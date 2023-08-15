@@ -1,4 +1,4 @@
-import { Transaction } from "./App.tsx";
+import { Transaction } from "Domain/Transactions.tsx";
 
 /*
 
@@ -25,11 +25,11 @@ import { Transaction } from "./App.tsx";
         </ul>
  */
 
-export default function TransactionList({
-  transactions,
-}: {
+interface TransactionsListProps {
   transactions: Transaction[];
-}) {
+}
+
+export function TransactionsList({ transactions }: TransactionsListProps) {
   return (
     <div className="py-8">
       <div className="sm:flex sm:items-center">
@@ -50,31 +50,43 @@ export default function TransactionList({
                 <tr>
                   <th
                     scope="col"
-                    className="whitespace-nowrap py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0"
+                    className="whitespace-nowrap py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0 w-1"
                   >
                     ID
                   </th>
                   <th
                     scope="col"
-                    className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900 w-1"
                   >
                     Method
                   </th>
                   <th
                     scope="col"
-                    className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900 w-1"
                   >
                     URL
                   </th>
                   <th
                     scope="col"
-                    className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900 w-1"
                   >
                     Status Code
                   </th>
                   <th
                     scope="col"
                     className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                  >
+                    Request
+                  </th>
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                  >
+                    Response
+                  </th>
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900 w-1"
                   >
                     Timestamp
                   </th>
@@ -83,7 +95,7 @@ export default function TransactionList({
               <tbody className="divide-y divide-gray-200 bg-white">
                 {transactions.map((transaction) => (
                   <tr key={transaction.id}>
-                    <td className="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-0">
+                    <td className="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-0 font-mono">
                       {transaction.id}
                     </td>
                     <td className="whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900">
@@ -101,6 +113,12 @@ export default function TransactionList({
                       ) : (
                         "-"
                       )}
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                      -
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                      -
                     </td>
                     <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
                       {transaction.createdAt}

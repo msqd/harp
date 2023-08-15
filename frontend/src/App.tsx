@@ -1,67 +1,9 @@
-import { ReactElement } from "react";
-import {
-  QueryClient,
-  QueryClientProvider,
-  useQuery,
-  UseQueryResult,
-} from "react-query";
-import { ReactQueryDevtools } from "react-query/devtools";
-import { QueryObserverSuccessResult } from "react-query/types/core/types";
+import { useQuery } from "react-query";
 import NavBar from "./Components/Layout/NavBar.tsx";
-import TransactionList from "./TransactionList.tsx";
-
-function OnQuerySuccess<T>({
-  query,
-  children,
-}: {
-  query: UseQueryResult<T>;
-  children: (query: QueryObserverSuccessResult<T>) => ReactElement;
-}) {
-  if (query.isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (query.isError || !query.isSuccess) {
-    return <div>Error!</div>;
-  }
-
-  return children(query);
-}
-
-interface ItemList<T> {
-  items: T[];
-}
-
-interface Request {
-  method: string;
-  url: string;
-  headers: any;
-  body: any;
-}
-
-interface Response {
-  statusCode: number;
-  headers: any;
-  body: any;
-}
-export interface Transaction {
-  id: string;
-  request: Request | null;
-  response: Response | null;
-  createdAt: string;
-}
-
-function List() {
-  const query = useQuery<ItemList<Transaction>>("transactions", () =>
-    fetch("http://localhost:4000/api/").then((r) => r.json()),
-  );
-
-  return (
-    <OnQuerySuccess query={query}>
-      {(query) => <TransactionList transactions={query.data.items} />}
-    </OnQuerySuccess>
-  );
-}
+import { OnQuerySuccess } from "./Components/Utilities/OnQuerySuccess.tsx";
+import { ItemList } from "./Domain/Api.tsx";
+import { Transaction } from "./Domain/Transactions.tsx";
+import TransactionsList from "./Pages/Transactions/List/TransactionsList.tsx";
 
 function App() {
   return (

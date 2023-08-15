@@ -14,4 +14,4 @@ app.use_cors(
 
 @app.router.get("/")
 async def home(request):
-    return json({"items": [transaction.asdict() for transaction in fake_db.rows]})
+    return json({"items": [transaction.asdict() for transaction in reversed(fake_db.rows)]})

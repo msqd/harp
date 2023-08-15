@@ -1,0 +1,52 @@
+{
+  "name": "mkui",
+  "version": "0.0.1",
+  "author": "Romain Dorgueil <romain@makersquad.fr>",
+  "license": "© Makersquad",
+  "private": true,
+  "babelMacros": {
+    "twin": {
+      "preset": "emotion"
+    }
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@babel/plugin-transform-react-jsx": "^7.22.5",
+    "@emotion/babel-plugin-jsx-pragmatic": "^0.2.1",
+    "@ladle/react": "^2.17.2",
+    "@playwright/test": "^1.36.0",
+    "@types/react": "^18.2.20",
+    "@types/react-dom": "^18.2.7",
+    "@types/sync-fetch": "^0.4.0",
+    "@vitejs/plugin-react": "^4.0.4",
+    "autoprefixer": "^10.4.15",
+    "cross-env": "^7.0.3",
+    "postcss": "^8.4.27",
+    "prettier": "^3.0.1",
+    "start-server-and-test": "^2.0.0",
+    "sync-fetch": "^0.5.2",
+    "sync-request": "^6.1.0",
+    "tailwindcss": "^3.3.3",
+    "twin.macro": "^3.4.0",
+    "typescript": "^5.1.6",
+    "vite": "^4.4.9"
+  },
+  "scripts": {
+    "build": "ladle build",
+    "build-preview": "ladle build && pnpm serve:prod",
+    "lint": "echo 'no lint'",
+    "serve": "pnpm serve:dev",
+    "serve:dev": "ladle serve -p 61110",
+    "serve:prod": "ladle preview -p 61110",
+    "test": "pnpm test:dev",
+    "test:all": "pnpm test:dev && pnpm test:prod",
+    "test:dev": "cross-env TYPE=dev pnpm exec playwright test",
+    "test:prod": "cross-env TYPE=prod pnpm exec playwright test",
+    "test:update": "cross-env TYPE=update pnpm exec playwright test -u"
+  }
+}

@@ -11,12 +11,14 @@
 *.sage.py
 *.so
 *.spec
+.DS_Store
 .Python
 .cache
 .coverage
 .coverage.*
 .dmypy.json
 .eggs/
+.idea/
 .env
 .hypothesis/
 .installed.cfg
@@ -62,6 +64,7 @@ ipython_config.py
 lib/
 lib64/
 local_settings.py
+node_modules/
 nosetests.xml
 parts/
 pip-delete-this-directory.txt

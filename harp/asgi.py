@@ -6,7 +6,6 @@ import harp
 from harp.apis.asgi import app as apiserver
 from harp.models.message import Request, Response
 from harp.models.transaction import Transaction
-from harp.services.database.asyncpg import get_connection
 from harp.services.database.fake import fake_db
 from harp.services.http import client
 from harp.settings import USE_STREAMING
@@ -95,8 +94,8 @@ def get_asgi_app_for_router(router: "harp.Harp"):
                 }
             )
 
-            db = await get_connection()
-            db.execute()
+            # db = await get_connection()
+            # db.execute()
             fake_db.rows.append(transaction)
 
     return _asgi_app

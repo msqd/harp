@@ -1,5 +1,7 @@
+import TransactionsListPage from "Pages/Transactions/List/TransactionsListPage.tsx";
+
 function TransactionsRoute() {
-  return <div>Transactions</div>;
+  return <TransactionsListPage />;
 }
 
 export { TransactionsRoute };

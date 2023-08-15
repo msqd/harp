@@ -2,13 +2,18 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from nanoid import generate
+from nanoid.resources import alphabet
 
 from .message import Request, Response
 
 
+def generate_transaction_id():
+    return generate(alphabet=alphabet[2:])
+
+
 @dataclass
 class Transaction:
-    id: str = field(default_factory=generate)
+    id: str = field(default_factory=generate_transaction_id)
     request: Request = None
     response: Response = None
     created_at: datetime = field(default_factory=datetime.now)
