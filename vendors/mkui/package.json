@@ -12,6 +12,8 @@
   "dependencies": {
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@headlessui/react": "^1.7.16",
+    "@heroicons/react": "^2.0.18",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
@@ -35,6 +37,12 @@
     "twin.macro": "^3.4.0",
     "typescript": "^5.1.6",
     "vite": "^4.4.9"
+  },
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./Components/*": "./src/Components/*/index.ts",
+    "./package.json": "./package.json"
   },
   "scripts": {
     "build": "ladle build",

@@ -21,8 +21,10 @@
     "@heroicons/react": "^2.0.18",
     "localforage": "^1.10.0",
     "match-sorter": "^6.3.1",
+    "mkui": "link:../vendors/mkui",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-is": "16.13.1",
     "react-query": "^3.39.3",
     "react-router-dom": "^6.15.0",
     "sort-by": "^1.2.0"
@@ -42,6 +44,7 @@
     "eslint-plugin-react-refresh": "^0.4.1",
     "postcss": "^8.4.26",
     "prettier": "^3.0.0",
+    "rollup-plugin-visualizer": "^5.9.2",
     "tailwindcss": "^3.3.3",
     "twin.macro": "^3.4.0",
     "typescript": "^5.0.2",

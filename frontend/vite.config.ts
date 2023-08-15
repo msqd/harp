@@ -1,9 +1,28 @@
-import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
-
+import { defineConfig } from "vite";
+import tsconfigPaths from "vite-tsconfig-paths"; // https://vitejs.dev/config/
+import { visualizer } from "rollup-plugin-visualizer";
 // https://vitejs.dev/config/
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom", "react-is"],
+          reactQuery: ["react-query"],
+          reactRouter: ["react-router-dom"],
+          ui: [
+            "@headlessui/react",
+            "@heroicons/react",
+            "@emotion/react",
+            "@emotion/react",
+            "mkui",
+          ],
+          utils: ["localforage", "match-sorter", "sort-by"],
+        },
+      },
+    },
+  },
   optimizeDeps: {
     esbuildOptions: {
       target: "es2020",
@@ -36,6 +55,8 @@ export default defineConfig({
         ],
       },
     }),
+
+    visualizer(),
   ],
 
   server: { port: 4001 },

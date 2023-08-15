@@ -1,4 +1,4 @@
-const baseUrl = 'http://127.0.0.1:61110'
+const baseUrl = "http://127.0.0.1:61110"
 
 export default {
   use: {
@@ -7,6 +7,7 @@ export default {
   webServer: {
     command: process.env.TYPE === "dev" ? "pnpm serve:dev" : "pnpm build-preview",
     url: baseUrl,
+    reuseExistingServer: true,
   },
   retries: 0,
 }

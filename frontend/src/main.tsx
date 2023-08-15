@@ -31,12 +31,15 @@ const router = createBrowserRouter([
 ]);
 const queryClient = new QueryClient();
 
+// @ts-ignore
+const Root = React.StrictMode;
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
+  <Root>
     <QueryClientProvider client={queryClient}>
       <GlobalStyles />
       <RouterProvider router={router} />
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
-  </React.StrictMode>,
+  </Root>,
 );

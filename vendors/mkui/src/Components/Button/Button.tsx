@@ -1,18 +1,15 @@
-import { StyledComponent } from '@emotion/styled'
-import { ReactNode } from 'react'
-import tw, { styled } from 'twin.macro'
+import { StyledComponent } from "@emotion/styled"
+import { ReactNode } from "react"
+import tw, { styled } from "twin.macro"
 
-type ButtonVariant = 'primary' | 'secondary'
+type ButtonVariant = "primary" | "secondary"
 
 interface ButtonProps {
   children?: ReactNode
   variant?: ButtonVariant
 }
 
-const StyledComponents: Record<
-  ButtonVariant,
-  StyledComponent<JSX.IntrinsicElements['button']>
-> = {
+const StyledComponents: Record<ButtonVariant, StyledComponent<JSX.IntrinsicElements["button"]>> = {
   primary: styled.button(() => [
     tw`px-2.5 py-1.5`,
     tw`mx-1`, // dubious ?
@@ -30,7 +27,9 @@ const StyledComponents: Record<
   ]),
 }
 
-export const Button = ({ children, variant = 'primary' }: ButtonProps) => {
+const Button = ({ children, variant = "primary" }: ButtonProps) => {
   const Wrapper = StyledComponents[variant]
   return <Wrapper>{children}</Wrapper>
 }
+
+export { Button }
