@@ -1,3 +1,3 @@
-from .proxy import Harp
+from .proxy import ProxyFactory
 
-__all__ = [Harp]
+__all__ = [ProxyFactory]
