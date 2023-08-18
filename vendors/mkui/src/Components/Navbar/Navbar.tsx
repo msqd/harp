@@ -1,6 +1,6 @@
 import { Disclosure, Menu, Transition } from "@headlessui/react"
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline"
-import { Fragment } from "react"
+import { ComponentType, Fragment } from "react"
 import tw, { styled } from "twin.macro"
 import defaultLogo from "./Assets/logo.svg"
 
@@ -10,17 +10,20 @@ function classNames(...classes: string[]) {
 
 interface NavbarProps {
   logo?: string
-  Link?: React.ComponentType<any>
+  Link?: ComponentType<any>
+  Wrapper?: ComponentType<any>
 }
 
 const NavbarContainer = styled(Disclosure)(() => [tw`bg-white shadow`])
+const DefaultNavbarWrapper = styled.div(() => [tw`mx-auto max-w-7xl px-2 sm:px-6 lg:px-8`])
+const DefaultLink = styled.a()
 
-function Navbar({ logo = defaultLogo, Link = styled.a() }: NavbarProps) {
+function Navbar({ logo = defaultLogo, Link = DefaultLink, Wrapper = DefaultNavbarWrapper }: NavbarProps) {
   return (
     <NavbarContainer as="nav">
       {({ open }: { open: boolean }) => (
         <>
-          <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+          <Wrapper>
             <div className="relative flex h-16 justify-between">
               <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
                 {/* Mobile menu button */}
@@ -127,7 +130,7 @@ function Navbar({ logo = defaultLogo, Link = styled.a() }: NavbarProps) {
                 </Menu>
               </div>
             </div>
-          </div>
+          </Wrapper>
 
           <Disclosure.Panel className="sm:hidden">
             <div className="space-y-1 pb-4 pt-2">

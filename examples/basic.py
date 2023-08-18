@@ -1,6 +1,6 @@
 from harp import ProxyFactory
 
-proxy = ProxyFactory()
+proxy = ProxyFactory(ui=True)
 
 proxy.add("https://api-adresse.data.gouv.fr/", port=8000)
 proxy.add("https://api-adresse.data.gouv.fr/", port=8001)

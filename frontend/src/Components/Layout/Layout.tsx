@@ -2,10 +2,14 @@ import { useMemo } from "react"
 import { Link, Outlet } from "react-router-dom"
 import { Navbar } from "mkui/Components/Navbar"
 import logo from "Assets/logo.svg"
+import tw, { styled } from "twin.macro"
+
+const Wrapper = styled.div(() => [tw`mx-auto px-2 sm:px-6 lg:px-8`])
 
 function Layout() {
   const navbarProps = useMemo(
     () => ({
+      Wrapper,
       Link,
       logo,
     }),
@@ -15,9 +19,9 @@ function Layout() {
   return (
     <>
       <Navbar {...navbarProps} />
-      <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-        Layout: <Outlet />
-      </div>
+      <Wrapper>
+        <Outlet />
+      </Wrapper>
     </>
   )
 }

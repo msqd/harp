@@ -33,8 +33,17 @@ class asgi:
 
 
 class ProxyEndpoint:
-    def __init__(self, url):
+    def __init__(self, url, *, name=None):
+        self.name = name
         self.url = url
+
+    def get_proxy_scope(self, scope):
+        return {
+            "target": self.url,
+            "method": scope["method"],
+            "path": scope["raw_path"].decode("utf-8"),
+            "query_string": scope["query_string"].decode("utf-8"),
+        }
 
 
 class AsgiContext:
@@ -75,9 +84,6 @@ class Proxy:
     def __init__(self, *, ports):
         self.ports = ports
 
-    def response(self, type, **kwargs):
-        return {"type": f"http.response.{type}", **kwargs}
-
     async def __call__(self, scope, receive, send):
         with AsgiContext(scope, receive, send) as ctx:
             return await self.handle(ctx)
@@ -101,32 +107,31 @@ class Proxy:
             )
             return
 
-        ctx.scope["proxy"] = {
-            "target": endpoint.url,
-            "path": ctx.scope["raw_path"].decode("utf-8")
-            + (("?" + ctx.scope["query_string"].decode("utf-8")) if ctx.scope["query_string"] else ""),
-        }
+        ctx.scope["proxy"] = endpoint.get_proxy_scope(ctx.scope)
 
-        logger.info(f"◀ {ctx.scope['method']} {ctx.scope['proxy']['path']}")
+        logger.info(f"◀ {ctx.scope['proxy']['method']} {ctx.scope['proxy']['path']}")
 
         scope_filters = ()
         for scope_filter in scope_filters:
             await scope_filter(ctx.scope)
 
         response: httpx.Response
-        transaction = Transaction()
-
-        url = urljoin(ctx.scope["proxy"]["target"], ctx.scope["proxy"]["path"])
-        request = client.request(ctx.scope["method"], url)
-        transaction.request = Request(ctx.scope["method"], url, headers=(), body=None)
+        transaction = Transaction(endpoint=endpoint.name)
+        transaction.request = Request(
+            ctx.scope["proxy"]["method"],
+            urljoin(ctx.scope["proxy"]["target"], ctx.scope["proxy"]["path"])
+            + (f"?{ctx.scope['query_string'].decode('utf-8')}" if ctx.scope["query_string"] else ""),
+            headers=(),
+            body=None,
+        )
         try:
-            logger.info(f"▶▶ {ctx.scope['method']} {transaction.request.url}", **transaction.request.asdict())
-            response = await request
+            logger.info(f"▶▶ {transaction.request.method} {transaction.request.url}", **transaction.request.asdict())
+            response = await client.request(transaction.request.method, transaction.request.url)
             logger.info(f"◀◀ {response.status_code} {response.reason_phrase}")
         except Exception as exc:
             logger.info(f"▶ 503 {codes.get_reason_phrase(503)}")
             tb = "\n".join(traceback.format_exception(exc))
-            await ctx.send_all(
+            return await ctx.send_all(
                 asgi.http.response.start(status=503),
                 asgi.http.response.body(
                     body=bytes(f"<h1>503 - Service Unavailable<h1>\n<pre>{tb}</pre>", "utf-8"),
@@ -160,16 +165,24 @@ class Proxy:
 class ProxyFactory:
     ProxyType = Proxy
 
-    def __init__(self, *, port=4000):
+    def __init__(self, *, port=4000, ui=True, ui_port=None):
         self.ports = {}
         self._next_available_port = port
 
+        if ui:
+            self.ports[ui_port or self.next_available_port()] = ProxyEndpoint("http://localhost:3999/", name="ui")
+
+    def next_available_port(self):
+        while self._next_available_port in self.ports:
+            self._next_available_port += 1
+        try:
+            return self._next_available_port
+        finally:
+            self._next_available_port += 1
+
     def add(self, target, *, port=auto):
         if port is auto:
-            while self._next_available_port in self.ports:
-                self._next_available_port += 1
-            port = self._next_available_port
-            self._next_available_port += 1
+            port = self.next_available_port()
 
         self.ports[port] = ProxyEndpoint(target)
         return self.ports[port]
@@ -180,27 +193,16 @@ class ProxyFactory:
         return self.ProxyType(ports=MappingProxyType(deepcopy(self.ports)))
 
     def run(self):
-        import asyncio
+        proxy = self.create()
 
-        import uvloop
         from hypercorn.asyncio import serve
         from hypercorn.config import Config
-
-        proxy = self.create()
 
         config = Config()
         config.bind = [f"0.0.0.0:{port}" for port in proxy.ports]
         config.accesslog = structlog.getLogger("hypercorn.access")
         config.errorlog = structlog.getLogger("hypercorn.error")
 
-        uvloop.install()
+        import anyio
 
-        loop = asyncio.get_event_loop()
-        server = serve(proxy, config)
-        loop.run_until_complete(server)
-
-
-class Harp:
-    def __init__(self, *, port=4000):
-        self._next_available_port = port
-        self.ports = {}
+        anyio.run(serve, proxy, config, backend="asyncio", backend_options={"use_uvloop": True})

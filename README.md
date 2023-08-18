@@ -30,3 +30,22 @@ https://tdengine.com/devops-performance-comparison-influxdb-and-timescaledb-vs-t
 https://github.com/timescale/timescaledb
 
 timescale prob better option to have pg behind for stability, power and other stuff not ts related
+
+
+Marketing
+=========
+
+for developpers
+
+less code, more robust, avoid repetitive hard code (cache, retry, timeouts ...), debugging
+
+for operations
+
+secure by default, adds observability
+
+for executives
+
+reduce development and maintenance cost of API related code
+audited by default, adds security
+
+rgpd : need a way to anonymize payloads

@@ -27,7 +27,8 @@
     "react-is": "16.13.1",
     "react-query": "^3.39.3",
     "react-router-dom": "^6.15.0",
-    "sort-by": "^1.2.0"
+    "sort-by": "^1.2.0",
+    "url-join": "^5.0.0"
   },
   "devDependencies": {
     "@babel/plugin-transform-react-jsx": "^7.22.5",

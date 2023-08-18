@@ -14,6 +14,7 @@ def generate_transaction_id():
 @dataclass
 class Transaction:
     id: str = field(default_factory=generate_transaction_id)
+    endpoint: str = None
     request: Request = None
     response: Response = None
     created_at: datetime = field(default_factory=datetime.now)
@@ -23,6 +24,7 @@ class Transaction:
     def asdict(self):
         return {
             "id": self.id,
+            "endpoint": self.endpoint,
             "request": self.request.asdict() if self.request else None,
             "response": self.response.asdict() if self.response else None,
             "createdAt": self.created_at,
