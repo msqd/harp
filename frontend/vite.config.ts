@@ -59,5 +59,5 @@ export default defineConfig({
     visualizer(),
   ],
 
-  server: { port: 3999 },
+  server: { port: 4999 },
 });

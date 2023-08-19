@@ -1,4 +1,5 @@
 import { Transaction } from "Domain/Transactions/Types"
+import urlJoin from "url-join"
 
 /*
 
@@ -36,6 +37,28 @@ interface DataTableProps<TRow> {
   formatters: Record<string, (x: any) => string>
 }
 
+function isUrl(urlOrWhatever: string | any) {
+  let url
+
+  try {
+    url = new URL(urlOrWhatever)
+  } catch (_) {
+    return false
+  }
+
+  return url.protocol === "http:" || url.protocol === "https:"
+}
+
+function truncateString(str, num) {
+  // If the length of str is less than or equal to num
+  // just return str--don't truncate it.
+  if (str.length <= num) {
+    return str
+  }
+  // Return str truncated with '...' concatenated to the end of str.
+  return str.slice(0, num) + "…"
+}
+
 function DataTable<TRow>({ transactions }: DataTableProps<TRow>) {
   return (
     <table className="min-w-full divide-y divide-gray-300 text-left">
@@ -46,9 +69,6 @@ function DataTable<TRow>({ transactions }: DataTableProps<TRow>) {
             className="whitespace-nowrap py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0 w-1"
           >
             ID
-          </th>
-          <th scope="col" className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900 w-1">
-            Endpoint
           </th>
           <th scope="col" className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900 w-1">
             Method
@@ -74,16 +94,22 @@ function DataTable<TRow>({ transactions }: DataTableProps<TRow>) {
         {transactions.map((transaction) => (
           <tr key={transaction.id}>
             <td className="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-0 font-mono">
-              {transaction.id}
+              <span title={transaction.id}>{truncateString(transaction.id, 3) + transaction.id.slice(-3)}</span>
             </td>
             <td className="whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900">
-              {transaction.endpoint || "-"}
+              <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                {transaction.request?.method || "-"}
+              </span>
             </td>
             <td className="whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900">
-              {transaction.request?.method || "-"}
-            </td>
-            <td className="whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900">
-              {transaction.request?.url || "-"}
+              {isUrl(transaction.endpoint || "") ? (
+                urlJoin(transaction.endpoint || "?", "")
+              ) : (
+                <span className="inline-flex items-center bg-gray-50 px-1 mx-1 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">
+                  {transaction.endpoint}
+                </span>
+              )}
+              {urlJoin("/", transaction.request?.url || "")}
             </td>
             <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
               {transaction.response?.statusCode ? (
@@ -97,7 +123,9 @@ function DataTable<TRow>({ transactions }: DataTableProps<TRow>) {
             </td>
             <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-900">-</td>
             <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-900">-</td>
-            <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-900">{transaction.createdAt}</td>
+            <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+              {new Date(transaction.createdAt).toLocaleString()}
+            </td>
           </tr>
         ))}
       </tbody>

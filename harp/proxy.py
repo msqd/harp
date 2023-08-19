@@ -1,5 +1,6 @@
 import traceback
 from copy import deepcopy
+from functools import cached_property
 from types import MappingProxyType
 from urllib.parse import urljoin
 
@@ -8,11 +9,13 @@ import structlog
 from httpx._status_codes import codes
 
 from harp import logging
-from harp.apis.asgi import app as apiserver
+from harp.apis.asgi import ManagementApplication
 from harp.models.message import Request, Response
+from harp.models.proxy_endpoint import ProxyEndpoint
 from harp.models.transaction import Transaction
-from harp.services.database.fake import fake_db
+from harp.services import container
 from harp.services.http import client
+from harp.services.storage.base import Storage
 
 auto = object()
 
@@ -32,20 +35,6 @@ class asgi:
                 return {"type": "http.response.body", **kwargs}
 
 
-class ProxyEndpoint:
-    def __init__(self, url, *, name=None):
-        self.name = name
-        self.url = url
-
-    def get_proxy_scope(self, scope):
-        return {
-            "target": self.url,
-            "method": scope["method"],
-            "path": scope["raw_path"].decode("utf-8"),
-            "query_string": scope["query_string"].decode("utf-8"),
-        }
-
-
 class AsgiContext:
     @property
     def scope(self):
@@ -61,7 +50,7 @@ class AsgiContext:
         self._send = send
 
     def __enter__(self):
-        logger.debug(f"◁ RECV {self.type}", **self._scope)
+        logger.debug(f"◁ ENTER {self.type}", **self._scope)
 
         return self
 
@@ -76,13 +65,21 @@ class AsgiContext:
         for ctx in ctxs:
             await self.send(ctx)
 
-    def receive(self, *args, **kwargs):
-        raise NotImplementedError()
+    async def receive(self):
+        retval = await self._receive()
+        logger.debug(f"◁ RECV {self.type}", **retval)
+        return retval
 
 
 class Proxy:
-    def __init__(self, *, ports):
+    def __init__(self, *, ports, container):
         self.ports = ports
+        print(container)
+        self.app = ManagementApplication(container=container)
+
+    @cached_property
+    def storage(self):
+        return self.app.service_provider.get(Storage)
 
     async def __call__(self, scope, receive, send):
         with AsgiContext(scope, receive, send) as ctx:
@@ -90,13 +87,13 @@ class Proxy:
 
     async def handle(self, ctx: AsgiContext):
         if ctx.type == "lifespan":
-            return await apiserver(ctx.scope, ctx.receive, ctx.send)
+            return await self.app(ctx.scope, ctx.receive, ctx.send)
         elif ctx.type != "http":
             return
 
         if ctx.scope["path"].startswith("/api/"):
             subscope = {**ctx.scope, "path": ctx.scope["path"][4:], "raw_path": ctx.scope["raw_path"][4:]}
-            return await apiserver(subscope, ctx.receive, ctx.send)
+            return await self.app(subscope, ctx.receive, ctx.send)
 
         endpoint = self.ports.get(ctx.scope["server"][1], None)
 
@@ -116,50 +113,51 @@ class Proxy:
             await scope_filter(ctx.scope)
 
         response: httpx.Response
-        transaction = Transaction(endpoint=endpoint.name)
-        transaction.request = Request(
-            ctx.scope["proxy"]["method"],
-            urljoin(ctx.scope["proxy"]["target"], ctx.scope["proxy"]["path"])
-            + (f"?{ctx.scope['query_string'].decode('utf-8')}" if ctx.scope["query_string"] else ""),
-            headers=(),
-            body=None,
-        )
-        try:
-            logger.info(f"▶▶ {transaction.request.method} {transaction.request.url}", **transaction.request.asdict())
-            response = await client.request(transaction.request.method, transaction.request.url)
-            logger.info(f"◀◀ {response.status_code} {response.reason_phrase}")
-        except Exception as exc:
-            logger.info(f"▶ 503 {codes.get_reason_phrase(503)}")
-            tb = "\n".join(traceback.format_exception(exc))
-            return await ctx.send_all(
-                asgi.http.response.start(status=503),
-                asgi.http.response.body(
-                    body=bytes(f"<h1>503 - Service Unavailable<h1>\n<pre>{tb}</pre>", "utf-8"),
-                ),
+
+        with self.storage.store(Transaction(endpoint=endpoint)) as transaction:
+            transaction.request = Request(
+                ctx.scope["proxy"]["method"],
+                urljoin(ctx.scope["proxy"]["target"], ctx.scope["proxy"]["path"])
+                + (f"?{ctx.scope['query_string'].decode('utf-8')}" if ctx.scope["query_string"] else ""),
+                headers=(),
+                body=None,
+                endpoint=endpoint,
             )
 
-        # TODO content encoding removed because of gzip. we should handle that
-        # TODO contant length removed because some api sends bullshit here that we cannot reuse
-        headers = tuple(
-            (
-                (k, v)
-                for k, v in response.headers.raw
-                if k.lower() not in (b"server", b"date", b"content-encoding", b"content-length")
+            try:
+                logger.info(
+                    f"▶▶ {transaction.request.method} {transaction.request.url}", **transaction.request.asdict()
+                )
+                response = await client.request(transaction.request.method, transaction.request.url)
+                logger.info(f"◀◀ {response.status_code} {response.reason_phrase}")
+            except Exception as exc:
+                logger.info(f"▶ 503 {codes.get_reason_phrase(503)}")
+                tb = "\n".join(traceback.format_exception(exc))
+                return await ctx.send_all(
+                    asgi.http.response.start(status=503),
+                    asgi.http.response.body(
+                        body=bytes(f"<h1>503 - Service Unavailable<h1>\n<pre>{tb}</pre>", "utf-8"),
+                    ),
+                )
+
+            # TODO content encoding removed because of gzip. we should handle that
+            # TODO contant length removed because some api sends bullshit here that we cannot reuse
+            headers = tuple(
+                (
+                    (k, v)
+                    for k, v in response.headers.raw
+                    if k.lower() not in (b"server", b"date", b"content-encoding", b"content-length")
+                )
             )
-        )
 
-        logger.info(
-            f"▶ {response.status_code} {codes.get_reason_phrase(response.status_code)}",
-            **dict((k.decode("utf-8"), v.decode("utf-8")) for k, v in headers),
-        )
-        await ctx.send(asgi.http.response.start(status=response.status_code, headers=headers))
-        transaction.response = Response(response.status_code, headers, response.content)
+            logger.info(
+                f"▶ {response.status_code} {codes.get_reason_phrase(response.status_code)}",
+                **dict((k.decode("utf-8"), v.decode("utf-8")) for k, v in headers),
+            )
+            await ctx.send(asgi.http.response.start(status=response.status_code, headers=headers))
+            transaction.response = Response(response.status_code, headers, response.content)
 
-        await ctx.send(asgi.http.response.body(body=response.content))
-
-        # db = await get_connection()
-        # db.execute()
-        fake_db.rows.append(transaction)
+            await ctx.send(asgi.http.response.body(body=response.content))
 
 
 class ProxyFactory:
@@ -167,10 +165,11 @@ class ProxyFactory:
 
     def __init__(self, *, port=4000, ui=True, ui_port=None):
         self.ports = {}
+        self.container = container
         self._next_available_port = port
 
         if ui:
-            self.ports[ui_port or self.next_available_port()] = ProxyEndpoint("http://localhost:3999/", name="ui")
+            self.ports[ui_port or self.next_available_port()] = ProxyEndpoint("http://localhost:4999/", name="ui")
 
     def next_available_port(self):
         while self._next_available_port in self.ports:
@@ -180,17 +179,17 @@ class ProxyFactory:
         finally:
             self._next_available_port += 1
 
-    def add(self, target, *, port=auto):
+    def add(self, target, *, port=auto, name=None):
         if port is auto:
             port = self.next_available_port()
 
-        self.ports[port] = ProxyEndpoint(target)
+        self.ports[port] = ProxyEndpoint(target, name=name)
         return self.ports[port]
 
     def create(self):
         # Make it has hard as possible to modify configuration at runtime, outside the factory. Of course, if you really
         # want to write a # shitload of crappy code, you can.
-        return self.ProxyType(ports=MappingProxyType(deepcopy(self.ports)))
+        return self.ProxyType(ports=MappingProxyType(deepcopy(self.ports)), container=self.container)
 
     def run(self):
         proxy = self.create()

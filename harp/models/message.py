@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from harp.models.proxy_endpoint import ProxyEndpoint
+
 
 @dataclass
 class Request:
@@ -7,11 +9,12 @@ class Request:
     url: str
     headers: tuple
     body: bytes | None
+    endpoint: ProxyEndpoint | None = None
 
     def asdict(self):
         return {
             "method": self.method,
-            "url": self.url,
+            "url": self.endpoint.contextualize(self.url) if self.endpoint else self.url,
             "headers": self.headers,
             "body": self.body,
         }

@@ -119,24 +119,24 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "blacksheep"
-version = "1.2.17"
+version = "1.2.18"
 description = "Fast web framework for Python asyncio"
 optional = false
 python-versions = "*"
 files = [
-    {file = "blacksheep-1.2.17-cp310-cp310-macosx_11_0_x86_64.whl", hash = "sha256:3d1b281433762250b9bbcc772165d53c5c9671485467d439c5cf98fb3a39d461"},
-    {file = "blacksheep-1.2.17-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:778dda09d19f0a4bbbcae3851b1a8be219164dbbadda5c2e94f60ca3e12eeda7"},
-    {file = "blacksheep-1.2.17-cp310-cp310-win_amd64.whl", hash = "sha256:80b9fdafda9a9605b0babee1beecbfe2b931a4decb4593205ff7b407d64dbc92"},
-    {file = "blacksheep-1.2.17-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:b79b0c93ebcf05c49b0a6bb3c9c73c1c6c0b1be31abab178710586fe689fd91a"},
-    {file = "blacksheep-1.2.17-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:42994b897152d5017db9791f8e383446d080d09e00306c2c8fbaff26499d7247"},
-    {file = "blacksheep-1.2.17-cp311-cp311-win_amd64.whl", hash = "sha256:2e574fcd82c5d700b7bfa8e9fe7567902343d55b0e48189ed6744834520eb3dc"},
-    {file = "blacksheep-1.2.17-cp38-cp38-macosx_11_0_x86_64.whl", hash = "sha256:fe5bd9fc07da3336dfd97bc660f6dcf57f6e24bb105c3bc71c3b3c061fed6f54"},
-    {file = "blacksheep-1.2.17-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e16069c9566b38fc2f01d6aa1b346f1a231d336cedc4b2761f3b801c3692178c"},
-    {file = "blacksheep-1.2.17-cp38-cp38-win_amd64.whl", hash = "sha256:65b4ed2f695cdfb96d96ed20343c7b9a8ac5f499c3f45a04dc0fa8161fe99c57"},
-    {file = "blacksheep-1.2.17-cp39-cp39-macosx_11_0_x86_64.whl", hash = "sha256:325238ef5ef4d8fa92d74906cf7509e7804b6d30c6005998e7b84575bb8b79df"},
-    {file = "blacksheep-1.2.17-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b43f6e844d17271a35edb3efc07f28df6efab02f18c33a293d0de7a36445da11"},
-    {file = "blacksheep-1.2.17-cp39-cp39-win_amd64.whl", hash = "sha256:ef8db4d525248ea2af2251a5f71ab2adeb09fdfbd9a8cb1c360db2f4796a35ad"},
-    {file = "blacksheep-1.2.17.tar.gz", hash = "sha256:724e571d4c07d5dfb0607452c983520bdee2f43f652f075f5aa3b37c0d7bb120"},
+    {file = "blacksheep-1.2.18-cp310-cp310-macosx_11_0_x86_64.whl", hash = "sha256:14412ad79c0cacad3534a5f54feddaffa1283bee24ce5306e02fe029984eaf85"},
+    {file = "blacksheep-1.2.18-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3b11672885ae5b195bd4dc685e553fd6078e2b6cb29f08239aba7d677a679893"},
+    {file = "blacksheep-1.2.18-cp310-cp310-win_amd64.whl", hash = "sha256:db6b1455910025d65093b0b0b312a1fcd37ee06310d4b8a0434dbc8e1344e67b"},
+    {file = "blacksheep-1.2.18-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:75d11454a34abdda2f0e41dfb3e6438dc57339f93c7f09358b5ca9ef5df806b0"},
+    {file = "blacksheep-1.2.18-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:df7a43b15059312f4394caf926ca1dbd61b624339f7a22802907bc6ce0f3c70e"},
+    {file = "blacksheep-1.2.18-cp311-cp311-win_amd64.whl", hash = "sha256:7fd9c9b2104ce1e95e42b582c3f0194425e3d3e1a13176ac8e6c38d1e4bea82f"},
+    {file = "blacksheep-1.2.18-cp38-cp38-macosx_11_0_x86_64.whl", hash = "sha256:8360e1251ea7a9ba025d1542b31c066db5f5c3e13df384ba0ef0f5606715aecc"},
+    {file = "blacksheep-1.2.18-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d733d4d9017ff57e618111c4cc6ad1a9a2ca23d62ccfa9dbbb9816117afffea2"},
+    {file = "blacksheep-1.2.18-cp38-cp38-win_amd64.whl", hash = "sha256:7deee8774ea68c586193d7b0c1d9feea109dc018e88223cc5032900b4255d5b4"},
+    {file = "blacksheep-1.2.18-cp39-cp39-macosx_11_0_x86_64.whl", hash = "sha256:f2427c6f0be6eccbf9ebddcec450da2b78b944a4a7ccd756bbe1ea0ae7f6cdd2"},
+    {file = "blacksheep-1.2.18-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fb8a951829bce23476386a2adea3e6de41cc22ddb5635a43453fc2dc91e9209b"},
+    {file = "blacksheep-1.2.18-cp39-cp39-win_amd64.whl", hash = "sha256:8fb8656776e370b52e26ab0b873abbadd6ca64e6fda610728aa58b328674387a"},
+    {file = "blacksheep-1.2.18.tar.gz", hash = "sha256:50cf71512b1e071cc32a183f97bbdcaf5b34f39e4f86015d3d3d717c2a127952"},
 ]
 
 [package.dependencies]
@@ -843,6 +843,16 @@ pluggy = ">=0.12,<2.0"
 testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
+name = "python-baseconv"
+version = "1.2.2"
+description = "Convert numbers from base 10 integers to base X strings and back again."
+optional = false
+python-versions = "*"
+files = [
+    {file = "python-baseconv-1.2.2.tar.gz", hash = "sha256:0539f8bd0464013b05ad62e0a1673f0ac9086c76b43ebf9f833053527cd9931b"},
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
@@ -1002,6 +1012,19 @@ dev = ["structlog[docs,tests,typing]"]
 docs = ["furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphinxcontrib-mermaid", "twisted"]
 tests = ["coverage[toml]", "freezegun (>=0.2.8)", "pretend", "pytest (>=6.0)", "pytest-asyncio (>=0.17)", "simplejson"]
 typing = ["mypy", "rich", "twisted"]
+
+[[package]]
+name = "svix-ksuid"
+version = "0.6.2"
+description = "A pure-Python KSUID implementation"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "svix-ksuid-0.6.2.tar.gz", hash = "sha256:beb95bd6284bdbd526834e233846653d2bd26eb162b3233513d8f2c853c78964"},
+]
+
+[package.dependencies]
+python-baseconv = "*"
 
 [[package]]
 name = "uvicorn"
@@ -1222,4 +1245,4 @@ h11 = ">=0.9.0,<1"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "f3f561712765a49ec358224926ee4234e3a2156599860ed41c9bffca19139fd6"
+content-hash = "7b7d6337cc93a826c0abeac9f99b16196e80ebe52d30ce0257ed632b7ccee1e0"
