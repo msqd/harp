@@ -308,6 +308,26 @@ files = [
 ]
 
 [[package]]
+name = "essentials-configuration"
+version = "2.0.3"
+description = "Implementation of key-value pair based configuration for Python applications."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "essentials_configuration-2.0.3-py3-none-any.whl", hash = "sha256:ecc32f52b68add16c312fe665aa0e9e0892eba9b7519ac454f12e682d819112b"},
+    {file = "essentials_configuration-2.0.3.tar.gz", hash = "sha256:4a78f641647d43de287be827ea8ce377a4a21c0d1ce1aa2bbbb7caf2d04257f8"},
+]
+
+[package.dependencies]
+python-dotenv = ">=1.0.0,<1.1.0"
+pyyaml = {version = "*", optional = true, markers = "extra == \"full\""}
+rich-click = {version = "*", optional = true, markers = "extra == \"full\""}
+
+[package.extras]
+full = ["pyyaml", "rich-click"]
+yaml = ["pyyaml"]
+
+[[package]]
 name = "essentials-openapi"
 version = "1.0.7"
 description = "Classes to generate OpenAPI Documentation v3 and v2, in JSON and YAML."
@@ -568,6 +588,23 @@ files = [
     {file = "iniconfig-2.0.0-py3-none-any.whl", hash = "sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374"},
     {file = "iniconfig-2.0.0.tar.gz", hash = "sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3"},
 ]
+
+[[package]]
+name = "isort"
+version = "5.12.0"
+description = "A Python utility / library to sort Python imports."
+optional = false
+python-versions = ">=3.8.0"
+files = [
+    {file = "isort-5.12.0-py3-none-any.whl", hash = "sha256:f84c2818376e66cf843d497486ea8fed8700b340f308f076c6fb1229dff318b6"},
+    {file = "isort-5.12.0.tar.gz", hash = "sha256:8bef7dde241278824a6d83f44a544709b065191b95b6e50894bdc722fcba0504"},
+]
+
+[package.extras]
+colors = ["colorama (>=0.4.3)"]
+pipfile-deprecated-finder = ["pip-shims (>=0.5.2)", "pipreqs", "requirementslib"]
+plugins = ["setuptools"]
+requirements-deprecated-finder = ["pip-api", "pipreqs"]
 
 [[package]]
 name = "itsdangerous"
@@ -881,6 +918,17 @@ files = [
 cli = ["click (>=5.0)"]
 
 [[package]]
+name = "python-ulid"
+version = "1.1.0"
+description = "Universally Unique Lexicographically Sortable Identifier"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "python-ulid-1.1.0.tar.gz", hash = "sha256:5fb5e4a91db8ca93e8938a613360b3def299b60d41f847279a8c39c9b2e9c65e"},
+    {file = "python_ulid-1.1.0-py3-none-any.whl", hash = "sha256:88c952f6be133dbede19c907d72d26717d2691ec8421512b573144794d891e24"},
+]
+
+[[package]]
 name = "pyyaml"
 version = "6.0"
 description = "YAML parser and emitter for Python"
@@ -946,6 +994,24 @@ pygments = ">=2.13.0,<3.0.0"
 
 [package.extras]
 jupyter = ["ipywidgets (>=7.5.1,<9)"]
+
+[[package]]
+name = "rich-click"
+version = "1.6.1"
+description = "Format click help output nicely with rich"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "rich-click-1.6.1.tar.gz", hash = "sha256:f8ff96693ec6e261d1544e9f7d9a5811c5ef5d74c8adb4978430fc0dac16777e"},
+    {file = "rich_click-1.6.1-py3-none-any.whl", hash = "sha256:0fcf4d1a09029d79322dd814ab0b2e66ac183633037561881d45abae8a161d95"},
+]
+
+[package.dependencies]
+click = ">=7"
+rich = ">=10.7.0"
+
+[package.extras]
+dev = ["pre-commit"]
 
 [[package]]
 name = "rodi"
@@ -1245,4 +1311,4 @@ h11 = ">=0.9.0,<1"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "7b7d6337cc93a826c0abeac9f99b16196e80ebe52d30ce0257ed632b7ccee1e0"
+content-hash = "29964e191fadc6ac70d4cb0350ce8f5fa118c088e0d90f4e821ff29f68aa05af"

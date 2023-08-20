@@ -1,22 +1,32 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from ksuid import KsuidMs
-from nanoid import generate
-from nanoid.resources import alphabet
-
 from .message import Request, Response
 from .proxy_endpoint import ProxyEndpoint
 
 
-def generate_transaction_id():
+def generate_transaction_id_ksuid():
+    from ksuid import KsuidMs
+
     return str(KsuidMs())
+
+
+def generate_transaction_id_nanoid():
+    from nanoid import generate
+    from nanoid.resources import alphabet
+
     return generate(alphabet=alphabet[2:])
+
+
+def generate_transaction_id_ulid():
+    from ulid import ULID
+
+    return str(ULID())
 
 
 @dataclass
 class Transaction:
-    id: str = field(default_factory=generate_transaction_id)
+    id: str = field(default_factory=generate_transaction_id_ksuid)
     request: Request = None
     response: Response = None
     created_at: datetime = field(default_factory=datetime.now)

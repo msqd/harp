@@ -1,3 +1,8 @@
-from .base import Storage
+from .base import BaseStorageSettings, Storage
+from .in_memory import InMemoryStorageSettings as DefaultStorageSettings
 
-__all__ = ["Storage"]
+__all__ = [
+    "BaseStorageSettings",
+    "DefaultStorageSettings",
+    "Storage",
+]

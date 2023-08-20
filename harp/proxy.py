@@ -13,7 +13,7 @@ from harp.apis.asgi import ManagementApplication
 from harp.models.message import Request, Response
 from harp.models.proxy_endpoint import ProxyEndpoint
 from harp.models.transaction import Transaction
-from harp.services import container
+from harp.services import create_config, create_container
 from harp.services.http import client
 from harp.services.storage.base import Storage
 
@@ -163,9 +163,10 @@ class Proxy:
 class ProxyFactory:
     ProxyType = Proxy
 
-    def __init__(self, *, port=4000, ui=True, ui_port=None):
+    def __init__(self, *, settings=None, port=4000, ui=True, ui_port=None):
+        self.config = create_config(settings)
+        self.container = create_container(self.config)
         self.ports = {}
-        self.container = container
         self._next_available_port = port
 
         if ui:

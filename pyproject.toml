@@ -18,6 +18,8 @@ structlog = "^23.1.0"
 anyio = "^3.7.1"
 rodi = ">=1.1.1,<1.2.0"
 svix-ksuid = "^0.6.2"
+python-ulid = "^1.1.0"
+essentials-configuration = {extras = ["full"], version = "^2.0.3"}
 
 
 [tool.poetry.group.dev.dependencies]
@@ -25,6 +27,7 @@ pre-commit = "^3.3.3"
 honcho = "^1.1.0"
 pytest = "^7.4.0"
 black = "^23.7.0"
+isort = "^5.12.0"
 
 [build-system]
 requires = ["poetry-core"]

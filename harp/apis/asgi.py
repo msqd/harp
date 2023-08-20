@@ -1,17 +1,7 @@
-from pprint import pprint
-
 import rodi
-from blacksheep import Application, json
-from blacksheep.server.controllers import Controller, get
+from blacksheep import Application
 
-from harp.models.transaction import Transaction
-from harp.services.storage import Storage
-
-
-class ApiController(Controller):
-    @get("/")
-    async def get(self, storage: Storage):
-        return json({"items": [transaction.asdict() for transaction in reversed(storage.select(Transaction))]})
+from harp.apis.controllers.api import ApiController
 
 
 class ManagementApplication(Application):
@@ -24,7 +14,10 @@ class ManagementApplication(Application):
             allow_headers="* Authorization",
             max_age=300,
         )
+        self.register_controllers([ApiController])
 
         @self.after_start
         async def after_start_print_routes(application: Application) -> None:
+            from pprint import pprint
+
             pprint(dict(application.router.routes))
