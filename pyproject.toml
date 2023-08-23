@@ -20,6 +20,9 @@ rodi = ">=1.1.1,<1.2.0"
 svix-ksuid = "^0.6.2"
 python-ulid = "^1.1.0"
 essentials-configuration = {extras = ["full"], version = "^2.0.3"}
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.20"}
+psycopg2-binary = "^2.9.7"
+sqlalchemy-utils = "^0.41.1"
 
 
 [tool.poetry.group.dev.dependencies]

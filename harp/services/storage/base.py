@@ -5,11 +5,12 @@ from dataclasses import dataclass
 
 class Storage(ABC):
     @contextmanager
-    def store(self, entity):
+    def store(self, entity, *, mode="save"):
         try:
             yield entity
         finally:
-            self.save(entity)
+            if mode == "save":
+                self.save(entity)
 
     @abstractmethod
     def select(self, _type):

@@ -18,9 +18,9 @@
 .coverage.*
 .dmypy.json
 .eggs/
-.idea/
 .env
 .hypothesis/
+.idea/
 .installed.cfg
 .ipynb_checkpoints
 .mypy_cache/
@@ -37,6 +37,7 @@
 .tox/
 .venv
 .webassets-cache
+/.vscode/
 /site
 ENV/
 MANIFEST

@@ -2,4 +2,4 @@
 
 export PYTHONUNBUFFERED=1
 
-watchfiles --filter python "python $1" harp examples
+watchfiles --filter python "python $1" harp

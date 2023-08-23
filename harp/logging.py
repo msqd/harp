@@ -63,7 +63,11 @@ logging_config = {
         "handlers": ["console"],
         "level": logging.INFO,
     },
-    "loggers": {"harp": {"level": "INFO"}},
+    "loggers": {
+        "harp": {"level": "DEBUG"},
+        "httpx": {"level": "DEBUG"},
+        "httpcore": {"level": "DEBUG"},
+    },
 }
 
 logging.config.dictConfig(logging_config)

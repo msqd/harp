@@ -1,6 +1,3 @@
-import { useQuery } from "react-query"
-import { ItemList } from "Domain/Api"
-import { Transaction } from "Domain/Transactions"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { TransactionsList } from "./TransactionsList.tsx"
 import { useTransactionsListQuery } from "Domain/Transactions"

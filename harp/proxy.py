@@ -1,3 +1,4 @@
+import pprint
 import traceback
 from copy import deepcopy
 from functools import cached_property
@@ -5,7 +6,6 @@ from types import MappingProxyType
 from urllib.parse import urljoin
 
 import httpx
-import structlog
 from httpx._status_codes import codes
 
 from harp import logging
@@ -74,7 +74,6 @@ class AsgiContext:
 class Proxy:
     def __init__(self, *, ports, container):
         self.ports = ports
-        print(container)
         self.app = ManagementApplication(container=container)
 
     @cached_property
@@ -91,11 +90,10 @@ class Proxy:
         elif ctx.type != "http":
             return
 
-        if ctx.scope["path"].startswith("/api/"):
-            subscope = {**ctx.scope, "path": ctx.scope["path"][4:], "raw_path": ctx.scope["raw_path"][4:]}
-            return await self.app(subscope, ctx.receive, ctx.send)
-
         endpoint = self.ports.get(ctx.scope["server"][1], None)
+
+        if endpoint.name == "ui" and (self.app.has_static_build or ctx.scope["path"].startswith("/api/")):
+            return await self.app(ctx.scope, ctx.receive, ctx.send)
 
         if not endpoint:
             await ctx.send_all(
@@ -106,6 +104,8 @@ class Proxy:
 
         ctx.scope["proxy"] = endpoint.get_proxy_scope(ctx.scope)
 
+        pprint.pprint(ctx.scope)
+
         logger.info(f"◀ {ctx.scope['proxy']['method']} {ctx.scope['proxy']['path']}")
 
         scope_filters = ()
@@ -114,21 +114,42 @@ class Proxy:
 
         response: httpx.Response
 
-        with self.storage.store(Transaction(endpoint=endpoint)) as transaction:
+        with self.storage.store(
+            Transaction(endpoint=endpoint), mode="ignore" if endpoint.name == "ui" else "save"
+        ) as transaction:
+            ## REQUEST (from client)
+            request_headers = tuple(((k, v) for k, v in ctx.scope["headers"] if k.lower() not in (b"host",)))
             transaction.request = Request(
                 ctx.scope["proxy"]["method"],
                 urljoin(ctx.scope["proxy"]["target"], ctx.scope["proxy"]["path"])
                 + (f"?{ctx.scope['query_string'].decode('utf-8')}" if ctx.scope["query_string"] else ""),
-                headers=(),
+                headers=request_headers,
                 body=None,
                 endpoint=endpoint,
             )
 
             try:
+                messages = []
+                more_body = True
+                while more_body:
+                    message = await ctx.receive()
+                    more_body = message.get("more_body", False)
+                    if len(message["body"]):
+                        messages.append(message["body"])
+
+                content = b"".join(messages) if len(messages) else None
                 logger.info(
                     f"▶▶ {transaction.request.method} {transaction.request.url}", **transaction.request.asdict()
                 )
-                response = await client.request(transaction.request.method, transaction.request.url)
+                request = client.build_request(
+                    transaction.request.method,
+                    transaction.request.url,
+                    headers=transaction.request.headers,
+                    content=content,
+                )
+                ### SEND REQUEST (to remote endpoint)
+                response = await client.send(request)
+
                 logger.info(f"◀◀ {response.status_code} {response.reason_phrase}")
             except Exception as exc:
                 logger.info(f"▶ 503 {codes.get_reason_phrase(503)}")
@@ -154,6 +175,8 @@ class Proxy:
                 f"▶ {response.status_code} {codes.get_reason_phrase(response.status_code)}",
                 **dict((k.decode("utf-8"), v.decode("utf-8")) for k, v in headers),
             )
+
+            ### SEND RESPONSE (to client)
             await ctx.send(asgi.http.response.start(status=response.status_code, headers=headers))
             transaction.response = Response(response.status_code, headers, response.content)
 
@@ -163,14 +186,15 @@ class Proxy:
 class ProxyFactory:
     ProxyType = Proxy
 
-    def __init__(self, *, settings=None, port=4000, ui=True, ui_port=None):
+    def __init__(self, *, settings=None, port=4000, ui=True, ui_port=4080):
         self.config = create_config(settings)
         self.container = create_container(self.config)
         self.ports = {}
         self._next_available_port = port
 
         if ui:
-            self.ports[ui_port or self.next_available_port()] = ProxyEndpoint("http://localhost:4999/", name="ui")
+            endpoint = ProxyEndpoint("http://localhost:4999/", name="ui")
+            self.ports[ui_port or self.next_available_port()] = endpoint
 
     def next_available_port(self):
         while self._next_available_port in self.ports:
@@ -195,13 +219,15 @@ class ProxyFactory:
     def run(self):
         proxy = self.create()
 
+        import logging as python_logging
+
         from hypercorn.asyncio import serve
         from hypercorn.config import Config
 
         config = Config()
         config.bind = [f"0.0.0.0:{port}" for port in proxy.ports]
-        config.accesslog = structlog.getLogger("hypercorn.access")
-        config.errorlog = structlog.getLogger("hypercorn.error")
+        config.accesslog = python_logging.getLogger("hypercorn.access")
+        config.errorlog = python_logging.getLogger("hypercorn.error")
 
         import anyio
 

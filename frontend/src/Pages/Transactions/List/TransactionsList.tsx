@@ -32,9 +32,9 @@ interface TransactionsListProps {
 
 interface DataTableProps<TRow> {
   transactions: TRow[]
-  availableColumns: any
-  columns: string[]
-  formatters: Record<string, (x: any) => string>
+  availableColumns?: any
+  columns?: string[]
+  formatters?: Record<string, (x: any) => string>
 }
 
 function isUrl(urlOrWhatever: string | any) {
@@ -49,7 +49,7 @@ function isUrl(urlOrWhatever: string | any) {
   return url.protocol === "http:" || url.protocol === "https:"
 }
 
-function truncateString(str, num) {
+function truncateString(str: string, num: number) {
   // If the length of str is less than or equal to num
   // just return str--don't truncate it.
   if (str.length <= num) {
@@ -91,7 +91,8 @@ function DataTable<TRow>({ transactions }: DataTableProps<TRow>) {
         </tr>
       </thead>
       <tbody className="divide-y divide-gray-200 bg-white">
-        {transactions.map((transaction) => (
+        {/* TODO this should not be cast but we need it while we have this type specific code */}
+        {(transactions as Transaction[]).map((transaction) => (
           <tr key={transaction.id}>
             <td className="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-0 font-mono">
               <span title={transaction.id}>{truncateString(transaction.id, 3) + transaction.id.slice(-3)}</span>

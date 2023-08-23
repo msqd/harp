@@ -1,0 +1,7 @@
+**/*.egg-info
+**/.git
+**/.idea
+**/__pycache__
+**/node_modules
+.cache
+Dockerfile

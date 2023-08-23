@@ -6,6 +6,6 @@ from harp.services.storage import Storage
 
 
 class ApiController(Controller):
-    @get("/")
+    @get("/api/")
     async def get(self, storage: Storage):
         return json({"items": [transaction.asdict() for transaction in reversed(storage.select(Transaction))]})

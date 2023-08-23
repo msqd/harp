@@ -1,23 +1,19 @@
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from harp.services.storage.base import BaseStorageSettings
 
 from .base import Storage
 
-IN_MEMORY_DATABASE_DEFAULTS = {
-    "max_size": 1000,
-}
-
 
 @dataclass(frozen=True)
 class InMemoryStorageSettings(BaseStorageSettings):
     type: str = "in_memory"
-    database: dict = field(default_factory=lambda: IN_MEMORY_DATABASE_DEFAULTS)
+    max_size: dict = 1000
 
 
 class InMemoryDatabase:
-    def __init__(self, *, max_size=IN_MEMORY_DATABASE_DEFAULTS["max_size"]):
+    def __init__(self, *, max_size=InMemoryStorageSettings.max_size):
         self._entities = deque()
         self._max_size = max_size
 
@@ -32,7 +28,7 @@ class InMemoryStorage(Storage):
 
     def __init__(self, settings: InMemoryStorageSettings = None):
         self._settings = settings or InMemoryStorageSettings()
-        self._database = self.DatabaseType(**self._settings.database)
+        self._database = self.DatabaseType(max_size=self._settings.max_size)
 
     def save(self, entity):
         self._database.append(entity)
