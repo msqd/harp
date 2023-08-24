@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from harp.models.proxy_endpoint import ProxyEndpoint
+from harp.models.proxy_endpoint import ProxyEndpoint, ProxyEndpointTarget
 
 
 @dataclass
@@ -18,6 +18,16 @@ class Request:
             "headers": self.headers,
             "body": self.body,
         }
+
+    @classmethod
+    def from_proxy_target(cls, target: ProxyEndpointTarget):
+        return cls(
+            method=target.method,
+            url=target.full_url,
+            headers=target.headers,
+            body=None,
+            endpoint=target.endpoint,
+        )
 
 
 @dataclass

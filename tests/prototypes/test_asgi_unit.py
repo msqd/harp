@@ -22,7 +22,7 @@ def anyio_backend():
 
 @pytest.mark.anyio
 async def test_asgi_basics():
-    app = Proxy(ports={8000: ProxyEndpoint("http://api.example.com/")})
+    app = Proxy(endpoints={8000: ProxyEndpoint("http://api.example.com/")})
 
     async with httpx.AsyncClient(app=app) as client:
         response = await client.get("http://localhost:8000/foo")

@@ -1,4 +1,3 @@
-import logging
 import logging.config
 import os
 
@@ -72,7 +71,7 @@ logging_config = {
 
 logging.config.dictConfig(logging_config)
 
-getLogger = structlog.getLogger
+get_logger = structlog.get_logger
 
 
-__all__ = ["getLogger"]
+__all__ = ["get_logger"]

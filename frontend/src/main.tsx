@@ -1,13 +1,13 @@
-import ReactDOM from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "react-query";
-import { ReactQueryDevtools } from "react-query/devtools";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import GlobalStyles from "Styles/GlobalStyles";
+import ReactDOM from "react-dom/client"
+import { QueryClient, QueryClientProvider } from "react-query"
+import { ReactQueryDevtools } from "react-query/devtools"
+import { createBrowserRouter, RouterProvider } from "react-router-dom"
+import GlobalStyles from "Styles/GlobalStyles"
 
 // main css
-import "./index.css";
-import { Layout } from "./Components/Layout";
-import { DashboardRoute, TransactionsRoute } from "./Routes";
+import "./index.css"
+import { Layout } from "./Components/Layout"
+import { DashboardRoute, TransactionsRoute } from "./Routes"
 
 const router = createBrowserRouter([
   {
@@ -28,11 +28,11 @@ const router = createBrowserRouter([
     path: "/transactions",
     element: <TransactionsRoute />,
   },
-]);
-const queryClient = new QueryClient();
+])
+const queryClient = new QueryClient()
 
 // @ts-ignore
-const Root = React.StrictMode;
+const Root = React.StrictMode
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <Root>
@@ -42,4 +42,4 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   </Root>,
-);
+)
