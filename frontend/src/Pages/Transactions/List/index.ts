@@ -1,1 +1,1 @@
-export { default as TransactionListPage } from "./TransactionsListPage.tsx";
+export { default as TransactionListPage } from "./TransactionsListPage.tsx"

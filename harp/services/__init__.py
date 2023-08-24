@@ -36,12 +36,12 @@ def create_container(config):
 
     storage = config.bind(BaseStorageSettings.build, "storage")
 
-    if storage.type == "in_memory":
+    if storage.type == "memory":
         from harp.services.storage.in_memory import InMemoryStorage, InMemoryStorageSettings
 
         container.add_instance(config.bind(InMemoryStorageSettings, "storage"))
         container.add_singleton(Storage, InMemoryStorage)
-    elif storage.type == "sql_database":
+    elif storage.type == "database":
         from harp.services.storage.sql_database import SqlDatabaseStorage, SqlDatabaseStorageSettings
 
         container.add_instance(config.bind(SqlDatabaseStorageSettings, "storage"))
@@ -52,4 +52,7 @@ def create_container(config):
     return container
 
 
-__all__ = ["container"]
+__all__ = [
+    "create_config",
+    "create_container",
+]

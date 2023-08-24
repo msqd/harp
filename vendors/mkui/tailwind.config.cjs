@@ -7,6 +7,9 @@ module.exports = {
         electric: "#db00ff",
         ribbon: "#0047ff",
       },
+      maxWidth: {
+        '90': '90%',
+      }
     },
   },
   plugins: [],

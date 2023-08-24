@@ -5,6 +5,21 @@ Harp is a tiny and fast sidecar microservice that stands by between your applica
 external API to add features (like caching, retrying, auditing, debugging, rewriting, ...)
 without having add code on your application side.
 
+Content
+:::::::
+
+.. toctree::
+   :maxdepth: 2
+
+   quickstart/index
+   configuration/index
+   features/index
+   reference/index
+   development/index
+
+Introduction
+::::::::::::
+
 Harp is written in Python and Cython (kind of a Python to C++ transpiler) and compiled to
 native bytecode for blazing speed.
 
@@ -26,3 +41,10 @@ Harp uses a dual licence model:
 - Setup / Configuration
   - database
   - environment
+
+Indices and tables
+::::::::::::::::::
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

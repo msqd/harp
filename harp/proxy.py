@@ -87,7 +87,7 @@ class Proxy:
         logger.info(f"◀ {proxy_target.method} {proxy_target.path}")
 
         with self.storage.store(
-            Transaction(endpoint=endpoint), mode="ignore" if endpoint.name == "ui" else "save"
+            Transaction(endpoint=endpoint), mode="save" if endpoint.name == "ui" else "save"
         ) as transaction:
             ## REQUEST (from client)
             transaction.request = Request.from_proxy_target(proxy_target)

@@ -1,4 +1,4 @@
-from collections import deque
+from collections import defaultdict, deque
 from dataclasses import dataclass
 
 from harp.services.storage.base import BaseStorageSettings
@@ -8,19 +8,23 @@ from .base import Storage
 
 @dataclass(frozen=True)
 class InMemoryStorageSettings(BaseStorageSettings):
-    type: str = "in_memory"
-    max_size: dict = 1000
+    type: str = "memory"
+    max_size: int = 1000
 
 
 class InMemoryDatabase:
+    CollectionType = deque
+
     def __init__(self, *, max_size=InMemoryStorageSettings.max_size):
-        self._entities = deque()
+        self._entities = defaultdict(self.CollectionType)
         self._max_size = max_size
 
     def append(self, entity):
-        self._entities.append(entity)
-        if self._entities.__len__() > self._max_size:
-            self._entities.popleft()
+        collection = self._entities[type(entity).__name__]
+
+        collection.append(entity)
+        if len(collection) > self._max_size:
+            collection.popleft()
 
 
 class InMemoryStorage(Storage):
@@ -34,7 +38,7 @@ class InMemoryStorage(Storage):
         self._database.append(entity)
 
     def select(self, entity_type):
-        return self._database._entities
+        return self._database._entities[entity_type.__name__]
 
     def count(self, entity_type):
-        return len(self._database._entities)
+        return len(self._database._entities[entity_type.__name__])

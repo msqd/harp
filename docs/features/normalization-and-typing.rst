@@ -1,0 +1,2 @@
+Normalization and Typing
+========================

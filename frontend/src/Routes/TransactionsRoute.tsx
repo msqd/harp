@@ -1,7 +1,7 @@
-import TransactionsListPage from "Pages/Transactions/List/TransactionsListPage.tsx";
+import TransactionsListPage from "Pages/Transactions/List/TransactionsListPage.tsx"
 
 function TransactionsRoute() {
-  return <TransactionsListPage />;
+  return <TransactionsListPage />
 }
 
-export { TransactionsRoute };
+export { TransactionsRoute }

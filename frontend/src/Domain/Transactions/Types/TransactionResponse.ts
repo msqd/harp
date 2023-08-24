@@ -1,5 +1,4 @@
 export interface TransactionResponse {
+  id: string
   statusCode: number
-  headers: any
-  body: any
 }
