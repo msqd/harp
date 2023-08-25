@@ -1,8 +1,9 @@
-import { Transaction } from "Domain/Transactions/Types"
+import { Transaction, TransactionMessage } from "Domain/Transactions/Types"
 import urlJoin from "url-join"
-import { Fragment, useState } from "react"
+import { ComponentType, Fragment, useState } from "react"
 import { Dialog, Transition } from "@headlessui/react"
-import { ExclamationTriangleIcon, XMarkIcon, ArrowsRightLeftIcon } from "@heroicons/react/24/outline"
+import { XMarkIcon, ArrowsRightLeftIcon, ArrowRightIcon, ArrowLeftIcon } from "@heroicons/react/24/outline"
+import { useRequestsDetailQuery, useResponsesDetailQuery } from "Domain/Transactions"
 
 interface TransactionsListProps {
   transactions: Transaction[]
@@ -19,7 +20,7 @@ function isUrl(urlOrWhatever: string | any) {
   let url
 
   try {
-    url = new URL(urlOrWhatever)
+    url = new URL(urlOrWhatever as string)
   } catch (_) {
     return false
   }
@@ -35,6 +36,90 @@ function truncateString(str: string, num: number) {
   }
   // Return str truncated with '...' concatenated to the end of str.
   return str.slice(0, num) + "…"
+}
+
+function HeadersTable({ headers }: { headers: Record<string, string> }) {
+  return (
+    <table className="divide-y">
+      <tbody className="divide-y divide-gray-200 bg-white">
+        {Object.entries(headers).map(([k, v], index) => (
+          <tr key={index}>
+            <td className="whitespace-nowrap py-1 pl-4 pr-3 text-sm text-gray-500 sm:pl-0">{k}</td>
+            <td className="whitespace-nowrap px-2 py-1 text-sm text-gray-900">{v}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+function TransactionMessagePanel({
+  Icon,
+  title,
+  messageId,
+  message,
+}: {
+  Icon: ComponentType<any>
+  message: TransactionMessage | Record<string, never> | null
+  messageId: string | null
+  title: string
+}) {
+  return (
+    <div className="flex-none w-1/2 overflow-none max-h-screen px-1">
+      <h4 className="text-sm font-semibold leading-6 text-gray-900">
+        <span className="mx-auto flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 float-left">
+          <Icon className="h-4 w-4 text-blue-600" aria-hidden="true" />
+        </span>
+
+        <span className="px-2 ">
+          {title} <span className="text-gray-400">({truncateString(messageId || "-", 7)})</span>
+        </span>
+      </h4>
+      <div className="w-full overflow-auto">
+        {message == null ? (
+          <div>Loading...</div>
+        ) : (
+          <>
+            <HeadersTable headers={message.headers || {}} />
+            <pre className="w-fit overflow-x-auto p-4 text-xs text-black">{message.content}</pre>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function TransactionDetails({ transaction }: { transaction: Transaction }) {
+  const requestsDetailQuery = useRequestsDetailQuery(transaction.request?.id)
+  const responsesDetailQuery = useResponsesDetailQuery(transaction.response?.id)
+  return (
+    <div className="sm:flex sm:items-start ">
+      <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+        <ArrowsRightLeftIcon className="h-6 w-6 text-blue-600" aria-hidden="true" />
+      </div>
+      <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full pr-12">
+        <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
+          Transaction ({truncateString(transaction.id, 7)})
+        </Dialog.Title>
+        <div className="mt-2 text-sm text-gray-500 max-w-full">
+          <div className="flex flex-row max-w-full">
+            <TransactionMessagePanel
+              Icon={ArrowRightIcon}
+              title={transaction.request ? transaction.request.method + " " + transaction.request.url : "-"}
+              messageId={transaction.request?.id || null}
+              message={requestsDetailQuery.isSuccess ? requestsDetailQuery.data : null}
+            />
+            <TransactionMessagePanel
+              Icon={ArrowLeftIcon}
+              title={transaction.response ? `HTTP ${transaction.response.statusCode}` : "-"}
+              messageId={transaction.response?.id || null}
+              message={responsesDetailQuery.isSuccess ? responsesDetailQuery.data : null}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function DataTable<TRow>({ transactions }: DataTableProps<TRow>) {
@@ -74,7 +159,7 @@ function DataTable<TRow>({ transactions }: DataTableProps<TRow>) {
         <tbody className="divide-y divide-gray-200 bg-white">
           {/* TODO this should not be cast but we need it while we have this type specific code */}
           {(transactions as Transaction[]).map((transaction) => (
-            <tr key={transaction.id}>
+            <tr key={transaction.id} className={transaction == current ? "bg-blue-100" : ""}>
               <td className="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-0 font-mono">
                 <a
                   href="#"
@@ -140,7 +225,7 @@ function DataTable<TRow>({ transactions }: DataTableProps<TRow>) {
           </Transition.Child>
 
           <div className="fixed inset-0 z-10 overflow-y-auto">
-            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div className="flex items-end justify-center p-4 text-center sm:items-center sm:p-0">
               <Transition.Child
                 as={Fragment}
                 enter="ease-out duration-300"
@@ -150,7 +235,7 @@ function DataTable<TRow>({ transactions }: DataTableProps<TRow>) {
                 leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
               >
-                <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-fit sm:min-6/12 sm:max-w-90 sm:p-6">
+                <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-fit sm:min-6/12 sm:max-w-90% sm:p-6 max-h-11/12">
                   <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
                     <button
                       type="button"
@@ -162,24 +247,7 @@ function DataTable<TRow>({ transactions }: DataTableProps<TRow>) {
                       <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                     </button>
                   </div>
-                  <div className="sm:flex sm:items-start">
-                    <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                      <ArrowsRightLeftIcon className="h-6 w-6 text-blue-600" aria-hidden="true" />
-                    </div>
-                    {current !== null ? (
-                      <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-                        <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
-                          Transaction details - {current.id}
-                        </Dialog.Title>
-                        <div className="mt-2">
-                          <p className="text-sm text-gray-500">
-                            <div>Request id: {current.request?.id}</div>
-                            <div>Response id: {current.response?.id}</div>
-                          </p>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
+                  {current !== null ? <TransactionDetails transaction={current} /> : null}
                 </Dialog.Panel>
               </Transition.Child>
             </div>

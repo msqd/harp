@@ -1,80 +1,57 @@
 from dataclasses import dataclass
 
-from harp.models.proxy_endpoint import ProxyEndpoint, ProxyEndpointTarget
+from harp.models.base import ContentAddressable, Entity
+
+interesting_headers_order = [
+    b"content",
+    b"accept",
+    b"cache",
+]
 
 
-class ContentAddressable:
-    def __init__(self, content: bytes):
-        self._hash = None
+def header_key(header):
+    k, v = header[0].lower(), header[1].lower()
+    sk = k.split(b"-")
+    try:
+        i = interesting_headers_order.index(sk[0])
+    except ValueError:
+        i = len(interesting_headers_order)
+    return i, k, v
 
-    def hash(self):
-        if getattr(self, "_hash", None) is None:
-            from hashlib import sha256
 
-            self._hash = sha256(self.normalize()).hexdigest()
-
-        return self._hash
-
-    def normalize(self):
-        raise NotImplementedError
+def get_headers_as_dict(headers):
+    return {
+        k.decode("utf-8").title(): v.decode("utf-8")
+        for k, v in sorted(
+            headers,
+            key=header_key,
+        )
+    }
 
 
 @dataclass
-class Request(ContentAddressable):
-    method: str
-    url: str
+class TransactionMessage(ContentAddressable, Entity):
     headers: tuple
-    body: bytes | None
-    endpoint: ProxyEndpoint | None = None
-
-    def asdict(self):
-        return {
-            "id": self.hash(),
-            "method": self.method,
-            "url": self.endpoint.contextualize(self.url) if self.endpoint else self.url,
-        }
+    content: bytes | None
 
     def normalize(self):
         return b"\n".join(
             (
-                f"HTTP {self.method} {self.url}".encode(),
-                b"",
                 *(k + b": " + v for k, v in self.headers),
                 b"",
-                self.body or b"",
+                self.content or b"",
             )
         )
 
-    @classmethod
-    def from_proxy_target(cls, target: ProxyEndpointTarget):
-        return cls(
-            method=target.method,
-            url=target.full_url,
-            headers=target.headers,
-            body=None,
-            endpoint=target.endpoint,
-        )
-
-
-@dataclass
-class Response(ContentAddressable):
-    status_code: int
-    headers: tuple
-    body: bytes
-
-    def asdict(self):
+    def asdict(self, *, with_details=False):
         return {
-            "id": self.hash(),
-            "statusCode": self.status_code,
+            "id": self.id,
+            **(
+                {
+                    "content": self.content.decode() if self.content else None,
+                    "headers": get_headers_as_dict(self.headers),
+                }
+                if with_details
+                else {}
+            ),
         }
-
-    def normalize(self):
-        return b"\n".join(
-            (
-                f"HTTP {self.status_code}".encode(),
-                b"",
-                *(k + b": " + v for k, v in self.headers),
-                b"",
-                self.body or b"",
-            )
-        )

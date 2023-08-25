@@ -10,8 +10,9 @@ from harp import get_logger
 from harp.apis.asgi import ManagementApplication
 from harp.asgi import AsgiContext, asgi
 from harp.errors import EndpointNotFound, ProxyError
-from harp.models.message import Request, Response
 from harp.models.proxy_endpoint import ProxyEndpoint
+from harp.models.request import TransactionRequest
+from harp.models.response import TransactionResponse
 from harp.models.transaction import Transaction
 from harp.services import create_config, create_container
 from harp.services.http import client
@@ -90,17 +91,9 @@ class Proxy:
             Transaction(endpoint=endpoint), mode="save" if endpoint.name == "ui" else "save"
         ) as transaction:
             ## REQUEST (from client)
-            transaction.request = Request.from_proxy_target(proxy_target)
+            transaction.request = TransactionRequest.from_proxy_target(proxy_target)
             try:
-                messages = []
-                more_body = True
-                while more_body:
-                    message = await ctx.receive()
-                    more_body = message.get("more_body", False)
-                    if len(message["body"]):
-                        messages.append(message["body"])
-
-                content = b"".join(messages) if len(messages) else None
+                transaction.request.content = await ctx._extract_request_content()
                 logger.info(
                     f"▶▶ {transaction.request.method} {transaction.request.url}", **transaction.request.asdict()
                 )
@@ -108,7 +101,7 @@ class Proxy:
                     transaction.request.method,
                     transaction.request.url,
                     headers=transaction.request.headers,
-                    content=content,
+                    content=transaction.request.content,
                 )
                 ### SEND REQUEST (to remote endpoint)
                 response: httpx.Response = await client.send(request)
@@ -141,9 +134,13 @@ class Proxy:
 
             ### SEND RESPONSE (to client)
             await ctx.send(asgi.http.response.start(status=response.status_code, headers=headers))
-            transaction.response = Response(response.status_code, headers, response.content)
+            transaction.response = TransactionResponse(
+                status_code=response.status_code, headers=headers, content=response.content
+            )
 
-            await ctx.send(asgi.http.response.body(body=response.content))
+            response_content = response.content
+            await ctx.send(asgi.http.response.body(body=response_content))
+            transaction.response.content = response_content
 
 
 class ProxyFactory:

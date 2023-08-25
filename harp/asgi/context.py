@@ -43,3 +43,20 @@ class AsgiContext:
         retval = await self._receive()
         logger.debug(f"◁ RECV {self.type}", **retval)
         return retval
+
+    async def _extract_request_content(self):
+        """
+        todo we should not remove the buffering ability, httpx allows us to stream the request body but for that we need
+        some kind of stream processor that yields and store the chunks.
+
+        :param ctx:
+        :return:
+        """
+        messages = []
+        more_body = True
+        while more_body:
+            message = await self.receive()
+            more_body = message.get("more_body", False)
+            if len(message["body"]):
+                messages.append(message["body"])
+        return b"".join(messages) if len(messages) else None

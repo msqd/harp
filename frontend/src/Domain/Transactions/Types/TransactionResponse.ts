@@ -1,4 +1,5 @@
-export interface TransactionResponse {
-  id: string
+import { TransactionMessage } from "./TransactionMessage.ts"
+
+export interface TransactionResponse extends TransactionMessage {
   statusCode: number
 }

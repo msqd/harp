@@ -64,8 +64,9 @@ logging_config = {
     },
     "loggers": {
         "harp": {"level": "DEBUG"},
-        "httpx": {"level": "DEBUG"},
-        "httpcore": {"level": "DEBUG"},
+        "harp.asgi": {"level": "INFO"},  # todo remove body from debug logs ? or truncate ?
+        "httpx": {"level": "INFO"},  # todo wrap in structlog
+        "httpcore": {"level": "INFO"},  # todo wrap in structlog
     },
 }
 

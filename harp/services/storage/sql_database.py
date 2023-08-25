@@ -44,7 +44,6 @@ class SqlDatabaseStorage(Storage):
             meta.create_all(connection)
 
     def save(self, entity):
-        print(entity)
         pass
 
     def select(self, entity_type):

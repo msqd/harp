@@ -1,5 +1,6 @@
 from collections import defaultdict, deque
 from dataclasses import dataclass
+from weakref import WeakValueDictionary
 
 from harp.services.storage.base import BaseStorageSettings
 
@@ -14,17 +15,23 @@ class InMemoryStorageSettings(BaseStorageSettings):
 
 class InMemoryDatabase:
     CollectionType = deque
+    IndexType = WeakValueDictionary
 
     def __init__(self, *, max_size=InMemoryStorageSettings.max_size):
         self._entities = defaultdict(self.CollectionType)
+        self._indexes = defaultdict(self.IndexType)
         self._max_size = max_size
 
-    def append(self, entity):
-        collection = self._entities[type(entity).__name__]
-
+    def add(self, entity):
+        name = type(entity).__name__
+        collection = self._entities[name]
         collection.append(entity)
         if len(collection) > self._max_size:
             collection.popleft()
+        self._indexes[name][entity.id] = entity
+
+        for child in entity.children():
+            self.add(child)
 
 
 class InMemoryStorage(Storage):
@@ -35,7 +42,10 @@ class InMemoryStorage(Storage):
         self._database = self.DatabaseType(max_size=self._settings.max_size)
 
     def save(self, entity):
-        self._database.append(entity)
+        self._database.add(entity)
+
+    def find(self, entity_type, id):
+        return self._database._indexes[entity_type.__name__][id]
 
     def select(self, entity_type):
         return self._database._entities[entity_type.__name__]

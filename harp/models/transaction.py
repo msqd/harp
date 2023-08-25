@@ -1,34 +1,18 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from .message import Request, Response
+from .base import Entity
 from .proxy_endpoint import ProxyEndpoint
-
-
-def generate_transaction_id_ksuid():
-    from ksuid import KsuidMs
-
-    return str(KsuidMs())
-
-
-def generate_transaction_id_nanoid():
-    from nanoid import generate
-    from nanoid.resources import alphabet
-
-    return generate(alphabet=alphabet[2:])
-
-
-def generate_transaction_id_ulid():
-    from ulid import ULID
-
-    return str(ULID())
+from .request import TransactionRequest
+from .response import TransactionResponse
+from .utils import generate_transaction_id_ksuid
 
 
 @dataclass
-class Transaction:
+class Transaction(Entity):
     id: str = field(default_factory=generate_transaction_id_ksuid)
-    request: Request = None
-    response: Response = None
+    request: TransactionRequest = None
+    response: TransactionResponse = None
     created_at: datetime = field(default_factory=datetime.now)
 
     endpoint: ProxyEndpoint = None
@@ -48,3 +32,6 @@ class Transaction:
             "response": self.response.asdict() if self.response else None,
             "createdAt": self.created_at,
         }
+
+    def children(self):
+        yield from filter(None, (self.request, self.response))

@@ -5,5 +5,5 @@ import { ItemList } from "Domain/Api/Types"
 
 export function useTransactionsListQuery() {
   const api = useApi()
-  return useQuery<ItemList<Transaction>>("transactions", () => api.fetch("/").then((r) => r.json()))
+  return useQuery<ItemList<Transaction>>("transactions", () => api.fetch("/transactions").then((r) => r.json()))
 }
