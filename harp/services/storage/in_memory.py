@@ -1,5 +1,6 @@
 from collections import defaultdict, deque
 from dataclasses import dataclass
+from itertools import islice
 from weakref import WeakValueDictionary
 
 from harp.services.storage.base import BaseStorageSettings
@@ -47,8 +48,8 @@ class InMemoryStorage(Storage):
     def find(self, entity_type, id):
         return self._database._indexes[entity_type.__name__][id]
 
-    def select(self, entity_type):
-        return self._database._entities[entity_type.__name__]
+    def select(self, entity_type, *, limit=100):
+        return islice(reversed(self._database._entities[entity_type.__name__]), None, limit)
 
     def count(self, entity_type):
         return len(self._database._entities[entity_type.__name__])

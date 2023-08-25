@@ -68,8 +68,8 @@ function Navbar({
                   </a>
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                  {items.map((item) => (
-                    <Link
+                  {items.map((item, index) => (
+                    <Link key={index}
                       to={item.to}
                       className={classNames(
                         "inline-flex items-center border-b-2",
@@ -156,8 +156,9 @@ function Navbar({
 
           <Disclosure.Panel className="sm:hidden">
             <div className="space-y-1 pb-4 pt-2">
-              {items.map((item) => (
+              {items.map((item,index) => (
                 <Disclosure.Button
+                    key={index}
                   as={Link}
                   to={item.to}
                   className={classNames(

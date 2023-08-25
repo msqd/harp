@@ -10,7 +10,7 @@ from harp.services.storage import Storage
 class ApiController(Controller):
     @get("/api/transactions")
     async def list_transactions(self, storage: Storage):
-        return json({"items": [transaction.asdict() for transaction in reversed(storage.select(Transaction))]})
+        return json({"items": [transaction.asdict() for transaction in storage.select(Transaction)]})
 
     @get("/api/requests/{id}")
     async def get_request(self, storage: Storage, id: str):

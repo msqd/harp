@@ -1,26 +1,27 @@
 import { Transaction, TransactionMessage } from "Domain/Transactions/Types"
 import urlJoin from "url-join"
-import { ComponentType, Fragment, useState } from "react"
+import { ComponentType, Dispatch, Fragment, SetStateAction, useState } from "react"
 import { Dialog, Transition } from "@headlessui/react"
-import { XMarkIcon, ArrowsRightLeftIcon, ArrowRightIcon, ArrowLeftIcon } from "@heroicons/react/24/outline"
+import { ArrowLeftIcon, ArrowRightIcon, ArrowsRightLeftIcon, XMarkIcon } from "@heroicons/react/24/outline"
 import { useRequestsDetailQuery, useResponsesDetailQuery } from "Domain/Transactions"
+import { DataTable } from "mkui/Components/DataTable"
 
 interface TransactionsListProps {
   transactions: Transaction[]
 }
 
-interface DataTableProps<TRow> {
-  transactions: TRow[]
+interface TransactionsDataTableProps {
+  transactions: Transaction[]
   availableColumns?: any
   columns?: string[]
   formatters?: Record<string, (x: any) => string>
 }
 
-function isUrl(urlOrWhatever: string | any) {
+function isUrl(urlOrWhatever: string) {
   let url
 
   try {
-    url = new URL(urlOrWhatever as string)
+    url = new URL(urlOrWhatever)
   } catch (_) {
     return false
   }
@@ -122,7 +123,157 @@ function TransactionDetails({ transaction }: { transaction: Transaction }) {
   )
 }
 
-function DataTable<TRow>({ transactions }: DataTableProps<TRow>) {
+function createShortIdFormatter({
+  maxLength = 7,
+  Icon = null,
+}: { maxLength?: number; Icon?: ComponentType<any> | null } = {}) {
+  return (id: unknown) => {
+    return (
+      <span className="font-mono inline-flex items-center bg-white px-1 mx-1 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">
+        {Icon ? (
+          <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 mr-1">
+            <Icon className="h-3 w-3 text-gray-500" aria-hidden="true" />
+          </span>
+        ) : null}
+        {truncateString(id as string, maxLength)}
+      </span>
+    )
+  }
+}
+
+const formatTransactionShortId = createShortIdFormatter({ Icon: ArrowsRightLeftIcon, maxLength: 10 })
+const formatRequestShortId = createShortIdFormatter({ Icon: ArrowRightIcon })
+const formatResponseShortId = createShortIdFormatter({ Icon: ArrowLeftIcon })
+const formatRequestMethod = (method: unknown) => {
+  switch (method) {
+    case "GET":
+      return (
+        <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+          {method}
+        </span>
+      )
+  }
+  return (
+    <span className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-green-600/20">
+      {method as string}
+    </span>
+  )
+}
+
+function TransactionDetailsDialog({
+  current,
+  setCurrent,
+}: {
+  current: Transaction | null
+  setCurrent: Dispatch<SetStateAction<Transaction | null>>
+}) {
+  return (
+    <Transition.Root show={current !== null} as={Fragment}>
+      <Dialog as="div" className="relative z-10" onClose={() => setCurrent(null)}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-100"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-100"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-100"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-100"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-fit sm:min-6/12 sm:max-w-90% sm:p-6 max-h-11/12">
+                <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
+                  <button
+                    type="button"
+                    className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    onClick={() => setCurrent(null)}
+                  >
+                    <span className="sr-only">Close</span>
+
+                    <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                  </button>
+                </div>
+                {current !== null ? <TransactionDetails transaction={current} /> : null}
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition.Root>
+  )
+}
+
+function TransactionDataTable({ transactions }: TransactionsDataTableProps) {
+  const [current, setCurrent] = useState<Transaction | null>(null)
+
+  return (
+    <>
+      <DataTable<Transaction, { method: string; statusCode: string }>
+        types={{
+          id: {
+            label: "Transaction",
+            format: formatTransactionShortId,
+            onClick: (row: Transaction) => setCurrent(row),
+          },
+          endpoint: {
+            label: "URL",
+            get: (row: Transaction): [string, string] => [row.endpoint || "-", row.request?.url || "-"],
+            format: ([endpoint, url]: [string, string]) => (
+              <>
+                {isUrl(endpoint || "") ? (
+                  urlJoin(endpoint || "?", "")
+                ) : (
+                  <span className="inline-flex items-center bg-gray-50 px-1 mx-1 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">
+                    {endpoint}
+                  </span>
+                )}
+                {urlJoin("/", url || "")}
+              </>
+            ),
+          },
+          request: {
+            label: "Request",
+            get: (row) => (row as Transaction).request?.id || "-",
+            format: formatRequestShortId,
+          },
+          response: {
+            label: "Response",
+            get: (row) => (row as Transaction).response?.id || "-",
+            format: formatResponseShortId,
+          },
+          createdAt: {
+            label: "Timestamp",
+            format: (x) => new Date(x as string).toLocaleString(),
+            className: "whitespace-nowrap",
+          },
+          method: {
+            label: "Method",
+            get: (row) => (row as Transaction).request?.method || "-",
+            format: formatRequestMethod,
+          },
+          statusCode: { label: "Status Code" },
+        }}
+        rows={transactions}
+        columns={["id", "method", "endpoint", "request", "response", "createdAt"]}
+      />
+      <TransactionDetailsDialog current={current} setCurrent={setCurrent} />
+    </>
+  )
+}
+
+function OldTransactionDataTable({ transactions }: TransactionsDataTableProps) {
   const [current, setCurrent] = useState<Transaction | null>(null)
 
   return (
@@ -158,7 +309,7 @@ function DataTable<TRow>({ transactions }: DataTableProps<TRow>) {
         </thead>
         <tbody className="divide-y divide-gray-200 bg-white">
           {/* TODO this should not be cast but we need it while we have this type specific code */}
-          {(transactions as Transaction[]).map((transaction) => (
+          {transactions.map((transaction) => (
             <tr key={transaction.id} className={transaction == current ? "bg-blue-100" : ""}>
               <td className="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-0 font-mono">
                 <a
@@ -210,50 +361,6 @@ function DataTable<TRow>({ transactions }: DataTableProps<TRow>) {
           ))}
         </tbody>
       </table>
-      <Transition.Root show={current !== null} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={() => setCurrent(null)}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
-          </Transition.Child>
-
-          <div className="fixed inset-0 z-10 overflow-y-auto">
-            <div className="flex items-end justify-center p-4 text-center sm:items-center sm:p-0">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                enterTo="opacity-100 translate-y-0 sm:scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-              >
-                <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-fit sm:min-6/12 sm:max-w-90% sm:p-6 max-h-11/12">
-                  <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
-                    <button
-                      type="button"
-                      className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                      onClick={() => setCurrent(null)}
-                    >
-                      <span className="sr-only">Close</span>
-
-                      <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                    </button>
-                  </div>
-                  {current !== null ? <TransactionDetails transaction={current} /> : null}
-                </Dialog.Panel>
-              </Transition.Child>
-            </div>
-          </div>
-        </Dialog>
-      </Transition.Root>
     </>
   )
 }
@@ -270,7 +377,7 @@ export function TransactionsList({ transactions }: TransactionsListProps) {
       <div className="mt-8 flow-root">
         <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <DataTable<Transaction> transactions={transactions} />
+            <TransactionDataTable<Transaction> transactions={transactions} />
           </div>
         </div>
       </div>
