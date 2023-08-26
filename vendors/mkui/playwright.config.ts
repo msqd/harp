@@ -5,7 +5,7 @@ export default {
     baseURL: baseUrl,
   },
   webServer: {
-    command: process.env.TYPE === "dev" ? "pnpm serve:dev" : "pnpm build-preview",
+    command: process.env.TYPE === "dev" ? "pnpm serve:dev" : "pnpm build-preview > /dev/null",
     url: baseUrl,
     reuseExistingServer: true,
   },

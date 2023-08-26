@@ -5,6 +5,8 @@ import { Dialog, Transition } from "@headlessui/react"
 import { ArrowLeftIcon, ArrowRightIcon, ArrowsRightLeftIcon, XMarkIcon } from "@heroicons/react/24/outline"
 import { useRequestsDetailQuery, useResponsesDetailQuery } from "Domain/Transactions"
 import { DataTable } from "mkui/Components/DataTable"
+import { Badge } from "mkui/Components/Badge"
+import { isUrl, truncate } from "Utils/Strings.ts"
 
 interface TransactionsListProps {
   transactions: Transaction[]
@@ -15,28 +17,6 @@ interface TransactionsDataTableProps {
   availableColumns?: any
   columns?: string[]
   formatters?: Record<string, (x: any) => string>
-}
-
-function isUrl(urlOrWhatever: string) {
-  let url
-
-  try {
-    url = new URL(urlOrWhatever)
-  } catch (_) {
-    return false
-  }
-
-  return url.protocol === "http:" || url.protocol === "https:"
-}
-
-function truncateString(str: string, num: number) {
-  // If the length of str is less than or equal to num
-  // just return str--don't truncate it.
-  if (str.length <= num) {
-    return str
-  }
-  // Return str truncated with '...' concatenated to the end of str.
-  return str.slice(0, num) + "…"
 }
 
 function HeadersTable({ headers }: { headers: Record<string, string> }) {
@@ -73,7 +53,7 @@ function TransactionMessagePanel({
         </span>
 
         <span className="px-2 ">
-          {title} <span className="text-gray-400">({truncateString(messageId || "-", 7)})</span>
+          {title} <span className="text-gray-400">({truncate(messageId || "-", 7)})</span>
         </span>
       </h4>
       <div className="w-full overflow-auto">
@@ -100,7 +80,7 @@ function TransactionDetails({ transaction }: { transaction: Transaction }) {
       </div>
       <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full pr-12">
         <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
-          Transaction ({truncateString(transaction.id, 7)})
+          Transaction ({truncate(transaction.id, 7)})
         </Dialog.Title>
         <div className="mt-2 text-sm text-gray-500 max-w-full">
           <div className="flex flex-row max-w-full">
@@ -135,15 +115,15 @@ function createShortIdFormatter({
             <Icon className="h-3 w-3 text-gray-500" aria-hidden="true" />
           </span>
         ) : null}
-        {truncateString(id as string, maxLength)}
+        {truncate(id as string, maxLength)}
       </span>
     )
   }
 }
 
-const formatTransactionShortId = createShortIdFormatter({ Icon: ArrowsRightLeftIcon, maxLength: 10 })
-const formatRequestShortId = createShortIdFormatter({ Icon: ArrowRightIcon })
-const formatResponseShortId = createShortIdFormatter({ Icon: ArrowLeftIcon })
+const formatTransactionShortId = createShortIdFormatter({ Icon: ArrowsRightLeftIcon, maxLength: 9 })
+const formatRequestShortId = createShortIdFormatter({ Icon: ArrowRightIcon, maxLength: 5 })
+const formatResponseShortId = createShortIdFormatter({ Icon: ArrowLeftIcon, maxLength: 5 })
 const formatRequestMethod = (method: unknown) => {
   switch (method) {
     case "GET":
@@ -158,6 +138,26 @@ const formatRequestMethod = (method: unknown) => {
       {method as string}
     </span>
   )
+}
+
+const formatStatusCode = (statusCode: number) => {
+  if (statusCode >= 200 && statusCode < 300) {
+    return <Badge color="green">{statusCode}</Badge>
+  }
+  if (statusCode >= 300 && statusCode < 400) {
+    return <Badge color="blue">{statusCode}</Badge>
+  }
+  if (statusCode >= 400 && statusCode < 500) {
+    return <Badge color="orange">{statusCode}</Badge>
+  }
+  if (statusCode >= 500 && statusCode < 600) {
+    return <Badge color="red">{statusCode}</Badge>
+  }
+  if (statusCode >= 600) {
+    return <Badge color="purple">{statusCode}</Badge>
+  }
+
+  return <Badge>{statusCode}</Badge>
 }
 
 function TransactionDetailsDialog({
@@ -220,14 +220,27 @@ function TransactionDataTable({ transactions }: TransactionsDataTableProps) {
 
   return (
     <>
-      <DataTable<Transaction, { method: string; statusCode: string }>
+      <DataTable<Transaction, { method: string; url: string; statusCode: string }>
         types={{
           id: {
             label: "Transaction",
             format: formatTransactionShortId,
             onClick: (row: Transaction) => setCurrent(row),
+            headerClassName: "w-1",
           },
-          endpoint: {
+          request: {
+            label: "Request",
+            get: (row: Transaction) => row.request?.id || "-",
+            format: formatRequestShortId,
+            headerClassName: "w-1",
+          },
+          method: {
+            label: "Method",
+            get: (row: Transaction) => row.request?.method || "-",
+            format: formatRequestMethod,
+            headerClassName: "w-1",
+          },
+          url: {
             label: "URL",
             get: (row: Transaction): [string, string] => [row.endpoint || "-", row.request?.url || "-"],
             format: ([endpoint, url]: [string, string]) => (
@@ -242,11 +255,7 @@ function TransactionDataTable({ transactions }: TransactionsDataTableProps) {
                 {urlJoin("/", url || "")}
               </>
             ),
-          },
-          request: {
-            label: "Request",
-            get: (row) => (row as Transaction).request?.id || "-",
-            format: formatRequestShortId,
+            headerClassName: "w-1",
           },
           response: {
             label: "Response",
@@ -258,109 +267,16 @@ function TransactionDataTable({ transactions }: TransactionsDataTableProps) {
             format: (x) => new Date(x as string).toLocaleString(),
             className: "whitespace-nowrap",
           },
-          method: {
-            label: "Method",
-            get: (row) => (row as Transaction).request?.method || "-",
-            format: formatRequestMethod,
+          statusCode: {
+            label: "Status Code",
+            get: (row: Transaction) => row.response?.statusCode || "-",
+            format: formatStatusCode,
           },
-          statusCode: { label: "Status Code" },
         }}
         rows={transactions}
-        columns={["id", "method", "endpoint", "request", "response", "createdAt"]}
+        columns={["id", "request", "method", "url", "response", "statusCode", "createdAt"]}
       />
       <TransactionDetailsDialog current={current} setCurrent={setCurrent} />
-    </>
-  )
-}
-
-function OldTransactionDataTable({ transactions }: TransactionsDataTableProps) {
-  const [current, setCurrent] = useState<Transaction | null>(null)
-
-  return (
-    <>
-      <table className="min-w-full divide-y divide-gray-300 text-left">
-        <thead>
-          <tr>
-            <th
-              scope="col"
-              className="whitespace-nowrap py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0 w-1"
-            >
-              ID
-            </th>
-            <th scope="col" className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900 w-1">
-              Method
-            </th>
-            <th scope="col" className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900 w-1">
-              URL
-            </th>
-            <th scope="col" className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900 w-1">
-              Status Code
-            </th>
-            <th scope="col" className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-              Request
-            </th>
-            <th scope="col" className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-              Response
-            </th>
-            <th scope="col" className="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900 w-1">
-              Timestamp
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200 bg-white">
-          {/* TODO this should not be cast but we need it while we have this type specific code */}
-          {transactions.map((transaction) => (
-            <tr key={transaction.id} className={transaction == current ? "bg-blue-100" : ""}>
-              <td className="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-0 font-mono">
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    setCurrent(transaction)
-                    return false
-                  }}
-                >
-                  <span title={transaction.id}>{truncateString(transaction.id, 3) + transaction.id.slice(-3)}</span>
-                </a>
-              </td>
-              <td className="whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900">
-                <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-                  {transaction.request?.method || "-"}
-                </span>
-              </td>
-              <td className="whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900">
-                {isUrl(transaction.endpoint || "") ? (
-                  urlJoin(transaction.endpoint || "?", "")
-                ) : (
-                  <span className="inline-flex items-center bg-gray-50 px-1 mx-1 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">
-                    {transaction.endpoint}
-                  </span>
-                )}
-                {urlJoin("/", transaction.request?.url || "")}
-              </td>
-              <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
-                {transaction.response?.statusCode ? (
-                  <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-                    {/* vert bleu jaune ou rouge */}
-                    {transaction.response.statusCode}
-                  </span>
-                ) : (
-                  "-"
-                )}
-              </td>
-              <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-500 font-mono">
-                {truncateString(transaction.request?.id || "-", 7)}
-              </td>
-              <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-500 font-mono">
-                {truncateString(transaction.response?.id || "-", 7)}
-              </td>
-              <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
-                {new Date(transaction.createdAt).toLocaleString()}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </>
   )
 }
@@ -377,7 +293,7 @@ export function TransactionsList({ transactions }: TransactionsListProps) {
       <div className="mt-8 flow-root">
         <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <TransactionDataTable<Transaction> transactions={transactions} />
+            <TransactionDataTable transactions={transactions} />
           </div>
         </div>
       </div>

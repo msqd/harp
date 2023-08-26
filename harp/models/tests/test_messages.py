@@ -19,5 +19,5 @@ def test_response():
     assert response.normalize() == b"HTTP/1.1 200\n\n\n"
     assert response.asdict() == {
         "id": ANY,
-        "status_code": 200,
+        "statusCode": 200,
     }

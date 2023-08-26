@@ -7,6 +7,7 @@ export interface Column<TRow = any, TValue = any> {
   get?: (row: TRow) => TValue
   onClick?: (row: TRow) => unknown
   className?: string
+  headerClassName?: string
 }
 
 interface DataTableVariantsProps {
@@ -24,9 +25,19 @@ const StyledTable = styled.table(({ variant }: DataTableVariantsProps) => [
   tw`min-w-full divide-y divide-gray-300 text-left`,
 ])
 
-const StyledTh = styled.th(() => [tw`whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900 w-1`])
+const StyledTh = styled.th(() => [tw`whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900`])
 
 const StyledTd = styled.td(() => [tw`whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900`])
+
+
+/*
+function getColumnsIterator<TRow extends BaseRow, TComputed extends Record<string, any>(
+  types: Record<string, Column<TRow>>,
+  columns?: Array<keyof (TRow & TComputed)>,
+) {
+  return (callback) =>
+}
+*/
 
 function formatRowValue<TRow>(type: Column<TRow>, row: TRow, name: keyof TRow): ReactNode {
   let value
@@ -56,7 +67,13 @@ export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = {}>(
       <thead>
         <tr>
           {columns?.map((name) => {
-            return <StyledTh scope="col" key={name }>{types?.[name as string]?.label ?? name}</StyledTh>
+            const colName = name as string
+            const colType = types[colName]
+            return (
+              <StyledTh scope="col" key={name} className={colType.headerClassName ?? ""}>
+                {colType.label ?? name}
+              </StyledTh>
+            )
           })}
         </tr>
       </thead>
@@ -73,11 +90,7 @@ export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = {}>(
                   colProps["onClick"] = () => onClick(row)
                 }
                 return (
-                  <StyledTd
-                      key={index}
-                    className={+(colType.className ? " " + colType.className : "")}
-                      {...colProps}
-                  >
+                  <StyledTd key={index} className={(colType.className ?? "")} {...colProps}>
                     {formatRowValue(colType, row, colName)}
                   </StyledTd>
                 )
