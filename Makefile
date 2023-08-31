@@ -1,7 +1,11 @@
 PRE_COMMIT ?= $(shell which pre-commit || echo "pre-commit")
 PYTEST ?= $(shell which pytest || echo "pytest")
+HONCHO ?= $(shell which honcho || echo "honcho")
 
-.PHONY: format test test-ui test-ui-update test-back test-front test-full qa
+.PHONY: format test test-ui test-ui-update test-back test-front test-full qa start
+
+start:
+	$(HONCHO) start
 
 format:
 	cd frontend; pnpm prettier -w src

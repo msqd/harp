@@ -3,10 +3,8 @@ import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline"
 import { ComponentType, Fragment } from "react"
 import tw, { styled } from "twin.macro"
 import defaultLogo from "./Assets/logo.svg"
+import { classNames } from "Utilities"
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(" ")
-}
 
 interface NavbarItem {
   label: string
@@ -24,7 +22,7 @@ interface NavbarProps {
 
 const NavbarContainer = styled(Disclosure)(() => [tw`bg-white shadow`])
 const DefaultNavbarWrapper = styled.div(() => [tw`mx-auto max-w-7xl px-2 sm:px-6 lg:px-8`])
-const DefaultLink = styled.a()
+const DefaultLink = styled.a(() => tw`cursor-pointer`)
 
 /**
  * Check if the item is active, given a current location.
@@ -51,7 +49,7 @@ function Navbar({
             <div className="relative flex h-16 justify-between">
               <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
                 {/* Mobile menu button */}
-                <Disclosure.Button className="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                <Disclosure.Button className="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary">
                   <span className="absolute -inset-0.5" />
                   <span className="sr-only">Open main menu</span>
                   {open ? (
@@ -75,7 +73,7 @@ function Navbar({
                         "inline-flex items-center border-b-2",
                         "px-1 pt-1 text-sm font-medium",
                         isItemActive(item, currentPath)
-                          ? /* current */ "border-indigo-500 text-gray-900"
+                          ? /* current */ "border-primary text-gray-900"
                           : /* default */ "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
                       )}
                     >
@@ -87,7 +85,7 @@ function Navbar({
               <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
                 <button
                   type="button"
-                  className="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  className="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                 >
                   <span className="absolute -inset-1.5" />
                   <span className="sr-only">View notifications</span>
@@ -97,7 +95,7 @@ function Navbar({
                 {/* Profile dropdown */}
                 <Menu as="div" className="relative ml-3">
                   <div>
-                    <Menu.Button className="relative flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    <Menu.Button className="relative flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
                       <span className="absolute -inset-1.5" />
                       <span className="sr-only">Open user menu</span>
                       <img
@@ -165,7 +163,7 @@ function Navbar({
                     "block border-l-4",
                     "py-2 pl-3 pr-4 text-base font-medium",
                     isItemActive(item, currentPath)
-                      ? /* current */ "bg-indigo-50 border-indigo-500 text-indigo-700"
+                      ? /* current */ "bg-secondary border-primary-500 text-primary"
                       : /* default */ "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700",
                   )}
                 >
