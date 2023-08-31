@@ -1,5 +1,5 @@
 import tw, { styled } from "twin.macro"
-import { ReactElement, ReactNode } from "react"
+import {  ReactNode } from "react"
 
 export interface Column<TRow = any, TValue = any> {
   label: string
@@ -21,7 +21,7 @@ interface DataTableProps<TRow extends Record<string, any>, TComputed extends Rec
   columns?: Array<keyof (TRow & TComputed)>
 }
 
-const StyledTable = styled.table(({ variant }: DataTableVariantsProps) => [
+const StyledTable = styled.table(({  }: DataTableVariantsProps) => [
   tw`min-w-full divide-y divide-gray-300 text-left`,
 ])
 
@@ -70,7 +70,7 @@ export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = {}>(
             const colName = name as string
             const colType = types[colName]
             return (
-              <StyledTh scope="col" key={name} className={colType.headerClassName ?? ""}>
+              <StyledTh scope="col" key={colName} className={colType.headerClassName ?? ""}>
                 {colType.label ?? name}
               </StyledTh>
             )

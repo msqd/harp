@@ -3,7 +3,7 @@ import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline"
 import { ComponentType, Fragment } from "react"
 import tw, { styled } from "twin.macro"
 import defaultLogo from "./Assets/logo.svg"
-import { classNames } from "Utilities"
+import { classNames } from "../../Utilities"
 
 
 interface NavbarItem {

@@ -1,0 +1,57 @@
+#! /bin/bash
+#
+# This script will execute something in a clean copy of the local git repository, pinned to HEAD's commit.
+# It's mostly useful to ensure that a local build completely ignore local changes and non versionned files, helping
+# builds to be more predictible.
+#
+# Usage: bin/sandbox some-command with some args
+#
+# Requires a valid python environment to run, as we'll need git-archive-all (we could avoid that, but then it becomes
+# very hard to create an archive with recursive submodules using the right versions).
+#
+# Brought to you by Makersquad and licensed under the DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE, version 2.
+#
+
+__PATH__=$(cd $(dirname "$0")/..; pwd)
+
+# Exit if something fails
+set -e
+
+# Verbose
+set -x
+
+# Set version
+export VERSION=`git describe 2>/dev/null || git rev-parse --short HEAD`
+
+# If there are local changes, force the user to clean things up (he may not expect his changes to be ignored, so
+# it's better that he choses to stash, revert or commit the things).
+git diff-index --quiet --cached HEAD -- || {
+  echo "Repository not clean, please explicitely act so I am certain you're not ignoring something you expected to have in your sandbox."
+  exit 1
+}
+
+# Create temporary sandbox and trap removal at exit
+SANDBOX=`mktemp -d`
+echo "Created sandbox directory: $SANDBOX"
+function cleanup {
+  rm -rf $SANDBOX
+  echo "Removed sandbox directory."
+}
+trap cleanup EXIT
+
+# Release path
+RELEASE=$SANDBOX/release
+
+# Clean clone
+(cd $SANDBOX; git clone $__PATH__ release --no-checkout)
+(cd $SANDBOX/release; git checkout $VERSION)
+(cd $SANDBOX/release; git submodule update --init --recursive)
+(cd $SANDBOX/release; rm -rf .git)
+(cd $SANDBOX/release; touch .env)
+
+#pip install git-archive-all==1.20.0
+#git archive-all --force-submodules $RELEASE.tar
+#tar xf $RELEASE.tar -C $SANDBOX
+
+# Execute
+(cd $RELEASE; "$@")

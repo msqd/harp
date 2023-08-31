@@ -19,6 +19,7 @@
     "@emotion/styled": "^11.11.0",
     "@headlessui/react": "^1.7.16",
     "@heroicons/react": "^2.0.18",
+    "@tailwindcss/forms": "^0.5.6",
     "http-status-codes": "^2.2.0",
     "localforage": "^1.10.0",
     "match-sorter": "^6.3.1",
