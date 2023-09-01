@@ -19,6 +19,7 @@ interface DataTableProps<TRow extends Record<string, any>, TComputed extends Rec
   rows: TRow[]
   types: Record<string, Column<TRow>>
   columns?: Array<keyof (TRow & TComputed)>
+  onRowClick?: (row: TRow) => unknown
 }
 
 const StyledTable = styled.table(({  }: DataTableVariantsProps) => [
@@ -29,15 +30,6 @@ const StyledTh = styled.th(() => [tw`whitespace-nowrap px-2 py-3.5 text-left tex
 
 const StyledTd = styled.td(() => [tw`whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900`])
 
-
-/*
-function getColumnsIterator<TRow extends BaseRow, TComputed extends Record<string, any>(
-  types: Record<string, Column<TRow>>,
-  columns?: Array<keyof (TRow & TComputed)>,
-) {
-  return (callback) =>
-}
-*/
 
 function formatRowValue<TRow>(type: Column<TRow>, row: TRow, name: keyof TRow): ReactNode {
   let value
@@ -57,10 +49,11 @@ function formatRowValue<TRow>(type: Column<TRow>, row: TRow, name: keyof TRow): 
 type BaseRow = Record<string, any>
 
 export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = {}>({
-  variant = "default",
-  types,
   columns,
+  onRowClick,
   rows,
+  types,
+  variant = "default",
 }: DataTableProps<TRow, TComputed>) {
   return (
     <StyledTable variant={variant}>
@@ -80,7 +73,7 @@ export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = {}>(
       <tbody className="divide-y divide-gray-200 bg-white">
         {rows.map((row, index) => {
           return (
-            <tr key={index}>
+            <tr key={index} onClick={onRowClick ? () => onRowClick(row) : undefined}>
               {columns?.map((name, index) => {
                 const colName = name as string
                 const colType = types[colName]

@@ -1,4 +1,4 @@
-import { ComponentType } from "react"
+import { ComponentType, ReactElement } from "react"
 import { truncate } from "Utils/Strings"
 import { Badge, type BadgeColor } from "mkui/Components/Badge"
 import { ArrowLeftIcon, ArrowRightIcon, ArrowsRightLeftIcon } from "@heroicons/react/24/outline"
@@ -28,17 +28,9 @@ export const formatResponseShortId = createShortIdFormatter({ Icon: ArrowLeftIco
 export const formatRequestMethod = (method: unknown) => {
   switch (method) {
     case "GET":
-      return (
-        <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-          {method}
-        </span>
-      )
+      return <Badge color="green">{method}</Badge>
   }
-  return (
-    <span className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-green-600/20">
-      {method as string}
-    </span>
-  )
+  return <Badge color="default">{method as string}</Badge>
 }
 
 const getStatusColorFromStatusCode = (statusCode: number): BadgeColor => {
@@ -64,9 +56,11 @@ const getStatusColorFromStatusCode = (statusCode: number): BadgeColor => {
 
   return "default"
 }
-export const formatStatusCode = (statusCode: number) => {
+export const formatStatus = (statusCode: number): ReactElement => {
+  const color = getStatusColorFromStatusCode(statusCode)
+
   return (
-    <Badge color={getStatusColorFromStatusCode(statusCode)}>
+    <Badge color={color}>
       {statusCode} {getReasonPhrase(statusCode)}
     </Badge>
   )
