@@ -1,6 +1,6 @@
 import tw, { styled } from "twin.macro"
 
-type BadgeColor = "default" | "green" | "yellow" | "orange" | "red" | "blue" | "purple"
+export type BadgeColor = "default" | "green" | "yellow" | "orange" | "red" | "blue" | "purple"
 
 interface BadgeProps {
   color?: BadgeColor
