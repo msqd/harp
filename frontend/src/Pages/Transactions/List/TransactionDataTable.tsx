@@ -8,9 +8,10 @@ import {
   formatStatus,
   formatTransactionShortId,
 } from "./formatters.tsx"
-import { isUrl } from "../../../Utils/Strings.ts"
+import { isUrl } from "Utils/Strings.ts"
 import urlJoin from "url-join"
 import { TransactionDetailsDialog } from "./TransactionDetailsDialog.tsx"
+import { formatDistance } from "date-fns"
 
 interface TransactionsDataTableProps {
   transactions: Transaction[]
@@ -65,8 +66,8 @@ const transactionColumnTypes = {
     format: formatStatus,
   },
   createdAt: {
-    label: "Timestamp",
-    format: (x: string) => new Date(x).toLocaleString(),
+    label: "Date",
+    format: (x: string) => formatDistance(new Date(x), new Date(), { addSuffix: true }),
     className: "whitespace-nowrap",
   },
 }
