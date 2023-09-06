@@ -11,6 +11,8 @@ export default defineConfig({
           react: ["react", "react-dom", "react-is"],
           reactQuery: ["react-query"],
           reactRouter: ["react-router-dom"],
+          recharts: ['recharts'],
+          // lodash: ['lodash'],
           ui: [
             "@headlessui/react",
             "@heroicons/react",

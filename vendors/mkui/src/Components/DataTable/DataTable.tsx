@@ -1,5 +1,5 @@
 import tw, { styled } from "twin.macro"
-import {  ReactNode } from "react"
+import { ReactNode } from "react"
 
 export interface Column<TRow = any, TValue = any> {
   label: string
@@ -22,14 +22,11 @@ interface DataTableProps<TRow extends Record<string, any>, TComputed extends Rec
   onRowClick?: (row: TRow) => unknown
 }
 
-const StyledTable = styled.table(({  }: DataTableVariantsProps) => [
-  tw`min-w-full divide-y divide-gray-300 text-left`,
-])
+const StyledTable = styled.table(({}: DataTableVariantsProps) => [tw`min-w-full divide-y divide-gray-300 text-left`])
 
 const StyledTh = styled.th(() => [tw`whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900`])
 
 const StyledTd = styled.td(() => [tw`whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900`])
-
 
 function formatRowValue<TRow>(type: Column<TRow>, row: TRow, name: keyof TRow): ReactNode {
   let value
@@ -83,7 +80,7 @@ export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = {}>(
                   colProps["onClick"] = () => onClick(row)
                 }
                 return (
-                  <StyledTd key={index} className={(colType.className ?? "")} {...colProps}>
+                  <StyledTd key={index} className={colType.className ?? ""} {...colProps}>
                     {formatRowValue(colType, row, colName)}
                   </StyledTd>
                 )

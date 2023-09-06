@@ -1,4 +1,4 @@
-NAME ?= harp
+NAME ?= harp-proxy
 VERSION ?= $(shell git describe 2>/dev/null || git rev-parse --short HEAD)
 HONCHO ?= $(shell which honcho || echo "honcho")
 PRE_COMMIT ?= $(shell which pre-commit || echo "pre-commit")
@@ -33,7 +33,7 @@ install-ui:
 # QA, tests and other CI/CD related stuff
 ########################################################################################################################
 
-.PHONY: qa format test test-ui test-ui-update test-back test-frontend test-full
+.PHONY: qa format test test-ui test-ui-update test-back lint-frontend test-frontend test-full
 
 qa: format test-full
 
@@ -54,8 +54,11 @@ test-ui-update: install-ui
 test-back:
 	$(PYTEST) harp
 
-test-frontend: install-frontend
-	cd frontend; pnpm test; pnpm build
+lint-frontend: install-frontend
+	cd frontend; pnpm build
+
+test-frontend: install-frontend lint-frontend
+	cd frontend; pnpm test
 
 ########################################################################################################################
 # Docker builds
@@ -72,4 +75,4 @@ push:
 	done
 
 release:
-	DOCKER_IMAGE=makersquad/harp DOCKER_TAGS=latest bin/sandbox $(MAKE) test-full build push
+	DOCKER_IMAGE=makersquad/$(NAME) DOCKER_TAGS=latest bin/sandbox $(MAKE) test-full build push

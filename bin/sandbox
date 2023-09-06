@@ -49,9 +49,5 @@ RELEASE=$SANDBOX/release
 (cd $SANDBOX/release; rm -rf .git)
 (cd $SANDBOX/release; touch .env)
 
-#pip install git-archive-all==1.20.0
-#git archive-all --force-submodules $RELEASE.tar
-#tar xf $RELEASE.tar -C $SANDBOX
-
 # Execute
 (cd $RELEASE; "$@")

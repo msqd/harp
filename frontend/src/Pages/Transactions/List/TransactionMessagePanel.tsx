@@ -1,7 +1,8 @@
 import { ComponentType } from "react"
-import { TransactionMessage } from "../../../Domain/Transactions/Types"
-import { truncate } from "../../../Utils/Strings.ts"
-import { HeadersTable } from "./HeadersTable.tsx"
+import { TransactionMessage } from "Domain/Transactions/Types"
+import { truncate } from "Utils/Strings"
+import { HeadersTable } from "./HeadersTable"
+import { LightAsync as SyntaxHighlighter } from "react-syntax-highlighter"
 
 export function TransactionMessagePanel({
   Icon,
@@ -31,7 +32,11 @@ export function TransactionMessagePanel({
         ) : (
           <>
             <HeadersTable headers={message.headers || {}} />
-            <pre className="w-fit overflow-x-auto p-4 text-xs text-black">{message.content}</pre>
+            <SyntaxHighlighter
+              language="javascript"
+              className="w-fit overflow-x-auto p-4 text-xs text-black language-javascript"
+              children={message.content || ""}
+            />
           </>
         )}
       </div>

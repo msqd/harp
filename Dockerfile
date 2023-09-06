@@ -21,5 +21,6 @@ FROM python:3.11-alpine as runtime
 COPY --from=build /wheels /usr/local/harp/wheels
 COPY --from=build-dashboard /sources/frontend/dist /usr/local/harp/dashboard
 RUN pip install --no-index --find-links=/usr/local/harp/wheels harp
+COPY --from=build /sources/harp/examples/default.py /etc/harp/entrypoint.py
 
 CMD [ "/usr/local/bin/python", "/etc/harp/entrypoint.py" ]

@@ -3,11 +3,11 @@ import { QueryClient, QueryClientProvider } from "react-query"
 import { ReactQueryDevtools } from "react-query/devtools"
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
 import GlobalStyles from "Styles/GlobalStyles"
-
-// main css
-import "./index.css"
-import { Layout } from "./Components/Layout"
+import { Layout } from "Components/Layout"
 import { DashboardRoute, TransactionsRoute } from "./Routes"
+import TransactionsListPage from "./Pages/Transactions/List/TransactionsListPage"
+
+import "./index.css"
 
 const router = createBrowserRouter([
   {
@@ -20,7 +20,9 @@ const router = createBrowserRouter([
       },
       {
         path: "transactions",
-        element: <TransactionsRoute />,
+        element: (
+            <TransactionsListPage />
+        ),
       },
     ],
   },
