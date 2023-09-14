@@ -1,8 +1,8 @@
-import { Transaction } from "../../../Domain/Transactions/Types"
+import { Transaction } from "Domain/Transactions/Types"
 import { Dispatch, Fragment, SetStateAction } from "react"
 import { Dialog, Transition } from "@headlessui/react"
 import { XMarkIcon } from "@heroicons/react/24/outline"
-import { TransactionDetails } from "./TransactionDetails.tsx"
+import { TransactionDetails } from "./TransactionDetails"
 
 export function TransactionDetailsDialog({
   current,
@@ -37,7 +37,7 @@ export function TransactionDetailsDialog({
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-fit sm:min-6/12 sm:max-w-90% sm:p-6 max-h-11/12">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:min-6/12 max-w-90% min-w-90% sm:p-6 max-h-11/12">
                 <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
                   <button
                     type="button"

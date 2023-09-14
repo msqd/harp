@@ -4,6 +4,7 @@ import { ArrowLeftIcon, ArrowRightIcon, ArrowsRightLeftIcon } from "@heroicons/r
 import { Dialog } from "@headlessui/react"
 import { truncate } from "../../../Utils/Strings.ts"
 import { TransactionMessagePanel } from "./TransactionMessagePanel.tsx"
+import { RequestHeading } from "./RequestHeading.tsx"
 
 export function TransactionDetails({ transaction }: { transaction: Transaction }) {
   const requestsDetailQuery = useRequestsDetailQuery(transaction.request?.id)
@@ -21,7 +22,15 @@ export function TransactionDetails({ transaction }: { transaction: Transaction }
           <div className="flex flex-row max-w-full">
             <TransactionMessagePanel
               Icon={ArrowRightIcon}
-              title={transaction.request ? transaction.request.method + " " + transaction.request.url : "-"}
+              title={
+                <RequestHeading
+                  as="h4"
+                  id={transaction.request?.id || ""}
+                  method={transaction.request?.method || ""}
+                  endpoint={transaction.endpoint || ""}
+                  url={transaction.request?.url || ""}
+                />
+              }
               messageId={transaction.request?.id || null}
               message={requestsDetailQuery.isSuccess ? requestsDetailQuery.data : null}
             />

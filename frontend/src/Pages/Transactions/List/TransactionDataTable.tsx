@@ -1,23 +1,14 @@
 import { useState } from "react"
 import { Transaction } from "Domain/Transactions/Types"
 import { DataTable } from "mkui/Components/DataTable"
-import {
-  formatRequestMethod,
-  formatRequestShortId,
-  formatResponseShortId,
-  formatStatus,
-  formatTransactionShortId,
-} from "./formatters.tsx"
-import { isUrl } from "Utils/Strings.ts"
-import urlJoin from "url-join"
+import { formatTransactionShortId, getDurationRatingBadge, ResponseStatusBadge } from "./formatters.tsx"
 import { TransactionDetailsDialog } from "./TransactionDetailsDialog.tsx"
-import { formatDistance } from "date-fns"
+import { formatDistance, formatDuration } from "date-fns"
+import { ArrowLeftIcon } from "@heroicons/react/24/outline"
+import { RequestHeading } from "./RequestHeading.tsx"
 
 interface TransactionsDataTableProps {
   transactions: Transaction[]
-  availableColumns?: any
-  columns?: string[]
-  formatters?: Record<string, (x: any) => string>
 }
 
 const transactionColumnTypes = {
@@ -28,47 +19,43 @@ const transactionColumnTypes = {
   },
   request: {
     label: "Request",
-    get: (row: Transaction) => row.request?.id || "-",
-    format: formatRequestShortId,
-    headerClassName: "w-1",
-  },
-  method: {
-    label: "Method",
-    get: (row: Transaction) => row.request?.method || "-",
-    format: formatRequestMethod,
-    headerClassName: "w-1",
-  },
-  url: {
-    label: "URL",
-    get: (row: Transaction): [string, string] => [row.endpoint || "-", row.request?.url || "-"],
-    format: ([endpoint, url]: [string, string]) => (
-      <>
-        {isUrl(endpoint || "") ? (
-          urlJoin(endpoint || "?", "")
-        ) : (
-          <span className="inline-flex items-center bg-gray-50 px-1 mx-1 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">
-            {endpoint}
-          </span>
-        )}
-        {urlJoin("/", url || "")}
-      </>
-    ),
-    headerClassName: "w-1",
+    get: (row: Transaction) => ({
+      id: row.request?.id,
+      method: row.request?.method,
+      endpoint: row.endpoint,
+      url: row.request?.url,
+    }),
+    format: RequestHeading,
   },
   response: {
     label: "Response",
-    get: (row: Transaction) => row.response?.id || "-",
-    format: formatResponseShortId,
-  },
-  statusCode: {
-    label: "Status",
-    get: (row: Transaction) => row.response?.statusCode || "-",
-    format: formatStatus,
+    get: (row: Transaction) => ({
+      id: row.response?.id,
+      statusCode: row.response?.statusCode,
+    }),
+    format: ({ id, statusCode }: { id: string; statusCode: number }) => (
+      <div className="flex items-center" title={id}>
+        <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 mr-1">
+          <ArrowLeftIcon className="h-3 w-3 text-gray-500" aria-hidden="true" />
+        </span>
+        <ResponseStatusBadge statusCode={statusCode} />
+        <span>...kB</span>
+      </div>
+    ),
   },
   createdAt: {
     label: "Date",
     format: (x: string) => formatDistance(new Date(x), new Date(), { addSuffix: true }),
-    className: "whitespace-nowrap",
+  },
+  elapsed: {
+    label: "Duration",
+    format: (x: number) => {
+      return (
+        <div>
+          {getDurationRatingBadge(x)} {formatDuration({ seconds: x })}{" "}
+        </div>
+      )
+    },
   },
 }
 
@@ -77,11 +64,13 @@ export function TransactionDataTable({ transactions }: TransactionsDataTableProp
 
   return (
     <>
-      <DataTable<Transaction, { method: string; url: string; statusCode: string }>
+      {/*durationRatingScale.map((x) => getDurationRatingBadge(x.threshold || 10))*/}
+
+      <DataTable<Transaction, { method: string; url: string; statusCode: string; responseBodySize: number }>
         types={transactionColumnTypes}
         onRowClick={(row: Transaction) => setCurrent(row)}
         rows={transactions}
-        columns={["id", "request", "method", "url", "response", "statusCode", "createdAt"]}
+        columns={["request", "response", "elapsed", "createdAt"]}
       />
       <TransactionDetailsDialog current={current} setCurrent={setCurrent} />
     </>

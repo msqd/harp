@@ -1,7 +1,7 @@
 import { ReactElement } from "react"
 import { UseQueryResult } from "react-query"
 import { QueryObserverSuccessResult } from "react-query/types/core/types"
-import {useErrorBoundary} from "react-error-boundary";
+import { useErrorBoundary } from "react-error-boundary"
 
 interface OnQuerySuccessCommonProps<T> {
   children: (...queries: QueryObserverSuccessResult<T>[]) => ReactElement
@@ -30,15 +30,15 @@ function anyQueryIsNotSuccess<T>(queries: UseQueryResult<T>[]): boolean {
 function OnQuerySuccess<T>(props: OnQuerySuccessProps<T> | OnQueriesSuccessProps<T>) {
   const queries = "query" in props ? [props.query] : props.queries
 
-  const { showBoundary } = useErrorBoundary();
+  const { showBoundary } = useErrorBoundary()
 
   if (anyQueryIsLoading(queries)) {
     return <div>Loading...</div>
   }
 
   if (anyQueryIsError(queries) || anyQueryIsNotSuccess(queries)) {
-    showBoundary(new Error("Error while loading required remote data!"));
-    return null;
+    showBoundary(new Error("Error while loading required remote data!"))
+    return null
   }
 
   return props.children(...(queries as QueryObserverSuccessResult<T>[]))

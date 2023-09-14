@@ -7,4 +7,5 @@ export interface Transaction {
   request: TransactionRequest | null
   response: TransactionResponse | null
   createdAt: string
+  elapsed: number
 }

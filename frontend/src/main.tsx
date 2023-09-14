@@ -20,9 +20,7 @@ const router = createBrowserRouter([
       },
       {
         path: "transactions",
-        element: (
-            <TransactionsListPage />
-        ),
+        element: <TransactionsListPage />,
       },
     ],
   },

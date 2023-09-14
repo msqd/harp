@@ -25,12 +25,26 @@ function createShortIdFormatter({
 export const formatTransactionShortId = createShortIdFormatter({ Icon: ArrowsRightLeftIcon, maxLength: 9 })
 export const formatRequestShortId = createShortIdFormatter({ Icon: ArrowRightIcon, maxLength: 5 })
 export const formatResponseShortId = createShortIdFormatter({ Icon: ArrowLeftIcon, maxLength: 5 })
-export const formatRequestMethod = (method: unknown) => {
+export const RequestMethodBadge = ({ method }: { method: string }) => {
   switch (method) {
     case "GET":
       return <Badge color="green">{method}</Badge>
+    case "DELETE":
+      return <Badge color="red">{method}</Badge>
+    case "PUT":
+      return <Badge color="yellow">{method}</Badge>
+    case "POST":
+      return <Badge color="orange">{method}</Badge>
+    case "PATCH":
+      return <Badge color="purple">{method}</Badge>
+    case "OPTIONS":
+      return <Badge color="blue">{method}</Badge>
   }
-  return <Badge color="default">{method as string}</Badge>
+  return <Badge>{method}</Badge>
+}
+
+export const formatRequestMethod = (method: unknown) => {
+  return <RequestMethodBadge method={method as string} />
 }
 
 const getStatusColorFromStatusCode = (statusCode: number): BadgeColor => {
@@ -56,7 +70,8 @@ const getStatusColorFromStatusCode = (statusCode: number): BadgeColor => {
 
   return "default"
 }
-export const formatStatus = (statusCode: number): ReactElement => {
+
+export const ResponseStatusBadge = ({ statusCode }: { statusCode: number }) => {
   const color = getStatusColorFromStatusCode(statusCode)
 
   return (
@@ -64,4 +79,29 @@ export const formatStatus = (statusCode: number): ReactElement => {
       {statusCode} {getReasonPhrase(statusCode)}
     </Badge>
   )
+}
+export const formatStatus = (statusCode: number): ReactElement => {
+  return <ResponseStatusBadge statusCode={statusCode} />
+}
+
+export const durationRatingScale: { label: string; threshold?: number; className: string }[] = [
+  { label: "A++", threshold: 0.025, className: "bg-teal-400" },
+  { label: "A+", threshold: 0.05, className: "bg-emerald-400" },
+  { label: "A", threshold: 0.1, className: "bg-green-500" },
+  { label: "B", threshold: 0.2, className: "bg-lime-500" },
+  { label: "C", threshold: 0.4, className: "bg-yellow-500" },
+  { label: "D", threshold: 0.8, className: "bg-amber-500" },
+  { label: "E", threshold: 1.6, className: "bg-orange-500" },
+  { label: "F", threshold: 3.2, className: "bg-red-500" },
+  { label: "G", className: "bg-red-700" },
+]
+
+export const getDurationRatingBadge = (duration: number): ReactElement => {
+  for (const rating of durationRatingScale) {
+    if (rating.threshold === undefined || duration <= rating.threshold) {
+      return <span className={"px-1 py-0.5 text-white font-semibold " + rating.className}>{rating.label}</span>
+    }
+  }
+
+  return <span className="px-1 py-0.5 text-white font-semibold">?</span>
 }

@@ -1,4 +1,5 @@
 import traceback
+from collections import defaultdict
 from copy import deepcopy
 from functools import cached_property
 from types import MappingProxyType
@@ -88,7 +89,7 @@ class Proxy:
         logger.info(f"◀ {proxy_target.method} {proxy_target.path}")
 
         with self.storage.store(
-            Transaction(endpoint=endpoint), mode="save" if endpoint.name == "ui" else "save"
+            Transaction(endpoint=endpoint), mode="ignore" if endpoint.name == "ui" else "save"
         ) as transaction:
             ## REQUEST (from client)
             transaction.request = TransactionRequest.from_proxy_target(proxy_target)
@@ -106,7 +107,10 @@ class Proxy:
                 ### SEND REQUEST (to remote endpoint)
                 response: httpx.Response = await client.send(request)
 
-                logger.info(f"◀◀ {response.status_code} {response.reason_phrase}")
+                transaction.elapsed = response.elapsed
+                logger.info(
+                    f"◀◀ {response.status_code} {response.reason_phrase} ({transaction.elapsed.total_seconds()}s)"
+                )
             except Exception as exc:
                 logger.info(f"▶ 503 {codes.get_reason_phrase(503)}")
                 tb = "\n".join(traceback.format_exception(exc))
@@ -151,6 +155,21 @@ class ProxyFactory:
         self.container = create_container(self.config)
         self.ports = {}
         self._next_available_port = port
+
+        # should be refactored, read env for auto conf
+        _ports = defaultdict(dict)
+        for k, v in self.config.values.items():
+            if k.startswith("proxy_endpoint_"):
+                _port, _prop = k[15:].split("_")
+                try:
+                    _port = int(_port)
+                except TypeError as exc:
+                    raise ProxyError(f"Invalid endpoint port {_port}.") from exc
+                if _prop not in ("name", "target"):
+                    raise ProxyError(f"Invalid endpoint property {_prop}.")
+                _ports[_port][_prop] = v
+        for _port, _port_config in _ports.items():
+            self.add(**_port_config, port=port)
 
         if ui:
             endpoint = ProxyEndpoint("http://localhost:4999/", name="ui")

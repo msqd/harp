@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from .base import Entity
 from .proxy_endpoint import ProxyEndpoint
@@ -13,7 +13,9 @@ class Transaction(Entity):
     id: str = field(default_factory=generate_transaction_id_ksuid)
     request: TransactionRequest = None
     response: TransactionResponse = None
+
     created_at: datetime = field(default_factory=datetime.now)
+    elapsed: timedelta = None
 
     endpoint: ProxyEndpoint = None
 
@@ -31,6 +33,7 @@ class Transaction(Entity):
             "request": self.request.asdict() if self.request else None,
             "response": self.response.asdict() if self.response else None,
             "createdAt": self.created_at,
+            "elapsed": self.elapsed.total_seconds() if self.elapsed else None,
         }
 
     def children(self):
