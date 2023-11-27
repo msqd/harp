@@ -52,7 +52,7 @@ test-ui-update: install-ui
 	cd vendors/mkui; pnpm test:update
 
 test-back:
-	$(PYTEST) harp
+	$(PYTEST) harp tests
 
 lint-frontend: install-frontend
 	cd frontend; pnpm build

@@ -1,15 +1,18 @@
+import logging
 import traceback
 from collections import defaultdict
 from copy import deepcopy
 from functools import cached_property
 from types import MappingProxyType
 
+import anyio
 import httpx
 from httpx._status_codes import codes
 
 from harp import get_logger
 from harp.apis.asgi import ManagementApplication
-from harp.asgi import AsgiContext, asgi
+from harp.asgi import AsgiContext as DefaultAsgiContext
+from harp.asgi import asgi
 from harp.errors import EndpointNotFound, ProxyError
 from harp.models.proxy_endpoint import ProxyEndpoint
 from harp.models.request import TransactionRequest
@@ -26,12 +29,14 @@ logger = get_logger(__name__)
 
 
 class Proxy:
+    AsgiContext = DefaultAsgiContext
+
     def __init__(self, *, endpoints, container):
         self._endpoints = endpoints
         self.app = ManagementApplication(container=container)
 
     async def __call__(self, scope, receive, send):
-        with AsgiContext(scope, receive, send) as ctx:
+        with self.AsgiContext(scope, receive, send) as ctx:
             try:
                 if ctx.type == "lifespan":
                     return await self.app(ctx.scope, ctx.receive, ctx.send)
@@ -47,7 +52,13 @@ class Proxy:
 
     @cached_property
     def storage(self):
-        return self.app.service_provider.get(Storage)
+        try:
+            service_provider = self.app.service_provider
+        except TypeError as exc:
+            raise RuntimeError(
+                "Cannot access service provider, the lifespan.startup asgi event probably never went through."
+            ) from exc
+        return service_provider.get(Storage)
 
     async def not_found(self, ctx: AsgiContext, message="Not found."):
         """
@@ -148,11 +159,14 @@ class Proxy:
 
 
 class ProxyFactory:
-    ProxyType = Proxy
+    Proxy = Proxy
 
-    def __init__(self, *, settings=None, port=4000, ui=True, ui_port=4080):
+    def __init__(self, *, settings=None, port=4000, ui=True, ui_port=4080, ProxyType=None):
         self.config = create_config(settings)
         self.container = create_container(self.config)
+
+        self.Proxy = ProxyType or self.Proxy
+
         self.ports = {}
         self._next_available_port = port
 
@@ -191,23 +205,25 @@ class ProxyFactory:
         return self.ports[port]
 
     def create(self):
-        # Make it has hard as possible to modify configuration at runtime, outside the factory. Of course, if you really
-        # want to write a # shitload of crappy code, you can.
-        return self.ProxyType(endpoints=MappingProxyType(deepcopy(self.ports)), container=self.container)
+        """
+        Builds the proxy instance with the current configuration.
+
+        We try to use readonly containers as much as possible to avoid side effects of runtime configuration changes.
+        But if you really want to, you'll find a way. Real question being why would you want to?
+
+        :return: Proxy instance
+        """
+        return self.Proxy(endpoints=MappingProxyType(deepcopy(self.ports)), container=self.container)
 
     def run(self):
-        proxy = self.create()
-
-        import logging
-
         from hypercorn.asyncio import serve
         from hypercorn.config import Config
+
+        proxy = self.create()
 
         config = Config()
         config.bind = [f"0.0.0.0:{port}" for port in proxy._endpoints]
         config.accesslog = logging.getLogger("hypercorn.access")
         config.errorlog = logging.getLogger("hypercorn.error")
-
-        import anyio
 
         anyio.run(serve, proxy, config, backend="asyncio", backend_options={"use_uvloop": True})

@@ -33,7 +33,7 @@ class ProxyEndpointTarget:
         return cls(
             endpoint=endpoint,
             method=scope["method"],
-            path=scope["raw_path"].decode("utf-8"),
+            path=scope["raw_path"].decode("utf-8") if "raw_path" in scope else scope["path"],
             query_string=scope["query_string"].decode("utf-8"),
             headers=tuple(((k, v) for k, v in scope["headers"] if k.lower() not in (b"host",))),
         )

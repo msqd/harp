@@ -1,4 +1,5 @@
 https://asgi.readthedocs.io/en/latest/introduction.html
+https://github.com/florimondmanca/awesome-asgi
 
 Run example with reload
 =======================
@@ -49,3 +50,5 @@ reduce development and maintenance cost of API related code
 audited by default, adds security
 
 rgpd : need a way to anonymize payloads
+
+réversibilité des données, réversibilité du code

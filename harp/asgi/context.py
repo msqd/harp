@@ -29,7 +29,7 @@ class AsgiContext:
 
     @cached_property
     def server_port(self):
-        return self._scope["server"][1]
+        return self._scope.get("server", ["", 80])[1]
 
     def send(self, ctx):
         logger.debug(f"▷ SEND {ctx['type']}", **ctx)
