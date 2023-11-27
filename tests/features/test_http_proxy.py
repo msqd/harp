@@ -5,7 +5,6 @@ import asyncio
 import dataclasses
 
 import pytest
-from asgi_tools import App
 from asgiref.testing import ApplicationCommunicator
 from hypercorn import Config
 from hypercorn.asyncio import serve
@@ -14,13 +13,7 @@ from hypercorn.typing import LifespanScope, LifespanStartupEvent
 from harp.proxy import Proxy, ProxyFactory
 from harp.testing.http_communiator import HttpCommunicator
 from harp.testing.network_utils import get_available_network_port
-
-app = App()
-
-
-@app.route("/")
-async def hello_world(request):
-    return "<p>Hello, World!</p>"
+from harp.testing.stub_api import stub_api
 
 
 @dataclasses.dataclass
@@ -39,7 +32,7 @@ def stubd():
     shutdown_event = asyncio.Event()
 
     async def do_serve():
-        return await serve(app, config, shutdown_trigger=shutdown_event.wait)
+        return await serve(stub_api, config, shutdown_trigger=shutdown_event.wait)
 
     task = asyncio.ensure_future(do_serve(), loop=loop)
     loop.run_until_complete(asyncio.sleep(1))
@@ -76,7 +69,7 @@ class TestAsgiProxy:
         com = ApplicationCommunicator(proxy, LifespanScope(type="lifespan", asgi={"version": "2.0"}))
         await com.send_input(LifespanStartupEvent(type="lifespan.startup"))
         await com.wait()
-        response = await proxy.get("/", port=stubd.port).get_response()
+        response = await proxy.get("/echo", port=stubd.port).get_response()
         assert response["status"] == 200
-        assert response["body"] == b"<p>Hello, World!</p>"
+        assert response["body"] == b"GET /echo"
         assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
