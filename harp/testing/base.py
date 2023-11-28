@@ -3,5 +3,5 @@ from testing.proxy import TestProxy
 
 
 class BaseProxyTest:
-    def factory(self, *args, **kwargs):
+    def create_proxy_factory(self, *args, **kwargs):
         return ProxyFactory(*args, ProxyType=TestProxy, **kwargs)

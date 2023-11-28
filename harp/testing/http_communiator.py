@@ -14,7 +14,7 @@ class HttpCommunicator(ApplicationCommunicator):
     directly.
     """
 
-    def __init__(self, application, method, path, body=b"", headers=None, *, port=None):
+    def __init__(self, application, method, path, body=b"", headers=None, *, hostname="0.0.0.0", port=80):
         parsed = urlparse(path)
         self.scope = {
             "type": "http",
@@ -23,7 +23,7 @@ class HttpCommunicator(ApplicationCommunicator):
             "path": unquote(parsed.path),
             "query_string": parsed.query.encode("utf-8"),
             "headers": headers or [],
-            **({"server": ("localhost", port)} if port else {}),
+            **({"server": (hostname, port)} if port and hostname else {}),
         }
         assert isinstance(body, bytes)
         self.body = body

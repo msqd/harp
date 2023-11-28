@@ -14,9 +14,13 @@ class StubServerDescription:
     host: str
     port: int
 
+    @property
+    def url(self):
+        return f"http://{self.host}:{self.port}"
+
 
 @pytest.fixture
-def stub_api_server():
+def test_api():
     port = get_available_network_port()
     loop = asyncio.get_event_loop()
     config = Config()

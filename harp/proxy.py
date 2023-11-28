@@ -159,13 +159,13 @@ class Proxy:
 
 
 class ProxyFactory:
-    Proxy = Proxy
+    ProxyType = Proxy
 
     def __init__(self, *, settings=None, port=4000, ui=True, ui_port=4080, ProxyType=None):
         self.config = create_config(settings)
         self.container = create_container(self.config)
 
-        self.Proxy = ProxyType or self.Proxy
+        self.ProxyType = ProxyType or self.ProxyType
 
         self.ports = {}
         self._next_available_port = port
@@ -204,7 +204,7 @@ class ProxyFactory:
         self.ports[port] = ProxyEndpoint(target, name=name)
         return self.ports[port]
 
-    def create(self):
+    def create(self, *args, **kwargs):
         """
         Builds the proxy instance with the current configuration.
 
@@ -213,7 +213,9 @@ class ProxyFactory:
 
         :return: Proxy instance
         """
-        return self.Proxy(endpoints=MappingProxyType(deepcopy(self.ports)), container=self.container)
+        return self.ProxyType(
+            *args, endpoints=MappingProxyType(deepcopy(self.ports)), container=self.container, **kwargs
+        )
 
     def run(self):
         from hypercorn.asyncio import serve
