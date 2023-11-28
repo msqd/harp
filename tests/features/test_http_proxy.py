@@ -59,6 +59,8 @@ class TestAsgiProxyWithStubApi(BaseProxyTest):
             "PATCH",
             "DELETE",
             "OPTIONS",
+            "BREW",  # non standard (#7)
+            "REMIX",  # non standard (#7)
         ],
     )
     async def test_asgi_proxy_basic_http_requests(self, proxy, method):
