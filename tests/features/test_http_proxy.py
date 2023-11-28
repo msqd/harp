@@ -5,6 +5,7 @@ Initial implementation : https://trello.com/c/yCdcY7Og/1-5-http-proxy
 import pytest
 
 from harp.testing.base import BaseProxyTest
+from harp.testing.http import parametrize_with_http_methods
 from harp.utils.network import get_available_network_port
 
 
@@ -50,19 +51,7 @@ class TestAsgiProxyWithStubApi(BaseProxyTest):
         )
         assert response["headers"] == []
 
-    @pytest.mark.parametrize(
-        "method",
-        [
-            "GET",
-            "POST",
-            "PUT",
-            "PATCH",
-            "DELETE",
-            "OPTIONS",
-            "BREW",  # non standard (#7)
-            "REMIX",  # non standard (#7)
-        ],
-    )
+    @parametrize_with_http_methods(include_non_standard=True, exclude=("CONNECT", "HEAD"))
     async def test_asgi_proxy_basic_http_requests(self, proxy, method):
         await proxy.asgi_lifespan_startup()
         response = await proxy.asgi_http(method, "/echo")

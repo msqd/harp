@@ -3,7 +3,7 @@ from asgiref.typing import LifespanScope, LifespanStartupEvent
 
 from harp import ProxyFactory
 from harp.proxy import Proxy
-from harp.testing.http_communiator import HttpCommunicator
+from harp.testing.asgi import HttpCommunicator
 
 
 class TestProxy(Proxy):
