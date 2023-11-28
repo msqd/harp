@@ -50,12 +50,29 @@ class TestAsgiProxyWithStubApi(BaseProxyTest):
         )
         assert response["headers"] == []
 
-    @pytest.mark.parametrize("method", ["GET", "POST"])
+    @pytest.mark.parametrize(
+        "method",
+        [
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE",
+            "OPTIONS",
+        ],
+    )
     async def test_asgi_proxy_basic_http_requests(self, proxy, method):
         await proxy.asgi_lifespan_startup()
         response = await proxy.asgi_http(method, "/echo")
         assert response["status"] == 200
         assert response["body"] == method.encode("utf-8") + b" /echo"
+        assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
+
+    async def test_asgi_proxy_basic_http_head_request(self, proxy):
+        await proxy.asgi_lifespan_startup()
+        response = await proxy.asgi_http_head("/echo")
+        assert response["status"] == 200
+        assert response["body"] == b""
         assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
 
     async def test_asgi_proxy_post_basic(self, proxy):

@@ -48,6 +48,21 @@ class TestProxy(Proxy):
     def asgi_http_post(self, path, *, host=None, port=None):
         return self.asgi_http("POST", path, host=host, port=port)
 
+    def asgi_http_put(self, path, *, host=None, port=None):
+        return self.asgi_http("PUT", path, host=host, port=port)
+
+    def asgi_http_patch(self, path, *, host=None, port=None):
+        return self.asgi_http("PATCH", path, host=host, port=port)
+
+    def asgi_http_delete(self, path, *, host=None, port=None):
+        return self.asgi_http("DELETE", path, host=host, port=port)
+
+    def asgi_http_options(self, path, *, host=None, port=None):
+        return self.asgi_http("OPTIONS", path, host=host, port=port)
+
+    def asgi_http_head(self, path, *, host=None, port=None):
+        return self.asgi_http("HEAD", path, host=host, port=port)
+
 
 class BaseProxyTest:
     """
