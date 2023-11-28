@@ -5,8 +5,8 @@ import pytest
 from hypercorn import Config
 from hypercorn.asyncio import serve
 
-from harp.testing.network_utils import get_available_network_port
 from harp.testing.stub_api import stub_api
+from harp.utils.network import get_available_network_port
 
 
 @dataclasses.dataclass

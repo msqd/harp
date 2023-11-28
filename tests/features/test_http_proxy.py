@@ -5,7 +5,7 @@ Initial implementation : https://trello.com/c/yCdcY7Og/1-5-http-proxy
 import pytest
 
 from harp.testing.base import BaseProxyTest
-from harp.testing.network_utils import get_available_network_port
+from harp.utils.network import get_available_network_port
 
 
 class TestAsgiProxyWithoutEndpoints(BaseProxyTest):
