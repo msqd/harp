@@ -83,3 +83,11 @@ class TestAsgiProxyWithStubApi(BaseProxyTest):
         assert response["status"] == 200
         assert response["body"] == method.encode("utf-8") + b" /echo/body\n" + repr(body).encode("ascii")
         assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
+
+    @parametrize_with_http_methods(include_having_response_body=True, include_maybe_having_response_body=True)
+    async def test_requests_with_response_body(self, proxy, method):
+        await proxy.asgi_lifespan_startup()
+        response = await proxy.asgi_http(method, "/binary")
+        assert response["status"] == 200
+        assert len(response["body"]) == 32
+        assert response["headers"] == ((b"content-type", b"application/octet-stream"),)

@@ -1,7 +1,7 @@
 import pytest
 
 from harp.models.http import HTTP_METHODS
-from harp.types import _not_set
+from harp.types import Maybe, _not_set
 
 
 def parametrize_with_http_methods(
@@ -13,7 +13,11 @@ def parametrize_with_http_methods(
     include_standard=_not_set,
     include_non_standard=_not_set,
     include_having_request_body=_not_set,
+    include_maybe_having_request_body=_not_set,
     include_not_having_request_body=_not_set,
+    include_having_response_body=_not_set,
+    include_maybe_having_response_body=_not_set,
+    include_not_having_response_body=_not_set,
     exclude=(),
 ):
     if {
@@ -24,7 +28,11 @@ def parametrize_with_http_methods(
         include_standard,
         include_non_standard,
         include_having_request_body,
+        include_maybe_having_request_body,
         include_not_having_request_body,
+        include_having_response_body,
+        include_maybe_having_response_body,
+        include_not_having_response_body,
     } == {_not_set}:
         include_standard = True
 
@@ -45,6 +53,14 @@ def parametrize_with_http_methods(
         methods |= {name for name, method in HTTP_METHODS.items() if method.request_body is True}
     if include_not_having_request_body is True:
         methods |= {name for name, method in HTTP_METHODS.items() if method.request_body is False}
+    if include_maybe_having_request_body is True:
+        methods |= {name for name, method in HTTP_METHODS.items() if method.request_body is Maybe}
+    if include_having_response_body is True:
+        methods |= {name for name, method in HTTP_METHODS.items() if method.response_body is True}
+    if include_not_having_response_body is True:
+        methods |= {name for name, method in HTTP_METHODS.items() if method.response_body is False}
+    if include_maybe_having_response_body is True:
+        methods |= {name for name, method in HTTP_METHODS.items() if method.response_body is Maybe}
 
     if include_safe is False:
         methods -= {name for name, method in HTTP_METHODS.items() if method.safe is True}
@@ -62,6 +78,14 @@ def parametrize_with_http_methods(
         methods -= {name for name, method in HTTP_METHODS.items() if method.request_body is True}
     if include_not_having_request_body is False:
         methods -= {name for name, method in HTTP_METHODS.items() if method.request_body is False}
+    if include_maybe_having_request_body is False:
+        methods -= {name for name, method in HTTP_METHODS.items() if method.request_body is Maybe}
+    if include_having_response_body is False:
+        methods -= {name for name, method in HTTP_METHODS.items() if method.response_body is True}
+    if include_not_having_response_body is False:
+        methods -= {name for name, method in HTTP_METHODS.items() if method.response_body is False}
+    if include_maybe_having_response_body is False:
+        methods -= {name for name, method in HTTP_METHODS.items() if method.response_body is Maybe}
 
     methods -= set(exclude)
 
