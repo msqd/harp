@@ -1,6 +1,7 @@
 """
 Initial implementation : https://trello.com/c/yCdcY7Og/1-5-http-proxy
 """
+import os
 
 import pytest
 
@@ -42,7 +43,7 @@ class TestAsgiProxyWithStubApi(BaseProxyTest):
         factory.add(test_api.url, port=proxy_port, name="default")
         return factory.create(default_host="proxy.localhost", default_port=proxy_port)
 
-    async def test_missing_startup(self, proxy):
+    async def test_missing_lifecycle_startup(self, proxy):
         response = await proxy.asgi_http_get("/echo")
         assert response["status"] == 500
         assert response["body"] == (
@@ -52,23 +53,33 @@ class TestAsgiProxyWithStubApi(BaseProxyTest):
         assert response["headers"] == []
 
     @parametrize_with_http_methods(include_non_standard=True, exclude=("CONNECT", "HEAD"))
-    async def test_asgi_proxy_basic_http_requests(self, proxy, method):
+    async def test_all_methods(self, proxy, method):
         await proxy.asgi_lifespan_startup()
         response = await proxy.asgi_http(method, "/echo")
         assert response["status"] == 200
         assert response["body"] == method.encode("utf-8") + b" /echo"
         assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
 
-    async def test_asgi_proxy_basic_http_head_request(self, proxy):
+    async def test_head_request(self, proxy):
         await proxy.asgi_lifespan_startup()
         response = await proxy.asgi_http_head("/echo")
         assert response["status"] == 200
         assert response["body"] == b""
         assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
 
-    async def test_asgi_proxy_post_basic(self, proxy):
+    @parametrize_with_http_methods(include_having_request_body=True)
+    async def test_requests_with_body(self, proxy, method):
         await proxy.asgi_lifespan_startup()
-        response = await proxy.asgi_http_post("/echo")
+        response = await proxy.asgi_http(method, "/echo/body", body=b"Hello, world.")
         assert response["status"] == 200
-        assert response["body"] == b"POST /echo"
+        assert response["body"] == method.encode("utf-8") + b" /echo/body\nb'Hello, world.'"
+        assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
+
+    @parametrize_with_http_methods(include_having_request_body=True)
+    async def test_requests_with_binary_body(self, proxy, method):
+        await proxy.asgi_lifespan_startup()
+        body = bytes(os.urandom(8))
+        response = await proxy.asgi_http(method, "/echo/body", body=body)
+        assert response["status"] == 200
+        assert response["body"] == method.encode("utf-8") + b" /echo/body\n" + repr(body).encode("ascii")
         assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)

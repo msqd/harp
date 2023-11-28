@@ -11,6 +11,7 @@ Start here.
    :maxdepth: 1
 
    basics
+   http-proxy
    configuration
    dashboard
 

@@ -33,14 +33,17 @@ class TestProxy(Proxy):
         )
         await com.wait()
 
-    def asgi_http(self, method, path, *, host=None, port=None):
-        return HttpCommunicator(
+    def asgi_http(self, method, path, *, body=b"", host=None, port=None):
+        communicator = HttpCommunicator(
             self,
             method,
             path,
+            body=body,
             hostname=host or self.default_host,
             port=port or self.default_port,
-        ).get_response()
+        )
+
+        return communicator.get_response()
 
     def asgi_http_get(self, path, *, host=None, port=None):
         return self.asgi_http("GET", path, host=host, port=port)

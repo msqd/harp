@@ -14,6 +14,7 @@ release = "1.0"
 extensions = [
     "sphinx_design",
     "sphinxcontrib.jquery",
+    "sphinx.ext.todo",
 ]
 
 templates_path = ["_templates"]
@@ -24,3 +25,6 @@ root_doc = "index"
 html_theme = "furo"
 html_static_path = ["_static"]
 html_js_files = ["js/links-target-blank.js"]
+
+todo_include_todos = True
+html_show_sphinx = False

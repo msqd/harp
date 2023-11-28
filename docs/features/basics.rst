@@ -5,6 +5,8 @@ The basic goal of HARP is to be a nearline proxy to remote HTTP APIs, to enhance
 lowering development and maintenance cost by offloading all usual needed features to the proxy (caching, auditing,
 alerting, retrying...).
 
+You can read more about the core HTTP proxy features in the :doc:`http-proxy` section of the documentation.
+
 By default, it respects HTTP cache headers and will speed up your API calls without further configuration. Of course,
 a lot of APIs are non-standard or bahve strangely, and one goal of HARP is to give you a toolkit for fixing those.
 
@@ -19,15 +21,15 @@ You run it locally, and query the local server instead of the remote API.
 
 The easiest way to get started is to run it through docker:
 
-```bash
-docker run -it --rm -p 4000:4000 -p 4080:4080 -e HARP_ENDPOINT_URL=https://httpbin.org makersquad/harp-proxy
-```
+.. code-block:: bash
+
+    docker run -it --rm -p 4000:4000 -p 4080:4080 -e HARP_ENDPOINT_URL=https://httpbin.org makersquad/harp-proxy
 
 Then you can query the proxy and get the same result as the remote API:
 
-```bash
-curl http://localhost:4000/get
-```
+.. code-block:: bash
+
+    curl http://localhost:4000/get
 
 Open http://localhost:4080/ in your favorite browser and have a look to the proxy dashboard. You can inspect all
 transactions (http request-response pairs) that went through the proxy.
@@ -45,21 +47,21 @@ configure it using its python API and/or a configuration file (various formats a
 
 Here is a simple example of a bootstrap script that will do the exact same thing as the docker command above:
 
-```python
-from harp import ProxyFactory
+.. code-block:: python
 
-proxy = ProxyFactory()
-proxy.add("https://httpbin.org", port=4000)
+    from harp import ProxyFactory
 
-if __name__ == "__main__":
-    proxy.run()
-```
+    proxy = ProxyFactory()
+    proxy.add("https://httpbin.org", port=4000)
+
+    if __name__ == "__main__":
+        proxy.run()
 
 To run it with docker, save it as `proxy.py` use the following command (from the directory where you saved the file):
 
-```bash
-docker run -p 4000:4000 -p 4080:4080 -v "$(pwd)"/proxy.py:/etc/harp/entrypoint.py nginx
-```
+.. code-block:: bash
+
+    docker run -p 4000:4000 -p 4080:4080 -v "$(pwd)"/proxy.py:/etc/harp/entrypoint.py nginx
 
 Other ways to run
 :::::::::::::::::
