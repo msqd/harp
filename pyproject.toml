@@ -58,6 +58,7 @@ line_length = 120
 py_version = 311
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
 filterwarnings = [
     "ignore:Deprecated call to:DeprecationWarning",
     "ignore:pkg_resources is deprecated as an API:DeprecationWarning",

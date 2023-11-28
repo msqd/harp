@@ -19,24 +19,37 @@ class StubServerDescription:
         return f"http://{self.host}:{self.port}"
 
 
-@pytest.fixture
-def test_api():
-    port = get_available_network_port()
-    loop = asyncio.get_event_loop()
+@pytest.fixture(scope="session")
+def event_loop():
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="function")
+async def test_api(event_loop):
+    shutdown_event = asyncio.Event()
     config = Config()
+    port = get_available_network_port()
     config.bind = [f"localhost:{port}"]
 
-    shutdown_event = asyncio.Event()
-
-    async def do_serve():
-        return await serve(stub_api, config, shutdown_trigger=shutdown_event.wait)
-
-    task = asyncio.ensure_future(do_serve(), loop=loop)
-    # TODO: find a better way to wait for the server to be ready
-    loop.run_until_complete(asyncio.sleep(1))
+    # starts the async server in the background
+    server = asyncio.ensure_future(
+        serve(
+            stub_api,
+            config=config,
+            shutdown_trigger=shutdown_event.wait,
+        ),
+        loop=event_loop,
+    )
+    # wait for the server to be accepting connections
+    await asyncio.open_connection("localhost", port)
 
     try:
         yield StubServerDescription("localhost", port)
     finally:
         shutdown_event.set()
-        loop.run_until_complete(task)
+        await server

@@ -34,14 +34,13 @@ class TestAsgiProxyWithStubApi(BaseProxyTest):
 
     """
 
-    @pytest.fixture
+    @pytest.fixture(scope="function")
     def proxy(self, test_api):
         factory = self.create_proxy_factory()
         proxy_port = get_available_network_port()
         factory.add(test_api.url, port=proxy_port, name="default")
         return factory.create(default_host="proxy.localhost", default_port=proxy_port)
 
-    @pytest.mark.asyncio
     async def test_missing_startup(self, proxy):
         response = await proxy.asgi_http_get("/echo")
         assert response["status"] == 500
@@ -51,10 +50,17 @@ class TestAsgiProxyWithStubApi(BaseProxyTest):
         )
         assert response["headers"] == []
 
-    @pytest.mark.asyncio
-    async def test_asgi_proxy_get_basic(self, proxy):
+    @pytest.mark.parametrize("method", ["GET", "POST"])
+    async def test_asgi_proxy_basic_http_requests(self, proxy, method):
         await proxy.asgi_lifespan_startup()
-        response = await proxy.asgi_http_get("/echo")
+        response = await proxy.asgi_http(method, "/echo")
         assert response["status"] == 200
-        assert response["body"] == b"GET /echo"
+        assert response["body"] == method.encode("utf-8") + b" /echo"
+        assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
+
+    async def test_asgi_proxy_post_basic(self, proxy):
+        await proxy.asgi_lifespan_startup()
+        response = await proxy.asgi_http_post("/echo")
+        assert response["status"] == 200
+        assert response["body"] == b"POST /echo"
         assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)

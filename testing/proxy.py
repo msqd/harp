@@ -27,12 +27,17 @@ class TestProxy(Proxy):
         )
         await com.wait()
 
-    async def asgi_http_get(self, path, *, host=None, port=None):
-        com = HttpCommunicator(
+    def asgi_http(self, method, path, *, host=None, port=None):
+        return HttpCommunicator(
             self,
-            "GET",
+            method,
             path,
             hostname=host or self.default_host,
             port=port or self.default_port,
-        )
-        return await com.get_response()
+        ).get_response()
+
+    def asgi_http_get(self, path, *, host=None, port=None):
+        return self.asgi_http("GET", path, host=host, port=port)
+
+    def asgi_http_post(self, path, *, host=None, port=None):
+        return self.asgi_http("POST", path, host=host, port=port)
