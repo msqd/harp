@@ -29,7 +29,7 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 async def test_api(event_loop):
     shutdown_event = asyncio.Event()
     config = Config()

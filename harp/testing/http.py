@@ -1,7 +1,16 @@
+import http
+
 import pytest
 
 from harp.models.http import HTTP_METHODS
 from harp.types import Maybe, _not_set
+
+
+def parametrize_with_http_status_codes(include=None):
+    statuses = list(map(lambda x: x.value, http.HTTPStatus))
+    if include is not None:
+        statuses = list(filter(lambda x: x // 100 in include, statuses))
+    return pytest.mark.parametrize("status_code", statuses)
 
 
 def parametrize_with_http_methods(
