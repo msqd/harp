@@ -1,0 +1,25 @@
+image: alpine:3.12
+
+stages:
+  - build
+
+variables:
+  DOCKER_BUILD: docker image build --pull
+  DOCKER_BUILDKIT: "1"
+  DOCKER_CLI_EXPERIMENTAL: enabled
+  GIT_FETCH_EXTRA_FLAGS: --tags
+  GIT_STRATEGY: fetch
+  GIT_SUBMODULE_STRATEGY: recursive
+  JOB_VERSION: ci-${CI_PIPELINE_IID}
+
+.DockerBuild: &DockerBuild
+  image: docker:20
+  stage: build
+  before_script:
+    - apk add git make py3-pip py3-jinja2 bash
+
+build:
+  <<: *DockerBuild
+
+  script:
+    - bash bin/sandbox make build
