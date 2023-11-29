@@ -7,6 +7,7 @@ variables:
   DOCKER_BUILD: docker image build --pull
   DOCKER_BUILDKIT: "1"
   DOCKER_CLI_EXPERIMENTAL: enabled
+  DOCKER_HOST: tcp://docker:2375/
   GIT_FETCH_EXTRA_FLAGS: --tags
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
@@ -15,6 +16,8 @@ variables:
 .DockerBuild: &DockerBuild
   image: docker:20
   stage: build
+  services:
+    - docker:dind
   tags:
     - gitlab-org-docker
   before_script:
