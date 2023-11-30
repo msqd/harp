@@ -7,7 +7,7 @@ from harp.apis.controllers.api import ApiController
 
 
 class ManagementApplication(Application):
-    static_build_path = "/usr/local/harp/dashboard"
+    static_build_path = "/opt/harp/public"
     has_static_build = False
 
     def __init__(self, *, container: rodi.Container):
