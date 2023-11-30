@@ -7,6 +7,7 @@ PYTEST ?= $(shell which pytest || echo "pytest")
 DOCKER ?= $(shell which docker || echo "docker")
 DOCKER_IMAGE ?= $(NAME)
 DOCKER_TAGS ?=
+DOCKER_BUILD_OPTIONS ?=
 
 
 ########################################################################################################################
@@ -64,10 +65,14 @@ test-frontend: install-frontend lint-frontend
 # Docker builds
 ########################################################################################################################
 
-.PHONY: build push release
+.PHONY: build build-dev push release run
 
 build:
-	$(DOCKER) build -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)) .
+	$(DOCKER) build --progress=plain $(DOCKER_BUILD_OPTIONS) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)) .
+
+build-dev:
+	poetry export --with=dev -f requirements.txt --output requirements.$@.txt
+	DOCKER_IMAGE=$(DOCKER_IMAGE)-dev DOCKER_BUILD_OPTIONS=--target=build-dev $(MAKE) build
 
 push:
 	for tag in $(VERSION) $(DOCKER_TAGS); do \
@@ -76,3 +81,15 @@ push:
 
 release:
 	DOCKER_IMAGE=makersquad/$(NAME) DOCKER_TAGS=latest bin/sandbox $(MAKE) test-full build push
+
+run:
+	$(DOCKER) run -it -p 4080:4080 --rm $(DOCKER_IMAGE)
+
+run-shell:
+	$(DOCKER) run -it -p 4080:4080 --rm $(DOCKER_IMAGE) ash -l
+
+run-dev:
+	DOCKER_IMAGE=$(DOCKER_IMAGE)-dev $(MAKE) run
+
+run-dev-shell:
+	DOCKER_IMAGE=$(DOCKER_IMAGE)-dev $(MAKE) run-shell

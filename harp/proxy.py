@@ -158,10 +158,13 @@ class Proxy:
             transaction.response.content = response_content
 
 
+_default = object()
+
+
 class ProxyFactory:
     ProxyType = Proxy
 
-    def __init__(self, *, settings=None, port=4000, ui=True, ui_port=4080, ProxyType=None):
+    def __init__(self, *, settings=None, port=4000, ui=True, ui_port=_default, ProxyType=None):
         self.config = create_config(settings)
         self.container = create_container(self.config)
 
@@ -186,6 +189,11 @@ class ProxyFactory:
             self.add(**_port_config, port=port)
 
         if ui:
+            # self.config['dashboard_enabled']
+            if "dashboard_port" in self.config:
+                ui_port = self.config["dashboard_port"]
+            if ui_port is _default:
+                ui_port = 4080
             endpoint = ProxyEndpoint("http://localhost:4999/", name="ui")
             self.ports[ui_port or self.next_available_port()] = endpoint
 
