@@ -97,12 +97,14 @@ RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
 
 USER harp
 WORKDIR /opt/harp
-COPY --from=backend-builder /opt/venv /opt/venv
-COPY --from=frontend-builder /sources/frontend/dist /opt/harp/public
-
-#RUN --mount=type=cache,target=/wheels,sharing=locked pip install --no-index --find-links=/wheels harp
 
 COPY --from=backend-builder /opt/harp/src/harp/examples/default.py /opt/harp/entrypoint.py
 
+COPY --from=backend-builder /opt/venv /opt/venv
+COPY --from=frontend-builder /sources/frontend/dist /opt/harp/public
+
+COPY --from=backend-builder /opt/harp/src /opt/harp/src
+RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
+    pip install -e src
 
 CMD [ "/opt/venv/bin/python", "/opt/harp/entrypoint.py" ]
