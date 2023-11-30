@@ -48,6 +48,7 @@ RELEASE=$SANDBOX/release
 (cd $SANDBOX/release; git submodule update --init --recursive)
 (cd $SANDBOX/release; rm -rf .git)
 (cd $SANDBOX/release; touch .env)
+(cd $SANDBOX/release; echo $VERSION > version.txt)
 
 # Execute
 (cd $RELEASE; "$@")

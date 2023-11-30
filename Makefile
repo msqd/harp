@@ -70,7 +70,6 @@ test-frontend: install-frontend lint-frontend
 
 build:
 	poetry export -f requirements.txt --output requirements.$@.txt
-	echo $(VERSION) > version.txt
 	$(DOCKER) build --progress=plain --target=$(DOCKER_BUILD_TARGET) $(DOCKER_BUILD_OPTIONS) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)) .
 
 build-dev:
