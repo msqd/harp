@@ -5,9 +5,9 @@ FROM python:3.11-alpine as base-builder
 ENV PATH="/opt/venv/bin:$PATH"
 
 USER root
-RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
+RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apk,sharing=locked \
-    apk add gcc musl-dev libffi-dev \
+    apk add gcc musl-dev libffi-dev make \
     && adduser -D harp -G www-data -h /opt/harp -u 500  \
     && mkdir -p /opt/harp /opt/venv \
     && python3.11 -m venv /opt/venv \
@@ -38,6 +38,7 @@ RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
 FROM base-builder as development
 
 USER root
+WORKDIR /root
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     --mount=type=cache,target=/root/.cache,sharing=locked \
     apk add 'nodejs<19' npm \
@@ -50,7 +51,8 @@ RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
     pip install -r /tmp/requirements.txt
 ADD --chown=harp:www-data . src
 RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
-    pip install -e src[dev] \
+    chown -R harp .cache \
+    && pip install -e src[dev] \
     && (cd src/vendors/mkui; pnpm install) \
     && (cd src/frontend; pnpm install)
 
@@ -62,6 +64,7 @@ RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
 FROM base-builder as frontend-builder
 
 USER root
+WORKDIR /root
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     --mount=type=cache,target=/root/.cache,sharing=locked \
     apk add 'nodejs<19' npm \
@@ -84,7 +87,8 @@ FROM python:3.11-alpine as runtime
 ENV PATH="/opt/venv/bin:$PATH"
 
 USER root
-RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
+WORKDIR /root
+RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apk,sharing=locked \
     apk add gcc musl-dev libffi-dev \
     && adduser -D harp -G www-data -h /opt/harp -u 500  \

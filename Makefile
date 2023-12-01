@@ -6,7 +6,9 @@ PYTEST ?= $(shell which pytest || echo "pytest")
 
 DOCKER ?= $(shell which docker || echo "docker")
 DOCKER_IMAGE ?= $(NAME)
+DOCKER_IMAGE_DEV ?= $(NAME)-dev
 DOCKER_TAGS ?=
+DOCKER_TAGS_SUFFIX ?=
 DOCKER_BUILD_OPTIONS ?=
 DOCKER_BUILD_TARGET ?= runtime
 
@@ -73,16 +75,19 @@ test-frontend: install-frontend lint-frontend
 
 build:
 	poetry export -f requirements.txt --output requirements.$@.txt
-	$(DOCKER) build --progress=plain --target=$(DOCKER_BUILD_TARGET) $(DOCKER_BUILD_OPTIONS) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)) .
+	$(DOCKER) build --progress=plain --target=$(DOCKER_BUILD_TARGET) $(DOCKER_BUILD_OPTIONS) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .
 
 build-dev:
 	poetry export --with=dev -f requirements.txt --output requirements.$@.txt
-	DOCKER_IMAGE=$(DOCKER_IMAGE)-dev DOCKER_BUILD_TARGET=development $(MAKE) build
+	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) DOCKER_BUILD_TARGET=development $(MAKE) build
 
 push:
 	for tag in $(VERSION) $(DOCKER_TAGS); do \
-		$(DOCKER) image push $(DOCKER_IMAGE):$$tag; \
+		$(DOCKER) image push $(DOCKER_IMAGE):$$tag$(DOCKER_TAGS_SUFFIX); \
 	done
+
+push-dev:
+	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) push
 
 release:
 	DOCKER_IMAGE=makersquad/$(NAME) DOCKER_TAGS=latest bin/sandbox $(MAKE) test-full build push
@@ -94,7 +99,7 @@ run-shell:
 	$(DOCKER) run -it -p 4080:4080 --rm $(DOCKER_IMAGE) ash -l
 
 run-dev:
-	DOCKER_IMAGE=$(DOCKER_IMAGE)-dev $(MAKE) run
+	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) run
 
 run-dev-shell:
-	DOCKER_IMAGE=$(DOCKER_IMAGE)-dev $(MAKE) run-shell
+	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) run-shell
