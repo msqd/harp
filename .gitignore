@@ -2,6 +2,7 @@
 *.cover
 *.egg
 *.egg-info/
+*.iml
 *.log
 *.manifest
 *.mo
@@ -38,6 +39,7 @@
 .venv
 .webassets-cache
 /.vscode/
+/requirements*.txt
 /site
 ENV/
 MANIFEST

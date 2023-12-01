@@ -1,6 +1,10 @@
 # Configuration file for the Sphinx documentation builder.
 
+import os
+import sys
 from datetime import datetime
+
+sys.path.insert(0, os.path.abspath(".."))
 
 project = "Harp Proxy"
 
@@ -13,8 +17,10 @@ release = "1.0"
 
 extensions = [
     "sphinx_design",
-    "sphinxcontrib.jquery",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.todo",
+    "sphinxcontrib.jquery",
 ]
 
 templates_path = ["_templates"]

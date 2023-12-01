@@ -1,4 +1,5 @@
 import logging
+import pprint
 import traceback
 from collections import defaultdict
 from copy import deepcopy
@@ -33,6 +34,7 @@ class Proxy:
 
     def __init__(self, *, endpoints, container):
         self._endpoints = endpoints
+        logger.info(pprint.pformat(self._endpoints))
         self.app = ManagementApplication(container=container)
 
     async def __call__(self, scope, receive, send):
@@ -185,8 +187,9 @@ class ProxyFactory:
                 if _prop not in ("name", "target"):
                     raise ProxyError(f"Invalid endpoint property {_prop}.")
                 _ports[_port][_prop] = v
+
         for _port, _port_config in _ports.items():
-            self.add(**_port_config, port=port)
+            self.add(**_port_config, port=_port)
 
         if ui:
             # self.config['dashboard_enabled']
@@ -195,7 +198,7 @@ class ProxyFactory:
             if ui_port is _default:
                 ui_port = 4080
             endpoint = ProxyEndpoint("http://localhost:4999/", name="ui")
-            self.ports[ui_port or self.next_available_port()] = endpoint
+            self.ports[int(ui_port or self.next_available_port())] = endpoint
 
     def next_available_port(self):
         while self._next_available_port in self.ports:

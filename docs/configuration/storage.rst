@@ -18,27 +18,6 @@ use. Engine specific settings are documented under each section below.
           engine: <name>
           ...
 
-    .. code-block:: python
-
-        from harp import ProxyFactoy
-
-        settings = {
-            'storage': {
-                'engine': '<name>',
-                ...
-            }
-        }
-
-        proxy = ProxyFactory(settings=settings)
-
-        if __name__ == "__main__":
-            proxy.run()
-
-    .. code-block:: env
-
-        export HARP_STORAGE_ENGINE=<name>
-        ...
-
     .. code-block:: json
 
         {
@@ -59,6 +38,27 @@ use. Engine specific settings are documented under each section below.
         [storage]
         engine = <name>
         ...
+
+    .. code-block:: env
+
+        export HARP_STORAGE_ENGINE=<name>
+        ...
+
+    .. code-block:: python
+
+        from harp import ProxyFactoy
+
+        settings = {
+            'storage': {
+                'engine': '<name>',
+                ...
+            }
+        }
+
+        proxy = ProxyFactory(settings=settings)
+
+        if __name__ == "__main__":
+            proxy.run()
 
 .. attribute:: storage.engine
 

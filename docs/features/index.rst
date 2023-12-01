@@ -18,7 +18,7 @@ Start here.
 Common features
 :::::::::::::::
 
-You may neede those quite often, and those are pre-configured with reasonable and respectful defaults.
+You may need this quite often although it's pre-configured with reasonable and respectful defaults.
 
 .. toctree::
    :maxdepth: 1
