@@ -80,3 +80,4 @@ var/
 venv.bak/
 venv/
 wheels/
+.python-version
