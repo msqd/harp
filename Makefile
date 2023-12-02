@@ -17,7 +17,7 @@ DOCKER_BUILD_TARGET ?= runtime
 # Local development
 ########################################################################################################################
 
-.PHONY: start install install-frontend install-backend install-ui
+.PHONY: start install install-frontend install-backend install-ui clean
 
 start: install-frontend install-backend
 	$(HONCHO) start
@@ -33,16 +33,22 @@ install-backend:
 install-ui:
 	cd vendors/mkui; pnpm install
 
+clean:
+	rm -rf docs/reference
+
+docs/reference: harp
+	sphinx-apidoc -o $@ harp
+	sed "1s/.*/Reference/" docs/reference/modules.rst > docs/reference/index.rst
+	rm docs/reference/modules.rst
+
+
 ########################################################################################################################
 # QA, tests and other CI/CD related stuff
 ########################################################################################################################
 
 .PHONY: qa format test test-ui test-ui-update test-back lint-frontend test-frontend test-full
 
-qa: format docs/reference test-full
-
-docs/reference: harp
-	sphinx-apidoc -o $@ harp
+qa: clean format docs/reference test-full
 
 format: install-frontend
 	cd frontend; pnpm prettier -w src

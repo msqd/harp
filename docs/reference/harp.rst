@@ -29,6 +29,14 @@ harp.errors module
    :undoc-members:
    :show-inheritance:
 
+harp.factory module
+-------------------
+
+.. automodule:: harp.factory
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 harp.filter module
 ------------------
 
