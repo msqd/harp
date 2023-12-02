@@ -1,5 +1,5 @@
 from ._logging import get_logger
-from .proxy import ProxyFactory
+from .factory import ProxyFactory
 
 __all__ = [
     ProxyFactory,
