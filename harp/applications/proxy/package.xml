@@ -1,0 +1,3 @@
+<package id="harp.proxy">
+    <controller id="HttpProxy" src="controllers.http_proxy.HttpProxyController" />
+</package>

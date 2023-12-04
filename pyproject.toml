@@ -28,6 +28,8 @@ structlog = "^23.1.0"
 svix-ksuid = "^0.6.2"
 asgiref = "^3.7.2"
 asgi-tools = "^0.76.0"
+whistle = "^1.0.1"
+aiosqlite = "^0.19.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.7.0"
@@ -42,6 +44,7 @@ sphinx-autobuild = "^2021.3.14"
 sphinx-design = "^0.5.0"
 sphinxcontrib-jquery = "^4.1"
 watchfiles = "^0.21.0"
+respx = "^0.20.2"
 
 [tool.poetry.scripts]
 harp = 'harp.cli:entrypoint'
@@ -55,6 +58,7 @@ line-length = 120
 [tool.isort]
 line_length = 120
 py_version = 311
+profile = "black"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

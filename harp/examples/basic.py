@@ -8,8 +8,9 @@ proxy = ProxyFactory(
     }
 )
 
-proxy.add("https://api-adresse.data.gouv.fr/", port=4000, name="api-adresse")
-proxy.add("https://api-adresse.data.gouv.fr/", port=4001, name="api-adresse (2)")
+proxy.add(4000, "https://api-adresse.data.gouv.fr/", name="api-adresse")
+proxy.add(4001, "https://api-adresse.data.gouv.fr/", name="api-adresse (2)")
+
 
 if __name__ == "__main__":
-    proxy.run()
+    proxy.serve()

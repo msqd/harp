@@ -2,8 +2,8 @@ from harp import ProxyFactory
 
 proxy = ProxyFactory()
 
-proxy.add("https://pypi.org/", port=9001, name="pypi")
-proxy.add("https://registry.npmjs.org/", port=9002, name="npm")
+proxy.add(9001, "https://pypi.org/", name="pypi")
+proxy.add(9002, "https://registry.npmjs.org/", name="npm")
 
 if __name__ == "__main__":
-    proxy.run()
+    proxy.serve()

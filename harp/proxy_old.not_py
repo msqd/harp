@@ -1,0 +1,199 @@
+import traceback
+from functools import cached_property
+
+import httpx
+from httpx._status_codes import codes
+from whistle import EventDispatcher
+
+from harp import get_logger
+from harp.apis.asgi import ManagementApplication
+from harp.core.asgi import AsgiContext as DefaultAsgiContext
+from harp.core.asgi import RequestEvent, asgi
+from harp.errors import EndpointNotFound, ProxyError
+from harp.models.proxy_endpoint import ProxyEndpoint
+from harp.models.request import TransactionRequest
+from harp.models.response import TransactionResponse
+from harp.models.transaction import Transaction
+from harp.services.http import client
+from harp.services.storage.base import Storage
+
+auto = object()
+
+
+logger = get_logger(__name__)
+
+
+def readonly(x):
+    return cached_property(lambda self: x)
+
+
+class Proxy:
+    AsgiContext = DefaultAsgiContext
+
+    @cached_property
+    def service_provider(self):
+        try:
+            return self.app.service_provider
+        except TypeError as exc:
+            raise RuntimeError(
+                "Cannot access service provider, the lifespan.startup asgi event probably never went through."
+            ) from exc
+
+    @cached_property
+    def storage(self):
+        """Storage service."""
+        return self.service_provider.get(Storage)
+
+    def __init__(self, *, endpoints, container):
+        """Constructor."""
+        self._endpoints = endpoints
+        self.dispatcher = EventDispatcher()
+        self.app = ManagementApplication(container=container)
+
+    async def __call__(self, scope, receive, send):
+        """Raw ASGI handler (async).
+
+        :param scope:
+        :param receive:
+        :param send:
+        :return: response
+        """
+        with self.AsgiContext(scope, receive, send) as ctx:
+            try:
+                if ctx.type == "lifespan":
+                    return await self.app(ctx.scope, ctx.receive, ctx.send)
+                elif ctx.type == "http":
+                    return await self.handle_http_request(ctx)
+                else:
+                    raise ProxyError(f"Unsupported scope type: {ctx.type}")
+            except EndpointNotFound:
+                return await self.not_found(ctx, f"No endpoint found for port {ctx.server_port}.")
+            except Exception as exc:
+                logger.exception(exc)
+                return await self.server_error(ctx, f"Unhandled server error: {str(exc)}")
+
+    async def not_found(self, ctx: AsgiContext, message="Not found."):
+        """
+        Build and send a 404 response to the given asgi context.
+
+        """
+        return await ctx.send_all(
+            asgi.http.response.start(status=404),
+            asgi.http.response.body(body=bytes(message, "utf-8")),
+        )
+
+    async def server_error(self, ctx: AsgiContext, message="Server error."):
+        """
+        Build and send a 500 response to the given asgi context.
+
+        """
+        return await ctx.send_all(
+            asgi.http.response.start(status=500),
+            asgi.http.response.body(body=bytes(message, "utf-8")),
+        )
+
+    async def get_proxy_endpoint_from_asgi_context(self, ctx: AsgiContext) -> ProxyEndpoint:
+        try:
+            return self._endpoints[ctx.server_port]
+        except KeyError as exc:
+            raise EndpointNotFound() from exc
+
+    def filter_response(self, response, request):
+        event = RequestEvent(request, response)
+        self.dispatcher.dispatch("harp.response", event)
+        return event.get_response()
+
+    def get_controller(self, request):
+        return ...
+
+    async def handle2_http_request(self, request):
+        # request
+        event = RequestEvent(request)  # ref to self ?
+        self.dispatcher.dispatch("harp.request", event)
+        if event.response:
+            return self.filter_response(request, event.response)
+
+        # controller
+        controller = self.get_controller(request)
+        if not controller:
+            raise RuntimeError("Unable to find controller for request.")
+        event = RequestEvent(request, controller)
+        self.dispatcher.dispatch("harp.controller", event)
+        controller = event.controller
+
+        # generate response
+        response = controller(request)
+
+        return self.filter_response(request, response)
+
+    async def handle_http_request(self, ctx: AsgiContext):
+        """Main handler for HTTP requests."""
+        endpoint = await self.get_proxy_endpoint_from_asgi_context(ctx)
+
+        # special case for ui endpoint, should become something more generic at some point but does the job for now
+        # 2 cases: either the ui is served from the static build, or it's proxied to dev server. The later will use
+        # the standard proxy code while the former delegates frontend app assets to the blacksheep static file handler.
+        if endpoint.name == "ui" and (self.app.has_static_build or ctx.scope["path"].startswith("/api/")):
+            return await self.app(ctx.scope, ctx.receive, ctx.send)
+
+        # retrieve the proxy target for this request, a.k.a. where and what to forward
+        proxy_target = endpoint.get_target(ctx.scope)
+        logger.info(f"◀ {proxy_target.method} {proxy_target.path}")
+
+        with self.storage.store(
+            Transaction(endpoint=endpoint), mode="ignore" if endpoint.name == "ui" else "save"
+        ) as transaction:
+            ## REQUEST (from client)
+            transaction.request = TransactionRequest.from_proxy_target(proxy_target)
+            try:
+                transaction.request.content = await ctx._extract_request_content()
+                logger.info(
+                    f"▶▶ {transaction.request.method} {transaction.request.url}", **transaction.request.asdict()
+                )
+                request: httpx.Request = client.build_request(
+                    transaction.request.method,
+                    transaction.request.url,
+                    headers=transaction.request.headers,
+                    content=transaction.request.content,
+                )
+                ### SEND REQUEST (to remote endpoint)
+                response: httpx.Response = await client.send(request)
+
+                transaction.elapsed = response.elapsed
+                logger.info(
+                    f"◀◀ {response.status_code} {response.reason_phrase} ({transaction.elapsed.total_seconds()}s)"
+                )
+            except Exception as exc:
+                logger.info(f"▶ 503 {codes.get_reason_phrase(503)}")
+                tb = "\n".join(traceback.format_exception(exc))
+                return await ctx.send_all(
+                    asgi.http.response.start(status=503),
+                    asgi.http.response.body(
+                        body=bytes(f"<h1>503 - Service Unavailable<h1>\n<pre>{tb}</pre>", "utf-8"),
+                    ),
+                )
+
+            # TODO content encoding removed because of gzip. we should handle that
+            # TODO contant length removed because some api sends bullshit here that we cannot reuse
+            headers = tuple(
+                (
+                    (k, v)
+                    for k, v in response.headers.raw
+                    if k.lower() not in (b"server", b"date", b"content-encoding", b"content-length")
+                )
+            )
+
+            logger.info(
+                f"▶ {response.status_code} {codes.get_reason_phrase(response.status_code)}",
+                **dict((k.decode("utf-8"), v.decode("utf-8")) for k, v in headers),
+            )
+
+            ### SEND RESPONSE (to client)
+            await ctx.send(asgi.http.response.start(status=response.status_code, headers=headers))
+            transaction.response = TransactionResponse(
+                status_code=response.status_code, headers=headers, content=response.content
+            )
+
+            response_content = response.content
+            await ctx.send(asgi.http.response.body(body=response_content))
+            transaction.response.content = response_content

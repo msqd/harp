@@ -1,11 +1,11 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
+from ..utils.guids import generate_transaction_id_ksuid
 from .base import Entity
 from .proxy_endpoint import ProxyEndpoint
 from .request import TransactionRequest
 from .response import TransactionResponse
-from .utils import generate_transaction_id_ksuid
 
 
 @dataclass

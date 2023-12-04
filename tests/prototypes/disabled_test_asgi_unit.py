@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 import httpx
 import pytest
 
+from harp.applications.proxy import Proxy
 from harp.models.proxy_endpoint import ProxyEndpoint
-from harp.proxy import Proxy
 
 
 class AsyncMock(MagicMock):

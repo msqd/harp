@@ -13,7 +13,7 @@ def entrypoint():
     pass
 
 
-@click.command()
+@click.command(short_help="Starts the development environment.")
 @click.option("--with-docs/--no-docs", default=False)
 @click.option("--with-ui/--no-ui", default=False)
 def start(with_docs, with_ui):

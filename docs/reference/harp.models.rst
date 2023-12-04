@@ -13,14 +13,6 @@ Subpackages
 Submodules
 ----------
 
-harp.models.http module
------------------------
-
-.. automodule:: harp.models.http
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 harp.models.message module
 --------------------------
 
@@ -57,14 +49,6 @@ harp.models.transaction module
 ------------------------------
 
 .. automodule:: harp.models.transaction
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-harp.models.utils module
-------------------------
-
-.. automodule:: harp.models.utils
    :members:
    :undoc-members:
    :show-inheritance:

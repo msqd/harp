@@ -1,0 +1,3 @@
+<package>
+    <requirement>sentry-sdk&gt;=1.38,&lt;2</requirement>
+</package>

@@ -5,106 +5,120 @@ import os
 
 import pytest
 
-from harp.testing.base import BaseProxyTest, TestProxy
-from harp.testing.http import parametrize_with_http_methods, parametrize_with_http_status_codes
-from harp.utils.network import get_available_network_port
+from harp.applications.proxy.controllers.http_proxy import HttpProxyController
+from harp.core.asgi.kernel import ASGIKernel
+from harp.core.asgi.resolvers import ProxyControllerResolver
+from harp.core.factories.proxy import ProxyFactory
+from harp.utils.testing.communicators import ASGICommunicator
+from harp.utils.testing.http import parametrize_with_http_methods, parametrize_with_http_status_codes
 
 
-class TestAsgiProxyWithoutEndpoints(BaseProxyTest):
+class TestAsgiProxyWithoutEndpoints:
     """
     A proxy without configured endpoint will send back 404 responses.
 
     """
 
     @pytest.fixture
-    def proxy(self):
-        factory = self.create_proxy_factory()
-        return factory.create()
+    def kernel(self):
+        return ASGIKernel()
+
+    @pytest.fixture
+    async def client(self, kernel):
+        client = ASGICommunicator(kernel)
+        await client.asgi_lifespan_startup()
+        return client
 
     @pytest.mark.asyncio
-    async def test_asgi_proxy_get_no_endpoint(self, proxy):
-        response = await proxy.asgi_http_get("/")
+    async def test_asgi_proxy_get_no_endpoint(self, client):
+        response = await client.http_get("/")
         assert response["status"] == 404
-        assert response["body"] == b"No endpoint found for port 80."
-        assert response["headers"] == []
+        assert response["body"] == b"Not found."
+        assert response["headers"] == ((b"x-powered-by", b"harp"), (b"content-type", b"text/plain"))
 
 
-class TestAsgiProxyWithMissingStartup(BaseProxyTest):
-    @pytest.fixture(scope="class")
-    def proxy(self, test_api):
-        factory = self.create_proxy_factory()
-        proxy_port = get_available_network_port()
-        factory.add(test_api.url, port=proxy_port, name="default")
-        return factory.create(default_host="proxy.localhost", default_port=proxy_port)
+class TestAsgiProxyWithMissingStartup:
+    @pytest.fixture
+    def kernel(self, test_api):
+        resolver = ProxyControllerResolver()
+        resolver.add(80, HttpProxyController(test_api.url))
+        return ASGIKernel(resolver=resolver)
 
-    async def test_missing_lifecycle_startup(self, proxy):
-        response = await proxy.asgi_http_get("/echo")
+    @pytest.fixture
+    async def client(self, kernel):
+        return ASGICommunicator(kernel)
+
+    async def test_missing_lifecycle_startup(self, client):
+        response = await client.http_get("/echo")
         assert response["status"] == 500
         assert response["body"] == (
             b"Unhandled server error: Cannot access service provider, the lifespan.startup asgi event probably never "
             b"went through."
         )
-        assert response["headers"] == []
+        assert response["headers"] == ((b"x-powered-by", b"harp"), (b"content-type", b"text/plain"))
 
 
-class TestAsgiProxyWithStubApi(BaseProxyTest):
+class TestAsgiProxyWithStubApi:
     """
     A proxy with an endpoint configured will forward requests to the api, if it has been started first (see asgi's
     lifespan.startup event).
 
     """
 
-    @pytest.fixture(scope="class")
-    async def proxy(self, test_api):
-        factory = self.create_proxy_factory()
-        proxy_port = get_available_network_port()
-        factory.add(test_api.url, port=proxy_port, name="default")
-        proxy = factory.create(default_host="proxy.localhost", default_port=proxy_port)
-        await proxy.asgi_lifespan_startup()
-        return proxy
+    @pytest.fixture
+    def kernel(self, test_api):
+        factory = ProxyFactory()
+        factory.add(80, test_api.url)
+        return factory.create(responder_kwargs={"default_headers": {}})
+
+    @pytest.fixture
+    async def client(self, kernel):
+        client = ASGICommunicator(kernel)
+        await client.asgi_lifespan_startup()
+        return client
 
     @parametrize_with_http_methods(include_non_standard=True, exclude=("CONNECT", "HEAD"))
-    async def test_all_methods(self, proxy: TestProxy, method):
-        response = await proxy.asgi_http(method, "/echo")
+    async def test_all_methods(self, client: ASGICommunicator, method):
+        response = await client.http_request(method, "/echo")
         assert response["status"] == 200
         assert response["body"] == method.encode("utf-8") + b" /echo"
         assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
 
-    async def test_head_request(self, proxy: TestProxy):
-        response = await proxy.asgi_http_head("/echo")
+    async def test_head_request(self, client: ASGICommunicator):
+        response = await client.asgi_http_head("/echo")
         assert response["status"] == 200
         assert response["body"] == b""
         assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
 
     @parametrize_with_http_methods(include_having_request_body=True)
-    async def test_requests_with_body(self, proxy: TestProxy, method):
-        response = await proxy.asgi_http(method, "/echo/body", body=b"Hello, world.")
+    async def test_requests_with_body(self, client: ASGICommunicator, method):
+        response = await client.http_request(method, "/echo/body", body=b"Hello, world.")
         assert response["status"] == 200
         assert response["body"] == method.encode("utf-8") + b" /echo/body\nb'Hello, world.'"
         assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
 
     @parametrize_with_http_methods(include_having_request_body=True)
-    async def test_requests_with_binary_body(self, proxy: TestProxy, method):
+    async def test_requests_with_binary_body(self, client: ASGICommunicator, method):
         body = bytes(os.urandom(8))
-        response = await proxy.asgi_http(method, "/echo/body", body=body)
+        response = await client.http_request(method, "/echo/body", body=body)
         assert response["status"] == 200
         assert response["body"] == method.encode("utf-8") + b" /echo/body\n" + repr(body).encode("ascii")
         assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
 
     @parametrize_with_http_methods(include_having_response_body=True, include_maybe_having_response_body=True)
-    async def test_requests_with_response_body(self, proxy: TestProxy, method):
-        response = await proxy.asgi_http(method, "/binary")
+    async def test_requests_with_response_body(self, client: ASGICommunicator, method):
+        response = await client.http_request(method, "/binary")
         assert response["status"] == 200
         assert len(response["body"]) == 32
         assert response["headers"] == ((b"content-type", b"application/octet-stream"),)
 
     @parametrize_with_http_status_codes(include=(2, 3, 4, 5))
     @parametrize_with_http_methods(exclude={"CONNECT", "HEAD"})
-    async def test_response_status(self, proxy: TestProxy, method, status_code):
-        response = await proxy.asgi_http(method, f"/status/{status_code}")
+    async def test_response_status(self, client: ASGICommunicator, method, status_code):
+        response = await client.http_request(method, f"/status/{status_code}")
         assert response["status"] == status_code
 
     @parametrize_with_http_methods(exclude={"CONNECT", "HEAD"})
-    async def test_headers(self, proxy: TestProxy, method):
-        response = await proxy.asgi_http(method, "/headers")
+    async def test_headers(self, client: ASGICommunicator, method):
+        response = await client.http_request(method, "/headers")
         assert response["headers"] == ((b"X-Foo", b"Bar"), (b"content-type", b"application/octet-stream"))
