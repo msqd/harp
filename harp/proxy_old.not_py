@@ -78,8 +78,8 @@ class Proxy:
 
         """
         return await ctx.send_all(
-            asgi.http.response.start(status=404),
-            asgi.http.response.body(body=bytes(message, "utf-8")),
+            asgi.http.responder.start(status=404),
+            asgi.http.responder.body(body=bytes(message, "utf-8")),
         )
 
     async def server_error(self, ctx: AsgiContext, message="Server error."):
@@ -88,8 +88,8 @@ class Proxy:
 
         """
         return await ctx.send_all(
-            asgi.http.response.start(status=500),
-            asgi.http.response.body(body=bytes(message, "utf-8")),
+            asgi.http.responder.start(status=500),
+            asgi.http.responder.body(body=bytes(message, "utf-8")),
         )
 
     async def get_proxy_endpoint_from_asgi_context(self, ctx: AsgiContext) -> ProxyEndpoint:
@@ -110,8 +110,8 @@ class Proxy:
         # request
         event = RequestEvent(request)  # ref to self ?
         self.dispatcher.dispatch("harp.request", event)
-        if event.response:
-            return self.filter_response(request, event.response)
+        if event.responder:
+            return self.filter_response(request, event.responder)
 
         # controller
         controller = self.get_controller(request)
@@ -167,8 +167,8 @@ class Proxy:
                 logger.info(f"▶ 503 {codes.get_reason_phrase(503)}")
                 tb = "\n".join(traceback.format_exception(exc))
                 return await ctx.send_all(
-                    asgi.http.response.start(status=503),
-                    asgi.http.response.body(
+                    asgi.http.responder.start(status=503),
+                    asgi.http.responder.body(
                         body=bytes(f"<h1>503 - Service Unavailable<h1>\n<pre>{tb}</pre>", "utf-8"),
                     ),
                 )
@@ -189,11 +189,11 @@ class Proxy:
             )
 
             ### SEND RESPONSE (to client)
-            await ctx.send(asgi.http.response.start(status=response.status_code, headers=headers))
-            transaction.response = TransactionResponse(
+            await ctx.send(asgi.http.responder.start(status=response.status_code, headers=headers))
+            transaction.responder = TransactionResponse(
                 status_code=response.status_code, headers=headers, content=response.content
             )
 
             response_content = response.content
-            await ctx.send(asgi.http.response.body(body=response_content))
-            transaction.response.content = response_content
+            await ctx.send(asgi.http.responder.body(body=response_content))
+            transaction.responder.content = response_content

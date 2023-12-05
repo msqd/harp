@@ -7,8 +7,18 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   harp.applications.proxy.controllers
    harp.applications.proxy.tests
+
+Submodules
+----------
+
+harp.applications.proxy.controllers module
+------------------------------------------
+
+.. automodule:: harp.applications.proxy.controllers
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

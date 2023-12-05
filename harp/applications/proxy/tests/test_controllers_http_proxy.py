@@ -4,7 +4,7 @@ import pytest
 import respx
 from httpx import Response
 
-from harp.applications.proxy.controllers.http_proxy import HttpProxyController
+from harp.applications.proxy.controllers import HttpProxyController
 from harp.core.asgi.requests import ASGIRequest
 from harp.core.asgi.responders import ASGIResponder
 

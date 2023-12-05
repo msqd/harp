@@ -1,13 +1,16 @@
 harp.applications.api package
 =============================
 
-Subpackages
------------
+Submodules
+----------
 
-.. toctree::
-   :maxdepth: 4
+harp.applications.api.controllers module
+----------------------------------------
 
-   harp.applications.api.controllers
+.. automodule:: harp.applications.api.controllers
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

@@ -7,6 +7,16 @@ from harp import get_logger
 logger = get_logger(__name__)
 
 
+EVENT_CORE_CONTROLLER = "core.controller"
+EVENT_CORE_REQUEST = "core.request"
+EVENT_CORE_RESPONSE = "core.response"
+EVENT_CORE_STARTED = "core.startup"
+EVENT_CORE_VIEW = "core.view"
+EVENT_TRANSACTION_ENDED = "transaction.ended"
+EVENT_TRANSACTION_STARTED = "transaction.started"
+EVENT_TRANSACTION_MESSAGE = "transaction.message"
+
+
 class BaseASGIEvent(Event):
     dispatcher = None
     name = None
@@ -35,14 +45,20 @@ class ControllerEvent(RequestEvent):
         self._controller = controller
 
 
-class ResponseEvent(RequestEvent):
-    def __init__(self, request, response):
+class ResponderEvent(RequestEvent):
+    def __init__(self, request, responder):
         super().__init__(request)
-        self._response = response
+        self.responder = responder
+
+
+class ViewEvent(ResponderEvent):
+    def __init__(self, request, responder, value):
+        super().__init__(request, responder)
+        self._value = value
 
     @property
-    def response(self):
-        return self._response
+    def value(self):
+        return self._value
 
 
 class AsyncEventDispatcher(EventDispatcher):
@@ -68,9 +84,17 @@ class AsyncEventDispatcher(EventDispatcher):
 
 
 class LoggingAsyncEventDispatcher(AsyncEventDispatcher):
+    def __init__(self):
+        super().__init__()
+        self.level = 0
+
     async def dispatch(self, event_id, event=None):
         logger.info(f"⚡ {event_id} ({type(event).__name__})")
-        return await super().dispatch(event_id, event)
+        try:
+            self.level += 1
+            return await super().dispatch(event_id, event)
+        finally:
+            self.level -= 1
 
 
 class TransactionEvent(Event):

@@ -1,6 +1,14 @@
 harp.core.factories package
 ===========================
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   harp.core.factories.events
+
 Submodules
 ----------
 

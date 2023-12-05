@@ -20,6 +20,22 @@ harp.contrib.sqlite\_storage.events module
    :undoc-members:
    :show-inheritance:
 
+harp.contrib.sqlite\_storage.settings module
+--------------------------------------------
+
+.. automodule:: harp.contrib.sqlite_storage.settings
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+harp.contrib.sqlite\_storage.setup module
+-----------------------------------------
+
+.. automodule:: harp.contrib.sqlite_storage.setup
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

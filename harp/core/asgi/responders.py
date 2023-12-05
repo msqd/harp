@@ -1,6 +1,8 @@
+from functools import cached_property
 from itertools import chain
 
 from asgiref.typing import ASGISendCallable
+from httpx import codes
 
 from harp.core.asgi.requests import ASGIRequest
 from harp.utils.bytes import ensure_bytes
@@ -58,3 +60,18 @@ class ASGIResponder:
 
     async def close(self):
         pass
+
+    @cached_property
+    def serialized_summary(self):
+        status = self._response["status"]
+        reason = codes.get_reason_phrase(status)
+        return f"HTTP/1.1 {status} {reason}"
+
+    @cached_property
+    def serialized_headers(self):
+        headers = self._response["headers"]
+        return "\n".join([f"{k.decode('utf-8')}: {v.decode('utf-8')}" for k, v in headers])
+
+    @cached_property
+    def serialized_body(self):
+        return self._response["body"]

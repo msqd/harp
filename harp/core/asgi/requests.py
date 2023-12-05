@@ -4,6 +4,7 @@ from functools import cached_property
 class ASGIRequest:
     def __init__(self, scope, receive):
         self._scope = scope
+        self._body = b""
         self._receive = receive
 
     async def receive(self):
@@ -45,11 +46,11 @@ class ASGIRequest:
 
     @cached_property
     def serialized_headers(self):
-        return "\n".join([f"{k}: {v}" for k, v in self.headers])
+        return "\n".join([f"{k.decode('utf-8')}: {v.decode('utf-8')}" for k, v in self.headers])
 
     @cached_property
     def serialized_body(self):
-        return b"yoyoyo"
+        return self._body
 
     def serialize(self):
         return {

@@ -4,14 +4,6 @@ harp.core.asgi package
 Submodules
 ----------
 
-harp.core.asgi.context module
------------------------------
-
-.. automodule:: harp.core.asgi.context
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 harp.core.asgi.events module
 ----------------------------
 

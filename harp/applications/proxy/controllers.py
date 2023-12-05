@@ -28,7 +28,9 @@ class HttpProxyController:
         while more_body:
             message = await request.receive()
             more_body = message.get("more_body", False)
-            messages.append(message.get("body", b""))
+            part = message.get("body", b"")
+            messages.append(part)
+            request._body += part
         return b"".join(messages) if len(messages) else None
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponder, *, transaction_id=None):

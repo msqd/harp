@@ -48,7 +48,7 @@ docs/reference: harp
 
 .PHONY: qa format test test-ui test-ui-update test-back lint-frontend test-frontend test-full
 
-qa: clean format docs/reference test-full
+qa: format clean docs/reference test-full
 
 format: install-frontend
 	cd frontend; pnpm prettier -w src

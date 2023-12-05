@@ -13,6 +13,7 @@ Subpackages
    harp.core.interfaces
    harp.core.tests
    harp.core.types
+   harp.core.views
 
 Module contents
 ---------------

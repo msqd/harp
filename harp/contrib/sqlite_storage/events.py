@@ -1,11 +1,12 @@
 import hashlib
-import time
+from datetime import datetime
 
 from whistle import Event
 
 from harp import get_logger
 from harp.contrib.sqlite_storage.connect import connect_to_sqlite
-from harp.core.asgi.events import TransactionMessageEvent
+from harp.contrib.sqlite_storage.settings import HARP_SQLITE_STORAGE
+from harp.core.asgi.events import TransactionEvent, TransactionMessageEvent
 
 logger = get_logger(__name__)
 
@@ -13,15 +14,16 @@ logger = get_logger(__name__)
 async def on_startup(event: Event):
     try:
         async with connect_to_sqlite() as db:
-            await db.execute("DROP TABLE IF EXISTS messages")
-            await db.execute("DROP TABLE IF EXISTS blobs")
-            await db.execute("DROP TABLE IF EXISTS transactions")
+            if HARP_SQLITE_STORAGE.get("drop_tables", False):
+                await db.execute("DROP TABLE IF EXISTS blobs")
+                await db.execute("DROP TABLE IF EXISTS messages")
+                await db.execute("DROP TABLE IF EXISTS transactions")
+
             await db.execute(
                 """
                 CREATE TABLE IF NOT EXISTS transactions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    uuid TEXT,
-                    started_at INTEGER
+                    id TEXT PRIMARY KEY UNIQUE,
+                    created_at TEXT
                 )
                 """
             )
@@ -29,7 +31,7 @@ async def on_startup(event: Event):
                 """
                 CREATE TABLE IF NOT EXISTS messages (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    transaction_id INTEGER,
+                    transaction_id TEXT,
                     kind TEXT,
                     summary TEXT,
                     headers TEXT,
@@ -61,21 +63,24 @@ async def insert_blob(db, content):
     return hash
 
 
-async def on_transaction_started(event: TransactionMessageEvent):
-    # event.request.
+async def on_transaction_started(event: TransactionEvent):
     async with connect_to_sqlite() as db:
-        c = await db.execute(
-            "INSERT INTO transactions (uuid, started_at) VALUES (?, ?)", (event.transaction_id, time.time())
+        await db.execute(
+            "INSERT INTO transactions (id, created_at) VALUES (?, ?)",
+            (event.transaction_id, datetime.now().isoformat()),
         )
-        transaction_id = c.lastrowid
+        await db.commit()
 
+
+async def on_transaction_message(event: TransactionMessageEvent):
+    async with connect_to_sqlite() as db:
         headers_blob_id = await insert_blob(db, event.content.serialized_headers)
         content_blob_id = await insert_blob(db, event.content.serialized_body)
 
-        c = await db.execute(
+        await db.execute(
             "INSERT INTO messages (transaction_id, kind, summary, headers, body) VALUES (?, ?, ?, ?, ?)",
             (
-                transaction_id,
+                event.transaction_id,
                 event.kind,
                 event.content.serialized_summary,
                 headers_blob_id,
@@ -85,5 +90,5 @@ async def on_transaction_started(event: TransactionMessageEvent):
         await db.commit()
 
 
-async def on_transaction_ended(event: TransactionMessageEvent):
+async def on_transaction_ended(event: TransactionEvent):
     pass
