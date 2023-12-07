@@ -1,8 +1,10 @@
 import dataclasses
 import pprint
 from datetime import datetime
+from typing import List
 
 from harp.core.models.base import Entity
+from harp.core.models.messages import Message
 
 
 @dataclasses.dataclass(kw_only=True)
@@ -12,6 +14,7 @@ class Transaction(Entity):
     started_at: datetime
     finished_at: datetime = None
     ellapsed: float = None
+    messages: List[Message] = None
 
 
 if __name__ == "__main__":

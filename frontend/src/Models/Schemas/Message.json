@@ -5,8 +5,12 @@
     "type": {
       "type": "string"
     },
-    "content": {}
+    "content": {},
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
   },
-  "description": "Message(type: str, content: Any)",
+  "description": "Message(type: str, content: Any, created_at: datetime.datetime = None)",
   "$schema": "http://json-schema.org/draft-06/schema#"
 }

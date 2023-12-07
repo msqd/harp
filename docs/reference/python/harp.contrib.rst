@@ -8,7 +8,7 @@ Subpackages
    :maxdepth: 4
 
    harp.contrib.sentry
-   harp.contrib.sqlite_storage
+   harp.contrib.sqlalchemy_storage
 
 Module contents
 ---------------

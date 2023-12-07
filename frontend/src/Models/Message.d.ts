@@ -6,10 +6,11 @@
  */
 
 /**
- * Message(type: str, content: Any)
+ * Message(type: str, content: Any, created_at: datetime.datetime = None)
  */
 export interface Message {
   type: string
   content: unknown
+  created_at?: string
   [k: string]: unknown
 }

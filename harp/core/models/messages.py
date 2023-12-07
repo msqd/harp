@@ -1,4 +1,5 @@
 import dataclasses
+from datetime import datetime
 from typing import Any
 
 from harp.core.models.base import Entity
@@ -8,3 +9,4 @@ from harp.core.models.base import Entity
 class Message(Entity):
     type: str
     content: Any
+    created_at: datetime = None

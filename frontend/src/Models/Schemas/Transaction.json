@@ -18,8 +18,31 @@
     },
     "ellapsed": {
       "type": "number"
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Message"
+      }
     }
   },
-  "description": "Transaction(*, id: str, type: str, started_at: datetime.datetime, finished_at: datetime.datetime = None, ellapsed: float = None)",
-  "$schema": "http://json-schema.org/draft-06/schema#"
+  "description": "Transaction(*, id: str, type: str, started_at: datetime.datetime, finished_at: datetime.datetime = None, ellapsed: float = None, messages: List[harp.core.models.messages.Message] = None)",
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "definitions": {
+    "Message": {
+      "type": "object",
+      "required": ["type", "content"],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "content": {},
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "Message(type: str, content: Any, created_at: datetime.datetime = None)"
+    }
+  }
 }

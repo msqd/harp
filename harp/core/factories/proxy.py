@@ -123,5 +123,5 @@ class ProxyFactory:
 if __name__ == "__main__":
     proxy = ProxyFactory(dashboard_port=4040)
     proxy.add(8000, "https://httpbin.org/")
-    proxy.load("harp.contrib.sqlite_storage")
+    proxy.load("harp.contrib.sqlalchemy_storage")
     proxy.serve()
