@@ -45,9 +45,12 @@ reference: harp
 # QA, tests and other CI/CD related stuff
 ########################################################################################################################
 
-.PHONY: qa format test test-ui test-ui-update test-back lint-frontend test-frontend test-full
+.PHONY: qa types format test test-ui test-ui-update test-back lint-frontend test-frontend test-full
 
-qa: format reference test-full
+qa: types format reference test-full
+
+types:
+	bin/generate_types
 
 format: install-frontend
 	cd frontend; pnpm prettier -w src

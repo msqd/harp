@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "required": ["id", "started_at", "finished_at", "ellapsed"],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "finished_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ellapsed": {
+      "type": "number"
+    }
+  },
+  "description": "Transaction(id: str, started_at: datetime.datetime, finished_at: datetime.datetime, ellapsed: float)",
+  "$schema": "http://json-schema.org/draft-06/schema#"
+}

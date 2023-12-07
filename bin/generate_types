@@ -1,0 +1,26 @@
+#! /usr/bin/env python
+import json
+import os
+
+models = ["harp.core.models.transactions.Transaction"]
+
+ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
+JSON2TS = os.path.join(ROOT_DIR, "frontend/node_modules/.bin/json2ts")
+
+
+def main():
+    for model in models:
+        model_path, model_name = model.rsplit(".", 1)
+        cls = getattr(__import__(model_path, fromlist=[model_name]), model_name)
+        target_filename = os.path.join("frontend/src/Models/Schemas", f"{model_name}.json")
+        print(f"Generating schema for {model_name}... {target_filename}")
+        with open(os.path.join(ROOT_DIR, target_filename), "w+") as f:
+            f.write(json.dumps(cls.json_schema(), indent=2, sort_keys=False))
+
+        ts_filename = os.path.join("frontend/src/Models", f"{model_name}.d.ts")
+        print(f"Generating types for {model_name}... {ts_filename}")
+        os.system(f"cd {ROOT_DIR}; {JSON2TS} {target_filename} > {ts_filename}")
+
+
+if __name__ == "__main__":
+    main()
