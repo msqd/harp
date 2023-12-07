@@ -33,4 +33,4 @@ class TestAsgiKernel:
         assert controller.await_count == 1
         assert response["status"] == 200
         assert response["body"] == b"Hello, world!"
-        assert response["headers"] == ((b"x-powered-by", b"harp"), (b"content-type", b"text/plain"))
+        assert response["headers"] == ((b"content-type", b"text/plain"),)

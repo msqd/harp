@@ -1,0 +1,6 @@
+[submodule "vendors/config"]
+	path = vendors/config
+	url = git@github.com:msqd/config.git
+[submodule "vendors/rodi"]
+	path = vendors/rodi
+	url = git@github.com:msqd/rodi.git

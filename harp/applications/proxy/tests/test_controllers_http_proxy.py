@@ -6,7 +6,7 @@ from httpx import Response
 
 from harp.applications.proxy.controllers import HttpProxyController
 from harp.core.asgi.requests import ASGIRequest
-from harp.core.asgi.responders import ASGIResponder
+from harp.core.asgi.responses import ASGIResponse
 
 
 class TestHttpProxyController:
@@ -23,19 +23,19 @@ class TestHttpProxyController:
         return AsyncMock()
 
     @pytest.fixture
-    def asgi_responder(self, asgi_request, asgi_send):
-        return ASGIResponder(asgi_request, asgi_send)
+    def asgi_response(self, asgi_request, asgi_send):
+        return ASGIResponse(asgi_request, asgi_send)
 
     @respx.mock
-    async def test_basic_get(self, asgi_request, asgi_responder):
+    async def test_basic_get(self, asgi_request, asgi_response):
         endpoint = respx.get("http://example.com/").mock(return_value=Response(200, content=b"Hello."))
 
         controller = HttpProxyController("http://example.com/")
-        await controller(asgi_request, asgi_responder)
+        await controller(asgi_request, asgi_response)
 
         assert endpoint.called
-        assert asgi_responder._response == {
+        assert asgi_response.snapshot() == {
             "status": 200,
-            "headers": ((b"x-powered-by", b"harp"),),
+            "headers": (),
             "body": b"Hello.",
         }

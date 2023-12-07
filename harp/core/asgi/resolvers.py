@@ -1,16 +1,16 @@
 import json
 
 from harp.core.asgi.requests import ASGIRequest
-from harp.core.asgi.responders import ASGIResponder
+from harp.core.asgi.responses import ASGIResponse
 from harp.utils.json import BytesEncoder
 
 
-async def dump_request_controller(request: ASGIRequest, response: ASGIResponder):
+async def dump_request_controller(request: ASGIRequest, response: ASGIResponse):
     await response.start(headers={"content-type": "application/json"})
     await response.body(json.dumps(request.scope, cls=BytesEncoder))
 
 
-async def not_found_controller(request: ASGIRequest, response: ASGIResponder):
+async def not_found_controller(request: ASGIRequest, response: ASGIResponse):
     await response.start(headers={"content-type": "text/plain"}, status=404)
     await response.body("Not found.")
 

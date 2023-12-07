@@ -16,6 +16,7 @@ Content
    features/index
    reference/index
    development/index
+   faq
 
 Introduction
 ::::::::::::

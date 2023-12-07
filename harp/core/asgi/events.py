@@ -45,15 +45,15 @@ class ControllerEvent(RequestEvent):
         self._controller = controller
 
 
-class ResponderEvent(RequestEvent):
-    def __init__(self, request, responder):
+class ResponseEvent(RequestEvent):
+    def __init__(self, request, response):
         super().__init__(request)
-        self.responder = responder
+        self.response = response
 
 
-class ViewEvent(ResponderEvent):
-    def __init__(self, request, responder, value):
-        super().__init__(request, responder)
+class ViewEvent(ResponseEvent):
+    def __init__(self, request, response, value):
+        super().__init__(request, response)
         self._value = value
 
     @property

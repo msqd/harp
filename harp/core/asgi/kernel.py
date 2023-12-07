@@ -12,19 +12,19 @@ from harp.core.asgi.events import (
     ControllerEvent,
     LoggingAsyncEventDispatcher,
     RequestEvent,
-    ResponderEvent,
+    ResponseEvent,
     ViewEvent,
 )
 from harp.core.asgi.requests import ASGIRequest
 from harp.core.asgi.resolvers import ControllerResolver
-from harp.core.asgi.responders import ASGIResponder
+from harp.core.asgi.responses import ASGIResponse
 
 logger = get_logger(__name__)
 
 
-async def kernel_not_started_controller(request, responder: ASGIResponder):
-    await responder.start(status=500, headers={"content-type": "text/plain"})
-    await responder.body(
+async def kernel_not_started_controller(request, response: ASGIResponse):
+    await response.start(status=500, headers={"content-type": "text/plain"})
+    await response.body(
         b"Unhandled server error: Cannot access service provider, the lifespan.startup asgi event probably never went "
         b"through."
     )
@@ -32,24 +32,23 @@ async def kernel_not_started_controller(request, responder: ASGIResponder):
 
 class ASGIKernel:
     RequestType = ASGIRequest
-    ResponderType = ASGIResponder
+    ResponseType = ASGIResponse
 
-    def __init__(self, *, dispatcher=None, resolver=None, responder_kwargs=None):
+    def __init__(self, *, dispatcher=None, resolver=None):
         self.dispatcher: AsyncEventDispatcher = dispatcher or AsyncEventDispatcher()
         self.resolver = resolver or ControllerResolver()
         self.started = False
-        self.responder_kwargs = responder_kwargs or {}
 
     async def __call__(self, scope: Scope, receive: ASGIReceiveCallable, send: ASGISendCallable):
         await self.handle(self.RequestType(scope, receive), send)
 
     async def handle(self, request: ASGIRequest, send: ASGISendCallable):
         if request.type == "http":
-            responder = self.ResponderType(request, send, **self.responder_kwargs)
+            response = self.ResponseType(request, send)
             if not self.started:
-                await kernel_not_started_controller(request, responder)
-                return responder
-            return await self.handle_http(request, responder)
+                await kernel_not_started_controller(request, response)
+                return response
+            return await self.handle_http(request, response)
 
         if request.type == "lifespan":
             await request.receive()
@@ -73,29 +72,29 @@ class ASGIKernel:
             raise RuntimeError("Unable to find request controller after controller event dispatch.")
         return event.controller
 
-    async def _execute_controller(self, controller, request: ASGIRequest, responder: ASGIResponder):
-        retval = await controller(request, responder)
+    async def _execute_controller(self, controller, request: ASGIRequest, response: ASGIResponse):
+        retval = await controller(request, response)
 
         if retval:
-            if responder.started:
-                raise RuntimeError("cannot both use responder and return value in controller")
-            await self.dispatcher.dispatch(EVENT_CORE_VIEW, ViewEvent(request, responder, retval))
+            if response.started:
+                raise RuntimeError("cannot both use the response api and return value in controller")
+            await self.dispatcher.dispatch(EVENT_CORE_VIEW, ViewEvent(request, response, retval))
 
-        if not responder.started:
-            raise RuntimeError("responder did not start despite the efforts made")
+        if not response.started:
+            raise RuntimeError("response did not start despite the efforts made")
 
-        await self.dispatcher.dispatch(EVENT_CORE_RESPONSE, ResponderEvent(request, responder))
-        return responder
+        await self.dispatcher.dispatch(EVENT_CORE_RESPONSE, ResponseEvent(request, response))
+        return response
 
-    async def handle_http(self, request: ASGIRequest, responder: ASGIResponder):
+    async def handle_http(self, request: ASGIRequest, response: ASGIResponse):
         event = await self.dispatcher.dispatch(EVENT_CORE_REQUEST, RequestEvent(request))
 
         if event.controller:
-            return await self._execute_controller(event.controller, request, responder)
+            return await self._execute_controller(event.controller, request, response)
 
         controller = await self._resolve_controller(request)
 
-        return await self._execute_controller(controller, request, responder)
+        return await self._execute_controller(controller, request, response)
 
 
 if __name__ == "__main__":

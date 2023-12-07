@@ -31,7 +31,7 @@ async def on_http_request(event):
 
 
 async def on_http_response(event):
-    status = event.responder.status
+    status = event.response.status
     reason = codes.get_reason_phrase(status)
     spent = int((time.time() - event.request.transaction_started_at) * 100000) / 100
     logger.info(
@@ -39,6 +39,6 @@ async def on_http_response(event):
         transaction_id=getattr(event.request, "transaction_id", None),
     )
     await event.dispatcher.dispatch(
-        EVENT_TRANSACTION_MESSAGE, TransactionMessageEvent(event.request.transaction_id, "response", event.responder)
+        EVENT_TRANSACTION_MESSAGE, TransactionMessageEvent(event.request.transaction_id, "response", event.response)
     )
     await event.dispatcher.dispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(event.request.transaction_id))

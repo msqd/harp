@@ -34,7 +34,7 @@ class TestAsgiProxyWithoutEndpoints:
         response = await client.http_get("/")
         assert response["status"] == 404
         assert response["body"] == b"Not found."
-        assert response["headers"] == ((b"x-powered-by", b"harp"), (b"content-type", b"text/plain"))
+        assert response["headers"] == ((b"content-type", b"text/plain"),)
 
 
 class TestAsgiProxyWithMissingStartup:
@@ -55,7 +55,7 @@ class TestAsgiProxyWithMissingStartup:
             b"Unhandled server error: Cannot access service provider, the lifespan.startup asgi event probably never "
             b"went through."
         )
-        assert response["headers"] == ((b"x-powered-by", b"harp"), (b"content-type", b"text/plain"))
+        assert response["headers"] == ((b"content-type", b"text/plain"),)
 
 
 class TestAsgiProxyWithStubApi:
@@ -69,7 +69,7 @@ class TestAsgiProxyWithStubApi:
     def kernel(self, test_api):
         factory = ProxyFactory()
         factory.add(80, test_api.url)
-        return factory.create(responder_kwargs={"default_headers": {}})
+        return factory.create()
 
     @pytest.fixture
     async def client(self, kernel):

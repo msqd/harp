@@ -1,5 +1,6 @@
 """
-An easy to use toolkit to configure, build and run proxies.
+:class:`ProxyFactory` is a helper to create proxies. It will load configuration, build services, create an
+:class:`ASGIKernel <harp.core.asgi.kernel.ASGIKernel>` and prepare it for its future purpose.
 """
 
 import logging

@@ -2,7 +2,7 @@ from http_router import NotFoundError, Router
 
 from harp.applications.proxy.controllers import HttpProxyController
 from harp.core.asgi.requests import ASGIRequest
-from harp.core.asgi.responders import ASGIResponder
+from harp.core.asgi.responses import ASGIResponse
 from harp.core.views.json import json
 
 
@@ -34,7 +34,7 @@ class DashboardController(HttpProxyController):
         router.route("/api/blobs/{blob}")(self.get_blob)
         return router
 
-    async def __call__(self, request: ASGIRequest, response: ASGIResponder, *, transaction_id=None):
+    async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
         try:
             match = self.router(request.path, method=request.method)
             return await match.target(request, response, **(match.params or {}))

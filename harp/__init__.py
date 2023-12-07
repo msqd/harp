@@ -1,3 +1,4 @@
+"""foo"""
 from ._logging import get_logger
 from .core.factories.proxy import ProxyFactory
 

@@ -11,28 +11,35 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
+aiosqlite = "^0.19.0"
 anyio = "^3.7.1"
+asgiref = "^3.7.2"
 asyncpg = "^0.28.0"
-blacksheep = "^1.2.18"
-essentials-configuration = { extras = ["full"], version = "^2.0.3" }
+http-router = "^4.0.0"
 httpx = "^0.24.1"
 hypercorn = "^0.14.4"
 nanoid = "^2.0.0"
 psycopg2-binary = "^2.9.7"
 python-ulid = "^1.1.0"
 rich = "^13.4.2"
-rodi = ">=1.1.1,<1.2.0"
 sqlalchemy = { extras = ["asyncio"], version = "^2.0.20" }
 sqlalchemy-utils = "^0.41.1"
 structlog = "^23.1.0"
 svix-ksuid = "^0.6.2"
-asgiref = "^3.7.2"
-asgi-tools = "^0.76.0"
 whistle = "^1.0.1"
-aiosqlite = "^0.19.0"
-http-router = "^4.0.0"
+dataclasses-json = "^0.6.3"
+
+[tool.poetry.dependencies.essentials-configuration]
+path = "./vendors/config"
+extras = ["full"]
+develop = true
+
+[tool.poetry.dependencies.rodi]
+path = "./vendors/rodi"
+develop = true
 
 [tool.poetry.group.dev.dependencies]
+asgi-tools = "^0.76.0"
 black = "^23.7.0"
 furo = "^2023.8.19"
 honcho = "^1.1.0"
@@ -40,12 +47,13 @@ isort = "^5.12.0"
 pre-commit = "^3.3.3"
 pytest = "^7.4.0"
 pytest-asyncio = "^0.21.1"
+respx = "^0.20.2"
 sphinx = "^7.2.3"
 sphinx-autobuild = "^2021.3.14"
 sphinx-design = "^0.5.0"
 sphinxcontrib-jquery = "^4.1"
 watchfiles = "^0.21.0"
-respx = "^0.20.2"
+dataclasses-jsonschema = "^2.16.0"
 
 [tool.poetry.scripts]
 harp = 'harp.cli:entrypoint'

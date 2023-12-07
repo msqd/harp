@@ -4,7 +4,7 @@ import httpx
 
 from harp import get_logger
 from harp.core.asgi.requests import ASGIRequest
-from harp.core.asgi.responders import ASGIResponder
+from harp.core.asgi.responses import ASGIResponse
 from harp.services.http import client
 
 logger = get_logger(__name__)
@@ -33,7 +33,7 @@ class HttpProxyController:
             request._body += part
         return b"".join(messages) if len(messages) else None
 
-    async def __call__(self, request: ASGIRequest, response: ASGIResponder, *, transaction_id=None):
+    async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
         request_headers = tuple(((k, v) for k, v in request.headers if k.lower() not in (b"host",)))
         request_content = await self._suboptimal_temporary_extract_request_content(request)
         logger_kwargs = dict(transaction_id=getattr(request, "transaction_id", None))

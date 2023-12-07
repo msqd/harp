@@ -16,15 +16,24 @@ def entrypoint():
 @click.command(short_help="Starts the development environment.")
 @click.option("--with-docs/--no-docs", default=False)
 @click.option("--with-ui/--no-ui", default=False)
-def start(with_docs, with_ui):
+@click.argument("services", nargs=-1)
+def start(with_docs, with_ui, services):
     processes = {
         "frontend": "(cd frontend; pnpm dev)",
         "proxy": 'watchfiles --filter python "' + sys.executable + ' -m harp.examples.default" harp',
     }
-    if with_docs:
+    if with_docs or "docs" in services:
         processes["docs"] = "(cd docs; sphinx-autobuild . _build/html)"
-    if with_ui:
+    if with_ui or "ui" in services:
         processes["ui"] = "(cd vendors/mkui; pnpm serve)"
+
+    # allow to limit the services to start
+    if services:
+        unknown_services = set(services) - set(processes.keys())
+        if unknown_services:
+            raise click.UsageError(f"Unknown services: {', '.join(unknown_services)}")
+        processes = {k: v for k, v in processes.items() if k in services}
+
     manager = Manager(Printer(sys.stdout))
     for name, command in processes.items():
         e = os.environ.copy()
