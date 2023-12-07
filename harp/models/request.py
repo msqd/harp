@@ -1,16 +1,16 @@
 from dataclasses import dataclass
 
-from harp.models.proxy_endpoint import ProxyEndpoint, ProxyEndpointTarget
+from harp.models.proxy_endpoint import DeprecatedOldProxyEndpoint, DeprecatedOldProxyEndpointTarget
 
-from .message import TransactionMessage
+from .message import DeprecatedOldTransactionMessage
 
 
 @dataclass(kw_only=True)
-class TransactionRequest(TransactionMessage):
+class DeprecatedOldTransactionRequest(DeprecatedOldTransactionMessage):
     method: str
     url: str
 
-    endpoint: ProxyEndpoint | None = None
+    endpoint: DeprecatedOldProxyEndpoint | None = None
 
     def normalize(self):
         return b"\n".join(
@@ -28,7 +28,7 @@ class TransactionRequest(TransactionMessage):
         }
 
     @classmethod
-    def from_proxy_target(cls, target: ProxyEndpointTarget):
+    def from_proxy_target(cls, target: DeprecatedOldProxyEndpointTarget):
         return cls(
             method=target.method,
             url=target.full_url,

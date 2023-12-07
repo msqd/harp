@@ -6,13 +6,10 @@
  */
 
 /**
- * Transaction(*, id: str, type: str, started_at: datetime.datetime, finished_at: datetime.datetime = None, ellapsed: float = None)
+ * Message(type: str, content: Any)
  */
-export interface Transaction {
-  id: string
+export interface Message {
   type: string
-  started_at: string
-  finished_at?: string
-  ellapsed?: number
+  content: unknown
   [k: string]: unknown
 }

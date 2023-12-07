@@ -3,13 +3,13 @@ from functools import cached_property
 from urllib.parse import urljoin
 
 
-class ProxyEndpoint:
+class DeprecatedOldProxyEndpoint:
     def __init__(self, url, *, name=None):
         self.name = name
         self.url = url
 
     def get_target(self, scope):
-        return ProxyEndpointTarget.from_scope(self, scope)
+        return DeprecatedOldProxyEndpointTarget.from_scope(self, scope)
 
     def contextualize(self, url):
         if url.startswith(self.url):
@@ -18,9 +18,9 @@ class ProxyEndpoint:
 
 
 @dataclass(frozen=True)
-class ProxyEndpointTarget:
+class DeprecatedOldProxyEndpointTarget:
     # info about the endpoint used
-    endpoint: ProxyEndpoint
+    endpoint: DeprecatedOldProxyEndpoint
 
     # info about the request
     method: str
@@ -29,7 +29,7 @@ class ProxyEndpointTarget:
     headers: tuple = ()
 
     @classmethod
-    def from_scope(cls, endpoint: ProxyEndpoint, scope):
+    def from_scope(cls, endpoint: DeprecatedOldProxyEndpoint, scope):
         return cls(
             endpoint=endpoint,
             method=scope["method"],

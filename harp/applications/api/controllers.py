@@ -1,22 +1,35 @@
+import datetime
+
 from http_router import NotFoundError, Router
 
 from harp.applications.proxy.controllers import HttpProxyController
 from harp.core.asgi.requests import ASGIRequest
 from harp.core.asgi.responses import ASGIResponse
+from harp.core.models.transactions import Transaction
 from harp.core.views.json import json
 
 
 class Storage:
     async def find_transactions(self):
-        import aiosqlite
-
         from harp.contrib.sqlite_storage.connect import connect_to_sqlite
 
-        async with connect_to_sqlite() as db:
-            db.row_factory = aiosqlite.Row
-            async with db.execute("SELECT * FROM transactions ORDER BY created_at DESC LIMIT 50") as cursor:
+        async with (connect_to_sqlite() as db):
+
+            def row_factory(cursor, values):
+                return Transaction(
+                    id=values[0],
+                    type=values[1],
+                    started_at=datetime.datetime.fromisoformat(values[2]),
+                    finished_at=values[3],
+                    ellapsed=values[4],
+                )
+
+            db.row_factory = row_factory
+            async with db.execute(
+                "SELECT id, type, started_at, finished_at, ellapsed FROM transactions ORDER BY started_at DESC LIMIT 50"
+            ) as cursor:
                 async for row in cursor:
-                    yield dict(row)
+                    yield row
 
 
 class DashboardController(HttpProxyController):
@@ -46,7 +59,14 @@ class DashboardController(HttpProxyController):
         async for transaction in self.storage.find_transactions():
             transactions.append(transaction)
         return json(
-            {"items": transactions, "total": len(transactions), "limit": 50, "offset": 0, "page": 1, "pages": 1}
+            {
+                "items": list(map(Transaction.to_dict, transactions)),
+                "total": len(transactions),
+                "limit": 50,
+                "offset": 0,
+                "page": 1,
+                "pages": 1,
+            }
         )
 
     async def get_transaction(self, request, response, transaction):

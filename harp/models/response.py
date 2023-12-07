@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
-from .message import TransactionMessage
+from .message import DeprecatedOldTransactionMessage
 
 
 @dataclass(kw_only=True)
-class TransactionResponse(TransactionMessage):
+class DeprecatedOldTransactionResponse(DeprecatedOldTransactionMessage):
     status_code: int
 
     def normalize(self):

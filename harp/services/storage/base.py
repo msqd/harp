@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, Type
 
-from harp.models.base import Entity
+from harp.core.models.base import Entity
 
 
 class Storage(ABC):

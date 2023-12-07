@@ -5,7 +5,7 @@ import httpx
 import pytest
 
 from harp.applications.proxy import Proxy
-from harp.models.proxy_endpoint import ProxyEndpoint
+from harp.models.proxy_endpoint import DeprecatedOldProxyEndpoint
 
 
 class AsyncMock(MagicMock):
@@ -22,7 +22,7 @@ def anyio_backend():
 
 @pytest.mark.anyio
 async def test_asgi_basics():
-    app = Proxy(endpoints={8000: ProxyEndpoint("http://api.example.com/")})
+    app = Proxy(endpoints={8000: DeprecatedOldProxyEndpoint("http://api.example.com/")})
 
     async with httpx.AsyncClient(app=app) as client:
         response = await client.get("http://localhost:8000/foo")

@@ -20,7 +20,6 @@ Submodules
    harp.models.proxy_endpoint
    harp.models.request
    harp.models.response
-   harp.models.transaction
 
 Module contents
 ---------------

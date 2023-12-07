@@ -1,11 +1,11 @@
 from unittest.mock import ANY
 
-from harp.models.request import TransactionRequest
-from harp.models.response import TransactionResponse
+from harp.models.request import DeprecatedOldTransactionRequest
+from harp.models.response import DeprecatedOldTransactionResponse
 
 
 def test_request():
-    request = TransactionRequest(headers=(), content=b"", method="GET", url="http://example.com")
+    request = DeprecatedOldTransactionRequest(headers=(), content=b"", method="GET", url="http://example.com")
     assert request.normalize() == b"HTTP GET http://example.com\n\n\n"
     assert request.asdict() == {
         "id": ANY,
@@ -15,7 +15,7 @@ def test_request():
 
 
 def test_response():
-    response = TransactionResponse(headers=(), content=b"", status_code=200)
+    response = DeprecatedOldTransactionResponse(headers=(), content=b"", status_code=200)
     assert response.normalize() == b"HTTP/1.1 200\n\n\n"
     assert response.asdict() == {
         "id": ANY,

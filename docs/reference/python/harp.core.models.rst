@@ -7,6 +7,8 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   harp.core.models.base
+   harp.core.models.messages
    harp.core.models.transactions
 
 Module contents

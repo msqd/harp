@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
-from harp.models.base import ContentAddressable, Entity
+from harp.core.models.base import Entity
+from harp.models.base import ContentAddressable
 
 interesting_headers_order = [
     b"content",
@@ -30,7 +31,7 @@ def get_headers_as_dict(headers):
 
 
 @dataclass
-class TransactionMessage(ContentAddressable, Entity):
+class DeprecatedOldTransactionMessage(ContentAddressable, Entity):
     headers: tuple
     content: bytes | None
 

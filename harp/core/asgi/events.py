@@ -3,6 +3,7 @@ from functools import cached_property
 from whistle import Event, EventDispatcher
 
 from harp import get_logger
+from harp.core.models.transactions import Transaction
 
 logger = get_logger(__name__)
 
@@ -98,12 +99,11 @@ class LoggingAsyncEventDispatcher(AsyncEventDispatcher):
 
 
 class TransactionEvent(Event):
-    def __init__(self, transaction_id):
-        self.transaction_id = transaction_id
+    def __init__(self, transaction: Transaction):
+        self.transaction = transaction
 
 
 class TransactionMessageEvent(TransactionEvent):
-    def __init__(self, transaction_id, kind, content):
-        super().__init__(transaction_id)
-        self.kind = kind
-        self.content = content
+    def __init__(self, transaction, message):
+        super().__init__(transaction)
+        self.message = message

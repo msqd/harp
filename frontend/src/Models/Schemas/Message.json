@@ -1,0 +1,12 @@
+{
+  "type": "object",
+  "required": ["type", "content"],
+  "properties": {
+    "type": {
+      "type": "string"
+    },
+    "content": {}
+  },
+  "description": "Message(type: str, content: Any)",
+  "$schema": "http://json-schema.org/draft-06/schema#"
+}
