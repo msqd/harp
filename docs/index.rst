@@ -17,6 +17,7 @@ Content
    reference/index
    development/index
    faq
+   gotchas
 
 Introduction
 ::::::::::::

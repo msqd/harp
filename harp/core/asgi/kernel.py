@@ -90,7 +90,6 @@ class ASGIKernel:
 
         if event.controller:
             return await self._execute_controller(event.controller, request, response)
-
         controller = await self._resolve_controller(request)
 
         return await self._execute_controller(controller, request, response)
@@ -104,19 +103,14 @@ if __name__ == "__main__":
 
     from harp.applications.proxy.controllers import HttpProxyController
     from harp.core.asgi.resolvers import ProxyControllerResolver, dump_request_controller
-    from harp.services.old_deprecated_storage.in_memory import InMemoryStorage
-
-    storage = InMemoryStorage()
 
     resolver = ProxyControllerResolver(default_controller=dump_request_controller)
     resolver.add(8080, HttpProxyController("https://v2.jokeapi.dev/"))
     resolver.add(8081, HttpProxyController("http://localhost:4999/"))
 
     dispatcher = LoggingAsyncEventDispatcher()
-
     kernel = ASGIKernel(dispatcher=dispatcher, resolver=resolver)
 
     config = Config()
-    config.bind = ["localhost:8080", "localhost:8081"]
-
+    config.bind = ["localhost:8080", "localhost:8081", "localhost:8090"]
     asyncio.run(serve(kernel, config))

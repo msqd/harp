@@ -17,8 +17,6 @@ logger = get_logger(__name__)
 def register(container: Container, dispatcher: EventDispatcher, settings: Configuration):
     logger.info("Registering sqlalchemy_storage ...")
 
-    print(settings.values)
-
     from harp.contrib.sqlalchemy_storage.events import on_startup  # , on_transaction_ended, on_transaction_started
 
     dispatcher.add_listener(EVENT_CORE_STARTED, on_startup, priority=-20)

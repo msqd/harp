@@ -43,6 +43,8 @@ class ProxyFactory:
             _port = self.settings["dashboard_port"] if "dashboard_port" in self.settings else dashboard_port
             self.configure_dashboard(port=_port)
 
+        print(self.settings.values)
+
     def create_event_dispatcher(self):
         """Creates an event dispatcher and registers the default listeners."""
         dispatcher = LoggingAsyncEventDispatcher()

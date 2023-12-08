@@ -1,4 +1,4 @@
-import { TransactionDataTable } from "./TransactionDataTable.tsx"
+import { TransactionDataTable } from "../TransactionDataTable.tsx"
 import { Transaction } from "Models/Transaction"
 
 interface TransactionsListProps {

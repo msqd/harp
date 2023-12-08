@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 
 from harp.contrib.sqlalchemy_storage.engine import engine
 from harp.contrib.sqlalchemy_storage.settings import HARP_SQLALCHEMY_STORAGE
-from harp.contrib.sqlalchemy_storage.tables import metadata
+from harp.contrib.sqlalchemy_storage.tables import MessagesTable, TransactionsTable, metadata
 from harp.core.asgi.events.message import MessageEvent
 from harp.core.asgi.events.transaction import TransactionEvent
 
@@ -19,9 +19,7 @@ async def on_startup(event: TransactionEvent):
 async def on_transaction_started(event: TransactionEvent):
     async with engine.begin() as conn:
         await conn.execute(
-            metadata.tables["sa_transactions"]
-            .insert()
-            .values(
+            TransactionsTable.insert().values(
                 id=event.transaction.id,
                 type=event.transaction.type,
                 started_at=event.transaction.started_at,
@@ -46,9 +44,7 @@ async def on_transaction_message(event: MessageEvent):
         headers_blob_id = await insert_blob(conn, event.message.serialized_headers)
         body_blob_id = await insert_blob(conn, event.message.serialized_body)
         await conn.execute(
-            metadata.tables["sa_messages"]
-            .insert()
-            .values(
+            MessagesTable.insert().values(
                 transaction_id=event.transaction.id,
                 kind=event.message.kind,
                 summary=event.message.serialized_summary,
@@ -62,8 +58,7 @@ async def on_transaction_message(event: MessageEvent):
 async def on_transaction_ended(event: TransactionEvent):
     async with engine.begin() as conn:
         await conn.execute(
-            metadata.tables["sa_transactions"]
-            .update()
+            TransactionsTable.update()
             .where(metadata.tables["sa_transactions"].c.id == event.transaction.id)
             .values(
                 finished_at=event.transaction.finished_at,

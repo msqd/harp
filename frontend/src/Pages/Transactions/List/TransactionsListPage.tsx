@@ -1,11 +1,10 @@
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
-import { TransactionsList } from "./TransactionsList.tsx"
+import { TransactionsList } from "./Components/TransactionsList.tsx"
 import { useTransactionsListQuery } from "Domain/Transactions"
 import { ErrorBoundary, FallbackProps } from "react-error-boundary"
 import * as Sentry from "@sentry/browser"
 
 function Error(props: FallbackProps) {
-  console.log(props)
   return (
     <div>
       Woopsie!
