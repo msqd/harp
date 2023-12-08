@@ -2,10 +2,13 @@ import hashlib
 
 from sqlalchemy import func, select
 
+from harp import get_logger
 from harp.contrib.sqlalchemy_storage.engine import engine
 from harp.contrib.sqlalchemy_storage.tables import MessagesTable, TransactionsTable, metadata
 from harp.core.asgi.events.message import MessageEvent
 from harp.core.asgi.events.transaction import TransactionEvent
+
+logger = get_logger(__name__)
 
 
 async def on_startup(event: TransactionEvent):
@@ -34,7 +37,10 @@ async def insert_blob(conn, data):
     query = select(func.count()).where(metadata.tables["sa_blobs"].c.id == hash)
 
     if not await conn.scalar(query):
-        await conn.execute(metadata.tables["sa_blobs"].insert().values(id=hash, data=data))
+        try:
+            await conn.execute(metadata.tables["sa_blobs"].insert().values(id=hash, data=data))
+        except Exception as e:
+            logger.exception(e)
     return hash
 
 
