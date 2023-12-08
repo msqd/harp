@@ -27,25 +27,29 @@ const StyledTh = styled.th(() => [tw`whitespace-nowrap px-2 py-3.5 text-left tex
 const StyledTd = styled.td(() => [tw`whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900`])
 
 function formatRowValue<TRow>(type: Column<TRow>, row: TRow, name: keyof TRow): ReactNode {
+  console.log(name, row)
   try {
+    let value
+    if (type.get) {
+      value = type.get(row)
+    } else {
+      value = row[name]
+    }
+    console.log('-', value)
 
-  let value
-  if (type.get) {
-    value = type.get(row)
-  } else {
-    value = row[name]
-  }
+    if (type.format && value) {
+      value = type.format(value)
+    }
 
-  if (type.format) {
-    return type.format(value)
-  }
+    if (!value) {
+      return "-"
+    }
 
-  return value as ReactNode
-  }
-  catch (e) {
+    return value as ReactNode
+  } catch (e) {
     console.error(`Error while rendering value of ${name as string}:\n`, e)
     /* todo warning sign with error in hover ? */
-    return "n/a";
+    return "n/a"
   }
 }
 
@@ -66,11 +70,7 @@ export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = {}>(
             const colName = name as string
             const colType = types[colName]
             return (
-              <StyledTh
-                scope="col"
-                key={colName}
-                className={colType.headerClassName ?? ""}
-              >
+              <StyledTh scope="col" key={colName} className={colType.headerClassName ?? ""}>
                 {colType.label ?? name}
               </StyledTh>
             )

@@ -5,10 +5,18 @@ import { TransactionDetailsDialog } from "./TransactionDetailsDialog.tsx"
 import { formatDistance, formatDuration } from "date-fns"
 import { ArrowLeftIcon } from "@heroicons/react/24/outline"
 import { RequestHeading } from "./RequestHeading.tsx"
-import { Transaction } from "Models/Transaction"
+import { Message, Transaction } from "Models/Transaction"
 
 interface TransactionsDataTableProps {
   transactions: Transaction[]
+}
+
+const getRequestFromTransactionMessages = (transaction: Transaction) => {
+  return transaction.messages?.find((message: Message) => message.kind === "request")
+}
+
+const getResponseFromTransactionMessages = (transaction: Transaction) => {
+  return transaction.messages?.find((message: Message) => message.kind === "response")
 }
 
 const transactionColumnTypes = {
@@ -19,20 +27,12 @@ const transactionColumnTypes = {
   },
   request: {
     label: "Request",
-    get: (row: Transaction) => ({
-      id: row.request?.id,
-      method: row.request?.method,
-      endpoint: row.endpoint,
-      url: row.request?.url,
-    }),
+    get: (row: Transaction) => getRequestFromTransactionMessages(row) ?? null,
     format: RequestHeading,
   },
   response: {
     label: "Response",
-    get: (row: Transaction) => ({
-      id: row.response?.id,
-      statusCode: row.response?.statusCode,
-    }),
+    get: (row: Transaction) => getResponseFromTransactionMessages(row) ?? null,
     format: ({ id, statusCode }: { id: string; statusCode: number }) => (
       <div className="flex items-center" title={id}>
         <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 mr-1">
