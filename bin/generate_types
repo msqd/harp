@@ -4,7 +4,6 @@ import os
 
 MODELS = [
     "harp.core.models.transactions.Transaction",
-    "harp.core.models.messages.Message",
 ]
 
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
