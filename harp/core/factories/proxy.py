@@ -8,7 +8,7 @@ import warnings
 from typing import Type
 
 from hypercorn.typing import ASGIFramework
-from rodi import CannotResolveTypeException, Services
+from rodi import CannotResolveTypeException, Container, Services
 
 from harp import get_logger
 from harp.applications.api.controllers import DashboardController
@@ -17,7 +17,6 @@ from harp.core.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_RESPONSE, EVENT
 from harp.core.asgi.kernel import ASGIKernel
 from harp.core.asgi.resolvers import ProxyControllerResolver
 from harp.core.event_dispatcher import LoggingAsyncEventDispatcher
-from harp.core.factories.container import create_container
 from harp.core.factories.events import EVENT_FACTORY_BIND
 from harp.core.factories.events.bind import ProxyFactoryBindEvent
 from harp.core.factories.events.lifecycle import on_http_request, on_http_response
@@ -35,8 +34,8 @@ class ProxyFactory:
 
     def __init__(self, *, bind="localhost", settings=None, dashboard=True, dashboard_port=Default):
         self.settings = create_settings(settings)
-        self.container = create_container(self.settings)
-        self.dispatcher = self.create_event_dispatcher()
+        self.container = Container()
+        self.dispatcher = self._create_event_dispatcher()
 
         self.resolver = ProxyControllerResolver()
         self.bind = bind
@@ -45,7 +44,7 @@ class ProxyFactory:
         self.dashboard = dashboard
         self.dashboard_port = dashboard_port
 
-    def create_event_dispatcher(self):
+    def _create_event_dispatcher(self):
         """Creates an event dispatcher and registers the default listeners."""
         dispatcher = LoggingAsyncEventDispatcher()
 

@@ -15,7 +15,6 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   harp.core.factories.container
    harp.core.factories.proxy
    harp.core.factories.settings
 
