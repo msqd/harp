@@ -1,20 +1,20 @@
 from http_router import NotFoundError, Router
 
 from harp.applications.proxy.controllers import HttpProxyController
-from harp.contrib.sqlalchemy_storage.storage import SqlAlchemyStorage
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.models.transactions import Transaction
 from harp.core.views.json import json
+from harp.protocols.storage import IStorage
 
 
 class DashboardController(HttpProxyController):
-    storage: SqlAlchemyStorage
+    storage: IStorage
 
-    def __init__(self):
+    def __init__(self, storage: IStorage):
         super().__init__("http://localhost:4999/", name="ui")
         self.router = self.create_router()
-        self.storage = SqlAlchemyStorage()
+        self.storage = storage
 
     def create_router(self):
         router = Router(trim_last_slash=True)

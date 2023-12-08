@@ -4,18 +4,22 @@ from whistle import EventDispatcher
 
 from harp import get_logger
 from harp.contrib.sqlalchemy_storage.events import on_transaction_ended, on_transaction_message, on_transaction_started
+from harp.contrib.sqlalchemy_storage.storage import SqlAlchemyStorage
 from harp.core.asgi.events import (
     EVENT_CORE_STARTED,
     EVENT_TRANSACTION_ENDED,
     EVENT_TRANSACTION_MESSAGE,
     EVENT_TRANSACTION_STARTED,
 )
+from harp.protocols.storage import IStorage
 
 logger = get_logger(__name__)
 
 
 def register(container: Container, dispatcher: EventDispatcher, settings: Configuration):
     logger.info("Registering sqlalchemy_storage ...")
+
+    container.register(IStorage, SqlAlchemyStorage)
 
     from harp.contrib.sqlalchemy_storage.events import on_startup  # , on_transaction_ended, on_transaction_started
 

@@ -4,9 +4,12 @@
 """
 
 import logging
+import warnings
+from functools import cached_property
 from typing import Type
 
 from hypercorn.typing import ASGIFramework
+from rodi import CannotResolveTypeException, Services
 
 from harp.applications.api.controllers import DashboardController
 from harp.applications.proxy.controllers import HttpProxyController
@@ -19,9 +22,11 @@ from harp.core.factories.events.lifecycle import on_http_request, on_http_respon
 from harp.core.factories.settings import create_settings
 from harp.core.types.signs import Default
 from harp.core.views.json import on_json_response
+from harp.protocols.storage import IStorage
 
 
 class ProxyFactory:
+    DEFAULT_DASHBOARD_PORT = 4080
     KernelType: Type[ASGIKernel] = ASGIKernel
 
     def __init__(self, *, bind="localhost", settings=None, dashboard=True, dashboard_port=Default):
@@ -35,15 +40,13 @@ class ProxyFactory:
 
         self.dashboard = dashboard
         self.dashboard_port = dashboard_port
-        if self.dashboard_port is Default:
-            self.dashboard_port = 4080
-
-        if dashboard:
-            # todo: use self.config['dashboard_enabled'] ???
-            _port = self.settings["dashboard_port"] if "dashboard_port" in self.settings else dashboard_port
-            self.configure_dashboard(port=_port)
 
         print(self.settings.values)
+
+    @cached_property
+    def provider(self) -> Services:
+        # todo: lock container to avoid future changes. Once built, should not be changed.
+        return self.container.build_provider()
 
     def create_event_dispatcher(self):
         """Creates an event dispatcher and registers the default listeners."""
@@ -54,11 +57,6 @@ class ProxyFactory:
         dispatcher.add_listener(EVENT_CORE_VIEW, on_json_response)
 
         return dispatcher
-
-    def configure_dashboard(self, *, port):
-        port = 4080 if port is Default else port
-        self.resolver.add(port, DashboardController())
-        self.binds.add(f"{self.bind}:{port}")
 
     def add(self, port, target, *, name=None):
         """
@@ -92,6 +90,7 @@ class ProxyFactory:
         :param kwargs:
         :return: ASGI application
         """
+        self._on_create_configure_dashboard_if_needed(**kwargs)
         # noinspection PyTypeChecker
         return self.KernelType(*args, dispatcher=self.dispatcher, resolver=self.resolver, **kwargs)
 
@@ -121,6 +120,22 @@ class ProxyFactory:
         config = self.create_hypercorn_config()
 
         return asyncio.run(serve(kernel, config))
+
+    def _on_create_configure_dashboard_if_needed(self):
+        # todo: use self.config['dashboard_enabled'] ???
+        if not self.dashboard:
+            return
+
+        port = self.settings["dashboard_port"] if "dashboard_port" in self.settings else self.dashboard_port
+        if port is Default:
+            port = self.DEFAULT_DASHBOARD_PORT
+
+        try:
+            storage = self.provider.get(IStorage)
+            self.resolver.add(port, DashboardController(storage=storage))
+            self.binds.add(f"{self.bind}:{port}")
+        except CannotResolveTypeException:
+            warnings.warn("Dashboard is enabled but no storage is configured. Dashboard will not be available.")
 
 
 if __name__ == "__main__":
