@@ -1,3 +1,4 @@
+from config.common import Configuration
 from http_router import NotFoundError, Router
 
 from harp.applications.proxy.controllers import HttpProxyController
@@ -10,17 +11,20 @@ from harp.protocols.storage import IStorage
 
 class DashboardController(HttpProxyController):
     storage: IStorage
+    proxy_settings: Configuration
 
-    def __init__(self, storage: IStorage):
+    def __init__(self, storage: IStorage, proxy_settings: Configuration):
         super().__init__("http://localhost:4999/", name="ui")
         self.router = self.create_router()
         self.storage = storage
+        self.proxy_settings = proxy_settings
 
     def create_router(self):
         router = Router(trim_last_slash=True)
         router.route("/api/transactions")(self.list_transactions)
         router.route("/api/transactions/{transaction}")(self.get_transaction)
         router.route("/api/blobs/{blob}")(self.get_blob)
+        router.route("/api/settings")(self.get_settings)
         return router
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
@@ -63,3 +67,6 @@ class DashboardController(HttpProxyController):
 
         await response.start(status=200, headers={"content-type": "application/octet-stream"})
         await response.body(blob.data)
+
+    async def get_settings(self, request, response):
+        return json(self.proxy_settings.values)

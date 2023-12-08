@@ -14,6 +14,7 @@ function Layout() {
         items={[
           { label: "Dashboard", to: "/", exact: true },
           { label: "Transactions", to: "/transactions" },
+          { label: "Settings", to: "/settings" },
         ]}
         currentPath={location.pathname}
         Link={Link}

@@ -6,7 +6,7 @@ import GlobalStyles from "Styles/GlobalStyles"
 import { Layout } from "Components/Layout"
 import { DashboardRoute, TransactionsRoute } from "./Routes"
 import TransactionsListPage from "./Pages/Transactions/List/TransactionsListPage"
-
+import { Settings } from "Pages/ProxySettings"
 import "./index.css"
 
 const router = createBrowserRouter([
@@ -22,11 +22,19 @@ const router = createBrowserRouter([
         path: "transactions",
         element: <TransactionsListPage />,
       },
+      {
+        path: "settings",
+        element: <Settings/>,
+      },
     ],
   },
   {
     path: "/transactions",
     element: <TransactionsRoute />,
+  },
+  {
+    path: "/settings",
+    element: <Settings/>,
   },
 ])
 const queryClient = new QueryClient()
