@@ -1,19 +1,27 @@
+from datetime import datetime
 from urllib.parse import urljoin
 
 import httpx
+from httpx import codes
 
 from harp import get_logger
+from harp.core.asgi.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
+from harp.core.asgi.events.message import MessageEvent
+from harp.core.asgi.events.transaction import TransactionEvent
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
+from harp.core.models.transactions import Transaction
 from harp.services.http import client
+from harp.utils.guids import generate_transaction_id_ksuid
 
 logger = get_logger(__name__)
 
 
 class HttpProxyController:
-    def __init__(self, target, *, name=None):
+    def __init__(self, target, *, dispatcher=None, name=None):
         self.target = target
         self.name = name
+        self.dispatcher = dispatcher
 
     async def _suboptimal_temporary_extract_request_content(self, request: ASGIRequest):
         """
@@ -34,6 +42,21 @@ class HttpProxyController:
         return b"".join(messages) if len(messages) else None
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
+        # BEGIN TRANSACTION
+        transaction = Transaction(
+            id=generate_transaction_id_ksuid(), type=request.type, started_at=datetime.utcnow(), target=self.name
+        )
+        logger.info(f"▶ {request.method} {request.path}", transaction_id=transaction.id)
+
+        if self.dispatcher:
+            # dispatch transaction started event
+            # we don't really want to await this, should run in background ? or use an async queue ?
+            await self.dispatcher.dispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(transaction))
+
+            # dispatch message event for request
+            await self.dispatcher.dispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, request))
+
+        # PROXY REQUEST
         request_headers = tuple(((k, v) for k, v in request.headers if k.lower() not in (b"host",)))
         request_content = await self._suboptimal_temporary_extract_request_content(request)
         logger_kwargs = dict(transaction_id=getattr(request, "transaction_id", None))
@@ -47,6 +70,8 @@ class HttpProxyController:
             content=request_content,
         )
         logger.info(f"▶▶ {request.method} {url}", **logger_kwargs)
+
+        # PROXY RESPONSE
         p_response: httpx.Response = await client.send(p_request)
         logger.info(
             f"◀◀ {p_response.status_code} {p_response.reason_phrase} ({p_response.elapsed.total_seconds()}s)",
@@ -59,5 +84,18 @@ class HttpProxyController:
             if k.lower() not in (b"server", b"date", b"content-encoding", b"content-length")
         )
 
-        await response.start(status=p_response.status_code, headers=response_headers)
+        status = p_response.status_code
+        await response.start(status=status, headers=response_headers)
         await response.body(p_response.content)
+
+        # END TRANSACTION
+        reason = codes.get_reason_phrase(status)
+        spent = int((datetime.utcnow().timestamp() - transaction.started_at.timestamp()) * 100000) / 100
+        logger.info(f"◀ {status} {reason} ({spent}ms)", transaction_id=transaction.id)
+
+        if self.dispatcher:
+            # dispatch message event for response
+            await self.dispatcher.dispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, response))
+
+            # dispatch transaction ended event
+            await self.dispatcher.dispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(transaction))

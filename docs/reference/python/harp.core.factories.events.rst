@@ -8,7 +8,6 @@ Submodules
    :maxdepth: 4
 
    harp.core.factories.events.bind
-   harp.core.factories.events.lifecycle
 
 Module contents
 ---------------

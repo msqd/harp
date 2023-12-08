@@ -16,6 +16,9 @@ class Transaction(Entity):
     ellapsed: float = None
     messages: List[Message] = None
 
+    # eg: ui, httpbin, ... short name to represent the other side
+    target: str = None
+
 
 if __name__ == "__main__":
     pprint.pprint(Transaction.json_schema())
