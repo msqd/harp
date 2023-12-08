@@ -27,7 +27,6 @@ const StyledTh = styled.th(() => [tw`whitespace-nowrap px-2 py-3.5 text-left tex
 const StyledTd = styled.td(() => [tw`whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900`])
 
 function formatRowValue<TRow>(type: Column<TRow>, row: TRow, name: keyof TRow): ReactNode {
-  console.log(name, row)
   try {
     let value
     if (type.get) {
@@ -35,7 +34,6 @@ function formatRowValue<TRow>(type: Column<TRow>, row: TRow, name: keyof TRow): 
     } else {
       value = row[name]
     }
-    console.log('-', value)
 
     if (type.format && value) {
       value = type.format(value)
