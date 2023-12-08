@@ -1,6 +1,7 @@
 from sqlalchemy import alias, select
 
 from harp.contrib.sqlalchemy_storage.engine import engine
+from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
 from harp.contrib.sqlalchemy_storage.tables import BlobsTable, MessagesTable, TransactionsTable
 from harp.core.models.messages import Blob, Message
 from harp.core.models.transactions import Transaction
@@ -11,6 +12,10 @@ LEN_TRANSACTIONS_COLUMNS = len(TransactionsTable.columns)
 
 
 class SqlAlchemyStorage:
+    def __init__(self, settings: SqlAlchemyStorageSettings):
+        self.settings = settings
+        print(settings)
+
     async def find_transactions(self, *, with_messages=False):
         query = select(transactions, messages)
         if with_messages:

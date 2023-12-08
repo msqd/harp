@@ -1,4 +1,9 @@
-HARP_SQLALCHEMY_STORAGE = {
-    "database": "sqlite+aiosqlite:///harp.db",
-    "drop_tables": True,
-}
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class SqlAlchemyStorageSettings:
+    type: str = "sqlalchemy"
+    url: str = "sqlite+aiosqlite:///harp.db"
+    drop_tables: bool = False
+    echo: bool = False

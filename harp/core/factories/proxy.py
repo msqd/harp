@@ -2,15 +2,15 @@
 :class:`ProxyFactory` is a helper to create proxies. It will load configuration, build services, create an
 :class:`ASGIKernel <harp.core.asgi.kernel.ASGIKernel>` and prepare it for its future purpose.
 """
-
+import asyncio
 import logging
 import warnings
-from functools import cached_property
 from typing import Type
 
 from hypercorn.typing import ASGIFramework
 from rodi import CannotResolveTypeException, Services
 
+from harp import get_logger
 from harp.applications.api.controllers import DashboardController
 from harp.applications.proxy.controllers import HttpProxyController
 from harp.core.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_RESPONSE, EVENT_CORE_VIEW
@@ -18,11 +18,15 @@ from harp.core.asgi.kernel import ASGIKernel
 from harp.core.asgi.resolvers import ProxyControllerResolver
 from harp.core.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.core.factories.container import create_container
+from harp.core.factories.events import EVENT_FACTORY_BIND
+from harp.core.factories.events.bind import ProxyFactoryBindEvent
 from harp.core.factories.events.lifecycle import on_http_request, on_http_response
 from harp.core.factories.settings import create_settings
 from harp.core.types.signs import Default
 from harp.core.views.json import on_json_response
 from harp.protocols.storage import IStorage
+
+logger = get_logger(__name__)
 
 
 class ProxyFactory:
@@ -40,13 +44,6 @@ class ProxyFactory:
 
         self.dashboard = dashboard
         self.dashboard_port = dashboard_port
-
-        print(self.settings.values)
-
-    @cached_property
-    def provider(self) -> Services:
-        # todo: lock container to avoid future changes. Once built, should not be changed.
-        return self.container.build_provider()
 
     def create_event_dispatcher(self):
         """Creates an event dispatcher and registers the default listeners."""
@@ -79,10 +76,10 @@ class ProxyFactory:
         try:
             plugin = __import__(plugin, fromlist=["register"])
         except ImportError as exc:
-            raise RuntimeError(f"Module {plugin} does not have a register function.") from exc
+            raise RuntimeError(f"Module {plugin} does not have a register function or could not be imported.") from exc
         plugin.register(self.container, self.dispatcher, self.settings)
 
-    def create(self, *args, **kwargs) -> ASGIFramework:
+    async def create(self, *args, **kwargs) -> ASGIFramework:
         """
         Builds the actual proxy as an ASGI application.
 
@@ -90,9 +87,35 @@ class ProxyFactory:
         :param kwargs:
         :return: ASGI application
         """
-        self._on_create_configure_dashboard_if_needed(**kwargs)
+
+        # bind services
+
+        await self.dispatcher.dispatch(EVENT_FACTORY_BIND, ProxyFactoryBindEvent(self.container, self.settings))
+        provider = self.container.build_provider()
+
+        logger.info(f"ProxyFactory::create() Settings={repr(self.settings.values)}")
+        self._on_create_configure_dashboard_if_needed(provider)
         # noinspection PyTypeChecker
         return self.KernelType(*args, dispatcher=self.dispatcher, resolver=self.resolver, **kwargs)
+
+    def _on_create_configure_dashboard_if_needed(self, provider: Services):
+        # todo: use self.config['dashboard_enabled'] ???
+        if not self.dashboard:
+            return
+
+        port = self.settings["dashboard_port"] if "dashboard_port" in self.settings else self.dashboard_port
+        if port is Default:
+            port = self.DEFAULT_DASHBOARD_PORT
+
+        try:
+            storage = provider.get(IStorage)
+            self.resolver.add(port, DashboardController(storage=storage))
+            self.binds.add(f"{self.bind}:{port}")
+        except CannotResolveTypeException:
+            warnings.warn(
+                "Dashboard is enabled but no storage is configured. Dashboard will not be available.\nDid you forget "
+                "to load a storage plugin?"
+            )
 
     def create_hypercorn_config(self):
         """
@@ -108,38 +131,23 @@ class ProxyFactory:
         config.errorlog = logging.getLogger("hypercorn.error")
         return config
 
-    def serve(self):
+    async def serve(self):
         """
         Creates and serves the proxy using hypercorn.
         """
-        import asyncio
-
         from hypercorn.asyncio import serve
 
-        kernel = self.create()
+        kernel = await self.create()
         config = self.create_hypercorn_config()
 
-        return asyncio.run(serve(kernel, config))
-
-    def _on_create_configure_dashboard_if_needed(self):
-        # todo: use self.config['dashboard_enabled'] ???
-        if not self.dashboard:
-            return
-
-        port = self.settings["dashboard_port"] if "dashboard_port" in self.settings else self.dashboard_port
-        if port is Default:
-            port = self.DEFAULT_DASHBOARD_PORT
-
-        try:
-            storage = self.provider.get(IStorage)
-            self.resolver.add(port, DashboardController(storage=storage))
-            self.binds.add(f"{self.bind}:{port}")
-        except CannotResolveTypeException:
-            warnings.warn("Dashboard is enabled but no storage is configured. Dashboard will not be available.")
+        return await serve(kernel, config)
 
 
 if __name__ == "__main__":
     proxy = ProxyFactory(dashboard_port=4040)
     proxy.add(8000, "https://httpbin.org/")
     proxy.load("harp.contrib.sqlalchemy_storage")
-    proxy.serve()
+    proxy.settings._data["storage"]["url"] = "sqlite+aiosqlite:///custom.db"
+    proxy.settings._data["storage"]["drop_tables"] = True
+    proxy.settings._data["storage"]["echo"] = False
+    asyncio.run(proxy.serve())

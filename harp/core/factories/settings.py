@@ -1,20 +1,18 @@
-from dataclasses import asdict
-
 from config.common import ConfigurationBuilder, MapSource
 from config.env import EnvVars
 from config.yaml import YAMLFile
 
-from harp.services.old_deprecated_storage.in_memory import InMemoryStorageSettings as DefaultStorageSettings
 from harp.settings import ENVIRONMENT
 
 
 def create_settings(settings=None):
     builder = ConfigurationBuilder()
 
+    # default config
     builder.add_source(
         MapSource(
             {
-                "storage": asdict(DefaultStorageSettings()),
+                "storage": {},
             }
         )
     )

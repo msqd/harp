@@ -3,7 +3,6 @@ import hashlib
 from sqlalchemy import func, select
 
 from harp.contrib.sqlalchemy_storage.engine import engine
-from harp.contrib.sqlalchemy_storage.settings import HARP_SQLALCHEMY_STORAGE
 from harp.contrib.sqlalchemy_storage.tables import MessagesTable, TransactionsTable, metadata
 from harp.core.asgi.events.message import MessageEvent
 from harp.core.asgi.events.transaction import TransactionEvent
@@ -11,7 +10,7 @@ from harp.core.asgi.events.transaction import TransactionEvent
 
 async def on_startup(event: TransactionEvent):
     async with engine.begin() as conn:
-        if HARP_SQLALCHEMY_STORAGE.get("drop_tables", False):
+        if {"drop_tables": True}.get("drop_tables", False):
             await conn.run_sync(metadata.drop_all)
         await conn.run_sync(metadata.create_all)
 

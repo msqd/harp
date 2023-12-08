@@ -66,10 +66,10 @@ class TestAsgiProxyWithStubApi:
     """
 
     @pytest.fixture
-    def kernel(self, test_api):
+    async def kernel(self, test_api):
         factory = ProxyFactory()
         factory.add(80, test_api.url)
-        return factory.create()
+        return await factory.create()
 
     @pytest.fixture
     async def client(self, kernel):

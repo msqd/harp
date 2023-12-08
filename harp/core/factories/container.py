@@ -1,11 +1,10 @@
 import rodi
 
-from harp.services.old_deprecated_storage import BaseStorageSettings, Storage
-
 
 def create_container(config):
     container = rodi.Container()
 
+    """
     storage = config.bind(BaseStorageSettings.build, "storage")
 
     if storage.type == "memory":
@@ -20,5 +19,6 @@ def create_container(config):
         container.add_singleton(Storage, SqlDatabaseStorage)
     else:
         raise ValueError(f"Invalid storage type: {storage.type}")
+    """
 
     return container
