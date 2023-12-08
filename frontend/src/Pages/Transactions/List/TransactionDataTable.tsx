@@ -5,18 +5,11 @@ import { TransactionDetailsDialog } from "./TransactionDetailsDialog.tsx"
 import { formatDistance, formatDuration } from "date-fns"
 import { ArrowLeftIcon } from "@heroicons/react/24/outline"
 import { RequestHeading } from "./RequestHeading.tsx"
-import { Message, Transaction } from "Models/Transaction"
+import { Transaction } from "Models/Transaction"
+import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
 
 interface TransactionsDataTableProps {
   transactions: Transaction[]
-}
-
-const getRequestFromTransactionMessages = (transaction: Transaction) => {
-  return transaction.messages?.find((message: Message) => message.kind === "request")
-}
-
-const getResponseFromTransactionMessages = (transaction: Transaction) => {
-  return transaction.messages?.find((message: Message) => message.kind === "response")
 }
 
 const transactionColumnTypes = {

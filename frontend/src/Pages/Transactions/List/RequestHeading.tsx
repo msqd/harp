@@ -15,8 +15,6 @@ const StyledRequestHeading = styled.h1`
 `
 
 export const RequestHeading = ({ as = "h1", ...request }: RequestHeadingProps) => {
-  console.log(request)
-
   const [method, url] = request.summary.split(" ")
   return (
     <StyledRequestHeading as={as}>
