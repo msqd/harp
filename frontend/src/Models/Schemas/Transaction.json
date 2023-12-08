@@ -1,6 +1,6 @@
 {
   "type": "object",
-  "required": ["id", "type", "started_at"],
+  "required": ["type", "started_at"],
   "properties": {
     "id": {
       "type": "string"
@@ -26,23 +26,37 @@
       }
     }
   },
-  "description": "Transaction(*, id: str, type: str, started_at: datetime.datetime, finished_at: datetime.datetime = None, ellapsed: float = None, messages: List[harp.core.models.messages.Message] = None)",
+  "description": "Transaction(*, id: str = None, type: str, started_at: datetime.datetime, finished_at: datetime.datetime = None, ellapsed: float = None, messages: List[harp.core.models.messages.Message] = None)",
   "$schema": "http://json-schema.org/draft-06/schema#",
   "definitions": {
     "Message": {
       "type": "object",
-      "required": ["type", "content"],
+      "required": ["transaction_id", "kind", "summary", "headers", "body"],
       "properties": {
-        "type": {
+        "id": {
+          "type": "integer"
+        },
+        "transaction_id": {
           "type": "string"
         },
-        "content": {},
+        "kind": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "headers": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
         "created_at": {
           "type": "string",
           "format": "date-time"
         }
       },
-      "description": "Message(type: str, content: Any, created_at: datetime.datetime = None)"
+      "description": "Message(*, id: int = None, transaction_id: str, kind: str, summary: str, headers: str, body: str, created_at: datetime.datetime = None)"
     }
   }
 }

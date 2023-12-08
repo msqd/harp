@@ -1,19 +1,22 @@
+from datetime import datetime
 from functools import cached_property
 from itertools import chain
 
 from asgiref.typing import ASGISendCallable
 from httpx import codes
 
-from harp.core.asgi.requests import ASGIRequest
+from harp.core.asgi.messages.base import AbstractASGIMessage
+from harp.core.asgi.messages.requests import ASGIRequest
 from harp.utils.bytes import ensure_bytes
 
 
-class ASGIResponse:
+class ASGIResponse(AbstractASGIMessage):
     """
     Represents a way to answer an ASGI request, and allows to store the actual response content for future usage.
 
     """
 
+    kind = "response"
     default_headers = {}
 
     def __init__(self, request: ASGIRequest, send: ASGISendCallable, *, default_headers=None):
@@ -28,6 +31,8 @@ class ASGIResponse:
         # Keep track of what has been sent, mostly for testing, logging or auditing purposes.
         # The ASGI protocol being async-first, it may be used to send a response in multiple parts.
         self._response = {}
+
+        self.created_at = datetime.utcnow()
 
     def snapshot(self):
         return self._response

@@ -27,6 +27,8 @@ const StyledTh = styled.th(() => [tw`whitespace-nowrap px-2 py-3.5 text-left tex
 const StyledTd = styled.td(() => [tw`whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900`])
 
 function formatRowValue<TRow>(type: Column<TRow>, row: TRow, name: keyof TRow): ReactNode {
+  try {
+
   let value
   if (type.get) {
     value = type.get(row)
@@ -39,6 +41,12 @@ function formatRowValue<TRow>(type: Column<TRow>, row: TRow, name: keyof TRow): 
   }
 
   return value as ReactNode
+  }
+  catch (e) {
+    console.error(`Error while rendering value of ${name as string}:\n`, e)
+    /* todo warning sign with error in hover ? */
+    return "n/a";
+  }
 }
 
 type BaseRow = Record<string, any>

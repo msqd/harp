@@ -1,10 +1,10 @@
-import { Transaction } from "../../../Domain/Transactions/Types"
-import { useRequestsDetailQuery, useResponsesDetailQuery } from "../../../Domain/Transactions"
+import { useRequestsDetailQuery, useResponsesDetailQuery } from "Domain/Transactions"
 import { ArrowLeftIcon, ArrowRightIcon, ArrowsRightLeftIcon } from "@heroicons/react/24/outline"
 import { Dialog } from "@headlessui/react"
-import { truncate } from "../../../Utils/Strings.ts"
+import { truncate } from "Utils/Strings.ts"
 import { TransactionMessagePanel } from "./TransactionMessagePanel.tsx"
 import { RequestHeading } from "./RequestHeading.tsx"
+import { Transaction } from "Models/Transaction"
 
 export function TransactionDetails({ transaction }: { transaction: Transaction }) {
   const requestsDetailQuery = useRequestsDetailQuery(transaction.request?.id)

@@ -8,16 +8,15 @@ from harp.core.asgi.events import (
     EVENT_CORE_RESPONSE,
     EVENT_CORE_STARTED,
     EVENT_CORE_VIEW,
-    AsyncEventDispatcher,
-    ControllerEvent,
-    LoggingAsyncEventDispatcher,
-    RequestEvent,
-    ResponseEvent,
-    ViewEvent,
 )
-from harp.core.asgi.requests import ASGIRequest
+from harp.core.asgi.events.controller import ControllerEvent
+from harp.core.asgi.events.dispatchers import AsyncEventDispatcher, LoggingAsyncEventDispatcher
+from harp.core.asgi.events.request import RequestEvent
+from harp.core.asgi.events.response import ResponseEvent
+from harp.core.asgi.events.view import ViewEvent
+from harp.core.asgi.messages.requests import ASGIRequest
+from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.asgi.resolvers import ControllerResolver
-from harp.core.asgi.responses import ASGIResponse
 
 logger = get_logger(__name__)
 
@@ -75,7 +74,7 @@ class ASGIKernel:
     async def _execute_controller(self, controller, request: ASGIRequest, response: ASGIResponse):
         retval = await controller(request, response)
 
-        if retval:
+        if retval is not None:
             if response.started:
                 raise RuntimeError("cannot both use the response api and return value in controller")
             await self.dispatcher.dispatch(EVENT_CORE_VIEW, ViewEvent(request, response, retval))

@@ -73,10 +73,17 @@ const getStatusColorFromStatusCode = (statusCode: number): BadgeColor => {
 
 export const ResponseStatusBadge = ({ statusCode }: { statusCode: number }) => {
   const color = getStatusColorFromStatusCode(statusCode)
+  let reason: string
+
+  try {
+    reason = getReasonPhrase(statusCode)
+  } catch (e) {
+    reason = "Unknown"
+  }
 
   return (
     <Badge color={color}>
-      {statusCode} {getReasonPhrase(statusCode)}
+      {statusCode} {reason}
     </Badge>
   )
 }

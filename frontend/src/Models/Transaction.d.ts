@@ -6,10 +6,10 @@
  */
 
 /**
- * Transaction(*, id: str, type: str, started_at: datetime.datetime, finished_at: datetime.datetime = None, ellapsed: float = None, messages: List[harp.core.models.messages.Message] = None)
+ * Transaction(*, id: str = None, type: str, started_at: datetime.datetime, finished_at: datetime.datetime = None, ellapsed: float = None, messages: List[harp.core.models.messages.Message] = None)
  */
 export interface Transaction {
-  id: string
+  id?: string
   type: string
   started_at: string
   finished_at?: string
@@ -18,11 +18,15 @@ export interface Transaction {
   [k: string]: unknown
 }
 /**
- * Message(type: str, content: Any, created_at: datetime.datetime = None)
+ * Message(*, id: int = None, transaction_id: str, kind: str, summary: str, headers: str, body: str, created_at: datetime.datetime = None)
  */
 export interface Message {
-  type: string
-  content: unknown
+  id?: number
+  transaction_id: string
+  kind: string
+  summary: string
+  headers: string
+  body: string
   created_at?: string
   [k: string]: unknown
 }

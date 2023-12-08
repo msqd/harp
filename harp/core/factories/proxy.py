@@ -10,7 +10,8 @@ from hypercorn.typing import ASGIFramework
 
 from harp.applications.api.controllers import DashboardController
 from harp.applications.proxy.controllers import HttpProxyController
-from harp.core.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_RESPONSE, EVENT_CORE_VIEW, LoggingAsyncEventDispatcher
+from harp.core.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_RESPONSE, EVENT_CORE_VIEW
+from harp.core.asgi.events.dispatchers import LoggingAsyncEventDispatcher
 from harp.core.asgi.kernel import ASGIKernel
 from harp.core.asgi.resolvers import ProxyControllerResolver
 from harp.core.factories.container import create_container

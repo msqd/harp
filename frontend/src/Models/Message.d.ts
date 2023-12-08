@@ -6,11 +6,15 @@
  */
 
 /**
- * Message(type: str, content: Any, created_at: datetime.datetime = None)
+ * Message(*, id: int = None, transaction_id: str, kind: str, summary: str, headers: str, body: str, created_at: datetime.datetime = None)
  */
 export interface Message {
-  type: string
-  content: unknown
+  id?: number
+  transaction_id: string
+  kind: string
+  summary: string
+  headers: string
+  body: string
   created_at?: string
   [k: string]: unknown
 }

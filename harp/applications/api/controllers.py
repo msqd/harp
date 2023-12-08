@@ -2,8 +2,8 @@ from http_router import NotFoundError, Router
 
 from harp.applications.proxy.controllers import HttpProxyController
 from harp.contrib.sqlalchemy_storage.storage import SqlAlchemyStorage
-from harp.core.asgi.requests import ASGIRequest
-from harp.core.asgi.responses import ASGIResponse
+from harp.core.asgi.messages.requests import ASGIRequest
+from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.models.transactions import Transaction
 from harp.core.views.json import json
 
@@ -32,7 +32,7 @@ class DashboardController(HttpProxyController):
 
     async def list_transactions(self, request, response):
         transactions = []
-        async for transaction in self.storage.find_transactions():
+        async for transaction in self.storage.find_transactions(with_messages=True):
             transactions.append(transaction)
         return json(
             {
@@ -54,9 +54,12 @@ class DashboardController(HttpProxyController):
         )
 
     async def get_blob(self, request, response, blob):
-        return json(
-            {
-                "@type": "blob",
-                "@id": blob,
-            }
-        )
+        blob = await self.storage.get_blob(blob)
+
+        if not blob:
+            await response.start(status=404, headers={"content-type": "text/plain"})
+            await response.body(b"Blob not found.")
+            return
+
+        await response.start(status=200, headers={"content-type": "application/octet-stream"})
+        await response.body(blob.data)

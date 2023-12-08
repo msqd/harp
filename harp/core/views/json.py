@@ -1,6 +1,6 @@
 from json import dumps
 
-from harp.core.asgi.events import ViewEvent
+from harp.core.asgi.events.view import ViewEvent
 
 
 class json(dict):

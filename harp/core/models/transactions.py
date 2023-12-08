@@ -9,7 +9,7 @@ from harp.core.models.messages import Message
 
 @dataclasses.dataclass(kw_only=True)
 class Transaction(Entity):
-    id: str
+    id: str = None
     type: str  # enum http websocket lifecycle ...
     started_at: datetime
     finished_at: datetime = None

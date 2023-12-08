@@ -1,4 +1,4 @@
-import { TransactionRequest } from "./Types"
+import { TransactionRequest } from "./OldDeprecatedTypes"
 import { useQuery } from "react-query"
 import { useApi } from "Domain/Api"
 

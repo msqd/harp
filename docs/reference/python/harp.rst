@@ -7,7 +7,6 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   harp.apis
    harp.applications
    harp.cli
    harp.contrib

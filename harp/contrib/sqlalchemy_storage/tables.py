@@ -14,27 +14,23 @@ TransactionsTable = Table(
     Column("ellapsed", Float(), nullable=True),
 )
 
-BlobsTable = (
-    Table(
-        "sa_blobs",
-        metadata,
-        Column("id", String(40), primary_key=True, unique=True),
-        Column("content", BLOB()),
-    ),
+BlobsTable = Table(
+    "sa_blobs",
+    metadata,
+    Column("id", String(40), primary_key=True, unique=True),
+    Column("data", BLOB()),
 )
 
-MessagesTable = (
-    Table(
-        "sa_messages",
-        metadata,
-        Column("id", Integer(), primary_key=True, unique=True, autoincrement=True),
-        Column("transaction_id", String(27), ForeignKey("sa_transactions.id")),
-        Column("kind", String(10)),
-        Column("summary", String(255)),
-        Column("headers", String(40), ForeignKey("sa_blobs.id")),
-        Column("body", String(40), ForeignKey("sa_blobs.id")),
-        Column("created_at", DateTime()),
-    ),
+MessagesTable = Table(
+    "sa_messages",
+    metadata,
+    Column("id", Integer(), primary_key=True, unique=True, autoincrement=True),
+    Column("transaction_id", String(27), ForeignKey("sa_transactions.id")),
+    Column("kind", String(10)),
+    Column("summary", String(255)),
+    Column("headers", String(40), ForeignKey("sa_blobs.id")),
+    Column("body", String(40), ForeignKey("sa_blobs.id")),
+    Column("created_at", DateTime()),
 )
 
 

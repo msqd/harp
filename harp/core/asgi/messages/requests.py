@@ -1,11 +1,17 @@
+from datetime import datetime
 from functools import cached_property
 
+from harp.core.asgi.messages.base import AbstractASGIMessage
 
-class ASGIRequest:
+
+class ASGIRequest(AbstractASGIMessage):
+    kind = "request"
+
     def __init__(self, scope, receive):
         self._scope = scope
         self._body = b""
         self._receive = receive
+        self.created_at = datetime.utcnow()
 
     async def receive(self):
         return await self._receive()
@@ -51,13 +57,3 @@ class ASGIRequest:
     @cached_property
     def serialized_body(self):
         return self._body
-
-    def serialize(self):
-        return {
-            "type": self.type,
-            "subtype": "request",
-            "method": self.method,
-            "path": self.path,
-            "query_string": self.query_string,
-            "headers": self.headers,
-        }

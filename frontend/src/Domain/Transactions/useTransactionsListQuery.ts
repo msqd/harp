@@ -1,5 +1,5 @@
 import { useQuery } from "react-query"
-import { Transaction } from "./Types"
+import { Transaction } from "Models/Transaction"
 import { useApi } from "Domain/Api"
 import { ItemList } from "Domain/Api/Types"
 

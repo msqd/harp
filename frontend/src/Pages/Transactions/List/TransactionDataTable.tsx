@@ -1,11 +1,11 @@
 import { useState } from "react"
-import { Transaction } from "Domain/Transactions/Types"
 import { DataTable } from "mkui/Components/DataTable"
 import { formatTransactionShortId, getDurationRatingBadge, ResponseStatusBadge } from "./formatters.tsx"
 import { TransactionDetailsDialog } from "./TransactionDetailsDialog.tsx"
 import { formatDistance, formatDuration } from "date-fns"
 import { ArrowLeftIcon } from "@heroicons/react/24/outline"
 import { RequestHeading } from "./RequestHeading.tsx"
+import { Transaction } from "Models/Transaction"
 
 interface TransactionsDataTableProps {
   transactions: Transaction[]
@@ -43,9 +43,11 @@ const transactionColumnTypes = {
       </div>
     ),
   },
-  createdAt: {
+  started_at: {
     label: "Date",
-    format: (x: string) => formatDistance(new Date(x), new Date(), { addSuffix: true }),
+    format: (x: string) => {
+      return <div title={x}>{formatDistance(new Date(x), new Date(), { addSuffix: true })}</div>
+    },
   },
   elapsed: {
     label: "Duration",
@@ -70,7 +72,7 @@ export function TransactionDataTable({ transactions }: TransactionsDataTableProp
         types={transactionColumnTypes}
         onRowClick={(row: Transaction) => setCurrent(row)}
         rows={transactions}
-        columns={["request", "response", "elapsed", "createdAt"]}
+        columns={["request", "response", "elapsed", "started_at"]}
       />
       <TransactionDetailsDialog current={current} setCurrent={setCurrent} />
     </>

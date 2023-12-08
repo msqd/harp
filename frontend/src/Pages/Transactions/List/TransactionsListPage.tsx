@@ -5,6 +5,7 @@ import { ErrorBoundary, FallbackProps } from "react-error-boundary"
 import * as Sentry from "@sentry/browser"
 
 function Error(props: FallbackProps) {
+  console.log(props)
   return (
     <div>
       Woopsie!
@@ -26,7 +27,10 @@ function Error(props: FallbackProps) {
         <div className="card-body">
           <details className="error-details">
             <summary>Click for error details</summary>
-            {/*errorInfo && errorInfo.componentStack.toString()*/}
+            <pre>
+              {/* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */}
+              {props.error.stack}
+            </pre>
           </details>
         </div>
 

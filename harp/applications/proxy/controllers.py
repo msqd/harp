@@ -3,8 +3,8 @@ from urllib.parse import urljoin
 import httpx
 
 from harp import get_logger
-from harp.core.asgi.requests import ASGIRequest
-from harp.core.asgi.responses import ASGIResponse
+from harp.core.asgi.messages.requests import ASGIRequest
+from harp.core.asgi.messages.responses import ASGIResponse
 from harp.services.http import client
 
 logger = get_logger(__name__)

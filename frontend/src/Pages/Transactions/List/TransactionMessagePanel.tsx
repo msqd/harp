@@ -1,5 +1,5 @@
 import { ComponentType, ReactNode } from "react"
-import { TransactionMessage } from "Domain/Transactions/Types"
+import { TransactionMessage } from "Domain/Transactions/OldDeprecatedTypes"
 import { HeadersTable } from "./HeadersTable"
 import { LightAsync as SyntaxHighlighter } from "react-syntax-highlighter"
 

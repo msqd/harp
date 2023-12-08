@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock
 
 from harp.core.asgi.kernel import ASGIKernel
-from harp.core.asgi.requests import ASGIRequest
+from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.resolvers import ControllerResolver
 
 

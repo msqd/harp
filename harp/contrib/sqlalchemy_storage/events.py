@@ -5,7 +5,8 @@ from sqlalchemy import func, select
 from harp.contrib.sqlalchemy_storage.engine import engine
 from harp.contrib.sqlalchemy_storage.settings import HARP_SQLALCHEMY_STORAGE
 from harp.contrib.sqlalchemy_storage.tables import metadata
-from harp.core.asgi.events import TransactionEvent, TransactionMessageEvent
+from harp.core.asgi.events.message import MessageEvent
+from harp.core.asgi.events.transaction import TransactionEvent
 
 
 async def on_startup(event: TransactionEvent):
@@ -28,26 +29,32 @@ async def on_transaction_started(event: TransactionEvent):
         )
 
 
-async def insert_blob(conn, content):
-    if not isinstance(content, bytes):
-        content = content.encode()
-    hash = hashlib.sha1(content).hexdigest()
-    if not await conn.scalar(select(func.count()).where(metadata.tables["sa_blobs"].c.id == hash)):
-        await conn.execute(metadata.tables["sa_blobs"].insert().values(id=hash, content=content))
+async def insert_blob(conn, data):
+    if not isinstance(data, bytes):
+        data = data.encode()
+    hash = hashlib.sha1(data).hexdigest()
+
+    # select([BlobsTable.c.id]).where(BlobsTable.c.id == hash).limit(1)
+
+    query = select(func.count()).where(metadata.tables["sa_blobs"].c.id == hash)
+
+    if not await conn.scalar(query):
+        print("INSERTING BLOB", hash)
+        await conn.execute(metadata.tables["sa_blobs"].insert().values(id=hash, data=data))
     return hash
 
 
-async def on_transaction_message(event: TransactionMessageEvent):
+async def on_transaction_message(event: MessageEvent):
     async with engine.begin() as conn:
-        headers_blob_id = await insert_blob(conn, event.message.content.serialized_headers)
-        body_blob_id = await insert_blob(conn, event.message.content.serialized_body)
+        headers_blob_id = await insert_blob(conn, event.message.serialized_headers)
+        body_blob_id = await insert_blob(conn, event.message.serialized_body)
         await conn.execute(
             metadata.tables["sa_messages"]
             .insert()
             .values(
                 transaction_id=event.transaction.id,
-                kind=event.message.type,
-                summary=event.message.content.serialized_summary,
+                kind=event.message.kind,
+                summary=event.message.serialized_summary,
                 headers=headers_blob_id,
                 body=body_blob_id,
                 created_at=event.message.created_at,

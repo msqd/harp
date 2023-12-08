@@ -1,5 +1,5 @@
-import { Transaction } from "Domain/Transactions/Types"
 import { TransactionDataTable } from "./TransactionDataTable.tsx"
+import { Transaction } from "Models/Transaction"
 
 interface TransactionsListProps {
   transactions: Transaction[]
