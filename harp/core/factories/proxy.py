@@ -78,7 +78,7 @@ class ProxyFactory:
             raise RuntimeError(f"Module {plugin} does not have a register function or could not be imported.") from exc
         plugin.register(self.container, self.dispatcher, self.settings)
 
-    async def create(self, *args, **kwargs) -> ASGIFramework:
+    async def create(self) -> ASGIFramework:
         """
         Builds the actual proxy as an ASGI application.
 
@@ -91,11 +91,10 @@ class ProxyFactory:
 
         await self.dispatcher.dispatch(EVENT_FACTORY_BIND, ProxyFactoryBindEvent(self.container, self.settings))
         provider = self.container.build_provider()
-
         logger.info(f"ProxyFactory::create() Settings={repr(self.settings.values)}")
         self._on_create_configure_dashboard_if_needed(provider)
         # noinspection PyTypeChecker
-        return self.KernelType(*args, dispatcher=self.dispatcher, resolver=self.resolver, **kwargs)
+        return self.KernelType(dispatcher=self.dispatcher, resolver=self.resolver)
 
     def _on_create_configure_dashboard_if_needed(self, provider: Services):
         # todo: use self.config['dashboard_enabled'] ???
