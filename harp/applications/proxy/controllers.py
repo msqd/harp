@@ -46,7 +46,7 @@ class HttpProxyController:
         transaction = Transaction(
             id=generate_transaction_id_ksuid(), type=request.type, started_at=datetime.utcnow(), target=self.name
         )
-        logger.info(f"▶ {request.method} {request.path}", transaction_id=transaction.id)
+        logger.debug(f"▶ {request.method} {request.path}", transaction_id=transaction.id)
 
         if self.dispatcher:
             # dispatch transaction started event
@@ -59,7 +59,6 @@ class HttpProxyController:
         # PROXY REQUEST
         request_headers = tuple(((k, v) for k, v in request.headers if k.lower() not in (b"host",)))
         request_content = await self._suboptimal_temporary_extract_request_content(request)
-        logger_kwargs = dict(transaction_id=getattr(request, "transaction_id", None))
 
         url = urljoin(self.target, request.path) + (f"?{request.query_string}" if request.query_string else "")
 
@@ -69,13 +68,13 @@ class HttpProxyController:
             headers=request_headers,
             content=request_content,
         )
-        logger.info(f"▶▶ {request.method} {url}", **logger_kwargs)
+        logger.debug(f"▶▶ {request.method} {url}", transaction_id=transaction.id)
 
         # PROXY RESPONSE
         p_response: httpx.Response = await client.send(p_request)
-        logger.info(
+        logger.debug(
             f"◀◀ {p_response.status_code} {p_response.reason_phrase} ({p_response.elapsed.total_seconds()}s)",
-            **logger_kwargs,
+            transaction_id=transaction.id,
         )
 
         response_headers = dict(
@@ -91,7 +90,7 @@ class HttpProxyController:
         # END TRANSACTION
         reason = codes.get_reason_phrase(status)
         spent = int((datetime.utcnow().timestamp() - transaction.started_at.timestamp()) * 100000) / 100
-        logger.info(f"◀ {status} {reason} ({spent}ms)", transaction_id=transaction.id)
+        logger.debug(f"◀ {status} {reason} ({spent}ms)", transaction_id=transaction.id)
 
         if self.dispatcher:
             # dispatch message event for response
