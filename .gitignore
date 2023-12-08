@@ -30,6 +30,7 @@
 .pybuilder/
 .pyre/
 .pytest_cache/
+.python-version
 .pytype/
 .ropeproject
 .scrapy
@@ -39,6 +40,7 @@
 .venv
 .webassets-cache
 /.vscode/
+/harp.db
 /requirements*.txt
 /site
 ENV/
@@ -80,4 +82,3 @@ var/
 venv.bak/
 venv/
 wheels/
-.python-version
