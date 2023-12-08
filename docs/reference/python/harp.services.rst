@@ -1,14 +1,6 @@
 harp.services package
 =====================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   harp.services.old_deprecated_storage
-
 Submodules
 ----------
 

@@ -63,7 +63,7 @@ logging_config = {
         "level": logging.INFO,
     },
     "loggers": {
-        "harp": {"level": "DEBUG"},
+        "harp": {"level": "INFO"},
         "httpx": {"level": "WARNING"},  # todo wrap in structlog
         "httpcore": {"level": "INFO"},  # todo wrap in structlog
     },
