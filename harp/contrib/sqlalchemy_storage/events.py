@@ -34,12 +34,9 @@ async def insert_blob(conn, data):
         data = data.encode()
     hash = hashlib.sha1(data).hexdigest()
 
-    # select([BlobsTable.c.id]).where(BlobsTable.c.id == hash).limit(1)
-
     query = select(func.count()).where(metadata.tables["sa_blobs"].c.id == hash)
 
     if not await conn.scalar(query):
-        print("INSERTING BLOB", hash)
         await conn.execute(metadata.tables["sa_blobs"].insert().values(id=hash, data=data))
     return hash
 

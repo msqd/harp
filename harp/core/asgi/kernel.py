@@ -10,13 +10,13 @@ from harp.core.asgi.events import (
     EVENT_CORE_VIEW,
 )
 from harp.core.asgi.events.controller import ControllerEvent
-from harp.core.asgi.events.dispatchers import AsyncEventDispatcher, LoggingAsyncEventDispatcher
 from harp.core.asgi.events.request import RequestEvent
 from harp.core.asgi.events.response import ResponseEvent
 from harp.core.asgi.events.view import ViewEvent
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.asgi.resolvers import ControllerResolver
+from harp.core.event_dispatcher import AsyncEventDispatcher, LoggingAsyncEventDispatcher
 
 logger = get_logger(__name__)
 
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     from harp.applications.proxy.controllers import HttpProxyController
     from harp.core.asgi.resolvers import ProxyControllerResolver, dump_request_controller
-    from harp.services.storage.in_memory import InMemoryStorage
+    from harp.services.old_deprecated_storage.in_memory import InMemoryStorage
 
     storage = InMemoryStorage()
 

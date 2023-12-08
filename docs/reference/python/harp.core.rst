@@ -16,6 +16,14 @@ Subpackages
    harp.core.types
    harp.core.views
 
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   harp.core.event_dispatcher
+
 Module contents
 ---------------
 

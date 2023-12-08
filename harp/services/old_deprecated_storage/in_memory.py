@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from itertools import islice
 from weakref import WeakValueDictionary
 
-from harp.services.storage.base import BaseStorageSettings
+from harp.services.old_deprecated_storage.base import BaseStorageSettings
 
 from .base import Storage
 

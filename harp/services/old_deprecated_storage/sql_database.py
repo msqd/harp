@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from sqlalchemy import Column, MetaData, String, Table, create_engine
 
-from harp.services.storage.base import BaseStorageSettings, Storage
+from harp.services.old_deprecated_storage.base import BaseStorageSettings, Storage
 
 
 @dataclass(frozen=True)

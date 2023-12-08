@@ -11,9 +11,9 @@ from hypercorn.typing import ASGIFramework
 from harp.applications.api.controllers import DashboardController
 from harp.applications.proxy.controllers import HttpProxyController
 from harp.core.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_RESPONSE, EVENT_CORE_VIEW
-from harp.core.asgi.events.dispatchers import LoggingAsyncEventDispatcher
 from harp.core.asgi.kernel import ASGIKernel
 from harp.core.asgi.resolvers import ProxyControllerResolver
+from harp.core.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.core.factories.container import create_container
 from harp.core.factories.events.lifecycle import on_http_request, on_http_response
 from harp.core.factories.settings import create_settings
@@ -25,11 +25,11 @@ class ProxyFactory:
     KernelType: Type[ASGIKernel] = ASGIKernel
 
     def __init__(self, *, bind="localhost", settings=None, dashboard=True, dashboard_port=Default):
-        self.config = create_settings(settings)
-        self.container = create_container(self.config)
-        self.resolver = ProxyControllerResolver()
-
+        self.settings = create_settings(settings)
+        self.container = create_container(self.settings)
         self.dispatcher = self.create_event_dispatcher()
+
+        self.resolver = ProxyControllerResolver()
         self.bind = bind
         self.binds = set()
 
@@ -40,7 +40,7 @@ class ProxyFactory:
 
         if dashboard:
             # todo: use self.config['dashboard_enabled'] ???
-            _port = self.config["dashboard_port"] if "dashboard_port" in self.config else dashboard_port
+            _port = self.settings["dashboard_port"] if "dashboard_port" in self.settings else dashboard_port
             self.configure_dashboard(port=_port)
 
     def create_event_dispatcher(self):
@@ -80,7 +80,7 @@ class ProxyFactory:
             plugin = __import__(plugin, fromlist=["register"])
         except ImportError as exc:
             raise RuntimeError(f"Module {plugin} does not have a register function.") from exc
-        plugin.register(self.dispatcher)
+        plugin.register(self.container, self.dispatcher, self.settings)
 
     def create(self, *args, **kwargs) -> ASGIFramework:
         """
