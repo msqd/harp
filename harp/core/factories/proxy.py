@@ -105,7 +105,7 @@ class ProxyFactory:
 
         try:
             storage = provider.get(IStorage)
-            self.resolver.add(port, DashboardController(storage=storage))
+            self.resolver.add(port, DashboardController(storage=storage, proxy_settings=self.settings))
             self.__server_binds.add(f"{self.bind}:{port}")
         except CannotResolveTypeException:
             logger.error(

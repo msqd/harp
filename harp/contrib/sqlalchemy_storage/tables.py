@@ -4,6 +4,7 @@ from sqlalchemy import BLOB, Column, DateTime, Float, ForeignKey, Integer, MetaD
 
 metadata = MetaData()
 
+# todo endpoint name + api
 TransactionsTable = Table(
     "sa_transactions",
     metadata,

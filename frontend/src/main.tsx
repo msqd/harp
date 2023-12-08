@@ -24,7 +24,7 @@ const router = createBrowserRouter([
       },
       {
         path: "settings",
-        element: <Settings/>,
+        element: <Settings />,
       },
     ],
   },
@@ -34,7 +34,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/settings",
-    element: <Settings/>,
+    element: <Settings />,
   },
 ])
 const queryClient = new QueryClient()

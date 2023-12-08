@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 
 const Settings = () => {
   const query = useProxySettingsQuery()
-  const [settings, setSettings] = useState(null)
+  const [settings, setSettings] = useState<string | null>(null)
 
   useEffect(() => {
     if (query.data) {
