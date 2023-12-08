@@ -4,7 +4,6 @@
 """
 import asyncio
 import logging
-import warnings
 from typing import Type
 
 from hypercorn.typing import ASGIFramework
@@ -89,9 +88,9 @@ class ProxyFactory:
 
         # bind services
 
+        logger.info(f"ProxyFactory::create() Settings={repr(self.settings.values)}")
         await self.dispatcher.dispatch(EVENT_FACTORY_BIND, ProxyFactoryBindEvent(self.container, self.settings))
         provider = self.container.build_provider()
-        logger.info(f"ProxyFactory::create() Settings={repr(self.settings.values)}")
         self._on_create_configure_dashboard_if_needed(provider)
         # noinspection PyTypeChecker
         return self.KernelType(dispatcher=self.dispatcher, resolver=self.resolver)
@@ -110,8 +109,8 @@ class ProxyFactory:
             self.resolver.add(port, DashboardController(storage=storage))
             self.binds.add(f"{self.bind}:{port}")
         except CannotResolveTypeException:
-            warnings.warn(
-                "Dashboard is enabled but no storage is configured. Dashboard will not be available.\nDid you forget "
+            logger.error(
+                "Dashboard is enabled but no storage is configured. Dashboard will not be available. Did you forget "
                 "to load a storage plugin?"
             )
 

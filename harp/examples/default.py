@@ -1,6 +1,9 @@
+import asyncio
+
 from harp import ProxyFactory
 
 proxy = ProxyFactory()
+proxy.load("harp.contrib.sqlalchemy_storage")
 
 if __name__ == "__main__":
-    proxy.serve()
+    asyncio.run(proxy.serve())

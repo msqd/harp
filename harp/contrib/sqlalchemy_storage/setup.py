@@ -16,6 +16,7 @@ from harp.core.asgi.events import (
 )
 from harp.core.factories.events import EVENT_FACTORY_BIND
 from harp.core.factories.events.bind import ProxyFactoryBindEvent
+from harp.protocols.storage import IStorage
 
 logger = get_logger(__name__)
 
@@ -53,6 +54,6 @@ async def on_bind(event: ProxyFactoryBindEvent):
     if storage_type != "sqlalchemy":
         return
 
-    event.container.add_instance(
-        event.settings.bind(SqlAlchemyStorageSettings, "storage"),
-    )
+    local_settings = event.settings.bind(SqlAlchemyStorageSettings, "storage")
+    event.container.add_instance(local_settings)
+    event.container.register(IStorage, SqlAlchemyStorage)
