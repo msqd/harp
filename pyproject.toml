@@ -26,7 +26,6 @@ sqlalchemy = { extras = ["asyncio"], version = "^2.0.20" }
 sqlalchemy-utils = "^0.41.1"
 structlog = "^23.1.0"
 svix-ksuid = "^0.6.2"
-whistle = "^1.0.1"
 dataclasses-json = "^0.6.3"
 
 [tool.poetry.dependencies.essentials-configuration]
@@ -36,6 +35,10 @@ develop = true
 
 [tool.poetry.dependencies.rodi]
 path = "./vendors/rodi"
+develop = true
+
+[tool.poetry.dependencies.whistle]
+path = "./vendors/whistle"
 develop = true
 
 [tool.poetry.group.dev.dependencies]
