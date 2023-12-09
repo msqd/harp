@@ -16,11 +16,19 @@ def entrypoint():
 @click.command(short_help="Starts the development environment.")
 @click.option("--with-docs/--no-docs", default=False)
 @click.option("--with-ui/--no-ui", default=False)
+@click.option("--set", "options", default=(), multiple=True, help="Set proxy configuration options.")
 @click.argument("services", nargs=-1)
-def start(with_docs, with_ui, services):
+def start(with_docs, with_ui, options, services):
+    options = (
+        "--set {key} {value}".format(key=key, value=value) for key, value in map(lambda x: x.split("=", 1), options)
+    )
     processes = {
         "frontend": "(cd frontend; pnpm dev)",
-        "proxy": 'watchfiles --filter python "' + sys.executable + ' -m harp.examples.default" harp',
+        "proxy": 'watchfiles --filter python "'
+        + sys.executable
+        + " -m harp.examples.default"
+        + (f" {' '.join(options)}" if options else "")
+        + '" harp',
     }
     if with_docs or "docs" in services:
         processes["docs"] = "(cd docs; sphinx-autobuild . _build/html)"

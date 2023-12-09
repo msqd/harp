@@ -1,4 +1,5 @@
 import asyncio
+import sys
 
 from harp import ProxyFactory
 
@@ -10,7 +11,8 @@ proxy = ProxyFactory(
             "echo": False,
             "drop_tables": True,
         }
-    }
+    },
+    args=sys.argv[1:],
 )
 proxy.load("harp.contrib.sqlalchemy_storage")
 

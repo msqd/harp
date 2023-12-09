@@ -4,6 +4,7 @@
 """
 import asyncio
 import logging
+from argparse import ArgumentParser
 from collections import defaultdict
 from typing import Type
 
@@ -32,8 +33,8 @@ class ProxyFactory:
     DEFAULT_DASHBOARD_PORT = 4080
     KernelType: Type[ASGIKernel] = ASGIKernel
 
-    def __init__(self, *, bind="localhost", settings=None, dashboard=True, dashboard_port=Default):
-        self.settings = create_settings(settings)
+    def __init__(self, *, bind="localhost", settings=None, dashboard=True, dashboard_port=Default, args=None):
+        self.settings = create_settings(settings, values=self._get_values_from_arguments(args))
         self.container = Container()
         self.dispatcher = self._create_event_dispatcher()
 
@@ -44,6 +45,22 @@ class ProxyFactory:
 
         self.dashboard = dashboard
         self.dashboard_port = dashboard_port
+
+    def _get_values_from_arguments(self, args=None):
+        if not args:
+            return None
+        parser = ArgumentParser()
+        parser.add_argument(
+            "--set",
+            "-s",
+            action="append",
+            dest="settings",
+            nargs=2,
+            metavar=("KEY", "VALUE"),
+            help="Set a configuration value.",
+        )
+        parsed_args = parser.parse_args(args)
+        return dict(parsed_args.settings) if parsed_args.settings else None
 
     def _create_event_dispatcher(self):
         """Creates an event dispatcher and registers the default listeners."""
@@ -112,6 +129,20 @@ class ProxyFactory:
                 if _prop not in ("name", "target"):
                     raise ProxyConfigurationError(f"Invalid endpoint property {_prop}.")
                 _ports[_port][_prop] = v
+
+        try:
+            _endpoints = self.settings.proxy.endpoint.values
+        except AttributeError:
+            _endpoints = {}
+        for _port, _port_config in _endpoints.items():
+            try:
+                _port = int(_port)
+            except TypeError as exc:
+                raise ProxyConfigurationError(f"Invalid endpoint port {_port}.") from exc
+            if _port_config.keys() != {"name", "target"}:
+                raise ProxyConfigurationError(f"Invalid endpoint configuration for port {_port}.")
+            _ports[_port]["target"] = _port_config["target"]
+            _ports[_port]["name"] = _port_config["name"]
 
         for _port, _port_config in _ports.items():
             self.add(_port, _port_config["target"], name=_port_config["name"])

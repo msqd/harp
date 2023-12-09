@@ -142,10 +142,16 @@ class SqlAlchemyStorage:
         query = select(func.count()).where(BlobsTable.c.id == hash)
 
         if not await conn.scalar(query):
+            from sqlite3 import IntegrityError
+
             try:
                 await conn.execute(BlobsTable.insert().values(id=hash, data=data))
-            except Exception as e:
-                logger.exception(e)
+            except IntegrityError as e:
+                logger.error(
+                    "SQLite IntegrityError: %s (ignored for now as it just shows concurrency problems with sqlite, "
+                    "which we are aware of)",
+                    e,
+                )
         return hash
 
     async def _on_startup_create_database(self, event: TransactionEvent):
