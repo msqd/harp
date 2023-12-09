@@ -2,7 +2,7 @@ import { useQuery } from "react-query"
 import { useApi } from "Domain/Api"
 
 export interface KeyValueSettings {
-  [key: string]: string | KeyValueSettings
+  [key: string]: string | boolean | KeyValueSettings
 }
 
 export function useProxySettingsQuery() {

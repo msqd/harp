@@ -1,6 +1,8 @@
 import { useProxySettingsQuery } from "Domain/ProxySettings"
 import { useEffect, useState } from "react"
 import { KeyValueSettings } from "Domain/ProxySettings/useProxySettingsQuery.ts"
+import { CheckIcon } from "@heroicons/react/20/solid"
+import { XMarkIcon } from "@heroicons/react/24/outline"
 
 const SettingsTable = ({ settings }: { settings: KeyValueSettings }) => {
   return (
@@ -13,7 +15,23 @@ const SettingsTable = ({ settings }: { settings: KeyValueSettings }) => {
                 {key}
               </td>
               <td className="whitespace-nowrap text-sm text-gray-500">
-                {typeof value === "string" ? value : <SettingsTable settings={value} />}
+                {typeof value === "string" ? (
+                  value
+                ) : typeof value == "boolean" ? (
+                  value ? (
+                    <>
+                      <CheckIcon className="w-3 inline mr-1" />
+                      true
+                    </>
+                  ) : (
+                    <>
+                      <XMarkIcon className="w-3 inline mr-1" />
+                      false
+                    </>
+                  )
+                ) : (
+                  <SettingsTable settings={value} />
+                )}
               </td>
             </tr>
           )
