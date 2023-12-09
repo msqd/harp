@@ -4,6 +4,7 @@
 """
 import asyncio
 import logging
+from collections import defaultdict
 from typing import Type
 
 from hypercorn.typing import ASGIFramework
@@ -15,12 +16,13 @@ from harp.applications.proxy.controllers import HttpProxyController
 from harp.core.asgi.events import EVENT_CORE_VIEW
 from harp.core.asgi.kernel import ASGIKernel
 from harp.core.asgi.resolvers import ProxyControllerResolver
-from harp.core.event_dispatcher import LoggingAsyncEventDispatcher
-from harp.core.factories.events import EVENT_FACTORY_BIND
-from harp.core.factories.events.bind import ProxyFactoryBindEvent
-from harp.core.factories.settings import create_settings
+from harp.core.event_dispatcher import IAsyncEventDispatcher, LoggingAsyncEventDispatcher
 from harp.core.types.signs import Default
 from harp.core.views.json import on_json_response
+from harp.errors import ProxyConfigurationError
+from harp.factories.events import EVENT_FACTORY_BIND
+from harp.factories.events.bind import ProxyFactoryBindEvent
+from harp.factories.settings import create_settings
 from harp.protocols.storage import IStorage
 
 logger = get_logger(__name__)
@@ -49,6 +51,8 @@ class ProxyFactory:
 
         # todo move into core or extension, this is not proxy related
         dispatcher.add_listener(EVENT_CORE_VIEW, on_json_response)
+
+        self.container.add_instance(dispatcher, IAsyncEventDispatcher)
 
         return dispatcher
 
@@ -91,8 +95,26 @@ class ProxyFactory:
         await self.dispatcher.dispatch(EVENT_FACTORY_BIND, ProxyFactoryBindEvent(self.container, self.settings))
         provider = self.container.build_provider()
         self._on_create_configure_dashboard_if_needed(provider)
+        self._on_create_configure_endpoints(provider)
         # noinspection PyTypeChecker
         return self.KernelType(dispatcher=self.dispatcher, resolver=self.resolver)
+
+    def _on_create_configure_endpoints(self, provider: Services):
+        # should be refactored, read env for auto conf
+        _ports = defaultdict(dict)
+        for k, v in self.settings.values.items():
+            if k.startswith("proxy_endpoint_"):
+                _port, _prop = k[15:].split("_")
+                try:
+                    _port = int(_port)
+                except TypeError as exc:
+                    raise ProxyConfigurationError(f"Invalid endpoint port {_port}.") from exc
+                if _prop not in ("name", "target"):
+                    raise ProxyConfigurationError(f"Invalid endpoint property {_prop}.")
+                _ports[_port][_prop] = v
+
+        for _port, _port_config in _ports.items():
+            self.add(_port, _port_config["target"], name=_port_config["name"])
 
     def _on_create_configure_dashboard_if_needed(self, provider: Services):
         # todo: use self.config['dashboard_enabled'] ???

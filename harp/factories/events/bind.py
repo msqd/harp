@@ -1,7 +1,7 @@
 from config.common import Configuration
 from rodi import Container
 
-from harp.core.asgi.events.base import BaseEvent
+from harp.core.event_dispatcher import BaseEvent
 
 
 class ProxyFactoryBindEvent(BaseEvent):

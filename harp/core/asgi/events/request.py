@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from .base import BaseEvent
+from harp.core.event_dispatcher import BaseEvent
 
 
 class RequestEvent(BaseEvent):

@@ -5,10 +5,10 @@ import os
 
 import pytest
 
+from harp import ProxyFactory
 from harp.applications.proxy.controllers import HttpProxyController
 from harp.core.asgi.kernel import ASGIKernel
 from harp.core.asgi.resolvers import ProxyControllerResolver
-from harp.core.factories.proxy import ProxyFactory
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.http import parametrize_with_http_methods, parametrize_with_http_status_codes
 

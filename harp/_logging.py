@@ -64,8 +64,10 @@ logging_config = {
     },
     "loggers": {
         "harp": {"level": "INFO"},
-        "httpx": {"level": "WARNING"},  # todo wrap in structlog
         "httpcore": {"level": "INFO"},  # todo wrap in structlog
+        "httpx": {"level": "WARNING"},  # todo wrap in structlog
+        "hypercorn.access": {"level": "ERROR"},
+        "hypercorn.error": {"level": "INFO"},
     },
 }
 

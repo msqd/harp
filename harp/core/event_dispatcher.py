@@ -1,8 +1,28 @@
+from typing import Protocol
+
 from whistle import Event, EventDispatcher
 
 from harp import get_logger
 
 logger = get_logger(__name__)
+
+
+class IAsyncEventDispatcher(Protocol):
+    async def dispatch(self, event_id, event=None) -> "IEvent":
+        ...
+
+    def add_listener(self, event_id, listener, priority=0):
+        ...
+
+
+class IEvent(Protocol):
+    dispatcher: IAsyncEventDispatcher
+    name: str
+
+
+class BaseEvent(Event):
+    dispatcher = None
+    name = None
 
 
 class AsyncEventDispatcher(EventDispatcher):
@@ -17,6 +37,13 @@ class AsyncEventDispatcher(EventDispatcher):
                 break
 
     async def dispatch(self, event_id, event=None):
+        """
+        todo: add this as dispatch_async in whistle 2.0 ?
+
+        :param event_id:
+        :param event:
+        :return:
+        """
         if event is None:
             event = Event()
 

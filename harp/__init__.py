@@ -1,6 +1,5 @@
-"""foo"""
-from ._logging import get_logger
-from .core.factories.proxy import ProxyFactory
+from ._logging import get_logger  # isort: skip
+from harp.factories.proxy import ProxyFactory
 
 __all__ = [
     ProxyFactory,

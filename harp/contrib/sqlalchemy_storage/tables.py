@@ -1,5 +1,3 @@
-import asyncio
-
 from sqlalchemy import BLOB, Column, DateTime, Float, ForeignKey, Integer, MetaData, String, Table
 
 metadata = MetaData()
@@ -40,9 +38,3 @@ async def create_all_tables(engine, *, drop_tables=False):
         if drop_tables:
             await conn.run_sync(metadata.drop_all)
         await conn.run_sync(metadata.create_all)
-
-
-if __name__ == "__main__":
-    from harp.contrib.sqlalchemy_storage.engine import engine
-
-    asyncio.run(create_all_tables(engine, drop_tables=True))

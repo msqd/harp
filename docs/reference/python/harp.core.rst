@@ -8,7 +8,6 @@ Subpackages
    :maxdepth: 4
 
    harp.core.asgi
-   harp.core.factories
    harp.core.http
    harp.core.models
    harp.core.settings

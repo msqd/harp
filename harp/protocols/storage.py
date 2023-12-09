@@ -2,4 +2,8 @@ from typing import Protocol
 
 
 class IStorage(Protocol):
-    pass
+    def find_transactions(self, *, with_messages=False):
+        ...
+
+    def get_blob(self, blob_id):
+        ...

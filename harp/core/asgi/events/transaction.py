@@ -1,6 +1,5 @@
+from harp.core.event_dispatcher import BaseEvent
 from harp.core.models.transactions import Transaction
-
-from .base import BaseEvent
 
 
 class TransactionEvent(BaseEvent):

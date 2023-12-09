@@ -1,5 +1,5 @@
-harp.core.factories package
-===========================
+harp.factories package
+======================
 
 Subpackages
 -----------
@@ -7,7 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   harp.core.factories.events
+   harp.factories.events
 
 Submodules
 ----------
@@ -15,13 +15,13 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   harp.core.factories.proxy
-   harp.core.factories.settings
+   harp.factories.proxy
+   harp.factories.settings
 
 Module contents
 ---------------
 
-.. automodule:: harp.core.factories
+.. automodule:: harp.factories
    :members:
    :undoc-members:
    :show-inheritance:

@@ -7,8 +7,6 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   harp.contrib.sqlalchemy_storage.engine
-   harp.contrib.sqlalchemy_storage.events
    harp.contrib.sqlalchemy_storage.settings
    harp.contrib.sqlalchemy_storage.setup
    harp.contrib.sqlalchemy_storage.storage
