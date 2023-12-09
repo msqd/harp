@@ -5,7 +5,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
 import { Page } from "Components/Page"
 
-const SettingsTable = ({ settings }: { settings: KeyValueSettings }) => {
+const ProxySettingsTable = ({ settings }: { settings: KeyValueSettings }) => {
   return (
     <table className="min-w-fit divide-y divide-gray-300">
       <tbody className="divide-y divide-gray-200 bg-white">
@@ -31,7 +31,7 @@ const SettingsTable = ({ settings }: { settings: KeyValueSettings }) => {
                     </>
                   )
                 ) : (
-                  <SettingsTable settings={value} />
+                  <ProxySettingsTable settings={value} />
                 )}
               </td>
             </tr>
@@ -42,34 +42,22 @@ const SettingsTable = ({ settings }: { settings: KeyValueSettings }) => {
   )
 }
 
-const Settings = () => {
+const ProxySettings = () => {
   const query = useProxySettingsQuery()
 
   return (
-    <Page>
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h1 className="text-base font-semibold leading-6 text-gray-900">Settings</h1>
-          <p className="mt-2 text-sm text-gray-700">Dump of actually applied configuration</p>
-        </div>
-      </div>
-      <div className="mt-8 flow-root">
-        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <OnQuerySuccess query={query}>
-              {(query) => {
-                return (
-                  <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-                    <SettingsTable settings={query.data} />
-                  </div>
-                )
-              }}
-            </OnQuerySuccess>
-          </div>
-        </div>
-      </div>
+    <Page title="Settings" description="Dump of actually applied configuration">
+      <OnQuerySuccess query={query}>
+        {(query) => {
+          return (
+            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+              <ProxySettingsTable settings={query.data} />
+            </div>
+          )
+        }}
+      </OnQuerySuccess>
     </Page>
   )
 }
 
-export default Settings
+export default ProxySettings
