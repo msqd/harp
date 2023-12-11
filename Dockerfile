@@ -1,65 +1,90 @@
 ################################################################################
 # IMAGE: Base build image
 #
-FROM python:3.12-alpine as base-builder
-ENV PATH="/opt/venv/bin:$PATH"
+FROM python:3.12-alpine as base
 
-USER root
+ENV PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_DEFAULT_TIMEOUT=100 \
+    HOME="/opt/harp" \
+    POETRY_VERSION=1.7.1 \
+    POETRY_HOME="/opt/poetry" \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_CREATE=false \
+    VIRTUAL_ENV="/opt/venv" \
+    NODE_MAJOR=20
+
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apk,sharing=locked \
     apk add gcc musl-dev libffi-dev make \
-    && adduser -D harp -G www-data -h /opt/harp -u 500  \
-    && mkdir -p /opt/harp /opt/venv \
-    && python3.12 -m venv /opt/venv \
-    && /opt/venv/bin/pip install -U pip wheel setuptools 'poetry==1.7.1' \
+    && adduser -D harp -G www-data -h ${HOME} -u 500  \
+    && mkdir -p ${HOME} \
     && echo 'alias l="ls -lsah --color"' > /opt/harp/.profile \
-    && echo 'export PATH="/opt/venv/bin:$PATH"' >> /opt/harp/.profile \
-    && chown harp:www-data -R /opt/harp /opt/venv
+    && echo 'export PATH="${POETRY_HOME}/bin:${VIRTUAL_ENV}/bin:$PATH"' >> /opt/harp/.profile
+
+RUN --mount=type=cache,target=/root/.cache,sharing=locked \
+    --mount=type=cache,target=/var/cache/apk,sharing=locked \
+    pip install 'poetry==1.7.1' \
+    && python3 -m venv ${VIRTUAL_ENV}
+
+RUN chown harp:www-data -R /opt/harp /opt/venv
+
+USER harp
+WORKDIR /opt/harp
 
 
 ################################################################################
 # IMAGE: Backend builder image (install prod deps in a virtualenv ready to be copied to runtime)
 #
-FROM base-builder as backend-builder
+FROM base as backend
 
+# Step: Add sources and install dependencies (prod)
 USER harp
 WORKDIR /opt/harp
-
 ADD --chown=harp:www-data . src
+
+# ... install
 RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
-    (cd src; poetry install --only main)
+    (cd src; poetry config --list; poetry debug info; poetry install --only main -vvv)
+
+# Step: Fix cache directory
+RUN rm -rf .cache
+
 
 ################################################################################
 # IMAGE: Development image (ability to use from sources, run tests, run dev servers ...)
 #
-FROM base-builder as development
+FROM base as development
 
+# Step: Add system build dependencies
 USER root
 WORKDIR /root
-
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     --mount=type=cache,target=/root/.cache,sharing=locked \
     apk add 'nodejs<21' npm \
     && npm install -g pnpm
 
-
+# Step: Add sources, install dependencies (dev) and build assets
 USER harp
 WORKDIR /opt/harp
-
 ADD --chown=harp:www-data . src
+
+# ... install and build
 RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
-    chown -R harp:www-data .cache \
-    && (cd src; poetry install) \
+    (cd src; poetry config --list; poetry debug info; poetry install -vvv) \
     && (cd src/vendors/mkui; pnpm install) \
     && (cd src/frontend; pnpm install)
 
+# Step: Fix cache directory
+RUN rm -rf .cache
 
 
 ################################################################################
 # IMAGE: Frontend builder image (ability to compile frontend app into production version)
 #
-FROM base-builder as frontend-builder
+FROM base as frontend
 
+# Step: Add system build dependencies
 USER root
 WORKDIR /root
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
@@ -68,44 +93,40 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     && npm install -g pnpm
 
 USER harp
-WORKDIR /sources
-
+WORKDIR /opt/harp
 ADD --chown=harp:www-data ./frontend frontend
-ADD --chown=harp:www-data ./vendors vendors
+ADD --chown=harp:www-data ./vendors/mkui vendors/mkui
+
 RUN (cd vendors/mkui; pnpm install)
-RUN (cd frontend; pnpm install)
-RUN (cd frontend; pnpm build)
+RUN (cd frontend; pnpm install; pnpm build)
 
 
 ################################################################################
 # IMAGE: Lightest possible image, with only production related abilities
 #
 FROM python:3.12-alpine as runtime
-ENV PATH="/opt/venv/bin:$PATH"
+
+ENV PYTHONUNBUFFERED=1 \
+    HOME="/opt/harp" \
+    VIRTUAL_ENV="/opt/venv"
 
 USER root
 WORKDIR /root
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apk,sharing=locked \
-    apk add gcc musl-dev libffi-dev \
-    && adduser -D harp -G www-data -h /opt/harp -u 500  \
-    && mkdir -p /opt/harp /opt/venv \
-    && python3.12 -m venv /opt/venv \
-    && /opt/venv/bin/pip install -U pip wheel setuptools 'poetry==1.7.1' \
+    apk add gcc musl-dev libffi-dev make \
+    && adduser -D harp -G www-data -h ${HOME} -u 500  \
+    && mkdir -p ${HOME} \
     && echo 'alias l="ls -lsah --color"' > /opt/harp/.profile \
-    && echo 'export PATH="/opt/venv/bin:$PATH"' >> /opt/harp/.profile \
-    && chown harp:www-data -R /opt/harp /opt/venv
+    && echo 'export PATH="${POETRY_HOME}/bin:${VIRTUAL_ENV}/bin:$PATH"' >> /opt/harp/.profile
+RUN chown harp:www-data -R /opt/harp
 
 USER harp
-WORKDIR /opt/harp
+WORKDIR ${HOME}
 
-COPY --from=backend-builder /opt/harp/src/harp/examples/default.py /opt/harp/entrypoint.py
-
-COPY --from=backend-builder /opt/venv /opt/venv
-COPY --from=frontend-builder /sources/frontend/dist /opt/harp/public
-
-COPY --from=backend-builder /opt/harp/src /opt/harp/src
-RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
-    pip install -e src
+COPY --from=backend ${HOME}/src/harp/examples/default.py ${HOME}/entrypoint.py
+COPY --from=backend ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+COPY --from=frontend ${HOME}/frontend/dist ${HOME}/public
+COPY --from=backend ${HOME}/src ${HOME}/src
 
 CMD [ "/opt/venv/bin/python", "/opt/harp/entrypoint.py" ]
