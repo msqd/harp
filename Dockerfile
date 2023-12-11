@@ -6,7 +6,7 @@ FROM python:3.12-alpine as base
 ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_DEFAULT_TIMEOUT=100 \
-    HOME="/opt/harp" \
+    BASE="/opt/harp" \
     POETRY_VERSION=1.7.1 \
     POETRY_HOME="/opt/poetry" \
     POETRY_NO_INTERACTION=1 \
@@ -17,8 +17,8 @@ ENV PYTHONUNBUFFERED=1 \
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apk,sharing=locked \
     apk add gcc musl-dev libffi-dev make \
-    && adduser -D harp -G www-data -h ${HOME} -u 500  \
-    && mkdir -p ${HOME} \
+    && adduser -D harp -G www-data -h ${BASE} -u 500  \
+    && mkdir -p ${BASE} \
     && echo 'alias l="ls -lsah --color"' > /opt/harp/.profile \
     && echo 'export PATH="${POETRY_HOME}/bin:${VIRTUAL_ENV}/bin:$PATH"' >> /opt/harp/.profile
 
@@ -107,7 +107,7 @@ RUN (cd frontend; pnpm install; pnpm build)
 FROM python:3.12-alpine as runtime
 
 ENV PYTHONUNBUFFERED=1 \
-    HOME="/opt/harp" \
+    BASE="/opt/harp" \
     VIRTUAL_ENV="/opt/venv"
 
 USER root
@@ -115,18 +115,18 @@ WORKDIR /root
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apk,sharing=locked \
     apk add gcc musl-dev libffi-dev make \
-    && adduser -D harp -G www-data -h ${HOME} -u 500  \
-    && mkdir -p ${HOME} \
+    && adduser -D harp -G www-data -h ${BASE} -u 500  \
+    && mkdir -p ${BASE} \
     && echo 'alias l="ls -lsah --color"' > /opt/harp/.profile \
     && echo 'export PATH="${POETRY_HOME}/bin:${VIRTUAL_ENV}/bin:$PATH"' >> /opt/harp/.profile
 RUN chown harp:www-data -R /opt/harp
 
 USER harp
-WORKDIR ${HOME}
+WORKDIR ${BASE}
 
-COPY --from=backend ${HOME}/src/harp/examples/default.py ${HOME}/entrypoint.py
+COPY --from=backend ${BASE}/src/harp/examples/default.py ${BASE}/entrypoint.py
 COPY --from=backend ${VIRTUAL_ENV} ${VIRTUAL_ENV}
-COPY --from=frontend ${HOME}/frontend/dist ${HOME}/public
-COPY --from=backend ${HOME}/src ${HOME}/src
+COPY --from=frontend ${BASE}/frontend/dist ${BASE}/public
+COPY --from=backend ${BASE}/src ${BASE}/src
 
 CMD [ "/opt/venv/bin/python", "/opt/harp/entrypoint.py" ]
