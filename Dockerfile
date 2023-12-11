@@ -45,7 +45,7 @@ ADD --chown=harp:www-data . src
 
 # ... install
 RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
-    (cd src; poetry config --list; poetry debug info; poetry install --only main -vvv)
+    (cd src; poetry config --list; poetry debug info; poetry install --only main)
 
 # Step: Fix cache directory
 RUN rm -rf .cache
@@ -71,7 +71,7 @@ ADD --chown=harp:www-data . src
 
 # ... install and build
 RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
-    (cd src; poetry config --list; poetry debug info; poetry install -vvv) \
+    (cd src; poetry config --list; poetry debug info; poetry install) \
     && (cd src/vendors/mkui; pnpm install) \
     && (cd src/frontend; pnpm install)
 
