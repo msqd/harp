@@ -53,6 +53,7 @@ test:
   variables:
     GIT_STRATEGY: none
   script:
+    - env | sort
     - cd /opt/harp/src; make test
 
 doc:html:
