@@ -14,7 +14,6 @@ variables:
   GIT_FETCH_EXTRA_FLAGS: --tags
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
-  GIT_SUBMODULE_FORCE_HTTPS: "true"
   DOCKER_TAGS: ${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_IID}
   DOCKER_IMAGE: registry.gitlab.com/makersquad/oss/harp
   DOCKER_IMAGE_DEV: registry.gitlab.com/makersquad/oss/harp
