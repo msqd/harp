@@ -7,7 +7,7 @@ name = "harp"
 version = "0.1.0"
 description = ""
 authors = ["Romain Dorgueil <romain@makersquad.fr>"]
-readme = "README.md"
+readme = "README.rst"
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -28,6 +28,7 @@ structlog = "^23.1.0"
 svix-ksuid = "^0.6.2"
 dataclasses-json = "^0.6.3"
 dataclasses-jsonschema = "^2.16.0"
+asgimiddlewarestaticfile = "^0.6.0"
 
 [tool.poetry.dependencies.essentials-configuration]
 path = "./vendors/config"

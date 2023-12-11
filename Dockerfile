@@ -17,42 +17,39 @@ RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     && chown harp:www-data -R /opt/harp /opt/venv
 
 
-
-#ADD . /sources
-#RUN --mount=type=cache,target=/wheels,sharing=locked (cd /sources; mkdir /wheels; pip wheel --wheel-dir=/wheels .)
-
+################################################################################
+# IMAGE: Backend builder image (install prod deps in a virtualenv ready to be copied to runtime)
+#
 FROM base-builder as backend-builder
 
 USER harp
 WORKDIR /opt/harp
-ADD ./requirements.build.txt /tmp/requirements.txt
-RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
-    pip install -r /tmp/requirements.txt
+
 ADD --chown=harp:www-data . src
 RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
-    pip install -e src
+    (cd src; poetry install --only main)
 
 ################################################################################
-# IMAGE: Development image (ability to use from sources, run tests, run dev servers ...
+# IMAGE: Development image (ability to use from sources, run tests, run dev servers ...)
 #
 FROM base-builder as development
 
 USER root
 WORKDIR /root
+
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     --mount=type=cache,target=/root/.cache,sharing=locked \
     apk add 'nodejs<21' npm \
     && npm install -g pnpm
 
+
 USER harp
 WORKDIR /opt/harp
-ADD ./requirements.build-dev.txt /tmp/requirements.txt
-RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
-    pip install -r /tmp/requirements.txt
+
 ADD --chown=harp:www-data . src
 RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
-    chown -R harp .cache \
-    && pip install -e src[dev] \
+    chown -R harp:www-data .cache \
+    && (cd src; poetry install) \
     && (cd src/vendors/mkui; pnpm install) \
     && (cd src/frontend; pnpm install)
 

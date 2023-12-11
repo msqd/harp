@@ -29,7 +29,7 @@ install-frontend: install-ui
 	cd frontend; pnpm install
 
 install-backend:
-	pip install -e .
+	poetry install
 
 install-ui:
 	cd vendors/mkui; pnpm install

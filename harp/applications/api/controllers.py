@@ -1,6 +1,10 @@
+import os
+
+from asgi_middleware_static_file import ASGIMiddlewareStaticFile
 from config.common import Configuration
 from http_router import NotFoundError, Router
 
+from harp import ROOT_DIR, get_logger
 from harp.applications.proxy.controllers import HttpProxyController
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
@@ -8,16 +12,35 @@ from harp.core.models.transactions import Transaction
 from harp.core.views.json import json
 from harp.protocols.storage import IStorage
 
+STATIC_BUILD_PATHS = [
+    os.path.realpath(os.path.join(ROOT_DIR, "../frontend/dist")),
+    "/opt/harp/public",
+]
+
+logger = get_logger(__name__)
+
 
 class DashboardController(HttpProxyController):
+    name = "ui"
     storage: IStorage
     proxy_settings: Configuration
 
+    middleware = None
+
     def __init__(self, storage: IStorage, proxy_settings: Configuration):
-        super().__init__("http://localhost:4999/", name="ui")
+        super().__init__("http://localhost:4999/")
+
         self.router = self.create_router()
         self.storage = storage
         self.proxy_settings = proxy_settings
+
+        # todo use delegation instead of inheritance, this is not clean.
+        for _path in STATIC_BUILD_PATHS:
+            logger.info("Checking for static files in %s", _path)
+            if os.path.exists(_path):
+                logger.info("Serving static files from %s", _path)
+                self.middleware = ASGIMiddlewareStaticFile(None, "", [_path])
+                break
 
     def create_router(self):
         router = Router(trim_last_slash=True)
@@ -28,6 +51,22 @@ class DashboardController(HttpProxyController):
         return router
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
+        if self.middleware and not request.path.startswith("/api/"):
+            try:
+                return await self.middleware(
+                    {
+                        "type": request._scope["type"],
+                        "path": (request._scope["path"] + "index.html")
+                        if request._scope["path"].endswith("/")
+                        else request._scope["path"],
+                        "method": request._scope["method"],
+                    },
+                    request._receive,
+                    response._send,
+                )
+            finally:
+                response.started = True
+
         try:
             match = self.router(request.path, method=request.method)
             return await match.target(request, response, **(match.params or {}))

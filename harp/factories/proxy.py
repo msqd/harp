@@ -33,14 +33,14 @@ class ProxyFactory:
     DEFAULT_DASHBOARD_PORT = 4080
     KernelType: Type[ASGIKernel] = ASGIKernel
 
-    def __init__(self, *, bind="localhost", settings=None, dashboard=True, dashboard_port=Default, args=None):
+    def __init__(self, *, binds=("[::]",), settings=None, dashboard=True, dashboard_port=Default, args=None):
         self.settings = create_settings(settings, values=self._get_values_from_arguments(args))
         self.container = Container()
         self.dispatcher = self._create_event_dispatcher()
 
         self.resolver = ProxyControllerResolver()
 
-        self.bind = bind
+        self.binds = binds
         self.__server_binds = set()
 
         self.dashboard = dashboard
@@ -82,7 +82,10 @@ class ProxyFactory:
         :param name: The name of the proxy. This is used to identify the proxy in the dashboard.
         """
         self.resolver.add(port, HttpProxyController(target, name=name, dispatcher=self.dispatcher))
-        self.__server_binds.add(f"{self.bind}:{port}")
+
+        for bind in self.binds:
+            logger.info(f"Adding proxy on {bind}:{port} to {target}")
+            self.__server_binds.add(f"{bind}:{port}")
 
     def load(self, plugin):
         """
@@ -159,7 +162,9 @@ class ProxyFactory:
         try:
             storage = provider.get(IStorage)
             self.resolver.add(port, DashboardController(storage=storage, proxy_settings=self.settings))
-            self.__server_binds.add(f"{self.bind}:{port}")
+            for bind in self.binds:
+                logger.info(f"Adding dashboard on {bind}:{port}")
+                self.__server_binds.add(f"{bind}:{port}")
         except CannotResolveTypeException:
             logger.error(
                 "Dashboard is enabled but no storage is configured. Dashboard will not be available. Did you forget "

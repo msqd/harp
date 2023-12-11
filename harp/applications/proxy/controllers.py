@@ -18,10 +18,14 @@ logger = get_logger(__name__)
 
 
 class HttpProxyController:
+    name = None
+    dispatcher = None
+    target = None
+
     def __init__(self, target, *, dispatcher=None, name=None):
-        self.target = target
-        self.name = name
-        self.dispatcher = dispatcher
+        self.target = target or self.target
+        self.name = name or self.name
+        self.dispatcher = dispatcher or self.dispatcher
 
     async def _suboptimal_temporary_extract_request_content(self, request: ASGIRequest):
         """
