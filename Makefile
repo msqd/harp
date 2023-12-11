@@ -82,11 +82,9 @@ test-frontend: install-frontend lint-frontend
 .PHONY: build build-dev push release run
 
 build:
-	poetry export -f requirements.txt --output requirements.$@.txt
 	$(DOCKER) build --progress=plain --target=$(DOCKER_BUILD_TARGET) $(DOCKER_BUILD_OPTIONS) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .
 
 build-dev:
-	poetry export --with=dev -f requirements.txt --output requirements.$@.txt
 	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) DOCKER_BUILD_TARGET=development $(MAKE) build
 
 push:
