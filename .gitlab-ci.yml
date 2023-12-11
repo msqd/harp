@@ -52,6 +52,7 @@ test:
   stage: test
   variables:
     GIT_STRATEGY: none
+    PYTEST: /opt/venv/bin/pytest
   script:
     - env | sort
     - cd /opt/harp/src; make test
