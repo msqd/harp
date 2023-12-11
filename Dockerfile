@@ -1,7 +1,7 @@
 ################################################################################
 # IMAGE: Base build image
 #
-FROM python:3.11-alpine as base-builder
+FROM python:3.12-alpine as base-builder
 ENV PATH="/opt/venv/bin:$PATH"
 
 USER root
@@ -10,7 +10,7 @@ RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     apk add gcc musl-dev libffi-dev make \
     && adduser -D harp -G www-data -h /opt/harp -u 500  \
     && mkdir -p /opt/harp /opt/venv \
-    && python3.11 -m venv /opt/venv \
+    && python3.12 -m venv /opt/venv \
     && /opt/venv/bin/pip install -U pip wheel setuptools 'poetry==1.7.1' \
     && echo 'alias l="ls -lsah --color"' > /opt/harp/.profile \
     && echo 'export PATH="/opt/venv/bin:$PATH"' >> /opt/harp/.profile \
@@ -41,7 +41,7 @@ USER root
 WORKDIR /root
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     --mount=type=cache,target=/root/.cache,sharing=locked \
-    apk add 'nodejs<19' npm \
+    apk add 'nodejs<21' npm \
     && npm install -g pnpm
 
 USER harp
@@ -67,7 +67,7 @@ USER root
 WORKDIR /root
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     --mount=type=cache,target=/root/.cache,sharing=locked \
-    apk add 'nodejs<19' npm \
+    apk add 'nodejs<21' npm \
     && npm install -g pnpm
 
 USER harp
@@ -83,7 +83,7 @@ RUN (cd frontend; pnpm build)
 ################################################################################
 # IMAGE: Lightest possible image, with only production related abilities
 #
-FROM python:3.11-alpine as runtime
+FROM python:3.12-alpine as runtime
 ENV PATH="/opt/venv/bin:$PATH"
 
 USER root
@@ -93,7 +93,7 @@ RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     apk add gcc musl-dev libffi-dev \
     && adduser -D harp -G www-data -h /opt/harp -u 500  \
     && mkdir -p /opt/harp /opt/venv \
-    && python3.11 -m venv /opt/venv \
+    && python3.12 -m venv /opt/venv \
     && /opt/venv/bin/pip install -U pip wheel setuptools 'poetry==1.7.1' \
     && echo 'alias l="ls -lsah --color"' > /opt/harp/.profile \
     && echo 'export PATH="/opt/venv/bin:$PATH"' >> /opt/harp/.profile \
