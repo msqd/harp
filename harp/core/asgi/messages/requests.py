@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from functools import cached_property
 
 from harp.core.asgi.messages.base import AbstractASGIMessage
@@ -11,7 +11,7 @@ class ASGIRequest(AbstractASGIMessage):
         self._scope = scope
         self._body = b""
         self._receive = receive
-        self.created_at = datetime.utcnow()
+        self.created_at = datetime.now(UTC)
 
     async def receive(self):
         return await self._receive()

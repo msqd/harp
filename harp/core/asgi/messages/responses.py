@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from functools import cached_property
 from itertools import chain
 
@@ -32,7 +32,7 @@ class ASGIResponse(AbstractASGIMessage):
         # The ASGI protocol being async-first, it may be used to send a response in multiple parts.
         self._response = {}
 
-        self.created_at = datetime.utcnow()
+        self.created_at = datetime.now(UTC)
 
     def snapshot(self):
         return self._response

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from urllib.parse import urljoin
 
 import httpx
@@ -48,7 +48,7 @@ class HttpProxyController:
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
         # BEGIN TRANSACTION
         transaction = Transaction(
-            id=generate_transaction_id_ksuid(), type=request.type, started_at=datetime.utcnow(), target=self.name
+            id=generate_transaction_id_ksuid(), type=request.type, started_at=datetime.now(UTC), target=self.name
         )
         logger.debug(f"▶ {request.method} {request.path}", transaction_id=transaction.id)
 
@@ -93,7 +93,7 @@ class HttpProxyController:
 
         # END TRANSACTION
         reason = codes.get_reason_phrase(status)
-        spent = int((datetime.utcnow().timestamp() - transaction.started_at.timestamp()) * 100000) / 100
+        spent = int((datetime.now(UTC).timestamp() - transaction.started_at.timestamp()) * 100000) / 100
         logger.debug(f"◀ {status} {reason} ({spent}ms)", transaction_id=transaction.id)
 
         if self.dispatcher:
