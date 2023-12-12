@@ -10,6 +10,7 @@ def create_settings(settings=None, *, values=None):
 
     # default config
     builder.add_source(MapSource({"dashboard": {}}))
+    builder.add_source(YAMLFile("/etc/harp.yaml", optional=True))
     builder.add_source(YAMLFile("settings.yaml", optional=True))
     builder.add_source(YAMLFile(f"settings.{ENVIRONMENT}.yaml", optional=True))
     if settings:
