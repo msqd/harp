@@ -33,7 +33,7 @@ class ProxyFactory:
     DEFAULT_DASHBOARD_PORT = 4080
     KernelType: Type[ASGIKernel] = ASGIKernel
 
-    def __init__(self, *, binds=("0.0.0.0",), settings=None, dashboard=True, dashboard_port=Default, args=None):
+    def __init__(self, *, binds=("[::]",), settings=None, dashboard=True, dashboard_port=Default, args=None):
         self.settings = create_settings(settings, values=self._get_values_from_arguments(args))
         self.container = Container()
         self.dispatcher = self._create_event_dispatcher()
