@@ -51,6 +51,7 @@ class DashboardController(HttpProxyController):
         return router
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
+        logger.debug(f"📈 {request.method} {request.path}")
         if self.middleware and not request.path.startswith("/api/"):
             try:
                 return await self.middleware(
