@@ -7,7 +7,7 @@ proxy = ProxyFactory(
     settings={
         "storage": {
             "type": "sqlalchemy",
-            "url": "sqlite+aiosqlite:///customized.db",
+            "url": "sqlite+aiosqlite:///harp.db",
             "echo": False,
             "drop_tables": True,
         }

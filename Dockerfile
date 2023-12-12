@@ -117,17 +117,22 @@ RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     apk add gcc musl-dev libffi-dev make \
     && apk add httpie \
     && adduser -D harp -G www-data -h ${BASE} -u 500  \
-    && mkdir -p ${BASE} \
+    && mkdir -p ${BASE} /var/lib/harp/data \
     && echo 'alias l="ls -lsah --color"' > /opt/harp/.profile \
     && echo 'export PATH="${POETRY_HOME}/bin:${VIRTUAL_ENV}/bin:$PATH"' >> /opt/harp/.profile
-RUN chown harp:www-data -R /opt/harp
+
+RUN chown harp:www-data -R /opt/harp /var/lib/harp/data
 
 USER harp
 WORKDIR ${BASE}
+
+RUN ln -s /var/lib/harp/data
 
 COPY --from=backend ${BASE}/src/harp/examples/default.py ${BASE}/entrypoint.py
 COPY --from=backend ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 COPY --from=frontend ${BASE}/frontend/dist ${BASE}/public
 COPY --from=backend ${BASE}/src ${BASE}/src
+
+ENV HARP__STORAGE__URL="sqlite+aiosqlite:///data/harp.db"
 
 CMD [ "/opt/venv/bin/python", "/opt/harp/entrypoint.py" ]
