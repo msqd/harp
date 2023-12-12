@@ -7,7 +7,6 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   harp.core.asgi.events.base
    harp.core.asgi.events.controller
    harp.core.asgi.events.message
    harp.core.asgi.events.request
