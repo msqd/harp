@@ -6,6 +6,7 @@ import asyncio
 import logging
 from argparse import ArgumentParser
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import Type
 
 from hypercorn.typing import ASGIFramework
@@ -18,7 +19,6 @@ from harp.core.asgi.events import EVENT_CORE_VIEW
 from harp.core.asgi.kernel import ASGIKernel
 from harp.core.asgi.resolvers import ProxyControllerResolver
 from harp.core.event_dispatcher import IAsyncEventDispatcher, LoggingAsyncEventDispatcher
-from harp.core.types.signs import Default
 from harp.core.views.json import on_json_response
 from harp.errors import ProxyConfigurationError
 from harp.factories.events import EVENT_FACTORY_BIND
@@ -29,11 +29,17 @@ from harp.protocols.storage import IStorage
 logger = get_logger(__name__)
 
 
+@dataclass(frozen=True)
+class DashboardSettings:
+    enabled: bool = True
+    port: int | str = 4080
+
+
 class ProxyFactory:
     DEFAULT_DASHBOARD_PORT = 4080
     KernelType: Type[ASGIKernel] = ASGIKernel
 
-    def __init__(self, *, binds=("[::]",), settings=None, dashboard=True, dashboard_port=Default, args=None):
+    def __init__(self, *, binds=("[::]",), settings=None, args=None):
         self.settings = create_settings(settings, values=self._get_values_from_arguments(args))
         self.container = Container()
         self.dispatcher = self._create_event_dispatcher()
@@ -42,9 +48,6 @@ class ProxyFactory:
 
         self.binds = binds
         self.__server_binds = set()
-
-        self.dashboard = dashboard
-        self.dashboard_port = dashboard_port
 
     def _get_values_from_arguments(self, args=None):
         if not args:
@@ -151,21 +154,17 @@ class ProxyFactory:
             self.add(_port, _port_config["target"], name=_port_config["name"])
 
     def _on_create_configure_dashboard_if_needed(self, provider: Services):
-        # todo: use self.config['dashboard_enabled'] ???
-        if not self.dashboard:
-            logger.info("Dashboard is disabled, skipping.")
-            return
+        settings = self.settings.bind(DashboardSettings, "dashboard")
 
-        port = self.settings["dashboard_port"] if "dashboard_port" in self.settings else self.dashboard_port
-        if port is Default:
-            port = self.DEFAULT_DASHBOARD_PORT
+        if not settings.enabled:
+            return
 
         try:
             storage = provider.get(IStorage)
-            self.resolver.add(port, DashboardController(storage=storage, proxy_settings=self.settings))
+            self.resolver.add(settings.port, DashboardController(storage=storage, proxy_settings=self.settings))
             for bind in self.binds:
-                logger.info(f"Adding dashboard on {bind}:{port}")
-                self.__server_binds.add(f"{bind}:{port}")
+                logger.info(f"Adding dashboard on {bind}:{settings.port}")
+                self.__server_binds.add(f"{bind}:{settings.port}")
         except CannotResolveTypeException:
             logger.error(
                 "Dashboard is enabled but no storage is configured. Dashboard will not be available. Did you forget "

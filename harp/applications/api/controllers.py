@@ -57,9 +57,7 @@ class DashboardController(HttpProxyController):
                 return await self.middleware(
                     {
                         "type": request._scope["type"],
-                        "path": (request._scope["path"] + "index.html")
-                        if request._scope["path"].endswith("/")
-                        else request._scope["path"],
+                        "path": request._scope["path"] if "." in request._scope["path"] else "/index.html",
                         "method": request._scope["method"],
                     },
                     request._receive,

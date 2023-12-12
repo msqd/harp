@@ -9,7 +9,7 @@ def create_settings(settings=None, *, values=None):
     builder = ConfigurationBuilder()
 
     # default config
-    builder.add_source(MapSource({}))
+    builder.add_source(MapSource({"dashboard": {}}))
     builder.add_source(YAMLFile("settings.yaml", optional=True))
     builder.add_source(YAMLFile(f"settings.{ENVIRONMENT}.yaml", optional=True))
     if settings:

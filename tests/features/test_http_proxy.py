@@ -67,7 +67,7 @@ class TestAsgiProxyWithStubApi:
 
     @pytest.fixture
     async def kernel(self, test_api):
-        factory = ProxyFactory()
+        factory = ProxyFactory(settings={"dashboard": {"enabled": False}})
         factory.add(80, test_api.url)
         return await factory.create()
 
