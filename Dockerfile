@@ -115,6 +115,7 @@ WORKDIR /root
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apk,sharing=locked \
     apk add gcc musl-dev libffi-dev make \
+    && apk add httpie \
     && adduser -D harp -G www-data -h ${BASE} -u 500  \
     && mkdir -p ${BASE} \
     && echo 'alias l="ls -lsah --color"' > /opt/harp/.profile \
