@@ -153,6 +153,7 @@ class ProxyFactory:
     def _on_create_configure_dashboard_if_needed(self, provider: Services):
         # todo: use self.config['dashboard_enabled'] ???
         if not self.dashboard:
+            logger.info("Dashboard is disabled, skipping.")
             return
 
         port = self.settings["dashboard_port"] if "dashboard_port" in self.settings else self.dashboard_port

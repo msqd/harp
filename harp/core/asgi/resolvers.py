@@ -28,8 +28,8 @@ class ProxyControllerResolver(ControllerResolver):
         super().__init__(default_controller=default_controller)
         self._ports = {}
 
-    def add(self, port, controller):
-        self._ports[port] = controller
+    def add(self, port: int | str, controller):
+        self._ports[int(port)] = controller
 
     async def resolve(self, request):
         return self._ports.get(request.port, self.default_controller)
