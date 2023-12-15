@@ -52,6 +52,9 @@ class ProxyFactory:
         self.binds = binds
         self.__server_binds = set()
 
+        for extension in self.settings.values.get("extensions", []):
+            self.load(extension)
+
     def _get_values_from_arguments(self, args=None):
         if not args:
             return None

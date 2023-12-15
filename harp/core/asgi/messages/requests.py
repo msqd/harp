@@ -48,11 +48,18 @@ class ASGIRequest(AbstractASGIMessage):
 
     @cached_property
     def serialized_summary(self):
-        return f"{self.method} {self.path}{('?'+self.query_string if self.query_string else '')} HTTP/1.1"
+        return f"{self.method} {self.path}{('?' + self.query_string if self.query_string else '')} HTTP/1.1"
 
     @cached_property
     def serialized_headers(self):
         return "\n".join([f"{k.decode('utf-8')}: {v.decode('utf-8')}" for k, v in self.headers])
+
+    @cached_property
+    def cookies(self):
+        for k, v in self.headers:
+            if k == b"cookie":
+                return {k: v for k, v in [h.split("=", 1) for h in v.decode("utf-8").split("; ")]}
+        return {}
 
     @cached_property
     def serialized_body(self):
