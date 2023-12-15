@@ -38,6 +38,7 @@ Update version numbers in `pyproject.toml` and `harp/__init__.py`...
 
     gsed -i -e "s/^version = .*/version = \"$NEXT_VERSION\"/" pyproject.toml
     gsed -i -e "s/^__version__ = .*/__version__ = \"$NEXT_VERSION\"/" harp/__init__.py
+    gsed -i -e "s/^appVersion: .*/appVersion: \"$NEXT_VERSION\"/" misc/helm/charts/harp-proxy/Chart.yaml
 
 Generate a changelog...
 
@@ -45,6 +46,8 @@ Generate a changelog...
 
     git log --oneline --no-merges --pretty=format:"* %s (%an)" `git tag | tail -n 1`.. > docs/changelogs/$NEXT_VERSION.rst
     git add docs/changelogs/$NEXT_VERSION.rst
+
+Then **edit the changelogs index** to add a title and a date.
 
 Add to git ...
 
