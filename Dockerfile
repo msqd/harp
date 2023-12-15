@@ -133,6 +133,6 @@ COPY --from=backend ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 COPY --from=frontend ${BASE}/frontend/dist ${BASE}/public
 COPY --from=backend ${BASE}/src ${BASE}/src
 
-ENV HARP__STORAGE__URL="sqlite+aiosqlite:///data/harp.db"
+ENV DEFAULT__HARP__STORAGE__URL="sqlite+aiosqlite:///data/harp.db"
 
 CMD [ "/opt/venv/bin/python", "/opt/harp/entrypoint.py" ]
