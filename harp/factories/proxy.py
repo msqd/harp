@@ -39,7 +39,8 @@ class ProxyFactory:
     KernelType: Type[ASGIKernel] = ASGIKernel
 
     def __init__(self, *, binds=("[::]",), settings=None, args=None):
-        self.settings = create_settings(settings, values=self._get_values_from_arguments(args))
+        _options = self._get_values_from_arguments(args)
+        self.settings = create_settings(settings, values=_options.values, files=_options.files)
         self.container = Container()
         self.dispatcher = self._create_event_dispatcher()
 
@@ -56,13 +57,13 @@ class ProxyFactory:
             "--set",
             "-s",
             action="append",
-            dest="settings",
+            dest="values",
             nargs=2,
             metavar=("KEY", "VALUE"),
             help="Set a configuration value.",
         )
-        parsed_args = parser.parse_args(args)
-        return dict(parsed_args.settings) if parsed_args.settings else None
+        parser.add_argument("--file", "-f", action="append", dest="files", help="Load configuration from file.")
+        return parser.parse_args(args)
 
     def _create_event_dispatcher(self):
         """Creates an event dispatcher and registers the default listeners."""
@@ -124,6 +125,8 @@ class ProxyFactory:
     def _on_create_configure_endpoints(self, provider: Services):
         # should be refactored, read env for auto conf
         _ports = defaultdict(dict)
+
+        # deprecated env, do not document, we'll use HARP__PROXY__ENDPOINTS__... instead
         for k, v in self.settings.values.items():
             if k.startswith("proxy_endpoint_"):
                 _port, _prop = k[15:].split("_")
@@ -133,10 +136,12 @@ class ProxyFactory:
                     raise ProxyConfigurationError(f"Invalid endpoint port {_port}.") from exc
                 if _prop not in ("name", "target"):
                     raise ProxyConfigurationError(f"Invalid endpoint property {_prop}.")
+                if _prop == "target":
+                    _prop = "url"
                 _ports[_port][_prop] = v
 
         try:
-            _endpoints = self.settings.proxy.endpoint.values
+            _endpoints = self.settings.proxy.endpoints.values
         except AttributeError:
             _endpoints = {}
         for _port, _port_config in _endpoints.items():
@@ -144,13 +149,13 @@ class ProxyFactory:
                 _port = int(_port)
             except TypeError as exc:
                 raise ProxyConfigurationError(f"Invalid endpoint port {_port}.") from exc
-            if _port_config.keys() != {"name", "target"}:
+            if _port_config.keys() != {"name", "url"}:
                 raise ProxyConfigurationError(f"Invalid endpoint configuration for port {_port}.")
-            _ports[_port]["target"] = _port_config["target"]
+            _ports[_port]["url"] = _port_config["url"]
             _ports[_port]["name"] = _port_config["name"]
 
         for _port, _port_config in _ports.items():
-            self.add(_port, _port_config["target"], name=_port_config["name"])
+            self.add(_port, _port_config["url"], name=_port_config["name"])
 
     def _on_create_configure_dashboard_if_needed(self, provider: Services):
         settings = self.settings.bind(DashboardSettings, "dashboard")

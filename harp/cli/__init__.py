@@ -1,5 +1,6 @@
 import os
 import sys
+from itertools import chain
 
 import rich_click as click
 
@@ -15,8 +16,9 @@ def entrypoint():
 @click.option("--with-docs/--no-docs", default=False)
 @click.option("--with-ui/--no-ui", default=False)
 @click.option("--set", "options", default=(), multiple=True, help="Set proxy configuration options.")
+@click.option("--file", "-f", "files", default=(), multiple=True, help="Load configuration from file.")
 @click.argument("services", nargs=-1)
-def start(with_docs, with_ui, options, services):
+def start(with_docs, with_ui, files, options, services):
     try:
         from honcho.manager import Manager
         from honcho.printer import Printer
@@ -25,8 +27,9 @@ def start(with_docs, with_ui, options, services):
             "You must install development dependencies to start the development environment"
         ) from exc
 
-    options = (
-        "--set {key} {value}".format(key=key, value=value) for key, value in map(lambda x: x.split("=", 1), options)
+    options = chain(
+        ("--set {key} {value}".format(key=key, value=value) for key, value in map(lambda x: x.split("=", 1), options)),
+        ("-f " + file for file in files),
     )
     processes = {
         "frontend": "(cd frontend; pnpm dev)",
