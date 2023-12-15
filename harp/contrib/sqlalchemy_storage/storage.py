@@ -94,12 +94,14 @@ class SqlAlchemyStorage:
                     _db_transaction = row[0:LEN_TRANSACTIONS_COLUMNS]
                     if current_transaction:
                         yield current_transaction
+                    # TODO WARNING the field order is not the same as the model
                     current_transaction = Transaction(
                         id=_db_transaction[0],
                         type=_db_transaction[1],
-                        started_at=_db_transaction[2],
-                        finished_at=_db_transaction[3],
-                        ellapsed=_db_transaction[4],
+                        endpoint=_db_transaction[2],
+                        started_at=_db_transaction[3],
+                        finished_at=_db_transaction[4],
+                        ellapsed=_db_transaction[5],
                         messages=[],
                     )
 
@@ -168,6 +170,7 @@ class SqlAlchemyStorage:
                 TransactionsTable.insert().values(
                     id=event.transaction.id,
                     type=event.transaction.type,
+                    endpoint=event.transaction.endpoint,
                     started_at=event.transaction.started_at,
                 )
             )

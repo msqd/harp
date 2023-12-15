@@ -14,14 +14,14 @@ class Transaction(Entity):
     type: str  # enum http websocket lifecycle ...
     """Type of ASGI transaction: http, websocket, lifecycle, ..."""
 
+    endpoint: str = None
+    """Endpoint name, if any (this describes which proxy controller handled the request)."""
+
     started_at: datetime
     """Timestamp of the transaction start."""
 
     finished_at: datetime = None
     """Timestamp of the transaction end (if it has ended), or None."""
-
-    endpoint: str = None
-    """Endpoint name, if any (this describes which proxy controller handled the request)."""
 
     # Computed fields
 

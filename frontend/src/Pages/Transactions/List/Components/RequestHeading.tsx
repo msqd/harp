@@ -15,7 +15,6 @@ const StyledRequestHeading = styled.h1`
 
 export const RequestHeading = ({ as = "h1", ...request }: RequestHeadingProps) => {
   const [method, url] = request.summary.split(" ")
-  const endpoint = "api"
   return (
     <StyledRequestHeading as={as}>
       <div className="flex items-center">
@@ -23,12 +22,7 @@ export const RequestHeading = ({ as = "h1", ...request }: RequestHeadingProps) =
           <ArrowRightIcon className="h-3 w-3 text-gray-500" aria-hidden="true" />
         </span>
         <RequestMethodBadge method={method} />
-        {endpoint ? (
-          <span className="inline-flex items-center bg-gray-50 px-1 mx-1 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">
-            {endpoint}
-          </span>
-        ) : null}
-        {urlJoin("/", url || "")}
+        <span className="mx-1">{urlJoin("/", url || "")}</span>
       </div>
     </StyledRequestHeading>
   )

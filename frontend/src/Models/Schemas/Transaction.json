@@ -8,6 +8,9 @@
     "type": {
       "type": "string"
     },
+    "endpoint": {
+      "type": "string"
+    },
     "started_at": {
       "type": "string",
       "format": "date-time"
@@ -15,9 +18,6 @@
     "finished_at": {
       "type": "string",
       "format": "date-time"
-    },
-    "endpoint": {
-      "type": "string"
     },
     "ellapsed": {
       "type": "number"
@@ -29,7 +29,7 @@
       }
     }
   },
-  "description": "Transaction(*, id: str = None, type: str, started_at: datetime.datetime, finished_at: datetime.datetime = None, endpoint: str = None, ellapsed: float = None, messages: List[harp.core.models.messages.Message] = None)",
+  "description": "Transaction(*, id: str = None, type: str, endpoint: str = None, started_at: datetime.datetime, finished_at: datetime.datetime = None, ellapsed: float = None, messages: List[harp.core.models.messages.Message] = None)",
   "$schema": "http://json-schema.org/draft-06/schema#",
   "definitions": {
     "Message": {

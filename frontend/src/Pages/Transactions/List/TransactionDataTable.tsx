@@ -26,6 +26,15 @@ const transactionColumnTypes = {
     ),
     headerClassName: "w-28",
   },
+  endpoint: {
+    label: "Endpoint",
+    format: (endpoint: string) => (
+      <span className="inline-flex items-center bg-gray-50 px-1 mx-1 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">
+        {endpoint}
+      </span>
+    ),
+    headerClassName: "w-1",
+  },
   request: {
     label: "Request",
     get: (row: Transaction) => getRequestFromTransactionMessages(row) ?? null,
@@ -65,7 +74,7 @@ export function TransactionDataTable({ transactions }: TransactionsDataTableProp
         types={transactionColumnTypes}
         onRowClick={(row: Transaction) => setCurrent(row)}
         rows={transactions}
-        columns={["id", "request", "response", "elapsed", "started_at"]}
+        columns={["id", "endpoint", "request", "response", "elapsed", "started_at"]}
       />
       <TransactionDetailsDialog current={current} setCurrent={setCurrent} />
     </>
