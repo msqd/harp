@@ -10,14 +10,28 @@ from harp.core.models.messages import Message
 @dataclasses.dataclass(kw_only=True)
 class Transaction(Entity):
     id: str = None
-    type: str  # enum http websocket lifecycle ...
-    started_at: datetime
-    finished_at: datetime = None
-    ellapsed: float = None
-    messages: List[Message] = None
+    """Unique identifier for this transaction."""
 
-    # eg: ui, httpbin, ... short name to represent the other side
-    target: str = None
+    type: str  # enum http websocket lifecycle ...
+    """Type of ASGI transaction: http, websocket, lifecycle, ..."""
+
+    started_at: datetime
+    """Timestamp of the transaction start."""
+
+    finished_at: datetime = None
+    """Timestamp of the transaction end (if it has ended), or None."""
+
+    endpoint: str = None
+    """Endpoint name, if any (this describes which proxy controller handled the request)."""
+
+    # Computed fields
+
+    ellapsed: float = None
+    """Ellapsed time in seconds, if the transaction has ended."""
+
+    # Relations
+
+    messages: List[Message] = None
 
 
 if __name__ == "__main__":

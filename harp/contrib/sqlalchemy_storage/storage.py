@@ -2,6 +2,7 @@ import hashlib
 
 from sqlalchemy import alias, func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from whistle.protocols import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
@@ -14,7 +15,6 @@ from harp.core.asgi.events import (
 )
 from harp.core.asgi.events.message import MessageEvent
 from harp.core.asgi.events.transaction import TransactionEvent
-from harp.core.event_dispatcher import IAsyncEventDispatcher
 from harp.core.models.messages import Blob, Message
 from harp.core.models.transactions import Transaction
 

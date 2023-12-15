@@ -10,6 +10,7 @@ from typing import Type
 
 from hypercorn.typing import ASGIFramework
 from rodi import CannotResolveTypeException, Container, Services
+from whistle.protocols import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.applications.api.controllers import DashboardController
@@ -17,7 +18,7 @@ from harp.applications.proxy.controllers import HttpProxyController
 from harp.core.asgi.events import EVENT_CORE_VIEW
 from harp.core.asgi.kernel import ASGIKernel
 from harp.core.asgi.resolvers import ProxyControllerResolver
-from harp.core.event_dispatcher import IAsyncEventDispatcher, LoggingAsyncEventDispatcher
+from harp.core.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.core.views.json import on_json_response
 from harp.errors import ProxyConfigurationError
 from harp.factories.events import EVENT_FACTORY_BIND

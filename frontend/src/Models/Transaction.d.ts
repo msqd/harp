@@ -6,16 +6,16 @@
  */
 
 /**
- * Transaction(*, id: str = None, type: str, started_at: datetime.datetime, finished_at: datetime.datetime = None, ellapsed: float = None, messages: List[harp.core.models.messages.Message] = None, target: str = None)
+ * Transaction(*, id: str = None, type: str, started_at: datetime.datetime, finished_at: datetime.datetime = None, endpoint: str = None, ellapsed: float = None, messages: List[harp.core.models.messages.Message] = None)
  */
 export interface Transaction {
   id?: string
   type: string
   started_at: string
   finished_at?: string
+  endpoint?: string
   ellapsed?: number
   messages?: Message[]
-  target?: string
   [k: string]: unknown
 }
 /**

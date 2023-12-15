@@ -1,61 +1,14 @@
-from typing import Protocol
-
-from whistle import Event, EventDispatcher
+from whistle import Event
+from whistle.dispatcher import AsyncEventDispatcher
 
 from harp import get_logger
 
 logger = get_logger(__name__)
 
 
-class IAsyncEventDispatcher(Protocol):
-    async def dispatch(self, event_id, event=None) -> "IEvent":
-        ...
-
-    def add_listener(self, event_id, listener, priority=0):
-        ...
-
-
-class IEvent(Protocol):
-    dispatcher: IAsyncEventDispatcher
-    name: str
-
-
 class BaseEvent(Event):
     dispatcher = None
     name = None
-
-
-class AsyncEventDispatcher(EventDispatcher):
-    """
-    Adapts whiste's EventDispatcher to be async. Probably should go into whistle 2.x?
-    """
-
-    async def do_dispatch(self, listeners, event):
-        for listener in listeners:
-            await listener(event)
-            if event.propagation_stopped:
-                break
-
-    async def dispatch(self, event_id, event=None):
-        """
-        todo: add this as dispatch_async in whistle 2.0 ?
-
-        :param event_id:
-        :param event:
-        :return:
-        """
-        if event is None:
-            event = Event()
-
-        event.dispatcher = self
-        event.name = event_id
-
-        if event_id not in self._listeners:
-            return event
-
-        await self.do_dispatch(self.get_listeners(event_id), event)
-
-        return event
 
 
 class LoggingAsyncEventDispatcher(AsyncEventDispatcher):

@@ -16,6 +16,9 @@
       "type": "string",
       "format": "date-time"
     },
+    "endpoint": {
+      "type": "string"
+    },
     "ellapsed": {
       "type": "number"
     },
@@ -24,12 +27,9 @@
       "items": {
         "$ref": "#/definitions/Message"
       }
-    },
-    "target": {
-      "type": "string"
     }
   },
-  "description": "Transaction(*, id: str = None, type: str, started_at: datetime.datetime, finished_at: datetime.datetime = None, ellapsed: float = None, messages: List[harp.core.models.messages.Message] = None, target: str = None)",
+  "description": "Transaction(*, id: str = None, type: str, started_at: datetime.datetime, finished_at: datetime.datetime = None, endpoint: str = None, ellapsed: float = None, messages: List[harp.core.models.messages.Message] = None)",
   "$schema": "http://json-schema.org/draft-06/schema#",
   "definitions": {
     "Message": {

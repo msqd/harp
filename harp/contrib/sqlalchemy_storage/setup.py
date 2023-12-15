@@ -2,11 +2,11 @@ from dataclasses import asdict
 
 from config.common import Configuration
 from rodi import Container
+from whistle.protocols import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
 from harp.contrib.sqlalchemy_storage.storage import SqlAlchemyStorage
-from harp.core.event_dispatcher import IAsyncEventDispatcher
 from harp.factories.events import EVENT_FACTORY_BIND
 from harp.factories.events.bind import ProxyFactoryBindEvent
 from harp.protocols.storage import IStorage
