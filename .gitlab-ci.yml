@@ -20,10 +20,10 @@ variables:
   CI_REGISTRY_PASSWORD: ${CI_JOB_TOKEN}
 
 .DockerBuild: &DockerBuild
-  image: docker:20
+  image: docker:24.0.6
   stage: build
   services:
-    - docker:dind
+    - docker:24.0.6-dind
   tags:
     - gitlab-org-docker
   before_script:
@@ -47,7 +47,7 @@ build:dev:
     - bash bin/sandbox make build-dev push-dev
 
 test:
-  needs: ["build:dev"]
+  needs: [ "build:dev" ]
   image: ${DOCKER_IMAGE}:${DOCKER_TAGS}-dev
   stage: test
   variables:
@@ -57,7 +57,7 @@ test:
     - (cd /opt/harp/src; make test)
 
 doc:html:
-  needs: ["build:dev"]
+  needs: [ "build:dev" ]
   image: ${DOCKER_IMAGE}:${DOCKER_TAGS}-dev
   stage: artefacts
   variables:
@@ -73,7 +73,7 @@ doc:html:
       - "harp-doc/*"
 
 storybook:
-  needs: ["build:dev"]
+  needs: [ "build:dev" ]
   image: ${DOCKER_IMAGE}:${DOCKER_TAGS}-dev
   stage: artefacts
   variables:
@@ -88,15 +88,15 @@ storybook:
       - "harp-ui/*"
 
 release:
-  image: docker:20
-  needs: ["build:runtime", "test"]
+  image: docker:24.0.6
+  needs: [ "build:runtime", "test" ]
   stage: release
   only:
     - main
     - dev
     - tags
   services:
-    - docker:dind
+    - docker:24.0.6-dind
   variables:
     GIT_STRATEGY: none
     SOURCE_IMAGE: registry.gitlab.com/makersquad/oss/harp:${DOCKER_TAGS}
