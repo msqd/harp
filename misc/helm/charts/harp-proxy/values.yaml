@@ -8,7 +8,7 @@ image:
   repository: makersquad/harp-proxy
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "git-dev@sha256:cab9d11be591b125b4924c7697a3a61b8a2113d0f403663a44a3ea0287fd05a5"
+  tag: "git-dev"
 
 endpoints:
   - name: httpbin
@@ -76,7 +76,7 @@ ingress:
 
 resources: { }
   # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
+# choice for the user. This also increases chances charts run on environments with little
 # resources, such as Minikube. If you do want to specify resources, uncomment the following
 # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
 # limits:
