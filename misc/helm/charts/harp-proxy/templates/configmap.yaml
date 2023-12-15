@@ -4,10 +4,15 @@ metadata:
   name: {{ include "harp-proxy.fullname" . }}
 data:
   harp.yaml: |
+    storage:
+      type: {{ .Values.storage.type | default "sqlalchemy" }}
+      url: {{ .Values.storage.url | default "sqlite+aiosqlite:///data/harp.db" }}
+      drop_tables: {{ .Values.storage.drop_tables | default false }}
+      echo: {{ .Values.storage.echo | default false }}
     proxy:
       endpoints:
         {{- range .Values.endpoints }}
         "{{ .port }}":
           name: "{{ .name }}"
-          target: "{{ .url }}"
+          url: "{{ .url }}"
         {{- end }}

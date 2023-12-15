@@ -13,7 +13,12 @@ def create_settings(settings=None, *, values=None, files=None):
 
     # default config
     builder.add_source(MapSource({"dashboard": {}}))
+
+    if settings:
+        builder.add_source(MapSource(settings))
+
     builder.add_source(YAMLFile("/etc/harp.yaml", optional=True))
+
     if files:
         for file in files:
             _, ext = os.path.splitext(file)
@@ -27,8 +32,6 @@ def create_settings(settings=None, *, values=None, files=None):
                 builder.add_source(TOMLFile(file))
             else:
                 raise ValueError(f"Unknown file extension: {ext}")
-    if settings:
-        builder.add_source(MapSource(settings))
 
     builder.add_source(EnvVars(prefix="HARP_"))
 
