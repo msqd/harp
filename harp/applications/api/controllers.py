@@ -1,4 +1,6 @@
 import os
+import re
+from copy import deepcopy
 
 from asgi_middleware_static_file import ASGIMiddlewareStaticFile
 from config.common import Configuration
@@ -116,7 +118,11 @@ class DashboardController:
         await response.body(blob.data)
 
     async def get_settings(self, request: ASGIRequest, response: ASGIResponse):
-        return json(self.proxy_settings.values)
+        values = deepcopy(self.proxy_settings.values)
+        if "storage" in values:
+            if "url" in values["storage"]:
+                values["storage"]["url"] = re.sub(r"//[^@]*@", "//***@", values["storage"]["url"])
+        return json(values)
 
     async def get_dashboard_data(self, request: ASGIRequest, response: ASGIResponse):
         data = [
