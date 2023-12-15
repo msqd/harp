@@ -1,16 +1,5 @@
-import tw, { styled, theme } from "twin.macro"
-import {
-  ResponsiveContainer,
-  ComposedChart,
-  Line,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  BarChart,
-} from "recharts"
+import tw, { styled } from "twin.macro"
+import { ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts"
 
 import { H1, H2 } from "mkui/Components/Typography"
 
@@ -18,11 +7,7 @@ const PageContent = styled.main(() => [tw`py-8`])
 
 export const DashboardCharts = ({ data }) => {
   const rating = "A"
-  const ratingColors = {
-    A: "green",
-    B: "yellow",
-    C: "red",
-  }
+
   console.log(data)
   return (
     <PageContent>
