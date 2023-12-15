@@ -55,6 +55,7 @@ class DashboardController:
         router.route("/api/transactions/{transaction}")(self.get_transaction)
         router.route("/api/blobs/{blob}")(self.get_blob)
         router.route("/api/settings")(self.get_settings)
+        router.route("/api/dashboard")(self.get_dashboard_data)
         return controller
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
@@ -116,3 +117,32 @@ class DashboardController:
 
     async def get_settings(self, request: ASGIRequest, response: ASGIResponse):
         return json(self.proxy_settings.values)
+
+    async def get_dashboard_data(self, request: ASGIRequest, response: ASGIResponse):
+        data = [
+            {"date": "2022-01-01", "requests": 120, "errors": 20},
+            {"date": "2022-01-02", "requests": 160, "errors": 30},
+            {"date": "2022-01-03", "requests": 200, "errors": 40},
+            {"date": "2022-01-04", "requests": 100, "errors": 50},
+            {"date": "2022-01-05", "requests": 280, "errors": 60},
+            {"date": "2022-01-06", "requests": 320, "errors": 70},
+            {"date": "2022-01-07", "requests": 300, "errors": 50},
+            {"date": "2022-01-08", "requests": 400, "errors": 90},
+            {"date": "2022-01-09", "requests": 440, "errors": 50},
+            {"date": "2022-01-10", "requests": 480, "errors": 50},
+            {"date": "2022-01-11", "requests": 300, "errors": 120},
+            {"date": "2022-01-12", "requests": 560, "errors": 130},
+            {"date": "2022-01-13", "requests": 600, "errors": 10},
+            {"date": "2022-01-14", "requests": 640, "errors": 150},
+            {"date": "2022-01-15", "requests": 680, "errors": 50},
+            {"date": "2022-01-16", "requests": 500, "errors": 170},
+            {"date": "2022-01-17", "requests": 760, "errors": 180},
+            {"date": "2022-01-18", "requests": 800, "errors": 190},
+            {"date": "2022-01-19", "requests": 400, "errors": 50},
+            {"date": "2022-01-20", "requests": 880, "errors": 210},
+            {"date": "2022-01-21", "requests": 300, "errors": 50},
+            {"date": "2022-01-22", "requests": 300, "errors": 50},
+            {"date": "2022-01-23", "requests": 1000, "errors": 50},
+            {"date": "2022-01-24", "requests": 500, "errors": 50},
+        ]
+        return json({"data": data})

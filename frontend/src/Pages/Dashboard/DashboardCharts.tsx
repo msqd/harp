@@ -14,43 +14,16 @@ import {
 
 import { H1, H2 } from "mkui/Components/Typography"
 
-const data = [
-  { date: "2022-01-01", requests: 120, errors: 20 },
-  { date: "2022-01-02", requests: 160, errors: 30 },
-  { date: "2022-01-03", requests: 200, errors: 40 },
-  { date: "2022-01-04", requests: 100, errors: 50 },
-  { date: "2022-01-05", requests: 280, errors: 60 },
-  { date: "2022-01-06", requests: 320, errors: 70 },
-  { date: "2022-01-07", requests: 300, errors: 50 },
-  { date: "2022-01-08", requests: 400, errors: 90 },
-  { date: "2022-01-09", requests: 440, errors: 50 },
-  { date: "2022-01-10", requests: 480, errors: 50 },
-  { date: "2022-01-11", requests: 300, errors: 120 },
-  { date: "2022-01-12", requests: 560, errors: 130 },
-  { date: "2022-01-13", requests: 600, errors: 10 },
-  { date: "2022-01-14", requests: 640, errors: 150 },
-  { date: "2022-01-15", requests: 680, errors: 50 },
-  { date: "2022-01-16", requests: 500, errors: 170 },
-  { date: "2022-01-17", requests: 760, errors: 180 },
-  { date: "2022-01-18", requests: 800, errors: 190 },
-  { date: "2022-01-19", requests: 400, errors: 50 },
-  { date: "2022-01-20", requests: 880, errors: 210 },
-  { date: "2022-01-21", requests: 300, errors: 50 },
-  { date: "2022-01-22", requests: 300, errors: 50 },
-  { date: "2022-01-23", requests: 1000, errors: 50 },
-  { date: "2022-01-24", requests: 500, errors: 50 },
-]
-
 const PageContent = styled.main(() => [tw`py-8`])
 
-function DashboardRoute() {
+export const DashboardCharts = ({ data }) => {
   const rating = "A"
   const ratingColors = {
     A: "green",
     B: "yellow",
     C: "red",
   }
-
+  console.log(data)
   return (
     <PageContent>
       <H2>Request statuses over time</H2>
@@ -62,7 +35,7 @@ function DashboardRoute() {
         >
           <h3 style={{ color: "green", fontSize: "24px" }}>{rating}</h3>
         </div>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="90%" height={300}>
           <ComposedChart
             width={400}
             height={300}
@@ -103,5 +76,3 @@ function DashboardRoute() {
     </PageContent>
   )
 }
-
-export { DashboardRoute }
