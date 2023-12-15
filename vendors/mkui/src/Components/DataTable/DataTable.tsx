@@ -35,7 +35,7 @@ function formatRowValue<TRow>(type: Column<TRow>, row: TRow, name: keyof TRow): 
       value = row[name]
     }
 
-    if (type.format && value) {
+    if (type.format) {
       value = type.format(value)
     }
 

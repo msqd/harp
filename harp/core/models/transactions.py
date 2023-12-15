@@ -1,5 +1,4 @@
 import dataclasses
-import pprint
 from datetime import datetime
 from typing import List
 
@@ -32,9 +31,3 @@ class Transaction(Entity):
     # Relations
 
     messages: List[Message] = None
-
-
-if __name__ == "__main__":
-    pprint.pprint(Transaction.json_schema())
-
-    transaction = Transaction(id="123", started_at=datetime.now(), finished_at=datetime.now(), ellapsed=0.1)

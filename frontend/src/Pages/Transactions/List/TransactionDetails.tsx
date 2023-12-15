@@ -2,7 +2,7 @@ import { ArrowLeftIcon, ArrowRightIcon, ArrowsRightLeftIcon } from "@heroicons/r
 import { Dialog } from "@headlessui/react"
 import { truncate } from "Utils/Strings.ts"
 import { TransactionMessagePanel } from "./TransactionMessagePanel.tsx"
-import { RequestHeading } from "./RequestHeading.tsx"
+import { RequestHeading } from "./Components/RequestHeading.tsx"
 import { Transaction } from "Models/Transaction"
 
 import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
