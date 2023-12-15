@@ -7,7 +7,6 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   harp.contrib.cookie_based_stupid_auth
    harp.contrib.sentry
    harp.contrib.sqlalchemy_storage
 

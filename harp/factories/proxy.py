@@ -5,7 +5,6 @@
 import logging
 from argparse import ArgumentParser
 from collections import defaultdict
-from dataclasses import dataclass
 from typing import Type
 
 from hypercorn.typing import ASGIFramework
@@ -13,10 +12,14 @@ from rodi import CannotResolveTypeException, Container, Services
 from whistle.protocols import IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.applications.api.controllers import DashboardController
+from harp.applications.dashboard.controllers import DashboardController
+from harp.applications.dashboard.settings import DashboardSettings
 from harp.applications.proxy.controllers import HttpProxyController
-from harp.core.asgi.events import EVENT_CORE_VIEW
+from harp.core.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_VIEW
+from harp.core.asgi.events.request import RequestEvent
 from harp.core.asgi.kernel import ASGIKernel
+from harp.core.asgi.messages.requests import ASGIRequest
+from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.asgi.resolvers import ProxyControllerResolver
 from harp.core.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.core.views.json import on_json_response
@@ -27,12 +30,6 @@ from harp.factories.settings import create_settings
 from harp.protocols.storage import IStorage
 
 logger = get_logger(__name__)
-
-
-@dataclass(frozen=True)
-class DashboardSettings:
-    enabled: bool = True
-    port: int | str = 4080
 
 
 class ProxyFactory:
@@ -74,6 +71,17 @@ class ProxyFactory:
     def _create_event_dispatcher(self):
         """Creates an event dispatcher and registers the default listeners."""
         dispatcher = LoggingAsyncEventDispatcher()
+
+        async def ok_controller(request: ASGIRequest, response: ASGIResponse):
+            await response.start(status=200)
+            await response.body("Ok.")
+
+        async def on_health_request(event: RequestEvent):
+            if event.request.path == "/healthz":
+                event.set_controller(ok_controller)
+                event.stop_propagation()
+
+        dispatcher.add_listener(EVENT_CORE_REQUEST, on_health_request, priority=-100)
 
         # todo move into core or extension, this is not proxy related
         dispatcher.add_listener(EVENT_CORE_VIEW, on_json_response)

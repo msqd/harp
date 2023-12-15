@@ -7,7 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   harp.applications.api
+   harp.applications.dashboard
    harp.applications.proxy
 
 Module contents

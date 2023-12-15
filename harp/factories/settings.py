@@ -12,7 +12,7 @@ def create_settings(settings=None, *, values=None, files=None):
     builder = ConfigurationBuilder()
 
     # default config
-    builder.add_source(MapSource({"dashboard": {}}))
+    builder.add_source(MapSource({}))
     builder.add_source(EnvVars(prefix="DEFAULT__HARP_"))
 
     if settings:

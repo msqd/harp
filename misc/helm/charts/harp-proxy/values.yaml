@@ -13,11 +13,12 @@ endpoints:
     port: "8080"
     url: https://httpbin.org/
 
-storage:
-  type: sqlalchemy
-  url: sqlite+aiosqlite:///data/harp.db
-  drop_tables: false
-  echo: false
+settings:
+  storage:
+    type: sqlalchemy
+    url: sqlite+aiosqlite:///data/harp.db
+    drop_tables: false
+    echo: false
 
 postgresql:
   enabled: false

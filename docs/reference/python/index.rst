@@ -1,4 +1,4 @@
-harp
+Python Package
 ====
 
 .. toctree::

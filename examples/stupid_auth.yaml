@@ -1,10 +1,5 @@
 # extends: sqlite.yaml
 
-extensions:
-  - harp.contrib.cookie_based_stupid_auth
-
-stupid_token: foo bar baz
-
 storage:
   type: sqlalchemy
   url: sqlite+aiosqlite:///harp.db
@@ -16,3 +11,6 @@ proxy:
     4000:
       name: httpbin
       url: http://httpbin.org
+
+dashboard:
+  auth: foo bar baz

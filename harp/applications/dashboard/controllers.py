@@ -34,6 +34,7 @@ class DashboardController:
     def __init__(self, storage: IStorage, proxy_settings: Configuration):
         # context for usage in handlers
         self.storage = storage
+        self.auth = proxy_settings.dashboard.values.get("auth", None)
         self.proxy_settings = proxy_settings
 
         # controllers for delegating requests
@@ -62,6 +63,12 @@ class DashboardController:
         return controller
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
+        if self.auth:
+            if request.cookies.get("harp") != self.auth:
+                await response.start(status=401, headers={"content-type": "text/plain"})
+                await response.body(b"Unauthorized")
+                return
+
         logger.debug(f"📈 {request.method} {request.path}")
 
         # Is this a prebuilt static asset?
