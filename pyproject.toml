@@ -73,6 +73,8 @@ line-length = 120
 line_length = 120
 py_version = 311
 profile = "black"
+known_first_party = "harp"
+known_third_party = "asgiref,httpx,rich,structlog,sqlalchemy,whistle,config,rodi"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

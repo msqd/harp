@@ -19,7 +19,7 @@
       "type": "string",
       "format": "date-time"
     },
-    "ellapsed": {
+    "elapsed": {
       "type": "number"
     },
     "messages": {
@@ -29,7 +29,7 @@
       }
     }
   },
-  "description": "Transaction(*, id: str = None, type: str, endpoint: str = None, started_at: datetime.datetime, finished_at: datetime.datetime = None, ellapsed: float = None, messages: List[harp.core.models.messages.Message] = None)",
+  "description": "Transaction(*, id: str = None, type: str, endpoint: str = None, started_at: datetime.datetime, finished_at: datetime.datetime = None, elapsed: float = None, messages: List[harp.core.models.messages.Message] = None)",
   "$schema": "http://json-schema.org/draft-06/schema#",
   "definitions": {
     "Message": {

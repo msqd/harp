@@ -101,7 +101,7 @@ class SqlAlchemyStorage:
                         endpoint=_db_transaction[2],
                         started_at=_db_transaction[3],
                         finished_at=_db_transaction[4],
-                        ellapsed=_db_transaction[5],
+                        elapsed=_db_transaction[5],
                         messages=[],
                     )
 
@@ -197,6 +197,6 @@ class SqlAlchemyStorage:
                 .where(TransactionsTable.c.id == event.transaction.id)
                 .values(
                     finished_at=event.transaction.finished_at,
-                    ellapsed=event.transaction.ellapsed,
+                    elapsed=event.transaction.elapsed,
                 )
             )

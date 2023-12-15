@@ -110,6 +110,9 @@ class HttpProxyController:
         # dispatch message event for response
         await self.dispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, response))
 
+        transaction.finished_at = datetime.now(UTC)
+        transaction.elapsed = spent
+
         # dispatch transaction ended event
         await self.dispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(transaction))
 

@@ -53,6 +53,7 @@ const transactionColumnTypes = {
   },
   elapsed: {
     label: "Duration",
+    get: (row: Transaction) => (row.elapsed ? Math.trunc(row.elapsed) / 1000 : null),
     format: (x: number) => {
       return (
         <div>

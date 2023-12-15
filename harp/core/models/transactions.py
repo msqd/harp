@@ -25,8 +25,8 @@ class Transaction(Entity):
 
     # Computed fields
 
-    ellapsed: float = None
-    """Ellapsed time in seconds, if the transaction has ended."""
+    elapsed: float = None
+    """Elapsed time in seconds, if the transaction has ended."""
 
     # Relations
 

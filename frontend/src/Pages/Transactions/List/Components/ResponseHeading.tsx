@@ -21,7 +21,7 @@ export function ResponseHeading({ as = "h1", ...response }: ResponseHeadingProps
           <ArrowLeftIcon className="h-3 w-3 text-gray-500" aria-hidden="true" />
         </span>
         <ResponseStatusBadge statusCode={parseInt(responseSummary[1])} />
-        <span>...kB</span>
+        {/* todo size <span>...kB</span>*/}
       </div>
     </StyledResponseHeading>
   )

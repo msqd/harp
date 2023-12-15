@@ -11,7 +11,7 @@ TransactionsTable = Table(
     Column("endpoint", String(32), nullable=True),
     Column("started_at", DateTime()),
     Column("finished_at", DateTime(), nullable=True),
-    Column("ellapsed", Float(), nullable=True),
+    Column("elapsed", Float(), nullable=True),
 )
 
 BlobsTable = Table(
