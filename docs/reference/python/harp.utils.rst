@@ -15,6 +15,7 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   harp.utils.arguments
    harp.utils.bytes
    harp.utils.guids
    harp.utils.json

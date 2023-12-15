@@ -7,6 +7,7 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   harp.protocols.controllers
    harp.protocols.storage
 
 Module contents

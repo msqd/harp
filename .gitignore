@@ -41,6 +41,7 @@
 .webassets-cache
 /.vscode/
 /harp.db
+/misc/secrets
 /requirements*.txt
 /site
 ENV/

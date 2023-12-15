@@ -28,13 +28,14 @@ class DashboardController(HttpProxyController):
     middleware = None
 
     def __init__(self, storage: IStorage, proxy_settings: Configuration):
+        # todo use delegation instead of inheritance, this is not clean.
+        # proxy can be set as attribute, then delegate if the request is for him
         super().__init__("http://localhost:4999/")
 
         self.router = self.create_router()
         self.storage = storage
         self.proxy_settings = proxy_settings
 
-        # todo use delegation instead of inheritance, this is not clean.
         for _path in STATIC_BUILD_PATHS:
             logger.info("Checking for static files in %s", _path)
             if os.path.exists(_path):

@@ -45,9 +45,10 @@ reference: harp
 # QA, tests and other CI/CD related stuff
 ########################################################################################################################
 
-.PHONY: qa types format test test-ui test-ui-update test-back lint-frontend test-frontend test-full
+.PHONY: preqa qa types format test test-ui test-ui-update test-back lint-frontend test-frontend test-full
 
-qa: types format reference test-full
+preqa: types format reference
+qa: preqa test-full
 
 types:
 	bin/generate_types

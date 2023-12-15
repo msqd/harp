@@ -1,5 +1,5 @@
-harp.core.views package
-=======================
+harp.core.controllers package
+=============================
 
 Submodules
 ----------
@@ -7,13 +7,12 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   harp.core.views.json
-   harp.core.views.strings
+   harp.core.controllers.routing
 
 Module contents
 ---------------
 
-.. automodule:: harp.core.views
+.. automodule:: harp.core.controllers
    :members:
    :undoc-members:
    :show-inheritance:

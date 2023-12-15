@@ -1,0 +1,36 @@
+{{- $fullName := include "harp-proxy.fullname" . -}}
+{{- $labels := include "harp-proxy.labels" . -}}
+{{- $selectorLabels := include "harp-proxy.selectorLabels" . -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "harp-proxy.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "harp-proxy.selectorLabels" . | nindent 4 }}
+{{- range .Values.remotes }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}-{{ .name }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: {{ .name }}
+      protocol: TCP
+      name: {{ .name }}
+  selector:
+    {{- $selectorLabels | nindent 4 }}
+{{- end }}
