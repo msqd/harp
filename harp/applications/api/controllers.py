@@ -58,6 +58,7 @@ class DashboardController:
         router.route("/api/blobs/{blob}")(self.get_blob)
         router.route("/api/settings")(self.get_settings)
         router.route("/api/dashboard")(self.get_dashboard_data)
+        router.route("/api/dashboard/{endpoint}")(self.get_dashboard_data_for_endpoint)
         return controller
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
@@ -150,5 +151,38 @@ class DashboardController:
             {"date": "2022-01-22", "requests": 300, "errors": 50},
             {"date": "2022-01-23", "requests": 1000, "errors": 50},
             {"date": "2022-01-24", "requests": 500, "errors": 50},
+            {"date": "2022-01-25", "requests": 300, "errors": 50},
+            {"date": "2022-01-26", "requests": 300, "errors": 100},
         ]
         return json({"data": data})
+
+    async def get_dashboard_data_for_endpoint(self, request: ASGIRequest, response: ASGIResponse, endpoint: str):
+        data_foo = [
+            {"date": "2022-01-01", "requests": 120, "errors": 100},
+            {"date": "2022-01-02", "requests": 160, "errors": 30},
+            {"date": "2022-01-03", "requests": 200, "errors": 40},
+            {"date": "2022-01-04", "requests": 100, "errors": 50},
+            {"date": "2022-01-05", "requests": 280, "errors": 60},
+            {"date": "2022-01-06", "requests": 320, "errors": 70},
+            {"date": "2022-01-07", "requests": 300, "errors": 50},
+            {"date": "2022-01-08", "requests": 400, "errors": 90},
+            {"date": "2022-01-09", "requests": 440, "errors": 50},
+        ]
+        data_bar = [
+            {"date": "2022-01-01", "requests": 120, "errors": 20},
+            {"date": "2022-01-02", "requests": 160, "errors": 30},
+            {"date": "2022-01-03", "requests": 200, "errors": 80},
+            {"date": "2022-01-04", "requests": 100, "errors": 50},
+            {"date": "2022-01-05", "requests": 280, "errors": 30},
+            {"date": "2022-01-06", "requests": 320, "errors": 10},
+            {"date": "2022-01-07", "requests": 300, "errors": 50},
+            {"date": "2022-01-08", "requests": 400, "errors": 50},
+            {"date": "2022-01-09", "requests": 440, "errors": 50},
+        ]
+
+        endpoints_data = {
+            "foo": data_foo,
+            "bar": data_bar,
+        }
+
+        return json({"data": endpoints_data[endpoint]})

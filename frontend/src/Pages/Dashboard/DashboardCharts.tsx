@@ -1,13 +1,14 @@
 import tw, { styled } from "twin.macro"
-import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { RequestsChart } from "./RequestChart"
 
 import { H2 } from "mkui/Components/Typography"
 import { DashboardGraphData } from "Models/Dashboard"
-
+import { EndpointChart } from "./EndpointChart"
 const PageContent = styled.main(() => [tw`py-8`])
 
 export const DashboardCharts = ({ data }: DashboardGraphData) => {
   const rating = "A"
+  const endpoints = ["foo", "bar"]
   return (
     <PageContent>
       <H2>Request statuses over time</H2>
@@ -19,44 +20,12 @@ export const DashboardCharts = ({ data }: DashboardGraphData) => {
         >
           <h3 style={{ color: "green", fontSize: "24px" }}>{rating}</h3>
         </div>
-        <ResponsiveContainer width="90%" height={300}>
-          <ComposedChart
-            width={400}
-            height={300}
-            data={data}
-            margin={{
-              top: 0,
-              right: 0,
-              left: 0,
-              bottom: 0,
-            }}
-          >
-            <CartesianGrid stroke="#f5f5f5" vertical={false} />
-            <XAxis dataKey="date" interval={data.length - 2} tickLine={false} axisLine={{ stroke: "#f5f5f5" }} />
-            <Tooltip />
-            <Legend verticalAlign="top" align="right" height={36} />
-            <Bar
-              radius={[10, 10, 0, 0]}
-              dataKey="requests"
-              barSize={20}
-              fill="#ADD8E6"
-              legendType="rect"
-              name="requests"
-            />
-            <Line
-              dot={false}
-              strokeWidth={2}
-              strokeLinecap="round"
-              type="monotone"
-              dataKey="errors"
-              stroke="#FF0000"
-              legendType="rect"
-              name="Errors"
-            />
-            <YAxis tickLine={false} axisLine={{ stroke: "#f5f5f5" }} domain={[5, "dataMax + 5"]} tickCount={5} />
-          </ComposedChart>
-        </ResponsiveContainer>
+        <RequestsChart data={data} width="90%"></RequestsChart>
       </div>
+      <H2>Request charts per endpoint</H2>
+      {endpoints.map((endpoint, index) => (
+        <EndpointChart key={index} endpoint={endpoint} />
+      ))}
     </PageContent>
   )
 }
