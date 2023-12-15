@@ -40,7 +40,9 @@ class ProxyFactory:
 
     def __init__(self, *, binds=("[::]",), settings=None, args=None):
         _options = self._get_values_from_arguments(args)
-        self.settings = create_settings(settings, values=_options.values, files=_options.files)
+        self.settings = create_settings(
+            settings, values=_options.values if _options else None, files=_options.files if _options else None
+        )
         self.container = Container()
         self.dispatcher = self._create_event_dispatcher()
 

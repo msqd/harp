@@ -13,7 +13,7 @@ author = "Romain Dorgueil"
 copyright = f"{current_year}, {author}"
 if current_year > first_year:
     copyright = str(first_year) + "-" + copyright
-release = "1.0"
+release = ".".join(__import__("harp").__version__.split(".")[0:2])
 
 extensions = [
     "sphinx_design",
