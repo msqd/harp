@@ -4,9 +4,10 @@ import { ReactQueryDevtools } from "react-query/devtools"
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
 import GlobalStyles from "Styles/GlobalStyles"
 import { Layout } from "Components/Layout"
-import { DashboardRoute, TransactionsRoute } from "./Routes"
+import { TransactionsRoute } from "./Routes"
 import TransactionsListPage from "./Pages/Transactions/List/TransactionsListPage"
 import { ProxySettings } from "Pages/ProxySettings"
+import { Dashboard } from "Pages/Dashboard"
 import "./index.css"
 
 const router = createBrowserRouter([
@@ -16,7 +17,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "",
-        element: <DashboardRoute />,
+        element: <Dashboard />,
       },
       {
         path: "transactions",
