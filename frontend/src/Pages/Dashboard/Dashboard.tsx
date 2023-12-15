@@ -1,5 +1,5 @@
 import { useDashboardDataQuery } from "Domain/Dashboard"
-import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
+import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { Page } from "Components/Page"
 import { DashboardCharts } from "./DashboardCharts"
 
