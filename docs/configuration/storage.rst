@@ -12,7 +12,7 @@ only tested engines are sqlite (using `aiosqlite <https://aiosqlite.omnilib.dev/
 SQLite
 ::::::
 
-SQL has the benefit of requiring no external service, and is thus the default storage engine.
+SQLite has the benefit of requiring no external service, and is thus the default storage engine.
 Do not use it in production, as it is slow and have concurrency issues.
 
 .. tab-set-code::
@@ -28,6 +28,8 @@ Do not use it in production, as it is slow and have concurrency issues.
 
 PostgreSQL
 ::::::::::
+
+PostgreSQL is the recommended storage engine for production use.
 
 .. tab-set-code::
 
