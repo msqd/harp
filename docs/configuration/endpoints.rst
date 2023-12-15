@@ -48,3 +48,10 @@ Proxy endpoints are the remote APIs that your proxy will serve. Each endpoint ha
             },
             args=sys.argv[1:],
         )
+
+    .. code-block:: helm
+
+        endpoints:
+          - name: httpbin
+            port: "8080"
+            url: https://httpbin.org/

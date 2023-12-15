@@ -44,6 +44,7 @@ class ProxyFactory:
         self.settings = create_settings(
             settings, values=_options.values if _options else None, files=_options.files if _options else None
         )
+        logger.info(f"ProxyFactory::init() Settings={repr(self.settings.values)}")
         self.container = Container()
         self.dispatcher = self._create_event_dispatcher()
 
