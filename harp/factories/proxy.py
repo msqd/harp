@@ -2,7 +2,6 @@
 :class:`ProxyFactory` is a helper to create proxies. It will load configuration, build services, create an
 :class:`ASGIKernel <harp.core.asgi.kernel.ASGIKernel>` and prepare it for its future purpose.
 """
-import asyncio
 import logging
 from argparse import ArgumentParser
 from collections import defaultdict
@@ -195,13 +194,3 @@ class ProxyFactory:
         config = self.create_hypercorn_config()
 
         return await serve(kernel, config)
-
-
-if __name__ == "__main__":
-    proxy = ProxyFactory(dashboard_port=4040)
-    proxy.add(8000, "https://httpbin.org/", name="httpbin")
-    proxy.load("harp.contrib.sqlalchemy_storage")
-    proxy.settings._data["storage"]["url"] = "sqlite+aiosqlite:///custom.db"
-    proxy.settings._data["storage"]["drop_tables"] = True
-    proxy.settings._data["storage"]["echo"] = False
-    asyncio.run(proxy.serve())

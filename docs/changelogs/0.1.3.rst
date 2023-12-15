@@ -1,3 +1,6 @@
+Version 0.1.3
+=============
+
 * feat: working on k8s/helm deployment, release process, cleanup (Romain Dorgueil)
 * feat: adjust default database paths (Romain Dorgueil)
 * feat: adds a default optional yaml source from /etc/harp.yaml (Romain Dorgueil)

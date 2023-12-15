@@ -16,7 +16,7 @@ from harp.core.asgi.events.view import ViewEvent
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.asgi.resolvers import ControllerResolver
-from harp.core.event_dispatcher import AsyncEventDispatcher, LoggingAsyncEventDispatcher
+from harp.core.event_dispatcher import AsyncEventDispatcher
 
 logger = get_logger(__name__)
 
@@ -93,24 +93,3 @@ class ASGIKernel:
         controller = await self._resolve_controller(request)
 
         return await self._execute_controller(controller, request, response)
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    from hypercorn.asyncio import serve
-    from hypercorn.config import Config
-
-    from harp.applications.proxy.controllers import HttpProxyController
-    from harp.core.asgi.resolvers import ProxyControllerResolver, dump_request_controller
-
-    resolver = ProxyControllerResolver(default_controller=dump_request_controller)
-    resolver.add(8080, HttpProxyController("https://v2.jokeapi.dev/"))
-    resolver.add(8081, HttpProxyController("http://localhost:4999/"))
-
-    dispatcher = LoggingAsyncEventDispatcher()
-    kernel = ASGIKernel(dispatcher=dispatcher, resolver=resolver)
-
-    config = Config()
-    config.bind = ["localhost:8080", "localhost:8081", "localhost:8090"]
-    asyncio.run(serve(kernel, config))
