@@ -1,4 +1,5 @@
 import hashlib
+from datetime import UTC
 
 from sqlalchemy import alias, func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
@@ -171,7 +172,7 @@ class SqlAlchemyStorage:
                     id=event.transaction.id,
                     type=event.transaction.type,
                     endpoint=event.transaction.endpoint,
-                    started_at=event.transaction.started_at,
+                    started_at=event.transaction.started_at.astimezone(UTC).replace(tzinfo=None),
                 )
             )
 
@@ -186,7 +187,7 @@ class SqlAlchemyStorage:
                     summary=event.message.serialized_summary,
                     headers=headers_blob_id,
                     body=body_blob_id,
-                    created_at=event.message.created_at,
+                    created_at=event.message.created_at.astimezone(UTC).replace(tzinfo=None),
                 )
             )
 
@@ -196,7 +197,7 @@ class SqlAlchemyStorage:
                 TransactionsTable.update()
                 .where(TransactionsTable.c.id == event.transaction.id)
                 .values(
-                    finished_at=event.transaction.finished_at,
+                    finished_at=event.transaction.finished_at.astimezone(UTC).replace(tzinfo=None),
                     elapsed=event.transaction.elapsed,
                 )
             )

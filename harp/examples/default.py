@@ -3,17 +3,7 @@ import sys
 
 from harp import ProxyFactory
 
-proxy = ProxyFactory(
-    settings={
-        "storage": {
-            "type": "sqlalchemy",
-            "url": "sqlite+aiosqlite:///harp.db",
-            "echo": False,
-            "drop_tables": True,
-        }
-    },
-    args=sys.argv[1:],
-)
+proxy = ProxyFactory(args=sys.argv[1:])
 proxy.load("harp.contrib.sqlalchemy_storage")
 
 if __name__ == "__main__":

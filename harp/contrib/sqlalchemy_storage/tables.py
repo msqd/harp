@@ -1,4 +1,4 @@
-from sqlalchemy import BLOB, Column, DateTime, Float, ForeignKey, Integer, MetaData, String, Table
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, LargeBinary, MetaData, String, Table
 
 metadata = MetaData()
 
@@ -18,7 +18,7 @@ BlobsTable = Table(
     "sa_blobs",
     metadata,
     Column("id", String(40), primary_key=True, unique=True),
-    Column("data", BLOB()),
+    Column("data", LargeBinary()),
 )
 
 MessagesTable = Table(

@@ -37,6 +37,7 @@ async def on_bind(event: ProxyFactoryBindEvent):
         storage_type = event.settings.storage.type
     except AttributeError:
         storage_type = None
+
     if storage_type != "sqlalchemy":
         return
 

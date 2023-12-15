@@ -18,14 +18,9 @@ class LoggingAsyncEventDispatcher(AsyncEventDispatcher):
     todo: pass logger or logger name to constructor, choose logging level
     """
 
-    def __init__(self):
-        super().__init__()
-        self.level = 0
-
     async def dispatch(self, event_id, event=None):
         logger.debug(f"⚡ {event_id} ({type(event).__name__})")
         try:
-            self.level += 1
             return await super().dispatch(event_id, event)
-        finally:
-            self.level -= 1
+        except Exception as e:
+            logger.exception(f"⚡ {event_id} ({type(event).__name__}) failed: {e}")
