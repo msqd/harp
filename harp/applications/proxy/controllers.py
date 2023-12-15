@@ -1,8 +1,11 @@
 from datetime import UTC, datetime
+from functools import cached_property
+from typing import Optional
 from urllib.parse import urljoin
 
 import httpx
 from httpx import codes
+from whistle.protocols import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.core.asgi.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
@@ -18,53 +21,61 @@ logger = get_logger(__name__)
 
 
 class HttpProxyController:
-    name = None
-    dispatcher = None
-    target = None
+    name: str = None
+    """Controller name, also refered as endpoint name (for example in
+    :class:`Transaction <harp.core.models.transactions.Transaction>`)."""
 
-    def __init__(self, target, *, dispatcher=None, name=None):
-        self.target = target or self.target
+    _dispatcher: Optional[IAsyncEventDispatcher] = None
+    """Event dispatcher for this controller."""
+
+    url: str
+    """Base URL to proxy requests to."""
+
+    @cached_property
+    def dispatcher(self):
+        """Read-only reference to the event dispatcher."""
+        return self._dispatcher
+
+    def __init__(self, url, *, dispatcher=None, name=None):
+        self.url = url or self.url
         self.name = name or self.name
-        self.dispatcher = dispatcher or self.dispatcher
+        self._dispatcher = dispatcher or self._dispatcher
 
-    async def _suboptimal_temporary_extract_request_content(self, request: ASGIRequest):
+    async def dispatch(self, event_id, event=None):
         """
-        todo we should not remove the buffering ability, httpx allows us to stream the request body but for that we need
-        some kind of stream processor that yields and store the chunks.
+        Shortcut method to dispatch an event using the controller's dispatcher, if there is one.
 
-        :param ctx:
+        :return: :class:`IEvent <whistle.protocols.IEvent>` or None
+        """
+        if self._dispatcher:
+            return await self._dispatcher.dispatch(event_id, event)
+
+    async def __call__(self, request: ASGIRequest, response: ASGIResponse):
+        """Handle an incoming request and proxy it to the configured URL.
+
+        :param request: ASGI request
+        :param response: ASGI response
         :return:
-        """
-        messages = []
-        more_body = True
-        while more_body:
-            message = await request.receive()
-            more_body = message.get("more_body", False)
-            part = message.get("body", b"")
-            messages.append(part)
-            request._body += part
-        return b"".join(messages) if len(messages) else None
 
-    async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
+        """
         # BEGIN TRANSACTION
         transaction = Transaction(
-            id=generate_transaction_id_ksuid(), type=request.type, started_at=datetime.now(UTC), target=self.name
+            id=generate_transaction_id_ksuid(), type=request.type, started_at=datetime.now(UTC), endpoint=self.name
         )
         logger.debug(f"▶ {request.method} {request.path}", transaction_id=transaction.id)
 
-        if self.dispatcher:
-            # dispatch transaction started event
-            # we don't really want to await this, should run in background ? or use an async queue ?
-            await self.dispatcher.dispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(transaction))
+        # dispatch transaction started event
+        # we don't really want to await this, should run in background ? or use an async queue ?
+        await self.dispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(transaction))
 
-            # dispatch message event for request
-            await self.dispatcher.dispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, request))
+        # dispatch message event for request
+        await self.dispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, request))
 
         # PROXY REQUEST
         request_headers = tuple(((k, v) for k, v in request.headers if k.lower() not in (b"host",)))
         request_content = await self._suboptimal_temporary_extract_request_content(request)
 
-        url = urljoin(self.target, request.path) + (f"?{request.query_string}" if request.query_string else "")
+        url = urljoin(self.url, request.path) + (f"?{request.query_string}" if request.query_string else "")
 
         p_request: httpx.Request = client.build_request(
             request.method,
@@ -96,9 +107,29 @@ class HttpProxyController:
         spent = int((datetime.now(UTC).timestamp() - transaction.started_at.timestamp()) * 100000) / 100
         logger.debug(f"◀ {status} {reason} ({spent}ms)", transaction_id=transaction.id)
 
-        if self.dispatcher:
-            # dispatch message event for response
-            await self.dispatcher.dispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, response))
+        # dispatch message event for response
+        await self.dispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, response))
 
-            # dispatch transaction ended event
-            await self.dispatcher.dispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(transaction))
+        transaction.finished_at = datetime.now(UTC)
+        transaction.elapsed = spent
+
+        # dispatch transaction ended event
+        await self.dispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(transaction))
+
+    async def _suboptimal_temporary_extract_request_content(self, request: ASGIRequest):
+        """
+        todo we should not remove the buffering ability, httpx allows us to stream the request body but for that we need
+        some kind of stream processor that yields and store the chunks.
+
+        :param ctx:
+        :return:
+        """
+        messages = []
+        more_body = True
+        while more_body:
+            message = await request.receive()
+            more_body = message.get("more_body", False)
+            part = message.get("body", b"")
+            messages.append(part)
+            request._body += part
+        return b"".join(messages) if len(messages) else None

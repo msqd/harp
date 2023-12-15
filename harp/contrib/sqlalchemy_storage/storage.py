@@ -1,7 +1,9 @@
 import hashlib
+from datetime import UTC
 
 from sqlalchemy import alias, func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from whistle.protocols import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
@@ -14,7 +16,6 @@ from harp.core.asgi.events import (
 )
 from harp.core.asgi.events.message import MessageEvent
 from harp.core.asgi.events.transaction import TransactionEvent
-from harp.core.event_dispatcher import IAsyncEventDispatcher
 from harp.core.models.messages import Blob, Message
 from harp.core.models.transactions import Transaction
 
@@ -94,12 +95,14 @@ class SqlAlchemyStorage:
                     _db_transaction = row[0:LEN_TRANSACTIONS_COLUMNS]
                     if current_transaction:
                         yield current_transaction
+                    # TODO WARNING the field order is not the same as the model
                     current_transaction = Transaction(
                         id=_db_transaction[0],
                         type=_db_transaction[1],
-                        started_at=_db_transaction[2],
-                        finished_at=_db_transaction[3],
-                        ellapsed=_db_transaction[4],
+                        endpoint=_db_transaction[2],
+                        started_at=_db_transaction[3],
+                        finished_at=_db_transaction[4],
+                        elapsed=_db_transaction[5],
                         messages=[],
                     )
 
@@ -168,7 +171,8 @@ class SqlAlchemyStorage:
                 TransactionsTable.insert().values(
                     id=event.transaction.id,
                     type=event.transaction.type,
-                    started_at=event.transaction.started_at,
+                    endpoint=event.transaction.endpoint,
+                    started_at=event.transaction.started_at.astimezone(UTC).replace(tzinfo=None),
                 )
             )
 
@@ -183,7 +187,7 @@ class SqlAlchemyStorage:
                     summary=event.message.serialized_summary,
                     headers=headers_blob_id,
                     body=body_blob_id,
-                    created_at=event.message.created_at,
+                    created_at=event.message.created_at.astimezone(UTC).replace(tzinfo=None),
                 )
             )
 
@@ -193,7 +197,7 @@ class SqlAlchemyStorage:
                 TransactionsTable.update()
                 .where(TransactionsTable.c.id == event.transaction.id)
                 .values(
-                    finished_at=event.transaction.finished_at,
-                    ellapsed=event.transaction.ellapsed,
+                    finished_at=event.transaction.finished_at.astimezone(UTC).replace(tzinfo=None),
+                    elapsed=event.transaction.elapsed,
                 )
             )

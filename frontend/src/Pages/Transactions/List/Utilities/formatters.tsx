@@ -1,7 +1,7 @@
 import { ComponentType, ReactElement } from "react"
-import { truncate } from "Utils/Strings"
+import { truncate } from "Utils/Strings.ts"
 import { Badge, type BadgeColor } from "mkui/Components/Badge"
-import { ArrowLeftIcon, ArrowRightIcon, ArrowsRightLeftIcon } from "@heroicons/react/24/outline"
+import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline"
 import { getReasonPhrase } from "http-status-codes"
 
 function createShortIdFormatter({
@@ -22,7 +22,7 @@ function createShortIdFormatter({
   }
 }
 
-export const formatTransactionShortId = createShortIdFormatter({ Icon: ArrowsRightLeftIcon, maxLength: 9 })
+export const formatTransactionShortId = createShortIdFormatter({ maxLength: 9 })
 export const formatRequestShortId = createShortIdFormatter({ Icon: ArrowRightIcon, maxLength: 5 })
 export const formatResponseShortId = createShortIdFormatter({ Icon: ArrowLeftIcon, maxLength: 5 })
 export const RequestMethodBadge = ({ method }: { method: string }) => {

@@ -8,6 +8,9 @@
     "type": {
       "type": "string"
     },
+    "endpoint": {
+      "type": "string"
+    },
     "started_at": {
       "type": "string",
       "format": "date-time"
@@ -16,7 +19,7 @@
       "type": "string",
       "format": "date-time"
     },
-    "ellapsed": {
+    "elapsed": {
       "type": "number"
     },
     "messages": {
@@ -24,12 +27,9 @@
       "items": {
         "$ref": "#/definitions/Message"
       }
-    },
-    "target": {
-      "type": "string"
     }
   },
-  "description": "Transaction(*, id: str = None, type: str, started_at: datetime.datetime, finished_at: datetime.datetime = None, ellapsed: float = None, messages: List[harp.core.models.messages.Message] = None, target: str = None)",
+  "description": "Transaction(*, id: str = None, type: str, endpoint: str = None, started_at: datetime.datetime, finished_at: datetime.datetime = None, elapsed: float = None, messages: List[harp.core.models.messages.Message] = None)",
   "$schema": "http://json-schema.org/draft-06/schema#",
   "definitions": {
     "Message": {

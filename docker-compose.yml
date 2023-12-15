@@ -1,8 +1,10 @@
 services:
+
   httpbin:
     image: mccutchen/go-httpbin
     ports:
       - 8080:8080
+
   postgres:
     image: timescale/timescaledb-ha:pg14-latest
     ports:

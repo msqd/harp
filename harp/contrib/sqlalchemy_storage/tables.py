@@ -1,4 +1,4 @@
-from sqlalchemy import BLOB, Column, DateTime, Float, ForeignKey, Integer, MetaData, String, Table
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, LargeBinary, MetaData, String, Table
 
 metadata = MetaData()
 
@@ -8,16 +8,17 @@ TransactionsTable = Table(
     metadata,
     Column("id", String(27), primary_key=True, unique=True),
     Column("type", String(10)),
+    Column("endpoint", String(32), nullable=True),
     Column("started_at", DateTime()),
     Column("finished_at", DateTime(), nullable=True),
-    Column("ellapsed", Float(), nullable=True),
+    Column("elapsed", Float(), nullable=True),
 )
 
 BlobsTable = Table(
     "sa_blobs",
     metadata,
     Column("id", String(40), primary_key=True, unique=True),
-    Column("data", BLOB()),
+    Column("data", LargeBinary()),
 )
 
 MessagesTable = Table(

@@ -1,12 +1,13 @@
 import { useState } from "react"
 import { DataTable } from "mkui/Components/DataTable"
-import { formatTransactionShortId, getDurationRatingBadge, ResponseStatusBadge } from "./formatters.tsx"
+import { formatTransactionShortId, getDurationRatingBadge } from "./Utilities/formatters.tsx"
 import { TransactionDetailsDialog } from "./TransactionDetailsDialog.tsx"
 import { formatDistance, formatDuration } from "date-fns"
-import { ArrowLeftIcon } from "@heroicons/react/24/outline"
-import { RequestHeading } from "./RequestHeading.tsx"
+import { ArrowsRightLeftIcon } from "@heroicons/react/24/outline"
+import { RequestHeading } from "./Components/RequestHeading.tsx"
 import { Transaction } from "Models/Transaction"
 import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
+import { ResponseHeading } from "./Components/ResponseHeading.tsx"
 
 interface TransactionsDataTableProps {
   transactions: Transaction[]
@@ -15,7 +16,23 @@ interface TransactionsDataTableProps {
 const transactionColumnTypes = {
   id: {
     label: "Transaction",
-    format: formatTransactionShortId,
+    format: (id: string) => (
+      <>
+        <span className="mx-auto flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 float-left">
+          <ArrowsRightLeftIcon className="h-3 w-3 text-blue-600" aria-hidden="true" />
+        </span>
+        {formatTransactionShortId(id)}
+      </>
+    ),
+    headerClassName: "w-28",
+  },
+  endpoint: {
+    label: "Endpoint",
+    format: (endpoint: string) => (
+      <span className="inline-flex items-center bg-gray-50 px-1 mx-1 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">
+        {endpoint}
+      </span>
+    ),
     headerClassName: "w-1",
   },
   request: {
@@ -26,15 +43,7 @@ const transactionColumnTypes = {
   response: {
     label: "Response",
     get: (row: Transaction) => getResponseFromTransactionMessages(row) ?? null,
-    format: ({ id, statusCode }: { id: string; statusCode: number }) => (
-      <div className="flex items-center" title={id}>
-        <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 mr-1">
-          <ArrowLeftIcon className="h-3 w-3 text-gray-500" aria-hidden="true" />
-        </span>
-        <ResponseStatusBadge statusCode={statusCode} />
-        <span>...kB</span>
-      </div>
-    ),
+    format: ResponseHeading,
   },
   started_at: {
     label: "Date",
@@ -44,6 +53,7 @@ const transactionColumnTypes = {
   },
   elapsed: {
     label: "Duration",
+    get: (row: Transaction) => (row.elapsed ? Math.trunc(row.elapsed) / 1000 : null),
     format: (x: number) => {
       return (
         <div>
@@ -65,7 +75,7 @@ export function TransactionDataTable({ transactions }: TransactionsDataTableProp
         types={transactionColumnTypes}
         onRowClick={(row: Transaction) => setCurrent(row)}
         rows={transactions}
-        columns={["request", "response", "elapsed", "started_at"]}
+        columns={["id", "endpoint", "request", "response", "elapsed", "started_at"]}
       />
       <TransactionDetailsDialog current={current} setCurrent={setCurrent} />
     </>
