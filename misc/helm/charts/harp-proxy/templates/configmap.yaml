@@ -3,11 +3,11 @@ kind: ConfigMap
 metadata:
   name: {{ include "harp-proxy.fullname" . }}
 data:
-  harp.yaml:  |
+  harp.yaml: |
     proxy:
-      endpoint:
-        {{- range .Values.remotes }}
-        "{{ .containerPort }}":
+      endpoints:
+        {{- range .Values.endpoints }}
+        "{{ .port }}":
           name: "{{ .name }}"
-          target: "{{ .endpoint }}"
+          target: "{{ .url }}"
         {{- end }}
