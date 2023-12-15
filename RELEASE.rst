@@ -51,9 +51,6 @@ Add to git ...
 .. code-block:: shell-session
 
     git add -p pyproject.toml poetry.lock harp/__init__.py
-
-.. code-block:: shell-session
-
     make preqa; git add docs/reference; git add -p
 
 3. Run a full test suite (todo: from a clean virtualenv)
