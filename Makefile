@@ -45,7 +45,11 @@ reference: harp
 # QA, tests and other CI/CD related stuff
 ########################################################################################################################
 
-.PHONY: preqa qa types format test test-ui test-ui-update test-back lint-frontend test-frontend test-full
+.PHONY: preqa qa types format test test-ui test-ui-update test-back lint-frontend test-frontend test-full clean
+
+clean:
+	(cd docs; $(MAKE) clean)
+	rm -rf frontend/dist
 
 preqa: types format reference
 qa: preqa test-full

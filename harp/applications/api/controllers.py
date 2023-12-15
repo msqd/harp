@@ -2,60 +2,68 @@ import os
 
 from asgi_middleware_static_file import ASGIMiddlewareStaticFile
 from config.common import Configuration
-from http_router import NotFoundError, Router
+from http_router import NotFoundError
 
 from harp import ROOT_DIR, get_logger
 from harp.applications.proxy.controllers import HttpProxyController
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
+from harp.core.controllers.routing import RoutingController
 from harp.core.models.transactions import Transaction
 from harp.core.views.json import json
 from harp.protocols.storage import IStorage
 
+logger = get_logger(__name__)
+
+# Static directories to look for pre-built assets, in order of priority.
 STATIC_BUILD_PATHS = [
     os.path.realpath(os.path.join(ROOT_DIR, "../frontend/dist")),
     "/opt/harp/public",
 ]
 
-logger = get_logger(__name__)
 
-
-class DashboardController(HttpProxyController):
+class DashboardController:
     name = "ui"
     storage: IStorage
     proxy_settings: Configuration
 
-    middleware = None
+    _ui_static_middleware = None
 
     def __init__(self, storage: IStorage, proxy_settings: Configuration):
-        # todo use delegation instead of inheritance, this is not clean.
-        # proxy can be set as attribute, then delegate if the request is for him
-        super().__init__("http://localhost:4999/")
-
-        self.router = self.create_router()
+        # context for usage in handlers
         self.storage = storage
         self.proxy_settings = proxy_settings
+
+        # controllers for delegating requests
+        self._devserver_proxy_controller = self._create_devserver_proxy_controller()
+        self._routing_controller = self._create_routing_controller()
 
         for _path in STATIC_BUILD_PATHS:
             logger.info("Checking for static files in %s", _path)
             if os.path.exists(_path):
                 logger.info("Serving static files from %s", _path)
-                self.middleware = ASGIMiddlewareStaticFile(None, "", [_path])
+                self._ui_static_middleware = ASGIMiddlewareStaticFile(None, "", [_path])
                 break
 
-    def create_router(self):
-        router = Router(trim_last_slash=True)
+    def _create_devserver_proxy_controller(self):
+        return HttpProxyController("http://localhost:4999/")
+
+    def _create_routing_controller(self):
+        controller = RoutingController(handle_errors=False)
+        router = controller.router
         router.route("/api/transactions")(self.list_transactions)
         router.route("/api/transactions/{transaction}")(self.get_transaction)
         router.route("/api/blobs/{blob}")(self.get_blob)
         router.route("/api/settings")(self.get_settings)
-        return router
+        return controller
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
         logger.debug(f"📈 {request.method} {request.path}")
-        if self.middleware and not request.path.startswith("/api/"):
+
+        # Is this a prebuilt static asset?
+        if self._ui_static_middleware and not request.path.startswith("/api/"):
             try:
-                return await self.middleware(
+                return await self._ui_static_middleware(
                     {
                         "type": request._scope["type"],
                         "path": request._scope["path"] if "." in request._scope["path"] else "/index.html",
@@ -68,12 +76,11 @@ class DashboardController(HttpProxyController):
                 response.started = True
 
         try:
-            match = self.router(request.path, method=request.method)
-            return await match.target(request, response, **(match.params or {}))
+            return await self._routing_controller(request, response)
         except NotFoundError:
-            return await super().__call__(request, response, transaction_id=transaction_id)
+            return await self._devserver_proxy_controller(request, response)
 
-    async def list_transactions(self, request, response):
+    async def list_transactions(self, request: ASGIRequest, response: ASGIResponse):
         transactions = []
         async for transaction in self.storage.find_transactions(with_messages=True):
             transactions.append(transaction)
@@ -88,7 +95,7 @@ class DashboardController(HttpProxyController):
             }
         )
 
-    async def get_transaction(self, request, response, transaction):
+    async def get_transaction(self, request: ASGIRequest, response: ASGIResponse, transaction):
         return json(
             {
                 "@type": "transaction",
@@ -96,7 +103,7 @@ class DashboardController(HttpProxyController):
             }
         )
 
-    async def get_blob(self, request, response, blob):
+    async def get_blob(self, request: ASGIRequest, response: ASGIResponse, blob):
         blob = await self.storage.get_blob(blob)
 
         if not blob:
@@ -107,5 +114,5 @@ class DashboardController(HttpProxyController):
         await response.start(status=200, headers={"content-type": "application/octet-stream"})
         await response.body(blob.data)
 
-    async def get_settings(self, request, response):
+    async def get_settings(self, request: ASGIRequest, response: ASGIResponse):
         return json(self.proxy_settings.values)

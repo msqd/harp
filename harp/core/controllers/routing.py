@@ -18,19 +18,24 @@ class RoutingController:
     RouterType = Router
     RouterArguments = Arguments(trim_last_slash=True)
 
-    def __init__(self):
+    def __init__(self, *, handle_errors=True):
         self.router = self.create_router()
+        self.handle_errors = handle_errors
 
     def create_router(self):
         return self.RouterType(*self.RouterArguments.args, *self.RouterArguments.kwargs)
 
-    async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
+    async def __call__(self, request: ASGIRequest, response: ASGIResponse):
         try:
             match = self.router(request.path, method=request.method)
             return await match.target(request, response, **(match.params or {}))
         except NotFoundError as exc:
+            if not self.handle_errors:
+                raise
             await self.handle_error(exc, response, status=404)
         except Exception as exc:
+            if not self.handle_errors:
+                raise
             await self.handle_error(exc, response)
 
     async def handle_error(self, exc, response, *, status=500):
