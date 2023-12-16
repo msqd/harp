@@ -4,7 +4,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $fullName }}
+  name: {{ $fullName }}-dashboard
   labels:
     {{- include "harp-proxy.labels" . | nindent 4 }}
 spec:
@@ -16,12 +16,12 @@ spec:
       name: http
   selector:
     {{- include "harp-proxy.selectorLabels" . | nindent 4 }}
-{{- range .Values.remotes }}
+{{- range .Values.endpoints }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $fullName }}-{{ .name }}
+  name: {{ .serviceName | default (printf "%s-%s" $fullName .name) }}
   labels:
     {{- $labels | nindent 4 }}
 spec:

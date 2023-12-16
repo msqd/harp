@@ -37,9 +37,9 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
-            {{- range .Values.remotes }}
+            {{- range .Values.endpoints }}
             - name: {{ .name }}
-              containerPort: {{ .containerPort }}
+              containerPort: {{ .port }}
               protocol: TCP
             {{- end }}
           livenessProbe:
