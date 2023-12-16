@@ -8,6 +8,7 @@ class html(str):
 async def on_string_response(event: ViewEvent):
     if isinstance(event.value, str):
         response = event.response
-        await response.start(status=200, headers={"content-type": getattr(event.value, "content_type", "text/plain")})
+        response.headers["content-type"] = getattr(event.value, "content_type", "text/plain")
+        await response.start(status=200)
         await response.body(event.value)
         event.stop_propagation()

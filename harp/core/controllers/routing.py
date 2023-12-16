@@ -39,5 +39,6 @@ class RoutingController:
             await self.handle_error(exc, response)
 
     async def handle_error(self, exc, response, *, status=500):
-        await response.start(status=status, headers={"content-type": "text/html"})
+        response.headers["content-type"] = "text/html"
+        await response.start(status=status)
         await response.body(f"<h1>{type(exc).__name__}</h1><h2>Stack trace</h2>{get_exception_traceback_str(exc)}")

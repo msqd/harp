@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from functools import cached_property
 
-from multidict import CIMultiDict
+from multidict import CIMultiDict, CIMultiDictProxy
 
 from harp.core.asgi.messages.base import AbstractASGIMessage
 
@@ -53,7 +53,7 @@ class ASGIRequest(AbstractASGIMessage):
         headers = CIMultiDict()
         for name, value in self._scope.get("headers", []):
             headers.add(name.decode("utf-8"), value.decode("utf-8"))
-        return headers
+        return CIMultiDictProxy(headers)
 
     @cached_property
     def serialized_summary(self):

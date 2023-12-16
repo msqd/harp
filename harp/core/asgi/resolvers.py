@@ -6,12 +6,14 @@ from harp.utils.json import BytesEncoder
 
 
 async def dump_request_controller(request: ASGIRequest, response: ASGIResponse):
-    await response.start(headers={"content-type": "application/json"})
+    response.headers["content-type"] = "application/json"
+    await response.start()
     await response.body(json.dumps(request.scope, cls=BytesEncoder))
 
 
 async def not_found_controller(request: ASGIRequest, response: ASGIResponse):
-    await response.start(headers={"content-type": "text/plain"}, status=404)
+    response.headers["content-type"] = "text/plain"
+    await response.start(status=404)
     await response.body("Not found.")
 
 

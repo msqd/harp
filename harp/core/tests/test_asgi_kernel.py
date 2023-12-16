@@ -6,7 +6,8 @@ from harp.core.asgi.resolvers import ControllerResolver
 
 
 async def mock_controller(request, response):
-    await response.start(headers={"content-type": "text/plain"})
+    response.headers["content-type"] = "text/plain"
+    await response.start()
     await response.body("Hello, world!")
 
 
@@ -29,7 +30,7 @@ class TestAsgiKernel:
             receive,
         )
 
-        response = (await kernel.handle(request, send))._response
+        response = (await kernel.handle(request, send)).snapshot()
         assert controller.await_count == 1
         assert response["status"] == 200
         assert response["body"] == b"Hello, world!"

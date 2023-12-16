@@ -10,6 +10,7 @@ class json(dict):
 async def on_json_response(event: ViewEvent):
     if isinstance(event.value, json):
         response = event.response
-        await response.start(status=200, headers={"content-type": "application/json"})
+        response.headers["content-type"] = "application/json"
+        await response.start(status=200)
         await response.body(dumps(event.value))
         event.stop_propagation()

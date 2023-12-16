@@ -22,7 +22,8 @@ logger = get_logger(__name__)
 
 
 async def kernel_not_started_controller(request, response: ASGIResponse):
-    await response.start(status=500, headers={"content-type": "text/plain"})
+    response.headers["content-type"] = "text/plain"
+    await response.start(status=500)
     await response.body(
         b"Unhandled server error: Cannot access service provider, the lifespan.startup asgi event probably never went "
         b"through."

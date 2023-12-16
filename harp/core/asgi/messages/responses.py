@@ -1,9 +1,9 @@
 from datetime import UTC, datetime
 from functools import cached_property
-from itertools import chain
 
 from asgiref.typing import ASGISendCallable
 from httpx import codes
+from multidict import CIMultiDict, CIMultiDictProxy
 
 from harp.core.asgi.messages.base import AbstractASGIMessage
 from harp.core.asgi.messages.requests import ASGIRequest
@@ -19,25 +19,26 @@ class ASGIResponse(AbstractASGIMessage):
     kind = "response"
     default_headers = {}
 
-    def __init__(self, request: ASGIRequest, send: ASGISendCallable, *, default_headers=None):
+    def __init__(self, request: ASGIRequest, send: ASGISendCallable):
+        # todo no request needed in response ?
         self._request = request
         self._send = send
 
         self.status = None
-        self.default_headers = default_headers if default_headers is not None else self.default_headers
+        self.headers = CIMultiDict()
 
         self.started = False
 
         # Keep track of what has been sent, mostly for testing, logging or auditing purposes.
         # The ASGI protocol being async-first, it may be used to send a response in multiple parts.
-        self._response = {}
+        self.__deprecated_data_snapshot_for_early_developments = {}
 
         self.created_at = datetime.now(UTC)
 
     def snapshot(self):
-        return self._response
+        return self.__deprecated_data_snapshot_for_early_developments
 
-    async def start(self, *, status=200, headers=None):
+    async def start(self, status=200):
         """
         Starts an HTTP response. This is specific to HTTP and may be moved elsewhere later (subclass, protocol specific
         delegate...).
@@ -52,10 +53,10 @@ class ASGIResponse(AbstractASGIMessage):
         self.started = True
         self.status = status
 
-        headers = tuple(
-            (ensure_bytes(k), ensure_bytes(v))
-            for k, v in chain((self.default_headers or {}).items(), (headers or {}).items())
-        )
+        # headers are now readonly
+        self.headers = CIMultiDictProxy(self.headers)
+
+        headers = tuple((ensure_bytes(k), ensure_bytes(v)) for k, v in self.headers.items())
         await self._send(
             {
                 "type": "http.response.start",
@@ -64,8 +65,8 @@ class ASGIResponse(AbstractASGIMessage):
             }
         )
 
-        self._response["status"] = self.status
-        self._response["headers"] = headers
+        self.__deprecated_data_snapshot_for_early_developments["status"] = self.status
+        self.__deprecated_data_snapshot_for_early_developments["headers"] = headers
 
     async def body(self, content):
         """
@@ -83,8 +84,8 @@ class ASGIResponse(AbstractASGIMessage):
                 "body": content,
             }
         )
-        self._response.setdefault("body", b"")
-        self._response["body"] += content
+        self.__deprecated_data_snapshot_for_early_developments.setdefault("body", b"")
+        self.__deprecated_data_snapshot_for_early_developments["body"] += content
 
     async def close(self):
         """
@@ -102,15 +103,15 @@ class ASGIResponse(AbstractASGIMessage):
 
         :return: str
         """
-        status = self._response["status"]
+        status = self.__deprecated_data_snapshot_for_early_developments["status"]
         reason = codes.get_reason_phrase(status)
         return f"HTTP/1.1 {status} {reason}"
 
     @cached_property
     def serialized_headers(self):
-        headers = self._response["headers"]
+        headers = self.__deprecated_data_snapshot_for_early_developments["headers"]
         return "\n".join([f"{k.decode('utf-8')}: {v.decode('utf-8')}" for k, v in headers])
 
     @cached_property
     def serialized_body(self):
-        return self._response["body"]
+        return self.__deprecated_data_snapshot_for_early_developments["body"]

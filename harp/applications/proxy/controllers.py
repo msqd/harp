@@ -92,14 +92,13 @@ class HttpProxyController:
             transaction_id=transaction.id,
         )
 
-        response_headers = dict(
-            (k, v)
-            for k, v in p_response.headers.raw
-            if k.lower() not in (b"server", b"date", b"content-encoding", b"content-length")
-        )
-
         status = p_response.status_code
-        await response.start(status=status, headers=response_headers)
+        response.headers.update(
+            (k, v)
+            for k, v in p_response.headers.multi_items()
+            if k.lower() not in ("server", "date", "content-encoding", "content-length")
+        )
+        await response.start(status=status)
         await response.body(p_response.content)
 
         # END TRANSACTION

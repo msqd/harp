@@ -71,7 +71,8 @@ class DashboardController:
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
         if self.auth:
             if request.cookies.get("harp") != self.auth:
-                await response.start(status=401, headers={"content-type": "text/plain"})
+                response.headers["content-type"] = "text/plain"
+                await response.start(401)
                 await response.body(b"Unauthorized")
                 return
 
@@ -101,11 +102,13 @@ class DashboardController:
         blob = await self.storage.get_blob(blob)
 
         if not blob:
-            await response.start(status=404, headers={"content-type": "text/plain"})
+            response.headers["content-type"] = "text/plain"
+            await response.start(status=404)
             await response.body(b"Blob not found.")
             return
 
-        await response.start(status=200, headers={"content-type": "application/octet-stream"})
+        response.headers["content-type"] = "application/octet-stream"
+        await response.start(status=200)
         await response.body(blob.data)
 
     async def get_dashboard_data(self, request: ASGIRequest, response: ASGIResponse):
