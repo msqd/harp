@@ -5,9 +5,13 @@ import sys
 
 from harp import ProxyFactory
 
-# todo go in main
-proxy = ProxyFactory(args=sys.argv[1:])
-proxy.load("harp.contrib.sqlalchemy_storage")
+
+def create_proxy():
+    proxy = ProxyFactory(args=sys.argv[1:])
+    proxy.load("harp.contrib.sqlalchemy_storage")
+    return proxy
+
 
 if __name__ == "__main__":
+    proxy = create_proxy()
     asyncio.run(proxy.serve())
