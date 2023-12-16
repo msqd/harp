@@ -1,16 +1,14 @@
-import tw, { styled } from "twin.macro"
 import { RequestsChart } from "./RequestChart"
 
 import { H2 } from "mkui/Components/Typography"
 import { DashboardGraphData } from "Models/Dashboard"
 import { EndpointChart } from "./EndpointChart"
-const PageContent = styled.main(() => [tw`py-8`])
 
 export const DashboardCharts = ({ data }: DashboardGraphData) => {
   const rating = "A"
   const endpoints = ["foo", "bar"]
   return (
-    <PageContent>
+    <>
       <H2>Request statuses over time</H2>
       <div style={{ display: "flex", alignItems: "center" }}>
         <div
@@ -26,6 +24,6 @@ export const DashboardCharts = ({ data }: DashboardGraphData) => {
       {endpoints.map((endpoint, index) => (
         <EndpointChart key={index} endpoint={endpoint} />
       ))}
-    </PageContent>
+    </>
   )
 }

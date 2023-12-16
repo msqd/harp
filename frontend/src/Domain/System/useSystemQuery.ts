@@ -3,5 +3,5 @@ import { useApi } from "Domain/Api"
 
 export function useSystemQuery() {
   const api = useApi()
-  return useQuery<{ version: string }>(["system"], () => api.fetch("/system").then((r) => r.json()))
+  return useQuery<{ version: string; revision: string }>(["system"], () => api.fetch("/system").then((r) => r.json()))
 }

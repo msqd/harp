@@ -1,5 +1,6 @@
 import { ErrorBoundary, FallbackProps } from "react-error-boundary"
 import * as Sentry from "@sentry/browser"
+import { H1, P } from "mkui/Components/Typography"
 
 export function Error(props: FallbackProps) {
   return (
@@ -51,20 +52,20 @@ export function Page({
 }) {
   return (
     <ErrorBoundary FallbackComponent={Error}>
-      {title ? (
-        <div className="sm:flex sm:items-center">
-          <div className="mt-8 sm:flex-auto">
-            <h1 className="text-xl font-semibold leading-6 text-gray-900">{title}</h1>
-            {description ? <p className="mt-2 text-sm text-gray-700">{description}</p> : null}
+      <main>
+        {title ? (
+          <div className="mt-4 mb-4">
+            <H1>{title}</H1>
+            {description ? <P>{description}</P> : null}
+          </div>
+        ) : null}
+
+        <div className="mt-4">
+          <div className="overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <section className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">{children}</section>
           </div>
         </div>
-      ) : null}
-
-      <div className="mt-8 flow-root">
-        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">{children}</div>
-        </div>
-      </div>
+      </main>
     </ErrorBoundary>
   )
 }

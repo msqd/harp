@@ -1,17 +1,16 @@
 import os
-import re
-from copy import deepcopy
 
 from asgi_middleware_static_file import ASGIMiddlewareStaticFile
 from config.common import Configuration
 from http_router import NotFoundError
 
-from harp import ROOT_DIR, __version__, get_logger
+from harp import ROOT_DIR, get_logger
+from harp.applications.dashboard.controllers.system import SystemController
+from harp.applications.dashboard.controllers.transactions import TransactionsController
 from harp.applications.proxy.controllers import HttpProxyController
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.controllers.routing import RoutingController
-from harp.core.models.transactions import Transaction
 from harp.core.views.json import json
 from harp.protocols.storage import IStorage
 
@@ -22,65 +21,6 @@ STATIC_BUILD_PATHS = [
     os.path.realpath(os.path.join(ROOT_DIR, "frontend/dist")),
     "/opt/harp/public",
 ]
-
-
-class TransactionsController:
-    prefix = "/api/transactions"
-
-    def __init__(self, storage: IStorage):
-        self.storage = storage
-
-    def register(self, router):
-        router.route(self.prefix + "/")(self.list)
-        router.route(self.prefix + "/{transaction}")(self.get)
-
-    async def list(self, request: ASGIRequest, response: ASGIResponse):
-        transactions = []
-        async for transaction in self.storage.find_transactions(with_messages=True):
-            transactions.append(transaction)
-        return json(
-            {
-                "items": list(map(Transaction.to_dict, transactions)),
-                "total": len(transactions),
-                "limit": 50,
-                "offset": 0,
-                "page": 1,
-                "pages": 1,
-            }
-        )
-
-    async def get(self, request: ASGIRequest, response: ASGIResponse, transaction):
-        return json(
-            {
-                "@type": "transaction",
-                "@id": transaction,
-            }
-        )
-
-
-class SystemController:
-    prefix = "/api/system"
-
-    def __init__(self, settings: Configuration):
-        self.settings = settings
-
-    def register(self, router):
-        router.route(self.prefix + "/")(self.get)
-        router.route(self.prefix + "/settings")(self.get_settings)
-
-    async def get(self, request: ASGIRequest, response: ASGIResponse):
-        return json(
-            {
-                "version": __version__,
-            }
-        )
-
-    async def get_settings(self, request: ASGIRequest, response: ASGIResponse):
-        settings = deepcopy(self.settings.values)
-        if "storage" in settings:
-            if "url" in settings["storage"]:
-                settings["storage"]["url"] = re.sub(r"//[^@]*@", "//***@", settings["storage"]["url"])
-        return json(settings)
 
 
 class DashboardController:

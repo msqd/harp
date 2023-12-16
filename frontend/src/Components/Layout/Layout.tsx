@@ -8,11 +8,11 @@ const StyledContainerWithHorizontalConstraint = styled.div(() => [tw`mx-auto px-
 
 function RightNav() {
   const systemQuery = useSystemQuery()
-  return (
-    <div className="text-sm text-white">
-      {systemQuery && systemQuery.isSuccess ? `v.${systemQuery.data.version}` : ""}
+  return systemQuery && systemQuery.isSuccess ? (
+    <div className="text-sm text-white" title={systemQuery.data.revision}>
+      {`v.${systemQuery.data.version}`}
     </div>
-  )
+  ) : null
 }
 
 function Layout() {
