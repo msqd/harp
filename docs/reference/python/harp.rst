@@ -11,7 +11,6 @@ Subpackages
    harp.cli
    harp.contrib
    harp.core
-   harp.examples
    harp.factories
    harp.protocols
    harp.services

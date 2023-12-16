@@ -37,7 +37,7 @@ def create_settings(settings=None, *, values=None, files=None):
     builder.add_source(EnvVars(prefix="HARP_"))
 
     if values:
-        for k, v in values.items():
+        for k, v in values:
             builder.add_value(k, v)
 
     return builder.build()

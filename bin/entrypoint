@@ -1,8 +1,11 @@
+#! /usr/bin/env python3
+
 import asyncio
 import sys
 
 from harp import ProxyFactory
 
+# todo go in main
 proxy = ProxyFactory(args=sys.argv[1:])
 proxy.load("harp.contrib.sqlalchemy_storage")
 

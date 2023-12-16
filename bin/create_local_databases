@@ -1,0 +1,18 @@
+#! /bin/bash
+
+if [ "$1" = "--reset" ]; then
+  docker-compose exec -T postgres psql -U postgres <<EOF
+    DROP DATABASE harp;
+    DROP DATABASE repositories;
+
+    DROP ROLE harp;
+
+EOF
+fi
+
+docker-compose exec -T postgres psql -U postgres <<EOF
+  CREATE ROLE harp WITH LOGIN PASSWORD 'harp';
+
+  CREATE DATABASE harp WITH OWNER=harp ENCODING='utf-8' TEMPLATE=template0;
+  CREATE DATABASE repositories WITH OWNER=harp ENCODING='utf-8' TEMPLATE=template0;
+EOF

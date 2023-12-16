@@ -1,7 +1,10 @@
 Containers
 ==========
 
-To build containers, one runs the following command:
+Basics
+::::::
+
+To build containers:
 
 .. code-block:: bash
 
@@ -9,7 +12,22 @@ To build containers, one runs the following command:
 
 This uses provided Dockerfile to build the default production ready container.
 
-To work on the Dockerfile, it may be more convenient to stop the build at a given stage.
+You can now run the container with:
+
+.. code-block:: bash
+
+    $ make run
+
+Or of you prefer an interactive shell:
+
+.. code-block:: bash
+
+    $ make run-shell
+
+Build recipe
+::::::::::::
+
+To work on the build recipe (aka the Dockerfile), it may be more convenient to stop the build at a given stage.
 
 .. code-block:: bash
 

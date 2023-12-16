@@ -4,7 +4,7 @@ from itertools import chain
 
 import rich_click as click
 
-root_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+from harp import ROOT_DIR
 
 
 @click.group()
@@ -35,7 +35,7 @@ def start(with_docs, with_ui, files, options, services):
         "frontend": "(cd frontend; pnpm dev)",
         "proxy": 'watchfiles --filter python "'
         + sys.executable
-        + " -m harp.examples.default"
+        + " bin/entrypoint"
         + (f" {' '.join(options)}" if options else "")
         + '" harp',
     }
@@ -54,7 +54,7 @@ def start(with_docs, with_ui, files, options, services):
     manager = Manager(Printer(sys.stdout))
     for name, command in processes.items():
         e = os.environ.copy()
-        manager.add_process(name, command, quiet=False, cwd=root_dir, env=e)
+        manager.add_process(name, command, quiet=False, cwd=ROOT_DIR, env=e)
     manager.loop()
     sys.exit(manager.returncode)
 

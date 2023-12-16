@@ -47,7 +47,8 @@ ADD --chown=harp:www-data . src
 RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
     (cd src; poetry config --list; poetry debug info; poetry install --only main)
 
-# Step: Fix cache directory
+# Step: Fix cache directory permissions: this wont delete the content, just the directory that may have strange \
+# permissions caused by the cache mounts.
 RUN rm -rf .cache
 
 
@@ -126,13 +127,18 @@ RUN chown harp:www-data -R /opt/harp /var/lib/harp/data
 USER harp
 WORKDIR ${BASE}
 
-RUN ln -s /var/lib/harp/data
-
-COPY --from=backend ${BASE}/src/harp/examples/default.py ${BASE}/entrypoint.py
 COPY --from=backend ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 COPY --from=frontend ${BASE}/frontend/dist ${BASE}/public
-COPY --from=backend ${BASE}/src ${BASE}/src
+COPY --from=backend --chown=harp:www-data ${BASE}/src ${BASE}/src
 
+RUN ln -s /var/lib/harp/data; \
+    ln -s /etc/harp.conf; \
+    mkdir bin; \
+    ln -s ${BASE}/src/bin/entrypoint bin/entrypoint; \
+    mv src/examples ./examples;
+
+
+ENV DEFAULT__HARP__STORAGE__TYPE="sqlalchemy"
 ENV DEFAULT__HARP__STORAGE__URL="sqlite+aiosqlite:///data/harp.db"
 
-CMD [ "/opt/venv/bin/python", "/opt/harp/entrypoint.py" ]
+ENTRYPOINT [ "/opt/venv/bin/python", "/opt/harp/bin/entrypoint" ]

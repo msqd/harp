@@ -25,6 +25,7 @@ def register(container: Container, dispatcher: IAsyncEventDispatcher, settings: 
     settings._data.setdefault("storage", None)
     if not settings._data["storage"]:
         settings._data["storage"] = asdict(SqlAlchemyStorageSettings())
+    settings._data["storage"].setdefault("type", "sqlalchemy")
 
     # register our late configuration binder (can't be done sooner, because it should only be done if
     # sqlalchemy_storage is used). Not very clean as it needs the plugin to check it itself, but it

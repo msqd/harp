@@ -138,6 +138,9 @@ class SqlAlchemyStorage:
             return Blob(id=row.id, data=row.data)
 
     async def _store_blob(self, conn, data):
+        # todo this has concurrency problems with sqlite AND with postgres. Find a way to lock the insertion ? Or maybe
+        # use an insert or update if not found, which will work by overriding just inserted data with the same data. But
+        # this can be problematic under pressure, so maybe not.
         if not isinstance(data, bytes):
             data = data.encode()
         hash = hashlib.sha1(data).hexdigest()

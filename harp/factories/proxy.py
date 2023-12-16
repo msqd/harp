@@ -5,10 +5,11 @@
 import logging
 from argparse import ArgumentParser
 from collections import defaultdict
+from dataclasses import asdict
 from typing import Type
 
 from hypercorn.typing import ASGIFramework
-from rodi import CannotResolveTypeException, Container, Services
+from rodi import CannotResolveParameterException, CannotResolveTypeException, Container, Services
 from whistle.protocols import IAsyncEventDispatcher
 
 from harp import get_logger
@@ -90,13 +91,14 @@ class ProxyFactory:
 
         return dispatcher
 
-    def add(self, port, target, *, name=None):
+    def add(self, port, target, *, name=None, description=None):
         """
         Adds a port to proxy to a remote target (url).
 
         :param port: The port to listen on.
         :param target: The target url to proxy to.
         :param name: The name of the proxy. This is used to identify the proxy in the dashboard.
+        :param description: The description of the proxy. Humans will like it like it (if we implement it...).
         """
         self.resolver.add(port, HttpProxyController(target, name=name, dispatcher=self.dispatcher))
 
@@ -130,7 +132,11 @@ class ProxyFactory:
 
         logger.info(f"ProxyFactory::create() Settings={repr(self.settings.values)}")
         await self.dispatcher.dispatch(EVENT_FACTORY_BIND, ProxyFactoryBindEvent(self.container, self.settings))
-        provider = self.container.build_provider()
+
+        try:
+            provider = self.container.build_provider()
+        except CannotResolveParameterException as exc:
+            raise ProxyConfigurationError("Cannot build container: unresolvable parameter.") from exc
         self._on_create_configure_dashboard_if_needed(provider)
         self._on_create_configure_endpoints(provider)
         # noinspection PyTypeChecker
@@ -148,7 +154,7 @@ class ProxyFactory:
                     _port = int(_port)
                 except TypeError as exc:
                     raise ProxyConfigurationError(f"Invalid endpoint port {_port}.") from exc
-                if _prop not in ("name", "target"):
+                if _prop not in ("name", "target", "description"):
                     raise ProxyConfigurationError(f"Invalid endpoint property {_prop}.")
                 if _prop == "target":
                     _prop = "url"
@@ -163,15 +169,21 @@ class ProxyFactory:
                 _port = int(_port)
             except TypeError as exc:
                 raise ProxyConfigurationError(f"Invalid endpoint port {_port}.") from exc
-            if _port_config.keys() != {"name", "url"}:
+
+            # check keys contains a required url, a required name, and an optional description
+            if _port_config.keys() != {"url", "name"} and _port_config.keys() != {"url", "name", "description"}:
                 raise ProxyConfigurationError(f"Invalid endpoint configuration for port {_port}.")
+
             _ports[_port]["url"] = _port_config["url"]
             _ports[_port]["name"] = _port_config["name"]
 
         for _port, _port_config in _ports.items():
-            self.add(_port, _port_config["url"], name=_port_config["name"])
+            self.add(_port, _port_config["url"], name=_port_config["name"], description=_port_config.get("description"))
 
     def _on_create_configure_dashboard_if_needed(self, provider: Services):
+        self.settings._data.setdefault("dashboard", {})
+        for k, v in asdict(DashboardSettings()).items():
+            self.settings._data["dashboard"].setdefault(k, v)
         settings = self.settings.bind(DashboardSettings, "dashboard")
 
         if not settings.enabled:

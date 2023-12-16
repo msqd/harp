@@ -11,6 +11,7 @@ DOCKER_TAGS ?=
 DOCKER_TAGS_SUFFIX ?=
 DOCKER_BUILD_OPTIONS ?=
 DOCKER_BUILD_TARGET ?= runtime
+DOCKER_NETWORK ?= harp_default
 
 SED ?= $(shell which gsed || which sed || echo "sed")
 
@@ -104,10 +105,13 @@ release:
 	DOCKER_IMAGE=makersquad/$(NAME) DOCKER_TAGS=latest bin/sandbox $(MAKE) test-full build push
 
 run:
-	$(DOCKER) run -it -p 4080:4080 --rm $(DOCKER_IMAGE)
+	$(DOCKER) run -it --network $(DOCKER_NETWORK) -p 4080:4080 --rm $(DOCKER_IMAGE)
 
 run-shell:
-	$(DOCKER) run -it -p 4080:4080 --rm $(DOCKER_IMAGE) ash -l
+	$(DOCKER) run -it --network $(DOCKER_NETWORK) -p 4080:4080 --rm --entrypoint=/bin/ash $(DOCKER_IMAGE) -l
+
+run-example-repositories:
+	$(DOCKER) run -it --network $(DOCKER_NETWORK) -p 4080:4080 -p 9001-9012:9001-9012 --rm $(DOCKER_IMAGE) --file examples/repositories.yml --set storage.url postgresql+asyncpg://harp:harp@harp-postgres-1/repositories
 
 run-dev:
 	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) run

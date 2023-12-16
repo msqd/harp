@@ -40,6 +40,7 @@
 .venv
 .webassets-cache
 /.vscode/
+/frontend/stats.html
 /harp.db
 /misc/secrets
 /requirements*.txt

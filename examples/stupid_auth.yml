@@ -1,4 +1,4 @@
-# extends: sqlite.yaml
+# extends: sqlite.yml
 
 storage:
   type: sqlalchemy

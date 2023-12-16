@@ -1,0 +1,52 @@
+storage:
+  type: sqlalchemy
+  url: postgresql+asyncpg://harp:harp@127.0.0.1/repositories
+  drop_tables: false
+  echo: false
+
+proxy:
+  endpoints:
+    9001:
+      name: pypi
+      description: Python Package Index (Python)
+      url: https://pypi.org/
+    9002:
+      name: npm
+      description: Node Package Manager Registry (JavaScript)
+      url: https://registry.npmjs.org/
+    9003:
+      name: rubygems
+      description: Ruby Gems (Ruby)
+      url: https://rubygems.org/
+    9004:
+      name: maven
+      description: Maven Central Repository (Java)
+      url: https://repo.maven.apache.org/maven2/
+    9005:
+      name: nuget
+      description: NuGet Gallery (.NET)
+      url: https://api.nuget.org/v3/index.json
+    9006:
+      name: cran
+      description: The Comprehensive R Archive Network (R)
+      url: https://cran.r-project.org/
+    9007:
+      name: conda
+      description: Conda package manager (Python)
+      url: https://conda.anaconda.org/
+    9008:
+      name: clojars
+      description: Clojars (Clojure)
+      url: https://clojars.org/repo/
+    9010:
+      name: hackage
+      description: The Haskell Package Repository (Haskell)
+      url: https://hackage.haskell.org/
+    9011:
+      name: packagist
+      description: Composer Repository (PHP)
+      url: https://packagist.org/
+    9012:
+      name: yarn
+      description: Yarn Registry (JavaScript)
+      url: https://registry.yarnpkg.com/
