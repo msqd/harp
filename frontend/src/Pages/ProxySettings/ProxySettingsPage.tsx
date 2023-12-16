@@ -1,10 +1,10 @@
-import { useProxySettingsQuery } from "Domain/System"
+import { useSystemSettingsQuery } from "Domain/System"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
 import { Page } from "Components/Page"
 import { ProxySettingsTable } from "./ProxySettingsTable"
 
-const ProxySettings = () => {
-  const query = useProxySettingsQuery()
+const ProxySettingsPage = () => {
+  const query = useSystemSettingsQuery()
 
   return (
     <Page title="Settings" description="Dump of actually applied configuration">
@@ -21,4 +21,4 @@ const ProxySettings = () => {
   )
 }
 
-export default ProxySettings
+export default ProxySettingsPage

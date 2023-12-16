@@ -1,1 +1,1 @@
-export { default as ProxySettings } from "./ProxySettings.tsx"
+export { default as ProxySettings } from "./ProxySettingsPage.tsx"

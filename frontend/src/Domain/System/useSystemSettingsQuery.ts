@@ -7,7 +7,7 @@ export interface KeyValueSettings {
 
 export type Setting = string | number | boolean | null | KeyValueSettings
 
-export function useProxySettingsQuery() {
+export function useSystemSettingsQuery() {
   const api = useApi()
   return useQuery<KeyValueSettings>(["system", "settings"], () => api.fetch("/system/settings").then((r) => r.json()))
 }

@@ -3,7 +3,7 @@ import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { Page } from "Components/Page"
 import { DashboardCharts } from "./DashboardCharts"
 
-const Dashboard = () => {
+const DashboardPage = () => {
   const query = useDashboardDataQuery()
 
   return (
@@ -17,4 +17,4 @@ const Dashboard = () => {
   )
 }
 
-export default Dashboard
+export default DashboardPage
