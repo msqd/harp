@@ -29,6 +29,8 @@ svix-ksuid = "^0.6.2"
 dataclasses-json = "^0.6.3"
 dataclasses-jsonschema = "^2.16.0"
 asgimiddlewarestaticfile = "^0.6.0"
+aiohttp = "^3.9.1"
+multidict = "^6.0.4"
 
 [tool.poetry.dependencies.essentials-configuration]
 path = "./vendors/config"

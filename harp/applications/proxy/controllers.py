@@ -72,7 +72,7 @@ class HttpProxyController:
         await self.dispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, request))
 
         # PROXY REQUEST
-        request_headers = tuple(((k, v) for k, v in request.headers if k.lower() not in (b"host",)))
+        request_headers = tuple(((k, v) for k, v in request.headers.items() if k.lower() not in (b"host",)))
         request_content = await self._suboptimal_temporary_extract_request_content(request)
 
         url = urljoin(self.url, request.path) + (f"?{request.query_string}" if request.query_string else "")

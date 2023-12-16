@@ -1,6 +1,8 @@
 from datetime import UTC, datetime
 from functools import cached_property
 
+from multidict import CIMultiDict
+
 from harp.core.asgi.messages.base import AbstractASGIMessage
 
 
@@ -8,6 +10,10 @@ class ASGIRequest(AbstractASGIMessage):
     kind = "request"
 
     def __init__(self, scope, receive):
+        """
+        :param scope: see https://asgi.readthedocs.io/en/latest/specs/www.html#http-connection-scope
+        :param receive:
+        """
         self._scope = scope
         self._body = b""
         self._receive = receive
@@ -44,7 +50,10 @@ class ASGIRequest(AbstractASGIMessage):
 
     @cached_property
     def headers(self):
-        return self._scope.get("headers", [])
+        headers = CIMultiDict()
+        for name, value in self._scope.get("headers", []):
+            headers.add(name.decode("utf-8"), value.decode("utf-8"))
+        return headers
 
     @cached_property
     def serialized_summary(self):
@@ -52,7 +61,7 @@ class ASGIRequest(AbstractASGIMessage):
 
     @cached_property
     def serialized_headers(self):
-        return "\n".join([f"{k.decode('utf-8')}: {v.decode('utf-8')}" for k, v in self.headers])
+        return "\n".join([f"{k}: {v}" for k, v in self.headers.items()])
 
     @cached_property
     def cookies(self):
