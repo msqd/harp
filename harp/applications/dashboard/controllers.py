@@ -6,7 +6,7 @@ from asgi_middleware_static_file import ASGIMiddlewareStaticFile
 from config.common import Configuration
 from http_router import NotFoundError
 
-from harp import ROOT_DIR, get_logger
+from harp import ROOT_DIR, __version__, get_logger
 from harp.applications.proxy.controllers import HttpProxyController
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
@@ -58,24 +58,57 @@ class TransactionsController:
         )
 
 
+class SystemController:
+    prefix = "/api/system"
+
+    def __init__(self, settings: Configuration):
+        self.settings = settings
+
+    def register(self, router):
+        router.route(self.prefix + "/")(self.get)
+        router.route(self.prefix + "/settings")(self.get_settings)
+
+    async def get(self, request: ASGIRequest, response: ASGIResponse):
+        return json(
+            {
+                "version": __version__,
+            }
+        )
+
+    async def get_settings(self, request: ASGIRequest, response: ASGIResponse):
+        settings = deepcopy(self.settings.values)
+        if "storage" in settings:
+            if "url" in settings["storage"]:
+                settings["storage"]["url"] = re.sub(r"//[^@]*@", "//***@", settings["storage"]["url"])
+        return json(settings)
+
+
 class DashboardController:
     name = "ui"
     storage: IStorage
-    proxy_settings: Configuration
+    settings: Configuration
 
     _ui_static_middleware = None
 
-    def __init__(self, storage: IStorage, proxy_settings: Configuration):
+    def __init__(self, storage: IStorage, settings: Configuration):
         # context for usage in handlers
         self.storage = storage
-        self.auth = proxy_settings.dashboard.values.get("auth", None)
-        self.proxy_settings = proxy_settings
+        self.settings = settings
+
+        # auth (naive first implementation)
+        self.auth = self.settings.dashboard.values.get("auth", None)
 
         # controllers for delegating requests
         self._devserver_proxy_controller = self._create_devserver_proxy_controller()
         self._routing_controller = self._create_routing_controller()
-        self.transactions_controller = TransactionsController(self.storage)
-        self.transactions_controller.register(self._routing_controller.router)
+
+        self.sub_controllers = [
+            TransactionsController(self.storage),
+            SystemController(self.settings),
+        ]
+
+        for _controller in self.sub_controllers:
+            _controller.register(self._routing_controller.router)
 
         for _path in STATIC_BUILD_PATHS:
             logger.info("Checking for static files in %s", _path)
@@ -91,7 +124,6 @@ class DashboardController:
         controller = RoutingController(handle_errors=False)
         router = controller.router
         router.route("/api/blobs/{blob}")(self.get_blob)
-        router.route("/api/settings")(self.get_settings)
         router.route("/api/dashboard")(self.get_dashboard_data)
         router.route("/api/dashboard/{endpoint}")(self.get_dashboard_data_for_endpoint)
         return controller
@@ -135,13 +167,6 @@ class DashboardController:
 
         await response.start(status=200, headers={"content-type": "application/octet-stream"})
         await response.body(blob.data)
-
-    async def get_settings(self, request: ASGIRequest, response: ASGIResponse):
-        values = deepcopy(self.proxy_settings.values)
-        if "storage" in values:
-            if "url" in values["storage"]:
-                values["storage"]["url"] = re.sub(r"//[^@]*@", "//***@", values["storage"]["url"])
-        return json(values)
 
     async def get_dashboard_data(self, request: ASGIRequest, response: ASGIResponse):
         data = [

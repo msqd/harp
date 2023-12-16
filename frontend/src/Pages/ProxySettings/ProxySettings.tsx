@@ -1,4 +1,4 @@
-import { useProxySettingsQuery } from "Domain/ProxySettings"
+import { useProxySettingsQuery } from "Domain/System"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
 import { Page } from "Components/Page"
 import { ProxySettingsTable } from "./ProxySettingsTable"

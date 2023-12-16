@@ -1,6 +1,49 @@
-import { KeyValueSettings } from "Domain/ProxySettings/useProxySettingsQuery.ts"
+import { KeyValueSettings, Setting } from "Domain/System/useProxySettingsQuery.ts"
 import { CheckIcon } from "@heroicons/react/20/solid"
 import { XMarkIcon } from "@heroicons/react/24/outline"
+
+function NullValue() {
+  return (
+    <>
+      <XMarkIcon className="w-3 inline mr-1" />
+      null
+    </>
+  )
+}
+
+function TrueValue() {
+  return (
+    <>
+      <CheckIcon className="w-3 inline mr-1" />
+      true
+    </>
+  )
+}
+
+function FalseValue() {
+  return (
+    <>
+      <XMarkIcon className="w-3 inline mr-1" />
+      false
+    </>
+  )
+}
+
+function Value({ value }: { value: Setting }) {
+  if (value === null) {
+    return <NullValue />
+  }
+
+  if (typeof value === "string" || typeof value == "number") {
+    return value
+  }
+
+  if (typeof value == "boolean") {
+    return value ? <TrueValue /> : <FalseValue />
+  }
+
+  return <ProxySettingsTable settings={value} />
+}
 
 export const ProxySettingsTable = ({ settings }: { settings: KeyValueSettings }) => {
   return (
@@ -13,23 +56,7 @@ export const ProxySettingsTable = ({ settings }: { settings: KeyValueSettings })
                 {key}
               </td>
               <td className="whitespace-nowrap text-sm text-gray-500">
-                {typeof value === "string" ? (
-                  value
-                ) : typeof value == "boolean" ? (
-                  value ? (
-                    <>
-                      <CheckIcon className="w-3 inline mr-1" />
-                      true
-                    </>
-                  ) : (
-                    <>
-                      <XMarkIcon className="w-3 inline mr-1" />
-                      false
-                    </>
-                  )
-                ) : (
-                  <ProxySettingsTable settings={value} />
-                )}
+                <Value value={value} />
               </td>
             </tr>
           )

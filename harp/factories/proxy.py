@@ -191,7 +191,7 @@ class ProxyFactory:
 
         try:
             storage = provider.get(IStorage)
-            self.resolver.add(settings.port, DashboardController(storage=storage, proxy_settings=self.settings))
+            self.resolver.add(settings.port, DashboardController(storage=storage, settings=self.settings))
             for bind in self.binds:
                 logger.info(f"Adding dashboard on {bind}:{settings.port}")
                 self.__server_binds.add(f"{bind}:{settings.port}")
