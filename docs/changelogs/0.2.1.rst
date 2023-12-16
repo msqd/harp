@@ -1,0 +1,14 @@
+Version 0.2.1 — 2023-12-16
+==========================
+
+* feat: cleaner design, version in navbar (Romain Dorgueil)
+* feat: small refactoring of settings, add endpoint for version (Romain Dorgueil)
+* feat: splitting the dashboard controller (Romain Dorgueil)
+* feat: refactor entrypoint (Romain Dorgueil)
+* feat: cleaning helm chart, requests ratings a bit less severe (Romain Dorgueil)
+* misc: dev experience, remove examples from python code, add examples in containers, bugfix on --set (Romain Dorgueil)
+* feat: still stupid auth, but a bit less (Romain Dorgueil)
+* feat: implement cookie based stupid auth as an extension (Romain Dorgueil)
+* chart per endpoint (Arthur Degonde)
+* feat: remove postgresql password from settings if it is there (Romain Dorgueil)
+* delet unused code (Arthur Degonde)
