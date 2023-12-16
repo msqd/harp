@@ -24,6 +24,40 @@ STATIC_BUILD_PATHS = [
 ]
 
 
+class TransactionsController:
+    prefix = "/api/transactions"
+
+    def __init__(self, storage: IStorage):
+        self.storage = storage
+
+    def register(self, router):
+        router.route(self.prefix + "/")(self.list)
+        router.route(self.prefix + "/{transaction}")(self.get)
+
+    async def list(self, request: ASGIRequest, response: ASGIResponse):
+        transactions = []
+        async for transaction in self.storage.find_transactions(with_messages=True):
+            transactions.append(transaction)
+        return json(
+            {
+                "items": list(map(Transaction.to_dict, transactions)),
+                "total": len(transactions),
+                "limit": 50,
+                "offset": 0,
+                "page": 1,
+                "pages": 1,
+            }
+        )
+
+    async def get(self, request: ASGIRequest, response: ASGIResponse, transaction):
+        return json(
+            {
+                "@type": "transaction",
+                "@id": transaction,
+            }
+        )
+
+
 class DashboardController:
     name = "ui"
     storage: IStorage
@@ -40,6 +74,8 @@ class DashboardController:
         # controllers for delegating requests
         self._devserver_proxy_controller = self._create_devserver_proxy_controller()
         self._routing_controller = self._create_routing_controller()
+        self.transactions_controller = TransactionsController(self.storage)
+        self.transactions_controller.register(self._routing_controller.router)
 
         for _path in STATIC_BUILD_PATHS:
             logger.info("Checking for static files in %s", _path)
@@ -54,8 +90,6 @@ class DashboardController:
     def _create_routing_controller(self):
         controller = RoutingController(handle_errors=False)
         router = controller.router
-        router.route("/api/transactions")(self.list_transactions)
-        router.route("/api/transactions/{transaction}")(self.get_transaction)
         router.route("/api/blobs/{blob}")(self.get_blob)
         router.route("/api/settings")(self.get_settings)
         router.route("/api/dashboard")(self.get_dashboard_data)
@@ -90,29 +124,6 @@ class DashboardController:
             return await self._routing_controller(request, response)
         except NotFoundError:
             return await self._devserver_proxy_controller(request, response)
-
-    async def list_transactions(self, request: ASGIRequest, response: ASGIResponse):
-        transactions = []
-        async for transaction in self.storage.find_transactions(with_messages=True):
-            transactions.append(transaction)
-        return json(
-            {
-                "items": list(map(Transaction.to_dict, transactions)),
-                "total": len(transactions),
-                "limit": 50,
-                "offset": 0,
-                "page": 1,
-                "pages": 1,
-            }
-        )
-
-    async def get_transaction(self, request: ASGIRequest, response: ASGIResponse, transaction):
-        return json(
-            {
-                "@type": "transaction",
-                "@id": transaction,
-            }
-        )
 
     async def get_blob(self, request: ASGIRequest, response: ASGIResponse, blob):
         blob = await self.storage.get_blob(blob)
