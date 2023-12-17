@@ -186,7 +186,8 @@ class ProxyFactory:
             self.settings._data["dashboard"].setdefault(k, v)
         settings = self.settings.bind(DashboardSettings, "dashboard")
 
-        if not settings.enabled:
+        # todo cast boolean strings
+        if not settings.enabled or settings.enabled == "false":
             return
 
         try:
