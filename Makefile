@@ -46,7 +46,7 @@ reference: harp
 # QA, tests and other CI/CD related stuff
 ########################################################################################################################
 
-.PHONY: preqa qa types format test test-ui test-ui-update test-back lint-frontend test-frontend test-full clean
+.PHONY: preqa qa types format test test-ui test-ui-update test-all lint-frontend test-frontend test-full clean
 
 clean:
 	(cd docs; $(MAKE) clean)
@@ -62,9 +62,24 @@ format: install-frontend
 	cd frontend; pnpm prettier -w src
 	$(PRE_COMMIT)
 
-test: test-back test-frontend
+test-all: test-back test-frontend
 
-test-full: test test-ui
+test-full: test-all test-ui
+
+test:
+	$(PYTEST) harp tests
+
+benchmarks:
+	$(PYTEST) tests_benchmarks $(BENCHMARKS_OPTIONS) --benchmark-group-by=group --benchmark-compare="0001" --benchmark-histogram
+
+benchmarks-save:
+	BENCHMARKS_OPTIONS='--benchmark-min-rounds=50 --benchmark-save="$(shell git describe --tags --always --dirty)"' $(MAKE) benchmarks
+
+test-frontend: install-frontend lint-frontend
+	cd frontend; pnpm test
+
+lint-frontend: install-frontend
+	cd frontend; pnpm build
 
 test-ui: install-ui
 	cd vendors/mkui; pnpm test:prod
@@ -72,14 +87,7 @@ test-ui: install-ui
 test-ui-update: install-ui
 	cd vendors/mkui; pnpm test:update
 
-test-back:
-	$(PYTEST) harp tests
 
-lint-frontend: install-frontend
-	cd frontend; pnpm build
-
-test-frontend: install-frontend lint-frontend
-	cd frontend; pnpm test
 
 ########################################################################################################################
 # Docker builds

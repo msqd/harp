@@ -1,0 +1,113 @@
+{
+    "machine_info": {
+        "node": "naja.local",
+        "processor": "arm",
+        "machine": "arm64",
+        "python_compiler": "Clang 14.0.0 (clang-1400.0.29.202)",
+        "python_implementation": "CPython",
+        "python_implementation_version": "3.12.1",
+        "python_version": "3.12.1",
+        "python_build": [
+            "main",
+            "Dec  8 2023 18:57:29"
+        ],
+        "release": "21.6.0",
+        "system": "Darwin",
+        "cpu": {
+            "python_version": "3.12.1.final.0 (64 bit)",
+            "cpuinfo_version": [
+                9,
+                0,
+                0
+            ],
+            "cpuinfo_version_string": "9.0.0",
+            "arch": "ARM_8",
+            "bits": 64,
+            "count": 10,
+            "arch_string_raw": "arm64",
+            "brand_raw": "Apple M1 Pro"
+        }
+    },
+    "commit_info": {
+        "id": "26336d0ecfce883a13a314251f5c6182b7b1cb45",
+        "time": "2023-12-17T09:36:25+01:00",
+        "author_time": "2023-12-17T09:36:25+01:00",
+        "dirty": true,
+        "project": "harp",
+        "branch": "benchmarks"
+    },
+    "benchmarks": [
+        {
+            "group": null,
+            "name": "test_postgres_httpbin_get",
+            "fullname": "tests_benchmarks/test_basics.py::TestPostgresHttpbinBenchmark::test_postgres_httpbin_get",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 50,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.009979667025618255,
+                "max": 0.05018708301940933,
+                "mean": 0.016366864159936087,
+                "stddev": 0.0057536124812686325,
+                "rounds": 50,
+                "median": 0.015981458505848423,
+                "iqr": 0.004121123987715691,
+                "q1": 0.013611959002446383,
+                "q3": 0.017733082990162075,
+                "iqr_outliers": 1,
+                "stddev_outliers": 5,
+                "outliers": "5;1",
+                "ld15iqr": 0.009979667025618255,
+                "hd15iqr": 0.05018708301940933,
+                "ops": 61.09905906397558,
+                "total": 0.8183432079968043,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test_sqlite_httpbin_get",
+            "fullname": "tests_benchmarks/test_basics.py::TestSqliteHttpbinBenchmark::test_sqlite_httpbin_get",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 50,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.00928562501212582,
+                "max": 0.033376583945937455,
+                "mean": 0.015232343397801742,
+                "stddev": 0.004481317016593151,
+                "rounds": 50,
+                "median": 0.014367958472575992,
+                "iqr": 0.004556375031825155,
+                "q1": 0.012122292013373226,
+                "q3": 0.01667866704519838,
+                "iqr_outliers": 4,
+                "stddev_outliers": 9,
+                "outliers": "9;4",
+                "ld15iqr": 0.00928562501212582,
+                "hd15iqr": 0.02397995797218755,
+                "ops": 65.64978046282197,
+                "total": 0.7616171698900871,
+                "iterations": 1
+            }
+        }
+    ],
+    "datetime": "2023-12-17T18:50:25.024804",
+    "version": "4.0.0"
+}
