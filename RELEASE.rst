@@ -47,6 +47,12 @@ Generate a changelog...
     git log --oneline --no-merges --pretty=format:"* %s (%an)" `git tag | tail -n 1`.. > docs/development/changelogs/$NEXT_VERSION.rst
     git add docs/development/changelogs/$NEXT_VERSION.rst
 
+
+.. code-block:: shell-session
+
+    docker-compose up -d
+    make benchmark-save
+
 Then **edit the changelogs index** to add a title, date, **run the benchmarks** and **add perf graphs to docs**.
 
 Add to git ...

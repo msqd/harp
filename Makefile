@@ -98,7 +98,7 @@ benchmark:
 	          --benchmark-disable-gc \
 	          --benchmark-min-rounds=$(BENCHMARK_MIN_ROUNDS) \
 	          --benchmark-group-by=group \
-	          --benchmark-compare="0002" \
+	          --benchmark-compare="0003" \
 	          --benchmark-histogram
 
 benchmark-save:
