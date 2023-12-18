@@ -1,4 +1,4 @@
-Version 0.2.1 — 2023-12-16
+Version 0.2.1 (2023-12-16)
 ==========================
 
 * feat: cleaner design, version in navbar (Romain Dorgueil)

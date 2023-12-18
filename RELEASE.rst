@@ -45,9 +45,9 @@ Generate a changelog...
 .. code-block:: shell-session
 
     git log --oneline --no-merges --pretty=format:"* %s (%an)" `git tag | tail -n 1`.. > docs/changelogs/$NEXT_VERSION.rst
-    git add docs/changelogs/$NEXT_VERSION.rst
+    git add docs/development/changelogs/$NEXT_VERSION.rst
 
-Then **edit the changelogs index** to add a title and a date.
+Then **edit the changelogs index** to add a title, date, **run the benchmarks** and **add perf graphs to docs**.
 
 Add to git ...
 
@@ -66,6 +66,8 @@ Add to git ...
 .. code-block:: shell
 
    make qa
+
+**TODO: Generate benchmarks ???**
 
 4. Create the git release
 

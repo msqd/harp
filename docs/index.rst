@@ -16,7 +16,6 @@ Content
    features/index
    reference/index
    development/index
-   changelogs/index
    faq
    gotchas
 

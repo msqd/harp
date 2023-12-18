@@ -46,14 +46,16 @@ reference: harp
 # QA, tests and other CI/CD related stuff
 ########################################################################################################################
 
-.PHONY: preqa qa types format test test-ui test-ui-update test-all lint-frontend test-frontend test-full clean
+.PHONY: clean preqa qa types format test test-backend test-frontend lint-frontend test-ui test-ui-update
 
 clean:
 	(cd docs; $(MAKE) clean)
 	rm -rf frontend/dist
+	rm benchmark_*.svg
 
 preqa: types format reference
-qa: preqa test-full
+
+qa: preqa test test-ui
 
 types:
 	bin/generate_types
@@ -62,18 +64,12 @@ format: install-frontend
 	cd frontend; pnpm prettier -w src
 	$(PRE_COMMIT)
 
-test-all: test-back test-frontend
-
-test-full: test-all test-ui
-
 test:
+	$(MAKE) test-backend
+	$(MAKE) test-frontend
+
+test-backend:
 	$(PYTEST) harp tests
-
-benchmarks:
-	$(PYTEST) tests_benchmarks $(BENCHMARKS_OPTIONS) --benchmark-group-by=group --benchmark-compare="0001" --benchmark-histogram
-
-benchmarks-save:
-	BENCHMARKS_OPTIONS='--benchmark-min-rounds=50 --benchmark-save="$(shell git describe --tags --always --dirty)"' $(MAKE) benchmarks
 
 test-frontend: install-frontend lint-frontend
 	cd frontend; pnpm test
@@ -87,13 +83,35 @@ test-ui: install-ui
 test-ui-update: install-ui
 	cd vendors/mkui; pnpm test:update
 
+########################################################################################################################
+# Benchmarks
+########################################################################################################################
+
+.PHONY: benchmark benchmark-save
+
+BENCHMARK_OPTIONS ?=
+BENCHMARK_MIN_ROUNDS ?= 100
+
+benchmark:
+	$(PYTEST) tests_benchmarks \
+	          $(BENCHMARK_OPTIONS) \
+	          --benchmark-disable-gc \
+	          --benchmark-min-rounds=$(BENCHMARK_MIN_ROUNDS) \
+	          --benchmark-group-by=group \
+	          --benchmark-compare="0002" \
+	          --benchmark-histogram
+
+benchmark-save:
+	BENCHMARK_OPTIONS='--benchmark-warmup=on --benchmark-warmup-iterations=50 --benchmark-save="$(shell git describe --tags --always --dirty)"' \
+	BENCHMARK_MIN_ROUNDS=500 \
+	$(MAKE) benchmark
 
 
 ########################################################################################################################
 # Docker builds
 ########################################################################################################################
 
-.PHONY: build build-dev push release run
+.PHONY: build build-dev push push-dev run run-shell run-example-repositories run-dev run-dev-shell
 
 build:
 	$(DOCKER) build --progress=plain --target=$(DOCKER_BUILD_TARGET) $(DOCKER_BUILD_OPTIONS) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .
@@ -108,9 +126,6 @@ push:
 
 push-dev:
 	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) push
-
-release:
-	DOCKER_IMAGE=makersquad/$(NAME) DOCKER_TAGS=latest bin/sandbox $(MAKE) test-full build push
 
 run:
 	$(DOCKER) run -it --network $(DOCKER_NETWORK) -p 4080:4080 --rm $(DOCKER_IMAGE)

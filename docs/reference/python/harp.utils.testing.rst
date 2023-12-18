@@ -16,6 +16,7 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   harp.utils.testing.benchmarking
    harp.utils.testing.http
 
 Module contents

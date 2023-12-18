@@ -54,7 +54,7 @@ test:
     GIT_STRATEGY: none
     PYTEST: /opt/venv/bin/pytest
   script:
-    - (cd /opt/harp/src; make test-all)
+    - (cd /opt/harp/src; make test)
 
 doc:html:
   needs: [ "build:dev" ]

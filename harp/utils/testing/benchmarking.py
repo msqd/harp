@@ -4,6 +4,7 @@ import threading
 from string import Template
 from tempfile import NamedTemporaryFile
 
+import httpx
 import pytest
 
 from harp.utils.network import get_available_network_port, wait_for_port
@@ -48,3 +49,13 @@ class AbstractProxyBenchmark:
         wait_for_port(port)
         yield f"localhost:{port}"
         thread.join()
+
+    def test_noproxy_get(self, benchmark):
+        @benchmark
+        def result():
+            return httpx.get("http://localhost:8080/get")
+
+    def test_httpbin_get(self, benchmark, proxy):
+        @benchmark
+        def result():
+            return httpx.get(f"http://{proxy}/get")

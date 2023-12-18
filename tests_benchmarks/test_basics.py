@@ -1,11 +1,11 @@
 from string import Template
 
-import httpx
 import pytest
 
 from harp.utils.testing.benchmarking import AbstractProxyBenchmark
 
 
+@pytest.mark.benchmark(group="postgresql")
 class TestPostgresHttpbinBenchmark(AbstractProxyBenchmark):
     config = Template(
         """
@@ -22,13 +22,8 @@ class TestPostgresHttpbinBenchmark(AbstractProxyBenchmark):
     """
     )
 
-    @pytest.mark.benchmark
-    def test_postgres_httpbin_get(self, benchmark, proxy):
-        @benchmark
-        def result():
-            return httpx.get(f"http://{proxy}/get")
 
-
+@pytest.mark.benchmark(group="sqlite")
 class TestSqliteHttpbinBenchmark(AbstractProxyBenchmark):
     config = Template(
         """
@@ -41,9 +36,3 @@ class TestSqliteHttpbinBenchmark(AbstractProxyBenchmark):
                     name: test
     """
     )
-
-    @pytest.mark.benchmark
-    def test_sqlite_httpbin_get(self, benchmark, proxy):
-        @benchmark
-        def result():
-            return httpx.get(f"http://{proxy}/get")

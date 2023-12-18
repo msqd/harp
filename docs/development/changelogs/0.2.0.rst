@@ -1,4 +1,4 @@
-Version 0.2.0 — 2023-12-15
+Version 0.2.0 (2023-12-15)
 ==========================
 
 * feat: cleanup (Romain Dorgueil)
