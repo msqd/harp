@@ -1,9 +1,13 @@
 from datetime import UTC, datetime
 from functools import cached_property
+from http.cookies import SimpleCookie
 
 from multidict import CIMultiDict, CIMultiDictProxy
 
+from harp import get_logger
 from harp.core.asgi.messages.base import AbstractASGIMessage
+
+logger = get_logger(__name__)
 
 
 class ASGIRequest(AbstractASGIMessage):
@@ -65,10 +69,12 @@ class ASGIRequest(AbstractASGIMessage):
 
     @cached_property
     def cookies(self):
-        for k, v in self.headers:
-            if k == b"cookie":
-                return {k: v for k, v in [h.split("=", 1) for h in v.decode("utf-8").split("; ")]}
-        return {}
+        """Parse cookies from headers."""
+        cookies = SimpleCookie()
+        for header in self.headers.getall("cookie", []):
+            cookies.load(header)
+        logger.info(repr(cookies))
+        return cookies
 
     @cached_property
     def serialized_body(self):

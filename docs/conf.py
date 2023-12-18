@@ -16,10 +16,11 @@ if current_year > first_year:
 release = ".".join(__import__("harp").__version__.split(".")[0:2])
 
 extensions = [
-    "sphinx_design",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.githubpages",
     "sphinx.ext.todo",
+    "sphinx_design",
     "sphinxcontrib.jquery",
 ]
 

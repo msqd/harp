@@ -13,4 +13,4 @@ proxy:
       url: http://httpbin.org
 
 dashboard:
-  auth: foo bar baz
+  auth: secret

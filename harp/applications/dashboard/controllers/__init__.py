@@ -69,8 +69,11 @@ class DashboardController:
         return controller
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
+        # This is a naive implementation of auth, but it works for now.
+        # TODO: This feature won't stay, it will use standard auth mechanisms instead.
         if self.auth:
-            if request.cookies.get("harp") != self.auth:
+            _auth = request.cookies.get("harp", None)
+            if not _auth or _auth.value != self.auth:
                 response.headers["content-type"] = "text/plain"
                 await response.start(401)
                 await response.body(b"Unauthorized")

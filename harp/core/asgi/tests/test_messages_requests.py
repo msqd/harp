@@ -3,14 +3,20 @@ from unittest.mock import AsyncMock
 from harp.core.asgi.messages.requests import ASGIRequest
 
 
+def _http_scope(*, method="GET", scheme="http"):
+    return {
+        "type": "http",
+        "http_version": "1.1",
+        "asgi": {"spec_version": "2.1", "version": "3.0"},
+        "method": method,
+        "scheme": scheme,
+    }
+
+
 def test_headers():
     request = ASGIRequest(
         {
-            "type": "http",
-            "http_version": "1.1",
-            "asgi": {"spec_version": "2.1", "version": "3.0"},
-            "method": "GET",
-            "scheme": "http",
+            **_http_scope(),
             "path": "/",
             "query_string": b"",
             "headers": [
@@ -38,3 +44,33 @@ def test_headers():
         "accept-encoding: gzip, deflate, br\n"
         "accept-language: fr-FR,fr;q=0.9,en;q=0.8,fr-CA;q=0.7"
     )
+
+
+def test_cookies_empty():
+    request = ASGIRequest(
+        {
+            **_http_scope(),
+            "path": "/",
+            "query_string": b"",
+            "headers": [],
+        },
+        AsyncMock(),
+    )
+
+    assert request.cookies == {}
+
+
+def test_cookies_basics():
+    request = ASGIRequest(
+        {
+            **_http_scope(),
+            "path": "/",
+            "query_string": b"",
+            "headers": [
+                (b"cookie", b"name=value; name2=value2; name3=value3"),
+            ],
+        },
+        AsyncMock(),
+    )
+
+    assert repr(request.cookies) == "<SimpleCookie: name='value' name2='value2' name3='value3'>"
