@@ -44,7 +44,7 @@ Generate a changelog...
 
 .. code-block:: shell-session
 
-    git log --oneline --no-merges --pretty=format:"* %s (%an)" `git tag | tail -n 1`.. > docs/changelogs/$NEXT_VERSION.rst
+    git log --oneline --no-merges --pretty=format:"* %s (%an)" `git tag | tail -n 1`.. > docs/development/changelogs/$NEXT_VERSION.rst
     git add docs/development/changelogs/$NEXT_VERSION.rst
 
 Then **edit the changelogs index** to add a title, date, **run the benchmarks** and **add perf graphs to docs**.
@@ -53,7 +53,7 @@ Add to git ...
 
 .. code-block:: shell-session
 
-    git add -p pyproject.toml poetry.lock harp/__init__.py
+    git add -p pyproject.toml poetry.lock harp/__init__.py add docs/development/changelogs/
     make preqa; git add docs/reference; git add -p
 
 3. Run a full test suite (todo: from a clean virtualenv)

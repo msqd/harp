@@ -4,7 +4,7 @@ from subprocess import check_output
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # last release
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 __revision__ = __version__  # we can't commit the not yet known revision
 
 # override with current development version/revision if available

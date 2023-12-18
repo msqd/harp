@@ -4,10 +4,10 @@ Roadmap
 Version 0.3 (2023-12-15)
 ::::::::::::::::::::::::
 
-- Storage: PostgreSQL
-- Multiformat Configuration
+- Storage: PostgreSQL (code: ✓, tests: ..., docs, ...)
+- Multiformat Configuration (code: ✓, tests: ..., docs, ...)
 - Timeouts Management
-- Settings available in dashboard
+- Settings available in dashboard  (code: ✓, tests: ..., docs, ...)
 
 Version 0.4 (2023-12-29)
 ::::::::::::::::::::::::
