@@ -72,8 +72,8 @@ class ASGIRequest(AbstractASGIMessage):
         """Parse cookies from headers."""
         cookies = SimpleCookie()
         for header in self.headers.getall("cookie", []):
+            logger.info('Parsing cookie header "%s"', header)
             cookies.load(header)
-        logger.info(repr(cookies))
         return cookies
 
     @cached_property

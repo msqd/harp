@@ -73,6 +73,7 @@ class DashboardController:
         # TODO: This feature won't stay, it will use standard auth mechanisms instead.
         if self.auth:
             _auth = request.cookies.get("harp", None)
+            logger.info(f'🔑 {request.method} {request.path} "{_auth}" "{_auth.value if _auth else None}"')
             if not _auth or _auth.value != self.auth:
                 response.headers["content-type"] = "text/plain"
                 await response.start(401)
