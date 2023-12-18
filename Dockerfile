@@ -132,7 +132,7 @@ COPY --from=frontend ${BASE}/frontend/dist ${BASE}/public
 COPY --from=backend --chown=harp:www-data ${BASE}/src ${BASE}/src
 
 RUN ln -s /var/lib/harp/data; \
-    ln -s /etc/harp.conf; \
+    ln -s /etc/harp.yaml; \
     mkdir bin; \
     ln -s ${BASE}/src/bin/entrypoint bin/entrypoint; \
     mv src/examples ./examples;

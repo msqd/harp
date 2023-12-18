@@ -7,6 +7,7 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   harp.core.http.cookies
    harp.core.http.methods
 
 Module contents

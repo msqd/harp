@@ -73,4 +73,37 @@ def test_cookies_basics():
         AsyncMock(),
     )
 
-    assert repr(request.cookies) == "<SimpleCookie: name='value' name2='value2' name3='value3'>"
+    assert request.cookies == {"name": "value", "name2": "value2", "name3": "value3"}
+
+
+def test_cookies_more():
+    request = ASGIRequest(
+        {
+            **_http_scope(),
+            "path": "/",
+            "query_string": b"",
+            "headers": [
+                (
+                    b"cookie",
+                    b"bab_locale=fr; bab_original=fr; bab_block=1690; _fbp=fb.1.1687.19100; "
+                    b"_ga_6F3R65C=GS1.1.1452.9.0.1732.0.0.0; _ga_D73X6=GS1.1.1762.30.1.1796.0.0.0; "
+                    b"harp=421 balloons flying; _ga_X8BC7QX9TE=GS1.1.7712.22.1.1753.0.0.0; "
+                    b"_ga=GA1.1.7767.1438; _ga_PPPB3LT24D=GS1.1.1784.84.0.1784.0.0.0",
+                ),
+            ],
+        },
+        AsyncMock(),
+    )
+
+    assert request.cookies == {
+        "_fbp": "fb.1.1687.19100",
+        "_ga": "GA1.1.7767.1438",
+        "_ga_6F3R65C": "GS1.1.1452.9.0.1732.0.0.0",
+        "_ga_D73X6": "GS1.1.1762.30.1.1796.0.0.0",
+        "_ga_PPPB3LT24D": "GS1.1.1784.84.0.1784.0.0.0",
+        "_ga_X8BC7QX9TE": "GS1.1.7712.22.1.1753.0.0.0",
+        "bab_block": "1690",
+        "bab_locale": "fr",
+        "bab_original": "fr",
+        "harp": "421 balloons flying",
+    }
