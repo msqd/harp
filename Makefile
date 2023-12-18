@@ -1,6 +1,5 @@
 NAME ?= harp-proxy
 VERSION ?= $(shell git describe 2>/dev/null || git rev-parse --short HEAD)
-HONCHO ?= $(shell which honcho || echo "honcho")
 PRE_COMMIT ?= $(shell which pre-commit || echo "pre-commit")
 PYTEST ?= $(shell which pytest || echo "pytest")
 
@@ -19,10 +18,7 @@ SED ?= $(shell which gsed || which sed || echo "sed")
 ########################################################################################################################
 # Local development
 ########################################################################################################################
-.PHONY: start install install-frontend install-backend install-ui reference
-
-start: install-frontend install-backend
-	$(HONCHO) start
+.PHONY: install install-frontend install-backend install-ui reference
 
 install: install-frontend install-backend
 
