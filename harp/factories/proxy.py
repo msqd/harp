@@ -5,7 +5,6 @@
 import logging
 from argparse import ArgumentParser
 from collections import defaultdict
-from dataclasses import asdict
 from typing import Type
 
 from hypercorn.typing import ASGIFramework
@@ -130,7 +129,6 @@ class ProxyFactory:
 
         # bind services
 
-        logger.info(f"ProxyFactory::create() Settings={repr(self.settings.values)}")
         await self.dispatcher.dispatch(EVENT_FACTORY_BIND, ProxyFactoryBindEvent(self.container, self.settings))
 
         try:
@@ -139,6 +137,9 @@ class ProxyFactory:
             raise ProxyConfigurationError("Cannot build container: unresolvable parameter.") from exc
         self._on_create_configure_dashboard_if_needed(provider)
         self._on_create_configure_endpoints(provider)
+
+        logger.info(f"ProxyFactory::create() Settings={repr(self.settings.values)}")
+
         # noinspection PyTypeChecker
         return self.KernelType(dispatcher=self.dispatcher, resolver=self.resolver)
 
@@ -182,20 +183,20 @@ class ProxyFactory:
 
     def _on_create_configure_dashboard_if_needed(self, provider: Services):
         self.settings._data.setdefault("dashboard", {})
-        for k, v in asdict(DashboardSettings()).items():
-            self.settings._data["dashboard"].setdefault(k, v)
-        settings = self.settings.bind(DashboardSettings, "dashboard")
 
-        # todo cast boolean strings
-        if not settings.enabled or settings.enabled == "false":
+        # for k, v in asdict(DashboardSettings()).items():
+        #    self.settings._data["dashboard"].setdefault(k, v)
+        dashboard_settings = self.settings.bind(DashboardSettings, "dashboard")
+        self.settings._data["dashboard"] = dashboard_settings
+        if not dashboard_settings.enabled:
             return
 
         try:
             storage = provider.get(IStorage)
-            self.resolver.add(settings.port, DashboardController(storage=storage, settings=self.settings))
+            self.resolver.add(dashboard_settings.port, DashboardController(storage=storage, settings=self.settings))
             for bind in self.binds:
-                logger.info(f"Adding dashboard on {bind}:{settings.port}")
-                self.__server_binds.add(f"{bind}:{settings.port}")
+                logger.info(f"Adding dashboard on {bind}:{dashboard_settings.port}")
+                self.__server_binds.add(f"{bind}:{dashboard_settings.port}")
         except CannotResolveTypeException:
             logger.error(
                 "Dashboard is enabled but no storage is configured. Dashboard will not be available. Did you forget "

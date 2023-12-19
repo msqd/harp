@@ -36,7 +36,7 @@ class DashboardController:
         self.settings = settings
 
         # auth (naive first implementation)
-        self.auth = self.settings.dashboard.values.get("auth", None)
+        self.auth = self.settings.dashboard.auth
 
         # controllers for delegating requests
         self._devserver_proxy_controller = self._create_devserver_proxy_controller()
