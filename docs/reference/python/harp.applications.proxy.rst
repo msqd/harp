@@ -1,14 +1,6 @@
 harp.applications.proxy package
 ===============================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   harp.applications.proxy.tests
-
 Submodules
 ----------
 

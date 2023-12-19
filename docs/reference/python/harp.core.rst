@@ -12,7 +12,6 @@ Subpackages
    harp.core.http
    harp.core.models
    harp.core.settings
-   harp.core.tests
    harp.core.types
    harp.core.views
 
