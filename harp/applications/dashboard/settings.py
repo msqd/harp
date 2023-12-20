@@ -1,16 +1,30 @@
+from functools import cached_property
 from typing import Literal, Optional
 
 from harp.core.settings import BaseSetting, DisabledSettings, FromFileSetting, settings_dataclass
 from harp.errors import ProxyConfigurationError
 
 
+def _plain(actual, expected):
+    return actual == expected
+
+
 @settings_dataclass
 class DashboardAuthBasicSettings(BaseSetting):
     type: str = "basic"
+    algorithm: str = "pbkdf2_sha256"
     users: Optional[FromFileSetting | dict[str, str]] = None
 
     def __post_init__(self):
         FromFileSetting.may_override(self, "users")
+
+    @cached_property
+    def algorithm_impl(self):
+        if self.algorithm == "plain":
+            return _plain
+        # todo check we do not import anything else than a valid algorithm implementation
+        impl = __import__("passlib.hash", fromlist=[self.algorithm])
+        return getattr(impl, self.algorithm).verify
 
     def check(self, username, password):
         if not self.users:
@@ -22,7 +36,7 @@ class DashboardAuthBasicSettings(BaseSetting):
                 return False
             if "password" not in user:
                 return False
-            if user["password"] != password:
+            if not self.algorithm_impl(password, user["password"]):
                 return False
             return username
         else:
