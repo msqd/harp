@@ -20,6 +20,7 @@ Submodules
    harp.utils.guids
    harp.utils.json
    harp.utils.network
+   harp.utils.urls
 
 Module contents
 ---------------

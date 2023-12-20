@@ -29,6 +29,9 @@ from harp.factories.events.bind import ProxyFactoryBindEvent
 from harp.factories.settings import create_settings
 from harp.protocols.storage import IStorage
 
+_PROXY_ENDPOINT_OPTIONAL_KEYS = {"description"}
+_PROXY_ENDPOINT_REQUIRED_KEYS = {"url", "name"}
+
 logger = get_logger(__name__)
 
 
@@ -147,24 +150,12 @@ class ProxyFactory:
         # should be refactored, read env for auto conf
         _ports = defaultdict(dict)
 
-        # deprecated env, do not document, we'll use HARP__PROXY__ENDPOINTS__... instead
-        for k, v in self.settings.values.items():
-            if k.startswith("proxy_endpoint_"):
-                _port, _prop = k[15:].split("_")
-                try:
-                    _port = int(_port)
-                except TypeError as exc:
-                    raise ProxyConfigurationError(f"Invalid endpoint port {_port}.") from exc
-                if _prop not in ("name", "target", "description"):
-                    raise ProxyConfigurationError(f"Invalid endpoint property {_prop}.")
-                if _prop == "target":
-                    _prop = "url"
-                _ports[_port][_prop] = v
-
         try:
             _endpoints = self.settings.proxy.endpoints.values
         except AttributeError:
             _endpoints = {}
+
+        logger.info(f"ProxyFactory::_on_create_configure_endpoints() Endpoints={repr(_endpoints)}")
         for _port, _port_config in _endpoints.items():
             try:
                 _port = int(_port)
@@ -172,8 +163,15 @@ class ProxyFactory:
                 raise ProxyConfigurationError(f"Invalid endpoint port {_port}.") from exc
 
             # check keys contains a required url, a required name, and an optional description
-            if _port_config.keys() != {"url", "name"} and _port_config.keys() != {"url", "name", "description"}:
-                raise ProxyConfigurationError(f"Invalid endpoint configuration for port {_port}.")
+            if (
+                _port_config.keys() != _PROXY_ENDPOINT_REQUIRED_KEYS
+                and _port_config.keys() != _PROXY_ENDPOINT_OPTIONAL_KEYS | _PROXY_ENDPOINT_REQUIRED_KEYS
+            ):
+                raise ProxyConfigurationError(
+                    f"Invalid endpoint configuration for port {_port} (required keys: "
+                    f"{', '.join(_PROXY_ENDPOINT_REQUIRED_KEYS)}; optional keys: "
+                    f"{', '.join(_PROXY_ENDPOINT_OPTIONAL_KEYS)}; got: {', '.join(_port_config.keys())})."
+                )
 
             _ports[_port]["url"] = _port_config["url"]
             _ports[_port]["name"] = _port_config["name"]
