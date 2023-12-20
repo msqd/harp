@@ -22,11 +22,11 @@ class TestSettings:
 
     async def test_dashboard_auth_basic(self):
         users = {"foo": "bar"}
-        settings = await self.factory({"dashboard": {"auth": {"type": "basic", "users": users}}})
+        settings = await self.factory({"dashboard": {"auth": {"type": "basic", "algorithm": "plain", "users": users}}})
         assert settings.dashboard.auth.type == "basic"
         assert isinstance(settings.dashboard.auth, DashboardAuthBasicSettings)
         assert settings.dashboard.auth.users == users
-        assert settings.dashboard.auth.to_dict() == {"type": "basic", "users": users}
+        assert settings.dashboard.auth.to_dict() == {"type": "basic", "algorithm": "plain", "users": users}
 
     async def test_dashboard_auth_basic_from_file(self):
         with NamedTemporaryFile("w") as f:
