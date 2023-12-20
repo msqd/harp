@@ -1,6 +1,7 @@
 import pytest
 
-from harp.applications.dashboard.settings import DashboardAuthSettings, DashboardSettings, DisabledSettings
+from harp.applications.dashboard.settings import DashboardAuthSettings, DashboardSettings
+from harp.core.settings.common import DisabledSettings
 from harp.errors import ProxyConfigurationError
 
 
@@ -18,9 +19,14 @@ def test_invalid_auth():
         DashboardAuthSettings(type="invalid")
 
 
-@pytest.mark.skip(reason="todo")
 def test_basic_auth():
-    DashboardAuthSettings(type="basic", passwd={"foo": "bar"})
+    assert DashboardAuthSettings(
+        type="basic",
+        passwd={"foo": "bar"},
+    ).to_dict() == {
+        "type": "basic",
+        "passwd": {"foo": "bar"},
+    }
 
 
 def test_disabled():

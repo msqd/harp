@@ -1,5 +1,13 @@
-How to make a release?
-======================
+Release notes
+=============
+
+Prior to release
+::::::::::::::::
+
+* dependency cleanup (remove unused dependencies, update ...)
+
+Releasing a new version
+:::::::::::::::::::::::
 
 Considering the main project repository is setup as "upstream" remote for git...
 

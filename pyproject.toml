@@ -63,6 +63,7 @@ sphinxcontrib-jquery = "^4.1"
 watchfiles = "^0.21.0"
 dataclasses-jsonschema = "^2.16.0"
 pytest-benchmark = {extras = ["histogram"], version = "^4.0.0"}
+pytest-cov = "^4.1.0"
 
 [tool.poetry.scripts]
 harp = 'harp.cli:entrypoint'
