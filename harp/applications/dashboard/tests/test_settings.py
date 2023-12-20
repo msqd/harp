@@ -22,10 +22,10 @@ def test_invalid_auth():
 def test_basic_auth():
     assert DashboardAuthSettings(
         type="basic",
-        passwd={"foo": "bar"},
+        users={"foo": "bar"},
     ).to_dict() == {
         "type": "basic",
-        "passwd": {"foo": "bar"},
+        "users": {"foo": "bar"},
     }
 
 

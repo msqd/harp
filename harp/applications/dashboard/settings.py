@@ -7,10 +7,26 @@ from harp.errors import ProxyConfigurationError
 @settings_dataclass
 class DashboardAuthBasicSettings(BaseSetting):
     type: str = "basic"
-    passwd: Optional[FromFileSetting | dict[str, str]] = None
+    users: Optional[FromFileSetting | dict[str, str]] = None
 
     def __post_init__(self):
-        FromFileSetting.may_override(self, "passwd")
+        FromFileSetting.may_override(self, "users")
+
+    def check(self, username, password):
+        if not self.users:
+            return False
+
+        if isinstance(self.users, dict):
+            user = self.users.get(username)
+            if not user:
+                return False
+            if "password" not in user:
+                return False
+            if user["password"] != password:
+                return False
+            return username
+        else:
+            raise NotImplementedError("Only dict is supported for now")
 
 
 @settings_dataclass

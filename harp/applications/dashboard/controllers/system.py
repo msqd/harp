@@ -12,8 +12,9 @@ from harp.core.views.json import json
 class SystemController:
     prefix = "/api/system"
 
-    def __init__(self, settings: Configuration):
+    def __init__(self, settings: Configuration, *, context=None):
         self.settings = settings
+        self.context = context if context is not None else {}
 
     def register(self, router):
         router.route(self.prefix + "/")(self.get)
@@ -24,6 +25,7 @@ class SystemController:
             {
                 "version": __version__,
                 "revision": __revision__,
+                "user": self.context.get("user"),
             }
         )
 

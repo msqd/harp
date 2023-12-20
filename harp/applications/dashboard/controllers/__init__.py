@@ -34,6 +34,7 @@ class DashboardController:
         # context for usage in handlers
         self.storage = storage
         self.settings = settings
+        self.context = {}
 
         # auth (naive first implementation)
         self.auth = self.settings.dashboard.auth
@@ -44,7 +45,7 @@ class DashboardController:
 
         self.sub_controllers = [
             TransactionsController(self.storage),
-            SystemController(self.settings),
+            SystemController(self.settings, context=self.context),
         ]
 
         for _controller in self.sub_controllers:
@@ -69,15 +70,18 @@ class DashboardController:
         return controller
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
-        # This is a naive implementation of auth, but it works for now.
-        # TODO: This feature won't stay, it will use standard auth mechanisms instead.
+        self.context.setdefault("user", None)
         if self.auth:
-            _auth = request.cookies.get("harp", None)
-            if not _auth or _auth != self.auth:
-                response.headers["content-type"] = "text/plain"
-                await response.start(401)
-                await response.body(b"Unauthorized")
-                return
+            current_auth = request.basic_auth
+
+            if current_auth:
+                self.context["user"] = self.auth.check(current_auth[0], current_auth[1])
+                if not self.context["user"]:
+                    response.headers["content-type"] = "text/plain"
+                    response.headers["WWW-Authenticate"] = 'Basic realm="Harp Dashboard"'
+                    await response.start(401)
+                    await response.body(b"Unauthorized")
+                    return
 
         logger.debug(f"📈 {request.method} {request.path}")
 

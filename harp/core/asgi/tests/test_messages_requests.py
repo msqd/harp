@@ -107,3 +107,13 @@ def test_cookies_more():
         "bab_original": "fr",
         "harp": "421 balloons flying",
     }
+
+
+def test_basic_auth_unset():
+    request = ASGIRequest({**_http_scope()}, AsyncMock())
+    assert request.basic_auth is None
+
+
+def test_basic_auth():
+    request = ASGIRequest({**_http_scope(), "headers": [(b"authorization", b"Basic dXNlcjpwYXNz")]}, AsyncMock())
+    assert request.basic_auth == ["user", "pass"]

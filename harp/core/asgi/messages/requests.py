@@ -1,3 +1,5 @@
+import binascii
+from base64 import b64decode
 from datetime import UTC, datetime
 from functools import cached_property
 
@@ -75,6 +77,20 @@ class ASGIRequest(AbstractASGIMessage):
             logger.info('Parsing cookie header "%s"', header)
             cookies.update(parse_cookie(header))
         return cookies
+
+    @cached_property
+    def basic_auth(self):
+        """Parse basic auth from headers."""
+        for header in self.headers.getall("authorization", []):
+            try:
+                _type, _auth = header.split(" ", 1)
+            except ValueError:
+                continue
+            if _type.lower() == "basic":
+                try:
+                    return b64decode(_auth).decode("utf-8").split(":", 1)
+                except binascii.Error:
+                    continue
 
     @cached_property
     def serialized_body(self):

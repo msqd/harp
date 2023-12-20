@@ -21,18 +21,18 @@ class TestSettings:
         assert isinstance(settings.dashboard, DisabledSettings)
 
     async def test_dashboard_auth_basic(self):
-        passwd = {"foo": "bar"}
-        settings = await self.factory({"dashboard": {"auth": {"type": "basic", "passwd": passwd}}})
+        users = {"foo": "bar"}
+        settings = await self.factory({"dashboard": {"auth": {"type": "basic", "users": users}}})
         assert settings.dashboard.auth.type == "basic"
         assert isinstance(settings.dashboard.auth, DashboardAuthBasicSettings)
-        assert settings.dashboard.auth.passwd == passwd
-        assert settings.dashboard.auth.to_dict() == {"type": "basic", "passwd": passwd}
+        assert settings.dashboard.auth.users == users
+        assert settings.dashboard.auth.to_dict() == {"type": "basic", "users": users}
 
     async def test_dashboard_auth_basic_from_file(self):
         with NamedTemporaryFile("w") as f:
             f.write("foo:bar")
             f.close()
-            settings = await self.factory({"dashboard": {"auth": {"type": "basic", "passwd": {"fromFile": f.name}}}})
+            settings = await self.factory({"dashboard": {"auth": {"type": "basic", "users": {"fromFile": f.name}}}})
             assert settings.dashboard.auth.type == "basic"
             assert isinstance(settings.dashboard.auth, DashboardAuthBasicSettings)
-            assert isinstance(settings.dashboard.auth.passwd, FromFileSetting)
+            assert isinstance(settings.dashboard.auth.users, FromFileSetting)
