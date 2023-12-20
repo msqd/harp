@@ -30,7 +30,7 @@ class DashboardAuthBasicSettings(BaseSetting):
 
 
 @settings_dataclass
-class DashboardAuthSettings:
+class DashboardAuthSettings(BaseSetting):
     type: Optional[Literal["basic"] | None] = None
 
     def __new__(cls, **kwargs):
@@ -54,7 +54,7 @@ class DashboardAuthSettings:
 
 
 @settings_dataclass
-class DashboardSettings:
+class DashboardSettings(BaseSetting):
     enabled = True
     port: int | str = 4080
     auth: Optional[DashboardAuthSettings] = None

@@ -76,12 +76,13 @@ class DashboardController:
 
             if current_auth:
                 self.context["user"] = self.auth.check(current_auth[0], current_auth[1])
-                if not self.context["user"]:
-                    response.headers["content-type"] = "text/plain"
-                    response.headers["WWW-Authenticate"] = 'Basic realm="Harp Dashboard"'
-                    await response.start(401)
-                    await response.body(b"Unauthorized")
-                    return
+
+            if not self.context["user"]:
+                response.headers["content-type"] = "text/plain"
+                response.headers["WWW-Authenticate"] = 'Basic realm="Harp Dashboard"'
+                await response.start(401)
+                await response.body(b"Unauthorized")
+                return
 
         logger.debug(f"📈 {request.method} {request.path}")
 
