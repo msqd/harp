@@ -34,7 +34,6 @@ class DashboardController:
         # context for usage in handlers
         self.storage = storage
         self.settings = settings
-        self.context = {}
 
         # auth (naive first implementation)
         self.auth = self.settings.dashboard.auth
@@ -45,7 +44,7 @@ class DashboardController:
 
         self.sub_controllers = [
             TransactionsController(self.storage),
-            SystemController(self.settings, context=self.context),
+            SystemController(self.settings),
         ]
 
         for _controller in self.sub_controllers:
@@ -70,14 +69,16 @@ class DashboardController:
         return controller
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
-        self.context.setdefault("user", None)
+        request.context = {}
+        request.context.setdefault("user", None)
+
         if self.auth:
             current_auth = request.basic_auth
 
             if current_auth:
-                self.context["user"] = self.auth.check(current_auth[0], current_auth[1])
+                request.context["user"] = self.auth.check(current_auth[0], current_auth[1])
 
-            if not self.context["user"]:
+            if not request.context["user"]:
                 response.headers["content-type"] = "text/plain"
                 response.headers["WWW-Authenticate"] = 'Basic realm="Harp Dashboard"'
                 await response.start(401)

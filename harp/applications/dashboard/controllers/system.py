@@ -32,20 +32,27 @@ def _asdict(obj):
 class SystemController:
     prefix = "/api/system"
 
-    def __init__(self, settings: Configuration, *, context=None):
+    def __init__(
+        self,
+        settings: Configuration,
+    ):
         self.settings = settings
-        self.context = context if context is not None else {}
 
     def register(self, router):
         router.route(self.prefix + "/")(self.get)
         router.route(self.prefix + "/settings")(self.get_settings)
 
     async def get(self, request: ASGIRequest, response: ASGIResponse):
+        try:
+            context = request.context
+        except AttributeError:
+            context = {}
+
         return json(
             {
                 "version": __version__,
                 "revision": __revision__,
-                "user": self.context.get("user"),
+                "user": context.get("user"),
             }
         )
 
