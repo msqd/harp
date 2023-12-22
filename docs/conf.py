@@ -13,14 +13,21 @@ author = "Romain Dorgueil"
 copyright = f"{current_year}, {author}"
 if current_year > first_year:
     copyright = str(first_year) + "-" + copyright
-release = ".".join(__import__("harp").__version__.split(".")[0:2])
+version = release = ".".join(__import__("harp").__version__.split(".")[0:2])
 
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.coverage",
     "sphinx.ext.githubpages",
+    "sphinx.ext.graphviz",
+    "sphinx.ext.ifconfig",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
+    "sphinx.ext.viewcode",
+    "sphinx_copybutton",
     "sphinx_design",
+    "sphinx_sitemap",
     "sphinxcontrib.jquery",
 ]
 
@@ -35,3 +42,17 @@ html_js_files = ["js/links-target-blank.js"]
 
 todo_include_todos = True
 html_show_sphinx = False
+
+autodoc_typehints = "description"
+autodoc_member_order = "groupwise"
+autodoc_default_flags = ["members", "undoc-members", "show-inheritance"]
+autodoc_class_signature = "separated"
+
+autoclass_content = "both"
+add_module_names = False
+pygments_style = "sphinx"
+graphviz_output_format = "svg"
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3.12", None),
+}

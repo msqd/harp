@@ -6,13 +6,17 @@ from functools import cached_property
 from multidict import CIMultiDict, CIMultiDictProxy
 
 from harp import get_logger
-from harp.core.asgi.messages.base import AbstractASGIMessage
 from harp.core.http.cookies import parse_cookie
 
 logger = get_logger(__name__)
 
 
-class ASGIRequest(AbstractASGIMessage):
+class ASGIRequest:
+    """
+    ASGI request message.
+
+    """
+
     kind = "request"
 
     def __init__(self, scope, receive):
@@ -24,6 +28,13 @@ class ASGIRequest(AbstractASGIMessage):
         self._body = b""
         self._receive = receive
         self.created_at = datetime.now(UTC)
+
+        self._context = {}
+
+    @property
+    def context(self) -> dict:
+        """Contextual data for this request's lifecycle. Example usage: authentication bagage."""
+        return self._context
 
     async def receive(self):
         return await self._receive()

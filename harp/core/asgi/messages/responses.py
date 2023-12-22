@@ -5,12 +5,11 @@ from asgiref.typing import ASGISendCallable
 from httpx import codes
 from multidict import CIMultiDict, CIMultiDictProxy
 
-from harp.core.asgi.messages.base import AbstractASGIMessage
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.utils.bytes import ensure_bytes
 
 
-class ASGIResponse(AbstractASGIMessage):
+class ASGIResponse:
     """
     Represents a way to answer an ASGI request, and allows to store the actual response content for future usage.
 
@@ -96,7 +95,7 @@ class ASGIResponse(AbstractASGIMessage):
         pass
 
     @cached_property
-    def serialized_summary(self):
+    def serialized_summary(self) -> str:
         """
         Returns a summary of the message as a string (for http requests, command line, for http responses, status line,
         etc.)
@@ -108,10 +107,10 @@ class ASGIResponse(AbstractASGIMessage):
         return f"HTTP/1.1 {status} {reason}"
 
     @cached_property
-    def serialized_headers(self):
+    def serialized_headers(self) -> str:
         headers = self.__deprecated_data_snapshot_for_early_developments["headers"]
         return "\n".join([f"{k.decode('utf-8')}: {v.decode('utf-8')}" for k, v in headers])
 
     @cached_property
-    def serialized_body(self):
+    def serialized_body(self) -> bytes:
         return self.__deprecated_data_snapshot_for_early_developments["body"]

@@ -43,10 +43,7 @@ class SystemController:
         router.route(self.prefix + "/settings")(self.get_settings)
 
     async def get(self, request: ASGIRequest, response: ASGIResponse):
-        try:
-            context = request.context
-        except AttributeError:
-            context = {}
+        context = getattr(request, "context", {})
 
         return json(
             {

@@ -9,6 +9,7 @@ Submodules
 
    harp.protocols.controllers
    harp.protocols.storage
+   harp.protocols.transactions
 
 Module contents
 ---------------

@@ -1,38 +1,22 @@
 import { useState } from "react"
 import { DataTable } from "mkui/Components/DataTable"
-import { formatTransactionShortId, getDurationRatingBadge } from "./Utilities/formatters.tsx"
-import { TransactionDetailsDialog } from "./TransactionDetailsDialog.tsx"
+import { getDurationRatingBadge } from "../Utilities/formatters.tsx"
+import { TransactionDetailsDialog } from "../Detail"
 import { formatDistance, formatDuration } from "date-fns"
-import { ArrowsRightLeftIcon } from "@heroicons/react/24/outline"
-import { RequestHeading } from "./Components/RequestHeading.tsx"
+import { StarIcon } from "@heroicons/react/24/outline"
+import { RequestHeading } from "../Components/RequestHeading.tsx"
 import { Transaction } from "Models/Transaction"
 import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
-import { ResponseHeading } from "./Components/ResponseHeading.tsx"
+import { ResponseHeading } from "../Components/ResponseHeading.tsx"
 
 interface TransactionsDataTableProps {
   transactions: Transaction[]
 }
 
 const transactionColumnTypes = {
-  id: {
-    label: "Transaction",
-    format: (id: string) => (
-      <>
-        <span className="mx-auto flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 sm:mx-0 float-left">
-          <ArrowsRightLeftIcon className="h-3 w-3 text-blue-600" aria-hidden="true" />
-        </span>
-        {formatTransactionShortId(id)}
-      </>
-    ),
-    headerClassName: "w-28",
-  },
-  endpoint: {
-    label: "Endpoint",
-    format: (endpoint: string) => (
-      <span className="inline-flex items-center bg-gray-50 px-1 mx-1 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">
-        {endpoint}
-      </span>
-    ),
+  actions: {
+    label: "",
+    format: () => <StarIcon className="h-5 w-5 text-gray-300" aria-hidden="true" />,
     headerClassName: "w-1",
   },
   request: {
@@ -75,7 +59,7 @@ export function TransactionDataTable({ transactions }: TransactionsDataTableProp
         types={transactionColumnTypes}
         onRowClick={(row: Transaction) => setCurrent(row)}
         rows={transactions}
-        columns={["id", "endpoint", "request", "response", "elapsed", "started_at"]}
+        columns={["actions", "request", "response", "elapsed", "started_at"]}
       />
       <TransactionDetailsDialog current={current} setCurrent={setCurrent} />
     </>

@@ -1,4 +1,4 @@
-import { H1, H2, H3, H4 } from "./Titles"
+import { H1, H2, H3, H4, H5, H6 } from "./Titles"
 import { P } from "./Paragraphs"
 
 export const Titles = () => (
@@ -7,6 +7,8 @@ export const Titles = () => (
     <H2>Still a big title, but not so much</H2>
     <H3>A less pretentious title</H3>
     <H4>Quite an humble title</H4>
+    <H5>Getting timid</H5>
+    <H6>Or very discret</H6>
   </>
 )
 

@@ -1,12 +1,12 @@
-import { ArrowLeftIcon, ArrowRightIcon, ArrowsRightLeftIcon } from "@heroicons/react/24/outline"
 import { Dialog } from "@headlessui/react"
-import { TransactionMessagePanel } from "./TransactionMessagePanel.tsx"
-import { RequestHeading } from "./Components/RequestHeading.tsx"
-import { Transaction } from "Models/Transaction"
+import { ArrowLeftIcon, ArrowRightIcon, ArrowsRightLeftIcon } from "@heroicons/react/24/outline"
 
 import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
-import { ResponseHeading } from "./Components/ResponseHeading.tsx"
-import { useBlobQuery } from "../../../Domain/Transactions/useBlobQuery.tsx"
+import { useBlobQuery } from "Domain/Transactions/useBlobQuery.tsx"
+import { Transaction } from "Models/Transaction"
+
+import { RequestHeading, ResponseHeading } from "../Components"
+import { TransactionMessagePanel } from "../List/TransactionMessagePanel.tsx"
 
 export function TransactionDetails({ transaction }: { transaction: Transaction }) {
   const request = getRequestFromTransactionMessages(transaction)

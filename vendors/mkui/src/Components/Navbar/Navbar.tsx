@@ -12,11 +12,11 @@ interface NavbarItem {
 }
 
 interface NavbarProps {
-  logo?: string
   Link?: ComponentType<any>
   Wrapper?: ComponentType<any>
   items?: NavbarItem[]
   currentPath?: string
+  leftChildren?: ReactElement
   rightChildren?: ReactElement
 }
 
@@ -35,11 +35,11 @@ function isItemActive(item: NavbarItem, currentPath: string): boolean {
 }
 
 function Navbar({
-  logo = defaultLogo,
   Link = DefaultLink,
   Wrapper = DefaultNavbarWrapper,
   items = [{ label: "Home", to: "/" }],
   currentPath = "/",
+  leftChildren = undefined,
   rightChildren = undefined,
 }: NavbarProps) {
   return (
@@ -62,9 +62,11 @@ function Navbar({
               </div>
               <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
                 <div className="flex flex-shrink-0 items-center p-2">
-                  <Link to="/">
-                    <img className="h-8 w-auto" src={logo} alt="Harp" />
-                  </Link>
+                  {leftChildren ?? (
+                    <Link to="/">
+                      <img className="h-8 w-auto" src={defaultLogo} alt="User Interface" />
+                    </Link>
+                  )}
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                   {/* Desktop navigation */}

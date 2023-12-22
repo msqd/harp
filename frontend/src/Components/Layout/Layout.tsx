@@ -1,9 +1,10 @@
-import { Link, Outlet, useLocation } from "react-router-dom"
-import { Navbar } from "mkui/Components/Navbar"
-import logo from "Assets/logo.svg"
-import tw, { styled } from "twin.macro"
-import { useSystemQuery } from "Domain/System"
 import { TagIcon, UserCircleIcon } from "@heroicons/react/20/solid"
+import { Link, Outlet, useLocation } from "react-router-dom"
+import tw, { styled } from "twin.macro"
+
+import logo from "Assets/logo.svg"
+import { useSystemQuery } from "Domain/System"
+import { Navbar } from "mkui/Components/Navbar"
 
 const StyledContainerWithHorizontalConstraint = styled.div(() => [tw`mx-auto px-2 sm:px-6 lg:px-8`])
 
@@ -14,7 +15,6 @@ function RightNav() {
       <UserCircleIcon className="inline-block w-4 h-4 mr-1" />
       {systemQuery.data.user ?? "anonymous"}
       <br />
-
       <span className="text-xs">
         <TagIcon className="inline-block w-4 h-4 mr-1" />
         {`v.${systemQuery.data.version}`}
@@ -28,7 +28,14 @@ function Layout() {
   return (
     <>
       <Navbar
-        logo={logo}
+        leftChildren={
+          <Link to="/" className="flex">
+            <img className="h-8 w-auto" src={logo} alt="Harp" />
+            <span className="h-8 px-2 pt-1 text-md font-medium text-white" title="Community Edition">
+              Harp CE
+            </span>
+          </Link>
+        }
         items={[
           { label: "Dashboard", to: "/", exact: true },
           { label: "Transactions", to: "/transactions" },

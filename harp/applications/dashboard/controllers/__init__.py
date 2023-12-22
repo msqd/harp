@@ -69,7 +69,6 @@ class DashboardController:
         return controller
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
-        request.context = {}
         request.context.setdefault("user", None)
 
         if self.auth:

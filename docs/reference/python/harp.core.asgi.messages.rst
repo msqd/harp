@@ -7,7 +7,6 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   harp.core.asgi.messages.base
    harp.core.asgi.messages.requests
    harp.core.asgi.messages.responses
 
