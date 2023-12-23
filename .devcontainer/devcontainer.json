@@ -8,7 +8,8 @@
 		"ghcr.io/devcontainers-contrib/features/tmux-apt-get:1": {},
 		"ghcr.io/devcontainers/features/sshd:1": {
 			"version": "latest"
-		}
+		},
+		"ghcr.io/devcontainers/features/node:1": {}
 	}
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
