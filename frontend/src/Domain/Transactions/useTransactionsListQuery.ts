@@ -1,11 +1,29 @@
 import { useQuery } from "react-query"
-import { Transaction } from "Models/Transaction"
+
 import { useApi } from "Domain/Api"
 import { ItemList } from "Domain/Api/Types"
+import { Transaction } from "Models/Transaction"
+import { Filters } from "Types/filters"
 
-export function useTransactionsListQuery() {
+function getQueryStringFromRecord(filters: Filters) {
+  const searchParams = new URLSearchParams()
+  for (const [key, value] of Object.entries(filters)) {
+    if (value) {
+      searchParams.append(key, value.toString())
+    }
+  }
+  return searchParams.toString()
+}
+
+export function useTransactionsListQuery({ filters = undefined }: { filters?: Filters }) {
   const api = useApi()
-  return useQuery<ItemList<Transaction>>("transactions", () => api.fetch("/transactions").then((r) => r.json()), {
-    refetchInterval: 10000,
-  })
+  const qs = filters ? getQueryStringFromRecord(filters) : ""
+
+  return useQuery<ItemList<Transaction>>(
+    ["transactions", filters],
+    () => api.fetch("/transactions" + (qs ? `?${qs}` : "")).then((r) => r.json()),
+    {
+      refetchInterval: 60000,
+    },
+  )
 }

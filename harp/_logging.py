@@ -67,7 +67,7 @@ logging_config = {
         "harp.applications": {"level": os.environ.get("LOGGING_HARP_APPLICATIONS", "INFO")},
         "httpcore": {"level": os.environ.get("LOGGING_HTTPCORE", "INFO")},  # todo wrap in structlog
         "httpx": {"level": os.environ.get("LOGGING_HTTPX", "WARNING")},  # todo wrap in structlog
-        "hypercorn.access": {"level": os.environ.get("LOGGING_HYPERCORN_ACCESS", "INFO")},
+        "hypercorn.access": {"level": os.environ.get("LOGGING_HYPERCORN_ACCESS", "WARNING")},
         "hypercorn.error": {"level": os.environ.get("LOGGING_HYPERCORN_ERROR", "INFO")},
     },
 }

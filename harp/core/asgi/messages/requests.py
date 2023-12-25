@@ -2,6 +2,7 @@ import binascii
 from base64 import b64decode
 from datetime import UTC, datetime
 from functools import cached_property
+from urllib.parse import parse_qsl
 
 from multidict import CIMultiDict, CIMultiDictProxy
 
@@ -63,7 +64,12 @@ class ASGIRequest:
 
     @cached_property
     def query_string(self):
+        """DEPRECATED: use request.query instead."""
         return self._scope.get("query_string", b"").decode("utf-8")
+
+    @cached_property
+    def query(self):
+        return CIMultiDictProxy(CIMultiDict(parse_qsl(self._scope.get("query_string", b"").decode("utf-8"))))
 
     @cached_property
     def headers(self):

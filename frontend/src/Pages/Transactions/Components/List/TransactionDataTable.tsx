@@ -1,13 +1,15 @@
-import { useState } from "react"
-import { DataTable } from "mkui/Components/DataTable"
-import { getDurationRatingBadge } from "../Utilities/formatters.tsx"
-import { TransactionDetailsDialog } from "../Detail"
-import { formatDistance, formatDuration } from "date-fns"
 import { StarIcon } from "@heroicons/react/24/outline"
-import { RequestHeading } from "../Components/RequestHeading.tsx"
-import { Transaction } from "Models/Transaction"
+import { formatDistance, formatDuration } from "date-fns"
+import { useState } from "react"
+
 import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
-import { ResponseHeading } from "../Components/ResponseHeading.tsx"
+import { Transaction } from "Models/Transaction"
+import { DataTable } from "mkui/Components/DataTable"
+
+import { getDurationRatingBadge } from "../../Utilities/formatters.tsx"
+import { TransactionsDetailDialog } from "../Detail"
+import { RequestHeading } from "../RequestHeading.tsx"
+import { ResponseHeading } from "../ResponseHeading.tsx"
 
 interface TransactionsDataTableProps {
   transactions: Transaction[]
@@ -53,15 +55,13 @@ export function TransactionDataTable({ transactions }: TransactionsDataTableProp
 
   return (
     <>
-      {/*durationRatingScale.map((x) => getDurationRatingBadge(x.threshold || 10))*/}
-
       <DataTable<Transaction, { method: string; url: string; statusCode: string; responseBodySize: number }>
         types={transactionColumnTypes}
         onRowClick={(row: Transaction) => setCurrent(row)}
         rows={transactions}
         columns={["actions", "request", "response", "elapsed", "started_at"]}
       />
-      <TransactionDetailsDialog current={current} setCurrent={setCurrent} />
+      <TransactionsDetailDialog current={current} setCurrent={setCurrent} />
     </>
   )
 }

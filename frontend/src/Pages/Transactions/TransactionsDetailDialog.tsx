@@ -1,10 +1,12 @@
-import { Dispatch, Fragment, SetStateAction } from "react"
 import { Dialog, Transition } from "@headlessui/react"
 import { XMarkIcon } from "@heroicons/react/24/outline"
-import { TransactionDetails } from "./TransactionDetails.tsx"
+import { Dispatch, Fragment, SetStateAction } from "react"
+
 import { Transaction } from "Models/Transaction"
 
-export function TransactionDetailsDialog({
+import { TransactionDetails } from "./Components/Detail"
+
+export function TransactionsDetailDialog({
   current,
   setCurrent,
 }: {

@@ -19,8 +19,8 @@ from harp.core.asgi.events.transaction import TransactionEvent
 from harp.core.models.messages import Blob, Message
 from harp.core.models.transactions import Transaction
 
-transactions = alias(TransactionsTable, name="t")
-messages = alias(MessagesTable, name="m")
+t_transactions = alias(TransactionsTable, name="t")
+t_messages = alias(MessagesTable, name="m")
 LEN_TRANSACTIONS_COLUMNS = len(TransactionsTable.columns)
 
 logger = get_logger(__name__)
@@ -72,7 +72,7 @@ class SqlAlchemyStorage:
         """
         return self.engine.begin()
 
-    async def find_transactions(self, *, with_messages=False):
+    async def find_transactions(self, *, with_messages=False, filters=None):
         """
         Implements :meth:`IStorage.find_transactions <harp.protocols.storage.IStorage.find_transactions>`.
 
@@ -80,11 +80,16 @@ class SqlAlchemyStorage:
         :return:
 
         """
-        query = select(transactions, messages)
+        query = select(t_transactions, t_messages)
         if with_messages:
             # query.add_columns(messages)
-            query = query.outerjoin(messages, messages.c.transaction_id == transactions.c.id)
-        query = query.order_by(transactions.c.started_at.desc()).limit(50)
+            query = query.outerjoin(t_messages, t_messages.c.transaction_id == t_transactions.c.id)
+
+        endpoint_filter = filters.get("endpoint", "*") if filters else "*"
+        if endpoint_filter != "*":
+            query = query.filter(t_transactions.c.endpoint.in_(endpoint_filter))
+
+        query = query.order_by(t_transactions.c.started_at.desc()).limit(50)
 
         current_transaction = None
         async with self.connect() as conn:

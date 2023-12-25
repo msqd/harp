@@ -1,1 +1,2 @@
-export { TransactionListPage } from "./List"
+export { TransactionsListPage } from "./TransactionsListPage"
+export { TransactionsDetailDialog } from "./TransactionsDetailDialog"

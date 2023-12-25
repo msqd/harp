@@ -117,3 +117,35 @@ def test_basic_auth_unset():
 def test_basic_auth():
     request = ASGIRequest({**_http_scope(), "headers": [(b"authorization", b"Basic dXNlcjpwYXNz")]}, AsyncMock())
     assert request.basic_auth == ["user", "pass"]
+
+
+def test_query_string_basic():
+    request = ASGIRequest(
+        {
+            **_http_scope(),
+            "path": "/",
+            "query_string": b"foo=bar&baz=qux",
+        },
+        AsyncMock(),
+    )
+
+    assert list(sorted(request.query.items())) == [("baz", "qux"), ("foo", "bar")]
+
+
+def test_query_string_multi():
+    request = ASGIRequest(
+        {
+            **_http_scope(),
+            "path": "/",
+            "query_string": b"foo=bar&baz=qux&foo=more&foo=stuff&john=doe",
+        },
+        AsyncMock(),
+    )
+
+    assert list(sorted(request.query.items())) == [
+        ("baz", "qux"),
+        ("foo", "bar"),
+        ("foo", "more"),
+        ("foo", "stuff"),
+        ("john", "doe"),
+    ]

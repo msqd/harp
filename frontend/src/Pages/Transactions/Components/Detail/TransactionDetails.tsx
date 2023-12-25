@@ -5,11 +5,11 @@ import { getRequestFromTransactionMessages, getResponseFromTransactionMessages }
 import { useBlobQuery } from "Domain/Transactions/useBlobQuery.tsx"
 import { Transaction } from "Models/Transaction"
 
-import { RequestHeading, ResponseHeading } from "../Components"
 import { TransactionMessagePanel } from "../List/TransactionMessagePanel.tsx"
+import { RequestHeading, ResponseHeading } from "../index.ts"
 
 export function TransactionDetails({ transaction }: { transaction: Transaction }) {
-  const request = getRequestFromTransactionMessages(transaction)
+  const { request } = getRequestFromTransactionMessages(transaction)
   const response = getResponseFromTransactionMessages(transaction)
   const requestHeadersQuery = useBlobQuery(request?.headers)
   const responseHeadersQuery = useBlobQuery(response?.headers)
