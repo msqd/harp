@@ -106,10 +106,9 @@ class ASGIResponse:
         reason = codes.get_reason_phrase(status)
         return f"HTTP/1.1 {status} {reason}"
 
-    @cached_property
+    @property
     def serialized_headers(self) -> str:
-        headers = self.__deprecated_data_snapshot_for_early_developments["headers"]
-        return "\n".join([f"{k.decode('utf-8')}: {v.decode('utf-8')}" for k, v in headers])
+        return "\n".join([f"{k}: {v}" for k, v in self.headers.items()])
 
     @cached_property
     def serialized_body(self) -> bytes:

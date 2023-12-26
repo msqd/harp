@@ -47,7 +47,6 @@ LOGGING_FORMATTER = os.environ.get("LOGGING_FORMATTER", LOGGING_DEFAULT_FORMATTE
 if LOGGING_FORMATTER not in LOGGING_FORMATTERS:
     LOGGING_FORMATTER = LOGGING_DEFAULT_FORMATTER
 
-
 logging_config = {
     "version": 1,
     "disable_existing_loggers": True,
@@ -64,7 +63,9 @@ logging_config = {
     },
     "loggers": {
         "harp": {"level": os.environ.get("LOGGING_HARP", "INFO")},
-        "harp.applications": {"level": os.environ.get("LOGGING_HARP_APPLICATIONS", "INFO")},
+        "harp.applications": {
+            "level": os.environ.get("LOGGING_HARP_APPLICATIONS", os.environ.get("LOGGING_HARP", "INFO"))
+        },
         "httpcore": {"level": os.environ.get("LOGGING_HTTPCORE", "INFO")},  # todo wrap in structlog
         "httpx": {"level": os.environ.get("LOGGING_HTTPX", "WARNING")},  # todo wrap in structlog
         "hypercorn.access": {"level": os.environ.get("LOGGING_HYPERCORN_ACCESS", "WARNING")},
@@ -75,6 +76,5 @@ logging_config = {
 logging.config.dictConfig(logging_config)
 
 get_logger = structlog.get_logger
-
 
 __all__ = ["get_logger"]

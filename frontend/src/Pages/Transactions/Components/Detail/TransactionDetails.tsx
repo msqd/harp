@@ -31,8 +31,13 @@ export function TransactionDetails({ transaction }: { transaction: Transaction }
                 Icon={ArrowRightIcon}
                 title={<RequestHeading as="h4" {...request} />}
                 messageId={String(request.id)}
-                headers={requestHeadersQuery.isSuccess ? requestHeadersQuery.data : null}
-                body={requestBodyQuery.isSuccess ? requestBodyQuery.data : null}
+                headers={
+                  requestHeadersQuery.isSuccess && requestHeadersQuery.data ? requestHeadersQuery.data.content : null
+                }
+                body={requestBodyQuery.isSuccess && requestBodyQuery.data ? requestBodyQuery.data.content : null}
+                contentType={
+                  requestBodyQuery.isSuccess && requestBodyQuery.data ? requestBodyQuery.data.contentType : null
+                }
               />
             ) : null}
             {response ? (
@@ -40,8 +45,13 @@ export function TransactionDetails({ transaction }: { transaction: Transaction }
                 Icon={ArrowLeftIcon}
                 title={<ResponseHeading as="h4" {...response} />}
                 messageId={String(response.id)}
-                headers={responseHeadersQuery.isSuccess ? responseHeadersQuery.data : null}
-                body={responseBodyQuery.isSuccess ? responseBodyQuery.data : null}
+                headers={
+                  responseHeadersQuery.isSuccess && responseHeadersQuery.data ? responseHeadersQuery.data.content : null
+                }
+                body={responseBodyQuery.isSuccess && responseBodyQuery.data ? responseBodyQuery.data.content : null}
+                contentType={
+                  responseBodyQuery.isSuccess && responseBodyQuery.data ? responseBodyQuery.data.contentType : null
+                }
               />
             ) : null}
           </div>

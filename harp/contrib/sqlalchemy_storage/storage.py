@@ -1,4 +1,3 @@
-import hashlib
 from datetime import UTC
 
 from sqlalchemy import alias, func, select
@@ -24,7 +23,6 @@ t_messages = alias(MessagesTable, name="m")
 LEN_TRANSACTIONS_COLUMNS = len(TransactionsTable.columns)
 
 logger = get_logger(__name__)
-
 
 _FILTER_COLUMN_NAMES = {
     "method": "x_method",
@@ -118,8 +116,6 @@ class SqlAlchemyStorage:
 
         query = query.order_by(t_transactions.c.started_at.desc()).limit(50)
 
-        logger.info(query)
-
         current_transaction = None
         async with self.connect() as conn:
             result = await conn.execute(query)
@@ -169,29 +165,30 @@ class SqlAlchemyStorage:
             row = (await conn.execute(BlobsTable.select().where(BlobsTable.c.id == blob_id))).fetchone()
 
         if row:
-            return Blob(id=row.id, data=row.data)
+            return Blob(id=row.id, data=row.data, content_type=row.content_type)
 
-    async def _store_blob(self, conn, data):
+    async def store_blob(self, conn, blob: Blob):
         # todo this has concurrency problems with sqlite AND with postgres. Find a way to lock the insertion ? Or maybe
         # use an insert or update if not found, which will work by overriding just inserted data with the same data. But
         # this can be problematic under pressure, so maybe not.
-        if not isinstance(data, bytes):
-            data = data.encode()
-        hash = hashlib.sha1(data).hexdigest()
-
-        query = select(func.count()).where(BlobsTable.c.id == hash)
-
+        query = select(func.count()).where(BlobsTable.c.id == blob.id)
         if not await conn.scalar(query):
             from sqlite3 import IntegrityError
 
+            from asyncpg import UniqueViolationError
+
             try:
-                await conn.execute(BlobsTable.insert().values(id=hash, data=data))
+                await conn.execute(
+                    BlobsTable.insert().values(id=blob.id, data=blob.data, content_type=blob.content_type)
+                )
             except IntegrityError as e:
                 logger.error(
                     "SQLite IntegrityError: %s (ignored for now as it just shows concurrency problems with sqlite, "
                     "which we are aware of)",
                     e,
                 )
+            except UniqueViolationError as e:
+                logger.error("Postgres UniqueViolationError: %s", e)
         return hash
 
     async def _on_startup_create_database(self, event: TransactionEvent):
@@ -216,15 +213,24 @@ class SqlAlchemyStorage:
 
     async def _on_transaction_message(self, event: MessageEvent):
         async with self.begin() as conn:
-            headers_blob_id = await self._store_blob(conn, event.message.serialized_headers)
-            body_blob_id = await self._store_blob(conn, event.message.serialized_body)
+            # todo is the "__headers__" dunder content type any good idea ? maybe it's just a waste of bytes.
+            headers_blob = Blob.from_data(event.message.serialized_headers, content_type="__headers__")
+
+            content_blob = Blob.from_data(
+                event.message.serialized_body, content_type=event.message.headers.get("content-type")
+            )
+
+            # todo compute hash now, store later ? (once benchmarks are up)
+            await self.store_blob(conn, headers_blob)
+            await self.store_blob(conn, content_blob)
+
             await conn.execute(
                 MessagesTable.insert().values(
                     transaction_id=event.transaction.id,
                     kind=event.message.kind,
                     summary=event.message.serialized_summary,
-                    headers=headers_blob_id,
-                    body=body_blob_id,
+                    headers=headers_blob.id,
+                    body=content_blob.id,
                     created_at=event.message.created_at.astimezone(UTC).replace(tzinfo=None),
                 )
             )

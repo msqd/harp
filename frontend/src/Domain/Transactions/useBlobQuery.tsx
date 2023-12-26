@@ -1,18 +1,25 @@
 import { useApi } from "../Api"
 import { useQuery } from "react-query"
 
+const decoder = new TextDecoder("utf-8")
+
+interface Blob {
+  id: string
+  content: string
+  contentType?: string
+}
+
 export function useBlobQuery(id?: string) {
   const api = useApi()
-  return useQuery<string | null>(["blobs", id], () => {
+  return useQuery<Blob | undefined>(["blobs", id], async () => {
     if (id) {
-      return api
-        .fetch(`/blobs/${id}`)
-        .then((response) => response.arrayBuffer())
-        .then((buffer) => {
-          const decoder = new TextDecoder("utf-8")
-          return decoder.decode(buffer)
-        })
+      const response = await api.fetch(`/blobs/${id}`)
+      const buffer = await response.arrayBuffer()
+      return {
+        id,
+        content: decoder.decode(buffer),
+        contentType: response.headers.get("Content-Type"),
+      } as Blob
     }
-    return null
   })
 }

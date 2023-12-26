@@ -92,7 +92,13 @@ class HttpProxyController:
         logger.debug(f"▶▶ {request.method} {url}", transaction_id=transaction.id)
 
         # PROXY RESPONSE
-        p_response: httpx.Response = await client.send(p_request)
+        try:
+            p_response: httpx.Response = await client.send(p_request)
+        except httpx.TimeoutException:
+            logger.error(f"▶▶ {request.method} {url} (timeout)", transaction_id=transaction.id)
+            await response.start(status=504)
+            return
+
         logger.debug(
             f"◀◀ {p_response.status_code} {p_response.reason_phrase} ({p_response.elapsed.total_seconds()}s)",
             transaction_id=transaction.id,

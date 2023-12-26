@@ -20,6 +20,7 @@ BlobsTable = Table(
     metadata,
     Column("id", String(40), primary_key=True, unique=True),
     Column("data", LargeBinary()),
+    Column("content_type", String(64)),
 )
 
 MessagesTable = Table(

@@ -115,9 +115,13 @@ class DashboardController:
             await response.body(b"Blob not found.")
             return
 
-        response.headers["content-type"] = "application/octet-stream"
+        response.headers["content-type"] = blob.content_type or "application/octet-stream"
         await response.start(status=200)
-        await response.body(blob.data)
+
+        if blob.content_type == "application/json":
+            await response.body(blob.prettify())
+        else:
+            await response.body(blob.data)
 
     async def get_dashboard_data(self, request: ASGIRequest, response: ASGIResponse):
         data = [
