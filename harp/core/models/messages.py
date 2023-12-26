@@ -27,6 +27,10 @@ class Blob(Entity):
     @classmethod
     def from_data(cls, data, /, *, content_type=None):
         content_type = ensure_str(content_type) if content_type else None
+        if content_type and ";" in content_type:
+            # xxx hack, we should parse the rest of the content type
+            content_type = content_type.split(";", 1)[0].strip()
+
         data = ensure_bytes(data)
         return cls(
             id=hashlib.sha1((content_type.encode("utf-8") if content_type else b"") + b"\n" + data).hexdigest(),
