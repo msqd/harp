@@ -5,6 +5,7 @@ import { Filter } from "Types/filters"
 import { Checkbox, Radio } from "mkui/Components/FormWidgets"
 import { H5 } from "mkui/Components/Typography"
 
+import { FacetInnerLightButton } from "./FacetInnerLightButton.tsx"
 import { FacetLabel } from "./FacetLabel.tsx"
 
 interface FacetProps {
@@ -13,10 +14,15 @@ interface FacetProps {
   type: "checkboxes" | "radios"
   defaultOpen?: boolean
   meta: Array<{ name: string; count?: number }>
-  values?: Filter | "*"
+  values?: Filter
   setValues?: (value: Filter) => unknown
 }
 
+/**
+ * Facet component, renders a facet (group of values that can filter a given field) with checkboxes or radios.
+ *
+ * Radios for single selection, checkboxes for multiple selection. La base.
+ */
 export function Facet({
   title,
   name,
@@ -26,8 +32,15 @@ export function Facet({
   type,
   defaultOpen = true,
 }: FacetProps) {
+  /**
+   * Should this facet be open (aka, unfolded)? Default value can be passed as a prop, then the component will manage
+   * the open state.
+   */
   const [open, setOpen] = useState(defaultOpen)
 
+  /**
+   * Underlying input's change handler, will update the values state.
+   */
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (setValues) {
       const current = new Set(!values || !values.length ? meta.map((x) => x.name) : values)
@@ -44,7 +57,12 @@ export function Facet({
     <div className="px-4 py-3">
       <fieldset name={name}>
         <H5 as="legend" padding="pt-0" className="flex w-full cursor-pointer" onClick={() => setOpen(!open)}>
-          <span className="grow">{title}</span>
+          <span className="grow">
+            {title}
+            {setValues && values?.length && !(values.length == meta.length) ? (
+              <FacetInnerLightButton label="any" handler={() => setValues(undefined)} />
+            ) : null}
+          </span>
           {open ? (
             <ChevronUpIcon className="h-4 w-4 text-gray-600" />
           ) : (
@@ -57,7 +75,13 @@ export function Facet({
                 <Checkbox
                   name={value.name}
                   key={value.name}
-                  label={<FacetLabel {...value} />}
+                  label={
+                    <FacetLabel {...value}>
+                      {setValues && !(values?.length == 1 && values[0] == value.name) ? (
+                        <FacetInnerLightButton label="only" handler={() => setValues([value.name])} />
+                      ) : null}
+                    </FacetLabel>
+                  }
                   onChange={onChange}
                   checked={!values || !values.length || values.includes(value.name)}
                 />
