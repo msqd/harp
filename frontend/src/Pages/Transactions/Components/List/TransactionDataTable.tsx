@@ -8,8 +8,7 @@ import { DataTable } from "mkui/Components/DataTable"
 
 import { getDurationRatingBadge } from "../../Utilities/formatters.tsx"
 import { TransactionsDetailDialog } from "../Detail"
-import { RequestHeading } from "../RequestHeading.tsx"
-import { ResponseHeading } from "../ResponseHeading.tsx"
+import { RequestHeading, ResponseHeading } from "../Elements"
 
 interface TransactionsDataTableProps {
   transactions: Transaction[]

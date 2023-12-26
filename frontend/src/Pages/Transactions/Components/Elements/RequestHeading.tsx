@@ -5,7 +5,7 @@ import urlJoin from "url-join"
 
 import { Message } from "Models/Transaction"
 
-import { RequestMethodBadge } from "../Utilities/formatters.tsx"
+import { RequestMethodBadge } from "../../Utilities/formatters.tsx"
 
 interface RequestHeadingProps {
   as?: ElementType

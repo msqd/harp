@@ -31,3 +31,7 @@ class Transaction(Entity):
     # Relations
 
     messages: List[Message] = None
+
+    # Extra attributes
+
+    extras: dict = dataclasses.field(default_factory=dict)

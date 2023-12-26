@@ -1,23 +1,32 @@
 from functools import cached_property
+from itertools import chain
 from random import randint
 
+from harp import get_logger
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.models.transactions import Transaction
 from harp.core.views.json import json
 from harp.protocols.storage import IStorage
 
+logger = get_logger(__name__)
 
-class TransactionEndpointFacet:
-    def __init__(self):
-        self.endpoints = {"httpbin", "stripe", "twilio", "ban"}
 
+def _flatten_facet_value(values: list):
+    return list(
+        chain(
+            *map(lambda x: x.split(","), values),
+        ),
+    )
+
+
+class AbstractFacet:
     @cached_property
     def values(self):
-        return [{"name": endpoint, "count": randint(20, 200)} for endpoint in self.endpoints]
+        return [{"name": endpoint, "count": randint(20, 200)} for endpoint in self.choices]
 
     def get_filter(self, raw_data: list):
-        query_endpoints = self.endpoints.intersection(raw_data)
+        query_endpoints = self.choices.intersection(raw_data)
         return list(query_endpoints) if len(query_endpoints) else "*"
 
     def filter(self, raw_data: list):
@@ -27,12 +36,34 @@ class TransactionEndpointFacet:
         }
 
 
+class TransactionEndpointFacet(AbstractFacet):
+    name = "endpoint"
+    choices = {"httpbin", "stripe", "twilio", "ban"}
+
+
+class TransactionMethodFacet(AbstractFacet):
+    name = "method"
+    choices = {"GET", "POST", "PUT", "DELETE", "PATCH"}
+
+
+class TransactionStatusFacet(AbstractFacet):
+    name = "status"
+    choices = {"2xx", "3xx", "4xx", "5xx"}
+
+
 class TransactionsController:
     prefix = "/api/transactions"
 
     def __init__(self, storage: IStorage):
         self.storage = storage
-        self.facets = {"endpoint": TransactionEndpointFacet()}
+        self.facets = {
+            facet.name: facet
+            for facet in (
+                TransactionEndpointFacet(),
+                TransactionMethodFacet(),
+                TransactionStatusFacet(),
+            )
+        }
 
     def register(self, router):
         router.route(self.prefix + "/")(self.list)
@@ -40,14 +71,24 @@ class TransactionsController:
 
     async def filters(self, request: ASGIRequest, response: ASGIResponse):
         return json(
-            {name: facet.filter(request.query.getall(name, [])) for name, facet in self.facets.items()},
+            {
+                name: facet.filter(
+                    _flatten_facet_value(request.query.getall(name, [])),
+                )
+                for name, facet in self.facets.items()
+            },
         )
 
     async def list(self, request: ASGIRequest, response: ASGIResponse):
         transactions = []
         async for transaction in self.storage.find_transactions(
             with_messages=True,
-            filters={name: facet.get_filter(request.query.getall(name, [])) for name, facet in self.facets.items()},
+            filters={
+                name: facet.get_filter(
+                    _flatten_facet_value(request.query.getall(name, [])),
+                )
+                for name, facet in self.facets.items()
+            },
         ):
             transactions.append(transaction)
         return json(

@@ -60,9 +60,15 @@ class HttpProxyController:
         """
         # BEGIN TRANSACTION
         transaction = Transaction(
-            id=generate_transaction_id_ksuid(), type=request.type, started_at=datetime.now(UTC), endpoint=self.name
+            id=generate_transaction_id_ksuid(),
+            type=request.type,
+            started_at=datetime.now(UTC),
+            endpoint=self.name,
         )
         logger.debug(f"▶ {request.method} {request.path}", transaction_id=transaction.id)
+
+        # XXX for now, we use transaction "extras" to store searchable data for later
+        transaction.extras["method"] = request.method
 
         # dispatch transaction started event
         # we don't really want to await this, should run in background ? or use an async queue ?
@@ -93,6 +99,10 @@ class HttpProxyController:
         )
 
         status = p_response.status_code
+
+        # XXX for now, we use transaction "extras" to store searchable data for later
+        transaction.extras["status_class"] = f"{status // 100}xx"
+
         response.headers.update(
             (k, v)
             for k, v in p_response.headers.multi_items()

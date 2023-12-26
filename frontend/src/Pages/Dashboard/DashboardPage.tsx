@@ -1,6 +1,7 @@
-import { useDashboardDataQuery } from "Domain/Dashboard"
-import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { Page } from "Components/Page"
+import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
+import { useDashboardDataQuery } from "Domain/Dashboard"
+
 import { DashboardCharts } from "./DashboardCharts"
 
 const DashboardPage = () => {

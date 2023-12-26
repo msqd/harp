@@ -26,6 +26,23 @@ LEN_TRANSACTIONS_COLUMNS = len(TransactionsTable.columns)
 logger = get_logger(__name__)
 
 
+_FILTER_COLUMN_NAMES = {
+    "method": "x_method",
+    "status": "x_status_class",
+}
+
+
+def _filter_query(query, name, values):
+    if values and values != "*":
+        query = query.filter(
+            getattr(
+                t_transactions.c,
+                _FILTER_COLUMN_NAMES.get(name, name),
+            ).in_(values)
+        )
+    return query
+
+
 class SqlAlchemyStorage:
     """
     Storage implementation using SQL Alchemy Core, with async drivers.
@@ -85,11 +102,13 @@ class SqlAlchemyStorage:
             # query.add_columns(messages)
             query = query.outerjoin(t_messages, t_messages.c.transaction_id == t_transactions.c.id)
 
-        endpoint_filter = filters.get("endpoint", "*") if filters else "*"
-        if endpoint_filter != "*":
-            query = query.filter(t_transactions.c.endpoint.in_(endpoint_filter))
+        query = _filter_query(query, "endpoint", filters.get("endpoint", None))
+        query = _filter_query(query, "method", filters.get("method", None))
+        query = _filter_query(query, "status", filters.get("status", None))
 
         query = query.order_by(t_transactions.c.started_at.desc()).limit(50)
+
+        logger.info(query)
 
         current_transaction = None
         async with self.connect() as conn:
@@ -181,6 +200,7 @@ class SqlAlchemyStorage:
                     type=event.transaction.type,
                     endpoint=event.transaction.endpoint,
                     started_at=event.transaction.started_at.astimezone(UTC).replace(tzinfo=None),
+                    x_method=event.transaction.extras.get("method"),
                 )
             )
 
@@ -207,5 +227,6 @@ class SqlAlchemyStorage:
                 .values(
                     finished_at=event.transaction.finished_at.astimezone(UTC).replace(tzinfo=None),
                     elapsed=event.transaction.elapsed,
+                    x_status_class=event.transaction.extras.get("status_class"),
                 )
             )

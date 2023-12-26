@@ -4,12 +4,14 @@ import { classNames } from "../../Utilities"
 export function Checkbox({
   name,
   label = undefined,
+  checked = undefined,
   containerProps = {},
   labelProps = {},
   ...inputProps
 }: {
   name: string
   label?: string | ReactNode
+  checked?: boolean
   containerProps?: React.HTMLAttributes<HTMLDivElement>
   labelProps?: React.HTMLAttributes<HTMLLabelElement>
 } & React.HTMLAttributes<HTMLInputElement>) {
@@ -33,8 +35,10 @@ export function Checkbox({
       <div className="flex h-6 items-center">
         <input
           id={inputProps.id ?? name}
+          name={name}
           ref={inputRef}
           type="checkbox"
+          checked={checked}
           {...inputProps}
           className={classNames(
             "h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer",

@@ -1,12 +1,12 @@
 import { useState } from "react"
 
 import { Page } from "Components/Page"
-import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
+import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { useTransactionsListQuery } from "Domain/Transactions"
 import { Filters } from "Types/filters"
 
-import { FiltersSidebar } from "./Components/FiltersSidebar.tsx"
-import { TransactionDataTable } from "./Components/List/TransactionDataTable.tsx"
+import { FiltersSidebar } from "./Components"
+import { TransactionDataTable } from "./Components/List"
 
 export function TransactionsListPage() {
   const [filters, setFilters] = useState<Filters>({})

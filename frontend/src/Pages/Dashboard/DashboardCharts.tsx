@@ -1,8 +1,8 @@
-import { RequestsChart } from "./RequestChart"
-
-import { H2 } from "mkui/Components/Typography"
 import { DashboardGraphData } from "Models/Dashboard"
+import { H2 } from "mkui/Components/Typography"
+
 import { EndpointChart } from "./EndpointChart"
+import { RequestsChart } from "./RequestChart"
 
 export const DashboardCharts = ({ data }: DashboardGraphData) => {
   const rating = "A"

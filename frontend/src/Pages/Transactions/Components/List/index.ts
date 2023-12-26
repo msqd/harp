@@ -1,1 +1,2 @@
-export { default as TransactionListPage } from "../../TransactionsListPage.tsx"
+export { TransactionDataTable } from "./TransactionDataTable"
+export { TransactionMessagePanel } from "./TransactionMessagePanel"

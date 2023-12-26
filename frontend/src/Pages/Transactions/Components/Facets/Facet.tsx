@@ -1,11 +1,21 @@
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
-import { useState } from "react"
+import { ChangeEvent, useState } from "react"
 
 import { Filter } from "Types/filters"
 import { Checkbox, Radio } from "mkui/Components/FormWidgets"
 import { H5 } from "mkui/Components/Typography"
 
 import { FacetLabel } from "./FacetLabel.tsx"
+
+interface FacetProps {
+  title: string
+  name: string
+  type: "checkboxes" | "radios"
+  defaultOpen?: boolean
+  meta: Array<{ name: string; count?: number }>
+  values?: Filter | "*"
+  setValues?: (value: Filter) => unknown
+}
 
 export function Facet({
   title,
@@ -15,16 +25,21 @@ export function Facet({
   meta,
   type,
   defaultOpen = true,
-}: {
-  title: string
-  name: string
-  type: "checkboxes" | "radios"
-  defaultOpen?: boolean
-  meta: Array<{ name: string; count?: number }>
-  values?: Filter | "*"
-  setValues?: (value: Filter) => unknown
-}) {
+}: FacetProps) {
   const [open, setOpen] = useState(defaultOpen)
+
+  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (setValues) {
+      const current = new Set(!values || !values.length ? meta.map((x) => x.name) : values)
+      if (e.target.checked) {
+        current.add(e.target.name)
+      } else {
+        current.delete(e.target.name)
+      }
+      setValues(current.size == meta.length || !current.size ? undefined : [...current])
+    }
+  }
+
   return (
     <div className="px-4 py-3">
       <fieldset name={name}>
@@ -43,7 +58,8 @@ export function Facet({
                   name={value.name}
                   key={value.name}
                   label={<FacetLabel {...value} />}
-                  onChange={(e) => (setValues ? setValues([...(values ?? []), value.name]) : null)}
+                  onChange={onChange}
+                  checked={!values || !values.length || values.includes(value.name)}
                 />
               ))
             : null}

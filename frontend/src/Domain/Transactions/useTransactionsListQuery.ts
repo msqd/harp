@@ -7,7 +7,9 @@ import { Filters } from "Types/filters"
 
 function getQueryStringFromRecord(filters: Filters) {
   const searchParams = new URLSearchParams()
+  // todo handle "*" ?
   for (const [key, value] of Object.entries(filters)) {
+    console.log(key, value)
     if (value) {
       searchParams.append(key, value.toString())
     }

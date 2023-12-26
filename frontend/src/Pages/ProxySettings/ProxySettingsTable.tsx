@@ -1,6 +1,7 @@
-import { KeyValueSettings, Setting } from "Domain/System/useSystemSettingsQuery.ts"
 import { CheckIcon } from "@heroicons/react/20/solid"
 import { XMarkIcon } from "@heroicons/react/24/outline"
+
+import { KeyValueSettings, Setting } from "Domain/System/useSystemSettingsQuery"
 
 function NullValue() {
   return (

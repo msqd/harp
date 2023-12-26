@@ -1,6 +1,7 @@
-import { useSystemSettingsQuery } from "Domain/System"
-import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
 import { Page } from "Components/Page"
+import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
+import { useSystemSettingsQuery } from "Domain/System"
+
 import { ProxySettingsTable } from "./ProxySettingsTable"
 
 const ProxySettingsPage = () => {

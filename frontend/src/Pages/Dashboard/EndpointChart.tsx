@@ -1,6 +1,6 @@
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
-
 import { useDashboardEndpointQuery } from "Domain/Dashboard"
+
 import { RequestsChart } from "./RequestChart"
 
 interface EndpointChartProps {
