@@ -1,6 +1,6 @@
+from datetime import datetime, timedelta
 from functools import cached_property
 from itertools import chain
-from random import randint
 
 from harp import get_logger
 from harp.core.asgi.messages.requests import ASGIRequest
@@ -21,13 +21,19 @@ def _flatten_facet_value(values: list):
 
 
 class AbstractFacet:
+    name = None
+    choices = set()
+
+    def __init__(self):
+        self.meta = {}
+
     @cached_property
     def values(self):
-        return [{"name": endpoint, "count": randint(20, 200)} for endpoint in self.choices]
+        return [{"name": choice, "count": self.meta.get(choice, {}).get("count", None)} for choice in self.choices]
 
     def get_filter(self, raw_data: list):
         query_endpoints = self.choices.intersection(raw_data)
-        return list(query_endpoints) if len(query_endpoints) else "*"
+        return list(query_endpoints) if len(query_endpoints) else None
 
     def filter(self, raw_data: list):
         return {
@@ -36,9 +42,26 @@ class AbstractFacet:
         }
 
 
-class TransactionEndpointFacet(AbstractFacet):
+class FacetWithStorage(AbstractFacet):
+    def __init__(self, *, storage: IStorage):
+        super().__init__()
+        self.storage = storage
+
+
+class TransactionEndpointFacet(FacetWithStorage):
     name = "endpoint"
-    choices = {"httpbin", "stripe", "twilio", "ban"}
+
+    def __init__(self, *, storage: IStorage):
+        super().__init__(storage=storage)
+        self.choices = set()
+        self._refreshed_at = None
+
+    async def refresh(self):
+        if not self._refreshed_at or (self._refreshed_at < datetime.now() - timedelta(minutes=1)):
+            self._refreshed_at = datetime.now()
+            meta = await self.storage.get_facet_meta(self.name)
+            self.choices = set(meta.keys())
+            self.meta = {endpoint: {"count": count} for endpoint, count in meta.items()}
 
 
 class TransactionMethodFacet(AbstractFacet):
@@ -59,7 +82,7 @@ class TransactionsController:
         self.facets = {
             facet.name: facet
             for facet in (
-                TransactionEndpointFacet(),
+                TransactionEndpointFacet(storage=self.storage),
                 TransactionMethodFacet(),
                 TransactionStatusFacet(),
             )
@@ -70,6 +93,8 @@ class TransactionsController:
         router.route(self.prefix + "/filters")(self.filters)
 
     async def filters(self, request: ASGIRequest, response: ASGIResponse):
+        await self.facets["endpoint"].refresh()
+
         return json(
             {
                 name: facet.filter(

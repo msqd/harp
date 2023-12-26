@@ -25,7 +25,7 @@ export function useTransactionsListQuery({ filters = undefined }: { filters?: Fi
     ["transactions", filters],
     () => api.fetch("/transactions" + (qs ? `?${qs}` : "")).then((r) => r.json()),
     {
-      refetchInterval: 60000,
+      refetchInterval: 30000,
     },
   )
 }

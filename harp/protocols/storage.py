@@ -9,3 +9,6 @@ class IStorage(Protocol):
 
     async def get_blob(self, blob_id):
         ...
+
+    async def get_facet_meta(self, name):
+        ...

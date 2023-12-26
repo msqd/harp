@@ -89,6 +89,16 @@ class SqlAlchemyStorage:
         """
         return self.engine.begin()
 
+    async def get_facet_meta(self, name):
+        if name == "endpoint":
+            # get transaction count grouped by endpoint
+            query = select(t_transactions.c.endpoint, func.count()).group_by(t_transactions.c.endpoint)
+            async with self.connect() as conn:
+                result = await conn.execute(query)
+                return {row[0]: row[1] for row in result.fetchall()}
+
+        raise NotImplementedError(f"Unknown facet: {name}")
+
     async def find_transactions(self, *, with_messages=False, filters=None):
         """
         Implements :meth:`IStorage.find_transactions <harp.protocols.storage.IStorage.find_transactions>`.

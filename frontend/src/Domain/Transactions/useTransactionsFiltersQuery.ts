@@ -9,7 +9,9 @@ interface TransactionFilter {
 
 export function useTransactionsFiltersQuery() {
   const api = useApi()
-  return useQuery<Record<string, TransactionFilter>>("transactions/filters", () =>
-    api.fetch("/transactions/filters").then((r) => r.json()),
+  return useQuery<Record<string, TransactionFilter>>(
+    "transactions/filters",
+    () => api.fetch("/transactions/filters").then((r) => r.json()),
+    { refetchInterval: 30000 },
   )
 }
