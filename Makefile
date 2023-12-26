@@ -46,8 +46,8 @@ reference: harp
 
 clean:
 	(cd docs; $(MAKE) clean)
-	rm -rf frontend/dist
-	rm benchmark_*.svg
+	-rm -rf frontend/dist
+	-rm -f benchmark_*.svg
 
 preqa: types format reference
 

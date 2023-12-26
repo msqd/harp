@@ -2,18 +2,17 @@ from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, LargeBinary
 
 metadata = MetaData()
 
-# todo endpoint name + api
 TransactionsTable = Table(
     "sa_transactions",
     metadata,
     Column("id", String(27), primary_key=True, unique=True),
-    Column("type", String(10)),
-    Column("endpoint", String(32), nullable=True),
-    Column("started_at", DateTime()),
+    Column("type", String(10), index=True),
+    Column("endpoint", String(32), nullable=True, index=True),
+    Column("started_at", DateTime(), index=True),
     Column("finished_at", DateTime(), nullable=True),
     Column("elapsed", Float(), nullable=True),
-    Column("x_method", String(16), nullable=True),
-    Column("x_status_class", String(3), nullable=True),
+    Column("x_method", String(16), nullable=True, index=True),
+    Column("x_status_class", String(3), nullable=True, index=True),
 )
 
 BlobsTable = Table(
@@ -27,7 +26,7 @@ MessagesTable = Table(
     "sa_messages",
     metadata,
     Column("id", Integer(), primary_key=True, unique=True, autoincrement=True),
-    Column("transaction_id", String(27), ForeignKey("sa_transactions.id")),
+    Column("transaction_id", String(27), ForeignKey("sa_transactions.id"), index=True),
     Column("kind", String(10)),
     Column("summary", String(255)),
     Column("headers", String(40), ForeignKey("sa_blobs.id")),
