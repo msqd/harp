@@ -2,9 +2,8 @@ import { ArrowLeftIcon } from "@heroicons/react/24/outline"
 import { ElementType } from "react"
 import tw, { styled } from "twin.macro"
 
+import { ResponseStatusBadge } from "Components/Badges/ResponseStatusBadge"
 import { Message } from "Models/Transaction"
-
-import { ResponseStatusBadge } from "../../Utilities/formatters"
 
 interface ResponseHeadingProps extends Message {
   as?: ElementType

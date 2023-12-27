@@ -1,5 +1,5 @@
 import { StrictMode } from "react"
-import ReactDOM from "react-dom/client"
+import { createRoot } from "react-dom/client"
 import { QueryClient, QueryClientProvider } from "react-query"
 import { ReactQueryDevtools } from "react-query/devtools"
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
@@ -39,7 +39,7 @@ const router = createBrowserRouter([
 ])
 const queryClient = new QueryClient()
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <GlobalStyles />

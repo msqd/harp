@@ -57,8 +57,9 @@ types:
 	bin/generate_types
 
 format: install-frontend
-	cd frontend; pnpm prettier -w src
-	$(PRE_COMMIT)
+	cd frontend; pnpm lint:fix; pnpm prettier -w src
+	isort harp tests
+	black harp tests
 
 test:
 	$(MAKE) test-backend

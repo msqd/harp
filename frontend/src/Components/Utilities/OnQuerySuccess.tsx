@@ -1,7 +1,7 @@
 import { ReactElement } from "react"
+import { useErrorBoundary } from "react-error-boundary"
 import { UseQueryResult } from "react-query"
 import { QueryObserverSuccessResult } from "react-query/types/core/types"
-import { useErrorBoundary } from "react-error-boundary"
 
 interface OnQuerySuccessCommonProps<T> {
   children: (...queries: QueryObserverSuccessResult<T>[]) => ReactElement

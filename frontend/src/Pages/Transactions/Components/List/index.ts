@@ -1,2 +1,2 @@
 export { TransactionDataTable } from "./TransactionDataTable"
-export { TransactionMessagePanel } from "./TransactionMessagePanel"
+export { TransactionMessagePanel } from "../Detail/TransactionMessagePanel.tsx"

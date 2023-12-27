@@ -24,8 +24,7 @@ export function TransactionMessagePanel({
   body = null,
   contentType = null,
 }: {
-  Icon: ComponentType<any>
-  //message: TransactionMessage | Record<string, never> | null
+  Icon: ComponentType
   messageId: string | null
   title: ReactNode
   headers?: string | null

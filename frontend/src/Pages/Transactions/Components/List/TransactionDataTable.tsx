@@ -2,12 +2,12 @@ import { StarIcon } from "@heroicons/react/24/outline"
 import { formatDistance, formatDuration } from "date-fns"
 import { useState } from "react"
 
+import { PerformanceRatingBadge } from "Components/Badges"
 import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
 import { Transaction } from "Models/Transaction"
+import { TransactionsDetailDialog } from "Pages/Transactions/TransactionsDetailDialog"
 import { DataTable } from "mkui/Components/DataTable"
 
-import { getDurationRatingBadge } from "../../Utilities/formatters.tsx"
-import { TransactionsDetailDialog } from "../Detail"
 import { RequestHeading, ResponseHeading } from "../Elements"
 
 interface TransactionsDataTableProps {
@@ -42,7 +42,7 @@ const transactionColumnTypes = {
     format: (x: number) => {
       return (
         <div>
-          {getDurationRatingBadge(x)} {formatDuration({ seconds: x })}{" "}
+          <PerformanceRatingBadge duration={x} /> {formatDuration({ seconds: x })}{" "}
         </div>
       )
     },

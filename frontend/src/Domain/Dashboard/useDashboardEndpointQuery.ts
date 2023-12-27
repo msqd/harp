@@ -1,4 +1,5 @@
 import { useQuery } from "react-query"
+
 import { useApi } from "Domain/Api"
 import { DashboardGraphData } from "Models/Dashboard.ts"
 

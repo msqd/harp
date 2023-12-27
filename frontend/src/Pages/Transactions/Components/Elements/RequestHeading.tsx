@@ -3,9 +3,8 @@ import { ElementType } from "react"
 import tw, { styled } from "twin.macro"
 import urlJoin from "url-join"
 
+import { RequestMethodBadge } from "Components/Badges/RequestMethodBadge"
 import { Message } from "Models/Transaction"
-
-import { RequestMethodBadge } from "../../Utilities/formatters.tsx"
 
 interface RequestHeadingProps {
   as?: ElementType
