@@ -33,8 +33,8 @@ def event_loop():
 async def test_api(event_loop):
     shutdown_event = asyncio.Event()
     config = Config()
-    port = get_available_network_port()
-    config.bind = [f"localhost:{port}"]
+    host, port = "localhost", get_available_network_port()
+    config.bind = [f"{host}:{port}"]
 
     # starts the async server in the background
     server = asyncio.ensure_future(
@@ -46,10 +46,10 @@ async def test_api(event_loop):
         loop=event_loop,
     )
     # wait for the server to be accepting connections
-    await asyncio.open_connection("localhost", port)
+    await asyncio.open_connection(host, port)
 
     try:
-        yield StubServerDescription("localhost", port)
+        yield StubServerDescription(host, port)
     finally:
         shutdown_event.set()
         await server
