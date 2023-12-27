@@ -1,0 +1,55 @@
+Version 0.3.0 (2023-12-27)
+==========================
+
+Changes
+:::::::
+
+* chore(deps): upgrade backend dependencies (Romain Dorgueil)
+* chore(deps): upgrade frontend dependencies (Romain Dorgueil)
+* feat: update code splitting settings (Romain Dorgueil)
+* feat: adds a basic readme (Romain Dorgueil)
+* feat: add license file (to be amended later) (Romain Dorgueil)
+* chore: cleaning up and moving common components to components package (Romain Dorgueil)
+* chore(ui/deps): upgrade vitejs (Romain Dorgueil)
+* chore(deps): upgrade ladle to latest version (Romain Dorgueil)
+* feat: add hack to ignore meta in content type, for now (Romain Dorgueil)
+* feat: restore syntax highlighting for json blobs (Romain Dorgueil)
+* feat: real meta for facets (Romain Dorgueil)
+* chore: remove useless run script (cleanup) (Romain Dorgueil)
+* feat: add db indexes on searchable fields (Romain Dorgueil)
+* feat: add ui helper buttons for quick selection (Romain Dorgueil)
+* feat: implement facet filtering for transaction list (kind of naive on backend side, and facet numbers are random) (Romain Dorgueil)
+* feat: transaction filters (wip) (Romain Dorgueil)
+* feat: preinstall (Romain Dorgueil)
+* deat: nodejs (Romain Dorgueil)
+* feat: add sshd (Romain Dorgueil)
+* feat: tmux+python 3.12 (Romain Dorgueil)
+* feat: add codespace configuration (Romain Dorgueil)
+* feat: working on user interface (not functionnal, for now, but design is there) (Romain Dorgueil)
+* feat: fix context as request based (Romain Dorgueil)
+* feat: fix tests around auth (Romain Dorgueil)
+* feat: use hashing algorithms to check passwords (Romain Dorgueil)
+* feat: fix host header, remove deprecated code (Romain Dorgueil)
+* feat: fix basic auth (Romain Dorgueil)
+* feat: implement basic auth with hardcoded passwords in config (Romain Dorgueil)
+* feat: working on settings to implement new auth systems (Romain Dorgueil)
+* feat: working on configuration normalization (Romain Dorgueil)
+* feat: remove tests apidoc (Romain Dorgueil)
+* feat: add cookies tests (Romain Dorgueil)
+* feat: benchmark on virgin gcloud vm for reproductibility (Romain Dorgueil)
+* feat: remove start command as it may differ on some systems (Romain Dorgueil)
+* feat: fix cookies parsing using django method (Romain Dorgueil)
+* debug: cookies (Romain Dorgueil)
+
+Benchmarks
+::::::::::
+
+PostgreSQL
+----------
+
+.. figure:: benchmarks/0.3.0-postgresql.svg
+
+SQLite
+----------
+
+.. figure:: benchmarks/0.3.0-sqlite.svg

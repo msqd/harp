@@ -88,9 +88,12 @@ Add to git ...
 .. code-block:: shell
 
     git commit -m "release: $(poetry version)"
-    git tag -am "$(poetry version)" $(poetry version --short)
 
-    # Push to origin
+Then when commit succeeds ...
+
+.. code-block:: shell
+
+    git tag -am "$(poetry version)" $(poetry version --short)
     git push origin `git rev-parse --abbrev-ref HEAD` --tags
     git push upstream `git rev-parse --abbrev-ref HEAD` --tags
 
