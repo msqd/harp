@@ -1,6 +1,8 @@
 import { ComponentType, ReactNode } from "react"
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
-import { vs } from "react-syntax-highlighter/dist/esm/styles/prism"
+import SyntaxHighlighter from "react-syntax-highlighter/dist/esm/prism-light"
+import BaseStyle from "react-syntax-highlighter/dist/esm/styles/prism/vs"
+
+const Style = { ...BaseStyle }
 
 function _render(content: string | null, contentType: string | null) {
   switch (contentType) {
@@ -10,7 +12,7 @@ function _render(content: string | null, contentType: string | null) {
           language="javascript"
           className="w-fit overflow-x-auto p-4 font-medium text-black language-javascript"
           children={content || ""}
-          style={vs}
+          style={Style}
           customStyle={{ fontSize: "0.9rem", padding: 0, border: 0 }}
         />
       )
