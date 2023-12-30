@@ -30,11 +30,11 @@ LOGGING_FORMATTERS = {
     },
     "plain": {
         "()": structlog.stdlib.ProcessorFormatter,
-        "processor": structlog.dev.ConsoleRenderer(colors=False),
+        "processor": structlog.dev.ConsoleRenderer(exception_formatter=structlog.dev.plain_traceback, colors=False),
     },
     "pretty": {
         "()": structlog.stdlib.ProcessorFormatter,
-        "processor": structlog.dev.ConsoleRenderer(),
+        "processor": structlog.dev.ConsoleRenderer(exception_formatter=structlog.dev.plain_traceback),
     },
     "keyvalue": {
         "()": structlog.stdlib.ProcessorFormatter,
