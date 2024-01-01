@@ -188,7 +188,7 @@ def start(with_docs, with_ui, options, files, services, server_subprocesses):
         )
     )
 
-    processes = {HARP_DASHBOARD_SERVICE, HARP_SERVER_SERVICE}
+    processes = set(manager_factory.defaults)
     if with_docs or HARP_DOCS_SERVICE in services:
         processes.add(HARP_DOCS_SERVICE)
     if with_ui or HARP_UI_SERVICE in services:
