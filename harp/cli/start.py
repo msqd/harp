@@ -11,6 +11,11 @@ from honcho.process import Process
 from harp import ROOT_DIR
 from harp.utils.network import get_available_network_port
 
+HARP_DASHBOARD_SERVICE = "harp:dashboard"
+HARP_DOCS_SERVICE = "harp:docs"
+HARP_SERVER_SERVICE = "harp:server"
+HARP_UI_SERVICE = "harp:ui"
+
 
 class QuietViteHonchoProcess(Process):
     _muted = True
@@ -45,16 +50,19 @@ class QuietViteHonchoProcess(Process):
 
 
 class HonchoManagerFactory:
-    names = {"frontend", "proxy", "docs", "ui"}
-    defaults = {"frontend", "proxy"}
+    names = {HARP_DASHBOARD_SERVICE, HARP_SERVER_SERVICE, HARP_DOCS_SERVICE, HARP_UI_SERVICE}
+    defaults = {HARP_DASHBOARD_SERVICE, HARP_SERVER_SERVICE}
+    commands = {}
 
     def __init__(self, *, proxy_options=()):
-        self.ports = {"frontend": get_available_network_port()}
+        self.ports = {HARP_DASHBOARD_SERVICE: get_available_network_port()}
         self.proxy_ports = {}
         self.proxy_options = proxy_options
-        self.commands = {}
 
-    def get_frontend_executable(self, processes):
+        # copy to allow changes on this instance only
+        self.commands = {**self.commands}
+
+    def _get_dashboard_executable(self, processes):
         # todo make sure the frontend tools are available, in the right versions
         if not os.path.exists(os.path.join(ROOT_DIR, "frontend/node_modules")) or not os.path.exists(
             os.path.join(ROOT_DIR, "vendors/mkui/node_modules")
@@ -65,14 +73,19 @@ class HonchoManagerFactory:
                 "(shortcut to come), install the dependencies (with `harp install-dev`), or do not run the dashboard."
             )
 
-        return f"(cd frontend; pnpm exec vite --host 'localhost' --port {self.ports['frontend']} --strictPort --clearScreen false)"
+        return (
+            os.path.join(ROOT_DIR, "frontend"),
+            f"pnpm exec vite --host 'localhost' --port {self.ports[HARP_DASHBOARD_SERVICE]} --strictPort --clearScreen false",
+        )
 
-    def get_proxy_executable(self, processes):
+    commands[HARP_DASHBOARD_SERVICE] = _get_dashboard_executable
+
+    def _get_server_executable(self, processes):
         cmd = f"{sys.executable} bin/entrypoint"
         proxy_options = list(self.proxy_options)
 
-        if "frontend" in processes:
-            proxy_options.append(f"--set dashboard.devserver_port {self.ports['frontend']}")
+        if HARP_DASHBOARD_SERVICE in processes:
+            proxy_options.append(f"--set dashboard.devserver_port {self.ports[HARP_DASHBOARD_SERVICE]}")
 
         for _name, _port in self.proxy_ports.items():
             proxy_options.append(f"--set proxy.endpoints.{_port}.name {_name}")
@@ -81,15 +94,21 @@ class HonchoManagerFactory:
         if proxy_options:
             cmd += " " + " ".join(proxy_options)
 
-        return f'watchfiles --filter python "{cmd}" harp'
+        return ROOT_DIR, f'watchfiles --filter python "{cmd}" harp'
 
-    def get_docs_executable(self, processes):
-        # todo add check available
-        return "(cd docs; sphinx-autobuild . _build/html)"
+    commands[HARP_SERVER_SERVICE] = _get_server_executable
 
-    def get_ui_executable(self, processes):
+    def _get_docs_executable(self, processes):
         # todo add check available
-        return "(cd vendors/mkui; pnpm serve)"
+        return os.path.join(ROOT_DIR, "docs"), "poetry run sphinx-autobuild . _build/html"
+
+    commands[HARP_DOCS_SERVICE] = _get_docs_executable
+
+    def _get_ui_executable(self, processes):
+        # todo add check available
+        return os.path.join(ROOT_DIR, "vendors/mkui"), "pnpm serve"
+
+    commands[HARP_UI_SERVICE] = _get_ui_executable
 
     def build(self, processes) -> "honcho.Manager":
         from honcho.manager import Manager
@@ -97,18 +116,19 @@ class HonchoManagerFactory:
 
         manager = Manager(Printer(sys.stdout))
         for name in processes:
-            if name in self.commands:
-                command = self.commands[name]
-            elif (method := getattr(self, f"get_{name}_executable", None)) is not None:
-                command = method(processes)
-            else:
+            if not name in self.commands:
                 raise ValueError(f"Unknown process: {name}")
 
+            if callable(self.commands[name]):
+                working_directory, command = self.commands[name](self, processes)
+            else:
+                working_directory, command = os.getcwd(), self.commands[name]
+
             e = os.environ.copy()
-            manager.add_process(name, command, cwd=ROOT_DIR, env=e)
+            manager.add_process(name, command, cwd=working_directory, env=e)
 
             # this hack will change the class impl at runtime for frontend process to avoid misleading log at start.
-            if name == "frontend":
+            if name == HARP_DASHBOARD_SERVICE:
                 manager._processes[name]["obj"].__class__ = QuietViteHonchoProcess
 
         return manager
@@ -117,10 +137,16 @@ class HonchoManagerFactory:
 def _parse_subprocesses(server_subprocesses):
     processes = {}
     for server_subprocess in server_subprocesses:
-        _name, _port, _command = server_subprocess.split(":", 2)
+        try:
+            _name, _port, _command = server_subprocess.split(":", 2)
+        except ValueError as exc:
+            raise click.UsageError(
+                "Invalid server subprocess configuration. Expected format: <name>:<port>:<command>."
+            ) from exc
         _target_port = get_available_network_port()
-        _command = Template(_command).substitute(port=_target_port)
+        _command = Template(_command).safe_substitute(port=_target_port)
         processes[_name] = (_port, _command, _target_port)
+
     return processes
 
 
@@ -162,13 +188,15 @@ def start(with_docs, with_ui, options, files, services, server_subprocesses):
         )
     )
 
-    processes = {"frontend", "proxy"}
-    if with_docs or "docs" in services:
-        processes.add("docs")
-    if with_ui or "ui" in services:
-        processes.add("ui")
+    processes = {HARP_DASHBOARD_SERVICE, HARP_SERVER_SERVICE}
+    if with_docs or HARP_DOCS_SERVICE in services:
+        processes.add(HARP_DOCS_SERVICE)
+    if with_ui or HARP_UI_SERVICE in services:
+        processes.add(HARP_UI_SERVICE)
 
     for _name, (_proxy_port, _cmd, _port) in _parse_subprocesses(server_subprocesses).items():
+        if _name in processes:
+            raise click.UsageError(f"Duplicate process name: {_name}.")
         processes.add(_name)
         manager_factory.proxy_ports[_name] = _proxy_port
         manager_factory.ports[_name] = _port
