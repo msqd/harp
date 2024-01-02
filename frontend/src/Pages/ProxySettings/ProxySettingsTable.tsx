@@ -46,7 +46,7 @@ function Value({ value }: { value: Setting }) {
   return <ProxySettingsTable settings={value} />
 }
 
-export const ProxySettingsTable = ({ settings }: { settings: KeyValueSettings }) => {
+export const ProxySettingsTable = ({ settings }: { settings: KeyValueSettings | Array<Setting> }) => {
   return (
     <table className="min-w-fit divide-y divide-gray-300">
       <tbody className="divide-y divide-gray-200 bg-white">

@@ -1,6 +1,6 @@
 import traceback
-from json import dumps
 
+import orjson
 from whistle import IEventDispatcher
 
 from harp.core.asgi.events import EVENT_CORE_VIEW
@@ -27,13 +27,16 @@ async def on_json_response(event: ViewEvent):
         response.headers["content-type"] = "application/json"
 
         try:
-            serialized = dumps(event.value)
+            serialized = orjson.dumps(
+                event.value,
+                option=orjson.OPT_NON_STR_KEYS | orjson.OPT_NAIVE_UTC,
+            )
             await response.start(status=200)
             await response.body(serialized)
         except TypeError as exc:
             await response.start(status=500)
             await response.body(
-                dumps(
+                orjson.dumps(
                     {
                         "error": "Cannot serialize response to json.",
                         "type": type(exc).__name__,

@@ -5,6 +5,7 @@ from config.common import Configuration
 
 from harp import __revision__, __version__
 from harp.applications.dashboard.settings import DashboardSettings
+from harp.applications.dashboard.utils.dependencies import get_python_dependencies, parse_dependencies
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.views.json import json
@@ -37,10 +38,12 @@ class SystemController:
         settings: Configuration,
     ):
         self.settings = settings
+        self._dependencies = None
 
     def register(self, router):
         router.route(self.prefix + "/")(self.get)
         router.route(self.prefix + "/settings")(self.get_settings)
+        router.route(self.prefix + "/dependencies")(self.get_dependencies)
 
     async def get(self, request: ASGIRequest, response: ASGIResponse):
         context = getattr(request, "context", {})
@@ -59,6 +62,14 @@ class SystemController:
             if "url" in settings["storage"]:
                 settings["storage"]["url"] = re.sub(r"//[^@]*@", "//***@", settings["storage"]["url"])
         return json(settings)
+
+    async def get_dependencies(self, request: ASGIRequest, response: ASGIResponse):
+        return json({"python": await self.__get_cached_python_dependencies()})
+
+    async def __get_cached_python_dependencies(self):
+        if self._dependencies is None:
+            self._dependencies = parse_dependencies(await get_python_dependencies())
+        return self._dependencies
 
 
 if __name__ == "__main__":
