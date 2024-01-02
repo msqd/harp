@@ -5,7 +5,6 @@ from string import Template
 import rich_click as click
 
 from harp import ROOT_DIR
-from harp.cli.utils._hacks import QuietViteHonchoProcess
 from harp.utils.network import get_available_network_port
 
 HARP_DASHBOARD_SERVICE = "harp:dashboard"
@@ -38,9 +37,19 @@ class HonchoManagerFactory:
                 "(shortcut to come), install the dependencies (with `harp install-dev`), or do not run the dashboard."
             )
 
+        host = "localhost"
+
         return (
             os.path.join(ROOT_DIR, "frontend"),
-            f"pnpm exec vite --host 'localhost' --port {self.ports[HARP_DASHBOARD_SERVICE]} --strictPort --clearScreen false",
+            " ".join(
+                [
+                    "pnpm exec vite",
+                    f"--host {host}",
+                    f"--port {self.ports[HARP_DASHBOARD_SERVICE]}",
+                    "--strictPort",
+                    "--clearScreen false",
+                ]
+            ),
         )
 
     commands[HARP_DASHBOARD_SERVICE] = _get_dashboard_executable
@@ -75,13 +84,13 @@ class HonchoManagerFactory:
 
     commands[HARP_UI_SERVICE] = _get_ui_executable
 
-    def build(self, processes) -> "honcho.Manager":
+    def build(self, processes):
         from honcho.manager import Manager
         from honcho.printer import Printer
 
         manager = Manager(Printer(sys.stdout))
         for name in processes:
-            if not name in self.commands:
+            if name not in self.commands:
                 raise ValueError(f"Unknown process: {name}")
 
             if callable(self.commands[name]):
@@ -94,6 +103,8 @@ class HonchoManagerFactory:
 
             # this hack will change the class impl at runtime for frontend process to avoid misleading log at start.
             if name == HARP_DASHBOARD_SERVICE:
+                from harp.cli.utils._hacks import QuietViteHonchoProcess
+
                 manager._processes[name]["obj"].__class__ = QuietViteHonchoProcess
 
         return manager

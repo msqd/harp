@@ -1,3 +1,4 @@
+import importlib.util
 import sys
 from itertools import chain
 
@@ -26,15 +27,18 @@ from harp.cli.utils.manager import (
 @click.argument("services", nargs=-1)
 def start(with_docs, with_ui, options, files, services, server_subprocesses):
     try:
-        # todo check watchfiles too ?
-        from honcho.manager import Manager
-        from honcho.printer import Printer
+        importlib.util.find_spec("honcho")
+        importlib.util.find_spec("watchfiles")
     except ImportError as exc:
         # todo when released on pypi, add more help
         raise click.UsageError(
-            "You must install development dependencies to start the development environment.\n"
-            + "\n"
-            + 'Try to install the "dev" extra.'
+            "\n".join(
+                (
+                    "You must install development dependencies to start the development environment.",
+                    "",
+                    'Try to install the "dev" extra.',
+                )
+            )
         ) from exc
 
     manager_factory = HonchoManagerFactory(
