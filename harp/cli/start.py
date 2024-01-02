@@ -12,6 +12,12 @@ from harp.cli.utils.manager import (
 )
 
 
+def _get_service_name_for_humans(x: str):
+    if ":" in x:
+        return x.split(":", 1)[1]
+    return x
+
+
 @click.command(short_help="Starts the development environment.")
 @click.option("--set", "options", default=(), multiple=True, help="Set proxy configuration options.")
 @click.option("--file", "-f", "files", default=(), multiple=True, help="Load configuration from file.")
@@ -22,7 +28,7 @@ from harp.cli.utils.manager import (
     "-XS",
     "server_subprocesses",
     multiple=True,
-    help="Add a server subprocess to the list of processes to start.",
+    help="Add a server subprocess to the list of services to start.",
 )
 @click.argument("services", nargs=-1)
 def start(with_docs, with_ui, options, files, services, server_subprocesses):
@@ -53,26 +59,30 @@ def start(with_docs, with_ui, options, files, services, server_subprocesses):
         )
     )
 
-    processes = set(manager_factory.defaults)
+    services = {f"harp:{_name}" for _name in services or ()} or set(manager_factory.defaults)
     if with_docs or HARP_DOCS_SERVICE in services:
-        processes.add(HARP_DOCS_SERVICE)
+        services.add(HARP_DOCS_SERVICE)
     if with_ui or HARP_UI_SERVICE in services:
-        processes.add(HARP_UI_SERVICE)
+        services.add(HARP_UI_SERVICE)
 
     for _name, (_proxy_port, _cmd, _port) in parse_server_subprocesses_options(server_subprocesses).items():
-        if _name in processes:
+        if _name in services:
             raise click.UsageError(f"Duplicate process name: {_name}.")
-        processes.add(_name)
+        services.add(_name)
         manager_factory.proxy_ports[_name] = _proxy_port
         manager_factory.ports[_name] = _port
         manager_factory.commands[_name] = _cmd
 
     # allow to limit the services to start
     if services:
-        unknown_services = set(services) - processes
+        unknown_services = set(services) - manager_factory.names
         if unknown_services:
-            raise click.UsageError(f"Unknown services: {', '.join(unknown_services)}")
+            unknown_services_as_string = ", ".join(map(_get_service_name_for_humans, sorted(unknown_services)))
+            known_services_as_string = ", ".join(map(_get_service_name_for_humans, sorted(manager_factory.names)))
+            raise click.UsageError(
+                f"Unknown services: {unknown_services_as_string}. Available: {known_services_as_string}."
+            )
 
-    manager = manager_factory.build(processes)
+    manager = manager_factory.build(services)
     manager.loop()
     sys.exit(manager.returncode)
