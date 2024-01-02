@@ -59,7 +59,7 @@ Generate a changelog...
 .. code-block:: shell-session
 
     docker-compose up -d
-    make benchmark-save
+    poetry run make benchmark-save
 
 Then **edit the changelogs index** to add a title, date, **run the benchmarks** and **add perf graphs to docs**.
 
@@ -68,7 +68,7 @@ Add to git ...
 .. code-block:: shell-session
 
     git add -p pyproject.toml poetry.lock harp/__init__.py add docs/development/changelogs/
-    make preqa; git add docs/reference; git add -p
+    poetry run make preqa; git add docs/reference; git add -p
 
 3. Run a full test suite (todo: from a clean virtualenv)
 
@@ -79,7 +79,7 @@ Add to git ...
 
 .. code-block:: shell
 
-   make qa
+   poetry run make qa
 
 **TODO: Generate benchmarks ???**
 
