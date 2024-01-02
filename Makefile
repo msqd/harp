@@ -115,7 +115,9 @@ benchmark-save:
 .PHONY: build build-dev push push-dev run run-shell run-example-repositories run-dev run-dev-shell
 
 build:
+	echo $(VERSION) > version.txt
 	$(DOCKER) build --progress=plain --target=$(DOCKER_BUILD_TARGET) $(DOCKER_BUILD_OPTIONS) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .
+	-rm -f version.txt
 
 build-dev:
 	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) DOCKER_BUILD_TARGET=development $(MAKE) build

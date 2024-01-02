@@ -7,6 +7,11 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 __version__ = "0.3.1"
 __revision__ = __version__  # we can't commit the not yet known revision
 
+# override with version.txt if available (after docker build for example)
+if os.path.exists(os.path.join(ROOT_DIR, "version.txt")):
+    with open(os.path.join(ROOT_DIR, "version.txt")) as f:
+        __version__ = f.read().strip()
+
 # override with current development version/revision if available
 if os.path.exists(os.path.join(ROOT_DIR, ".git")):
     __revision__ = check_output(["git", "rev-parse", "HEAD"], cwd=ROOT_DIR).decode("utf-8").strip()
