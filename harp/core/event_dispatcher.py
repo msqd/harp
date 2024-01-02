@@ -1,7 +1,8 @@
 from typing import Optional
 
+from whistle import AsyncEventDispatcher, IDispatchedEvent, IEvent
+
 from harp import get_logger
-from whistle import AsyncEventDispatcher, IEvent, IDispatchedEvent
 
 logger = get_logger(__name__)
 

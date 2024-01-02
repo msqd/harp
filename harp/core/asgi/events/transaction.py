@@ -1,5 +1,6 @@
-from harp.core.models.transactions import Transaction
 from whistle import Event
+
+from harp.core.models.transactions import Transaction
 
 
 class TransactionEvent(Event):

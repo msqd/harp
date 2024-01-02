@@ -22,7 +22,7 @@ dataclasses-jsonschema = "^2.16.0"
 honcho = { version = "^1.1.0", optional = true }
 http-router = "^4.0.0"
 httpx = "^0.26.0"
-hypercorn = "^0.15.0"
+hypercorn = "^0.16.0"
 multidict = "^6.0.4"
 passlib = "^1.7.4"
 psycopg2-binary = "^2.9.9"
