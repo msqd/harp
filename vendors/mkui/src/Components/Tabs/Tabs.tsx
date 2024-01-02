@@ -21,7 +21,7 @@ function TabRoot({ children }: { children: ReactNode }) {
   )
 }
 
-export let Tab = Object.assign(TabRoot, {
+export const Tab = Object.assign(TabRoot, {
   Group: HeadlessUITab.Group,
   List: SC.List,
   Panels: SC.Panels,

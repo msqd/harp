@@ -1,7 +1,6 @@
-import { Tab } from "@headlessui/react"
-
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
 import { useSystemSettingsQuery } from "Domain/System"
+import { Tab } from "mkui/Components/Tabs"
 
 import { SettingsTable } from "./Components"
 
