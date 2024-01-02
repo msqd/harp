@@ -18,7 +18,7 @@ SED ?= $(shell which gsed || which sed || echo "sed")
 ########################################################################################################################
 # Local development
 ########################################################################################################################
-.PHONY: install install-frontend install-backend install-ui reference
+.PHONY: install install-frontend install-backend install-ui reference frontend
 
 install: install-frontend install-backend
 
@@ -36,6 +36,9 @@ reference: harp
 	mkdir -p docs/reference/python
 	sphinx-apidoc --tocfile index --separate -f -o docs/reference/python -t docs/_api_templates harp '**/tests'
 	$(SED) -i "1s/.*/Python Package/" docs/reference/python/index.rst
+
+frontend:
+	cd frontend; pnpm build
 
 
 ########################################################################################################################

@@ -12,7 +12,7 @@ dependencies:
     specifier: ^11.11.0
     version: 11.11.0(@emotion/react@11.11.3)(@types/react@18.2.45)(react@18.2.0)
   '@headlessui/react':
-    specifier: ^1.7.17
+    specifier: 1.7.17
     version: 1.7.17(react-dom@18.2.0)(react@18.2.0)
   '@heroicons/react':
     specifier: ^2.1.1
