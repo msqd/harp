@@ -20,7 +20,7 @@ interface NavbarProps {
   rightChildren?: ReactElement
 }
 
-const NavbarContainer = styled(Disclosure)(() => [tw`bg-white shadow`])
+const NavbarContainer = styled(Disclosure)(() => [tw`bg-primary-900 shadow`])
 const DefaultNavbarWrapper = styled.div(() => [tw`mx-auto max-w-7xl px-2 sm:px-6 lg:px-8`])
 const DefaultLink = styled.a(() => tw`cursor-pointer`)
 
@@ -43,7 +43,7 @@ function Navbar({
   rightChildren = undefined,
 }: NavbarProps) {
   return (
-    <NavbarContainer as="nav" style={{ backgroundColor: "#06609F" }}>
+    <NavbarContainer as="nav">
       {({ open }: { open: boolean }) => (
         <>
           <Wrapper>

@@ -6,7 +6,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom"
 
 import { Layout } from "Components/Layout"
 import { Dashboard } from "Pages/Dashboard"
-import { ProxySettings } from "Pages/ProxySettings"
+import { ProxySettings } from "Pages/System"
 import GlobalStyles from "Styles/GlobalStyles"
 
 import { TransactionsListPage } from "./Pages/Transactions"
