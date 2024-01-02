@@ -21,7 +21,7 @@ class ControllerResolver:
     def __init__(self, *, default_controller=None):
         self.default_controller = default_controller or not_found_controller
 
-    async def resolve(self, request):
+    async def resolve(self, request: ASGIRequest):
         return self.default_controller
 
 
@@ -33,5 +33,5 @@ class ProxyControllerResolver(ControllerResolver):
     def add(self, port: int | str, controller):
         self._ports[int(port)] = controller
 
-    async def resolve(self, request):
+    async def resolve(self, request: ASGIRequest):
         return self._ports.get(request.port, self.default_controller)
