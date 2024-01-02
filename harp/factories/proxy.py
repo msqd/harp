@@ -9,7 +9,7 @@ from typing import Type
 
 from hypercorn.typing import ASGIFramework
 from rodi import CannotResolveParameterException, CannotResolveTypeException, Container, Services
-from whistle.protocols import IAsyncEventDispatcher
+from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.applications.dashboard.controllers import DashboardController
@@ -132,7 +132,7 @@ class ProxyFactory:
 
         # bind services
 
-        await self.dispatcher.dispatch(EVENT_FACTORY_BIND, ProxyFactoryBindEvent(self.container, self.settings))
+        await self.dispatcher.adispatch(EVENT_FACTORY_BIND, ProxyFactoryBindEvent(self.container, self.settings))
 
         try:
             provider = self.container.build_provider()

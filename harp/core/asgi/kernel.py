@@ -35,8 +35,10 @@ class ASGIKernel:
     RequestType = ASGIRequest
     ResponseType = ASGIResponse
 
+    dispatcher: IAsyncEventDispatcher
+
     def __init__(self, *, dispatcher=None, resolver=None, debug=False):
-        self.dispatcher: IAsyncEventDispatcher = dispatcher or AsyncEventDispatcher()
+        self.dispatcher = dispatcher or AsyncEventDispatcher()
         # TODO IControllerResolver ? What contract do we expect ?
         self.resolver = resolver or ControllerResolver()
         self.started = False
@@ -73,7 +75,7 @@ class ASGIKernel:
 
         if request.type == "lifespan":
             await request.receive()
-            await self.dispatcher.dispatch(EVENT_CORE_STARTED, Event())
+            await self.dispatcher.adispatch(EVENT_CORE_STARTED, Event())
             self.started = True
             return
 
@@ -90,7 +92,7 @@ class ASGIKernel:
             raise RuntimeError("Unable to find request controller using resolver.")
 
         event = ControllerEvent(request, controller)
-        await self.dispatcher.dispatch(EVENT_CORE_CONTROLLER, event)
+        await self.dispatcher.adispatch(EVENT_CORE_CONTROLLER, event)
 
         if not event.controller:
             raise RuntimeError("Unable to find request controller after controller event dispatch.")
@@ -103,19 +105,19 @@ class ASGIKernel:
             if response.started:
                 raise RuntimeError("Cannot both use the response api and return value in controller.")
             event = ViewEvent(request, response, retval)
-            await self.dispatcher.dispatch(EVENT_CORE_VIEW, event)
+            await self.dispatcher.adispatch(EVENT_CORE_VIEW, event)
 
         if not response.started:
             raise RuntimeError(
                 f"Response did not start despite the efforts made (controller return value is {type(retval).__name__})."
             )
 
-        await self.dispatcher.dispatch(EVENT_CORE_RESPONSE, ResponseEvent(request, response))
+        await self.dispatcher.adispatch(EVENT_CORE_RESPONSE, ResponseEvent(request, response))
         return response
 
     async def handle_http(self, request: ASGIRequest, response: ASGIResponse):
         event = RequestEvent(request)
-        await self.dispatcher.dispatch(EVENT_CORE_REQUEST, event)
+        await self.dispatcher.adispatch(EVENT_CORE_REQUEST, event)
 
         if event.controller:
             return await self._execute_controller(event.controller, request, response)

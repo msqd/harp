@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 
 import httpx
 from httpx import codes
-from whistle.protocols import IAsyncEventDispatcher
+from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.core.asgi.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
@@ -41,14 +41,14 @@ class HttpProxyController:
         self.name = name or self.name
         self._dispatcher = dispatcher or self._dispatcher
 
-    async def dispatch(self, event_id, event=None):
+    async def adispatch(self, event_id, event=None):
         """
         Shortcut method to dispatch an event using the controller's dispatcher, if there is one.
 
         :return: :class:`IEvent <whistle.protocols.IEvent>` or None
         """
         if self._dispatcher:
-            return await self._dispatcher.dispatch(event_id, event)
+            return await self._dispatcher.adispatch(event_id, event)
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponse):
         """Handle an incoming request and proxy it to the configured URL.
@@ -72,10 +72,10 @@ class HttpProxyController:
 
         # dispatch transaction started event
         # we don't really want to await this, should run in background ? or use an async queue ?
-        await self.dispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(transaction))
+        await self.adispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(transaction))
 
         # dispatch message event for request
-        await self.dispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, request))
+        await self.adispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, request))
 
         # PROXY REQUEST
         request_headers = tuple(((k, v) for k, v in request.headers.items() if k.lower() not in ("host",)))
@@ -123,13 +123,13 @@ class HttpProxyController:
         logger.debug(f"◀ {status} {reason} ({spent}ms)", transaction_id=transaction.id)
 
         # dispatch message event for response
-        await self.dispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, response))
+        await self.adispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, response))
 
         transaction.finished_at = datetime.now(UTC)
         transaction.elapsed = spent
 
         # dispatch transaction ended event
-        await self.dispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(transaction))
+        await self.adispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(transaction))
 
     async def _suboptimal_temporary_extract_request_content(self, request: ASGIRequest):
         """

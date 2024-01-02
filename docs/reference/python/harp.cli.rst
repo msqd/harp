@@ -1,6 +1,14 @@
 harp.cli package
 ================
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   harp.cli.utils
+
 Submodules
 ----------
 

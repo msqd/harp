@@ -1,5 +1,4 @@
-from whistle import Event
-from whistle.dispatcher import AsyncEventDispatcher
+from whistle import AsyncEventDispatcher, Event
 
 from harp import get_logger
 
@@ -19,9 +18,9 @@ class LoggingAsyncEventDispatcher(AsyncEventDispatcher):
     todo: add check for non oroutines listeners which is wrong but leads to an undecypherable error message
     """
 
-    async def dispatch(self, event_id, event=None):
+    async def adispatch(self, event_id, event=None):
         logger.debug(f"⚡ {event_id} ({type(event).__name__})")
         try:
-            return await super().dispatch(event_id, event)
+            return await super().adispatch(event_id, event)
         except Exception as e:
             logger.exception(f"⚡ {event_id} ({type(event).__name__}) failed: {e}")
