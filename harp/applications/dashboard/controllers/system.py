@@ -1,12 +1,11 @@
-import asyncio
 import re
-import sys
 from copy import deepcopy
 
 from config.common import Configuration
 
 from harp import __revision__, __version__
 from harp.applications.dashboard.settings import DashboardSettings
+from harp.applications.dashboard.utils.dependencies import get_python_dependencies, parse_dependencies
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.views.json import json
@@ -29,28 +28,6 @@ def _asdict(obj):
         return result
 
     return obj
-
-
-async def check_output(*args, **kwargs):
-    p = await asyncio.create_subprocess_exec(
-        *args,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        **kwargs,
-    )
-    stdout_data, stderr_data = await p.communicate()
-
-    if p.returncode == 0:
-        return stdout_data
-
-
-async def get_python_dependencies():
-    return list(
-        filter(
-            lambda x: x and not x.startswith("#"),
-            (await check_output(sys.executable, "-m", "pip", "freeze")).decode("utf-8").split("\n"),
-        ),
-    )
 
 
 class SystemController:
@@ -86,13 +63,13 @@ class SystemController:
                 settings["storage"]["url"] = re.sub(r"//[^@]*@", "//***@", settings["storage"]["url"])
         return json(settings)
 
-    async def _get_python_dependencies(self):
-        if self._dependencies is None:
-            self._dependencies = await get_python_dependencies()
-        return self._dependencies
-
     async def get_dependencies(self, request: ASGIRequest, response: ASGIResponse):
-        return json({"python": await self._get_python_dependencies()})
+        return json({"python": await self.__get_cached_python_dependencies()})
+
+    async def __get_cached_python_dependencies(self):
+        if self._dependencies is None:
+            self._dependencies = parse_dependencies(await get_python_dependencies())
+        return self._dependencies
 
 
 if __name__ == "__main__":

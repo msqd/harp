@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    harp.applications.dashboard.controllers
+   harp.applications.dashboard.utils
 
 Submodules
 ----------
