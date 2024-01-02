@@ -2,7 +2,7 @@ from dataclasses import asdict
 
 from config.common import Configuration
 from rodi import Container
-from whistle.protocols import IAsyncEventDispatcher
+from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings

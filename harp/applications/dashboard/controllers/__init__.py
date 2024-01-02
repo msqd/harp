@@ -12,6 +12,7 @@ from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.controllers.routing import RoutingController
 from harp.core.views.json import json
+from harp.errors import ProxyConfigurationError
 from harp.protocols.storage import IStorage
 
 logger = get_logger(__name__)
@@ -29,6 +30,7 @@ class DashboardController:
     settings: Configuration
 
     _ui_static_middleware = None
+    _ui_devserver_proxy_controller = None
 
     def __init__(self, storage: IStorage, settings: Configuration):
         # context for usage in handlers
@@ -39,26 +41,32 @@ class DashboardController:
         self.auth = self.settings.dashboard.auth
 
         # controllers for delegating requests
-        self._devserver_proxy_controller = self._create_devserver_proxy_controller()
-        self._routing_controller = self._create_routing_controller()
+        if self.settings.dashboard.devserver_port:
+            self._ui_devserver_proxy_controller = self._create_ui_devserver_proxy_controller(
+                port=self.settings.dashboard.devserver_port
+            )
 
-        self.sub_controllers = [
-            TransactionsController(self.storage),
-            SystemController(self.settings),
-        ]
+        # register the subcontrollers, aka the api handlers
+        self._internal_api_controller = self._create_routing_controller()
 
-        for _controller in self.sub_controllers:
-            _controller.register(self._routing_controller.router)
+        # if no devserver is configured, we may need to serve static files
+        if not self._ui_devserver_proxy_controller:
+            for _path in STATIC_BUILD_PATHS:
+                logger.info("Checking for static files in %s", _path)
+                if os.path.exists(_path):
+                    logger.info("Serving static files from %s", _path)
+                    self._ui_static_middleware = ASGIMiddlewareStaticFile(None, "", [_path])
+                    break
 
-        for _path in STATIC_BUILD_PATHS:
-            logger.info("Checking for static files in %s", _path)
-            if os.path.exists(_path):
-                logger.info("Serving static files from %s", _path)
-                self._ui_static_middleware = ASGIMiddlewareStaticFile(None, "", [_path])
-                break
+        # if no devserver is configured and no static files are found, we can't serve the dashboard
+        if not self._ui_static_middleware and not self._ui_devserver_proxy_controller:
+            raise ProxyConfigurationError(
+                "Dashboard controller could not initiate because it got neither compiled assets nor a devserver "
+                "configuration."
+            )
 
-    def _create_devserver_proxy_controller(self):
-        return HttpProxyController("http://localhost:4999/")
+    def _create_ui_devserver_proxy_controller(self, *, port):
+        return HttpProxyController(f"http://localhost:{port}/")
 
     def _create_routing_controller(self):
         controller = RoutingController(handle_errors=False)
@@ -66,6 +74,14 @@ class DashboardController:
         router.route("/api/blobs/{blob}")(self.get_blob)
         router.route("/api/dashboard")(self.get_dashboard_data)
         router.route("/api/dashboard/{endpoint}")(self.get_dashboard_data_for_endpoint)
+
+        # subcontrollers
+        for _controller in (
+            TransactionsController(self.storage),
+            SystemController(self.settings),
+        ):
+            _controller.register(controller.router)
+
         return controller
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
@@ -84,8 +100,6 @@ class DashboardController:
                 await response.body(b"Unauthorized")
                 return
 
-        logger.debug(f"📈 {request.method} {request.path}")
-
         # Is this a prebuilt static asset?
         if self._ui_static_middleware and not request.path.startswith("/api/"):
             try:
@@ -102,9 +116,13 @@ class DashboardController:
                 response.started = True
 
         try:
-            return await self._routing_controller(request, response)
+            return await self._internal_api_controller(request, response)
         except NotFoundError:
-            return await self._devserver_proxy_controller(request, response)
+            if self._ui_devserver_proxy_controller:
+                return await self._ui_devserver_proxy_controller(request, response)
+
+        await response.start(status=404)
+        await response.body("Not found.")
 
     async def get_blob(self, request: ASGIRequest, response: ASGIResponse, blob):
         blob = await self.storage.get_blob(blob)

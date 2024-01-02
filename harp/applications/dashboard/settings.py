@@ -73,6 +73,8 @@ class DashboardSettings(BaseSetting):
     port: int | str = 4080
     auth: Optional[DashboardAuthSettings] = None
 
+    devserver_port: Optional[int | str] = None
+
     def __new__(cls, **kwargs):
         # todo generic management of disablable settings
         _enabled = kwargs.pop("enabled", True)
