@@ -32,6 +32,7 @@ sqlalchemy-utils = "^0.41.1"
 structlog = "^23.3.0"
 svix-ksuid = "^0.6.2"
 watchfiles = { version = "^0.21.0", optional = true }
+orjson = "^3.9.10"
 
 [tool.poetry.dependencies.essentials-configuration]
 path = "./vendors/config"

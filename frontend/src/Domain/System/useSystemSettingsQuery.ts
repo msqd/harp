@@ -6,7 +6,7 @@ export interface KeyValueSettings {
   [key: string]: Setting
 }
 
-export type Setting = string | number | boolean | null | KeyValueSettings
+export type Setting = string | number | boolean | null | KeyValueSettings | Array<Setting>
 
 export function useSystemSettingsQuery() {
   const api = useApi()

@@ -1,4 +1,6 @@
+import asyncio
 import re
+import sys
 from copy import deepcopy
 
 from config.common import Configuration
@@ -29,6 +31,28 @@ def _asdict(obj):
     return obj
 
 
+async def check_output(*args, **kwargs):
+    p = await asyncio.create_subprocess_exec(
+        *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        **kwargs,
+    )
+    stdout_data, stderr_data = await p.communicate()
+
+    if p.returncode == 0:
+        return stdout_data
+
+
+async def get_python_dependencies():
+    return list(
+        filter(
+            None,
+            (await check_output(sys.executable, "-m", "pip", "freeze")).decode("utf-8").split("\n"),
+        ),
+    )
+
+
 class SystemController:
     prefix = "/api/system"
 
@@ -37,10 +61,12 @@ class SystemController:
         settings: Configuration,
     ):
         self.settings = settings
+        self._dependencies = None
 
     def register(self, router):
         router.route(self.prefix + "/")(self.get)
         router.route(self.prefix + "/settings")(self.get_settings)
+        router.route(self.prefix + "/dependencies")(self.get_dependencies)
 
     async def get(self, request: ASGIRequest, response: ASGIResponse):
         context = getattr(request, "context", {})
@@ -59,6 +85,14 @@ class SystemController:
             if "url" in settings["storage"]:
                 settings["storage"]["url"] = re.sub(r"//[^@]*@", "//***@", settings["storage"]["url"])
         return json(settings)
+
+    async def _get_python_dependencies(self):
+        if self._dependencies is None:
+            self._dependencies = await get_python_dependencies()
+        return self._dependencies
+
+    async def get_dependencies(self, request: ASGIRequest, response: ASGIResponse):
+        return json({"python": await self._get_python_dependencies()})
 
 
 if __name__ == "__main__":
