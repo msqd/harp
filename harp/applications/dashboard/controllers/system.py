@@ -47,7 +47,7 @@ async def check_output(*args, **kwargs):
 async def get_python_dependencies():
     return list(
         filter(
-            None,
+            lambda x: x and not x.startswith("#"),
             (await check_output(sys.executable, "-m", "pip", "freeze")).decode("utf-8").split("\n"),
         ),
     )
