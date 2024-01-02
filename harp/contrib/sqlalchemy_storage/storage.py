@@ -2,7 +2,7 @@ from datetime import UTC
 
 from sqlalchemy import alias, func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from whistle.protocols import IAsyncEventDispatcher
+from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings

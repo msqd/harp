@@ -45,7 +45,7 @@ class HttpProxyController:
         """
         Shortcut method to dispatch an event using the controller's dispatcher, if there is one.
 
-        :return: :class:`IEvent <whistle.protocols.IEvent>` or None
+        :return: :class:`IEvent <whistle.IEvent>` or None
         """
         if self._dispatcher:
             return await self._dispatcher.adispatch(event_id, event)

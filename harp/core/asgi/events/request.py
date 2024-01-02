@@ -1,9 +1,9 @@
 from functools import cached_property
 
-from harp.core.event_dispatcher import BaseEvent
+from whistle import Event
 
 
-class RequestEvent(BaseEvent):
+class RequestEvent(Event):
     def __init__(self, request):
         self._request = request
         self._controller = None
