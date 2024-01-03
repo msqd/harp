@@ -5,14 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
+from harp.apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
 from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
 from harp.contrib.sqlalchemy_storage.tables import BlobsTable, MessagesTable, TransactionsTable, metadata
-from harp.core.asgi.events import (
-    EVENT_CORE_STARTED,
-    EVENT_TRANSACTION_ENDED,
-    EVENT_TRANSACTION_MESSAGE,
-    EVENT_TRANSACTION_STARTED,
-)
+from harp.core.asgi.events import EVENT_CORE_STARTED
 from harp.core.asgi.events.message import MessageEvent
 from harp.core.asgi.events.transaction import TransactionEvent
 from harp.core.models.messages import Blob, Message

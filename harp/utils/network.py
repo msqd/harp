@@ -1,3 +1,4 @@
+import dataclasses
 import socket
 import time
 
@@ -32,3 +33,12 @@ def wait_for_port(port: int, host: str = "localhost", timeout: float = 5.0):
                 raise TimeoutError(
                     "Waited too long for the port {} on host {} to start accepting " "connections.".format(port, host)
                 ) from ex
+
+
+@dataclasses.dataclass(frozen=True)
+class Bind:
+    host: str
+    port: int
+
+    def __str__(self):
+        return f"{self.host}:{self.port}"

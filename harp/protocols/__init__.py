@@ -1,0 +1,2 @@
+class ISettings(dict):
+    pass

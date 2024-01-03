@@ -1,8 +1,11 @@
 import json
 
+from harp import get_logger
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
 from harp.utils.json import BytesEncoder
+
+logger = get_logger(__name__)
 
 
 async def dump_request_controller(request: ASGIRequest, response: ASGIResponse):
@@ -30,8 +33,14 @@ class ProxyControllerResolver(ControllerResolver):
         super().__init__(default_controller=default_controller)
         self._ports = {}
 
+    @property
+    def ports(self):
+        return tuple(self._ports.keys())
+
     def add(self, port: int | str, controller):
-        self._ports[int(port)] = controller
+        port = int(port)
+        self._ports[port] = controller
+        logger.info(f"🏭 {type(self).__name__}::add(:{port} -> {controller})")
 
     async def resolve(self, request: ASGIRequest):
         return self._ports.get(request.port, self.default_controller)

@@ -96,6 +96,7 @@ class ASGIKernel:
 
         if not event.controller:
             raise RuntimeError("Unable to find request controller after controller event dispatch.")
+
         return event.controller
 
     async def _execute_controller(self, controller, request: ASGIRequest, response: ASGIResponse):
