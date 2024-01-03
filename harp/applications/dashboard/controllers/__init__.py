@@ -65,6 +65,14 @@ class DashboardController:
                 "configuration."
             )
 
+    def __repr__(self):
+        features = {
+            "api": bool(self._internal_api_controller),
+            "devserver": bool(self._ui_devserver_proxy_controller),
+            "static": bool(self._ui_static_middleware),
+        }
+        return f"{type(self).__name__}({'+'.join(f for f in features if features[f])})"
+
     def _create_ui_devserver_proxy_controller(self, *, port):
         return HttpProxyController(f"http://localhost:{port}/")
 
