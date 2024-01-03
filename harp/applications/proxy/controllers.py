@@ -148,3 +148,6 @@ class HttpProxyController:
             messages.append(part)
             request._body += part
         return b"".join(messages) if len(messages) else None
+
+    def __repr__(self):
+        return f"{type(self).__name__}({self.url!r}, name={self.name!r})"

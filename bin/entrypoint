@@ -3,15 +3,21 @@
 import asyncio
 import sys
 
-from harp import ProxyFactory
+from harp import ProxyFactory, get_logger, get_server_adapter
+
+logger = get_logger(__name__)
 
 
-def create_proxy():
-    proxy = ProxyFactory(args=sys.argv[1:])
-    proxy.load("harp.contrib.sqlalchemy_storage")
-    return proxy
+class Factory(ProxyFactory):
+    def configure(self):
+        self.load("harp.contrib.sqlalchemy_storage")
 
 
 if __name__ == "__main__":
-    proxy = create_proxy()
-    asyncio.run(proxy.serve())
+    try:
+        proxy = Factory()
+        adapter = get_server_adapter(proxy)
+    except Exception as exc:
+        logger.fatal(exc, exc_info=True)
+        sys.exit(1)
+    asyncio.run(adapter.serve())
