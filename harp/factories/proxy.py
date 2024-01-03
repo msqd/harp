@@ -2,10 +2,11 @@
 :class:`ProxyFactory` is a helper to create proxies. It will load configuration, build services, create an
 :class:`ASGIKernel <harp.core.asgi.kernel.ASGIKernel>` and prepare it for its future purpose.
 """
-import logging
+import dataclasses
 from argparse import ArgumentParser
 from collections import defaultdict
-from typing import Type
+from functools import cached_property
+from typing import Set, Type
 
 from hypercorn.typing import ASGIFramework
 from rodi import CannotResolveParameterException, CannotResolveTypeException, Container, Services
@@ -35,11 +36,26 @@ _PROXY_ENDPOINT_REQUIRED_KEYS = {"url", "name"}
 logger = get_logger(__name__)
 
 
+@dataclasses.dataclass(frozen=True)
+class Bind:
+    host: str
+    port: int
+
+    def __str__(self):
+        return f"{self.host}:{self.port}"
+
+
 class ProxyFactory:
     DEFAULT_DASHBOARD_PORT = 4080
     KernelType: Type[ASGIKernel] = ASGIKernel
 
-    def __init__(self, *, binds=("[::]",), settings=None, args=None):
+    _binds: Set[Bind] = None
+
+    @cached_property
+    def binds(self) -> Set[Bind]:
+        return self._binds
+
+    def __init__(self, *, hostnames=("[::]",), settings=None, args=None):
         _options = self._get_values_from_arguments(args)
         self.settings = create_settings(
             settings, values=_options.values if _options else None, files=_options.files if _options else None
@@ -49,13 +65,79 @@ class ProxyFactory:
 
         self.resolver = ProxyControllerResolver()
 
-        self.binds = binds
+        self._hostnames = hostnames
         self.__server_binds = set()
+
+        self._binds = set()
 
         for extension in self.settings.values.get("extensions", []):
             self.load(extension)
 
+        self.configure()
+
+    def configure(self):
+        pass
+
+    def add(self, port, target, *, name=None, description=None):
+        """
+        Adds a port to proxy to a remote target (url).
+
+        :param port: The port to listen on.
+        :param target: The target url to proxy to.
+        :param name: The name of the proxy. This is used to identify the proxy in the dashboard.
+        :param description: The description of the proxy. Humans will like it like it (if we implement it...).
+        """
+        controller = HttpProxyController(target, name=name, dispatcher=self.dispatcher)
+        self.resolver.add(port, controller)
+
+        logger.info(f"🏭 :{port} -> {controller}")
+        for hostname in self._hostnames:
+            self.binds.add(Bind(hostname, port))
+
+    def load(self, plugin):
+        """
+        Loads a python package that can register itself. The plugin spec will be thought about in the far future, but
+        for now it mostly consists of a register function that takes a dispatcher as argument.
+
+        :param plugin: The qualified path of the plugin to load.
+        """
+        try:
+            plugin = __import__(plugin, fromlist=["register"])
+        except ImportError as exc:
+            raise RuntimeError(f"Module {plugin} does not have a register function or could not be imported.") from exc
+        plugin.register(self.container, self.dispatcher, self.settings)
+
+    async def create(self) -> ASGIFramework:
+        """
+        Builds the actual proxy as an ASGI application.
+
+        :param args:
+        :param kwargs:
+        :return: ASGI application
+        """
+
+        # bind services
+
+        await self.dispatcher.adispatch(EVENT_FACTORY_BIND, ProxyFactoryBindEvent(self.container, self.settings))
+
+        try:
+            provider = self.container.build_provider()
+        except CannotResolveParameterException as exc:
+            raise ProxyConfigurationError("Cannot build container: unresolvable parameter.") from exc
+        self._on_create_configure_dashboard_if_needed(provider)
+        self._on_create_configure_endpoints(provider)
+
+        # noinspection PyTypeChecker
+        return self.KernelType(dispatcher=self.dispatcher, resolver=self.resolver)
+
     def _get_values_from_arguments(self, args=None):
+        """
+        Parses sys.argv-like arguments.
+
+        :param args:
+        :return: argparse.Namespace
+
+        """
         if not args:
             return None
         parser = ArgumentParser()
@@ -93,59 +175,6 @@ class ProxyFactory:
 
         return dispatcher
 
-    def add(self, port, target, *, name=None, description=None):
-        """
-        Adds a port to proxy to a remote target (url).
-
-        :param port: The port to listen on.
-        :param target: The target url to proxy to.
-        :param name: The name of the proxy. This is used to identify the proxy in the dashboard.
-        :param description: The description of the proxy. Humans will like it like it (if we implement it...).
-        """
-        self.resolver.add(port, HttpProxyController(target, name=name, dispatcher=self.dispatcher))
-
-        for bind in self.binds:
-            logger.info(f"Adding proxy on {bind}:{port} to {target}")
-            self.__server_binds.add(f"{bind}:{port}")
-
-    def load(self, plugin):
-        """
-        Loads a python package that can register itself. The plugin spec will be thought about in the far future, but
-        for now it mostly consists of a register function that takes a dispatcher as argument.
-
-        :param plugin: The qualified path of the plugin to load.
-        """
-        try:
-            plugin = __import__(plugin, fromlist=["register"])
-        except ImportError as exc:
-            raise RuntimeError(f"Module {plugin} does not have a register function or could not be imported.") from exc
-        plugin.register(self.container, self.dispatcher, self.settings)
-
-    async def create(self) -> ASGIFramework:
-        """
-        Builds the actual proxy as an ASGI application.
-
-        :param args:
-        :param kwargs:
-        :return: ASGI application
-        """
-
-        # bind services
-
-        await self.dispatcher.adispatch(EVENT_FACTORY_BIND, ProxyFactoryBindEvent(self.container, self.settings))
-
-        try:
-            provider = self.container.build_provider()
-        except CannotResolveParameterException as exc:
-            raise ProxyConfigurationError("Cannot build container: unresolvable parameter.") from exc
-        self._on_create_configure_dashboard_if_needed(provider)
-        self._on_create_configure_endpoints(provider)
-
-        logger.info(f"ProxyFactory::create() Settings={repr(self.settings.values)}")
-
-        # noinspection PyTypeChecker
-        return self.KernelType(dispatcher=self.dispatcher, resolver=self.resolver)
-
     def _on_create_configure_endpoints(self, provider: Services):
         # should be refactored, read env for auto conf
         _ports = defaultdict(dict)
@@ -155,7 +184,6 @@ class ProxyFactory:
         except AttributeError:
             _endpoints = {}
 
-        logger.info(f"ProxyFactory::_on_create_configure_endpoints() Endpoints={repr(_endpoints)}")
         for _port, _port_config in _endpoints.items():
             try:
                 _port = int(_port)
@@ -191,37 +219,14 @@ class ProxyFactory:
 
         try:
             storage = provider.get(IStorage)
-            self.resolver.add(dashboard_settings.port, DashboardController(storage=storage, settings=self.settings))
-            for bind in self.binds:
-                logger.info(f"Adding dashboard on {bind}:{dashboard_settings.port}")
-                self.__server_binds.add(f"{bind}:{dashboard_settings.port}")
+            controller = DashboardController(storage=storage, settings=self.settings)
+            self.resolver.add(dashboard_settings.port, controller)
+            logger.info(f"🏭 :{dashboard_settings.port} -> {controller}")
+            for hostname in self._hostnames:
+                self.binds.add(Bind(hostname, dashboard_settings.port))
+
         except CannotResolveTypeException:
             logger.error(
                 "Dashboard is enabled but no storage is configured. Dashboard will not be available. Did you forget "
                 "to load a storage plugin?"
             )
-
-    def create_hypercorn_config(self):
-        """
-        Creates a hypercorn config object.
-
-        :return: hypercorn config object
-        """
-        from hypercorn.config import Config
-
-        config = Config()
-        config.bind = [*self.__server_binds]
-        config.accesslog = logging.getLogger("hypercorn.access")
-        config.errorlog = logging.getLogger("hypercorn.error")
-        return config
-
-    async def serve(self):
-        """
-        Creates and serves the proxy using hypercorn.
-        """
-        from hypercorn.asyncio import serve
-
-        kernel = await self.create()
-        config = self.create_hypercorn_config()
-
-        return await serve(kernel, config)
