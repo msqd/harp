@@ -15,8 +15,11 @@ from config.json import JSONFile
 from config.toml import TOMLFile
 from whistle import IAsyncEventDispatcher
 
+from harp import get_logger
 from harp.config.application import Application
 from harp.utils.identifiers import is_valid_dotted_identifier
+
+logger = get_logger(__name__)
 
 
 def get_application_class_name(name):
@@ -78,7 +81,7 @@ class Config:
         """
 
         if not args:
-            return None
+            args = []
 
         parser = ArgumentParser()
         parser.add_argument(
@@ -170,6 +173,8 @@ class Config:
             # propagate for the world to use
             self._validated_settings = MappingProxyType(validated)
             self._applications = applications
+
+        logger.debug(f"Configuration validated: {pprint.pformat(self._validated_settings)}")
 
         return self._validated_settings
 
