@@ -2,25 +2,15 @@
 import asyncio
 import sys
 
-from harp.core.apps import Config
-from harp.factories.adapters.hypercorn_adapter import HypercornServerAdapter
-from harp.factories.kernel_factory import KernelFactory
+from harp import Config
+from harp.adapters.hypercorn_adapter import HypercornServerAdapter
+from harp.config.factories.kernel_factory import KernelFactory
 
 config = Config()
 # config.add_application("harp.contrib.telemetry", defaults={"url": "https://telemetry.harp-proxy.net/"})
 config.add_application("harp.apps.proxy")
 config.add_application("harp.apps.dashboard")
 config.add_application("harp.contrib.sqlalchemy_storage")
-config.set(
-    "proxy.endpoints",
-    [
-        {
-            "name": "httpbin",
-            "port": 4000,
-            "url": "https://httpbin.org/",
-        }
-    ],
-)
 
 if __name__ == "__main__":
     config.read_env(sys.argv[1:])
