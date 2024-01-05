@@ -1,9 +1,11 @@
 import { useQuery } from "react-query"
 
 import { useApi } from "Domain/Api"
-import { DashboardGraphData } from "Models/Dashboard.ts"
+import { DahsboardData } from "Models/Dashboard.ts"
 
-export function useDashboardDataQuery() {
+export function useDashboardDataQuery(entrypoint: string | undefined = undefined) {
   const api = useApi()
-  return useQuery<DashboardGraphData>("dashboard", () => api.fetch("/dashboard").then((r) => r.json()))
+  return useQuery<DahsboardData>(["dashboard", entrypoint], () =>
+    api.fetch(entrypoint ? `/dashboard/${entrypoint}` : "/dashboard").then((r) => r.json()),
+  )
 }

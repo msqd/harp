@@ -5,7 +5,7 @@ import { ReactQueryDevtools } from "react-query/devtools"
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
 
 import { Layout } from "Components/Layout"
-import { DashboardPage } from "Pages/Dashboard"
+import { OverviewPage } from "Pages/Overview"
 import { SystemPage } from "Pages/System"
 import GlobalStyles from "Styles/GlobalStyles"
 
@@ -20,7 +20,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "",
-        element: <DashboardPage />,
+        element: <OverviewPage />,
       },
       {
         path: "transactions",

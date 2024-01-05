@@ -1,17 +1,11 @@
 import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
-interface Data {
-  date: string
-  requests: string
-  errors: string
-}
-
 interface RequestCHartProps {
-  data: Data[]
+  data: Array<{ date: string; transactions: number; errors: number }>
   width?: string
 }
 
-export const RequestsChart: React.FC<RequestCHartProps> = ({ data, width }) => {
+export const TransactionsChart: React.FC<RequestCHartProps> = ({ data, width }) => {
   return (
     <ResponsiveContainer width={width} height={300}>
       <ComposedChart
@@ -30,12 +24,11 @@ export const RequestsChart: React.FC<RequestCHartProps> = ({ data, width }) => {
         <Tooltip isAnimationActive={false} />
         <Legend verticalAlign="top" align="right" height={36} iconSize={10} />
         <Bar
-          radius={[10, 10, 0, 0]}
-          dataKey="requests"
+          dataKey="transactions"
           barSize={20}
           fill="#ADD8E6"
-          legendType="rect"
-          name="requests"
+          legendType="circle"
+          name="transactions"
           isAnimationActive={false}
         />
         <Line
@@ -45,7 +38,7 @@ export const RequestsChart: React.FC<RequestCHartProps> = ({ data, width }) => {
           type="monotone"
           dataKey="errors"
           stroke="#FF0000"
-          legendType="rect"
+          legendType="circle"
           name="Errors"
           isAnimationActive={false}
         />

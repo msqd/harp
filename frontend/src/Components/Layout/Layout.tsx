@@ -9,7 +9,7 @@ import { Navbar } from "mkui/Components/Navbar"
 const StyledContainerWithHorizontalConstraint = styled.div(() => [tw`mx-auto px-2 sm:px-6 lg:px-8`])
 
 const navigationItems = [
-  { label: "Dashboard", to: "/", exact: true },
+  { label: "Overview", to: "/", exact: true },
   { label: "Transactions", to: "/transactions" },
   { label: "System", to: "/system" },
 ]
