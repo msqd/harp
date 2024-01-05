@@ -5,8 +5,8 @@ import { ReactQueryDevtools } from "react-query/devtools"
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
 
 import { Layout } from "Components/Layout"
-import { Dashboard } from "Pages/Dashboard"
-import { ProxySettings } from "Pages/System"
+import { DashboardPage } from "Pages/Dashboard"
+import { SystemPage } from "Pages/System"
 import GlobalStyles from "Styles/GlobalStyles"
 
 import { TransactionsListPage } from "./Pages/Transactions"
@@ -20,21 +20,17 @@ const router = createBrowserRouter([
     children: [
       {
         path: "",
-        element: <Dashboard />,
+        element: <DashboardPage />,
       },
       {
         path: "transactions",
         element: <TransactionsListPage />,
       },
       {
-        path: "settings",
-        element: <ProxySettings />,
+        path: "system",
+        element: <SystemPage />,
       },
     ],
-  },
-  {
-    path: "/settings",
-    element: <ProxySettings />,
   },
 ])
 const queryClient = new QueryClient()

@@ -1,1 +1,1 @@
-export { default as ProxySettings } from "./SystemPage.tsx"
+export { SystemPage } from "./SystemPage.tsx"

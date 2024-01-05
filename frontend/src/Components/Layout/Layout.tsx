@@ -8,6 +8,12 @@ import { Navbar } from "mkui/Components/Navbar"
 
 const StyledContainerWithHorizontalConstraint = styled.div(() => [tw`mx-auto px-2 sm:px-6 lg:px-8`])
 
+const navigationItems = [
+  { label: "Dashboard", to: "/", exact: true },
+  { label: "Transactions", to: "/transactions" },
+  { label: "System", to: "/system" },
+]
+
 function RightNav() {
   const systemQuery = useSystemQuery()
   return systemQuery && systemQuery.isSuccess ? (
@@ -36,11 +42,7 @@ function Layout() {
             </span>
           </Link>
         }
-        items={[
-          { label: "Dashboard", to: "/", exact: true },
-          { label: "Transactions", to: "/transactions" },
-          { label: "Settings", to: "/settings" },
-        ]}
+        items={navigationItems}
         currentPath={location.pathname}
         Link={Link}
         Wrapper={StyledContainerWithHorizontalConstraint}
