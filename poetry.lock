@@ -916,6 +916,25 @@ hpack = ">=4.0,<5"
 hyperframe = ">=6.0,<7"
 
 [[package]]
+name = "hishel"
+version = "0.0.21"
+description = "Persistent cache implementation for httpx and httpcore"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "hishel-0.0.21-py3-none-any.whl", hash = "sha256:2347180fb2396700f0616cdfd4bb9d04ba0c543694d19f2d0156226dfa5a511d"},
+    {file = "hishel-0.0.21.tar.gz", hash = "sha256:62de30930e7fc02551d17d0f653f6e79499eaeffe32be9e36664ea7e0c0b82bd"},
+]
+
+[package.dependencies]
+httpx = ">=0.22.0"
+
+[package.extras]
+redis = ["redis (==5.0.1)"]
+sqlite = ["anysqlite (>=0.0.5)"]
+yaml = ["pyyaml (==6.0.1)"]
+
+[[package]]
 name = "honcho"
 version = "1.1.0"
 description = "Honcho: a Python clone of Foreman. For managing Procfile-based applications."
@@ -2908,4 +2927,4 @@ dev = ["honcho", "watchfiles"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "c1c903a4ca7e093e4f256022c830e8cb3e67b58109a3b6c8efc302cb672a232b"
+content-hash = "ecd252cd29b87f146cdfc26d6902ecc7a8f7b00004fe6ba946db167e927f6ef5"
