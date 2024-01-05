@@ -14,13 +14,19 @@ export const TransactionsChart: React.FC<RequestCHartProps> = ({ data, width }) 
         data={data}
         margin={{
           top: 0,
-          right: 0,
+          right: 30,
           left: 0,
           bottom: 0,
         }}
       >
         <CartesianGrid stroke="#f5f5f5" vertical={false} />
-        <XAxis dataKey="date" interval={data.length - 2} tickLine={false} axisLine={{ stroke: "#f5f5f5" }} />
+        <XAxis
+          dataKey="date"
+          interval={Math.min(data.length - 1, data.length - 2)}
+          tickLine={false}
+          axisLine={{ stroke: "#f5f5f5" }}
+          fontSize={12}
+        />
         <Tooltip isAnimationActive={false} />
         <Legend verticalAlign="top" align="right" height={36} iconSize={10} />
         <Bar
@@ -42,7 +48,13 @@ export const TransactionsChart: React.FC<RequestCHartProps> = ({ data, width }) 
           name="Errors"
           isAnimationActive={false}
         />
-        <YAxis tickLine={false} axisLine={{ stroke: "#f5f5f5" }} domain={[5, "dataMax + 5"]} tickCount={5} />
+        <YAxis
+          tickLine={false}
+          axisLine={{ stroke: "#f5f5f5" }}
+          domain={[5, "dataMax + 5"]}
+          tickCount={5}
+          fontSize={12}
+        />
       </ComposedChart>
     </ResponsiveContainer>
   )
