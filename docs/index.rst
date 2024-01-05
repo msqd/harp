@@ -12,6 +12,7 @@ Content
    :maxdepth: 2
 
    quickstart/index
+   installation/index
    configuration/index
    features/index
    reference/index

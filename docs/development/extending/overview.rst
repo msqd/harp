@@ -1,13 +1,12 @@
 Overview
 ::::::::
 
-Harp consists of a core library and a set of extensions that provides features over the core.
+Harp consists of a core library and a set of applications that provides features (including most of the core features).
 
-A lot of builtin features are provided by extensions, and you can extend the core using the very same API used to
-implement core features.
-
-To allow extensions to do basically anything, Harp provides the following components:
+To allow extensions to do basically anything, Harp uses the following components:
 
 - a dependency injection container (provided by `rodi <https://www.neoteroi.dev/blacksheep/dependency-injection/>`_).
 - an event dispatcher (provided by `whistle <https://python-whistle.github.io/>`_).
-- an protocol to register packages as a plugable extension.
+- an protocol to register applications as plug-and-play extensions to harp.
+
+For now, look at the source of core applications.

@@ -9,14 +9,14 @@ Version 0.3 (2023-12-15)
 - Timeouts Management
 - Settings available in dashboard  (code: ✓, tests: ..., docs, ...)
 
-Version 0.4 (2023-12-29)
+Version 0.4 (2023-01-12)
 ::::::::::::::::::::::::
 
 - Audit Log
 - Dashboard
 - Basic Stats & Graphs
 
-Version 0.5 (2024-01-12)
+Version 0.5 (2024-01-26)
 ::::::::::::::::::::::::
 
 - Marketing website
@@ -24,7 +24,7 @@ Version 0.5 (2024-01-12)
 - Early adopters onboarding process
 - Docker install
 
-Version 0.6 (2024-01-26)
+Version 0.6 (2024-02-09)
 ::::::::::::::::::::::::
 
 - Syntax Highlighting
@@ -33,7 +33,7 @@ Version 0.6 (2024-01-26)
 - Helm install
 - Simple search (sql based)
 
-Version 0.7 (2024-02-09)
+Version 0.7 (2024-02-23)
 ::::::::::::::::::::::::
 
 - Basic agregation (by endpoint, method, ...)
