@@ -9,10 +9,11 @@ import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 interface TransactionOverviewChartProps {
   data: DahsboardData
   title?: string
+  className?: string
 }
-export const TransactionsOverviewChart = ({ data, title }: TransactionOverviewChartProps) => {
+export const TransactionsOverviewChart = ({ data, title, className }: TransactionOverviewChartProps) => {
   return (
-    <>
+    <div className={className}>
       <H2>{title}</H2>
       <div style={{ display: "flex", alignItems: "center" }}>
         <div className="flex flex-col items-center">
@@ -28,22 +29,23 @@ export const TransactionsOverviewChart = ({ data, title }: TransactionOverviewCh
         </div>
         <TransactionsChart data={data.dailyStats} width="90%"></TransactionsChart>
       </div>
-    </>
+    </div>
   )
 }
 
 interface TransactionsOverviewProps {
   endpoint?: string
   title?: string
+  className?: string
 }
 
-export const TransactionsOverview = ({ endpoint, title }: TransactionsOverviewProps) => {
+export const TransactionsOverview = ({ endpoint, title, className }: TransactionsOverviewProps) => {
   const query = useDashboardDataQuery(endpoint)
 
   return (
     <OnQuerySuccess query={query} queries={[query, query]}>
       {(query) => {
-        return <TransactionsOverviewChart data={query.data} title={title} />
+        return <TransactionsOverviewChart data={query.data} title={title} className={className} />
       }}
     </OnQuerySuccess>
   )
