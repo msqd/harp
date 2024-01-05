@@ -26,7 +26,7 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
         args = [
             "harp",
             "start",
-            "proxy",
+            "server",
             *(("--file", self.config_filename) if self.config_filename else ()),
         ]
         self.process = subprocess.Popen(args, shell=False)
