@@ -4,6 +4,7 @@ import { useOverviewDataQuery } from "Domain/Overview"
 
 import { TransactionsOverview } from "./OverviewCharts"
 import { TransactionsOverviewChart } from "./Components/OverviewChart/TransactionsOverviewChart"
+import { Topology } from "./Components/Topology/Topology"
 
 export const OverviewPage = () => {
   const query = useOverviewDataQuery()
@@ -18,6 +19,7 @@ export const OverviewPage = () => {
       </OnQuerySuccess>
 
       <div className="grid grid-cols-2 gap-4">
+        <Topology title="Topology" className="border" />
         {endpoints.map((endpoint, index) => (
           <TransactionsOverview key={index} endpoint={endpoint} title={endpoint} className="border p-2" />
         ))}
