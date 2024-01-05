@@ -9,7 +9,7 @@ const SC = {
     tw`block`,
     tw`font-medium text-base cursor-pointer`,
     tw`rounded-t-sm border border-b-0 border-primary-900 px-3 py-2`,
-    selected ? tw`bg-primary-800 border-primary-800 text-white` : tw`text-primary-900`,
+    selected ? tw`bg-primary-900 border-primary-900 text-white` : tw`text-primary-900`,
   ]),
   Panels: styled(HeadlessTab.Panels)(() => [tw`p-4 border border-t-0 border-primary-900`]),
 }
