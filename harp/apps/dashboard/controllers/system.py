@@ -6,7 +6,7 @@ from harp.apps.dashboard.utils.dependencies import get_python_dependencies, pars
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.views.json import json
-from harp.protocols import ISettings
+from harp.typing.global_settings import GlobalSettings
 
 
 def _asdict(obj):
@@ -31,7 +31,7 @@ def _asdict(obj):
 class SystemController:
     prefix = "/api/system"
 
-    def __init__(self, settings: ISettings):
+    def __init__(self, settings: GlobalSettings):
         # a bit of scrambling for passwords etc.
         if "storage" in settings:
             if "url" in settings["storage"]:

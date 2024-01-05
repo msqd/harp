@@ -1,5 +1,0 @@
-EVENT_CORE_CONTROLLER = "core.controller"
-EVENT_CORE_REQUEST = "core.request"
-EVENT_CORE_RESPONSE = "core.response"
-EVENT_CORE_STARTED = "core.startup"
-EVENT_CORE_VIEW = "core.view"

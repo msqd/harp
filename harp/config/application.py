@@ -1,12 +1,22 @@
 from dataclasses import asdict, is_dataclass
 from typing import Optional
 
+from rodi import Container
 from whistle import IAsyncEventDispatcher
 
 from harp.config.factories.events import EVENT_FACTORY_BIND, EVENT_FACTORY_BOUND
 
 
 class Application:
+    """
+    Base class for writing harp applications, which are basically python packages with auto-registration superpowers.
+
+    TODO:
+    - use settings instead of settings_type, with type annotation ?
+    - namespace instead of settings namespace ? autodetect from settings ?
+
+    """
+
     name = None
 
     settings_namespace = None
@@ -48,6 +58,10 @@ class Application:
             dispatcher.add_listener(EVENT_FACTORY_BIND, self.on_bind)
         if self.on_bound is not None:
             dispatcher.add_listener(EVENT_FACTORY_BOUND, self.on_bound)
+
+    def register_services(self, container: Container):
+        if self.settings and self.settings_type:
+            container.add_instance(self.settings, self.settings_type)
 
     def __repr__(self):
         return f'<{type(self).__name__} name="{self.name}">'

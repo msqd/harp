@@ -1,4 +1,4 @@
-from harp.core.asgi.events.view import ViewEvent
+from harp.core.asgi.events import ViewEvent
 
 
 class html(str):

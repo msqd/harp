@@ -1,19 +1,15 @@
-from typing import Type
+from typing import Type, cast
 
-from rodi import CannotResolveParameterException, Container
+from rodi import Container
 from whistle import IAsyncEventDispatcher
 
 from harp.config import Config
-from harp.core.asgi import ASGIKernel
-from harp.core.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_VIEW
-from harp.core.asgi.events.request import RequestEvent
-from harp.core.asgi.messages.requests import ASGIRequest
-from harp.core.asgi.messages.responses import ASGIResponse
+from harp.core.asgi import ASGIKernel, ASGIRequest, ASGIResponse
+from harp.core.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_VIEW, RequestEvent
 from harp.core.asgi.resolvers import ProxyControllerResolver
 from harp.core.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.core.views.json import on_json_response
-from harp.errors import ProxyConfigurationError
-from harp.protocols import ISettings
+from harp.typing import GlobalSettings
 from harp.utils.network import Bind
 
 from .events import EVENT_FACTORY_BIND, EVENT_FACTORY_BOUND, FactoryBindEvent, FactoryBoundEvent
@@ -32,6 +28,7 @@ async def on_health_request(event: RequestEvent):
 
 class KernelFactory:
     AsyncEventDispatcherType: Type[IAsyncEventDispatcher] = LoggingAsyncEventDispatcher
+    ContainerType: Type[Container] = Container
     KernelType: Type[ASGIKernel] = ASGIKernel
 
     def __init__(self, configuration: Config):
@@ -42,13 +39,11 @@ class KernelFactory:
         # we only work on validated configuration
         self.configuration.validate()
 
-        container = Container()
-        dispatcher = self.build_event_dispatcher(container)
+        dispatcher = self.build_event_dispatcher()
+        container = self.build_container(dispatcher)
         resolver = ProxyControllerResolver()
 
-        container.add_instance(self.configuration.settings, ISettings)
-
-        self.configuration.register_events(dispatcher)
+        # dispatch "bind" event: this is the last chance to add services to the container
         await dispatcher.adispatch(
             EVENT_FACTORY_BIND,
             FactoryBindEvent(
@@ -57,11 +52,11 @@ class KernelFactory:
             ),
         )
 
-        try:
-            provider = container.build_provider()
-        except CannotResolveParameterException as exc:
-            raise ProxyConfigurationError("Cannot build container: unresolvable parameter.") from exc
+        # this can fail if configuration is not valid, but we let the container raise exception which is more explicit
+        # that what we can show here.
+        provider = container.build_provider()
 
+        # dispatch "bound" event: you get a resolved container, do your thing
         await dispatcher.adispatch(
             EVENT_FACTORY_BOUND,
             FactoryBoundEvent(
@@ -71,18 +66,29 @@ class KernelFactory:
             ),
         )
 
-        # self._on_create_configure_dashboard_if_needed(provider)
-        # self._on_create_configure_endpoints(provider)
-
         return self.KernelType(dispatcher=dispatcher, resolver=resolver), [
             Bind(host=self.hostname, port=port) for port in resolver.ports
         ]
 
-    def build_event_dispatcher(self, container):
-        dispatcher = self.AsyncEventDispatcherType()
+    def build_container(self, dispatcher: IAsyncEventDispatcher) -> Container:
+        """Factory method responsible for the service injection container creation, registering initial services."""
+        container = cast(Container, self.ContainerType())
+        container.add_instance(self.configuration.settings, GlobalSettings)
+        container.add_instance(dispatcher, IAsyncEventDispatcher)
+
+        self.configuration.register_services(container)
+
+        return container
+
+    def build_event_dispatcher(self) -> IAsyncEventDispatcher:
+        """Factory method responsible for the event dispatcher creation, binding initial/generic listeners."""
+        dispatcher = cast(IAsyncEventDispatcher, self.AsyncEventDispatcherType())
+
         dispatcher.add_listener(EVENT_CORE_REQUEST, on_health_request, priority=-100)
 
         # todo move into core or extension, this is not proxy related
         dispatcher.add_listener(EVENT_CORE_VIEW, on_json_response)
-        container.add_instance(dispatcher, IAsyncEventDispatcher)
+
+        self.configuration.register_events(dispatcher)
+
         return dispatcher

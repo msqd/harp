@@ -4,16 +4,17 @@ from asgi_middleware_static_file import ASGIMiddlewareStaticFile
 from http_router import NotFoundError
 
 from harp import ROOT_DIR, get_logger
-from harp.apps.dashboard.controllers.system import SystemController
-from harp.apps.dashboard.controllers.transactions import TransactionsController
+from harp.apps.dashboard.settings import DashboardSettings
 from harp.apps.proxy.controllers import HttpProxyController
-from harp.core.asgi.messages.requests import ASGIRequest
-from harp.core.asgi.messages.responses import ASGIResponse
-from harp.core.controllers.routing import RoutingController
-from harp.core.views.json import json
+from harp.core.asgi import ASGIRequest, ASGIResponse
+from harp.core.controllers import RoutingController
+from harp.core.views import json
 from harp.errors import ProxyConfigurationError
-from harp.protocols import ISettings
 from harp.protocols.storage import IStorage
+from harp.typing.global_settings import GlobalSettings
+
+from .system import SystemController
+from .transactions import TransactionsController
 
 logger = get_logger(__name__)
 
@@ -28,25 +29,22 @@ class DashboardController:
     name = "ui"
 
     storage: IStorage
-    settings: dict
+    settings: DashboardSettings
+    global_settings: GlobalSettings
 
     _ui_static_middleware = None
     _ui_devserver_proxy_controller = None
 
-    def __init__(self, storage: IStorage, settings: ISettings):
+    def __init__(self, storage: IStorage, all_settings: GlobalSettings, local_settings: DashboardSettings):
         # context for usage in handlers
         self.storage = storage
-        self.settings = settings
-
-        dashboard_settings = self.settings.get("dashboard", {})
-
-        # auth (naive first implementation)
-        self.auth = dashboard_settings.get("auth", {})
+        self.global_settings = all_settings
+        self.settings = local_settings
 
         # controllers for delegating requests
-        if dashboard_settings.get("devserver_port", None):
+        if self.settings.devserver_port:
             self._ui_devserver_proxy_controller = self._create_ui_devserver_proxy_controller(
-                port=dashboard_settings["devserver_port"]
+                port=self.settings.devserver_port
             )
 
         # register the subcontrollers, aka the api handlers
@@ -87,7 +85,7 @@ class DashboardController:
         # subcontrollers
         for _controller in (
             TransactionsController(self.storage),
-            SystemController(self.settings),
+            SystemController(self.global_settings),
         ):
             _controller.register(controller.router)
 
@@ -96,11 +94,11 @@ class DashboardController:
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
         request.context.setdefault("user", None)
 
-        if self.auth:
+        if self.settings.auth:
             current_auth = request.basic_auth
 
             if current_auth:
-                request.context["user"] = self.auth.check(current_auth[0], current_auth[1])
+                request.context["user"] = self.settings.auth.check(current_auth[0], current_auth[1])
 
             if not request.context["user"]:
                 response.headers["content-type"] = "text/plain"

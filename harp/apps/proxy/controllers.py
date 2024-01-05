@@ -9,8 +9,7 @@ from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
-from harp.core.asgi.events.message import MessageEvent
-from harp.core.asgi.events.transaction import TransactionEvent
+from harp.core.asgi.events import MessageEvent, TransactionEvent
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.models.transactions import Transaction

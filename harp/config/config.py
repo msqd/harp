@@ -13,6 +13,7 @@ import orjson
 from config.ini import INIFile
 from config.json import JSONFile
 from config.toml import TOMLFile
+from rodi import Container
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
@@ -164,7 +165,7 @@ class Config:
             applications, newly_validated = self._validate_round_2_extract_and_validate_settings(
                 application_types, to_be_validated
             )
-            newly_validated.pop("applications", None)  # not allowed
+            newly_validated.pop("applications", None)  # not allowed xxx todo raise
             validated |= newly_validated
 
             if to_be_validated != {}:
@@ -275,6 +276,11 @@ class Config:
         self.validate()
         for application in self._applications:
             application.register_events(dispatcher)
+
+    def register_services(self, container: Container):
+        self.validate()
+        for application in self._applications:
+            application.register_services(container)
 
     def serialize(self):
         self.validate()

@@ -15,6 +15,7 @@ Subpackages
    harp.core
    harp.protocols
    harp.services
+   harp.typing
    harp.utils
 
 Submodules

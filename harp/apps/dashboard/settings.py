@@ -66,6 +66,9 @@ class DashboardAuthSetting(BaseSetting):
             f"Invalid dashboard auth type: {_type}. Available types: {', '.join(available_types)}."
         )
 
+    def check(self, username, password):
+        raise NotImplementedError()
+
 
 @settings_dataclass
 class DashboardSettings(BaseSetting):

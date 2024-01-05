@@ -33,5 +33,4 @@ class SqlalchemyStorageApplication(Application):
     async def on_bind(self, event: FactoryBindEvent):
         event.container.register(SqlAlchemyStorage)
         event.container.add_alias("storage.sqlalchemy", SqlAlchemyStorage)
-        event.container.add_instance(self.settings)
         event.container.register(IStorage, SqlAlchemyStorage)
