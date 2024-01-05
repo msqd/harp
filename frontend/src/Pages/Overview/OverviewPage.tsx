@@ -1,12 +1,12 @@
 import { Page } from "Components/Page"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
-import { useDashboardDataQuery } from "Domain/Overview"
+import { useOverviewDataQuery } from "Domain/Overview"
 
 import { TransactionsOverview } from "./OverviewCharts"
 import { TransactionsOverviewChart } from "./Components/OverviewChart/TransactionsOverviewChart"
 
 export const OverviewPage = () => {
-  const query = useDashboardDataQuery()
+  const query = useOverviewDataQuery()
   const endpoints = ["foo", "bar", "foo"]
 
   return (

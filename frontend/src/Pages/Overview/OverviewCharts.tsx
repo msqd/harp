@@ -1,5 +1,5 @@
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
-import { useDashboardDataQuery } from "Domain/Overview"
+import { useOverviewDataQuery } from "Domain/Overview"
 
 import { TransactionsOverviewChart } from "./Components/OverviewChart"
 
@@ -10,7 +10,7 @@ interface TransactionsOverviewProps {
 }
 
 export const TransactionsOverview = ({ endpoint, title, className }: TransactionsOverviewProps) => {
-  const query = useDashboardDataQuery(endpoint)
+  const query = useOverviewDataQuery(endpoint)
 
   return (
     <OnQuerySuccess query={query} queries={[query, query]}>

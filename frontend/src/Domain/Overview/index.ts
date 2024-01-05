@@ -1,1 +1,1 @@
-export { useDashboardDataQuery } from "./useDashboardDataQuery"
+export { useOverviewDataQuery } from "./useOverviewDataQuery"
