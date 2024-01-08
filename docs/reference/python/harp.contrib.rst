@@ -7,7 +7,6 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   harp.contrib.sentry
    harp.contrib.sqlalchemy_storage
 
 Module contents

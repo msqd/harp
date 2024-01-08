@@ -1,8 +1,8 @@
 harp.services package
 =====================
 
-Submodules
-----------
+Subpackages
+-----------
 
 .. toctree::
    :maxdepth: 4

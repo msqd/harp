@@ -3,6 +3,7 @@ from typing import Type, cast
 from rodi import Container
 from whistle import IAsyncEventDispatcher
 
+from harp import get_logger
 from harp.config import Config
 from harp.core.asgi import ASGIKernel, ASGIRequest, ASGIResponse
 from harp.core.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_VIEW, RequestEvent
@@ -13,6 +14,8 @@ from harp.typing import GlobalSettings
 from harp.utils.network import Bind
 
 from .events import EVENT_FACTORY_BIND, EVENT_FACTORY_BOUND, FactoryBindEvent, FactoryBoundEvent
+
+logger = get_logger(__name__)
 
 
 async def ok_controller(request: ASGIRequest, response: ASGIResponse):
@@ -38,6 +41,9 @@ class KernelFactory:
     async def build(self):
         # we only work on validated configuration
         self.configuration.validate()
+
+        for application in self.configuration.applications:
+            logger.info(f"📦 {application}")
 
         dispatcher = self.build_event_dispatcher()
         container = self.build_container(dispatcher)

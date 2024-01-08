@@ -1,0 +1,3 @@
+dashboard.devserver:
+  # force disabling the devserver, otherwise, it will be enabled based on availability
+  enabled: false

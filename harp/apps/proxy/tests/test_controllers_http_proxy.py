@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 import respx
-from httpx import Response
+from httpx import AsyncClient, Response
 
 from harp.apps.proxy.controllers import HttpProxyController
 from harp.core.asgi.messages.requests import ASGIRequest
@@ -30,7 +30,7 @@ class TestHttpProxyController:
     async def test_basic_get(self, asgi_request, asgi_response):
         endpoint = respx.get("http://example.com/").mock(return_value=Response(200, content=b"Hello."))
 
-        controller = HttpProxyController("http://example.com/")
+        controller = HttpProxyController("http://example.com/", http_client=AsyncClient())
         await controller(asgi_request, asgi_response)
 
         assert endpoint.called

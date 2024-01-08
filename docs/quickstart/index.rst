@@ -1,52 +1,87 @@
 Quick start
 ===========
 
-TL;DR;
-::::::
-
-Harp will run as a proxy between your app and remote APIs. The easiest way to run it is to use our docker image.
-Configuration can be provided via environment variables (the simplest amongst available options).
-
-.. code-block:: bash
-
-    docker run -d -p 4080:4080 -p 4000:4000 -e HARP_PROXY_ENDPOINT_4000_NAME=httpbin -e HARP_PROXY_ENDPOINT_4000_TARGET=https://httpbin.org/ makersquad/harp-proxy:latest
-
-This will proxy your local 4000 port to httpbin.org. All requests going through the proxy will be visible in the
-dashboard: open http://localhost:4080/ and go to the transactions tab.
-
-.. figure:: images/tldr.png
-   :alt: Basic proxy setup from the quickstart tl;dr
-
-Once you have this running, you may want to consider switching httpbin for some of your favorite apis, and switching
-the human for an application you work on.
-
-Getting the traffic through the proxy should be as simple as switching your application's configured API endpoints.
-
-
 Installation
 ::::::::::::
 
-The simplest option is to use the docker image.
+The easiest way to run it is to use our docker image. It is available on docker hub as `makersquad/harp-proxy
+<https://hub.docker.com/repository/docker/makersquad/harp-proxy>`_.
 
-Configuration
-:::::::::::::
+.. tab-set-code::
 
-Various options are available for configuration. All options can be combined together, elements higher in the following
-list will override elements lower in the list (unless something is "locked", in which case the higher order
-configuration will fail with an exception).
+    .. code-block:: docker
 
-* Command line options
-* Environment variables
-* Configuration file(s) (toml, ini, yaml, json, xml, ...)
-* Python source code (programmatic api)
+        # TODO review needed (config format updated since written)
+        $ docker run -d \
+                     -p 4000:4000 \
+                     -p 4080:4080 \
+                     -e HARP_PROXY_ENDPOINT_4000_NAME=httpbin \
+                     -e HARP_PROXY_ENDPOINT_4000_TARGET=https://httpbin.org/ \
+                     makersquad/harp-proxy:latest
 
-.. todo:: This is the target, not yet true for everything.
+    .. code-block:: compose
 
-.. todo:: Decide the inheritance rules between the various configuration options.
+        $ cat <<EOF > docker-compose.yml
+        version: '3'
 
-Runtime
-:::::::
+        services:
+          api-proxy:
+            image: ...
+            volumes:
+              - "./config.yaml:/etc/harp.yaml"
+              - "./data:/var/lib/harp/data"
+            ports:
+              - 4000:4000
+              - 4080:4080
 
-The runtime mostly consists in the ASGI proxy, forwarding http requests back and forth to configured endpoints.
-As a free candy, you get a dashboard to observe the requests going through the proxy. Of course, this dashboard can be
-disabled.
+        EOF
+
+        $ docker compose up -d
+
+.. note::
+
+    Other installation options exist but are out of the scope of this quick start guide.
+
+    You can read more about :doc:`installing with docker <../installation/docker>`, :doc:`installing with docker
+    compose <../installation/docker-compose>`, :doc:`installing with pip <../installation/pip>`, :doc:`installing with
+    helm <../installation/helm>` and :doc:`installing from sources <../installation/sources>`.
+
+    Configuration can also be provided via a lot of different means: command line arguments, environment variables,
+    configuration files, or a mix of those. To dive in, :doc:`read more about configuration options
+    <../configuration/index>`.
+
+First glance
+::::::::::::
+
+Once the container runs, it will serve two different ports from your local host:
+
+- `localhost:4000 <http://localhost:4000/>`_ serves a proxy to httpbin.org (an example external api that we'll use as our first proxy
+  target)
+- `localhost:4080 <http://localhost:4080/>`_ serves a dashboard allowing to observe the network traffic going through the proxy. It is
+  activated and unsecure by default but for production environments you can disable it or add authentication.
+
+Open the dashboard and go to the «Transactions» tab. It should be empty.
+
+Now make a few requests through the proxy:
+
+.. code-block:: bash
+
+    # todo review this
+    $ curl http://localhost:4000
+    $ curl http://localhost:4000
+    $ curl http://localhost:4000
+
+If you go back to the dashboard, you'll now see the transactions.
+
+Congratulations, you just ran your first harp proxy.
+
+Next steps
+::::::::::
+
+.. todo::
+
+    And now what?
+
+    * configure your endpoints
+    * configure your dashboard: auth, ...
+    * write an extension application

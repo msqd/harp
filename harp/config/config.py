@@ -27,11 +27,18 @@ def get_application_class_name(name):
     return "".join(map(lambda x: x.title().replace("_", ""), name.rsplit(".", 1)[-1:])) + "Application"
 
 
+DEFAULT_APPLICATIONS = [
+    # ["harp.contrib.telemetry", {"url": "https://telemetry.harp-proxy.net/"}],
+    "harp.services.http",
+    "harp.apps.proxy",
+    "harp.apps.dashboard",
+    "harp.contrib.sqlalchemy_storage",
+]
+
+
 class Config:
-    def __init__(self, settings=None, /):
-        self._raw_settings = {
-            "applications": [],
-        } | (settings or {})
+    def __init__(self, settings=None, /, applications=None):
+        self._raw_settings = {"applications": applications or []} | (settings or {})
         self._validated_settings = None
         self._debug_applications = set()
         self._application_types = {}
@@ -40,25 +47,30 @@ class Config:
     def __eq__(self, other: Self):
         return self.settings == other.settings
 
+    def __repr__(self):
+        return (
+            f"<{type(self).__name__}{'' if self._validated_settings else '*'} "
+            f"settings={orjson.dumps(self.settings.copy()).decode()}>"
+        )
+
     @property
     def settings(self):
         if self._validated_settings is not None:
             return self._validated_settings
         return self._raw_settings
 
+    @property
+    def applications(self):
+        if not self._validated_settings:
+            raise RuntimeError("Configuration not validated.")
+        return self._validated_settings.get("applications", [])
+
     def reset(self):
         self._validated_settings = None
 
-    def add(self, port, target, *, name=None, description=None):
-        """
-        Adds a port to proxy to a remote target (url).
-
-        :param port: The port to listen on.
-        :param target: The target url to proxy to.
-        :param name: The name of the proxy. This is used to identify the proxy in the dashboard.
-        :param description: The description of the proxy. Humans will like it like it (if we implement it...).
-        """
-        self.reset()
+    def add_defaults(self):
+        for application in DEFAULT_APPLICATIONS:
+            self.add_application(application)
 
     def set(self, key, value):
         if not is_valid_dotted_identifier(key):

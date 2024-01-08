@@ -1,7 +1,8 @@
 from functools import cached_property
 from typing import Literal, Optional
 
-from harp.core.settings import BaseSetting, DisabledSettings, FromFileSetting, settings_dataclass
+from harp.config.settings import DisabledSettings, FromFileSetting
+from harp.config.settings.base import BaseSetting, settings_dataclass
 from harp.errors import ProxyConfigurationError
 
 
@@ -72,6 +73,8 @@ class DashboardAuthSetting(BaseSetting):
 
 @settings_dataclass
 class DashboardSettings(BaseSetting):
+    """Root settings for the dashboard."""
+
     enabled: bool = True
     port: int | str = 4080
     auth: Optional[DashboardAuthSetting] = None

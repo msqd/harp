@@ -2,6 +2,7 @@ import os
 
 from asgi_middleware_static_file import ASGIMiddlewareStaticFile
 from http_router import NotFoundError
+from httpx import AsyncClient
 
 from harp import ROOT_DIR, get_logger
 from harp.apps.dashboard.settings import DashboardSettings
@@ -31,12 +32,20 @@ class DashboardController:
     storage: Storage
     settings: DashboardSettings
     global_settings: GlobalSettings
+    http_client: AsyncClient
 
     _ui_static_middleware = None
     _ui_devserver_proxy_controller = None
 
-    def __init__(self, storage: Storage, all_settings: GlobalSettings, local_settings: DashboardSettings):
+    def __init__(
+        self,
+        storage: Storage,
+        all_settings: GlobalSettings,
+        local_settings: DashboardSettings,
+        http_client: AsyncClient,
+    ):
         # context for usage in handlers
+        self.http_client = http_client
         self.storage = storage
         self.global_settings = all_settings
         self.settings = local_settings
@@ -73,7 +82,7 @@ class DashboardController:
         return f"{type(self).__name__}({'+'.join(f for f in features if features[f])})"
 
     def _create_ui_devserver_proxy_controller(self, *, port):
-        return HttpProxyController(f"http://localhost:{port}/")
+        return HttpProxyController(f"http://localhost:{port}/", http_client=self.http_client)
 
     def _create_routing_controller(self):
         controller = RoutingController(handle_errors=False)

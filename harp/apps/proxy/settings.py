@@ -1,6 +1,6 @@
 from typing import Optional
 
-from harp.core.settings import BaseSetting, settings_dataclass
+from harp.config.settings.base import BaseSetting, settings_dataclass
 
 
 @settings_dataclass

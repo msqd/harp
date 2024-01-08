@@ -1,7 +1,7 @@
 import pytest
 
 from harp.apps.dashboard.settings import DashboardAuthSetting, DashboardSettings
-from harp.core.settings.common import DisabledSettings
+from harp.config.settings import DisabledSettings
 from harp.errors import ProxyConfigurationError
 
 

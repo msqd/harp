@@ -1,9 +1,21 @@
 Harp — HTTP API Runtime Proxy
 =============================
 
-Harp is a tiny and fast sidecar microservice that stands by between your application and an
-external API to add features (like caching, retrying, auditing, debugging, rewriting, ...)
-without having add code on your application side.
+Harp runs as a sidecar proxy between your app and remote APIs to enhance their reliability, performances and security
+while adding observability and lowering the amount of userland code you'll need to write for common non-business needs.
+
+Harp can be used both as a development and a production tool, for different purposes.
+
+.. figure:: images/tldr.png
+   :alt: Basic proxy setup from the quickstart tl;dr
+
+The core runtime is mostly composed of a proxy, which can be configured to forward requests to different endpoints, and
+a dashboard, which can be used to observe the requests going through the proxy.
+
+All features are implemented as composable independant modules (called applications) and can be enabled, disabled,
+extended or arranged in different ways to fit your needs. Reasonable defaults will get you started in a breeze, but
+you get infinite flexibility to adapt the proxy to your needs.
+
 
 Content
 :::::::
@@ -12,37 +24,13 @@ Content
    :maxdepth: 2
 
    quickstart/index
-   configuration/index
    features/index
-   reference/index
+   installation/index
+   commandline/index
+   configuration/index
+   reference/python/index
    development/index
    faq
-   gotchas
-
-Introduction
-::::::::::::
-
-Harp is written in Python and Cython (kind of a Python to C++ transpiler) and compiled to
-native bytecode for blazing speed.
-
-Harp also provides a management API and an optional frontend that helps you display and
-explore logs, debug HTTP calls (with breakpoints) and much more.
-
-Harp can be used both as a development and a production tool, for different purposes.
-
-Harp uses a dual licence model:
-
-- The basic version is open-source and can be used by anyone for free.
-- The pro/enterprise version adds extensions to the basic version for advanced usage and requires
-  a valid license.
-
-- Install
-  - locally
-  - with docker / docker compose
-  - with k8s / using manifests / using helm / using your own helm chart
-- Setup / Configuration
-  - database
-  - environment
 
 Indices and tables
 ::::::::::::::::::
