@@ -3,8 +3,8 @@ import asyncio
 import sys
 
 from harp import Config
-from harp.adapters.hypercorn_adapter import HypercornServerAdapter
 from harp.config.factories.kernel_factory import KernelFactory
+from harp.config.http_adapters.hypercorn_adapter import HypercornServerAdapter
 
 config = Config()
 config.add_defaults()
