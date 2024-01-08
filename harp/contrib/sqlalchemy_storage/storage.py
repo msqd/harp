@@ -102,7 +102,7 @@ class SqlAlchemyStorage:
 
     async def find_transactions(self, *, with_messages=False, filters=None) -> AsyncIterator[Transaction]:
         """
-        Implements :meth:`IStorage.find_transactions <harp.protocols.storage.IStorage.find_transactions>`.
+        Implements :meth:`Storage.find_transactions <harp.protocols.storage.Storage.find_transactions>`.
 
         :param with_messages:
         :return:
