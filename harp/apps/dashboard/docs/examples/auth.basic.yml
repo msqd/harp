@@ -1,0 +1,5 @@
+dashboard.auth:
+  type: basic
+  algorithm: pbkdf2_sha256
+  users:
+    admin: { password: $pbkdf2-sha256$29000$f4.RkvLeG2OstfZ.D8F4zw$4ONvNXnHCX.8Q.40SU9KjvBsAEAhqdrGJ80tsfLPA/s }

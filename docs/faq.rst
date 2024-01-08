@@ -1,8 +1,8 @@
 Frequently Asked Questions
 ==========================
 
-Development related questions
-:::::::::::::::::::::::::::::
+Internal development related questions
+::::::::::::::::::::::::::::::::::::::
 
 While building the API reference, `sed` complains about "extra characters at the end of d command" on MacOSX. What's wrong?
 ---------------------------------------------------------------------------------------------------------------------------

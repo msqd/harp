@@ -72,6 +72,8 @@ class DashboardAuthSetting(BaseSetting):
 
 @settings_dataclass
 class DashboardSettings(BaseSetting):
+    """Root settings for the dashboard."""
+
     enabled: bool = True
     port: int | str = 4080
     auth: Optional[DashboardAuthSetting] = None

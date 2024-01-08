@@ -1,23 +1,11 @@
 Quick start
 ===========
 
-Intro
-:::::::
+Installation
+::::::::::::
 
-Harp runs as a sidecar proxy between your app and remote APIs to enhance their reliability, performances and security
-while adding observability and lowering the amount of userland code you'll need to write for common non-business needs.
-
-.. figure:: images/tldr.png
-   :alt: Basic proxy setup from the quickstart tl;dr
-
-The runtime mostly consists in the ASGI proxy, forwarding http requests back and forth to configured endpoints.
-As a free candy, you get a dashboard to observe the requests going through the proxy. Of course, this dashboard can be
-disabled.
-
-Quick install
-:::::::::::::
-
-The easiest way to run it is to use our docker image, but choose the flavour that suits you most.
+The easiest way to run it is to use our docker image. It is available on docker hub as `makersquad/harp-proxy
+<https://hub.docker.com/repository/docker/makersquad/harp-proxy>`_.
 
 .. tab-set-code::
 
@@ -87,7 +75,13 @@ If you go back to the dashboard, you'll now see the transactions.
 
 Congratulations, you just ran your first harp proxy.
 
+Next steps
+::::::::::
 
 .. todo::
 
     And now what?
+
+    * configure your endpoints
+    * configure your dashboard: auth, ...
+    * write an extension application
