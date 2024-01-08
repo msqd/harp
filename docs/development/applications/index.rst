@@ -1,3 +1,6 @@
+Applications
+============
+
 Overview
 ::::::::
 
@@ -10,3 +13,24 @@ To allow extensions to do basically anything, Harp uses the following components
 - an protocol to register applications as plug-and-play extensions to harp.
 
 For now, look at the source of core applications.
+
+Concepts
+::::::::
+
+.. toctree::
+    :maxdepth: 2
+
+    dependency-injection
+    event-dispatcher
+    application-protocol
+
+Guides
+::::::
+
+.. toctree::
+    :maxdepth: 2
+
+    creating
+    using
+    testing
+    faq
