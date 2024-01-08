@@ -22,7 +22,7 @@ export const TransactionsChart: React.FC<RequestCHartProps> = ({ data, width }) 
         <CartesianGrid stroke="#f5f5f5" vertical={false} />
         <XAxis
           dataKey="date"
-          interval={Math.min(data.length - 1, data.length - 2)}
+          interval={"preserveStartEnd"}
           tickLine={false}
           axisLine={{ stroke: "#f5f5f5" }}
           fontSize={12}
