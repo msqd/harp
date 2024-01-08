@@ -1,9 +1,17 @@
-from typing import AsyncIterator, Protocol
+from datetime import date
+from typing import AsyncIterator, List, Protocol, TypedDict
 
 from harp.core.models.transactions import Transaction
 
 
-class IStorage(Protocol):
+class TransactionsGroupedByDate(TypedDict):
+    date: date
+    transactions: int
+    errors: int
+    meanDuration: float
+
+
+class Storage(Protocol):
     def find_transactions(self, *, with_messages=False, filters=None) -> AsyncIterator[Transaction]:
         ...
 
@@ -11,4 +19,7 @@ class IStorage(Protocol):
         ...
 
     async def get_facet_meta(self, name):
+        ...
+
+    async def transactions_grouped_by_date(self, *, endpoint=None) -> List[TransactionsGroupedByDate]:
         ...

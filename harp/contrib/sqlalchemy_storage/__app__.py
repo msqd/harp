@@ -5,7 +5,7 @@ SqlAlchemy Storage Extension
 
 from harp.config import Application
 from harp.config.factories.events import FactoryBindEvent
-from harp.protocols.storage import IStorage
+from harp.protocols.storage import Storage
 
 from .settings import SqlAlchemyStorageSettings
 from .storage import SqlAlchemyStorage
@@ -33,4 +33,4 @@ class SqlalchemyStorageApplication(Application):
     async def on_bind(self, event: FactoryBindEvent):
         event.container.register(SqlAlchemyStorage)
         event.container.add_alias("storage.sqlalchemy", SqlAlchemyStorage)
-        event.container.register(IStorage, SqlAlchemyStorage)
+        event.container.register(Storage, SqlAlchemyStorage)

@@ -7,7 +7,7 @@ from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.models.transactions import Transaction
 from harp.core.views.json import json
-from harp.protocols.storage import IStorage
+from harp.protocols.storage import Storage
 
 logger = get_logger(__name__)
 
@@ -43,7 +43,7 @@ class AbstractFacet:
 
 
 class FacetWithStorage(AbstractFacet):
-    def __init__(self, *, storage: IStorage):
+    def __init__(self, *, storage: Storage):
         super().__init__()
         self.storage = storage
 
@@ -51,7 +51,7 @@ class FacetWithStorage(AbstractFacet):
 class TransactionEndpointFacet(FacetWithStorage):
     name = "endpoint"
 
-    def __init__(self, *, storage: IStorage):
+    def __init__(self, *, storage: Storage):
         super().__init__(storage=storage)
         self.choices = set()
         self._refreshed_at = None
@@ -77,7 +77,7 @@ class TransactionStatusFacet(AbstractFacet):
 class TransactionsController:
     prefix = "/api/transactions"
 
-    def __init__(self, storage: IStorage):
+    def __init__(self, storage: Storage):
         self.storage = storage
         self.facets = {
             facet.name: facet

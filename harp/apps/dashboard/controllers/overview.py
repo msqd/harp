@@ -1,7 +1,7 @@
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.views import json
-from harp.protocols.storage import IStorage
+from harp.protocols.storage import Storage
 
 # from harp.apps.dashboard.schemas import TransactionsByDate
 
@@ -9,7 +9,7 @@ from harp.protocols.storage import IStorage
 class OverviewController:
     prefix = "/api/overview"
 
-    def __init__(self, storage: IStorage):
+    def __init__(self, storage: Storage):
         self.storage = storage
 
     def register(self, router):

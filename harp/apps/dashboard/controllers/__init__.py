@@ -9,7 +9,7 @@ from harp.apps.proxy.controllers import HttpProxyController
 from harp.core.asgi import ASGIRequest, ASGIResponse
 from harp.core.controllers import RoutingController
 from harp.errors import ProxyConfigurationError
-from harp.protocols.storage import IStorage
+from harp.protocols.storage import Storage
 from harp.typing.global_settings import GlobalSettings
 
 from .overview import OverviewController
@@ -28,14 +28,14 @@ STATIC_BUILD_PATHS = [
 class DashboardController:
     name = "ui"
 
-    storage: IStorage
+    storage: Storage
     settings: DashboardSettings
     global_settings: GlobalSettings
 
     _ui_static_middleware = None
     _ui_devserver_proxy_controller = None
 
-    def __init__(self, storage: IStorage, all_settings: GlobalSettings, local_settings: DashboardSettings):
+    def __init__(self, storage: Storage, all_settings: GlobalSettings, local_settings: DashboardSettings):
         # context for usage in handlers
         self.storage = storage
         self.global_settings = all_settings
