@@ -25,9 +25,10 @@ Content
 
    quickstart/index
    installation/index
+   commandline/index
    configuration/index
    features/index
-   reference/index
+   reference/python/index
    development/index
    faq
 
