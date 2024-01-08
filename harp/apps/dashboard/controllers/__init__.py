@@ -13,6 +13,7 @@ from harp.errors import ProxyConfigurationError
 from harp.protocols.storage import IStorage
 from harp.typing.global_settings import GlobalSettings
 
+# from harp.apps.dashboard.schemas import TransactionsByDate
 from .system import SystemController
 from .transactions import TransactionsController
 
@@ -148,40 +149,27 @@ class DashboardController:
         else:
             await response.body(blob.data)
 
+    async def overview_from_transactions(self, request: ASGIRequest, response: ASGIResponse):
+        self.storage.find_transactions(
+            with_messages=False,
+        )
+
     async def get_dashboard_data(self, request: ASGIRequest, response: ASGIResponse):
-        data = [
-            {"date": "2022-01-01", "transactions": 120, "errors": 20},
-            {"date": "2022-01-02", "transactions": 160, "errors": 30},
-            {"date": "2022-01-03", "transactions": 200, "errors": 40},
-            {"date": "2022-01-04", "transactions": 100, "errors": 50},
-            {"date": "2022-01-05", "transactions": 280, "errors": 60},
-            {"date": "2022-01-06", "transactions": 320, "errors": 70},
-            {"date": "2022-01-07", "transactions": 300, "errors": 50},
-            {"date": "2022-01-08", "transactions": 400, "errors": 90},
-            {"date": "2022-01-09", "transactions": 440, "errors": 50},
-            {"date": "2022-01-10", "transactions": 480, "errors": 50},
-            {"date": "2022-01-11", "transactions": 300, "errors": 120},
-            {"date": "2022-01-12", "transactions": 560, "errors": 130},
-            {"date": "2022-01-13", "transactions": 600, "errors": 10},
-            {"date": "2022-01-14", "transactions": 640, "errors": 150},
-            {"date": "2022-01-15", "transactions": 680, "errors": 50},
-            {"date": "2022-01-16", "transactions": 500, "errors": 170},
-            {"date": "2022-01-17", "transactions": 760, "errors": 180},
-            {"date": "2022-01-18", "transactions": 800, "errors": 190},
-            {"date": "2022-01-19", "transactions": 400, "errors": 50},
-            {"date": "2022-01-20", "transactions": 880, "errors": 210},
-            {"date": "2022-01-21", "transactions": 300, "errors": 50},
-            {"date": "2022-01-22", "transactions": 300, "errors": 50},
-            {"date": "2022-01-23", "transactions": 1000, "errors": 50},
-            {"date": "2022-01-24", "transactions": 500, "errors": 50},
-            {"date": "2022-01-25", "transactions": 300, "errors": 50},
-            {"date": "2022-01-26", "transactions": 300, "errors": 100},
-        ]
+        transactions_by_date_list = await self.storage.transactions_grouped_by_date()
+        errors_count = sum([t["errors"] for t in transactions_by_date_list])
+        transactions_count = sum([t["transactions"] for t in transactions_by_date_list])
+        errors_rate = errors_count / transactions_count if transactions_count else 0
+        mean_duration = (
+            sum([t["meanDuration"] * t["transactions"] for t in transactions_by_date_list]) / transactions_count
+            if transactions_count
+            else 0
+        )
+
         return json(
             {
-                "dailyStats": data,
-                "errors": {"count": 100, "rate": 0.1},
-                "transactions": {"count": 1000, "meanDuration": 0.1},
+                "dailyStats": transactions_by_date_list,
+                "errors": {"count": errors_count, "rate": errors_rate},
+                "transactions": {"count": transactions_count, "meanDuration": mean_duration},
             }
         )
 
@@ -206,7 +194,7 @@ class DashboardController:
             {"date": "2022-01-06", "transactions": 320, "errors": 10},
             {"date": "2022-01-07", "transactions": 300, "errors": 50},
             {"date": "2022-01-08", "transactions": 400, "errors": 50},
-            {"date": "2022-01-09", "transactions": 440, "errors": 50},
+            {"date": "2022-01-10", "transactions": 440, "errors": 50},
         ]
 
         endpoints_data = {

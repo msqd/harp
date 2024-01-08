@@ -1,6 +1,7 @@
-from datetime import UTC
+from datetime import UTC, date, datetime
+from typing import AsyncIterator, List, TypedDict
 
-from sqlalchemy import alias, func, select
+from sqlalchemy import alias, case, func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from whistle import IAsyncEventDispatcher
 
@@ -11,6 +12,14 @@ from harp.contrib.sqlalchemy_storage.tables import BlobsTable, MessagesTable, Tr
 from harp.core.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionEvent
 from harp.core.models.messages import Blob, Message
 from harp.core.models.transactions import Transaction
+
+
+class TransactionsGroupedByDate(TypedDict):
+    date: date
+    transactions: int
+    errors: int
+    meanDuration: float
+
 
 t_transactions = alias(TransactionsTable, name="t")
 t_messages = alias(MessagesTable, name="m")
@@ -91,7 +100,7 @@ class SqlAlchemyStorage:
 
         raise NotImplementedError(f"Unknown facet: {name}")
 
-    async def find_transactions(self, *, with_messages=False, filters=None):
+    async def find_transactions(self, *, with_messages=False, filters=None) -> AsyncIterator[Transaction]:
         """
         Implements :meth:`IStorage.find_transactions <harp.protocols.storage.IStorage.find_transactions>`.
 
@@ -104,9 +113,10 @@ class SqlAlchemyStorage:
             # query.add_columns(messages)
             query = query.outerjoin(t_messages, t_messages.c.transaction_id == t_transactions.c.id)
 
-        query = _filter_query(query, "endpoint", filters.get("endpoint", None))
-        query = _filter_query(query, "method", filters.get("method", None))
-        query = _filter_query(query, "status", filters.get("status", None))
+        if filters:
+            query = _filter_query(query, "endpoint", filters.get("endpoint", None))
+            query = _filter_query(query, "method", filters.get("method", None))
+            query = _filter_query(query, "status", filters.get("status", None))
 
         query = query.order_by(t_transactions.c.started_at.desc()).limit(50)
 
@@ -146,6 +156,25 @@ class SqlAlchemyStorage:
 
             if current_transaction:
                 yield current_transaction
+
+    async def transactions_grouped_by_date(self) -> List[TransactionsGroupedByDate]:
+        query = select(
+            func.date(t_transactions.c.started_at),  #! returns a string in sqlite of the formm "YYYY-MM-DD"
+            func.count(),
+            func.sum(case((t_transactions.c.x_status_class != "2xx", 1), else_=0)),
+            func.avg(t_transactions.c.elapsed),
+        ).group_by(func.date(t_transactions.c.started_at))
+        async with self.connect() as conn:
+            result = await conn.execute(query)
+            return [
+                {
+                    "date": datetime.strptime(row[0], "%Y-%m-%d").date(),
+                    "transactions": row[1],
+                    "errors": row[2],
+                    "meanDuration": row[3],
+                }
+                for row in result.fetchall()
+            ]
 
     async def get_blob(self, blob_id):
         """

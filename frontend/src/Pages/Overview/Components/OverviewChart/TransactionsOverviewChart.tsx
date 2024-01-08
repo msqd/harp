@@ -11,17 +11,18 @@ export interface TransactionOverviewChartProps {
 }
 
 export const TransactionsOverviewChart = ({ data, title, className }: TransactionOverviewChartProps) => {
+  const meaDurationSeconds = Math.trunc(data.transactions.meanDuration) / 1000
   return (
     <div className={className}>
       <H2>{title}</H2>
       <div style={{ display: "flex", alignItems: "center" }}>
         <div className="flex flex-col items-center">
           <div className="flex self-center text-3xl">
-            <PerformanceRatingBadge duration={data.transactions.meanDuration} />
+            <PerformanceRatingBadge duration={meaDurationSeconds} />
           </div>
           <div className="grid grid-cols-2 text-xs text-left align-text-bottom items-center self-center ml-10 mt-10">
             <span className="font-bold">Mean duration:</span>
-            <span>{data.transactions.meanDuration}</span>
+            <span>{meaDurationSeconds}</span>
             <span className="font-bold">Errors:</span>
             <span>{data.errors.rate}%</span>
           </div>
