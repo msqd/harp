@@ -1,7 +1,7 @@
-harp.core.settings.common module
+harp.config.settings.base module
 ================================
 
-.. automodule:: harp.core.settings.common
+.. automodule:: harp.config.settings.base
    :members:
    :undoc-members:
    :show-inheritance:

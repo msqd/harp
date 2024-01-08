@@ -29,6 +29,7 @@ def get_application_class_name(name):
 
 DEFAULT_APPLICATIONS = [
     # ["harp.contrib.telemetry", {"url": "https://telemetry.harp-proxy.net/"}],
+    "harp.services.http",
     "harp.apps.proxy",
     "harp.apps.dashboard",
     "harp.contrib.sqlalchemy_storage",
@@ -57,6 +58,12 @@ class Config:
         if self._validated_settings is not None:
             return self._validated_settings
         return self._raw_settings
+
+    @property
+    def applications(self):
+        if not self._validated_settings:
+            raise RuntimeError("Configuration not validated.")
+        return self._validated_settings.get("applications", [])
 
     def reset(self):
         self._validated_settings = None

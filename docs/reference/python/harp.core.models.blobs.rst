@@ -1,7 +1,7 @@
-harp.core.http.cookies module
+harp.core.models.blobs module
 =============================
 
-.. automodule:: harp.core.http.cookies
+.. automodule:: harp.core.models.blobs
    :members:
    :undoc-members:
    :show-inheritance:

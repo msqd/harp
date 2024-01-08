@@ -4,6 +4,7 @@ Initial implementation : https://trello.com/c/yCdcY7Og/1-5-http-proxy
 import os
 
 import pytest
+from httpx import AsyncClient
 
 from harp import Config
 from harp.apps.proxy.controllers import HttpProxyController
@@ -42,7 +43,7 @@ class TestAsgiProxyWithMissingStartup:
     @pytest.fixture
     def kernel(self, test_api):
         resolver = ProxyControllerResolver()
-        resolver.add(80, HttpProxyController(test_api.url))
+        resolver.add(80, HttpProxyController(test_api.url, http_client=AsyncClient()))
         return ASGIKernel(resolver=resolver)
 
     @pytest.fixture
@@ -70,6 +71,7 @@ class TestAsgiProxyWithStubApi:
     async def kernel(self, test_api):
         config = Config({"dashboard": {"enabled": False}})
 
+        config.add_application("harp.services.http")
         config.add_application("harp.apps.proxy")
         config.add_application("harp.apps.dashboard")
         config.add_application("harp.contrib.sqlalchemy_storage")

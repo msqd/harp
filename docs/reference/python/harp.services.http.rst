@@ -1,5 +1,8 @@
-harp.services.http module
-=========================
+harp.services.http package
+==========================
+
+Module contents
+---------------
 
 .. automodule:: harp.services.http
    :members:

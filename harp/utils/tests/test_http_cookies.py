@@ -1,4 +1,4 @@
-from harp.core.http.cookies import parse_cookie
+from harp.utils.http import parse_cookie
 
 
 class TestCookieParsing:

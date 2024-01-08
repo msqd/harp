@@ -4,7 +4,7 @@ from typing import Optional
 from urllib.parse import urljoin
 
 import httpx
-from httpx import codes
+from httpx import AsyncClient, codes
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
@@ -13,7 +13,6 @@ from harp.core.asgi.events import MessageEvent, TransactionEvent
 from harp.core.asgi.messages.requests import ASGIRequest
 from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.models.transactions import Transaction
-from harp.services.http import client
 from harp.utils.guids import generate_transaction_id_ksuid
 
 logger = get_logger(__name__)
@@ -35,7 +34,8 @@ class HttpProxyController:
         """Read-only reference to the event dispatcher."""
         return self._dispatcher
 
-    def __init__(self, url, *, dispatcher=None, name=None):
+    def __init__(self, url, *, http_client: AsyncClient, dispatcher=None, name=None):
+        self.http_client = http_client
         self.url = url or self.url
         self.name = name or self.name
         self._dispatcher = dispatcher or self._dispatcher
@@ -82,7 +82,7 @@ class HttpProxyController:
 
         url = urljoin(self.url, request.path) + (f"?{request.query_string}" if request.query_string else "")
 
-        p_request: httpx.Request = client.build_request(
+        p_request: httpx.Request = self.http_client.build_request(
             request.method,
             url,
             headers=request_headers,
@@ -92,7 +92,7 @@ class HttpProxyController:
 
         # PROXY RESPONSE
         try:
-            p_response: httpx.Response = await client.send(p_request)
+            p_response: httpx.Response = await self.http_client.send(p_request)
         except httpx.TimeoutException:
             logger.error(f"▶▶ {request.method} {url} (timeout)", transaction_id=transaction.id)
             await response.start(status=504)

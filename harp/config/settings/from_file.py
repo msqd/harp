@@ -1,6 +1,6 @@
 import os
 
-from harp.core.settings.dataclasses import BaseSetting, settings_dataclass
+from .base import BaseSetting, settings_dataclass
 
 
 @settings_dataclass
@@ -19,12 +19,3 @@ class FromFileSetting(BaseSetting):
 
     def open(self, *args, **kwargs):
         return open(self.from_file, *args, **kwargs)
-
-
-@settings_dataclass
-class DisabledSettings(BaseSetting):
-    # todo we should not be able to set enabled = True for this class
-    enabled: bool = False
-
-    def __repr__(self):
-        return "disabled"

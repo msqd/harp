@@ -1,7 +1,8 @@
 from functools import cached_property
 from typing import Literal, Optional
 
-from harp.core.settings import BaseSetting, DisabledSettings, FromFileSetting, settings_dataclass
+from harp.config.settings import DisabledSettings, FromFileSetting
+from harp.config.settings.base import BaseSetting, settings_dataclass
 from harp.errors import ProxyConfigurationError
 
 

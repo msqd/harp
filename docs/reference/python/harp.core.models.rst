@@ -8,6 +8,7 @@ Submodules
    :maxdepth: 4
 
    harp.core.models.base
+   harp.core.models.blobs
    harp.core.models.messages
    harp.core.models.transactions
 

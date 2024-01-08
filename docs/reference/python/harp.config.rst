@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    harp.config.factories
+   harp.config.settings
 
 Submodules
 ----------
