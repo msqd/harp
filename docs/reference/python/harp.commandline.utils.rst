@@ -1,5 +1,5 @@
-harp.cli.utils package
-======================
+harp.commandline.utils package
+==============================
 
 Submodules
 ----------
@@ -7,12 +7,12 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   harp.cli.utils.manager
+   harp.commandline.utils.manager
 
 Module contents
 ---------------
 
-.. automodule:: harp.cli.utils
+.. automodule:: harp.commandline.utils
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,7 +1,7 @@
-harp.cli.utils.manager module
+harp.commandline.start module
 =============================
 
-.. automodule:: harp.cli.utils.manager
+.. automodule:: harp.commandline.start
    :members:
    :undoc-members:
    :show-inheritance:

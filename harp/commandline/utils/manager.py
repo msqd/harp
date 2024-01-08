@@ -103,7 +103,7 @@ class HonchoManagerFactory:
 
             # this hack will change the class impl at runtime for frontend process to avoid misleading log at start.
             if name == HARP_DASHBOARD_SERVICE:
-                from harp.cli.utils._hacks import QuietViteHonchoProcess
+                from harp.commandline.utils._hacks import QuietViteHonchoProcess
 
                 manager._processes[name]["obj"].__class__ = QuietViteHonchoProcess
 

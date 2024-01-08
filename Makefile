@@ -54,6 +54,7 @@ clean:
 	-rm -f benchmark_*.svg
 
 preqa: types format reference
+	ruff check harp
 
 qa: preqa test test-ui
 

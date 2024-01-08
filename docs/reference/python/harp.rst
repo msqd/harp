@@ -9,7 +9,7 @@ Subpackages
 
    harp.adapters
    harp.apps
-   harp.cli
+   harp.commandline
    harp.config
    harp.contrib
    harp.core

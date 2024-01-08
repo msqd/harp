@@ -4,13 +4,6 @@ from itertools import chain
 
 import rich_click as click
 
-from harp.cli.utils.manager import (
-    HARP_DOCS_SERVICE,
-    HARP_UI_SERVICE,
-    HonchoManagerFactory,
-    parse_server_subprocesses_options,
-)
-
 
 def _get_service_name_for_humans(x: str):
     if ":" in x:
@@ -32,11 +25,7 @@ def _get_service_name_for_humans(x: str):
 )
 @click.argument("services", nargs=-1)
 def start(with_docs, with_ui, options, files, services, server_subprocesses):
-    try:
-        importlib.util.find_spec("honcho")
-        importlib.util.find_spec("watchfiles")
-    except ImportError as exc:
-        # todo when released on pypi, add more help
+    if importlib.util.find_spec("honcho") is None or importlib.util.find_spec("watchfiles") is None:
         raise click.UsageError(
             "\n".join(
                 (
@@ -45,7 +34,14 @@ def start(with_docs, with_ui, options, files, services, server_subprocesses):
                     'Try to install the "dev" extra.',
                 )
             )
-        ) from exc
+        )
+
+    from harp.commandline.utils.manager import (
+        HARP_DOCS_SERVICE,
+        HARP_UI_SERVICE,
+        HonchoManagerFactory,
+        parse_server_subprocesses_options,
+    )
 
     manager_factory = HonchoManagerFactory(
         proxy_options=list(

@@ -3,7 +3,8 @@
 To do
 -----
 
-@click.option('--prod/--dev', default=False, help="Set defaults for production or development environment (default to dev).")
+@click.option('--prod/--dev', default=False, help="Set defaults for production or development environment (default to
+dev).")
 
 @click.option('--verbose', '-v', count=True)
 --verbose : change default log verbosity
@@ -18,8 +19,8 @@ If one process only, no honcho ? Or mayne no honcho manager ?
 
 import rich_click as click
 
-from harp.cli.install_dev import install_dev
-from harp.cli.start import start
+from harp.commandline.install_dev import install_dev
+from harp.commandline.start import start
 
 
 @click.group()

@@ -68,7 +68,7 @@ sphinx-sitemap = "^2.5.1"
 ruff = "^0.1.9"
 
 [tool.poetry.scripts]
-harp = 'harp.cli:entrypoint'
+harp = 'harp.commandline:entrypoint'
 
 [tool.poetry.extras]
 dev = ['honcho', 'watchfiles']
