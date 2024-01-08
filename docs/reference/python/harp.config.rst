@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    harp.config.factories
+   harp.config.http_adapters
    harp.config.settings
 
 Submodules

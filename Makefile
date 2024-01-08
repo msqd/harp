@@ -54,7 +54,6 @@ clean:
 	-rm -f benchmark_*.svg
 
 preqa: types format reference
-	ruff check harp
 
 qa: preqa test test-ui
 
@@ -69,6 +68,7 @@ format-frontend: install-frontend
 format-backend:
 	isort harp tests
 	black harp tests
+	ruff check harp tests
 
 test:
 	$(MAKE) test-backend
