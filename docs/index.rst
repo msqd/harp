@@ -24,10 +24,10 @@ Content
    :maxdepth: 2
 
    quickstart/index
+   features/index
    installation/index
    commandline/index
    configuration/index
-   features/index
    reference/python/index
    development/index
    faq

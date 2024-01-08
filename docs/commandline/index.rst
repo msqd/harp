@@ -31,3 +31,5 @@ By default, `harp start` will start the server and the dashboard.
 
     - build (compile stuff for production)
     - serve (run a production-like server)
+
+    Document how harp start work (honcho, devserver port, ...)
