@@ -1,4 +1,3 @@
-import { KeyValueSettings } from "Domain/System/useSystemSettingsQuery"
 import { H2 } from "mkui/Components/Typography"
 
 type endpoint = {
@@ -8,31 +7,19 @@ type endpoint = {
   description?: string
 }
 
-type ProxySettings = {
-  endpoints: endpoint[]
-}
-
-type Settings = {
-  proxy: ProxySettings
-  // include other properties of settings here if needed
-}
+type Endpoints = endpoint[]
 
 export const Topology = ({
-  settings,
+  endpoints,
   className,
   title,
 }: {
-  settings?: Settings
+  endpoints?: Endpoints
   className?: string
   title?: string
 }) => {
   //   const endpoints = settings.proxy.endpoints
 
-  const endpoints = [
-    { name: "foo", port: 4000, url: "http://localhost:3000" },
-    { name: "bar", port: 3000, url: "http://localhost:3000" },
-    { name: "baz", port: 2000, url: "http://localhost:3000" },
-  ]
   return (
     <div className={className}>
       <H2 className="p-2">{title}</H2>

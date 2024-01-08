@@ -1,5 +1,5 @@
 from datetime import UTC, date, datetime
-from typing import AsyncIterator, List, TypedDict
+from typing import AsyncIterator, List, Optional, TypedDict
 
 from sqlalchemy import alias, case, func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
@@ -157,13 +157,18 @@ class SqlAlchemyStorage:
             if current_transaction:
                 yield current_transaction
 
-    async def transactions_grouped_by_date(self) -> List[TransactionsGroupedByDate]:
+    async def transactions_grouped_by_date(self, endpoint: Optional[str] = None) -> List[TransactionsGroupedByDate]:
         query = select(
             func.date(t_transactions.c.started_at),  #! returns a string in sqlite of the formm "YYYY-MM-DD"
             func.count(),
             func.sum(case((t_transactions.c.x_status_class != "2xx", 1), else_=0)),
             func.avg(t_transactions.c.elapsed),
-        ).group_by(func.date(t_transactions.c.started_at))
+        )
+
+        if endpoint:
+            query = query.where(t_transactions.c.endpoint == endpoint)
+
+        query = query.group_by(func.date(t_transactions.c.started_at))
         async with self.connect() as conn:
             result = await conn.execute(query)
             return [
