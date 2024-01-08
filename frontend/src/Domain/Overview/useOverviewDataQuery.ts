@@ -1,11 +1,11 @@
 import { useQuery } from "react-query"
 
 import { useApi } from "Domain/Api"
-import { DahsboardData } from "Models/Dashboard.ts"
+import { OverviewData } from "Models/Overview"
 
 export function useOverviewDataQuery(entrypoint: string | undefined = undefined) {
   const api = useApi()
-  return useQuery<DahsboardData>(["dashboard", entrypoint], () =>
-    api.fetch(entrypoint ? `/dashboard/${entrypoint}` : "/dashboard").then((r) => r.json()),
+  return useQuery<OverviewData>(["overview", entrypoint], () =>
+    api.fetch(entrypoint ? `/overview/${entrypoint}` : "/overview").then((r) => r.json()),
   )
 }

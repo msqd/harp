@@ -1,8 +1,8 @@
-export interface DashboardTransactionsReport {
+export interface OverviewTransactionsReport {
   dailyStats: Array<{ date: string; transactions: number; errors: number }>
 }
 
-export interface DahsboardData extends DashboardTransactionsReport {
+export interface OverviewData extends OverviewTransactionsReport {
   errors: {
     count: number
     rate: number

@@ -1,11 +1,11 @@
 import { PerformanceRatingBadge } from "Components/Badges"
-import { DahsboardData } from "Models/Dashboard"
+import { OverviewData } from "Models/Overview"
 import { H2 } from "mkui/Components/Typography"
 
 import { TransactionsChart } from "."
 
 export interface TransactionOverviewChartProps {
-  data: DahsboardData
+  data: OverviewData
   title?: string
   className?: string
 }
