@@ -1,23 +1,8 @@
-# extends: sqlite.yml
-
-storage:
-  type: sqlalchemy
-  url: sqlite+aiosqlite:///harp.db
-  drop_tables: true
-  echo: false
-
-proxy:
-  endpoints:
-    - port: 4000
-      name: httpbin
-      url: http://httpbin.org
-
-dashboard:
-  auth:
-    type: basic
-    algorithm: pbkdf2_sha256
-    users:
-      admin: { password: $pbkdf2-sha256$29000$f4.RkvLeG2OstfZ.D8F4zw$4ONvNXnHCX.8Q.40SU9KjvBsAEAhqdrGJ80tsfLPA/s }
-      charles: { password: $pbkdf2-sha256$29000$pVSK0ZpTytlb611LifF.bw$WtNQjr67hyS0DSSRtRSp6zU59KSk3pqvWdVCrxZhcEA }
-      miles: { password: $pbkdf2-sha256$29000$kTKmtPbeO2ds7R2DcA5BiA$UlJJGi.dHPxrTS2Jv8RXEXcpUNR7r1OYQmHmmheVjLE }
-      john: { password: $pbkdf2-sha256$29000$DqE0hnCuVYoRIiREaM35Pw$vSB9/zMmcHwQQKdtcOtkZQNR43MA9fyvB8Gd114EZ.U }
+dashboard.auth:
+  type: basic
+  algorithm: pbkdf2_sha256
+  users:
+    admin: { password: $pbkdf2-sha256$29000$f4.RkvLeG2OstfZ.D8F4zw$4ONvNXnHCX.8Q.40SU9KjvBsAEAhqdrGJ80tsfLPA/s }
+    charles: { password: $pbkdf2-sha256$29000$pVSK0ZpTytlb611LifF.bw$WtNQjr67hyS0DSSRtRSp6zU59KSk3pqvWdVCrxZhcEA }
+    miles: { password: $pbkdf2-sha256$29000$kTKmtPbeO2ds7R2DcA5BiA$UlJJGi.dHPxrTS2Jv8RXEXcpUNR7r1OYQmHmmheVjLE }
+    john: { password: $pbkdf2-sha256$29000$DqE0hnCuVYoRIiREaM35Pw$vSB9/zMmcHwQQKdtcOtkZQNR43MA9fyvB8Gd114EZ.U }

@@ -1,4 +1,6 @@
+import asyncio
 from datetime import UTC
+from inspect import iscoroutinefunction
 
 from sqlalchemy import alias, func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
@@ -60,6 +62,9 @@ class SqlAlchemyStorage:
         dispatcher.add_listener(EVENT_TRANSACTION_ENDED, self._on_transaction_ended)
         dispatcher.add_listener(EVENT_TRANSACTION_MESSAGE, self._on_transaction_message)
 
+        self._queue = None
+        self._queue_task = None
+
     def connect(self):
         """Shortcut to get a connection from the engine.
 
@@ -81,6 +86,29 @@ class SqlAlchemyStorage:
 
         """
         return self.engine.begin()
+
+    @property
+    def queue(self):
+        if not self._queue:
+            self._queue = asyncio.Queue()
+
+            async def worker():
+                nonlocal self
+                while True:
+                    item = await self.queue.get()
+                    try:
+                        if isinstance(item, Blob):
+                            await self._store_blob(item)
+                        elif iscoroutinefunction(item):
+                            await item()
+                        else:
+                            raise ValueError(f"Unknown item type: {type(item)}")
+                    except Exception as e:
+                        logger.exception(f"Error while executing queued task: {e}")
+
+            self._queue_task = asyncio.create_task(worker())
+
+        return self._queue
 
     async def get_facet_meta(self, name):
         if name == "endpoint":
@@ -162,28 +190,16 @@ class SqlAlchemyStorage:
         if row:
             return Blob(id=row.id, data=row.data, content_type=row.content_type)
 
-    async def store_blob(self, conn, blob: Blob):
+    async def _store_blob(self, blob: Blob):
         # todo this has concurrency problems with sqlite AND with postgres. Find a way to lock the insertion ? Or maybe
         # use an insert or update if not found, which will work by overriding just inserted data with the same data. But
         # this can be problematic under pressure, so maybe not.
         query = select(func.count()).where(BlobsTable.c.id == blob.id)
-        if not await conn.scalar(query):
-            from sqlite3 import IntegrityError
-
-            from asyncpg import UniqueViolationError
-
-            try:
+        async with self.begin() as conn:
+            if not await conn.scalar(query):
                 await conn.execute(
                     BlobsTable.insert().values(id=blob.id, data=blob.data, content_type=blob.content_type)
                 )
-            except IntegrityError as e:
-                logger.error(
-                    "SQLite IntegrityError: %s (ignored for now as it just shows concurrency problems with sqlite, "
-                    "which we are aware of)",
-                    e,
-                )
-            except UniqueViolationError as e:
-                logger.error("Postgres UniqueViolationError: %s", e)
         return hash
 
     async def _on_startup_create_database(self, event: TransactionEvent):
@@ -207,27 +223,30 @@ class SqlAlchemyStorage:
             )
 
     async def _on_transaction_message(self, event: MessageEvent):
-        async with self.begin() as conn:
-            # todo is the "__headers__" dunder content type any good idea ? maybe it's just a waste of bytes.
-            headers_blob = Blob.from_data(event.message.serialized_headers, content_type="__headers__")
-            content_blob = Blob.from_data(
-                event.message.serialized_body, content_type=event.message.headers.get("content-type")
-            )
+        # todo is the "__headers__" dunder content type any good idea ? maybe it's just a waste of bytes.
+        transaction = event.transaction
+        message = event.message
+        headers_blob = Blob.from_data(message.serialized_headers, content_type="__headers__")
+        content_blob = Blob.from_data(message.serialized_body, content_type=message.headers.get("content-type"))
 
-            # todo compute hash now, store later ? (once benchmarks are up)
-            await self.store_blob(conn, headers_blob)
-            await self.store_blob(conn, content_blob)
+        await self.queue.put(headers_blob)
+        await self.queue.put(content_blob)
 
-            await conn.execute(
-                MessagesTable.insert().values(
-                    transaction_id=event.transaction.id,
-                    kind=event.message.kind,
-                    summary=event.message.serialized_summary,
-                    headers=headers_blob.id,
-                    body=content_blob.id,
-                    created_at=event.message.created_at.astimezone(UTC).replace(tzinfo=None),
+        async def delayed_message_persistor():
+            nonlocal headers_blob, content_blob, transaction, message, self
+            async with self.begin() as conn:
+                await conn.execute(
+                    MessagesTable.insert().values(
+                        transaction_id=transaction.id,
+                        kind=message.kind,
+                        summary=message.serialized_summary,
+                        headers=headers_blob.id,
+                        body=content_blob.id,
+                        created_at=message.created_at.astimezone(UTC).replace(tzinfo=None),
+                    )
                 )
-            )
+
+        await self.queue.put(delayed_message_persistor)
 
     async def _on_transaction_ended(self, event: TransactionEvent):
         async with self.begin() as conn:
