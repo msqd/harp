@@ -159,7 +159,7 @@ class SqlAlchemyStorage:
 
     async def transactions_grouped_by_date(self, endpoint: Optional[str] = None) -> List[TransactionsGroupedByDate]:
         query = select(
-            func.date(t_transactions.c.started_at),  #! returns a string in sqlite of the formm "YYYY-MM-DD"
+            func.date(t_transactions.c.started_at),  #! returns a string in sqlite of the form "YYYY-MM-DD"
             func.count(),
             func.sum(case((t_transactions.c.x_status_class != "2xx", 1), else_=0)),
             func.avg(t_transactions.c.elapsed),

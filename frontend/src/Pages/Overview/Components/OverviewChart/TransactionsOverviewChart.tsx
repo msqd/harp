@@ -12,6 +12,7 @@ export interface TransactionOverviewChartProps {
 
 export const TransactionsOverviewChart = ({ data, title, className }: TransactionOverviewChartProps) => {
   const meaDurationSeconds = Math.trunc(data.transactions.meanDuration) / 1000
+  const errorsRate = Math.trunc(data.errors.rate * 100)
   return (
     <div className={className}>
       <H2>{title}</H2>
@@ -22,9 +23,9 @@ export const TransactionsOverviewChart = ({ data, title, className }: Transactio
           </div>
           <div className="grid grid-cols-2 text-xs text-left align-text-bottom items-center self-center ml-10 mt-10">
             <span className="font-bold">Mean duration:</span>
-            <span>{meaDurationSeconds}</span>
+            <span>{meaDurationSeconds} s</span>
             <span className="font-bold">Errors:</span>
-            <span>{data.errors.rate}%</span>
+            <span>{errorsRate}%</span>
           </div>
         </div>
         <TransactionsChart data={data.dailyStats} width="90%"></TransactionsChart>

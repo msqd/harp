@@ -39,7 +39,7 @@ export const Topology = ({
             </defs>
             <rect x="50" y={50 + (100 * (endpoints.length - 1)) / 2} width="100" height="50" fill="lightblue" />
             <text
-              x="95"
+              x="100"
               y={75 + (100 * (endpoints.length - 1)) / 2}
               fill="black"
               textAnchor="middle"
@@ -65,7 +65,7 @@ export const Topology = ({
             {endpoints.map((endpoint, index) => (
               <g key={index}>
                 <rect x="500" y={60 + index * 100} width="100" height="50" fill="lightblue" />
-                <text x="535" y={90 + index * 100} fill="black">
+                <text x="550" y={90 + index * 100} fill="black" textAnchor="middle" dominantBaseline="middle">
                   {endpoint.name}
                 </text>
                 <line
