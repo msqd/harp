@@ -3,9 +3,3 @@ storage:
   url: sqlite+aiosqlite:///harp.db
   drop_tables: true
   echo: false
-
-proxy:
-  endpoints:
-    - port: 4000
-      name: httpbin
-      url: http://httpbin.org

@@ -3,9 +3,3 @@ storage:
   url: postgresql+asyncpg://harp:harp@127.0.0.1/harp
   drop_tables: false
   echo: false
-
-proxy:
-  endpoints:
-    - port: 4000
-      name: httpbin
-      url: http://httpbin.org
