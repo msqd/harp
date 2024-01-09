@@ -1,4 +1,5 @@
 import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { format } from "date-fns"
 
 interface RequestCHartProps {
   data: Array<{ date: string; transactions: number; errors: number }>
@@ -22,12 +23,12 @@ export const TransactionsChart: React.FC<RequestCHartProps> = ({ data, width }) 
         <CartesianGrid stroke="#f5f5f5" vertical={false} />
         <XAxis
           dataKey="date"
-          interval={"preserveStartEnd"}
           tickLine={false}
           axisLine={{ stroke: "#f5f5f5" }}
+          interval={"preserveStartEnd"}
           fontSize={12}
         />
-        <Tooltip isAnimationActive={false} />
+        <Tooltip isAnimationActive={false} filterNull={false} />
         <Legend verticalAlign="top" align="right" height={36} iconSize={10} />
         <Bar
           dataKey="transactions"

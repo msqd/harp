@@ -17,7 +17,9 @@ export const OverviewPage = () => {
     <Page title="Overview" description="Useful insights">
       <OnQuerySuccess query={query}>
         {(query) => {
-          return <TransactionsOverviewChart data={query.data} title="Transactions Overview" className="mb-10" />
+          return (
+            <TransactionsOverviewChart data={query.data} title="Transactions Overview" className="border p-2 mb-10" />
+          )
         }}
       </OnQuerySuccess>
       <OnQuerySuccess query={settingsQuery}>
