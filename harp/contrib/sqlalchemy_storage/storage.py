@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date
 from typing import AsyncIterator, List, Optional, TypedDict
 
 from sqlalchemy import alias, case, func, select
@@ -13,6 +13,7 @@ from harp.core.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionE
 from harp.core.models.blobs import Blob
 from harp.core.models.messages import Message
 from harp.core.models.transactions import Transaction
+from harp.utils.dates import ensure_date
 
 
 class TransactionsGroupedByDate(TypedDict):
@@ -160,7 +161,8 @@ class SqlAlchemyStorage:
 
     async def transactions_grouped_by_date(self, endpoint: Optional[str] = None) -> List[TransactionsGroupedByDate]:
         query = select(
-            func.date(t_transactions.c.started_at),  #! returns a string in sqlite of the form "YYYY-MM-DD"
+            # sqlite returns a string formated as "YYYY-MM-DD", postgres returns a datetime.date
+            func.date(t_transactions.c.started_at),
             func.count(),
             func.sum(case((t_transactions.c.x_status_class != "2xx", 1), else_=0)),
             func.avg(t_transactions.c.elapsed),
@@ -174,7 +176,7 @@ class SqlAlchemyStorage:
             result = await conn.execute(query)
             return [
                 {
-                    "date": datetime.strptime(row[0], "%Y-%m-%d").date(),
+                    "date": ensure_date(row[0]),
                     "transactions": row[1],
                     "errors": row[2],
                     "meanDuration": row[3],

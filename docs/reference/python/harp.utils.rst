@@ -17,6 +17,7 @@ Submodules
 
    harp.utils.arguments
    harp.utils.bytes
+   harp.utils.dates
    harp.utils.guids
    harp.utils.http
    harp.utils.identifiers
