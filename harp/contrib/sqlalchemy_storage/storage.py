@@ -160,9 +160,11 @@ class SqlAlchemyStorage:
                 yield current_transaction
 
     async def transactions_grouped_by_date(self, endpoint: Optional[str] = None) -> List[TransactionsGroupedByDate]:
+        s_date = func.date(t_transactions.c.started_at)
+
         query = select(
             # sqlite returns a string formated as "YYYY-MM-DD", postgres returns a datetime.date
-            func.date(t_transactions.c.started_at),
+            s_date,
             func.count(),
             func.sum(case((t_transactions.c.x_status_class == "5xx", 1), else_=0)),
             func.avg(t_transactions.c.elapsed),
@@ -171,7 +173,7 @@ class SqlAlchemyStorage:
         if endpoint:
             query = query.where(t_transactions.c.endpoint == endpoint)
 
-        query = query.group_by(func.date(t_transactions.c.started_at))
+        query = query.group_by(s_date).order_by(s_date.asc())
         async with self.connect() as conn:
             result = await conn.execute(query)
             return [
