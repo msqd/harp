@@ -13,7 +13,6 @@ from harp.contrib.sqlalchemy_storage.models import Base, Blobs, Messages, Transa
 from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
 from harp.core.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionEvent
 from harp.core.models.blobs import Blob
-from harp.core.models.messages import Message
 from harp.core.models.transactions import Transaction
 from harp.utils.dates import ensure_date
 
@@ -89,8 +88,6 @@ class SqlAlchemyStorage:
         """
         query = select(Transactions)
         if with_messages:
-            # query.add_columns(messages)
-            # query = query.outerjoin(Transactions.messages)
             query = query.options(joinedload(Transactions.messages))
 
         if filters:
@@ -100,31 +97,9 @@ class SqlAlchemyStorage:
 
         query = query.order_by(Transactions.started_at.desc()).limit(50)
 
-        async with self.session() as session:
+        async with (self.session() as session):
             for transaction in (await session.scalars(query)).unique().all():
-                yield Transaction(
-                    id=transaction.id,
-                    type=transaction.type,
-                    endpoint=transaction.endpoint,
-                    started_at=transaction.started_at,
-                    finished_at=transaction.finished_at,
-                    elapsed=transaction.elapsed,
-                    extras={"method": transaction.x_method, "status_class": transaction.x_status_class},
-                    messages=[
-                        Message(
-                            id=message.id,
-                            transaction_id=message.transaction_id,
-                            kind=message.kind,
-                            summary=message.summary,
-                            headers=message.headers,
-                            body=message.body,
-                            created_at=message.created_at,
-                        )
-                        for message in transaction.messages
-                    ]
-                    if with_messages
-                    else [],
-                )
+                yield transaction.to_model()
 
     async def transactions_grouped_by_date(self, endpoint: Optional[str] = None) -> List[TransactionsGroupedByDate]:
         s_date = func.date(Transactions.started_at)
@@ -222,15 +197,9 @@ class SqlAlchemyStorage:
                 pass
 
             async with session.begin():
-                message = Messages()
-                message.transaction_id = event.transaction.id
-                message.kind = event.message.kind
-                message.summary = event.message.serialized_summary
-                message.headers = headers_blob.id
-                message.body = content_blob.id
-                message.created_at = event.message.created_at.astimezone(UTC).replace(tzinfo=None)
-
-                session.add(message)
+                session.add(
+                    Messages.from_models(event.transaction, event.message, headers_blob, content_blob),
+                )
 
     async def _on_transaction_ended(self, event: TransactionEvent):
         async with self.session() as session:
