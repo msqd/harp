@@ -34,8 +34,8 @@ class TransactionsGroupedByDate(TypedDict):
 
 
 class TransactionsGroupedByTimeBucket(TypedDict):
-    date: datetime | None
-    transactions: int
+    datetime: datetime | None
+    count: int
     errors: int
     meanDuration: float
 
@@ -168,8 +168,8 @@ class SqlAlchemyStorage:
             result = await session.execute(query)
             return [
                 {
-                    "date": ensure_datetime(row[0]),
-                    "transactions": row[1],
+                    "datetime": ensure_datetime(row[0]),
+                    "count": row[1],
                     "errors": row[2],
                     "meanDuration": row[3],
                 }

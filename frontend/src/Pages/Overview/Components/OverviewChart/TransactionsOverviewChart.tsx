@@ -11,7 +11,7 @@ export interface TransactionOverviewChartProps {
 }
 
 export const TransactionsOverviewChart = ({ data, title, className }: TransactionOverviewChartProps) => {
-  const meaDurationSeconds = Math.trunc(data.transactions.meanDuration) / 1000
+  const meaDurationSeconds = Math.trunc(data.meanDuration) / 1000
   const errorsRate = Math.trunc(data.errors.rate * 100)
   return (
     <div className={className}>
@@ -28,7 +28,7 @@ export const TransactionsOverviewChart = ({ data, title, className }: Transactio
             <span>{errorsRate}%</span>
           </div>
         </div>
-        <TransactionsChart data={data.dailyStats} width="90%"></TransactionsChart>
+        <TransactionsChart data={data.transactions} width="90%"></TransactionsChart>
       </div>
     </div>
   )

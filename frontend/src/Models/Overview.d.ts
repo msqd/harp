@@ -1,5 +1,5 @@
 export interface OverviewTransactionsReport {
-  dailyStats: Array<{ date: string; transactions: number; errors: number }>
+  transactions: Array<{ datetime: string; count: number; errors: number }>
 }
 
 export interface OverviewData extends OverviewTransactionsReport {
@@ -7,8 +7,6 @@ export interface OverviewData extends OverviewTransactionsReport {
     count: number
     rate: number
   }
-  transactions: {
-    count: number
-    meanDuration: number
-  }
+  count: number
+  meanDuration: number
 }

@@ -8,6 +8,8 @@ from sqlalchemy.types import DateTime
 class Trunc(ColumnElement):
     type = DateTime()
 
+    inherit_cache = True
+
     def __init__(self, precision, expr):
         self.precision = precision
         self.expr = expr
