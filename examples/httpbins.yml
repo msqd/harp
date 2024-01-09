@@ -1,0 +1,10 @@
+proxy.endpoints:
+  - port: 4000
+    name: httpbin
+    url: http://httpbin.org
+  - port: 4001
+    name: httpbin2
+    url: http://httpbin.org
+  - port: 4002
+    name: httpbin3
+    url: http://httpbin.org
