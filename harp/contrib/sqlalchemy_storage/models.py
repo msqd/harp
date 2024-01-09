@@ -1,7 +1,11 @@
+from datetime import UTC
 from typing import List
 
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, LargeBinary, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+from harp.core.models.messages import Message
+from harp.core.models.transactions import Transaction
 
 
 class Base(DeclarativeBase):
@@ -21,6 +25,21 @@ class Transactions(Base):
     x_status_class = mapped_column(String(3), nullable=True, index=True)
 
     messages: Mapped[List["Messages"]] = relationship(back_populates="transaction")
+
+    def to_model(self):
+        return Transaction(
+            id=self.id,
+            type=self.type,
+            endpoint=self.endpoint,
+            started_at=self.started_at,
+            finished_at=self.finished_at,
+            elapsed=self.elapsed,
+            extras=dict(
+                method=self.x_method,
+                status_class=self.x_status_class,
+            ),
+            messages=[message.to_model() for message in self.messages] if self.messages else [],
+        )
 
 
 class Blobs(Base):
@@ -43,3 +62,25 @@ class Messages(Base):
     created_at = mapped_column(DateTime())
 
     transaction: Mapped["Transactions"] = relationship(back_populates="messages")
+
+    def to_model(self):
+        return Message(
+            id=self.id,
+            transaction_id=self.transaction_id,
+            kind=self.kind,
+            summary=self.summary,
+            headers=self.headers,
+            body=self.body,
+            created_at=self.created_at,
+        )
+
+    @classmethod
+    def from_models(cls, transaction, message, headers, content):
+        obj = cls()
+        obj.transaction_id = transaction.id
+        obj.kind = message.kind
+        obj.summary = message.serialized_summary
+        obj.headers = headers.id
+        obj.body = content.id
+        obj.created_at = message.created_at.astimezone(UTC).replace(tzinfo=None)
+        return obj
