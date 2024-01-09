@@ -1,5 +1,4 @@
 import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import { format } from "date-fns"
 
 interface RequestCHartProps {
   data: Array<{ date: string; transactions: number; errors: number }>
