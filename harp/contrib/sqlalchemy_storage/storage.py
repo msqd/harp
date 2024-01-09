@@ -164,7 +164,7 @@ class SqlAlchemyStorage:
             # sqlite returns a string formated as "YYYY-MM-DD", postgres returns a datetime.date
             func.date(t_transactions.c.started_at),
             func.count(),
-            func.sum(case((t_transactions.c.x_status_class != "2xx", 1), else_=0)),
+            func.sum(case((t_transactions.c.x_status_class == "5xx", 1), else_=0)),
             func.avg(t_transactions.c.elapsed),
         )
 
