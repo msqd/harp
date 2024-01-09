@@ -4,9 +4,11 @@ Initial implementation : https://trello.com/c/yCdcY7Og/1-5-http-proxy
 import os
 
 import pytest
+from httpx import AsyncClient
 
-from harp import ProxyFactory
-from harp.applications.proxy.controllers import HttpProxyController
+from harp import Config
+from harp.apps.proxy.controllers import HttpProxyController
+from harp.config.factories.kernel_factory import KernelFactory
 from harp.core.asgi.kernel import ASGIKernel
 from harp.core.asgi.resolvers import ProxyControllerResolver
 from harp.utils.testing.communicators import ASGICommunicator
@@ -41,7 +43,7 @@ class TestAsgiProxyWithMissingStartup:
     @pytest.fixture
     def kernel(self, test_api):
         resolver = ProxyControllerResolver()
-        resolver.add(80, HttpProxyController(test_api.url))
+        resolver.add(80, HttpProxyController(test_api.url, http_client=AsyncClient()))
         return ASGIKernel(resolver=resolver)
 
     @pytest.fixture
@@ -67,9 +69,25 @@ class TestAsgiProxyWithStubApi:
 
     @pytest.fixture
     async def kernel(self, test_api):
-        factory = ProxyFactory(settings={"dashboard": {"enabled": False}})
-        factory.add(80, test_api.url)
-        return await factory.create()
+        config = Config({"dashboard": {"enabled": False}})
+
+        config.add_application("harp.services.http")
+        config.add_application("harp.apps.proxy")
+        config.add_application("harp.apps.dashboard")
+        config.add_application("harp.contrib.sqlalchemy_storage")
+
+        config.set(
+            "proxy.endpoints",
+            [
+                {
+                    "port": 80,
+                    "name": "test",
+                    "url": test_api.url,
+                }
+            ],
+        )
+        factory = KernelFactory(config)
+        return (await factory.build())[0]
 
     @pytest.fixture
     async def client(self, kernel):

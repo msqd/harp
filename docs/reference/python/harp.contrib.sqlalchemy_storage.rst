@@ -8,7 +8,6 @@ Submodules
    :maxdepth: 4
 
    harp.contrib.sqlalchemy_storage.settings
-   harp.contrib.sqlalchemy_storage.setup
    harp.contrib.sqlalchemy_storage.storage
    harp.contrib.sqlalchemy_storage.tables
 

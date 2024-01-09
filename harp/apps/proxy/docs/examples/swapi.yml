@@ -1,0 +1,5 @@
+proxy:
+  endpoints:
+    - name: starwars
+      port: 1234
+      url: https://swapi.dev/

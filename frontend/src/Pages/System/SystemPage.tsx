@@ -4,7 +4,7 @@ import { Tab } from "mkui/Components/Tabs"
 import { SystemDependenciesTabPanel } from "./SystemDependenciesTabPanel.tsx"
 import { SystemSettingsTabPanel } from "./SystemSettingsTabPanel.tsx"
 
-const SystemPage = () => {
+export const SystemPage = () => {
   return (
     <Page title="System" description="Informations about the running instance.">
       <Tab.Group>
@@ -20,5 +20,3 @@ const SystemPage = () => {
     </Page>
   )
 }
-
-export default SystemPage

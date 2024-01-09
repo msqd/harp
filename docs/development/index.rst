@@ -4,8 +4,8 @@ Development
 .. toctree::
     :maxdepth: 2
 
-    extending/index
-    internals/index
+    applications/index
+    storage/index
     changelogs/index
     roadmap
     ideas

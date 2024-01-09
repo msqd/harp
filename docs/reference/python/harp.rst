@@ -7,13 +7,14 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   harp.applications
-   harp.cli
+   harp.apps
+   harp.commandline
+   harp.config
    harp.contrib
    harp.core
-   harp.factories
    harp.protocols
    harp.services
+   harp.typing
    harp.utils
 
 Submodules

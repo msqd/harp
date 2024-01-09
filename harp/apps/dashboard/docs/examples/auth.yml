@@ -1,0 +1,5 @@
+dashboard.auth:
+  type: basic
+  algorithm: plain
+  users:
+    admin: { password: "not-so-secret" }

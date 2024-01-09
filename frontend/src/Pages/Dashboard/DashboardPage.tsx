@@ -4,7 +4,7 @@ import { useDashboardDataQuery } from "Domain/Dashboard"
 
 import { DashboardCharts } from "./DashboardCharts"
 
-const DashboardPage = () => {
+export const DashboardPage = () => {
   const query = useDashboardDataQuery()
 
   return (
@@ -17,5 +17,3 @@ const DashboardPage = () => {
     </Page>
   )
 }
-
-export default DashboardPage

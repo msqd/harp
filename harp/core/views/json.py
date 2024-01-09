@@ -3,8 +3,7 @@ import traceback
 import orjson
 from whistle import IEventDispatcher
 
-from harp.core.asgi.events import EVENT_CORE_VIEW
-from harp.core.asgi.events.view import ViewEvent
+from harp.core.asgi.events import EVENT_CORE_VIEW, ViewEvent
 
 
 class json(dict):

@@ -1,1 +1,1 @@
-export { default as Dashboard } from "./DashboardPage.tsx"
+export { DashboardPage } from "./DashboardPage.tsx"

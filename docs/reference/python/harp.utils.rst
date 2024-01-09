@@ -18,6 +18,8 @@ Submodules
    harp.utils.arguments
    harp.utils.bytes
    harp.utils.guids
+   harp.utils.http
+   harp.utils.identifiers
    harp.utils.json
    harp.utils.network
    harp.utils.processes

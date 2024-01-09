@@ -9,9 +9,7 @@ Subpackages
 
    harp.core.asgi
    harp.core.controllers
-   harp.core.http
    harp.core.models
-   harp.core.settings
    harp.core.types
    harp.core.views
 

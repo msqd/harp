@@ -1,0 +1,6 @@
+dashboard:
+  # enable/disable dashboard. If disabled, all other settings are ignored
+  enabled: true
+
+  # external port to listen on
+  port: 4080

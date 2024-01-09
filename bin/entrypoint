@@ -1,23 +1,16 @@
 #! /usr/bin/env python3
-
 import asyncio
 import sys
 
-from harp import ProxyFactory, get_logger, get_server_adapter
+from harp import Config
+from harp.config.factories.kernel_factory import KernelFactory
+from harp.config.http_adapters.hypercorn_adapter import HypercornServerAdapter
 
-logger = get_logger(__name__)
-
-
-class Factory(ProxyFactory):
-    def configure(self):
-        self.load("harp.contrib.sqlalchemy_storage")
-
+config = Config()
+config.add_defaults()
 
 if __name__ == "__main__":
-    try:
-        proxy = Factory()
-        adapter = get_server_adapter(proxy)
-    except Exception as exc:
-        logger.fatal(exc, exc_info=True)
-        sys.exit(1)
-    asyncio.run(adapter.serve())
+    config.read_env(sys.argv[1:])
+    factory = KernelFactory(config)
+    server = HypercornServerAdapter(factory)
+    asyncio.run(server.serve())

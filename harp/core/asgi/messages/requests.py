@@ -7,7 +7,7 @@ from urllib.parse import parse_qsl
 from multidict import CIMultiDict, CIMultiDictProxy
 
 from harp import get_logger
-from harp.core.http.cookies import parse_cookie
+from harp.utils.http import parse_cookie
 
 logger = get_logger(__name__)
 

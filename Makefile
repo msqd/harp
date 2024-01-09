@@ -35,7 +35,8 @@ reference: harp
 	rm -rf docs/reference/python
 	mkdir -p docs/reference/python
 	sphinx-apidoc --tocfile index --separate -f -o docs/reference/python -t docs/_api_templates harp '**/tests'
-	$(SED) -i "1s/.*/Python Package/" docs/reference/python/index.rst
+	$(SED) -i "1s/.*/Reference/" docs/reference/python/index.rst
+	git add docs/reference/
 
 frontend:
 	cd frontend; pnpm build
@@ -67,6 +68,7 @@ format-frontend: install-frontend
 format-backend:
 	isort harp tests
 	black harp tests
+	ruff check harp tests
 
 test:
 	$(MAKE) test-backend

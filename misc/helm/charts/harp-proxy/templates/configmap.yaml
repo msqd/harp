@@ -7,7 +7,7 @@ data:
     proxy:
       endpoints:
         {{- range .Values.endpoints }}
-        "{{ .port }}":
+        - port: "{{ .port }}"
           name: "{{ .name }}"
           url: "{{ .url }}"
         {{- end }}
