@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/browser"
+import { ReactNode } from "react"
 import { ErrorBoundary, FallbackProps } from "react-error-boundary"
 
 import { H1, P } from "mkui/Components/Typography"
@@ -42,15 +43,7 @@ export function Error(props: FallbackProps) {
   )
 }
 
-export function Page({
-  children,
-  title,
-  description,
-}: {
-  children: React.ReactNode
-  title?: string
-  description?: string
-}) {
+export function Page({ children, title, description }: { children: ReactNode; title?: string; description?: string }) {
   return (
     <ErrorBoundary FallbackComponent={Error}>
       <main>

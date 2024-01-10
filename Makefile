@@ -46,7 +46,7 @@ frontend:
 # QA, tests and other CI/CD related stuff
 ########################################################################################################################
 
-.PHONY: clean preqa qa types format format-backend format-frontend test test-backend test-frontend lint-frontend test-ui test-ui-update
+.PHONY: clean preqa qa types format format-backend format-frontend test test-backend test-frontend lint-frontend test-ui test-ui-update test-ui-build
 
 clean:
 	(cd docs; $(MAKE) clean)
@@ -75,7 +75,7 @@ test:
 	$(MAKE) test-frontend
 
 test-backend:
-	$(PYTEST) --cov=harp --cov-report html:docs/_build/html/coverage harp tests
+	$(PYTEST) --cov=harp --cov-report html:docs/_build/html/coverage -n auto harp tests
 
 test-frontend: install-frontend lint-frontend
 	cd frontend; pnpm test
@@ -83,10 +83,13 @@ test-frontend: install-frontend lint-frontend
 lint-frontend: install-frontend
 	cd frontend; pnpm build
 
-test-ui: install-ui
+test-ui-build: install-ui
+	cd vendors/mkui; pnpm build
+
+test-ui: test-ui-build
 	cd vendors/mkui; pnpm test:prod
 
-test-ui-update: install-ui
+test-ui-update: test-ui-build
 	cd vendors/mkui; pnpm test:update
 
 ########################################################################################################################

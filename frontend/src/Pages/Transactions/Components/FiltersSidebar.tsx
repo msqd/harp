@@ -1,8 +1,8 @@
 import { useTransactionsFiltersQuery } from "Domain/Transactions"
 import { Filter, Filters } from "Types/filters"
+import { Pane } from "mkui/Components/Pane"
 
 import { Facet } from "./Facets"
-import { Pane } from "mkui/Components/Pane"
 
 const ratings = [
   { name: "A++" },
