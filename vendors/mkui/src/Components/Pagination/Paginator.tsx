@@ -3,22 +3,24 @@ import { generate } from "@bramus/pagination-sequence"
 import { classNames } from "../../Utilities"
 
 export function Paginator({
-  last = 50,
+  pages = 50,
   current = 1,
-  perPage = 10,
+  perPage = 20,
   total = undefined,
   className = undefined,
   setPage = undefined,
+  showSummary = true,
 }: {
-  last?: number
+  pages?: number
   current?: number
   perPage?: number
   total?: number
   className?: string
   setPage?: (page: number) => void
+  showSummary?: boolean
 }) {
   const setPreviousPage = setPage ? () => setPage(Math.max(1, current - 1)) : undefined
-  const setNextPage = setPage ? () => setPage(Math.min(last, current + 1)) : undefined
+  const setNextPage = setPage ? () => setPage(Math.min(pages, current + 1)) : undefined
   return (
     <div
       className={classNames("flex items-center justify-between border-gray-200 bg-white px-4 py-3 sm:px-6", className)}
@@ -40,10 +42,10 @@ export function Paginator({
         </a>
       </div>
       <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-        <div>
+        <div className={showSummary ? "" : "invisible"}>
           <p className="text-sm text-gray-700">
             Showing <span className="font-medium">{(current - 1) * perPage + 1}</span> to{" "}
-            <span className="font-medium">{current * perPage}</span>
+            <span className="font-medium">{total ? Math.min(current * perPage, total) : current * perPage}</span>
             {total ? (
               <>
                 {" "}
@@ -67,7 +69,7 @@ export function Paginator({
             {/* Current: "z-10 bg-primary-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600",
                 Default: "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0" */}
 
-            {generate(current, last, 1, 1, "…").map((i) => {
+            {generate(current, pages, 1, 1, "…").map((i) => {
               if (typeof i === "string") {
                 return (
                   <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">

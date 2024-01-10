@@ -28,7 +28,7 @@ export function useTransactionsListQuery({
   const api = useApi()
   const qs = filters ? getQueryStringFromRecord({ ...filters, page, cursor: page == 1 ? undefined : cursor }) : ""
 
-  return useQuery<ItemList<Transaction>>(
+  return useQuery<ItemList<Transaction> & { total: number; pages: number; perPage: number }>(
     ["transactions", qs],
     () => api.fetch("/transactions" + (qs ? `?${qs}` : "")).then((r) => r.json()),
     {
