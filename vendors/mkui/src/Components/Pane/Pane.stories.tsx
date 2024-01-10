@@ -2,7 +2,7 @@ import { Pane } from "./Pane"
 import { H2 } from "../Typography"
 
 export const Default = () => (
-  <div className="m-4">
+  <div className="m-4 grid gap-4">
     <Pane>
       <H2>Eat at Joe's</H2>
       <p>

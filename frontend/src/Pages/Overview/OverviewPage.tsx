@@ -5,10 +5,12 @@ import { useSystemSettingsQuery } from "Domain/System"
 
 import { TransactionsOverviewChart } from "./Components/OverviewChart/TransactionsOverviewChart"
 import { TransactionsOverview } from "./OverviewCharts"
+import { Pane } from "mkui/Components/Pane"
 
 export const OverviewPage = () => {
   const query = useOverviewDataQuery()
   const settingsQuery = useSystemSettingsQuery()
+
   interface ProxyData {
     endpoints?: { name: string; port: number; url: string; description?: string }[]
   }
@@ -17,7 +19,11 @@ export const OverviewPage = () => {
     <Page title="Overview" description="Useful insights">
       <OnQuerySuccess query={query}>
         {(query) => {
-          return <TransactionsOverviewChart data={query.data} title="Transactions Overview" className="mb-10" />
+          return (
+            <Pane className="mb-4">
+              <TransactionsOverviewChart data={query.data} title="Transactions Overview" />
+            </Pane>
+          )
         }}
       </OnQuerySuccess>
       <OnQuerySuccess query={settingsQuery}>
@@ -29,7 +35,9 @@ export const OverviewPage = () => {
               {endpointsNames &&
                 endpointsNames?.length > 1 &&
                 endpointsNames.map((endpoint: string, index: number) => (
-                  <TransactionsOverview key={index} endpoint={endpoint} title={endpoint} className="border p-2" />
+                  <Pane>
+                    <TransactionsOverview key={index} endpoint={endpoint} title={endpoint} />
+                  </Pane>
                 ))}
             </div>
           )
