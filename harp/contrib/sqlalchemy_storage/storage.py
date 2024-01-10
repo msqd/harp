@@ -1,4 +1,3 @@
-import asyncio
 from datetime import UTC, date
 from typing import AsyncIterator, List, Optional, TypedDict
 
@@ -14,6 +13,7 @@ from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
 from harp.core.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionEvent
 from harp.core.models.blobs import Blob
 from harp.core.models.transactions import Transaction
+from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_date
 
 
@@ -68,26 +68,13 @@ class SqlAlchemyStorage:
         dispatcher.add_listener(EVENT_TRANSACTION_ENDED, self._on_transaction_ended)
         dispatcher.add_listener(EVENT_TRANSACTION_MESSAGE, self._on_transaction_message)
 
-        self._queue = None
-        self._queue_task = None
+        self._worker = None
 
     @property
-    def queue(self):
-        if not self._queue:
-            self._queue = asyncio.Queue()
-
-            async def worker():
-                nonlocal self
-                while True:
-                    item = await self.queue.get()
-                    try:
-                        await item()
-                    except Exception as e:
-                        logger.error(f"Error while executing queued task: {e}")
-
-            self._queue_task = asyncio.create_task(worker())
-
-        return self._queue
+    def worker(self):
+        if not self._worker:
+            self._worker = AsyncWorkerQueue()
+        return self._worker
 
     async def get_facet_meta(self, name):
         if name == "endpoint":
@@ -192,27 +179,20 @@ class SqlAlchemyStorage:
         headers_blob = Blob.from_data(message.serialized_headers, content_type="__headers__")
         content_blob = Blob.from_data(message.serialized_body, content_type=message.headers.get("content-type"))
 
-        async def store_headers_blob():
-            async with self.session() as session:
-                async with session.begin():
-                    db_headers_blob = Blobs()
-                    db_headers_blob.id = headers_blob.id
-                    db_headers_blob.content_type = headers_blob.content_type
-                    db_headers_blob.data = headers_blob.data
-                    session.add(db_headers_blob)
+        def create_blob_storage_task(blob):
+            async def store_blob():
+                async with self.session() as session:
+                    async with session.begin():
+                        db_blob = Blobs()
+                        db_blob.id = blob.id
+                        db_blob.content_type = blob.content_type
+                        db_blob.data = blob.data
+                        session.add(db_blob)
 
-        await self.queue.put(store_headers_blob)
+            return store_blob
 
-        async def store_content_blob():
-            async with self.session() as session:
-                async with session.begin():
-                    db_content_blob = Blobs()
-                    db_content_blob.id = content_blob.id
-                    db_content_blob.content_type = content_blob.content_type
-                    db_content_blob.data = content_blob.data
-                    session.add(db_content_blob)
-
-        await self.queue.put(store_content_blob)
+        await self.worker.push(create_blob_storage_task(headers_blob), ignore_errors=True)
+        await self.worker.push(create_blob_storage_task(content_blob), ignore_errors=True)
 
         async def store_message():
             async with self.session() as session:
@@ -221,7 +201,7 @@ class SqlAlchemyStorage:
                         Messages.from_models(transaction, message, headers_blob, content_blob),
                     )
 
-        await self.queue.put(store_message)
+        await self.worker.push(store_message)
 
     async def _on_transaction_ended(self, event: TransactionEvent):
         async with self.session() as session:
