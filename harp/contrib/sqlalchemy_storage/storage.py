@@ -11,7 +11,7 @@ from harp import get_logger
 from harp.apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
 from harp.contrib.sqlalchemy_storage.models import Base, Blobs, Messages, Transactions
 from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
-from harp.contrib.sqlalchemy_storage.utils.dates import Trunc
+from harp.contrib.sqlalchemy_storage.utils.dates import TruncDatetime
 from harp.core.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionEvent
 from harp.core.models.blobs import Blob
 from harp.core.models.transactions import Transaction
@@ -20,10 +20,12 @@ from harp.utils.dates import ensure_date, ensure_datetime
 
 
 class TimeBucket(Enum):
+    YEAR = "year"
+    MONTH = "month"
+    WEEK = "week"
     DAY = "day"
     HOUR = "hour"
     MINUTE = "minute"
-    SECOND = "second"
 
 
 class TransactionsGroupedByDate(TypedDict):
@@ -169,14 +171,17 @@ class SqlAlchemyStorage:
             ]
 
     async def transactions_grouped_by_time_bucket(
-        self, endpoint: Optional[str] = None, time_bucket: str = TimeBucket.DAY.value
+        self,
+        endpoint: Optional[str] = None,
+        time_bucket: str = TimeBucket.DAY.value,
+        start_datetime: Optional[datetime] = None,
     ) -> List[TransactionsGroupedByTimeBucket]:
         if time_bucket not in [e.value for e in TimeBucket]:
             raise ValueError(
                 f"Invalid time bucket: {time_bucket}. Must be one of {', '.join([e.value for e in TimeBucket])}."
             )
 
-        s_date = Trunc(time_bucket, Transactions.started_at)
+        s_date = TruncDatetime(time_bucket, Transactions.started_at)
         query = select(
             s_date,
             func.count(),
@@ -187,12 +192,15 @@ class SqlAlchemyStorage:
         if endpoint:
             query = query.where(Transactions.endpoint == endpoint)
 
+        if start_datetime:
+            query = query.where(Transactions.started_at >= start_datetime)
+
         query = query.group_by(s_date).order_by(s_date.asc())
         async with self.session() as session:
             result = await session.execute(query)
             return [
                 {
-                    "datetime": ensure_datetime(row[0]),
+                    "datetime": ensure_datetime(row[0], UTC),
                     "count": row[1],
                     "errors": row[2],
                     "meanDuration": row[3],

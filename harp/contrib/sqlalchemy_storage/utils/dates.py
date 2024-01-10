@@ -5,7 +5,7 @@ from sqlalchemy.types import DateTime
 
 
 # Code from https://stackoverflow.com/questions/51662547/truncate-hour-day-week-month-year-in-sqlalchemy
-class Trunc(ColumnElement):
+class TruncDatetime(ColumnElement):
     type = DateTime()
 
     inherit_cache = True
@@ -19,7 +19,7 @@ class Trunc(ColumnElement):
         return self.expr._from_objects
 
 
-@compiles(Trunc, "postgresql")
+@compiles(TruncDatetime, "postgresql")
 def compile_trunc_postgresql(element, compiler, **kw):
     return compiler.process(func.date_trunc(element.precision, element.expr))
 
@@ -36,7 +36,7 @@ _modifiers = {
 }
 
 
-@compiles(Trunc, "sqlite")
+@compiles(TruncDatetime, "sqlite")
 def compile_trunc_sqlite(element, compiler, **kw):
     precision = element.precision
     expr = element.expr

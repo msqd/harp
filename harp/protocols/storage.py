@@ -39,6 +39,6 @@ class Storage(Protocol):
         ...
 
     async def transactions_grouped_by_time_bucket(
-        self, *, endpoint=None, time_bucket: Optional[str]
+        self, *, endpoint=None, time_bucket: Optional[str], start_datetime: Optional[datetime]
     ) -> List[TransactionsGroupedByTimeBucket]:
         ...
