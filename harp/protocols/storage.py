@@ -12,7 +12,9 @@ class TransactionsGroupedByDate(TypedDict):
 
 
 class Storage(Protocol):
-    def find_transactions(self, *, with_messages=False, filters=None, page: int = 1) -> AsyncIterator[Transaction]:
+    def find_transactions(
+        self, *, with_messages=False, filters=None, page: int = 1, cursor: str = ""
+    ) -> AsyncIterator[Transaction]:
         """Find transactions, using optional filters, for example to be displayed in the dashboard."""
         ...
 

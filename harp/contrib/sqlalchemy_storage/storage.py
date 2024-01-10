@@ -90,7 +90,12 @@ class SqlAlchemyStorage:
         raise NotImplementedError(f"Unknown facet: {name}")
 
     async def find_transactions(
-        self, *, with_messages=False, filters=None, page: int = 1
+        self,
+        *,
+        with_messages=False,
+        filters=None,
+        page: int = 1,
+        cursor: str = "",
     ) -> AsyncIterator[Transaction]:
         """
         Implements :meth:`Storage.find_transactions <harp.protocols.storage.Storage.find_transactions>`.
@@ -108,7 +113,13 @@ class SqlAlchemyStorage:
             query = _filter_query(query, "method", filters.get("method", None))
             query = _filter_query(query, "status", filters.get("status", None))
 
-        query = query.order_by(Transactions.started_at.desc()).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE)
+        query = query.order_by(Transactions.started_at.desc())
+        query = query.limit(PAGE_SIZE)
+
+        if page:
+            query = query.offset(max(0, (page - 1) * PAGE_SIZE))
+            if cursor:
+                query = query.filter(Transactions.id <= cursor)
 
         async with (self.session() as session):
             for transaction in (await session.scalars(query)).unique().all():

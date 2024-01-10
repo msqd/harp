@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { Page } from "Components/Page"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
@@ -12,7 +12,14 @@ import { TransactionDataTable } from "./Components/List"
 export function TransactionsListPage() {
   const [filters, setFilters] = useState<Filters>({})
   const [page, setPage] = useState(1)
-  const query = useTransactionsListQuery({ filters, page })
+  const [cursor, setCursor] = useState<string | undefined>(undefined)
+  const query = useTransactionsListQuery({ filters, page, cursor })
+
+  useEffect(() => {
+    if (page == 1 && query.isSuccess && query.data.items.length) {
+      setCursor(query.data.items[0].id)
+    }
+  }, [page, query])
 
   return (
     <Page title="Transactions" description="Explore transactions that went through the proxy">

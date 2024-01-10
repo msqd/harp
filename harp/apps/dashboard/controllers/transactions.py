@@ -109,6 +109,8 @@ class TransactionsController:
         if page < 1:
             page = 1
 
+        cursor = str(request.query.get("cursor", ""))
+
         transactions = []
         async for transaction in self.storage.find_transactions(
             with_messages=True,
@@ -119,6 +121,7 @@ class TransactionsController:
                 for name, facet in self.facets.items()
             },
             page=page,
+            cursor=cursor,
         ):
             transactions.append(transaction)
         return json(

@@ -75,7 +75,7 @@ test:
 	$(MAKE) test-frontend
 
 test-backend:
-	$(PYTEST) --cov=harp --cov-report html:docs/_build/html/coverage harp tests
+	$(PYTEST) --cov=harp --cov-report html:docs/_build/html/coverage -n auto harp tests
 
 test-frontend: install-frontend lint-frontend
 	cd frontend; pnpm test

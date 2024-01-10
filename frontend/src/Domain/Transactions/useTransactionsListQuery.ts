@@ -8,7 +8,7 @@ import { Filter, Filters } from "Types/filters"
 function getQueryStringFromRecord(filters: Record<string, Filter> | { page: number; cursor?: string }) {
   const searchParams = new URLSearchParams()
 
-  for (const [key, value] of Object.entries(filters)) {
+  for (const [key, value] of Object.entries(filters) as [string, string | number | undefined][]) {
     if (value) {
       searchParams.append(key, value.toString())
     }
@@ -26,10 +26,10 @@ export function useTransactionsListQuery({
   cursor?: string
 }) {
   const api = useApi()
-  const qs = filters ? getQueryStringFromRecord({ ...filters, page, cursor }) : ""
+  const qs = filters ? getQueryStringFromRecord({ ...filters, page, cursor: page == 1 ? undefined : cursor }) : ""
 
   return useQuery<ItemList<Transaction>>(
-    ["transactions", filters, page, cursor],
+    ["transactions", qs],
     () => api.fetch("/transactions" + (qs ? `?${qs}` : "")).then((r) => r.json()),
     {
       refetchInterval: 30000,
