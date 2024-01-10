@@ -10,10 +10,25 @@ import { TransactionDataTable } from "./Components/List"
 
 export function TransactionsListPage() {
   const [filters, setFilters] = useState<Filters>({})
-  const query = useTransactionsListQuery({ filters })
+  const [page, setPage] = useState(1)
+  const query = useTransactionsListQuery({ filters, page })
 
   return (
     <Page title="Transactions" description="Explore transactions that went through the proxy">
+      <div>
+        page
+        {[1, 2, 3, 4].map((page) => (
+          <a
+            href="#"
+            onClick={() => {
+              setPage(page)
+              return false
+            }}
+          >
+            {page}
+          </a>
+        ))}
+      </div>
       <OnQuerySuccess query={query}>
         {(query) => (
           <div className="w-full grid grid-cols-1 grid-rows-1 items-start gap-x-8 gap-y-8 lg:mx-0 lg:max-w-none lg:grid-cols-5">

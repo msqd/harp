@@ -105,6 +105,10 @@ class TransactionsController:
         )
 
     async def list(self, request: ASGIRequest, response: ASGIResponse):
+        page = int(request.query.get("page", 1))
+        if page < 1:
+            page = 1
+
         transactions = []
         async for transaction in self.storage.find_transactions(
             with_messages=True,
@@ -114,6 +118,7 @@ class TransactionsController:
                 )
                 for name, facet in self.facets.items()
             },
+            page=page,
         ):
             transactions.append(transaction)
         return json(

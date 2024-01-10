@@ -1,5 +1,5 @@
 storage:
   type: sqlalchemy
   url: sqlite+aiosqlite:///harp.db
-  drop_tables: true
+  drop_tables: false
   echo: false

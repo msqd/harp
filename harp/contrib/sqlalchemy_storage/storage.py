@@ -43,6 +43,9 @@ def _filter_query(query, name, values):
     return query
 
 
+PAGE_SIZE = 5
+
+
 class SqlAlchemyStorage:
     """
     Storage implementation using SQL Alchemy Core, with async drivers.
@@ -86,7 +89,9 @@ class SqlAlchemyStorage:
 
         raise NotImplementedError(f"Unknown facet: {name}")
 
-    async def find_transactions(self, *, with_messages=False, filters=None) -> AsyncIterator[Transaction]:
+    async def find_transactions(
+        self, *, with_messages=False, filters=None, page: int = 1
+    ) -> AsyncIterator[Transaction]:
         """
         Implements :meth:`Storage.find_transactions <harp.protocols.storage.Storage.find_transactions>`.
 
@@ -103,7 +108,7 @@ class SqlAlchemyStorage:
             query = _filter_query(query, "method", filters.get("method", None))
             query = _filter_query(query, "status", filters.get("status", None))
 
-        query = query.order_by(Transactions.started_at.desc()).limit(50)
+        query = query.order_by(Transactions.started_at.desc()).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE)
 
         async with (self.session() as session):
             for transaction in (await session.scalars(query)).unique().all():
