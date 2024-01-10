@@ -1,11 +1,10 @@
 import { StarIcon } from "@heroicons/react/24/outline"
 import { formatDistance, formatDuration } from "date-fns"
-import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 
 import { PerformanceRatingBadge } from "Components/Badges"
 import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
 import { Transaction } from "Models/Transaction"
-import { TransactionsDetailDialog } from "Pages/Transactions/TransactionsDetailDialog"
 import { DataTable } from "mkui/Components/DataTable"
 
 import { RequestHeading, ResponseHeading } from "../Elements"
@@ -50,17 +49,16 @@ const transactionColumnTypes = {
 }
 
 export function TransactionDataTable({ transactions }: TransactionsDataTableProps) {
-  const [current, setCurrent] = useState<Transaction | null>(null)
+  const navigate = useNavigate()
 
   return (
     <>
       <DataTable<Transaction, { method: string; url: string; statusCode: string; responseBodySize: number }>
         types={transactionColumnTypes}
-        onRowClick={(row: Transaction) => setCurrent(row)}
+        onRowClick={(row: Transaction) => navigate(`/transactions/${row.id}`)}
         rows={transactions}
         columns={["actions", "request", "response", "elapsed", "started_at"]}
       />
-      <TransactionsDetailDialog current={current} setCurrent={setCurrent} />
     </>
   )
 }

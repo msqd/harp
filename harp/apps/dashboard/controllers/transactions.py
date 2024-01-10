@@ -93,6 +93,7 @@ class TransactionsController:
     def register(self, router):
         router.route(self.prefix + "/")(self.list)
         router.route(self.prefix + "/filters")(self.filters)
+        router.route(self.prefix + "/{id}")(self.get)
 
     async def filters(self, request: ASGIRequest, response: ASGIResponse):
         await self.facets["endpoint"].refresh()
@@ -133,3 +134,10 @@ class TransactionsController:
                 "perPage": PAGE_SIZE,
             }
         )
+
+    async def get(self, request: ASGIRequest, response: ASGIResponse, id):
+        transaction = await self.storage.get_transaction(id)
+        if not transaction:
+            response.status = 404
+            return json({"error": "Transaction not found"})
+        return json(transaction.to_dict())
