@@ -2,10 +2,10 @@ import { Page } from "Components/Page"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { useOverviewDataQuery } from "Domain/Overview"
 import { useSystemSettingsQuery } from "Domain/System"
+import { Pane } from "mkui/Components/Pane"
 
 import { TransactionsOverviewChart } from "./Components/OverviewChart/TransactionsOverviewChart"
 import { TransactionsOverview } from "./OverviewCharts"
-import { Pane } from "mkui/Components/Pane"
 
 export const OverviewPage = () => {
   const query = useOverviewDataQuery()

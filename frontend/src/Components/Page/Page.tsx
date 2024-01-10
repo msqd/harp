@@ -1,8 +1,8 @@
 import * as Sentry from "@sentry/browser"
+import { ReactNode } from "react"
 import { ErrorBoundary, FallbackProps } from "react-error-boundary"
 
 import { H1, P } from "mkui/Components/Typography"
-import { ReactElement, ReactNode } from "react"
 
 export function Error(props: FallbackProps) {
   return (
