@@ -1,14 +1,9 @@
-import tw, { styled } from "twin.macro"
-
 import { useTransactionsFiltersQuery } from "Domain/Transactions"
 import { Filter, Filters } from "Types/filters"
 
 import { Facet } from "./Facets"
+import { Pane } from "mkui/Components/Pane"
 
-const StyledSidebar = styled.aside`
-  ${tw`max-w-full w-full divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-black ring-opacity-5`}
-  ${tw`text-gray-900 sm:text-sm`}
-`
 const ratings = [
   { name: "A++" },
   { name: "A+" },
@@ -37,7 +32,11 @@ export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
   const setStatusFilter = _createSetFilterFor("status")
 
   return (
-    <StyledSidebar>
+    <Pane
+      as="aside"
+      hasDefaultPadding={false}
+      className="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm"
+    >
       {/* TODO implement search
       <input className="h-12 w-full border-0 bg-transparent px-4 focus:ring-0" placeholder="Search..." />
      */}
@@ -89,6 +88,6 @@ export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
       {filtersQuery.isSuccess && filtersQuery.data.apdex ? (
         <Facet title="Performance Index" name="tpdex" meta={ratings} type="checkboxes" defaultOpen={false} />
       ) : null}
-    </StyledSidebar>
+    </Pane>
   )
 }

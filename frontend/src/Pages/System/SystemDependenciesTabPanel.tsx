@@ -3,6 +3,7 @@ import { useSystemDependenciesQuery } from "Domain/System"
 import { Tab } from "mkui/Components/Tabs"
 
 import { SettingsTable } from "./Components"
+import { Pane } from "mkui/Components/Pane"
 
 export function SystemDependenciesTabPanel() {
   const query = useSystemDependenciesQuery()
@@ -11,9 +12,9 @@ export function SystemDependenciesTabPanel() {
       <OnQuerySuccess query={query}>
         {(query) => {
           return (
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+            <Pane hasDefaultPadding={false}>
               <SettingsTable settings={query.data} />
-            </div>
+            </Pane>
           )
         }}
       </OnQuerySuccess>
