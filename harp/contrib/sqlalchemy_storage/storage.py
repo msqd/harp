@@ -1,33 +1,28 @@
 import asyncio
 from datetime import UTC, date
-from inspect import iscoroutinefunction
 from typing import AsyncIterator, List, Optional, TypedDict
 
-from sqlalchemy import alias, case, func, select
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy import case, func, select, update
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import joinedload
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
+from harp.contrib.sqlalchemy_storage.models import Base, Blobs, Messages, Transactions
 from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
-from harp.contrib.sqlalchemy_storage.tables import BlobsTable, MessagesTable, TransactionsTable, metadata
 from harp.core.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionEvent
 from harp.core.models.blobs import Blob
-from harp.core.models.messages import Message
 from harp.core.models.transactions import Transaction
 from harp.utils.dates import ensure_date
 
 
 class TransactionsGroupedByDate(TypedDict):
-    date: date
+    date: date | None
     transactions: int
     errors: int
     meanDuration: float
 
-
-t_transactions = alias(TransactionsTable, name="t")
-t_messages = alias(MessagesTable, name="m")
-LEN_TRANSACTIONS_COLUMNS = len(TransactionsTable.columns)
 
 logger = get_logger(__name__)
 
@@ -41,7 +36,7 @@ def _filter_query(query, name, values):
     if values and values != "*":
         query = query.filter(
             getattr(
-                t_transactions.c,
+                Transactions,
                 _FILTER_COLUMN_NAMES.get(name, name),
             ).in_(values)
         )
@@ -65,7 +60,8 @@ class SqlAlchemyStorage:
     def __init__(self, dispatcher: IAsyncEventDispatcher, settings: SqlAlchemyStorageSettings):
         self.settings = settings
         self.engine = create_async_engine(self.settings.url, echo=self.settings.echo)
-        self.metadata = metadata
+        self.session = async_sessionmaker(self.engine, expire_on_commit=False)
+        self.metadata = Base.metadata
 
         dispatcher.add_listener(EVENT_CORE_STARTED, self._on_startup_create_database, priority=-20)
         dispatcher.add_listener(EVENT_TRANSACTION_STARTED, self._on_transaction_started)
@@ -74,28 +70,6 @@ class SqlAlchemyStorage:
 
         self._queue = None
         self._queue_task = None
-
-    def connect(self):
-        """Shortcut to get a connection from the engine.
-
-        Example::
-
-            async with self.connect() as conn:
-                result = await conn.execute(...)
-
-        """
-        return self.engine.connect()
-
-    def begin(self):
-        """Shortcut to get a transaction from the engine (similar to :meth:`connect`, but with a database transaction).
-
-        Example::
-
-            async with self.begin() as conn:
-                result = await conn.execute(...)
-
-        """
-        return self.engine.begin()
 
     @property
     def queue(self):
@@ -107,14 +81,9 @@ class SqlAlchemyStorage:
                 while True:
                     item = await self.queue.get()
                     try:
-                        if isinstance(item, Blob):
-                            await self._store_blob(item)
-                        elif iscoroutinefunction(item):
-                            await item()
-                        else:
-                            raise ValueError(f"Unknown item type: {type(item)}")
+                        await item()
                     except Exception as e:
-                        logger.exception(f"Error while executing queued task: {e}")
+                        logger.error(f"Error while executing queued task: {e}")
 
             self._queue_task = asyncio.create_task(worker())
 
@@ -123,9 +92,9 @@ class SqlAlchemyStorage:
     async def get_facet_meta(self, name):
         if name == "endpoint":
             # get transaction count grouped by endpoint
-            query = select(t_transactions.c.endpoint, func.count()).group_by(t_transactions.c.endpoint)
-            async with self.connect() as conn:
-                result = await conn.execute(query)
+            async with self.session() as session:
+                query = select(Transactions.endpoint, func.count()).group_by(Transactions.endpoint)
+                result = await session.execute(query)
                 return {row[0]: row[1] for row in result.fetchall()}
 
         raise NotImplementedError(f"Unknown facet: {name}")
@@ -138,72 +107,38 @@ class SqlAlchemyStorage:
         :return:
 
         """
-        query = select(t_transactions, t_messages)
+        query = select(Transactions)
         if with_messages:
-            # query.add_columns(messages)
-            query = query.outerjoin(t_messages, t_messages.c.transaction_id == t_transactions.c.id)
+            query = query.options(joinedload(Transactions.messages))
 
         if filters:
             query = _filter_query(query, "endpoint", filters.get("endpoint", None))
             query = _filter_query(query, "method", filters.get("method", None))
             query = _filter_query(query, "status", filters.get("status", None))
 
-        query = query.order_by(t_transactions.c.started_at.desc()).limit(50)
+        query = query.order_by(Transactions.started_at.desc()).limit(50)
 
-        current_transaction = None
-        async with self.connect() as conn:
-            result = await conn.execute(query)
-            for row in result.fetchall():
-                # not the same transaction, build new one
-                if current_transaction is None or current_transaction.id != row[0]:
-                    _db_transaction = row[0:LEN_TRANSACTIONS_COLUMNS]
-                    if current_transaction:
-                        yield current_transaction
-                    # TODO WARNING the field order is not the same as the model
-                    current_transaction = Transaction(
-                        id=_db_transaction[0],
-                        type=_db_transaction[1],
-                        endpoint=_db_transaction[2],
-                        started_at=_db_transaction[3],
-                        finished_at=_db_transaction[4],
-                        elapsed=_db_transaction[5],
-                        messages=[],
-                    )
-
-                if with_messages and row[LEN_TRANSACTIONS_COLUMNS]:
-                    _db_message = row[LEN_TRANSACTIONS_COLUMNS:]
-                    current_transaction.messages.append(
-                        Message(
-                            id=_db_message[0],
-                            transaction_id=_db_message[1],
-                            kind=_db_message[2],
-                            summary=_db_message[3],
-                            headers=_db_message[4],
-                            body=_db_message[5],
-                            created_at=_db_message[6],
-                        )
-                    )
-
-            if current_transaction:
-                yield current_transaction
+        async with (self.session() as session):
+            for transaction in (await session.scalars(query)).unique().all():
+                yield transaction.to_model()
 
     async def transactions_grouped_by_date(self, endpoint: Optional[str] = None) -> List[TransactionsGroupedByDate]:
-        s_date = func.date(t_transactions.c.started_at)
+        s_date = func.date(Transactions.started_at)
 
         query = select(
             # sqlite returns a string formated as "YYYY-MM-DD", postgres returns a datetime.date
             s_date,
             func.count(),
-            func.sum(case((t_transactions.c.x_status_class == "5xx", 1), else_=0)),
-            func.avg(t_transactions.c.elapsed),
+            func.sum(case((Transactions.x_status_class == "5xx", 1), else_=0)),
+            func.avg(Transactions.elapsed),
         )
 
         if endpoint:
-            query = query.where(t_transactions.c.endpoint == endpoint)
+            query = query.where(Transactions.endpoint == endpoint)
 
         query = query.group_by(s_date).order_by(s_date.asc())
-        async with self.connect() as conn:
-            result = await conn.execute(query)
+        async with self.session() as session:
+            result = await session.execute(query)
             return [
                 {
                     "date": ensure_date(row[0]),
@@ -222,78 +157,81 @@ class SqlAlchemyStorage:
         :param blob_id: sha1 hash of the blob
         :return: Blob or None
         """
-        async with self.connect() as conn:
-            row = (await conn.execute(BlobsTable.select().where(BlobsTable.c.id == blob_id))).fetchone()
+        async with self.session() as session:
+            row = (
+                await session.execute(
+                    select(Blobs).where(Blobs.id == blob_id),
+                )
+            ).fetchone()
 
         if row:
-            return Blob(id=row.id, data=row.data, content_type=row.content_type)
-
-    async def _store_blob(self, blob: Blob):
-        # todo this has concurrency problems with sqlite AND with postgres. Find a way to lock the insertion ? Or maybe
-        # use an insert or update if not found, which will work by overriding just inserted data with the same data. But
-        # this can be problematic under pressure, so maybe not.
-        query = select(func.count()).where(BlobsTable.c.id == blob.id)
-        async with self.begin() as conn:
-            if not await conn.scalar(query):
-                await conn.execute(
-                    BlobsTable.insert().values(id=blob.id, data=blob.data, content_type=blob.content_type)
-                )
-        return hash
+            return Blob(id=blob_id, data=row[0].data, content_type=row[0].content_type)
 
     async def _on_startup_create_database(self, event: TransactionEvent):
         """Event handler to create the database tables on startup. May drop them first if configured to do so."""
-        async with self.begin() as conn:
+        async with self.engine.begin() as conn:
             if self.settings.drop_tables:
-                await conn.run_sync(metadata.drop_all)
-            await conn.run_sync(metadata.create_all)
+                await conn.run_sync(self.metadata.drop_all)
+            await conn.run_sync(self.metadata.create_all)
 
     async def _on_transaction_started(self, event: TransactionEvent):
         """Event handler to store the transaction in the database."""
-        async with self.begin() as conn:
-            await conn.execute(
-                TransactionsTable.insert().values(
-                    id=event.transaction.id,
-                    type=event.transaction.type,
-                    endpoint=event.transaction.endpoint,
-                    started_at=event.transaction.started_at.astimezone(UTC).replace(tzinfo=None),
-                    x_method=event.transaction.extras.get("method"),
-                )
-            )
+        async with self.session() as session:
+            transaction = Transactions()
+            transaction.id = event.transaction.id
+            transaction.type = event.transaction.type
+            transaction.endpoint = event.transaction.endpoint
+            transaction.started_at = event.transaction.started_at.astimezone(UTC).replace(tzinfo=None)
+            transaction.x_method = event.transaction.extras.get("method")
+            async with session.begin():
+                session.add(transaction)
 
     async def _on_transaction_message(self, event: MessageEvent):
+        transaction, message = event.transaction, event.message
         # todo is the "__headers__" dunder content type any good idea ? maybe it's just a waste of bytes.
-        transaction = event.transaction
-        message = event.message
         headers_blob = Blob.from_data(message.serialized_headers, content_type="__headers__")
         content_blob = Blob.from_data(message.serialized_body, content_type=message.headers.get("content-type"))
 
-        await self.queue.put(headers_blob)
-        await self.queue.put(content_blob)
+        async def store_headers_blob():
+            async with self.session() as session:
+                async with session.begin():
+                    db_headers_blob = Blobs()
+                    db_headers_blob.id = headers_blob.id
+                    db_headers_blob.content_type = headers_blob.content_type
+                    db_headers_blob.data = headers_blob.data
+                    session.add(db_headers_blob)
 
-        async def delayed_message_persistor():
-            nonlocal headers_blob, content_blob, transaction, message, self
-            async with self.begin() as conn:
-                await conn.execute(
-                    MessagesTable.insert().values(
-                        transaction_id=transaction.id,
-                        kind=message.kind,
-                        summary=message.serialized_summary,
-                        headers=headers_blob.id,
-                        body=content_blob.id,
-                        created_at=message.created_at.astimezone(UTC).replace(tzinfo=None),
+        await self.queue.put(store_headers_blob)
+
+        async def store_content_blob():
+            async with self.session() as session:
+                async with session.begin():
+                    db_content_blob = Blobs()
+                    db_content_blob.id = content_blob.id
+                    db_content_blob.content_type = content_blob.content_type
+                    db_content_blob.data = content_blob.data
+                    session.add(db_content_blob)
+
+        await self.queue.put(store_content_blob)
+
+        async def store_message():
+            async with self.session() as session:
+                async with session.begin():
+                    session.add(
+                        Messages.from_models(transaction, message, headers_blob, content_blob),
                     )
-                )
 
-        await self.queue.put(delayed_message_persistor)
+        await self.queue.put(store_message)
 
     async def _on_transaction_ended(self, event: TransactionEvent):
-        async with self.begin() as conn:
-            await conn.execute(
-                TransactionsTable.update()
-                .where(TransactionsTable.c.id == event.transaction.id)
-                .values(
-                    finished_at=event.transaction.finished_at.astimezone(UTC).replace(tzinfo=None),
-                    elapsed=event.transaction.elapsed,
-                    x_status_class=event.transaction.extras.get("status_class"),
+        async with self.session() as session:
+            async with session.begin():
+                await session.execute(
+                    update(Transactions)
+                    .where(Transactions.id == event.transaction.id)
+                    .values(
+                        finished_at=event.transaction.finished_at.astimezone(UTC).replace(tzinfo=None),
+                        elapsed=event.transaction.elapsed,
+                        x_status_class=event.transaction.extras.get("status_class"),
+                    )
                 )
-            )
