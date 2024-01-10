@@ -3,7 +3,6 @@ from enum import Enum
 from typing import AsyncIterator, List, Optional, TypedDict
 
 from sqlalchemy import case, func, select, update
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import joinedload
 from whistle import IAsyncEventDispatcher
@@ -16,6 +15,7 @@ from harp.contrib.sqlalchemy_storage.utils.dates import Trunc
 from harp.core.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionEvent
 from harp.core.models.blobs import Blob
 from harp.core.models.transactions import Transaction
+from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_date, ensure_datetime
 
 
@@ -59,6 +59,9 @@ def _filter_query(query, name, values):
     return query
 
 
+PAGE_SIZE = 5
+
+
 class SqlAlchemyStorage:
     """
     Storage implementation using SQL Alchemy Core, with async drivers.
@@ -84,6 +87,14 @@ class SqlAlchemyStorage:
         dispatcher.add_listener(EVENT_TRANSACTION_ENDED, self._on_transaction_ended)
         dispatcher.add_listener(EVENT_TRANSACTION_MESSAGE, self._on_transaction_message)
 
+        self._worker = None
+
+    @property
+    def worker(self):
+        if not self._worker:
+            self._worker = AsyncWorkerQueue()
+        return self._worker
+
     async def get_facet_meta(self, name):
         if name == "endpoint":
             # get transaction count grouped by endpoint
@@ -94,7 +105,14 @@ class SqlAlchemyStorage:
 
         raise NotImplementedError(f"Unknown facet: {name}")
 
-    async def find_transactions(self, *, with_messages=False, filters=None) -> AsyncIterator[Transaction]:
+    async def find_transactions(
+        self,
+        *,
+        with_messages=False,
+        filters=None,
+        page: int = 1,
+        cursor: str = "",
+    ) -> AsyncIterator[Transaction]:
         """
         Implements :meth:`Storage.find_transactions <harp.protocols.storage.Storage.find_transactions>`.
 
@@ -111,7 +129,13 @@ class SqlAlchemyStorage:
             query = _filter_query(query, "method", filters.get("method", None))
             query = _filter_query(query, "status", filters.get("status", None))
 
-        query = query.order_by(Transactions.started_at.desc()).limit(50)
+        query = query.order_by(Transactions.started_at.desc())
+        query = query.limit(PAGE_SIZE)
+
+        if page:
+            query = query.offset(max(0, (page - 1) * PAGE_SIZE))
+            if cursor:
+                query = query.filter(Transactions.id <= cursor)
 
         async with (self.session() as session):
             for transaction in (await session.scalars(query)).unique().all():
@@ -214,40 +238,34 @@ class SqlAlchemyStorage:
                 session.add(transaction)
 
     async def _on_transaction_message(self, event: MessageEvent):
-        async with self.session() as session:
-            # todo is the "__headers__" dunder content type any good idea ? maybe it's just a waste of bytes.
-            try:
+        transaction, message = event.transaction, event.message
+        # todo is the "__headers__" dunder content type any good idea ? maybe it's just a waste of bytes.
+        headers_blob = Blob.from_data(message.serialized_headers, content_type="__headers__")
+        content_blob = Blob.from_data(message.serialized_body, content_type=message.headers.get("content-type"))
+
+        def create_blob_storage_task(blob):
+            async def store_blob():
+                async with self.session() as session:
+                    async with session.begin():
+                        db_blob = Blobs()
+                        db_blob.id = blob.id
+                        db_blob.content_type = blob.content_type
+                        db_blob.data = blob.data
+                        session.add(db_blob)
+
+            return store_blob
+
+        await self.worker.push(create_blob_storage_task(headers_blob), ignore_errors=True)
+        await self.worker.push(create_blob_storage_task(content_blob), ignore_errors=True)
+
+        async def store_message():
+            async with self.session() as session:
                 async with session.begin():
-                    headers_blob = Blob.from_data(event.message.serialized_headers, content_type="__headers__")
-
-                    db_headers_blob = Blobs()
-                    db_headers_blob.id = headers_blob.id
-                    db_headers_blob.content_type = headers_blob.content_type
-                    db_headers_blob.data = headers_blob.data
-
-                    session.add(db_headers_blob)
-            except IntegrityError:
-                pass
-
-            try:
-                async with session.begin():
-                    content_blob = Blob.from_data(
-                        event.message.serialized_body, content_type=event.message.headers.get("content-type")
+                    session.add(
+                        Messages.from_models(transaction, message, headers_blob, content_blob),
                     )
 
-                    db_content_blob = Blobs()
-                    db_content_blob.id = content_blob.id
-                    db_content_blob.content_type = content_blob.content_type
-                    db_content_blob.data = content_blob.data
-
-                    session.add(db_content_blob)
-            except IntegrityError:
-                pass
-
-            async with session.begin():
-                session.add(
-                    Messages.from_models(event.transaction, event.message, headers_blob, content_blob),
-                )
+        await self.worker.push(store_message)
 
     async def _on_transaction_ended(self, event: TransactionEvent):
         async with self.session() as session:

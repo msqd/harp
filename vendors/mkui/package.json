@@ -10,6 +10,7 @@
     }
   },
   "dependencies": {
+    "@bramus/pagination-sequence": "^1.2.1",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
     "@headlessui/react": "1.7.18",
@@ -24,6 +25,7 @@
     "@emotion/babel-plugin-jsx-pragmatic": "^0.2.1",
     "@ladle/react": "^4.0.2",
     "@playwright/test": "^1.40.1",
+    "@types/bramus__pagination-sequence": "^1.2.2",
     "@types/react": "^18.2.47",
     "@types/react-dom": "^18.2.18",
     "@types/sync-fetch": "^0.4.3",
