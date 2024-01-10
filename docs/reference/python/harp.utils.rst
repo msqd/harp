@@ -16,6 +16,7 @@ Submodules
    :maxdepth: 4
 
    harp.utils.arguments
+   harp.utils.background
    harp.utils.bytes
    harp.utils.dates
    harp.utils.guids
