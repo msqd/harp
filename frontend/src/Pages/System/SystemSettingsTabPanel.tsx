@@ -12,7 +12,7 @@ export function SystemSettingsTabPanel() {
     <Tab.Panel>
       <OnQuerySuccess query={query}>
         {(query) => (
-          <Pane usePadding={false} className="p-0">
+          <Pane hasDefaultPadding={false}>
             <SettingsTable settings={query.data} />
           </Pane>
         )}
