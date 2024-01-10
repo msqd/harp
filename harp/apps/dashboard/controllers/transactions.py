@@ -130,5 +130,6 @@ class TransactionsController:
                 "items": list(map(Transaction.to_dict, results.items)),
                 "pages": math.ceil(results.meta.get("total", 0) / PAGE_SIZE),
                 "total": results.meta.get("total", 0),
+                "perPage": PAGE_SIZE,
             }
         )
