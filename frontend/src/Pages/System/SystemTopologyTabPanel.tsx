@@ -1,8 +1,10 @@
-import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
+import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { useSystemSettingsQuery } from "Domain/System"
+import { Pane } from "mkui/Components/Pane"
 import { Tab } from "mkui/Components/Tabs"
+import { H2 } from "mkui/Components/Typography"
 
-import { Topology } from "./Components/Topology/Topology"
+import { Topology } from "./Components/Topology"
 
 export function SystemTopologyTabPanel() {
   const query = useSystemSettingsQuery()
@@ -17,9 +19,10 @@ export function SystemTopologyTabPanel() {
           const proxyData = query.data.proxy as ProxyData
           const endpoints = proxyData.endpoints
           return (
-            <div className="grid grid-cols-2 gap-4">
-              <Topology endpoints={endpoints} title="Topology" className="border" />
-            </div>
+            <Pane>
+              <H2>Topology</H2>
+              <Topology endpoints={endpoints} />
+            </Pane>
           )
         }}
       </OnQuerySuccess>

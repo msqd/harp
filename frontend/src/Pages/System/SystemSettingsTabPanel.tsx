@@ -1,5 +1,6 @@
-import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
+import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { useSystemSettingsQuery } from "Domain/System"
+import { Pane } from "mkui/Components/Pane"
 import { Tab } from "mkui/Components/Tabs"
 
 import { SettingsTable } from "./Components"
@@ -11,9 +12,9 @@ export function SystemSettingsTabPanel() {
     <Tab.Panel>
       <OnQuerySuccess query={query}>
         {(query) => (
-          <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+          <Pane hasDefaultPadding={false}>
             <SettingsTable settings={query.data} />
-          </div>
+          </Pane>
         )}
       </OnQuerySuccess>
     </Tab.Panel>
