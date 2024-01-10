@@ -7,6 +7,7 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   harp.apps.dashboard.utils.dates
    harp.apps.dashboard.utils.dependencies
 
 Module contents
