@@ -23,12 +23,24 @@ export function TransactionsListPage() {
 
   return (
     <Page title="Transactions" description="Explore transactions that went through the proxy">
-      <Paginator current={page} setPage={setPage} />
       <OnQuerySuccess query={query}>
         {(query) => (
           <div className="w-full grid grid-cols-1 grid-rows-1 items-start gap-x-8 gap-y-8 lg:mx-0 lg:max-w-none lg:grid-cols-5">
             <div className="col-start-2 col-span-4 row-end-1">
+              <Paginator
+                current={page}
+                setPage={setPage}
+                total={query.isSuccess ? query.data.total : undefined}
+                pages={query.isSuccess ? query.data.pages ?? undefined : undefined}
+                showSummary={false}
+              />
               <TransactionDataTable transactions={query.data.items} />
+              <Paginator
+                current={page}
+                setPage={setPage}
+                total={query.isSuccess ? query.data.total : undefined}
+                pages={query.isSuccess ? query.data.pages ?? undefined : undefined}
+              />
             </div>
             <div className="col-start-1 col-span-1">
               <FiltersSidebar filters={filters} setFilters={setFilters} />
@@ -36,7 +48,6 @@ export function TransactionsListPage() {
           </div>
         )}
       </OnQuerySuccess>
-      <Paginator current={page} setPage={setPage} />
     </Page>
   )
 }

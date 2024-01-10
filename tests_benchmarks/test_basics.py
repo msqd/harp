@@ -19,7 +19,8 @@ class TestPostgresHttpbinBenchmark(AbstractProxyBenchmark):
         storage:
             type: sqlalchemy
             url: postgresql://harp:harp@localhost:5432/benchmarks
-    """
+
+        """
     )
 
 
@@ -34,5 +35,6 @@ class TestSqliteHttpbinBenchmark(AbstractProxyBenchmark):
                 $port:
                     url: http://localhost:8080/
                     name: test
-    """
+
+        """
     )

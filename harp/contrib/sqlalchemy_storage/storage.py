@@ -1,5 +1,5 @@
 from datetime import UTC, date
-from typing import AsyncIterator, List, Optional, TypedDict
+from typing import Generic, List, Optional, TypedDict, TypeVar
 
 from sqlalchemy import case, func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
@@ -13,6 +13,7 @@ from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
 from harp.core.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionEvent
 from harp.core.models.blobs import Blob
 from harp.core.models.transactions import Transaction
+from harp.settings import PAGE_SIZE
 from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_date
 
@@ -43,7 +44,16 @@ def _filter_query(query, name, values):
     return query
 
 
-PAGE_SIZE = 5
+T = TypeVar("T")
+
+
+class Results(Generic[T]):
+    def __init__(self):
+        self.items: list[T] = []
+        self.meta = {}
+
+    def append(self, item: T):
+        self.items.append(item)
 
 
 class SqlAlchemyStorage:
@@ -96,7 +106,7 @@ class SqlAlchemyStorage:
         filters=None,
         page: int = 1,
         cursor: str = "",
-    ) -> AsyncIterator[Transaction]:
+    ) -> Results[Transaction]:
         """
         Implements :meth:`Storage.find_transactions <harp.protocols.storage.Storage.find_transactions>`.
 
@@ -104,6 +114,7 @@ class SqlAlchemyStorage:
         :return:
 
         """
+        result = Results()
         query = select(Transactions)
         if with_messages:
             query = query.options(joinedload(Transactions.messages))
@@ -114,16 +125,27 @@ class SqlAlchemyStorage:
             query = _filter_query(query, "status", filters.get("status", None))
 
         query = query.order_by(Transactions.started_at.desc())
-        query = query.limit(PAGE_SIZE)
 
+        # apply cursor (before count)
+        if page and cursor:
+            query = query.filter(Transactions.id <= cursor)
+
+        async with self.session() as session:
+            # count items from query
+            result.meta["total"] = await session.scalar(
+                query.with_only_columns(func.count(Transactions.id)).order_by(None)
+            )
+
+        # apply limit/offset (after count)
+        query = query.limit(PAGE_SIZE)
         if page:
             query = query.offset(max(0, (page - 1) * PAGE_SIZE))
-            if cursor:
-                query = query.filter(Transactions.id <= cursor)
 
-        async with (self.session() as session):
+        async with self.session() as session:
             for transaction in (await session.scalars(query)).unique().all():
-                yield transaction.to_model()
+                result.append(transaction.to_model())
+
+        return result
 
     async def transactions_grouped_by_date(self, endpoint: Optional[str] = None) -> List[TransactionsGroupedByDate]:
         s_date = func.date(Transactions.started_at)

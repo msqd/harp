@@ -68,7 +68,7 @@ format-frontend: install-frontend
 format-backend:
 	isort harp tests
 	black harp tests
-	ruff check harp tests
+	ruff check --fix harp tests
 
 test:
 	$(MAKE) test-backend

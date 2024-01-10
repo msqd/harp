@@ -1,3 +1,4 @@
+import math
 from datetime import datetime, timedelta
 from functools import cached_property
 from itertools import chain
@@ -8,6 +9,7 @@ from harp.core.asgi.messages.responses import ASGIResponse
 from harp.core.models.transactions import Transaction
 from harp.core.views.json import json
 from harp.protocols.storage import Storage
+from harp.settings import PAGE_SIZE
 
 logger = get_logger(__name__)
 
@@ -111,8 +113,7 @@ class TransactionsController:
 
         cursor = str(request.query.get("cursor", ""))
 
-        transactions = []
-        async for transaction in self.storage.find_transactions(
+        results = await self.storage.find_transactions(
             with_messages=True,
             filters={
                 name: facet.get_filter(
@@ -122,11 +123,12 @@ class TransactionsController:
             },
             page=page,
             cursor=cursor,
-        ):
-            transactions.append(transaction)
+        )
+
         return json(
             {
-                "items": list(map(Transaction.to_dict, transactions)),
-                "total": len(transactions),
+                "items": list(map(Transaction.to_dict, results.items)),
+                "pages": math.ceil(results.meta.get("total", 0) / PAGE_SIZE),
+                "total": results.meta.get("total", 0),
             }
         )
