@@ -1,8 +1,8 @@
-import {Paginator} from "./Paginator"
+import {Paginator as PaginatorComponent} from "./Paginator"
 import {Pane} from "../Pane"
 import {useState} from "react"
 
-export const Default = () => {
+export const Paginator = () => {
     const [page, setPage] = useState(1)
     const props = {
         current: page,
@@ -11,9 +11,9 @@ export const Default = () => {
     }
     return (
         <Pane>
-            <Paginator className="border-b" {...props} />
+            <PaginatorComponent className="border-b" {...props} />
             <Pane hasDefaultBorder={false}>Hello, world.</Pane>
-            <Paginator className="border-t" {...props} />
+            <PaginatorComponent className="border-t" {...props} />
         </Pane>
     )
 }
