@@ -9,7 +9,7 @@ from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
-from harp.contrib.sqlalchemy_storage.models import Base, Blob, Message, Transaction
+from harp.contrib.sqlalchemy_storage.models import Base, Blob, Flag, Message, Transaction, User
 from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
 from harp.contrib.sqlalchemy_storage.utils.dates import TruncDatetime
 from harp.core.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionEvent
@@ -245,6 +245,22 @@ class SqlAlchemyStorage:
             transaction.x_method = event.transaction.extras.get("method")
             async with session.begin():
                 session.add(transaction)
+
+    async def set_transaction_flag(self, transaction_id: str, username: str, flag_type: str):
+        async with self.session() as session:
+            user = await session.execute(select(User).where(User.username == username))
+            user = user.unique().scalar_one_or_none()
+            if not user:
+                raise ValueError(f"Unknown user: {username}")
+            transaction = await session.get(Transaction, transaction_id)
+            if not transaction:
+                raise ValueError(f"Unknown transaction: {transaction_id}")
+            async with session.begin():
+                flag = Flag()
+                flag.transaction_id = transaction.id
+                flag.user_id = user.id
+                flag.type = flag_type
+                session.add(flag)
 
     async def _on_transaction_message(self, event: MessageEvent):
         transaction, message = event.transaction, event.message

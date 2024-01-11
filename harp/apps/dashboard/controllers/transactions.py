@@ -33,6 +33,7 @@ class TransactionsController(RoutingController):
         self.router.route(self.prefix + "/")(self.list)
         self.router.route(self.prefix + "/filters")(self.filters)
         self.router.route(self.prefix + "/{id}")(self.get)
+        self.router.route(self.prefix + "/set_flag")(self.set_flag)
 
     async def filters(self, request: ASGIRequest, response: ASGIResponse):
         await self.facets["endpoint"].refresh()
@@ -80,3 +81,10 @@ class TransactionsController(RoutingController):
             response.status = 404
             return json({"error": "Transaction not found"})
         return json(transaction.to_dict())
+
+    async def set_flag(self, request: ASGIRequest, response: ASGIResponse):
+        transaction_id = request.query.get("transaction_id")
+        flag_type = request.query.get("type")
+        username = request.context.get("user") or "anonymous"
+        self.storage.set_transaction_flag(transaction_id, username, flag_type)
+        return json({"success": True})

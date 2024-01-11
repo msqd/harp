@@ -1,7 +1,7 @@
 from datetime import UTC
 from typing import List
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, LargeBinary, String
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, LargeBinary, String, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from harp.core.models.messages import Message as MessageModel
@@ -18,6 +18,23 @@ class User(Base):
     id = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
     username = mapped_column(String(32), unique=True)
 
+    flags: Mapped[List["Flag"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+
+
+class Flag(Base):
+    __tablename__ = "sa_flags"
+
+    id = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
+    type = mapped_column(String(32), nullable=False)
+
+    user_id = mapped_column(ForeignKey("sa_users.id"), nullable=False)
+    user: Mapped["User"] = relationship(back_populates="flags")
+
+    transaction_id = mapped_column(ForeignKey("sa_transactions.id"), nullable=False)
+    transaction: Mapped["Transaction"] = relationship(back_populates="flags")
+
+    __table_args__ = (UniqueConstraint("user_id", "transaction_id", name="_user_transaction_uc"),)
+
 
 class Transaction(Base):
     __tablename__ = "sa_transactions"
@@ -32,6 +49,7 @@ class Transaction(Base):
     x_status_class = mapped_column(String(3), nullable=True, index=True)
 
     messages: Mapped[List["Message"]] = relationship(back_populates="transaction")
+    flags: Mapped[List["Flag"]] = relationship(back_populates="transaction", cascade="all, delete-orphan")
 
     def to_model(self):
         return TransactionModel(
