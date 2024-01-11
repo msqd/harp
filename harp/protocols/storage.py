@@ -1,10 +1,17 @@
-from datetime import date
-from typing import List, Protocol, TypedDict
+from datetime import date, datetime
+from typing import List, Optional, Protocol, TypedDict
 
 
 class TransactionsGroupedByDate(TypedDict):
-    date: date
+    date: date | datetime | None
     transactions: int
+    errors: int
+    meanDuration: float
+
+
+class TransactionsGroupedByTimeBucket(TypedDict):
+    datetime: datetime
+    count: int
     errors: int
     meanDuration: float
 
@@ -29,4 +36,9 @@ class Storage(Protocol):
         ...
 
     async def transactions_grouped_by_date(self, *, endpoint=None) -> List[TransactionsGroupedByDate]:
+        ...
+
+    async def transactions_grouped_by_time_bucket(
+        self, *, endpoint=None, time_bucket: Optional[str], start_datetime: Optional[datetime]
+    ) -> List[TransactionsGroupedByTimeBucket]:
         ...

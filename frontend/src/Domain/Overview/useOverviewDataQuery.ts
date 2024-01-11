@@ -3,11 +3,25 @@ import { useQuery } from "react-query"
 import { useApi } from "Domain/Api"
 import { OverviewData } from "Models/Overview"
 
-export function useOverviewDataQuery(endpoint: string | undefined = undefined) {
+export function useOverviewDataQuery(
+  endpoint: string | undefined = undefined,
+  timeRange: string | undefined = undefined,
+) {
   const api = useApi()
   let url = "/overview"
+  const params = new URLSearchParams()
+
   if (endpoint) {
-    url += `?endpoint=${encodeURIComponent(endpoint)}`
+    params.append("endpoint", endpoint)
   }
-  return useQuery<OverviewData>(["overview", endpoint], () => api.fetch(url).then((r) => r.json()))
+
+  if (timeRange) {
+    params.append("timeRange", timeRange)
+  }
+
+  if (params.toString()) {
+    url += `?${params.toString()}`
+  }
+
+  return useQuery<OverviewData>(["overview", endpoint, timeRange], () => api.fetch(url).then((r) => r.json()))
 }

@@ -1,12 +1,19 @@
-from datetime import timedelta
-from typing import List
-
+from harp.apps.dashboard.utils.dates import generate_continuous_time_range, get_start_datetime_from_range
 from harp.core.asgi.messages import ASGIRequest, ASGIResponse
 from harp.core.controllers import RoutingController
 from harp.core.views import json
-from harp.protocols.storage import Storage, TransactionsGroupedByDate
+from harp.protocols.storage import Storage
 
 # from harp.apps.dashboard.schemas import TransactionsByDate
+
+
+time_bucket_for_range = {
+    "1h": "minute",
+    "24h": "hour",
+    "7d": "day",
+    "1m": "day",
+    "1y": "day",
+}
 
 
 class OverviewController(RoutingController):
@@ -20,45 +27,34 @@ class OverviewController(RoutingController):
         self.router.route(self.prefix + "/")(self.get_overview_data)
 
     async def get_overview_data(self, request: ASGIRequest, response: ASGIResponse):
+        # endpoint and range from request
         endpoint = request.query.get("endpoint")
-        transactions_by_date_list = await self.storage.transactions_grouped_by_date(endpoint=endpoint)
+        range = request.query.get("timeRange", "24h")
+
+        # time buckets and start_datetime accordingly
+        time_bucket = time_bucket_for_range.get(range, "day")
+        start_datetime = get_start_datetime_from_range(range)
+
+        transactions_by_date_list = await self.storage.transactions_grouped_by_time_bucket(
+            endpoint=endpoint, start_datetime=start_datetime, time_bucket=time_bucket
+        )
         errors_count = sum([t["errors"] for t in transactions_by_date_list])
-        transactions_count = sum([t["transactions"] for t in transactions_by_date_list])
+        transactions_count = sum([t["count"] for t in transactions_by_date_list])
         errors_rate = errors_count / transactions_count if transactions_count else 0
         mean_duration = (
-            sum([t["meanDuration"] * t["transactions"] for t in transactions_by_date_list]) / transactions_count
+            sum([t["meanDuration"] * t["count"] for t in transactions_by_date_list]) / transactions_count
             if transactions_count
             else 0
         )
-        transactions_by_date_list = _fill_missing_data_points(transactions_by_date_list)
+        transactions_by_date_list = generate_continuous_time_range(
+            discontinuous_transactions=transactions_by_date_list, time_bucket=time_bucket, start_datetime=start_datetime
+        )
         return json(
             {
-                "dailyStats": transactions_by_date_list,
+                "transactions": transactions_by_date_list,
                 "errors": {"count": errors_count, "rate": errors_rate},
-                "transactions": {"count": transactions_count, "meanDuration": mean_duration},
+                "count": transactions_count,
+                "meanDuration": mean_duration,
+                "timeRange": range,
             }
         )
-
-
-def _fill_missing_data_points(
-    transactions_by_date_list: List[TransactionsGroupedByDate],
-) -> List[TransactionsGroupedByDate]:
-    """
-    Fill missing data points in the transactions_by_date_list.
-    """
-    if not transactions_by_date_list:
-        return transactions_by_date_list
-
-    # Fill missing data points
-    start_date = transactions_by_date_list[0]["date"]
-    date = start_date
-    filled_transactions_by_date_list = []
-    for t in transactions_by_date_list:
-        while date < t["date"]:
-            filled_transactions_by_date_list.append(
-                {"date": date, "transactions": None, "errors": None, "meanDuration": None}
-            )
-            date += timedelta(days=1)
-        filled_transactions_by_date_list.append(t)
-        date += timedelta(days=1)
-    return filled_transactions_by_date_list

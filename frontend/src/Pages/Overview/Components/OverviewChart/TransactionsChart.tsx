@@ -1,11 +1,41 @@
 import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
 interface RequestCHartProps {
-  data: Array<{ date: string; transactions: number; errors: number }>
+  data: Array<{ datetime: string; count: number; errors: number }>
+  timeRange?: string
   width?: string
 }
 
-export const TransactionsChart: React.FC<RequestCHartProps> = ({ data, width }) => {
+export const TransactionsChart: React.FC<RequestCHartProps> = ({ data, timeRange, width }) => {
+  const tickFormatter = (tick: string) => {
+    const date = new Date(tick)
+    switch (timeRange) {
+      case "1h":
+        // If time range is 1 hour, return time in 'mm:ss' format
+        return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+      case "24h":
+        // If time range is 24 hours, return time in 'HH:mm' format
+        return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+      case "7d":
+        // If time range is 7 days, return short weekday, month, and day
+        return date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })
+      case "1m":
+        // If time range is 1 month, return short month and day
+        return date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+      case "1y":
+        // If time range is 1 year, return month and full year
+        return date.toLocaleDateString(undefined, { month: "short", year: "numeric" })
+      default:
+        // By default return full date
+        return date.toLocaleDateString()
+    }
+  }
+
+  const toolTipLabelFormatter = (label: string) => {
+    const date = new Date(label)
+    return date.toLocaleString()
+  }
+
   return (
     <ResponsiveContainer width={width} height={300}>
       <ComposedChart
@@ -21,16 +51,18 @@ export const TransactionsChart: React.FC<RequestCHartProps> = ({ data, width }) 
       >
         <CartesianGrid stroke="#f5f5f5" vertical={false} />
         <XAxis
-          dataKey="date"
-          interval={"preserveStartEnd"}
+          dataKey="datetime"
           tickLine={false}
           axisLine={{ stroke: "#f5f5f5" }}
+          interval={"equidistantPreserveStart"}
           fontSize={12}
+          tickFormatter={tickFormatter}
+          minTickGap={20}
         />
-        <Tooltip isAnimationActive={false} />
+        <Tooltip isAnimationActive={false} filterNull={false} labelFormatter={toolTipLabelFormatter} />
         <Legend verticalAlign="top" align="right" height={36} iconSize={10} />
         <Bar
-          dataKey="transactions"
+          dataKey="count"
           barSize={20}
           fill="#ADD8E6"
           legendType="circle"
@@ -43,9 +75,9 @@ export const TransactionsChart: React.FC<RequestCHartProps> = ({ data, width }) 
           strokeLinecap="round"
           type="monotone"
           dataKey="errors"
-          stroke="#FF0000"
+          stroke="#FF8080"
           legendType="circle"
-          name="Errors"
+          name="Errors (5xx)"
           isAnimationActive={false}
         />
         <YAxis

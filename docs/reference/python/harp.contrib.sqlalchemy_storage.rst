@@ -1,6 +1,14 @@
 harp.contrib.sqlalchemy\_storage package
 ========================================
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   harp.contrib.sqlalchemy_storage.utils
+
 Submodules
 ----------
 
