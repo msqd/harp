@@ -7,6 +7,7 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   harp.apps.dashboard.controllers.blobs
    harp.apps.dashboard.controllers.overview
    harp.apps.dashboard.controllers.system
    harp.apps.dashboard.controllers.transactions

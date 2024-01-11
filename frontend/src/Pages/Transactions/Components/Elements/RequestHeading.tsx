@@ -1,5 +1,5 @@
 import { ArrowRightIcon } from "@heroicons/react/24/outline"
-import { ElementType } from "react"
+import { ElementType, HTMLAttributes } from "react"
 import tw, { styled } from "twin.macro"
 import urlJoin from "url-join"
 
@@ -16,10 +16,15 @@ const StyledRequestHeading = styled.h1`
   ${tw`text-sm font-semibold leading-6 text-gray-900`}
 `
 
-export const RequestHeading = ({ as = "h1", endpoint = undefined, request = undefined }: RequestHeadingProps) => {
+export const RequestHeading = ({
+  as = "h1",
+  endpoint = undefined,
+  request = undefined,
+  ...moreProps
+}: RequestHeadingProps & HTMLAttributes<HTMLElement>) => {
   const [method, url] = request ? request.summary.split(" ") : ["", ""]
   return (
-    <StyledRequestHeading as={as}>
+    <StyledRequestHeading as={as} {...moreProps}>
       {request ? (
         <div className="flex items-center">
           {endpoint ? (

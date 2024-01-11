@@ -2,8 +2,7 @@ from http_router import NotFoundError, Router
 from rich.console import Console
 from rich.traceback import Traceback
 
-from harp.core.asgi.messages.requests import ASGIRequest
-from harp.core.asgi.messages.responses import ASGIResponse
+from harp.core.asgi.messages import ASGIRequest, ASGIResponse
 from harp.utils.arguments import Arguments
 
 
@@ -18,9 +17,14 @@ class RoutingController:
     RouterType = Router
     RouterArguments = Arguments(trim_last_slash=True)
 
-    def __init__(self, *, handle_errors=True):
-        self.router = self.create_router()
+    def __init__(self, *, handle_errors=True, router=None):
+        self.router = router or self.create_router()
         self.handle_errors = handle_errors
+
+        self.configure()
+
+    def configure(self):
+        pass
 
     def create_router(self):
         return self.RouterType(*self.RouterArguments.args, *self.RouterArguments.kwargs)

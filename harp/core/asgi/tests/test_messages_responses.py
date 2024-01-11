@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from harp.core.asgi.messages.responses import ASGIResponse
+from harp.core.asgi.messages import ASGIResponse
 
 
 async def test_headers_readonly_after_start():

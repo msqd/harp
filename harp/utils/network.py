@@ -13,7 +13,7 @@ def get_available_network_port():
     return port
 
 
-def wait_for_port(port: int, host: str = "localhost", timeout: float = 5.0):
+def wait_for_port(port: int, host: str = "localhost", timeout: float = 10.0):
     """Wait until a port starts accepting TCP connections.
     Args:
         port: Port number.

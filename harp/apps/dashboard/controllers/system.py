@@ -3,35 +3,16 @@ from copy import deepcopy
 
 from harp import __revision__, __version__
 from harp.apps.dashboard.utils.dependencies import get_python_dependencies, parse_dependencies
-from harp.core.asgi.messages.requests import ASGIRequest
-from harp.core.asgi.messages.responses import ASGIResponse
+from harp.core.asgi.messages import ASGIRequest, ASGIResponse
+from harp.core.controllers import RoutingController
 from harp.core.views.json import json
 from harp.typing.global_settings import GlobalSettings
 
 
-def _asdict(obj):
-    if isinstance(obj, dict):
-        return {k: _asdict(v) for k, v in obj.items()}
-
-    if isinstance(obj, list):
-        return [_asdict(v) for v in obj]
-
-    if isinstance(obj, tuple):
-        return tuple(_asdict(v) for v in obj)
-
-    if hasattr(obj, "to_dict"):
-        result = _asdict(obj.to_dict())
-        if isinstance(result, dict):
-            return {"@type": type(obj).__name__, **result}
-        return result
-
-    return obj
-
-
-class SystemController:
+class SystemController(RoutingController):
     prefix = "/api/system"
 
-    def __init__(self, settings: GlobalSettings):
+    def __init__(self, *, settings: GlobalSettings, handle_errors=True, router=None):
         # a bit of scrambling for passwords etc.
         if "storage" in settings:
             if "url" in settings["storage"]:
@@ -40,10 +21,12 @@ class SystemController:
         self.settings = deepcopy(dict(settings))
         self._dependencies = None
 
-    def register(self, router):
-        router.route(self.prefix + "/")(self.get)
-        router.route(self.prefix + "/settings")(self.get_settings)
-        router.route(self.prefix + "/dependencies")(self.get_dependencies)
+        super().__init__(handle_errors=handle_errors, router=router)
+
+    def configure(self):
+        self.router.route(self.prefix + "/")(self.get)
+        self.router.route(self.prefix + "/settings")(self.get_settings)
+        self.router.route(self.prefix + "/dependencies")(self.get_dependencies)
 
     async def get(self, request: ASGIRequest, response: ASGIResponse):
         context = getattr(request, "context", {})

@@ -1,7 +1,5 @@
 from datetime import date, datetime
-from typing import AsyncIterator, List, Optional, Protocol, TypedDict
-
-from harp.core.models.transactions import Transaction
+from typing import List, Optional, Protocol, TypedDict
 
 
 class TransactionsGroupedByDate(TypedDict):
@@ -19,10 +17,12 @@ class TransactionsGroupedByTimeBucket(TypedDict):
 
 
 class Storage(Protocol):
-    def find_transactions(
-        self, *, with_messages=False, filters=None, page: int = 1, cursor: str = ""
-    ) -> AsyncIterator[Transaction]:
+    async def find_transactions(self, *, with_messages=False, filters=None, page: int = 1, cursor: str = ""):
         """Find transactions, using optional filters, for example to be displayed in the dashboard."""
+        ...
+
+    async def get_transaction(self, id, /):
+        """Find a transaction, by id."""
         ...
 
     async def get_blob(self, blob_id):

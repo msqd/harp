@@ -13,6 +13,7 @@ from harp.errors import ProxyConfigurationError
 from harp.protocols.storage import Storage
 from harp.typing.global_settings import GlobalSettings
 
+from .blobs import BlobsController
 from .overview import OverviewController
 from .system import SystemController
 from .transactions import TransactionsController
@@ -57,7 +58,7 @@ class DashboardController:
             )
 
         # register the subcontrollers, aka the api handlers
-        self._internal_api_controller = self._create_routing_controller()
+        self._internal_api_controller = self._create_internal_api_controller()
 
         # if no devserver is configured, we may need to serve static files
         if not self._ui_devserver_proxy_controller:
@@ -84,20 +85,17 @@ class DashboardController:
     def _create_ui_devserver_proxy_controller(self, *, port):
         return HttpProxyController(f"http://localhost:{port}/", http_client=self.http_client)
 
-    def _create_routing_controller(self):
-        controller = RoutingController(handle_errors=False)
-        router = controller.router
-        router.route("/api/blobs/{blob}")(self.get_blob)
+    def _create_internal_api_controller(self):
+        root = RoutingController(handle_errors=False)
 
-        # subcontrollers
-        for _controller in (
-            OverviewController(self.storage),
-            TransactionsController(self.storage),
-            SystemController(self.global_settings),
-        ):
-            _controller.register(controller.router)
+        self.children = [
+            BlobsController(storage=self.storage, router=root.router),
+            SystemController(settings=self.global_settings, router=root.router),
+            TransactionsController(storage=self.storage, router=root.router),
+            OverviewController(storage=self.storage, router=root.router),
+        ]
 
-        return controller
+        return root
 
     async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
         request.context.setdefault("user", None)
@@ -138,20 +136,3 @@ class DashboardController:
 
         await response.start(status=404)
         await response.body("Not found.")
-
-    async def get_blob(self, request: ASGIRequest, response: ASGIResponse, blob):
-        blob = await self.storage.get_blob(blob)
-
-        if not blob:
-            response.headers["content-type"] = "text/plain"
-            await response.start(status=404)
-            await response.body(b"Blob not found.")
-            return
-
-        response.headers["content-type"] = blob.content_type or "application/octet-stream"
-        await response.start(status=200)
-
-        if blob.content_type == "application/json":
-            await response.body(blob.prettify())
-        else:
-            await response.body(blob.data)

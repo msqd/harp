@@ -5,8 +5,7 @@ import respx
 from httpx import AsyncClient, Response
 
 from harp.apps.proxy.controllers import HttpProxyController
-from harp.core.asgi.messages.requests import ASGIRequest
-from harp.core.asgi.messages.responses import ASGIResponse
+from harp.core.asgi.messages import ASGIRequest, ASGIResponse
 
 
 class TestHttpProxyController:
