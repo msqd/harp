@@ -1,52 +1,67 @@
-import { ComponentType, ReactNode } from "react"
+import { ReactNode } from "react"
 import SyntaxHighlighter from "react-syntax-highlighter/dist/esm/prism-light"
 import BaseStyle from "react-syntax-highlighter/dist/esm/styles/prism/vs"
 
+import { H4 } from "mkui/Components/Typography"
+
 const Style = { ...BaseStyle }
 
-function _render(content: string | null, contentType: string | null) {
+function PrettyBody({ content = null, contentType = null }: { content: string | null; contentType: string | null }) {
   switch (contentType) {
     case "application/json":
       return (
         <SyntaxHighlighter
           language="javascript"
-          className="w-fit overflow-x-auto p-4 font-medium text-black language-javascript"
+          className="w-fit overflow-x-auto p-4 text-sm text-black language-javascript max-w-full"
           children={content || ""}
           style={Style}
           customStyle={{ fontSize: "0.9rem", padding: 0, border: 0 }}
         />
       )
   }
-  return content ? <pre>{content}</pre> : null
+
+  return content ? (
+    <pre
+      className="max-w-full overflow-x-auto p-4 text-sm text-black"
+      style={{ fontSize: "0.8rem", padding: 0, border: 0 }}
+    >
+      {content}
+    </pre>
+  ) : null
 }
 
 export function TransactionMessagePanel({
-  title,
+  children,
   headers = null,
   body = null,
   contentType = null,
 }: {
-  Icon: ComponentType
   messageId: string | null
-  title: ReactNode
   headers?: string | null
   body?: string | null
   contentType?: string | null
+  children?: ReactNode
 }) {
   return (
-    <div className="flex-none w-1/2 overflow-none max-h-screen px-1">
-      <h4 className="text-sm font-semibold leading-6 text-gray-900">{title}</h4>
-      <div className="w-full overflow-auto">
-        <h5 className="text-sm font-semibold leading-6 text-gray-900">Headers</h5>
-        {headers ? <pre>{headers}</pre> : null}
-        <h5 className="text-sm font-semibold leading-6 text-gray-900">
-          Body {contentType ? `(${contentType})` : null}
-        </h5>
-        {_render(body, contentType)}
-
-        {/*
-            <HeadersTable headers={message.headers || {}} />
-*/}
+    <div className="flex-none overflow-none px-1 max-w-full">
+      {children}
+      <div className="w-full max-w-full overflow-auto">
+        <H4>Headers</H4>
+        <table className="divide-y divide-gray-100 border mb-4">
+          {headers
+            ? headers.split("\n").map((line) => {
+                const s = line.split(":", 2)
+                return (
+                  <tr>
+                    <td className="px-2 py1">{s[0]}</td>
+                    <td className="px-2 py1">{s[1]}</td>
+                  </tr>
+                )
+              })
+            : null}
+        </table>
+        <H4>Body {contentType ? `(${contentType})` : null}</H4>
+        <PrettyBody content={body} contentType={contentType} />
       </div>
     </div>
   )

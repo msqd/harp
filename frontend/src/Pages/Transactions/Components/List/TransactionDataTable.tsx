@@ -14,9 +14,9 @@ interface TransactionsDataTableProps {
 }
 
 const transactionColumnTypes = {
-  actions: {
+  favoriteAction: {
     label: "",
-    format: () => <StarIcon className="h-5 w-5 text-gray-300" aria-hidden="true" />,
+    format: () => <StarIcon className="h-5 w-5 text-gray-300 hover:text-yellow-500" aria-hidden="true" />,
     headerClassName: "w-1",
   },
   request: {
@@ -57,7 +57,7 @@ export function TransactionDataTable({ transactions }: TransactionsDataTableProp
         types={transactionColumnTypes}
         onRowClick={(row: Transaction) => navigate(`/transactions/${row.id}`)}
         rows={transactions}
-        columns={["actions", "request", "response", "elapsed", "started_at"]}
+        columns={["favoriteAction", "request", "response", "elapsed", "started_at"]}
       />
     </>
   )

@@ -78,7 +78,11 @@ export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = {}>(
       <tbody className="divide-y divide-gray-200 bg-white">
         {rows.map((row, index) => {
           return (
-            <tr key={index} onClick={onRowClick ? () => onRowClick(row) : undefined}>
+            <tr
+              key={index}
+              onClick={onRowClick ? () => onRowClick(row) : undefined}
+              className="hover:bg-slate-50 cursor-pointer"
+            >
               {columns?.map((name, index) => {
                 const colName = name as string
                 const colType = types[colName]
