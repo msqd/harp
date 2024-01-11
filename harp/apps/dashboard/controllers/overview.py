@@ -10,8 +10,9 @@ from harp.protocols.storage import Storage
 time_bucket_for_range = {
     "1h": "minute",
     "24h": "hour",
-    "7j": "day",
+    "7d": "day",
     "1m": "day",
+    "1y": "day",
 }
 
 
@@ -28,7 +29,7 @@ class OverviewController(RoutingController):
     async def get_overview_data(self, request: ASGIRequest, response: ASGIResponse):
         # endpoint and range from request
         endpoint = request.query.get("endpoint")
-        range = request.query.get("range", "24h")
+        range = request.query.get("timeRange", "24h")
 
         # time buckets and start_datetime accordingly
         time_bucket = time_bucket_for_range.get(range, "day")

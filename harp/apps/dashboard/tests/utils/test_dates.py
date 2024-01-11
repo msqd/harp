@@ -18,10 +18,12 @@ def test_get_start_datetime_from_range():
     assert start_datetime is not None and abs((start_datetime - (now - timedelta(hours=1))).total_seconds()) < 1
     start_datetime = get_start_datetime_from_range("24h")
     assert start_datetime is not None and abs((start_datetime - (now - timedelta(hours=24))).total_seconds()) < 1
-    start_datetime = get_start_datetime_from_range("7j")
+    start_datetime = get_start_datetime_from_range("7d")
     assert start_datetime is not None and abs((start_datetime - (now - timedelta(days=7))).total_seconds()) < 1
     start_datetime = get_start_datetime_from_range("1m")
     assert start_datetime is not None and abs((start_datetime - (now - timedelta(days=30))).total_seconds()) < 1
+    start_datetime = get_start_datetime_from_range("1y")
+    assert start_datetime is not None and abs((start_datetime - (now - timedelta(days=365))).total_seconds()) < 1
     assert get_start_datetime_from_range(None) is None
     with pytest.raises(ValueError):
         get_start_datetime_from_range("unknown")

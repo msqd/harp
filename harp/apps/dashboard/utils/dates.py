@@ -15,10 +15,12 @@ def get_start_datetime_from_range(range: str | None) -> datetime | None:
         start_datetime = now - timedelta(hours=1)
     elif range == "24h":
         start_datetime = now - timedelta(hours=24)
-    elif range == "7j":
+    elif range == "7d":
         start_datetime = now - timedelta(days=7)
     elif range == "1m":
         start_datetime = now - timedelta(days=30)
+    elif range == "1y":
+        start_datetime = now - timedelta(days=365)
     else:
         raise ValueError(f"Unknown range: {range}")
     return start_datetime

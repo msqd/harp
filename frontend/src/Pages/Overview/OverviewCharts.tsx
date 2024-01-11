@@ -7,10 +7,11 @@ interface TransactionsOverviewProps {
   endpoint?: string
   title?: string
   className?: string
+  timeRange?: string
 }
 
-export const TransactionsOverview = ({ endpoint, title, className }: TransactionsOverviewProps) => {
-  const query = useOverviewDataQuery(endpoint)
+export const TransactionsOverview = ({ endpoint, title, className, timeRange }: TransactionsOverviewProps) => {
+  const query = useOverviewDataQuery(endpoint, timeRange)
 
   return (
     <OnQuerySuccess query={query} queries={[query, query]}>
