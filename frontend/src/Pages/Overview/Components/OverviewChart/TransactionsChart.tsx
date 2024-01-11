@@ -10,6 +10,9 @@ export const TransactionsChart: React.FC<RequestCHartProps> = ({ data, timeRange
   const tickFormatter = (tick: string) => {
     const date = new Date(tick)
     switch (timeRange) {
+      case "1h":
+        // If time range is 1 hour, return time in 'mm:ss' format
+        return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })
       case "24h":
         // If time range is 24 hours, return time in 'HH:mm' format
         return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })

@@ -20,6 +20,7 @@ export const OverviewPage = () => {
   }
 
   const buttonProps = [
+    { key: "1h", title: "1h" },
     { key: "24h", title: "24h" },
     { key: "7d", title: "7d" },
     { key: "1m", title: "1m" },
