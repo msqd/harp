@@ -55,5 +55,6 @@ class OverviewController(RoutingController):
                 "errors": {"count": errors_count, "rate": errors_rate},
                 "count": transactions_count,
                 "meanDuration": mean_duration,
+                "timeRange": range,
             }
         )

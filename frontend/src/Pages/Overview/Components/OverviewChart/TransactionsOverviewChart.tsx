@@ -28,7 +28,7 @@ export const TransactionsOverviewChart = ({ data, title, className }: Transactio
             <span>{errorsRate}%</span>
           </div>
         </div>
-        <TransactionsChart data={data.transactions} width="90%"></TransactionsChart>
+        <TransactionsChart data={data.transactions} width="90%" timeRange={data.timeRange}></TransactionsChart>
       </div>
     </div>
   )
