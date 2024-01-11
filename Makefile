@@ -46,7 +46,7 @@ frontend:
 # QA, tests and other CI/CD related stuff
 ########################################################################################################################
 
-.PHONY: clean preqa qa types format format-backend format-frontend test test-backend test-frontend lint-frontend test-ui test-ui-update test-ui-build
+.PHONY: clean preqa qa types format format-backend format-frontend test test-backend coverage test-frontend lint-frontend test-ui test-ui-update test-ui-build
 
 clean:
 	(cd docs; $(MAKE) clean)
@@ -63,7 +63,8 @@ types:
 format: format-backend format-frontend
 
 format-frontend: install-frontend
-	cd frontend; pnpm lint:fix; pnpm prettier -w src
+	(cd frontend; pnpm lint:fix)
+	(cd frontend; pnpm prettier -w src)
 
 format-backend:
 	isort harp tests
@@ -75,7 +76,16 @@ test:
 	$(MAKE) test-frontend
 
 test-backend:
-	$(PYTEST) --cov=harp --cov-report html:docs/_build/html/coverage -n auto harp tests
+	$(PYTEST) harp tests \
+	          --benchmark-disable \
+	          -n auto
+
+coverage:
+	$(PYTEST) harp tests \
+	          -m 'not subprocess' \
+	          --cov=harp \
+	          --cov-report html:docs/_build/html/coverage \
+	          -n auto
 
 test-frontend: install-frontend lint-frontend
 	cd frontend; pnpm test
@@ -102,8 +112,10 @@ BENCHMARK_OPTIONS ?=
 BENCHMARK_MIN_ROUNDS ?= 100
 
 benchmark:
-	$(PYTEST) tests_benchmarks \
+	$(PYTEST) harp tests \
 	          $(BENCHMARK_OPTIONS) \
+	          --benchmark-enable \
+	          --benchmark-only \
 	          --benchmark-disable-gc \
 	          --benchmark-min-rounds=$(BENCHMARK_MIN_ROUNDS) \
 	          --benchmark-group-by=group \

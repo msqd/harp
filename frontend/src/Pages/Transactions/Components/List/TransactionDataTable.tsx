@@ -16,7 +16,7 @@ interface TransactionsDataTableProps {
 const transactionColumnTypes = {
   favoriteAction: {
     label: "",
-    format: () => <StarIcon className="h-5 w-5 text-gray-300 hover:text-yellow-500" aria-hidden="true" />,
+    format: () => <StarIcon className="size-5 text-gray-300 hover:text-yellow-500" aria-hidden="true" />,
     headerClassName: "w-1",
   },
   request: {

@@ -9,10 +9,9 @@ import { OverviewPage } from "Pages/Overview"
 import { SystemPage } from "Pages/System"
 import GlobalStyles from "Styles/GlobalStyles"
 
-import { TransactionsListPage } from "./Pages/Transactions"
+import { TransactionsDetailPage, TransactionsListPage } from "./Pages/Transactions"
 
 import "./index.css"
-import { TransactionsDetailPage } from "./Pages/Transactions/TransactionsDetailPage.tsx"
 
 const router = createBrowserRouter([
   {

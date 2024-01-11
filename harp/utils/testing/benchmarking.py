@@ -7,7 +7,10 @@ from tempfile import NamedTemporaryFile
 import httpx
 import pytest
 
+from harp import get_logger
 from harp.utils.network import get_available_network_port, wait_for_port
+
+logger = get_logger(__name__)
 
 
 class RunHarpProxyInSubprocessThread(threading.Thread):
@@ -29,8 +32,8 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
             "server",
             *(("--file", self.config_filename) if self.config_filename else ()),
         ]
+        logger.info('Starting subprocess: "%s"', " ".join(args))
         self.process = subprocess.Popen(args, shell=False)
-        print(" ".join(args))
 
     def join(self, timeout=None):
         if self.config_filename:
@@ -45,10 +48,18 @@ class AbstractProxyBenchmark:
     def proxy(self):
         port = get_available_network_port()
         thread = RunHarpProxyInSubprocessThread(config=self.config.substitute(port=port))
-        thread.start()
-        wait_for_port(port)
-        yield f"localhost:{port}"
-        thread.join()
+        try:
+            try:
+                from pytest_cov.embed import cleanup_on_sigterm
+            except ImportError:
+                pass
+            else:
+                cleanup_on_sigterm()
+            thread.start()
+            wait_for_port(port, timeout=10.0)
+            yield f"localhost:{port}"
+        finally:
+            thread.join()
 
     def test_noproxy_get(self, benchmark):
         @benchmark
