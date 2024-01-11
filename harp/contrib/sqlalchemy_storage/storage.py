@@ -200,7 +200,7 @@ class SqlAlchemyStorage:
                     "date": ensure_date(row[0]),
                     "transactions": row[1],
                     "errors": row[2],
-                    "meanDuration": row[3],
+                    "meanDuration": row[3] if row[3] else 0,  #! probably sqlite struggling with unfinished transactions
                 }
                 for row in result.fetchall()
             ]
