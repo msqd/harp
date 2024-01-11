@@ -54,7 +54,7 @@ export const TransactionsChart: React.FC<RequestCHartProps> = ({ data, timeRange
           dataKey="datetime"
           tickLine={false}
           axisLine={{ stroke: "#f5f5f5" }}
-          interval={"equidistantPreserveStart"}
+          interval={timeRange === "1y" ? 29 : "preserveStartEnd"}
           fontSize={12}
           tickFormatter={tickFormatter}
           minTickGap={20}
