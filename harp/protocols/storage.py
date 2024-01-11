@@ -10,8 +10,12 @@ class TransactionsGroupedByDate(TypedDict):
 
 
 class Storage(Protocol):
-    def find_transactions(self, *, with_messages=False, filters=None, page: int = 1, cursor: str = ""):
+    async def find_transactions(self, *, with_messages=False, filters=None, page: int = 1, cursor: str = ""):
         """Find transactions, using optional filters, for example to be displayed in the dashboard."""
+        ...
+
+    async def get_transaction(self, id, /):
+        """Find a transaction, by id."""
         ...
 
     async def get_blob(self, blob_id):

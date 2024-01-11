@@ -147,6 +147,19 @@ class SqlAlchemyStorage:
 
         return result
 
+    async def get_transaction(self, id: str) -> Optional[Transaction]:
+        async with self.session() as session:
+            transaction = (
+                (
+                    await session.execute(
+                        select(Transactions).where(Transactions.id == id).options(joinedload(Transactions.messages))
+                    )
+                )
+                .unique()
+                .scalar_one_or_none()
+            )
+        return transaction.to_model() if transaction else None
+
     async def transactions_grouped_by_date(self, endpoint: Optional[str] = None) -> List[TransactionsGroupedByDate]:
         s_date = func.date(Transactions.started_at)
 

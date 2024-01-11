@@ -1,5 +1,6 @@
 import { H1, H2, H3, H4, H5, H6 } from "./Titles"
 import { P } from "./Paragraphs"
+import { Section } from "./Section"
 
 export const Titles = () => (
   <>
@@ -18,20 +19,27 @@ export const TitlesWithParagraphs = ({ withHr = false }) => (
   <>
     {withHr ? <HR /> : null}
 
-    <H1>Eat at Joe's</H1>
-    <P>So good you won't believe it's real.</P>
+    <Section>
+      <H1>Eat at Joe's</H1>
+      <P>So good you won't believe it's real.</P>
+    </Section>
 
     {withHr ? <HR /> : null}
 
-    <H2>Joe's special</H2>
-    <P>It's a secret, but it's good.</P>
+    <Section>
+      <H2>Joe's special</H2>
+      <P>It's a secret, but it's good.</P>
+    </Section>
 
     {withHr ? <HR /> : null}
 
-    <H3>Joe's special with cheese</H3>
-    <P>It's a secret, but it's good. And it has cheese.</P>
-    <P>And even a second paragraph. What would you want more?</P>
-    <P>Lovely Spam! (Lovely Spam!) Lovely Spam! (Lovely Spam!) Lovely Spam! Spam, Spam, Spam, Spam!</P>
+    <Section>
+      <H3>Joe's special with cheese</H3>
+      <P>It's a secret, but it's good. And it has cheese.</P>
+      <P>And even a second paragraph. What would you want more?</P>
+      <P>Lovely Spam! (Lovely Spam!) Lovely Spam! (Lovely Spam!) Lovely Spam! Spam, Spam, Spam, Spam!</P>
+    </Section>
+
     {withHr ? <HR /> : null}
   </>
 )

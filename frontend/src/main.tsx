@@ -12,6 +12,7 @@ import GlobalStyles from "Styles/GlobalStyles"
 import { TransactionsListPage } from "./Pages/Transactions"
 
 import "./index.css"
+import { TransactionsDetailPage } from "./Pages/Transactions/TransactionsDetailPage.tsx"
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
       {
         path: "",
         element: <OverviewPage />,
+      },
+      {
+        path: "transactions/:id",
+        element: <TransactionsDetailPage />,
       },
       {
         path: "transactions",
