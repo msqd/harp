@@ -1,22 +1,23 @@
 from datetime import timedelta
 from typing import List
 
-from harp.core.asgi.messages.requests import ASGIRequest
-from harp.core.asgi.messages.responses import ASGIResponse
+from harp.core.asgi.messages import ASGIRequest, ASGIResponse
+from harp.core.controllers import RoutingController
 from harp.core.views import json
 from harp.protocols.storage import Storage, TransactionsGroupedByDate
 
 # from harp.apps.dashboard.schemas import TransactionsByDate
 
 
-class OverviewController:
+class OverviewController(RoutingController):
     prefix = "/api/overview"
 
-    def __init__(self, storage: Storage):
+    def __init__(self, *, storage: Storage, handle_errors=True, router=None):
         self.storage = storage
+        super().__init__(handle_errors=handle_errors, router=router)
 
-    def register(self, router):
-        router.route(self.prefix + "/")(self.get_overview_data)
+    def configure(self):
+        self.router.route(self.prefix + "/")(self.get_overview_data)
 
     async def get_overview_data(self, request: ASGIRequest, response: ASGIResponse):
         endpoint = request.query.get("endpoint")

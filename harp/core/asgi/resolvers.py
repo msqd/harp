@@ -1,8 +1,7 @@
 import json
 
 from harp import get_logger
-from harp.core.asgi.messages.requests import ASGIRequest
-from harp.core.asgi.messages.responses import ASGIResponse
+from harp.core.asgi.messages import ASGIRequest, ASGIResponse
 from harp.utils.json import BytesEncoder
 
 logger = get_logger(__name__)

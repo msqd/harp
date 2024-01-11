@@ -1,7 +1,6 @@
 from typing import Protocol
 
-from harp.core.asgi.messages.requests import ASGIRequest
-from harp.core.asgi.messages.responses import ASGIResponse
+from harp.core.asgi.messages import ASGIRequest, ASGIResponse
 
 
 class IController(Protocol):
