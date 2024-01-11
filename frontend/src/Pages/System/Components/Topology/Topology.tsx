@@ -10,7 +10,7 @@ type Endpoints = endpoint[]
 export const Topology = ({ endpoints }: { endpoints?: Endpoints }) => {
   return (
     endpoints && (
-      <svg className="container" viewBox={`0 0 650 ${50 + 100 * endpoints.length}`}>
+      <svg className="container" viewBox={`0 0 700 ${50 + 100 * endpoints.length}`}>
         <defs>
           <marker
             id="arrow"
@@ -49,22 +49,29 @@ export const Topology = ({ endpoints }: { endpoints?: Endpoints }) => {
           markerEnd="url(#arrow)"
         />
 
-        {endpoints.map((endpoint, index) => (
-          <g key={index}>
-            <rect x="500" y={60 + index * 100} width="100" height="50" fill="lightblue" />
-            <text x="550" y={90 + index * 100} fill="black" textAnchor="middle" dominantBaseline="middle">
-              {endpoint.name}
-            </text>
-            <line
-              x1="400"
-              y1={85 + index * 100}
-              x2="490"
-              y2={85 + index * 100}
-              stroke="black"
-              markerEnd="url(#arrow)"
-            />
-          </g>
-        ))}
+        {endpoints.map((endpoint, index) => {
+          const padding = 20 // Adjust this value as needed
+          const strLength = endpoint.name.length * 8
+          const width = padding + strLength
+          const rectX = 500
+          const textX = rectX + width / 2
+          return (
+            <g key={index}>
+              <rect x="500" y={60 + index * 100} width={width} height="50" fill="lightblue" />
+              <text x={textX} y={90 + index * 100} fill="black" textAnchor="middle" dominantBaseline="middle">
+                {endpoint.name}
+              </text>
+              <line
+                x1="400"
+                y1={85 + index * 100}
+                x2="490"
+                y2={85 + index * 100}
+                stroke="black"
+                markerEnd="url(#arrow)"
+              />
+            </g>
+          )
+        })}
       </svg>
     )
   )

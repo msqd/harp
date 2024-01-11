@@ -18,6 +18,7 @@ export function SystemTopologyTabPanel() {
         {(query) => {
           const proxyData = query.data.proxy as ProxyData
           const endpoints = proxyData.endpoints
+          // const endpoints = [{ name: "tejshshshshshshshsst", port: 1234, url: "test" }]
           return (
             <Pane>
               <H2>Topology</H2>
