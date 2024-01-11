@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Generic, List, Optional, TypedDict, TypeVar
 
@@ -9,15 +9,15 @@ from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
-from harp.contrib.sqlalchemy_storage.models import Base, Blobs, Messages, Transactions
+from harp.contrib.sqlalchemy_storage.models import Base, Blob, Message, Transaction
 from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
 from harp.contrib.sqlalchemy_storage.utils.dates import TruncDatetime
 from harp.core.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionEvent
-from harp.core.models.blobs import Blob
-from harp.core.models.transactions import Transaction
+from harp.core.models.blobs import Blob as BlobModel
+from harp.core.models.transactions import Transaction as TransactionModel
 from harp.settings import PAGE_SIZE
 from harp.utils.background import AsyncWorkerQueue
-from harp.utils.dates import ensure_date, ensure_datetime
+from harp.utils.dates import ensure_datetime
 
 
 class TimeBucket(Enum):
@@ -27,13 +27,6 @@ class TimeBucket(Enum):
     DAY = "day"
     HOUR = "hour"
     MINUTE = "minute"
-
-
-class TransactionsGroupedByDate(TypedDict):
-    date: date | datetime | None
-    transactions: int
-    errors: int
-    meanDuration: float
 
 
 class TransactionsGroupedByTimeBucket(TypedDict):
@@ -55,7 +48,7 @@ def _filter_query(query, name, values):
     if values and values != "*":
         query = query.filter(
             getattr(
-                Transactions,
+                Transaction,
                 _FILTER_COLUMN_NAMES.get(name, name),
             ).in_(values)
         )
@@ -111,7 +104,7 @@ class SqlAlchemyStorage:
         if name == "endpoint":
             # get transaction count grouped by endpoint
             async with self.session() as session:
-                query = select(Transactions.endpoint, func.count()).group_by(Transactions.endpoint)
+                query = select(Transaction.endpoint, func.count()).group_by(Transaction.endpoint)
                 result = await session.execute(query)
                 return {row[0]: row[1] for row in result.fetchall()}
 
@@ -124,7 +117,7 @@ class SqlAlchemyStorage:
         filters=None,
         page: int = 1,
         cursor: str = "",
-    ) -> Results[Transaction]:
+    ) -> Results[TransactionModel]:
         """
         Implements :meth:`Storage.find_transactions <harp.protocols.storage.Storage.find_transactions>`.
 
@@ -133,25 +126,25 @@ class SqlAlchemyStorage:
 
         """
         result = Results()
-        query = select(Transactions)
+        query = select(Transaction)
         if with_messages:
-            query = query.options(joinedload(Transactions.messages))
+            query = query.options(joinedload(Transaction.messages))
 
         if filters:
             query = _filter_query(query, "endpoint", filters.get("endpoint", None))
             query = _filter_query(query, "method", filters.get("method", None))
             query = _filter_query(query, "status", filters.get("status", None))
 
-        query = query.order_by(Transactions.started_at.desc())
+        query = query.order_by(Transaction.started_at.desc())
 
         # apply cursor (before count)
         if page and cursor:
-            query = query.filter(Transactions.id <= cursor)
+            query = query.filter(Transaction.id <= cursor)
 
         async with self.session() as session:
             # count items from query
             result.meta["total"] = await session.scalar(
-                query.with_only_columns(func.count(Transactions.id)).order_by(None)
+                query.with_only_columns(func.count(Transaction.id)).order_by(None)
             )
 
         # apply limit/offset (after count)
@@ -165,45 +158,18 @@ class SqlAlchemyStorage:
 
         return result
 
-    async def get_transaction(self, id: str) -> Optional[Transaction]:
+    async def get_transaction(self, id: str) -> Optional[TransactionModel]:
         async with self.session() as session:
             transaction = (
                 (
                     await session.execute(
-                        select(Transactions).where(Transactions.id == id).options(joinedload(Transactions.messages))
+                        select(Transaction).where(Transaction.id == id).options(joinedload(Transaction.messages))
                     )
                 )
                 .unique()
                 .scalar_one_or_none()
             )
         return transaction.to_model() if transaction else None
-
-    async def transactions_grouped_by_date(self, endpoint: Optional[str] = None) -> List[TransactionsGroupedByDate]:
-        s_date = func.date(Transactions.started_at)
-
-        query = select(
-            # sqlite returns a string formated as "YYYY-MM-DD", postgres returns a datetime.date
-            s_date,
-            func.count(),
-            func.sum(case((Transactions.x_status_class == "5xx", 1), else_=0)),
-            func.avg(Transactions.elapsed),
-        )
-
-        if endpoint:
-            query = query.where(Transactions.endpoint == endpoint)
-
-        query = query.group_by(s_date).order_by(s_date.asc())
-        async with self.session() as session:
-            result = await session.execute(query)
-            return [
-                {
-                    "date": ensure_date(row[0]),
-                    "transactions": row[1],
-                    "errors": row[2],
-                    "meanDuration": row[3] if row[3] else 0,  #! probably sqlite struggling with unfinished transactions
-                }
-                for row in result.fetchall()
-            ]
 
     async def transactions_grouped_by_time_bucket(
         self,
@@ -216,19 +182,19 @@ class SqlAlchemyStorage:
                 f"Invalid time bucket: {time_bucket}. Must be one of {', '.join([e.value for e in TimeBucket])}."
             )
 
-        s_date = TruncDatetime(time_bucket, Transactions.started_at)
+        s_date = TruncDatetime(time_bucket, Transaction.started_at)
         query = select(
             s_date,
             func.count(),
-            func.sum(case((Transactions.x_status_class == "5xx", 1), else_=0)),
-            func.avg(Transactions.elapsed),
+            func.sum(case((Transaction.x_status_class == "5xx", 1), else_=0)),
+            func.avg(Transaction.elapsed),
         )
 
         if endpoint:
-            query = query.where(Transactions.endpoint == endpoint)
+            query = query.where(Transaction.endpoint == endpoint)
 
         if start_datetime:
-            query = query.where(Transactions.started_at >= start_datetime)
+            query = query.where(Transaction.started_at >= start_datetime)
 
         query = query.group_by(s_date).order_by(s_date.asc())
         async with self.session() as session:
@@ -238,7 +204,7 @@ class SqlAlchemyStorage:
                     "datetime": ensure_datetime(row[0], UTC),
                     "count": row[1],
                     "errors": row[2],
-                    "meanDuration": row[3],
+                    "meanDuration": row[3] if row[3] else 0,  #! probably sqlite struggling with unfinished transactions
                 }
                 for row in result.fetchall()
             ]
@@ -254,12 +220,12 @@ class SqlAlchemyStorage:
         async with self.session() as session:
             row = (
                 await session.execute(
-                    select(Blobs).where(Blobs.id == blob_id),
+                    select(Blob).where(Blob.id == blob_id),
                 )
             ).fetchone()
 
         if row:
-            return Blob(id=blob_id, data=row[0].data, content_type=row[0].content_type)
+            return BlobModel(id=blob_id, data=row[0].data, content_type=row[0].content_type)
 
     async def _on_startup_create_database(self, event: TransactionEvent):
         """Event handler to create the database tables on startup. May drop them first if configured to do so."""
@@ -271,7 +237,7 @@ class SqlAlchemyStorage:
     async def _on_transaction_started(self, event: TransactionEvent):
         """Event handler to store the transaction in the database."""
         async with self.session() as session:
-            transaction = Transactions()
+            transaction = Transaction()
             transaction.id = event.transaction.id
             transaction.type = event.transaction.type
             transaction.endpoint = event.transaction.endpoint
@@ -283,14 +249,14 @@ class SqlAlchemyStorage:
     async def _on_transaction_message(self, event: MessageEvent):
         transaction, message = event.transaction, event.message
         # todo is the "__headers__" dunder content type any good idea ? maybe it's just a waste of bytes.
-        headers_blob = Blob.from_data(message.serialized_headers, content_type="__headers__")
-        content_blob = Blob.from_data(message.serialized_body, content_type=message.headers.get("content-type"))
+        headers_blob = BlobModel.from_data(message.serialized_headers, content_type="__headers__")
+        content_blob = BlobModel.from_data(message.serialized_body, content_type=message.headers.get("content-type"))
 
         def create_blob_storage_task(blob):
             async def store_blob():
                 async with self.session() as session:
                     async with session.begin():
-                        db_blob = Blobs()
+                        db_blob = Blob()
                         db_blob.id = blob.id
                         db_blob.content_type = blob.content_type
                         db_blob.data = blob.data
@@ -305,7 +271,7 @@ class SqlAlchemyStorage:
             async with self.session() as session:
                 async with session.begin():
                     session.add(
-                        Messages.from_models(transaction, message, headers_blob, content_blob),
+                        Message.from_models(transaction, message, headers_blob, content_blob),
                     )
 
         await self.worker.push(store_message)
@@ -314,8 +280,8 @@ class SqlAlchemyStorage:
         async with self.session() as session:
             async with session.begin():
                 await session.execute(
-                    update(Transactions)
-                    .where(Transactions.id == event.transaction.id)
+                    update(Transaction)
+                    .where(Transaction.id == event.transaction.id)
                     .values(
                         finished_at=event.transaction.finished_at.astimezone(UTC).replace(tzinfo=None),
                         elapsed=event.transaction.elapsed,

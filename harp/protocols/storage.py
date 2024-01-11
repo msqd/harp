@@ -1,12 +1,5 @@
-from datetime import date, datetime
+from datetime import datetime
 from typing import List, Optional, Protocol, TypedDict
-
-
-class TransactionsGroupedByDate(TypedDict):
-    date: date | datetime | None
-    transactions: int
-    errors: int
-    meanDuration: float
 
 
 class TransactionsGroupedByTimeBucket(TypedDict):
@@ -33,9 +26,6 @@ class Storage(Protocol):
 
     async def get_facet_meta(self, name):
         """Retrieve a facet's metadata, by name."""
-        ...
-
-    async def transactions_grouped_by_date(self, *, endpoint=None) -> List[TransactionsGroupedByDate]:
         ...
 
     async def transactions_grouped_by_time_bucket(

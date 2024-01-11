@@ -4,15 +4,22 @@ from typing import List
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, LargeBinary, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from harp.core.models.messages import Message
-from harp.core.models.transactions import Transaction
+from harp.core.models.messages import Message as MessageModel
+from harp.core.models.transactions import Transaction as TransactionModel
 
 
 class Base(DeclarativeBase):
     pass
 
 
-class Transactions(Base):
+class User(Base):
+    __tablename__ = "sa_users"
+
+    id = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
+    username = mapped_column(String(32), unique=True)
+
+
+class Transaction(Base):
     __tablename__ = "sa_transactions"
 
     id = mapped_column(String(27), primary_key=True, unique=True)
@@ -24,10 +31,10 @@ class Transactions(Base):
     x_method = mapped_column(String(16), nullable=True, index=True)
     x_status_class = mapped_column(String(3), nullable=True, index=True)
 
-    messages: Mapped[List["Messages"]] = relationship(back_populates="transaction")
+    messages: Mapped[List["Message"]] = relationship(back_populates="transaction")
 
     def to_model(self):
-        return Transaction(
+        return TransactionModel(
             id=self.id,
             type=self.type,
             endpoint=self.endpoint,
@@ -42,7 +49,7 @@ class Transactions(Base):
         )
 
 
-class Blobs(Base):
+class Blob(Base):
     __tablename__ = "sa_blobs"
 
     id = mapped_column(String(40), primary_key=True, unique=True)
@@ -50,7 +57,7 @@ class Blobs(Base):
     content_type = mapped_column(String(64))
 
 
-class Messages(Base):
+class Message(Base):
     __tablename__ = "sa_messages"
 
     id = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
@@ -61,10 +68,10 @@ class Messages(Base):
     body = mapped_column(String(40))
     created_at = mapped_column(DateTime())
 
-    transaction: Mapped["Transactions"] = relationship(back_populates="messages")
+    transaction: Mapped["Transaction"] = relationship(back_populates="messages")
 
     def to_model(self):
-        return Message(
+        return MessageModel(
             id=self.id,
             transaction_id=self.transaction_id,
             kind=self.kind,
