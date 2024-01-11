@@ -2,6 +2,7 @@ NAME ?= harp-proxy
 VERSION ?= $(shell git describe 2>/dev/null || git rev-parse --short HEAD)
 PRE_COMMIT ?= $(shell which pre-commit || echo "pre-commit")
 PYTEST ?= $(shell which pytest || echo "pytest")
+PYTEST_OPTIONS ?=
 
 DOCKER ?= $(shell which docker || echo "docker")
 DOCKER_IMAGE ?= $(NAME)
@@ -78,14 +79,16 @@ test:
 test-backend:
 	$(PYTEST) harp tests \
 	          --benchmark-disable \
-	          -n auto
+	          -n auto \
+	          $(PYTEST_OPTIONS)
 
 coverage:
 	$(PYTEST) harp tests \
 	          -m 'not subprocess' \
 	          --cov=harp \
 	          --cov-report html:docs/_build/html/coverage \
-	          -n auto
+	          -n auto \
+	          $(PYTEST_OPTIONS)
 
 test-frontend: install-frontend lint-frontend
 	cd frontend; pnpm test
@@ -120,7 +123,8 @@ benchmark:
 	          --benchmark-min-rounds=$(BENCHMARK_MIN_ROUNDS) \
 	          --benchmark-group-by=group \
 	          --benchmark-compare="0004" \
-	          --benchmark-histogram
+	          --benchmark-histogram \
+	          $(PYTEST_OPTIONS)
 
 benchmark-save:
 	BENCHMARK_OPTIONS='--benchmark-warmup=on --benchmark-warmup-iterations=50 --benchmark-save="$(shell git describe --tags --always --dirty)"' \
