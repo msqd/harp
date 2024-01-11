@@ -72,9 +72,9 @@ export const TransactionsChart: React.FC<RequestCHartProps> = ({ data, timeRange
           strokeLinecap="round"
           type="monotone"
           dataKey="errors"
-          stroke="#FF0000"
+          stroke="#FF8080"
           legendType="circle"
-          name="Errors"
+          name="Errors (5xx)"
           isAnimationActive={false}
         />
         <YAxis
