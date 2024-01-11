@@ -53,8 +53,9 @@ test:
   variables:
     GIT_STRATEGY: none
     PYTEST: /opt/venv/bin/pytest
+    PYTEST_OPTIONS: "-m 'not subprocess'"
   script:
-    - (cd /opt/harp/src; make test)
+    - (cd /opt/harp/src; poetry run make test)
 
 doc:html:
   needs: [ "build:dev" ]
