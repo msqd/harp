@@ -66,6 +66,7 @@ class TransactionsController(RoutingController):
             },
             page=page,
             cursor=cursor,
+            username=request.context.get("user") or "anonymous",
         )
 
         return json(

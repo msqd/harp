@@ -10,7 +10,9 @@ class TransactionsGroupedByTimeBucket(TypedDict):
 
 
 class Storage(Protocol):
-    async def find_transactions(self, *, with_messages=False, filters=None, page: int = 1, cursor: str = ""):
+    async def find_transactions(
+        self, *, with_messages=False, filters=None, page: int = 1, cursor: str = "", username: Optional[str]
+    ):
         """Find transactions, using optional filters, for example to be displayed in the dashboard."""
         ...
 
