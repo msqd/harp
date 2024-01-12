@@ -1,5 +1,5 @@
-harp.config.factories package
-=============================
+harp.contrib.sentry package
+===========================
 
 Submodules
 ----------
@@ -7,12 +7,12 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   harp.config.factories.kernel_factory
+   harp.contrib.sentry.settings
 
 Module contents
 ---------------
 
-.. automodule:: harp.config.factories
+.. automodule:: harp.contrib.sentry
    :members:
    :undoc-members:
    :show-inheritance:

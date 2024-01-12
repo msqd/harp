@@ -5,6 +5,14 @@ from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.config import Config
+from harp.config.events import (
+    EVENT_FACTORY_BIND,
+    EVENT_FACTORY_BOUND,
+    EVENT_FACTORY_BUILD,
+    FactoryBindEvent,
+    FactoryBoundEvent,
+    FactoryBuildEvent,
+)
 from harp.core.asgi import ASGIKernel, ASGIRequest, ASGIResponse
 from harp.core.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_VIEW, RequestEvent
 from harp.core.asgi.resolvers import ProxyControllerResolver
@@ -12,8 +20,6 @@ from harp.core.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.core.views.json import on_json_response
 from harp.typing import GlobalSettings
 from harp.utils.network import Bind
-
-from .events import EVENT_FACTORY_BIND, EVENT_FACTORY_BOUND, FactoryBindEvent, FactoryBoundEvent
 
 logger = get_logger(__name__)
 
@@ -72,9 +78,12 @@ class KernelFactory:
             ),
         )
 
-        return self.KernelType(dispatcher=dispatcher, resolver=resolver), [
-            Bind(host=self.hostname, port=port) for port in resolver.ports
-        ]
+        kernel = self.KernelType(dispatcher=dispatcher, resolver=resolver)
+        binds = [Bind(host=self.hostname, port=port) for port in resolver.ports]
+        event = FactoryBuildEvent(kernel, binds)
+        await dispatcher.adispatch(EVENT_FACTORY_BUILD, event)
+
+        return event.kernel, event.binds
 
     def build_container(self, dispatcher: IAsyncEventDispatcher) -> Container:
         """Factory method responsible for the service injection container creation, registering initial services."""

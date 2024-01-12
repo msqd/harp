@@ -7,7 +7,7 @@ from httpx import AsyncClient
 from harp.apps.proxy.controllers import HttpProxyController
 from harp.apps.proxy.settings import ProxySettings
 from harp.config.application import Application
-from harp.config.factories.events import FactoryBoundEvent
+from harp.config.events import FactoryBoundEvent
 
 
 class ProxyApplication(Application):

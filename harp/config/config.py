@@ -33,6 +33,7 @@ DEFAULT_APPLICATIONS = [
     "harp.apps.proxy",
     "harp.apps.dashboard",
     "harp.contrib.sqlalchemy_storage",
+    "harp.contrib.sentry",  # todo: allow to extend application list in config file without overriding all
 ]
 
 

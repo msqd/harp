@@ -1,7 +1,7 @@
-harp.config.factories.events module
+harp.contrib.sentry.settings module
 ===================================
 
-.. automodule:: harp.config.factories.events
+.. automodule:: harp.contrib.sentry.settings
    :members:
    :undoc-members:
    :show-inheritance:
