@@ -63,6 +63,7 @@ class Transaction(Base):
             extras=dict(
                 method=self.x_method,
                 status_class=self.x_status_class,
+                flags=[flag.id for flag in self.flags] if self.flags else [],
             ),
             messages=[message.to_model() for message in self.messages] if self.messages else [],
         )

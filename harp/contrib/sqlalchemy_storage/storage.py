@@ -111,12 +111,7 @@ class SqlAlchemyStorage:
         raise NotImplementedError(f"Unknown facet: {name}")
 
     async def find_transactions(
-        self,
-        *,
-        with_messages=False,
-        filters=None,
-        page: int = 1,
-        cursor: str = "",
+        self, *, with_messages=False, filters=None, page: int = 1, cursor: str = "", username: Optional[str] = None
     ) -> Results[TransactionModel]:
         """
         Implements :meth:`Storage.find_transactions <harp.protocols.storage.Storage.find_transactions>`.
@@ -125,15 +120,15 @@ class SqlAlchemyStorage:
         :return:
 
         """
+
+        user = await self.get_user_from_username(username)
+
         result = Results()
         query = select(Transaction)
 
         query = query.outerjoin(
             Flag,
-            and_(
-                Transaction.id == Flag.transaction_id,
-                Flag.user_id == 34,  #! change to proper user id
-            ),
+            and_(Transaction.id == Flag.transaction_id, Flag.user_id == user.id),
         ).options(
             contains_eager(
                 Transaction.flags,
@@ -318,3 +313,13 @@ class SqlAlchemyStorage:
                         x_status_class=event.transaction.extras.get("status_class"),
                     )
                 )
+
+    async def get_user_from_username(self, username: Optional[str]) -> User:
+        if not username:
+            username = "anonymous"
+        async with self.session() as session:
+            user = await session.execute(select(User).where(User.username == username))
+            user = user.unique().scalar_one_or_none()
+            if not user:
+                raise ValueError(f"Unknown user: {username}")
+            return user
