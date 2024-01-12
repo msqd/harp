@@ -1,4 +1,5 @@
 import math
+from json import loads as json_loads
 
 from harp import get_logger
 from harp.core.asgi.messages import ASGIRequest, ASGIResponse
@@ -33,7 +34,8 @@ class TransactionsController(RoutingController):
         self.router.route(self.prefix + "/")(self.list)
         self.router.route(self.prefix + "/filters")(self.filters)
         self.router.route(self.prefix + "/{id}")(self.get)
-        self.router.route(self.prefix + "/set_flag")(self.set_flag)
+        self.router.route(self.prefix + "/flag", methods=["POST"])(self.create_flag)
+        # self.router.route(self.prefix + "/flag", methods=["DELETE"])(self.delete_flag)
 
     async def filters(self, request: ASGIRequest, response: ASGIResponse):
         await self.facets["endpoint"].refresh()
@@ -82,9 +84,14 @@ class TransactionsController(RoutingController):
             return json({"error": "Transaction not found"})
         return json(transaction.to_dict())
 
-    async def set_flag(self, request: ASGIRequest, response: ASGIResponse):
-        transaction_id = request.query.get("transaction_id")
-        flag_type = request.query.get("type")
+    async def create_flag(self, request: ASGIRequest, response: ASGIResponse):
+        message = await request.receive()
+        body = json_loads(message.get("body", b"{}"))
+        transaction_id = body.get("transactionId")
+        flag_type = body.get("flag")
         username = request.context.get("user") or "anonymous"
-        self.storage.set_transaction_flag(transaction_id, username, flag_type)
+        await self.storage.set_transaction_flag(transaction_id, username, flag_type)
         return json({"success": True})
+
+    async def delete_flag(self, request: ASGIRequest, response: ASGIResponse):
+        ...

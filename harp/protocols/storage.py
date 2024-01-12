@@ -36,3 +36,7 @@ class Storage(Protocol):
     async def set_transaction_flag(self, transaction_id: str, username: str, flag_type: str):
         """Set a flag on a transaction."""
         ...
+
+    async def delete_transaction_flag(self, transaction_id: str, username: str, flag_type: str):
+        """Delete a flag on a transaction."""
+        ...
