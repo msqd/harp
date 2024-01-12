@@ -10,7 +10,7 @@ remove repetition of configuration namespace ?
 
 from harp import get_logger
 from harp.config import Application
-from harp.config.factories.events import FactoryBindEvent, FactoryBoundEvent
+from harp.config.events import FactoryBindEvent, FactoryBoundEvent
 
 from .controllers import DashboardController
 from .settings import DashboardSettings

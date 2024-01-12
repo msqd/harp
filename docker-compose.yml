@@ -1,5 +1,5 @@
 volumes:
-  postgres_data: { }
+  postgres_data: {}
 
 services:
   httpbin:
@@ -12,6 +12,9 @@ services:
     ports:
       - 5432:5432
     environment:
+      POSTGRES_USER: harp
+      POSTGRES_PASSWORD: harp
+      POSTGRES_DB: harp
       POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - postgres_data:/var/lib/postgresql/data

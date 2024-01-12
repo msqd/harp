@@ -4,7 +4,7 @@ SqlAlchemy Storage Extension
 """
 
 from harp.config import Application
-from harp.config.factories.events import FactoryBindEvent
+from harp.config.events import FactoryBindEvent
 from harp.protocols.storage import Storage
 
 from .settings import SqlAlchemyStorageSettings

@@ -182,7 +182,7 @@ class SqlAlchemyStorage:
                 f"Invalid time bucket: {time_bucket}. Must be one of {', '.join([e.value for e in TimeBucket])}."
             )
 
-        s_date = TruncDatetime(time_bucket, Transaction.started_at)
+        s_date = TruncDatetime(time_bucket, Transaction.started_at).label("truncdatetime")
         query = select(
             s_date,
             func.count(),
@@ -194,9 +194,9 @@ class SqlAlchemyStorage:
             query = query.where(Transaction.endpoint == endpoint)
 
         if start_datetime:
-            query = query.where(Transaction.started_at >= start_datetime)
+            query = query.where(Transaction.started_at >= start_datetime.astimezone(UTC).replace(tzinfo=None))
 
-        query = query.group_by(s_date).order_by(s_date.asc())
+        query = query.group_by("truncdatetime").order_by(s_date.asc())
         async with self.session() as session:
             result = await session.execute(query)
             return [

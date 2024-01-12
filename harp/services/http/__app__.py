@@ -2,7 +2,7 @@ from hishel import AsyncCacheTransport
 from httpx import AsyncClient, AsyncHTTPTransport
 
 from harp.config import Application
-from harp.config.factories.events import FactoryBindEvent
+from harp.config.events import FactoryBindEvent
 
 
 class HttpApplication(Application):
