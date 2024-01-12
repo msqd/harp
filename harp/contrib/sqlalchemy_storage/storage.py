@@ -2,9 +2,9 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Generic, List, Optional, TypedDict, TypeVar
 
-from sqlalchemy import case, func, select, update
+from sqlalchemy import and_, case, func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import contains_eager, joinedload
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
@@ -127,6 +127,19 @@ class SqlAlchemyStorage:
         """
         result = Results()
         query = select(Transaction)
+
+        query = query.outerjoin(
+            Flag,
+            and_(
+                Transaction.id == Flag.transaction_id,
+                Flag.user_id == 34,  #! change to proper user id
+            ),
+        ).options(
+            contains_eager(
+                Transaction.flags,
+            )
+        )
+
         if with_messages:
             query = query.options(joinedload(Transaction.messages))
 

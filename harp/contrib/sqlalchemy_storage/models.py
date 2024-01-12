@@ -25,6 +25,7 @@ class Flag(Base):
     __tablename__ = "sa_flags"
 
     id = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
+    # TODO: enlever type
     type = mapped_column(String(32), nullable=False)
 
     user_id = mapped_column(ForeignKey("sa_users.id"), nullable=False)
