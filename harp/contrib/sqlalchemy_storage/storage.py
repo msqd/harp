@@ -179,7 +179,7 @@ class SqlAlchemyStorage:
         return transaction.to_model() if transaction else None
 
     async def transactions_grouped_by_date(self, endpoint: Optional[str] = None) -> List[TransactionsGroupedByDate]:
-        s_date = func.date(Transactions.started_at)
+        s_date = func.date(Transactions.started_at).label("truncdate")
 
         query = select(
             # sqlite returns a string formated as "YYYY-MM-DD", postgres returns a datetime.date
@@ -192,7 +192,7 @@ class SqlAlchemyStorage:
         if endpoint:
             query = query.where(Transactions.endpoint == endpoint)
 
-        query = query.group_by(s_date).order_by(s_date.asc())
+        query = query.group_by("truncdate").order_by(s_date.asc())
         async with self.session() as session:
             result = await session.execute(query)
             return [
@@ -216,7 +216,7 @@ class SqlAlchemyStorage:
                 f"Invalid time bucket: {time_bucket}. Must be one of {', '.join([e.value for e in TimeBucket])}."
             )
 
-        s_date = TruncDatetime(time_bucket, Transactions.started_at)
+        s_date = TruncDatetime(time_bucket, Transactions.started_at).label("truncdatetime")
         query = select(
             s_date,
             func.count(),
@@ -228,9 +228,9 @@ class SqlAlchemyStorage:
             query = query.where(Transactions.endpoint == endpoint)
 
         if start_datetime:
-            query = query.where(Transactions.started_at >= start_datetime)
+            query = query.where(Transactions.started_at >= start_datetime.astimezone(UTC).replace(tzinfo=None))
 
-        query = query.group_by(s_date).order_by(s_date.asc())
+        query = query.group_by("truncdatetime").order_by(s_date.asc())
         async with self.session() as session:
             result = await session.execute(query)
             return [
