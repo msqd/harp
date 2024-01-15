@@ -40,7 +40,7 @@ const FavoriteStar = ({ row }: { row: Row }) => {
 
   useEffect(() => {
     setIsFavorite(!!flag)
-  }, [flag])
+  }, [row, flag])
 
   return (
     <StarIcon
