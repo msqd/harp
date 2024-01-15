@@ -263,8 +263,7 @@ class SqlAlchemyStorage:
     async def set_transaction_flag(self, transaction_id: str, username: str, flag_type: int):
         async with self.session() as session:
             async with session.begin():
-                user = await session.execute(select(User).where(User.username == username))
-                user = user.unique().scalar_one_or_none()
+                user = await self.get_user_from_username(username)
                 if not user:
                     raise ValueError(f"Unknown user: {username}")
                 transaction = await session.get(Transaction, transaction_id)
