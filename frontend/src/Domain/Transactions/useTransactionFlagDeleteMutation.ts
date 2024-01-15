@@ -3,7 +3,7 @@ import { useMutation } from "react-query"
 import { useApi } from "Domain/Api"
 
 export interface TransactionFlagCreate {
-  flagId: number
+  transactionId: string
 }
 
 export function useTransactionFlagDeleteMutation() {

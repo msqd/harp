@@ -104,6 +104,7 @@ class TransactionsController(RoutingController):
     async def delete_flag(self, request: ASGIRequest, response: ASGIResponse):
         message = await request.receive()
         body = json_loads(message.get("body", b"{}"))
-        flag_id = body.get("flagId")
-        await self.storage.delete_transaction_flag(flag_id)
+        transaction_id = body.get("transactionId")
+        username = request.context.get("user") or "anonymous"
+        await self.storage.delete_transaction_flag(transaction_id, username)
         return json({"success": True})

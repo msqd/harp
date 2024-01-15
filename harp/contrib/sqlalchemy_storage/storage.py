@@ -292,10 +292,15 @@ class SqlAlchemyStorage:
                 flag.type = flag_type
                 session.add(flag)
 
-    async def delete_transaction_flag(self, flag_id: int):
+    async def delete_transaction_flag(self, transaction_id: str, username: str):
         async with self.session() as session:
             async with session.begin():
-                await session.execute(delete(Flag).where(Flag.id == flag_id))
+                user = await self.get_user_from_username(username)
+                if not user:
+                    raise ValueError(f"Unknown user: {username}")
+                await session.execute(
+                    delete(Flag).where(Flag.transaction_id == transaction_id, Flag.user_id == user.id)
+                )
 
     async def _on_transaction_message(self, event: MessageEvent):
         transaction, message = event.transaction, event.message

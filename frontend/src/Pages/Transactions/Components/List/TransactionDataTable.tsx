@@ -29,7 +29,7 @@ const FavoriteStar = ({ row }: { row: Row }) => {
   const onStarClick = (event: React.MouseEvent, row: Row) => {
     event.stopPropagation()
     if (isFavorite) {
-      deleteFlag.mutate({ flagId: flag })
+      deleteFlag.mutate({ transactionId: row.transactionId })
       setIsFavorite(false)
       return
     } else {
