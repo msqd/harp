@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Generic, Iterable, List, Optional, TypedDict, TypeVar
+from typing import Generic, Iterable, List, Optional, Sequence, TypedDict, TypeVar
 
 from sqlalchemy import and_, case, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
@@ -83,14 +83,16 @@ class SqlAlchemyStorage:
 
     def __init__(self, dispatcher: IAsyncEventDispatcher, settings: SqlAlchemyStorageSettings):
         self.settings = settings
+
+        self.metadata = Base.metadata
         self.engine = create_async_engine(self.settings.url, echo=self.settings.echo)
         self.session = async_sessionmaker(self.engine, expire_on_commit=False)
-        self.metadata = Base.metadata
-
-        dispatcher.add_listener(EVENT_CORE_STARTED, self._on_startup_create_database, priority=-20)
+        dispatcher.add_listener(EVENT_CORE_STARTED, self._on_startup_actions, priority=-20)
         dispatcher.add_listener(EVENT_TRANSACTION_STARTED, self._on_transaction_started)
         dispatcher.add_listener(EVENT_TRANSACTION_ENDED, self._on_transaction_ended)
         dispatcher.add_listener(EVENT_TRANSACTION_MESSAGE, self._on_transaction_message)
+
+        self._is_db_set = False
 
         self._worker = None
 
@@ -238,15 +240,29 @@ class SqlAlchemyStorage:
         if row:
             return BlobModel(id=blob_id, data=row[0].data, content_type=row[0].content_type)
 
-    async def _on_startup_create_database(self, event: TransactionEvent):
-        """Event handler to create the database tables on startup. May drop them first if configured to do so."""
+    async def create_database(self):
+        """Create the database tables. May drop them first if configured to do so."""
         async with self.engine.begin() as conn:
             if self.settings.drop_tables:
                 await conn.run_sync(self.metadata.drop_all)
             await conn.run_sync(self.metadata.create_all)
-            await conn.commit()
-            # Create the anonymous user
+
+    async def _on_startup_actions(self, TransactionEvent):
+        """Event handler to create the database tables on startup. May drop them first if configured to do so."""
+        if self._is_db_set:
+            return
+        async with self.engine.begin():
+            await self.create_database()
             await self.create_users(["anonymous"])
+            self._is_db_set = True
+
+    async def create_db_with_users(self, users: Sequence[str]):
+        """Event handler to create the database tables on startup. May drop them first if configured to do so."""
+        async with self.engine.begin():
+            await self.create_database()
+            await self.create_users(users)
+            await self.create_users(["anonymous"])
+            self._is_db_set = True
 
     async def _on_transaction_started(self, event: TransactionEvent):
         """Event handler to store the transaction in the database."""

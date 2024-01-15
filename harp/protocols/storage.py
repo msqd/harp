@@ -43,6 +43,6 @@ class Storage(Protocol):
         """Delete a flag on a transaction."""
         ...
 
-    async def create_users(self, users: Iterable[str]):
+    async def create_db_with_users(self, users: Iterable[str]):
         """Create users."""
         ...
