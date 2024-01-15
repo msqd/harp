@@ -4,7 +4,7 @@ import { useApi } from "Domain/Api"
 
 export interface TransactionFlagCreate {
   transactionId?: string
-  flag: string
+  flag: number
 }
 
 export function useTransactionFlagCreateMutation() {

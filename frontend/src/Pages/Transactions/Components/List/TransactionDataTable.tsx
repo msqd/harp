@@ -23,17 +23,17 @@ interface Row {
 const FavoriteStar = ({ row }: { row: Row }) => {
   const flag = row.flags[0]
   const createFlag = useTransactionFlagCreateMutation()
-  const DeleteFlag = useTransactionFlagDeleteMutation()
+  const deleteFlag = useTransactionFlagDeleteMutation()
   const [isFavorite, setIsFavorite] = useState(!!flag)
 
   const onStarClick = (event: React.MouseEvent, row: Row) => {
     event.stopPropagation()
     if (isFavorite) {
-      DeleteFlag.mutate({ flagId: flag })
+      deleteFlag.mutate({ flagId: flag })
       setIsFavorite(false)
       return
     } else {
-      createFlag.mutate({ transactionId: row.transactionId, flag: "favorite" })
+      createFlag.mutate({ transactionId: row.transactionId, flag: 1 })
       setIsFavorite(true)
     }
   }

@@ -244,6 +244,7 @@ class SqlAlchemyStorage:
             if self.settings.drop_tables:
                 await conn.run_sync(self.metadata.drop_all)
             await conn.run_sync(self.metadata.create_all)
+            await conn.commit()
             # Create the anonymous user
             await self.create_users(["anonymous"])
 
@@ -259,7 +260,7 @@ class SqlAlchemyStorage:
             async with session.begin():
                 session.add(transaction)
 
-    async def set_transaction_flag(self, transaction_id: str, username: str, flag_type: str):
+    async def set_transaction_flag(self, transaction_id: str, username: str, flag_type: int):
         async with self.session() as session:
             async with session.begin():
                 user = await session.execute(select(User).where(User.username == username))

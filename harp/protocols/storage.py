@@ -35,7 +35,7 @@ class Storage(Protocol):
     ) -> List[TransactionsGroupedByTimeBucket]:
         ...
 
-    async def set_transaction_flag(self, transaction_id: str, username: str, flag_type: str):
+    async def set_transaction_flag(self, transaction_id: str, username: str, flag_type: int):
         """Set a flag on a transaction."""
         ...
 
