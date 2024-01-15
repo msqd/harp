@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom"
 
 import { PerformanceRatingBadge } from "Components/Badges"
 import { useTransactionFlagCreateMutation } from "Domain/Transactions"
+import { useTransactionFlagDeleteMutation } from "Domain/Transactions"
 import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
 import { Transaction } from "Models/Transaction"
 import { DataTable } from "mkui/Components/DataTable"
@@ -15,27 +16,28 @@ interface TransactionsDataTableProps {
   transactions: Transaction[]
 }
 
-interface Extras {
-  flags: string[]
-}
-
 interface Row {
-  id: string
-  extras: Extras
+  transactionId: string
+  flags: number[]
 }
 
 const FavoriteStar = ({ row }: { row: Row }) => {
+  const flag = row.flags[0]
   const createFlag = useTransactionFlagCreateMutation()
-  const [isFavorite, setIsFavorite] = useState(row.extras.flags.length > 0)
+  const DeleteFlag = useTransactionFlagDeleteMutation()
+  const [isFavorite, setIsFavorite] = useState(!!flag)
 
   const onStarClick = (event: React.MouseEvent, row: Row) => {
     event.stopPropagation()
     if (isFavorite) {
       console.log("transaction already fav")
+      const flagId = row.flags[0]
+      DeleteFlag.mutate({ flagId: flagId })
+      setIsFavorite(false)
       return
     } else {
       console.log("transaction", row)
-      createFlag.mutate({ transactionId: row.id, flag: "favorite" })
+      createFlag.mutate({ transactionId: row.transactionId, flag: "favorite" })
       setIsFavorite(true)
     }
   }
@@ -52,7 +54,10 @@ const FavoriteStar = ({ row }: { row: Row }) => {
 const transactionColumnTypes = {
   favoriteAction: {
     label: "",
-    get: (row: Transaction) => row,
+    get: (row: Transaction) => ({
+      transactionId: row.id,
+      flags: row.extras?.flags ?? [],
+    }),
     format: (row: Row) => <FavoriteStar row={row} />,
     headerClassName: "w-1",
   },
