@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Generic, List, Optional, TypedDict, TypeVar
+from typing import Generic, Iterable, List, Optional, TypedDict, TypeVar
 
 from sqlalchemy import and_, case, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
@@ -244,6 +244,8 @@ class SqlAlchemyStorage:
             if self.settings.drop_tables:
                 await conn.run_sync(self.metadata.drop_all)
             await conn.run_sync(self.metadata.create_all)
+            # Create the anonymous user
+            await self.create_users(["anonymous"])
 
     async def _on_transaction_started(self, event: TransactionEvent):
         """Event handler to store the transaction in the database."""
@@ -331,3 +333,17 @@ class SqlAlchemyStorage:
             if not user:
                 raise ValueError(f"Unknown user: {username}")
             return user
+
+    async def create_users(self, users: Iterable[str]):
+        async with self.session() as session:
+            async with session.begin():
+                for username in users:
+                    # Check if the username already exists
+                    result = await session.execute(select(User).where(User.username == username))
+                    existing_user = result.scalar_one_or_none()
+
+                    # If the username does not exist, create a new user
+                    if existing_user is None:
+                        user = User()
+                        user.username = username
+                        session.add(user)

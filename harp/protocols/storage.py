@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, Protocol, TypedDict
+from typing import Iterable, List, Optional, Protocol, TypedDict
 
 
 class TransactionsGroupedByTimeBucket(TypedDict):
@@ -41,4 +41,8 @@ class Storage(Protocol):
 
     async def delete_transaction_flag(self, flag_id: int):
         """Delete a flag on a transaction."""
+        ...
+
+    async def create_users(self, users: Iterable[str]):
+        """Create users."""
         ...

@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 from asgi_middleware_static_file import ASGIMiddlewareStaticFile
@@ -5,7 +6,7 @@ from http_router import NotFoundError
 from httpx import AsyncClient
 
 from harp import ROOT_DIR, get_logger
-from harp.apps.dashboard.settings import DashboardSettings
+from harp.apps.dashboard.settings import DashboardAuthBasicSetting, DashboardSettings
 from harp.apps.proxy.controllers import HttpProxyController
 from harp.core.asgi import ASGIRequest, ASGIResponse
 from harp.core.controllers import RoutingController
@@ -50,6 +51,10 @@ class DashboardController:
         self.storage = storage
         self.global_settings = all_settings
         self.settings = local_settings
+
+        # create users if they don't exist
+        if isinstance(self.settings.auth, DashboardAuthBasicSetting):
+            asyncio.get_event_loop().create_task(self.storage.create_users(self.settings.auth.users))
 
         # controllers for delegating requests
         if self.settings.devserver_port:
