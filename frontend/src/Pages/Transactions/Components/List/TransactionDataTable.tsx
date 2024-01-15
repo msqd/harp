@@ -1,11 +1,10 @@
 import { StarIcon } from "@heroicons/react/24/outline"
 import { formatDistance, formatDuration } from "date-fns"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
 import { PerformanceRatingBadge } from "Components/Badges"
-import { useTransactionFlagCreateMutation } from "Domain/Transactions"
-import { useTransactionFlagDeleteMutation } from "Domain/Transactions"
+import { useTransactionFlagCreateMutation, useTransactionFlagDeleteMutation } from "Domain/Transactions"
 import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
 import { Transaction } from "Models/Transaction"
 import { DataTable } from "mkui/Components/DataTable"
@@ -30,17 +29,18 @@ const FavoriteStar = ({ row }: { row: Row }) => {
   const onStarClick = (event: React.MouseEvent, row: Row) => {
     event.stopPropagation()
     if (isFavorite) {
-      console.log("transaction already fav")
-      const flagId = row.flags[0]
-      DeleteFlag.mutate({ flagId: flagId })
+      DeleteFlag.mutate({ flagId: flag })
       setIsFavorite(false)
       return
     } else {
-      console.log("transaction", row)
       createFlag.mutate({ transactionId: row.transactionId, flag: "favorite" })
       setIsFavorite(true)
     }
   }
+
+  useEffect(() => {
+    setIsFavorite(!!flag)
+  }, [flag])
 
   return (
     <StarIcon

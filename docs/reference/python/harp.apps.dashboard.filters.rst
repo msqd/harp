@@ -9,6 +9,7 @@ Submodules
 
    harp.apps.dashboard.filters.base
    harp.apps.dashboard.filters.transaction_endpoint
+   harp.apps.dashboard.filters.transaction_flag
    harp.apps.dashboard.filters.transaction_method
    harp.apps.dashboard.filters.transaction_status
    harp.apps.dashboard.filters.utils
