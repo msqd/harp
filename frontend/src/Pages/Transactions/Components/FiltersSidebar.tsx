@@ -80,7 +80,7 @@ export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
           title="Flags"
           name="flags"
           type="checkboxes"
-          values={filters["flags"]}
+          values={filters["flag"]}
           setValues={setFlagsFilter}
           meta={filtersQuery.data.flag.values}
         />
