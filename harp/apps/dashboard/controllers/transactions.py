@@ -35,7 +35,7 @@ class TransactionsController(RoutingController):
         self.router.route(self.prefix + "/filters")(self.filters)
         self.router.route(self.prefix + "/{id}")(self.get)
         self.router.route(self.prefix + "/flag", methods=["POST"])(self.create_flag)
-        # self.router.route(self.prefix + "/flag", methods=["DELETE"])(self.delete_flag)
+        self.router.route(self.prefix + "/flag", methods=["DELETE"])(self.delete_flag)
 
     async def filters(self, request: ASGIRequest, response: ASGIResponse):
         await self.facets["endpoint"].refresh()
@@ -95,4 +95,8 @@ class TransactionsController(RoutingController):
         return json({"success": True})
 
     async def delete_flag(self, request: ASGIRequest, response: ASGIResponse):
-        ...
+        message = await request.receive()
+        body = json_loads(message.get("body", b"{}"))
+        flag_id = body.get("flagId")
+        await self.storage.delete_transaction_flag(flag_id)
+        return json({"success": True})

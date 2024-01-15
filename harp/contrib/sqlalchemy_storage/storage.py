@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Generic, List, Optional, TypedDict, TypeVar
 
-from sqlalchemy import and_, case, func, select, update
+from sqlalchemy import and_, case, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import contains_eager, joinedload
 from whistle import IAsyncEventDispatcher
@@ -270,6 +270,11 @@ class SqlAlchemyStorage:
                 flag.user_id = user.id
                 flag.type = flag_type
                 session.add(flag)
+
+    async def delete_transaction_flag(self, flag_id: int):
+        async with self.session() as session:
+            async with session.begin():
+                await session.execute(delete(Flag).where(Flag.id == flag_id))
 
     async def _on_transaction_message(self, event: MessageEvent):
         transaction, message = event.transaction, event.message
