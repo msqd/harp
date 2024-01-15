@@ -165,7 +165,7 @@ class SqlAlchemyStorage:
 
         async with self.session() as session:
             for transaction in (await session.scalars(query)).unique().all():
-                result.append(transaction.to_model())
+                result.append(transaction.to_model(with_flags=True))
 
         return result
 
