@@ -41,7 +41,7 @@ class TransactionsController(RoutingController):
         self.router.route(self.prefix + "/")(self.list)
         self.router.route(self.prefix + "/filters")(self.filters)
         self.router.route(self.prefix + "/{id}")(self.get)
-        self.router.route(self.prefix + "/flag", methods=["POST"])(self.create_flag)
+        self.router.route(self.prefix + "/flag", methods=["PUT"])(self.create_flag)
         self.router.route(self.prefix + "/flag", methods=["DELETE"])(self.delete_flag)
 
     async def filters(self, request: ASGIRequest, response: ASGIResponse):

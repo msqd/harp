@@ -10,6 +10,6 @@ export interface TransactionFlagCreate {
 export function useTransactionFlagCreateMutation() {
   const api = useApi()
   return useMutation((data: TransactionFlagCreate) =>
-    api.post("/transactions/flag", { body: JSON.stringify(data) }).then((r) => r.json()),
+    api.put("/transactions/flag", { body: JSON.stringify(data) }).then((r) => r.json()),
   )
 }

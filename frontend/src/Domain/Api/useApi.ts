@@ -43,10 +43,21 @@ export function useApi() {
     return _fetch(url, { ...(init || {}), method: "DELETE" })
   }
 
+  /**
+   * Wrapper for http delete requests.
+   *
+   * @param url
+   * @param init
+   */
+  function put(url: string, init?: RequestInit) {
+    return _fetch(url, { ...(init || {}), method: "PUT" })
+  }
+
   return {
     fetch: (url: string) => fetch(urlJoin("/api/", url)),
     get,
     post,
     del,
+    put,
   }
 }
