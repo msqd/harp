@@ -9,7 +9,13 @@ from harp.core.views.json import json
 from harp.protocols.storage import Storage
 from harp.settings import PAGE_SIZE
 
-from ..filters import TransactionEndpointFacet, TransactionMethodFacet, TransactionStatusFacet, flatten_facet_value
+from ..filters import (
+    TransactionEndpointFacet,
+    TransactionFlagFacet,
+    TransactionMethodFacet,
+    TransactionStatusFacet,
+    flatten_facet_value,
+)
 
 logger = get_logger(__name__)
 
@@ -25,6 +31,7 @@ class TransactionsController(RoutingController):
                 TransactionEndpointFacet(storage=self.storage),
                 TransactionMethodFacet(),
                 TransactionStatusFacet(),
+                TransactionFlagFacet(),
             )
         }
 

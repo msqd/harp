@@ -30,6 +30,7 @@ export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
   const setEndpointFilter = _createSetFilterFor("endpoint")
   const setMethodFilter = _createSetFilterFor("method")
   const setStatusFilter = _createSetFilterFor("status")
+  const setFlagsFilter = _createSetFilterFor("flag")
 
   return (
     <Pane
@@ -71,6 +72,17 @@ export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
           values={filters["status"]}
           setValues={setStatusFilter}
           meta={filtersQuery.data.status.values}
+        />
+      ) : null}
+
+      {filtersQuery.isSuccess && filtersQuery.data.flag ? (
+        <Facet
+          title="Flags"
+          name="flags"
+          type="checkboxes"
+          values={filters["flags"]}
+          setValues={setFlagsFilter}
+          meta={filtersQuery.data.flag.values}
         />
       ) : null}
 

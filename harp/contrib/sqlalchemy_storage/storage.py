@@ -143,6 +143,9 @@ class SqlAlchemyStorage:
             query = _filter_query(query, "method", filters.get("method", None))
             query = _filter_query(query, "status", filters.get("status", None))
 
+            if filters.get("flag"):
+                query = query.filter(Flag.id.isnot(None))
+
         query = query.order_by(Transaction.started_at.desc())
 
         # apply cursor (before count)
