@@ -33,8 +33,8 @@ dependencies:
     specifier: ^1.10.0
     version: 1.10.0
   match-sorter:
-    specifier: ^6.3.1
-    version: 6.3.1
+    specifier: ^6.3.2
+    version: 6.3.2
   mkui:
     specifier: link:../vendors/mkui
     version: link:../vendors/mkui
@@ -3139,11 +3139,11 @@ packages:
       es5-ext: 0.10.62
     dev: true
 
-  /match-sorter@6.3.1:
-    resolution: {integrity: sha512-mxybbo3pPNuA+ZuCUhm5bwNkXrJTbsk5VWbR5wiwz/GC6LIiegBGn2w3O08UG/jdbYLinw51fSQ5xNU1U3MgBw==}
+  /match-sorter@6.3.2:
+    resolution: {integrity: sha512-9eY6tQQFfV0qMrPLt7YGUk6BPyJzMLOoQ4D8wuV0A2PWjzyA2Fg3v7725X0o8M/UtIy1l0XwoZhvSeJdS+locw==}
     dependencies:
       '@babel/runtime': 7.23.6
-      remove-accents: 0.4.2
+      remove-accents: 0.5.0
     dev: false
 
   /memoizee@0.4.15:
@@ -3585,7 +3585,7 @@ packages:
     dependencies:
       '@babel/runtime': 7.23.6
       broadcast-channel: 3.7.0
-      match-sorter: 6.3.1
+      match-sorter: 6.3.2
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
     dev: false
@@ -3724,8 +3724,8 @@ packages:
       set-function-name: 2.0.1
     dev: true
 
-  /remove-accents@0.4.2:
-    resolution: {integrity: sha1-CkPTqq4egNuRngeuJUsoXZ4ce7U=}
+  /remove-accents@0.5.0:
+    resolution: {integrity: sha512-8g3/Otx1eJaVD12e31UbJj1YzdtVvzH85HV7t+9MJYk/u3XmkOUJ5Ys9wQrf9PCPK8+xn4ymzqYCiZl6QWKn+A==}
     dev: false
 
   /require-directory@2.1.1:
