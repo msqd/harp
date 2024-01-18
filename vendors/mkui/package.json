@@ -30,7 +30,7 @@
     "@types/react-dom": "^18.2.18",
     "@types/sync-fetch": "^0.4.3",
     "@vitejs/plugin-react": "^4.2.1",
-    "autoprefixer": "^10.4.16",
+    "autoprefixer": "^10.4.17",
     "cross-env": "^7.0.3",
     "postcss": "^8.4.33",
     "prettier": "^3.1.1",
