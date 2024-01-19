@@ -1,7 +1,7 @@
 import math
 
 from harp import get_logger
-from harp.contrib.sqlalchemy_storage.models import FLAGS_BY_NAME
+from harp.contrib.sqlalchemy_storage.models.flags import FLAGS_BY_NAME
 from harp.core.asgi.messages import ASGIRequest, ASGIResponse
 from harp.core.controllers import RoutingController
 from harp.core.models.transactions import Transaction

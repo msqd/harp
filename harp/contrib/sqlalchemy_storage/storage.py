@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-from enum import Enum
 from typing import Generic, Iterable, List, Optional, Sequence, TypedDict, TypeVar
 
 from sqlalchemy import case, delete, func, literal, select, update
@@ -9,7 +8,13 @@ from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
-from harp.contrib.sqlalchemy_storage.models import FLAGS_BY_NAME, Base, Blob, Flag, Message, Transaction, User
+from harp.contrib.sqlalchemy_storage.constants import TimeBucket
+from harp.contrib.sqlalchemy_storage.models import Base
+from harp.contrib.sqlalchemy_storage.models.blobs import Blob
+from harp.contrib.sqlalchemy_storage.models.flags import FLAGS_BY_NAME, Flag
+from harp.contrib.sqlalchemy_storage.models.messages import Message
+from harp.contrib.sqlalchemy_storage.models.transactions import Transaction
+from harp.contrib.sqlalchemy_storage.models.users import User
 from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
 from harp.contrib.sqlalchemy_storage.utils.dates import TruncDatetime
 from harp.core.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionEvent
@@ -18,15 +23,6 @@ from harp.core.models.transactions import Transaction as TransactionModel
 from harp.settings import PAGE_SIZE
 from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_datetime
-
-
-class TimeBucket(Enum):
-    YEAR = "year"
-    MONTH = "month"
-    WEEK = "week"
-    DAY = "day"
-    HOUR = "hour"
-    MINUTE = "minute"
 
 
 class TransactionsGroupedByTimeBucket(TypedDict):
