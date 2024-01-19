@@ -92,9 +92,17 @@ class HttpProxyController:
         # PROXY RESPONSE
         try:
             p_response: httpx.Response = await self.http_client.send(p_request)
+        except httpx.ConnectError:
+            logger.error(f"▶▶ {request.method} {url} (unavailable)", transaction_id=transaction.id)
+            # todo add web debug information if we are not on a production env
+            await response.start(status=503)
+            await response.body(b"Service Unavailable (remote server unavailable)")
+            return
         except httpx.TimeoutException:
             logger.error(f"▶▶ {request.method} {url} (timeout)", transaction_id=transaction.id)
+            # todo add web debug information if we are not on a production env
             await response.start(status=504)
+            await response.body(b"Gateway Timeout")
             return
 
         logger.debug(

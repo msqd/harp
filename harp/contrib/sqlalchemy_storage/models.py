@@ -33,7 +33,11 @@ class Flag(Base):
     transaction_id = mapped_column(ForeignKey("sa_transactions.id"), nullable=False)
     transaction: Mapped["Transaction"] = relationship(back_populates="flags")
 
-    __table_args__ = (UniqueConstraint("user_id", "transaction_id", name="_user_transaction_uc"),)
+    __table_args__ = (UniqueConstraint("user_id", "transaction_id", "type", name="_user_transaction_uc"),)
+
+
+FLAGS_BY_TYPE = {1: "favorite"}
+FLAGS_BY_NAME = {v: k for k, v in FLAGS_BY_TYPE.items()}
 
 
 class Transaction(Base):
@@ -62,7 +66,11 @@ class Transaction(Base):
             extras=dict(
                 method=self.x_method,
                 status_class=self.x_status_class,
-                flags=[flag.id for flag in self.flags] if with_flags else [],
+                **(
+                    {"flags": list(set(filter(None, (FLAGS_BY_TYPE.get(flag.type, None) for flag in self.flags))))}
+                    if with_flags
+                    else {}
+                ),
             ),
             messages=[message.to_model() for message in self.messages] if self.messages else [],
         )

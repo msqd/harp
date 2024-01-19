@@ -1,5 +1,4 @@
 import math
-from json import loads as json_loads
 
 from harp import get_logger
 from harp.core.asgi.messages import ASGIRequest, ASGIResponse
@@ -40,9 +39,8 @@ class TransactionsController(RoutingController):
     def configure(self):
         self.router.route(self.prefix + "/")(self.list)
         self.router.route(self.prefix + "/filters")(self.filters)
+        self.router.route(self.prefix + "/{id}/flags/{flag}", methods=["PUT", "DELETE"])(self.set_flag)
         self.router.route(self.prefix + "/{id}")(self.get)
-        self.router.route(self.prefix + "/flag", methods=["PUT"])(self.create_flag)
-        self.router.route(self.prefix + "/flag", methods=["DELETE"])(self.delete_flag)
 
     async def filters(self, request: ASGIRequest, response: ASGIResponse):
         await self.facets["endpoint"].refresh()
@@ -92,19 +90,17 @@ class TransactionsController(RoutingController):
             return json({"error": "Transaction not found"})
         return json(transaction.to_dict())
 
-    async def create_flag(self, request: ASGIRequest, response: ASGIResponse):
-        message = await request.receive()
-        body = json_loads(message.get("body", b"{}"))
-        transaction_id = body.get("transactionId")
-        flag_type = body.get("flag")
-        username = request.context.get("user") or "anonymous"
-        await self.storage.set_transaction_flag(transaction_id, username, flag_type)
+    async def set_flag(self, request: ASGIRequest, response: ASGIResponse, id, flag):
+        username = request.context.get("user", None) or "anonymous"
+        flag = _get_flag_id_from_name(flag)
+
+        await self.storage.set_user_flag(
+            transaction_id=id, username=username, flag=flag, value=False if request.method == "DELETE" else True
+        )
         return json({"success": True})
 
-    async def delete_flag(self, request: ASGIRequest, response: ASGIResponse):
-        message = await request.receive()
-        body = json_loads(message.get("body", b"{}"))
-        transaction_id = body.get("transactionId")
-        username = request.context.get("user") or "anonymous"
-        await self.storage.delete_transaction_flag(transaction_id, username)
-        return json({"success": True})
+
+def _get_flag_id_from_name(name):
+    if name == "favorite":
+        return 1
+    raise RuntimeError(f"Unknown flag {name}")

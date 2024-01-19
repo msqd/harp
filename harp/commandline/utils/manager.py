@@ -18,8 +18,8 @@ class HonchoManagerFactory:
     defaults = {HARP_DASHBOARD_SERVICE, HARP_SERVER_SERVICE}
     commands = {}
 
-    def __init__(self, *, proxy_options=()):
-        self.ports = {HARP_DASHBOARD_SERVICE: get_available_network_port()}
+    def __init__(self, *, proxy_options=(), dashboard_devserver_port=None):
+        self.ports = {HARP_DASHBOARD_SERVICE: dashboard_devserver_port or get_available_network_port()}
         self.proxy_ports = {}
         self.proxy_options = proxy_options
 

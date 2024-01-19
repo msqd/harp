@@ -38,22 +38,27 @@ _modifiers = {
 
 @compiles(TruncDatetime, "sqlite")
 def compile_trunc_sqlite(element, compiler, **kw):
-    precision = element.precision
+    try:
+        precision = element.precision.effective_value
+    except AttributeError:
+        precision = element.precision
     expr = element.expr
     modifiers = _modifiers.get(precision)
 
     if modifiers:
         return compiler.process(func.datetime(expr, *modifiers))
 
-    elif precision == "hour":
+    if precision == "hour":
         return compiler.process(
             func.datetime(expr, func.strftime("-%M minutes", expr), func.strftime("-%f seconds", expr))
         )
 
-    elif precision == "minute":
+    if precision == "minute":
         return compiler.process(func.datetime(expr, func.strftime("-%f seconds", expr)))
 
-    elif precision == "second":
+    if precision == "second":
         return compiler.process(
             func.datetime(expr, func.strftime("-%f seconds", expr), func.strftime("%S seconds", expr))
         )
+
+    raise NotImplementedError(f"Truncating {precision} is not supported for SQLite")

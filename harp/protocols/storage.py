@@ -35,12 +35,8 @@ class Storage(Protocol):
     ) -> List[TransactionsGroupedByTimeBucket]:
         ...
 
-    async def set_transaction_flag(self, transaction_id: str, username: str, flag_type: int):
-        """Set a flag on a transaction."""
-        ...
-
-    async def delete_transaction_flag(self, transaction_id: str, username: str):
-        """Delete a flag on a transaction."""
+    async def set_user_flag(self, *, transaction_id: str, username: str, flag: int, value=True):
+        """Sets or unsets a user flag on a transaction."""
         ...
 
     async def create_db_with_users(self, users: Iterable[str]):

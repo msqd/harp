@@ -4,7 +4,7 @@ import { useApi } from "Domain/Api"
 
 interface TransactionFilter {
   values: Array<{ name: string; count?: number }>
-  current: string[] | "*"
+  current: string[]
 }
 
 export function useTransactionsFiltersQuery() {
