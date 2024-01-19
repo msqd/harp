@@ -1,20 +1,20 @@
 from datetime import UTC, datetime
-from typing import Generic, Iterable, List, Optional, Sequence, TypedDict, TypeVar
+from typing import Iterable, List, Optional, Sequence, TypedDict
 
 from sqlalchemy import case, delete, func, literal, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import joinedload, selectinload
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
 from harp.contrib.sqlalchemy_storage.constants import TimeBucket
 from harp.contrib.sqlalchemy_storage.models import Base
+from harp.contrib.sqlalchemy_storage.models.base import Results
 from harp.contrib.sqlalchemy_storage.models.blobs import Blob
 from harp.contrib.sqlalchemy_storage.models.flags import FLAGS_BY_NAME, Flag
 from harp.contrib.sqlalchemy_storage.models.messages import Message
-from harp.contrib.sqlalchemy_storage.models.transactions import Transaction
-from harp.contrib.sqlalchemy_storage.models.users import User
+from harp.contrib.sqlalchemy_storage.models.transactions import Transaction, TransactionsRepository
+from harp.contrib.sqlalchemy_storage.models.users import User, UsersRepository
 from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
 from harp.contrib.sqlalchemy_storage.utils.dates import TruncDatetime
 from harp.core.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionEvent
@@ -62,39 +62,6 @@ def _filter_query_for_user_flags(query, values, /, *, user_id):
             ),
         )
     return query
-
-
-T = TypeVar("T")
-
-
-class Results(Generic[T]):
-    def __init__(self):
-        self.items: list[T] = []
-        self.meta = {}
-
-    def append(self, item: T):
-        self.items.append(item)
-
-
-class Repository:
-    def __init__(self, session):
-        self.session = session
-
-
-class TransactionsRepository(Repository):
-    Type = Transaction
-
-    async def find_one_by_id(self, id: str) -> Transaction:
-        async with self.session() as session:
-            return (await session.execute(select(self.Type).where(Transaction.id == id))).unique().scalar_one()
-
-
-class UsersRepository(Repository):
-    Type = User
-
-    async def find_one_by_username(self, username: str) -> User:
-        async with self.session() as session:
-            return (await session.execute(select(self.Type).where(User.username == username))).unique().scalar_one()
 
 
 class SqlAlchemyStorage:
@@ -158,12 +125,10 @@ class SqlAlchemyStorage:
         user = await self.users.find_one_by_username(username)
 
         result = Results()
-        query = select(Transaction)
-
-        if with_messages:
-            query = query.options(joinedload(Transaction.messages))
-
-        query = query.options(selectinload(Transaction.flags.and_(Flag.user_id == user.id)))
+        query = self.transactions.select(
+            with_messages=with_messages,
+            with_user_flags=user.id if user else False,
+        )
 
         if filters:
             query = _filter_query(query, "endpoint", filters.get("endpoint", None))
@@ -195,17 +160,12 @@ class SqlAlchemyStorage:
         return result
 
     async def get_transaction(self, id: str) -> Optional[TransactionModel]:
-        async with self.session() as session:
-            transaction = (
-                (
-                    await session.execute(
-                        select(Transaction).where(Transaction.id == id).options(joinedload(Transaction.messages))
-                    )
-                )
-                .unique()
-                .scalar_one_or_none()
+        return (
+            await self.transactions.find_one_by_id(
+                id,
+                with_messages=True,
             )
-        return transaction.to_model() if transaction else None
+        ).to_model()
 
     async def transactions_grouped_by_time_bucket(
         self,

@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Integer, String
+from sqlalchemy import Integer, String, select
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from . import Base
+from .base import Repository
 
 if TYPE_CHECKING:
     from .flags import Flag
@@ -16,3 +17,11 @@ class User(Base):
     username = mapped_column(String(32), unique=True)
 
     flags: Mapped[List["Flag"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+
+
+class UsersRepository(Repository):
+    Type = User
+
+    async def find_one_by_username(self, username: str) -> User:
+        async with self.session() as session:
+            return (await session.execute(select(self.Type).where(User.username == username))).unique().scalar_one()

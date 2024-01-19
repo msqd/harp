@@ -1,15 +1,14 @@
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import DateTime, Float, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import DateTime, Float, String, select
+from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship, selectinload
 
 from harp.core.models.transactions import Transaction as TransactionModel
 
-from .base import Base
-from .flags import FLAGS_BY_TYPE
+from .base import Base, Repository
+from .flags import FLAGS_BY_TYPE, Flag
 
 if TYPE_CHECKING:
-    from .flags import Flag
     from .messages import Message
 
 
@@ -47,3 +46,44 @@ class Transaction(Base):
             ),
             messages=[message.to_model() for message in self.messages] if self.messages else [],
         )
+
+
+class TransactionsRepository(Repository):
+    Type = Transaction
+
+    def select(self, /, *, with_messages=False, with_user_flags=False):
+        query = select(self.Type)
+
+        # should we join transaction messages?
+        if with_messages:
+            query = query.options(
+                joinedload(
+                    self.Type.messages,
+                )
+            )
+
+        # should we select flags for given user id?
+        if with_user_flags:
+            query = query.options(
+                selectinload(
+                    self.Type.flags.and_(
+                        Flag.user_id == with_user_flags,
+                    )
+                )
+            )
+
+        return query
+
+    async def find_one_by_id(self, id: str, /, **select_kwargs) -> Transaction:
+        async with self.session() as session:
+            return (
+                (
+                    await session.execute(
+                        self.select(**select_kwargs).where(
+                            self.Type.id == id,
+                        )
+                    )
+                )
+                .unique()
+                .scalar_one()
+            )
