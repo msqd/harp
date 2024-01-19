@@ -192,7 +192,6 @@ class SqlAlchemyStorage:
         if page:
             query = query.offset(max(0, (page - 1) * PAGE_SIZE))
 
-        logger.info(f"Executing query: {query}")
         async with self.session() as session:
             for transaction in (await session.scalars(query)).unique().all():
                 result.append(transaction.to_model(with_flags=True))
@@ -310,7 +309,6 @@ class SqlAlchemyStorage:
             async with session.begin():
                 user = await self.users.find_one_by_username(username)
                 transaction = await self.transactions.find_one_by_id(transaction_id)
-                logger.info(f"Setting flag {flag} on transaction {transaction_id} for user {username}")
 
                 if value:
                     session.add(
