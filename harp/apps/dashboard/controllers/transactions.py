@@ -62,7 +62,7 @@ class TransactionsController(RoutingController):
 
         cursor = str(request.query.get("cursor", ""))
 
-        results = await self.storage.find_transactions(
+        results = await self.storage.get_transaction_list(
             with_messages=True,
             filters={
                 name: facet.get_filter(
@@ -85,7 +85,10 @@ class TransactionsController(RoutingController):
         )
 
     async def get(self, request: ASGIRequest, response: ASGIResponse, id):
-        transaction = await self.storage.get_transaction(id)
+        transaction = await self.storage.get_transaction(
+            id,
+            username=request.context.get("user") or "anonymous",
+        )
         if not transaction:
             response.status = 404
             return json({"error": "Transaction not found"})

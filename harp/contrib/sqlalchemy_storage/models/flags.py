@@ -10,8 +10,8 @@ if TYPE_CHECKING:
     from .users import User
 
 
-class Flag(Base):
-    __tablename__ = "sa_flags"
+class UserFlag(Base):
+    __tablename__ = "sa_trans_user_flags"
 
     id = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
     type = mapped_column(Integer(), nullable=False)

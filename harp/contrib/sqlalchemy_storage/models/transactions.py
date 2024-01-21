@@ -1,15 +1,23 @@
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import DateTime, Float, String, select
+from sqlalchemy import Column, DateTime, Float, ForeignKey, String, Table
 from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship, selectinload
 
 from harp.core.models.transactions import Transaction as TransactionModel
 
 from .base import Base, Repository
-from .flags import FLAGS_BY_TYPE, Flag
+from .flags import FLAGS_BY_TYPE, UserFlag
+from .tags import TagValue
 
 if TYPE_CHECKING:
     from .messages import Message
+
+transaction_tag_values_association_table = Table(
+    "sa_trans_tag_values",
+    Base.metadata,
+    Column("transaction_id", ForeignKey("sa_transactions.id"), primary_key=True),
+    Column("value_id", ForeignKey("sa_tag_values.id"), primary_key=True),
+)
 
 
 class Transaction(Base):
@@ -25,9 +33,10 @@ class Transaction(Base):
     x_status_class = mapped_column(String(3), nullable=True, index=True)
 
     messages: Mapped[List["Message"]] = relationship(back_populates="transaction")
-    flags: Mapped[List["Flag"]] = relationship(back_populates="transaction", cascade="all, delete-orphan")
+    flags: Mapped[List["UserFlag"]] = relationship(back_populates="transaction", cascade="all, delete-orphan")
+    _tag_values: Mapped[List["TagValue"]] = relationship(secondary=transaction_tag_values_association_table)
 
-    def to_model(self, with_flags=False):
+    def to_model(self, with_user_flags=False):
         return TransactionModel(
             id=self.id,
             type=self.type,
@@ -40,19 +49,23 @@ class Transaction(Base):
                 status_class=self.x_status_class,
                 **(
                     {"flags": list(set(filter(None, (FLAGS_BY_TYPE.get(flag.type, None) for flag in self.flags))))}
-                    if with_flags
+                    if with_user_flags
                     else {}
                 ),
             ),
             messages=[message.to_model() for message in self.messages] if self.messages else [],
         )
 
+    @property
+    def tags(self):
+        return {tag_value.tag.name: tag_value.value for tag_value in self._tag_values}
 
-class TransactionsRepository(Repository):
+
+class TransactionsRepository(Repository[Transaction]):
     Type = Transaction
 
-    def select(self, /, *, with_messages=False, with_user_flags=False):
-        query = select(self.Type)
+    def select(self, /, *, with_messages=False, with_user_flags=False, with_tags=False):
+        query = super().select()
 
         # should we join transaction messages?
         if with_messages:
@@ -67,23 +80,17 @@ class TransactionsRepository(Repository):
             query = query.options(
                 selectinload(
                     self.Type.flags.and_(
-                        Flag.user_id == with_user_flags,
+                        UserFlag.user_id == with_user_flags,
                     )
                 )
+            )
+
+        # should we select tags?
+        if with_tags:
+            query = query.options(
+                selectinload(
+                    self.Type._tag_values,
+                ).joinedload(TagValue.tag)
             )
 
         return query
-
-    async def find_one_by_id(self, id: str, /, **select_kwargs) -> Transaction:
-        async with self.session() as session:
-            return (
-                (
-                    await session.execute(
-                        self.select(**select_kwargs).where(
-                            self.Type.id == id,
-                        )
-                    )
-                )
-                .unique()
-                .scalar_one()
-            )
