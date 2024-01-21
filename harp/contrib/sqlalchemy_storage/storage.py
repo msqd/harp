@@ -1,15 +1,13 @@
 from datetime import UTC, datetime
-from enum import Enum
-from typing import Generic, Iterable, List, Optional, Sequence, TypedDict, TypeVar
+from typing import Iterable, List, Optional, TypedDict
 
-from sqlalchemy import case, delete, func, literal, select, update
+from sqlalchemy import case, delete, func, insert, literal, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import joinedload, selectinload
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
-from harp.contrib.sqlalchemy_storage.models import FLAGS_BY_NAME, Base, Blob, Flag, Message, Transaction, User
+from harp.contrib.sqlalchemy_storage.constants import TimeBucket
 from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
 from harp.contrib.sqlalchemy_storage.utils.dates import TruncDatetime
 from harp.core.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionEvent
@@ -19,14 +17,21 @@ from harp.settings import PAGE_SIZE
 from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_datetime
 
-
-class TimeBucket(Enum):
-    YEAR = "year"
-    MONTH = "month"
-    WEEK = "week"
-    DAY = "day"
-    HOUR = "hour"
-    MINUTE = "minute"
+from .models import (
+    FLAGS_BY_NAME,
+    Base,
+    Blob,
+    Message,
+    Results,
+    TagsRepository,
+    Transaction,
+    TransactionsRepository,
+    User,
+    UserFlag,
+    UsersRepository,
+)
+from .models.tags import TagValuesRepository
+from .models.transactions import transaction_tag_values_association_table
 
 
 class TransactionsGroupedByTimeBucket(TypedDict):
@@ -57,48 +62,15 @@ def _filter_query(query, name, values):
 
 def _filter_query_for_user_flags(query, values, /, *, user_id):
     if values and values != "*":
-        query = query.join(Flag).filter(
-            Flag.user_id == user_id,
-            Flag.type.in_(
+        query = query.join(UserFlag).filter(
+            UserFlag.user_id == user_id,
+            UserFlag.type.in_(
                 list(
                     map(FLAGS_BY_NAME.get, values),
                 )
             ),
         )
     return query
-
-
-T = TypeVar("T")
-
-
-class Results(Generic[T]):
-    def __init__(self):
-        self.items: list[T] = []
-        self.meta = {}
-
-    def append(self, item: T):
-        self.items.append(item)
-
-
-class Repository:
-    def __init__(self, session):
-        self.session = session
-
-
-class TransactionsRepository(Repository):
-    Type = Transaction
-
-    async def find_one_by_id(self, id: str) -> Transaction:
-        async with self.session() as session:
-            return (await session.execute(select(self.Type).where(Transaction.id == id))).unique().scalar_one()
-
-
-class UsersRepository(Repository):
-    Type = User
-
-    async def find_one_by_username(self, username: str) -> User:
-        async with self.session() as session:
-            return (await session.execute(select(self.Type).where(User.username == username))).unique().scalar_one()
 
 
 class SqlAlchemyStorage:
@@ -121,6 +93,7 @@ class SqlAlchemyStorage:
         self.metadata = Base.metadata
         self.engine = create_async_engine(self.settings.url, echo=self.settings.echo)
         self.session = async_sessionmaker(self.engine, expire_on_commit=False)
+
         dispatcher.add_listener(EVENT_CORE_STARTED, self._on_startup_actions, priority=-20)
         dispatcher.add_listener(EVENT_TRANSACTION_STARTED, self._on_transaction_started)
         dispatcher.add_listener(EVENT_TRANSACTION_ENDED, self._on_transaction_ended)
@@ -131,6 +104,8 @@ class SqlAlchemyStorage:
 
         self.transactions = TransactionsRepository(self.session)
         self.users = UsersRepository(self.session)
+        self.tags = TagsRepository(self.session)
+        self.tag_values = TagValuesRepository(self.session)
 
     @property
     def worker(self):
@@ -148,8 +123,14 @@ class SqlAlchemyStorage:
 
         raise NotImplementedError(f"Unknown facet: {name}")
 
-    async def find_transactions(
-        self, *, with_messages=False, filters=None, page: int = 1, cursor: str = "", username: Optional[str] = None
+    async def get_transaction_list(
+        self,
+        *,
+        with_messages=False,
+        filters=None,
+        page: int = 1,
+        cursor: str = "",
+        username: Optional[str] = None,
     ) -> Results[TransactionModel]:
         """
         Implements :meth:`Storage.find_transactions <harp.protocols.storage.Storage.find_transactions>`.
@@ -162,12 +143,10 @@ class SqlAlchemyStorage:
         user = await self.users.find_one_by_username(username)
 
         result = Results()
-        query = select(Transaction)
-
-        if with_messages:
-            query = query.options(joinedload(Transaction.messages))
-
-        query = query.options(selectinload(Transaction.flags.and_(Flag.user_id == user.id)))
+        query = self.transactions.select(
+            with_messages=with_messages,
+            with_user_flags=user.id if user else False,
+        )
 
         if filters:
             query = _filter_query(query, "endpoint", filters.get("endpoint", None))
@@ -194,22 +173,26 @@ class SqlAlchemyStorage:
 
         async with self.session() as session:
             for transaction in (await session.scalars(query)).unique().all():
-                result.append(transaction.to_model(with_flags=True))
+                result.append(transaction.to_model(with_user_flags=True))
 
         return result
 
-    async def get_transaction(self, id: str) -> Optional[TransactionModel]:
-        async with self.session() as session:
-            transaction = (
-                (
-                    await session.execute(
-                        select(Transaction).where(Transaction.id == id).options(joinedload(Transaction.messages))
-                    )
-                )
-                .unique()
-                .scalar_one_or_none()
+    async def get_transaction(
+        self,
+        id: str,
+        /,
+        *,
+        username: Optional[str] = None,
+    ) -> Optional[TransactionModel]:
+        user = await self.users.find_one_by_username(username)
+
+        return (
+            await self.transactions.find_one_by_id(
+                id,
+                with_messages=True,
+                with_user_flags=user.id if user else False,
             )
-        return transaction.to_model() if transaction else None
+        ).to_model(with_user_flags=True)
 
     async def transactions_grouped_by_time_bucket(
         self,
@@ -244,7 +227,8 @@ class SqlAlchemyStorage:
                     "datetime": ensure_datetime(row[0], UTC),
                     "count": row[1],
                     "errors": row[2],
-                    "meanDuration": row[3] if row[3] else 0,  #! probably sqlite struggling with unfinished transactions
+                    "meanDuration": row[3] if row[3] else 0,
+                    # ! probably sqlite struggling with unfinished transactions
                 }
                 for row in result.fetchall()
             ]
@@ -267,41 +251,34 @@ class SqlAlchemyStorage:
         if row:
             return BlobModel(id=blob_id, data=row[0].data, content_type=row[0].content_type)
 
-    async def create_database(self):
+    async def initialize(self, /, *, force_reset=False):
         """Create the database tables. May drop them first if configured to do so."""
         async with self.engine.begin() as conn:
-            if self.settings.drop_tables:
+            if force_reset or self.settings.drop_tables:
                 await conn.run_sync(self.metadata.drop_all)
             await conn.run_sync(self.metadata.create_all)
 
     async def _on_startup_actions(self, TransactionEvent):
         """Event handler to create the database tables on startup. May drop them first if configured to do so."""
-        if self._is_db_set:
-            return
-        async with self.engine.begin():
-            await self.create_database()
-            await self.create_users(["anonymous"])
-            self._is_db_set = True
+        await self.initialize()
+        await self.create_users(["anonymous"])
 
-    async def create_db_with_users(self, users: Sequence[str]):
-        """Event handler to create the database tables on startup. May drop them first if configured to do so."""
-        async with self.engine.begin():
-            await self.create_database()
-            await self.create_users(users)
-            await self.create_users(["anonymous"])
-            self._is_db_set = True
+    async def create_transaction(self, transaction: TransactionModel):
+        async with self.session() as session:
+            db_transaction = Transaction(
+                id=transaction.id,
+                type=transaction.type,
+                endpoint=transaction.endpoint,
+                started_at=transaction.started_at.astimezone(UTC).replace(tzinfo=None),
+                x_method=transaction.extras.get("method"),
+            )
+            session.add(db_transaction)
+            await session.commit()
+        return db_transaction
 
     async def _on_transaction_started(self, event: TransactionEvent):
         """Event handler to store the transaction in the database."""
-        async with self.session() as session:
-            transaction = Transaction()
-            transaction.id = event.transaction.id
-            transaction.type = event.transaction.type
-            transaction.endpoint = event.transaction.endpoint
-            transaction.started_at = event.transaction.started_at.astimezone(UTC).replace(tzinfo=None)
-            transaction.x_method = event.transaction.extras.get("method")
-            async with session.begin():
-                session.add(transaction)
+        return await self.create_transaction(event.transaction)
 
     async def set_user_flag(self, *, transaction_id: str, username: str, flag: int, value=True):
         """Sets or unsets a user flag on a transaction."""
@@ -312,7 +289,7 @@ class SqlAlchemyStorage:
 
                 if value:
                     session.add(
-                        Flag(
+                        UserFlag(
                             transaction_id=transaction.id,
                             user_id=user.id,
                             type=flag,
@@ -320,8 +297,32 @@ class SqlAlchemyStorage:
                     )
                 else:
                     await session.execute(
-                        delete(Flag).where(Flag.transaction_id == transaction.id, Flag.user_id == user.id)
+                        delete(UserFlag).where(UserFlag.transaction_id == transaction.id, UserFlag.user_id == user.id)
                     )
+
+    async def set_transaction_tags(self, transaction_id, tags: dict, /):
+        async with self.session() as session:
+            db_transaction = await self.transactions.find_one_by_id(transaction_id, session=session)
+
+            values = []
+            for name, value in tags.items():
+                db_tag = await self.tags.find_or_create_one({"name": name}, session=session)
+                db_value = await self.tag_values.find_or_create_one(
+                    {"tag_id": db_tag.id, "value": value}, session=session
+                )
+                values.append(
+                    {
+                        "transaction_id": db_transaction.id,
+                        "value_id": db_value.id,
+                    }
+                )
+
+            if len(values):
+                print(values)
+                await session.execute(insert(transaction_tag_values_association_table), values)
+                await session.commit()
+
+        return db_transaction
 
     async def _on_transaction_message(self, event: MessageEvent):
         transaction, message = event.transaction, event.message

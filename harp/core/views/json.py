@@ -1,7 +1,7 @@
 import traceback
 
 import orjson
-from whistle import IEventDispatcher
+from whistle import IAsyncEventDispatcher
 
 from harp.core.asgi.events import EVENT_CORE_VIEW, ViewEvent
 
@@ -49,5 +49,5 @@ async def on_json_response(event: ViewEvent):
         event.stop_propagation()
 
 
-def register(dispatcher: IEventDispatcher):
+def register(dispatcher: IAsyncEventDispatcher):
     dispatcher.add_listener(EVENT_CORE_VIEW, on_json_response)

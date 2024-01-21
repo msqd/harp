@@ -37,12 +37,13 @@ class ASGIKernel:
 
     dispatcher: IAsyncEventDispatcher
 
-    def __init__(self, *, dispatcher=None, resolver=None, debug=False):
+    def __init__(self, *, dispatcher=None, resolver=None, debug=False, handle_errors=True):
         self.dispatcher = dispatcher or AsyncEventDispatcher()
         # TODO IControllerResolver ? What contract do we expect ?
         self.resolver = resolver or ControllerResolver()
         self.started = False
         self.debug = debug
+        self.handle_errors = handle_errors
 
     async def __call__(self, scope: Scope, receive: ASGIReceiveCallable, send: ASGISendCallable):
         await self.handle(self.RequestType(scope, receive), send)
@@ -56,6 +57,9 @@ class ASGIKernel:
             try:
                 return await self.handle_http(request, response)
             except Exception as exc:
+                if not self.handle_errors:
+                    raise
+
                 # todo refactor this
                 logger.exception()
                 if self.debug:
