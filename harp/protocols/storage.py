@@ -1,12 +1,5 @@
-from datetime import date, datetime
-from typing import List, Optional, Protocol, TypedDict
-
-
-class TransactionsGroupedByDate(TypedDict):
-    date: date | datetime | None
-    transactions: int
-    errors: int
-    meanDuration: float
+from datetime import datetime
+from typing import Iterable, List, Optional, Protocol, TypedDict
 
 
 class TransactionsGroupedByTimeBucket(TypedDict):
@@ -17,7 +10,9 @@ class TransactionsGroupedByTimeBucket(TypedDict):
 
 
 class Storage(Protocol):
-    async def find_transactions(self, *, with_messages=False, filters=None, page: int = 1, cursor: str = ""):
+    async def find_transactions(
+        self, *, with_messages=False, filters=None, page: int = 1, cursor: str = "", username: Optional[str]
+    ):
         """Find transactions, using optional filters, for example to be displayed in the dashboard."""
         ...
 
@@ -35,10 +30,15 @@ class Storage(Protocol):
         """Retrieve a facet's metadata, by name."""
         ...
 
-    async def transactions_grouped_by_date(self, *, endpoint=None) -> List[TransactionsGroupedByDate]:
-        ...
-
     async def transactions_grouped_by_time_bucket(
         self, *, endpoint=None, time_bucket: Optional[str], start_datetime: Optional[datetime]
     ) -> List[TransactionsGroupedByTimeBucket]:
+        ...
+
+    async def set_user_flag(self, *, transaction_id: str, username: str, flag: int, value=True):
+        """Sets or unsets a user flag on a transaction."""
+        ...
+
+    async def create_db_with_users(self, users: Iterable[str]):
+        """Create users."""
         ...

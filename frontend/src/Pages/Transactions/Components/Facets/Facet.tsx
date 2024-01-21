@@ -59,7 +59,7 @@ export function Facet({
         <H5 as="legend" padding="pt-0" className="flex w-full cursor-pointer" onClick={() => setOpen(!open)}>
           <span className="grow">
             {title}
-            {setValues && values?.length && !(values.length == meta.length) ? (
+            {setValues && values?.length ? (
               <FacetInnerLightButton label="any" handler={() => setValues(undefined)} />
             ) : null}
           </span>

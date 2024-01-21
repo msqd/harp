@@ -43,16 +43,15 @@ def start(with_docs, with_ui, options, files, services, server_subprocesses):
         parse_server_subprocesses_options,
     )
 
+    options = dict(map(lambda x: x.split("=", 1), options))
     manager_factory = HonchoManagerFactory(
         proxy_options=list(
             chain(
-                (
-                    "--set {key} {value}".format(key=key, value=value)
-                    for key, value in map(lambda x: x.split("=", 1), options)
-                ),
+                ("--set {key} {value}".format(key=key, value=value) for key, value in options.items()),
                 ("-f " + file for file in files),
             )
-        )
+        ),
+        dashboard_devserver_port=options.get("dashboard.devserver_port", None),
     )
 
     services = {f"harp:{_name}" for _name in services or ()} or set(manager_factory.defaults)
