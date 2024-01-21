@@ -2,8 +2,8 @@ import dataclasses
 from datetime import datetime
 from typing import List
 
-from harp.core.models.base import Entity
-from harp.core.models.messages import Message
+from .base import Entity
+from .messages import Message
 
 
 @dataclasses.dataclass(kw_only=True)

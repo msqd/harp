@@ -1,5 +1,6 @@
+import asyncio
 from datetime import UTC, datetime
-from typing import Iterable, List, Optional, TypedDict
+from typing import Iterable, List, Optional, TypedDict, override
 
 from sqlalchemy import case, delete, func, insert, literal, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
@@ -11,8 +12,10 @@ from harp.contrib.sqlalchemy_storage.constants import TimeBucket
 from harp.contrib.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
 from harp.contrib.sqlalchemy_storage.utils.dates import TruncDatetime
 from harp.core.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionEvent
+from harp.core.models.base import Results
 from harp.core.models.blobs import Blob as BlobModel
 from harp.core.models.transactions import Transaction as TransactionModel
+from harp.protocols.storage import Storage
 from harp.settings import PAGE_SIZE
 from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_datetime
@@ -22,7 +25,6 @@ from .models import (
     Base,
     Blob,
     Message,
-    Results,
     TagsRepository,
     Transaction,
     TransactionsRepository,
@@ -73,7 +75,7 @@ def _filter_query_for_user_flags(query, values, /, *, user_id):
     return query
 
 
-class SqlAlchemyStorage:
+class SqlAlchemyStorage(Storage):
     """
     Storage implementation using SQL Alchemy Core, with async drivers.
 
@@ -94,18 +96,28 @@ class SqlAlchemyStorage:
         self.engine = create_async_engine(self.settings.url, echo=self.settings.echo)
         self.session = async_sessionmaker(self.engine, expire_on_commit=False)
 
+        # TODO is this the right place ? (maybe it is, but maybe it causes tight coupling to the ed which may be not
+        #      right, especially if we want to be able to use the storage out of the special context of harp proxy)
         dispatcher.add_listener(EVENT_CORE_STARTED, self._on_startup_actions, priority=-20)
         dispatcher.add_listener(EVENT_TRANSACTION_STARTED, self._on_transaction_started)
         dispatcher.add_listener(EVENT_TRANSACTION_ENDED, self._on_transaction_ended)
         dispatcher.add_listener(EVENT_TRANSACTION_MESSAGE, self._on_transaction_message)
 
-        self._is_db_set = False
+        self._is_ready = asyncio.Event()
         self._worker = None
 
         self.transactions = TransactionsRepository(self.session)
         self.users = UsersRepository(self.session)
         self.tags = TagsRepository(self.session)
         self.tag_values = TagValuesRepository(self.session)
+
+    async def initialize(self, /, *, force_reset=False):
+        """Create the database tables. May drop them first if configured to do so."""
+        async with self.engine.begin() as conn:
+            if force_reset or self.settings.drop_tables:
+                await conn.run_sync(self.metadata.drop_all)
+            await conn.run_sync(self.metadata.create_all)
+        self._is_ready.set()
 
     @property
     def worker(self):
@@ -117,6 +129,7 @@ class SqlAlchemyStorage:
         if self._worker:
             await self._worker.wait_until_empty()
 
+    @override
     async def get_facet_meta(self, name):
         if name == "endpoint":
             # get transaction count grouped by endpoint
@@ -127,6 +140,7 @@ class SqlAlchemyStorage:
 
         raise NotImplementedError(f"Unknown facet: {name}")
 
+    @override
     async def get_transaction_list(
         self,
         *,
@@ -138,9 +152,6 @@ class SqlAlchemyStorage:
     ) -> Results[TransactionModel]:
         """
         Implements :meth:`Storage.find_transactions <harp.protocols.storage.Storage.find_transactions>`.
-
-        :param with_messages:
-        :return:
 
         """
 
@@ -182,6 +193,7 @@ class SqlAlchemyStorage:
 
         return result
 
+    @override
     async def get_transaction(
         self,
         id: str,
@@ -200,6 +212,7 @@ class SqlAlchemyStorage:
             )
         ).to_model(with_user_flags=True)
 
+    @override
     async def transactions_grouped_by_time_bucket(
         self,
         endpoint: Optional[str] = None,
@@ -239,6 +252,7 @@ class SqlAlchemyStorage:
                 for row in result.fetchall()
             ]
 
+    @override
     async def get_blob(self, blob_id):
         """
         Retrieve a blob from the database, using its hash.
@@ -256,13 +270,6 @@ class SqlAlchemyStorage:
 
         if row:
             return BlobModel(id=blob_id, data=row[0].data, content_type=row[0].content_type)
-
-    async def initialize(self, /, *, force_reset=False):
-        """Create the database tables. May drop them first if configured to do so."""
-        async with self.engine.begin() as conn:
-            if force_reset or self.settings.drop_tables:
-                await conn.run_sync(self.metadata.drop_all)
-            await conn.run_sync(self.metadata.create_all)
 
     async def _on_startup_actions(self, TransactionEvent):
         """Event handler to create the database tables on startup. May drop them first if configured to do so."""
@@ -290,6 +297,7 @@ class SqlAlchemyStorage:
         """Event handler to store the transaction in the database."""
         return await self.create_transaction(event.transaction)
 
+    @override
     async def set_user_flag(self, *, transaction_id: str, username: str, flag: int, value=True):
         """Sets or unsets a user flag on a transaction."""
         async with self.session() as session:
@@ -310,6 +318,7 @@ class SqlAlchemyStorage:
                         delete(UserFlag).where(UserFlag.transaction_id == transaction.id, UserFlag.user_id == user.id)
                     )
 
+    @override
     async def set_transaction_tags(self, transaction_or_id, tags: dict, /):
         async with self.session() as session:
             if isinstance(transaction_or_id, Transaction):
@@ -378,6 +387,16 @@ class SqlAlchemyStorage:
                         x_status_class=event.transaction.extras.get("status_class"),
                     )
                 )
+
+    @override
+    async def create_users_once_ready(self, users: Iterable[str]):
+        """Sets the list of users to be created once the database is ready."""
+
+        async def defered_create_users():
+            await self._is_ready.wait()
+            await self.create_users(users)
+
+        await self.worker.push(defered_create_users)
 
     async def create_users(self, users: Iterable[str]):
         async with self.session() as session:
