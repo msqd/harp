@@ -42,6 +42,9 @@ class TestControllerTransactions(SqlalchemyStorageFixtureMixin):
         }
 
     async def test_filters_using_asgi(self, client: ASGICommunicator):
+        # todo this is probably not the right place, we're unit testing a controller, should we really duplicate tests
+        # to also go through asgi ? Let's think about this, there is no real value of aving two tests doing the same
+        # with an additional layer here.
         response = await client.http_get("/api/transactions/filters")
 
         assert response["status"] == 200
