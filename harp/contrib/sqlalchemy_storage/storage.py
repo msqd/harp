@@ -113,6 +113,10 @@ class SqlAlchemyStorage:
             self._worker = AsyncWorkerQueue()
         return self._worker
 
+    async def wait_for_background_tasks_to_be_processed(self):
+        if self._worker:
+            await self._worker.wait_until_empty()
+
     async def get_facet_meta(self, name):
         if name == "endpoint":
             # get transaction count grouped by endpoint
@@ -126,11 +130,11 @@ class SqlAlchemyStorage:
     async def get_transaction_list(
         self,
         *,
+        username: str,
         with_messages=False,
         filters=None,
         page: int = 1,
         cursor: str = "",
-        username: Optional[str] = None,
     ) -> Results[TransactionModel]:
         """
         Implements :meth:`Storage.find_transactions <harp.protocols.storage.Storage.find_transactions>`.
@@ -146,6 +150,7 @@ class SqlAlchemyStorage:
         query = self.transactions.select(
             with_messages=with_messages,
             with_user_flags=user.id if user else False,
+            with_tags=True,
         )
 
         if filters:
@@ -182,7 +187,7 @@ class SqlAlchemyStorage:
         id: str,
         /,
         *,
-        username: Optional[str] = None,
+        username: str,
     ) -> Optional[TransactionModel]:
         user = await self.users.find_one_by_username(username)
 
@@ -191,6 +196,7 @@ class SqlAlchemyStorage:
                 id,
                 with_messages=True,
                 with_user_flags=user.id if user else False,
+                with_tags=True,
             )
         ).to_model(with_user_flags=True)
 
@@ -265,15 +271,19 @@ class SqlAlchemyStorage:
 
     async def create_transaction(self, transaction: TransactionModel):
         async with self.session() as session:
-            db_transaction = Transaction(
-                id=transaction.id,
-                type=transaction.type,
-                endpoint=transaction.endpoint,
-                started_at=transaction.started_at.astimezone(UTC).replace(tzinfo=None),
-                x_method=transaction.extras.get("method"),
+            db_transaction = await self.transactions.create(
+                dict(
+                    id=transaction.id,
+                    type=transaction.type,
+                    endpoint=transaction.endpoint,
+                    started_at=transaction.started_at.astimezone(UTC).replace(tzinfo=None),
+                    x_method=transaction.extras.get("method"),
+                ),
+                session=session,
             )
-            session.add(db_transaction)
-            await session.commit()
+
+            if len(transaction.tags):
+                await self.set_transaction_tags(db_transaction, transaction.tags)
         return db_transaction
 
     async def _on_transaction_started(self, event: TransactionEvent):
@@ -300,9 +310,12 @@ class SqlAlchemyStorage:
                         delete(UserFlag).where(UserFlag.transaction_id == transaction.id, UserFlag.user_id == user.id)
                     )
 
-    async def set_transaction_tags(self, transaction_id, tags: dict, /):
+    async def set_transaction_tags(self, transaction_or_id, tags: dict, /):
         async with self.session() as session:
-            db_transaction = await self.transactions.find_one_by_id(transaction_id, session=session)
+            if isinstance(transaction_or_id, Transaction):
+                db_transaction = await session.merge(transaction_or_id)
+            else:
+                db_transaction = await self.transactions.find_one_by_id(transaction_or_id, session=session)
 
             values = []
             for name, value in tags.items():
@@ -318,7 +331,6 @@ class SqlAlchemyStorage:
                 )
 
             if len(values):
-                print(values)
                 await session.execute(insert(transaction_tag_values_association_table), values)
                 await session.commit()
 

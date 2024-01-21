@@ -56,37 +56,23 @@ class HttpProxyController:
         :return:
 
         """
-        # BEGIN TRANSACTION
-        transaction = Transaction(
-            id=generate_transaction_id_ksuid(),
-            type=request.type,
-            started_at=datetime.now(UTC),
-            endpoint=self.name,
-        )
-        logger.debug(f"▶ {request.method} {request.path}", transaction_id=transaction.id)
 
-        # XXX for now, we use transaction "extras" to store searchable data for later
-        transaction.extras["method"] = request.method
+        # BEGIN TRANSACTION AND PREPARE DATA FOR PROXY REQUEST
+        headers, tags = [], {}
+        for k, v in request.headers.items():
+            k = k.lower()
 
-        # dispatch transaction started event
-        # we don't really want to await this, should run in background ? or use an async queue ?
-        await self.adispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(transaction))
+            if k.startswith("x-harp-"):
+                tags[k[7:]] = v
+            elif k not in ("host",):
+                headers.append((k, v))
 
-        # dispatch message event for request
-        await self.adispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, request))
-
-        # PROXY REQUEST
-        request_headers = tuple(((k, v) for k, v in request.headers.items() if k.lower() not in ("host",)))
-        request_content = await self._suboptimal_temporary_extract_request_content(request)
-
+        transaction = await self._create_transaction_from_request(request, tags=tags)
+        content = await self._suboptimal_temporary_extract_request_content(request)
         url = urljoin(self.url, request.path) + (f"?{request.query_string}" if request.query_string else "")
 
-        p_request: httpx.Request = self.http_client.build_request(
-            request.method,
-            url,
-            headers=request_headers,
-            content=request_content,
-        )
+        # PROXY REQUEST
+        p_request: httpx.Request = self.http_client.build_request(request.method, url, headers=headers, content=content)
         logger.debug(f"▶▶ {request.method} {url}", transaction_id=transaction.id)
 
         # PROXY RESPONSE
@@ -136,6 +122,29 @@ class HttpProxyController:
 
         # dispatch transaction ended event
         await self.adispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(transaction))
+
+    async def _create_transaction_from_request(self, request, *, tags=None):
+        transaction = Transaction(
+            id=generate_transaction_id_ksuid(),
+            type=request.type,
+            started_at=datetime.now(UTC),
+            endpoint=self.name,
+            tags=tags,
+        )
+
+        # XXX for now, we use transaction "extras" to store searchable data for later
+        transaction.extras["method"] = request.method
+
+        logger.debug(f"▶ {request.method} {request.path}", transaction_id=transaction.id)
+
+        # dispatch transaction started event
+        # we don't really want to await this, should run in background ? or use an async queue ?
+        await self.adispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(transaction))
+
+        # dispatch message event for request
+        await self.adispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, request))
+
+        return transaction
 
     async def _suboptimal_temporary_extract_request_content(self, request: ASGIRequest):
         """

@@ -6,11 +6,11 @@ from sqlalchemy.exc import MissingGreenlet
 from sqlalchemy.orm.exc import DetachedInstanceError
 
 from harp.contrib.sqlalchemy_storage.storage import SqlAlchemyStorage
-from harp.contrib.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageFixtureMixin
+from harp.contrib.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
 from harp.utils.guids import generate_transaction_id_ksuid
 
 
-class TestModelsBase(SqlalchemyStorageFixtureMixin):
+class TestModelsBase(SqlalchemyStorageTestFixtureMixin):
     async def test_create_using_explicit_session(self, storage: SqlAlchemyStorage):
         """
         Check how instance creation works with an explicit session scope created outside the "create" call.
