@@ -13,15 +13,24 @@ class AsyncWorkerQueue:
 
     async def __call__(self):
         while True:
-            item, ignore_errors = await self._queue.get()
+            try:
+                item, ignore_errors = await self._queue.get()
+            except RuntimeError:
+                # queue is closed
+                break
             try:
                 await item()
             except Exception as e:
                 if not ignore_errors:
                     logger.exception(f"Error while executing queued task: {e}")
+            finally:
+                self._queue.task_done()
 
     async def push(self, item, /, *, ignore_errors=False):
         if not iscoroutinefunction(item):
             raise ValueError(f"Unknown item type: {type(item)}, expecting coroutine function.")
 
         await self._queue.put((item, ignore_errors))
+
+    async def wait_until_empty(self):
+        await self._queue.join()

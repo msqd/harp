@@ -1,12 +1,12 @@
 from datetime import UTC, datetime
 
 from harp.contrib.sqlalchemy_storage.storage import SqlAlchemyStorage
-from harp.contrib.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageFixtureMixin
+from harp.contrib.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
 from harp.core.models.transactions import Transaction
 from harp.utils.guids import generate_transaction_id_ksuid
 
 
-class TestStorageTags(SqlalchemyStorageFixtureMixin):
+class TestStorageTags(SqlalchemyStorageTestFixtureMixin):
     echo = False
 
     async def test_get_transaction_list_with_tags(self, storage: SqlAlchemyStorage):

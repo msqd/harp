@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    harp.utils.testing.communicators
+   harp.utils.testing.mixins
    harp.utils.testing.stub_api
 
 Submodules

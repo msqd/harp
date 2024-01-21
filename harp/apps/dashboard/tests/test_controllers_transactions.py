@@ -5,26 +5,22 @@ import pytest
 from multidict import MultiDict
 
 from harp.apps.dashboard.controllers.transactions import TransactionsController
-from harp.contrib.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageFixtureMixin
-from harp.core.asgi import ASGIKernel, ASGIRequest
-from harp.core.asgi.resolvers import ControllerResolver
-from harp.core.views.json import register as register_json_views
+from harp.contrib.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
+from harp.core.asgi import ASGIRequest
 from harp.utils.testing.communicators import ASGICommunicator
+from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
 
 
-class TestControllerTransactions(SqlalchemyStorageFixtureMixin):
+class TransactionsControllerFixtureMixin:
     @pytest.fixture
     def controller(self, storage):
         return TransactionsController(storage=storage, handle_errors=False)
 
-    @pytest.fixture
-    async def client(self, controller):
-        kernel = ASGIKernel(resolver=ControllerResolver(default_controller=controller), handle_errors=False)
-        register_json_views(kernel.dispatcher)
-        client = ASGICommunicator(kernel)
-        await client.asgi_lifespan_startup()
-        return client
 
+class TestTransactionsController(
+    TransactionsControllerFixtureMixin,
+    SqlalchemyStorageTestFixtureMixin,
+):
     async def test_filters_using_handler(self, controller: TransactionsController):
         request = Mock(
             spec=ASGIRequest,
@@ -41,6 +37,12 @@ class TestControllerTransactions(SqlalchemyStorageFixtureMixin):
             "status": {"current": None, "values": ANY},
         }
 
+
+class TestTransactionsControllerThroughASGI(
+    TransactionsControllerFixtureMixin,
+    SqlalchemyStorageTestFixtureMixin,
+    ControllerThroughASGIFixtureMixin,
+):
     async def test_filters_using_asgi(self, client: ASGICommunicator):
         # todo this is probably not the right place, we're unit testing a controller, should we really duplicate tests
         # to also go through asgi ? Let's think about this, there is no real value of aving two tests doing the same

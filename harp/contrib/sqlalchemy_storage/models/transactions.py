@@ -54,6 +54,7 @@ class Transaction(Base):
                 ),
             ),
             messages=[message.to_model() for message in self.messages] if self.messages else [],
+            tags=self.tags,
         )
 
     @property

@@ -19,6 +19,12 @@ class Results(Generic[TResult]):
         self.items: list[TResult] = []
         self.meta = {}
 
+    def __len__(self):
+        return len(self.items)
+
+    def __getitem__(self, item):
+        return self.items[item]
+
     def append(self, item: TResult):
         self.items.append(item)
 
