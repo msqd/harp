@@ -122,7 +122,7 @@ benchmark:
 	          --benchmark-disable-gc \
 	          --benchmark-min-rounds=$(BENCHMARK_MIN_ROUNDS) \
 	          --benchmark-group-by=group \
-	          --benchmark-compare="0004" \
+	          --benchmark-compare="0006" \
 	          --benchmark-histogram \
 	          $(PYTEST_OPTIONS)
 
