@@ -54,7 +54,7 @@ class DashboardController:
 
         # create users if they don't exist
         if isinstance(self.settings.auth, DashboardAuthBasicSetting):
-            asyncio.create_task(self.storage.create_db_with_users(self.settings.auth.users))
+            asyncio.create_task(self.storage.create_users_once_ready(self.settings.auth.users))
 
         # controllers for delegating requests
         if self.settings.devserver_port:

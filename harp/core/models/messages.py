@@ -1,7 +1,7 @@
 import dataclasses
 from datetime import datetime
 
-from harp.core.models.base import Entity
+from .base import Entity
 
 
 @dataclasses.dataclass(kw_only=True)

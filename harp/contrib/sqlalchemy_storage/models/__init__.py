@@ -1,4 +1,4 @@
-from .base import Base, Results
+from .base import Base
 from .blobs import Blob
 from .flags import FLAGS_BY_NAME, FLAGS_BY_TYPE, UserFlag
 from .messages import Message
@@ -12,7 +12,6 @@ __all__ = [
     "FLAGS_BY_NAME",
     "FLAGS_BY_TYPE",
     "Message",
-    "Results",
     "TagValue",
     "TagsRepository",
     "Transaction",

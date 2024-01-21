@@ -1,6 +1,9 @@
 from datetime import datetime
 from typing import Iterable, List, Optional, Protocol, TypedDict
 
+from harp.core.models.base import Results
+from harp.core.models.transactions import Transaction
+
 
 class TransactionsGroupedByTimeBucket(TypedDict):
     datetime: datetime
@@ -13,12 +16,12 @@ class Storage(Protocol):
     async def get_transaction_list(
         self,
         *,
+        username: str,
         with_messages=False,
         filters=None,
         page: int = 1,
         cursor: str = "",
-        username: Optional[str],
-    ):
+    ) -> Results[Transaction]:
         """Find transactions, using optional filters, for example to be displayed in the dashboard."""
         ...
 
@@ -27,7 +30,7 @@ class Storage(Protocol):
         id: str,
         /,
         *,
-        username: Optional[str] = None,
+        username: str,
     ):
         """Find a transaction, by id."""
         ...
@@ -43,7 +46,11 @@ class Storage(Protocol):
         ...
 
     async def transactions_grouped_by_time_bucket(
-        self, *, endpoint=None, time_bucket: Optional[str], start_datetime: Optional[datetime]
+        self,
+        *,
+        endpoint=None,
+        time_bucket: Optional[str],
+        start_datetime: Optional[datetime],
     ) -> List[TransactionsGroupedByTimeBucket]:
         ...
 
@@ -51,6 +58,10 @@ class Storage(Protocol):
         """Sets or unsets a user flag on a transaction."""
         ...
 
-    async def create_db_with_users(self, users: Iterable[str]):
+    async def create_users_once_ready(self, users: Iterable[str]):
         """Create users."""
+        ...
+
+    async def set_transaction_tags(self, transaction_or_id, tags: dict, /):
+        """Set transaction tags."""
         ...
