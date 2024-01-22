@@ -9,6 +9,7 @@ Subpackages
 
    harp.contrib.sentry
    harp.contrib.sqlalchemy_storage
+   harp.contrib.telemetry
 
 Module contents
 ---------------

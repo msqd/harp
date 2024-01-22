@@ -28,12 +28,12 @@ def get_application_class_name(name):
 
 
 DEFAULT_APPLICATIONS = [
-    # ["harp.contrib.telemetry", {"url": "https://telemetry.harp-proxy.net/"}],
     "harp.services.http",
     "harp.apps.proxy",
     "harp.apps.dashboard",
     "harp.contrib.sqlalchemy_storage",
     "harp.contrib.sentry",  # todo: allow to extend application list in config file without overriding all
+    "harp.contrib.telemetry",
 ]
 
 

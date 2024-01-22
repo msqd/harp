@@ -96,22 +96,3 @@ Then when commit succeeds ...
     git tag -am "$(poetry version)" $(poetry version --short)
     git push origin `git rev-parse --abbrev-ref HEAD` --tags
     git push upstream `git rev-parse --abbrev-ref HEAD` --tags
-
-
-5. (open-source) Create the distribution in a sandbox directory & upload to PyPI (multi python versions).
-
-.. code-block:: shell
-
-    (VERSION=`python setup.py --version`; rm -rf .release; mkdir .release; git archive `git rev-parse $VERSION` | tar xf - -C .release; cd .release/; for v in 3.6 3.7 3.8 3.9; do pip$v install -U wheel; python$v setup.py sdist bdist_egg bdist_wheel; done; twine upload dist/*-`python setup.py --version`*)
-
-And maybe, test that the release is now installable...
-
-.. code-block:: shell
-
-    (name=`python setup.py --name`; for v in 3.6 3.7 3.8 3.9; do python$v -m pip install -U virtualenv; python$v -m virtualenv -p python$v .rtest$v; cd .rtest$v; bin/pip --no-cache-dir install $name; bin/python -c "import $name; print($name.__name__, $name.__version__);"; cd ..; rm -rf .rtest$v; done; )
-
-Note that for PRERELEASES, you must add `--pre` to `pip install` arguments.
-
-.. code-block:: shell
-
-    (name=`python setup.py --name`; for v in 3.6 3.7 3.8 3.9; do python$v -m pip install -U virtualenv; python$v -m virtualenv -p python$v .rtest$v; cd .rtest$v; bin/pip --no-cache-dir install --pre $name; bin/python -c "import $name; print($name.__name__, $name.__version__);"; cd ..; rm -rf .rtest$v; done; )
