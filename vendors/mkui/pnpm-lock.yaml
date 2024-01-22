@@ -86,8 +86,8 @@ devDependencies:
     specifier: ^3.4.1
     version: 3.4.1
   twin.macro:
-    specifier: ^3.4.0
-    version: 3.4.0(tailwindcss@3.4.1)
+    specifier: ^3.4.1
+    version: 3.4.1(tailwindcss@3.4.1)
   typescript:
     specifier: ~5.2.2
     version: 5.2.2
@@ -4682,8 +4682,8 @@ packages:
     engines: {node: '>=0.6.x'}
     dev: true
 
-  /twin.macro@3.4.0(tailwindcss@3.4.1):
-    resolution: {integrity: sha512-sOZN3PAlUpA/5ZITFkK1UjYhAKqKUGLrAbqviVagmd/B18Es6faozVdUceJTpMklD/dAjxhHCMPP2gwpJLCbyg==}
+  /twin.macro@3.4.1(tailwindcss@3.4.1):
+    resolution: {integrity: sha512-bxGKTV4u/iGcQqHIugPaW5YSLJ5rIr56ay4Pjcr2Mbb037k341bQ+eWT8z3F7r8ZGTXjTD3uiuxos+qQRy4VjQ==}
     engines: {node: '>=16.14.0'}
     peerDependencies:
       tailwindcss: '>=3.3.1'
