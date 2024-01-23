@@ -22,7 +22,7 @@ dependencies:
     version: 7.94.1
   '@tailwindcss/forms':
     specifier: ^0.5.7
-    version: 0.5.7(tailwindcss@3.4.0)
+    version: 0.5.7(tailwindcss@3.4.1)
   date-fns:
     specifier: ^3.3.0
     version: 3.3.0
@@ -158,11 +158,11 @@ devDependencies:
     specifier: ^5.12.0
     version: 5.12.0
   tailwindcss:
-    specifier: ^3.4.0
-    version: 3.4.0
+    specifier: ^3.4.1
+    version: 3.4.1
   twin.macro:
-    specifier: ^3.4.0
-    version: 3.4.0(tailwindcss@3.4.0)
+    specifier: ^3.4.1
+    version: 3.4.1(tailwindcss@3.4.1)
   typescript:
     specifier: ^5.3.3
     version: 5.3.3
@@ -1113,13 +1113,13 @@ packages:
       '@sentry/types': 7.94.1
     dev: false
 
-  /@tailwindcss/forms@0.5.7(tailwindcss@3.4.0):
+  /@tailwindcss/forms@0.5.7(tailwindcss@3.4.1):
     resolution: {integrity: sha512-QE7X69iQI+ZXwldE+rzasvbJiyV/ju1FGHH0Qn2W3FKbuYtqp8LKcy6iSw79fVUT5/Vvf+0XgLCeYVG+UV6hOw==}
     peerDependencies:
       tailwindcss: '>=3.0.0 || >= 3.0.0-alpha.1'
     dependencies:
       mini-svg-data-uri: 1.4.4
-      tailwindcss: 3.4.0
+      tailwindcss: 3.4.1
     dev: false
 
   /@types/babel__core@7.20.5:
@@ -4035,8 +4035,8 @@ packages:
       tslib: 2.6.2
     dev: true
 
-  /tailwindcss@3.4.0:
-    resolution: {integrity: sha512-VigzymniH77knD1dryXbyxR+ePHihHociZbXnLZHUyzf2MMs2ZVqlUrZ3FvpXP8pno9JzmILt1sZPD19M3IxtA==}
+  /tailwindcss@3.4.1:
+    resolution: {integrity: sha512-qAYmXRfk3ENzuPBakNK0SRrUDipP8NQnEY6772uDhflcQz5EhRdD7JNZxyrFHVQNCwULPBn6FNPp9brpO7ctcA==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
@@ -4144,8 +4144,8 @@ packages:
     resolution: {integrity: sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==}
     dev: true
 
-  /twin.macro@3.4.0(tailwindcss@3.4.0):
-    resolution: {integrity: sha512-sOZN3PAlUpA/5ZITFkK1UjYhAKqKUGLrAbqviVagmd/B18Es6faozVdUceJTpMklD/dAjxhHCMPP2gwpJLCbyg==}
+  /twin.macro@3.4.1(tailwindcss@3.4.1):
+    resolution: {integrity: sha512-bxGKTV4u/iGcQqHIugPaW5YSLJ5rIr56ay4Pjcr2Mbb037k341bQ+eWT8z3F7r8ZGTXjTD3uiuxos+qQRy4VjQ==}
     engines: {node: '>=16.14.0'}
     peerDependencies:
       tailwindcss: '>=3.3.1'
@@ -4156,7 +4156,7 @@ packages:
       lodash.get: 4.4.2
       lodash.merge: 4.6.2
       postcss-selector-parser: 6.0.14
-      tailwindcss: 3.4.0
+      tailwindcss: 3.4.1
     dev: true
 
   /type-check@0.4.0:
