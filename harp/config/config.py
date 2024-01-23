@@ -43,6 +43,7 @@ class Config:
         self._debug_applications = set()
         self._application_types = {}
         self._applications = []
+        self._disabled_applications = set()
 
     def __eq__(self, other: Self):
         return self.settings == other.settings
@@ -84,6 +85,22 @@ class Config:
             current = current.setdefault(bit, {})
         current[bits[-1]] = value
 
+    def add_application(self, name, /, *, debug=False):
+        if not is_valid_dotted_identifier(name):
+            raise ValueError(f"Invalid application name: {name}")
+        self.reset()
+        self._raw_settings["applications"].append(name)
+        if debug:
+            self._debug_applications.add(name)
+
+    def remove_application(self, name):
+        if not is_valid_dotted_identifier(name):
+            raise ValueError(f"Invalid application name: {name}")
+        self.reset()
+        if name in self._raw_settings["applications"]:
+            self._raw_settings["applications"].remove(name)
+        self._debug_applications.discard(name)
+
     def read_env(self, args=None):
         """
         Parses sys.argv-like arguments.
@@ -92,7 +109,6 @@ class Config:
         :return: argparse.Namespace
 
         """
-
         if not args:
             args = []
 
@@ -113,7 +129,17 @@ class Config:
             dest="files",
             help="Load configuration from file.",
         )
+        parser.add_argument(
+            "--disable",
+            "-D",
+            action="append",
+            dest="disabled_applications",
+            help="Disable an application.",
+        )
         options = parser.parse_args(args)
+
+        for disabled_application in options.disabled_applications or ():
+            self.remove_application(disabled_application)
 
         from config.common import ConfigurationBuilder, MapSource
         from config.env import EnvVars
@@ -152,14 +178,6 @@ class Config:
             builder.add_value(k, v)
 
         self._raw_settings = builder.build().values
-
-    def add_application(self, name, /, *, debug=False):
-        if not is_valid_dotted_identifier(name):
-            raise ValueError(f"Invalid application name: {name}")
-        self.reset()
-        self._raw_settings["applications"].append(name)
-        if debug:
-            self._debug_applications.add(name)
 
     def validate(self):
         if self._validated_settings is None:

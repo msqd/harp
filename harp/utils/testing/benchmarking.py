@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 
 
 class RunHarpProxyInSubprocessThread(threading.Thread):
-    daemon = True
+    daemon = False
 
     def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, *, daemon=None, config=None):
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
@@ -31,6 +31,7 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
             "start",
             "server",
             *(("--file", self.config_filename) if self.config_filename else ()),
+            *("--disable", "harp_apps.telemetry"),
         ]
         logger.info('Starting subprocess: "%s"', " ".join(args))
         self.process = subprocess.Popen(args, shell=False)

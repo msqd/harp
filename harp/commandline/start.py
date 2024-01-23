@@ -14,6 +14,7 @@ def _get_service_name_for_humans(x: str):
 @click.command(short_help="Starts the development environment.")
 @click.option("--set", "options", default=(), multiple=True, help="Set proxy configuration options.")
 @click.option("--file", "-f", "files", default=(), multiple=True, help="Load configuration from file.")
+@click.option("--disable", default=(), multiple=True, help="Disable some applications.")
 @click.option("--with-docs/--no-docs", default=False)
 @click.option("--with-ui/--no-ui", default=False)
 @click.option(
@@ -24,7 +25,7 @@ def _get_service_name_for_humans(x: str):
     help="Add a server subprocess to the list of services to start.",
 )
 @click.argument("services", nargs=-1)
-def start(with_docs, with_ui, options, files, services, server_subprocesses):
+def start(with_docs, with_ui, options, files, disable, services, server_subprocesses):
     if importlib.util.find_spec("honcho") is None or importlib.util.find_spec("watchfiles") is None:
         raise click.UsageError(
             "\n".join(
@@ -48,6 +49,7 @@ def start(with_docs, with_ui, options, files, services, server_subprocesses):
         proxy_options=list(
             chain(
                 ("--set {key} {value}".format(key=key, value=value) for key, value in options.items()),
+                ("--disable {app}".format(app=app) for app in disable),
                 ("-f " + file for file in files),
             )
         ),
