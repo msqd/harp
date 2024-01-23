@@ -1,11 +1,23 @@
 import asyncio
 import itertools
 from typing import Iterator
+from unittest.mock import patch
 
 import pytest
 from pytest import FixtureRequest
 
 from harp.utils.network import wait_for_port
+
+
+@pytest.fixture(scope="session", autouse=True)
+def default_session_fixture():
+    from harp.config import Config
+
+    DEFAULT_APPLICATIONS_FOR_TESTS = list(Config.DEFAULT_APPLICATIONS)
+    DEFAULT_APPLICATIONS_FOR_TESTS.remove("harp_apps.telemetry")
+
+    with patch("harp.config.Config.DEFAULT_APPLICATIONS", DEFAULT_APPLICATIONS_FOR_TESTS):
+        yield
 
 
 # see https://github.com/GrahamDumpleton/wrapt/issues/257

@@ -27,17 +27,16 @@ def get_application_class_name(name):
     return "".join(map(lambda x: x.title().replace("_", ""), name.rsplit(".", 1)[-1:])) + "Application"
 
 
-DEFAULT_APPLICATIONS = [
-    "harp_apps.http_client",
-    "harp_apps.proxy",
-    "harp_apps.dashboard",
-    "harp_apps.sqlalchemy_storage",
-    "harp_apps.telemetry",
-    "harp_apps.contrib.sentry",  # todo: allow to extend application list in config file without overriding all
-]
-
-
 class Config:
+    DEFAULT_APPLICATIONS = [
+        "harp_apps.http_client",
+        "harp_apps.proxy",
+        "harp_apps.dashboard",
+        "harp_apps.sqlalchemy_storage",
+        "harp_apps.telemetry",
+        "harp_apps.contrib.sentry",  # todo: allow to extend application list in config file without overriding all
+    ]
+
     def __init__(self, settings=None, /, applications=None):
         self._raw_settings = {"applications": applications or []} | (settings or {})
         self._validated_settings = None
@@ -70,7 +69,7 @@ class Config:
         self._validated_settings = None
 
     def add_defaults(self):
-        for application in DEFAULT_APPLICATIONS:
+        for application in type(self).DEFAULT_APPLICATIONS:
             self.add_application(application)
 
     def set(self, key, value):

@@ -6,7 +6,7 @@ import hashlib
 import platform
 import sys
 
-from httpx import AsyncClient
+from httpx import AsyncClient, TimeoutException
 
 from harp import __version__, get_logger
 from harp.config import Application
@@ -27,14 +27,16 @@ class TelemetryApplication(Application):
     async def on_bound(self, event: FactoryBoundEvent):
         settings = event.provider.get(GlobalSettings)
         client = event.provider.get(AsyncClient)
-
-        res = await client.post(
-            "https://connect.makersquad.fr/t/a",
-            json={
-                "f": self._hashed,
-                "a": ",".join(map(lambda x: x.split(".")[-1], settings["applications"])),
-                "v": __version__,
-                "c": 1,
-            },
-        )
-        logger.info(res)
+        try:
+            await client.post(
+                "https://connect.makersquad.fr/t/a",
+                json={
+                    "f": self._hashed,
+                    "a": ",".join(map(lambda x: x.split(".")[-1], settings["applications"])),
+                    "v": __version__,
+                    "c": 1,
+                },
+                timeout=2.0,
+            )
+        except TimeoutException:
+            pass
