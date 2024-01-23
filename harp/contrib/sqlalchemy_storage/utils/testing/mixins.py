@@ -14,13 +14,15 @@ class SqlalchemyStorageTestFixtureMixin:
     async def create_storage(self, /, *, dispatcher=None, **settings) -> SqlAlchemyStorage:
         storage = SqlAlchemyStorage(
             dispatcher=dispatcher or AsyncEventDispatcher(),
-            settings=SqlAlchemyStorageSettings(**self.storage_settings, **settings),
+            settings=SqlAlchemyStorageSettings(**{**self.storage_settings, **settings}),
         )
 
-        await storage.initialize()
+        # todo wrap the test in a transaction ?
+        await storage.initialize(force_reset=True)
         await storage.create_users(["anonymous"])
+
         return storage
 
     @pytest.fixture
-    async def storage(self):
-        yield await self.create_storage()
+    async def storage(self, database_url):
+        yield await self.create_storage(url=database_url)

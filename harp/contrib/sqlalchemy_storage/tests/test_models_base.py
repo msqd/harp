@@ -1,8 +1,8 @@
-from datetime import UTC, datetime
+from datetime import datetime
 
 import pytest
 from sqlalchemy import inspect
-from sqlalchemy.exc import MissingGreenlet
+from sqlalchemy.exc import MissingGreenlet, StatementError
 from sqlalchemy.orm.exc import DetachedInstanceError
 
 from harp.contrib.sqlalchemy_storage.storage import SqlAlchemyStorage
@@ -23,14 +23,14 @@ class TestModelsBase(SqlalchemyStorageTestFixtureMixin):
                     "id": generate_transaction_id_ksuid(),
                     "type": "http",
                     "endpoint": "/api/transactions",
-                    "started_at": datetime.now(UTC),
+                    "started_at": datetime.now(),
                 },
                 session=session,
             )
 
             # but lazy loading cannot work there ...
-            with pytest.raises(MissingGreenlet):
-                assert db_transaction._tag_values == []
+            with pytest.raises((MissingGreenlet, StatementError)):
+                _ = db_transaction._tag_values
 
             # ... unless we use the async wrapper ...
             assert await db_transaction.awaitable_attrs._tag_values == []
@@ -57,7 +57,7 @@ class TestModelsBase(SqlalchemyStorageTestFixtureMixin):
                 "id": generate_transaction_id_ksuid(),
                 "type": "http",
                 "endpoint": "/api/transactions",
-                "started_at": datetime.now(UTC),
+                "started_at": datetime.now(),
             },
         )
 

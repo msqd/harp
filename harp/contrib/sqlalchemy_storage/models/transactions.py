@@ -32,7 +32,7 @@ class Transaction(Base):
     x_method = mapped_column(String(16), nullable=True, index=True)
     x_status_class = mapped_column(String(3), nullable=True, index=True)
 
-    messages: Mapped[List["Message"]] = relationship(back_populates="transaction")
+    messages: Mapped[List["Message"]] = relationship(back_populates="transaction", order_by="Message.id")
     flags: Mapped[List["UserFlag"]] = relationship(back_populates="transaction", cascade="all, delete-orphan")
     _tag_values: Mapped[List["TagValue"]] = relationship(secondary=transaction_tag_values_association_table)
 

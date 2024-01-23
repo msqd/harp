@@ -88,11 +88,11 @@ class TestHttpProxyControllerWithStorage(
     DispatcherTestFixtureMixin,
 ):
     @respx.mock
-    async def test_basic_get(self, dispatcher: AsyncEventDispatcher):
+    async def test_basic_get(self, database_url, dispatcher: AsyncEventDispatcher):
         self.mock_http_endpoint("http://example.com/", content="Hello.")
 
         # register the storage
-        storage = await self.create_storage(dispatcher=dispatcher)
+        storage = await self.create_storage(dispatcher=dispatcher, url=database_url)
 
         await self.call_controller(self.create_controller("http://example.com/", dispatcher=dispatcher))
         await storage.wait_for_background_tasks_to_be_processed()
@@ -138,11 +138,11 @@ class TestHttpProxyControllerWithStorage(
         assert (await storage.get_blob(resmsg.body)).data == b"Hello."
 
     @respx.mock
-    async def test_get_with_tags(self, dispatcher: AsyncEventDispatcher):
+    async def test_get_with_tags(self, database_url, dispatcher: AsyncEventDispatcher):
         self.mock_http_endpoint("http://example.com/", content="Hello.")
 
         # register the storage
-        storage = await self.create_storage(dispatcher=dispatcher)
+        storage = await self.create_storage(dispatcher=dispatcher, url=database_url)
 
         # call our controller
         await self.call_controller(

@@ -47,7 +47,7 @@ frontend:
 # QA, tests and other CI/CD related stuff
 ########################################################################################################################
 
-.PHONY: clean preqa qa types format format-backend format-frontend test test-backend coverage test-frontend lint-frontend test-ui test-ui-update test-ui-build
+.PHONY: clean preqa qa qa-full types format format-backend format-frontend test test-backend coverage test-frontend lint-frontend test-ui test-ui-update test-ui-build
 
 clean:
 	(cd docs; $(MAKE) clean)
@@ -57,6 +57,8 @@ clean:
 preqa: types format reference
 
 qa: preqa test test-ui
+qa-full:
+	TEST_ALL_DATABASES=true $(MAKE) qa
 
 types:
 	bin/generate_types
