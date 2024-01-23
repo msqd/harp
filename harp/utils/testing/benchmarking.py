@@ -45,9 +45,11 @@ class AbstractProxyBenchmark:
     config = Template("")
 
     @pytest.fixture(scope="class")
-    def proxy(self):
+    def proxy(self, httpbin, database_url):
         port = get_available_network_port()
-        thread = RunHarpProxyInSubprocessThread(config=self.config.substitute(port=port))
+        thread = RunHarpProxyInSubprocessThread(
+            config=self.config.substitute(port=port, httpbin=httpbin, database=database_url)
+        )
         try:
             try:
                 from pytest_cov.embed import cleanup_on_sigterm
@@ -61,10 +63,10 @@ class AbstractProxyBenchmark:
         finally:
             thread.join()
 
-    def test_noproxy_get(self, benchmark):
+    def test_noproxy_get(self, benchmark, httpbin):
         @benchmark
         def result():
-            return httpx.get("http://localhost:8080/get")
+            return httpx.get(f"{httpbin}/get")
 
     def test_httpbin_get(self, benchmark, proxy):
         @benchmark

@@ -25,17 +25,17 @@ def test_is_valid_extension_name():
 
 def test_add_application():
     config = Config()
-    config.add_application("harp.contrib.sqlalchemy_storage")
+    config.add_application("harp_apps.sqlalchemy_storage")
 
     assert config.settings == {
-        "applications": ["harp.contrib.sqlalchemy_storage"],
+        "applications": ["harp_apps.sqlalchemy_storage"],
     }
 
     # can we serialize it?
     serialized = config.serialize()
 
     assert serialized == (
-        b'{"applications":["harp.contrib.sqlalchemy_storage"],"storage":{"type":"sqlal'
+        b'{"applications":["harp_apps.sqlalchemy_storage"],"storage":{"type":"sqlal'
         b'chemy","url":"sqlite+aiosqlite:///:memory:","drop_tables":false,"echo":false'
         b"}}"
     )
@@ -47,14 +47,14 @@ def test_add_application():
     new_config.add_application("foo.bar")
     assert new_config != config
     assert new_config.settings == {
-        "applications": ["harp.contrib.sqlalchemy_storage", "foo.bar"],
+        "applications": ["harp_apps.sqlalchemy_storage", "foo.bar"],
         "storage": {"drop_tables": False, "echo": False, "type": "sqlalchemy", "url": "sqlite+aiosqlite:///:memory:"},
     }
 
     new_config._application_types["foo.bar"] = type("MockedExtension", (Application,), {"name": "foo.bar"})
 
     assert new_config.serialize() == (
-        b'{"applications":["harp.contrib.sqlalchemy_storage","foo.bar"],"storage":{"ty'
+        b'{"applications":["harp_apps.sqlalchemy_storage","foo.bar"],"storage":{"ty'
         b'pe":"sqlalchemy","url":"sqlite+aiosqlite:///:memory:","drop_tables":false,"e'
         b'cho":false}}'
     )

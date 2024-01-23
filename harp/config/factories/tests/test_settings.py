@@ -8,8 +8,8 @@ from harp import Config
 class TestSettings:
     async def factory(self, settings=None):
         config = Config(settings)
-        config.add_application("harp.contrib.sqlalchemy_storage")
-        config.add_application("harp.apps.dashboard")
+        config.add_application("harp_apps.sqlalchemy_storage")
+        config.add_application("harp_apps.dashboard")
         config.validate()
         return config.settings
 

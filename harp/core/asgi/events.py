@@ -3,7 +3,7 @@ from functools import cached_property
 from whistle import Event
 
 from harp.core.models.transactions import Transaction
-from harp.protocols.transactions import Message
+from harp.typing.transactions import Message
 
 EVENT_CORE_STARTED = "core.startup"
 

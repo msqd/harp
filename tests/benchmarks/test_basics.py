@@ -14,12 +14,12 @@ class TestPostgresHttpbinBenchmark(AbstractProxyBenchmark):
           enabled: false
         proxy:
           endpoints:
-            - port: $port
-              url: http://localhost:8080/
+            - port: "$port"
+              url: "$httpbin"
               name: test
         storage:
           type: sqlalchemy
-          url: postgresql://harp:harp@localhost:5432/benchmarks
+          url: "$database"
         """
     )
 
@@ -33,8 +33,8 @@ class TestSqliteHttpbinBenchmark(AbstractProxyBenchmark):
           enabled: false
         proxy:
           endpoints:
-            - port: $port
-              url: http://localhost:8080/
+            - port: "$port"
+              url: "$httpbin"
               name: test
         """
     )

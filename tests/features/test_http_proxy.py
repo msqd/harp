@@ -7,12 +7,12 @@ import pytest
 from httpx import AsyncClient
 
 from harp import Config
-from harp.apps.proxy.controllers import HttpProxyController
 from harp.config.factories.kernel_factory import KernelFactory
 from harp.core.asgi.kernel import ASGIKernel
 from harp.core.asgi.resolvers import ProxyControllerResolver
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.http import parametrize_with_http_methods, parametrize_with_http_status_codes
+from harp_apps.proxy.controllers import HttpProxyController
 
 
 class TestAsgiProxyWithoutEndpoints:
@@ -71,10 +71,10 @@ class TestAsgiProxyWithStubApi:
     async def kernel(self, test_api):
         config = Config({"dashboard": {"enabled": False}})
 
-        config.add_application("harp.services.http")
-        config.add_application("harp.apps.proxy")
-        config.add_application("harp.apps.dashboard")
-        config.add_application("harp.contrib.sqlalchemy_storage")
+        config.add_application("harp_apps.http_client")
+        config.add_application("harp_apps.proxy")
+        config.add_application("harp_apps.dashboard")
+        config.add_application("harp_apps.sqlalchemy_storage")
 
         config.set(
             "proxy.endpoints",

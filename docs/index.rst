@@ -28,7 +28,7 @@ Content
    installation/index
    commandline/index
    configuration/index
-   reference/python/index
+   reference/index
    development/index
    faq
 

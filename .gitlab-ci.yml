@@ -50,6 +50,8 @@ test:
   needs: [ "build:dev" ]
   image: ${DOCKER_IMAGE}:${DOCKER_TAGS}-dev
   stage: test
+  services:
+    - docker:24.0.6-dind
   variables:
     GIT_STRATEGY: none
     PYTEST: /opt/venv/bin/pytest
