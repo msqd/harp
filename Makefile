@@ -33,10 +33,12 @@ install-ui:
 	cd vendors/mkui; pnpm install
 
 reference: harp
-	rm -rf docs/reference/python
-	mkdir -p docs/reference/python
-	sphinx-apidoc --tocfile index --separate -f -o docs/reference/python -t docs/_api_templates harp '**/tests'
-	$(SED) -i "1s/.*/Reference/" docs/reference/python/index.rst
+	rm -rf docs/reference/core docs/reference/apps
+	mkdir -p docs/reference/core docs/reference/apps
+	sphinx-apidoc --tocfile index --separate -f -o docs/reference/core -t docs/_api_templates harp '**/tests'
+	sphinx-apidoc --tocfile index --separate -f -o docs/reference/apps -t docs/_api_templates harp_apps '**/tests'
+	$(SED) -i "1s/.*/Core/" docs/reference/core/harp.rst
+	$(SED) -i "1s/.*/Applications/" docs/reference/apps/harp_apps.rst
 	git add docs/reference/
 
 frontend:
@@ -70,22 +72,22 @@ format-frontend: install-frontend
 	(cd frontend; pnpm prettier -w src)
 
 format-backend:
-	isort harp tests
-	black harp tests
-	ruff check --fix harp tests
+	isort harp harp_apps tests
+	black harp harp_apps tests
+	ruff check --fix harp harp_apps tests
 
 test:
 	$(MAKE) test-backend
 	$(MAKE) test-frontend
 
 test-backend:
-	$(PYTEST) harp tests \
+	$(PYTEST) harp harp_apps tests \
 	          --benchmark-disable \
 	          -n auto \
 	          $(PYTEST_OPTIONS)
 
 coverage:
-	$(PYTEST) harp tests \
+	$(PYTEST) harp harp_apps tests \
 	          -m 'not subprocess' \
 	          --cov=harp \
 	          --cov-report html:docs/_build/html/coverage \

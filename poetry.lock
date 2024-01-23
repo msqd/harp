@@ -2999,13 +2999,13 @@ url = ["furl (>=0.4.1)"]
 
 [[package]]
 name = "structlog"
-version = "23.3.0"
+version = "24.1.0"
 description = "Structured Logging for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "structlog-23.3.0-py3-none-any.whl", hash = "sha256:d6922a88ceabef5b13b9eda9c4043624924f60edbb00397f4d193bd754cde60a"},
-    {file = "structlog-23.3.0.tar.gz", hash = "sha256:24b42b914ac6bc4a4e6f716e82ac70d7fb1e8c3b1035a765591953bfc37101a5"},
+    {file = "structlog-24.1.0-py3-none-any.whl", hash = "sha256:3f6efe7d25fab6e86f277713c218044669906537bb717c1807a09d46bca0714d"},
+    {file = "structlog-24.1.0.tar.gz", hash = "sha256:41a09886e4d55df25bdcb9b5c9674bccfab723ff43e0a86a1b7b236be8e57b16"},
 ]
 
 [package.extras]
@@ -3459,4 +3459,4 @@ dev = ["honcho", "watchfiles"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "1c050b6a916ab70e0e96f1661028960507dd0178884f1be670cd16bbbab43458"
+content-hash = "4dbaaa55fa35482bab875d4835b5c684fc42ef306a6b2979185096f98ded2d39"

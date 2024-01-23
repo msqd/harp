@@ -4,7 +4,7 @@ Storage
 Storage implementations are in charge of persisting transactions and messages into a backend (database, memory, ...)
 using eventual dependencies.
 
-Each storages should implement the :class:`IStorage <harp.protocols.storage.IStorage>` protocol.
+Each storages should implement the :class:`IStorage <harp.typing.storage.IStorage>` protocol.
 
 Model
 :::::
@@ -22,5 +22,5 @@ Model
 Protocol
 ::::::::
 
-.. autoclass:: harp.protocols.storage.IStorage
+.. autoclass:: harp.typing.storage.IStorage
     :members:
