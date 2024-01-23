@@ -62,7 +62,8 @@ USER root
 WORKDIR /root
 RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     --mount=type=cache,target=/root/.cache,sharing=locked \
-    apk add 'nodejs<21' npm \
+    apk add docker \
+    && apk add 'nodejs<21' npm \
     && npm install -g pnpm
 
 # Step: Add sources, install dependencies (dev) and build assets

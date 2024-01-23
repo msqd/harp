@@ -56,8 +56,6 @@ test:
     GIT_STRATEGY: none
     PYTEST: /opt/venv/bin/pytest
     PYTEST_OPTIONS: "-m 'not subprocess'"
-  before_script:
-    - apk add --update docker
   script:
     - (cd /opt/harp/src; poetry run make test)
 
