@@ -17,6 +17,8 @@ logger = get_logger(__name__)
 
 
 class TelemetryApplication(Application):
+    ACTIVITY_ENDPOINT = "https://connect.makersquad.fr/t/a"
+
     def __init__(self, settings, /):
         super().__init__(settings)
 
@@ -29,7 +31,7 @@ class TelemetryApplication(Application):
         client = event.provider.get(AsyncClient)
         try:
             await client.post(
-                "https://connect.makersquad.fr/t/a",
+                type(self).ACTIVITY_ENDPOINT,
                 json={
                     "f": self._hashed,
                     "a": ",".join(map(lambda x: x.split(".")[-1], settings["applications"])),
