@@ -17,7 +17,6 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
     daemon = True
 
     def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, *, daemon=None, config=None):
-        print(config)
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
 
         self.config_filename = None
