@@ -40,6 +40,8 @@ class TelemetryApplication(Application):
         self._host = "; ".join(platform.uname())
         self._hashed = hashlib.sha1("\n".join([self._platform, self._host]).encode("utf-8")).hexdigest()
 
+        self.count = 0
+
     async def on_bound(self, event: FactoryBoundEvent):
         global_settings = event.provider.get(GlobalSettings)
         applications = ",".join(map(lambda x: x.split(".")[-1], global_settings["applications"]))
@@ -49,13 +51,24 @@ class TelemetryApplication(Application):
             logger.warning("Failed to send activity ping: %s", exc)
 
     async def ping(self, client, /, *, applications):
-        return await client.post(
-            self.endpoint,
-            json={
-                "f": self._hashed,
-                "a": applications,
-                "v": __version__,
-                "c": 1,
-            },
-            timeout=5.0,
-        )
+        try:
+            return await client.post(
+                self.endpoint,
+                json={
+                    # anonymous fingerprint of instance
+                    "f": self._hashed,
+                    # configured applications
+                    "a": applications,
+                    # application version
+                    "v": __version__,
+                    # transaction count in last period (not implemented yet)
+                    "c": 1,
+                    # activity type
+                    "t": "ping" if self.count else "start",
+                    # incrementing counter
+                    "i": self.count,
+                },
+                timeout=5.0,
+            )
+        finally:
+            self.count += 1

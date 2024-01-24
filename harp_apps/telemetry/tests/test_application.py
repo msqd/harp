@@ -31,7 +31,11 @@ class TestTelemetryApplication(BaseTestForApplications):
             "a": "foo,bar",
             "v": ANY,
             "c": 1,
+            "i": 0,
+            "t": "start",
         }
+
+        assert application.count == 1
 
     @respx.mock
     @pytest.mark.parametrize("url", [None, "https://example.com/"])
@@ -59,4 +63,8 @@ class TestTelemetryApplication(BaseTestForApplications):
             "a": "oh,my",
             "v": ANY,
             "c": 1,
+            "i": 0,
+            "t": "start",
         }
+
+        assert application.count == 1
