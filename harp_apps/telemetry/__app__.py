@@ -14,6 +14,7 @@ todo:
 - detect git/docker/pip/brew install ?
 
 """
+import asyncio
 import hashlib
 import platform
 import sys
@@ -45,6 +46,7 @@ class TelemetryApplication(Application):
         self.count = 0
 
         self.storage = None
+        self.worker = None
 
     async def on_bound(self, event: FactoryBoundEvent):
         global_settings = event.provider.get(GlobalSettings)
@@ -59,6 +61,17 @@ class TelemetryApplication(Application):
             await self.ping(event.provider.get(AsyncClient), applications=applications)
         except TransportError as exc:
             logger.warning("Failed to send activity ping: %s", exc)
+
+        self.worker = asyncio.create_task(self._worker(event.provider.get(AsyncClient), applications))
+
+    async def _worker(self, client, applications):
+        while True:
+            await asyncio.sleep(24 * 60 * 60)
+            try:
+                logger.warning("ping")
+                await self.ping(client, applications=applications)
+            except TransportError as exc:
+                logger.warning("Failed to send activity ping: %s", exc)
 
     async def ping(self, client, /, *, applications):
         try:

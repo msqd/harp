@@ -256,7 +256,7 @@ class SqlAlchemyStorage(Storage):
     async def get_usage(self):
         async with self.session() as session:
             query = select(count(Transaction.id)).where(
-                Transaction.started_at > (datetime.now(UTC) - timedelta(hours=1)).replace(tzinfo=None)
+                Transaction.started_at > (datetime.now(UTC) - timedelta(hours=24)).replace(tzinfo=None)
             )
             return (await session.execute(query)).scalar_one_or_none()
 
