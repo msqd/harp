@@ -41,7 +41,8 @@ class Application:
     factory dispatcher automatically.
     """
 
-    def __init__(self, settings, /):
+    def __init__(self, settings=None, /):
+        settings = settings or {}
         if isinstance(settings, dict) and self.settings_type is not None:
             settings = self.settings_type(**settings)
         self.settings = settings

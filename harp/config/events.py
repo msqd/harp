@@ -35,10 +35,9 @@ class FactoryBoundEvent(Event):
 
     name = "harp.config.bound"
 
-    def __init__(self, provider: Services, resolver: ProxyControllerResolver, settings: Configuration):
+    def __init__(self, provider: Services, resolver: ProxyControllerResolver):
         self.provider = provider
         self.resolver = resolver
-        self.settings = settings
 
 
 EVENT_FACTORY_BOUND = FactoryBoundEvent.name

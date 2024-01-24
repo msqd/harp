@@ -74,7 +74,6 @@ class KernelFactory:
             FactoryBoundEvent(
                 provider,
                 resolver,
-                self.configuration.settings,
             ),
         )
 
