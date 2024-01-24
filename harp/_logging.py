@@ -63,6 +63,7 @@ logging_config = {
     },
     "loggers": {
         "harp": {"level": os.environ.get("LOGGING_HARP", "INFO")},
+        "harp.core.event_dispatcher": {"level": os.environ.get("LOGGING_HARP_EVENTS", "WARNING")},
         "httpcore": {"level": os.environ.get("LOGGING_HTTPCORE", "INFO")},  # todo wrap in structlog
         "httpx": {"level": os.environ.get("LOGGING_HTTPX", "WARNING")},  # todo wrap in structlog
         "hypercorn.access": {"level": os.environ.get("LOGGING_HYPERCORN_ACCESS", "WARNING")},

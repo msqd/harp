@@ -19,11 +19,13 @@ import platform
 import sys
 
 from httpx import AsyncClient, TransportError
+from rodi import CannotResolveTypeException
 
 from harp import __version__, get_logger
 from harp.config import Application
 from harp.config.events import FactoryBoundEvent
 from harp.typing import GlobalSettings
+from harp.typing.storage import Storage
 
 logger = get_logger(__name__)
 
@@ -42,9 +44,17 @@ class TelemetryApplication(Application):
 
         self.count = 0
 
+        self.storage = None
+
     async def on_bound(self, event: FactoryBoundEvent):
         global_settings = event.provider.get(GlobalSettings)
         applications = ",".join(map(lambda x: x.split(".")[-1], global_settings["applications"]))
+
+        try:
+            self.storage = event.provider.get(Storage)
+        except CannotResolveTypeException:
+            self.storage = None
+
         try:
             await self.ping(event.provider.get(AsyncClient), applications=applications)
         except TransportError as exc:
@@ -62,7 +72,7 @@ class TelemetryApplication(Application):
                     # application version
                     "v": __version__,
                     # transaction count in last period (not implemented yet)
-                    "c": 1,
+                    "c": (await self.storage.get_usage()) if self.storage else 0,
                     # activity type
                     "t": "ping" if self.count else "start",
                     # incrementing counter

@@ -30,7 +30,7 @@ class TestTelemetryApplication(BaseTestForApplications):
             "f": ANY,
             "a": "foo,bar",
             "v": ANY,
-            "c": 1,
+            "c": 0,
             "i": 0,
             "t": "start",
         }
@@ -62,7 +62,7 @@ class TestTelemetryApplication(BaseTestForApplications):
             "f": ANY,
             "a": "oh,my",
             "v": ANY,
-            "c": 1,
+            "c": 0,
             "i": 0,
             "t": "start",
         }

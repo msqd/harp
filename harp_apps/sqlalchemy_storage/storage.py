@@ -1,9 +1,10 @@
 import asyncio
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Iterable, List, Optional, TypedDict, override
 
 from sqlalchemy import case, delete, func, insert, literal, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+from sqlalchemy.sql.functions import count
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
@@ -149,7 +150,7 @@ class SqlAlchemyStorage(Storage):
         filters=None,
         page: int = 1,
         cursor: str = "",
-    ) -> Results[TransactionModel]:
+    ):
         """
         Implements :meth:`Storage.find_transactions <harp.typing.storage.Storage.find_transactions>`.
 
@@ -252,6 +253,13 @@ class SqlAlchemyStorage(Storage):
                 for row in result.fetchall()
             ]
 
+    async def get_usage(self):
+        async with self.session() as session:
+            query = select(count(Transaction.id)).where(
+                Transaction.started_at > (datetime.now(UTC) - timedelta(hours=1)).replace(tzinfo=None)
+            )
+            return (await session.execute(query)).scalar_one_or_none()
+
     @override
     async def get_blob(self, blob_id):
         """
@@ -283,7 +291,7 @@ class SqlAlchemyStorage(Storage):
                     id=transaction.id,
                     type=transaction.type,
                     endpoint=transaction.endpoint,
-                    started_at=transaction.started_at.astimezone(UTC).replace(tzinfo=None),
+                    started_at=transaction.started_at.replace(tzinfo=None),
                     x_method=transaction.extras.get("method"),
                 ),
                 session=session,
@@ -291,11 +299,8 @@ class SqlAlchemyStorage(Storage):
 
             if len(transaction.tags):
                 await self.set_transaction_tags(db_transaction, transaction.tags)
-        return db_transaction
 
-    async def _on_transaction_started(self, event: TransactionEvent):
-        """Event handler to store the transaction in the database."""
-        return await self.create_transaction(event.transaction)
+            return db_transaction
 
     @override
     async def set_user_flag(self, *, transaction_id: str, username: str, flag: int, value=True):
@@ -344,6 +349,10 @@ class SqlAlchemyStorage(Storage):
                 await session.commit()
 
         return db_transaction
+
+    async def _on_transaction_started(self, event: TransactionEvent):
+        """Event handler to store the transaction in the database."""
+        return await self.create_transaction(event.transaction)
 
     async def _on_transaction_message(self, event: MessageEvent):
         transaction, message = event.transaction, event.message

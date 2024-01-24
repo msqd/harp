@@ -1,9 +1,6 @@
 from datetime import datetime
 from typing import Iterable, List, Optional, Protocol, TypedDict
 
-from harp.core.models.base import Results
-from harp.core.models.transactions import Transaction
-
 
 class TransactionsGroupedByTimeBucket(TypedDict):
     datetime: datetime
@@ -21,7 +18,7 @@ class Storage(Protocol):
         filters=None,
         page: int = 1,
         cursor: str = "",
-    ) -> Results[Transaction]:
+    ):
         """Find transactions, using optional filters, for example to be displayed in the dashboard."""
         ...
 
@@ -64,4 +61,8 @@ class Storage(Protocol):
 
     async def set_transaction_tags(self, transaction_or_id, tags: dict, /):
         """Set transaction tags."""
+        ...
+
+    async def get_usage(self):
+        """Get storage usage."""
         ...
