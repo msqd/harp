@@ -1,12 +1,9 @@
 from harp.asgi import ASGIRequest, ASGIResponse
-from harp.controllers import RoutingController
+from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.typing.storage import Storage
 from harp.views import json
 
 from ..utils.dates import generate_continuous_time_range, get_start_datetime_from_range
-
-# from harp.apps.dashboard.schemas import TransactionsByDate
-
 
 time_bucket_for_range = {
     "1h": "minute",
@@ -17,16 +14,13 @@ time_bucket_for_range = {
 }
 
 
+@RouterPrefix("/api/overview")
 class OverviewController(RoutingController):
-    prefix = "/api/overview"
-
     def __init__(self, *, storage: Storage, handle_errors=True, router=None):
         self.storage = storage
         super().__init__(handle_errors=handle_errors, router=router)
 
-    def configure(self):
-        self.router.route(self.prefix + "/")(self.get_overview_data)
-
+    @GetHandler("/")
     async def get_overview_data(self, request: ASGIRequest, response: ASGIResponse):
         # endpoint and range from request
         endpoint = request.query.get("endpoint")
