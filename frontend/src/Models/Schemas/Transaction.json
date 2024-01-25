@@ -37,7 +37,7 @@
       "default": {}
     }
   },
-  "description": "Transaction(*, id: str = None, type: str, endpoint: str = None, started_at: datetime.datetime, finished_at: datetime.datetime = None, elapsed: float = None, messages: List[harp.core.models.messages.Message] = None, tags: dict = <factory>, extras: dict = <factory>)",
+  "description": "Transaction(*, id: str = None, type: str, endpoint: str = None, started_at: datetime.datetime, finished_at: datetime.datetime = None, elapsed: float = None, messages: List[harp.models.messages.Message] = None, tags: dict = <factory>, extras: dict = <factory>)",
   "$schema": "http://json-schema.org/draft-06/schema#",
   "definitions": {
     "Message": {

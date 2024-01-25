@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 import pytest
 from whistle import AsyncEventDispatcher
 
-from harp.core.models import Transaction
+from harp.models import Transaction
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp_apps.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
 from harp_apps.sqlalchemy_storage.storage import SqlAlchemyStorage

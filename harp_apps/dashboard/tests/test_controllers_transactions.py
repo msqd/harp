@@ -4,7 +4,7 @@ import orjson
 import pytest
 from multidict import MultiDict
 
-from harp.core.asgi import ASGIRequest
+from harp.asgi import ASGIRequest
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin

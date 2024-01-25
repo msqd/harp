@@ -2,7 +2,7 @@ from config.common import Configuration
 from rodi import Container, Services
 from whistle import Event
 
-from harp.core.asgi.resolvers import ProxyControllerResolver
+from harp.asgi.resolvers import ProxyControllerResolver
 
 
 class FactoryBindEvent(Event):

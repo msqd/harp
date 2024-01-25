@@ -7,9 +7,9 @@ import pytest
 from httpx import AsyncClient
 
 from harp import Config
+from harp.asgi.kernel import ASGIKernel
+from harp.asgi.resolvers import ProxyControllerResolver
 from harp.config.factories.kernel_factory import KernelFactory
-from harp.core.asgi.kernel import ASGIKernel
-from harp.core.asgi.resolvers import ProxyControllerResolver
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.http import parametrize_with_http_methods, parametrize_with_http_status_codes
 from harp_apps.proxy.controllers import HttpProxyController

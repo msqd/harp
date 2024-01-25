@@ -2,7 +2,7 @@ import dataclasses
 import http.cookies
 from typing import Union
 
-from harp.core.types import Maybe
+from harp.types import Maybe
 
 
 def parse_cookie(cookie):

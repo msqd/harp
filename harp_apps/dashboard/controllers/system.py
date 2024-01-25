@@ -2,10 +2,10 @@ import re
 from copy import deepcopy
 
 from harp import __revision__, __version__
-from harp.core.asgi.messages import ASGIRequest, ASGIResponse
-from harp.core.controllers import RoutingController
-from harp.core.views.json import json
+from harp.asgi import ASGIRequest, ASGIResponse
+from harp.controllers import RoutingController
 from harp.typing.global_settings import GlobalSettings
+from harp.views.json import json
 
 from ..utils.dependencies import get_python_dependencies, parse_dependencies
 

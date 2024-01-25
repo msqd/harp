@@ -1,18 +1,15 @@
-from harp.core.asgi import ASGIRequest, ASGIResponse
-from harp.core.controllers import RoutingController
+from harp.asgi import ASGIRequest, ASGIResponse
+from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.typing.storage import Storage
 
 
+@RouterPrefix("/api/blobs")
 class BlobsController(RoutingController):
-    prefix = "/api/blobs"
-
     def __init__(self, *, storage: Storage, handle_errors=True, router=None):
         self.storage = storage
         super().__init__(handle_errors=handle_errors, router=router)
 
-    def configure(self):
-        self.router.route(self.prefix + "/{id}")(self.get)
-
+    @GetHandler("/{id}")
     async def get(self, request: ASGIRequest, response: ASGIResponse, id):
         blob = await self.storage.get_blob(id)
 

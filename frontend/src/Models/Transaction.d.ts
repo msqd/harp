@@ -6,7 +6,7 @@
  */
 
 /**
- * Transaction(*, id: str = None, type: str, endpoint: str = None, started_at: datetime.datetime, finished_at: datetime.datetime = None, elapsed: float = None, messages: List[harp.core.models.messages.Message] = None, tags: dict = <factory>, extras: dict = <factory>)
+ * Transaction(*, id: str = None, type: str, endpoint: str = None, started_at: datetime.datetime, finished_at: datetime.datetime = None, elapsed: float = None, messages: List[harp.models.messages.Message] = None, tags: dict = <factory>, extras: dict = <factory>)
  */
 export interface Transaction {
   id?: string

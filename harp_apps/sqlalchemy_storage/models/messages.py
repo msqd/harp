@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from harp.core.models.messages import Message as MessageModel
+from harp.models.messages import Message as MessageModel
 
 from .base import Base
 

@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, List
 from sqlalchemy import Column, DateTime, Float, ForeignKey, String, Table
 from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship, selectinload
 
-from harp.core.models.transactions import Transaction as TransactionModel
+from harp.models.transactions import Transaction as TransactionModel
 
 from .base import Base, Repository
 from .flags import FLAGS_BY_TYPE, UserFlag
