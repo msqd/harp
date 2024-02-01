@@ -18,3 +18,4 @@ external APIs.
   that the integration or removal cost is virtually zero, or even negative when considering the reduction in code you
   won't need to write.
 
+`Read the documentation <https://msqd.github.io/harp/>`_
