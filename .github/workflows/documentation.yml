@@ -48,7 +48,7 @@ jobs:
           
       - name: Build Sphinx Documentation
         run: |
-          make -C docs html
+          poetry run make -C docs html
         
       - name: Setup Pages
         uses: actions/configure-pages@v4
