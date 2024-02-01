@@ -42,7 +42,7 @@
     "react-query": "^3.39.3",
     "react-router-dom": "^6.21.3",
     "react-syntax-highlighter": "^15.5.0",
-    "recharts": "^2.10.4",
+    "recharts": "^2.11.0",
     "sort-by": "^1.2.0",
     "url-join": "^5.0.0"
   },
