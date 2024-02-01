@@ -1,12 +1,12 @@
 import math
 
 from harp import get_logger
-from harp.core.asgi.messages import ASGIRequest, ASGIResponse
-from harp.core.controllers import RoutingController
-from harp.core.models.transactions import Transaction
-from harp.core.views.json import json
+from harp.asgi import ASGIRequest, ASGIResponse
+from harp.controllers import GetHandler, RouteHandler, RouterPrefix, RoutingController
+from harp.models.transactions import Transaction
 from harp.settings import PAGE_SIZE
 from harp.typing.storage import Storage
+from harp.views.json import json
 from harp_apps.sqlalchemy_storage.models.flags import FLAGS_BY_NAME
 
 from ..filters import (
@@ -20,9 +20,8 @@ from ..filters import (
 logger = get_logger(__name__)
 
 
+@RouterPrefix("/api/transactions")
 class TransactionsController(RoutingController):
-    prefix = "/api/transactions"
-
     def __init__(self, *, storage: Storage, handle_errors=True, router=None):
         self.storage = storage
         self.facets = {
@@ -37,12 +36,7 @@ class TransactionsController(RoutingController):
 
         super().__init__(handle_errors=handle_errors, router=router)
 
-    def configure(self):
-        self.router.route(self.prefix + "/")(self.list)
-        self.router.route(self.prefix + "/filters")(self.filters)
-        self.router.route(self.prefix + "/{id}/flags/{flag}", methods=["PUT", "DELETE"])(self.set_user_flag)
-        self.router.route(self.prefix + "/{id}")(self.get)
-
+    @GetHandler("/filters")
     async def filters(self, request: ASGIRequest, response: ASGIResponse):
         await self.facets["endpoint"].refresh()
 
@@ -55,6 +49,7 @@ class TransactionsController(RoutingController):
             },
         )
 
+    @GetHandler("/")
     async def list(self, request: ASGIRequest, response: ASGIResponse):
         page = int(request.query.get("page", 1))
         if page < 1:
@@ -84,6 +79,7 @@ class TransactionsController(RoutingController):
             }
         )
 
+    @GetHandler("/{id}")
     async def get(self, request: ASGIRequest, response: ASGIResponse, id):
         transaction = await self.storage.get_transaction(
             id,
@@ -94,6 +90,7 @@ class TransactionsController(RoutingController):
             return json({"error": "Transaction not found"})
         return json(transaction.to_dict())
 
+    @RouteHandler("/{id}/flags/{flag}", methods=["PUT", "DELETE"])
     async def set_user_flag(self, request: ASGIRequest, response: ASGIResponse, id, flag):
         username = request.context.get("user", None) or "anonymous"
         flag_id = FLAGS_BY_NAME.get(flag)

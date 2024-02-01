@@ -8,9 +8,9 @@ from httpx import AsyncClient, codes
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.core.asgi.events import MessageEvent, TransactionEvent
-from harp.core.asgi.messages import ASGIRequest, ASGIResponse
-from harp.core.models.transactions import Transaction
+from harp.asgi import ASGIRequest, ASGIResponse
+from harp.asgi.events import MessageEvent, TransactionEvent
+from harp.models import Transaction
 from harp.utils.guids import generate_transaction_id_ksuid
 
 from .events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 class HttpProxyController:
     name: str = None
     """Controller name, also refered as endpoint name (for example in
-    :class:`Transaction <harp.core.models.transactions.Transaction>`)."""
+    :class:`Transaction <harp.models.Transaction>`)."""
 
     _dispatcher: Optional[IAsyncEventDispatcher] = None
     """Event dispatcher for this controller."""

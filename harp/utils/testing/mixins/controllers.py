@@ -2,11 +2,11 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from harp.core.asgi import ASGIKernel, ASGIRequest, ASGIResponse
-from harp.core.asgi.resolvers import ControllerResolver
-from harp.core.views.json import register as register_json_views
+from harp.asgi import ASGIKernel, ASGIRequest, ASGIResponse
+from harp.asgi.resolvers import ControllerResolver
 from harp.utils.bytes import ensure_bytes
 from harp.utils.testing.communicators import ASGICommunicator
+from harp.views.json import register as register_json_views
 
 
 async def create_asgi_context(body=None, /, *, method="GET", headers=None):

@@ -3,7 +3,7 @@ import json
 import os
 
 MODELS = [
-    "harp.core.models.transactions.Transaction",
+    "harp.models.Transaction",
 ]
 
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__))

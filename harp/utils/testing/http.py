@@ -2,7 +2,7 @@ import http
 
 import pytest
 
-from harp.core.types import Maybe, NotSet
+from harp.types import Maybe, NotSet
 from harp.utils.http import HTTP_METHODS
 
 

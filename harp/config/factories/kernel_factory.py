@@ -4,6 +4,9 @@ from rodi import Container
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
+from harp.asgi import ASGIKernel, ASGIRequest, ASGIResponse
+from harp.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_VIEW, RequestEvent
+from harp.asgi.resolvers import ProxyControllerResolver
 from harp.config import Config
 from harp.config.events import (
     EVENT_FACTORY_BIND,
@@ -13,13 +16,10 @@ from harp.config.events import (
     FactoryBoundEvent,
     FactoryBuildEvent,
 )
-from harp.core.asgi import ASGIKernel, ASGIRequest, ASGIResponse
-from harp.core.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_VIEW, RequestEvent
-from harp.core.asgi.resolvers import ProxyControllerResolver
-from harp.core.event_dispatcher import LoggingAsyncEventDispatcher
-from harp.core.views.json import on_json_response
+from harp.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.typing import GlobalSettings
 from harp.utils.network import Bind
+from harp.views.json import on_json_response
 
 logger = get_logger(__name__)
 

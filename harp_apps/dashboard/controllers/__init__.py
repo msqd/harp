@@ -6,8 +6,8 @@ from http_router import NotFoundError
 from httpx import AsyncClient
 
 from harp import ROOT_DIR, get_logger
-from harp.core.asgi import ASGIRequest, ASGIResponse
-from harp.core.controllers import RoutingController
+from harp.asgi import ASGIRequest, ASGIResponse
+from harp.controllers import RoutingController
 from harp.errors import ProxyConfigurationError
 from harp.typing.global_settings import GlobalSettings
 from harp.typing.storage import Storage

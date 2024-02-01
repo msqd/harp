@@ -2,17 +2,16 @@ import re
 from copy import deepcopy
 
 from harp import __revision__, __version__
-from harp.core.asgi.messages import ASGIRequest, ASGIResponse
-from harp.core.controllers import RoutingController
-from harp.core.views.json import json
+from harp.asgi import ASGIRequest, ASGIResponse
+from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.typing.global_settings import GlobalSettings
+from harp.views.json import json
 
 from ..utils.dependencies import get_python_dependencies, parse_dependencies
 
 
+@RouterPrefix("/api/system")
 class SystemController(RoutingController):
-    prefix = "/api/system"
-
     def __init__(self, *, settings: GlobalSettings, handle_errors=True, router=None):
         # a bit of scrambling for passwords etc.
         if "storage" in settings:
@@ -24,11 +23,7 @@ class SystemController(RoutingController):
 
         super().__init__(handle_errors=handle_errors, router=router)
 
-    def configure(self):
-        self.router.route(self.prefix + "/")(self.get)
-        self.router.route(self.prefix + "/settings")(self.get_settings)
-        self.router.route(self.prefix + "/dependencies")(self.get_dependencies)
-
+    @GetHandler("/")
     async def get(self, request: ASGIRequest, response: ASGIResponse):
         context = getattr(request, "context", {})
 
@@ -40,9 +35,11 @@ class SystemController(RoutingController):
             }
         )
 
+    @GetHandler("/settings")
     async def get_settings(self, request: ASGIRequest, response: ASGIResponse):
         return json(self.settings)
 
+    @GetHandler("/dependencies")
     async def get_dependencies(self, request: ASGIRequest, response: ASGIResponse):
         return json({"python": await self.__get_cached_python_dependencies()})
 
