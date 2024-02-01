@@ -29,26 +29,24 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
       
     steps:
-
     
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           submodules: true
+      
+      - name: Install poetry
+        run: pipx install poetry
         
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: 3.12
+          cache: 'poetry'
  
-      - name: Install dependencies
-        run: |
-          pipx install poetry
-          poetry install
+      - run: poetry install
           
-      - name: Build Sphinx Documentation
-        run: |
-          poetry run make -C docs html
+      - run: poetry run make -C docs html
         
       - name: Setup Pages
         uses: actions/configure-pages@v4
