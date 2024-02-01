@@ -142,4 +142,6 @@ RUN ln -s /var/lib/harp/data; \
 ENV DEFAULT__HARP__STORAGE__TYPE="sqlalchemy"
 ENV DEFAULT__HARP__STORAGE__URL="sqlite+aiosqlite:///data/harp.db"
 
+EXPOSE 4080
+
 ENTRYPOINT [ "/opt/venv/bin/python", "/opt/harp/bin/entrypoint" ]
