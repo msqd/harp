@@ -1,6 +1,9 @@
 {
   "type": "object",
-  "required": ["type", "started_at"],
+  "required": [
+    "type",
+    "started_at"
+  ],
   "properties": {
     "id": {
       "type": "string"
@@ -42,7 +45,13 @@
   "definitions": {
     "Message": {
       "type": "object",
-      "required": ["transaction_id", "kind", "summary", "headers", "body"],
+      "required": [
+        "transaction_id",
+        "kind",
+        "summary",
+        "headers",
+        "body"
+      ],
       "properties": {
         "id": {
           "type": "integer"

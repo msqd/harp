@@ -1,28 +1,36 @@
+import * as Bokeh from "@bokeh/bokehjs/build/js/lib"
+import { JsonItem } from "@bokeh/bokehjs/build/js/lib/embed"
+import { useEffect } from "react"
+
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
-import { useSystemSettingsQuery } from "Domain/System"
+import { useSystemTopologyQuery } from "Domain/System"
 import { Pane } from "mkui/Components/Pane"
 import { Tab } from "mkui/Components/Tabs"
 import { H2 } from "mkui/Components/Typography"
 
-import { Topology } from "./Components/Topology"
+import "@bokeh/bokehjs/build/js/lib/models/main"
+
+function Plot({ data }: { data: JsonItem }) {
+  useEffect(() => {
+    Bokeh.embed.embed_item(data, "testplot").catch((err) => {
+      throw err
+    })
+  }, [])
+
+  return <div id="testplot"></div>
+}
 
 export function SystemTopologyTabPanel() {
-  const query = useSystemSettingsQuery()
-  interface ProxyData {
-    endpoints?: { name: string; port: number; url: string; description?: string }[]
-  }
+  const query = useSystemTopologyQuery()
 
   return (
     <Tab.Panel>
       <OnQuerySuccess query={query}>
         {(query) => {
-          const proxyData = query.data.proxy as ProxyData
-          const endpoints = proxyData.endpoints
-          // const endpoints = [{ name: "tejshshshshshshshsst", port: 1234, url: "test" }]
           return (
             <Pane>
               <H2>Topology</H2>
-              <Topology endpoints={endpoints} />
+              <Plot data={query.data as JsonItem} />
             </Pane>
           )
         }}

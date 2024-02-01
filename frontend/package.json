@@ -22,6 +22,7 @@
     }
   },
   "dependencies": {
+    "@bokeh/bokehjs": "3.3.3",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
     "@headlessui/react": "1.7.17",

@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@bokeh/bokehjs':
+    specifier: 3.3.3
+    version: 3.3.3
   '@emotion/react':
     specifier: ^11.11.3
     version: 11.11.3(@types/react@18.2.45)(react@18.2.0)
@@ -455,6 +458,11 @@ packages:
       call-me-maybe: 1.0.2
       js-yaml: 4.1.0
     dev: true
+
+  /@bokeh/bokehjs@3.3.3:
+    resolution: {integrity: sha512-kB9fcq02KHicn3tdM+TFmHQdFfI6F6cxUXvJ6CxqfBajtjfgoeOqqOUyC2lxEZnfo/x6VxxIsgdd3deLrK+Uiw==}
+    engines: {node: '>=16.0', npm: '>=8.0'}
+    dev: false
 
   /@emotion/babel-plugin-jsx-pragmatic@0.2.1(@babel/core@7.23.6):
     resolution: {integrity: sha512-xy1SlgEJygAAIvIuC2idkGKJYa6v5iwoyILkvNKgk347bV+IImXrUat5Z86EmLGyWhEoTplVT9EHqTnHZG4HFw==}
