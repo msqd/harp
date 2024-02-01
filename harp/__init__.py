@@ -12,8 +12,8 @@ if os.path.exists(os.path.join(ROOT_DIR, "version.txt")):
     with open(os.path.join(ROOT_DIR, "version.txt")) as f:
         __version__ = f.read().strip()
 
-# override with current development version/revision if available
-if os.path.exists(os.path.join(ROOT_DIR, ".git")):
+# override with current development version/revision if available (disabled in CI, for docs)
+if not os.environ.get("CI", False) and os.path.exists(os.path.join(ROOT_DIR, ".git")):
     __revision__ = check_output(["git", "rev-parse", "HEAD"], cwd=ROOT_DIR).decode("utf-8").strip()
     try:
         __version__ = (
