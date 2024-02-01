@@ -1,20 +1,24 @@
 Harp — HTTP API Runtime Proxy
 =============================
 
-Harp runs as a sidecar proxy between your app and remote APIs to enhance their reliability, performances and security
-while adding observability and lowering the amount of userland code you'll need to write for common non-business needs.
+HARP operates as a sidecar proxy that sits between your application and remote APIs, elevating their reliability,
+performance, and security. By doing so, it also provides observability and reduces the amount of userland code required
+for common non-business functionalities.
 
-Harp can be used both as a development and a production tool, for different purposes.
+Whether you are in the development phase or ready for production, HARP serves as a versatile tool that caters to
+different purposes.
 
 .. figure:: images/tldr.png
    :alt: Basic proxy setup from the quickstart tl;dr
 
-The core runtime is mostly composed of a proxy, which can be configured to forward requests to different endpoints, and
-a dashboard, which can be used to observe the requests going through the proxy.
+The core runtime of HARP primarily consists of two components: a proxy and a dashboard. The proxy is responsible for
+forwarding requests to various endpoints, while the dashboard allows you to observe the requests passing through the
+proxy.
 
-All features are implemented as composable independant modules (called applications) and can be enabled, disabled,
-extended or arranged in different ways to fit your needs. Reasonable defaults will get you started in a breeze, but
-you get infinite flexibility to adapt the proxy to your needs.
+HARP adopts a modular approach, where all features are implemented as independent and composable modules known as
+"applications." These applications can be enabled, disabled, extended, or arranged in different configurations to suit
+your specific requirements. While HARP provides sensible defaults to get you up and running quickly, it also offers
+limitless flexibility, allowing you to customize the proxy according to your unique needs.
 
 
 Content
