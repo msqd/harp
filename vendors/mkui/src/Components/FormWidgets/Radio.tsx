@@ -8,7 +8,7 @@ export function Radio({
 }: {
   name: string
   label?: string | ReactNode
-  inputProps?: React.HTMLAttributes<HTMLInputElement>
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>
   containerProps?: React.HTMLAttributes<HTMLDivElement>
 }) {
   return (
