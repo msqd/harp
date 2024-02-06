@@ -16,9 +16,10 @@ const customJestConfig = {
     "^.+\\.(js|jsx|ts|tsx|mjs)$": ["babel-jest", babelConfigStyledComponents],
   },
   collectCoverageFrom: [
-    "src/**/*.{js,jsx,ts,tsx}",
+    "src/**/*.{js,jsx,tsx}",
     "!<rootDir>/node_modules/",
     "!<rootDir>/**/*.stories.{js,jsx,ts,tsx}",
+    "!<rootDir>/**/Styles/**/*.{js,jsx,ts,tsx}",
   ],
   coverageDirectory: "<rootDir>/coverage",
   testPathIgnorePatterns: ["<rootDir>/tests/"],
