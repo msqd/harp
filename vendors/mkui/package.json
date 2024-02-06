@@ -26,7 +26,7 @@
     "@ladle/react": "^4.0.2",
     "@playwright/test": "^1.41.1",
     "@types/bramus__pagination-sequence": "^1.2.2",
-    "@types/react": "^18.2.52",
+    "@types/react": "^18.2.54",
     "@types/react-dom": "^18.2.18",
     "@types/sync-fetch": "^0.4.3",
     "@vitejs/plugin-react": "^4.2.1",
