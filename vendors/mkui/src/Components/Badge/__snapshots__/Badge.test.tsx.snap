@@ -1,0 +1,12 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Badge renders correctly 1`] = `
+<DocumentFragment>
+  <span
+    class="css-pnlnkr"
+    color="green"
+  >
+    Test Badge
+  </span>
+</DocumentFragment>
+`;
