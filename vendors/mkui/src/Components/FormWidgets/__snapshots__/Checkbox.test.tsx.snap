@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Checkbox renders correctly 1`] = `
+<DocumentFragment>
+  <div
+    class="relative flex gap-x-3 cursor-pointer select-none"
+  >
+    <div
+      class="flex h-6 items-center"
+    >
+      <input
+        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+        id="test-checkbox"
+        name="test-checkbox"
+        type="checkbox"
+      />
+    </div>
+    <div
+      class="text-sm leading-6"
+    >
+      <label
+        class="font-medium text-gray-900 cursor-pointer"
+        for="test-checkbox"
+      >
+        test-checkbox
+      </label>
+    </div>
+  </div>
+</DocumentFragment>
+`;

@@ -2,6 +2,11 @@ import { render, screen, fireEvent } from "@testing-library/react"
 import { Checkbox } from "./Checkbox"
 
 describe("Checkbox", () => {
+  it("renders correctly", () => {
+    const { asFragment } = render(<Checkbox name="test-checkbox" />)
+    expect(asFragment()).toMatchSnapshot()
+  })
+
   it("renders the checkbox input and label", () => {
     render(<Checkbox name="test-checkbox" label="Test Checkbox" />)
 
