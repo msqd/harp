@@ -6,7 +6,7 @@ import { useSystemSettingsQuery } from "Domain/System"
 import { ButtonGroup } from "mkui/Components/ButtonGroup"
 import { Pane } from "mkui/Components/Pane"
 
-import { TransactionsOverview } from "./OverviewCharts"
+import { TransactionsOverview } from "./Containers/"
 
 export const OverviewPage = () => {
   const settingsQuery = useSystemSettingsQuery()
