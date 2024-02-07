@@ -11,4 +11,9 @@ describe("Button", () => {
     render(<Button data-testid="my-button">Test</Button>)
     expect(screen.getByTestId("my-button")).toBeInTheDocument()
   })
+
+  it("renders correctly", () => {
+    const { asFragment } = render(<Button>Test Button</Button>)
+    expect(asFragment()).toMatchSnapshot()
+  })
 })
