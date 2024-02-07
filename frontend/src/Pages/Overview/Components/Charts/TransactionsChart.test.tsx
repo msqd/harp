@@ -35,4 +35,15 @@ describe("TransactionsChart", () => {
     // Check that the component renders the correct data
     expect(screen.getByText("transactions")).toBeInTheDocument()
   })
+
+  it("renders correctly", () => {
+    type DataType = { datetime: string; count: number; errors: number }
+    const data: DataType[] = [
+      { datetime: "2022-01-01T00:00:00", count: 10, errors: 1 },
+      { datetime: "2022-01-01T01:00:00", count: 20, errors: 2 },
+    ]
+
+    const { container } = render(<TransactionsChart data={data} />)
+    expect(container).toMatchSnapshot()
+  })
 })
