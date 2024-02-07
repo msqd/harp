@@ -24,4 +24,9 @@ describe("ButtonGroup", () => {
     fireEvent.click(getByText("Button 3"))
     expect(setCurrent).toHaveBeenCalledWith("3")
   })
+
+  it("renders correctly", () => {
+    const { asFragment } = render(<ButtonGroup buttonProps={buttonProps} current="1" setCurrent={() => {}} />)
+    expect(asFragment()).toMatchSnapshot()
+  })
 })
