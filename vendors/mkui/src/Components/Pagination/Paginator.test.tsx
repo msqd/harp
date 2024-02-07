@@ -2,6 +2,11 @@ import { render, fireEvent } from "@testing-library/react"
 import { Paginator } from "./Paginator"
 
 describe("Paginator", () => {
+  it("renders correctly", () => {
+    const { asFragment } = render(<Paginator />)
+    expect(asFragment()).toMatchSnapshot()
+  })
+
   it("renders without crashing", () => {
     const { getAllByText } = render(<Paginator />)
     const previousButtons = getAllByText("Previous")
