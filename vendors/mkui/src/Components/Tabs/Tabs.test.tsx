@@ -2,6 +2,20 @@ import { render, screen } from "@testing-library/react"
 import { Tab } from "./Tabs"
 
 describe("Tab", () => {
+  it("renders correctly", () => {
+    const { asFragment } = render(
+      <Tab.Group>
+        <Tab.List>
+          <Tab>Tab 1</Tab>
+        </Tab.List>
+        <Tab.Panels>
+          <Tab.Panel>Panel 1</Tab.Panel>
+        </Tab.Panels>
+      </Tab.Group>,
+    )
+    expect(asFragment()).toMatchSnapshot()
+  })
+
   it("renders without crashing", () => {
     const { container } = render(
       <Tab.Group>
