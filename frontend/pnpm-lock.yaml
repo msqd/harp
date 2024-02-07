@@ -33,8 +33,8 @@ dependencies:
     specifier: ^1.10.0
     version: 1.10.0
   match-sorter:
-    specifier: ^6.3.3
-    version: 6.3.3
+    specifier: ^6.3.4
+    version: 6.3.4
   mkui:
     specifier: link:../vendors/mkui
     version: link:../vendors/mkui
@@ -3157,8 +3157,8 @@ packages:
       es5-ext: 0.10.62
     dev: true
 
-  /match-sorter@6.3.3:
-    resolution: {integrity: sha512-sgiXxrRijEe0SzHKGX4HouCpfHRPnqteH42UdMEW7BlWy990ZkzcvonJGv4Uu9WE7Y1f8Yocm91+4qFPCbmNww==}
+  /match-sorter@6.3.4:
+    resolution: {integrity: sha512-jfZW7cWS5y/1xswZo8VBOdudUiSd9nifYRWphc9M5D/ee4w4AoXLgBEdRbgVaxbMuagBPeUC5y2Hi8DO6o9aDg==}
     dependencies:
       '@babel/runtime': 7.23.8
       remove-accents: 0.5.0
@@ -3603,7 +3603,7 @@ packages:
     dependencies:
       '@babel/runtime': 7.23.6
       broadcast-channel: 3.7.0
-      match-sorter: 6.3.3
+      match-sorter: 6.3.4
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
     dev: false
