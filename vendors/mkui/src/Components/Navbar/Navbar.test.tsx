@@ -2,6 +2,11 @@ import { render, screen } from "@testing-library/react"
 import { Navbar } from "./Navbar"
 
 describe("Navbar", () => {
+  it("renders correctly", () => {
+    const { asFragment } = render(<Navbar />)
+    expect(asFragment()).toMatchSnapshot()
+  })
+
   it("renders without crashing", () => {
     render(<Navbar />)
     expect(screen.getByRole("navigation")).toBeInTheDocument()
