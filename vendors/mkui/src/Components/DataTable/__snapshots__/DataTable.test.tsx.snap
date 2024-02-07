@@ -1,0 +1,138 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DataTable renders correctly 1`] = `
+<DocumentFragment>
+  <table
+    class="css-1w1sink"
+  >
+    <thead>
+      <tr>
+        <th
+          class=" css-1dlftgi"
+          scope="col"
+        >
+          First name
+        </th>
+        <th
+          class=" css-1dlftgi"
+          scope="col"
+        >
+          Last name
+        </th>
+        <th
+          class=" css-1dlftgi"
+          scope="col"
+        >
+          Instrument
+        </th>
+        <th
+          class=" css-1dlftgi"
+          scope="col"
+        >
+          Country
+        </th>
+      </tr>
+    </thead>
+    <tbody
+      class="divide-y divide-gray-200 bg-white"
+    >
+      <tr
+        class="hover:bg-slate-50 cursor-pointer"
+      >
+        <td
+          class=" css-157hpf5"
+        >
+          John
+        </td>
+        <td
+          class=" css-157hpf5"
+        >
+          Coltrane
+        </td>
+        <td
+          class=" css-157hpf5"
+        >
+          Saxophone
+        </td>
+        <td
+          class=" css-157hpf5"
+        >
+          USA
+        </td>
+      </tr>
+      <tr
+        class="hover:bg-slate-50 cursor-pointer"
+      >
+        <td
+          class=" css-157hpf5"
+        >
+          Miles
+        </td>
+        <td
+          class=" css-157hpf5"
+        >
+          Davis
+        </td>
+        <td
+          class=" css-157hpf5"
+        >
+          Trumpet
+        </td>
+        <td
+          class=" css-157hpf5"
+        >
+          USA
+        </td>
+      </tr>
+      <tr
+        class="hover:bg-slate-50 cursor-pointer"
+      >
+        <td
+          class=" css-157hpf5"
+        >
+          Thelonious
+        </td>
+        <td
+          class=" css-157hpf5"
+        >
+          Monk
+        </td>
+        <td
+          class=" css-157hpf5"
+        >
+          Piano
+        </td>
+        <td
+          class=" css-157hpf5"
+        >
+          USA
+        </td>
+      </tr>
+      <tr
+        class="hover:bg-slate-50 cursor-pointer"
+      >
+        <td
+          class=" css-157hpf5"
+        >
+          Charles
+        </td>
+        <td
+          class=" css-157hpf5"
+        >
+          Mingus
+        </td>
+        <td
+          class=" css-157hpf5"
+        >
+          Double Bass
+        </td>
+        <td
+          class=" css-157hpf5"
+        >
+          USA
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;
