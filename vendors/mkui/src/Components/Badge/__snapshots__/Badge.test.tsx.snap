@@ -3,7 +3,7 @@
 exports[`Badge renders correctly 1`] = `
 <DocumentFragment>
   <span
-    class="css-pnlnkr"
+    class="css-1fcnutn-Badge e71yal90"
     color="green"
   >
     Test Badge

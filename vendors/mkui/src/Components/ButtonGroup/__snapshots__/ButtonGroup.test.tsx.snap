@@ -6,19 +6,19 @@ exports[`ButtonGroup renders correctly 1`] = `
     class="isolate inline-flex rounded-md shadow-sm"
   >
     <button
-      class="css-v7wx26"
+      class="css-2qs6ep-StyledButton e1e3ngs50"
       type="button"
     >
       Button 1
     </button>
     <button
-      class="css-1gwafep"
+      class="css-7qui5w-StyledButton e1e3ngs50"
       type="button"
     >
       Button 2
     </button>
     <button
-      class="css-1gwafep"
+      class="css-7qui5w-StyledButton e1e3ngs50"
       type="button"
     >
       Button 3

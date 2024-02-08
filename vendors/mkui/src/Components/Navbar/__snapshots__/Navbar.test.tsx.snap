@@ -3,11 +3,11 @@
 exports[`Navbar renders correctly 1`] = `
 <DocumentFragment>
   <nav
-    class="css-orfs66"
+    class="css-n72nzm-NavbarContainer e1r8cor32"
     data-headlessui-state=""
   >
     <div
-      class="css-f01hpo"
+      class="css-1u1eeve-DefaultNavbarWrapper e1r8cor31"
     >
       <div
         class="relative flex h-14 justify-between"
@@ -55,7 +55,7 @@ exports[`Navbar renders correctly 1`] = `
             class="flex flex-shrink-0 items-center p-2"
           >
             <a
-              class="css-4g6ai3"
+              class="css-greoy-DefaultLink e1r8cor30"
               to="/"
             >
               <img
@@ -69,7 +69,7 @@ exports[`Navbar renders correctly 1`] = `
             class="hidden sm:ml-6 sm:flex sm:space-x-8"
           >
             <a
-              class="inline-flex items-center border-b-4 px-2 pt-1 text-sm font-medium text-white border-primary css-4g6ai3"
+              class="inline-flex items-center border-b-4 px-2 pt-1 text-sm font-medium text-white border-primary css-greoy-DefaultLink e1r8cor30"
               to="/"
             >
               Home
