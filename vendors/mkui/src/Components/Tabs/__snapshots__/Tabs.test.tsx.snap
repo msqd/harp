@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`Tab > renders correctly 1`] = `
-<DocumentFragment>
+<div>
   <div
     aria-orientation="horizontal"
     class="css-tvjki7"
@@ -38,5 +38,5 @@ exports[`Tab > renders correctly 1`] = `
       Panel 1
     </div>
   </div>
-</DocumentFragment>
+</div>
 `;

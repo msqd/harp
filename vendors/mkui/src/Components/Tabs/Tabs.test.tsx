@@ -1,9 +1,10 @@
 import { render, screen } from "@testing-library/react"
 import { Tab } from "./Tabs"
+import { expect, describe, it } from "vitest"
 
 describe("Tab", () => {
   it("renders correctly", () => {
-    const { asFragment } = render(
+    const { container } = render(
       <Tab.Group>
         <Tab.List>
           <Tab>Tab 1</Tab>
@@ -13,7 +14,7 @@ describe("Tab", () => {
         </Tab.Panels>
       </Tab.Group>,
     )
-    expect(asFragment()).toMatchSnapshot()
+    expect(container).toMatchSnapshot()
   })
 
   it("renders without crashing", () => {
