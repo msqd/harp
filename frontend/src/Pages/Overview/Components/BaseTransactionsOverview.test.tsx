@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react"
-import { expect, describe, vi, it } from "vitest"
+import { expect, it } from "vitest"
 
 import { BaseTransactionsOverview, TransactionOverviewChartProps } from "./BaseTransactionsOverview"
 
