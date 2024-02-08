@@ -1,5 +1,6 @@
 import { render, fireEvent } from "@testing-library/react"
 import { DataTable, Column } from "./DataTable"
+import { expect, describe, it } from "vitest"
 
 describe("DataTable", () => {
   const types: Record<string, Column> = {

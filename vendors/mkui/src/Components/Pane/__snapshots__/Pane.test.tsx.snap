@@ -1,4 +1,12 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Pane > renders correctly 1`] = `
+<DocumentFragment>
+  <div
+    class="css-14upriz"
+  />
+</DocumentFragment>
+`;
 
 exports[`Pane renders correctly 1`] = `
 <DocumentFragment>

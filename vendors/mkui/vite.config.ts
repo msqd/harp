@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
 
@@ -38,5 +39,11 @@ export default defineConfig({
   preview: {
     open: "none",
     host: "127.0.0.1",
+  },
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: ["vitest.setup.ts"],
+    exclude: ["node_modules", "dist", ".idea", ".git", ".cache", "build"],
   },
 })
