@@ -3,8 +3,8 @@ import { Navbar } from "./Navbar"
 
 describe("Navbar", () => {
   it("renders correctly", () => {
-    const { asFragment } = render(<Navbar />)
-    expect(asFragment()).toMatchSnapshot()
+    const { container } = render(<Navbar />)
+    expect(container).toMatchSnapshot()
   })
 
   it("renders without crashing", () => {

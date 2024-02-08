@@ -1,6 +1,6 @@
 import { render, fireEvent } from "@testing-library/react"
 import { DataTable, Column } from "./DataTable"
-import { expect, describe, it } from "vitest"
+import { expect, describe, it, vi } from "vitest"
 
 describe("DataTable", () => {
   const types: Record<string, Column> = {
@@ -18,8 +18,8 @@ describe("DataTable", () => {
     { firstName: "Charles", lastName: "Mingus", instrument: "Double Bass", country: "USA" },
   ]
   it("renders correctly", () => {
-    const { asFragment } = render(<DataTable types={types} columns={columns} rows={rows} />)
-    expect(asFragment()).toMatchSnapshot()
+    const { container } = render(<DataTable types={types} columns={columns} rows={rows} />)
+    expect(container).toMatchSnapshot()
   })
 
   it("renders the table headers", () => {
@@ -44,14 +44,14 @@ describe("DataTable", () => {
   })
 
   it("calls onRowClick when a row is clicked", () => {
-    const onRowClick = jest.fn()
+    const onRowClick = vi.fn()
     const { getByText } = render(<DataTable types={types} columns={columns} rows={rows} onRowClick={onRowClick} />)
 
     fireEvent.click(getByText("John"))
     expect(onRowClick).toHaveBeenCalledWith(rows[0])
   })
   it("uses provided get function", () => {
-    const getfn = jest.fn((row: (typeof rows)[0]) => row.firstName)
+    const getfn = vi.fn((row: (typeof rows)[0]) => row.firstName)
 
     const types: Record<string, Column> = {
       firstName: { label: "First name", get: getfn },
@@ -68,7 +68,7 @@ describe("DataTable", () => {
   })
 
   it("uses provided format function", () => {
-    const formatfn = jest.fn((firstName: string) => firstName)
+    const formatfn = vi.fn((firstName: string) => firstName)
 
     const types: Record<string, Column> = {
       firstName: { label: "First name", format: formatfn },
@@ -92,7 +92,7 @@ describe("DataTable", () => {
     expect(getByText("-")).toBeInTheDocument()
   })
   it("allows specific onClick actions for column", () => {
-    const onClick = jest.fn()
+    const onClick = vi.fn()
     const types: Record<string, Column> = {
       firstName: { label: "First name", onClick },
       lastName: { label: "Last name" },
@@ -107,7 +107,7 @@ describe("DataTable", () => {
   })
 
   it("handles errors in get or format function and shows n/a", () => {
-    const getfn = jest.fn(() => {
+    const getfn = vi.fn(() => {
       throw new Error("test")
     })
 
@@ -118,7 +118,7 @@ describe("DataTable", () => {
       country: { label: "Country" },
     }
 
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {})
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
     const { getAllByText } = render(<DataTable types={types} columns={columns} rows={rows} />)
 

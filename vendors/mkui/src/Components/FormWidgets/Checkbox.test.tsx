@@ -4,8 +4,8 @@ import { expect, describe, it } from "vitest"
 
 describe("Checkbox", () => {
   it("renders correctly", () => {
-    const { asFragment } = render(<Checkbox name="test-checkbox" />)
-    expect(asFragment).toMatchSnapshot()
+    const { container } = render(<Checkbox name="test-checkbox" />)
+    expect(container).toMatchSnapshot()
   })
 
   it("renders the checkbox input and label", () => {

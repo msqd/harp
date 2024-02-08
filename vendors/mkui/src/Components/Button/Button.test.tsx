@@ -14,7 +14,7 @@ describe("Button", () => {
   })
 
   it("renders correctly", () => {
-    const { asFragment } = render(<Button>Test Button</Button>)
-    expect(asFragment).toMatchSnapshot()
+    const { container } = render(<Button>Test Button</Button>)
+    expect(container).toMatchSnapshot()
   })
 })

@@ -1,9 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Checkbox > renders correctly 1`] = `[Function]`;
-
-exports[`Checkbox renders correctly 1`] = `
-<DocumentFragment>
+exports[`Checkbox > renders correctly 1`] = `
+<div>
   <div
     class="relative flex gap-x-3 cursor-pointer select-none"
   >
@@ -28,5 +26,5 @@ exports[`Checkbox renders correctly 1`] = `
       </label>
     </div>
   </div>
-</DocumentFragment>
+</div>
 `;

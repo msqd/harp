@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react"
 import { Radio } from "./Radio"
+import { expect, describe, it } from "vitest"
 
 describe("Radio", () => {
   it("renders correctly", () => {
-    const { asFragment } = render(<Radio name="test-radio" />)
-    expect(asFragment()).toMatchSnapshot()
+    const { container } = render(<Radio name="test-radio" />)
+    expect(container).toMatchSnapshot()
   })
 
   it("renders the radio input and label", () => {
