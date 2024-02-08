@@ -2,6 +2,11 @@ import { render, screen } from "@testing-library/react"
 import { Radio } from "./Radio"
 
 describe("Radio", () => {
+  it("renders correctly", () => {
+    const { asFragment } = render(<Radio name="test-radio" />)
+    expect(asFragment()).toMatchSnapshot()
+  })
+
   it("renders the radio input and label", () => {
     render(<Radio name="test-radio" label="Test Radio" />)
 

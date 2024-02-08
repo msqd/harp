@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Pane renders correctly 1`] = `
+<DocumentFragment>
+  <div
+    class="css-s1f07n-Pane eqftyvq0"
+  />
+</DocumentFragment>
+`;

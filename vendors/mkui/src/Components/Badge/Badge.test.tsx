@@ -6,4 +6,9 @@ describe("Badge", () => {
     render(<Badge color="green">Hello, world!</Badge>)
     expect(screen.getByText("Hello, world!")).toBeInTheDocument()
   })
+
+  it("renders correctly", () => {
+    const { asFragment } = render(<Badge color="green">Test Badge</Badge>)
+    expect(asFragment()).toMatchSnapshot()
+  })
 })

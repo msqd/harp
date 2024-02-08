@@ -16,6 +16,10 @@ describe("DataTable", () => {
     { firstName: "Thelonious", lastName: "Monk", instrument: "Piano", country: "USA" },
     { firstName: "Charles", lastName: "Mingus", instrument: "Double Bass", country: "USA" },
   ]
+  it("renders correctly", () => {
+    const { asFragment } = render(<DataTable types={types} columns={columns} rows={rows} />)
+    expect(asFragment()).toMatchSnapshot()
+  })
 
   it("renders the table headers", () => {
     const { getByText } = render(<DataTable types={types} columns={columns} rows={rows} />)

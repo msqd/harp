@@ -1,0 +1,138 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DataTable renders correctly 1`] = `
+<DocumentFragment>
+  <table
+    class="css-1ozcbj-StyledTable e18ofnjy2"
+  >
+    <thead>
+      <tr>
+        <th
+          class=" css-1b2hx0f-StyledTh e18ofnjy1"
+          scope="col"
+        >
+          First name
+        </th>
+        <th
+          class=" css-1b2hx0f-StyledTh e18ofnjy1"
+          scope="col"
+        >
+          Last name
+        </th>
+        <th
+          class=" css-1b2hx0f-StyledTh e18ofnjy1"
+          scope="col"
+        >
+          Instrument
+        </th>
+        <th
+          class=" css-1b2hx0f-StyledTh e18ofnjy1"
+          scope="col"
+        >
+          Country
+        </th>
+      </tr>
+    </thead>
+    <tbody
+      class="divide-y divide-gray-200 bg-white"
+    >
+      <tr
+        class="hover:bg-slate-50 cursor-pointer"
+      >
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          John
+        </td>
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          Coltrane
+        </td>
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          Saxophone
+        </td>
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          USA
+        </td>
+      </tr>
+      <tr
+        class="hover:bg-slate-50 cursor-pointer"
+      >
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          Miles
+        </td>
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          Davis
+        </td>
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          Trumpet
+        </td>
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          USA
+        </td>
+      </tr>
+      <tr
+        class="hover:bg-slate-50 cursor-pointer"
+      >
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          Thelonious
+        </td>
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          Monk
+        </td>
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          Piano
+        </td>
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          USA
+        </td>
+      </tr>
+      <tr
+        class="hover:bg-slate-50 cursor-pointer"
+      >
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          Charles
+        </td>
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          Mingus
+        </td>
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          Double Bass
+        </td>
+        <td
+          class=" css-1p0hoir-StyledTd e18ofnjy0"
+        >
+          USA
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</DocumentFragment>
+`;
