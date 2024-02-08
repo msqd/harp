@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import react from "@vitejs/plugin-react";
 import {defineConfig} from "vite";
 import tsconfigPaths from "vite-tsconfig-paths"; // https://vitejs.dev/config/
@@ -63,4 +64,15 @@ export default defineConfig({
     ],
 
     server: {port: 4999},
+    test: {
+        coverage: {
+          provider: "v8",
+          reporter: ["html", "json", "text"],
+          exclude: ["node_modules", "dist", "build", "tests", ".ladle", "**/Styles", "**/*.{js,ts,cjs}", ".*"],
+        },
+        environment: "jsdom",
+        globals: true,
+        setupFiles: ["vitest.setup.ts"],
+        exclude: ["node_modules", "dist", ".idea", ".git", ".cache", "build", "tests"],
+      },
 });
