@@ -32,7 +32,7 @@
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.17",
     "cross-env": "^7.0.3",
-    "postcss": "^8.4.34",
+    "postcss": "^8.4.35",
     "prettier": "^3.2.5",
     "start-server-and-test": "^2.0.3",
     "sync-fetch": "^0.5.2",
