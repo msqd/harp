@@ -41,6 +41,11 @@ export default defineConfig({
     host: "127.0.0.1",
   },
   test: {
+    coverage: {
+      provider: "v8",
+      reporter: ["html", "json", "text"],
+      exclude: ["node_modules", "dist", "build", "tests", ".ladle", "**/Styles", "**/*.{js,ts,cjs}", ".*"],
+    },
     environment: "jsdom",
     globals: true,
     setupFiles: ["vitest.setup.ts"],
