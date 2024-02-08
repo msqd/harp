@@ -1,8 +1,21 @@
-const nextJest = require("next/jest")
-
-const babelConfigStyledComponents = {
-  presets: [["next/babel", { "preset-react": { runtime: "automatic" } }]],
-  plugins: ["babel-plugin-macros", ["babel-plugin-styled-components", { ssr: true }]],
+const babelConfigEmotion = {
+  presets: [
+    [
+      "@babel/preset-env",
+      {
+        targets: { node: "current" },
+      },
+    ],
+    [
+      "@babel/preset-react",
+      {
+        runtime: "automatic",
+        importSource: "@emotion/react",
+      },
+    ],
+    "@babel/preset-typescript",
+  ],
+  plugins: ["babel-plugin-macros", "@emotion/babel-plugin"],
 }
 
 /** @type {import('ts-jest').JestConfigWithTsJest} */
@@ -10,11 +23,14 @@ const customJestConfig = {
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
   testEnvironment: "jest-environment-jsdom",
   moduleNameMapper: {
-    "^@/components/(.*)$": "<rootDir>/components/$1",
+    "^@/components/(.*)$": "<rootDir>/src/components/$1",
+    "^@/pages/(.*)$": "<rootDir>/src/pages/$1",
   },
   transform: {
-    "^.+\\.(js|jsx|ts|tsx|mjs)$": ["babel-jest", babelConfigStyledComponents],
+    "^.+\\.(js|jsx|ts|tsx|mjs)$": ["babel-jest", babelConfigEmotion],
+    "^.+\\.svg$": "<rootDir>/svgTransform.js",
   },
+
   collectCoverageFrom: [
     "src/**/*.{js,jsx,tsx}",
     "!<rootDir>/node_modules/",
@@ -26,6 +42,4 @@ const customJestConfig = {
   coverageReporters: ["html", "text"],
 }
 
-const createJestConfig = nextJest({ dir: "./" })
-
-module.exports = createJestConfig(customJestConfig)
+module.exports = customJestConfig
