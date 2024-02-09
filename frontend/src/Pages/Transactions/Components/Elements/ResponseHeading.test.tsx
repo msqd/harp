@@ -15,7 +15,7 @@ describe("ResponseHeading", () => {
 
     render(<ResponseHeading response={response} />)
 
-    // Check that the status code is rendered
+    // Check that the status code and the reason are rendered
     expect(screen.getByText("200 OK")).toBeInTheDocument()
   })
 })

@@ -24,7 +24,6 @@ describe("Topology", () => {
 
   test("does not render without endpoints", () => {
     const { container } = render(<Topology />)
-    console.log(container)
     expect(container.firstChild).toBeNull()
   })
 })
