@@ -4,6 +4,8 @@ import { ErrorBoundary } from "react-error-boundary"
 import { QueryClient, QueryClientProvider } from "react-query"
 import { expect, it } from "vitest"
 
+import { Error } from "Components/Page"
+
 import { TransactionsOverview } from "./TransactionsOverview"
 
 // Create a new QueryClient instance for each test
