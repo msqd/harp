@@ -1,5 +1,5 @@
 import { ErrorBoundary } from "react-error-boundary"
-import { renderWithClient } from "test/utils"
+import { renderWithClient } from "tests/utils"
 import { expect, it } from "vitest"
 
 import { Error } from "Components/Page"

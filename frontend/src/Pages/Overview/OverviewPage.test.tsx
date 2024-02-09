@@ -1,4 +1,4 @@
-import { renderWithClient } from "test/utils"
+import { renderWithClient } from "tests/utils"
 import { expect, it } from "vitest"
 
 import { OverviewPage } from "./OverviewPage"
