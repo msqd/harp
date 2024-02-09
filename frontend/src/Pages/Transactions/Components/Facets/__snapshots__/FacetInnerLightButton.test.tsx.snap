@@ -1,0 +1,11 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FacetInnerLightButton > renders correctly 1`] = `
+<div>
+  <button
+    class="text-gray-400 mx-1 font-medium text-xs"
+  >
+    Test Label
+  </button>
+</div>
+`;
