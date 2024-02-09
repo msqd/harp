@@ -40,7 +40,7 @@
     "tailwindcss": "^3.4.1",
     "twin.macro": "^3.4.1",
     "typescript": "~5.2.2",
-    "vite": "^5.0.12"
+    "vite": "^5.1.0"
   },
   "main": "./src/index.ts",
   "exports": {
