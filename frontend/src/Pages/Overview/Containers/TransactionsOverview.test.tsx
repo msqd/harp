@@ -1,35 +1,15 @@
-import { render } from "@testing-library/react"
-import { ReactElement } from "react"
 import { ErrorBoundary } from "react-error-boundary"
-import { QueryClient, QueryClientProvider } from "react-query"
+import { renderWithClient } from "test/utils"
 import { expect, it } from "vitest"
 
 import { Error } from "Components/Page"
 
 import { TransactionsOverview } from "./TransactionsOverview"
 
-// Create a new QueryClient instance for each test
-const createWrapper = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
-    },
-  })
-
-  return ({ children }: { children: ReactElement }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  )
-}
-
 it("renders the title and data when the query is successful", async () => {
-  const Wrapper = createWrapper()
-  const { ...result } = render(
+  const result = renderWithClient(
     <ErrorBoundary FallbackComponent={Error}>
-      <Wrapper>
-        <TransactionsOverview endpoint="test" title="Test Title" className="test-class" timeRange="month" />
-      </Wrapper>
+      <TransactionsOverview endpoint="test" title="Test Title" className="test-class" timeRange="month" />
     </ErrorBoundary>,
   )
 
