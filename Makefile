@@ -104,10 +104,10 @@ test-ui-build: install-ui
 	cd vendors/mkui; pnpm build
 
 test-ui: test-ui-build
-	cd vendors/mkui; pnpm test:prod
+	cd vendors/mkui; pnpm test
 
 test-ui-update: test-ui-build
-	cd vendors/mkui; pnpm test:update
+	cd vendors/mkui; pnpm test:visual:update
 
 ########################################################################################################################
 # Benchmarks

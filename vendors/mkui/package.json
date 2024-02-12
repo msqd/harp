@@ -22,16 +22,24 @@
   },
   "devDependencies": {
     "@babel/plugin-transform-react-jsx": "^7.23.4",
+    "@babel/preset-env": "^7.23.9",
+    "@babel/preset-react": "^7.23.3",
+    "@babel/preset-typescript": "^7.23.3",
     "@emotion/babel-plugin-jsx-pragmatic": "^0.2.1",
     "@ladle/react": "^4.0.2",
     "@playwright/test": "^1.41.1",
+    "@testing-library/jest-dom": "^6.4.2",
+    "@testing-library/react": "^14.2.1",
     "@types/bramus__pagination-sequence": "^1.2.2",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.18",
     "@types/sync-fetch": "^0.4.3",
     "@vitejs/plugin-react": "^4.2.1",
+    "@vitest/coverage-v8": "^1.2.2",
     "autoprefixer": "^10.4.17",
     "cross-env": "^7.0.3",
+    "jest-environment-jsdom": "^29.7.0",
+    "jsdom": "^24.0.0",
     "postcss": "^8.4.34",
     "prettier": "^3.2.5",
     "start-server-and-test": "^2.0.3",
@@ -40,7 +48,8 @@
     "tailwindcss": "^3.4.1",
     "twin.macro": "^3.4.1",
     "typescript": "~5.2.2",
-    "vite": "^5.0.12"
+    "vite": "^5.0.12",
+    "vitest": "^1.2.2"
   },
   "main": "./src/index.ts",
   "exports": {
@@ -56,10 +65,11 @@
     "serve": "pnpm serve:dev",
     "serve:dev": "ladle serve -p 61110",
     "serve:prod": "ladle preview -p 61110",
-    "test": "pnpm test:dev",
-    "test:all": "pnpm test:dev && pnpm test:prod",
-    "test:dev": "cross-env TYPE=dev pnpm exec playwright test",
-    "test:prod": "cross-env TYPE=prod pnpm exec playwright test",
-    "test:update": "cross-env TYPE=update pnpm exec playwright test -u"
+    "test:unit": "vitest run",
+    "test:visual": "pnpm test:visual:dev",
+    "test:visual:dev": "cross-env TYPE=dev pnpm exec playwright test",
+    "test:visual:prod": "cross-env TYPE=prod pnpm exec playwright test",
+    "test:visual:update": "cross-env TYPE=update pnpm exec playwright test -u",
+    "test": "pnpm test:unit && pnpm test:visual"
   }
 }
