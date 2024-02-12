@@ -46,4 +46,8 @@ export const handlers: RequestHandler[] = [
   http.get("/api/system", () => {
     return HttpResponse.json({ version: "test version", revision: "test revision" })
   }),
+
+  http.get("/api/system/dependencies", () => {
+    return HttpResponse.json({ python: ["numpy", "pandas"] })
+  }),
 ]
