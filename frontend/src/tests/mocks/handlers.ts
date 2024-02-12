@@ -42,4 +42,8 @@ export const handlers: RequestHandler[] = [
   http.get("/api/system/settings", () => {
     return HttpResponse.json(mockSettingsData)
   }),
+
+  http.get("/api/system", () => {
+    return HttpResponse.json({ version: "test version", revision: "test revision" })
+  }),
 ]
