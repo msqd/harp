@@ -68,7 +68,7 @@ export default defineConfig({
         coverage: {
           provider: "v8",
           reporter: ["html", "json", "text"],
-          exclude: ["node_modules", "dist", "build", "tests", ".ladle", "**/Styles", "**/*.{js,ts,cjs}", ".*"],
+          exclude: ["node_modules", "dist", "build", "src/tests", ".ladle", "**/Styles", "**/*.{js,ts,cjs}", "**/Domain"],
           reportsDirectory: './src/tests/coverage'
         },
         environment: "jsdom",
