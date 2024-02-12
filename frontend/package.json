@@ -9,7 +9,8 @@
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "babelMacros": {
     "twin": {
@@ -55,6 +56,7 @@
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "@vitejs/plugin-react": "^4.2.1",
+    "@vitest/coverage-v8": "^1.2.2",
     "autoprefixer": "^10.4.16",
     "babel-plugin-macros": "^3.1.0",
     "babel-plugin-prismjs": "^2.1.0",
