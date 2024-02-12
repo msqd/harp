@@ -19,7 +19,6 @@ export default defineConfig({
                         "@headlessui/react",
                         "@heroicons/react",
                         "@emotion/react",
-                        "@emotion/react",
                     ],
                     sentry: ["@sentry/browser"],
                     dateFns: ["date-fns"],
