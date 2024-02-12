@@ -1,0 +1,35 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Page > renders without error 1`] = `
+<div>
+  <main>
+    <div
+      class="mt-4 mb-4"
+    >
+      <h1
+        class="css-9lrcch"
+      >
+        Test Title
+      </h1>
+      <p
+        class="css-11bp3eh"
+      >
+        Test Description
+      </p>
+    </div>
+    <div
+      class="mt-4"
+    >
+      <div
+        class="overflow-x-auto sm:-mx-6 lg:-mx-8"
+      >
+        <section
+          class="inline-block min-w-full max-w-full py-2 align-middle sm:px-6 lg:px-8"
+        >
+          <div />
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+`;
