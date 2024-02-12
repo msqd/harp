@@ -1,10 +1,14 @@
 import { render, screen } from "@testing-library/react"
 import { ErrorBoundary } from "react-error-boundary"
-import { describe, test, expect } from "vitest"
+import { describe, test, expect, vi, afterEach } from "vitest"
 
 import { Page, Error as ErrorFunc } from "./Page"
 
 describe("Page", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   test("renders without error", () => {
     const { container } = render(<Page children={<div />} title="Test Title" description="Test Description" />)
     expect(container).toMatchSnapshot()
@@ -17,6 +21,7 @@ describe("Page", () => {
   })
 
   test("renders Error component when child throws error", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
     const Child = () => {
       throw new Error("Test error")
     }
