@@ -27,6 +27,9 @@ export default defineConfig({
             },
         },
     },
+    resolve: {
+        dedupe: ["@headlessui/react"],
+      },
     optimizeDeps: {
         esbuildOptions: {
             target: "es2020",
