@@ -2,8 +2,78 @@ import { http, HttpResponse, RequestHandler } from "msw"
 
 import { KeyValueSettings } from "Domain/System/useSystemSettingsQuery"
 import { OverviewData } from "Models/Overview"
+import { Transaction, Message } from "Models/Transaction"
+import { mock } from "node:test"
 
-const mockData: OverviewData = {
+const mockTransaction1: Transaction = {
+  id: "ABCD1234",
+  type: "GET",
+  endpoint: "endpoint1",
+  started_at: "2021-08-20T20:00:00Z",
+  finished_at: "2021-08-20T20:01:00Z",
+  elapsed: 60,
+  messages: [
+    {
+      id: 1,
+      transaction_id: "ABCD1234",
+      kind: "request",
+      summary: "GET / HTTP/1.1",
+      headers: "headers1",
+      body: "body1",
+      created_at: "2021-08-20T20:00:00Z",
+    } as Message,
+    {
+      id: 2,
+      transaction_id: "ABCD1234",
+      kind: "response",
+      summary: "HTTP/1.1 200 OK",
+      headers: "headers2",
+      body: "body2",
+      created_at: "2021-08-20T20:01:00Z",
+    } as Message,
+  ],
+
+  tags: {},
+  extras: {},
+}
+
+const mockTransaction2: Transaction = {
+  id: "EFGH5678",
+  type: "GET",
+  endpoint: "endpoint1",
+  started_at: "2021-08-20T20:00:00Z",
+  finished_at: "2021-08-20T20:01:00Z",
+  elapsed: 60,
+  messages: [
+    {
+      id: 1,
+      transaction_id: "EFGH5678",
+      kind: "request",
+      summary: "GET / HTTP/1.1",
+      headers: "headers1",
+      body: "body1",
+      created_at: "2021-08-20T20:00:00Z",
+    } as Message,
+    {
+      id: 2,
+      transaction_id: "EFGH5678",
+      kind: "response",
+      summary: "HTTP/1.1 200 OK",
+      headers: "headers2",
+      body: "body2",
+      created_at: "2021-08-20T20:01:00Z",
+    } as Message,
+  ],
+
+  tags: {},
+  extras: {},
+}
+const mockTransactions: { [key: string]: Transaction } = {
+  ABCD1234: mockTransaction1,
+  EFGH5678: mockTransaction2,
+}
+
+const mockOverviewData: OverviewData = {
   errors: {
     count: 10,
     rate: 0.5,
@@ -86,7 +156,7 @@ const mockBlobsResponses: { [key: string]: BlobResponse } = {
 }
 export const handlers: RequestHandler[] = [
   http.get("/api/overview", () => {
-    return HttpResponse.json(mockData)
+    return HttpResponse.json(mockOverviewData)
   }),
 
   http.get("/api/system/settings", () => {
@@ -120,5 +190,10 @@ export const handlers: RequestHandler[] = [
     } else {
       return HttpResponse.json({ error: "Blob not found" }, { status: 404 })
     }
+  }),
+
+  http.get("/api/transactions/:id", ({ params }) => {
+    const id = params.id as string
+    return HttpResponse.json(mockTransactions[id])
   }),
 ]
