@@ -1,32 +1,32 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`DataTable renders correctly 1`] = `
-<DocumentFragment>
+exports[`DataTable > renders correctly 1`] = `
+<div>
   <table
-    class="css-1ozcbj-StyledTable e18ofnjy2"
+    class="css-1w1sink"
   >
     <thead>
       <tr>
         <th
-          class=" css-1b2hx0f-StyledTh e18ofnjy1"
+          class=" css-1dlftgi"
           scope="col"
         >
           First name
         </th>
         <th
-          class=" css-1b2hx0f-StyledTh e18ofnjy1"
+          class=" css-1dlftgi"
           scope="col"
         >
           Last name
         </th>
         <th
-          class=" css-1b2hx0f-StyledTh e18ofnjy1"
+          class=" css-1dlftgi"
           scope="col"
         >
           Instrument
         </th>
         <th
-          class=" css-1b2hx0f-StyledTh e18ofnjy1"
+          class=" css-1dlftgi"
           scope="col"
         >
           Country
@@ -40,22 +40,22 @@ exports[`DataTable renders correctly 1`] = `
         class="hover:bg-slate-50 cursor-pointer"
       >
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           John
         </td>
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           Coltrane
         </td>
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           Saxophone
         </td>
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           USA
         </td>
@@ -64,22 +64,22 @@ exports[`DataTable renders correctly 1`] = `
         class="hover:bg-slate-50 cursor-pointer"
       >
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           Miles
         </td>
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           Davis
         </td>
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           Trumpet
         </td>
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           USA
         </td>
@@ -88,22 +88,22 @@ exports[`DataTable renders correctly 1`] = `
         class="hover:bg-slate-50 cursor-pointer"
       >
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           Thelonious
         </td>
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           Monk
         </td>
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           Piano
         </td>
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           USA
         </td>
@@ -112,27 +112,27 @@ exports[`DataTable renders correctly 1`] = `
         class="hover:bg-slate-50 cursor-pointer"
       >
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           Charles
         </td>
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           Mingus
         </td>
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           Double Bass
         </td>
         <td
-          class=" css-1p0hoir-StyledTd e18ofnjy0"
+          class=" css-157hpf5"
         >
           USA
         </td>
       </tr>
     </tbody>
   </table>
-</DocumentFragment>
+</div>
 `;

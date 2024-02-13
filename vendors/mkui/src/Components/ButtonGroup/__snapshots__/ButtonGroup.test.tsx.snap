@@ -1,28 +1,28 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`ButtonGroup renders correctly 1`] = `
-<DocumentFragment>
+exports[`ButtonGroup > renders correctly 1`] = `
+<div>
   <span
     class="isolate inline-flex rounded-md shadow-sm"
   >
     <button
-      class="css-2qs6ep-StyledButton e1e3ngs50"
+      class="css-v7wx26"
       type="button"
     >
       Button 1
     </button>
     <button
-      class="css-7qui5w-StyledButton e1e3ngs50"
+      class="css-1gwafep"
       type="button"
     >
       Button 2
     </button>
     <button
-      class="css-7qui5w-StyledButton e1e3ngs50"
+      class="css-1gwafep"
       type="button"
     >
       Button 3
     </button>
   </span>
-</DocumentFragment>
+</div>
 `;

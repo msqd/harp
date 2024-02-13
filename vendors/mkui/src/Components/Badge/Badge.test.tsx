@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import { Badge } from "./Badge"
+import { expect, describe, it } from "vitest"
 
 describe("Badge", () => {
   it("renders its children correctly", () => {
@@ -8,7 +9,7 @@ describe("Badge", () => {
   })
 
   it("renders correctly", () => {
-    const { asFragment } = render(<Badge color="green">Test Badge</Badge>)
-    expect(asFragment()).toMatchSnapshot()
+    const { container } = render(<Badge color="green">Test Badge</Badge>)
+    expect(container).toMatchSnapshot()
   })
 })

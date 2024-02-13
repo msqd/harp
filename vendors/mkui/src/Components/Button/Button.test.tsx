@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import { Button } from "./Button"
+import { expect, describe, it } from "vitest"
 
 describe("Button", () => {
   it("renders its children correctly", () => {
@@ -13,7 +14,7 @@ describe("Button", () => {
   })
 
   it("renders correctly", () => {
-    const { asFragment } = render(<Button>Test Button</Button>)
-    expect(asFragment()).toMatchSnapshot()
+    const { container } = render(<Button>Test Button</Button>)
+    expect(container).toMatchSnapshot()
   })
 })

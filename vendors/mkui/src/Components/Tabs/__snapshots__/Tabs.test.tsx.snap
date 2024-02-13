@@ -1,10 +1,10 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Tab renders correctly 1`] = `
-<DocumentFragment>
+exports[`Tab > renders correctly 1`] = `
+<div>
   <div
     aria-orientation="horizontal"
-    class="css-6cf2cn-List e15jh2do3"
+    class="css-tvjki7"
     role="tablist"
   >
     <button
@@ -18,18 +18,18 @@ exports[`Tab renders correctly 1`] = `
       type="button"
     >
       <span
-        class="css-1my20wo-InnerTab e15jh2do2"
+        class="css-7lc9z"
       >
         Tab 1
       </span>
     </button>
   </div>
   <div
-    class="css-1lmq0kc-Panels e15jh2do1"
+    class="css-ii4d2e"
   >
     <div
       aria-labelledby="headlessui-tabs-tab-:r0:"
-      class="css-19qtj8m-Panel e15jh2do0"
+      class="css-hu3rmt"
       data-headlessui-state="selected"
       id="headlessui-tabs-panel-:r1:"
       role="tabpanel"
@@ -38,5 +38,5 @@ exports[`Tab renders correctly 1`] = `
       Panel 1
     </div>
   </div>
-</DocumentFragment>
+</div>
 `;

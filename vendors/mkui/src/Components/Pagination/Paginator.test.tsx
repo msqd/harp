@@ -1,10 +1,11 @@
 import { render, fireEvent } from "@testing-library/react"
 import { Paginator } from "./Paginator"
+import { expect, describe, it, vi } from "vitest"
 
 describe("Paginator", () => {
   it("renders correctly", () => {
-    const { asFragment } = render(<Paginator />)
-    expect(asFragment()).toMatchSnapshot()
+    const { container } = render(<Paginator />)
+    expect(container).toMatchSnapshot()
   })
 
   it("renders without crashing", () => {
@@ -17,7 +18,7 @@ describe("Paginator", () => {
 
   describe("when Previous button is clicked", () => {
     it("calls setPage with correct value when previous span clicked", () => {
-      const setPage = jest.fn()
+      const setPage = vi.fn()
       const { getByText } = render(<Paginator current={2} setPage={setPage} />)
 
       fireEvent.click(getByText("Previous", { selector: "span" }))
@@ -25,7 +26,7 @@ describe("Paginator", () => {
     })
 
     it("calls setPage with correct value when previous anchor clicked", () => {
-      const setPage = jest.fn()
+      const setPage = vi.fn()
       const { getByText } = render(<Paginator current={2} setPage={setPage} />)
 
       fireEvent.click(getByText("Previous", { selector: "a" }))
@@ -35,7 +36,7 @@ describe("Paginator", () => {
 
   describe("when Next button is clicked", () => {
     it("calls setPage with correct value when next span clicked", () => {
-      const setPage = jest.fn()
+      const setPage = vi.fn()
       const { getByText } = render(<Paginator current={2} setPage={setPage} />)
 
       fireEvent.click(getByText("Next", { selector: "span" }))
@@ -43,7 +44,7 @@ describe("Paginator", () => {
     })
 
     it("calls setPage with correct value when next anchor clicked", () => {
-      const setPage = jest.fn()
+      const setPage = vi.fn()
       const { getByText } = render(<Paginator current={2} setPage={setPage} />)
 
       fireEvent.click(getByText("Next", { selector: "a" }))

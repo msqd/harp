@@ -1,11 +1,11 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Button renders correctly 1`] = `
-<DocumentFragment>
+exports[`Button > renders correctly 1`] = `
+<div>
   <button
-    class="css-1eure9w-primary ev23jjw1"
+    class="css-1fo8x6t"
   >
     Test Button
   </button>
-</DocumentFragment>
+</div>
 `;

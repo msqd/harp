@@ -1,5 +1,6 @@
 import { render, fireEvent, screen } from "@testing-library/react"
 import { ButtonGroup } from "./ButtonGroup"
+import { expect, describe, it, vi } from "vitest"
 
 describe("ButtonGroup", () => {
   const buttonProps = [
@@ -19,14 +20,14 @@ describe("ButtonGroup", () => {
   })
 
   it("calls setCurrent with the correct key when a button is clicked", () => {
-    const setCurrent = jest.fn()
+    const setCurrent = vi.fn()
     const { getByText } = render(<ButtonGroup buttonProps={buttonProps} current="1" setCurrent={setCurrent} />)
     fireEvent.click(getByText("Button 3"))
     expect(setCurrent).toHaveBeenCalledWith("3")
   })
 
   it("renders correctly", () => {
-    const { asFragment } = render(<ButtonGroup buttonProps={buttonProps} current="1" setCurrent={() => {}} />)
-    expect(asFragment()).toMatchSnapshot()
+    const { container } = render(<ButtonGroup buttonProps={buttonProps} current="1" setCurrent={() => {}} />)
+    expect(container).toMatchSnapshot()
   })
 })

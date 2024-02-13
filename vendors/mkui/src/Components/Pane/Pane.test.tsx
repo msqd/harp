@@ -1,10 +1,11 @@
 import { render } from "@testing-library/react"
 import { Pane } from "./Pane"
+import { expect, describe, it } from "vitest"
 
 describe("Pane", () => {
   it("renders correctly", () => {
-    const { asFragment } = render(<Pane />)
-    expect(asFragment()).toMatchSnapshot()
+    const { container } = render(<Pane />)
+    expect(container).toMatchSnapshot()
   })
 
   it("renders without crashing", () => {

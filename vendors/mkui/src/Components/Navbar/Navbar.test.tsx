@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react"
 import { Navbar } from "./Navbar"
+import { expect, describe, it } from "vitest"
 
 describe("Navbar", () => {
   it("renders correctly", () => {
-    const { asFragment } = render(<Navbar />)
-    expect(asFragment()).toMatchSnapshot()
+    const { container } = render(<Navbar />)
+    expect(container).toMatchSnapshot()
   })
 
   it("renders without crashing", () => {

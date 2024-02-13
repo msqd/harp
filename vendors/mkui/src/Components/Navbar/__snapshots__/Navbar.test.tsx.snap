@@ -1,13 +1,13 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Navbar renders correctly 1`] = `
-<DocumentFragment>
+exports[`Navbar > renders correctly 1`] = `
+<div>
   <nav
-    class="css-n72nzm-NavbarContainer e1r8cor32"
+    class="css-orfs66"
     data-headlessui-state=""
   >
     <div
-      class="css-1u1eeve-DefaultNavbarWrapper e1r8cor31"
+      class="css-f01hpo"
     >
       <div
         class="relative flex h-14 justify-between"
@@ -55,13 +55,13 @@ exports[`Navbar renders correctly 1`] = `
             class="flex flex-shrink-0 items-center p-2"
           >
             <a
-              class="css-greoy-DefaultLink e1r8cor30"
+              class="css-4g6ai3"
               to="/"
             >
               <img
                 alt="User Interface"
                 class="h-8 w-auto"
-                src="[object Object]"
+                src="/src/Components/Navbar/Assets/logo.svg"
               />
             </a>
           </div>
@@ -69,7 +69,7 @@ exports[`Navbar renders correctly 1`] = `
             class="hidden sm:ml-6 sm:flex sm:space-x-8"
           >
             <a
-              class="inline-flex items-center border-b-4 px-2 pt-1 text-sm font-medium text-white border-primary css-greoy-DefaultLink e1r8cor30"
+              class="inline-flex items-center border-b-4 px-2 pt-1 text-sm font-medium text-white border-primary css-4g6ai3"
               to="/"
             >
               Home
@@ -79,5 +79,5 @@ exports[`Navbar renders correctly 1`] = `
       </div>
     </div>
   </nav>
-</DocumentFragment>
+</div>
 `;
