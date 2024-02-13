@@ -1,0 +1,588 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renders the title and data when the query is successful 1`] = `
+<div>
+  <aside
+    class="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm css-o0j4j7"
+  >
+    <div
+      class="px-4 py-3"
+    >
+      <fieldset
+        name="endpoint"
+      >
+        <legend
+          class="flex w-full cursor-pointer css-9ho516"
+        >
+          <span
+            class="grow"
+          >
+            Endpoint
+          </span>
+          <svg
+            aria-hidden="true"
+            class="h-4 w-4 text-gray-600"
+            data-slot="icon"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m4.5 15.75 7.5-7.5 7.5 7.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </legend>
+        <div
+          class="mt-2 space-y-2 "
+        >
+          <div
+            class="relative flex gap-x-3 cursor-pointer select-none"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="endpoint1"
+                name="endpoint1"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900 cursor-pointer"
+                for="endpoint1"
+              >
+                <div>
+                  endpoint1
+                  <span
+                    class="text-xs text-gray-400"
+                  >
+                     (
+                    10
+                    )
+                  </span>
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div
+            class="relative flex gap-x-3 cursor-pointer select-none"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="endpoint2"
+                name="endpoint2"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900 cursor-pointer"
+                for="endpoint2"
+              >
+                <div>
+                  endpoint2
+                  <span
+                    class="text-xs text-gray-400"
+                  >
+                     (
+                    20
+                    )
+                  </span>
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+    <div
+      class="px-4 py-3"
+    >
+      <fieldset
+        name="method"
+      >
+        <legend
+          class="flex w-full cursor-pointer css-9ho516"
+        >
+          <span
+            class="grow"
+          >
+            Request Method
+          </span>
+          <svg
+            aria-hidden="true"
+            class="h-4 w-4 text-gray-600"
+            data-slot="icon"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m4.5 15.75 7.5-7.5 7.5 7.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </legend>
+        <div
+          class="mt-2 space-y-2 "
+        >
+          <div
+            class="relative flex gap-x-3 cursor-pointer select-none"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="GET"
+                name="GET"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900 cursor-pointer"
+                for="GET"
+              >
+                <div>
+                  GET
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div
+            class="relative flex gap-x-3 cursor-pointer select-none"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="POST"
+                name="POST"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900 cursor-pointer"
+                for="POST"
+              >
+                <div>
+                  POST
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div
+            class="relative flex gap-x-3 cursor-pointer select-none"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="PUT"
+                name="PUT"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900 cursor-pointer"
+                for="PUT"
+              >
+                <div>
+                  PUT
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div
+            class="relative flex gap-x-3 cursor-pointer select-none"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="DELETE"
+                name="DELETE"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900 cursor-pointer"
+                for="DELETE"
+              >
+                <div>
+                  DELETE
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div
+            class="relative flex gap-x-3 cursor-pointer select-none"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="PATCH"
+                name="PATCH"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900 cursor-pointer"
+                for="PATCH"
+              >
+                <div>
+                  PATCH
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+    <div
+      class="px-4 py-3"
+    >
+      <fieldset
+        name="status"
+      >
+        <legend
+          class="flex w-full cursor-pointer css-9ho516"
+        >
+          <span
+            class="grow"
+          >
+            Response Status
+          </span>
+          <svg
+            aria-hidden="true"
+            class="h-4 w-4 text-gray-600"
+            data-slot="icon"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m4.5 15.75 7.5-7.5 7.5 7.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </legend>
+        <div
+          class="mt-2 space-y-2 "
+        >
+          <div
+            class="relative flex gap-x-3 cursor-pointer select-none"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="2xx"
+                name="2xx"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900 cursor-pointer"
+                for="2xx"
+              >
+                <div>
+                  2xx
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div
+            class="relative flex gap-x-3 cursor-pointer select-none"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="3xx"
+                name="3xx"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900 cursor-pointer"
+                for="3xx"
+              >
+                <div>
+                  3xx
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div
+            class="relative flex gap-x-3 cursor-pointer select-none"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="4xx"
+                name="4xx"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900 cursor-pointer"
+                for="4xx"
+              >
+                <div>
+                  4xx
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div
+            class="relative flex gap-x-3 cursor-pointer select-none"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="5xx"
+                name="5xx"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900 cursor-pointer"
+                for="5xx"
+              >
+                <div>
+                  5xx
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+    <div
+      class="px-4 py-3"
+    >
+      <fieldset
+        name="flags"
+      >
+        <legend
+          class="flex w-full cursor-pointer css-9ho516"
+        >
+          <span
+            class="grow"
+          >
+            Flags
+          </span>
+          <svg
+            aria-hidden="true"
+            class="h-4 w-4 text-gray-600"
+            data-slot="icon"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m4.5 15.75 7.5-7.5 7.5 7.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </legend>
+        <div
+          class="mt-2 space-y-2 "
+        >
+          <div
+            class="relative flex gap-x-3 cursor-pointer select-none"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="flag1"
+                name="flag1"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900 cursor-pointer"
+                for="flag1"
+              >
+                <div>
+                  flag1
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div
+            class="relative flex gap-x-3 cursor-pointer select-none"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="flag2"
+                name="flag2"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900 cursor-pointer"
+                for="flag2"
+              >
+                <div>
+                  flag2
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+  </aside>
+</div>
+`;

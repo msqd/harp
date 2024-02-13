@@ -25,6 +25,28 @@ const mockData: OverviewData = {
   ],
 }
 
+const mockTransactionsFilters = {
+  endpoint: {
+    values: [
+      { name: "endpoint1", count: 10 },
+      { name: "endpoint2", count: 20 },
+    ],
+    current: [],
+  },
+  method: {
+    values: [{ name: "GET" }, { name: "POST" }, { name: "PUT" }, { name: "DELETE" }, { name: "PATCH" }],
+    current: [],
+  },
+  status: {
+    values: [{ name: "2xx" }, { name: "3xx" }, { name: "4xx" }, { name: "5xx" }],
+    current: [],
+  },
+  flag: {
+    values: [{ name: "flag1" }, { name: "flag2" }],
+    current: [],
+  },
+}
+
 const mockSettingsData: KeyValueSettings = {
   proxy: {
     endpoints: [
@@ -49,5 +71,9 @@ export const handlers: RequestHandler[] = [
 
   http.get("/api/system/dependencies", () => {
     return HttpResponse.json({ python: ["numpy", "pandas"] })
+  }),
+
+  http.get("/api/transactions/filters", () => {
+    return HttpResponse.json(mockTransactionsFilters)
   }),
 ]
