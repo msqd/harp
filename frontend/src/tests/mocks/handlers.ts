@@ -1,9 +1,9 @@
-import { http, HttpResponse, RequestHandler } from "msw"
+import { http, HttpResponse, PathParams, RequestHandler } from "msw"
 
 import { KeyValueSettings } from "Domain/System/useSystemSettingsQuery"
 import { OverviewData } from "Models/Overview"
 import { Transaction, Message } from "Models/Transaction"
-import { mock } from "node:test"
+import { ItemList } from "Domain/Api/Types"
 
 const mockTransaction1: Transaction = {
   id: "ABCD1234",
@@ -43,7 +43,7 @@ const mockTransaction2: Transaction = {
   endpoint: "endpoint1",
   started_at: "2021-08-20T20:00:00Z",
   finished_at: "2021-08-20T20:01:00Z",
-  elapsed: 60,
+  elapsed: 25,
   messages: [
     {
       id: 1,
@@ -192,8 +192,18 @@ export const handlers: RequestHandler[] = [
     }
   }),
 
-  http.get("/api/transactions/:id", ({ params }) => {
+  http.get<PathParams>("/api/transactions/:id", ({ params }) => {
     const id = params.id as string
-    return HttpResponse.json(mockTransactions[id])
+    const transaction = mockTransactions[id]
+    if (transaction) {
+      return HttpResponse.json(transaction)
+    } else {
+      return HttpResponse.json({ error: "Transaction not found" }, { status: 404 })
+    }
+  }),
+
+  http.get("/api/transactions", () => {
+    const transactionsList: ItemList<Transaction> = { items: Object.values(mockTransactions) }
+    return HttpResponse.json(transactionsList)
   }),
 ]
