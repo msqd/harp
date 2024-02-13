@@ -4,10 +4,12 @@ export default {
   use: {
     baseURL: baseUrl,
   },
+  reporter: [["list"]],
   webServer: {
     command: process.env.TYPE === "dev" ? "pnpm serve:dev" : "pnpm build-preview > /dev/null",
     url: baseUrl,
     reuseExistingServer: true,
   },
   retries: 0,
+  testMatch: "**/tests/**/*.spec.ts",
 }
