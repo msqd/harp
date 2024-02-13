@@ -1,7 +1,7 @@
 import { renderWithClient } from "tests/utils"
 import { expect, it, test } from "vitest"
 import { screen } from "@testing-library/react"
-
+import { act } from "react-dom/test-utils"
 import { SystemPage } from "./SystemPage"
 import { describe } from "node:test"
 
@@ -19,7 +19,9 @@ describe("SystemPage", () => {
     await result.findByText("endpoint1")
 
     const tab = screen.getByText("Settings")
-    tab.click()
+    act(() => {
+      tab.click()
+    })
 
     await result.findByText("proxy")
     expect(result.findByText("description1")).toBeTruthy()
