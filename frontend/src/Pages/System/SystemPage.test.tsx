@@ -1,9 +1,8 @@
 import { renderWithClient } from "tests/utils"
-import { expect, it, test } from "vitest"
+import { expect, it, test, describe } from "vitest"
 import { screen } from "@testing-library/react"
 import { act } from "react-dom/test-utils"
 import { SystemPage } from "./SystemPage"
-import { describe } from "node:test"
 
 describe("SystemPage", () => {
   it("renders the title and data when the query is successful", async () => {
