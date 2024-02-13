@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`renders the title and data when the query is successful 1`] = `
+exports[`SystemPage > renders the title and data when the query is successful 1`] = `
 <div>
   <main>
     <div
