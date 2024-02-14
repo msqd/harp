@@ -2,7 +2,7 @@ import { PerformanceRatingBadge } from "Components/Badges"
 import { OverviewData } from "Models/Overview"
 import { H2 } from "mkui/Components/Typography"
 
-import { TransactionsChart } from "."
+import { TransactionsChart } from "./Charts"
 
 export interface TransactionOverviewChartProps {
   data: OverviewData
@@ -10,7 +10,7 @@ export interface TransactionOverviewChartProps {
   className?: string
 }
 
-export const TransactionsOverviewChart = ({ data, title, className }: TransactionOverviewChartProps) => {
+export const BaseTransactionsOverview = ({ data, title, className }: TransactionOverviewChartProps) => {
   const meaDurationSeconds = Math.trunc(data.meanDuration) / 1000
   const errorsRate = Math.trunc(data.errors.rate * 100)
   return (

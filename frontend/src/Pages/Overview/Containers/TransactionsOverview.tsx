@@ -1,7 +1,7 @@
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { useOverviewDataQuery } from "Domain/Overview"
 
-import { TransactionsOverviewChart } from "./Components/OverviewChart"
+import { BaseTransactionsOverview } from "../Components"
 
 interface TransactionsOverviewProps {
   endpoint?: string
@@ -16,7 +16,7 @@ export const TransactionsOverview = ({ endpoint, title, className, timeRange }: 
   return (
     <OnQuerySuccess query={query} queries={[query, query]}>
       {(query) => {
-        return <TransactionsOverviewChart data={query.data} title={title} className={className} />
+        return <BaseTransactionsOverview data={query.data} title={title} className={className} />
       }}
     </OnQuerySuccess>
   )

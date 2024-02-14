@@ -1,0 +1,9 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FacetLabel > renders correctly 1`] = `
+<div>
+  <div>
+    Facet Name
+  </div>
+</div>
+`;

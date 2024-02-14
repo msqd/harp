@@ -1,0 +1,42 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Facet > renders without crashing 1`] = `
+<div>
+  <div
+    class="px-4 py-3"
+  >
+    <fieldset
+      name="test-name"
+    >
+      <legend
+        class="flex w-full cursor-pointer css-9ho516"
+      >
+        <span
+          class="grow"
+        >
+          Test Title
+        </span>
+        <svg
+          aria-hidden="true"
+          class="h-4 w-4 text-gray-600"
+          data-slot="icon"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m4.5 15.75 7.5-7.5 7.5 7.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </legend>
+      <div
+        class="mt-2 space-y-2 "
+      />
+    </fieldset>
+  </div>
+</div>
+`;
