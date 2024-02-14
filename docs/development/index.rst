@@ -9,3 +9,4 @@ Development
     changelogs/index
     roadmap
     ideas
+    testing/index
