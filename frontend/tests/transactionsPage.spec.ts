@@ -19,10 +19,12 @@ test.describe("Transactions Page", () => {
     await endpointButton?.click()
     expect(endpoint1Label).not.toBeVisible()
 
-    const responseStatusButton = await page.$('span:has-text("Response Status")')
+    const responseStatusButton = await page.getByText("Response Status", { exact: true })
     const status200Label = await page.getByLabel("2xx")
     expect(status200Label).toBeVisible()
     await responseStatusButton?.click()
     expect(status200Label).not.toBeVisible()
+
+    await endpointButton?.click()
   })
 })
