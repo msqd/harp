@@ -46,8 +46,8 @@ export const OverviewPage = () => {
               {endpointsNames &&
                 endpointsNames?.length > 1 &&
                 endpointsNames.map((endpoint: string, index: number) => (
-                  <Pane>
-                    <TransactionsOverview key={index} endpoint={endpoint} title={endpoint} timeRange={timeRange} />
+                  <Pane key={index}>
+                    <TransactionsOverview endpoint={endpoint} title={endpoint} timeRange={timeRange} />
                   </Pane>
                 ))}
             </div>

@@ -22,6 +22,6 @@ export function useOverviewDataQuery(
   if (params.toString()) {
     url += `?${params.toString()}`
   }
-  console.log(url)
+
   return useQuery<OverviewData>(["overview", endpoint, timeRange], () => api.fetch(url).then((r) => r.json()))
 }
