@@ -52,6 +52,13 @@ Here's an example of a basic Playwright test:
       expect(title).toBe('Example Domain');
     });
 
+For more information, see:
+
+.. toctree::
+    :maxdepth: 1
+
+    e2e_tests
+
 Running Tests
 -------------
 
