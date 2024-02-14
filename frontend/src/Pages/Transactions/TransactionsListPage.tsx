@@ -6,7 +6,7 @@ import { useTransactionsListQuery } from "Domain/Transactions"
 import { Filters } from "Types/filters"
 import { Paginator } from "mkui/Components/Pagination"
 
-import { FiltersSidebar } from "./Components"
+import { FiltersSidebar } from "./Containers"
 import { TransactionDataTable } from "./Components/List"
 
 export function TransactionsListPage() {

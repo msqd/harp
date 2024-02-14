@@ -7,7 +7,7 @@ import { useTransactionsDetailQuery } from "Domain/Transactions"
 import { Button } from "mkui/Components/Button"
 import { H1 } from "mkui/Components/Typography"
 
-import { TransactionDetail } from "./Components/Detail"
+import { TransactionDetail } from "./Containers/Detail"
 
 export function TransactionsDetailPage() {
   const { id } = useParams<{ id: string }>()

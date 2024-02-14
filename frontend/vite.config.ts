@@ -2,8 +2,9 @@
 import react from "@vitejs/plugin-react";
 import {defineConfig} from "vite";
 import tsconfigPaths from "vite-tsconfig-paths"; // https://vitejs.dev/config/
-import {visualizer} from "rollup-plugin-visualizer";
-import * as path from "node:path";
+// import {visualizer} from "rollup-plugin-visualizer";
+
+
 // https://vitejs.dev/config/
 export default defineConfig({
     build: {
@@ -19,7 +20,6 @@ export default defineConfig({
                         "@headlessui/react",
                         "@heroicons/react",
                         "@emotion/react",
-                        "@emotion/react",
                     ],
                     sentry: ["@sentry/browser"],
                     dateFns: ["date-fns"],
@@ -27,6 +27,9 @@ export default defineConfig({
             },
         },
     },
+    resolve: {
+        dedupe: ["@headlessui/react"],
+      },
     optimizeDeps: {
         esbuildOptions: {
             target: "es2020",
@@ -60,7 +63,7 @@ export default defineConfig({
             },
         }),
 
-        visualizer(),
+        // visualizer(),
     ],
 
     server: {port: 4999},

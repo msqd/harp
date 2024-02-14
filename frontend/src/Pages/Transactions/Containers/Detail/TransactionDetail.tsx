@@ -8,8 +8,8 @@ import { SettingsTable } from "Pages/System/Components"
 import { Tab } from "mkui/Components/Tabs"
 import { H2 } from "mkui/Components/Typography"
 
-import { RequestHeading, ResponseHeading } from "../Elements"
-import { TransactionMessagePanel } from "../List"
+import { RequestHeading, ResponseHeading } from "../../Components/Elements"
+import { TransactionMessagePanel } from "../../Components/List"
 
 export function TransactionDetail({ transaction }: { transaction: Transaction }) {
   const { request, endpoint: requestEndpoint } = getRequestFromTransactionMessages(transaction)
