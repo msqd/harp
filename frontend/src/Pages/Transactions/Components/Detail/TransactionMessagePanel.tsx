@@ -48,17 +48,19 @@ export function TransactionMessagePanel({
       <div className="w-full max-w-full overflow-auto">
         <H4>Headers</H4>
         <table className="divide-y divide-gray-100 border mb-4">
-          {headers
-            ? headers.split("\n").map((line) => {
-                const s = line.split(":", 2)
-                return (
-                  <tr>
-                    <td className="px-2 py1">{s[0]}</td>
-                    <td className="px-2 py1">{s[1]}</td>
-                  </tr>
-                )
-              })
-            : null}
+          <tbody>
+            {headers
+              ? headers.split("\n").map((line, index) => {
+                  const s = line.split(":", 2)
+                  return (
+                    <tr key={index}>
+                      <td className="px-2 py1">{s[0]}</td>
+                      <td className="px-2 py1">{s[1]}</td>
+                    </tr>
+                  )
+                })
+              : null}
+          </tbody>
         </table>
         <H4>Body {contentType ? `(${contentType})` : null}</H4>
         <PrettyBody content={body} contentType={contentType} />
