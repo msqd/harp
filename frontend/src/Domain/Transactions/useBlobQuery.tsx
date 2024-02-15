@@ -16,6 +16,7 @@ export function useBlobQuery(id?: string) {
     if (id) {
       const response = await api.fetch(`/blobs/${id}`)
       const buffer = await response.arrayBuffer()
+
       return {
         id,
         content: decoder.decode(buffer),

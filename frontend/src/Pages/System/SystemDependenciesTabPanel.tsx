@@ -5,7 +5,7 @@ import { Tab } from "mkui/Components/Tabs"
 
 import { SettingsTable } from "./Components"
 
-export function SystemDependenciesTabPanel() {
+export const SystemDependenciesTabPanel = () => {
   const query = useSystemDependenciesQuery()
   return (
     <Tab.Panel>

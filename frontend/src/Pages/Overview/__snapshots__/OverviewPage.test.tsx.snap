@@ -1,0 +1,238 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renders the title and data when the query is successful 1`] = `
+<div>
+  <main>
+    <div
+      class="mt-4 mb-4"
+    >
+      <h1
+        class="css-9lrcch"
+      >
+        Overview
+      </h1>
+      <p
+        class="css-11bp3eh"
+      >
+        Useful insights
+      </p>
+    </div>
+    <div
+      class="mt-4"
+    >
+      <div
+        class="overflow-x-auto sm:-mx-6 lg:-mx-8"
+      >
+        <section
+          class="inline-block min-w-full max-w-full py-2 align-middle sm:px-6 lg:px-8"
+        >
+          <div
+            class="flex justify-end my-2"
+          >
+            <span
+              class="isolate inline-flex rounded-md shadow-sm"
+            >
+              <button
+                class="css-1gwafep"
+                type="button"
+              >
+                1h
+              </button>
+              <button
+                class="css-1gwafep"
+                type="button"
+              >
+                24h
+              </button>
+              <button
+                class="css-v7wx26"
+                type="button"
+              >
+                7d
+              </button>
+              <button
+                class="css-1gwafep"
+                type="button"
+              >
+                1m
+              </button>
+              <button
+                class="css-1gwafep"
+                type="button"
+              >
+                1y
+              </button>
+            </span>
+          </div>
+          <div
+            class="mb-4 css-14upriz"
+          >
+            <div>
+              <h2
+                class="css-13yts7e"
+              >
+                Transactions Overview
+              </h2>
+              <div
+                style="display: flex; align-items: center;"
+              >
+                <div
+                  class="flex flex-col items-center"
+                >
+                  <div
+                    class="flex self-center text-3xl"
+                  >
+                    <span
+                      class="px-1 py-0.5 text-white font-semibold bg-emerald-400"
+                    >
+                      A+
+                    </span>
+                  </div>
+                  <div
+                    class="grid grid-cols-2 text-xs text-left align-text-bottom items-center self-center ml-10 mt-10"
+                  >
+                    <span
+                      class="font-bold"
+                    >
+                      Mean duration:
+                    </span>
+                    <span>
+                      0.03
+                       s
+                    </span>
+                    <span
+                      class="font-bold"
+                    >
+                      Errors:
+                    </span>
+                    <span>
+                      50
+                      %
+                    </span>
+                  </div>
+                </div>
+                <div
+                  class="recharts-responsive-container"
+                  style="width: 90%; height: 300px; min-width: 0;"
+                />
+              </div>
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-2 gap-4"
+          >
+            <div
+              class="css-14upriz"
+            >
+              <div>
+                <h2
+                  class="css-13yts7e"
+                >
+                  endpoint1
+                </h2>
+                <div
+                  style="display: flex; align-items: center;"
+                >
+                  <div
+                    class="flex flex-col items-center"
+                  >
+                    <div
+                      class="flex self-center text-3xl"
+                    >
+                      <span
+                        class="px-1 py-0.5 text-white font-semibold bg-emerald-400"
+                      >
+                        A+
+                      </span>
+                    </div>
+                    <div
+                      class="grid grid-cols-2 text-xs text-left align-text-bottom items-center self-center ml-10 mt-10"
+                    >
+                      <span
+                        class="font-bold"
+                      >
+                        Mean duration:
+                      </span>
+                      <span>
+                        0.03
+                         s
+                      </span>
+                      <span
+                        class="font-bold"
+                      >
+                        Errors:
+                      </span>
+                      <span>
+                        50
+                        %
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    class="recharts-responsive-container"
+                    style="width: 90%; height: 300px; min-width: 0;"
+                  />
+                </div>
+              </div>
+            </div>
+            <div
+              class="css-14upriz"
+            >
+              <div>
+                <h2
+                  class="css-13yts7e"
+                >
+                  endpoint2
+                </h2>
+                <div
+                  style="display: flex; align-items: center;"
+                >
+                  <div
+                    class="flex flex-col items-center"
+                  >
+                    <div
+                      class="flex self-center text-3xl"
+                    >
+                      <span
+                        class="px-1 py-0.5 text-white font-semibold bg-emerald-400"
+                      >
+                        A+
+                      </span>
+                    </div>
+                    <div
+                      class="grid grid-cols-2 text-xs text-left align-text-bottom items-center self-center ml-10 mt-10"
+                    >
+                      <span
+                        class="font-bold"
+                      >
+                        Mean duration:
+                      </span>
+                      <span>
+                        0.03
+                         s
+                      </span>
+                      <span
+                        class="font-bold"
+                      >
+                        Errors:
+                      </span>
+                      <span>
+                        50
+                        %
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    class="recharts-responsive-container"
+                    style="width: 90%; height: 300px; min-width: 0;"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+`;
