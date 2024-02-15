@@ -51,7 +51,7 @@ devDependencies:
     version: 0.2.1(@babel/core@7.23.9)
   '@ladle/react':
     specifier: ^4.0.2
-    version: 4.0.2(@types/react@18.2.55)(react-dom@18.2.0)(react@18.2.0)(typescript@5.2.2)
+    version: 4.0.2(@types/react@18.2.55)(react-dom@18.2.0)(react@18.2.0)(typescript@5.3.3)
   '@playwright/test':
     specifier: ^1.41.1
     version: 1.41.2
@@ -113,8 +113,8 @@ devDependencies:
     specifier: ^3.4.1
     version: 3.4.1(tailwindcss@3.4.1)
   typescript:
-    specifier: ~5.2.2
-    version: 5.2.2
+    specifier: ~5.3.3
+    version: 5.3.3
   vite:
     specifier: ^5.1.1
     version: 5.1.1
@@ -1939,7 +1939,7 @@ packages:
       react-dom: 18.2.0(react@18.2.0)
     dev: true
 
-  /@ladle/react@4.0.2(@types/react@18.2.55)(react-dom@18.2.0)(react@18.2.0)(typescript@5.2.2):
+  /@ladle/react@4.0.2(@types/react@18.2.55)(react-dom@18.2.0)(react@18.2.0)(typescript@5.3.3):
     resolution: {integrity: sha512-SnYniR/U7kJX1Zh199jhjxqiFa5e5eA8chuX6uYEZYAUtCCY/hQqGr7/7Grr0j6Q4FYu9iQyyV2K1NJKDdUZIw==}
     engines: {node: '>=18.0.0'}
     hasBin: true
@@ -1972,7 +1972,7 @@ packages:
       koa: 2.15.0
       koa-connect: 2.1.0
       lodash.merge: 4.6.2
-      msw: 2.2.0(typescript@5.2.2)
+      msw: 2.2.0(typescript@5.3.3)
       open: 9.1.0
       prism-react-renderer: 2.3.1(react@18.2.0)
       prop-types: 15.8.1
@@ -1987,7 +1987,7 @@ packages:
       source-map: 0.7.4
       vfile: 6.0.1
       vite: 5.1.1
-      vite-tsconfig-paths: 4.3.1(typescript@5.2.2)(vite@5.1.1)
+      vite-tsconfig-paths: 4.3.1(typescript@5.3.3)(vite@5.1.1)
     transitivePeerDependencies:
       - '@swc/helpers'
       - '@types/node'
@@ -5707,7 +5707,7 @@ packages:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
     dev: true
 
-  /msw@2.2.0(typescript@5.2.2):
+  /msw@2.2.0(typescript@5.3.3):
     resolution: {integrity: sha512-98cUGcIphhdf3KDbmSxji7XFqLxeSFAmPUNV00N/U76GOkuUKEwp6MHqM6KW70rlpgeJP8qIWueppdnVThzG1g==}
     engines: {node: '>=18'}
     hasBin: true
@@ -5734,7 +5734,7 @@ packages:
       path-to-regexp: 6.2.1
       strict-event-emitter: 0.5.1
       type-fest: 4.10.2
-      typescript: 5.2.2
+      typescript: 5.3.3
       yargs: 17.7.2
     dev: true
 
@@ -6963,7 +6963,7 @@ packages:
   /ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
 
-  /tsconfck@3.0.2(typescript@5.2.2):
+  /tsconfck@3.0.2(typescript@5.3.3):
     resolution: {integrity: sha512-6lWtFjwuhS3XI4HsX4Zg0izOI3FU/AI9EGVlPEUMDIhvLPMD4wkiof0WCoDgW7qY+Dy198g4d9miAqUHWHFH6Q==}
     engines: {node: ^18 || >=20}
     hasBin: true
@@ -6973,7 +6973,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      typescript: 5.2.2
+      typescript: 5.3.3
     dev: true
 
   /tslib@2.6.2:
@@ -7032,8 +7032,8 @@ packages:
     resolution: {integrity: sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==}
     dev: true
 
-  /typescript@5.2.2:
-    resolution: {integrity: sha512-mI4WrpHsbCIcwT9cF4FZvr80QUeKvsUsUvKDoR+X/7XHQH98xYD8YHZg7ANtz2GtZt/CBq2QJ0thkGJMHfqc1w==}
+  /typescript@5.3.3:
+    resolution: {integrity: sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==}
     engines: {node: '>=14.17'}
     hasBin: true
     dev: true
@@ -7254,7 +7254,7 @@ packages:
       - terser
     dev: true
 
-  /vite-tsconfig-paths@4.3.1(typescript@5.2.2)(vite@5.1.1):
+  /vite-tsconfig-paths@4.3.1(typescript@5.3.3)(vite@5.1.1):
     resolution: {integrity: sha512-cfgJwcGOsIxXOLU/nELPny2/LUD/lcf1IbfyeKTv2bsupVbTH/xpFtdQlBmIP1GEK2CjjLxYhFfB+QODFAx5aw==}
     peerDependencies:
       vite: '*'
@@ -7264,7 +7264,7 @@ packages:
     dependencies:
       debug: 4.3.4
       globrex: 0.1.2
-      tsconfck: 3.0.2(typescript@5.2.2)
+      tsconfck: 3.0.2(typescript@5.3.3)
       vite: 5.1.1
     transitivePeerDependencies:
       - supports-color
