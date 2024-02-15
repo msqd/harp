@@ -28,9 +28,9 @@ Content
    :maxdepth: 2
 
    quickstart/index
-   apps/index
    features/index
    installation/index
+   apps/index
    commandline/index
    configuration/index
    reference/index

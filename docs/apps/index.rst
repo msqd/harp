@@ -10,7 +10,7 @@ Harp comes with default applications:
 You can find more details about each application in their respective sections:
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     proxy
     dashboard
