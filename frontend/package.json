@@ -22,7 +22,7 @@
     "@emotion/styled": "^11.11.0",
     "@headlessui/react": "1.7.17",
     "@heroicons/react": "^2.1.1",
-    "@sentry/browser": "^7.101.0",
+    "@sentry/browser": "^7.102.0",
     "@tailwindcss/forms": "^0.5.7",
     "date-fns": "^3.3.1",
     "http-status-codes": "^2.3.0",
