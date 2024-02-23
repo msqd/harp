@@ -66,6 +66,7 @@ class KernelFactory:
             )
         except Exception as exc:
             logger.fatal("Fatal while dispatching «factory bind» event: %s", exc)
+            raise
 
         # this can fail if configuration is not valid, but we let the container raise exception which is more explicit
         # that what we can show here.
@@ -82,6 +83,7 @@ class KernelFactory:
             )
         except Exception as exc:
             logger.fatal("Fatal while dispatching «factory bound» event: %s", exc)
+            raise
 
         kernel = self.KernelType(dispatcher=dispatcher, resolver=resolver)
         binds = [Bind(host=self.hostname, port=port) for port in resolver.ports]
