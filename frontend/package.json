@@ -9,9 +9,10 @@
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix",
     "preview": "vite preview",
-    "test": "vitest run",
+    "test:unit": "vitest run",
     "test:browser": "playwright test",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test": "pnpm run test:unit && pnpm run test:browser"
   },
   "babelMacros": {
     "twin": {
