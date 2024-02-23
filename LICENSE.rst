@@ -1,9 +1,9 @@
 License
 =======
 
-HARP Community Edition (or HARP CE) is the open-source core (this repository) for the HARP ecosystem (including both the
-open-source core, the professional and enterprise extensions and third party extensions that did not define their own
-licence).
+HARP Community Edition (or HARP CE) is the open-source core (`this repository <https://github.com/msqd/harp>`_) for the
+HARP ecosystem (including both the open-source core, the professional and enterprise extensions and third party
+extensions that did not define their own licence).
 
 
 HARP Community Edition (HARP CE)
