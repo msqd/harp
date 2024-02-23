@@ -56,26 +56,32 @@ class KernelFactory:
         resolver = ProxyControllerResolver()
 
         # dispatch "bind" event: this is the last chance to add services to the container
-        await dispatcher.adispatch(
-            EVENT_FACTORY_BIND,
-            FactoryBindEvent(
-                container,
-                self.configuration.settings,
-            ),
-        )
+        try:
+            await dispatcher.adispatch(
+                EVENT_FACTORY_BIND,
+                FactoryBindEvent(
+                    container,
+                    self.configuration.settings,
+                ),
+            )
+        except Exception as exc:
+            logger.fatal("Fatal while dispatching «factory bind» event: %s", exc)
 
         # this can fail if configuration is not valid, but we let the container raise exception which is more explicit
         # that what we can show here.
         provider = container.build_provider()
 
         # dispatch "bound" event: you get a resolved container, do your thing
-        await dispatcher.adispatch(
-            EVENT_FACTORY_BOUND,
-            FactoryBoundEvent(
-                provider,
-                resolver,
-            ),
-        )
+        try:
+            await dispatcher.adispatch(
+                EVENT_FACTORY_BOUND,
+                FactoryBoundEvent(
+                    provider,
+                    resolver,
+                ),
+            )
+        except Exception as exc:
+            logger.fatal("Fatal while dispatching «factory bound» event: %s", exc)
 
         kernel = self.KernelType(dispatcher=dispatcher, resolver=resolver)
         binds = [Bind(host=self.hostname, port=port) for port in resolver.ports]

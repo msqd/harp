@@ -1,8 +1,8 @@
 import { ErrorBoundary } from "react-error-boundary"
-import { renderWithClient } from "tests/utils"
 import { expect, it } from "vitest"
 
 import { Error } from "Components/Page"
+import { renderWithClient } from "tests/utils"
 
 import { TransactionsOverview } from "./TransactionsOverview"
 

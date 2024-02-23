@@ -1,5 +1,6 @@
 import logging.config
 import os
+from typing import Any
 
 import structlog
 
@@ -71,8 +72,16 @@ logging_config = {
     },
 }
 
+
 logging.config.dictConfig(logging_config)
 
-get_logger = structlog.get_logger
+
+def get_logger(name, *args: Any, **initial_values: Any) -> Any:
+    pkg, mod = name.rsplit(".", 1)
+    if mod in ("__init__", "__main__", "__app__"):
+        name = pkg
+
+    return structlog.get_logger(name, *args, **initial_values)
+
 
 __all__ = ["get_logger"]

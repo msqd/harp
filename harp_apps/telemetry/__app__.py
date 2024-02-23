@@ -22,7 +22,7 @@ import sys
 from httpx import AsyncClient, TransportError
 from rodi import CannotResolveTypeException
 
-from harp import __version__, get_logger
+from harp import ROOT_DIR, __version__, get_logger
 from harp.config import Application
 from harp.config.events import FactoryBoundEvent
 from harp.typing import GlobalSettings
@@ -47,6 +47,10 @@ class TelemetryApplication(Application):
 
         self.storage = None
         self.worker = None
+
+        logger.info(f"ℹ️  HARP {__version__} (in {ROOT_DIR})")
+        logger.info(f"ℹ️  Interpreter: {self._platform})")
+        logger.info(f"ℹ️  Host: {self._host}")
 
     async def on_bound(self, event: FactoryBoundEvent):
         global_settings = event.provider.get(GlobalSettings)

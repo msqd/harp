@@ -1,6 +1,7 @@
-import { renderWithClient } from "tests/utils"
-import { expect, it } from "vitest"
 import { MemoryRouter } from "react-router-dom"
+import { expect, it } from "vitest"
+
+import { renderWithClient } from "tests/utils"
 
 import { default as Layout } from "./Layout"
 

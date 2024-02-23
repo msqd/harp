@@ -47,7 +47,7 @@ async function enableMocking() {
 
   const { worker, http, HttpResponse } = await import("./tests/mocks/browser")
 
-  // @ts-ignore
+  // @ts-expect-error This is a wanted violation of Window type, as it is a special env for browser tests.
   // Propagate the worker and `http` references to be globally available.
   // This would allow to modify request handlers on runtime.
   window.msw = {
@@ -58,7 +58,7 @@ async function enableMocking() {
   return worker.start()
 }
 
-enableMocking().then(() => {
+void enableMocking().then(() => {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>

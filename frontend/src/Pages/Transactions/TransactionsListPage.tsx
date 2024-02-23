@@ -6,8 +6,8 @@ import { useTransactionsListQuery } from "Domain/Transactions"
 import { Filters } from "Types/filters"
 import { Paginator } from "mkui/Components/Pagination"
 
-import { FiltersSidebar } from "./Containers"
 import { TransactionDataTable } from "./Components/List"
+import { FiltersSidebar } from "./Containers"
 
 export function TransactionsListPage() {
   const [filters, setFilters] = useState<Filters>({})

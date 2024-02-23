@@ -1,6 +1,8 @@
-import { renderWithClient } from "tests/utils"
-import { expect, it } from "vitest"
 import { MemoryRouter } from "react-router-dom"
+import { expect, it } from "vitest"
+
+import { renderWithClient } from "tests/utils"
+
 import { TransactionsListPage } from "./TransactionsListPage"
 
 it("renders well when the query is successful", async () => {

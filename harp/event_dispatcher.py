@@ -24,7 +24,8 @@ class LoggingAsyncEventDispatcher(AsyncEventDispatcher):
         try:
             return await super().adispatch(event_id, event)
         except Exception as e:
-            logger.exception(f"⚡ [Error] {event_id} ({type(event).__name__}) failed: {e}")
+            logger.error(f"⚡ [Error] {event_id} ({type(event).__name__}) failed: {e}")
+            raise
 
     async def _adispatch(self, listeners, event):
         for listener in listeners:

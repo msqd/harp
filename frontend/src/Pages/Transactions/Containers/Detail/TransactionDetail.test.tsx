@@ -1,7 +1,9 @@
-import { renderWithClient } from "tests/utils"
 import { expect, it, describe } from "vitest"
-import { TransactionDetail } from "./TransactionDetail"
+
 import { Transaction, Message } from "Models/Transaction"
+import { renderWithClient } from "tests/utils"
+
+import { TransactionDetail } from "./TransactionDetail"
 
 const transaction: Transaction = {
   id: "ABCD1234",

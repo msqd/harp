@@ -1,9 +1,9 @@
 import { http, HttpResponse, PathParams, RequestHandler } from "msw"
 
+import { ItemList } from "Domain/Api/Types"
 import { KeyValueSettings } from "Domain/System/useSystemSettingsQuery"
 import { OverviewData } from "Models/Overview"
 import { Transaction, Message } from "Models/Transaction"
-import { ItemList } from "Domain/Api/Types"
 
 const mockTransaction1: Transaction = {
   id: "ABCD1234",
