@@ -1,9 +1,9 @@
 from functools import cached_property
 from typing import Literal, Optional
 
+from harp.config import ConfigurationRemovedSettingError, ConfigurationRuntimeError, ConfigurationValueError
 from harp.config.settings import DisabledSettings, FromFileSetting
 from harp.config.settings.base import BaseSetting, settings_dataclass
-from harp.errors import ProxyConfigurationError
 
 
 def _plain(actual, expected):
@@ -54,7 +54,7 @@ class DashboardAuthSetting(BaseSetting):
 
         if _type is None or not _type:
             if len(kwargs) > 0:
-                raise ProxyConfigurationError(
+                raise ConfigurationValueError(
                     "Invalid configuration for dashboard auth. There should not be additional arguments if no auth "
                     f"type is provided. Available types: {', '.join(available_types)}."
                 )
@@ -63,7 +63,7 @@ class DashboardAuthSetting(BaseSetting):
         if _type == "basic":
             return DashboardAuthBasicSetting(**kwargs)
 
-        raise ProxyConfigurationError(
+        raise ConfigurationValueError(
             f"Invalid dashboard auth type: {_type}. Available types: {', '.join(available_types)}."
         )
 
@@ -94,10 +94,10 @@ class DashboardSettings(BaseSetting):
 
     def __post_init__(self):
         if not self.enabled:
-            raise RuntimeError("DashboardSettings should never be instanciated if disabled.")
+            raise ConfigurationRuntimeError("DashboardSettings should never be instanciated if disabled.")
 
         if isinstance(self.auth, str):
-            raise ProxyConfigurationError(
+            raise ConfigurationRemovedSettingError(
                 "Invalid configuration for dashboard auth: string configuration is not supported anymore."
             )
 

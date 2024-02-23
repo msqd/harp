@@ -68,7 +68,7 @@ class HonchoManagerFactory:
         if proxy_options:
             cmd += " " + " ".join(proxy_options)
 
-        return ROOT_DIR, f'watchfiles --filter python "{cmd}" harp'
+        return ROOT_DIR, f'watchfiles --filter python "{cmd}" harp harp_apps'
 
     commands[HARP_SERVER_SERVICE] = _get_server_executable
 

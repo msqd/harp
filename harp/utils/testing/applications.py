@@ -24,7 +24,7 @@ class BaseTestForApplications:
 
     def test_default_settings_on_empty_dict_passed(self, ApplicationType):
         settings = {}
-        assert ApplicationType.defaults(settings) == {}
+        assert ApplicationType.defaults(settings) == self.expected_defaults
 
     def test_instanciate_with_default_settings(self, ApplicationType):
         defaults = ApplicationType.defaults()

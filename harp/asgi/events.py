@@ -5,7 +5,7 @@ from whistle import Event
 from harp.models.transactions import Transaction
 from harp.typing.transactions import Message
 
-EVENT_CORE_STARTED = "core.startup"
+EVENT_CORE_STARTED = "core.started"
 
 EVENT_CORE_REQUEST = "core.request"
 EVENT_CORE_CONTROLLER = "core.controller"

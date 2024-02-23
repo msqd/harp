@@ -19,6 +19,7 @@ Submodules
 
    harp.config.application
    harp.config.config
+   harp.config.errors
    harp.config.events
 
 Module contents

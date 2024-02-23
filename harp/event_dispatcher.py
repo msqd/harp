@@ -12,7 +12,7 @@ class LoggingAsyncEventDispatcher(AsyncEventDispatcher):
     Adds logging to AsyncEventDispatcher, should probably go into whistle 2.x (with a bit of reengineering).
 
     todo: pass logger or logger name to constructor, choose logging level
-    todo: add check for non oroutines listeners which is wrong but leads to an undecypherable error message
+    todo: add check for non-coroutines listeners which is wrong but leads to an undecypherable error message
     """
 
     def add_listener(self, event_id: str, listener: IListener, /, *, priority: int = 0):

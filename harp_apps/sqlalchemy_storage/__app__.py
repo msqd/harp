@@ -23,7 +23,8 @@ class SqlalchemyStorageApplication(Application):
     def defaults(cls, settings=None):
         settings = settings if settings is not None else {"type": "sqlalchemy"}
 
-        if cls.supports(settings):
+        if cls.supports({"type": "sqlalchemy"} | settings):
+            settings.setdefault("type", "sqlalchemy")
             settings.setdefault("url", "sqlite+aiosqlite:///:memory:")
             settings.setdefault("echo", False)
             settings.setdefault("drop_tables", False)

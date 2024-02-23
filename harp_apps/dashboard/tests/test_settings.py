@@ -1,7 +1,7 @@
 import pytest
 
+from harp.config import ConfigurationError
 from harp.config.settings import DisabledSettings
-from harp.errors import ProxyConfigurationError
 
 from ..settings import DashboardAuthSetting, DashboardSettings
 
@@ -13,10 +13,10 @@ def test_no_auth():
 
 
 def test_invalid_auth():
-    with pytest.raises(ProxyConfigurationError):
+    with pytest.raises(ConfigurationError):
         DashboardAuthSetting(type=None, value="no chance")
 
-    with pytest.raises(ProxyConfigurationError):
+    with pytest.raises(ConfigurationError):
         DashboardAuthSetting(type="invalid")
 
 

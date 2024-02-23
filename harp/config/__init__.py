@@ -1,7 +1,17 @@
 from .application import Application
 from .config import Config
+from .errors import (
+    ConfigurationError,
+    ConfigurationRemovedSettingError,
+    ConfigurationRuntimeError,
+    ConfigurationValueError,
+)
 
 __all__ = [
-    "Config",
     "Application",
+    "Config",
+    "ConfigurationError",
+    "ConfigurationRemovedSettingError",
+    "ConfigurationRuntimeError",
+    "ConfigurationValueError",
 ]

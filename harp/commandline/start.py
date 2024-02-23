@@ -27,6 +27,8 @@ def assert_development_packages_are_available():
 @click.option("--disable", default=(), multiple=True, help="Disable some applications.")
 @click.option("--with-docs/--no-docs", default=False)
 @click.option("--with-ui/--no-ui", default=False)
+# TODO maybe run reset as a pre-start command, so it does not run on each reload?
+@click.option("--reset", is_flag=True, help="Reset the database (drop and recreate tables).")
 @click.option(
     "--server-subprocess",
     "-XS",
@@ -35,7 +37,7 @@ def assert_development_packages_are_available():
     help="Add a server subprocess to the list of services to start.",
 )
 @click.argument("services", nargs=-1)
-def start(with_docs, with_ui, options, files, disable, services, server_subprocesses):
+def start(with_docs, with_ui, options, files, disable, services, server_subprocesses, reset):
     try:
         assert_development_packages_are_available()
     except ModuleNotFoundError as exc:
@@ -63,6 +65,7 @@ def start(with_docs, with_ui, options, files, disable, services, server_subproce
                 ("--set {key} {value}".format(key=key, value=value) for key, value in options.items()),
                 ("--disable {app}".format(app=app) for app in disable),
                 ("-f " + file for file in files),
+                (("--set storage.drop_tables true",) if reset else ()),
             )
         ),
         dashboard_devserver_port=options.get("dashboard.devserver_port", None),

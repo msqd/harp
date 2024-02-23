@@ -7,8 +7,8 @@ from httpx import AsyncClient
 
 from harp import ROOT_DIR, get_logger
 from harp.asgi import ASGIRequest, ASGIResponse
+from harp.config import ConfigurationError
 from harp.controllers import RoutingController
-from harp.errors import ProxyConfigurationError
 from harp.typing.global_settings import GlobalSettings
 from harp.typing.storage import Storage
 from harp_apps.proxy.controllers import HttpProxyController
@@ -74,7 +74,7 @@ class DashboardController:
 
         # if no devserver is configured and no static files are found, we can't serve the dashboard
         if not self._ui_static_middleware and not self._ui_devserver_proxy_controller:
-            raise ProxyConfigurationError(
+            raise ConfigurationError(
                 "Dashboard controller could not initiate because it got neither compiled assets nor a devserver "
                 "configuration."
             )
