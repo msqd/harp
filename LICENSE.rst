@@ -11,7 +11,13 @@ HARP Community Edition (HARP CE)
 
 HARP CE is an API Runtime Proxy, a sidecar service for web applications that helps raising reliability, performances,
 security and observability of your external API usage.
+
+All the code included in this repository is part of HARP CE, and is distributed under the terms of the GNU Lesser
+General Public License (LGPL) version 3.0 or later.
+
 Copyright (C) 2023-2024  Romain Dorgueil
+
+.. code-block:: text
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
