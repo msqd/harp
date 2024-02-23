@@ -10,6 +10,7 @@
     "lint:fix": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:browser": "playwright test",
     "test:coverage": "vitest run --coverage"
   },
   "babelMacros": {
@@ -45,6 +46,7 @@
   "devDependencies": {
     "@babel/plugin-transform-react-jsx": "^7.23.4",
     "@emotion/babel-plugin-jsx-pragmatic": "^0.2.1",
+    "@playwright/test": "^1.41.2",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
     "@types/node": "^20.11.20",

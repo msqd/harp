@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 src/tests/coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
