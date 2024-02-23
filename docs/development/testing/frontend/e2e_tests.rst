@@ -1,5 +1,6 @@
 End-to-End Tests with Playwright
-===========================
+================================
+
 
 Playwright is a Node.js library for automating browser tasks. In our project, we use Playwright for end-to-end (E2E) testing. E2E tests simulate real user scenarios by running tests in a real browser environment.
 
