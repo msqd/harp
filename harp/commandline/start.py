@@ -11,6 +11,16 @@ def _get_service_name_for_humans(x: str):
     return x
 
 
+def assert_package_is_available(package_name: str):
+    if importlib.util.find_spec(package_name) is None:
+        raise ModuleNotFoundError(f"Package {package_name!r} is not available.")
+
+
+def assert_development_packages_are_available():
+    assert_package_is_available("honcho")
+    assert_package_is_available("watchfiles")
+
+
 @click.command(short_help="Starts the development environment.")
 @click.option("--set", "options", default=(), multiple=True, help="Set proxy configuration options.")
 @click.option("--file", "-f", "files", default=(), multiple=True, help="Load configuration from file.")
@@ -26,7 +36,9 @@ def _get_service_name_for_humans(x: str):
 )
 @click.argument("services", nargs=-1)
 def start(with_docs, with_ui, options, files, disable, services, server_subprocesses):
-    if importlib.util.find_spec("honcho") is None or importlib.util.find_spec("watchfiles") is None:
+    try:
+        assert_development_packages_are_available()
+    except ModuleNotFoundError as exc:
         raise click.UsageError(
             "\n".join(
                 (
@@ -35,7 +47,7 @@ def start(with_docs, with_ui, options, files, disable, services, server_subproce
                     'Try to install the "dev" extra.',
                 )
             )
-        )
+        ) from exc
 
     from harp.commandline.utils.manager import (
         HARP_DOCS_SERVICE,

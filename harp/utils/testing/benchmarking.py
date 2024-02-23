@@ -8,6 +8,7 @@ import httpx
 import pytest
 
 from harp import get_logger
+from harp.commandline.start import assert_development_packages_are_available
 from harp.utils.network import get_available_network_port, wait_for_port
 
 logger = get_logger(__name__)
@@ -25,6 +26,10 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
                 _tmpfile_config.write(config or "")
                 self.config_filename = _tmpfile_config.name
 
+        # XXX we may not need dev environment (yet maybe we want to test it works too). To avoid cryptic error, we
+        # double check here to get an exception if not available.
+        assert_development_packages_are_available()
+
     def run(self):
         args = [
             "harp",
@@ -34,6 +39,7 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
             *("--disable", "harp_apps.telemetry"),
         ]
         logger.info('Starting subprocess: "%s"', " ".join(args))
+
         self.process = subprocess.Popen(args, shell=False)
 
     def join(self, timeout=None):
@@ -48,9 +54,14 @@ class AbstractProxyBenchmark:
     @pytest.fixture(scope="class")
     def proxy(self, httpbin, database_url):
         port = get_available_network_port()
-        thread = RunHarpProxyInSubprocessThread(
-            config=self.config.substitute(port=port, httpbin=httpbin, database=database_url)
-        )
+
+        try:
+            thread = RunHarpProxyInSubprocessThread(
+                config=self.config.substitute(port=port, httpbin=httpbin, database=database_url)
+            )
+        except Exception as exc:
+            pytest.skip(f"Failed to create subprocess thread: {exc}")
+
         try:
             try:
                 from pytest_cov.embed import cleanup_on_sigterm
@@ -59,7 +70,7 @@ class AbstractProxyBenchmark:
             else:
                 cleanup_on_sigterm()
             thread.start()
-            wait_for_port(port, timeout=10.0)
+            wait_for_port(port, timeout=5.0)
             yield f"localhost:{port}"
         finally:
             thread.join()
