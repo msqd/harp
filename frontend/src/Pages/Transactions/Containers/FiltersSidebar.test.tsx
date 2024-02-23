@@ -1,5 +1,5 @@
 import { renderWithClient } from "tests/utils"
-import { expect, it, test } from "vitest"
+import { expect, it } from "vitest"
 import { FiltersSidebar } from "./FiltersSidebar"
 import { describe } from "node:test"
 import { Filters } from "Types/filters"
