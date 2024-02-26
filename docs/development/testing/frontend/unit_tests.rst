@@ -7,7 +7,8 @@ Our project uses Vitest for unit testing. Vitest is a JavaScript testing framewo
 Vitest Setup
 ------------
 
-Before we can test our smart components, we need to set up our testing environment. In our `vitest.setup.ts` file, we import several libraries and set up global variables to ensure our tests run correctly.
+Before we can test our smart components, we need to set up our testing environment. In our `vitest.setup.ts` file, we
+import several libraries and set up global variables to ensure our tests run correctly.
 
 .. code-block:: typescript
 
@@ -29,11 +30,15 @@ Before we can test our smart components, we need to set up our testing environme
         server.close()
     })
 
-We import `@testing-library/jest-dom` to extend Jest's `expect` with matchers that are useful when testing DOM elements. We also import our mock server from `./src/tests/mocks/node`.
+We import `@testing-library/jest-dom` to extend Jest's `expect` with matchers that are useful when testing DOM elements.
+We also import our mock server from `./src/tests/mocks/node`.
 
-We then set up a polyfill for `ResizeObserver`, which is not natively supported in Jest's environment. We also set up a mock for `requestAnimationFrame`, which is not available in Node.js where our tests run.
+We then set up a polyfill for `ResizeObserver`, which is not natively supported in Jest's environment. We also set up a
+mock for `requestAnimationFrame`, which is not available in Node.js where our tests run.
 
-Finally, we use `vitest`'s `beforeAll`, `afterEach`, and `afterAll` functions to start our mock server before all tests, reset any runtime request handlers between tests, and close the server after all tests. This ensures that our mock server is correctly set up for each test and that our tests do not interfere with each other.
+Finally, we use `vitest`'s `beforeAll`, `afterEach`, and `afterAll` functions to start our mock server before all tests,
+reset any runtime request handlers between tests, and close the server after all tests. This ensures that our mock
+server is correctly set up for each test and that our tests do not interfere with each other.
 
 
 

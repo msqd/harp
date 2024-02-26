@@ -2,6 +2,7 @@ Frontend Testing
 ================
 
 First if you're in the root directory of the project let's move to the frontend directory:
+
 .. code-block:: bash
 
     cd frontend
@@ -33,8 +34,6 @@ For more information, see:
     unit_tests
 
 
-
-
 Playwright
 ----------
 
@@ -58,6 +57,7 @@ For more information, see:
     :maxdepth: 1
 
     e2e_tests
+
 
 Running Tests
 -------------
