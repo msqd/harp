@@ -5,7 +5,8 @@ from http_router.types import TMethodsArg, TPath
 from rich.console import Console
 from rich.traceback import Traceback
 
-from harp.asgi.messages import ASGIRequest, ASGIResponse
+from harp.asgi.messages import ASGIResponse
+from harp.http import HttpRequest
 from harp.meta import get_meta, has_meta, set_meta
 from harp.utils.arguments import Arguments
 
@@ -42,7 +43,7 @@ class RoutingController:
     def create_router(self):
         return self.RouterType(*self.RouterArguments.args, *self.RouterArguments.kwargs)
 
-    async def __call__(self, request: ASGIRequest, response: ASGIResponse):
+    async def __call__(self, request: HttpRequest, response: ASGIResponse):
         try:
             match = self.router(request.path, method=request.method)
             return await match.target(request, response, **(match.params or {}))

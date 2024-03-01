@@ -4,7 +4,7 @@ import orjson
 import pytest
 from multidict import MultiDict
 
-from harp.asgi import ASGIRequest
+from harp.http import HttpRequest
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
@@ -24,7 +24,7 @@ class TestTransactionsController(
 ):
     async def test_filters_using_handler(self, controller: TransactionsController):
         request = Mock(
-            spec=ASGIRequest,
+            spec=HttpRequest,
             query=MultiDict(),
         )
 

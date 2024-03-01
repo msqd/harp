@@ -2,11 +2,11 @@ from functools import cached_property
 
 from whistle import Event
 
+from harp.http import HttpRequest
+from harp.http.typing import BaseMessage
 from harp.models.transactions import Transaction
-from harp.typing.transactions import Message
 
 EVENT_CORE_STARTED = "core.started"
-
 EVENT_CORE_REQUEST = "core.request"
 EVENT_CORE_CONTROLLER = "core.controller"
 EVENT_CORE_VIEW = "core.view"
@@ -16,7 +16,7 @@ EVENT_CORE_RESPONSE = "core.response"
 class RequestEvent(Event):
     name = EVENT_CORE_REQUEST
 
-    def __init__(self, request):
+    def __init__(self, request: HttpRequest):
         self._request = request
         self._controller = None
 
@@ -35,7 +35,7 @@ class RequestEvent(Event):
 class ControllerEvent(RequestEvent):
     name = EVENT_CORE_CONTROLLER
 
-    def __init__(self, request, controller):
+    def __init__(self, request: HttpRequest, controller):
         super().__init__(request)
         self._controller = controller
 
@@ -43,7 +43,7 @@ class ControllerEvent(RequestEvent):
 class ResponseEvent(RequestEvent):
     name = EVENT_CORE_RESPONSE
 
-    def __init__(self, request, response):
+    def __init__(self, request: HttpRequest, response):
         super().__init__(request)
         self.response = response
 
@@ -51,7 +51,7 @@ class ResponseEvent(RequestEvent):
 class ViewEvent(ResponseEvent):
     name = EVENT_CORE_VIEW
 
-    def __init__(self, request, response, value):
+    def __init__(self, request: HttpRequest, response, value):
         super().__init__(request, response)
         self._value = value
 
@@ -66,6 +66,6 @@ class TransactionEvent(Event):
 
 
 class MessageEvent(TransactionEvent):
-    def __init__(self, transaction: Transaction, message: Message):
+    def __init__(self, transaction: Transaction, message: BaseMessage):
         super().__init__(transaction)
         self.message = message

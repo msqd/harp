@@ -6,9 +6,10 @@ from http_router import NotFoundError
 from httpx import AsyncClient
 
 from harp import ROOT_DIR, get_logger
-from harp.asgi import ASGIRequest, ASGIResponse
+from harp.asgi import ASGIResponse
 from harp.config import ConfigurationError
 from harp.controllers import RoutingController
+from harp.http import HttpRequest
 from harp.typing.global_settings import GlobalSettings
 from harp.typing.storage import Storage
 from harp_apps.proxy.controllers import HttpProxyController
@@ -102,7 +103,7 @@ class DashboardController:
 
         return root
 
-    async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
+    async def __call__(self, request: HttpRequest, response: ASGIResponse, *, transaction_id=None):
         request.context.setdefault("user", None)
 
         if self.settings.auth:
@@ -123,11 +124,11 @@ class DashboardController:
             try:
                 return await self._ui_static_middleware(
                     {
-                        "type": request._scope["type"],
-                        "path": request._scope["path"] if "." in request._scope["path"] else "/index.html",
-                        "method": request._scope["method"],
+                        "type": "http",
+                        "path": request.path if "." in request.path else "/index.html",
+                        "method": request.method,
                     },
-                    request._receive,
+                    request._impl.receive,
                     response._send,
                 )
             finally:

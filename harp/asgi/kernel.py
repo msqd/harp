@@ -4,6 +4,7 @@ from asgiref.typing import ASGIReceiveCallable, ASGISendCallable, Scope
 from whistle import AsyncEventDispatcher, Event, IAsyncEventDispatcher
 
 from harp import get_logger
+from harp.http import HttpRequest, HttpRequestAsgiBridge
 
 from .events import (
     EVENT_CORE_CONTROLLER,
@@ -16,7 +17,7 @@ from .events import (
     ResponseEvent,
     ViewEvent,
 )
-from .messages import ASGIRequest, ASGIResponse
+from .messages import ASGIResponse
 from .resolvers import ControllerResolver
 
 logger = get_logger(__name__)
@@ -32,7 +33,6 @@ async def kernel_not_started_controller(request, response: ASGIResponse):
 
 
 class ASGIKernel:
-    RequestType = ASGIRequest
     ResponseType = ASGIResponse
 
     dispatcher: IAsyncEventDispatcher
@@ -46,10 +46,9 @@ class ASGIKernel:
         self.handle_errors = handle_errors
 
     async def __call__(self, scope: Scope, receive: ASGIReceiveCallable, send: ASGISendCallable):
-        await self.handle(self.RequestType(scope, receive), send)
-
-    async def handle(self, request: ASGIRequest, send: ASGISendCallable):
-        if request.type == "http":
+        asgi_type = scope.get("type", None)
+        if asgi_type == "http":
+            request = HttpRequest(HttpRequestAsgiBridge(scope, receive))
             response = self.ResponseType(request, send)
             if not self.started:
                 await kernel_not_started_controller(request, response)
@@ -77,18 +76,18 @@ class ASGIKernel:
                     await response.body(b"Internal Server Error")
                 return response
 
-        if request.type == "lifespan":
-            await request.receive()
+        if asgi_type == "lifespan":
+            await receive()
             await self.dispatcher.adispatch(EVENT_CORE_STARTED, Event())
             self.started = True
             return
 
-        if request.type == "websocket":
+        if asgi_type == "websocket":
             # NOT IMPLEMENTED YET!
-            # This is here to avoid huge errors in the console.
+            # This is ignored here to avoid huge errors in the console.
             return
 
-        raise RuntimeError(f'Unable to handle request, invalid type "{request.type}".')
+        raise RuntimeError(f'Unable to handle request, invalid type "{asgi_type}".')
 
     async def _resolve_controller(self, request):
         controller = await self.resolver.resolve(request)
@@ -103,7 +102,7 @@ class ASGIKernel:
 
         return event.controller
 
-    async def _execute_controller(self, controller, request: ASGIRequest, response: ASGIResponse):
+    async def _execute_controller(self, controller, request: HttpRequest, response: ASGIResponse):
         retval = await controller(request, response)
 
         if retval is not None:
@@ -120,7 +119,7 @@ class ASGIKernel:
         await self.dispatcher.adispatch(EVENT_CORE_RESPONSE, ResponseEvent(request, response))
         return response
 
-    async def handle_http(self, request: ASGIRequest, response: ASGIResponse):
+    async def handle_http(self, request: HttpRequest, response: ASGIResponse):
         event = RequestEvent(request)
         await self.dispatcher.adispatch(EVENT_CORE_REQUEST, event)
 

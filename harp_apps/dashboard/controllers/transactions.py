@@ -1,8 +1,9 @@
 import math
 
 from harp import get_logger
-from harp.asgi import ASGIRequest, ASGIResponse
+from harp.asgi import ASGIResponse
 from harp.controllers import GetHandler, RouteHandler, RouterPrefix, RoutingController
+from harp.http import HttpRequest
 from harp.models.transactions import Transaction
 from harp.settings import PAGE_SIZE
 from harp.typing.storage import Storage
@@ -37,7 +38,7 @@ class TransactionsController(RoutingController):
         super().__init__(handle_errors=handle_errors, router=router)
 
     @GetHandler("/filters")
-    async def filters(self, request: ASGIRequest, response: ASGIResponse):
+    async def filters(self, request: HttpRequest, response: ASGIResponse):
         await self.facets["endpoint"].refresh()
 
         return json(
@@ -50,7 +51,7 @@ class TransactionsController(RoutingController):
         )
 
     @GetHandler("/")
-    async def list(self, request: ASGIRequest, response: ASGIResponse):
+    async def list(self, request: HttpRequest, response: ASGIResponse):
         page = int(request.query.get("page", 1))
         if page < 1:
             page = 1
@@ -80,7 +81,7 @@ class TransactionsController(RoutingController):
         )
 
     @GetHandler("/{id}")
-    async def get(self, request: ASGIRequest, response: ASGIResponse, id):
+    async def get(self, request: HttpRequest, response: ASGIResponse, id):
         transaction = await self.storage.get_transaction(
             id,
             username=request.context.get("user") or "anonymous",
@@ -91,7 +92,7 @@ class TransactionsController(RoutingController):
         return json(transaction.to_dict())
 
     @RouteHandler("/{id}/flags/{flag}", methods=["PUT", "DELETE"])
-    async def set_user_flag(self, request: ASGIRequest, response: ASGIResponse, id, flag):
+    async def set_user_flag(self, request: HttpRequest, response: ASGIResponse, id, flag):
         username = request.context.get("user", None) or "anonymous"
         flag_id = FLAGS_BY_NAME.get(flag)
 

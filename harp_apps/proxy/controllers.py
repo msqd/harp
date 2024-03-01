@@ -1,15 +1,16 @@
 from datetime import UTC, datetime
 from functools import cached_property
 from typing import Optional
-from urllib.parse import urljoin
+from urllib.parse import urlencode, urljoin
 
 import httpx
 from httpx import AsyncClient, codes
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.asgi import ASGIRequest, ASGIResponse
+from harp.asgi import ASGIResponse
 from harp.asgi.events import MessageEvent, TransactionEvent
+from harp.http import HttpRequest
 from harp.models import Transaction
 from harp.utils.guids import generate_transaction_id_ksuid
 
@@ -49,7 +50,7 @@ class HttpProxyController:
         if self._dispatcher:
             return await self._dispatcher.adispatch(event_id, event)
 
-    async def __call__(self, request: ASGIRequest, response: ASGIResponse):
+    async def __call__(self, request: HttpRequest, response: ASGIResponse):
         """Handle an incoming request and proxy it to the configured URL.
 
         :param request: ASGI request
@@ -69,11 +70,11 @@ class HttpProxyController:
                 headers.append((k, v))
 
         transaction = await self._create_transaction_from_request(request, tags=tags)
-        content = await self._suboptimal_temporary_extract_request_content(request)
-        url = urljoin(self.url, request.path) + (f"?{request.query_string}" if request.query_string else "")
+        body = await self._suboptimal_temporary_extract_request_body(request)
+        url = urljoin(self.url, request.path) + (f"?{urlencode(request.query)}" if request.query else "")
 
         # PROXY REQUEST
-        p_request: httpx.Request = self.http_client.build_request(request.method, url, headers=headers, content=content)
+        p_request: httpx.Request = self.http_client.build_request(request.method, url, headers=headers, content=body)
         logger.debug(f"▶▶ {request.method} {url}", transaction_id=transaction.id)
 
         # PROXY RESPONSE
@@ -124,10 +125,10 @@ class HttpProxyController:
         # dispatch transaction ended event
         await self.adispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(transaction))
 
-    async def _create_transaction_from_request(self, request, *, tags=None):
+    async def _create_transaction_from_request(self, request: HttpRequest, *, tags=None):
         transaction = Transaction(
             id=generate_transaction_id_ksuid(),
-            type=request.type,
+            type="http",
             started_at=datetime.now(UTC),
             endpoint=self.name,
             tags=tags,
@@ -147,7 +148,7 @@ class HttpProxyController:
 
         return transaction
 
-    async def _suboptimal_temporary_extract_request_content(self, request: ASGIRequest):
+    async def _suboptimal_temporary_extract_request_body(self, request: HttpRequest):
         """
         todo we should not remove the buffering ability, httpx allows us to stream the request body but for that we need
         some kind of stream processor that yields and store the chunks.
@@ -158,11 +159,10 @@ class HttpProxyController:
         messages = []
         more_body = True
         while more_body:
-            message = await request.receive()
+            message = await request._impl.receive()
             more_body = message.get("more_body", False)
             part = message.get("body", b"")
             messages.append(part)
-            request._body += part
         return b"".join(messages) if len(messages) else None
 
     def __repr__(self):

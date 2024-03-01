@@ -1,5 +1,6 @@
-from harp.asgi import ASGIRequest, ASGIResponse
+from harp.asgi import ASGIResponse
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
+from harp.http import HttpRequest
 from harp.typing.storage import Storage
 
 
@@ -10,7 +11,7 @@ class BlobsController(RoutingController):
         super().__init__(handle_errors=handle_errors, router=router)
 
     @GetHandler("/{id}")
-    async def get(self, request: ASGIRequest, response: ASGIResponse, id):
+    async def get(self, request: HttpRequest, response: ASGIResponse, id):
         blob = await self.storage.get_blob(id)
 
         if not blob:
