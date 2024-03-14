@@ -31,20 +31,29 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
         assert_development_packages_are_available()
 
     def run(self):
-        args = [
-            "harp",
-            "start",
-            "server",
-            *(("--file", self.config_filename) if self.config_filename else ()),
-            *("--disable", "harp_apps.telemetry"),
-        ]
-        logger.info('Starting subprocess: "%s"', " ".join(args))
-
-        self.process = subprocess.Popen(args, shell=False)
+        self.process = subprocess.Popen(
+            [
+                "harp",
+                "start",
+                "server",
+                *(("--file", self.config_filename) if self.config_filename else ()),
+                *("--disable", "harp_apps.telemetry"),
+            ]
+        )
 
     def join(self, timeout=None):
+        # try to kill gracefully ...
+        self.process.terminate()
+        self.process.wait(10.0)
+
+        # ... and if it does not work, kill it with fire
+        self.process.kill()
+
+        # remove temporary config file ...
         if self.config_filename:
             os.unlink(self.config_filename)
+
+        # ... and let threading handle the rest.
         return super().join(timeout)
 
 

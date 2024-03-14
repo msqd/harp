@@ -1,26 +1,36 @@
+from typing import cast
 from unittest.mock import AsyncMock
 
 import pytest
+from asgiref.typing import HTTPScope
 
-from harp.asgi import ASGIKernel, ASGIRequest, ASGIResponse
+from harp.asgi import ASGIKernel, ASGIResponse
 from harp.asgi.resolvers import ControllerResolver
+from harp.http import HttpRequest, HttpRequestAsgiBridge
 from harp.utils.bytes import ensure_bytes
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.views.json import register as register_json_views
 
 
-async def create_asgi_context(body=None, /, *, method="GET", headers=None):
+async def _create_asgi_context(body=None, /, *, method="GET", headers=None):
     receive = AsyncMock(
         return_value={"body": ensure_bytes(body) if body else b""},
     )
     send = AsyncMock()
-    request = ASGIRequest(
-        {
-            "type": "http",
-            "method": method,
-            **({"headers": [(ensure_bytes(k), ensure_bytes(v)) for k, v in headers.items()]} if headers else {}),
-        },
-        receive,
+    request = HttpRequest(
+        HttpRequestAsgiBridge(
+            cast(
+                HTTPScope,
+                {
+                    "type": "http",
+                    "method": method,
+                    **(
+                        {"headers": [(ensure_bytes(k), ensure_bytes(v)) for k, v in headers.items()]} if headers else {}
+                    ),
+                },
+            ),
+            receive,
+        ),
     )
     response = ASGIResponse(request, send)
     return request, response
@@ -35,7 +45,7 @@ class ControllerTestFixtureMixin:
     async def call_controller(self, controller=None, /, *, body=None, method="GET", headers=None):
         if controller is None:
             controller = self.create_controller()
-        request, response = await create_asgi_context(body or b"", method=method, headers=headers)
+        request, response = await _create_asgi_context(body or b"", method=method, headers=headers)
         retval = await controller(request, response)
         return request, response, retval
 

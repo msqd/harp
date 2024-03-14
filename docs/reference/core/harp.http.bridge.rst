@@ -8,6 +8,7 @@ Submodules
    :maxdepth: 4
 
    harp.http.bridge.asgi
+   harp.http.bridge.stub
 
 Module contents
 ---------------

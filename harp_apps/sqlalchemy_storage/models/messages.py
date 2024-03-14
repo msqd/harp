@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from harp.http import get_serializer_for
 from harp.models.messages import Message as MessageModel
 
 from .base import Base
@@ -38,10 +39,12 @@ class Message(Base):
 
     @classmethod
     def from_models(cls, transaction, message, headers, content):
+        serializer = get_serializer_for(message)
+
         obj = cls()
         obj.transaction_id = transaction.id
         obj.kind = message.kind
-        obj.summary = message.serialized_summary
+        obj.summary = serializer.summary
         obj.headers = headers.id
         obj.body = content.id
         obj.created_at = message.created_at.astimezone(UTC).replace(tzinfo=None)

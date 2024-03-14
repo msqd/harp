@@ -113,3 +113,6 @@ class ASGIResponse:
     @cached_property
     def serialized_body(self) -> bytes:
         return self.__deprecated_data_snapshot_for_early_developments["body"]
+
+    async def read(self) -> list[bytes]:
+        return []

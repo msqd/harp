@@ -84,7 +84,7 @@ class HonchoManagerFactory:
 
     commands[HARP_UI_SERVICE] = _get_ui_executable
 
-    def build(self, processes):
+    def build(self, processes, /, *, more_env=None):
         from honcho.manager import Manager
         from honcho.printer import Printer
 
@@ -99,7 +99,8 @@ class HonchoManagerFactory:
                 working_directory, command = os.getcwd(), self.commands[name]
 
             e = os.environ.copy()
-            manager.add_process(name, command, cwd=working_directory, env=e)
+            more_env = more_env or {}
+            manager.add_process(name, command, cwd=working_directory, env=e | more_env.get(name, {}))
 
             # this hack will change the class impl at runtime for frontend process to avoid misleading log at start.
             if name == HARP_DASHBOARD_SERVICE:

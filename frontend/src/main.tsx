@@ -39,9 +39,10 @@ const router = createBrowserRouter([
 ])
 const queryClient = new QueryClient()
 
+console.log(process.env)
 // Enable mocking in development using msw server set up for the browser
 async function enableMocking() {
-  if (process.env.NODE_ENV !== "development") {
+  if (process && process.env && (process.env.DISABLE_MOCKS == "true" || process.env.NODE_ENV !== "development")) {
     return
   }
 

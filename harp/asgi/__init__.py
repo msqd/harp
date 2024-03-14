@@ -1,8 +1,7 @@
 from .kernel import ASGIKernel
-from .messages import ASGIRequest, ASGIResponse
+from .messages import ASGIResponse
 
 __all__ = [
     "ASGIKernel",
-    "ASGIRequest",
     "ASGIResponse",
 ]

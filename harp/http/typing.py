@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from typing import Protocol
+from typing import AsyncIterator, Protocol
 
 from multidict import CIMultiDict, MultiDict
 
@@ -22,6 +22,12 @@ class HttpRequestBridge(Protocol):
 
     def get_headers(self) -> CIMultiDict:
         ...
+
+    async def read(self) -> bytes:
+        ...
+
+    async def stream(self) -> AsyncIterator[bytes]:
+        yield ...
 
 
 class BaseMessage:

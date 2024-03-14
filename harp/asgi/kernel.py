@@ -33,8 +33,6 @@ async def kernel_not_started_controller(request, response: ASGIResponse):
 
 
 class ASGIKernel:
-    ResponseType = ASGIResponse
-
     dispatcher: IAsyncEventDispatcher
 
     def __init__(self, *, dispatcher=None, resolver=None, debug=False, handle_errors=True):
@@ -47,9 +45,10 @@ class ASGIKernel:
 
     async def __call__(self, scope: Scope, receive: ASGIReceiveCallable, send: ASGISendCallable):
         asgi_type = scope.get("type", None)
+
         if asgi_type == "http":
             request = HttpRequest(HttpRequestAsgiBridge(scope, receive))
-            response = self.ResponseType(request, send)
+            response = ASGIResponse(request, send)
             if not self.started:
                 await kernel_not_started_controller(request, response)
                 return response

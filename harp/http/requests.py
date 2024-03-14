@@ -15,6 +15,8 @@ class HttpRequest(BaseHttpMessage):
         super().__init__()
 
         self._impl = impl
+        self._body = []
+        self._closed = False
 
     @cached_property
     def server_ipaddr(self) -> str:
@@ -71,3 +73,21 @@ class HttpRequest(BaseHttpMessage):
                     continue
 
                 return user, passwd
+
+    @cached_property
+    def body(self) -> bytes:
+        """Returns the previously read body of the request. Raises a RuntimeError if the body has not been read yet,
+        you must await the `read()` asynchronous method first, which cannot be done here because properties are
+        synchronous, so we let the user explicitely call it before."""
+        if not self._closed:
+            raise RuntimeError("Request body has not been read yet, please await `read()` first.")
+        return b"".join(self._body)
+
+    async def read(self) -> list[bytes]:
+        """Read all chunks from request. We may want to be able to read partial body later, but for now it's all or
+        nothing. This method does nothing if the body has already been read."""
+        if not self._closed:
+            async for chunk in self._impl.stream():
+                self._body.append(chunk)
+            self._closed = True
+        return self._body
