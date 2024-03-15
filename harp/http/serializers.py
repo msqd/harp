@@ -1,26 +1,36 @@
 from functools import cached_property
-from typing import Protocol
 from urllib.parse import urlencode
 
-from harp.http import HttpRequest
-from harp.http.typing import BaseMessage
+from httpx import codes
+
+from .requests import HttpRequest
+from .responses import HttpResponse
+from .typing import BaseHttpMessage, BaseMessage, MessageSerializer
 
 
-class MessageSerializer(Protocol):
-    @property
+class BaseHttpMessageSerializer(MessageSerializer):
+    """
+    Base serializer for HTTP messages.
+
+    """
+
+    def __init__(self, message: BaseHttpMessage):
+        self.wrapped = message
+
+    @cached_property
     def summary(self) -> str:
-        return ...
+        raise NotImplementedError
 
-    @property
+    @cached_property
     def headers(self) -> str:
-        return ...
+        return "\n".join([f"{k}: {v}" for k, v in self.wrapped.headers.items()])
 
-    @property
+    @cached_property
     def body(self) -> bytes:
-        return ...
+        return self.wrapped.body
 
 
-class HttpRequestSerializer(MessageSerializer):
+class HttpRequestSerializer(BaseHttpMessageSerializer):
     """
     Serialize an HTTP request object into string representations for different message parts:
 
@@ -28,51 +38,43 @@ class HttpRequestSerializer(MessageSerializer):
     - headers: the headers of the request message (e.g. "Host: localhost:4080\nConnection: keep-alive\n...")
     - body: the body of the request message (e.g. b'{"foo": "bar"}')
 
-    The main goal of this serializer is to prepare a message for storage.
+    The main goal of this serializer is to prepare a request message for storage.
 
     """
 
-    def __init__(self, request: HttpRequest):
-        self._request = request
+    wrapped: HttpRequest
 
     @cached_property
     def summary(self) -> str:
-        query_string = "?" + urlencode(self._request.query) if self._request.query else ""
-        return f"{self._request.method} {self._request.path}{query_string} HTTP/1.1"
-
-    @cached_property
-    def headers(self) -> str:
-        return "\n".join([f"{k}: {v}" for k, v in self._request.headers.items()])
-
-    @cached_property
-    def body(self) -> bytes:
-        return self._request.body
+        query_string = "?" + urlencode(self.wrapped.query) if self.wrapped.query else ""
+        return f"{self.wrapped.method} {self.wrapped.path}{query_string} HTTP/1.1"
 
 
-class LegacyMessageSerializer(MessageSerializer):
-    def __init__(self, message):
-        self._message = message
+class HttpResponseSerializer(BaseHttpMessageSerializer):
+    """
+    Serialize an HTTP response object into string representations for different message parts:
+
+    - summary: the first line of the response message (e.g. "HTTP/1.1 200 OK")
+    - headers: the headers of the response message (e.g. "Content-Type: text/plain\nContent-Length: 13\n...")
+    - body: the body of the response message (e.g. b'Hello, world!')
+
+    The main goal of this serializer is to prepare a response message for storage.
+
+    """
+
+    wrapped: HttpResponse
 
     @cached_property
     def summary(self) -> str:
-        return self._message.serialized_summary
-
-    @cached_property
-    def headers(self) -> str:
-        return self._message.serialized_headers
-
-    @cached_property
-    def body(self) -> bytes:
-        return self._message.serialized_body
+        reason = codes.get_reason_phrase(self.wrapped.status)
+        return f"HTTP/1.1 {self.wrapped.status} {reason}"
 
 
 def get_serializer_for(message: BaseMessage) -> MessageSerializer:
     if isinstance(message, HttpRequest):
         return HttpRequestSerializer(message)
 
-    from harp.asgi import ASGIResponse
-
-    if isinstance(message, ASGIResponse):
-        return LegacyMessageSerializer(message)
+    if isinstance(message, HttpResponse):
+        return HttpResponseSerializer(message)
 
     raise ValueError(f"No serializer available for message type: {type(message)}")

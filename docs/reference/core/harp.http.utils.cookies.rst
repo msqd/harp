@@ -1,7 +1,7 @@
-harp.typing.controllers module
+harp.http.utils.cookies module
 ==============================
 
-.. automodule:: harp.typing.controllers
+.. automodule:: harp.http.utils.cookies
    :members:
    :undoc-members:
    :show-inheritance:

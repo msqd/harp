@@ -1,7 +1,7 @@
-harp.asgi.resolvers module
+harp.http.responses module
 ==========================
 
-.. automodule:: harp.asgi.resolvers
+.. automodule:: harp.http.responses
    :members:
    :undoc-members:
    :show-inheritance:

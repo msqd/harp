@@ -20,7 +20,6 @@ Submodules
    harp.utils.bytes
    harp.utils.dates
    harp.utils.guids
-   harp.utils.http
    harp.utils.identifiers
    harp.utils.json
    harp.utils.network

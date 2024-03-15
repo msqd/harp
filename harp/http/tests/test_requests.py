@@ -1,7 +1,7 @@
 import pytest
 
 from harp.http import HttpRequest, HttpRequestSerializer
-from harp.http.bridge.stub import HttpRequestStubBridge
+from harp.http.tests.stubs import HttpRequestStubBridge
 
 
 class BaseHttpRequestTest:
@@ -166,22 +166,22 @@ class TestHttpRequestBody(BaseHttpRequestTest):
 
     async def test_body_empty(self):
         request = self.create_request()
-        await request.read()
+        await request.join()
         assert request.body == b""
 
     async def test_body_one_chunk(self):
         request = self.create_request(body=b"foobar")
-        await request.read()
+        await request.join()
         assert request.body == b"foobar"
 
     async def test_body_many_chunks(self):
         request = self.create_request(body=[b"foo", b"bar", b"baz"])
-        await request.read()
+        await request.join()
         assert request.body == b"foobarbaz"
 
     async def test_body_can_be_read_more_than_once(self):
         request = self.create_request(body=[b"foo", b"bar", b"baz"])
-        await request.read()
-        await request.read()
-        await request.read()
+        await request.join()
+        await request.join()
+        await request.join()
         assert request.body == b"foobarbaz"

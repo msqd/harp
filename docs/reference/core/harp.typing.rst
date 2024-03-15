@@ -7,7 +7,6 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   harp.typing.controllers
    harp.typing.global_settings
    harp.typing.storage
    harp.typing.transactions

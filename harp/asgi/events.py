@@ -1,20 +1,19 @@
 from functools import cached_property
+from typing import TYPE_CHECKING, Any, Optional
 
 from whistle import Event
 
-from harp.http import HttpRequest
-from harp.http.typing import BaseMessage
+from harp.http import BaseMessage, HttpRequest
 from harp.models.transactions import Transaction
 
+if TYPE_CHECKING:
+    from harp.http import HttpResponse
+
 EVENT_CORE_STARTED = "core.started"
-EVENT_CORE_REQUEST = "core.request"
-EVENT_CORE_CONTROLLER = "core.controller"
-EVENT_CORE_VIEW = "core.view"
-EVENT_CORE_RESPONSE = "core.response"
 
 
 class RequestEvent(Event):
-    name = EVENT_CORE_REQUEST
+    name = "core.request"
 
     def __init__(self, request: HttpRequest):
         self._request = request
@@ -32,32 +31,53 @@ class RequestEvent(Event):
         self._controller = controller
 
 
+EVENT_CORE_REQUEST = RequestEvent.name
+
+
 class ControllerEvent(RequestEvent):
-    name = EVENT_CORE_CONTROLLER
+    name = "core.controller"
 
     def __init__(self, request: HttpRequest, controller):
         super().__init__(request)
         self._controller = controller
 
 
+EVENT_CORE_CONTROLLER = ControllerEvent.name
+
+
 class ResponseEvent(RequestEvent):
-    name = EVENT_CORE_RESPONSE
+    name = "core.response"
 
     def __init__(self, request: HttpRequest, response):
         super().__init__(request)
         self.response = response
 
 
-class ViewEvent(ResponseEvent):
-    name = EVENT_CORE_VIEW
+EVENT_CORE_RESPONSE = ResponseEvent.name
 
-    def __init__(self, request: HttpRequest, response, value):
-        super().__init__(request, response)
-        self._value = value
 
-    @property
-    def value(self):
-        return self._value
+class ControllerViewEvent(RequestEvent):
+    """
+    The view event allows to transform controller return values into response objects.
+    """
+
+    name = "controller.view"
+
+    value: Any
+    response: Optional["HttpResponse"]
+
+    def __init__(self, request: HttpRequest, value: Any):
+        super().__init__(request)
+
+        self.value = value
+        self.response = None
+
+    def set_response(self, response: "HttpResponse"):
+        self.response = response
+        self.stop_propagation()
+
+
+EVENT_CONTROLLER_VIEW = ControllerViewEvent.name
 
 
 class TransactionEvent(Event):

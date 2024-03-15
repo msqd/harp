@@ -1,3 +1,4 @@
+from inspect import signature
 from typing import Optional
 
 from http_router import NotFoundError, Router
@@ -5,8 +6,7 @@ from http_router.types import TMethodsArg, TPath
 from rich.console import Console
 from rich.traceback import Traceback
 
-from harp.asgi.messages import ASGIResponse
-from harp.http import HttpRequest
+from harp.http import HttpRequest, HttpResponse
 from harp.meta import get_meta, has_meta, set_meta
 from harp.utils.arguments import Arguments
 
@@ -43,23 +43,30 @@ class RoutingController:
     def create_router(self):
         return self.RouterType(*self.RouterArguments.args, *self.RouterArguments.kwargs)
 
-    async def __call__(self, request: HttpRequest, response: ASGIResponse):
+    async def __call__(self, request: HttpRequest):
         try:
             match = self.router(request.path, method=request.method)
-            return await match.target(request, response, **(match.params or {}))
+            sig = signature(match.target)
+            args = (
+                request if name == "request" else match.params.get(name, param.default)
+                for name, param in sig.parameters.items()
+            )
+            return await match.target(*args)
         except NotFoundError as exc:
             if not self.handle_errors:
                 raise
-            await self.handle_error(exc, response, status=404)
+            return self.handle_error(exc, status=404)
         except Exception as exc:
             if not self.handle_errors:
                 raise
-            await self.handle_error(exc, response)
+            return self.handle_error(exc)
 
-    async def handle_error(self, exc, response, *, status=500):
-        response.headers["content-type"] = "text/html"
-        await response.start(status=status)
-        await response.body(f"<h1>{type(exc).__name__}</h1><h2>Stack trace</h2>{get_exception_traceback_str(exc)}")
+    def handle_error(self, exc, *, status=500):
+        return HttpResponse(
+            f"<h1>{type(exc).__name__}</h1><h2>Stack trace</h2>{get_exception_traceback_str(exc)}",
+            status=status,
+            content_type="text/html",
+        )
 
 
 def RouterPrefix(prefix):

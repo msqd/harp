@@ -1,4 +1,4 @@
-harp.http.bridge package
+harp.asgi.bridge package
 ========================
 
 Submodules
@@ -7,13 +7,13 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   harp.http.bridge.asgi
-   harp.http.bridge.stub
+   harp.asgi.bridge.requests
+   harp.asgi.bridge.responses
 
 Module contents
 ---------------
 
-.. automodule:: harp.http.bridge
+.. automodule:: harp.asgi.bridge
    :members:
    :undoc-members:
    :show-inheritance:

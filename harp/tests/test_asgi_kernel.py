@@ -2,17 +2,15 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from harp.asgi import ASGIResponse
+from harp.asgi.bridge.requests import HttpRequestAsgiBridge
 from harp.asgi.kernel import ASGIKernel
-from harp.asgi.resolvers import ControllerResolver
-from harp.http import HttpRequest, HttpRequestAsgiBridge
-from harp.http.bridge.stub import HttpRequestStubBridge
+from harp.controllers import DefaultControllerResolver
+from harp.http import HttpRequest, HttpResponse
+from harp.http.tests.stubs import HttpRequestStubBridge
 
 
-async def mock_controller(request, response):
-    response.headers["content-type"] = "text/plain"
-    await response.start()
-    await response.body("Hello, world!")
+async def mock_controller(request):
+    return HttpResponse("Hello, world!", content_type="text/plain")
 
 
 class TestAsgiKernel:
@@ -39,15 +37,15 @@ class TestAsgiKernel:
         ],
     )
     async def test_basic_request_handling(self, impl):
-        controller = AsyncMock(wraps=mock_controller)
+        controller = AsyncMock(wraps=mock_controller, spec=mock_controller)
 
-        kernel = ASGIKernel(resolver=ControllerResolver(default_controller=controller))
+        kernel = ASGIKernel(resolver=DefaultControllerResolver(default_controller=controller))
         kernel.started = True  # we do not need to test startup here.
 
         request = HttpRequest(impl)
 
-        response = (await kernel.handle_http(request, ASGIResponse(request, AsyncMock()))).snapshot()
+        response = await kernel.do_handle_http(request, AsyncMock())
         assert controller.await_count == 1
-        assert response["status"] == 200
-        assert response["body"] == b"Hello, world!"
-        assert response["headers"] == ((b"content-type", b"text/plain"),)
+        assert response.status == 200
+        assert response.body == b"Hello, world!"
+        assert response.headers == {"content-type": "text/plain"}

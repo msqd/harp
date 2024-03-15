@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from typing import Iterable, List, Optional, TypedDict, override
 
@@ -355,8 +356,14 @@ class SqlAlchemyStorage(Storage):
         """Event handler to store the transaction in the database."""
         return await self.create_transaction(event.transaction)
 
+    @asynccontextmanager
+    async def begin(self):
+        async with self.session() as session:
+            async with session.begin():
+                yield session
+
     async def _on_transaction_message(self, event: MessageEvent):
-        await event.message.read()
+        await event.message.join()
         serializer = get_serializer_for(event.message)
 
         # todo is the "__headers__" dunder content type any good idea ? maybe it's just a waste of bytes.

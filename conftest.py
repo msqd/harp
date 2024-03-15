@@ -107,7 +107,6 @@ DBS = {
                 if TEST_ALL_DATABASES
                 else [
                     "postgres:16-alpine",
-                    "timescale/timescaledb:latest-pg16",
                 ]
             ),
         ],
@@ -121,7 +120,7 @@ DBS = {
         ]
         if TEST_ALL_DATABASES
         else ["mariadb:lts"],
-        "drivers": ["aiomysql", "asyncmy"],
+        "drivers": ["aiomysql", "asyncmy"] if TEST_ALL_DATABASES else ["aiomysql"],
     },
     # disabled, does not install cleanly on osx+arm
     # see https://github.com/pymssql/pymssql/issues/769

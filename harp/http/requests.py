@@ -4,8 +4,8 @@ from functools import cached_property
 
 from multidict import CIMultiDictProxy, MultiDictProxy
 
-from harp.http.typing import BaseHttpMessage, HttpRequestBridge
-from harp.utils.http import parse_cookie
+from .typing import BaseHttpMessage, HttpRequestBridge
+from .utils.cookies import parse_cookie
 
 
 class HttpRequest(BaseHttpMessage):
@@ -83,11 +83,10 @@ class HttpRequest(BaseHttpMessage):
             raise RuntimeError("Request body has not been read yet, please await `read()` first.")
         return b"".join(self._body)
 
-    async def read(self) -> list[bytes]:
+    async def join(self):
         """Read all chunks from request. We may want to be able to read partial body later, but for now it's all or
         nothing. This method does nothing if the body has already been read."""
         if not self._closed:
             async for chunk in self._impl.stream():
                 self._body.append(chunk)
             self._closed = True
-        return self._body

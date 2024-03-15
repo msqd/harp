@@ -8,8 +8,8 @@ from httpx import AsyncClient
 
 from harp import Config
 from harp.asgi.kernel import ASGIKernel
-from harp.asgi.resolvers import ProxyControllerResolver
 from harp.config.factories.kernel_factory import KernelFactory
+from harp.controllers import ProxyControllerResolver
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.http import parametrize_with_http_methods, parametrize_with_http_status_codes
 from harp_apps.proxy.controllers import HttpProxyController
@@ -32,7 +32,7 @@ class TestAsgiProxyWithoutEndpoints:
         return client
 
     @pytest.mark.asyncio
-    async def test_asgi_proxy_get_no_endpoint(self, client):
+    async def test_asgi_proxy_get_no_endpoint(self, client: ASGICommunicator):
         response = await client.http_get("/")
         assert response["status"] == 404
         assert response["body"] == b"Not found."
@@ -50,7 +50,7 @@ class TestAsgiProxyWithMissingStartup:
     async def client(self, kernel):
         return ASGICommunicator(kernel)
 
-    async def test_missing_lifecycle_startup(self, client):
+    async def test_missing_lifecycle_startup(self, client: ASGICommunicator):
         response = await client.http_get("/echo")
         assert response["status"] == 500
         assert response["body"] == (

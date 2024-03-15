@@ -2,7 +2,6 @@ import re
 from copy import deepcopy
 
 from harp import __revision__, __version__
-from harp.asgi import ASGIResponse
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest
 from harp.typing.global_settings import GlobalSettings
@@ -25,7 +24,7 @@ class SystemController(RoutingController):
         super().__init__(handle_errors=handle_errors, router=router)
 
     @GetHandler("/")
-    async def get(self, request: HttpRequest, response: ASGIResponse):
+    async def get(self, request: HttpRequest):
         context = getattr(request, "context", {})
 
         return json(
@@ -37,11 +36,11 @@ class SystemController(RoutingController):
         )
 
     @GetHandler("/settings")
-    async def get_settings(self, request: HttpRequest, response: ASGIResponse):
+    async def get_settings(self):
         return json(self.settings)
 
     @GetHandler("/dependencies")
-    async def get_dependencies(self, request: HttpRequest, response: ASGIResponse):
+    async def get_dependencies(self):
         return json({"python": await self.__get_cached_python_dependencies()})
 
     async def __get_cached_python_dependencies(self):

@@ -7,7 +7,8 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   harp.http.bridge
+   harp.http.typing
+   harp.http.utils
 
 Submodules
 ----------
@@ -16,8 +17,8 @@ Submodules
    :maxdepth: 4
 
    harp.http.requests
+   harp.http.responses
    harp.http.serializers
-   harp.http.typing
 
 Module contents
 ---------------

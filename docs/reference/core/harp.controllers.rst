@@ -7,7 +7,10 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
+   harp.controllers.default
+   harp.controllers.resolvers
    harp.controllers.routing
+   harp.controllers.typing
 
 Module contents
 ---------------

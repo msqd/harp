@@ -3,7 +3,7 @@ from urllib.parse import parse_qsl
 
 from multidict import CIMultiDict, MultiDict
 
-from harp.http.typing import HttpRequestBridge
+from harp.http import HttpRequestBridge
 
 
 class HttpRequestStubBridge(HttpRequestBridge):

@@ -4,9 +4,9 @@ from urllib.parse import urlencode
 import pytest
 from multidict import MultiDict
 
-from harp.http import HttpRequestAsgiBridge
-from harp.http.typing import HttpRequestBridge
-from harp.utils.http import HTTP_METHODS
+from harp.asgi.bridge.requests import HttpRequestAsgiBridge
+from harp.http import HttpRequestBridge
+from harp.http.utils import HTTP_METHODS
 
 DEFAULT_SERVER_IPADDR = "127.0.0.1"
 DEFAULT_SERVER_PORT = 80

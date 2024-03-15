@@ -4,19 +4,19 @@ from unittest.mock import AsyncMock
 import pytest
 from asgiref.typing import HTTPScope
 
-from harp.asgi import ASGIKernel, ASGIResponse
-from harp.asgi.resolvers import ControllerResolver
-from harp.http import HttpRequest, HttpRequestAsgiBridge
+from harp.asgi import ASGIKernel
+from harp.asgi.bridge.requests import HttpRequestAsgiBridge
+from harp.controllers import DefaultControllerResolver
+from harp.http import HttpRequest, HttpResponse
 from harp.utils.bytes import ensure_bytes
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.views.json import register as register_json_views
 
 
-async def _create_asgi_context(body=None, /, *, method="GET", headers=None):
+async def _create_request(body=None, /, *, method="GET", headers=None):
     receive = AsyncMock(
         return_value={"body": ensure_bytes(body) if body else b""},
     )
-    send = AsyncMock()
     request = HttpRequest(
         HttpRequestAsgiBridge(
             cast(
@@ -32,8 +32,7 @@ async def _create_asgi_context(body=None, /, *, method="GET", headers=None):
             receive,
         ),
     )
-    response = ASGIResponse(request, send)
-    return request, response
+    return request
 
 
 class ControllerTestFixtureMixin:
@@ -42,12 +41,13 @@ class ControllerTestFixtureMixin:
     def create_controller(self, *args, **kwargs):
         return self.ControllerType(*args, **kwargs)
 
-    async def call_controller(self, controller=None, /, *, body=None, method="GET", headers=None):
+    async def call_controller(
+        self, controller=None, /, *, body=None, method="GET", headers=None
+    ) -> tuple[HttpRequest, HttpResponse]:
         if controller is None:
             controller = self.create_controller()
-        request, response = await _create_asgi_context(body or b"", method=method, headers=headers)
-        retval = await controller(request, response)
-        return request, response, retval
+        request = await _create_request(body or b"", method=method, headers=headers)
+        return request, await controller(request)
 
     @pytest.fixture
     def controller(self, storage):
@@ -57,7 +57,7 @@ class ControllerTestFixtureMixin:
 class ControllerThroughASGIFixtureMixin(ControllerTestFixtureMixin):
     @pytest.fixture
     def kernel(self, controller):
-        kernel = ASGIKernel(resolver=ControllerResolver(default_controller=controller), handle_errors=False)
+        kernel = ASGIKernel(resolver=DefaultControllerResolver(default_controller=controller), handle_errors=False)
         register_json_views(kernel.dispatcher)
         return kernel
 

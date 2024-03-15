@@ -1,9 +1,9 @@
-from harp.utils.http import parse_cookie
+from harp.http.utils import parse_cookie
 
 
 class TestCookieParsing:
     """
-    Some test cases are adapted from django's httpwrappers tests and/or python's Lib/test/test_http_cookies.py.
+    Some test cases are adapted from django's httpwrappers tests and/or python's Lib/test/test_utils_cookies.py.
     """
 
     def test_nonstandard_keys(self):

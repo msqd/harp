@@ -1,6 +1,5 @@
-from harp.asgi import ASGIResponse
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
-from harp.http import HttpRequest
+from harp.http import HttpResponse
 from harp.typing.storage import Storage
 
 
@@ -11,19 +10,13 @@ class BlobsController(RoutingController):
         super().__init__(handle_errors=handle_errors, router=router)
 
     @GetHandler("/{id}")
-    async def get(self, request: HttpRequest, response: ASGIResponse, id):
+    async def get(self, id):
         blob = await self.storage.get_blob(id)
-
         if not blob:
-            response.headers["content-type"] = "text/plain"
-            await response.start(status=404)
-            await response.body(b"Blob not found.")
-            return
+            return HttpResponse(b"Blob not found.", status=404, content_type="text/plain")
 
-        response.headers["content-type"] = blob.content_type or "application/octet-stream"
-        await response.start(status=200)
+        content_type = blob.content_type or "application/octet-stream"
 
-        if blob.content_type == "application/json":
-            await response.body(blob.prettify())
-        else:
-            await response.body(blob.data)
+        if content_type == "application/json":
+            return HttpResponse(blob.prettify(), content_type=content_type)
+        return HttpResponse(blob.data, content_type=content_type)

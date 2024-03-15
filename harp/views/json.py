@@ -3,7 +3,8 @@ import traceback
 import orjson
 from whistle import IAsyncEventDispatcher
 
-from harp.asgi.events import EVENT_CORE_VIEW, ViewEvent
+from harp.asgi.events import EVENT_CONTROLLER_VIEW, ControllerViewEvent
+from harp.http import HttpResponse
 
 
 class json(dict):
@@ -20,34 +21,34 @@ class json(dict):
     pass
 
 
-async def on_json_response(event: ViewEvent):
+async def on_json_response(event: ControllerViewEvent):
     if isinstance(event.value, json):
-        response = event.response
-        response.headers["content-type"] = "application/json"
-
+        content_type = "application/json"
         try:
             serialized = orjson.dumps(
                 event.value,
                 option=orjson.OPT_NON_STR_KEYS | orjson.OPT_NAIVE_UTC,
             )
-            await response.start(status=200)
-            await response.body(serialized)
-        except TypeError as exc:
-            await response.start(status=500)
-            await response.body(
-                orjson.dumps(
-                    {
-                        "error": "Cannot serialize response to json.",
-                        "type": type(exc).__name__,
-                        "message": str(exc),
-                        "traceback": traceback.format_exc(),
-                        "value": repr(event.value),
-                    },
-                )
+            event.set_response(
+                HttpResponse(serialized, status=200, content_type=content_type),
             )
-
-        event.stop_propagation()
+        except TypeError as exc:
+            event.set_response(
+                HttpResponse(
+                    orjson.dumps(
+                        {
+                            "error": "Cannot serialize response to json.",
+                            "type": type(exc).__name__,
+                            "message": str(exc),
+                            "traceback": traceback.format_exc(),
+                            "value": repr(event.value),
+                        },
+                    ),
+                    status=500,
+                    content_type=content_type,
+                ),
+            )
 
 
 def register(dispatcher: IAsyncEventDispatcher):
-    dispatcher.add_listener(EVENT_CORE_VIEW, on_json_response)
+    dispatcher.add_listener(EVENT_CONTROLLER_VIEW, on_json_response)

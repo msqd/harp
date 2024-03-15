@@ -1,10 +1,14 @@
-from datetime import UTC, datetime
 from typing import AsyncIterator, Protocol
 
 from multidict import CIMultiDict, MultiDict
 
 
 class HttpRequestBridge(Protocol):
+    """
+    The HttpRequestBridge protocol defines the methods required by the HttpRequest object for it to attach to a real
+    implementation, such as WSGI, ASGI, ...
+    """
+
     def get_server_ipaddr(self) -> str:
         ...
 
@@ -30,20 +34,8 @@ class HttpRequestBridge(Protocol):
         yield ...
 
 
-class BaseMessage:
-    protocol: str
-    kind: str
-    created_at: datetime
-
-    def __init__(self):
-        self.created_at = datetime.now(UTC)
-
-        self._context = {}
-
-    @property
-    def context(self) -> dict:
-        return self._context
-
-
-class BaseHttpMessage(BaseMessage):
-    protocol = "http"
+class HttpResponseBridge(Protocol):
+    """
+    The HttpResponseBridge protocol defines the necessary methods to actually send an HttpResponse through a real
+    channel.
+    """
