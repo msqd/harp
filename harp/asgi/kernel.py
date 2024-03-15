@@ -1,12 +1,12 @@
 import traceback
-from inspect import _empty, signature
+from inspect import signature
 
 from asgiref.typing import ASGIReceiveCallable, ASGISendCallable, Scope
 from whistle import AsyncEventDispatcher, Event, IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.controllers import DefaultControllerResolver
-from harp.http import HttpRequest, HttpResponse
+from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
 
 from .bridge.requests import HttpRequestAsgiBridge
 from .bridge.responses import HttpResponseAsgiBridge
@@ -41,6 +41,8 @@ class ASGIKernel:
 
         if asgi_type == "http":
             response = await self.handle_http(scope, receive, send)
+            if isinstance(response, AlreadyHandledHttpResponse):
+                return
             return await HttpResponseAsgiBridge(response, send).send()
 
         if asgi_type == "lifespan":
@@ -67,7 +69,7 @@ class ASGIKernel:
 
         try:
             return [
-                candidates[name] if name in candidates or param.default is _empty else param.default
+                candidates[name] if name in candidates or param.default is param.empty else param.default
                 for name, param in signature(subject).parameters.items()
                 if param.kind is not param.KEYWORD_ONLY
             ], {}

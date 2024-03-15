@@ -9,7 +9,7 @@ from httpx import AsyncClient
 from harp import ROOT_DIR, get_logger
 from harp.config import ConfigurationError
 from harp.controllers import RoutingController
-from harp.http import HttpRequest, HttpResponse
+from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
 from harp.typing.global_settings import GlobalSettings
 from harp.typing.storage import Storage
 from harp_apps.proxy.controllers import HttpProxyController
@@ -123,7 +123,7 @@ class DashboardController:
         # Is this a prebuilt static asset?
         if self._ui_static_middleware and not request.path.startswith("/api/"):
             # XXX todo fix
-            return await self._ui_static_middleware(
+            await self._ui_static_middleware(
                 {
                     "type": "http",
                     "path": request.path if "." in request.path else "/index.html",
@@ -132,6 +132,7 @@ class DashboardController:
                 request._impl.asgi_receive,
                 asgi_send,
             )
+            return AlreadyHandledHttpResponse()
 
         try:
             return await self._internal_api_controller(request)
