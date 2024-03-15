@@ -18,14 +18,14 @@ dependencies:
     specifier: ^2.1.1
     version: 2.1.1(react@18.2.0)
   '@sentry/browser':
-    specifier: ^7.106.1
-    version: 7.106.1
+    specifier: ^7.107.0
+    version: 7.107.0
   '@tailwindcss/forms':
     specifier: ^0.5.7
     version: 0.5.7(tailwindcss@3.4.1)
   date-fns:
-    specifier: ^3.3.1
-    version: 3.3.1
+    specifier: ^3.5.0
+    version: 3.5.0
   http-status-codes:
     specifier: ^2.3.0
     version: 2.3.0
@@ -51,8 +51,8 @@ dependencies:
     specifier: ^18.2.0
     version: 18.2.0(react@18.2.0)
   react-error-boundary:
-    specifier: ^4.0.12
-    version: 4.0.12(react@18.2.0)
+    specifier: ^4.0.13
+    version: 4.0.13(react@18.2.0)
   react-is:
     specifier: 18.2.0
     version: 18.2.0
@@ -155,8 +155,8 @@ devDependencies:
     specifier: ^4.6.0
     version: 4.6.0(eslint@8.57.0)
   eslint-plugin-react-refresh:
-    specifier: ^0.4.5
-    version: 0.4.5(eslint@8.57.0)
+    specifier: ^0.4.6
+    version: 0.4.6(eslint@8.57.0)
   jsdom:
     specifier: ^24.0.0
     version: 24.0.0
@@ -194,8 +194,8 @@ devDependencies:
     specifier: ^5.0.10
     version: 5.1.1(@types/node@20.11.27)
   vite-tsconfig-paths:
-    specifier: ^4.3.1
-    version: 4.3.1(typescript@5.3.3)(vite@5.1.1)
+    specifier: ^4.3.2
+    version: 4.3.2(typescript@5.3.3)(vite@5.1.1)
   vitest:
     specifier: ^1.2.2
     version: 1.2.2(@types/node@20.11.27)(jsdom@24.0.0)
@@ -1168,75 +1168,75 @@ packages:
     dev: true
     optional: true
 
-  /@sentry-internal/feedback@7.106.1:
-    resolution: {integrity: sha512-udYR7rQnnQJ0q4PP3R7lTFx7cUz3SB4ghm8T/fJzdItrk+Puv6y8VqI19SFfDgvwgStInEzE5yys6SUQcXLBtA==}
+  /@sentry-internal/feedback@7.107.0:
+    resolution: {integrity: sha512-okF0B9AJHrpkwNMxNs/Lffw3N5ZNbGwz4uvCfyOfnMxc7E2VfDM18QzUvTBRvNr3bA9wl+InJ+EMG3aZhyPunA==}
     engines: {node: '>=12'}
     dependencies:
-      '@sentry/core': 7.106.1
-      '@sentry/types': 7.106.1
-      '@sentry/utils': 7.106.1
+      '@sentry/core': 7.107.0
+      '@sentry/types': 7.107.0
+      '@sentry/utils': 7.107.0
     dev: false
 
-  /@sentry-internal/replay-canvas@7.106.1:
-    resolution: {integrity: sha512-r+nhLrQuTQih93gZ08F6MLdmaoBy/bQFcVt/2ZVqe1SkDY+MxRlXxq8ydo3FfgEjMRHdody3yT1dj6E174h23w==}
+  /@sentry-internal/replay-canvas@7.107.0:
+    resolution: {integrity: sha512-dmDL9g3QDfo7axBOsVnpiKdJ/DXrdeuRv1AqsLgwzJKvItsv0ZizX0u+rj5b1UoxcwbXRMxJ0hit5a1yt3t/ow==}
     engines: {node: '>=12'}
     dependencies:
-      '@sentry/core': 7.106.1
-      '@sentry/replay': 7.106.1
-      '@sentry/types': 7.106.1
-      '@sentry/utils': 7.106.1
+      '@sentry/core': 7.107.0
+      '@sentry/replay': 7.107.0
+      '@sentry/types': 7.107.0
+      '@sentry/utils': 7.107.0
     dev: false
 
-  /@sentry-internal/tracing@7.106.1:
-    resolution: {integrity: sha512-Ui9zSmW88jTdmNnNBLYYpNoAi31esX5/auysC3v7+SpwxIsC3AGLFvXs4EPziyz8d0F62Ji0fNQZ96ui4fO6BQ==}
+  /@sentry-internal/tracing@7.107.0:
+    resolution: {integrity: sha512-le9wM8+OHBbq7m/8P7JUJ1UhSPIty+Z/HmRXc5Z64ODZcOwFV6TmDpYx729IXDdz36XUKmeI+BeM7yQdTTZPfQ==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry/core': 7.106.1
-      '@sentry/types': 7.106.1
-      '@sentry/utils': 7.106.1
+      '@sentry/core': 7.107.0
+      '@sentry/types': 7.107.0
+      '@sentry/utils': 7.107.0
     dev: false
 
-  /@sentry/browser@7.106.1:
-    resolution: {integrity: sha512-+Yp7OUx78ZwFFYfIvOKZGjMPW7Ds3zZSO8dsMxvDRzkA9NyyAmYMZ/dNTcsGb+PssgkCasF2XA07f6WgkNW92A==}
+  /@sentry/browser@7.107.0:
+    resolution: {integrity: sha512-KnqaQDhxv6w9dJ+mYLsNwPeGZfgbpM3vaismBNyJCKLgWn2V75kxkSq+bDX8LQT/13AyK7iFp317L6P8EuNa3g==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry-internal/feedback': 7.106.1
-      '@sentry-internal/replay-canvas': 7.106.1
-      '@sentry-internal/tracing': 7.106.1
-      '@sentry/core': 7.106.1
-      '@sentry/replay': 7.106.1
-      '@sentry/types': 7.106.1
-      '@sentry/utils': 7.106.1
+      '@sentry-internal/feedback': 7.107.0
+      '@sentry-internal/replay-canvas': 7.107.0
+      '@sentry-internal/tracing': 7.107.0
+      '@sentry/core': 7.107.0
+      '@sentry/replay': 7.107.0
+      '@sentry/types': 7.107.0
+      '@sentry/utils': 7.107.0
     dev: false
 
-  /@sentry/core@7.106.1:
-    resolution: {integrity: sha512-cwCd66wkbutXCI8j14JLkyod9RHtqSNfzGpx/ieBE+N786jX+Yj1DiaZJ6ZYjKQpnToipFnacEakCd9Vc9oePA==}
+  /@sentry/core@7.107.0:
+    resolution: {integrity: sha512-C7ogye6+KPyBi8NVL0P8Rxx3Ur7Td8ufnjxosVy678lqY+dcYPk/HONROrzUFYW5fMKWL4/KYnwP+x9uHnkDmw==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry/types': 7.106.1
-      '@sentry/utils': 7.106.1
+      '@sentry/types': 7.107.0
+      '@sentry/utils': 7.107.0
     dev: false
 
-  /@sentry/replay@7.106.1:
-    resolution: {integrity: sha512-UnuY6bj7v7CVv3T1sbLHjLutSG4hzcQQj6CjEB2NUpM+QAIguFrwAcYG4U42iNg4Qeg5q4kHi1rPpdpvh6unSA==}
+  /@sentry/replay@7.107.0:
+    resolution: {integrity: sha512-BNJDEVaEwr/YnV22qnyVA1almx/3p615m3+KaF8lPo7YleYgJGSJv1auH64j1G8INkrJ0J0wFBujb1EFjMYkxA==}
     engines: {node: '>=12'}
     dependencies:
-      '@sentry-internal/tracing': 7.106.1
-      '@sentry/core': 7.106.1
-      '@sentry/types': 7.106.1
-      '@sentry/utils': 7.106.1
+      '@sentry-internal/tracing': 7.107.0
+      '@sentry/core': 7.107.0
+      '@sentry/types': 7.107.0
+      '@sentry/utils': 7.107.0
     dev: false
 
-  /@sentry/types@7.106.1:
-    resolution: {integrity: sha512-g3OcyAHGugBwkQP4fZYCCZqF2ng9K7yQc9FVngKq/y7PwHm84epXdYYGDGgfQOIC1d5/GMaPxmzI5IIrZexzkg==}
+  /@sentry/types@7.107.0:
+    resolution: {integrity: sha512-H7qcPjPSUWHE/Zf5bR1EE24G0pGVuJgrSx8Tvvl5nKEepswMYlbXHRVSDN0gTk/E5Z7cqf+hUBOpkQgZyps77w==}
     engines: {node: '>=8'}
     dev: false
 
-  /@sentry/utils@7.106.1:
-    resolution: {integrity: sha512-NIeuvB9MeDwrObbi6W5xRrNTcQj8klVvwWWYQB0zotY/LDjyl+c+cZzUshFOxBTp9ljVnYzWqZ7J8x/i4baj7w==}
+  /@sentry/utils@7.107.0:
+    resolution: {integrity: sha512-C6PbN5gHh73MRHohnReeQ60N8rrLYa9LciHue3Ru2290eSThg4CzsPnx4SzkGpkSeVlhhptKtKZ+hp/ha3iVuw==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry/types': 7.106.1
+      '@sentry/types': 7.107.0
     dev: false
 
   /@sinclair/typebox@0.27.8:
@@ -2339,8 +2339,8 @@ packages:
       whatwg-url: 14.0.0
     dev: true
 
-  /date-fns@3.3.1:
-    resolution: {integrity: sha512-y8e109LYGgoQDveiEBD3DYXKba1jWf5BA8YU1FL5Tvm0BTdEfy54WLCwnuYWZNnzzvALy/QQ4Hov+Q9RVRv+Zw==}
+  /date-fns@3.5.0:
+    resolution: {integrity: sha512-a+DwyXn7NOfdJireCzAA0B9p7jIXEu/Q9JKCyMYvH6+0vPUNbQceA0neXrdfJ/xzl3mhOh5vibQQ3936Tssm6A==}
     dev: false
 
   /debug@3.2.7:
@@ -2863,8 +2863,8 @@ packages:
       eslint: 8.57.0
     dev: true
 
-  /eslint-plugin-react-refresh@0.4.5(eslint@8.57.0):
-    resolution: {integrity: sha512-D53FYKJa+fDmZMtriODxvhwrO+IOqrxoEo21gMA0sjHdU6dPVH4OhyFip9ypl8HOF5RV5KdTo+rBQLvnY2cO8w==}
+  /eslint-plugin-react-refresh@0.4.6(eslint@8.57.0):
+    resolution: {integrity: sha512-NjGXdm7zgcKRkKMua34qVO9doI7VOxZ6ancSvBELJSSoX97jyndXcSoa8XBh69JoB31dNz3EEzlMcizZl7LaMA==}
     peerDependencies:
       eslint: '>=7'
     dependencies:
@@ -4558,8 +4558,8 @@ packages:
       react: 18.2.0
       scheduler: 0.23.0
 
-  /react-error-boundary@4.0.12(react@18.2.0):
-    resolution: {integrity: sha512-kJdxdEYlb7CPC1A0SeUY38cHpjuu6UkvzKiAmqmOFL21VRfMhOcWxTCBgLVCO0VEMh9JhFNcVaXlV4/BTpiwOA==}
+  /react-error-boundary@4.0.13(react@18.2.0):
+    resolution: {integrity: sha512-b6PwbdSv8XeOSYvjt8LpgpKrZ0yGdtZokYwkwV2wlcZbxgopHX/hgPl5VgpnoVOWd868n1hktM8Qm4b+02MiLQ==}
     peerDependencies:
       react: '>=16.13.1'
     dependencies:
@@ -5263,8 +5263,8 @@ packages:
   /ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
 
-  /tsconfck@3.0.2(typescript@5.3.3):
-    resolution: {integrity: sha512-6lWtFjwuhS3XI4HsX4Zg0izOI3FU/AI9EGVlPEUMDIhvLPMD4wkiof0WCoDgW7qY+Dy198g4d9miAqUHWHFH6Q==}
+  /tsconfck@3.0.3(typescript@5.3.3):
+    resolution: {integrity: sha512-4t0noZX9t6GcPTfBAbIbbIU4pfpCwh0ueq3S4O/5qXI1VwK1outmxhe9dOiEWqMz3MW2LKgDTpqWV+37IWuVbA==}
     engines: {node: ^18 || >=20}
     hasBin: true
     peerDependencies:
@@ -5493,8 +5493,8 @@ packages:
       - terser
     dev: true
 
-  /vite-tsconfig-paths@4.3.1(typescript@5.3.3)(vite@5.1.1):
-    resolution: {integrity: sha512-cfgJwcGOsIxXOLU/nELPny2/LUD/lcf1IbfyeKTv2bsupVbTH/xpFtdQlBmIP1GEK2CjjLxYhFfB+QODFAx5aw==}
+  /vite-tsconfig-paths@4.3.2(typescript@5.3.3)(vite@5.1.1):
+    resolution: {integrity: sha512-0Vd/a6po6Q+86rPlntHye7F31zA2URZMbH8M3saAZ/xR9QoGN/L21bxEGfXdWmFdNkqPpRdxFT7nmNe12e9/uA==}
     peerDependencies:
       vite: '*'
     peerDependenciesMeta:
@@ -5503,7 +5503,7 @@ packages:
     dependencies:
       debug: 4.3.4
       globrex: 0.1.2
-      tsconfck: 3.0.2(typescript@5.3.3)
+      tsconfck: 3.0.3(typescript@5.3.3)
       vite: 5.1.1(@types/node@20.11.27)
     transitivePeerDependencies:
       - supports-color
