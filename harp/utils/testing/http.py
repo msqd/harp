@@ -2,8 +2,8 @@ import http
 
 import pytest
 
+from harp.http.utils import HTTP_METHODS
 from harp.types import Maybe, NotSet
-from harp.utils.http import HTTP_METHODS
 
 
 def parametrize_with_http_status_codes(include=None):

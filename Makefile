@@ -12,6 +12,7 @@ DOCKER_TAGS_SUFFIX ?=
 DOCKER_BUILD_OPTIONS ?=
 DOCKER_BUILD_TARGET ?= runtime
 DOCKER_NETWORK ?= harp_default
+DOCKER_RUN_COMMAND ?=
 
 SED ?= $(shell which gsed || which sed || echo "sed")
 
@@ -159,7 +160,7 @@ push-dev:
 	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) push
 
 run:
-	$(DOCKER) run -it --network $(DOCKER_NETWORK) -p 4080:4080 --rm $(DOCKER_IMAGE)
+	$(DOCKER) run -it --network $(DOCKER_NETWORK) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
 run-shell:
 	$(DOCKER) run -it --network $(DOCKER_NETWORK) -p 4080:4080 --rm --entrypoint=/bin/ash $(DOCKER_IMAGE) -l

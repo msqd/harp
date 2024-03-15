@@ -1,5 +1,5 @@
-from harp.asgi import ASGIRequest, ASGIResponse
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
+from harp.http import HttpRequest
 from harp.typing.storage import Storage
 from harp.views import json
 
@@ -21,7 +21,7 @@ class OverviewController(RoutingController):
         super().__init__(handle_errors=handle_errors, router=router)
 
     @GetHandler("/")
-    async def get_overview_data(self, request: ASGIRequest, response: ASGIResponse):
+    async def get_overview_data(self, request: HttpRequest):
         # endpoint and range from request
         endpoint = request.query.get("endpoint")
         range = request.query.get("timeRange", "24h")

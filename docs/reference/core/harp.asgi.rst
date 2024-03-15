@@ -7,7 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   harp.asgi.messages
+   harp.asgi.bridge
 
 Submodules
 ----------
@@ -17,7 +17,6 @@ Submodules
 
    harp.asgi.events
    harp.asgi.kernel
-   harp.asgi.resolvers
 
 Module contents
 ---------------

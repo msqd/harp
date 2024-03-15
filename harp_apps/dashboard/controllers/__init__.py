@@ -2,13 +2,14 @@ import asyncio
 import os
 
 from asgi_middleware_static_file import ASGIMiddlewareStaticFile
+from asgiref.typing import ASGISendCallable
 from http_router import NotFoundError
 from httpx import AsyncClient
 
 from harp import ROOT_DIR, get_logger
-from harp.asgi import ASGIRequest, ASGIResponse
 from harp.config import ConfigurationError
 from harp.controllers import RoutingController
+from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
 from harp.typing.global_settings import GlobalSettings
 from harp.typing.storage import Storage
 from harp_apps.proxy.controllers import HttpProxyController
@@ -102,7 +103,7 @@ class DashboardController:
 
         return root
 
-    async def __call__(self, request: ASGIRequest, response: ASGIResponse, *, transaction_id=None):
+    async def __call__(self, request: HttpRequest, asgi_send: ASGISendCallable, *, transaction_id=None):
         request.context.setdefault("user", None)
 
         if self.settings.auth:
@@ -112,32 +113,31 @@ class DashboardController:
                 request.context["user"] = self.settings.auth.check(current_auth[0], current_auth[1])
 
             if not request.context["user"]:
-                response.headers["content-type"] = "text/plain"
-                response.headers["WWW-Authenticate"] = 'Basic realm="Harp Dashboard"'
-                await response.start(401)
-                await response.body(b"Unauthorized")
-                return
+                return HttpResponse(
+                    b"Unauthorized",
+                    status=401,
+                    headers={"WWW-Authenticate": 'Basic realm="Harp Dashboard"'},
+                    content_type="text/plain",
+                )
 
         # Is this a prebuilt static asset?
         if self._ui_static_middleware and not request.path.startswith("/api/"):
-            try:
-                return await self._ui_static_middleware(
-                    {
-                        "type": request._scope["type"],
-                        "path": request._scope["path"] if "." in request._scope["path"] else "/index.html",
-                        "method": request._scope["method"],
-                    },
-                    request._receive,
-                    response._send,
-                )
-            finally:
-                response.started = True
+            # XXX todo fix
+            await self._ui_static_middleware(
+                {
+                    "type": "http",
+                    "path": request.path if "." in request.path else "/index.html",
+                    "method": request.method,
+                },
+                request._impl.asgi_receive,
+                asgi_send,
+            )
+            return AlreadyHandledHttpResponse()
 
         try:
-            return await self._internal_api_controller(request, response)
+            return await self._internal_api_controller(request)
         except NotFoundError:
             if self._ui_devserver_proxy_controller:
-                return await self._ui_devserver_proxy_controller(request, response)
+                return await self._ui_devserver_proxy_controller(request)
 
-        await response.start(status=404)
-        await response.body("Not found.")
+        return HttpResponse("Not found.", status=404, content_type="text/plain")

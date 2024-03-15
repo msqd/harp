@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from typing import Iterable, List, Optional, TypedDict, override
 
@@ -9,6 +10,7 @@ from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionEvent
+from harp.http import get_serializer_for
 from harp.models import Blob as BlobModel
 from harp.models.base import Results
 from harp.models.transactions import Transaction as TransactionModel
@@ -354,11 +356,19 @@ class SqlAlchemyStorage(Storage):
         """Event handler to store the transaction in the database."""
         return await self.create_transaction(event.transaction)
 
+    @asynccontextmanager
+    async def begin(self):
+        async with self.session() as session:
+            async with session.begin():
+                yield session
+
     async def _on_transaction_message(self, event: MessageEvent):
-        transaction, message = event.transaction, event.message
+        await event.message.join()
+        serializer = get_serializer_for(event.message)
+
         # todo is the "__headers__" dunder content type any good idea ? maybe it's just a waste of bytes.
-        headers_blob = BlobModel.from_data(message.serialized_headers, content_type="__headers__")
-        content_blob = BlobModel.from_data(message.serialized_body, content_type=message.headers.get("content-type"))
+        headers_blob = BlobModel.from_data(serializer.headers, content_type="__headers__")
+        content_blob = BlobModel.from_data(serializer.body, content_type=event.message.headers.get("content-type"))
 
         def create_blob_storage_task(blob):
             async def store_blob():
@@ -379,7 +389,7 @@ class SqlAlchemyStorage(Storage):
             async with self.session() as session:
                 async with session.begin():
                     session.add(
-                        Message.from_models(transaction, message, headers_blob, content_blob),
+                        Message.from_models(event.transaction, event.message, headers_blob, content_blob),
                     )
 
         await self.worker.push(store_message)

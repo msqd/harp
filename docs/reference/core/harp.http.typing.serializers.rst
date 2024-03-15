@@ -1,7 +1,7 @@
-harp.asgi.messages.responses module
+harp.http.typing.serializers module
 ===================================
 
-.. automodule:: harp.asgi.messages.responses
+.. automodule:: harp.http.typing.serializers
    :members:
    :undoc-members:
    :show-inheritance:

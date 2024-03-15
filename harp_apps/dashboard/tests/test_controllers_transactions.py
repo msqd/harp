@@ -4,31 +4,27 @@ import orjson
 import pytest
 from multidict import MultiDict
 
-from harp.asgi import ASGIRequest
+from harp.http import HttpRequest
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
 
-from ..controllers.transactions import TransactionsController
+from ..controllers import TransactionsController
 
 
-class TransactionsControllerFixtureMixin:
+class TransactionsControllerTestFixtureMixin:
     @pytest.fixture
     def controller(self, storage):
         return TransactionsController(storage=storage, handle_errors=False)
 
 
 class TestTransactionsController(
-    TransactionsControllerFixtureMixin,
+    TransactionsControllerTestFixtureMixin,
     SqlalchemyStorageTestFixtureMixin,
 ):
     async def test_filters_using_handler(self, controller: TransactionsController):
-        request = Mock(
-            spec=ASGIRequest,
-            query=MultiDict(),
-        )
-
-        response = await controller.filters(request, None)
+        request = Mock(spec=HttpRequest, query=MultiDict())
+        response = await controller.filters(request)
 
         # todo this format may/will change, but we add this test to ensure we start to be meticulous about quality
         assert response == {
@@ -40,7 +36,7 @@ class TestTransactionsController(
 
 
 class TestTransactionsControllerThroughASGI(
-    TransactionsControllerFixtureMixin,
+    TransactionsControllerTestFixtureMixin,
     SqlalchemyStorageTestFixtureMixin,
     ControllerThroughASGIFixtureMixin,
 ):

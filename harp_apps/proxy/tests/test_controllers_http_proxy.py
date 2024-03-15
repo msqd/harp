@@ -37,15 +37,13 @@ class TestHttpProxyController(HttpProxyControllerTestFixtureMixin, DispatcherTes
     @respx.mock
     async def test_basic_get(self):
         endpoint = self.mock_http_endpoint("http://example.com/", content="Hello.")
-        request, response, retval = await self.call_controller(self.create_controller("http://example.com/"))
+        request, response = await self.call_controller(self.create_controller("http://example.com/"))
 
         # check output and side effects
         assert endpoint.called and endpoint.call_count == 1
-        assert response.snapshot() == {
-            "status": 200,
-            "headers": (),
-            "body": b"Hello.",
-        }
+        assert response.status == 200
+        assert response.headers == {}
+        assert response.body == b"Hello."
 
     @respx.mock
     async def test_get_with_tags(self, dispatcher: AsyncEventDispatcher):
@@ -56,7 +54,7 @@ class TestHttpProxyController(HttpProxyControllerTestFixtureMixin, DispatcherTes
         dispatcher.add_listener(EVENT_TRANSACTION_STARTED, transaction_started_handler)
 
         # call our controller
-        request, response, retval = await self.call_controller(
+        request, response = await self.call_controller(
             self.create_controller("http://example.com/", dispatcher=dispatcher),
             headers={
                 "x-harp-foo": "bar",
@@ -76,11 +74,9 @@ class TestHttpProxyController(HttpProxyControllerTestFixtureMixin, DispatcherTes
         assert transaction_started_handler.call_args.args[0].transaction.tags == {"foo": "bar"}
 
         # check we got a valid response
-        assert response.snapshot() == {
-            "status": 200,
-            "headers": (),
-            "body": b"Hello.",
-        }
+        assert response.status == 200
+        assert response.headers == {}
+        assert response.body == b"Hello."
 
 
 class TestHttpProxyControllerWithStorage(

@@ -1,15 +1,15 @@
 from datetime import UTC, datetime
 from functools import cached_property
 from typing import Optional
-from urllib.parse import urljoin
+from urllib.parse import urlencode, urljoin
 
 import httpx
 from httpx import AsyncClient, codes
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.asgi import ASGIRequest, ASGIResponse
 from harp.asgi.events import MessageEvent, TransactionEvent
+from harp.http import HttpRequest, HttpResponse
 from harp.models import Transaction
 from harp.utils.guids import generate_transaction_id_ksuid
 
@@ -49,7 +49,7 @@ class HttpProxyController:
         if self._dispatcher:
             return await self._dispatcher.adispatch(event_id, event)
 
-    async def __call__(self, request: ASGIRequest, response: ASGIResponse):
+    async def __call__(self, request: HttpRequest):
         """Handle an incoming request and proxy it to the configured URL.
 
         :param request: ASGI request
@@ -69,11 +69,13 @@ class HttpProxyController:
                 headers.append((k, v))
 
         transaction = await self._create_transaction_from_request(request, tags=tags)
-        content = await self._suboptimal_temporary_extract_request_content(request)
-        url = urljoin(self.url, request.path) + (f"?{request.query_string}" if request.query_string else "")
+        await request.join()
+        url = urljoin(self.url, request.path) + (f"?{urlencode(request.query)}" if request.query else "")
 
         # PROXY REQUEST
-        p_request: httpx.Request = self.http_client.build_request(request.method, url, headers=headers, content=content)
+        p_request: httpx.Request = self.http_client.build_request(
+            request.method, url, headers=headers, content=request.body
+        )
         logger.debug(f"▶▶ {request.method} {url}", transaction_id=transaction.id)
 
         # PROXY RESPONSE
@@ -82,52 +84,52 @@ class HttpProxyController:
         except httpx.ConnectError:
             logger.error(f"▶▶ {request.method} {url} (unavailable)", transaction_id=transaction.id)
             # todo add web debug information if we are not on a production env
-            await response.start(status=503)
-            await response.body(b"Service Unavailable (remote server unavailable)")
-            return
+            return HttpResponse(
+                "Service Unavailable (remote server unavailable)", status=503, content_type="text/plain"
+            )
         except httpx.TimeoutException:
             logger.error(f"▶▶ {request.method} {url} (timeout)", transaction_id=transaction.id)
             # todo add web debug information if we are not on a production env
-            await response.start(status=504)
-            await response.body(b"Gateway Timeout")
-            return
+            return HttpResponse("Gateway Timeout (remote server timeout)", status=504, content_type="text/plain")
 
         logger.debug(
             f"◀◀ {p_response.status_code} {p_response.reason_phrase} ({p_response.elapsed.total_seconds()}s)",
             transaction_id=transaction.id,
         )
 
-        status = p_response.status_code
-
-        # XXX for now, we use transaction "extras" to store searchable data for later
-        transaction.extras["status_class"] = f"{status // 100}xx"
-
-        response.headers.update(
-            (k, v)
+        response_status = p_response.status_code
+        response_headers = {
+            k: v
             for k, v in p_response.headers.multi_items()
             if k.lower() not in ("server", "date", "content-encoding", "content-length")
-        )
-        await response.start(status=status)
-        await response.body(p_response.content)
+        }
+        # XXX for now, we use transaction "extras" to store searchable data for later
+        transaction.extras["status_class"] = f"{response_status // 100}xx"
+
+        response = HttpResponse(p_response.content, status=response_status, headers=response_headers)
 
         # END TRANSACTION
-        reason = codes.get_reason_phrase(status)
+        reason = codes.get_reason_phrase(response_status)
         spent = int((datetime.now(UTC).timestamp() - transaction.started_at.timestamp()) * 100000) / 100
-        logger.debug(f"◀ {status} {reason} ({spent}ms)", transaction_id=transaction.id)
+        logger.debug(f"◀ {response_status} {reason} ({spent}ms)", transaction_id=transaction.id)
 
         # dispatch message event for response
+        # TODO delay after response is sent ?
         await self.adispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, response))
 
         transaction.finished_at = datetime.now(UTC)
         transaction.elapsed = spent
 
         # dispatch transaction ended event
+        # TODO delay after response is sent ?
         await self.adispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(transaction))
 
-    async def _create_transaction_from_request(self, request, *, tags=None):
+        return response
+
+    async def _create_transaction_from_request(self, request: HttpRequest, *, tags=None):
         transaction = Transaction(
             id=generate_transaction_id_ksuid(),
-            type=request.type,
+            type="http",
             started_at=datetime.now(UTC),
             endpoint=self.name,
             tags=tags,
@@ -146,24 +148,6 @@ class HttpProxyController:
         await self.adispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, request))
 
         return transaction
-
-    async def _suboptimal_temporary_extract_request_content(self, request: ASGIRequest):
-        """
-        todo we should not remove the buffering ability, httpx allows us to stream the request body but for that we need
-        some kind of stream processor that yields and store the chunks.
-
-        :param ctx:
-        :return:
-        """
-        messages = []
-        more_body = True
-        while more_body:
-            message = await request.receive()
-            more_body = message.get("more_body", False)
-            part = message.get("body", b"")
-            messages.append(part)
-            request._body += part
-        return b"".join(messages) if len(messages) else None
 
     def __repr__(self):
         return f"{type(self).__name__}({self.url!r}, name={self.name!r})"

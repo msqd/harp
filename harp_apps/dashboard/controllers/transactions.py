@@ -1,8 +1,8 @@
 import math
 
 from harp import get_logger
-from harp.asgi import ASGIRequest, ASGIResponse
 from harp.controllers import GetHandler, RouteHandler, RouterPrefix, RoutingController
+from harp.http import HttpRequest, JsonHttpResponse
 from harp.models.transactions import Transaction
 from harp.settings import PAGE_SIZE
 from harp.typing.storage import Storage
@@ -37,7 +37,7 @@ class TransactionsController(RoutingController):
         super().__init__(handle_errors=handle_errors, router=router)
 
     @GetHandler("/filters")
-    async def filters(self, request: ASGIRequest, response: ASGIResponse):
+    async def filters(self, request: HttpRequest):
         await self.facets["endpoint"].refresh()
 
         return json(
@@ -50,7 +50,7 @@ class TransactionsController(RoutingController):
         )
 
     @GetHandler("/")
-    async def list(self, request: ASGIRequest, response: ASGIResponse):
+    async def list(self, request: HttpRequest):
         page = int(request.query.get("page", 1))
         if page < 1:
             page = 1
@@ -80,22 +80,24 @@ class TransactionsController(RoutingController):
         )
 
     @GetHandler("/{id}")
-    async def get(self, request: ASGIRequest, response: ASGIResponse, id):
+    async def get(self, request: HttpRequest, id):
         transaction = await self.storage.get_transaction(
             id,
             username=request.context.get("user") or "anonymous",
         )
+
         if not transaction:
-            response.status = 404
-            return json({"error": "Transaction not found"})
-        return json(transaction.to_dict())
+            return JsonHttpResponse({"error": "Transaction not found"}, status=404)
+
+        return JsonHttpResponse(transaction.to_dict())
 
     @RouteHandler("/{id}/flags/{flag}", methods=["PUT", "DELETE"])
-    async def set_user_flag(self, request: ASGIRequest, response: ASGIResponse, id, flag):
+    async def set_user_flag(self, request: HttpRequest, id, flag):
         username = request.context.get("user", None) or "anonymous"
         flag_id = FLAGS_BY_NAME.get(flag)
 
         await self.storage.set_user_flag(
             transaction_id=id, username=username, flag=flag_id, value=False if request.method == "DELETE" else True
         )
-        return json({"success": True})
+
+        return JsonHttpResponse({"success": True})

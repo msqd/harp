@@ -11,6 +11,7 @@ Subpackages
    harp.commandline
    harp.config
    harp.controllers
+   harp.http
    harp.meta
    harp.models
    harp.types

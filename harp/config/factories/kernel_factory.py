@@ -4,9 +4,8 @@ from rodi import Container
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.asgi import ASGIKernel, ASGIRequest, ASGIResponse
-from harp.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_VIEW, RequestEvent
-from harp.asgi.resolvers import ProxyControllerResolver
+from harp.asgi import ASGIKernel
+from harp.asgi.events import EVENT_CONTROLLER_VIEW, EVENT_CORE_REQUEST, RequestEvent
 from harp.config import Config
 from harp.config.events import (
     EVENT_FACTORY_BIND,
@@ -16,7 +15,9 @@ from harp.config.events import (
     FactoryBoundEvent,
     FactoryBuildEvent,
 )
+from harp.controllers import ProxyControllerResolver
 from harp.event_dispatcher import LoggingAsyncEventDispatcher
+from harp.http import HttpResponse
 from harp.typing import GlobalSettings
 from harp.utils.network import Bind
 from harp.views.json import on_json_response
@@ -24,9 +25,8 @@ from harp.views.json import on_json_response
 logger = get_logger(__name__)
 
 
-async def ok_controller(request: ASGIRequest, response: ASGIResponse):
-    await response.start(status=200)
-    await response.body("Ok.")
+async def ok_controller():
+    return HttpResponse("Ok.", status=200)
 
 
 async def on_health_request(event: RequestEvent):
@@ -109,7 +109,7 @@ class KernelFactory:
         dispatcher.add_listener(EVENT_CORE_REQUEST, on_health_request, priority=-100)
 
         # todo move into core or extension, this is not proxy related
-        dispatcher.add_listener(EVENT_CORE_VIEW, on_json_response)
+        dispatcher.add_listener(EVENT_CONTROLLER_VIEW, on_json_response)
 
         self.configuration.register_events(dispatcher)
 

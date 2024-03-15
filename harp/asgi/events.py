@@ -1,22 +1,21 @@
 from functools import cached_property
+from typing import TYPE_CHECKING, Any, Optional
 
 from whistle import Event
 
+from harp.http import BaseMessage, HttpRequest
 from harp.models.transactions import Transaction
-from harp.typing.transactions import Message
+
+if TYPE_CHECKING:
+    from harp.http import HttpResponse
 
 EVENT_CORE_STARTED = "core.started"
 
-EVENT_CORE_REQUEST = "core.request"
-EVENT_CORE_CONTROLLER = "core.controller"
-EVENT_CORE_VIEW = "core.view"
-EVENT_CORE_RESPONSE = "core.response"
-
 
 class RequestEvent(Event):
-    name = EVENT_CORE_REQUEST
+    name = "core.request"
 
-    def __init__(self, request):
+    def __init__(self, request: HttpRequest):
         self._request = request
         self._controller = None
 
@@ -32,32 +31,53 @@ class RequestEvent(Event):
         self._controller = controller
 
 
-class ControllerEvent(RequestEvent):
-    name = EVENT_CORE_CONTROLLER
+EVENT_CORE_REQUEST = RequestEvent.name
 
-    def __init__(self, request, controller):
+
+class ControllerEvent(RequestEvent):
+    name = "core.controller"
+
+    def __init__(self, request: HttpRequest, controller):
         super().__init__(request)
         self._controller = controller
 
 
-class ResponseEvent(RequestEvent):
-    name = EVENT_CORE_RESPONSE
+EVENT_CORE_CONTROLLER = ControllerEvent.name
 
-    def __init__(self, request, response):
+
+class ResponseEvent(RequestEvent):
+    name = "core.response"
+
+    def __init__(self, request: HttpRequest, response):
         super().__init__(request)
         self.response = response
 
 
-class ViewEvent(ResponseEvent):
-    name = EVENT_CORE_VIEW
+EVENT_CORE_RESPONSE = ResponseEvent.name
 
-    def __init__(self, request, response, value):
-        super().__init__(request, response)
-        self._value = value
 
-    @property
-    def value(self):
-        return self._value
+class ControllerViewEvent(RequestEvent):
+    """
+    The view event allows to transform controller return values into response objects.
+    """
+
+    name = "controller.view"
+
+    value: Any
+    response: Optional["HttpResponse"]
+
+    def __init__(self, request: HttpRequest, value: Any):
+        super().__init__(request)
+
+        self.value = value
+        self.response = None
+
+    def set_response(self, response: "HttpResponse"):
+        self.response = response
+        self.stop_propagation()
+
+
+EVENT_CONTROLLER_VIEW = ControllerViewEvent.name
 
 
 class TransactionEvent(Event):
@@ -66,6 +86,6 @@ class TransactionEvent(Event):
 
 
 class MessageEvent(TransactionEvent):
-    def __init__(self, transaction: Transaction, message: Message):
+    def __init__(self, transaction: Transaction, message: BaseMessage):
         super().__init__(transaction)
         self.message = message
