@@ -24,8 +24,8 @@ dependencies:
     specifier: ^0.5.7
     version: 0.5.7(tailwindcss@3.4.1)
   date-fns:
-    specifier: ^3.3.1
-    version: 3.3.1
+    specifier: ^3.5.0
+    version: 3.5.0
   http-status-codes:
     specifier: ^2.3.0
     version: 2.3.0
@@ -2339,8 +2339,8 @@ packages:
       whatwg-url: 14.0.0
     dev: true
 
-  /date-fns@3.3.1:
-    resolution: {integrity: sha512-y8e109LYGgoQDveiEBD3DYXKba1jWf5BA8YU1FL5Tvm0BTdEfy54WLCwnuYWZNnzzvALy/QQ4Hov+Q9RVRv+Zw==}
+  /date-fns@3.5.0:
+    resolution: {integrity: sha512-a+DwyXn7NOfdJireCzAA0B9p7jIXEu/Q9JKCyMYvH6+0vPUNbQceA0neXrdfJ/xzl3mhOh5vibQQ3936Tssm6A==}
     dev: false
 
   /debug@3.2.7:
