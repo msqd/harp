@@ -2,6 +2,8 @@ import dataclasses
 import hashlib
 import json
 
+import orjson
+
 from harp.utils.bytes import ensure_bytes, ensure_str
 
 from .base import Entity
@@ -35,6 +37,19 @@ class Blob(Entity):
 
     def prettify(self):
         if self.content_type == "application/json":
-            return json.dumps(json.loads(self.data), indent=4)
+            try:
+                data = orjson.loads(self.data)
+            except orjson.JSONDecodeError:
+                try:
+                    data = json.loads(self.data)
+                except json.JSONDecodeError as exc:
+                    raise ValueError("Could not decode json data.") from exc
+            try:
+                return orjson.dumps(data, option=orjson.OPT_INDENT_2)
+            except orjson.JSONEncodeError:
+                try:
+                    return json.dumps(data, indent=4)
+                except json.JSONDecodeError as exc:
+                    raise ValueError("Could not encode json data.") from exc
 
         raise NotImplementedError(f"Cannot prettify blob of type {self.content_type}")

@@ -7,8 +7,8 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   harp.config.adapters
    harp.config.factories
-   harp.config.http_adapters
    harp.config.settings
 
 Submodules

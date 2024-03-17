@@ -17,6 +17,9 @@ class BlobsController(RoutingController):
 
         content_type = blob.content_type or "application/octet-stream"
 
-        if content_type == "application/json":
-            return HttpResponse(blob.prettify(), content_type=content_type)
-        return HttpResponse(blob.data, content_type=content_type)
+        try:
+            data = blob.prettify()
+        except (ValueError, NotImplementedError):
+            data = blob.data
+
+        return HttpResponse(data, content_type=content_type)
