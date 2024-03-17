@@ -3,8 +3,8 @@ import asyncio
 import sys
 
 from harp import Config
+from harp.config.adapters.hypercorn import HypercornAdapter
 from harp.config.factories.kernel_factory import KernelFactory
-from harp.config.http_adapters.hypercorn_adapter import HypercornServerAdapter
 
 config = Config()
 config.add_defaults()
@@ -12,5 +12,5 @@ config.add_defaults()
 if __name__ == "__main__":
     config.read_env(sys.argv[1:])
     factory = KernelFactory(config)
-    server = HypercornServerAdapter(factory)
+    server = HypercornAdapter(factory)
     asyncio.run(server.serve())

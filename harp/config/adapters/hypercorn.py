@@ -5,7 +5,7 @@ from harp import get_logger
 logger = get_logger(__name__)
 
 
-class HypercornServerAdapter:
+class HypercornAdapter:
     def __init__(self, factory):
         self.factory = factory
 
@@ -31,5 +31,5 @@ class HypercornServerAdapter:
 
         asgi_app, binds = await self.factory.build()
         config = self._create_config(binds)
-        logger.info(f"🌎 HypercornServerAdapter.serve {config.bind}")
+        logger.debug(f"🌎 {type(self).__name__}::serve({', '.join(config.bind)})")
         return await serve(asgi_app, config)
