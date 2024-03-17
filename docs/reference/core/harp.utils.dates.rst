@@ -1,7 +1,7 @@
-harp.utils.dates module
-=======================
+harp.utils.dates
+================
 
 .. automodule:: harp.utils.dates
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

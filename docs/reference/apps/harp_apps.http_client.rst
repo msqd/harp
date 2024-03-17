@@ -1,10 +1,7 @@
-harp\_apps.http\_client package
-===============================
-
-Module contents
----------------
+HTTP Client (harp_apps.http_client)
+===================================
 
 .. automodule:: harp_apps.http_client
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

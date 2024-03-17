@@ -1,7 +1,7 @@
-harp\_apps.sqlalchemy\_storage.utils.dates module
-=================================================
+harp_apps.sqlalchemy_storage.utils.dates
+========================================
 
 .. automodule:: harp_apps.sqlalchemy_storage.utils.dates
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

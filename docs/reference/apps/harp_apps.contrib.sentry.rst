@@ -1,18 +1,15 @@
-harp\_apps.contrib.sentry package
+Sentry (harp_apps.contrib.sentry)
 =================================
+
+.. automodule:: harp_apps.contrib.sentry
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 1
 
-   harp_apps.contrib.sentry.settings
-
-Module contents
----------------
-
-.. automodule:: harp_apps.contrib.sentry
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    harp_apps.contrib.sentry.settings

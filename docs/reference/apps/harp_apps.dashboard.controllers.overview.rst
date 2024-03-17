@@ -1,7 +1,7 @@
-harp\_apps.dashboard.controllers.overview module
-================================================
+harp_apps.dashboard.controllers.overview
+========================================
 
 .. automodule:: harp_apps.dashboard.controllers.overview
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

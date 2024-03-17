@@ -1,7 +1,7 @@
-harp.utils.bytes module
-=======================
+harp.utils.bytes
+================
 
 .. automodule:: harp.utils.bytes
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

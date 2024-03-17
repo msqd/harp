@@ -1,7 +1,7 @@
-harp.utils.json module
-======================
+harp.utils.json
+===============
 
 .. automodule:: harp.utils.json
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,7 +1,7 @@
-harp.utils.arguments module
-===========================
+harp.utils.arguments
+====================
 
 .. automodule:: harp.utils.arguments
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

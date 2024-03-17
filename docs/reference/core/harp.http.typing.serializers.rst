@@ -1,7 +1,7 @@
-harp.http.typing.serializers module
-===================================
+harp.http.typing.serializers
+============================
 
 .. automodule:: harp.http.typing.serializers
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

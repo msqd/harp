@@ -1,7 +1,7 @@
-harp.config.events module
-=========================
+harp.config.events
+==================
 
 .. automodule:: harp.config.events
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,7 +1,7 @@
-harp\_apps.dashboard.settings module
-====================================
+harp_apps.dashboard.settings
+============================
 
 .. automodule:: harp_apps.dashboard.settings
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

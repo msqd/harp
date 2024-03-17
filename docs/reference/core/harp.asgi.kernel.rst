@@ -1,7 +1,7 @@
-harp.asgi.kernel module
-=======================
+harp.asgi.kernel
+================
 
 .. automodule:: harp.asgi.kernel
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

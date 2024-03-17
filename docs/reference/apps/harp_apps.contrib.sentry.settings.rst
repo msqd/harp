@@ -1,7 +1,7 @@
-harp\_apps.contrib.sentry.settings module
-=========================================
+harp_apps.contrib.sentry.settings
+=================================
 
 .. automodule:: harp_apps.contrib.sentry.settings
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

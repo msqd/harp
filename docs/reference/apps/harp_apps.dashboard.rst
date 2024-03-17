@@ -1,29 +1,19 @@
-harp\_apps.dashboard package
-============================
+Dashboard (harp_apps.dashboard)
+===============================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   harp_apps.dashboard.controllers
-   harp_apps.dashboard.filters
-   harp_apps.dashboard.schemas
-   harp_apps.dashboard.utils
+.. automodule:: harp_apps.dashboard
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 1
 
-   harp_apps.dashboard.settings
-
-Module contents
----------------
-
-.. automodule:: harp_apps.dashboard
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    harp_apps.dashboard.controllers
+    harp_apps.dashboard.filters
+    harp_apps.dashboard.schemas
+    harp_apps.dashboard.settings
+    harp_apps.dashboard.utils

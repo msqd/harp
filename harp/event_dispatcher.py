@@ -5,6 +5,7 @@ from whistle import AsyncEventDispatcher, IDispatchedEvent, IEvent, IListener
 from harp import get_logger
 
 logger = get_logger(__name__)
+__title__ = "Event Dispatcher"
 
 
 class LoggingAsyncEventDispatcher(AsyncEventDispatcher):

@@ -1,7 +1,7 @@
-harp\_apps.dashboard.utils.dates module
-=======================================
+harp_apps.dashboard.utils.dates
+===============================
 
 .. automodule:: harp_apps.dashboard.utils.dates
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

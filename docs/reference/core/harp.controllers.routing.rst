@@ -1,7 +1,7 @@
-harp.controllers.routing module
-===============================
+harp.controllers.routing
+========================
 
 .. automodule:: harp.controllers.routing
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

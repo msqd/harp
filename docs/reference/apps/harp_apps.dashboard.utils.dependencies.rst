@@ -1,7 +1,7 @@
-harp\_apps.dashboard.utils.dependencies module
-==============================================
+harp_apps.dashboard.utils.dependencies
+======================================
 
 .. automodule:: harp_apps.dashboard.utils.dependencies
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

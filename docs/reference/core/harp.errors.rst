@@ -1,7 +1,7 @@
-harp.errors module
-==================
+Errors (harp.errors)
+====================
 
 .. automodule:: harp.errors
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

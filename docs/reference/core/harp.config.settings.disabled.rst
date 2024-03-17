@@ -1,7 +1,7 @@
-harp.config.settings.disabled module
-====================================
+harp.config.settings.disabled
+=============================
 
 .. automodule:: harp.config.settings.disabled
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,7 +1,7 @@
-harp\_apps.dashboard.filters.transaction\_method module
-=======================================================
+harp_apps.dashboard.filters.transaction_method
+==============================================
 
 .. automodule:: harp_apps.dashboard.filters.transaction_method
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

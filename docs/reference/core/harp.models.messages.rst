@@ -1,7 +1,7 @@
-harp.models.messages module
-===========================
+harp.models.messages
+====================
 
 .. automodule:: harp.models.messages
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

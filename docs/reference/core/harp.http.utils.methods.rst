@@ -1,7 +1,7 @@
-harp.http.utils.methods module
-==============================
+harp.http.utils.methods
+=======================
 
 .. automodule:: harp.http.utils.methods
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

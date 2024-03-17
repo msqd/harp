@@ -1,7 +1,7 @@
-harp.config.settings.from\_file module
-======================================
+harp.config.settings.from_file
+==============================
 
 .. automodule:: harp.config.settings.from_file
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,7 +1,7 @@
-harp.http.responses module
-==========================
+harp.http.responses
+===================
 
 .. automodule:: harp.http.responses
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

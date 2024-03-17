@@ -1,7 +1,7 @@
-harp.config.config module
-=========================
+harp.config.config
+==================
 
 .. automodule:: harp.config.config
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

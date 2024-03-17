@@ -1,7 +1,7 @@
-harp.config.factories.kernel\_factory module
-============================================
+harp.config.factories.kernel_factory
+====================================
 
 .. automodule:: harp.config.factories.kernel_factory
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

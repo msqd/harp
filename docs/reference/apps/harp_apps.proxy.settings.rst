@@ -1,7 +1,7 @@
-harp\_apps.proxy.settings module
-================================
+harp_apps.proxy.settings
+========================
 
 .. automodule:: harp_apps.proxy.settings
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

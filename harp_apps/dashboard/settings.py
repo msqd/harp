@@ -1,9 +1,9 @@
 from functools import cached_property
 from typing import Literal, Optional
 
-from harp.config import ConfigurationRemovedSettingError, ConfigurationRuntimeError, ConfigurationValueError
 from harp.config.settings import DisabledSettings, FromFileSetting
 from harp.config.settings.base import BaseSetting, settings_dataclass
+from harp.errors import ConfigurationRemovedSettingError, ConfigurationRuntimeError, ConfigurationValueError
 
 
 def _plain(actual, expected):

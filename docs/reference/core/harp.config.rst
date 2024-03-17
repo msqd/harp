@@ -1,31 +1,20 @@
-harp.config package
-===================
+Config (harp.config)
+====================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   harp.config.adapters
-   harp.config.factories
-   harp.config.settings
+.. automodule:: harp.config
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 1
 
-   harp.config.application
-   harp.config.config
-   harp.config.errors
-   harp.config.events
-
-Module contents
----------------
-
-.. automodule:: harp.config
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    harp.config.adapters
+    harp.config.application
+    harp.config.config
+    harp.config.events
+    harp.config.factories
+    harp.config.settings

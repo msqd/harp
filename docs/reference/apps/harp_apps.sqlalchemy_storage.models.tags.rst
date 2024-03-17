@@ -1,7 +1,7 @@
-harp\_apps.sqlalchemy\_storage.models.tags module
-=================================================
+harp_apps.sqlalchemy_storage.models.tags
+========================================
 
 .. automodule:: harp_apps.sqlalchemy_storage.models.tags
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

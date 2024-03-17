@@ -1,20 +1,17 @@
-harp.typing package
-===================
+Typing (harp.typing)
+====================
+
+.. automodule:: harp.typing
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 1
 
-   harp.typing.global_settings
-   harp.typing.storage
-   harp.typing.transactions
-
-Module contents
----------------
-
-.. automodule:: harp.typing
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    harp.typing.global_settings
+    harp.typing.signs
+    harp.typing.storage

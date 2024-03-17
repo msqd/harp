@@ -1,7 +1,7 @@
-harp.utils.network module
-=========================
+harp.utils.network
+==================
 
 .. automodule:: harp.utils.network
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

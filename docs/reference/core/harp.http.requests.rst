@@ -1,7 +1,7 @@
-harp.http.requests module
-=========================
+harp.http.requests
+==================
 
 .. automodule:: harp.http.requests
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

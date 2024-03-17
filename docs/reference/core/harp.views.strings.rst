@@ -1,7 +1,7 @@
-harp.views.strings module
-=========================
+harp.views.strings
+==================
 
 .. automodule:: harp.views.strings
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

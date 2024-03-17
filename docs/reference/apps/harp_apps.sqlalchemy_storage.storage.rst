@@ -1,7 +1,7 @@
-harp\_apps.sqlalchemy\_storage.storage module
-=============================================
+harp_apps.sqlalchemy_storage.storage
+====================================
 
 .. automodule:: harp_apps.sqlalchemy_storage.storage
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

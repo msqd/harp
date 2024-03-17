@@ -1,0 +1,69 @@
+#! /usr/bin/env python
+import os.path
+import pkgutil
+import sys
+from inspect import ismodule
+from typing import Optional
+
+
+def parse_module(module) -> Optional[dict]:
+    if not ismodule(module):
+        return
+
+    children = list(filter(None, map(parse_module, get_submodules(module))))
+    return {
+        "name": module.__name__,
+        "module": module,
+        **({"children": children} if len(children) else {}),
+    }
+
+
+def get_submodules(module):
+    try:
+        submodules = pkgutil.iter_modules(module.__path__)
+    except AttributeError:
+        return
+    for importer, modname, ispkg in submodules:
+        if not modname.startswith("_") and modname not in ("tests", "testing"):
+            yield getattr(__import__(module.__name__, fromlist=[modname]), modname)
+
+
+def generate_doc(desc, /, *, root, level=0):
+    title = getattr(desc["module"], "__title__", "")
+    full_title = f"{title} ({desc['name']})" if title else desc["name"]
+    should_update = not len(sys.argv[1:]) or desc["name"] in sys.argv[1:]
+    # print( "  " * level, "*" if should_update else "", full_title, sep="")
+
+    if should_update:
+        with open(f"{root}/{desc['name']}.rst", "w+") as f:
+            f.write(f"{full_title}\n")
+            f.write("=" * len(full_title))
+            f.write("\n\n")
+
+            f.write(f".. automodule:: {desc['name']}\n")
+            f.write("    :members:\n")
+            f.write("    :undoc-members:\n")
+            f.write("    :show-inheritance:\n")
+
+            if len(desc.get("children", [])):
+                f.write("\n")
+                f.write("Submodules\n")
+                f.write("----------\n")
+                f.write("\n")
+                f.write(".. toctree::\n")
+                f.write("    :maxdepth: 1\n")
+                f.write("\n")
+                for child in sorted(desc.get("children", []), key=lambda x: x["name"]):
+                    f.write(f'    {child["name"]}\n')
+
+    for child in desc.get("children", []):
+        generate_doc(child, root=root, level=level + 1)
+
+
+if __name__ == "__main__":
+    import harp
+    import harp_apps
+
+    root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs/reference")
+    generate_doc(parse_module(harp), root=os.path.join(root, "core"))
+    generate_doc(parse_module(harp_apps), root=os.path.join(root, "apps"))

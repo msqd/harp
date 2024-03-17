@@ -1,7 +1,7 @@
 import pytest
 
-from harp.config import ConfigurationError
 from harp.config.settings import DisabledSettings
+from harp.errors import ConfigurationError
 
 from ..settings import DashboardAuthSetting, DashboardSettings
 

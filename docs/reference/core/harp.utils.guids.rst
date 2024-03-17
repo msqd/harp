@@ -1,7 +1,7 @@
-harp.utils.guids module
-=======================
+harp.utils.guids
+================
 
 .. automodule:: harp.utils.guids
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

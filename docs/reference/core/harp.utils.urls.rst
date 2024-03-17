@@ -1,7 +1,7 @@
-harp.utils.urls module
-======================
+harp.utils.urls
+===============
 
 .. automodule:: harp.utils.urls
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,7 +1,7 @@
-harp\_apps.proxy.events module
-==============================
+harp_apps.proxy.events
+======================
 
 .. automodule:: harp_apps.proxy.events
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

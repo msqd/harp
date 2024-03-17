@@ -36,10 +36,7 @@ install-ui:
 reference: harp
 	rm -rf docs/reference/core docs/reference/apps
 	mkdir -p docs/reference/core docs/reference/apps
-	sphinx-apidoc --tocfile index --separate -f -o docs/reference/core -t docs/_api_templates harp '**/tests'
-	sphinx-apidoc --tocfile index --separate -f -o docs/reference/apps -t docs/_api_templates harp_apps '**/tests'
-	$(SED) -i "1s/.*/Core/" docs/reference/core/harp.rst
-	$(SED) -i "1s/.*/Applications/" docs/reference/apps/harp_apps.rst
+	bin/generate_apidoc
 	git add docs/reference/
 
 frontend:

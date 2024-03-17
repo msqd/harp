@@ -1,7 +1,7 @@
-harp\_apps.dashboard.controllers.blobs module
-=============================================
+harp_apps.dashboard.controllers.blobs
+=====================================
 
 .. automodule:: harp_apps.dashboard.controllers.blobs
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,19 +1,16 @@
-harp.http.utils package
-=======================
+harp.http.utils
+===============
+
+.. automodule:: harp.http.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 1
 
-   harp.http.utils.cookies
-   harp.http.utils.methods
-
-Module contents
----------------
-
-.. automodule:: harp.http.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    harp.http.utils.cookies
+    harp.http.utils.methods

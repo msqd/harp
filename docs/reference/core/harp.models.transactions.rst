@@ -1,7 +1,7 @@
-harp.models.transactions module
-===============================
+harp.models.transactions
+========================
 
 .. automodule:: harp.models.transactions
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

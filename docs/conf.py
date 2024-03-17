@@ -29,6 +29,7 @@ extensions = [
     "sphinx_design",
     "sphinx_sitemap",
     "sphinxcontrib.jquery",
+    "sphinx_click",
 ]
 
 templates_path = ["_templates"]

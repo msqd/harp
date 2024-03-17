@@ -1,18 +1,15 @@
-harp\_apps.contrib package
-==========================
-
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   harp_apps.contrib.sentry
-
-Module contents
----------------
+Contrib (harp_apps.contrib)
+===========================
 
 .. automodule:: harp_apps.contrib
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+    :maxdepth: 1
+
+    harp_apps.contrib.sentry

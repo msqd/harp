@@ -7,8 +7,8 @@ from http_router import NotFoundError
 from httpx import AsyncClient
 
 from harp import ROOT_DIR, get_logger
-from harp.config import ConfigurationError
 from harp.controllers import RoutingController
+from harp.errors import ConfigurationError
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
 from harp.typing.global_settings import GlobalSettings
 from harp.typing.storage import Storage

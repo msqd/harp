@@ -1,7 +1,7 @@
-harp.http.utils.cookies module
-==============================
+harp.http.utils.cookies
+=======================
 
 .. automodule:: harp.http.utils.cookies
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

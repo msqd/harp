@@ -1,7 +1,7 @@
-harp\_apps.telemetry.manager module
-===================================
+harp_apps.telemetry.manager
+===========================
 
 .. automodule:: harp_apps.telemetry.manager
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

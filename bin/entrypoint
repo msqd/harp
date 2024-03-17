@@ -1,16 +1,9 @@
 #! /usr/bin/env python3
-import asyncio
-import sys
 
-from harp import Config
-from harp.config.adapters.hypercorn import HypercornAdapter
-from harp.config.factories.kernel_factory import KernelFactory
+from harp import Config, run
 
 config = Config()
 config.add_defaults()
 
 if __name__ == "__main__":
-    config.read_env(sys.argv[1:])
-    factory = KernelFactory(config)
-    server = HypercornAdapter(factory)
-    asyncio.run(server.serve())
+    run(config)

@@ -1,26 +1,15 @@
-harp\_apps.sqlalchemy\_storage.utils package
-============================================
+harp_apps.sqlalchemy_storage.utils
+==================================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   harp_apps.sqlalchemy_storage.utils.testing
+.. automodule:: harp_apps.sqlalchemy_storage.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 1
 
-   harp_apps.sqlalchemy_storage.utils.dates
-
-Module contents
----------------
-
-.. automodule:: harp_apps.sqlalchemy_storage.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    harp_apps.sqlalchemy_storage.utils.dates

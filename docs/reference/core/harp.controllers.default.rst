@@ -1,7 +1,7 @@
-harp.controllers.default module
-===============================
+harp.controllers.default
+========================
 
 .. automodule:: harp.controllers.default
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

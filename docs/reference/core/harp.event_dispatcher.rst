@@ -1,7 +1,7 @@
-harp.event\_dispatcher module
-=============================
+Event Dispatcher (harp.event_dispatcher)
+========================================
 
 .. automodule:: harp.event_dispatcher
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

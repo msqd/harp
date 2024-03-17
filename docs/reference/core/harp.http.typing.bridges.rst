@@ -1,7 +1,7 @@
-harp.http.typing.bridges module
-===============================
+harp.http.typing.bridges
+========================
 
 .. automodule:: harp.http.typing.bridges
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,21 +1,18 @@
-harp.controllers package
-========================
+Controllers (harp.controllers)
+==============================
+
+.. automodule:: harp.controllers
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 1
 
-   harp.controllers.default
-   harp.controllers.resolvers
-   harp.controllers.routing
-   harp.controllers.typing
-
-Module contents
----------------
-
-.. automodule:: harp.controllers
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    harp.controllers.default
+    harp.controllers.resolvers
+    harp.controllers.routing
+    harp.controllers.typing

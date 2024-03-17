@@ -1,18 +1,15 @@
-harp.config.factories package
-=============================
+harp.config.factories
+=====================
+
+.. automodule:: harp.config.factories
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 1
 
-   harp.config.factories.kernel_factory
-
-Module contents
----------------
-
-.. automodule:: harp.config.factories
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    harp.config.factories.kernel_factory

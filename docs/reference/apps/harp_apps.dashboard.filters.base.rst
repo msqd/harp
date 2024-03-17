@@ -1,7 +1,7 @@
-harp\_apps.dashboard.filters.base module
-========================================
+harp_apps.dashboard.filters.base
+================================
 
 .. automodule:: harp_apps.dashboard.filters.base
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,18 +1,15 @@
-harp.config.adapters package
-============================
+harp.config.adapters
+====================
+
+.. automodule:: harp.config.adapters
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 1
 
-   harp.config.adapters.hypercorn
-
-Module contents
----------------
-
-.. automodule:: harp.config.adapters
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    harp.config.adapters.hypercorn

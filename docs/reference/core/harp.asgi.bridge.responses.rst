@@ -1,7 +1,7 @@
-harp.asgi.bridge.responses module
-=================================
+harp.asgi.bridge.responses
+==========================
 
 .. automodule:: harp.asgi.bridge.responses
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

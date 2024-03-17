@@ -1,29 +1,19 @@
-harp.http package
-=================
+HTTP (harp.http)
+================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   harp.http.typing
-   harp.http.utils
+.. automodule:: harp.http
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 1
 
-   harp.http.requests
-   harp.http.responses
-   harp.http.serializers
-
-Module contents
----------------
-
-.. automodule:: harp.http
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    harp.http.requests
+    harp.http.responses
+    harp.http.serializers
+    harp.http.typing
+    harp.http.utils

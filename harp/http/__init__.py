@@ -3,6 +3,8 @@ from .responses import AlreadyHandledHttpResponse, HttpResponse, JsonHttpRespons
 from .serializers import HttpRequestSerializer, get_serializer_for
 from .typing import BaseHttpMessage, BaseMessage, HttpRequestBridge, HttpResponseBridge
 
+__title__ = "HTTP"
+
 __all__ = [
     "AlreadyHandledHttpResponse",
     "BaseHttpMessage",

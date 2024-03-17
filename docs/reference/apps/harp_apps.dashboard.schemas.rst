@@ -1,18 +1,15 @@
-harp\_apps.dashboard.schemas package
-====================================
+harp_apps.dashboard.schemas
+===========================
+
+.. automodule:: harp_apps.dashboard.schemas
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 1
 
-   harp_apps.dashboard.schemas.transactions_grouped_by
-
-Module contents
----------------
-
-.. automodule:: harp_apps.dashboard.schemas
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    harp_apps.dashboard.schemas.transactions_grouped_by

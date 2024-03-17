@@ -1,35 +1,24 @@
-harp.utils package
+Utils (harp.utils)
 ==================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   harp.utils.testing
+.. automodule:: harp.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 1
 
-   harp.utils.arguments
-   harp.utils.background
-   harp.utils.bytes
-   harp.utils.dates
-   harp.utils.guids
-   harp.utils.identifiers
-   harp.utils.json
-   harp.utils.network
-   harp.utils.processes
-   harp.utils.urls
-
-Module contents
----------------
-
-.. automodule:: harp.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    harp.utils.arguments
+    harp.utils.background
+    harp.utils.bytes
+    harp.utils.dates
+    harp.utils.guids
+    harp.utils.identifiers
+    harp.utils.json
+    harp.utils.network
+    harp.utils.processes
+    harp.utils.urls

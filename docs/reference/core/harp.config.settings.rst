@@ -1,20 +1,17 @@
-harp.config.settings package
-============================
+harp.config.settings
+====================
+
+.. automodule:: harp.config.settings
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Submodules
 ----------
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 1
 
-   harp.config.settings.base
-   harp.config.settings.disabled
-   harp.config.settings.from_file
-
-Module contents
----------------
-
-.. automodule:: harp.config.settings
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    harp.config.settings.base
+    harp.config.settings.disabled
+    harp.config.settings.from_file

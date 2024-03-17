@@ -1,9 +1,3 @@
-[submodule "vendors/config"]
-	path = vendors/config
-	url = https://github.com/msqd/config.git
-[submodule "vendors/rodi"]
-	path = vendors/rodi
-	url = https://github.com/msqd/rodi.git
 [submodule "vendors/whistle"]
 	path = vendors/whistle
 	url = https://github.com/msqd/whistle.git

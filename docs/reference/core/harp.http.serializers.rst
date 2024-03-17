@@ -1,7 +1,7 @@
-harp.http.serializers module
-============================
+harp.http.serializers
+=====================
 
 .. automodule:: harp.http.serializers
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

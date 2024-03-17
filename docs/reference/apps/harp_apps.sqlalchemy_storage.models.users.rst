@@ -1,7 +1,7 @@
-harp\_apps.sqlalchemy\_storage.models.users module
-==================================================
+harp_apps.sqlalchemy_storage.models.users
+=========================================
 
 .. automodule:: harp_apps.sqlalchemy_storage.models.users
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:

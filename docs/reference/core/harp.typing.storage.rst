@@ -1,7 +1,7 @@
-harp.typing.storage module
-==========================
+harp.typing.storage
+===================
 
 .. automodule:: harp.typing.storage
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    :members:
+    :undoc-members:
+    :show-inheritance:
