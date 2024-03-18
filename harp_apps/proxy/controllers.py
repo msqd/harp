@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from functools import cached_property
 from typing import Optional
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlencode, urljoin, urlparse
 
 import httpx
 from httpx import AsyncClient, codes
@@ -40,6 +40,8 @@ class HttpProxyController:
         self.name = name or self.name
         self._dispatcher = dispatcher or self._dispatcher
 
+        self.parsed_url = urlparse(self.url)
+
     async def adispatch(self, event_id, event=None):
         """
         Shortcut method to dispatch an event using the controller's dispatcher, if there is one.
@@ -67,6 +69,7 @@ class HttpProxyController:
                 tags[k[7:]] = v
             elif k not in ("host",):
                 headers.append((k, v))
+        headers.append(("host", self.parsed_url.netloc))
 
         transaction = await self._create_transaction_from_request(request, tags=tags)
         await request.join()
