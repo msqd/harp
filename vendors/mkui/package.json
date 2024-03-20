@@ -40,7 +40,7 @@
     "cross-env": "^7.0.3",
     "jest-environment-jsdom": "^29.7.0",
     "jsdom": "^24.0.0",
-    "postcss": "^8.4.36",
+    "postcss": "^8.4.37",
     "prettier": "^3.2.5",
     "start-server-and-test": "^2.0.3",
     "sync-fetch": "^0.5.2",
