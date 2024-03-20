@@ -14,21 +14,27 @@ DOCKER_BUILD_TARGET ?= runtime
 DOCKER_NETWORK ?= harp_default
 DOCKER_RUN_COMMAND ?=
 
+POETRY_INSTALL_OPTIONS ?=
+
 SED ?= $(shell which gsed || which sed || echo "sed")
 
 
 ########################################################################################################################
 # Local development
 ########################################################################################################################
-.PHONY: install install-frontend install-backend install-ui reference frontend
+.PHONY: install install-dev install-frontend install-backend install-ui reference frontend
 
 install: install-frontend install-backend
+
+install-dev:
+	POETRY_INSTALL_OPTIONS="-E dev" $(MAKE) install
+
 
 install-frontend: install-ui
 	cd frontend; pnpm install
 
 install-backend:
-	poetry install
+	poetry install $(POETRY_INSTALL_OPTIONS)
 
 install-ui:
 	cd vendors/mkui; pnpm install
