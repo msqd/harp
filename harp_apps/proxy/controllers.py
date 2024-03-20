@@ -10,6 +10,7 @@ from whistle import IAsyncEventDispatcher
 from harp import get_logger
 from harp.asgi.events import MessageEvent, TransactionEvent
 from harp.http import HttpRequest, HttpResponse
+from harp.http.requests import WrappedHttpRequest
 from harp.models import Transaction
 from harp.utils.guids import generate_transaction_id_ksuid
 
@@ -60,16 +61,18 @@ class HttpProxyController:
 
         """
 
-        # BEGIN TRANSACTION AND PREPARE DATA FOR PROXY REQUEST
-        headers, tags = [], {}
-        for k, v in request.headers.items():
-            k = k.lower()
+        # create an enveloppe to override things, without touching the original request
+        request = request
+        request = WrappedHttpRequest(request)
+        request.headers["host"] = self.parsed_url.netloc
 
-            if k.startswith("x-harp-"):
-                tags[k[7:]] = v
-            elif k not in ("host",):
-                headers.append((k, v))
-        headers.append(("host", self.parsed_url.netloc))
+        # BEGIN TRANSACTION AND PREPARE DATA FOR PROXY REQUEST
+        tags = {}
+
+        for header in request.headers:
+            header = header.lower()
+            if header.startswith("x-harp-"):
+                tags[header[7:]] = request.headers.pop(header)
 
         transaction = await self._create_transaction_from_request(request, tags=tags)
         await request.join()
@@ -77,7 +80,7 @@ class HttpProxyController:
 
         # PROXY REQUEST
         p_request: httpx.Request = self.http_client.build_request(
-            request.method, url, headers=headers, content=request.body
+            request.method, url, headers=list(request.headers.items()), content=request.body
         )
         logger.debug(f"▶▶ {request.method} {url}", transaction_id=transaction.id)
 

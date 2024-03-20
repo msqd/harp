@@ -15,6 +15,7 @@ Submodules
     harp.utils.arguments
     harp.utils.background
     harp.utils.bytes
+    harp.utils.collections
     harp.utils.dates
     harp.utils.guids
     harp.utils.identifiers

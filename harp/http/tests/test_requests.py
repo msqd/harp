@@ -9,8 +9,10 @@ class BaseHttpRequestTest:
     Base class for testing HTTP requests, without focusing on a specific underlying protocol bridge implementation.
     """
 
+    RequestType = HttpRequest
+
     def create_request(self, **kwargs) -> HttpRequest:
-        return HttpRequest(HttpRequestStubBridge(**kwargs))
+        return self.RequestType(HttpRequestStubBridge(**kwargs))
 
 
 class TestHttpRequestPath(BaseHttpRequestTest):

@@ -84,6 +84,13 @@ class TestHttpProxyControllerWithStorage(
     SqlalchemyStorageTestFixtureMixin,
     DispatcherTestFixtureMixin,
 ):
+    async def _find_one_transaction_with_messages_from_storage(self, storage):
+        # get transaction, request and response
+        transactions = await storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert len(transactions) == 1
+        transaction = transactions[0]
+        return transaction, transaction.messages[0], transaction.messages[1]
+
     @respx.mock
     async def test_basic_get(self, database_url, dispatcher: AsyncEventDispatcher):
         self.mock_http_endpoint("http://example.com/", content="Hello.")
@@ -94,9 +101,9 @@ class TestHttpProxyControllerWithStorage(
         await self.call_controller(self.create_controller("http://example.com/", dispatcher=dispatcher))
         await storage.wait_for_background_tasks_to_be_processed()
 
-        transactions = await storage.get_transaction_list(username="anonymous", with_messages=True)
-        assert len(transactions) == 1
-        transaction = transactions[0]
+        transaction, request, response = await self._find_one_transaction_with_messages_from_storage(storage)
+
+        # transaction
         assert transaction.to_dict(omit_none=False) == {
             "id": ANY,
             "type": "http",
@@ -104,35 +111,36 @@ class TestHttpProxyControllerWithStorage(
             "elapsed": ANY,
             "started_at": ANY,
             "finished_at": ANY,
-            "messages": [
-                {
-                    "id": 1,
-                    "transaction_id": ANY,
-                    "kind": "request",
-                    "summary": "GET / HTTP/1.1",
-                    "headers": "7507b0bca78329128f61f37d09c88b8712cecd64",
-                    "body": "adc83b19e793491b1c6ea0fd8b46cd9f32e592fc",
-                    "created_at": ANY,
-                },
-                {
-                    "id": 2,
-                    "transaction_id": ANY,
-                    "kind": "response",
-                    "summary": "HTTP/1.1 200 OK",
-                    "headers": "7507b0bca78329128f61f37d09c88b8712cecd64",
-                    "body": "6ffdd89703735cc316470566467b816446f008ce",
-                    "created_at": ANY,
-                },
-            ],
+            "messages": ANY,
             "tags": {},
             "extras": {"flags": [], "method": "GET", "status_class": "2xx"},
         }
 
-        reqmsg, resmsg = transaction.messages[0], transaction.messages[1]
-        assert (await storage.get_blob(reqmsg.headers)).data == b""
-        assert (await storage.get_blob(reqmsg.body)).data == b""
-        assert (await storage.get_blob(resmsg.headers)).data == b""
-        assert (await storage.get_blob(resmsg.body)).data == b"Hello."
+        # request
+        assert (await storage.get_blob(request.headers)).data == b"host: example.com"
+        assert (await storage.get_blob(request.body)).data == b""
+        assert request.to_dict(omit_none=False) == {
+            "id": 1,
+            "transaction_id": ANY,
+            "kind": "request",
+            "summary": "GET / HTTP/1.1",
+            "headers": "5b5fa853da2315f3639fd85d183307b0db6fcfa9",
+            "body": "adc83b19e793491b1c6ea0fd8b46cd9f32e592fc",
+            "created_at": ANY,
+        }
+
+        # response
+        assert (await storage.get_blob(response.headers)).data == b""
+        assert (await storage.get_blob(response.body)).data == b"Hello."
+        assert response.to_dict(omit_none=False) == {
+            "id": 2,
+            "transaction_id": ANY,
+            "kind": "response",
+            "summary": "HTTP/1.1 200 OK",
+            "headers": "7507b0bca78329128f61f37d09c88b8712cecd64",
+            "body": "6ffdd89703735cc316470566467b816446f008ce",
+            "created_at": ANY,
+        }
 
     @respx.mock
     async def test_get_with_tags(self, database_url, dispatcher: AsyncEventDispatcher):
@@ -152,12 +160,8 @@ class TestHttpProxyControllerWithStorage(
         )
         await storage.wait_for_background_tasks_to_be_processed()
 
-        transactions = await storage.get_transaction_list(
-            username="anonymous",
-            with_messages=True,
-        )
-        assert len(transactions) == 1
-        transaction = transactions[0]
+        transaction, request, response = await self._find_one_transaction_with_messages_from_storage(storage)
+
         assert transaction.to_dict(omit_none=False) == {
             "id": ANY,
             "type": "http",
@@ -165,34 +169,33 @@ class TestHttpProxyControllerWithStorage(
             "elapsed": ANY,
             "started_at": ANY,
             "finished_at": ANY,
-            "messages": [
-                {
-                    "id": 1,
-                    "transaction_id": ANY,
-                    "kind": "request",
-                    "summary": "GET / HTTP/1.1",
-                    "headers": "dbda1eeaeffbc11dc30647d645320bd9fade3e10",
-                    "body": "adc83b19e793491b1c6ea0fd8b46cd9f32e592fc",
-                    "created_at": ANY,
-                },
-                {
-                    "id": 2,
-                    "transaction_id": ANY,
-                    "kind": "response",
-                    "summary": "HTTP/1.1 200 OK",
-                    "headers": "7507b0bca78329128f61f37d09c88b8712cecd64",
-                    "body": "6ffdd89703735cc316470566467b816446f008ce",
-                    "created_at": ANY,
-                },
-            ],
+            "messages": ANY,
             "tags": {"foo": "bar"},
             "extras": {"flags": [], "method": "GET", "status_class": "2xx"},
         }
 
-        reqmsg, resmsg = transaction.messages[0], transaction.messages[1]
-        assert (await storage.get_blob(reqmsg.headers)).data == (
-            b"x-harp-foo: bar\naccept: application/json\nvary: custom"
+        assert (await storage.get_blob(request.headers)).data == (
+            b"accept: application/json\nvary: custom\nhost: example.com"
         )
-        assert (await storage.get_blob(reqmsg.body)).data == b""
-        assert (await storage.get_blob(resmsg.headers)).data == b""
-        assert (await storage.get_blob(resmsg.body)).data == b"Hello."
+        assert (await storage.get_blob(request.body)).data == b""
+        assert request.to_dict(omit_none=False) == {
+            "id": 1,
+            "transaction_id": ANY,
+            "kind": "request",
+            "summary": "GET / HTTP/1.1",
+            "headers": "3215728a5aed81014fd90307f48fe439e785e64a",
+            "body": "adc83b19e793491b1c6ea0fd8b46cd9f32e592fc",
+            "created_at": ANY,
+        }
+
+        assert (await storage.get_blob(response.headers)).data == b""
+        assert (await storage.get_blob(response.body)).data == b"Hello."
+        assert response.to_dict(omit_none=False) == {
+            "id": 2,
+            "transaction_id": ANY,
+            "kind": "response",
+            "summary": "HTTP/1.1 200 OK",
+            "headers": "7507b0bca78329128f61f37d09c88b8712cecd64",
+            "body": "6ffdd89703735cc316470566467b816446f008ce",
+            "created_at": ANY,
+        }

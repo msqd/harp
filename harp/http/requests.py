@@ -1,9 +1,11 @@
 import binascii
 from base64 import b64decode
 from functools import cached_property
+from typing import TYPE_CHECKING, MutableMapping, cast
 
-from multidict import CIMultiDictProxy, MultiDictProxy
+from multidict import CIMultiDict, CIMultiDictProxy, MultiDictProxy
 
+from ..utils.collections import MultiChainMap
 from .typing import BaseHttpMessage, HttpRequestBridge
 from .utils.cookies import parse_cookie
 
@@ -90,3 +92,24 @@ class HttpRequest(BaseHttpMessage):
             async for chunk in self._impl.stream():
                 self._body.append(chunk)
             self._closed = True
+
+
+class WrappedHttpRequest(HttpRequest):
+    def __init__(self, wrapped: HttpRequest, /):
+        # we do not need to call super, but we don't want linters to complain
+        if TYPE_CHECKING:
+            super().__init__(wrapped._impl)
+
+        self._wrapped = wrapped
+        self._headers = CIMultiDict()
+
+    @property
+    def _impl(self):
+        return self._wrapped._impl
+
+    @property
+    def headers(self) -> MutableMapping:
+        return MultiChainMap(self._headers, cast(MutableMapping, self._wrapped.headers))
+
+    def __getattr__(self, item):
+        return getattr(self._wrapped, item)
