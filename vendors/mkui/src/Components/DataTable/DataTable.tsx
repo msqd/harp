@@ -20,6 +20,7 @@ interface DataTableProps<TRow extends Record<string, any>, TComputed extends Rec
   types: Record<string, Column<TRow>>
   columns?: Array<keyof (TRow & TComputed) | Array<keyof (TRow & TComputed)>>
   onRowClick?: (row: TRow) => unknown
+  selected?: TRow
 }
 
 const StyledTable = styled.table(({}: DataTableVariantsProps) => [tw`min-w-full divide-y divide-gray-300 text-left`])
@@ -59,6 +60,7 @@ export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = {}>(
   rows,
   types,
   variant = "default",
+  selected = undefined,
 }: DataTableProps<TRow, TComputed>) {
   return (
     <StyledTable variant={variant}>
@@ -80,8 +82,16 @@ export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = {}>(
           return (
             <tr
               key={index}
-              onClick={onRowClick ? () => onRowClick(row) : undefined}
-              className="hover:bg-slate-50 cursor-pointer"
+              onClick={
+                onRowClick
+                  ? (e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      onRowClick(row)
+                    }
+                  : undefined
+              }
+              className={"hover:bg-slate-50 cursor-pointer" + (selected === row ? " bg-slate-100" : "")}
             >
               {columns?.map((name, index) => {
                 const colName = name as string

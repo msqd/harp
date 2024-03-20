@@ -1,7 +1,6 @@
 import { StarIcon } from "@heroicons/react/24/outline"
 import { formatDistance, formatDuration } from "date-fns"
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
 
 import { PerformanceRatingBadge } from "Components/Badges"
 import { useSetUserFlagMutation } from "Domain/Transactions"
@@ -13,6 +12,8 @@ import { RequestHeading, ResponseHeading } from "../Elements"
 
 interface TransactionsDataTableProps {
   transactions: Transaction[]
+  onSelectionChange?: (selected: Transaction | null) => void
+  selected?: Transaction
 }
 
 interface Row {
@@ -80,16 +81,15 @@ const transactionColumnTypes = {
   },
 }
 
-export function TransactionDataTable({ transactions }: TransactionsDataTableProps) {
-  const navigate = useNavigate()
-
+export function TransactionDataTable({ transactions, onSelectionChange, selected }: TransactionsDataTableProps) {
   return (
     <>
       <DataTable<Transaction, { method: string; url: string; statusCode: string; responseBodySize: number }>
         types={transactionColumnTypes}
-        onRowClick={(row: Transaction) => navigate(`/transactions/${row.id}`)}
+        onRowClick={onSelectionChange}
         rows={transactions}
         columns={["favoriteAction", "request", "response", "elapsed", "started_at"]}
+        selected={selected}
       />
     </>
   )

@@ -32,7 +32,7 @@ function RightNav() {
 function Layout() {
   const location = useLocation()
   return (
-    <>
+    <div>
       <Navbar
         leftChildren={
           <Link to="/" className="flex">
@@ -51,7 +51,7 @@ function Layout() {
       <StyledContainerWithHorizontalConstraint>
         <Outlet />
       </StyledContainerWithHorizontalConstraint>
-    </>
+    </div>
   )
 }
 
