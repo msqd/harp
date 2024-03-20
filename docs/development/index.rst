@@ -9,4 +9,4 @@ Development
     changelogs/index
     roadmap
     ideas
-    testing/index
+    ../apps/dashboard/development/index
