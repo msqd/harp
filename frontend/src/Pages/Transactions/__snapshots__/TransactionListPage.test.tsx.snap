@@ -6,11 +6,19 @@ exports[`renders well when the query is successful 1`] = `
     <div
       class="mt-4 mb-4"
     >
+      <div
+        class="float-end"
+      />
       <h1
         class="css-9lrcch"
       >
         Transactions
       </h1>
+      <p
+        class="css-11bp3eh"
+      >
+        Explore transactions that went through the proxy
+      </p>
     </div>
     <div
       class="mt-4"
