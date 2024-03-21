@@ -34,13 +34,6 @@ function TransactionListPageOnQuerySuccess({
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
 
   const detailQuery = useTransactionsDetailQuery(selected?.id)
-  const paginatorProps = {
-    current: page,
-    setPage: setPage,
-    total: query.isSuccess ? query.data.total ?? undefined : undefined,
-    pages: query.isSuccess ? query.data.pages ?? undefined : undefined,
-    perPage: query.isSuccess ? query.data.perPage ?? undefined : undefined,
-  }
   return (
     <div className="flex w-full items-start gap-x-8 relative">
       {isFiltersOpen ? (
@@ -71,13 +64,6 @@ function TransactionListPageOnQuerySuccess({
           }
           selected={hasSelection ? selected : undefined}
         />
-
-        {(paginatorProps.total || 0) > 0 ? (
-          <Paginator {...paginatorProps} showSummary={false} className={hasSelection ? "invisible" : ""} />
-        ) : null}
-        {(paginatorProps.total || 0) > 0 ? (
-          <Paginator {...paginatorProps} className={hasSelection ? "invisible" : ""} />
-        ) : null}
       </main>
 
       {hasSelection ? (
@@ -103,8 +89,27 @@ export function TransactionListPage() {
     }
   }, [page, query])
 
+  let paginator = null
+  if (query.isSuccess) {
+    const paginatorProps = {
+      current: page,
+      setPage: setPage,
+      total: query.isSuccess ? query.data.total ?? undefined : undefined,
+      pages: query.isSuccess ? query.data.pages ?? undefined : undefined,
+      perPage: query.isSuccess ? query.data.perPage ?? undefined : undefined,
+    }
+
+    paginator = (paginatorProps.total || 0) > 0 ? <Paginator {...paginatorProps} showSummary={false} /> : null
+  }
+
   return (
-    <Page title={<PageTitle title="Transactions" />}>
+    <Page
+      title={
+        <PageTitle title="Transactions" description="Explore transactions that went through the proxy">
+          {paginator}
+        </PageTitle>
+      }
+    >
       <OnQuerySuccess query={query}>
         {(query) => (
           <TransactionListPageOnQuerySuccess
@@ -119,5 +124,3 @@ export function TransactionListPage() {
     </Page>
   )
 }
-
-//title="Transactions" description="Explore transactions that went through the proxy"
