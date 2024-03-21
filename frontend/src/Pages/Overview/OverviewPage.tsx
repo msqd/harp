@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-import { Page } from "Components/Page"
+import { Page, PageTitle } from "Components/Page"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { useSystemSettingsQuery } from "Domain/System"
 import { ButtonGroup } from "mkui/Components/ButtonGroup"
@@ -28,7 +28,7 @@ export const OverviewPage = () => {
   ]
 
   return (
-    <Page title="Overview" description="Useful insights">
+    <Page title={<PageTitle title="Overview" />}>
       <div className="flex justify-end my-2">
         <ButtonGroup buttonProps={buttonProps} current={timeRange} setCurrent={setCurrentTimeRange} />
       </div>

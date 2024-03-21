@@ -11,11 +11,6 @@ exports[`renders the title and data when the query is successful 1`] = `
       >
         Overview
       </h1>
-      <p
-        class="css-11bp3eh"
-      >
-        Useful insights
-      </p>
     </div>
     <div
       class="mt-4"

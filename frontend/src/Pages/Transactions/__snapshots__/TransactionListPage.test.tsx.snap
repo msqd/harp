@@ -11,11 +11,6 @@ exports[`renders well when the query is successful 1`] = `
       >
         Transactions
       </h1>
-      <p
-        class="css-11bp3eh"
-      >
-        Explore transactions that went through the proxy
-      </p>
     </div>
     <div
       class="mt-4"
@@ -32,7 +27,30 @@ exports[`renders well when the query is successful 1`] = `
             <aside
               class="sticky top-8 hidden w-1/5 min-w-56 max-w-96 shrink-0 lg:block"
             >
-              <aside
+              <div
+                class="text-right"
+              >
+                <button
+                  class="text-gray-400 mx-1 font-medium text-xs"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="h-3 w-3 inline-block"
+                    data-slot="icon"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      clip-rule="evenodd"
+                      d="M3.22 7.595a.75.75 0 0 0 0 1.06l3.25 3.25a.75.75 0 0 0 1.06-1.06l-2.72-2.72 2.72-2.72a.75.75 0 0 0-1.06-1.06l-3.25 3.25Zm8.25-3.25-3.25 3.25a.75.75 0 0 0 0 1.06l3.25 3.25a.75.75 0 1 0 1.06-1.06l-2.72-2.72 2.72-2.72a.75.75 0 0 0-1.06-1.06Z"
+                      fill-rule="evenodd"
+                    />
+                  </svg>
+                   hide
+                </button>
+              </div>
+              <div
                 class="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm css-o0j4j7"
               />
             </aside>

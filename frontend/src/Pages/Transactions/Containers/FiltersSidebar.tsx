@@ -33,11 +33,7 @@ export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
   const setFlagsFilter = _createSetFilterFor("flag")
 
   return (
-    <Pane
-      as="aside"
-      hasDefaultPadding={false}
-      className="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm"
-    >
+    <Pane hasDefaultPadding={false} className="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm">
       {/* TODO implement search
       <input className="h-12 w-full border-0 bg-transparent px-4 focus:ring-0" placeholder="Search..." />
      */}

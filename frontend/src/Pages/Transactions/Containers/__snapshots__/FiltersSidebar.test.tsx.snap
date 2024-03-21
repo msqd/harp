@@ -2,7 +2,7 @@
 
 exports[`renders the title and data when the query is successful 1`] = `
 <div>
-  <aside
+  <div
     class="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm css-o0j4j7"
   >
     <div
@@ -583,6 +583,6 @@ exports[`renders the title and data when the query is successful 1`] = `
         </div>
       </fieldset>
     </div>
-  </aside>
+  </div>
 </div>
 `;

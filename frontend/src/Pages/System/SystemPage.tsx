@@ -1,4 +1,4 @@
-import { Page } from "Components/Page"
+import { Page, PageTitle } from "Components/Page"
 import { Tab } from "mkui/Components/Tabs"
 
 import { SystemDependenciesTabPanel } from "./SystemDependenciesTabPanel.tsx"
@@ -7,7 +7,7 @@ import { SystemTopologyTabPanel } from "./SystemTopologyTabPanel.tsx"
 
 export const SystemPage = () => {
   return (
-    <Page title="System" description="Informations about the running instance.">
+    <Page title={<PageTitle title="System" description="Informations about the running instance." />}>
       <Tab.Group>
         <Tab.List as="nav" aria-label="Tabs">
           <Tab>Topology</Tab>

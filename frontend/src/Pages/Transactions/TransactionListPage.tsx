@@ -1,7 +1,9 @@
+import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from "@heroicons/react/16/solid"
 import { useEffect, useState } from "react"
 import { QueryObserverSuccessResult } from "react-query/types/core/types"
 
 import { Page } from "Components/Page"
+import { PageTitle } from "Components/Page/PageTitle.tsx"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { ItemList } from "Domain/Api/Types"
 import { useTransactionsDetailQuery, useTransactionsListQuery } from "Domain/Transactions"
@@ -28,6 +30,9 @@ function TransactionListPageOnQuerySuccess({
 }) {
   const [selected, setSelected] = useState<Transaction | null>(null)
   const hasSelection = selected && selected.id
+
+  const [isFiltersOpen, setIsFiltersOpen] = useState(true)
+
   const detailQuery = useTransactionsDetailQuery(selected?.id)
   const paginatorProps = {
     current: page,
@@ -38,9 +43,23 @@ function TransactionListPageOnQuerySuccess({
   }
   return (
     <div className="flex w-full items-start gap-x-8 relative">
-      <aside className="sticky top-8 hidden w-1/5 min-w-56 max-w-96 shrink-0 lg:block">
-        <FiltersSidebar filters={filters} setFilters={setFilters} />
-      </aside>
+      {isFiltersOpen ? (
+        <aside className="sticky top-8 hidden w-1/5 min-w-56 max-w-96 shrink-0 lg:block">
+          <div className="text-right">
+            <button onClick={() => setIsFiltersOpen(false)} className="text-gray-400 mx-1 font-medium text-xs">
+              <ChevronDoubleLeftIcon className="h-3 w-3 inline-block" /> hide
+            </button>
+          </div>
+          <FiltersSidebar filters={filters} setFilters={setFilters} />
+        </aside>
+      ) : (
+        <button onClick={() => setIsFiltersOpen(true)} className="text-gray-400 mx-1 font-medium text-xs">
+          <ChevronDoubleRightIcon className="h-3 w-3 inline-block" />
+          <div className="w-4">
+            <div className="rotate-90">filters</div>
+          </div>
+        </button>
+      )}
 
       <main className="flex-1 overflow-auto">
         <TransactionDataTable
@@ -85,7 +104,7 @@ export function TransactionListPage() {
   }, [page, query])
 
   return (
-    <Page title="Transactions" description="Explore transactions that went through the proxy">
+    <Page title={<PageTitle title="Transactions" />}>
       <OnQuerySuccess query={query}>
         {(query) => (
           <TransactionListPageOnQuerySuccess
@@ -100,3 +119,5 @@ export function TransactionListPage() {
     </Page>
   )
 }
+
+//title="Transactions" description="Explore transactions that went through the proxy"

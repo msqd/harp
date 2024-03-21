@@ -1,8 +1,9 @@
 import { render, screen } from "@testing-library/react"
 import { ErrorBoundary } from "react-error-boundary"
-import { describe, test, expect, vi, afterEach } from "vitest"
+import { afterEach, describe, expect, test, vi } from "vitest"
 
-import { Page, Error as ErrorFunc } from "./Page"
+import { Error as ErrorFunc, Page } from "./Page"
+import { PageTitle } from "./PageTitle.tsx"
 
 describe("Page", () => {
   afterEach(() => {
@@ -10,12 +11,14 @@ describe("Page", () => {
   })
 
   test("renders without error", () => {
-    const { container } = render(<Page children={<div />} title="Test Title" description="Test Description" />)
+    const { container } = render(
+      <Page children={<div />} title={<PageTitle title="Test Title" description="Test Description" />} />,
+    )
     expect(container).toMatchSnapshot()
   })
 
   test("renders title and description", () => {
-    render(<Page children={<div />} title="Test Title" description="Test Description" />)
+    render(<Page children={<div />} title={<PageTitle title="Test Title" description="Test Description" />} />)
     expect(screen.getByText("Test Title")).toBeInTheDocument()
     expect(screen.getByText("Test Description")).toBeInTheDocument()
   })

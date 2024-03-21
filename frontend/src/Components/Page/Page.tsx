@@ -2,8 +2,6 @@ import * as Sentry from "@sentry/browser"
 import { ReactNode } from "react"
 import { ErrorBoundary, FallbackProps } from "react-error-boundary"
 
-import { H1, P } from "mkui/Components/Typography"
-
 export function Error(props: FallbackProps) {
   return (
     <div>
@@ -43,17 +41,16 @@ export function Error(props: FallbackProps) {
   )
 }
 
-export function Page({ children, title, description }: { children: ReactNode; title?: string; description?: string }) {
+interface PageProps {
+  children: ReactNode
+  title?: ReactNode
+}
+
+export function Page({ children, title }: PageProps) {
   return (
     <ErrorBoundary FallbackComponent={Error}>
       <main>
-        {title ? (
-          <div className="mt-4 mb-4">
-            <H1>{title}</H1>
-            {description ? <P>{description}</P> : null}
-          </div>
-        ) : null}
-
+        {title ?? null}
         <div className="mt-4">
           <div className="sm:-mx-6 lg:-mx-8">
             <section className="inline-block min-w-full max-w-full py-2 align-middle sm:px-6 lg:px-8">

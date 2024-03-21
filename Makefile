@@ -53,7 +53,7 @@ frontend:
 # QA, tests and other CI/CD related stuff
 ########################################################################################################################
 
-.PHONY: clean preqa qa qa-full types format format-backend format-frontend test test-backend coverage test-frontend lint-frontend test-ui test-ui-update test-ui-build
+.PHONY: clean preqa qa qa-full types format format-backend format-frontend test test-backend coverage test-frontend test-frontend-update lint-frontend test-ui test-ui-update test-ui-build
 
 clean:
 	(cd docs; $(MAKE) clean)
@@ -100,6 +100,9 @@ coverage:
 
 test-frontend: install-frontend lint-frontend
 	cd frontend; pnpm test
+
+test-frontend-update: install-frontend lint-frontend
+	cd frontend; pnpm test:unit:update
 
 lint-frontend: install-frontend
 	cd frontend; pnpm build
