@@ -1,22 +1,80 @@
 import { useEffect, useState } from "react"
+import { QueryObserverSuccessResult } from "react-query/types/core/types"
 
 import { Page } from "Components/Page"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
-import { useTransactionsListQuery } from "Domain/Transactions"
+import { ItemList } from "Domain/Api/Types"
+import { useTransactionsDetailQuery, useTransactionsListQuery } from "Domain/Transactions"
+import { Transaction } from "Models/Transaction"
 import { Filters } from "Types/filters"
 import { Paginator } from "mkui/Components/Pagination"
 
 import { TransactionDataTable } from "./Components/List"
 import { FiltersSidebar } from "./Containers"
-import { TransactionDetailPanel } from "./TransactionDetailPanel.tsx"
+import { TransactionDetail } from "./Containers/Detail"
 
-import { Transaction } from "../../Models/Transaction"
+function TransactionListPageOnQuerySuccess({
+  query,
+  filters,
+  setFilters,
+  page,
+  setPage,
+}: {
+  query: QueryObserverSuccessResult<ItemList<Transaction> & { total: number; pages: number; perPage: number }>
+  filters: Filters
+  setFilters: (filters: Filters) => void
+  page: number
+  setPage: (page: number) => void
+}) {
+  const [selected, setSelected] = useState<Transaction | null>(null)
+  const hasSelection = selected && selected.id
+  const detailQuery = useTransactionsDetailQuery(selected?.id)
+  const paginatorProps = {
+    current: page,
+    setPage: setPage,
+    total: query.isSuccess ? query.data.total ?? undefined : undefined,
+    pages: query.isSuccess ? query.data.pages ?? undefined : undefined,
+    perPage: query.isSuccess ? query.data.perPage ?? undefined : undefined,
+  }
+  return (
+    <div className="flex w-full items-start gap-x-8 relative">
+      <aside className="sticky top-8 hidden w-1/5 min-w-56 max-w-96 shrink-0 lg:block">
+        <FiltersSidebar filters={filters} setFilters={setFilters} />
+      </aside>
+
+      <main className="flex-1 overflow-auto">
+        <TransactionDataTable
+          transactions={query.data.items}
+          onSelectionChange={(newSelected) =>
+            newSelected && newSelected.id && (!hasSelection || selected.id != newSelected.id)
+              ? setSelected(newSelected)
+              : setSelected(null)
+          }
+          selected={hasSelection ? selected : undefined}
+        />
+
+        {(paginatorProps.total || 0) > 0 ? (
+          <Paginator {...paginatorProps} showSummary={false} className={hasSelection ? "invisible" : ""} />
+        ) : null}
+        {(paginatorProps.total || 0) > 0 ? (
+          <Paginator {...paginatorProps} className={hasSelection ? "invisible" : ""} />
+        ) : null}
+      </main>
+
+      {hasSelection ? (
+        <aside className="sticky top-8 w-2/5 min-w-96 shrink-0 block">
+          <OnQuerySuccess query={detailQuery}>
+            {(query) => <TransactionDetail transaction={query.data} />}
+          </OnQuerySuccess>
+        </aside>
+      ) : null}
+    </div>
+  )
+}
 
 export function TransactionListPage() {
   const [filters, setFilters] = useState<Filters>({})
   const [page, setPage] = useState(1)
-  const [selected, setSelected] = useState<Transaction | null>(null)
-  const hasSelection = selected && selected.id
   const [cursor, setCursor] = useState<string | undefined>(undefined)
   const query = useTransactionsListQuery({ filters, page, cursor })
 
@@ -26,51 +84,17 @@ export function TransactionListPage() {
     }
   }, [page, query])
 
-  useEffect(() => {
-    const handleClick = () => {
-      setSelected(null)
-    }
-    document.body.addEventListener("click", handleClick)
-
-    return () => {
-      document.body.removeEventListener("click", handleClick)
-    }
-  }, [])
-
-  const paginatorProps = {
-    current: page,
-    setPage: setPage,
-    total: query.isSuccess ? query.data.total ?? undefined : undefined,
-    pages: query.isSuccess ? query.data.pages ?? undefined : undefined,
-    perPage: query.isSuccess ? query.data.perPage ?? undefined : undefined,
-  }
-
   return (
     <Page title="Transactions" description="Explore transactions that went through the proxy">
       <OnQuerySuccess query={query}>
         {(query) => (
-          <div className="w-full grid grid-cols-1 grid-rows-1 items-start gap-x-8 gap-y-8 lg:mx-0 lg:max-w-none lg:grid-cols-5">
-            <div className={hasSelection ? "" : "row-end-1 col-start-2 col-span-4"}>
-              {(paginatorProps.total || 0) > 0 ? (
-                <Paginator {...paginatorProps} showSummary={false} className={hasSelection ? "invisible" : ""} />
-              ) : null}
-              <TransactionDataTable
-                transactions={query.data.items}
-                onSelectionChange={(selected) => setSelected(selected)}
-                selected={selected && selected.id ? selected : undefined}
-              />
-              {(paginatorProps.total || 0) > 0 ? (
-                <Paginator {...paginatorProps} className={hasSelection ? "invisible" : ""} />
-              ) : null}
-            </div>
-            {hasSelection ? null : (
-              <div className="col-start-1 col-span-1">
-                <FiltersSidebar filters={filters} setFilters={setFilters} />
-              </div>
-            )}
-
-            {selected && selected.id ? <TransactionDetailPanel id={selected.id} /> : null}
-          </div>
+          <TransactionListPageOnQuerySuccess
+            query={query}
+            filters={filters}
+            setFilters={setFilters}
+            page={page}
+            setPage={setPage}
+          />
         )}
       </OnQuerySuccess>
     </Page>

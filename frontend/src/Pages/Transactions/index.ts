@@ -1,2 +1,2 @@
 export { TransactionListPage } from "./TransactionListPage.tsx"
-export { TransactionsDetailPage } from "./TransactionsDetailPage"
+export { TransactionDetailPage } from "./TransactionDetailPage.tsx"

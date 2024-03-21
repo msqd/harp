@@ -2,7 +2,9 @@
 
 exports[`renders the title and data when the query is successful 1`] = `
 <div>
-  <div>
+  <div
+    class="flex h-screen min-h-screen max-h-screen w-screen flex-col"
+  >
     <nav
       class="css-orfs66"
       data-headlessui-state=""
@@ -143,7 +145,7 @@ exports[`renders the title and data when the query is successful 1`] = `
       </div>
     </nav>
     <div
-      class="css-1pur65d"
+      class="overflow-y-auto w-full css-1pur65d"
     />
   </div>
 </div>

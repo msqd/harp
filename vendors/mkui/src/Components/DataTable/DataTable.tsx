@@ -91,7 +91,9 @@ export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = {}>(
                     }
                   : undefined
               }
-              className={"hover:bg-slate-50 cursor-pointer" + (selected === row ? " bg-slate-100" : "")}
+              className={
+                "hover:bg-slate-50 cursor-pointer" + (selected && selected.id === row.id ? " bg-slate-100" : "")
+              }
             >
               {columns?.map((name, index) => {
                 const colName = name as string

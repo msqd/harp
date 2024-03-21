@@ -9,7 +9,7 @@ import { OverviewPage } from "Pages/Overview"
 import { SystemPage } from "Pages/System"
 import GlobalStyles from "Styles/GlobalStyles"
 
-import { TransactionListPage, TransactionsDetailPage } from "./Pages/Transactions"
+import { TransactionDetailPage, TransactionListPage } from "./Pages/Transactions"
 
 import "./index.css"
 
@@ -24,7 +24,7 @@ const router = createBrowserRouter([
       },
       {
         path: "transactions/:id",
-        element: <TransactionsDetailPage />,
+        element: <TransactionDetailPage />,
       },
       {
         path: "transactions",

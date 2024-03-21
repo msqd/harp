@@ -55,7 +55,7 @@ export function Page({ children, title, description }: { children: ReactNode; ti
         ) : null}
 
         <div className="mt-4">
-          <div className="overflow-x-auto sm:-mx-6 lg:-mx-8">
+          <div className="sm:-mx-6 lg:-mx-8">
             <section className="inline-block min-w-full max-w-full py-2 align-middle sm:px-6 lg:px-8">
               {children}
             </section>

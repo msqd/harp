@@ -46,7 +46,6 @@ export function TransactionDetail({ transaction }: { transaction: Transaction })
           {request ? (
             <>
               <H2>
-                Request
                 <RequestHeading as="span" request={request} endpoint={requestEndpoint} className="inline-flex ml-4" />
               </H2>
               <TransactionMessagePanel
@@ -66,7 +65,6 @@ export function TransactionDetail({ transaction }: { transaction: Transaction })
           {response ? (
             <>
               <H2>
-                Response
                 <ResponseHeading as="span" response={response} className="inline-flex ml-4" />
               </H2>
               <TransactionMessagePanel

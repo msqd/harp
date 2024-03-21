@@ -15,7 +15,7 @@ export function TransactionDetailPanel({ id }: { id: string }) {
   return (
     <Transition.Root show={!!id && open} as={Fragment}>
       <div
-        className="relative z-10"
+        className="relative z-10 debug"
         onClick={(e) => {
           // to avoid closing the panel when clicking inside it
           e.stopPropagation()

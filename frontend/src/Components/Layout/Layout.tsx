@@ -32,7 +32,7 @@ function RightNav() {
 function Layout() {
   const location = useLocation()
   return (
-    <div>
+    <div className="flex h-screen min-h-screen max-h-screen w-screen flex-col">
       <Navbar
         leftChildren={
           <Link to="/" className="flex">
@@ -48,7 +48,7 @@ function Layout() {
         Wrapper={StyledContainerWithHorizontalConstraint}
         rightChildren={<RightNav />}
       />
-      <StyledContainerWithHorizontalConstraint>
+      <StyledContainerWithHorizontalConstraint className="overflow-y-auto w-full">
         <Outlet />
       </StyledContainerWithHorizontalConstraint>
     </div>

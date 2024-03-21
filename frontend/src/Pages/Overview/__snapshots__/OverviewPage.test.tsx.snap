@@ -21,7 +21,7 @@ exports[`renders the title and data when the query is successful 1`] = `
       class="mt-4"
     >
       <div
-        class="overflow-x-auto sm:-mx-6 lg:-mx-8"
+        class="sm:-mx-6 lg:-mx-8"
       >
         <section
           class="inline-block min-w-full max-w-full py-2 align-middle sm:px-6 lg:px-8"
