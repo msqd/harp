@@ -11,3 +11,6 @@ __title__ = "Settings"
 
 #: Pagination size for api endpoints
 PAGE_SIZE = 20
+
+#: Default timeout for http requests
+DEFAULT_TIMEOUT = 10.0

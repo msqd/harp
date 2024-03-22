@@ -1,3 +1,4 @@
+from .errors import HttpError
 from .requests import HttpRequest
 from .responses import AlreadyHandledHttpResponse, HttpResponse, JsonHttpResponse
 from .serializers import HttpRequestSerializer, get_serializer_for
@@ -9,6 +10,7 @@ __all__ = [
     "AlreadyHandledHttpResponse",
     "BaseHttpMessage",
     "BaseMessage",
+    "HttpError",
     "HttpRequest",
     "HttpRequestBridge",
     "HttpRequestSerializer",

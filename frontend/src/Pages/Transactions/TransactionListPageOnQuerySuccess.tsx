@@ -1,4 +1,5 @@
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
+import { format } from "date-fns"
 import { ReactNode, useState } from "react"
 import { QueryObserverSuccessResult } from "react-query/types/core/types"
 
@@ -25,10 +26,11 @@ import { SettingsTable } from "../System/Components"
 interface FoldableProps {
   open?: boolean
   title: ReactNode
+  subtitle?: ReactNode
   children: ReactNode
 }
 
-function Foldable({ open = true, title, children }: FoldableProps) {
+function Foldable({ open = true, title, subtitle, children }: FoldableProps) {
   const [isOpen, setIsOpen] = useState(open)
 
   return (
@@ -46,6 +48,7 @@ function Foldable({ open = true, title, children }: FoldableProps) {
           <ChevronDownIcon className="h-4 w-4 min-w-4 text-gray-600" />
         )}
       </H5>
+      {subtitle ?? null}
       {/* actual foldable content */}
       <div className={"mt-2 space-y-2 overflow-x-auto " + (isOpen ? "" : "hidden")}>{children}</div>
     </div>
@@ -69,6 +72,10 @@ function ShortMessageSummary({ kind, summary }: { kind: string; summary: string 
         <ResponseStatusBadge statusCode={parseInt(splitSummary[1])} />
       </span>
     )
+  }
+
+  if (kind == "error") {
+    return <span className="font-normal text-red-800 font-mono text-xs">{summary}</span>
   }
 }
 
@@ -98,11 +105,13 @@ function MessageBody({ id }: { id: string }) {
   const query = useBlobQuery(id)
 
   if (query && query.isSuccess && query.data !== undefined) {
-    return (
-      <div className="px-2">
-        <PrettyBody content={query.data.content} contentType={query.data.contentType} />
-      </div>
-    )
+    if (query.data.content.length) {
+      return (
+        <div className="px-2">
+          <PrettyBody content={query.data.content} contentType={query.data.contentType} />
+        </div>
+      )
+    }
   }
 
   return null
@@ -163,9 +172,18 @@ export function TransactionListPageOnQuerySuccess({
                     <Foldable
                       title={
                         <>
-                          {ucfirst(message.kind)} <ShortMessageSummary kind={message.kind} summary={message.summary} />
+                          <span className="mr-2">{ucfirst(message.kind)}</span>
+                          <ShortMessageSummary kind={message.kind} summary={message.summary} />
                         </>
                       }
+                      subtitle={
+                        message.created_at ? (
+                          <span className="text-xs text-gray-500">
+                            {format(new Date(message.created_at), "PPPPpppp")}
+                          </span>
+                        ) : undefined
+                      }
+                      open={message.kind != "error"}
                     >
                       <MessageHeaders id={message.headers} />
                       <MessageBody id={message.body} />

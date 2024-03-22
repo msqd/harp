@@ -9,7 +9,7 @@ from whistle import IAsyncEventDispatcher
 
 from harp import __parsed_version__, get_logger
 from harp.asgi.events import MessageEvent, TransactionEvent
-from harp.http import HttpRequest, HttpResponse
+from harp.http import HttpError, HttpRequest, HttpResponse
 from harp.http.requests import WrappedHttpRequest
 from harp.models import Transaction
 from harp.utils.guids import generate_transaction_id_ksuid
@@ -98,14 +98,22 @@ class HttpProxyController:
         # PROXY RESPONSE
         try:
             p_response: httpx.Response = await self.http_client.send(p_request)
-        except httpx.ConnectError:
+        except httpx.ConnectError as exc:
             logger.error(f"▶▶ {request.method} {url} (unavailable)", transaction_id=transaction.id)
+            await self.adispatch(
+                EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, HttpError("Unavailable", exception=exc))
+            )
+
             # todo add web debug information if we are not on a production env
             return HttpResponse(
                 "Service Unavailable (remote server unavailable)", status=503, content_type="text/plain"
             )
-        except httpx.TimeoutException:
+        except httpx.TimeoutException as exc:
             logger.error(f"▶▶ {request.method} {url} (timeout)", transaction_id=transaction.id)
+            await self.adispatch(
+                EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, HttpError("Timeout", exception=exc))
+            )
+
             # todo add web debug information if we are not on a production env
             return HttpResponse("Gateway Timeout (remote server timeout)", status=504, content_type="text/plain")
 

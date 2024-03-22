@@ -4,10 +4,12 @@ import tw, { styled } from "twin.macro"
 
 import { ResponseStatusBadge } from "Components/Badges/ResponseStatusBadge"
 import { Message } from "Models/Transaction"
+import { Badge } from "mkui/Components/Badge"
 
 interface ResponseHeadingProps {
   as?: ElementType
-  response: Message
+  response?: Message
+  error?: Message
 }
 
 const StyledResponseHeading = styled.h1`
@@ -17,18 +19,26 @@ const StyledResponseHeading = styled.h1`
 export function ResponseHeading({
   as = "h1",
   response,
+  error,
   ...moreProps
 }: ResponseHeadingProps & HTMLAttributes<HTMLElement>) {
-  const responseSummary = response.summary.split(" ")
-  return (
-    <StyledResponseHeading as={as} {...moreProps}>
-      <div className="flex items-center">
-        <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 mr-1">
-          <ArrowLeftIcon className="h-3 w-3 text-gray-500" aria-hidden="true" />
-        </span>
-        <ResponseStatusBadge statusCode={parseInt(responseSummary[1])} />
-        {/* todo size <span>...kB</span>*/}
-      </div>
-    </StyledResponseHeading>
-  )
+  if (response !== undefined) {
+    const responseSummary = response.summary.split(" ")
+    return (
+      <StyledResponseHeading as={as} {...moreProps}>
+        <div className="flex items-center">
+          <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 mr-1">
+            <ArrowLeftIcon className="h-3 w-3 text-gray-500" aria-hidden="true" />
+          </span>
+          <ResponseStatusBadge statusCode={parseInt(responseSummary[1])} />
+          {/* todo size <span>...kB</span>*/}
+        </div>
+      </StyledResponseHeading>
+    )
+  }
+  if (error !== undefined) {
+    return <Badge color="red">{error.summary}</Badge>
+  }
+
+  return <span className="text-xs text-gray-500">n/a</span>
 }

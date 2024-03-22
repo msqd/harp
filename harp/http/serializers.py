@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 
 from httpx import codes
 
+from .errors import HttpError
 from .requests import HttpRequest
 from .responses import HttpResponse
 from .typing import BaseHttpMessage, BaseMessage, MessageSerializer
@@ -70,11 +71,33 @@ class HttpResponseSerializer(BaseHttpMessageSerializer):
         return f"HTTP/1.1 {self.wrapped.status} {reason}"
 
 
+class HttpErrorSerializer(BaseHttpMessageSerializer):
+    """
+    Serialize an HTTP error object into string representations for different message parts:
+
+    - summary: the error message
+    - headers: empty
+    - body: stack trace (xxx this may change, maybe too much info and too much internal)
+
+    The main goal of this serializer is to prepare an error message for storage.
+
+    """
+
+    wrapped: HttpError
+
+    @cached_property
+    def summary(self) -> str:
+        return self.wrapped.message
+
+
 def get_serializer_for(message: BaseMessage) -> MessageSerializer:
     if isinstance(message, HttpRequest):
         return HttpRequestSerializer(message)
 
     if isinstance(message, HttpResponse):
         return HttpResponseSerializer(message)
+
+    if isinstance(message, HttpError):
+        return HttpErrorSerializer(message)
 
     raise ValueError(f"No serializer available for message type: {type(message)}")

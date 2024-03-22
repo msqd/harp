@@ -3,6 +3,7 @@ from httpx import AsyncClient, AsyncHTTPTransport
 
 from harp.config import Application
 from harp.config.events import FactoryBindEvent
+from harp.settings import DEFAULT_TIMEOUT
 
 
 class HttpClientApplication(Application):
@@ -13,7 +14,7 @@ class HttpClientApplication(Application):
         cache_transport = AsyncCacheTransport(transport=transport)
         event.container.add_instance(
             AsyncClient(
-                timeout=10.0,
+                timeout=DEFAULT_TIMEOUT,
                 transport=cache_transport,
             )
         )

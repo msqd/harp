@@ -12,6 +12,7 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
+    harp.http.errors
     harp.http.requests
     harp.http.responses
     harp.http.serializers

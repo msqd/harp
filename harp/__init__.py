@@ -90,8 +90,6 @@ def run(config: Config):
     asyncio.run(server.serve())
 
 
-print(__parsed_version__)
-
 __all__ = [
     "Config",
     "ROOT_DIR",
