@@ -30,7 +30,19 @@ Contents
 import os
 from subprocess import check_output
 
+from packaging.version import InvalidVersion, Version
+
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _parse_version(version: str, /, *, default=None) -> Version:
+    try:
+        return Version(version)
+    except InvalidVersion:
+        if "-" in version:
+            return _parse_version(version.rsplit("-", 1)[0], default=default)
+        return default
+
 
 # last release
 __title__ = "Core"
@@ -42,6 +54,8 @@ if os.path.exists(os.path.join(ROOT_DIR, "version.txt")):
     with open(os.path.join(ROOT_DIR, "version.txt")) as f:
         __version__ = f.read().strip()
 
+__parsed_version__ = _parse_version(__version__)
+
 # override with current development version/revision if available (disabled in CI, for docs)
 if not os.environ.get("CI", False) and os.path.exists(os.path.join(ROOT_DIR, ".git")):
     __revision__ = check_output(["git", "rev-parse", "HEAD"], cwd=ROOT_DIR).decode("utf-8").strip()
@@ -49,6 +63,7 @@ if not os.environ.get("CI", False) and os.path.exists(os.path.join(ROOT_DIR, ".g
         __version__ = (
             check_output(["git", "describe", "--tags", "--always", "--dirty"], cwd=ROOT_DIR).decode("utf-8").strip()
         )
+        __parsed_version__ = _parse_version(__version__, default=__parsed_version__)
     except Exception:
         __version__ = __revision__[:7]
 
@@ -75,11 +90,14 @@ def run(config: Config):
     asyncio.run(server.serve())
 
 
+print(__parsed_version__)
+
 __all__ = [
     "Config",
     "ROOT_DIR",
     "__revision__",
     "__version__",
+    "__parsed_version__",
     "get_logger",
     "run",
 ]

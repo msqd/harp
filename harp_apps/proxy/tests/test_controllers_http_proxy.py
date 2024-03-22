@@ -1,4 +1,4 @@
-from unittest.mock import ANY, AsyncMock
+from unittest.mock import ANY, AsyncMock, patch
 
 import pytest
 import respx
@@ -21,6 +21,12 @@ class DispatcherTestFixtureMixin:
 
 class HttpProxyControllerTestFixtureMixin(ControllerTestFixtureMixin):
     ControllerType = HttpProxyController
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        # forces the user agent to be a known value, even if versions are incremented
+        with patch("harp_apps.proxy.controllers.HttpProxyController.user_agent", "test/1.0"):
+            yield
 
     def mock_http_endpoint(self, url, /, *, status=200, content=""):
         """Make sure you decorate your tests function using this with respx.mock decorator, otherwise the real network
@@ -117,14 +123,14 @@ class TestHttpProxyControllerWithStorage(
         }
 
         # request
-        assert (await storage.get_blob(request.headers)).data == b"host: example.com"
+        assert (await storage.get_blob(request.headers)).data == b"host: example.com\nuser-agent: test/1.0"
         assert (await storage.get_blob(request.body)).data == b""
         assert request.to_dict(omit_none=False) == {
             "id": 1,
             "transaction_id": ANY,
             "kind": "request",
             "summary": "GET / HTTP/1.1",
-            "headers": "5b5fa853da2315f3639fd85d183307b0db6fcfa9",
+            "headers": "ecd46dd3023926417e1205b219aec4c2b9e0dab0",
             "body": "adc83b19e793491b1c6ea0fd8b46cd9f32e592fc",
             "created_at": ANY,
         }
@@ -175,7 +181,7 @@ class TestHttpProxyControllerWithStorage(
         }
 
         assert (await storage.get_blob(request.headers)).data == (
-            b"accept: application/json\nvary: custom\nhost: example.com"
+            b"accept: application/json\nvary: custom\nhost: example.com\nuser-agent: test/1.0"
         )
         assert (await storage.get_blob(request.body)).data == b""
         assert request.to_dict(omit_none=False) == {
@@ -183,7 +189,7 @@ class TestHttpProxyControllerWithStorage(
             "transaction_id": ANY,
             "kind": "request",
             "summary": "GET / HTTP/1.1",
-            "headers": "3215728a5aed81014fd90307f48fe439e785e64a",
+            "headers": "885ad9e4633a3c038f13c32e4ee48fc9221c0152",
             "body": "adc83b19e793491b1c6ea0fd8b46cd9f32e592fc",
             "created_at": ANY,
         }

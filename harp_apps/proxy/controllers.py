@@ -7,7 +7,7 @@ import httpx
 from httpx import AsyncClient, codes
 from whistle import IAsyncEventDispatcher
 
-from harp import get_logger
+from harp import __parsed_version__, get_logger
 from harp.asgi.events import MessageEvent, TransactionEvent
 from harp.http import HttpRequest, HttpResponse
 from harp.http.requests import WrappedHttpRequest
@@ -23,6 +23,9 @@ class HttpProxyController:
     name: str = None
     """Controller name, also refered as endpoint name (for example in
     :class:`Transaction <harp.models.Transaction>`)."""
+
+    user_agent: str = None
+    """User agent to use when proxying requests (will default to harp/<version>)."""
 
     _dispatcher: Optional[IAsyncEventDispatcher] = None
     """Event dispatcher for this controller."""
@@ -42,6 +45,10 @@ class HttpProxyController:
         self._dispatcher = dispatcher or self._dispatcher
 
         self.parsed_url = urlparse(self.url)
+
+        # we only expose minimal information about the exact version
+        if not self.user_agent:
+            self.user_agent = f"harp/{__parsed_version__.major}.{__parsed_version__.minor}"
 
     async def adispatch(self, event_id, event=None):
         """
@@ -73,6 +80,10 @@ class HttpProxyController:
             header = header.lower()
             if header.startswith("x-harp-"):
                 tags[header[7:]] = request.headers.pop(header)
+
+        # override user agent (later, may be customizable behavior)
+        if self.user_agent:
+            request.headers["user-agent"] = self.user_agent
 
         transaction = await self._create_transaction_from_request(request, tags=tags)
         await request.join()
