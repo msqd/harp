@@ -7,7 +7,7 @@ import { useTransactionsListQuery } from "Domain/Transactions"
 import { Filters } from "Types/filters"
 
 import { OptionalPaginator } from "./Components/OptionalPaginator.tsx"
-import { TransactionListPageOnQuerySuccess } from "./TransactionListPageOnQuerySuccess.tsx"
+import { TransactionListOnQuerySuccess } from "./TransactionListOnQuerySuccess.tsx"
 
 export function TransactionListPage() {
   const [filters, setFilters] = useState<Filters>({})
@@ -38,7 +38,7 @@ export function TransactionListPage() {
       }
     >
       <OnQuerySuccess query={query}>
-        {(query) => <TransactionListPageOnQuerySuccess query={query} filters={filters} setFilters={setFilters} />}
+        {(query) => <TransactionListOnQuerySuccess query={query} filters={filters} setFilters={setFilters} />}
       </OnQuerySuccess>
     </Page>
   )

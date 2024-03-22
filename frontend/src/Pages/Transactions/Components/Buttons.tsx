@@ -1,4 +1,5 @@
-import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon, XMarkIcon } from "@heroicons/react/16/solid"
+import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon, LinkIcon, XMarkIcon } from "@heroicons/react/16/solid"
+import { Link } from "react-router-dom"
 
 interface PaneVisibilityButtonProps {
   onClick: () => void
@@ -28,5 +29,13 @@ export function DetailsCloseButton({ onClick }: PaneVisibilityButtonProps) {
     <button onClick={onClick} className="text-gray-400 mx-1 font-medium text-xs">
       <XMarkIcon className="h-3 w-3 inline-block" /> close
     </button>
+  )
+}
+
+export function OpenInNewWindowLink({ id }: { id: string }) {
+  return (
+    <Link target="_blank" to={`/transactions/${id}`} className="text-gray-400 mx-1 font-medium text-xs">
+      <LinkIcon className="h-3 w-3 inline-block" /> open in new window
+    </Link>
   )
 }

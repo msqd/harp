@@ -5,10 +5,10 @@ import { useState } from "react"
 import { PerformanceRatingBadge } from "Components/Badges"
 import { useSetUserFlagMutation } from "Domain/Transactions"
 import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
-import { Transaction } from "Models/Transaction"
+import { Message, Transaction } from "Models/Transaction"
 import { DataTable } from "mkui/Components/DataTable"
 
-import { RequestHeading, ResponseHeading } from "../Elements"
+import { MessageSummary } from "../MessageSummary.tsx"
 
 interface TransactionsDataTableProps {
   transactions: Transaction[]
@@ -54,13 +54,24 @@ const transactionColumnTypes = {
   },
   request: {
     label: "Request",
-    get: (row: Transaction) => getRequestFromTransactionMessages(row) ?? null,
-    format: RequestHeading,
+    get: (row: Transaction) => getRequestFromTransactionMessages(row),
+    format: ({ request, endpoint }: { request?: Message; endpoint?: string }) =>
+      request ? <MessageSummary kind={request.kind} summary={request.summary} endpoint={endpoint} /> : null,
   },
   response: {
     label: "Response",
     get: (row: Transaction) => getResponseFromTransactionMessages(row) ?? null,
-    format: ResponseHeading,
+    format: ({ response, error, endpoint }: { response?: Message; error?: Message; endpoint?: string }) => {
+      if (error) {
+        return <MessageSummary kind={error.kind} summary={error.summary} endpoint={endpoint} />
+      }
+
+      if (response) {
+        return <MessageSummary kind={response.kind} summary={response.summary} endpoint={endpoint} />
+      }
+
+      return <MessageSummary />
+    },
   },
   started_at: {
     label: "Date",
