@@ -84,7 +84,7 @@ function MessageHeaders({ id }: { id: string }) {
             return (
               <tr key={index}>
                 <td className="px-2 w-1 text-blue-600 truncate">{s[0]}</td>
-                <td className="px-2">{s[1]}</td>
+                <td className="px-2 whitespace-nowrap">{s[1]}</td>
               </tr>
             )
           })}
