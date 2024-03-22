@@ -48,7 +48,10 @@ class HttpProxyController:
 
         # we only expose minimal information about the exact version
         if not self.user_agent:
-            self.user_agent = f"harp/{__parsed_version__.major}.{__parsed_version__.minor}"
+            try:
+                self.user_agent = f"harp/{__parsed_version__.major}.{__parsed_version__.minor}"
+            except AttributeError:
+                self.user_agent = "harp"
 
     async def adispatch(self, event_id, event=None):
         """
