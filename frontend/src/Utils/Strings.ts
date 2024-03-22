@@ -16,3 +16,5 @@ export function truncate(str: string, maxLength: number) {
   }
   return str.slice(0, maxLength) + "…"
 }
+
+export const ucfirst = (s: string) => (s && s[0].toUpperCase() + s.slice(1)) || ""

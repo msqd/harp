@@ -157,7 +157,7 @@ exports[`SystemPage > renders when the query is successful 1`] = `
               GET
             </span>
             <span
-              class="mx-1"
+              class="mx-1 font-mono font-normal text-gray-500 text-xs"
             >
               /
             </span>
@@ -212,8 +212,8 @@ exports[`SystemPage > renders when the query is successful 1`] = `
             (application/json)
           </h4>
           <pre
-            class="w-fit overflow-x-auto p-4 text-sm text-black language-javascript max-w-full"
-            style="color: rgb(57, 58, 52); font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; font-size: 0.9rem; line-height: 1.2em; tab-size: 4; hyphens: none; padding: 0px; margin: .5em 0px; overflow: auto; border: 0px; background-color: white;"
+            class="w-fit overflow-x-auto text-black language-javascript max-w-full text-xs"
+            style="color: rgb(57, 58, 52); font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; font-size: .9em; line-height: 1.2em; tab-size: 4; hyphens: none; padding: 0px; margin: .5em 0px; overflow: auto; border: 0px; background-color: white;"
           >
             <code
               class="language-javascript"

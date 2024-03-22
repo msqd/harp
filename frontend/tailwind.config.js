@@ -24,10 +24,11 @@ export default {
       fontFamily: {
         sans: 'Lato, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
       },
-      minWidth: {
-        "90%": "90%",
-      },
+      minWidth: {},
       maxWidth: {
+        "1/5": "20%",
+        "1/3": "33%",
+        "2/5": "40%",
         "90%": "90%",
         128: "32rem",
       },

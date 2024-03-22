@@ -167,7 +167,7 @@ exports[`renders well when the query is successful 1`] = `
                             GET
                           </span>
                           <span
-                            class="mx-1"
+                            class="mx-1 font-mono font-normal text-gray-500 text-xs"
                           >
                             /
                           </span>
@@ -302,7 +302,7 @@ exports[`renders well when the query is successful 1`] = `
                             GET
                           </span>
                           <span
-                            class="mx-1"
+                            class="mx-1 font-mono font-normal text-gray-500 text-xs"
                           >
                             /
                           </span>

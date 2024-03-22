@@ -6,25 +6,28 @@ import { H4 } from "mkui/Components/Typography"
 
 const Style = { ...BaseStyle }
 
-function PrettyBody({ content = null, contentType = null }: { content: string | null; contentType: string | null }) {
+export function PrettyBody({
+  content = null,
+  contentType = null,
+}: {
+  content: string | null
+  contentType?: string | null
+}) {
   switch (contentType) {
     case "application/json":
       return (
         <SyntaxHighlighter
           language="javascript"
-          className="w-fit overflow-x-auto p-4 text-sm text-black language-javascript max-w-full"
+          className="w-fit overflow-x-auto text-black language-javascript max-w-full text-xs"
           children={content || ""}
           style={Style}
-          customStyle={{ fontSize: "0.9rem", padding: 0, border: 0 }}
+          customStyle={{ padding: 0, border: 0 }}
         />
       )
   }
 
   return content ? (
-    <pre
-      className="max-w-full overflow-x-auto p-4 text-sm text-black"
-      style={{ fontSize: "0.8rem", padding: 0, border: 0 }}
-    >
+    <pre className="max-w-full overflow-x-auto p-4 text-xs text-black" style={{ padding: 0, border: 0 }}>
       {content}
     </pre>
   ) : null

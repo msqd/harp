@@ -36,7 +36,7 @@ export const RequestHeading = ({
             <ArrowRightIcon className="h-3 w-3 text-gray-500" aria-hidden="true" />
           </span>
           <RequestMethodBadge method={method} />
-          <span className="mx-1">{urlJoin("/", url || "")}</span>
+          <span className="mx-1 font-mono font-normal text-gray-500 text-xs">{urlJoin("/", url || "")}</span>
         </div>
       ) : (
         <span className="text-gray-500 text-sm font-normal">n/a</span>
