@@ -13,7 +13,7 @@ import { Pane } from "mkui/Components/Pane"
 import { H5 } from "mkui/Components/Typography"
 
 import { PrettyBody } from "./Components/Detail/TransactionMessagePanel.tsx"
-import { FiltersHideButton, FiltersShowButton } from "./Components/FiltersVisibilityButtons.tsx"
+import { DetailsCloseButton, FiltersHideButton, FiltersShowButton } from "./Components/FiltersVisibilityButtons.tsx"
 import { TransactionDataTable } from "./Components/List"
 import { FiltersSidebar } from "./Containers"
 
@@ -149,6 +149,9 @@ export function TransactionListPageOnQuerySuccess({
 
       {hasSelection ? (
         <aside className="sticky top-8 w-2/5 min-w-96 shrink-0 block">
+          <div className="text-right">
+            <DetailsCloseButton onClick={() => setSelected(null)} />
+          </div>
           <OnQuerySuccess query={detailQuery}>
             {(query) => {
               return (

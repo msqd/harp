@@ -1,10 +1,10 @@
-import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from "@heroicons/react/16/solid"
+import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon, XMarkIcon } from "@heroicons/react/16/solid"
 
-interface FiltersVisibilityButtonProps {
+interface PaneVisibilityButtonProps {
   onClick: () => void
 }
 
-export function FiltersShowButton({ onClick }: FiltersVisibilityButtonProps) {
+export function FiltersShowButton({ onClick }: PaneVisibilityButtonProps) {
   return (
     <button onClick={onClick} className="text-gray-400 mx-1 font-medium text-xs">
       <ChevronDoubleRightIcon className="h-3 w-3 inline-block" />
@@ -15,10 +15,18 @@ export function FiltersShowButton({ onClick }: FiltersVisibilityButtonProps) {
   )
 }
 
-export function FiltersHideButton({ onClick }: FiltersVisibilityButtonProps) {
+export function FiltersHideButton({ onClick }: PaneVisibilityButtonProps) {
   return (
     <button onClick={onClick} className="text-gray-400 mx-1 font-medium text-xs">
       <ChevronDoubleLeftIcon className="h-3 w-3 inline-block" /> hide
+    </button>
+  )
+}
+
+export function DetailsCloseButton({ onClick }: PaneVisibilityButtonProps) {
+  return (
+    <button onClick={onClick} className="text-gray-400 mx-1 font-medium text-xs">
+      <XMarkIcon className="h-3 w-3 inline-block" /> close
     </button>
   )
 }
