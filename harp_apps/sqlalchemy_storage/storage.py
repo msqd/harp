@@ -415,12 +415,15 @@ class SqlAlchemyStorage(Storage):
                     )
                 )
 
+    async def ready(self):
+        await self._is_ready.wait()
+
     @override
     async def create_users_once_ready(self, users: Iterable[str]):
         """Sets the list of users to be created once the database is ready."""
 
         async def defered_create_users():
-            await self._is_ready.wait()
+            await self.ready()
             await self.create_users(users)
 
         await self.worker.push(defered_create_users)

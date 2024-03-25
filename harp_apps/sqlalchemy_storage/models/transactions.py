@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, List
 
 from sqlalchemy import Column, DateTime, Float, ForeignKey, String, Table
@@ -15,8 +16,8 @@ if TYPE_CHECKING:
 transaction_tag_values_association_table = Table(
     "sa_trans_tag_values",
     Base.metadata,
-    Column("transaction_id", ForeignKey("sa_transactions.id"), primary_key=True),
-    Column("value_id", ForeignKey("sa_tag_values.id"), primary_key=True),
+    Column("transaction_id", ForeignKey("sa_transactions.id", ondelete="CASCADE"), primary_key=True),
+    Column("value_id", ForeignKey("sa_tag_values.id", ondelete="CASCADE"), primary_key=True),
 )
 
 
@@ -32,9 +33,22 @@ class Transaction(Base):
     x_method = mapped_column(String(16), nullable=True, index=True)
     x_status_class = mapped_column(String(3), nullable=True, index=True)
 
-    messages: Mapped[List["Message"]] = relationship(back_populates="transaction", order_by="Message.id")
-    flags: Mapped[List["UserFlag"]] = relationship(back_populates="transaction", cascade="all, delete-orphan")
-    _tag_values: Mapped[List["TagValue"]] = relationship(secondary=transaction_tag_values_association_table)
+    messages: Mapped[List["Message"]] = relationship(
+        back_populates="transaction",
+        order_by="Message.id",
+        cascade="all, delete",
+        passive_deletes=True,
+    )
+    flags: Mapped[List["UserFlag"]] = relationship(
+        back_populates="transaction",
+        cascade="all, delete",
+        passive_deletes=True,
+    )
+    _tag_values: Mapped[List["TagValue"]] = relationship(
+        secondary=transaction_tag_values_association_table,
+        cascade="all, delete",
+        passive_deletes=True,
+    )
 
     def to_model(self, with_user_flags=False):
         return TransactionModel(
@@ -95,3 +109,7 @@ class TransactionsRepository(Repository[Transaction]):
             )
 
         return query
+
+    def delete_old(self, old_after):
+        threshold = (datetime.now(UTC) - timedelta(days=old_after)).replace(tzinfo=None)
+        return self.delete().where(self.Type.started_at < threshold)

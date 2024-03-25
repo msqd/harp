@@ -1,4 +1,4 @@
-from sqlalchemy import DateTime, LargeBinary, String, func, select
+from sqlalchemy import DateTime, LargeBinary, String, delete, func, select
 from sqlalchemy.orm import aliased, mapped_column
 
 from .base import Base, Repository
@@ -30,3 +30,17 @@ class BlobsRepository(Repository[Blob]):
         )
         query = select(func.count(subquery.c.id)).where(subquery.c[1] == 0)
         return query
+
+    def delete_orphans(self):
+        MH = aliased(Message, name="mh")
+        MB = aliased(Message, name="mb")
+        subquery = (
+            select(Blob.id, func.count(MH.id) + func.count(MB.id))
+            .select_from(Blob)
+            .outerjoin(MH, MH.headers == Blob.id)
+            .outerjoin(MB, MB.body == Blob.id)
+            .group_by(Blob.id)
+            .subquery()
+        )
+        query = select(subquery.c.id).where(subquery.c[1] == 0)
+        return delete(Blob).where(Blob.id.in_(query))

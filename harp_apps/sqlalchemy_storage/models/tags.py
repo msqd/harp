@@ -22,7 +22,7 @@ class TagValue(Base):
 
     id = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
 
-    tag_id = mapped_column(ForeignKey("sa_tags.id"), nullable=False)
+    tag_id = mapped_column(ForeignKey("sa_tags.id", ondelete="CASCADE"), nullable=False)
     tag: Mapped["Tag"] = relationship()
 
     value = mapped_column(String(255), nullable=False)

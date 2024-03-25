@@ -1,7 +1,7 @@
 from functools import wraps
 from typing import Generic, TypeVar
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase
@@ -34,6 +34,9 @@ class Repository(Generic[TRow]):
 
     def select(self):
         return select(self.Type)
+
+    def delete(self):
+        return delete(self.Type)
 
     def count(self):
         return select(func.count()).select_from(self.Type)

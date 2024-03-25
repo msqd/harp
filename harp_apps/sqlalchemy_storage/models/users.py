@@ -16,7 +16,11 @@ class User(Base):
     id = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
     username = mapped_column(String(32), unique=True)
 
-    flags: Mapped[List["UserFlag"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    flags: Mapped[List["UserFlag"]] = relationship(
+        back_populates="user",
+        cascade="all, delete",
+        passive_deletes=True,
+    )
 
 
 class UsersRepository(Repository):
