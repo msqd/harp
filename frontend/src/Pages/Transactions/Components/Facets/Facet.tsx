@@ -2,8 +2,8 @@ import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
 import { ChangeEvent, useState } from "react"
 
 import { Filter } from "Types/filters"
-import { Checkbox, Radio } from "mkui/Components/FormWidgets"
-import { H5 } from "mkui/Components/Typography"
+import { Checkbox, Radio } from "ui/Components/FormWidgets"
+import { H5 } from "ui/Components/Typography"
 
 import { FacetInnerLightButton } from "./FacetInnerLightButton.tsx"
 import { FacetLabel } from "./FacetLabel.tsx"

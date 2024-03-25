@@ -1,8 +1,8 @@
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { useSystemSettingsQuery } from "Domain/System"
-import { Pane } from "mkui/Components/Pane"
-import { Tab } from "mkui/Components/Tabs"
-import { H2 } from "mkui/Components/Typography"
+import { Pane } from "ui/Components/Pane"
+import { Tab } from "ui/Components/Tabs"
+import { H2 } from "ui/Components/Typography"
 
 import { Topology } from "./Components/Topology"
 

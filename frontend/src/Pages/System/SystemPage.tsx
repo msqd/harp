@@ -1,5 +1,5 @@
 import { Page, PageTitle } from "Components/Page"
-import { Tab } from "mkui/Components/Tabs"
+import { Tab } from "ui/Components/Tabs"
 
 import { SystemDependenciesTabPanel } from "./SystemDependenciesTabPanel.tsx"
 import { SystemSettingsTabPanel } from "./SystemSettingsTabPanel.tsx"

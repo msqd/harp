@@ -1,6 +1,6 @@
 import { PerformanceRatingBadge } from "Components/Badges"
 import { OverviewData } from "Models/Overview"
-import { H2 } from "mkui/Components/Typography"
+import { H2 } from "ui/Components/Typography"
 
 import { TransactionsChart } from "./Charts"
 

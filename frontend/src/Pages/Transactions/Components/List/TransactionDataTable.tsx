@@ -6,7 +6,7 @@ import { PerformanceRatingBadge } from "Components/Badges"
 import { useSetUserFlagMutation } from "Domain/Transactions"
 import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
 import { Message, Transaction } from "Models/Transaction"
-import { DataTable } from "mkui/Components/DataTable"
+import { DataTable } from "ui/Components/DataTable"
 
 import { MessageSummary } from "../MessageSummary.tsx"
 

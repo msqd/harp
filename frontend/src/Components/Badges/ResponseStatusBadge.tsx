@@ -1,6 +1,6 @@
 import { getReasonPhrase } from "http-status-codes"
 
-import { Badge, BadgeColor } from "mkui/Components/Badge"
+import { Badge, BadgeColor } from "ui/Components/Badge"
 
 const getStatusColorFromStatusCode = (statusCode: number): BadgeColor => {
   if (statusCode >= 200 && statusCode < 300) {
