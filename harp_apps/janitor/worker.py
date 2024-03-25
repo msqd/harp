@@ -48,20 +48,20 @@ class JanitorWorker:
                 logger.info("🧹 Deleted %d old transactions", result.rowcount)
 
         async with self.storage.session() as session:
-            logger.info("🧹 Delete orphan blobs...")
-            await self._delete_orphan_blobs(session)
+            result = await self._delete_orphan_blobs(session)
             await session.commit()
+            if result.rowcount:
+                logger.info("🧹 Deleted %d orphan blobs", result.rowcount)
 
         async with self.storage.session() as session:
             logger.info("🧹 Compute and store metrics...")
             await self._compute_and_store_metrics(session)
 
     async def _delete_old_transactions(self, session):
-        query = self.storage.transactions.delete_old(OLD_AFTER)
-        return await session.execute(query)
+        return await session.execute(self.storage.transactions.delete_old(OLD_AFTER))
 
     async def _delete_orphan_blobs(self, session):
-        await session.execute(self.storage.blobs.delete_orphans())
+        return await session.execute(self.storage.blobs.delete_orphans())
 
     async def _compute_and_store_metrics(self, session):
         await self.storage.metrics.insert_values(
