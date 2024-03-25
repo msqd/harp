@@ -36,8 +36,6 @@ install-frontend: install-ui
 install-backend:
 	poetry install $(POETRY_INSTALL_OPTIONS)
 
-install-ui:
-	cd vendors/mkui; pnpm install
 
 reference: harp
 	rm -rf docs/reference/core docs/reference/apps
@@ -107,14 +105,6 @@ test-frontend-update: install-frontend lint-frontend
 lint-frontend: install-frontend
 	cd frontend; pnpm build
 
-test-ui-build: install-ui
-	cd vendors/mkui; pnpm build
-
-test-ui: test-ui-build
-	cd vendors/mkui; pnpm test
-
-test-ui-update: test-ui-build
-	cd vendors/mkui; pnpm test:visual:update
 
 ########################################################################################################################
 # Benchmarks

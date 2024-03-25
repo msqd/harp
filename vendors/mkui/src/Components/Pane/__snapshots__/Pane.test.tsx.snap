@@ -1,9 +1,0 @@
-// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
-
-exports[`Pane > renders correctly 1`] = `
-<div>
-  <div
-    class="css-14upriz"
-  />
-</div>
-`;
