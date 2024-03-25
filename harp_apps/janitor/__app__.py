@@ -35,6 +35,8 @@ class JanitorWorker:
                 "storage.blobs": (await session.execute(self.storage.blobs.count())).scalar(),
             }
 
+            metrics["storage.blobs.orphans"] = (await session.execute(self.storage.blobs.count_orphans())).scalar()
+
             await self.storage.metrics.insert_values(metrics)
 
 

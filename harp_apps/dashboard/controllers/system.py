@@ -68,7 +68,7 @@ class SystemController(RoutingController):
         return json(
             {
                 "settings": self.settings.get("storage", {}),
-                "counts": {value.metric.name.split(".")[-1]: value.value for value in result},
+                "counts": {value.metric.name.split(".", 1)[-1]: value.value for value in result},
             }
         )
 
