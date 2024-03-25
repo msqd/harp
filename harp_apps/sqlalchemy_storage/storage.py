@@ -25,15 +25,19 @@ from .models import (
     FLAGS_BY_NAME,
     Base,
     Blob,
+    BlobsRepository,
     Message,
+    MessagesRepository,
+    MetricsRepository,
+    MetricValuesRepository,
     TagsRepository,
+    TagValuesRepository,
     Transaction,
     TransactionsRepository,
     User,
     UserFlag,
     UsersRepository,
 )
-from .models.tags import TagValuesRepository
 from .models.transactions import transaction_tag_values_association_table
 from .settings import SqlAlchemyStorageSettings
 from .utils.dates import TruncDatetime
@@ -109,10 +113,14 @@ class SqlAlchemyStorage(Storage):
         self._is_ready = asyncio.Event()
         self._worker = None
 
+        self.blobs = BlobsRepository(self.session)
+        self.messages = MessagesRepository(self.session)
         self.transactions = TransactionsRepository(self.session)
         self.users = UsersRepository(self.session)
         self.tags = TagsRepository(self.session)
         self.tag_values = TagValuesRepository(self.session)
+        self.metrics = MetricsRepository(self.session)
+        self.metric_values = MetricValuesRepository(self.session)
 
     async def initialize(self, /, *, force_reset=False):
         """Create the database tables. May drop them first if configured to do so."""

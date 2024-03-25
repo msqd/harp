@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from harp.http import get_serializer_for
 from harp.models.messages import Message as MessageModel
 
-from .base import Base
+from .base import Base, Repository
 
 if TYPE_CHECKING:
     from .transactions import Transaction
@@ -49,3 +49,7 @@ class Message(Base):
         obj.body = content.id
         obj.created_at = message.created_at.astimezone(UTC).replace(tzinfo=None)
         return obj
+
+
+class MessagesRepository(Repository[Message]):
+    Type = Message

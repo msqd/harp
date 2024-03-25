@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.sql.functions import func
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -33,6 +34,9 @@ class Repository(Generic[TRow]):
 
     def select(self):
         return select(self.Type)
+
+    def count(self):
+        return select(func.count()).select_from(self.Type)
 
     @contextualize_with_session_if_not_provided
     async def find_one(self, values: dict, /, session, **select_kwargs) -> TRow:

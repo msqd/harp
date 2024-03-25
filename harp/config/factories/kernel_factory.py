@@ -49,7 +49,7 @@ class KernelFactory:
         self.configuration.validate()
 
         for application in self.configuration.applications:
-            logger.debug(f"📦 {application}")
+            logger.info(f"📦 {application}")
 
         dispatcher = self.build_event_dispatcher()
         container = self.build_container(dispatcher)
