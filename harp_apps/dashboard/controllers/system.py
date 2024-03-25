@@ -56,7 +56,7 @@ class SystemController(RoutingController):
     @GetHandler("/storage")
     async def get_storage(self):
         subquery = select(
-            func.rank().over(order_by=MetricValue.timestamp.desc(), partition_by=MetricValue.metric_id).label("rank"),
+            func.rank().over(order_by=MetricValue.created_at.desc(), partition_by=MetricValue.metric_id).label("rank"),
             MetricValue,
         ).subquery()
         v = aliased(MetricValue, subquery)

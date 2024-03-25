@@ -27,15 +27,24 @@ class JanitorWorker:
                 logger.exception(exc)
             await asyncio.sleep(60)
 
+    async def count(self, name: str, session, method_name="count"):
+        return (
+            await session.execute(
+                getattr(
+                    getattr(self.storage, name),
+                    method_name,
+                )()
+            )
+        ).scalar()
+
     async def loop(self):
         async with self.storage.session() as session:
             metrics = {
-                "storage.transactions": (await session.execute(self.storage.transactions.count())).scalar(),
-                "storage.messages": (await session.execute(self.storage.messages.count())).scalar(),
-                "storage.blobs": (await session.execute(self.storage.blobs.count())).scalar(),
+                "storage.transactions": await self.count("transactions", session),
+                "storage.messages": await self.count("messages", session),
+                "storage.blobs": await self.count("blobs", session),
+                "storage.blobs.orphans": await self.count("blobs", session, "count_orphans"),
             }
-
-            metrics["storage.blobs.orphans"] = (await session.execute(self.storage.blobs.count_orphans())).scalar()
 
             await self.storage.metrics.insert_values(metrics)
 
