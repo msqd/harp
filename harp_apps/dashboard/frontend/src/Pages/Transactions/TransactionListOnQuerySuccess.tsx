@@ -8,8 +8,8 @@ import { Transaction } from "Models/Transaction"
 import { Filters } from "Types/filters"
 
 import { DetailsCloseButton, FiltersHideButton, FiltersShowButton, OpenInNewWindowLink } from "./Components/Buttons.tsx"
-import { TransactionDataTable } from "./Components/List"
-import { FiltersSidebar } from "./Containers"
+import { TransactionDataTable } from "./Components/List/index.ts"
+import { FiltersSidebar } from "./Containers/index.ts"
 import { TransactionDetailOnQuerySuccess } from "./TransactionDetailOnQuerySuccess.tsx"
 
 export function TransactionListOnQuerySuccess({

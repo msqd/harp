@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react"
 import { ErrorBoundary } from "react-error-boundary"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
-import { Error as ErrorFunc, Page } from "./Page"
+import { Error as ErrorFunc, Page } from "./Page.tsx"
 import { PageTitle } from "./PageTitle.tsx"
 
 describe("Page", () => {

@@ -6,7 +6,7 @@ import { useSystemSettingsQuery } from "Domain/System"
 import { ButtonGroup } from "ui/Components/ButtonGroup"
 import { Pane } from "ui/Components/Pane"
 
-import { TransactionsOverview } from "./Containers/"
+import { TransactionsOverview } from "./Containers"
 
 export const OverviewPage = () => {
   const settingsQuery = useSystemSettingsQuery()

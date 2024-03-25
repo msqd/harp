@@ -11,7 +11,7 @@ import { MessageBody } from "./Components/MessageBody.tsx"
 import { MessageHeaders } from "./Components/MessageHeaders.tsx"
 import { MessageSummary } from "./Components/MessageSummary.tsx"
 
-import { SettingsTable } from "../System/Components"
+import { SettingsTable } from "../System/Components/index.ts"
 
 export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserverSuccessResult<Transaction> }) {
   return (
