@@ -10,7 +10,3 @@ updates:
     directory: "/frontend"
     schedule:
       interval: "daily"
-  - package-ecosystem: "npm"
-    directory: "/vendors/mkui"
-    schedule:
-      interval: "daily"

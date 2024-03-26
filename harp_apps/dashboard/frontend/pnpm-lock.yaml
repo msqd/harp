@@ -44,9 +44,6 @@ dependencies:
   match-sorter:
     specifier: ^6.3.4
     version: 6.3.4
-  mkui:
-    specifier: link:../vendors/mkui
-    version: link:../vendors/mkui
   prismjs:
     specifier: ^1.29.0
     version: 1.29.0

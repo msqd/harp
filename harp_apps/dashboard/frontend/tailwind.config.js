@@ -2,7 +2,7 @@ const colors = require("tailwindcss/colors")
 
 /** @type {import("tailwindcss").Config} */
 export default {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}", "../vendors/mkui/src/**/*.{html,js,jsx,ts,tsx}"],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     colors: {
       inherit: colors.inherit,
