@@ -78,7 +78,7 @@ class HonchoManagerFactory:
 
     def _get_ui_executable(self, processes):
         # todo add check available
-        return os.path.join(ROOT_DIR, "harp_apps/dashboard/frontend"), "pnpm serve:storybook"
+        return os.path.join(ROOT_DIR, "harp_apps/dashboard/frontend"), "pnpm ui:serve"
 
     commands[HARP_UI_SERVICE] = _get_ui_executable
 

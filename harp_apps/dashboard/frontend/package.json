@@ -7,14 +7,14 @@
     "dev": "vite",
     "build": "tsc && vite build",
 
-    "build-storybook": "ladle build",
-    "build-preview-storybook": "ladle build && pnpm serve:storybook:prod",
-    "serve:storybook:prod": "ladle preview -p 61110",
-    "serve:storybook:dev": "ladle serve -p 61110",
-    "serve:storybook": "pnpm serve:storybook:dev",
-    "test:storybook:dev": "cross-env TYPE=dev pnpm exec playwright test -c src/ui/playwright.config.ts",
-    "test:storybook:prod": "cross-env TYPE=prod pnpm exec playwright test -c src/ui/playwright.config.ts",
-    "test:storybook:update": "cross-env TYPE=update pnpm exec playwright test -c src/ui/playwright.config.ts -u",
+    "ui:build": "ladle build",
+    "ui:preview": "ladle build && pnpm ui:serve:prod",
+    "ui:serve:prod": "ladle preview -p 61110",
+    "ui:serve:dev": "ladle serve -p 61110",
+    "ui:serve": "pnpm ui:serve:dev",
+    "test:ui:dev": "cross-env TYPE=dev pnpm exec playwright test -c src/ui/playwright.config.ts",
+    "test:ui:prod": "cross-env TYPE=prod pnpm exec playwright test -c src/ui/playwright.config.ts",
+    "test:ui:update": "cross-env TYPE=update pnpm exec playwright test -c src/ui/playwright.config.ts -u",
 
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix",
@@ -23,7 +23,7 @@
     "test:unit:update": "vitest run --update",
     "test:browser": "playwright test",
     "test:coverage": "vitest run --coverage",
-    "test": "pnpm run test:unit && pnpm run test:browser && pnpm test:storybook:dev"
+    "test": "pnpm run test:unit && pnpm run test:browser && pnpm test:ui:dev"
   },
   "babelMacros": {
     "twin": {

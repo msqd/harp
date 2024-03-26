@@ -93,7 +93,7 @@ storybook:
   variables:
     GIT_STRATEGY: none
   script:
-    - (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm build-storybook)
+    - (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm ui:build)
     - mv /opt/harp/src//harp_apps/dashboard/frontend/build harp-ui
   artifacts:
     name: harp-ui

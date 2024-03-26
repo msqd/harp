@@ -6,7 +6,7 @@ export default {
   },
   reporter: [["list"]],
   webServer: {
-    command: process.env.TYPE === "dev" ? "pnpm serve:storybook" : "pnpm build-preview-storybook > /dev/null",
+    command: process.env.TYPE === "dev" ? "pnpm ui:serve" : "pnpm ui:preview > /dev/null",
     url: baseUrl,
     reuseExistingServer: true,
   },
