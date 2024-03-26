@@ -1,6 +1,7 @@
 import { render, fireEvent } from "@testing-library/react"
-import { DataTable, Column } from "./DataTable"
 import { expect, describe, it, vi } from "vitest"
+
+import { DataTable, Column } from "./DataTable"
 
 describe("DataTable", () => {
   const types: Record<string, Column> = {
@@ -51,7 +52,7 @@ describe("DataTable", () => {
     expect(onRowClick).toHaveBeenCalledWith(rows[0])
   })
   it("uses provided get function", () => {
-    const getfn = vi.fn((row: (typeof rows)[0]) => row.firstName)
+    const getfn = vi.fn((row: (typeof rows)[0]) => row.firstName) as (x: unknown) => unknown
 
     const types: Record<string, Column> = {
       firstName: { label: "First name", get: getfn },

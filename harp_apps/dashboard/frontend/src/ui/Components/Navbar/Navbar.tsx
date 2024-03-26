@@ -1,8 +1,11 @@
 import { Disclosure } from "@headlessui/react"
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline"
-import { ComponentType, ReactElement } from "react"
+import { ComponentType, ReactElement, ReactNode } from "react"
+import { To } from "react-router-dom"
 import tw, { styled } from "twin.macro"
+
 import defaultLogo from "./Assets/logo.svg"
+
 import { classNames } from "../../Utilities"
 
 interface NavbarItem {
@@ -12,8 +15,8 @@ interface NavbarItem {
 }
 
 interface NavbarProps {
-  Link?: ComponentType<any>
-  Wrapper?: ComponentType<any>
+  Link?: ComponentType<{ children?: ReactNode; to: To; className?: string }>
+  Wrapper?: ComponentType<{ children?: ReactNode }>
   items?: NavbarItem[]
   currentPath?: string
   leftChildren?: ReactElement

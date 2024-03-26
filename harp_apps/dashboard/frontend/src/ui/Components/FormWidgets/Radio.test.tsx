@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react"
-import { Radio } from "./Radio"
 import { expect, describe, it } from "vitest"
+
+import { Radio } from "./Radio"
 
 describe("Radio", () => {
   it("renders correctly", () => {

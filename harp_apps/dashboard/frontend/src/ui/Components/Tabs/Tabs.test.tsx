@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react"
-import { Tab } from "./Tabs"
 import { expect, describe, it } from "vitest"
+
+import { Tab } from "./Tabs"
 
 describe("Tab", () => {
   it("renders correctly", () => {

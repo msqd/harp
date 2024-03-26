@@ -1,4 +1,5 @@
 import { Pane } from "./Pane"
+
 import { H2 } from "../Typography"
 
 export const Default = () => (

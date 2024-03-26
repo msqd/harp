@@ -1,6 +1,7 @@
 import { render, fireEvent } from "@testing-library/react"
-import { Paginator } from "./Paginator"
 import { expect, describe, it, vi } from "vitest"
+
+import { Paginator } from "./Paginator"
 
 describe("Paginator", () => {
   it("renders correctly", () => {

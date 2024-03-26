@@ -1,6 +1,6 @@
-import { H1, H2, H3, H4, H5, H6 } from "./Titles"
 import { P } from "./Paragraphs"
 import { Section } from "./Section"
+import { H1, H2, H3, H4, H5, H6 } from "./Titles"
 
 export const Titles = () => (
   <>

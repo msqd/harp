@@ -1,7 +1,6 @@
 import { Tab as HeadlessTab } from "@headlessui/react"
-
-import tw, { styled } from "twin.macro"
 import { ReactNode } from "react"
+import tw, { styled } from "twin.macro"
 
 const SC = {
   List: styled(HeadlessTab.List)(() => [tw`border-b border-primary-900 flex space-x-4 px-4`]),

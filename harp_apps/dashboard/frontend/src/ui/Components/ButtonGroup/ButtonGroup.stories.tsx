@@ -1,5 +1,6 @@
-import { ButtonGroup as ButtonGroupComponent } from "./ButtonGroup"
 import { useState } from "react"
+
+import { ButtonGroup as ButtonGroupComponent } from "./ButtonGroup"
 
 export const ButtonGroup = () => {
   const [current, setCurrent] = useState("1")

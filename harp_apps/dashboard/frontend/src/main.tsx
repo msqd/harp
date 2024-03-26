@@ -52,6 +52,7 @@ async function enableMocking() {
   // This would allow to modify request handlers on runtime.
   window.msw = {
     worker,
+
     http,
     HttpResponse,
   }

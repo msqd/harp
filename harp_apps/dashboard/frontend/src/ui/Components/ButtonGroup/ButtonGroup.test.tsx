@@ -1,6 +1,7 @@
 import { render, fireEvent } from "@testing-library/react"
-import { ButtonGroup } from "./ButtonGroup"
 import { expect, describe, it, vi } from "vitest"
+
+import { ButtonGroup } from "./ButtonGroup"
 
 describe("ButtonGroup", () => {
   const buttonProps = [

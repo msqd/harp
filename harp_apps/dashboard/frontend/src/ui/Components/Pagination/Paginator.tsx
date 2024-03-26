@@ -1,5 +1,6 @@
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid"
 import { generate } from "@bramus/pagination-sequence"
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid"
+
 import { classNames } from "../../Utilities"
 
 export function Paginator({

@@ -1,5 +1,5 @@
-import { Radio } from "./Radio"
 import { Checkbox } from "./Checkbox"
+import { Radio } from "./Radio"
 
 const data = [
   { name: "john", label: "John Coltrane" },

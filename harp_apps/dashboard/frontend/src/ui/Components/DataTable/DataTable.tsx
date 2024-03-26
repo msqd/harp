@@ -1,9 +1,9 @@
-import tw, { styled } from "twin.macro"
 import { ReactNode } from "react"
+import tw, { styled } from "twin.macro"
 
-export interface Column<TRow = any, TValue = any> {
+export interface Column<TRow = unknown, TValue = unknown> {
   label: string
-  format?: (x: TValue) => ReactNode
+  format?: (row: never) => ReactNode
   get?: (row: TRow) => TValue
   onClick?: (row: TRow) => unknown
   className?: string
@@ -14,7 +14,7 @@ interface DataTableVariantsProps {
   variant?: "default"
 }
 
-interface DataTableProps<TRow extends Record<string, any>, TComputed extends Record<string, any>>
+interface DataTableProps<TRow extends Record<string, unknown>, TComputed extends Record<string, unknown>>
   extends DataTableVariantsProps {
   rows: TRow[]
   types: Record<string, Column<TRow>>
@@ -23,7 +23,7 @@ interface DataTableProps<TRow extends Record<string, any>, TComputed extends Rec
   selected?: TRow
 }
 
-const StyledTable = styled.table(({}: DataTableVariantsProps) => [tw`min-w-full divide-y divide-gray-300 text-left`])
+const StyledTable = styled.table<DataTableVariantsProps>(() => [tw`min-w-full divide-y divide-gray-300 text-left`])
 const StyledTh = styled.th(() => [tw`whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900`])
 const StyledTd = styled.td(() => [tw`whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900`])
 
@@ -37,7 +37,7 @@ function formatRowValue<TRow>(type: Column<TRow>, row: TRow, name: keyof TRow): 
     }
 
     if (type.format) {
-      value = type.format(value)
+      value = (type.format as (x: unknown) => ReactNode)(value)
     }
 
     if (!value) {
@@ -52,9 +52,9 @@ function formatRowValue<TRow>(type: Column<TRow>, row: TRow, name: keyof TRow): 
   }
 }
 
-type BaseRow = Record<string, any>
+type BaseRow = Record<string, unknown>
 
-export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = {}>({
+export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = BaseRow>({
   columns,
   onRowClick,
   rows,

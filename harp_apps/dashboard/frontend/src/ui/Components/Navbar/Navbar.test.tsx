@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react"
-import { Navbar } from "./Navbar"
 import { expect, describe, it } from "vitest"
+
+import { Navbar } from "./Navbar"
 
 describe("Navbar", () => {
   it("renders correctly", () => {

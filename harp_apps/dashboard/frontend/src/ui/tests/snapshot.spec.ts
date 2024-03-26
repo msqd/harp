@@ -18,7 +18,7 @@ const url = "http://127.0.0.1:61110"
 const stories = fetch(`${url}/meta.json`).json().stories
 
 // iterate through stories
-Object.keys(stories).forEach(storyKey => {
+Object.keys(stories).forEach((storyKey) => {
   // create a test for each story
   test(`${storyKey} - compare snapshots`, async ({ page }) => {
     // skip stories that are marked as skipped

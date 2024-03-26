@@ -1,1 +1,1 @@
-export {DataTable, type Column} from './DataTable';
+export { DataTable, type Column } from "./DataTable"

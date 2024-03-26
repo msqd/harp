@@ -1,6 +1,7 @@
 import { render } from "@testing-library/react"
-import { Pane } from "./Pane"
 import { expect, describe, it } from "vitest"
+
+import { Pane } from "./Pane"
 
 describe("Pane", () => {
   it("renders correctly", () => {
