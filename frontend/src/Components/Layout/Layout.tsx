@@ -4,7 +4,7 @@ import tw, { styled } from "twin.macro"
 
 import logo from "Assets/logo.svg"
 import { useSystemQuery } from "Domain/System"
-import { Navbar } from "mkui/Components/Navbar"
+import { Navbar } from "ui/Components/Navbar"
 
 const StyledContainerWithHorizontalConstraint = styled.div(() => [tw`mx-auto px-2 sm:px-6 lg:px-8`])
 

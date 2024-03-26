@@ -74,7 +74,6 @@ ADD --chown=harp:www-data . src
 # ... install and build
 RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
     (cd src; poetry config --list; poetry debug info; poetry install) \
-    && (cd src/vendors/mkui; pnpm install) \
     && (cd src/frontend; pnpm install)
 
 # Step: Fix cache directory
@@ -97,9 +96,7 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
 USER harp
 WORKDIR /opt/harp
 ADD --chown=harp:www-data ./frontend frontend
-ADD --chown=harp:www-data ./vendors/mkui vendors/mkui
 
-RUN (cd vendors/mkui; pnpm install)
 RUN (cd frontend; pnpm install; pnpm build)
 
 

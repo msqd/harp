@@ -1,6 +1,6 @@
 import { RequestMethodBadge } from "Components/Badges/RequestMethodBadge.tsx"
 import { ResponseStatusBadge } from "Components/Badges/ResponseStatusBadge.tsx"
-import { Badge } from "mkui/Components/Badge"
+import { Badge } from "ui/Components/Badge"
 
 interface MessageSummaryProps {
   kind?: string

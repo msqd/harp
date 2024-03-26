@@ -1,6 +1,6 @@
 import { ReactNode } from "react"
 
-import { H1, P } from "mkui/Components/Typography"
+import { H1, P } from "ui/Components/Typography"
 
 interface PageTitleProps {
   title?: string

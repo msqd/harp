@@ -4,7 +4,7 @@ import { QueryObserverSuccessResult } from "react-query/types/core/types"
 import { KeyValueSettings } from "Domain/System/useSystemSettingsQuery.ts"
 import { Transaction } from "Models/Transaction"
 import { ucfirst } from "Utils/Strings.ts"
-import { Pane } from "mkui/Components/Pane"
+import { Pane } from "ui/Components/Pane"
 
 import { Foldable } from "./Components/Foldable.tsx"
 import { MessageBody } from "./Components/MessageBody.tsx"

@@ -5,7 +5,11 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}", "../vendors/mkui/src/**/*.{html,js,jsx,ts,tsx}"],
   theme: {
     colors: {
-      ...colors,
+      inherit: colors.inherit,
+      current: colors.current,
+      transparent: colors.transparent,
+      black: colors.black,
+      white: colors.white,
       primary: {
         50: "#e2f6fe",
         100: "#b5e8fc",
@@ -19,6 +23,13 @@ export default {
         900: "#065f9f",
       },
       secondary: colors.slate,
+      gray: colors.gray,
+      red: colors.red,
+      yellow: colors.yellow,
+      green: colors.green,
+      blue: colors.blue,
+      orange: colors.orange,
+      purple: colors.purple,
     },
     extend: {
       fontFamily: {
@@ -40,5 +51,5 @@ export default {
       },
     },
   },
-  plugins: [require("@tailwindcss/forms")],
+  plugins: [require("@tailwindcss/forms"), require("@tailwindcss/typography")],
 }

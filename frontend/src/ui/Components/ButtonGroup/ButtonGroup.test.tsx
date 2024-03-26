@@ -1,4 +1,4 @@
-import { render, fireEvent, screen } from "@testing-library/react"
+import { render, fireEvent } from "@testing-library/react"
 import { ButtonGroup } from "./ButtonGroup"
 import { expect, describe, it, vi } from "vitest"
 

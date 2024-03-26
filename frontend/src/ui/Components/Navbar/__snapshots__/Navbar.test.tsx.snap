@@ -61,7 +61,7 @@ exports[`Navbar > renders correctly 1`] = `
               <img
                 alt="User Interface"
                 class="h-8 w-auto"
-                src="/src/Components/Navbar/Assets/logo.svg"
+                src="/src/ui/Components/Navbar/Assets/logo.svg"
               />
             </a>
           </div>

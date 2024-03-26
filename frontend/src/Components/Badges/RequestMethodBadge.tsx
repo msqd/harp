@@ -1,4 +1,4 @@
-import { Badge } from "mkui/Components/Badge"
+import { Badge } from "ui/Components/Badge"
 
 export const RequestMethodBadge = ({ method }: { method: string }) => {
   switch (method) {

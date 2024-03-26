@@ -1,4 +1,4 @@
-import { Paginator } from "mkui/Components/Pagination"
+import { Paginator } from "ui/Components/Pagination"
 
 export function OptionalPaginator({
   current,

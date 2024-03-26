@@ -1,6 +1,6 @@
 import { useTransactionsFiltersQuery } from "Domain/Transactions"
 import { Filter, Filters } from "Types/filters"
-import { Pane } from "mkui/Components/Pane"
+import { Pane } from "ui/Components/Pane"
 
 import { Facet } from "../Components/Facets"
 

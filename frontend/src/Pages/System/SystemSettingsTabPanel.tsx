@@ -1,7 +1,7 @@
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { useSystemSettingsQuery } from "Domain/System"
-import { Pane } from "mkui/Components/Pane"
-import { Tab } from "mkui/Components/Tabs"
+import { Pane } from "ui/Components/Pane"
+import { Tab } from "ui/Components/Tabs"
 
 import { SettingsTable } from "./Components"
 

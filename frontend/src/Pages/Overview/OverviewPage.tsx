@@ -3,8 +3,8 @@ import { useState } from "react"
 import { Page, PageTitle } from "Components/Page"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { useSystemSettingsQuery } from "Domain/System"
-import { ButtonGroup } from "mkui/Components/ButtonGroup"
-import { Pane } from "mkui/Components/Pane"
+import { ButtonGroup } from "ui/Components/ButtonGroup"
+import { Pane } from "ui/Components/Pane"
 
 import { TransactionsOverview } from "./Containers/"
 

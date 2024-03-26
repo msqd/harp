@@ -11,7 +11,7 @@ export default defineConfig(({ command, mode }) => {
   return {
     define: {
       "process.env.DISABLE_MOCKS": JSON.stringify(String(!!env.DISABLE_MOCKS)),
-      "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "production"),
+      "process.env.NODE_ENV": JSON.stringify(env.NODE_ENV || "production"),
     },
     build: {
       rollupOptions: {
@@ -64,18 +64,33 @@ export default defineConfig(({ command, mode }) => {
       // visualizer(),
     ],
 
-    server: { port: 4999 },
+    server: { port: 4999, open: "none", host: "127.0.0.1" },
+
+    preview: {
+      open: "none",
+      host: "127.0.0.1",
+    },
     test: {
       coverage: {
         provider: "v8",
         reporter: ["html", "json", "text"],
-        exclude: ["node_modules", "dist", "build", "src/tests", ".ladle", "**/Styles", "**/*.{js,ts,cjs}", "**/Domain"],
+        exclude: [
+          "node_modules",
+          "dist",
+          "build",
+          "src/tests",
+          ".ladle",
+          "**/Styles",
+          "**/*.{js,ts,cjs}",
+          "**/Domain",
+          "**/*.spec.ts",
+        ],
         reportsDirectory: "./src/tests/coverage",
       },
       environment: "jsdom",
       globals: true,
       setupFiles: ["vitest.setup.ts"],
-      exclude: ["node_modules", "dist", ".idea", ".git", ".cache", "build", "tests"],
+      exclude: ["node_modules", "dist", ".idea", ".git", ".cache", "build", "tests", "src/ui/tests/snapshot.spec.ts"],
     },
   }
 })

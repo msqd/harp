@@ -2,7 +2,7 @@ import { ErrorBoundary } from "react-error-boundary"
 import { expect, it } from "vitest"
 
 import { Error } from "Components/Page"
-import { Tab } from "mkui/Components/Tabs"
+import { Tab } from "ui/Components/Tabs"
 import { renderWithClient } from "tests/utils"
 
 import { SystemTopologyTabPanel } from "./SystemTopologyTabPanel"
