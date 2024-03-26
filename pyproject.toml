@@ -68,7 +68,7 @@ sphinx-sitemap = "^2.5.1"
 ruff = "^0.1.9"
 pytest-xdist = {version = "^3.5.0", extras = ["psutil"]}
 freezegun = "^1.4.0"
-testcontainers = {extras = ["postgres"], version = "^3.7.1"}
+testcontainers = {extras = ["postgres"], version = ">=3.7.1,<5.0.0"}
 sphinx-click = "^5.1.0"
 rich-click = "^1.7.4"
 
