@@ -31,13 +31,11 @@ install-dev:
 
 
 install-frontend: install-ui
-	cd frontend; pnpm install
+	cd harp_apps/dashboard/frontend; pnpm install
 
 install-backend:
 	poetry install $(POETRY_INSTALL_OPTIONS)
 
-install-ui:
-	cd vendors/mkui; pnpm install
 
 reference: harp
 	rm -rf docs/reference/core docs/reference/apps
@@ -46,7 +44,7 @@ reference: harp
 	git add docs/reference/
 
 frontend:
-	cd frontend; pnpm build
+	cd harp_apps/dashboard/frontend; pnpm build
 
 
 ########################################################################################################################
@@ -72,8 +70,8 @@ types:
 format: format-backend format-frontend
 
 format-frontend: install-frontend
-	(cd frontend; pnpm lint:fix)
-	(cd frontend; pnpm prettier -w src)
+	(cd harp_apps/dashboard/frontend; pnpm lint:fix)
+	(cd harp_apps/dashboard/frontend; pnpm prettier -w src)
 
 format-backend:
 	isort harp harp_apps tests
@@ -99,22 +97,14 @@ coverage:
 	          $(PYTEST_OPTIONS)
 
 test-frontend: install-frontend lint-frontend
-	cd frontend; pnpm test
+	cd harp_apps/dashboard/frontend; pnpm test
 
 test-frontend-update: install-frontend lint-frontend
-	cd frontend; pnpm test:unit:update
+	cd harp_apps/dashboard/frontend; pnpm test:unit:update
 
 lint-frontend: install-frontend
-	cd frontend; pnpm build
+	cd harp_apps/dashboard/frontend; pnpm build
 
-test-ui-build: install-ui
-	cd vendors/mkui; pnpm build
-
-test-ui: test-ui-build
-	cd vendors/mkui; pnpm test
-
-test-ui-update: test-ui-build
-	cd vendors/mkui; pnpm test:visual:update
 
 ########################################################################################################################
 # Benchmarks
