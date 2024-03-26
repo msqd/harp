@@ -33,7 +33,7 @@ exports[`renders well when the query is successful 1`] = `
             class="flex w-full items-start gap-x-8 relative"
           >
             <aside
-              class="sticky top-8 hidden w-1/5 min-w-56 max-w-96 shrink-0 lg:block"
+              class="sticky top-8 hidden w-1/5 min-w-40 max-w-60 2xl:min-w-52 2xl:max-w-72 shrink-0 lg:block"
             >
               <div
                 class="text-right"

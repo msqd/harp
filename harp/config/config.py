@@ -34,6 +34,7 @@ class Config:
         "harp_apps.dashboard",
         "harp_apps.sqlalchemy_storage",
         "harp_apps.telemetry",
+        "harp_apps.janitor",
         "harp_apps.contrib.sentry",  # todo: allow to extend application list in config file without overriding all
     ]
 

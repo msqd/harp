@@ -16,10 +16,10 @@ class UserFlag(Base):
     id = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
     type = mapped_column(Integer(), nullable=False)
 
-    user_id = mapped_column(ForeignKey("sa_users.id"), nullable=False)
+    user_id = mapped_column(ForeignKey("sa_users.id", ondelete="CASCADE"), nullable=False)
     user: Mapped["User"] = relationship(back_populates="flags")
 
-    transaction_id = mapped_column(ForeignKey("sa_transactions.id"), nullable=False)
+    transaction_id = mapped_column(ForeignKey("sa_transactions.id", ondelete="CASCADE"), nullable=False)
     transaction: Mapped["Transaction"] = relationship(back_populates="flags")
 
     __table_args__ = (UniqueConstraint("user_id", "transaction_id", "type", name="_user_transaction_uc"),)

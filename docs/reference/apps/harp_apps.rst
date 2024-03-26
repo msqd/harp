@@ -15,6 +15,7 @@ Submodules
     harp_apps.contrib
     harp_apps.dashboard
     harp_apps.http_client
+    harp_apps.janitor
     harp_apps.proxy
     harp_apps.sqlalchemy_storage
     harp_apps.telemetry

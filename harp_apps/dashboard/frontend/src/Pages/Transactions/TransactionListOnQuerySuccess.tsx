@@ -29,7 +29,7 @@ export function TransactionListOnQuerySuccess({
   return (
     <div className="flex w-full items-start gap-x-8 relative">
       {isFiltersOpen ? (
-        <aside className="sticky top-8 hidden w-1/5 min-w-56 max-w-96 shrink-0 lg:block">
+        <aside className="sticky top-8 hidden w-1/5 min-w-40 max-w-60 2xl:min-w-52 2xl:max-w-72 shrink-0 lg:block">
           <div className="text-right">
             <FiltersHideButton onClick={() => setIsFiltersOpen(false)} />
           </div>
