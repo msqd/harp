@@ -33,7 +33,7 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
             role="tablist"
           >
             <button
-              aria-controls="headlessui-tabs-panel-:r3:"
+              aria-controls="headlessui-tabs-panel-:r4:"
               aria-selected="true"
               class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
               data-headlessui-state="selected"
@@ -49,7 +49,7 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
               </span>
             </button>
             <button
-              aria-controls="headlessui-tabs-panel-:r4:"
+              aria-controls="headlessui-tabs-panel-:r5:"
               aria-selected="false"
               class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
               data-headlessui-state=""
@@ -65,11 +65,27 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
               </span>
             </button>
             <button
-              aria-controls="headlessui-tabs-panel-:r5:"
+              aria-controls="headlessui-tabs-panel-:r6:"
               aria-selected="false"
               class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
               data-headlessui-state=""
               id="headlessui-tabs-tab-:r2:"
+              role="tab"
+              tabindex="-1"
+              type="button"
+            >
+              <span
+                class="css-gebh7q"
+              >
+                Storage
+              </span>
+            </button>
+            <button
+              aria-controls="headlessui-tabs-panel-:r7:"
+              aria-selected="false"
+              class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
+              data-headlessui-state=""
+              id="headlessui-tabs-tab-:r3:"
               role="tab"
               tabindex="-1"
               type="button"
@@ -88,7 +104,7 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
               aria-labelledby="headlessui-tabs-tab-:r0:"
               class="css-hu3rmt"
               data-headlessui-state="selected"
-              id="headlessui-tabs-panel-:r3:"
+              id="headlessui-tabs-panel-:r4:"
               role="tabpanel"
               tabindex="0"
             >
@@ -215,14 +231,21 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
             </div>
             <span
               aria-labelledby="headlessui-tabs-tab-:r1:"
-              id="headlessui-tabs-panel-:r4:"
+              id="headlessui-tabs-panel-:r5:"
               role="tabpanel"
               style="position: fixed; top: 1px; left: 1px; width: 1px; height: 0px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border-width: 0px;"
               tabindex="-1"
             />
             <span
               aria-labelledby="headlessui-tabs-tab-:r2:"
-              id="headlessui-tabs-panel-:r5:"
+              id="headlessui-tabs-panel-:r6:"
+              role="tabpanel"
+              style="position: fixed; top: 1px; left: 1px; width: 1px; height: 0px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border-width: 0px;"
+              tabindex="-1"
+            />
+            <span
+              aria-labelledby="headlessui-tabs-tab-:r3:"
+              id="headlessui-tabs-panel-:r7:"
               role="tabpanel"
               style="position: fixed; top: 1px; left: 1px; width: 1px; height: 0px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border-width: 0px;"
               tabindex="-1"

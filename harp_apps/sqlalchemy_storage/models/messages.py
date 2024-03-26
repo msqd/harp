@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from harp.http import get_serializer_for
 from harp.models.messages import Message as MessageModel
 
-from .base import Base
+from .base import Base, Repository, with_session
 
 if TYPE_CHECKING:
     from .transactions import Transaction
@@ -17,13 +17,13 @@ class Message(Base):
     __tablename__ = "sa_messages"
 
     id = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
-    transaction_id = mapped_column(ForeignKey("sa_transactions.id"))
     kind = mapped_column(String(10))
     summary = mapped_column(String(255))
     headers = mapped_column(String(40))
     body = mapped_column(String(40))
     created_at = mapped_column(DateTime())
 
+    transaction_id = mapped_column(ForeignKey("sa_transactions.id", ondelete="CASCADE"))
     transaction: Mapped["Transaction"] = relationship(back_populates="messages")
 
     def to_model(self):
@@ -49,3 +49,21 @@ class Message(Base):
         obj.body = content.id
         obj.created_at = message.created_at.astimezone(UTC).replace(tzinfo=None)
         return obj
+
+
+class MessagesRepository(Repository[Message]):
+    Type = Message
+
+    @with_session
+    async def create(self, values: dict | MessageModel, /, *, session):
+        if isinstance(values, MessageModel):
+            values = dict(
+                id=values.id,
+                transaction_id=values.transaction_id,
+                kind=values.kind,
+                summary=values.summary,
+                headers=values.headers,
+                body=values.body,
+                created_at=values.created_at,
+            )
+        return await super().create(values, session=session)

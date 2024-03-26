@@ -96,7 +96,7 @@ class DashboardController:
 
         self.children = [
             BlobsController(storage=self.storage, router=root.router),
-            SystemController(settings=self.global_settings, router=root.router),
+            SystemController(storage=self.storage, settings=self.global_settings, router=root.router),
             TransactionsController(storage=self.storage, router=root.router),
             OverviewController(storage=self.storage, router=root.router),
         ]

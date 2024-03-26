@@ -3,6 +3,7 @@ import { Tab } from "mkui/Components/Tabs"
 
 import { SystemDependenciesTabPanel } from "./SystemDependenciesTabPanel.tsx"
 import { SystemSettingsTabPanel } from "./SystemSettingsTabPanel.tsx"
+import { SystemStorageTabPanel } from "./SystemStorageTabPanel.tsx"
 import { SystemTopologyTabPanel } from "./SystemTopologyTabPanel.tsx"
 
 export const SystemPage = () => {
@@ -12,11 +13,13 @@ export const SystemPage = () => {
         <Tab.List as="nav" aria-label="Tabs">
           <Tab>Topology</Tab>
           <Tab>Settings</Tab>
+          <Tab>Storage</Tab>
           <Tab>Dependencies</Tab>
         </Tab.List>
         <Tab.Panels>
           <SystemTopologyTabPanel />
           <SystemSettingsTabPanel />
+          <SystemStorageTabPanel />
           <SystemDependenciesTabPanel />
         </Tab.Panels>
       </Tab.Group>
