@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from typing import Iterable, List, Optional, TypedDict, override
 
-from sqlalchemy import case, delete, func, insert, literal, select, update
+from sqlalchemy import case, delete, func, literal, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.sql.functions import count
 from whistle import IAsyncEventDispatcher
@@ -38,7 +38,6 @@ from .models import (
     UserFlag,
     UsersRepository,
 )
-from .models.transactions import transaction_tag_values_association_table
 from .settings import SqlAlchemyStorageSettings
 from .utils.dates import TruncDatetime
 
@@ -115,10 +114,10 @@ class SqlAlchemyStorage(Storage):
 
         self.blobs = BlobsRepository(self.session)
         self.messages = MessagesRepository(self.session)
-        self.transactions = TransactionsRepository(self.session)
-        self.users = UsersRepository(self.session)
         self.tags = TagsRepository(self.session)
         self.tag_values = TagValuesRepository(self.session)
+        self.transactions = TransactionsRepository(self.session, tags=self.tags, tag_values=self.tag_values)
+        self.users = UsersRepository(self.session)
         self.metrics = MetricsRepository(self.session)
         self.metric_values = MetricValuesRepository(self.session)
 
@@ -294,24 +293,6 @@ class SqlAlchemyStorage(Storage):
         await self.initialize()
         await self.create_users(["anonymous"])
 
-    async def create_transaction(self, transaction: TransactionModel):
-        async with self.session() as session:
-            db_transaction = await self.transactions.create(
-                dict(
-                    id=transaction.id,
-                    type=transaction.type,
-                    endpoint=transaction.endpoint,
-                    started_at=transaction.started_at.replace(tzinfo=None),
-                    x_method=transaction.extras.get("method"),
-                ),
-                session=session,
-            )
-
-            if len(transaction.tags):
-                await self.set_transaction_tags(db_transaction, transaction.tags)
-
-            return db_transaction
-
     @override
     async def set_user_flag(self, *, transaction_id: str, username: str, flag: int, value=True):
         """Sets or unsets a user flag on a transaction."""
@@ -333,36 +314,9 @@ class SqlAlchemyStorage(Storage):
                         delete(UserFlag).where(UserFlag.transaction_id == transaction.id, UserFlag.user_id == user.id)
                     )
 
-    @override
-    async def set_transaction_tags(self, transaction_or_id, tags: dict, /):
-        async with self.session() as session:
-            if isinstance(transaction_or_id, Transaction):
-                db_transaction = await session.merge(transaction_or_id)
-            else:
-                db_transaction = await self.transactions.find_one_by_id(transaction_or_id, session=session)
-
-            values = []
-            for name, value in tags.items():
-                db_tag = await self.tags.find_or_create_one({"name": name}, session=session)
-                db_value = await self.tag_values.find_or_create_one(
-                    {"tag_id": db_tag.id, "value": value}, session=session
-                )
-                values.append(
-                    {
-                        "transaction_id": db_transaction.id,
-                        "value_id": db_value.id,
-                    }
-                )
-
-            if len(values):
-                await session.execute(insert(transaction_tag_values_association_table), values)
-                await session.commit()
-
-        return db_transaction
-
     async def _on_transaction_started(self, event: TransactionEvent):
         """Event handler to store the transaction in the database."""
-        return await self.create_transaction(event.transaction)
+        return await self.transactions.create(event.transaction)
 
     @asynccontextmanager
     async def begin(self):

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from harp.http import get_serializer_for
 from harp.models.messages import Message as MessageModel
 
-from .base import Base, Repository
+from .base import Base, Repository, with_session
 
 if TYPE_CHECKING:
     from .transactions import Transaction
@@ -53,3 +53,17 @@ class Message(Base):
 
 class MessagesRepository(Repository[Message]):
     Type = Message
+
+    @with_session
+    async def create(self, values: dict | MessageModel, /, *, session):
+        if isinstance(values, MessageModel):
+            values = dict(
+                id=values.id,
+                transaction_id=values.transaction_id,
+                kind=values.kind,
+                summary=values.summary,
+                headers=values.headers,
+                body=values.body,
+                created_at=values.created_at,
+            )
+        return await super().create(values, session=session)

@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from sqlalchemy import DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .base import Base, Repository, contextualize_with_session_if_not_provided
+from .base import Base, Repository, with_session
 
 
 class Metric(Base):
@@ -34,7 +34,7 @@ class MetricsRepository(Repository[Metric]):
         super().__init__(session_factory)
         self.values = MetricValuesRepository(session_factory)
 
-    @contextualize_with_session_if_not_provided
+    @with_session
     async def insert_values(self, values: dict, /, session):
         now = datetime.now(UTC).replace(tzinfo=None)
         for name, value in values.items():

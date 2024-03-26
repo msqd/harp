@@ -1,7 +1,9 @@
 from sqlalchemy import DateTime, LargeBinary, String, delete, func, select
 from sqlalchemy.orm import aliased, mapped_column
 
-from .base import Base, Repository
+from harp.models import Blob as BlobModel
+
+from .base import Base, Repository, with_session
 from .messages import Message
 
 
@@ -44,3 +46,13 @@ class BlobsRepository(Repository[Blob]):
         )
         query = select(subquery.c.id).where(subquery.c[1] == 0)
         return delete(Blob).where(Blob.id.in_(query))
+
+    @with_session
+    async def create(self, values: dict | BlobModel, /, *, session):
+        if isinstance(values, BlobModel):
+            values = dict(
+                id=values.id,
+                data=values.data,
+                content_type=values.content_type,
+            )
+        return await super().create(values, session=session)

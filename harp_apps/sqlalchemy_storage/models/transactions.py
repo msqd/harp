@@ -1,12 +1,12 @@
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, String, Table
+from sqlalchemy import Column, DateTime, Float, ForeignKey, String, Table, insert
 from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship, selectinload
 
 from harp.models.transactions import Transaction as TransactionModel
 
-from .base import Base, Repository
+from .base import Base, Repository, with_session
 from .flags import FLAGS_BY_TYPE, UserFlag
 from .tags import TagValue
 
@@ -79,6 +79,12 @@ class Transaction(Base):
 class TransactionsRepository(Repository[Transaction]):
     Type = Transaction
 
+    def __init__(self, session_factory, /, tags=None, tag_values=None):
+        super().__init__(session_factory)
+
+        self.tags = tags
+        self.tag_values = tag_values
+
     def select(self, /, *, with_messages=False, with_user_flags=False, with_tags=False):
         query = super().select()
 
@@ -110,6 +116,49 @@ class TransactionsRepository(Repository[Transaction]):
 
         return query
 
-    def delete_old(self, old_after):
-        threshold = (datetime.now(UTC) - timedelta(days=old_after)).replace(tzinfo=None)
+    def delete_old(self, old_after: timedelta):
+        threshold = (datetime.now(UTC) - old_after).replace(tzinfo=None)
         return self.delete().where(self.Type.started_at < threshold)
+
+    @with_session
+    async def create(self, values: dict | TransactionModel, /, *, session):
+        # convert model to dict
+        if isinstance(values, TransactionModel):
+            # todo in to_dict method ? but how to keep prototype of parent ?
+            values = dict(
+                id=values.id,
+                type=values.type,
+                endpoint=values.endpoint,
+                started_at=values.started_at.replace(tzinfo=None),
+                x_method=values.extras.get("method"),
+                tags=values.tags,
+            )
+        tags = values.pop("tags", {})
+        transaction = await super().create(values, session=session)
+        if len(tags):
+            await self.set_tags(transaction, tags, session=session)
+        return transaction
+
+    @with_session
+    async def set_tags(self, transaction: Transaction, tags: dict, /, *, session):
+        if not self.tags:
+            raise ValueError("Tags repository is not available.")
+        if not self.tag_values:
+            raise ValueError("Tag values repository is not available.")
+
+        values = []
+        for name, value in tags.items():
+            db_tag = await self.tags.find_or_create_one({"name": name}, session=session)
+            db_value = await self.tag_values.find_or_create_one({"tag_id": db_tag.id, "value": value}, session=session)
+            values.append(
+                {
+                    "transaction_id": transaction.id,
+                    "value_id": db_value.id,
+                }
+            )
+
+        if len(values):
+            await session.execute(insert(transaction_tag_values_association_table), values)
+            await session.commit()
+
+        return transaction
