@@ -24,6 +24,32 @@ def compile_trunc_postgresql(element, compiler, **kw):
     return compiler.process(func.date_trunc(element.precision, element.expr))
 
 
+@compiles(TruncDatetime, "mysql")
+def compile_trunc_mysql(element, compiler, **kw):
+    try:
+        precision = element.precision.effective_value
+    except AttributeError:
+        precision = element.precision
+    expr = element.expr
+
+    if precision == "year":
+        format_str = "%Y-01-01 00:00:00"
+    elif precision == "month":
+        format_str = "%Y-%m-01 00:00:00"
+    elif precision == "day":
+        format_str = "%Y-%m-%d 00:00:00"
+    elif precision == "hour":
+        format_str = "%Y-%m-%d %H:00:00"
+    elif precision == "minute":
+        format_str = "%Y-%m-%d %H:%i:00"
+    elif precision == "second":
+        format_str = "%Y-%m-%d %H:%i:%s"
+    else:
+        raise NotImplementedError(f"Truncating {precision} is not supported for MySQL")
+
+    return compiler.process(func.date_format(expr, format_str))
+
+
 _modifiers = {
     "year": ("start of year",),
     "month": ("start of month",),

@@ -19,4 +19,7 @@ def ensure_datetime(x, tz=None) -> Optional[datetime]:
         return x.replace(tzinfo=tz)
     if isinstance(x, date):
         return datetime.combine(x, datetime.min.time(), tzinfo=tz)
-    return datetime.strptime(x, "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=tz)
+    try:
+        return datetime.strptime(x, "%Y-%m-%d %H:%M:%S").replace(tzinfo=tz)
+    except ValueError:
+        return datetime.strptime(x, "%Y-%m-%d %H:%M:%S.%f").replace(tzinfo=tz)

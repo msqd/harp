@@ -266,7 +266,7 @@ class SqlAlchemyStorage(Storage):
                 {
                     "datetime": ensure_datetime(row[0], UTC),
                     "count": row[1],
-                    "errors": row[2],
+                    "errors": int(row[2]),
                     "meanDuration": row[3] if row[3] else 0,
                     # ! probably sqlite struggling with unfinished transactions
                 }
