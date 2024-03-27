@@ -33,7 +33,7 @@ export const SearchBar = ({ label, setSearch, className, placeHolder }: SearchBa
           {label}
         </label>
       )}
-      <div className="relative mt-2 flex items-center">
+      <div className="mt-2 space-x-1 py-1 pl-1.5 flex text-base items-center rounded ring-1 text-gray-900 ring-inset ring-gray-200 placeholder:text-gray-400">
         <input
           ref={inputRef}
           type="text"
@@ -41,10 +41,10 @@ export const SearchBar = ({ label, setSearch, className, placeHolder }: SearchBa
           id="search"
           placeholder={placeHolder}
           onKeyDown={handleKeyPress}
-          className="block w-full rounded-md border-0 py-1.5 pr-14 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-8 focus:ring-inset focus:!ring-primary-300 sm:text-sm sm:leading-6"
+          className="overflow-ellipsis w-full !border-0 !p-0 focus:!ring-0 !ml-1"
         />
-        <div onClick={handleSearchClick} className="absolute inset-y-0 right-0 flex py-1.5 pr-1.5 hover:cursor-pointer">
-          <kbd className="inline-flex items-center rounded border border-gray-200 px-1 font-sans text-xs text-gray-400">
+        <div onClick={handleSearchClick} className="inset-y-0 right-0 flex py-1.5 pr-1.5 hover:cursor-pointer">
+          <kbd className="inline-flex items-center rounded border border-gray-200 px-1 py-0.5 font-sans text-sm text-gray-400">
             Enter
           </kbd>
         </div>
