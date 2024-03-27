@@ -127,7 +127,7 @@ class SqlAlchemyStorage(Storage):
         self.metrics = MetricsRepository(self.session)
         self.metric_values = MetricValuesRepository(self.session)
 
-    async def initialize(self, /, *, force_reset=True):
+    async def initialize(self, /, *, force_reset=False):
         """Create the database tables. May drop them first if configured to do so."""
         async with self.engine.begin() as conn:
             if force_reset or self.settings.drop_tables:

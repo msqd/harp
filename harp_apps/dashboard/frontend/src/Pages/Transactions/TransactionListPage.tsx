@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 
 import { Page } from "Components/Page"
 import { PageTitle } from "Components/Page/PageTitle.tsx"
@@ -8,12 +8,14 @@ import { Filters } from "Types/filters"
 
 import { OptionalPaginator } from "./Components/OptionalPaginator.tsx"
 import { TransactionListOnQuerySuccess } from "./TransactionListOnQuerySuccess.tsx"
+import { SearchBar } from "ui/Components/SearchBar/SearchBar.tsx"
 
 export function TransactionListPage() {
   const [filters, setFilters] = useState<Filters>({})
   const [page, setPage] = useState(1)
   const [cursor, setCursor] = useState<string | undefined>(undefined)
-  const query = useTransactionsListQuery({ filters, page, cursor })
+  const [search, setSearch] = useState<string | undefined>(undefined)
+  const query = useTransactionsListQuery({ filters, page, cursor, search })
 
   useEffect(() => {
     if (page == 1 && query.isSuccess && query.data.items.length) {
@@ -37,6 +39,7 @@ export function TransactionListPage() {
         </PageTitle>
       }
     >
+      <SearchBar placeHolder="Search transactions" setSearch={setSearch} className="w-1/2" />
       <OnQuerySuccess query={query}>
         {(query) => <TransactionListOnQuerySuccess query={query} filters={filters} setFilters={setFilters} />}
       </OnQuerySuccess>
