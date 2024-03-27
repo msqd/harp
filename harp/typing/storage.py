@@ -59,10 +59,6 @@ class Storage(Protocol):
         """Create users."""
         ...
 
-    async def set_transaction_tags(self, transaction_or_id, tags: dict, /):
-        """Set transaction tags."""
-        ...
-
     async def get_usage(self):
         """Get storage usage."""
         ...

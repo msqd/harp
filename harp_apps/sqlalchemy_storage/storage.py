@@ -3,8 +3,8 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from typing import Iterable, List, Optional, TypedDict, override
 
-from sqlalchemy import case, delete, func, literal, select, update
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+from sqlalchemy import case, delete, func, literal, select, text, update
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.sql.functions import count
 from whistle import IAsyncEventDispatcher
 
@@ -81,6 +81,12 @@ def _filter_query_for_user_flags(query, values, /, *, user_id):
     return query
 
 
+def _filter_transactions_based_on_text(query, text):
+    query = query.join(Message)
+    query = query.filter((Transaction.endpoint.ilike(f"%{text}%")) | Message.summary.ilike(f"%{text}%"))
+    return query
+
+
 class SqlAlchemyStorage(Storage):
     """
     Storage implementation using SQL Alchemy Core, with async drivers.
@@ -121,11 +127,12 @@ class SqlAlchemyStorage(Storage):
         self.metrics = MetricsRepository(self.session)
         self.metric_values = MetricValuesRepository(self.session)
 
-    async def initialize(self, /, *, force_reset=False):
+    async def initialize(self, /, *, force_reset=True):
         """Create the database tables. May drop them first if configured to do so."""
         async with self.engine.begin() as conn:
             if force_reset or self.settings.drop_tables:
                 await conn.run_sync(self.metadata.drop_all)
+            await self.install_pg_trgm_extension(conn)
             await conn.run_sync(self.metadata.create_all)
         self._is_ready.set()
 
@@ -159,6 +166,7 @@ class SqlAlchemyStorage(Storage):
         filters=None,
         page: int = 1,
         cursor: str = "",
+        text_search="",
     ):
         """
         Implements :meth:`Storage.find_transactions <harp.typing.storage.Storage.find_transactions>`.
@@ -179,6 +187,9 @@ class SqlAlchemyStorage(Storage):
             query = _filter_query(query, "method", filters.get("method", None))
             query = _filter_query(query, "status", filters.get("status", None))
             query = _filter_query_for_user_flags(query, filters.get("flag", None), user_id=user.id)
+
+        if text_search:
+            query = _filter_transactions_based_on_text(query, text_search)
 
         query = query.order_by(Transaction.started_at.desc())
 
@@ -395,3 +406,9 @@ class SqlAlchemyStorage(Storage):
                         user = User()
                         user.username = username
                         session.add(user)
+
+    async def install_pg_trgm_extension(self, conn: AsyncConnection):
+        # Check the type of the current database
+        if conn.engine.dialect.name == "postgresql":
+            # Install the pg_trgm extension
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm;"))

@@ -16,7 +16,7 @@ def with_session(f):
     @wraps(f)
     async def contextualized(self, *args, session=None, **kwargs):
         if session is None:
-            async with (session or self.session_factory()) as session:
+            async with session or self.session_factory() as session:
                 return await f(self, *args, session=session, **kwargs)
         return await f(self, *args, session=session, **kwargs)
 
@@ -56,7 +56,7 @@ class Repository(Generic[TRow]):
         )
 
     @with_session
-    async def find_one_by_id(self, id: str, /, session, **select_kwargs) -> TRow:
+    async def find_one_by_id(self, id: str, /, session=None, **select_kwargs) -> TRow:
         return await self.find_one({"id": id}, session=session, **select_kwargs)
 
     @with_session
