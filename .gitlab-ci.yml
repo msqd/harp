@@ -68,7 +68,7 @@ test:frontend:
   variables:
     GIT_STRATEGY: none
   script:
-    - (cd /opt/harp/src/frontend; pnpm test:unit)
+    - (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm test:unit)
 
 doc:html:
   needs: ["build:dev"]
@@ -93,8 +93,8 @@ storybook:
   variables:
     GIT_STRATEGY: none
   script:
-    - (cd /opt/harp/src/frontend; pnpm build-storybook)
-    - mv /opt/harp/src/frontend/build harp-ui
+    - (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm ui:build)
+    - mv /opt/harp/src//harp_apps/dashboard/frontend/build harp-ui
   artifacts:
     name: harp-ui
     expire_in: 1 month

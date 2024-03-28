@@ -28,9 +28,7 @@ class HonchoManagerFactory:
 
     def _get_dashboard_executable(self, processes):
         # todo make sure the frontend tools are available, in the right versions
-        if not os.path.exists(os.path.join(ROOT_DIR, "frontend/node_modules")) or not os.path.exists(
-            os.path.join(ROOT_DIR, "vendors/mkui/node_modules")
-        ):
+        if not os.path.exists(os.path.join(ROOT_DIR, "harp_apps/dashboard/frontend/node_modules")):
             # todo better guidance
             raise click.UsageError(
                 "Dashboard's frontend dependencies are not installed.\nYour options are: run a production version "
@@ -40,7 +38,7 @@ class HonchoManagerFactory:
         host = "localhost"
 
         return (
-            os.path.join(ROOT_DIR, "frontend"),
+            os.path.join(ROOT_DIR, "harp_apps/dashboard/frontend"),
             " ".join(
                 [
                     "pnpm exec vite",
@@ -80,7 +78,7 @@ class HonchoManagerFactory:
 
     def _get_ui_executable(self, processes):
         # todo add check available
-        return os.path.join(ROOT_DIR, "vendors/mkui"), "pnpm serve"
+        return os.path.join(ROOT_DIR, "harp_apps/dashboard/frontend"), "pnpm ui:serve"
 
     commands[HARP_UI_SERVICE] = _get_ui_executable
 
