@@ -966,20 +966,6 @@ files = [
 ]
 
 [[package]]
-name = "deprecation"
-version = "2.1.0"
-description = "A library to handle automated deprecations"
-optional = false
-python-versions = "*"
-files = [
-    {file = "deprecation-2.1.0-py2.py3-none-any.whl", hash = "sha256:a10811591210e1fb0e768a8c25517cabeabcba6f0bf96564f8ff45189f90b14a"},
-    {file = "deprecation-2.1.0.tar.gz", hash = "sha256:72b3bde64e5d778694b0cf68178aed03d15e15477116add3fb773e581f9518ff"},
-]
-
-[package.dependencies]
-packaging = "*"
-
-[[package]]
 name = "distlib"
 version = "0.3.8"
 description = "Distribution utilities"
@@ -3388,33 +3374,37 @@ python-baseconv = "*"
 
 [[package]]
 name = "testcontainers"
-version = "3.7.1"
-description = "Library provides lightweight, throwaway instances of common databases, Selenium web browsers, or anything else that can run in a Docker container"
+version = "4.2.0"
+description = "Python library for throwaway instances of anything that can run in a Docker container"
 optional = false
-python-versions = ">=3.7"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "testcontainers-3.7.1-py2.py3-none-any.whl", hash = "sha256:7f48cef4bf0ccd78f1a4534d4b701a003a3bace851f24eae58a32f9e3f0aeba0"},
+    {file = "testcontainers-4.2.0-py3-none-any.whl", hash = "sha256:64d24b1a3c9ce6ca67434e91771a9070b174f6912c3be729d506361d098f51f4"},
+    {file = "testcontainers-4.2.0.tar.gz", hash = "sha256:ee06222f17594dc41ee15b6f19c5758bc47e1c546082e80edde21a6c8ae59126"},
 ]
 
 [package.dependencies]
-deprecation = "*"
-docker = ">=4.0.0"
+docker = "*"
+urllib3 = "*"
 wrapt = "*"
 
 [package.extras]
-arangodb = ["python-arango"]
-azurite = ["azure-storage-blob"]
+arangodb = ["python-arango (>=7.8,<8.0)"]
+azurite = ["azure-storage-blob (>=12.19,<13.0)"]
 clickhouse = ["clickhouse-driver"]
-docker-compose = ["docker-compose"]
-google-cloud-pubsub = ["google-cloud-pubsub (<2)"]
+google = ["google-cloud-pubsub (>=2)"]
+influxdb = ["influxdb", "influxdb-client"]
+k3s = ["kubernetes", "pyyaml"]
 kafka = ["kafka-python"]
 keycloak = ["python-keycloak"]
-mongo = ["pymongo"]
-mssqlserver = ["pymssql"]
-mysql = ["pymysql", "sqlalchemy"]
+localstack = ["boto3"]
+minio = ["minio"]
+mongodb = ["pymongo"]
+mssql = ["pymssql", "sqlalchemy"]
+mysql = ["pymysql[rsa]", "sqlalchemy"]
 neo4j = ["neo4j"]
-oracle = ["cx-Oracle", "sqlalchemy"]
-postgresql = ["psycopg2-binary", "sqlalchemy"]
+opensearch = ["opensearch-py"]
+oracle = ["cx_Oracle", "sqlalchemy"]
 rabbitmq = ["pika"]
 redis = ["redis"]
 selenium = ["selenium"]
@@ -3841,4 +3831,4 @@ dev = ["honcho", "watchfiles"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "613dfbb279b17b2186eaf75f99e1115f2cb0159885091cdfe9e8f874422c3fca"
+content-hash = "8c89718124b2e54fc391e7aee06b92a3a3e9713c9d3647fdf09695a8bc97cb3c"
