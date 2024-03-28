@@ -4,21 +4,51 @@ exports[`renders well when the query is successful 1`] = `
 <div>
   <main>
     <div
-      class="mt-4 mb-4"
+      class="mt-4 flex"
     >
       <div
-        class="float-end"
-      />
-      <h1
-        class="css-9lrcch"
+        class="flex flex-col"
       >
-        Transactions
-      </h1>
-      <p
-        class="css-11bp3eh"
+        <h1
+          class="css-9lrcch"
+        >
+          Transactions
+        </h1>
+        <p
+          class="css-11bp3eh"
+        >
+          Explore transactions that went through the proxy
+        </p>
+      </div>
+      <div
+        class="flex flex-col ml-24 w-full items-end lg:items-start justify-end lg:justify-between lg:flex-row lg:mt-12"
       >
-        Explore transactions that went through the proxy
-      </p>
+        <div
+          class="w-96 order-last lg:order-first pr-6"
+        >
+          <div
+            class="mt-2 space-x-1 py-1 pl-1.5 flex text-base items-center rounded ring-1 text-gray-900 ring-inset ring-gray-200 placeholder:text-gray-400"
+          >
+            <input
+              autocomplete="off"
+              class="overflow-ellipsis w-full !border-0 !p-0 focus:!ring-0 !ml-1"
+              id="search"
+              name="search"
+              placeholder="Search transactions"
+              type="text"
+            />
+            <div
+              class="inset-y-0 right-0 flex py-1.5 pr-1.5 hover:cursor-pointer"
+            >
+              <kbd
+                class="inline-flex items-center rounded border border-gray-200 px-1 py-0.5 font-sans text-sm text-gray-400"
+              >
+                Enter
+              </kbd>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div
       class="mt-4"
@@ -29,30 +59,6 @@ exports[`renders well when the query is successful 1`] = `
         <section
           class="inline-block min-w-full max-w-full py-2 align-middle sm:px-6 lg:px-8"
         >
-          <div
-            class="w-1/2"
-          >
-            <div
-              class="mt-2 space-x-1 py-1 pl-1.5 flex text-base items-center rounded ring-1 text-gray-900 ring-inset ring-gray-200 placeholder:text-gray-400"
-            >
-              <input
-                class="overflow-ellipsis w-full !border-0 !p-0 focus:!ring-0 !ml-1"
-                id="search"
-                name="search"
-                placeholder="Search transactions"
-                type="text"
-              />
-              <div
-                class="inset-y-0 right-0 flex py-1.5 pr-1.5 hover:cursor-pointer"
-              >
-                <kbd
-                  class="inline-flex items-center rounded border border-gray-200 px-1 py-0.5 font-sans text-sm text-gray-400"
-                >
-                  Enter
-                </kbd>
-              </div>
-            </div>
-          </div>
           <div
             class="flex w-full items-start gap-x-8 relative"
           >

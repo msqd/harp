@@ -37,6 +37,7 @@ export const SearchBar = ({ label, setSearch, className, placeHolder }: SearchBa
         <input
           ref={inputRef}
           type="text"
+          autoComplete="off"
           name="search"
           id="search"
           placeholder={placeHolder}

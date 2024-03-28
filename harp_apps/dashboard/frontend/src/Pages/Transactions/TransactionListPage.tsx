@@ -27,19 +27,28 @@ export function TransactionListPage() {
     <Page
       title={
         <PageTitle title="Transactions" description="Explore transactions that went through the proxy">
-          {query.isSuccess ? (
-            <OptionalPaginator
-              current={page}
-              setPage={setPage}
-              total={query.data.total}
-              pages={query.data.pages}
-              perPage={query.data.perPage}
+          <div className="flex flex-col ml-24 w-full items-end lg:items-start justify-end lg:justify-between lg:flex-row lg:mt-12">
+            <SearchBar
+              placeHolder="Search transactions"
+              setSearch={setSearch}
+              className="w-96 order-last lg:order-first pr-6"
             />
-          ) : null}
+            {query.isSuccess ? (
+              <OptionalPaginator
+                current={page}
+                setPage={setPage}
+                total={query.data.total}
+                pages={query.data.pages}
+                perPage={query.data.perPage}
+              />
+            ) : (
+              <div className="block order-first lg:order-last"></div>
+            )}
+          </div>
         </PageTitle>
       }
     >
-      <SearchBar placeHolder="Search transactions" setSearch={setSearch} className="w-1/2" />
+      {/* <SearchBar placeHolder="Search transactions" setSearch={setSearch} className="w-1/2" /> */}
       <OnQuerySuccess query={query}>
         {(query) => <TransactionListOnQuerySuccess query={query} filters={filters} setFilters={setFilters} />}
       </OnQuerySuccess>
