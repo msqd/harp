@@ -71,8 +71,7 @@ class HttpProxyController:
 
         """
 
-        # create an enveloppe to override things, without touching the original request
-        request = request
+        # create an envelope to override things, without touching the original request
         request = WrappedHttpRequest(request)
         request.headers["host"] = self.parsed_url.netloc
 
