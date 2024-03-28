@@ -26,6 +26,7 @@ logger = get_logger(__name__)
 STATIC_BUILD_PATHS = [
     os.path.realpath(os.path.join(ROOT_DIR, "frontend/dist")),
     "/opt/harp/public",
+    os.path.realpath(os.path.join(ROOT_DIR, "harp_apps/dashboard/frontend/dist")),
 ]
 
 
@@ -96,7 +97,7 @@ class DashboardController:
 
         self.children = [
             BlobsController(storage=self.storage, router=root.router),
-            SystemController(settings=self.global_settings, router=root.router),
+            SystemController(storage=self.storage, settings=self.global_settings, router=root.router),
             TransactionsController(storage=self.storage, router=root.router),
             OverviewController(storage=self.storage, router=root.router),
         ]

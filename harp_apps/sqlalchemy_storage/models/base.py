@@ -1,17 +1,18 @@
 from functools import wraps
 from typing import Generic, TypeVar
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.sql.functions import func
 
 
 class Base(AsyncAttrs, DeclarativeBase):
     pass
 
 
-def contextualize_with_session_if_not_provided(f):
+def with_session(f):
     @wraps(f)
     async def contextualized(self, *args, session=None, **kwargs):
         if session is None:
@@ -34,7 +35,13 @@ class Repository(Generic[TRow]):
     def select(self):
         return select(self.Type)
 
-    @contextualize_with_session_if_not_provided
+    def delete(self):
+        return delete(self.Type)
+
+    def count(self):
+        return select(func.count()).select_from(self.Type)
+
+    @with_session
     async def find_one(self, values: dict, /, session, **select_kwargs) -> TRow:
         return (
             (
@@ -48,18 +55,18 @@ class Repository(Generic[TRow]):
             .scalar_one()
         )
 
-    @contextualize_with_session_if_not_provided
+    @with_session
     async def find_one_by_id(self, id: str, /, session, **select_kwargs) -> TRow:
         return await self.find_one({"id": id}, session=session, **select_kwargs)
 
-    @contextualize_with_session_if_not_provided
+    @with_session
     async def find_or_create_one(self, values: dict, /, session, defaults=None, **select_kwargs) -> TRow:
         try:
             return await self.find_one(values, session=session, **select_kwargs)
         except NoResultFound:
             return await self.create((defaults or {}) | values, session=session)
 
-    @contextualize_with_session_if_not_provided
+    @with_session
     async def create(self, values: dict, /, *, session):
         item = self.Type(**values)
         session.add(item)

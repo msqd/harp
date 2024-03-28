@@ -16,6 +16,7 @@ Submodules
     harp_apps.sqlalchemy_storage.models.blobs
     harp_apps.sqlalchemy_storage.models.flags
     harp_apps.sqlalchemy_storage.models.messages
+    harp_apps.sqlalchemy_storage.models.metrics
     harp_apps.sqlalchemy_storage.models.tags
     harp_apps.sqlalchemy_storage.models.transactions
     harp_apps.sqlalchemy_storage.models.users

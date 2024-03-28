@@ -9,7 +9,7 @@ class TestStorageTags(SqlalchemyStorageTestFixtureMixin):
         tags = {"version": "42", "env": "tests"}
 
         # set some tags
-        await storage.set_transaction_tags(t1.id, tags)
+        await storage.transactions.set_tags(t1, tags)
 
         # refresh our transaction from db (test env allow us to do this)
         t1_again = await storage.transactions.find_one_by_id(t1.id, with_tags=True)
