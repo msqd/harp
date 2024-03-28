@@ -16,6 +16,7 @@ from harp.models.base import Results
 from harp.models.transactions import Transaction as TransactionModel
 from harp.settings import PAGE_SIZE
 from harp.typing.storage import Storage
+from harp.utils.apdex import apdex
 from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_datetime
 from harp_apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
@@ -238,8 +239,9 @@ class SqlAlchemyStorage(Storage):
         query = select(
             s_date,
             func.count(),
-            func.sum(case((Transaction.x_status_class == "5xx", 1), else_=0)),
+            func.sum(case((Transaction.x_status_class.in_(("5xx", "ERR")), 1), else_=0)),
             func.avg(Transaction.elapsed),
+            func.avg(Transaction.apdex),
         )
 
         if endpoint:
@@ -257,6 +259,7 @@ class SqlAlchemyStorage(Storage):
                     "count": row[1],
                     "errors": row[2],
                     "meanDuration": row[3] if row[3] else 0,
+                    "meanApdex": row[4],
                     # ! probably sqlite struggling with unfinished transactions
                 }
                 for row in result.fetchall()
@@ -365,6 +368,7 @@ class SqlAlchemyStorage(Storage):
                     .values(
                         finished_at=event.transaction.finished_at.astimezone(UTC).replace(tzinfo=None),
                         elapsed=event.transaction.elapsed,
+                        apdex=apdex(event.transaction.elapsed),
                         x_status_class=event.transaction.extras.get("status_class"),
                     )
                 )

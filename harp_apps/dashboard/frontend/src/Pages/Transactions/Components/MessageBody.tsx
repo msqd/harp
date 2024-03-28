@@ -1,4 +1,4 @@
-import { useBlobQuery } from "Domain/Transactions/useBlobQuery.tsx"
+import { useBlobQuery } from "Domain/Transactions/useBlobQuery.ts"
 
 import { PrettyBody } from "./PrettyBody.tsx"
 

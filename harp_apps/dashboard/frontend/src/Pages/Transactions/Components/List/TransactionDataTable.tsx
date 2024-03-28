@@ -2,12 +2,12 @@ import { StarIcon } from "@heroicons/react/24/outline"
 import { formatDistance, formatDuration } from "date-fns"
 import { useState } from "react"
 
-import { PerformanceRatingBadge } from "Components/Badges"
 import { useSetUserFlagMutation } from "Domain/Transactions"
 import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
 import { Message, Transaction } from "Models/Transaction"
 import { DataTable } from "ui/Components/DataTable"
 
+import ApdexBadge from "../../../../Components/Badges/ApdexBadge.tsx"
 import { MessageSummary } from "../MessageSummary.tsx"
 
 interface TransactionsDataTableProps {
@@ -81,12 +81,12 @@ const transactionColumnTypes = {
   },
   elapsed: {
     label: "Duration",
-    get: (row: Transaction) => (row.elapsed ? Math.trunc(row.elapsed) / 1000 : null),
-    format: (x: number | null) => {
-      if (x !== null) {
+    get: (row: Transaction) => [row.elapsed ? Math.trunc(row.elapsed) / 1000 : null, row.apdex],
+    format: ([duration, apdex]: [number | null, number | null]) => {
+      if (duration !== null) {
         return (
           <div>
-            <PerformanceRatingBadge duration={x} /> {formatDuration({ seconds: x })}{" "}
+            {apdex !== null ? <ApdexBadge score={apdex} /> : null} {formatDuration({ seconds: duration })}
           </div>
         )
       }

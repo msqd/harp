@@ -12,6 +12,7 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
+    harp.utils.apdex
     harp.utils.arguments
     harp.utils.background
     harp.utils.bytes

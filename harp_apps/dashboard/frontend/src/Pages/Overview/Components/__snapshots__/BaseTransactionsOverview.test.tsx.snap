@@ -20,9 +20,10 @@ exports[`renders without crashing 1`] = `
           class="flex self-center text-3xl"
         >
           <span
-            class="px-1 py-0.5 text-white font-semibold bg-orange-500"
+            class="bg-lime-500 css-5capyy"
+            title="score: 85"
           >
-            E
+            B
           </span>
         </div>
         <div
