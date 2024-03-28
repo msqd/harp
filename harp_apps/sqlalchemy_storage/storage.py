@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Iterable, List, Optional, TypedDict, override
 
 from sqlalchemy import case, delete, func, literal, select, text, update
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.sql.functions import count
 from whistle import IAsyncEventDispatcher
@@ -427,8 +428,17 @@ class SqlAlchemyStorage(Storage):
         # Check the type of the current database
         if conn.engine.dialect.name == "mysql":
             # Create the full text index for transactions.endpoint
-            await conn.execute(
-                text(f"CREATE FULLTEXT INDEX endpoint_ft_index ON {Transaction.__tablename__} (endpoint);")
-            )
-            # Create the full text index for messages.summary
-            await conn.execute(text(f"CREATE FULLTEXT INDEX summary_ft_index ON {Message.__tablename__} (summary);"))
+            try:
+                await conn.execute(
+                    text(f"CREATE FULLTEXT INDEX endpoint_ft_index ON {Transaction.__tablename__} (endpoint);")
+                )
+                # Create the full text index for messages.summary
+                await conn.execute(
+                    text(f"CREATE FULLTEXT INDEX summary_ft_index ON {Message.__tablename__} (summary);")
+                )
+            except OperationalError as e:
+                # check for duplicate key error
+                if e.orig and e.orig.args[0] == 1061:
+                    pass
+                else:
+                    raise e
