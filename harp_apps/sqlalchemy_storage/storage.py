@@ -81,10 +81,19 @@ def _filter_query_for_user_flags(query, values, /, *, user_id):
     return query
 
 
-def _filter_transactions_based_on_text(query, text):
+def _filter_transactions_based_on_text(query, search_text: str, dialect_name: str):
     query = query.join(Message)
-    query = query.filter((Transaction.endpoint.ilike(f"%{text}%")) | Message.summary.ilike(f"%{text}%"))
-    return query
+    # check dialect and use appropriate full text search
+    if dialect_name == "mysql":
+        return query.filter(
+            text(
+                f"MATCH ({Transaction.__tablename__}.endpoint) "
+                f"AGAINST ('{search_text}*' IN BOOLEAN MODE) OR "
+                f"MATCH ({Message.__tablename__}.summary) "
+                f"AGAINST ('{search_text}*' IN BOOLEAN MODE)"
+            )
+        )
+    return query.filter((Transaction.endpoint.ilike(f"%{search_text}%")) | Message.summary.ilike(f"%{search_text}%"))
 
 
 class SqlAlchemyStorage(Storage):
@@ -127,13 +136,14 @@ class SqlAlchemyStorage(Storage):
         self.metrics = MetricsRepository(self.session)
         self.metric_values = MetricValuesRepository(self.session)
 
-    async def initialize(self, /, *, force_reset=False):
+    async def initialize(self, /, *, force_reset=True):
         """Create the database tables. May drop them first if configured to do so."""
         async with self.engine.begin() as conn:
             if force_reset or self.settings.drop_tables:
                 await conn.run_sync(self.metadata.drop_all)
             await self.install_pg_trgm_extension(conn)
             await conn.run_sync(self.metadata.create_all)
+            await self.create_full_text_indexes(conn)
         self._is_ready.set()
 
     @property
@@ -189,7 +199,7 @@ class SqlAlchemyStorage(Storage):
             query = _filter_query_for_user_flags(query, filters.get("flag", None), user_id=user.id)
 
         if text_search:
-            query = _filter_transactions_based_on_text(query, text_search)
+            query = _filter_transactions_based_on_text(query, text_search, dialect_name=self.engine.dialect.name)
 
         query = query.order_by(Transaction.started_at.desc())
 
@@ -412,3 +422,13 @@ class SqlAlchemyStorage(Storage):
         if conn.engine.dialect.name == "postgresql":
             # Install the pg_trgm extension
             await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm;"))
+
+    async def create_full_text_indexes(self, conn: AsyncConnection):
+        # Check the type of the current database
+        if conn.engine.dialect.name == "mysql":
+            # Create the full text index for transactions.endpoint
+            await conn.execute(
+                text(f"CREATE FULLTEXT INDEX endpoint_ft_index ON {Transaction.__tablename__} (endpoint);")
+            )
+            # Create the full text index for messages.summary
+            await conn.execute(text(f"CREATE FULLTEXT INDEX summary_ft_index ON {Message.__tablename__} (summary);"))

@@ -1,14 +1,14 @@
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 
 import { Page } from "Components/Page"
 import { PageTitle } from "Components/Page/PageTitle.tsx"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { useTransactionsListQuery } from "Domain/Transactions"
 import { Filters } from "Types/filters"
+import { SearchBar } from "ui/Components/SearchBar/SearchBar.tsx"
 
 import { OptionalPaginator } from "./Components/OptionalPaginator.tsx"
 import { TransactionListOnQuerySuccess } from "./TransactionListOnQuerySuccess.tsx"
-import { SearchBar } from "ui/Components/SearchBar/SearchBar.tsx"
 
 export function TransactionListPage() {
   const [filters, setFilters] = useState<Filters>({})
