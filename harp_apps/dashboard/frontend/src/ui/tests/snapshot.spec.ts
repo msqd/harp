@@ -24,7 +24,8 @@ Object.keys(stories).forEach((storyKey) => {
     // skip stories that are marked as skipped
     test.skip(stories[storyKey].meta.skip, "meta.skip is true")
     // navigate to the story
-    await page.goto(`${url}/?story=${storyKey}&mode=preview`)
+    const previewUrl = `${url}/?story=${storyKey}&mode=preview`
+    await page.goto(previewUrl)
     // stories are code-splitted, wait for them
     await page.waitForSelector("[data-storyloaded]")
     // take and compare a screenshot
