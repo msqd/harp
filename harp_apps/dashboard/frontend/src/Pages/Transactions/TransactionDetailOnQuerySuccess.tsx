@@ -12,6 +12,7 @@ import { MessageHeaders } from "./Components/MessageHeaders.tsx"
 import { MessageSummary } from "./Components/MessageSummary.tsx"
 
 import { SettingsTable } from "../System/Components/index.ts"
+import { CopyToClipboardWrapper } from "ui/Components/CopyToClipboardWrapper/CopyToClipboardWrapper.tsx"
 
 export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserverSuccessResult<Transaction> }) {
   return (
@@ -31,8 +32,10 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
           }
           open={message.kind != "error"}
         >
-          <MessageHeaders id={message.headers} />
-          <MessageBody id={message.body} />
+          <CopyToClipboardWrapper>
+            <MessageHeaders id={message.headers} />
+            <MessageBody id={message.body} />
+          </CopyToClipboardWrapper>
         </Foldable>
       ))}
       <Foldable title="Raw" open={false}>
