@@ -18,6 +18,7 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
     <Pane hasDefaultPadding={false} className="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm">
       {(query.data.messages || []).map((message) => (
         <Foldable
+          key={message.id}
           title={
             <>
               <span className="mr-2">{ucfirst(message.kind)}</span>
