@@ -1,6 +1,7 @@
 """
 Initial implementation : https://trello.com/c/yCdcY7Og/1-5-http-proxy
 """
+
 import os
 
 import pytest

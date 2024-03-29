@@ -2,6 +2,7 @@
 Proxy Application
 
 """
+
 from httpx import AsyncClient
 
 from harp.config.application import Application

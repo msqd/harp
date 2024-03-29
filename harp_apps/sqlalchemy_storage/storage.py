@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Iterable, List, Optional, TypedDict, override
 
 from sqlalchemy import bindparam, case, delete, func, literal, literal_column, select, text, update
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import DatabaseError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.sql.functions import count
 from whistle import IAsyncEventDispatcher
@@ -152,9 +152,16 @@ class SqlAlchemyStorage(Storage):
         async with self.engine.begin() as conn:
             if force_reset or self.settings.drop_tables:
                 await conn.run_sync(self.metadata.drop_all)
+
+        async with self.engine.begin() as conn:
             await self.install_pg_trgm_extension(conn)
+
+        async with self.engine.begin() as conn:
             await conn.run_sync(self.metadata.create_all)
+
+        async with self.engine.begin() as conn:
             await self.create_full_text_indexes(conn)
+
         self._is_ready.set()
 
     @property
@@ -434,8 +441,11 @@ class SqlAlchemyStorage(Storage):
     async def install_pg_trgm_extension(self, conn: AsyncConnection):
         # Check the type of the current database
         if conn.engine.dialect.name == "postgresql":
-            # Install the pg_trgm extension
-            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm;"))
+            # Install the pg_trgm extension if possible
+            try:
+                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm;"))
+            except DatabaseError as e:
+                logger.error(f"Failed to install pg_trgm extension: {e}")
 
     async def create_full_text_indexes(self, conn: AsyncConnection):
         # Check the type of the current database
