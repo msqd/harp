@@ -4,13 +4,17 @@ exports[`renders the title and data when the query is successful 1`] = `
 <div>
   <main>
     <div
-      class="mt-4 mb-4"
+      class="mt-4 flex"
     >
-      <h1
-        class="css-9lrcch"
+      <div
+        class="flex flex-col"
       >
-        Overview
-      </h1>
+        <h1
+          class="css-9lrcch"
+        >
+          Overview
+        </h1>
+      </div>
     </div>
     <div
       class="mt-4"

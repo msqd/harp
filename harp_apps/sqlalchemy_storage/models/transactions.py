@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, String, Table, exists, insert
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, String, Table, insert, exists
 from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship, selectinload
 
 from harp.models.transactions import Transaction as TransactionModel
@@ -48,6 +48,10 @@ class Transaction(Base):
         secondary=transaction_tag_values_association_table,
         cascade="all, delete",
         passive_deletes=True,
+    )
+    # Add a GIN index on the endpoint column
+    endpoint_index = Index(
+        "endpoint_gin_index", endpoint, postgresql_using="gin", postgresql_ops={"endpoint": "gin_trgm_ops"}
     )
 
     def to_model(self, with_user_flags=False):
@@ -122,7 +126,7 @@ class TransactionsRepository(Repository[Transaction]):
         return self.delete().where((self.Type.started_at < threshold) & no_flags)
 
     @with_session
-    async def create(self, values: dict | TransactionModel, /, *, session):
+    async def create(self, values: dict | TransactionModel, /, *, session=None):
         # convert model to dict
         if isinstance(values, TransactionModel):
             # todo in to_dict method ? but how to keep prototype of parent ?
@@ -141,7 +145,7 @@ class TransactionsRepository(Repository[Transaction]):
         return transaction
 
     @with_session
-    async def set_tags(self, transaction: Transaction, tags: dict, /, *, session):
+    async def set_tags(self, transaction: Transaction, tags: dict, /, *, session=None):
         if not self.tags:
             raise ValueError("Tags repository is not available.")
         if not self.tag_values:
