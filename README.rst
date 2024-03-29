@@ -5,6 +5,9 @@ HARP is a powerful sidecar proxy service designed to elevate the reliability, pe
 of your application's external API interactions. Think of it as a reverse API gateway or a nearline service mesh for
 external APIs.
 
+**HARP is released as an Early Access Preview. This means that the software is still in active development and may not
+be suitable for your applications.**
+
 .. image:: docs/images/how-it-works.png
 
 * **Easy Integration**: Integrating with your application is a breeze, because it speaks the same language you already
