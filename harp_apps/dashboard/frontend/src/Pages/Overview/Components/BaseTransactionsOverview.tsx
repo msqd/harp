@@ -19,8 +19,8 @@ export const BaseTransactionsOverview = ({ data, title, className }: Transaction
       <H2>{title}</H2>
       <div style={{ display: "flex", alignItems: "center" }}>
         <div className="flex flex-col items-center">
-          <div className="flex self-center text-3xl">
-            <ApdexBadge score={meanApdex} size="lg" />
+          <div className="flex self-center">
+            <ApdexBadge score={meanApdex} size="xl" />
           </div>
           <div className="grid grid-cols-2 text-xs text-left align-text-bottom items-center self-center ml-10 mt-10">
             <span className="font-bold">Mean duration:</span>

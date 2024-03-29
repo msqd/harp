@@ -17,10 +17,10 @@ exports[`renders the title and data when the query is successful 1`] = `
         class="flex flex-col items-center"
       >
         <div
-          class="flex self-center text-3xl"
+          class="flex self-center"
         >
           <span
-            class="bg-green-500 css-5capyy"
+            class="bg-green-500 css-1g68g52"
             title="score: 95"
           >
             A

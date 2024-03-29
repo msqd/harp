@@ -1,10 +1,12 @@
 import asyncio
+import re
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from typing import Iterable, List, Optional, TypedDict, override
 
-from sqlalchemy import case, delete, func, literal, select, update
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+from sqlalchemy import bindparam, case, delete, func, literal, literal_column, select, text, update
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.sql.functions import count
 from whistle import IAsyncEventDispatcher
 
@@ -27,6 +29,7 @@ from .models import (
     Base,
     Blob,
     BlobsRepository,
+    FlagsRepository,
     Message,
     MessagesRepository,
     MetricsRepository,
@@ -82,6 +85,27 @@ def _filter_query_for_user_flags(query, values, /, *, user_id):
     return query
 
 
+def _filter_transactions_based_on_text(query, search_text: str, dialect_name: str):
+    # Escape special characters in search_text
+    search_text = re.sub(r"([-\*\(\)~\"@<>\^+]+)", r"", search_text)
+    query = query.join(Message)
+    # check dialect and use appropriate full text search
+    if dialect_name == "mysql":
+        return query.filter(
+            text(
+                f"MATCH ({Transaction.__tablename__}.endpoint) "
+                f"AGAINST (:search_text IN BOOLEAN MODE) OR "
+                f"MATCH ({Message.__tablename__}.summary) "
+                f"AGAINST (:search_text IN BOOLEAN MODE)",
+            ).bindparams(bindparam("search_text", literal_column(f"'{search_text}*'")))
+        )
+
+    return query.filter(
+        (Transaction.endpoint.ilike(bindparam("search_text", f"%{search_text}%")))
+        | Message.summary.ilike(bindparam("search_text", f"%{search_text}%"))
+    )
+
+
 class SqlAlchemyStorage(Storage):
     """
     Storage implementation using SQL Alchemy Core, with async drivers.
@@ -121,13 +145,16 @@ class SqlAlchemyStorage(Storage):
         self.users = UsersRepository(self.session)
         self.metrics = MetricsRepository(self.session)
         self.metric_values = MetricValuesRepository(self.session)
+        self.flags = FlagsRepository(self.session)
 
     async def initialize(self, /, *, force_reset=False):
         """Create the database tables. May drop them first if configured to do so."""
         async with self.engine.begin() as conn:
             if force_reset or self.settings.drop_tables:
                 await conn.run_sync(self.metadata.drop_all)
+            await self.install_pg_trgm_extension(conn)
             await conn.run_sync(self.metadata.create_all)
+            await self.create_full_text_indexes(conn)
         self._is_ready.set()
 
     @property
@@ -160,6 +187,7 @@ class SqlAlchemyStorage(Storage):
         filters=None,
         page: int = 1,
         cursor: str = "",
+        text_search="",
     ):
         """
         Implements :meth:`Storage.find_transactions <harp.typing.storage.Storage.find_transactions>`.
@@ -180,6 +208,9 @@ class SqlAlchemyStorage(Storage):
             query = _filter_query(query, "method", filters.get("method", None))
             query = _filter_query(query, "status", filters.get("status", None))
             query = _filter_query_for_user_flags(query, filters.get("flag", None), user_id=user.id)
+
+        if text_search:
+            query = _filter_transactions_based_on_text(query, text_search, dialect_name=self.engine.dialect.name)
 
         query = query.order_by(Transaction.started_at.desc())
 
@@ -257,7 +288,7 @@ class SqlAlchemyStorage(Storage):
                 {
                     "datetime": ensure_datetime(row[0], UTC),
                     "count": row[1],
-                    "errors": row[2],
+                    "errors": int(row[2]),
                     "meanDuration": row[3] if row[3] else 0,
                     "meanApdex": row[4],
                     # ! probably sqlite struggling with unfinished transactions
@@ -399,3 +430,28 @@ class SqlAlchemyStorage(Storage):
                         user = User()
                         user.username = username
                         session.add(user)
+
+    async def install_pg_trgm_extension(self, conn: AsyncConnection):
+        # Check the type of the current database
+        if conn.engine.dialect.name == "postgresql":
+            # Install the pg_trgm extension
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm;"))
+
+    async def create_full_text_indexes(self, conn: AsyncConnection):
+        # Check the type of the current database
+        if conn.engine.dialect.name == "mysql":
+            # Create the full text index for transactions.endpoint
+            try:
+                await conn.execute(
+                    text(f"CREATE FULLTEXT INDEX endpoint_ft_index ON {Transaction.__tablename__} (endpoint);")
+                )
+                # Create the full text index for messages.summary
+                await conn.execute(
+                    text(f"CREATE FULLTEXT INDEX summary_ft_index ON {Message.__tablename__} (summary);")
+                )
+            except OperationalError as e:
+                # check for duplicate key error
+                if e.orig and e.orig.args[0] == 1061:
+                    pass
+                else:
+                    raise e

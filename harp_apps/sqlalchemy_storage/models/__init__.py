@@ -1,6 +1,6 @@
 from .base import Base
 from .blobs import Blob, BlobsRepository
-from .flags import FLAGS_BY_NAME, FLAGS_BY_TYPE, UserFlag
+from .flags import FLAGS_BY_NAME, FLAGS_BY_TYPE, FlagsRepository, UserFlag
 from .messages import Message, MessagesRepository
 from .metrics import Metric, MetricsRepository, MetricValue, MetricValuesRepository
 from .tags import Tag, TagsRepository, TagValue, TagValuesRepository
@@ -28,4 +28,5 @@ __all__ = [
     "User",
     "UserFlag",
     "UsersRepository",
+    "FlagsRepository",
 ]

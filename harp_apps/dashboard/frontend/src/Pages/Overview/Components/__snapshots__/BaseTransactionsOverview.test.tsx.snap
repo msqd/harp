@@ -17,10 +17,10 @@ exports[`renders without crashing 1`] = `
         class="flex flex-col items-center"
       >
         <div
-          class="flex self-center text-3xl"
+          class="flex self-center"
         >
           <span
-            class="bg-lime-500 css-5capyy"
+            class="bg-lime-500 css-1g68g52"
             title="score: 85"
           >
             B

@@ -4,18 +4,22 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
 <div>
   <main>
     <div
-      class="mt-4 mb-4"
+      class="mt-4 flex"
     >
-      <h1
-        class="css-9lrcch"
+      <div
+        class="flex flex-col"
       >
-        System
-      </h1>
-      <p
-        class="css-11bp3eh"
-      >
-        Informations about the running instance.
-      </p>
+        <h1
+          class="css-9lrcch"
+        >
+          System
+        </h1>
+        <p
+          class="css-11bp3eh"
+        >
+          Informations about the running instance.
+        </p>
+      </div>
     </div>
     <div
       class="mt-4"

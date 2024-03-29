@@ -18,6 +18,7 @@ class Storage(Protocol):
         filters=None,
         page: int = 1,
         cursor: str = "",
+        text_search: str = "",
     ):
         """Find transactions, using optional filters, for example to be displayed in the dashboard."""
         ...
@@ -57,10 +58,6 @@ class Storage(Protocol):
 
     async def create_users_once_ready(self, users: Iterable[str]):
         """Create users."""
-        ...
-
-    async def set_transaction_tags(self, transaction_or_id, tags: dict, /):
-        """Set transaction tags."""
         ...
 
     async def get_usage(self):

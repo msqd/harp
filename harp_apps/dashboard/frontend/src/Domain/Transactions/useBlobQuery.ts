@@ -2,11 +2,9 @@ import { useQuery } from "react-query"
 
 import { useApi } from "../Api"
 
-const decoder = new TextDecoder("utf-8")
-
 interface Blob {
   id: string
-  content: string
+  content: ArrayBuffer
   contentType?: string
 }
 
@@ -19,7 +17,7 @@ export function useBlobQuery(id?: string) {
 
       return {
         id,
-        content: decoder.decode(buffer),
+        content: buffer,
         contentType: response.headers.get("Content-Type"),
       } as Blob
     }
