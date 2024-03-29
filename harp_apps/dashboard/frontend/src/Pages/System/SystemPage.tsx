@@ -5,7 +5,6 @@ import { Page, PageTitle } from "Components/Page"
 import { SystemDependenciesTabPanel } from "./SystemDependenciesTabPanel.tsx"
 import { SystemSettingsTabPanel } from "./SystemSettingsTabPanel.tsx"
 import { SystemStorageTabPanel } from "./SystemStorageTabPanel.tsx"
-import { SystemTopologyTabPanel } from "./SystemTopologyTabPanel.tsx"
 
 export const SystemPage = () => {
   return (
