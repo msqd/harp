@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, String, Table, insert
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, String, Table, insert, exists
 from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship, selectinload
 
 from harp.models.transactions import Transaction as TransactionModel
@@ -122,7 +122,8 @@ class TransactionsRepository(Repository[Transaction]):
 
     def delete_old(self, old_after: timedelta):
         threshold = (datetime.now(UTC) - old_after).replace(tzinfo=None)
-        return self.delete().where(self.Type.started_at < threshold)
+        no_flags = ~exists().where(UserFlag.transaction_id == self.Type.id)
+        return self.delete().where((self.Type.started_at < threshold) & no_flags)
 
     @with_session
     async def create(self, values: dict | TransactionModel, /, *, session=None):

@@ -234,6 +234,7 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
               </div>
             </div>
             <span
+              aria-hidden="true"
               aria-labelledby="headlessui-tabs-tab-:r1:"
               id="headlessui-tabs-panel-:r5:"
               role="tabpanel"
@@ -241,6 +242,7 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
               tabindex="-1"
             />
             <span
+              aria-hidden="true"
               aria-labelledby="headlessui-tabs-tab-:r2:"
               id="headlessui-tabs-panel-:r6:"
               role="tabpanel"
@@ -248,6 +250,7 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
               tabindex="-1"
             />
             <span
+              aria-hidden="true"
               aria-labelledby="headlessui-tabs-tab-:r3:"
               id="headlessui-tabs-panel-:r7:"
               role="tabpanel"
