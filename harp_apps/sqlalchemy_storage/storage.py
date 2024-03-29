@@ -26,6 +26,7 @@ from .models import (
     Base,
     Blob,
     BlobsRepository,
+    FlagsRepository,
     Message,
     MessagesRepository,
     MetricsRepository,
@@ -120,6 +121,7 @@ class SqlAlchemyStorage(Storage):
         self.users = UsersRepository(self.session)
         self.metrics = MetricsRepository(self.session)
         self.metric_values = MetricValuesRepository(self.session)
+        self.flags = FlagsRepository(self.session)
 
     async def initialize(self, /, *, force_reset=False):
         """Create the database tables. May drop them first if configured to do so."""

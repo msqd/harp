@@ -3,11 +3,14 @@ from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .base import Base
+from .base import Base, Repository
 
 if TYPE_CHECKING:
     from .transactions import Transaction
     from .users import User
+
+FLAGS_BY_TYPE = {1: "favorite"}
+FLAGS_BY_NAME = {v: k for k, v in FLAGS_BY_TYPE.items()}
 
 
 class UserFlag(Base):
@@ -25,5 +28,5 @@ class UserFlag(Base):
     __table_args__ = (UniqueConstraint("user_id", "transaction_id", "type", name="_user_transaction_uc"),)
 
 
-FLAGS_BY_TYPE = {1: "favorite"}
-FLAGS_BY_NAME = {v: k for k, v in FLAGS_BY_TYPE.items()}
+class FlagsRepository(Repository):
+    Type = UserFlag

@@ -54,3 +54,27 @@ class TestJanitorWorker(SqlalchemyStorageTestFixtureMixin):
             metrics = await worker.compute_metrics(session)
             assert metrics["storage.blobs"] == 2
             assert metrics["storage.blobs.orphans"] == 0
+
+    async def test_delete_old_transactions_but_keep_flagged_ones(self, storage: SqlAlchemyStorage):
+        worker = JanitorWorker(storage)
+
+        t1 = await self.create_transaction(
+            storage, started_at=datetime.now(UTC).replace(tzinfo=None) - OLD_AFTER - timedelta(hours=1)
+        )
+        await self.create_transaction(
+            storage, started_at=datetime.now(UTC).replace(tzinfo=None) - OLD_AFTER - timedelta(minutes=1)
+        )
+        await self.create_transaction(
+            storage, started_at=datetime.now(UTC).replace(tzinfo=None) - OLD_AFTER + timedelta(minutes=1)
+        )
+
+        user = await storage.users.find_one_by_username("anonymous")
+        await storage.flags.create({"type": 1, "user_id": user.id, "transaction_id": t1.id})
+
+        async with storage.session() as session:
+            assert (await worker.compute_metrics(session))["storage.transactions"] == 3
+
+        await worker.delete_old_transactions()
+
+        async with storage.session() as session:
+            assert (await worker.compute_metrics(session))["storage.transactions"] == 2
