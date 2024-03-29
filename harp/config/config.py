@@ -1,6 +1,7 @@
 """
 Factory configuration, does nothing but can be used to instanciate a server.
 """
+
 import importlib.util
 import os
 import pprint

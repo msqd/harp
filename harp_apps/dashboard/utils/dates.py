@@ -70,5 +70,7 @@ def generate_continuous_time_range(
         if t in [d["datetime"] for d in discontinuous_transactions]:
             continuous_transactions.append([d for d in discontinuous_transactions if d["datetime"] == t][0])
         else:
-            continuous_transactions.append({"datetime": t, "count": None, "errors": None, "meanDuration": None})
+            continuous_transactions.append(
+                {"datetime": t, "count": None, "errors": None, "meanDuration": None, "meanApdex": None}
+            )
     return continuous_transactions

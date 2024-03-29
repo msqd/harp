@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Iterable, List, Optional, TypedDict, override
 
 from sqlalchemy import bindparam, case, delete, func, literal, literal_column, select, text, update
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import DatabaseError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.sql.functions import count
 from whistle import IAsyncEventDispatcher
@@ -18,6 +18,7 @@ from harp.models.base import Results
 from harp.models.transactions import Transaction as TransactionModel
 from harp.settings import PAGE_SIZE
 from harp.typing.storage import Storage
+from harp.utils.apdex import apdex
 from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_datetime
 from harp_apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
@@ -151,9 +152,16 @@ class SqlAlchemyStorage(Storage):
         async with self.engine.begin() as conn:
             if force_reset or self.settings.drop_tables:
                 await conn.run_sync(self.metadata.drop_all)
+
+        async with self.engine.begin() as conn:
             await self.install_pg_trgm_extension(conn)
+
+        async with self.engine.begin() as conn:
             await conn.run_sync(self.metadata.create_all)
+
+        async with self.engine.begin() as conn:
             await self.create_full_text_indexes(conn)
+
         self._is_ready.set()
 
     @property
@@ -269,8 +277,9 @@ class SqlAlchemyStorage(Storage):
         query = select(
             s_date,
             func.count(),
-            func.sum(case((Transaction.x_status_class == "5xx", 1), else_=0)),
+            func.sum(case((Transaction.x_status_class.in_(("5xx", "ERR")), 1), else_=0)),
             func.avg(Transaction.elapsed),
+            func.avg(Transaction.apdex),
         )
 
         if endpoint:
@@ -288,6 +297,7 @@ class SqlAlchemyStorage(Storage):
                     "count": row[1],
                     "errors": int(row[2]),
                     "meanDuration": row[3] if row[3] else 0,
+                    "meanApdex": row[4],
                     # ! probably sqlite struggling with unfinished transactions
                 }
                 for row in result.fetchall()
@@ -396,6 +406,7 @@ class SqlAlchemyStorage(Storage):
                     .values(
                         finished_at=event.transaction.finished_at.astimezone(UTC).replace(tzinfo=None),
                         elapsed=event.transaction.elapsed,
+                        apdex=apdex(event.transaction.elapsed),
                         x_status_class=event.transaction.extras.get("status_class"),
                     )
                 )
@@ -430,8 +441,11 @@ class SqlAlchemyStorage(Storage):
     async def install_pg_trgm_extension(self, conn: AsyncConnection):
         # Check the type of the current database
         if conn.engine.dialect.name == "postgresql":
-            # Install the pg_trgm extension
-            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm;"))
+            # Install the pg_trgm extension if possible
+            try:
+                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm;"))
+            except DatabaseError as e:
+                logger.error(f"Failed to install pg_trgm extension: {e}")
 
     async def create_full_text_indexes(self, conn: AsyncConnection):
         # Check the type of the current database

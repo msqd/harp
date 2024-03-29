@@ -200,14 +200,8 @@ exports[`renders well when the query is successful 1`] = `
                       class=" css-157hpf5"
                     >
                       <div>
-                        <span
-                          class="px-1 py-0.5 text-white font-semibold bg-green-500"
-                        >
-                          A
-                        </span>
                          
                         0.06 seconds
-                         
                       </div>
                     </td>
                     <td
@@ -287,14 +281,8 @@ exports[`renders well when the query is successful 1`] = `
                       class=" css-157hpf5"
                     >
                       <div>
-                        <span
-                          class="px-1 py-0.5 text-white font-semibold bg-teal-400"
-                        >
-                          A++
-                        </span>
                          
                         0.025 seconds
-                         
                       </div>
                     </td>
                     <td

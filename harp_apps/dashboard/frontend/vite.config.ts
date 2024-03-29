@@ -63,9 +63,7 @@ export default defineConfig(({ mode }) => {
 
       // visualizer(),
     ],
-
     server: { port: 4999, host: "127.0.0.1" },
-
     preview: {
       open: "none",
       host: "127.0.0.1",

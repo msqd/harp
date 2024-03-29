@@ -66,7 +66,7 @@ export const TransactionsChart: React.FC<RequestCHartProps> = ({ data, timeRange
           barSize={20}
           fill="#ADD8E6"
           legendType="circle"
-          name="transactions"
+          name="Transactions"
           isAnimationActive={false}
         />
         <Line
@@ -77,7 +77,7 @@ export const TransactionsChart: React.FC<RequestCHartProps> = ({ data, timeRange
           dataKey="errors"
           stroke="#FF8080"
           legendType="circle"
-          name="Errors (5xx)"
+          name="Errors"
           isAnimationActive={false}
         />
         <YAxis

@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, String, Table, insert, exists
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, Integer, String, Table, exists, insert
 from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship, selectinload
 
 from harp.models.transactions import Transaction as TransactionModel
@@ -30,6 +30,7 @@ class Transaction(Base):
     started_at = mapped_column(DateTime(), index=True)
     finished_at = mapped_column(DateTime(), nullable=True)
     elapsed = mapped_column(Float(), nullable=True)
+    apdex = mapped_column(Integer(), nullable=True)
     x_method = mapped_column(String(16), nullable=True, index=True)
     x_status_class = mapped_column(String(3), nullable=True, index=True)
 
@@ -62,6 +63,7 @@ class Transaction(Base):
             started_at=self.started_at,
             finished_at=self.finished_at,
             elapsed=self.elapsed,
+            apdex=self.apdex,
             extras=dict(
                 method=self.x_method,
                 status_class=self.x_status_class,

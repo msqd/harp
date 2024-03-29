@@ -1,7 +1,6 @@
-import { render, fireEvent } from "@testing-library/react"
-import { expect, describe, it, vi } from "vitest"
-
-import { DataTable, Column } from "./DataTable"
+import { fireEvent, render } from "@testing-library/react"
+import { describe, expect, it, vi } from "vitest"
+import { Column, DataTable } from "./DataTable"
 
 describe("DataTable", () => {
   const types: Record<string, Column> = {

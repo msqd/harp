@@ -14,8 +14,9 @@ interface DataTableVariantsProps {
   variant?: "default"
 }
 
-interface DataTableProps<TRow extends Record<string, unknown>, TComputed extends Record<string, unknown>>
-  extends DataTableVariantsProps {
+type BaseRow = Record<string, unknown>
+
+interface DataTableProps<TRow extends BaseRow, TComputed extends BaseRow> extends DataTableVariantsProps {
   rows: TRow[]
   types: Record<string, Column<TRow>>
   columns?: Array<keyof (TRow & TComputed) | Array<keyof (TRow & TComputed)>>
@@ -51,8 +52,6 @@ function formatRowValue<TRow>(type: Column<TRow>, row: TRow, name: keyof TRow): 
     return "n/a"
   }
 }
-
-type BaseRow = Record<string, unknown>
 
 export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = BaseRow>({
   columns,

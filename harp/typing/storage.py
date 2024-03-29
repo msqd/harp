@@ -49,8 +49,7 @@ class Storage(Protocol):
         endpoint=None,
         time_bucket: Optional[str],
         start_datetime: Optional[datetime],
-    ) -> List[TransactionsGroupedByTimeBucket]:
-        ...
+    ) -> List[TransactionsGroupedByTimeBucket]: ...
 
     async def set_user_flag(self, *, transaction_id: str, username: str, flag: int, value=True):
         """Sets or unsets a user flag on a transaction."""

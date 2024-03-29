@@ -6,6 +6,7 @@ import { BaseTransactionsOverview, TransactionOverviewChartProps } from "./BaseT
 it("renders without crashing", () => {
   const data: TransactionOverviewChartProps["data"] = {
     meanDuration: 2000,
+    meanApdex: 85,
     errors: { count: 2, rate: 0.05 },
     transactions: [],
     timeRange: "month",

@@ -2,8 +2,8 @@ import { http, HttpResponse, PathParams, RequestHandler } from "msw"
 
 import { ItemList } from "Domain/Api/Types"
 import { KeyValueSettings } from "Domain/System/useSystemSettingsQuery"
-import { OverviewData } from "Models/Overview"
-import { Transaction, Message } from "Models/Transaction"
+import { Message, Transaction } from "Models/Transaction"
+import * as api from "./api"
 
 const mockTransaction1: Transaction = {
   id: "ABCD1234",
@@ -73,28 +73,6 @@ const mockTransactions: { [key: string]: Transaction } = {
   EFGH5678: mockTransaction2,
 }
 
-const mockOverviewData: OverviewData = {
-  errors: {
-    count: 10,
-    rate: 0.5,
-  },
-  count: 20,
-  meanDuration: 30,
-  timeRange: "1h",
-  transactions: [
-    {
-      count: 10,
-      datetime: "2021-08-01T00:00:00Z",
-      errors: 3,
-    },
-    {
-      count: 20,
-      datetime: "2021-08-01T01:00:00Z",
-      errors: 5,
-    },
-  ],
-}
-
 const mockTransactionsFilters = {
   endpoint: {
     values: [
@@ -155,9 +133,8 @@ const mockBlobsResponses: { [key: string]: BlobResponse } = {
   },
 }
 export const handlers: RequestHandler[] = [
-  http.get("/api/overview", () => {
-    return HttpResponse.json(mockOverviewData)
-  }),
+  api.overview,
+  api.summary,
 
   http.get("/api/system/settings", () => {
     return HttpResponse.json(mockSettingsData)
