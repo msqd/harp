@@ -71,7 +71,7 @@ class OverviewController(RoutingController):
         try:
             mean_apdex = mean(filter(None, [t["meanApdex"] for t in transactions_by_date_list]))
         except StatisticsError:
-            mean_apdex = None
+            mean_apdex = 100
 
         return json(
             {
@@ -117,7 +117,8 @@ class OverviewController(RoutingController):
         try:
             mean_apdex = mean(filter(None, [t["meanApdex"] for t in transactions_by_date_list]))
         except StatisticsError:
-            mean_apdex = None
+            mean_apdex = 100
+
         return json(
             {
                 "transactions": transactions_by_date_list,
