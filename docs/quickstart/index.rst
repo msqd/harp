@@ -9,6 +9,7 @@ The easiest way to run it is to use our docker image. It is available on docker 
 
 .. tab-set-code::
 
+
     .. code-block:: docker
 
         # TODO review needed (config format updated since written)
@@ -20,7 +21,7 @@ The easiest way to run it is to use our docker image. It is available on docker 
                      makersquad/harp-proxy:latest
 
     .. code-block:: compose
-
+      # Should we provide a basic yaml file?
         $ cat <<EOF > docker-compose.yml
         version: '3'
 
@@ -39,7 +40,7 @@ The easiest way to run it is to use our docker image. It is available on docker 
         $ docker compose up -d
 
 .. note::
-
+    # The doc from all the installation methods don't exist yet, even the ones that exist.
     Other installation options exist but are out of the scope of this quick start guide.
 
     You can read more about :doc:`installing with docker <../installation/docker>`, :doc:`installing with docker

@@ -1,2 +1,4 @@
 Configuration
 =============
+.. todo::
+    remove?

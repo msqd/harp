@@ -8,7 +8,7 @@ alerting, retrying...).
 You can read more about the core HTTP proxy features in the :doc:`http-proxy` section of the documentation.
 
 By default, it respects HTTP cache headers and will speed up your API calls without further configuration. Of course,
-a lot of APIs are non-standard or bahve strangely, and one goal of HARP is to give you a toolkit for fixing those.
+a lot of APIs are non-standard or behave strangely, and one goal of HARP is to give you a toolkit for fixing those.
 
 Most usually complex but must-have features can be configured using very few lines of code (most often one or less),
 and you can extend the existing or write your own using Python or Cython (for incredible speed and efficience, if
@@ -21,6 +21,7 @@ You run it locally, and query the local server instead of the remote API.
 
 The easiest way to get started is to run it through docker:
 
+.. # TO DO update this with a working command for docker
 .. code-block:: bash
 
     docker run -it --rm -p 4000:4000 -p 4080:4080 -e HARP_ENDPOINT_URL=https://httpbin.org makersquad/harp-proxy
@@ -47,6 +48,7 @@ configure it using its python API and/or a configuration file (various formats a
 
 Here is a simple example of a bootstrap script that will do the exact same thing as the docker command above:
 
+.. TODO This is outdated, I don't think it exists anymore.
 .. code-block:: python
 
     from harp import ProxyFactory

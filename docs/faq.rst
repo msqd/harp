@@ -48,6 +48,6 @@ interface subpackage.
 
 Try running the following command:
 
-    (cd vendors/mkui; pnpm exec playwright install)
+    (cd harp_apps/dashboard/frontend; pnpm exec playwright install)
 
 It should download the expected browser versions in your local cache, allowing to run the interface tests.
