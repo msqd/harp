@@ -37,8 +37,8 @@ function Layout() {
         leftChildren={
           <Link to="/" className="flex">
             <img className="h-8 w-auto" src={logo} alt="Harp" />
-            <span className="h-8 px-2 pt-1 text-md font-medium text-white" title="Community Edition">
-              Harp CE
+            <span className="h-8 px-2 pt-1 text-md font-medium text-white" title="Harp Early Access">
+              Harp EA
             </span>
           </Link>
         }

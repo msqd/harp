@@ -68,9 +68,9 @@ exports[`renders the title and data when the query is successful 1`] = `
                 />
                 <span
                   class="h-8 px-2 pt-1 text-md font-medium text-white"
-                  title="Community Edition"
+                  title="Harp Early Access"
                 >
-                  Harp CE
+                  Harp EA
                 </span>
               </a>
             </div>
