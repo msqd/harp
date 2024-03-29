@@ -1,6 +1,5 @@
-import { Tab } from "ui/Components/Tabs"
-
 import { Page, PageTitle } from "Components/Page"
+import { Tab } from "ui/Components/Tabs"
 
 import { SystemDependenciesTabPanel } from "./SystemDependenciesTabPanel.tsx"
 import { SystemSettingsTabPanel } from "./SystemSettingsTabPanel.tsx"

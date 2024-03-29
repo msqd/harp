@@ -1,5 +1,5 @@
 from decimal import Decimal
-from statistics import mean
+from statistics import StatisticsError, mean
 
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest
@@ -68,7 +68,11 @@ class OverviewController(RoutingController):
         transactions_by_date_list = generate_continuous_time_range(
             discontinuous_transactions=transactions_by_date_list, time_bucket=time_bucket, start_datetime=start_datetime
         )
-        mean_apdex = mean(filter(None, [t["meanApdex"] for t in transactions_by_date_list]))
+        try:
+            mean_apdex = mean(filter(None, [t["meanApdex"] for t in transactions_by_date_list]))
+        except StatisticsError:
+            mean_apdex = None
+
         return json(
             {
                 "apdex": {
@@ -109,7 +113,11 @@ class OverviewController(RoutingController):
         transactions_by_date_list = generate_continuous_time_range(
             discontinuous_transactions=transactions_by_date_list, time_bucket=time_bucket, start_datetime=start_datetime
         )
-        mean_apdex = mean(filter(None, [t["meanApdex"] for t in transactions_by_date_list]))
+
+        try:
+            mean_apdex = mean(filter(None, [t["meanApdex"] for t in transactions_by_date_list]))
+        except StatisticsError:
+            mean_apdex = None
         return json(
             {
                 "transactions": transactions_by_date_list,
