@@ -1,9 +1,8 @@
+import ApdexBadge from "Components/Badges/ApdexBadge.tsx"
 import { OverviewData } from "Models/Overview"
 import { H2 } from "ui/Components/Typography"
 
 import { TransactionsChart } from "./Charts"
-
-import ApdexBadge from "../../../Components/Badges/ApdexBadge.tsx"
 
 export interface TransactionOverviewChartProps {
   data: OverviewData

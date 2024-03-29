@@ -1,7 +1,7 @@
+import { classNames } from "ui/Utilities"
+
 import { StyledJumboBadge, StyledJumboBadgeProps } from "./StyledJumboBadge.tsx"
 import { apdexScale } from "./constants.ts"
-
-import { classNames } from "../../ui/Utilities"
 
 export default function ApdexBadge({
   score,

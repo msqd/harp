@@ -1,19 +1,18 @@
 import { useState } from "react"
-import { Sparklines, SparklinesCurve, SparklinesLine, SparklinesSpots } from "react-sparklines"
 import tw, { styled } from "twin.macro"
 
-import ApdexBadge from "Components/Badges/ApdexBadge.tsx"
-import { StyledJumboBadge } from "Components/Badges/StyledJumboBadge.tsx"
 import { Page, PageTitle } from "Components/Page"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
+import { useSummaryDataQuery } from "Domain/Overview/useSummaryDataQuery.tsx"
 import { useSystemSettingsQuery } from "Domain/System"
 import { ButtonGroup } from "ui/Components/ButtonGroup"
 import { Pane } from "ui/Components/Pane"
 import { H2 } from "ui/Components/Typography"
 
+import { PerformancesSummary } from "./Components/PerformancesSummary.tsx"
+import { RateSummary } from "./Components/RateSummary.tsx"
 import { TransactionsOverview } from "./Containers"
-
-import { useSummaryDataQuery } from "../../Domain/Overview/useSummaryDataQuery.tsx"
+import { mapGetValues } from "./utils.ts"
 
 export const OverviewPage = () => {
   const settingsQuery = useSystemSettingsQuery()
@@ -23,6 +22,7 @@ export const OverviewPage = () => {
   interface ProxyData {
     endpoints?: { name: string; port: number; url: string; description?: string }[]
   }
+
   const [timeRange, setTimeRange] = useState("7d")
   const setCurrentTimeRange = (timeRange: string) => {
     setTimeRange(timeRange)
@@ -44,72 +44,35 @@ export const OverviewPage = () => {
         <StyledSummaryPane>
           <H2>Performances</H2>
           <OnQuerySuccess query={summaryQuery}>
-            {(query) => {
-              return (
-                <>
-                  <div className="flex self-center relative z-10">
-                    <ApdexBadge score={query.data.apdex.mean} size="xl" className="ring-1 ring-white" />
-                  </div>
-                  <Sparklines
-                    min={0}
-                    data={query.data.apdex.data.map((d: { value: number }) => d.value)}
-                    style={{ margin: "-3px", position: "absolute", bottom: 0, left: 0, zIndex: 0 }}
-                  >
-                    <SparklinesCurve color="#ADD8E6" />
-                    <SparklinesSpots />
-                  </Sparklines>
-                </>
-              )
-            }}
+            {(query) => <PerformancesSummary mean={query.data.apdex.mean} data={mapGetValues(query.data.apdex.data)} />}
           </OnQuerySuccess>
         </StyledSummaryPane>
         <StyledSummaryPane>
           <H2>Transactions</H2>
           <OnQuerySuccess query={summaryQuery}>
-            {(query) => {
-              return (
-                <>
-                  <div className="flex self-center relative z-10">
-                    <StyledJumboBadge className="bg-white ring-1 ring-blue-200" size="xl" color="black">
-                      {query.data.transactions.rate}{" "}
-                      <span className="font-light">/{query.data.transactions.period}</span>
-                    </StyledJumboBadge>
-                  </div>
-                  <Sparklines
-                    min={0}
-                    data={query.data.transactions.data.map((d: { value: number }) => d.value)}
-                    style={{ margin: "-3px", position: "absolute", bottom: 0, left: 0 }}
-                  >
-                    <SparklinesLine color="#ADD8E6" />
-                    <SparklinesSpots />
-                  </Sparklines>
-                </>
-              )
-            }}
+            {(query) => (
+              <RateSummary
+                rate={query.data.transactions.rate}
+                period={query.data.transactions.period}
+                data={mapGetValues(query.data.transactions.data)}
+                color="#ADD8E6"
+                badgeClassName="ring-blue-200"
+              />
+            )}
           </OnQuerySuccess>
         </StyledSummaryPane>
         <StyledSummaryPane>
           <H2>Errors</H2>
           <OnQuerySuccess query={summaryQuery}>
-            {(query) => {
-              return (
-                <>
-                  <div className="flex self-center relative z-10">
-                    <StyledJumboBadge className="bg-white ring-1 ring-red-200" size="xl" color="black">
-                      {query.data.errors.rate} <span className="font-light">/{query.data.errors.period}</span>
-                    </StyledJumboBadge>
-                  </div>
-                  <Sparklines
-                    min={0}
-                    data={query.data.errors.data.map((d: { value: number }) => d.value)}
-                    style={{ margin: "-3px", position: "absolute", bottom: 0, left: 0 }}
-                  >
-                    <SparklinesLine color="#e6b3ad" />
-                    <SparklinesSpots />
-                  </Sparklines>
-                </>
-              )
-            }}
+            {(query) => (
+              <RateSummary
+                rate={query.data.errors.rate}
+                period={query.data.errors.period}
+                data={mapGetValues(query.data.errors.data)}
+                color="#e6b3ad"
+                badgeClassName="ring-red-200"
+              />
+            )}
           </OnQuerySuccess>
         </StyledSummaryPane>
       </div>

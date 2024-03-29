@@ -2,12 +2,12 @@ import { StarIcon } from "@heroicons/react/24/outline"
 import { formatDistance, formatDuration } from "date-fns"
 import { useState } from "react"
 
+import ApdexBadge from "Components/Badges/ApdexBadge.tsx"
 import { useSetUserFlagMutation } from "Domain/Transactions"
 import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
 import { Message, Transaction } from "Models/Transaction"
 import { DataTable } from "ui/Components/DataTable"
 
-import ApdexBadge from "../../../../Components/Badges/ApdexBadge.tsx"
 import { MessageSummary } from "../MessageSummary.tsx"
 
 interface TransactionsDataTableProps {
