@@ -3512,4 +3512,4 @@ dev = ["honcho", "watchfiles"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "93798170595bfa437cc8f7b68f761d9352d7f31e26948ae4196233a4fb4ca25a"
+content-hash = "2fe8f5834da0a66a05678f239941d66ff59cfb45143e64375fbf9b14b142ef97"
