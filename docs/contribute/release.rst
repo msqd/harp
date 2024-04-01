@@ -48,97 +48,93 @@ Prior to release
   .. code-block:: shell-session
 
     git add -p pyproject.toml poetry.lock harp_apps/dashboard/frontend/package.json harp_apps/dashboard/frontend/pnpm-lock.yaml
-    git commit -m "chore: update dependencies"
+    git commit -m "chore: cleanup and update dependencies"
     git push
 
 
 Releasing a new version
 :::::::::::::::::::::::
 
-Considering the main project repository is setup as "upstream" remote for git...
-
 1. Pull and check dependencies are there.
 
 .. code-block:: shell-session
 
-    git pull upstream `git rev-parse --abbrev-ref HEAD`
-    git fetch upstream --tags
-    pip install -U pip wheel twine git-semver
-    poetry lock
+    git pull --tags
+    make install-dev
 
 2. Generate next version number
 
-.. todo::
+.. code-block:: shell-session
 
-    Use `poetry version` to bump ?
+    poetry version <patch|minor|major|prepatch|preminor|premajor|prerelease>
+    # ... or edit the version in pyproject.toml
 
 .. code-block:: shell-session
 
-    # Generate patch level version (x.y.z -> x.y.z+1)
-    NEXT_VERSION=`git semver --next-patch`
-    echo $NEXT_VERSION
+    export VERSION=`poetry version --short`
+    export OLD_VERSION=`git describe --tags --abbrev=0`
 
-    # Generate minor level version (x.y.z -> x.y+1.0)
-    NEXT_VERSION=`git semver --next-minor`
-    echo $NEXT_VERSION
-
-    # Generate major level version (x.y.z -> x+1.0.0)
-    NEXT_VERSION=`git semver --next-major`
-    echo $NEXT_VERSION
-
-Update version numbers in `pyproject.toml` and `harp/__init__.py`...
+3. Update version numbers in other project files...
 
 .. code-block:: shell-session
 
-    gsed -i -e "s/^version = .*/version = \"$NEXT_VERSION\"/" pyproject.toml
-    gsed -i -e "s/^__version__ = .*/__version__ = \"$NEXT_VERSION\"/" harp/__init__.py
-    gsed -i -e "s/^appVersion: .*/appVersion: \"$NEXT_VERSION\"/" misc/helm/charts/harp-proxy/Chart.yaml
+    gsed -i -e "s/^__version__ = .*/__version__ = \"$VERSION\"/" harp/__init__.py
+    gsed -i -e "s/^appVersion: .*/appVersion: \"$VERSION\"/" misc/helm/charts/harp-proxy/Chart.yaml
 
-Generate a changelog...
+4. Generate a changelog...
 
 .. code-block:: shell-session
 
-    git log --oneline --no-merges --pretty=format:"* %s (%an)" `git tag | tail -n 1`.. > docs/development/changelogs/$NEXT_VERSION.rst
-    git add docs/development/changelogs/$NEXT_VERSION.rst
+    git log --oneline --no-merges --pretty=format:"* %s (%an)" $OLD_VERSION.. > docs/contribute/changelogs/$VERSION.rst
+    git add docs/contribute/changelogs/$VERSION.rst
 
+5. Reboot computer and un the benchmarks on new version
 
 .. code-block:: shell-session
 
     docker-compose up -d
     poetry run make benchmark-save
 
-Then **edit the changelogs index** to add a title, date, **run the benchmarks** and **add perf graphs to docs**.
+.. todo:: use poetry version for benchmark save ?
 
-Add to git ...
+- Edit the **changelog index** (`docs/contribute/changelogs/index.rst`) to add the new version (title, date).
+- Add a **title** to the new changelog file.
+- Add the **performance graphs** to the release note.
+
+6. Add to git
 
 .. code-block:: shell-session
 
-    git add -p pyproject.toml poetry.lock harp/__init__.py add docs/development/changelogs/
-    poetry run make preqa; git add docs/reference; git add -p
+    poetry run make preqa
+    git add docs/reference
+    git add -p
 
-3. Run a full test suite (todo: from a clean virtualenv)
+7. Run a full test suite again (todo: from a clean virtualenv)
 
 .. todo::
 
     - This should be done from a clean virtualenv, but it's not yet the case.
     - Interface snapshots should be run in a repeatable environment (docker ?).
 
+Git add is there to check nothing was modified by QA suite.
+
 .. code-block:: shell
 
    poetry run make qa
+   git add -p
 
-**TODO: Generate benchmarks ???**
-
-4. Create the git release
-
-.. code-block:: shell
-
-    git commit -m "release: $(poetry version)"
-
-Then when commit succeeds ...
+8. Create the git release
 
 .. code-block:: shell
 
-    git tag -am "$(poetry version)" $(poetry version --short)
-    git push origin `git rev-parse --abbrev-ref HEAD` --tags
-    git push upstream `git rev-parse --abbrev-ref HEAD` --tags
+    git commit -m "release: $VERSION"
+
+9. Tag and push
+
+.. code-block:: shell
+
+    git tag -am "release: $VERSION" $VERSION
+
+.. code-block:: shell
+
+    git push `git rev-parse --abbrev-ref HEAD` --tags
