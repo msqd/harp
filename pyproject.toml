@@ -16,7 +16,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.11"
 aiohttp = "^3.9.3"
-aiosqlite = "^0.19.0"
+aiosqlite = ">=0.19,<0.21"
 anyio = "^4.3.0"
 asgimiddlewarestaticfile = "^0.6.0"
 asgiref = "^3.8.1"
