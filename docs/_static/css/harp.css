@@ -1,0 +1,30 @@
+.jumbo-toc table {
+    border: 2px solid #334155;
+}
+
+.jumbo-toc table td {
+    border: 2px solid #334155;
+    vertical-align: top;
+}
+
+.jumbo-toc table td > p > a:first-child {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.jumbo-toc table ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    font-size: 0.9em;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.jumbo-toc table ul li {
+    flex-grow: 1;
+    flex-basis: auto;
+    text-align: center;
+}

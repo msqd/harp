@@ -1,4 +1,0 @@
-Prefetching
-===========
-.. todo::
-    remove?

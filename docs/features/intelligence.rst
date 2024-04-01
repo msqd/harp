@@ -1,4 +1,0 @@
-Intelligence
-============
-.. todo::
-    remove?

@@ -1,4 +1,0 @@
-Routing
-=======
-.. todo::
-    remove?

@@ -40,6 +40,7 @@ root_doc = "index"
 html_theme = "furo"
 html_static_path = ["_static"]
 html_js_files = ["js/links-target-blank.js"]
+html_css_files = ["css/harp.css"]
 html_baseurl = "https://msqd.github.io/harp/"
 
 html_sidebars = {

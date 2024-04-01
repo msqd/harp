@@ -1,5 +1,5 @@
-Configuration
-=============
+Configure
+=========
 
 Configuration is built from different sources that may override each other. From lowest to hightest priority (lower items will override items configured by a higher item):
 

@@ -1,6 +1,18 @@
 Quick start
 ===========
 
+The main goal of HARP is to be a nearline proxy to remote HTTP APIs, to enhance observability and reliability while
+lowering development, operations and maintenance costs.
+
+You can read more about the core HTTP proxy features in the :doc:`/features/http-proxy` section of the documentation.
+
+By default, it respects HTTP cache headers and will speed up your API calls without further configuration. Of course,
+a lot of APIs are non-standard or behave strangely, and one goal of HARP is to give you a toolkit for fixing those.
+
+Most usually complex but must-have features can be configured using very few lines of code (most often one or less),
+and you can extend the existing or write your own using Python or Cython (for incredible speed and efficience, if
+it's a need).
+
 Installation
 ::::::::::::
 

@@ -1,5 +1,0 @@
-Batching
-========
-
-.. todo::
-    remove?

@@ -1,4 +1,0 @@
-Rewriting
-=========
-.. todo::
-    remove?

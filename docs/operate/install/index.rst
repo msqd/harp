@@ -1,5 +1,5 @@
-Installation
-============
+Install
+=======
 
 The following
 
