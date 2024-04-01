@@ -17,7 +17,6 @@ PYTEST_COMMON_OPTIONS ?= -n auto
 PYTEST_COVERAGE_OPTIONS ?= --cov=harp --cov=harp_apps --cov-report html:docs/_build/html/coverage
 PYTEST_OPTIONS ?=
 
-
 # docker
 DOCKER ?= $(shell which docker || echo "docker")
 DOCKER_IMAGE ?= $(NAME)
@@ -29,8 +28,14 @@ DOCKER_BUILD_TARGET ?= runtime
 DOCKER_NETWORK ?= harp_default
 DOCKER_RUN_COMMAND ?=
 
+# frontend
+PNPM ?= $(shell which pnpm || echo "pnpm")
+
 # misc.
 SED ?= $(shell which gsed || which sed || echo "sed")
+
+# constants
+FRONTEND_DIR = harp_apps/dashboard/frontend
 
 
 ########################################################################################################################
@@ -43,9 +48,10 @@ install: install-frontend install-backend  ## Installs harp dependencies (backen
 
 install-dev:  ## Installs harp dependencies (backend, dashboard) with development tools.
 	POETRY_INSTALL_OPTIONS="-E dev" $(MAKE) install
+	cd $(FRONTEND_DIR); $(PNPM) exec playwright install
 
 install-frontend:  ## Installs harp dashboard dependencies (frontend).
-	cd harp_apps/dashboard/frontend; pnpm install
+	cd $(FRONTEND_DIR); $(PNPM) install
 
 install-backend:  ## Installs harp dependencides (backend).
 	poetry install $(POETRY_INSTALL_OPTIONS)
@@ -74,7 +80,7 @@ reference: harp  ## Generates API reference documentation as ReST files (docs).
 .PHONY: frontend-build
 
 frontend-build:  ## Builds the harp dashboard frontend (compiles typescript and other sources into bundled version).
-	cd harp_apps/dashboard/frontend; pnpm build
+	cd $(FRONTEND_DIR); $(PNPM) build
 
 
 ########################################################################################################################
@@ -103,8 +109,8 @@ format-backend:  ## Formats the backend codebase.
 	$(RUN) ruff check --fix harp harp_apps tests
 
 format-frontend: install-frontend  ## Formats the frontend codebase.
-	(cd harp_apps/dashboard/frontend; pnpm lint:fix)
-	(cd harp_apps/dashboard/frontend; pnpm prettier -w src)
+	(cd $(FRONTEND_DIR); $(PNPM) lint:fix)
+	(cd $(FRONTEND_DIR); $(PNPM) prettier -w src)
 
 test:  ## Runs all tests.
 	$(MAKE) test-backend
@@ -117,13 +123,13 @@ test-backend: install-backend-dev  ## Runs backend tests.
 	          $(PYTEST_OPTIONS)
 
 test-frontend: install-frontend lint-frontend  ## Runs frontend tests.
-	cd harp_apps/dashboard/frontend; pnpm test
+	cd $(FRONTEND_DIR); $(PNPM) test
 
 test-frontend-update: install-frontend lint-frontend  ## Runs frontend tests while updating snapshots.
-	cd harp_apps/dashboard/frontend; pnpm test:unit:update
+	cd $(FRONTEND_DIR); $(PNPM) test:unit:update
 
 lint-frontend: install-frontend  ## Lints the frontend codebase.
-	cd harp_apps/dashboard/frontend; pnpm build
+	cd $(FRONTEND_DIR); $(PNPM) build
 
 coverage:  ## Generates coverage report.
 	$(PYTEST) $(PYTEST_TARGETS) tests \
@@ -215,6 +221,5 @@ help:   ## Shows available commands.
 
 clean:  ## Cleans up the project directory.
 	(cd docs; $(MAKE) clean)
-	-rm -rf harp_apps/dashboard/frontend/dist
+	-rm -rf $(FRONTEND_DIR)/dist
 	-rm -f benchmark_*.svg
-

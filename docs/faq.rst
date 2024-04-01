@@ -31,23 +31,17 @@ The full error may look like the following:
 All UI snapchot tests fails, it complains that browser (chromium) executables are not available.
 ------------------------------------------------------------------------------------------------
 
-If you get errors looking like the following...
+If you get the following error...
 
     Error: browserType.launch: Executable doesn't exist at /.../Chromium
-    ╔═════════════════════════════════════════════════════════════════════════╗
-    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
-    ║ Please run the following command to download new browsers:              ║
-    ║                                                                         ║
-    ║     pnpm exec playwright install                                        ║
-    ║                                                                         ║
-    ║ <3 Playwright Team                                                      ║
-    ╚═════════════════════════════════════════════════════════════════════════╝
+    Looks like Playwright Test or Playwright was just installed or updated.
+    Please run the following command to download new browsers:
+    ...
 
-... it means that you need to install the browsers that Playwright Test uses to run the tests, but within the user
-interface subpackage.
+... it means that you need to install the browsers that Playwright Test uses to run the tests.
 
-Try running the following command:
+Run::
 
-    (cd harp_apps/dashboard/frontend; pnpm exec playwright install)
+    make install-dev
 
 It should download the expected browser versions in your local cache, allowing to run the interface tests.
