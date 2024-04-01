@@ -80,19 +80,19 @@ Quick start
 
 Install
 
-.. todo:: fix once released
+TODO: fix once released
 
 Run
 
-.. todo:: fix once released
+TODO: fix once released
 
 Read the docs
 
-.. todo:: fix once released
+TODO: fix once released
 
 Tell us what you think
 
-.. todo:: fix once released
+TODO: fix once released
 
 
 Credits
