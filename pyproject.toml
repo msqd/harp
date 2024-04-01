@@ -3,7 +3,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "harp"
+name = "harp-proxy"
 version = "0.5.0b3"
 description = ""
 authors = ["Romain Dorgueil <romain@makersquad.fr>"]
