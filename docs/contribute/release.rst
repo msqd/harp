@@ -73,6 +73,7 @@ Releasing a new version
 
     export VERSION=`poetry version --short`
     export OLD_VERSION=`git describe --tags --abbrev=0`
+    echo New version: $VERSION - Old version: $OLD_VERSION
 
 3. Update version numbers in other project files...
 

@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "harp"
-version = "0.5.0b2"
+version = "0.5.0b3"
 description = ""
 authors = ["Romain Dorgueil <romain@makersquad.fr>"]
 readme = "README.rst"

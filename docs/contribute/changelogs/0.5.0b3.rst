@@ -1,6 +1,15 @@
-Version 0.5.0b2 (2024-04-01)
+Version 0.5.0b3 (2024-04-01)
 ============================
 
+* feat: fix rtd (Romain Dorgueil)
+* feat: fix rtd (Romain Dorgueil)
+* feat: fix rtd (Romain Dorgueil)
+* feat: fix rtd (Romain Dorgueil)
+* feat: read the docs (Romain Dorgueil)
+* chore(deps): bump aiosqlite from 0.19.0 to 0.20.0 (dependabot[bot])
+* feat: unvendor whistle (Romain Dorgueil)
+* feat: add missing dependency pyyaml (Romain Dorgueil)
+* release: 0.5.0b2 (Romain Dorgueil)
 * chore: cleanup and update dependencies (Romain Dorgueil)
 * chore: update dependencies (Romain Dorgueil)
 * docs: refactoring (Romain Dorgueil)
