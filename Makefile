@@ -210,7 +210,7 @@ run-dev-shell:  ## Runs a shell within the development docker image.
 # Misc. utilities
 ########################################################################################################################
 
-.PHONY: help clean
+.PHONY: help clean clean-frontend-modules
 
 help:   ## Shows available commands.
 	@echo "Available commands:"
@@ -218,8 +218,10 @@ help:   ## Shows available commands.
 	@grep -E '^[a-zA-Z_-]+:.*?##[\s]?.*$$' --no-filename $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo
 
+clean-frontend-modules:  ## Cleans up the frontend node modules directory.
+	-rm -rf $(FRONTEND_DIR)/node_modules
 
-clean:  ## Cleans up the project directory.
+clean: clean-frontend-modules  ## Cleans up the project.
 	(cd docs; $(MAKE) clean)
 	-rm -rf $(FRONTEND_DIR)/dist
 	-rm -f benchmark_*.svg
