@@ -137,4 +137,4 @@ Git add is there to check nothing was modified by QA suite.
 
 .. code-block:: shell
 
-    git push `git rev-parse --abbrev-ref HEAD` --tags
+    git push origin `git rev-parse --abbrev-ref HEAD` --tags
