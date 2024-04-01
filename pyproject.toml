@@ -39,8 +39,6 @@ watchfiles = { version = "^0.21.0", optional = true }
 orjson = "^3.10.0"
 hishel = ">=0.0.21,<0.0.26"
 sentry-sdk = "^1.44.0"
-networkx = "^3.2.1"
-bokeh = "^3.4.0"
 essentials-configuration = "^2.0.4"
 rodi = "^2.0.6"
 

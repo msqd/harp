@@ -59,9 +59,6 @@ dependencies:
   react-error-boundary:
     specifier: ^4.0.13
     version: 4.0.13(react@18.2.0)
-  react-google-charts:
-    specifier: ^4.0.1
-    version: 4.0.1(react-dom@18.2.0)(react@18.2.0)
   react-is:
     specifier: 18.2.0
     version: 18.2.0
@@ -6141,16 +6138,6 @@ packages:
     dependencies:
       '@babel/runtime': 7.24.1
       react: 18.2.0
-    dev: false
-
-  /react-google-charts@4.0.1(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-V/hcMcNuBgD5w49BYTUDye+bUKaPmsU5vy/9W/Nj2xEeGn+6/AuH9IvBkbDcNBsY00cV9OeexdmgfI5RFHgsXQ==}
-    peerDependencies:
-      react: '>=16.3.0'
-      react-dom: '>=16.3.0'
-    dependencies:
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
     dev: false
 
   /react-hotkeys-hook@4.5.0(react-dom@18.2.0)(react@18.2.0):
