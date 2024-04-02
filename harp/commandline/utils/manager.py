@@ -53,7 +53,7 @@ class HonchoManagerFactory:
     commands[HARP_DASHBOARD_SERVICE] = _get_dashboard_executable
 
     def _get_server_executable(self, processes):
-        cmd = f"{sys.executable} bin/entrypoint"
+        cmd = f"{sys.executable} -m harp server"
         proxy_options = list(self.proxy_options)
 
         if HARP_DASHBOARD_SERVICE in processes:

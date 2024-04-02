@@ -5,7 +5,6 @@ Factory configuration, does nothing but can be used to instanciate a server.
 import importlib.util
 import os
 import pprint
-from argparse import ArgumentParser
 from copy import deepcopy
 from types import MappingProxyType
 from typing import Self, Type
@@ -18,6 +17,7 @@ from rodi import Container
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
+from harp.commandline.server import ServerOptions
 from harp.config.application import Application
 from harp.utils.identifiers import is_valid_dotted_identifier
 
@@ -103,45 +103,23 @@ class Config:
             self._raw_settings["applications"].remove(name)
         self._debug_applications.discard(name)
 
-    def read_env(self, args=None):
+    def read_env(
+        self,
+        options: ServerOptions,
+        /,
+    ):
         """
         Parses sys.argv-like arguments.
 
         :param args:
+        :param files: list of filenames to load in order. Will happen after defaults env and files.
         :return: argparse.Namespace
 
         """
-        if not args:
-            args = []
-
-        parser = ArgumentParser()
-        parser.add_argument(
-            "--set",
-            "-s",
-            action="append",
-            dest="values",
-            nargs=2,
-            metavar=("KEY", "VALUE"),
-            help="Set a configuration value.",
-        )
-        parser.add_argument(
-            "--file",
-            "-f",
-            action="append",
-            dest="files",
-            help="Load configuration from file.",
-        )
-        parser.add_argument(
-            "--disable",
-            "-D",
-            action="append",
-            dest="disabled_applications",
-            help="Disable an application.",
-        )
-        options = parser.parse_args(args)
-
-        for disabled_application in options.disabled_applications or ():
-            self.remove_application(disabled_application)
+        for _enabaled_application in options.enable or ():
+            self.add_application(_enabaled_application)
+        for _disabled_application in options.disable or ():
+            self.remove_application(_disabled_application)
 
         from config.common import ConfigurationBuilder, MapSource
         from config.env import EnvVars
@@ -156,11 +134,13 @@ class Config:
         # current
         builder.add_source(MapSource(self._raw_settings))
 
+        # load default system config (if present)
         if os.path.exists("/etc/harp.yaml"):
             builder.add_source(YAMLFile("/etc/harp.yaml"))
         elif os.path.exists("/etc/harp.yml"):
             builder.add_source(YAMLFile("/etc/harp.yml"))
 
+        # load user config
         for file in options.files or ():
             _, ext = os.path.splitext(file)
             if ext in (".yaml", ".yml"):
@@ -176,7 +156,7 @@ class Config:
 
         builder.add_source(EnvVars(prefix="HARP_"))
 
-        for k, v in options.values or ():
+        for k, v in (options.options or {}).items():
             builder.add_value(k, v)
 
         self._raw_settings = builder.build().values

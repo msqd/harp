@@ -1,9 +1,8 @@
 import os
 import subprocess
 
-import rich_click as click
-
 from harp import ROOT_DIR
+from harp.utils.commandline import click
 
 
 @click.command(short_help="Installs the development dependencies.")

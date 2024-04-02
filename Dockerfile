@@ -113,12 +113,15 @@ USER root
 WORKDIR /root
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apk,sharing=locked \
-    apk add gcc musl-dev libffi-dev make \
-    && apk add httpie \
+    apk add httpie musl-dev libffi-dev gcc make \
     && adduser -D harp -G www-data -h ${BASE} -u 500  \
     && mkdir -p ${BASE} /var/lib/harp/data \
     && echo 'alias l="ls -lsah --color"' > /opt/harp/.profile \
     && echo 'export PATH="${POETRY_HOME}/bin:${VIRTUAL_ENV}/bin:$PATH"' >> /opt/harp/.profile
+
+ENV TINI_VERSION v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
 
 RUN chown harp:www-data -R /opt/harp /var/lib/harp/data
 
@@ -132,7 +135,6 @@ COPY --from=backend --chown=harp:www-data ${BASE}/src ${BASE}/src
 RUN ln -s /var/lib/harp/data; \
     ln -s /etc/harp.yaml; \
     mkdir bin; \
-    ln -s ${BASE}/src/bin/entrypoint bin/entrypoint; \
     mv src/examples ./examples;
 
 
@@ -141,4 +143,5 @@ ENV DEFAULT__HARP__STORAGE__URL="sqlite+aiosqlite:///data/harp.db"
 
 EXPOSE 4080
 
-ENTRYPOINT [ "/opt/venv/bin/python", "/opt/harp/bin/entrypoint" ]
+ENTRYPOINT  [ "/tini", "--", "/opt/venv/bin/python", "-m", "harp" ]
+CMD [ "server" ]

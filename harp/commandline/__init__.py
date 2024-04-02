@@ -35,12 +35,17 @@ Contents
 
 """
 
-import rich_click as click
-
 from harp.commandline.install_dev import install_dev
+from harp.commandline.server import server
 from harp.commandline.start import start
+from harp.utils.commandline import check_packages, click
 
 __title__ = "Command Line"
+
+IS_DEVELOPMENT_ENVIRONMENT = False
+
+if check_packages("honcho", "watchfiles"):
+    IS_DEVELOPMENT_ENVIRONMENT = True
 
 
 @click.group()
@@ -53,8 +58,11 @@ def entrypoint():
     pass
 
 
-entrypoint.add_command(start)
-entrypoint.add_command(install_dev)
+if IS_DEVELOPMENT_ENVIRONMENT:
+    entrypoint.add_command(start)
+    entrypoint.add_command(install_dev)
+
+entrypoint.add_command(server)
 
 __all__ = [
     "entrypoint",

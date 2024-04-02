@@ -17,6 +17,7 @@ Submodules
     harp.utils.background
     harp.utils.bytes
     harp.utils.collections
+    harp.utils.commandline
     harp.utils.dates
     harp.utils.guids
     harp.utils.identifiers
