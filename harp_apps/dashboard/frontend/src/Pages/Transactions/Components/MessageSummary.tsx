@@ -19,7 +19,9 @@ export function MessageSummary({ kind, summary = "", endpoint }: MessageSummaryP
             {endpoint}
           </span>
         ) : null}
-        <span className="text-gray-500 font-mono text-xs">{url}</span>
+        <span className="text-gray-500 font-mono text-xs" title={url}>
+          {url}
+        </span>
       </span>
     )
   }

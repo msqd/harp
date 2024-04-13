@@ -79,12 +79,10 @@ def run(config: Config):
     :return:
     """
     import asyncio
-    import sys
 
     from harp.config.adapters.hypercorn import HypercornAdapter
     from harp.config.factories.kernel_factory import KernelFactory
 
-    config.read_env(sys.argv[1:])
     factory = KernelFactory(config)
     server = HypercornAdapter(factory)
     asyncio.run(server.serve())

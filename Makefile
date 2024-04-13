@@ -19,6 +19,8 @@ PYTEST_OPTIONS ?=
 
 # docker
 DOCKER ?= $(shell which docker || echo "docker")
+DOCKER_DEFAULT_PLATFORM ?= linux/amd64
+DOCKER_OPTIONS ?=
 DOCKER_IMAGE ?= $(NAME)
 DOCKER_IMAGE_DEV ?= $(NAME)-dev
 DOCKER_TAGS ?=
@@ -27,6 +29,7 @@ DOCKER_BUILD_OPTIONS ?=
 DOCKER_BUILD_TARGET ?= runtime
 DOCKER_NETWORK ?= harp_default
 DOCKER_RUN_COMMAND ?=
+DOCKER_RUN_OPTIONS ?=
 
 # frontend
 PNPM ?= $(shell which pnpm || echo "pnpm")
@@ -88,7 +91,7 @@ frontend-build:  ## Builds the harp dashboard frontend (compiles typescript and 
 ########################################################################################################################
 
 .PHONY: preqa qa qa-full types format format-backend format-frontend
-.PHONY: test test-backend test-frontend test-frontend-update
+.PHONY: test test-backend test-frontend test-frontend-update test-frontend-ui-update
 .PHONY: lint-frontend coverage
 
 preqa: types format reference  ## Runs pre-qa checks (types generation, formatting, api reference).
@@ -127,6 +130,9 @@ test-frontend: install-frontend lint-frontend  ## Runs frontend tests.
 
 test-frontend-update: install-frontend lint-frontend  ## Runs frontend tests while updating snapshots.
 	cd $(FRONTEND_DIR); $(PNPM) test:unit:update
+
+test-frontend-ui-update: install-frontend lint-frontend  ## Update user interface visual snapshots.
+	cd $(FRONTEND_DIR); $(PNPM) test:ui:update
 
 lint-frontend: install-frontend  ## Lints the frontend codebase.
 	cd $(FRONTEND_DIR); $(PNPM) build
@@ -176,7 +182,7 @@ build:  ## Builds the docker image.
 	# TODO: rm in trap ?
 	# TODO: document --progress=plain ?
 	echo $(VERSION) > version.txt
-	$(DOCKER) build --target=$(DOCKER_BUILD_TARGET) $(DOCKER_BUILD_OPTIONS) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .
+	$(DOCKER) build --target=$(DOCKER_BUILD_TARGET) $(DOCKER_OPTIONS) $(DOCKER_BUILD_OPTIONS) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .
 	-rm -f version.txt
 
 build-dev:  ## Builds the development docker image.
@@ -191,13 +197,13 @@ push-dev:  ## Pushes the development docker image to the registry.
 	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) push
 
 run:  ## Runs the docker image.
-	$(DOCKER) run -it --network $(DOCKER_NETWORK) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
+	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
 run-shell:  ## Runs a shell within the docker image.
-	$(DOCKER) run -it --network $(DOCKER_NETWORK) -p 4080:4080 --rm --entrypoint=/bin/ash $(DOCKER_IMAGE) -l
+	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/ash $(DOCKER_IMAGE) -l
 
 run-example-repositories:  ## Runs harp with the "repositories" example within the docker image.
-	$(DOCKER) run -it --network $(DOCKER_NETWORK) -p 4080:4080 -p 9001-9012:9001-9012 --rm $(DOCKER_IMAGE) --file examples/repositories.yml --set storage.url postgresql+asyncpg://harp:harp@harp-postgres-1/repositories
+	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 -p 9001-9012:9001-9012 --rm $(DOCKER_IMAGE) --file examples/repositories.yml --set storage.url postgresql+asyncpg://harp:harp@harp-postgres-1/repositories
 
 run-dev:  ## Runs the development docker image.
 	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) run

@@ -45,3 +45,16 @@ Run::
     make install-dev
 
 It should download the expected browser versions in your local cache, allowing to run the interface tests.
+
+My M1/M2/M3 arm64-based mac complains about the absence of `ld-linux-x86-64.so` when starting the locally built image
+---------------------------------------------------------------------------------------------------------------------
+
+Error:
+
+    qemu-x86_64: Could not open '/lib64/ld-linux-x86-64.so.2': No such file or directory
+
+Solution:
+
+.. code-block:: shell-session
+
+    $ DOCKER_RUN_OPTIONS="--platform linux/x86_64" make build run

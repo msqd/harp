@@ -1,10 +1,9 @@
 import importlib.util
 import sys
-from itertools import chain
 
-import rich_click as click
-
+from harp.commandline.server import ServerOptions, add_harp_server_click_options
 from harp.commandline.utils.manager import HARP_DASHBOARD_SERVICE
+from harp.utils.commandline import click
 
 
 def _get_service_name_for_humans(x: str):
@@ -24,13 +23,9 @@ def assert_development_packages_are_available():
 
 
 @click.command(short_help="Starts the development environment.")
-@click.option("--set", "options", default=(), multiple=True, help="Set proxy configuration options.")
-@click.option("--file", "-f", "files", default=(), multiple=True, help="Load configuration from file.")
-@click.option("--disable", default=(), multiple=True, help="Disable some applications.")
 @click.option("--with-docs/--no-docs", default=False)
 @click.option("--with-ui/--no-ui", default=False)
 # TODO maybe run reset as a pre-start command, so it does not run on each reload?
-@click.option("--reset", is_flag=True, help="Reset the database (drop and recreate tables).")
 @click.option("--mock", is_flag=True, help="Enable mock data instead of real api data (dashboard).")
 @click.option(
     "--server-subprocess",
@@ -40,7 +35,8 @@ def assert_development_packages_are_available():
     help="Add a server subprocess to the list of services to start.",
 )
 @click.argument("services", nargs=-1)
-def start(with_docs, with_ui, options, files, disable, services, server_subprocesses, reset, mock):
+@add_harp_server_click_options
+def start(with_docs, with_ui, services, server_subprocesses, mock, **kwargs):
     try:
         assert_development_packages_are_available()
     except ModuleNotFoundError as exc:
@@ -66,17 +62,10 @@ def start(with_docs, with_ui, options, files, disable, services, server_subproce
     if not mock:
         more_env.setdefault(HARP_DASHBOARD_SERVICE, {})["DISABLE_MOCKS"] = "true"
 
-    options = dict(map(lambda x: x.split("=", 1), options))
+    options = ServerOptions(**kwargs)
+
     manager_factory = HonchoManagerFactory(
-        proxy_options=list(
-            chain(
-                ("--set {key} {value}".format(key=key, value=value) for key, value in options.items()),
-                ("--disable {app}".format(app=app) for app in disable),
-                ("-f " + file for file in files),
-                (("--set storage.drop_tables true",) if reset else ()),
-            )
-        ),
-        dashboard_devserver_port=options.get("dashboard.devserver_port", None),
+        proxy_options=options.as_list(), dashboard_devserver_port=options.get("dashboard.devserver_port", None)
     )
 
     services = {f"harp:{_name}" for _name in services or ()} or set(manager_factory.defaults)
