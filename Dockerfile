@@ -20,7 +20,7 @@ WORKDIR /root
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update \
-    && apt-get install -y make curl \
+    && apt-get install -y make curl ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -m harp -g www-data -d ${BASE} -u 500  \
     && echo 'alias l="ls -lsah --color"' > /opt/harp/.profile \
@@ -69,6 +69,7 @@ WORKDIR /root
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apt,sharing=locked \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && curl -sSL https://get.docker.com/ | sh \
     && apt-get install -y build-essential \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/* \
@@ -134,7 +135,7 @@ WORKDIR /root
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update \
-    && apt-get install -y make curl httpie \
+    && apt-get install -y make curl ca-certificates httpie \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -m harp -g www-data -d ${BASE} -u 500  \
     && mkdir -p /var/lib/harp/data \
