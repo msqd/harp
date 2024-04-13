@@ -90,7 +90,7 @@ frontend-build:  ## Builds the harp dashboard frontend (compiles typescript and 
 ########################################################################################################################
 
 .PHONY: preqa qa qa-full types format format-backend format-frontend
-.PHONY: test test-backend test-frontend test-frontend-update
+.PHONY: test test-backend test-frontend test-frontend-update test-frontend-ui-update
 .PHONY: lint-frontend coverage
 
 preqa: types format reference  ## Runs pre-qa checks (types generation, formatting, api reference).
@@ -129,6 +129,9 @@ test-frontend: install-frontend lint-frontend  ## Runs frontend tests.
 
 test-frontend-update: install-frontend lint-frontend  ## Runs frontend tests while updating snapshots.
 	cd $(FRONTEND_DIR); $(PNPM) test:unit:update
+
+test-frontend-ui-update: install-frontend lint-frontend  ## Update user interface visual snapshots.
+	cd $(FRONTEND_DIR); $(PNPM) test:ui:update
 
 lint-frontend: install-frontend  ## Lints the frontend codebase.
 	cd $(FRONTEND_DIR); $(PNPM) build

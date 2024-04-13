@@ -57,6 +57,7 @@ const transactionColumnTypes = {
     get: (row: Transaction) => getRequestFromTransactionMessages(row),
     format: ({ request, endpoint }: { request?: Message; endpoint?: string }) =>
       request ? <MessageSummary kind={request.kind} summary={request.summary} endpoint={endpoint} /> : null,
+    className: "truncate max-w-0 w-full",
   },
   response: {
     label: "Response",

@@ -157,7 +157,7 @@ exports[`renders well when the query is successful 1`] = `
                       </svg>
                     </td>
                     <td
-                      class=" css-157hpf5"
+                      class="truncate max-w-0 w-full css-157hpf5"
                     >
                       <span
                         class="font-normal"
@@ -175,8 +175,9 @@ exports[`renders well when the query is successful 1`] = `
                         </span>
                         <span
                           class="text-gray-500 font-mono text-xs"
+                          title="/lorem/ipsum-dolor/sit/amet?this=is&a=very-long&request=path&that-will=demonstrate&how-the-ui=behave-when&the-full-content-with-is-very-large=which-may-happen-quite-often"
                         >
-                          /
+                          /lorem/ipsum-dolor/sit/amet?this=is&a=very-long&request=path&that-will=demonstrate&how-the-ui=behave-when&the-full-content-with-is-very-large=which-may-happen-quite-often
                         </span>
                       </span>
                     </td>
@@ -238,7 +239,7 @@ exports[`renders well when the query is successful 1`] = `
                       </svg>
                     </td>
                     <td
-                      class=" css-157hpf5"
+                      class="truncate max-w-0 w-full css-157hpf5"
                     >
                       <span
                         class="font-normal"
@@ -256,8 +257,9 @@ exports[`renders well when the query is successful 1`] = `
                         </span>
                         <span
                           class="text-gray-500 font-mono text-xs"
+                          title="/this/is/short"
                         >
-                          /
+                          /this/is/short
                         </span>
                       </span>
                     </td>
