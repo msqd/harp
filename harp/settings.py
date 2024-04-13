@@ -13,4 +13,4 @@ __title__ = "Settings"
 PAGE_SIZE = 20
 
 #: Default timeout for http requests
-DEFAULT_TIMEOUT = 10.0
+DEFAULT_TIMEOUT = 30.0
