@@ -19,6 +19,7 @@ PYTEST_OPTIONS ?=
 
 # docker
 DOCKER ?= $(shell which docker || echo "docker")
+DOCKER_DEFAULT_PLATFORM ?= linux/amd64
 DOCKER_OPTIONS ?=
 DOCKER_IMAGE ?= $(NAME)
 DOCKER_IMAGE_DEV ?= $(NAME)-dev
