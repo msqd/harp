@@ -28,8 +28,10 @@ Prior to release
 
   .. code-block:: shell-session
 
-      cd harp_apps/dashboard/frontend
-      pnpm update --interactive
+      (
+           cd harp_apps/dashboard/frontend;
+           pnpm update --interactive
+      )
 
 - Python dependencies
 
@@ -37,10 +39,11 @@ Prior to release
 
       poetry up
 
-- Check that all tests are passing
+- Check that all tests are passing (they need background services, for now)
 
   .. code-block:: shell-session
 
+      docker compose up -d
       poetry run make qa
 
 - Eventually commit the updated dependencies

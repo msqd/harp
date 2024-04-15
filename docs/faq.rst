@@ -58,3 +58,15 @@ Solution:
 .. code-block:: shell-session
 
     $ DOCKER_RUN_OPTIONS="--platform linux/x86_64" make build run
+
+Tests starts to complain about being unable to fetch the docker server API version (on OSX, at least)
+-----------------------------------------------------------------------------------------------------
+
+If you have errors that looks like `docker.errors.DockerException: Error while fetching server API version` when running
+the test suite, a docker for desktop upgrade may be the cause.
+
+You need to ask docker for desktop to «Allow the default Docker socket to be used».
+
+.. image:: images/faq/docker-for-desktop-allow-default-socket.png
+
+Restart your docker daemon and you should be good to go.
