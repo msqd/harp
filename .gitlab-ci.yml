@@ -35,7 +35,7 @@ build:runtime:
   <<: *DockerBuild
 
   script:
-    - bash bin/sandbox make build push
+    - bash bin/sandbox make buildc pushc
 
 build:dev:
   <<: *DockerBuild
@@ -44,7 +44,7 @@ build:dev:
     DOCKER_TAGS_SUFFIX: -dev
 
   script:
-    - bash bin/sandbox make build-dev push-dev
+    - bash bin/sandbox make buildc-dev pushc-dev
 
 test:backend:
   needs: ["build:dev"]

@@ -13,7 +13,8 @@ RUN ?= $(if $(VIRTUAL_ENV),,$(POETRY) run)
 # pytest
 PYTEST ?= $(RUN) $(shell which pytest || echo "pytest")
 PYTEST_TARGETS ?= harp harp_apps tests
-PYTEST_COMMON_OPTIONS ?= -n auto
+PYTEST_CPUS ?= auto
+PYTEST_COMMON_OPTIONS ?= -n $(PYTEST_CPUS)
 PYTEST_COVERAGE_OPTIONS ?= --cov=harp --cov=harp_apps --cov-report html:docs/_build/html/coverage
 PYTEST_OPTIONS ?=
 
@@ -36,6 +37,7 @@ PNPM ?= $(shell which pnpm || echo "pnpm")
 
 # misc.
 SED ?= $(shell which gsed || which sed || echo "sed")
+TESTC_COMMAND ?= poetry shell
 
 # constants
 FRONTEND_DIR = harp_apps/dashboard/frontend
@@ -176,45 +178,56 @@ benchmark-save:  ## Runs benchmarks and saves the results.
 # Docker builds
 ########################################################################################################################
 
-.PHONY: build build-dev push push-dev run run-shell run-example-repositories run-dev run-dev-shell
+.PHONY: buildc pushc runc runc-shell runc-example-repositories
 
-build:  ## Builds the docker image.
+buildc:  ## Builds the docker image.
 	# TODO: rm in trap ?
 	# TODO: document --progress=plain ?
 	echo $(VERSION) > version.txt
 	$(DOCKER) build --target=$(DOCKER_BUILD_TARGET) $(DOCKER_OPTIONS) $(DOCKER_BUILD_OPTIONS) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .
 	-rm -f version.txt
 
-build-dev:  ## Builds the development docker image.
-	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) DOCKER_BUILD_TARGET=development $(MAKE) build
-
-push:  ## Pushes the docker image to the registry.
+pushc:  ## Pushes the docker image to the registry.
 	for tag in $(VERSION) $(DOCKER_TAGS); do \
 		$(DOCKER) image push $(DOCKER_IMAGE):$$tag$(DOCKER_TAGS_SUFFIX); \
 	done
 
-push-dev:  ## Pushes the development docker image to the registry.
-	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) push
-
-run:  ## Runs the docker image.
+runc:  ## Runs the docker image.
 	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
-run-shell:  ## Runs a shell within the docker image.
-	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) -l
+runc-shell:  ## Runs a shell within the docker image.
+	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
-run-example-repositories:  ## Runs harp with the "repositories" example within the docker image.
+runc-example-repositories:  ## Runs harp with the "repositories" example within the docker image.
 	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 -p 9001-9012:9001-9012 --rm $(DOCKER_IMAGE) --file examples/repositories.yml --set storage.url postgresql+asyncpg://harp:harp@harp-postgres-1/repositories
 
-run-dev:  ## Runs the development docker image.
-	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) run
 
-run-dev-shell:  ## Runs a shell within the development docker image.
-	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) run-shell
+.PHONY: buildc-dev pushc-dev runc-dev runc-dev-shell
 
-run-dev-test-backend:  ## Runs the backend test suite within the development docker image, with a docker in docker sidecar service.
+buildc-dev:  ## Builds the development docker image.
+	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) DOCKER_BUILD_TARGET=development $(MAKE) buildc
+
+pushc-dev:  ## Pushes the development docker image to the registry.
+	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) pushc
+
+runc-dev:  ## Runs the development docker image.
+	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) runc
+
+runc-dev-shell:  ## Runs a shell within the development docker image.
+	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) runc-shell
+
+
+.PHONY: testc-shell testc-backend
+
+testc-shell:  ## Runs a shell in the development test suite environment.
 	$(DOCKER) rm -f docker || true
 	$(DOCKER) run --privileged -d --name docker --network $(DOCKER_NETWORK) --network-alias docker -e DOCKER_TLS_CERTDIR= $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) docker:24.0.6-dind
-	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" $(MAKE) run-dev-shell
+	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" DOCKER_RUN_COMMAND="-c \"bin/wait-until-docker-available && (cd src; docker compose up -d; $(TESTC_COMMAND))\"" $(MAKE) runc-dev-shell
+	$(DOCKER) stop docker
+	$(DOCKER) rm docker
+
+testc-backend:  ## Runs the backend test suite within the development docker image, with a docker in docker sidecar service.
+	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" TESTC_COMMAND="PYTEST_CPUS=2 make test-backend" $(MAKE) testc-shell
 
 
 ########################################################################################################################

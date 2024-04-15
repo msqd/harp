@@ -72,6 +72,7 @@ RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     && curl -sSL https://get.docker.com/ | sh \
     && apt-get install -y build-essential \
     && apt-get install -y nodejs \
+    && apt-get install -y vim net-tools iputils-ping netcat-openbsd bind9-host \
     && rm -rf /var/lib/apt/lists/* \
     && npm install -g pnpm
 
@@ -83,9 +84,12 @@ ADD --chown=harp:www-data . src
 # ... install and build
 RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
     (cd src; poetry config --list; poetry debug info; poetry install) \
-    && (cd src/harp_apps/dashboard/frontend; pnpm install)
+    && (cd src/harp_apps/dashboard/frontend; pnpm install);
 
-# Step: Fix cache directory
+# Development image scripts are on the shelf
+RUN mv src/bin/development ./bin
+
+# No need for cache directory
 RUN rm -rf .cache
 
 
@@ -155,10 +159,10 @@ COPY --from=backend ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 COPY --from=frontend ${BASE}/frontend/dist ${BASE}/public
 COPY --from=backend --chown=harp:www-data ${BASE}/src ${BASE}/src
 
-RUN ln -s /var/lib/harp/data; \
-    ln -s /etc/harp.yaml; \
-    mkdir bin; \
-    mv src/examples ./examples;
+RUN ln -s /var/lib/harp/data \
+    && ln -s /etc/harp.yaml \
+    && mv src/bin/runtime ./bin \
+    && mv src/examples ./examples
 
 
 ENV DEFAULT__HARP__STORAGE__TYPE="sqlalchemy"
