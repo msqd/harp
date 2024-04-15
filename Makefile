@@ -200,7 +200,7 @@ run:  ## Runs the docker image.
 	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
 run-shell:  ## Runs a shell within the docker image.
-	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/ash $(DOCKER_IMAGE) -l
+	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) -l
 
 run-example-repositories:  ## Runs harp with the "repositories" example within the docker image.
 	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 -p 9001-9012:9001-9012 --rm $(DOCKER_IMAGE) --file examples/repositories.yml --set storage.url postgresql+asyncpg://harp:harp@harp-postgres-1/repositories
@@ -210,6 +210,11 @@ run-dev:  ## Runs the development docker image.
 
 run-dev-shell:  ## Runs a shell within the development docker image.
 	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) run-shell
+
+run-dev-test-backend:  ## Runs the backend test suite within the development docker image, with a docker in docker sidecar service.
+	$(DOCKER) rm -f docker || true
+	$(DOCKER) run --privileged -d --name docker --network $(DOCKER_NETWORK) --network-alias docker -e DOCKER_TLS_CERTDIR= $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) docker:24.0.6-dind
+	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" $(MAKE) run-dev-shell
 
 
 ########################################################################################################################

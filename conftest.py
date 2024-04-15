@@ -113,13 +113,15 @@ DBS = {
         "drivers": ["asyncpg"],
     },
     "mysql": {
-        "images": [
-            "mysql:8-oracle",
-            "mariadb:lts",
-            "mariadb:latest",
-        ]
-        if TEST_ALL_DATABASES
-        else ["mariadb:lts"],
+        "images": (
+            [
+                "mysql:8-oracle",
+                "mariadb:lts",
+                "mariadb:latest",
+            ]
+            if TEST_ALL_DATABASES
+            else ["mariadb:lts"]
+        ),
         "drivers": ["aiomysql", "asyncmy"] if TEST_ALL_DATABASES else ["aiomysql"],
     },
     # disabled, does not install cleanly on osx+arm
@@ -177,5 +179,5 @@ def httpbin():
     from testcontainers.core.container import DockerContainer
 
     with DockerContainer("mccutchen/go-httpbin:v2.13.2").with_exposed_ports(8080) as container:
-        wait_for_port(int(container.get_exposed_port(8080)))
-        yield f"http://localhost:{container.get_exposed_port(8080)}"
+        wait_for_port(int(container.get_exposed_port(8080)), container.get_container_host_ip())
+        yield f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8080)}"
