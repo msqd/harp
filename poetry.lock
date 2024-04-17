@@ -2699,13 +2699,13 @@ test = ["cython (>=3.0)", "filelock", "html5lib", "pytest (>=4.6)", "setuptools 
 
 [[package]]
 name = "sphinx-autobuild"
-version = "2024.4.13"
+version = "2024.4.16"
 description = "Rebuild Sphinx documentation on changes, with hot reloading in the browser."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "sphinx_autobuild-2024.4.13-py3-none-any.whl", hash = "sha256:97fae5ab04515fef9c7d1aca977082ec60417861eff6406acb06cb95d41d7601"},
-    {file = "sphinx_autobuild-2024.4.13.tar.gz", hash = "sha256:1d023b3a11866a094cd55c8e5a68c155430c033d560f649c1c2bde818f1d8f1b"},
+    {file = "sphinx_autobuild-2024.4.16-py3-none-any.whl", hash = "sha256:f2522779d30fcbf0253e09714f274ce8c608cb6ebcd67922b1c54de59faba702"},
+    {file = "sphinx_autobuild-2024.4.16.tar.gz", hash = "sha256:1c0ed37a1970eed197f9c5a66d65759e7c4e4cba7b5a5d77940752bf1a59f2c7"},
 ]
 
 [package.dependencies]
@@ -2713,10 +2713,11 @@ colorama = "*"
 sphinx = "*"
 starlette = ">=0.35"
 uvicorn = ">=0.25"
-websockets = ">=11.0"
+watchfiles = ">=0.20"
+websockets = ">=11"
 
 [package.extras]
-test = ["pytest (>=6.0)", "pytest-cov"]
+test = ["pytest (>=6)"]
 
 [[package]]
 name = "sphinx-basic-ng"
@@ -3204,7 +3205,7 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 name = "watchfiles"
 version = "0.21.0"
 description = "Simple, modern and high performance file watching and code reload in python."
-optional = true
+optional = false
 python-versions = ">=3.8"
 files = [
     {file = "watchfiles-0.21.0-cp310-cp310-macosx_10_7_x86_64.whl", hash = "sha256:27b4035013f1ea49c6c0b42d983133b136637a527e48c132d368eb19bf1ac6aa"},
