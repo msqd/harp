@@ -161,6 +161,19 @@ class Config:
 
         self._raw_settings = builder.build().values
 
+        self._raw_settings.setdefault("proxy", {})
+        self._raw_settings["proxy"].setdefault("endpoints", [])
+
+        for k, v in (options.entrypoints or {}).items():
+            _port, _url = v.split(":", 1)
+            self._raw_settings["proxy"]["endpoints"].append(
+                {
+                    "name": k,
+                    "port": int(_port),
+                    "url": _url,
+                }
+            )
+
     def validate(self):
         if self._validated_settings is None:
             to_be_validated = deepcopy(self._raw_settings)

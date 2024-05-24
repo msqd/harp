@@ -5,22 +5,22 @@ if [ -z "$1" ] || [ ! -e "$1" ]; then
   exit 1
 fi
 
-tmpfile=$(mktemp)
-wheel=$(basename -- $1)
+entrypoint_script=$(mktemp)
+wheel_basename=$(basename -- $1)
 
-cat > $tmpfile <<EOF
+cat > $entrypoint_script <<EOF
 #! /bin/bash
 
-pip install /$wheel
+pip install /$wheel_basename
 
 echo
-echo "Harp installed from wheel «${wheel}»."
+echo "Harp installed from wheel «${wheel_basename}»."
 echo "Start it using «harp server»."
 echo
 bash
 EOF
-chmod +x $tmpfile
+chmod +x $entrypoint_script
 
-docker run -it --rm --entrypoint=/entrypoint --volume "$(pwd)/$1":/$wheel --volume $tmpfile:/entrypoint -p 4000-4100:4000-4100 python:3.12-bookworm
+docker run -it --rm --entrypoint=/entrypoint --volume "$(pwd)/$1":/$wheel_basename --volume $entrypoint_script:/entrypoint -p 4000-4100:4000-4100 python:3.12-bookworm
 
-rm "$tmpfile"
+rm "$entrypoint_script"
