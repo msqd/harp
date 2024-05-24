@@ -47,7 +47,7 @@ FRONTEND_DIR = harp_apps/dashboard/frontend
 # Dependencies
 ########################################################################################################################
 
-.PHONY: install install-dev install-frontend install-backend install-backend-dev
+.PHONY: install install-dev install-frontend install-backend install-backend-dev wheel
 
 install: install-frontend install-backend  ## Installs harp dependencies (backend, dashboard) without development tools.
 
@@ -59,11 +59,14 @@ install-frontend:  ## Installs harp dashboard dependencies (frontend).
 	cd $(FRONTEND_DIR); $(PNPM) install
 
 install-backend:  ## Installs harp dependencides (backend).
-	poetry install $(POETRY_INSTALL_OPTIONS)
+	$(POETRY) install $(POETRY_INSTALL_OPTIONS)
 
 install-backend-dev:  ## Installs harp dependencies (backend) with development tools.
 	POETRY_INSTALL_OPTIONS="-E dev" $(MAKE) install
 
+wheel:
+	mkdir -p dist
+	bin/sandbox "$(MAKE) install-dev build-frontend; mv harp_apps/dashboard/frontend/dist harp_apps/dashboard/web; rm -rf harp_apps/dashboard/frontend; $(POETRY) build; cp dist/* $(PWD)/dist"
 
 ########################################################################################################################
 # Documentation
@@ -82,9 +85,9 @@ reference: harp  ## Generates API reference documentation as ReST files (docs).
 # Dashboard application
 ########################################################################################################################
 
-.PHONY: frontend-build
+.PHONY: build-frontend
 
-frontend-build:  ## Builds the harp dashboard frontend (compiles typescript and other sources into bundled version).
+build-frontend:  ## Builds the harp dashboard frontend (compiles typescript and other sources into bundled version).
 	cd $(FRONTEND_DIR); $(PNPM) build
 
 

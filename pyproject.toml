@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "harp-proxy"
-version = "0.5.0b5"
+version = "0.5.0b6"
 description = "Harp is an API Runtime Proxy – A toolkit for Fast, Reliable and Observable external APIs"
 authors = ["Romain Dorgueil <romain@makersquad.fr>"]
 readme = "README.rst"
@@ -12,9 +12,10 @@ packages = [
     { include = "harp" },
     { include = "harp_apps" },
 ]
+exclude = ["**/node_modules/", "harp_apps/dashboard/frontend", ]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.12"
 aiohttp = "^3.9.4"
 aiosqlite = ">=0.19,<0.21"
 anyio = "^4.3.0"
@@ -64,9 +65,9 @@ pytest-cov = ">=4.1,<6.0"
 sphinx-copybutton = "^0.5.2"
 sphinx-sitemap = "^2.5.1"
 ruff = ">=0.1.9,<0.4.0"
-pytest-xdist = {version = "^3.5.0", extras = ["psutil"]}
+pytest-xdist = { version = "^3.5.0", extras = ["psutil"] }
 freezegun = "^1.4.0"
-testcontainers = {extras = ["postgres"], version = ">=4.3.0,<4.4"}
+testcontainers = { extras = ["postgres"], version = ">=4.3.0,<4.4" }
 sphinx-click = "^5.1.0"
 
 
