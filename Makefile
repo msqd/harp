@@ -249,6 +249,7 @@ clean-frontend-modules:  ## Cleans up the frontend node modules directory.
 	-rm -rf $(FRONTEND_DIR)/node_modules
 
 clean: clean-frontend-modules  ## Cleans up the project.
-	(cd docs; $(MAKE) clean)
+	-rm -rf docs/_build
 	-rm -rf $(FRONTEND_DIR)/dist
 	-rm -f benchmark_*.svg
+	-rm -rf dist
