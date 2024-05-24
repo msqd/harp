@@ -164,7 +164,7 @@ class Config:
         self._raw_settings.setdefault("proxy", {})
         self._raw_settings["proxy"].setdefault("endpoints", [])
 
-        for k, v in (options.entrypoints or {}).items():
+        for k, v in (options.endpoints or {}).items():
             _port, _url = v.split(":", 1)
             self._raw_settings["proxy"]["endpoints"].append(
                 {

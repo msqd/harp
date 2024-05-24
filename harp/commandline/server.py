@@ -9,7 +9,7 @@ from harp.utils.commandline import click
 @dataclass(kw_only=True)
 class ServerOptions(dict):
     options: Iterable = field(default_factory=dict)
-    entrypoints: Iterable = field(default_factory=dict)
+    endpoints: Iterable = field(default_factory=dict)
     files: tuple = ()
     enable: tuple = ()
     disable: tuple = ()
@@ -19,7 +19,7 @@ class ServerOptions(dict):
         return list(
             chain(
                 (f"--set {quote(key)}={quote(value)}" for key, value in self.options.items()),
-                (f"--entrypoint {quote(key)}={quote(value)}" for key, value in self.entrypoints.items()),
+                (f"--endpoint {quote(key)}={quote(value)}" for key, value in self.endpoints.items()),
                 ("--enable {app}".format(app=app) for app in self.enable),
                 ("--disable {app}".format(app=app) for app in self.disable),
                 ("--file " + file for file in self.files),
@@ -29,12 +29,12 @@ class ServerOptions(dict):
 
     def __post_init__(self):
         self.options = dict(map(lambda x: x.split("=", 1), self.options))
-        self.entrypoints = dict(map(lambda x: x.split("=", 1), self.entrypoints))
+        self.endpoints = dict(map(lambda x: x.split("=", 1), self.endpoints))
 
 
 def add_harp_server_click_options(f):
     f = click.option("--set", "options", multiple=True, help="Set proxy configuration options.")(f)
-    f = click.option("--entrypoint", "entrypoints", multiple=True, help="Add an endpoint.")(f)
+    f = click.option("--endpoint", "endpoints", multiple=True, help="Add an endpoint.")(f)
     f = click.option("--file", "-f", "files", default=(), multiple=True, help="Load configuration from file.")(f)
     f = click.option("--enable", default=(), multiple=True, help="Enable some applications.")(f)
     f = click.option("--disable", default=(), multiple=True, help="Disable some applications.")(f)
