@@ -38,14 +38,18 @@ Contents
 from harp.commandline.install_dev import install_dev
 from harp.commandline.server import server
 from harp.commandline.start import start
+from harp.settings import HARP_ENV
 from harp.utils.commandline import check_packages, click
 
 __title__ = "Command Line"
 
 IS_DEVELOPMENT_ENVIRONMENT = False
 
-if check_packages("honcho", "watchfiles"):
+if HARP_ENV == "dev" or check_packages("honcho", "watchfiles"):
     IS_DEVELOPMENT_ENVIRONMENT = True
+
+if HARP_ENV == "prod":
+    IS_DEVELOPMENT_ENVIRONMENT = False
 
 
 @click.group()

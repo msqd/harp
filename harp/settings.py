@@ -9,8 +9,17 @@ Contents
 
 __title__ = "Settings"
 
+from os import environ
+
 #: Pagination size for api endpoints
 PAGE_SIZE = 40
 
 #: Default timeout for http requests
 DEFAULT_TIMEOUT = 30.0
+
+#: Force environment override (dev or prod)
+HARP_ENV = environ.pop("HARP_ENV", None)
+if HARP_ENV is not None:
+    HARP_ENV = HARP_ENV.strip().lower()
+    if HARP_ENV not in ("dev", "prod"):
+        HARP_ENV = None

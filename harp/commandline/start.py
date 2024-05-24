@@ -23,8 +23,8 @@ def assert_development_packages_are_available():
 
 
 @click.command(short_help="Starts the development environment.")
-@click.option("--with-docs/--no-docs", default=False)
-@click.option("--with-ui/--no-ui", default=False)
+@click.option("--with-docs/--no-docs", default=False, help="Append the sphinx doc process to the default process list.")
+@click.option("--with-ui/--no-ui", default=False, help="Append the storybook process to the default process list.")
 # TODO maybe run reset as a pre-start command, so it does not run on each reload?
 @click.option("--mock", is_flag=True, help="Enable mock data instead of real api data (dashboard).")
 @click.option(
