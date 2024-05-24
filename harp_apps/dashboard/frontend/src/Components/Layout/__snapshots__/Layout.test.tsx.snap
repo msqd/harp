@@ -1,0 +1,152 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renders the title and data when the query is successful 1`] = `
+<div>
+  <div
+    class="flex h-screen min-h-screen max-h-screen w-screen flex-col"
+  >
+    <nav
+      class="css-orfs66"
+      data-headlessui-state=""
+    >
+      <div
+        class="css-1pur65d"
+      >
+        <div
+          class="relative flex h-14 justify-between"
+        >
+          <div
+            class="absolute inset-y-0 left-0 flex items-center sm:hidden"
+          >
+            <button
+              aria-expanded="false"
+              class="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+              data-headlessui-state=""
+              id="headlessui-disclosure-button-:r0:"
+              type="button"
+            >
+              <span
+                class="absolute -inset-0.5"
+              />
+              <span
+                class="sr-only"
+              >
+                Open main menu
+              </span>
+              <svg
+                aria-hidden="true"
+                class="block h-6 w-6"
+                data-slot="icon"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+          <div
+            class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start"
+          >
+            <div
+              class="flex flex-shrink-0 items-center p-2"
+            >
+              <a
+                class="flex"
+                href="/"
+              >
+                <img
+                  alt="Harp"
+                  class="h-8 w-auto"
+                  src="/src/Assets/logo.svg"
+                />
+                <span
+                  class="h-8 px-2 pt-1 text-md font-medium text-white"
+                  title="Harp Early Access"
+                >
+                  Harp EA
+                </span>
+              </a>
+            </div>
+            <div
+              class="hidden sm:ml-6 sm:flex sm:space-x-8"
+            >
+              <a
+                class="inline-flex items-center border-b-4 px-2 pt-1 text-sm font-medium text-white border-primary"
+                href="/"
+              >
+                Overview
+              </a>
+              <a
+                class="inline-flex items-center border-b-4 px-2 pt-1 text-sm font-medium text-white border-transparent hover:border-white hover:text-white"
+                href="/transactions"
+              >
+                Transactions
+              </a>
+              <a
+                class="inline-flex items-center border-b-4 px-2 pt-1 text-sm font-medium text-white border-transparent hover:border-white hover:text-white"
+                href="/system"
+              >
+                System
+              </a>
+            </div>
+          </div>
+          <div
+            class="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0"
+          >
+            <div
+              class="text-sm text-white text-right"
+              title="test revision"
+            >
+              <svg
+                aria-hidden="true"
+                class="inline-block w-4 h-4 mr-1"
+                data-slot="icon"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  clip-rule="evenodd"
+                  d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-5.5-2.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0ZM10 12a5.99 5.99 0 0 0-4.793 2.39A6.483 6.483 0 0 0 10 16.5a6.483 6.483 0 0 0 4.793-2.11A5.99 5.99 0 0 0 10 12Z"
+                  fill-rule="evenodd"
+                />
+              </svg>
+              anonymous
+              <br />
+              <span
+                class="text-xs"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="inline-block w-4 h-4 mr-1"
+                  data-slot="icon"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    clip-rule="evenodd"
+                    d="M4.5 2A2.5 2.5 0 0 0 2 4.5v3.879a2.5 2.5 0 0 0 .732 1.767l7.5 7.5a2.5 2.5 0 0 0 3.536 0l3.878-3.878a2.5 2.5 0 0 0 0-3.536l-7.5-7.5A2.5 2.5 0 0 0 8.38 2H4.5ZM5 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                    fill-rule="evenodd"
+                  />
+                </svg>
+                v.test version
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <div
+      class="overflow-y-auto w-full css-1pur65d"
+    />
+  </div>
+</div>
+`;

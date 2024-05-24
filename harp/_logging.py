@@ -1,5 +1,6 @@
 import logging.config
 import os
+from typing import Any
 
 import structlog
 
@@ -63,6 +64,7 @@ logging_config = {
     },
     "loggers": {
         "harp": {"level": os.environ.get("LOGGING_HARP", "INFO")},
+        "harp.event_dispatcher": {"level": os.environ.get("LOGGING_HARP_EVENTS", "WARNING")},
         "httpcore": {"level": os.environ.get("LOGGING_HTTPCORE", "INFO")},  # todo wrap in structlog
         "httpx": {"level": os.environ.get("LOGGING_HTTPX", "WARNING")},  # todo wrap in structlog
         "hypercorn.access": {"level": os.environ.get("LOGGING_HYPERCORN_ACCESS", "WARNING")},
@@ -70,8 +72,16 @@ logging_config = {
     },
 }
 
+
 logging.config.dictConfig(logging_config)
 
-get_logger = structlog.get_logger
+
+def get_logger(name, *args: Any, **initial_values: Any) -> Any:
+    pkg, mod = name.rsplit(".", 1)
+    if mod in ("__init__", "__main__", "__app__"):
+        name = pkg
+
+    return structlog.get_logger(name, *args, **initial_values)
+
 
 __all__ = ["get_logger"]

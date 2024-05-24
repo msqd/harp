@@ -1,0 +1,131 @@
+from decimal import Decimal
+from statistics import StatisticsError, mean
+
+from harp.controllers import GetHandler, RouterPrefix, RoutingController
+from harp.http import HttpRequest
+from harp.typing.storage import Storage
+from harp.views import json
+from harp_apps.sqlalchemy_storage.constants import TimeBucket
+
+from ..utils.dates import generate_continuous_time_range, get_start_datetime_from_range
+
+time_bucket_for_range = {
+    "1h": TimeBucket.HOUR.value,
+    "24h": TimeBucket.HOUR.value,
+    "7d": TimeBucket.DAY.value,
+    "1m": TimeBucket.DAY.value,
+    "1y": TimeBucket.DAY.value,
+}
+
+
+def _format_aggregate(items, count, key):
+    if count >= 86400:
+        period = "sec"
+        divider = 86400
+
+    elif count >= 1440:
+        period = "min"
+        divider = 1440
+
+    elif count >= 24:
+        period = "hour"
+        divider = 24
+
+    else:
+        period = "day"
+        divider = 1
+
+    return {
+        "rate": Decimal(int(10 * (count / divider))) / 10,
+        "period": period,
+        "data": [
+            {
+                "value": int(t[key]) if t[key] is not None else None,
+            }
+            for t in items
+        ],
+    }
+
+
+@RouterPrefix("/api/overview")
+class OverviewController(RoutingController):
+    def __init__(self, *, storage: Storage, handle_errors=True, router=None):
+        self.storage = storage
+        super().__init__(handle_errors=handle_errors, router=router)
+
+    @GetHandler("/summary")
+    async def get_summary_data(self, request: HttpRequest):
+        time_span = "24h"
+        time_bucket = time_bucket_for_range[time_span]
+        start_datetime = get_start_datetime_from_range(time_span)
+        transactions_by_date_list = await self.storage.transactions_grouped_by_time_bucket(
+            start_datetime=start_datetime, time_bucket=time_bucket
+        )
+
+        errors_count = sum([t["errors"] for t in transactions_by_date_list])
+        transactions_count = sum([t["count"] for t in transactions_by_date_list])
+
+        transactions_by_date_list = generate_continuous_time_range(
+            discontinuous_transactions=transactions_by_date_list, time_bucket=time_bucket, start_datetime=start_datetime
+        )
+        try:
+            mean_apdex = mean(filter(None, [t["meanApdex"] for t in transactions_by_date_list]))
+        except StatisticsError:
+            mean_apdex = 100
+
+        return json(
+            {
+                "apdex": {
+                    "mean": int(mean_apdex),
+                    "data": [
+                        {
+                            "value": int(t["meanApdex"]) if t["meanApdex"] is not None else None,
+                        }
+                        for t in transactions_by_date_list
+                    ],
+                },
+                "transactions": _format_aggregate(transactions_by_date_list, transactions_count, "count"),
+                "errors": _format_aggregate(transactions_by_date_list, errors_count, "errors"),
+            }
+        )
+
+    @GetHandler("/")
+    async def get_overview_data(self, request: HttpRequest):
+        # endpoint and range from request
+        endpoint = request.query.get("endpoint")
+        range = request.query.get("timeRange", "24h")
+
+        # time buckets and start_datetime accordingly
+        time_bucket = time_bucket_for_range.get(range, "day")
+        start_datetime = get_start_datetime_from_range(range)
+
+        transactions_by_date_list = await self.storage.transactions_grouped_by_time_bucket(
+            endpoint=endpoint, start_datetime=start_datetime, time_bucket=time_bucket
+        )
+        errors_count = sum([t["errors"] for t in transactions_by_date_list])
+        transactions_count = sum([t["count"] for t in transactions_by_date_list])
+        errors_rate = errors_count / transactions_count if transactions_count else 0
+        mean_duration = (
+            sum([t["meanDuration"] * t["count"] for t in transactions_by_date_list]) / transactions_count
+            if transactions_count
+            else 0
+        )
+        transactions_by_date_list = generate_continuous_time_range(
+            discontinuous_transactions=transactions_by_date_list, time_bucket=time_bucket, start_datetime=start_datetime
+        )
+
+        try:
+            mean_apdex = mean(filter(None, [t["meanApdex"] for t in transactions_by_date_list]))
+        except StatisticsError:
+            mean_apdex = 100
+
+        return json(
+            {
+                "transactions": transactions_by_date_list,
+                "errors": {"count": errors_count, "rate": errors_rate},
+                "count": transactions_count,
+                "meanDuration": mean_duration,
+                "meanApdex": mean_apdex,
+                "timeRange": range,
+            }
+        )

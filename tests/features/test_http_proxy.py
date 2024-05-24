@@ -1,18 +1,19 @@
 """
 Initial implementation : https://trello.com/c/yCdcY7Og/1-5-http-proxy
 """
+
 import os
 
 import pytest
 from httpx import AsyncClient
 
 from harp import Config
-from harp.apps.proxy.controllers import HttpProxyController
+from harp.asgi.kernel import ASGIKernel
 from harp.config.factories.kernel_factory import KernelFactory
-from harp.core.asgi.kernel import ASGIKernel
-from harp.core.asgi.resolvers import ProxyControllerResolver
+from harp.controllers import ProxyControllerResolver
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.http import parametrize_with_http_methods, parametrize_with_http_status_codes
+from harp_apps.proxy.controllers import HttpProxyController
 
 
 class TestAsgiProxyWithoutEndpoints:
@@ -32,7 +33,7 @@ class TestAsgiProxyWithoutEndpoints:
         return client
 
     @pytest.mark.asyncio
-    async def test_asgi_proxy_get_no_endpoint(self, client):
+    async def test_asgi_proxy_get_no_endpoint(self, client: ASGICommunicator):
         response = await client.http_get("/")
         assert response["status"] == 404
         assert response["body"] == b"Not found."
@@ -50,7 +51,7 @@ class TestAsgiProxyWithMissingStartup:
     async def client(self, kernel):
         return ASGICommunicator(kernel)
 
-    async def test_missing_lifecycle_startup(self, client):
+    async def test_missing_lifecycle_startup(self, client: ASGICommunicator):
         response = await client.http_get("/echo")
         assert response["status"] == 500
         assert response["body"] == (
@@ -71,10 +72,10 @@ class TestAsgiProxyWithStubApi:
     async def kernel(self, test_api):
         config = Config({"dashboard": {"enabled": False}})
 
-        config.add_application("harp.services.http")
-        config.add_application("harp.apps.proxy")
-        config.add_application("harp.apps.dashboard")
-        config.add_application("harp.contrib.sqlalchemy_storage")
+        config.add_application("harp_apps.http_client")
+        config.add_application("harp_apps.proxy")
+        config.add_application("harp_apps.dashboard")
+        config.add_application("harp_apps.sqlalchemy_storage")
 
         config.set(
             "proxy.endpoints",

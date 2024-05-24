@@ -1,11 +1,5 @@
 storage:
   type: sqlalchemy
   url: sqlite+aiosqlite:///harp.db
-  drop_tables: true
+  drop_tables: false
   echo: false
-
-proxy:
-  endpoints:
-    - port: 4000
-      name: httpbin
-      url: http://httpbin.org

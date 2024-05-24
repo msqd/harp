@@ -1,8 +1,9 @@
 import importlib.util
 import sys
-from itertools import chain
 
-import rich_click as click
+from harp.commandline.server import ServerOptions, add_harp_server_click_options
+from harp.commandline.utils.manager import HARP_DASHBOARD_SERVICE
+from harp.utils.commandline import click
 
 
 def _get_service_name_for_humans(x: str):
@@ -11,11 +12,21 @@ def _get_service_name_for_humans(x: str):
     return x
 
 
+def assert_package_is_available(package_name: str):
+    if importlib.util.find_spec(package_name) is None:
+        raise ModuleNotFoundError(f"Package {package_name!r} is not available.")
+
+
+def assert_development_packages_are_available():
+    assert_package_is_available("honcho")
+    assert_package_is_available("watchfiles")
+
+
 @click.command(short_help="Starts the development environment.")
-@click.option("--set", "options", default=(), multiple=True, help="Set proxy configuration options.")
-@click.option("--file", "-f", "files", default=(), multiple=True, help="Load configuration from file.")
 @click.option("--with-docs/--no-docs", default=False)
 @click.option("--with-ui/--no-ui", default=False)
+# TODO maybe run reset as a pre-start command, so it does not run on each reload?
+@click.option("--mock", is_flag=True, help="Enable mock data instead of real api data (dashboard).")
 @click.option(
     "--server-subprocess",
     "-XS",
@@ -24,8 +35,11 @@ def _get_service_name_for_humans(x: str):
     help="Add a server subprocess to the list of services to start.",
 )
 @click.argument("services", nargs=-1)
-def start(with_docs, with_ui, options, files, services, server_subprocesses):
-    if importlib.util.find_spec("honcho") is None or importlib.util.find_spec("watchfiles") is None:
+@add_harp_server_click_options
+def start(with_docs, with_ui, services, server_subprocesses, mock, **kwargs):
+    try:
+        assert_development_packages_are_available()
+    except ModuleNotFoundError as exc:
         raise click.UsageError(
             "\n".join(
                 (
@@ -34,7 +48,7 @@ def start(with_docs, with_ui, options, files, services, server_subprocesses):
                     'Try to install the "dev" extra.',
                 )
             )
-        )
+        ) from exc
 
     from harp.commandline.utils.manager import (
         HARP_DOCS_SERVICE,
@@ -43,16 +57,15 @@ def start(with_docs, with_ui, options, files, services, server_subprocesses):
         parse_server_subprocesses_options,
     )
 
+    more_env = {}
+
+    if not mock:
+        more_env.setdefault(HARP_DASHBOARD_SERVICE, {})["DISABLE_MOCKS"] = "true"
+
+    options = ServerOptions(**kwargs)
+
     manager_factory = HonchoManagerFactory(
-        proxy_options=list(
-            chain(
-                (
-                    "--set {key} {value}".format(key=key, value=value)
-                    for key, value in map(lambda x: x.split("=", 1), options)
-                ),
-                ("-f " + file for file in files),
-            )
-        )
+        proxy_options=options.as_list(), dashboard_devserver_port=options.get("dashboard.devserver_port", None)
     )
 
     services = {f"harp:{_name}" for _name in services or ()} or set(manager_factory.defaults)
@@ -79,6 +92,10 @@ def start(with_docs, with_ui, options, files, services, server_subprocesses):
                 f"Unknown services: {unknown_services_as_string}. Available: {known_services_as_string}."
             )
 
-    manager = manager_factory.build(services)
-    manager.loop()
+    manager = manager_factory.build(services, more_env=more_env)
+    try:
+        manager.loop()
+    finally:
+        manager.terminate()
+        manager.kill()
     sys.exit(manager.returncode)

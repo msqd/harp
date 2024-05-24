@@ -35,7 +35,7 @@ build:runtime:
   <<: *DockerBuild
 
   script:
-    - bash bin/sandbox make build push
+    - bash bin/sandbox make buildc pushc
 
 build:dev:
   <<: *DockerBuild
@@ -44,20 +44,34 @@ build:dev:
     DOCKER_TAGS_SUFFIX: -dev
 
   script:
-    - bash bin/sandbox make build-dev push-dev
+    - bash bin/sandbox make buildc-dev pushc-dev
 
-test:
-  needs: [ "build:dev" ]
+test:backend:
+  needs: ["build:dev"]
   image: ${DOCKER_IMAGE}:${DOCKER_TAGS}-dev
   stage: test
+  services:
+    - docker:24.0.6-dind
   variables:
     GIT_STRATEGY: none
     PYTEST: /opt/venv/bin/pytest
+    PYTEST_OPTIONS: "-m 'not subprocess'"
   script:
-    - (cd /opt/harp/src; make test)
+    - (cd /opt/harp/src; poetry run make test-backend)
+
+test:frontend:
+  needs: ["build:dev"]
+  image: ${DOCKER_IMAGE}:${DOCKER_TAGS}-dev
+  stage: test
+  services:
+    - docker:24.0.6-dind
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm test:unit)
 
 doc:html:
-  needs: [ "build:dev" ]
+  needs: ["build:dev"]
   image: ${DOCKER_IMAGE}:${DOCKER_TAGS}-dev
   stage: artefacts
   variables:
@@ -73,14 +87,14 @@ doc:html:
       - "harp-doc/*"
 
 storybook:
-  needs: [ "build:dev" ]
+  needs: ["build:dev"]
   image: ${DOCKER_IMAGE}:${DOCKER_TAGS}-dev
   stage: artefacts
   variables:
     GIT_STRATEGY: none
   script:
-    - (cd /opt/harp/src/vendors/mkui; pnpm build)
-    - mv /opt/harp/src/vendors/mkui/build harp-ui
+    - (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm ui:build)
+    - mv /opt/harp/src//harp_apps/dashboard/frontend/build harp-ui
   artifacts:
     name: harp-ui
     expire_in: 1 month
@@ -89,7 +103,7 @@ storybook:
 
 release:
   image: docker:24.0.6
-  needs: [ "build:runtime", "test" ]
+  needs: ["build:runtime", "test:backend", "test:frontend"]
   stage: release
   only:
     - main
@@ -110,6 +124,3 @@ release:
     - test -n "$CI_COMMIT_TAG" && docker tag ${SOURCE_IMAGE} makersquad/harp-proxy:$CI_COMMIT_TAG
     - test -n "$CI_COMMIT_TAG" && docker tag ${SOURCE_IMAGE} makersquad/harp-proxy:latest
     - docker push makersquad/harp-proxy --all-tags
-#
-# todo: test ui
-#

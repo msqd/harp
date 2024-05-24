@@ -1,0 +1,59 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renders without crashing 1`] = `
+<div>
+  <div
+    class="test-class"
+  >
+    <h2
+      class="css-13yts7e"
+    >
+      Test Title
+    </h2>
+    <div
+      style="display: flex; align-items: center;"
+    >
+      <div
+        class="flex flex-col items-center"
+      >
+        <div
+          class="flex self-center"
+        >
+          <span
+            class="bg-lime-500 css-1g68g52"
+            title="score: 85"
+          >
+            B
+          </span>
+        </div>
+        <div
+          class="grid grid-cols-2 text-xs text-left align-text-bottom items-center self-center ml-10 mt-10"
+        >
+          <span
+            class="font-bold"
+          >
+            Mean duration:
+          </span>
+          <span>
+            2
+             s
+          </span>
+          <span
+            class="font-bold"
+          >
+            Errors:
+          </span>
+          <span>
+            5
+            %
+          </span>
+        </div>
+      </div>
+      <div
+        class="recharts-responsive-container"
+        style="width: 90%; height: 300px; min-width: 0;"
+      />
+    </div>
+  </div>
+</div>
+`;

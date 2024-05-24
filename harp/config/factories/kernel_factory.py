@@ -4,23 +4,29 @@ from rodi import Container
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
+from harp.asgi import ASGIKernel
+from harp.asgi.events import EVENT_CONTROLLER_VIEW, EVENT_CORE_REQUEST, RequestEvent
 from harp.config import Config
-from harp.core.asgi import ASGIKernel, ASGIRequest, ASGIResponse
-from harp.core.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_VIEW, RequestEvent
-from harp.core.asgi.resolvers import ProxyControllerResolver
-from harp.core.event_dispatcher import LoggingAsyncEventDispatcher
-from harp.core.views.json import on_json_response
+from harp.config.events import (
+    EVENT_FACTORY_BIND,
+    EVENT_FACTORY_BOUND,
+    EVENT_FACTORY_BUILD,
+    FactoryBindEvent,
+    FactoryBoundEvent,
+    FactoryBuildEvent,
+)
+from harp.controllers import ProxyControllerResolver
+from harp.event_dispatcher import LoggingAsyncEventDispatcher
+from harp.http import HttpResponse
 from harp.typing import GlobalSettings
 from harp.utils.network import Bind
-
-from .events import EVENT_FACTORY_BIND, EVENT_FACTORY_BOUND, FactoryBindEvent, FactoryBoundEvent
+from harp.views.json import on_json_response
 
 logger = get_logger(__name__)
 
 
-async def ok_controller(request: ASGIRequest, response: ASGIResponse):
-    await response.start(status=200)
-    await response.body("Ok.")
+async def ok_controller():
+    return HttpResponse("Ok.", status=200)
 
 
 async def on_health_request(event: RequestEvent):
@@ -50,31 +56,41 @@ class KernelFactory:
         resolver = ProxyControllerResolver()
 
         # dispatch "bind" event: this is the last chance to add services to the container
-        await dispatcher.adispatch(
-            EVENT_FACTORY_BIND,
-            FactoryBindEvent(
-                container,
-                self.configuration.settings,
-            ),
-        )
+        try:
+            await dispatcher.adispatch(
+                EVENT_FACTORY_BIND,
+                FactoryBindEvent(
+                    container,
+                    self.configuration.settings,
+                ),
+            )
+        except Exception as exc:
+            logger.fatal("Fatal while dispatching «factory bind» event: %s", exc)
+            raise
 
         # this can fail if configuration is not valid, but we let the container raise exception which is more explicit
         # that what we can show here.
         provider = container.build_provider()
 
         # dispatch "bound" event: you get a resolved container, do your thing
-        await dispatcher.adispatch(
-            EVENT_FACTORY_BOUND,
-            FactoryBoundEvent(
-                provider,
-                resolver,
-                self.configuration.settings,
-            ),
-        )
+        try:
+            await dispatcher.adispatch(
+                EVENT_FACTORY_BOUND,
+                FactoryBoundEvent(
+                    provider,
+                    resolver,
+                ),
+            )
+        except Exception as exc:
+            logger.fatal("Fatal while dispatching «factory bound» event: %s", exc)
+            raise
 
-        return self.KernelType(dispatcher=dispatcher, resolver=resolver), [
-            Bind(host=self.hostname, port=port) for port in resolver.ports
-        ]
+        kernel = self.KernelType(dispatcher=dispatcher, resolver=resolver)
+        binds = [Bind(host=self.hostname, port=port) for port in resolver.ports]
+        event = FactoryBuildEvent(kernel, binds)
+        await dispatcher.adispatch(EVENT_FACTORY_BUILD, event)
+
+        return event.kernel, event.binds
 
     def build_container(self, dispatcher: IAsyncEventDispatcher) -> Container:
         """Factory method responsible for the service injection container creation, registering initial services."""
@@ -93,7 +109,7 @@ class KernelFactory:
         dispatcher.add_listener(EVENT_CORE_REQUEST, on_health_request, priority=-100)
 
         # todo move into core or extension, this is not proxy related
-        dispatcher.add_listener(EVENT_CORE_VIEW, on_json_response)
+        dispatcher.add_listener(EVENT_CONTROLLER_VIEW, on_json_response)
 
         self.configuration.register_events(dispatcher)
 

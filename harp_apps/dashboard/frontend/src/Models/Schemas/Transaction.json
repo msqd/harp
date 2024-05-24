@@ -1,0 +1,76 @@
+{
+  "type": "object",
+  "required": ["type", "started_at"],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "endpoint": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "finished_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "elapsed": {
+      "type": "number"
+    },
+    "apdex": {
+      "type": "integer"
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Message"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "default": {}
+    },
+    "extras": {
+      "type": "object",
+      "default": {}
+    }
+  },
+  "description": "Transaction(*, id: str = None, type: str, endpoint: str = None, started_at: datetime.datetime, finished_at: datetime.datetime = None, elapsed: float = None, apdex: int = None, messages: List[harp.models.messages.Message] = None, tags: dict = <factory>, extras: dict = <factory>)",
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "definitions": {
+    "Message": {
+      "type": "object",
+      "required": ["transaction_id", "kind", "summary", "headers", "body"],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "transaction_id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "headers": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "Message(*, id: int = None, transaction_id: str, kind: str, summary: str, headers: str, body: str, created_at: datetime.datetime = None)"
+    }
+  }
+}

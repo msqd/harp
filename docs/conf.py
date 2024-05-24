@@ -29,6 +29,7 @@ extensions = [
     "sphinx_design",
     "sphinx_sitemap",
     "sphinxcontrib.jquery",
+    "sphinx_click",
 ]
 
 templates_path = ["_templates"]
@@ -39,6 +40,19 @@ root_doc = "index"
 html_theme = "furo"
 html_static_path = ["_static"]
 html_js_files = ["js/links-target-blank.js"]
+html_css_files = ["css/harp.css"]
+html_baseurl = "https://msqd.github.io/harp/"
+
+html_sidebars = {
+    "**": [
+        "sidebar/analytics.html",
+        "sidebar/scroll-start.html",
+        "sidebar/brand.html",
+        "sidebar/search.html",
+        "sidebar/navigation.html",
+        "sidebar/scroll-end.html",
+    ]
+}
 
 todo_include_todos = True
 html_show_sphinx = False

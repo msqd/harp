@@ -1,0 +1,12 @@
+#! /bin/bash
+
+echo -n "Waiting for docker-in-docker (dind) service to be available ..."
+
+until docker ps >/dev/null 2>&1; do
+  echo -n "."
+  ((c++)) && ((c==30)) && break
+  sleep 1
+done
+
+echo
+docker ps >/dev/null || exit 1

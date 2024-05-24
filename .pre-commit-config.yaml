@@ -4,6 +4,7 @@ repos:
     rev: v3.2.0
     hooks:
       - id: trailing-whitespace
+        exclude: '\.tsx\.snap$'
       - id: end-of-file-fixer
       - id: check-yaml
         exclude: misc
@@ -13,7 +14,7 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/psf/black
-    rev: 23.7.0
+    rev: 24.3.0
     hooks:
       - id: black
   - repo: https://github.com/charliermarsh/ruff-pre-commit

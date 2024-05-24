@@ -1,5 +1,5 @@
 volumes:
-  postgres_data: { }
+  postgres_data: {}
 
 services:
   httpbin:
