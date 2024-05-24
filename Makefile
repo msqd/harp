@@ -11,7 +11,7 @@ POETRY_INSTALL_OPTIONS ?=
 RUN ?= $(if $(VIRTUAL_ENV),,$(POETRY) run)
 
 # pytest
-PYTEST ?= $(RUN) $(shell which pytest || echo "pytest")
+PYTEST ?= $(RUN) pytest
 PYTEST_TARGETS ?= harp harp_apps tests
 PYTEST_CPUS ?= auto
 PYTEST_COMMON_OPTIONS ?= -n $(PYTEST_CPUS)

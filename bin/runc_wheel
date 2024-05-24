@@ -1,0 +1,26 @@
+#! /bin/bash
+
+if [ -z "$1" ] || [ ! -e "$1" ]; then
+  echo "Usage: $0 <wheel>"
+  exit 1
+fi
+
+tmpfile=$(mktemp)
+wheel=$(basename -- $1)
+
+cat > $tmpfile <<EOF
+#! /bin/bash
+
+pip install /$wheel
+
+echo
+echo "Harp installed from wheel «${wheel}»."
+echo "Start it using «harp server»."
+echo
+bash
+EOF
+chmod +x $tmpfile
+
+docker run -it --rm --entrypoint=/entrypoint --volume "$(pwd)/$1":/$wheel --volume $tmpfile:/entrypoint -p 4000-4100:4000-4100 python:3.12-bookworm
+
+rm "$tmpfile"
