@@ -64,7 +64,7 @@ pytest-benchmark = { extras = ["histogram"], version = "^4.0.0" }
 pytest-cov = ">=4.1,<6.0"
 sphinx-copybutton = "^0.5.2"
 sphinx-sitemap = "^2.5.1"
-ruff = ">=0.1.9,<0.4.0"
+ruff = ">=0.1.9,<0.5.0"
 pytest-xdist = { version = "^3.5.0", extras = ["psutil"] }
 freezegun = "^1.4.0"
 testcontainers = { extras = ["postgres"], version = ">=4.3.0,<4.4" }
