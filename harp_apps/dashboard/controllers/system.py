@@ -62,7 +62,7 @@ class SystemController(RoutingController):
         v = aliased(MetricValue, subquery)
         query = select(v).where(subquery.c.rank == 1).options(joinedload(v.metric))
 
-        async with self.storage.session() as session:
+        async with self.storage.session_factory() as session:
             result = (await session.execute(query)).scalars().all()
 
         return json(

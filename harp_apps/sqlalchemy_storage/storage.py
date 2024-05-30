@@ -125,27 +125,33 @@ class SqlAlchemyStorage(Storage):
 
         self.metadata = Base.metadata
         self.engine = create_async_engine(self.settings.url, echo=self.settings.echo)
-        self.session = async_sessionmaker(self.engine, expire_on_commit=False)
+        self.session_factory = async_sessionmaker(self.engine, expire_on_commit=False)
 
         # TODO is this the right place ? (maybe it is, but maybe it causes tight coupling to the ed which may be not
         #      right, especially if we want to be able to use the storage out of the special context of harp proxy)
         dispatcher.add_listener(EVENT_CORE_STARTED, self._on_startup_actions, priority=-20)
         dispatcher.add_listener(EVENT_TRANSACTION_STARTED, self._on_transaction_started)
-        dispatcher.add_listener(EVENT_TRANSACTION_ENDED, self._on_transaction_ended)
         dispatcher.add_listener(EVENT_TRANSACTION_MESSAGE, self._on_transaction_message)
+        dispatcher.add_listener(EVENT_TRANSACTION_ENDED, self._on_transaction_ended)
 
         self._is_ready = asyncio.Event()
         self._worker = None
 
-        self.blobs = BlobsRepository(self.session)
-        self.messages = MessagesRepository(self.session)
-        self.tags = TagsRepository(self.session)
-        self.tag_values = TagValuesRepository(self.session)
-        self.transactions = TransactionsRepository(self.session, tags=self.tags, tag_values=self.tag_values)
-        self.users = UsersRepository(self.session)
-        self.metrics = MetricsRepository(self.session)
-        self.metric_values = MetricValuesRepository(self.session)
-        self.flags = FlagsRepository(self.session)
+        self.blobs = BlobsRepository(self.session_factory)
+        self.messages = MessagesRepository(self.session_factory)
+        self.tags = TagsRepository(self.session_factory)
+        self.tag_values = TagValuesRepository(self.session_factory)
+        self.transactions = TransactionsRepository(self.session_factory, tags=self.tags, tag_values=self.tag_values)
+        self.users = UsersRepository(self.session_factory)
+        self.metrics = MetricsRepository(self.session_factory)
+        self.metric_values = MetricValuesRepository(self.session_factory)
+        self.flags = FlagsRepository(self.session_factory)
+
+    @asynccontextmanager
+    async def begin(self):
+        async with self.session_factory() as session:
+            async with session.begin():
+                yield session
 
     async def initialize(self, /, *, force_reset=False):
         """Create the database tables. May drop them first if configured to do so."""
@@ -179,7 +185,7 @@ class SqlAlchemyStorage(Storage):
     async def get_facet_meta(self, name):
         if name == "endpoint":
             # get transaction count grouped by endpoint
-            async with self.session() as session:
+            async with self.begin() as session:
                 query = select(Transaction.endpoint, func.count()).group_by(Transaction.endpoint)
                 result = await session.execute(query)
                 return {row[0]: row[1] for row in result.fetchall()}
@@ -226,7 +232,7 @@ class SqlAlchemyStorage(Storage):
         if page and cursor:
             query = query.filter(Transaction.id <= cursor)
 
-        async with self.session() as session:
+        async with self.begin() as session:
             # count items from query
             result.meta["total"] = await session.scalar(
                 query.with_only_columns(func.count(Transaction.id)).order_by(None)
@@ -237,7 +243,7 @@ class SqlAlchemyStorage(Storage):
         if page:
             query = query.offset(max(0, (page - 1) * PAGE_SIZE))
 
-        async with self.session() as session:
+        async with self.begin() as session:
             for transaction in (await session.scalars(query)).unique().all():
                 result.append(transaction.to_model(with_user_flags=True))
 
@@ -290,7 +296,7 @@ class SqlAlchemyStorage(Storage):
             query = query.where(Transaction.started_at >= start_datetime.astimezone(UTC).replace(tzinfo=None))
 
         query = query.group_by(s_date).order_by(s_date.asc())
-        async with self.session() as session:
+        async with self.begin() as session:
             result = await session.execute(query)
             return [
                 {
@@ -305,7 +311,7 @@ class SqlAlchemyStorage(Storage):
             ]
 
     async def get_usage(self):
-        async with self.session() as session:
+        async with self.begin() as session:
             query = select(count(Transaction.id)).where(
                 Transaction.started_at > (datetime.now(UTC) - timedelta(hours=24)).replace(tzinfo=None)
             )
@@ -320,7 +326,7 @@ class SqlAlchemyStorage(Storage):
         :param blob_id: sha1 hash of the blob
         :return: Blob or None
         """
-        async with self.session() as session:
+        async with self.begin() as session:
             row = (
                 await session.execute(
                     select(Blob).where(Blob.id == blob_id),
@@ -337,33 +343,26 @@ class SqlAlchemyStorage(Storage):
     @override
     async def set_user_flag(self, *, transaction_id: str, username: str, flag: int, value=True):
         """Sets or unsets a user flag on a transaction."""
-        async with self.session() as session:
-            async with session.begin():
-                user = await self.users.find_one_by_username(username)
-                transaction = await self.transactions.find_one_by_id(transaction_id)
+        async with self.begin() as session:
+            user = await self.users.find_one_by_username(username)
+            transaction = await self.transactions.find_one_by_id(transaction_id)
 
-                if value:
-                    session.add(
-                        UserFlag(
-                            transaction_id=transaction.id,
-                            user_id=user.id,
-                            type=flag,
-                        )
+            if value:
+                session.add(
+                    UserFlag(
+                        transaction_id=transaction.id,
+                        user_id=user.id,
+                        type=flag,
                     )
-                else:
-                    await session.execute(
-                        delete(UserFlag).where(UserFlag.transaction_id == transaction.id, UserFlag.user_id == user.id)
-                    )
+                )
+            else:
+                await session.execute(
+                    delete(UserFlag).where(UserFlag.transaction_id == transaction.id, UserFlag.user_id == user.id)
+                )
 
     async def _on_transaction_started(self, event: TransactionEvent):
         """Event handler to store the transaction in the database."""
         return await self.transactions.create(event.transaction)
-
-    @asynccontextmanager
-    async def begin(self):
-        async with self.session() as session:
-            async with session.begin():
-                yield session
 
     async def _on_transaction_message(self, event: MessageEvent):
         await event.message.join()
@@ -375,13 +374,12 @@ class SqlAlchemyStorage(Storage):
 
         def create_blob_storage_task(blob):
             async def store_blob():
-                async with self.session() as session:
-                    async with session.begin():
-                        db_blob = Blob()
-                        db_blob.id = blob.id
-                        db_blob.content_type = blob.content_type
-                        db_blob.data = blob.data
-                        session.add(db_blob)
+                async with self.begin() as session:
+                    db_blob = Blob()
+                    db_blob.id = blob.id
+                    db_blob.content_type = blob.content_type
+                    db_blob.data = blob.data
+                    session.add(db_blob)
 
             return store_blob
 
@@ -389,17 +387,16 @@ class SqlAlchemyStorage(Storage):
         await self.worker.push(create_blob_storage_task(content_blob), ignore_errors=True)
 
         async def store_message():
-            async with self.session() as session:
-                async with session.begin():
-                    session.add(
-                        Message.from_models(event.transaction, event.message, headers_blob, content_blob),
-                    )
+            async with self.begin() as session:
+                session.add(
+                    Message.from_models(event.transaction, event.message, headers_blob, content_blob),
+                )
 
         await self.worker.push(store_message)
 
     async def _on_transaction_ended(self, event: TransactionEvent):
-        async with self.session() as session:
-            async with session.begin():
+        async def finalize_transaction():
+            async with self.begin() as session:
                 await session.execute(
                     update(Transaction)
                     .where(Transaction.id == event.transaction.id)
@@ -410,6 +407,8 @@ class SqlAlchemyStorage(Storage):
                         x_status_class=event.transaction.extras.get("status_class"),
                     )
                 )
+
+        await self.worker.push(finalize_transaction)
 
     async def ready(self):
         await self._is_ready.wait()
@@ -425,18 +424,17 @@ class SqlAlchemyStorage(Storage):
         await self.worker.push(defered_create_users)
 
     async def create_users(self, users: Iterable[str]):
-        async with self.session() as session:
-            async with session.begin():
-                for username in users:
-                    # Check if the username already exists
-                    result = await session.execute(select(User).where(User.username == username))
-                    existing_user = result.scalar_one_or_none()
+        async with self.begin() as session:
+            for username in users:
+                # Check if the username already exists
+                result = await session.execute(select(User).where(User.username == username))
+                existing_user = result.scalar_one_or_none()
 
-                    # If the username does not exist, create a new user
-                    if existing_user is None:
-                        user = User()
-                        user.username = username
-                        session.add(user)
+                # If the username does not exist, create a new user
+                if existing_user is None:
+                    user = User()
+                    user.username = username
+                    session.add(user)
 
     async def install_pg_trgm_extension(self, conn: AsyncConnection):
         # Check the type of the current database

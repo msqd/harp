@@ -15,7 +15,7 @@ class JanitorWorker:
     def __init__(self, storage: Storage):
         self.storage: SqlAlchemyStorage = cast(SqlAlchemyStorage, storage)
         self.running = False
-        self.session_factory = self.storage.session
+        self.session_factory = self.storage.session_factory
 
     def stop(self):
         """
