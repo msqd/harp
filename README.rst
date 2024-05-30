@@ -17,7 +17,7 @@ external APIs.
     issues. We are here to help you and make HARP better for everyone.
 
 
-**Quick links:** `Documentation <https://msqd.github.io/harp/>`_ | `Repository <https://github.com/msqd/harp>`_ | `Issues <https://github.com/msqd/harp/issues>`_ | `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
+**Quick links:** `Documentation <https://harp-proxy.readthedocs.io/en/latest/>`_ | `Repository <https://github.com/msqd/harp>`_ | `Issues <https://github.com/msqd/harp/issues>`_ | `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
 
 
 How it works?
@@ -44,7 +44,7 @@ Overview
   that the integration or removal cost is virtually zero, or even negative when considering the reduction in code you
   won't need to write.
 
-`Read the full documentation <https://msqd.github.io/harp/>`_
+`Read the full documentation <https://harp-proxy.readthedocs.io/en/latest/>`_
 
 
 Service
@@ -109,4 +109,4 @@ Credits
 
 * Sponsored by `Makersquad <https://www.makersquad.fr/>`_
 
-`There are many ways you can contribute to HARP! <https://msqd.github.io/harp/development/index.html>`_
+`There are many ways you can contribute to HARP! <https://harp-proxy.readthedocs.io/en/latest/contribute/>`_
