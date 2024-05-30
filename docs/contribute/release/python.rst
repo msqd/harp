@@ -12,7 +12,7 @@ To build a wheel in an isolated directory:
 
 .. code-block:: shell
 
-    $ make clean wheel
+    make clean wheel
 
 The resulting build artifacts (wheel, tgz ...) will be available under the dist/ directory of your working copy.
 
@@ -24,13 +24,13 @@ To test a wheel you just built, a script is available to run a brand new contain
 
 .. code-block:: shell
 
-    $ bin/runc_wheel dist/<filename>.whl
+    bin/runc_wheel dist/<filename>.whl
 
 Once your container is up and running, you can run a server using, for example:
 
 .. code-block::
 
-    $ harp server --endpoint httpbin=4000:http://httpbin.org/
+    harp server --endpoint httpbin=4000:http://httpbin.org/
 
 
 Releasing a wheel to PyPI
@@ -41,4 +41,4 @@ Once you're confident with the just built wheel, it's time to make it available 
 
 .. code-block::
 
-    $ twine upload dist/*
+    twine upload dist/*

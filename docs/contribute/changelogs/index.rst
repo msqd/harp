@@ -4,6 +4,7 @@ Changelogs
 .. toctree::
     :maxdepth: 1
 
+    0.5.0b7
     0.5.0b3
     0.4.0
     0.3.2
