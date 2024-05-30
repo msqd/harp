@@ -12,7 +12,7 @@ To build a wheel in an isolated directory:
 
 .. code-block:: shell
 
-    make clean wheel
+    make clean-dist wheel
 
 The resulting build artifacts (wheel, tgz ...) will be available under the dist/ directory of your working copy.
 
