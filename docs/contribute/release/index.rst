@@ -6,53 +6,12 @@ Releasing
     This guide is intended for release managers. If you're not trying to release a new harp version, then this is most
     probably not what you're looking for.
 
-Prior to release
-::::::::::::::::
 
-1. Update and cleanup dependencies
+.. toctree::
+    :maxdepth: 1
 
-- Read the dependencies description and ensure nothing is there while not used.
-
-  .. code-block:: shell-session
-
-      poetry show
-      poetry show --tree
-
-  .. code-block:: shell-session
-
-      cd harp_apps/dashboard/frontend
-      pnpm list
-
-
-- Dashboard's frontend dependencies
-
-  .. code-block:: shell-session
-
-      (
-           cd harp_apps/dashboard/frontend;
-           pnpm update --interactive
-      )
-
-- Python dependencies
-
-  .. code-block:: shell-session
-
-      poetry up
-
-- Check that all tests are passing (they need background services, for now)
-
-  .. code-block:: shell-session
-
-      docker compose up -d
-      poetry run make qa
-
-- Eventually commit the updated dependencies
-
-  .. code-block:: shell-session
-
-    git add -p pyproject.toml poetry.lock harp_apps/dashboard/frontend/package.json harp_apps/dashboard/frontend/pnpm-lock.yaml
-    git commit -m "chore: cleanup and update dependencies"
-    git push
+    chores
+    python
 
 
 Releasing a new version

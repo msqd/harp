@@ -9,7 +9,7 @@ Contributor's Guide
     applications/index
     storage/index
     ../apps/dashboard/development/index
-    release
+    release/index
 
 Releases, Changes and Roadmap
 :::::::::::::::::::::::::::::
