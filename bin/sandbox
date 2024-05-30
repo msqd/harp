@@ -51,4 +51,5 @@ RELEASE=$SANDBOX/release
 (cd $RELEASE; echo $VERSION > version.txt)
 
 # Execute
-(cd $RELEASE; bash -c "$@")
+ARGS="$*"
+(cd $RELEASE; bash -c "$ARGS" )
