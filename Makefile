@@ -237,7 +237,7 @@ testc-backend:  ## Runs the backend test suite within the development docker ima
 # Misc. utilities
 ########################################################################################################################
 
-.PHONY: help clean clean-dist clean-frontend-modules
+.PHONY: help clean clean-dist clean-docs clean-frontend-modules
 
 help:   ## Shows available commands.
 	@echo "Available commands:"
@@ -251,7 +251,9 @@ clean-frontend-modules:  ## Cleans up the frontend node modules directory.
 clean-dist:  ## Cleans up the distribution files (wheels...)
 	-rm -rf dist
 
-clean: clean-frontend-modules clean-dist  ## Cleans up the project.
+clean-docs:  ## Cleanup the documentation builds.
 	-rm -rf docs/_build
+
+clean: clean-frontend-modules clean-dist clean-docs  ## Cleans up the project.
 	-rm -rf $(FRONTEND_DIR)/dist
 	-rm -f benchmark_*.svg

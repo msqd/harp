@@ -39,9 +39,9 @@ limitless flexibility, allowing you to customize the proxy according to your uni
     | Explore the user interface.                            | Install, configure and run the service.                |
     |                                                        |                                                        |
     | - :doc:`/user/overview`                                | - :doc:`/operate/quickstart`                           |
-    | - :doc:`/user/transactions`                            | - :doc:`/operate/install/index`                        |
-    | - :doc:`/user/system`                                  | - :doc:`/operate/configure/index`                      |
-    | - :doc:`/user/performances`                            | - :doc:`/operate/runtime`                              |
+    | - :doc:`/user/transactions`                            | - :doc:`/operate/configure/index`                      |
+    | - :doc:`/user/system`                                  | - :doc:`/operate/runtime`                              |
+    | - :doc:`/user/performances`                            |                                                        |
     +--------------------------------------------------------+--------------------------------------------------------+
     | :doc:`Developer's Guide </develop/index>`              | :doc:`Contributor's Guide </contribute/index>`         |
     |                                                        |                                                        |
