@@ -9,6 +9,7 @@ PRE_COMMIT ?= $(shell which pre-commit || echo "pre-commit")
 POETRY ?= $(shell which poetry || echo "poetry")
 POETRY_INSTALL_OPTIONS ?=
 RUN ?= $(if $(VIRTUAL_ENV),,$(POETRY) run)
+PLATFORM ?= linux/amd64
 
 # pytest
 PYTEST ?= $(RUN) pytest
@@ -20,13 +21,12 @@ PYTEST_OPTIONS ?=
 
 # docker
 DOCKER ?= $(shell which docker || echo "docker")
-DOCKER_DEFAULT_PLATFORM ?= linux/amd64
 DOCKER_OPTIONS ?=
 DOCKER_IMAGE ?= $(NAME)
 DOCKER_IMAGE_DEV ?= $(NAME)-dev
 DOCKER_TAGS ?=
 DOCKER_TAGS_SUFFIX ?=
-DOCKER_BUILD_OPTIONS ?=
+DOCKER_BUILD_OPTIONS ?= --platform=$(PLATFORM)
 DOCKER_BUILD_TARGET ?= runtime
 DOCKER_NETWORK ?= harp_default
 DOCKER_RUN_COMMAND ?=

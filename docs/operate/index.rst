@@ -7,6 +7,5 @@ This guide is intended for operators that want to run HARP instances on live ser
     :maxdepth: 2
 
     quickstart
-    install/index
     configure/index
     runtime

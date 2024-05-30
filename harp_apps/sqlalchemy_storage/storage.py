@@ -162,6 +162,7 @@ class SqlAlchemyStorage(Storage):
         async with self.engine.begin() as conn:
             await self.create_full_text_indexes(conn)
 
+        await self.create_users(["anonymous"])
         self._is_ready.set()
 
     @property
@@ -332,7 +333,6 @@ class SqlAlchemyStorage(Storage):
     async def _on_startup_actions(self, TransactionEvent):
         """Event handler to create the database tables on startup. May drop them first if configured to do so."""
         await self.initialize()
-        await self.create_users(["anonymous"])
 
     @override
     async def set_user_flag(self, *, transaction_id: str, username: str, flag: int, value=True):

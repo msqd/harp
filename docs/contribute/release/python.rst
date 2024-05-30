@@ -1,5 +1,5 @@
-Releasing as a Python Package (PyPI)
-====================================
+Releasing as a Python Package
+=============================
 
 Releasing a python package for a version consists of building a wheel, testing it and pushing it to the Python Package
 Index (PyPI).

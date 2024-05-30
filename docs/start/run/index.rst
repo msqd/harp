@@ -1,5 +1,5 @@
-Install
-=======
+Run
+===
 
 The following
 

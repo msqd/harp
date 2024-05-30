@@ -26,6 +26,14 @@ limitless flexibility, allowing you to customize the proxy according to your uni
     :widths: 50 50
 
     +--------------------------------------------------------+--------------------------------------------------------+
+    | :doc:`Start Guide </start/index>`                                                                               |
+    |                                                                                                                 |
+    | Install and run your first proxy.                                                                               |
+    |                                                                                                                 |
+    | - :doc:`Using Docker </start/docker>`                                                                           |
+    | - :doc:`Using Python </start/python>`                                                                           |
+    | - :doc:`From Sources </start/sources>`                                                                          |
+    +--------------------------------------------------------+--------------------------------------------------------+
     | :doc:`User's Guide </user/index>`                      | :doc:`Operator's Guide </operate/index>`               |
     |                                                        |                                                        |
     | Explore the user interface.                            | Install, configure and run the service.                |
@@ -57,6 +65,7 @@ Table of Content
 .. toctree::
    :maxdepth: 2
 
+   /start/index
    /user/index
    /operate/index
    /develop/index
