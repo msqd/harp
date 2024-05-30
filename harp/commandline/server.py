@@ -53,4 +53,4 @@ def server(**kwargs):
     config.add_defaults()
     config.read_env(options)
 
-    run(config)
+    return run(config)

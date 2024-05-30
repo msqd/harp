@@ -85,7 +85,7 @@ def run(config: Config):
 
     factory = KernelFactory(config)
     server = HypercornAdapter(factory)
-    asyncio.run(server.serve())
+    return asyncio.run(server.serve())
 
 
 __all__ = [

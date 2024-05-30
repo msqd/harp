@@ -24,6 +24,12 @@ structlog.configure(
     cache_logger_on_first_use=True,
 )
 
+try:
+    _exc_formatter_options = {"width": os.get_terminal_size()[0]}
+except OSError:
+    _exc_formatter_options = {}
+
+
 LOGGING_FORMATTERS = {
     "json": {
         "()": structlog.stdlib.ProcessorFormatter,
@@ -35,7 +41,9 @@ LOGGING_FORMATTERS = {
     },
     "pretty": {
         "()": structlog.stdlib.ProcessorFormatter,
-        "processor": structlog.dev.ConsoleRenderer(exception_formatter=structlog.dev.plain_traceback),
+        "processor": structlog.dev.ConsoleRenderer(
+            exception_formatter=structlog.dev.RichTracebackFormatter(**_exc_formatter_options)
+        ),
     },
     "keyvalue": {
         "()": structlog.stdlib.ProcessorFormatter,
