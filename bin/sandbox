@@ -6,9 +6,6 @@
 #
 # Usage: bin/sandbox some-command with some args
 #
-# Requires a valid python environment to run, as we'll need git-archive-all (we could avoid that, but then it becomes
-# very hard to create an archive with recursive submodules using the right versions).
-#
 # Brought to you by Makersquad and licensed under the DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE, version 2.
 #
 
@@ -35,7 +32,7 @@ SANDBOX=`mktemp -d`
 echo "Created sandbox directory: $SANDBOX"
 function cleanup {
   rm -rf $SANDBOX
-  echo "Removed sandbox directory $SANDBOX."
+  echo "Removed sandbox directory: $SANDBOX."
 }
 trap cleanup EXIT
 
