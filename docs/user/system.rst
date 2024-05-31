@@ -6,4 +6,25 @@ to understand how the running instance is configured.
 
 You probably don't need those informations unless you know what you are looking for.
 
-.. todo:: screenshots
+Settings
+::::::::
+
+The system settings tab (default) shows the current configuration.
+
+.. figure:: system-settings.png
+
+
+Storage
+:::::::
+
+The storage tab shows detailed informations about the current storage, including some usage metrics.
+
+.. figure:: system-storage.png
+
+
+Dependencies
+::::::::::::
+
+The dependencies tab shows the installed python dependencies.
+
+.. figure:: system-dependencies.png

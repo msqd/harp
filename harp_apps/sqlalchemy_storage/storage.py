@@ -18,9 +18,9 @@ from harp.models.base import Results
 from harp.models.transactions import Transaction as TransactionModel
 from harp.settings import PAGE_SIZE
 from harp.typing.storage import Storage
-from harp.utils.apdex import apdex
 from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_datetime
+from harp.utils.tpdex import tpdex
 from harp_apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
 
 from .constants import TimeBucket
@@ -403,7 +403,7 @@ class SqlAlchemyStorage(Storage):
                     .values(
                         finished_at=event.transaction.finished_at.astimezone(UTC).replace(tzinfo=None),
                         elapsed=event.transaction.elapsed,
-                        apdex=apdex(event.transaction.elapsed),
+                        apdex=tpdex(event.transaction.elapsed),
                         x_status_class=event.transaction.extras.get("status_class"),
                     )
                 )
