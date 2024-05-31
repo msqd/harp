@@ -30,6 +30,7 @@ limitless flexibility, allowing you to customize the proxy according to your uni
     |                                                                                                                 |
     | Install and run your first proxy.                                                                               |
     |                                                                                                                 |
+    | - :doc:`/start/quick`                                                                                           |
     | - :doc:`Using Docker </start/docker>`                                                                           |
     | - :doc:`Using Python </start/python>`                                                                           |
     | - :doc:`From Sources </start/sources>`                                                                          |
@@ -38,9 +39,9 @@ limitless flexibility, allowing you to customize the proxy according to your uni
     |                                                        |                                                        |
     | Explore the user interface.                            | Configure and watch.                                   |
     |                                                        |                                                        |
-    | - :doc:`/user/overview`                                | - :doc:`/operate/quickstart`                           |
-    | - :doc:`/user/transactions`                            | - :doc:`/operate/configure/index`                      |
-    | - :doc:`/user/system`                                  | - :doc:`/operate/runtime`                              |
+    | - :doc:`/user/overview`                                | - :doc:`/operate/configure/index`                      |
+    | - :doc:`/user/transactions`                            | - :doc:`/operate/runtime`                              |
+    | - :doc:`/user/system`                                  |                                                        |
     | - :doc:`/user/performances`                            |                                                        |
     +--------------------------------------------------------+--------------------------------------------------------+
     | :doc:`Developer's Guide </develop/index>`              | :doc:`Contributor's Guide </contribute/index>`         |

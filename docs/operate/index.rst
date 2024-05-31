@@ -7,6 +7,5 @@ already installed harp, please refer to the :doc:`Start Guide </start/index>` if
 .. toctree::
     :maxdepth: 2
 
-    quickstart
     configure/index
     runtime

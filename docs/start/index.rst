@@ -4,6 +4,11 @@ Getting Started
 This guide contains eveything you need to get started using the software, from a technical point of view. If you just
 want to use the dashboard, you may be looking for the :doc:`/user/index`.
 
+.. toctree::
+    :maxdepth: 2
+
+    quick
+
 Installation
 ::::::::::::
 
