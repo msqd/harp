@@ -39,7 +39,7 @@ class SqlalchemyStorageTestFixtureMixin:
                         "id": generate_transaction_id_ksuid(),
                         "type": "http",
                         "endpoint": "/",
-                        "started_at": datetime.now(UTC).replace(tzinfo=None),
+                        "started_at": datetime.now(UTC),
                     },
                     **kwargs,
                 }

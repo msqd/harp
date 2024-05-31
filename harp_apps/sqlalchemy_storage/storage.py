@@ -293,7 +293,7 @@ class SqlAlchemyStorage(Storage):
             query = query.where(Transaction.endpoint == endpoint)
 
         if start_datetime:
-            query = query.where(Transaction.started_at >= start_datetime.astimezone(UTC).replace(tzinfo=None))
+            query = query.where(Transaction.started_at >= start_datetime.astimezone(UTC))
 
         query = query.group_by(s_date).order_by(s_date.asc())
         async with self.begin() as session:
@@ -313,7 +313,7 @@ class SqlAlchemyStorage(Storage):
     async def get_usage(self):
         async with self.begin() as session:
             query = select(count(Transaction.id)).where(
-                Transaction.started_at > (datetime.now(UTC) - timedelta(hours=24)).replace(tzinfo=None)
+                Transaction.started_at > (datetime.now(UTC) - timedelta(hours=24))
             )
             return (await session.execute(query)).scalar_one_or_none()
 
@@ -401,7 +401,7 @@ class SqlAlchemyStorage(Storage):
                     update(Transaction)
                     .where(Transaction.id == event.transaction.id)
                     .values(
-                        finished_at=event.transaction.finished_at.astimezone(UTC).replace(tzinfo=None),
+                        finished_at=event.transaction.finished_at.astimezone(UTC),
                         elapsed=event.transaction.elapsed,
                         apdex=tpdex(event.transaction.elapsed),
                         x_status_class=event.transaction.extras.get("status_class"),

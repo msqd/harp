@@ -10,15 +10,9 @@ class TestJanitorWorker(SqlalchemyStorageTestFixtureMixin):
     async def test_delete_old_transactions(self, storage: SqlAlchemyStorage):
         worker = JanitorWorker(storage)
 
-        await self.create_transaction(
-            storage, started_at=datetime.now(UTC).replace(tzinfo=None) - OLD_AFTER - timedelta(hours=1)
-        )
-        await self.create_transaction(
-            storage, started_at=datetime.now(UTC).replace(tzinfo=None) - OLD_AFTER - timedelta(minutes=1)
-        )
-        await self.create_transaction(
-            storage, started_at=datetime.now(UTC).replace(tzinfo=None) - OLD_AFTER + timedelta(minutes=1)
-        )
+        await self.create_transaction(storage, started_at=datetime.now(UTC) - OLD_AFTER - timedelta(hours=1))
+        await self.create_transaction(storage, started_at=datetime.now(UTC) - OLD_AFTER - timedelta(minutes=1))
+        await self.create_transaction(storage, started_at=datetime.now(UTC) - OLD_AFTER + timedelta(minutes=1))
 
         async with storage.session_factory() as session:
             assert (await worker.compute_metrics(session))["storage.transactions"] == 3
@@ -58,15 +52,9 @@ class TestJanitorWorker(SqlalchemyStorageTestFixtureMixin):
     async def test_delete_old_transactions_but_keep_flagged_ones(self, storage: SqlAlchemyStorage):
         worker = JanitorWorker(storage)
 
-        t1 = await self.create_transaction(
-            storage, started_at=datetime.now(UTC).replace(tzinfo=None) - OLD_AFTER - timedelta(hours=1)
-        )
-        await self.create_transaction(
-            storage, started_at=datetime.now(UTC).replace(tzinfo=None) - OLD_AFTER - timedelta(minutes=1)
-        )
-        await self.create_transaction(
-            storage, started_at=datetime.now(UTC).replace(tzinfo=None) - OLD_AFTER + timedelta(minutes=1)
-        )
+        t1 = await self.create_transaction(storage, started_at=datetime.now(UTC) - OLD_AFTER - timedelta(hours=1))
+        await self.create_transaction(storage, started_at=datetime.now(UTC) - OLD_AFTER - timedelta(minutes=1))
+        await self.create_transaction(storage, started_at=datetime.now(UTC) - OLD_AFTER + timedelta(minutes=1))
 
         user = await storage.users.find_one_by_username("anonymous")
         await storage.flags.create({"type": 1, "user_id": user.id, "transaction_id": t1.id})

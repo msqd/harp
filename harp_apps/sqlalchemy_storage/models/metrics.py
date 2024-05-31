@@ -36,7 +36,7 @@ class MetricsRepository(Repository[Metric]):
 
     @with_session
     async def insert_values(self, values: dict, /, session):
-        now = datetime.now(UTC).replace(tzinfo=None)
+        now = datetime.now(UTC)
         for name, value in values.items():
             metric = await self.find_or_create_one({"name": name}, session=session)
             await self.values.create({"metric_id": metric.id, "value": value, "created_at": now}, session=session)
