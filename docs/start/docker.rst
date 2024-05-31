@@ -30,13 +30,13 @@ For a test run, you can:
 This will start the proxy using the default settings (in memory sqlite storage) and by default, the dashboard will be
 available `locally on the 4080 port <http://localhost:4080>`_.
 
-This first run is not very interesting, becasue there are no proxy ports configured. Nothing can get through, yet.
+This first run is not very interesting, because there are no proxy ports configured. Nothing can get through, yet.
 
 Stop this container and run another with a remote endpoint setup:
 
 .. code-block:: shell
 
-    docker run -it --rm -p 4000-4100:4000-4100 makersquad/harp-proxy -- --endpoint httpbin=4000:http://httpbin.org
+    docker run -it --rm -p 4000-4100:4000-4100 makersquad/harp-proxy server --endpoint httpbin=4000:http://httpbin.org
 
 This will start a container with an additional port that will proxy requests to `httpbin.org <http://httpbin.org>`_.
 
@@ -45,8 +45,9 @@ this instead of curl):
 
 .. code-block:: shell
 
-    curl http://localhost:4000/get
-    curl http://localhost:4000/ip
+    curl -X GET "http://localhost:4000/get" -H "accept: application/json"
+    curl -X POST "http://localhost:4000/post" -H "accept: application/json"
+    curl -X PUT "http://localhost:4000/put" -H "accept: application/json"
 
 Open the `dashboard <http://localhost:4080>`_ again, you'll be able to see the transactions that went through.
 
