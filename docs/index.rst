@@ -36,7 +36,7 @@ limitless flexibility, allowing you to customize the proxy according to your uni
     +--------------------------------------------------------+--------------------------------------------------------+
     | :doc:`User's Guide </user/index>`                      | :doc:`Operator's Guide </operate/index>`               |
     |                                                        |                                                        |
-    | Explore the user interface.                            | Install, configure and run the service.                |
+    | Explore the user interface.                            | Configure and watch.                                   |
     |                                                        |                                                        |
     | - :doc:`/user/overview`                                | - :doc:`/operate/quickstart`                           |
     | - :doc:`/user/transactions`                            | - :doc:`/operate/configure/index`                      |
@@ -45,13 +45,15 @@ limitless flexibility, allowing you to customize the proxy according to your uni
     +--------------------------------------------------------+--------------------------------------------------------+
     | :doc:`Developer's Guide </develop/index>`              | :doc:`Contributor's Guide </contribute/index>`         |
     |                                                        |                                                        |
-    | Run, enhance and extend.                               | Dive in the internals.                                 |
+    | Enhance and extend.                                    | Dive in the internals.                                 |
     |                                                        |                                                        |
     | - :doc:`/develop/run`                                  | - :doc:`/contribute/introduction`                      |
     | - :doc:`/develop/customize`                            | - :doc:`/contribute/applications/index`                |
     | - :doc:`/develop/extend`                               | - :doc:`/contribute/roadmap`                           |
     +--------------------------------------------------------+--------------------------------------------------------+
     | :doc:`Reference <reference/index>`                                                                              |
+    |                                                                                                                 |
+    | Implementation details.                                                                                         |
     |                                                                                                                 |
     | - :doc:`Command Line Reference </reference/commandline/index>`                                                  |
     | - :doc:`Core API Reference </reference/core/harp>`                                                              |
