@@ -10,7 +10,7 @@ Transactions older than 3 months (default) are automatically deleted, unless an 
 List (default)
 ::::::::::::::
 
-.. figure:: transactions.png
+.. figure:: images/transactions.png
 
 Details
 :::::::
@@ -18,6 +18,6 @@ Details
 You can select a transaction and read all transaction content dans details, including the full request and response
 headers and body.
 
-.. figure:: transactions-details.png
+.. figure:: images/transactions-details.png
 
 .. todo:: better screenshots

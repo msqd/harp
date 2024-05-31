@@ -11,7 +11,7 @@ Settings
 
 The system settings tab (default) shows the current configuration.
 
-.. figure:: system-settings.png
+.. figure:: images/system-settings.png
 
 
 Storage
@@ -19,7 +19,7 @@ Storage
 
 The storage tab shows detailed informations about the current storage, including some usage metrics.
 
-.. figure:: system-storage.png
+.. figure:: images/system-storage.png
 
 
 Dependencies
@@ -27,4 +27,4 @@ Dependencies
 
 The dependencies tab shows the installed python dependencies.
 
-.. figure:: system-dependencies.png
+.. figure:: images/system-dependencies.png
