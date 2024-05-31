@@ -187,7 +187,7 @@ class Config:
     def validate(self):
         if self._validated_settings is None:
             to_be_validated = deepcopy(self._raw_settings)
-            application_names = to_be_validated.pop("applications", [])
+            application_names = list(set(to_be_validated.pop("applications", [])))
             validated = {"applications": []}
 
             # round 1: import applications and set defaults before validation
