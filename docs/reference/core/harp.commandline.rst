@@ -12,4 +12,5 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
+    harp.commandline.install
     harp.commandline.utils
