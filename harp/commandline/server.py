@@ -25,8 +25,7 @@ class ServerOptions(dict):
                 ("--enable {app}".format(app=app) for app in self.enable),
                 ("--disable {app}".format(app=app) for app in self.disable),
                 ("--file " + file for file in self.files),
-                # TODO this is buggy, as it will only work with `start` but not `server`
-                (("--set storage.drop_tables true",) if self.reset else ()),
+                (("--set storage.drop_tables=true",) if self.reset else ()),
             )
         )
 

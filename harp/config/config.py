@@ -165,6 +165,10 @@ class Config:
         for k, v in (options.options or {}).items():
             builder.add_value(k, v)
 
+        # reset option
+        if options.reset:
+            builder.add_value("storage.drop_tables", True)
+
         self._raw_settings = builder.build().values
 
         self._raw_settings.setdefault("proxy", {})
