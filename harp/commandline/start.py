@@ -3,7 +3,7 @@ import sys
 
 from harp.commandline.server import ServerOptions, add_harp_server_click_options
 from harp.commandline.utils.manager import HARP_DASHBOARD_SERVICE
-from harp.utils.commandline import click
+from harp.utils.commandline import click, code
 
 
 def _get_service_name_for_humans(x: str):
@@ -22,17 +22,22 @@ def assert_development_packages_are_available():
     assert_package_is_available("watchfiles")
 
 
-@click.command(short_help="Starts the development environment.")
-@click.option("--with-docs/--no-docs", default=False, help="Append the sphinx doc process to the default process list.")
-@click.option("--with-ui/--no-ui", default=False, help="Append the storybook process to the default process list.")
-# TODO maybe run reset as a pre-start command, so it does not run on each reload?
-@click.option("--mock", is_flag=True, help="Enable mock data instead of real api data (dashboard).")
+@click.command(
+    short_help="Starts the local development environment.",
+    help=f"""Starts the local development environment, using honcho to spawn a configurable set of processes that you
+    can adapt to your needs. By default, it will starts the `dashboard` (frontend dev server) and `server` (python
+    server) processes. For live instances, you'll prefer {code('harp server')}.""",
+)
+@click.option("--with-docs/--no-docs", default=False, help="Append the sphinx doc process to the process list.")
+@click.option("--with-ui/--no-ui", default=False, help="Append the storybook process to the process list.")
+@click.option("--mock", is_flag=True, help="Enable mock data instead of real api data (dashboard only).")
 @click.option(
     "--server-subprocess",
     "-XS",
     "server_subprocesses",
+    metavar="NAME:PORT:CMD",
     multiple=True,
-    help="Add a server subprocess to the list of services to start.",
+    help="Add a server subprocess to the list of services to start (experimental, can be used multiple times).",
 )
 @click.argument("services", nargs=-1)
 @add_harp_server_click_options
@@ -93,9 +98,11 @@ def start(with_docs, with_ui, services, server_subprocesses, mock, **kwargs):
             )
 
     manager = manager_factory.build(services, more_env=more_env)
+
     try:
         manager.loop()
     finally:
         manager.terminate()
         manager.kill()
+
     sys.exit(manager.returncode)

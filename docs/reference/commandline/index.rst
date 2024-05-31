@@ -1,35 +1,55 @@
 Command Line
 ============
 
-Start
-:::::
+.. click:: harp.commandline:entrypoint
+   :prog: harp
+   :nested: full
 
-Starts local dev services using honcho (only for development purposes).
+How to use
+::::::::::
 
-.. code-block:: bash
+For PIP and source installs, it will be available as
+`harp` in your python environment.
 
-    $ harp start [--with-docs/--no-docs] [--with-ui/--no-ui] [services...] [--set <key>=<value> ...] [--file/-f <config-file> ...] [--server-subprocess/-XS <command> ...]
+For source installations, you may need to use
+`poetry run harp ...`.
 
+Docker
+------
 
-Available services:
+For Docker installs, the harp CLI being the default command of the container you can pass arguments to the `docker run`
+command directly.
 
-- server
-- dashboard
-- docs
-- ui
+.. code-block:: shell
+    :emphasize-lines: 3
 
-By default, `harp start` will start the server and the dashboard.
+    docker run -it --rm \
+           makersquad/harp-proxy \
+           server --endpoint httpbin=4000:https://httpbin.org
 
-.. todo::
+Python package
+--------------
 
-    Undocumented (for now)
+For regular python installations (for example, using pip to install it from PyPI), you'll find the `harp` command in
+your python environment's path, thus you'll be able to run:
 
-    - --server-subprocess
-    - install-dev
+.. code-block:: shell
 
-    Possible future things
+    harp server --endpoint httpbin=4000:https://httpbin.org
 
-    - build (compile stuff for production)
-    - serve (run a production-like server)
+Sources
+-------
 
-    Document how harp start work (honcho, devserver port, ...)
+For sources installations, the behaviour is similar to installing it from a packaged wheel (python package), but you
+may need to force using the right environment using poetry.
+
+.. code-block:: shell
+
+    poetry run harp server --endpoint httpbin=4000:https://httpbin.org
+
+Another way would be to activate the poetry environment and run the command directly:
+
+.. code-block:: shell
+
+    poetry shell
+    harp server --endpoint httpbin=4000:https://httpbin.org

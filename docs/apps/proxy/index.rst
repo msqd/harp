@@ -1,7 +1,7 @@
 Proxy
 =====
 
-The `harp.apps.proxy` application implements the core harp proxy features.
+The `harp_apps.proxy` application implements the core harp proxy features.
 
 Loading
 :::::::
@@ -17,8 +17,8 @@ Configuration
 
 Proxy endpoints are the remote APIs that your proxy will serve. Each endpoint have a local port, a name, and a base URL.
 
-Internal implementation: :class:`ProxySettings <harp.apps.proxy.settings.ProxySettings>`,
-:class:`ProxyEndpointSetting <harp.apps.proxy.settings.ProxyEndpointSetting>`
+Internal implementation: :class:`ProxySettings <harp_apps.proxy.settings.ProxySettings>`,
+:class:`ProxyEndpointSetting <harp_apps.proxy.settings.ProxyEndpointSetting>`
 
 
 .. warning::

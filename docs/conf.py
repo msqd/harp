@@ -1,8 +1,11 @@
 # Configuration file for the Sphinx documentation builder.
 
+import builtins
 import os
 import sys
 from datetime import datetime
+
+builtins.__sphinx__ = True
 
 sys.path.insert(0, os.path.abspath(".."))
 

@@ -115,6 +115,7 @@ class HonchoManagerFactory:
 
 
 def parse_server_subprocesses_options(server_subprocesses):
+    # TODO uniformise with --endpoint to be in format name=port:cmd
     processes = {}
     for server_subprocess in server_subprocesses:
         try:

@@ -1,20 +1,18 @@
 Dashboard
 =========
 
-The `harp.apps.dashboard` application implements the administrative api and micro-frontend.
+The `harp_apps.dashboard` application implements the administrative api and micro-frontend.
 
 If enabled, a server will be available (by default, on port `4080`) to observe whatever goes through the proxy.
 
 Loading
 :::::::
 
-The dashboard application is loaded by default. If you need to explicitely load or unlaod it, use the `--load` and
-`--unload` flags.
+The dashboard application is loaded by default. You can :code:`--disable` it if you want.
 
 .. code-block:: shell
 
-    $ harp start ... --load harp.apps.dashboard
-    $ harp start ... --unload harp.apps.dashboard
+    $ harp start ... --disable dashboard
 
 .. todo::
 
@@ -36,7 +34,7 @@ Main settings for the dashboard.
 .. literalinclude:: ./examples/main.yml
     :language: yaml
 
-Internal implementation: :class:`DashboardSettings <harp.apps.dashboard.settings.DashboardSettings>`
+Internal implementation: :class:`DashboardSettings <harp_apps.dashboard.settings.DashboardSettings>`
 
 Authentication
 --------------
@@ -50,8 +48,8 @@ Configuration for dashboard user authentication.
 .. literalinclude:: ./examples/auth.basic.yml
     :language: yaml
 
-Internal implementation: :class:`DashboardAuthSetting <harp.apps.dashboard.settings.DashboardAuthSetting>`,
-:class:`DashboardAuthBasicSetting <harp.apps.dashboard.settings.DashboardAuthBasicSetting>`
+Internal implementation: :class:`DashboardAuthSetting <harp_apps.dashboard.settings.DashboardAuthSetting>`,
+:class:`DashboardAuthBasicSetting <harp_apps.dashboard.settings.DashboardAuthBasicSetting>`
 
 Dev Server
 ----------
@@ -89,8 +87,8 @@ To disable the dashboard globally, set `dashboard.enabled` to `false`.
 
     Implement CLI to load or not load an application.
 
-    You can also disable the dashboard by not loading the `harp.apps.dashboard` application.
+    You can also disable the dashboard by not loading the `harp_apps.dashboard` application.
 
     .. code-block:: shell
 
-        $ harp start ... --disable harp.apps.dashboard
+        $ harp start ... --disable dashboard

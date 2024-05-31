@@ -26,16 +26,18 @@ well for now.
     Manage process list / options using a class (with hierarchy for prod/dev, for example)
     If one process only, no honcho ? Or mayne no honcho manager ?
 
-Contents
---------
+.. todo::
 
-.. click:: harp.commandline:entrypoint
-   :prog: harp
-   :nested: full
+    Possible future things (or not)
+
+    - build (compile stuff for production)
+    - serve (run a production-like server)
+
+    Document how harp start work (honcho, devserver port, ...)
 
 """
 
-from harp.commandline.install_dev import install_dev
+from harp.commandline.install import install_dev
 from harp.commandline.server import server
 from harp.commandline.start import start
 from harp.settings import HARP_ENV

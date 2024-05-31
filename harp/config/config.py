@@ -28,6 +28,14 @@ def get_application_class_name(name):
     return "".join(map(lambda x: x.title().replace("_", ""), name.rsplit(".", 1)[-1:])) + "Application"
 
 
+def _resolve_application_aliases(spec):
+    if "." not in spec:
+        _candidate = ".".join(("harp_apps", spec))
+        if importlib.util.find_spec(_candidate):
+            return _candidate
+    return spec
+
+
 class Config:
     DEFAULT_APPLICATIONS = [
         "harp_apps.http_client",
@@ -91,6 +99,7 @@ class Config:
         if not is_valid_dotted_identifier(name):
             raise ValueError(f"Invalid application name: {name}")
         self.reset()
+        name = _resolve_application_aliases(name)
         self._raw_settings["applications"].append(name)
         if debug:
             self._debug_applications.add(name)
@@ -99,15 +108,12 @@ class Config:
         if not is_valid_dotted_identifier(name):
             raise ValueError(f"Invalid application name: {name}")
         self.reset()
+        name = _resolve_application_aliases(name)
         if name in self._raw_settings["applications"]:
             self._raw_settings["applications"].remove(name)
         self._debug_applications.discard(name)
 
-    def read_env(
-        self,
-        options: ServerOptions,
-        /,
-    ):
+    def read_env(self, options: ServerOptions, /):
         """
         Parses sys.argv-like arguments.
 
@@ -116,8 +122,8 @@ class Config:
         :return: argparse.Namespace
 
         """
-        for _enabaled_application in options.enable or ():
-            self.add_application(_enabaled_application)
+        for _enabled_application in options.enable or ():
+            self.add_application(_enabled_application)
         for _disabled_application in options.disable or ():
             self.remove_application(_disabled_application)
 
