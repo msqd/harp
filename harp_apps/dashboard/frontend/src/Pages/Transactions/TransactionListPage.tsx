@@ -1,21 +1,49 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
+import { SearchBar } from "ui/Components/SearchBar/SearchBar"
 
 import { Page } from "Components/Page"
 import { PageTitle } from "Components/Page/PageTitle.tsx"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { useTransactionsListQuery } from "Domain/Transactions"
-import { Filters } from "Types/filters"
-import { SearchBar } from "ui/Components/SearchBar/SearchBar.tsx"
+import { Filters, Filter } from "Types/filters"
 
 import { OptionalPaginator } from "./Components/OptionalPaginator.tsx"
 import { TransactionListOnQuerySuccess } from "./TransactionListOnQuerySuccess.tsx"
 
 export function TransactionListPage() {
+  const location = useLocation()
+
+  const navigate = useNavigate()
+
+  const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search])
+
   const [filters, setFilters] = useState<Filters>({})
-  const [page, setPage] = useState(1)
-  const [cursor, setCursor] = useState<string | undefined>(undefined)
-  const [search, setSearch] = useState<string | undefined>(undefined)
+
+  const [page, setPage] = useState(Number(queryParams.get("page")) || 1)
+  const [cursor, setCursor] = useState<string | undefined>(queryParams.get("cursor") || undefined)
+  const [search, setSearch] = useState<string | undefined>(queryParams.get("search") || undefined)
   const query = useTransactionsListQuery({ filters, page, cursor, search })
+
+  useEffect(() => {
+    const queryParamsToUpdate = { page: page.toString(), cursor: cursor, search: search }
+    const updateQueryParam = (paramName: string, paramValue: string | undefined) => {
+      if (paramValue) {
+        queryParams.set(paramName, paramValue)
+      } else {
+        queryParams.delete(paramName)
+      }
+
+      navigate({
+        pathname: location.pathname,
+        search: queryParams.toString(),
+      })
+    }
+
+    for (const [key, value] of Object.entries(queryParamsToUpdate)) {
+      updateQueryParam(key, value)
+    }
+  }, [location.pathname, navigate, queryParams, search, cursor, page])
 
   useEffect(() => {
     if (page == 1 && query.isSuccess && query.data.items.length) {
@@ -23,6 +51,7 @@ export function TransactionListPage() {
     }
   }, [page, query])
 
+  console.log("Cursor", cursor)
   return (
     <Page
       title={
@@ -32,6 +61,7 @@ export function TransactionListPage() {
               placeHolder="Search transactions"
               setSearch={setSearch}
               className="w-96 order-last lg:order-first pr-6"
+              search={search}
             />
             {query.isSuccess ? (
               <OptionalPaginator
