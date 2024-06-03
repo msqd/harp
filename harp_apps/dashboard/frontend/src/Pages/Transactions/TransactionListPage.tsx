@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
-import { SearchBar } from "ui/Components/SearchBar/SearchBar"
 
 import { Page } from "Components/Page"
 import { PageTitle } from "Components/Page/PageTitle.tsx"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { useTransactionsListQuery } from "Domain/Transactions"
-import { Filters, Filter } from "Types/filters"
+import { Filters } from "Types/filters"
+import { SearchBar } from "ui/Components/SearchBar/SearchBar"
 
 import { OptionalPaginator } from "./Components/OptionalPaginator.tsx"
 import { TransactionListOnQuerySuccess } from "./TransactionListOnQuerySuccess.tsx"

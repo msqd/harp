@@ -1,11 +1,11 @@
-import { Pane } from "ui/Components/Pane"
+import { useCallback, useEffect } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
 
 import { useTransactionsFiltersQuery } from "Domain/Transactions"
 import { Filter, Filters } from "Types/filters"
+import { Pane } from "ui/Components/Pane"
 
 import { Facet } from "../Components/Facets"
-import { useLocation, useNavigate } from "react-router-dom"
-import { useCallback, useEffect } from "react"
 
 const ratings = [
   { name: "A++" },
