@@ -100,6 +100,9 @@ class Config:
             raise ValueError(f"Invalid application name: {name}")
         self.reset()
         name = _resolve_application_aliases(name)
+        # if application is already in the list, do nothing
+        if name in self._raw_settings["applications"]:
+            return
         self._raw_settings["applications"].append(name)
         if debug:
             self._debug_applications.add(name)
@@ -187,7 +190,7 @@ class Config:
     def validate(self):
         if self._validated_settings is None:
             to_be_validated = deepcopy(self._raw_settings)
-            application_names = list(set(to_be_validated.pop("applications", [])))
+            application_names = to_be_validated.pop("applications", [])
             validated = {"applications": []}
 
             # round 1: import applications and set defaults before validation
