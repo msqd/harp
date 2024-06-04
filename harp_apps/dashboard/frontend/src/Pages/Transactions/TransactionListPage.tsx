@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react"
+import { isEqual } from "lodash"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 
 import { Page } from "Components/Page"
@@ -51,7 +52,17 @@ export function TransactionListPage() {
     }
   }, [page, query])
 
-  console.log("Cursor", cursor)
+  const prevFiltersRef = useRef<Filters>({})
+
+  useEffect(() => {
+    console.log("Filters", prevFiltersRef.current)
+    if (!isEqual(filters, prevFiltersRef.current)) {
+      console.log("Filters changed")
+      setPage((prevPage) => (prevPage > 1 ? 1 : prevPage))
+      prevFiltersRef.current = filters
+    }
+  }, [filters])
+
   return (
     <Page
       title={
@@ -78,7 +89,6 @@ export function TransactionListPage() {
         </PageTitle>
       }
     >
-      {/* <SearchBar placeHolder="Search transactions" setSearch={setSearch} className="w-1/2" /> */}
       <OnQuerySuccess query={query}>
         {(query) => <TransactionListOnQuerySuccess query={query} filters={filters} setFilters={setFilters} />}
       </OnQuerySuccess>
