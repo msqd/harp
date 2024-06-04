@@ -36,6 +36,7 @@ exports[`renders well when the query is successful 1`] = `
               name="search"
               placeholder="Search transactions"
               type="text"
+              value=""
             />
             <div
               class="inset-y-0 right-0 flex py-1.5 pr-1.5 hover:cursor-pointer"
