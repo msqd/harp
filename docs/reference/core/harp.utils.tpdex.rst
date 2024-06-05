@@ -1,7 +1,7 @@
-harp.utils.apdex
+harp.utils.tpdex
 ================
 
-.. automodule:: harp.utils.apdex
+.. automodule:: harp.utils.tpdex
     :members:
     :undoc-members:
     :show-inheritance:

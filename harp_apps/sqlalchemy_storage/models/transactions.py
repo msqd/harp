@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, Integer, String, Table, exists, insert
+from sqlalchemy import TIMESTAMP, Column, Float, ForeignKey, Index, Integer, String, Table, exists, insert
 from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship, selectinload
 
 from harp.models.transactions import Transaction as TransactionModel
@@ -27,8 +27,8 @@ class Transaction(Base):
     id = mapped_column(String(27), primary_key=True, unique=True)
     type = mapped_column(String(10), index=True)
     endpoint = mapped_column(String(32), nullable=True, index=True)
-    started_at = mapped_column(DateTime(), index=True)
-    finished_at = mapped_column(DateTime(), nullable=True)
+    started_at = mapped_column(TIMESTAMP(timezone=True), index=True)
+    finished_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     elapsed = mapped_column(Float(), nullable=True)
     apdex = mapped_column(Integer(), nullable=True)
     x_method = mapped_column(String(16), nullable=True, index=True)
@@ -60,8 +60,8 @@ class Transaction(Base):
             id=self.id,
             type=self.type,
             endpoint=self.endpoint,
-            started_at=self.started_at,
-            finished_at=self.finished_at,
+            started_at=self.started_at.replace(tzinfo=UTC),
+            finished_at=self.finished_at.replace(tzinfo=UTC) if self.finished_at else self.finished_at,
             elapsed=self.elapsed,
             apdex=self.apdex,
             extras=dict(
@@ -123,7 +123,7 @@ class TransactionsRepository(Repository[Transaction]):
         return query
 
     def delete_old(self, old_after: timedelta):
-        threshold = (datetime.now(UTC) - old_after).replace(tzinfo=None)
+        threshold = datetime.now(UTC) - old_after
         no_flags = ~exists().where(UserFlag.transaction_id == self.Type.id)
         return self.delete().where((self.Type.started_at < threshold) & no_flags)
 
@@ -136,7 +136,7 @@ class TransactionsRepository(Repository[Transaction]):
                 id=values.id,
                 type=values.type,
                 endpoint=values.endpoint,
-                started_at=values.started_at.replace(tzinfo=None),
+                started_at=values.started_at,
                 x_method=values.extras.get("method"),
                 tags=values.tags,
             )

@@ -14,5 +14,5 @@ def test_applications():
 def test_reset():
     options = ServerOptions(options=(), files=(), enable=(), disable=(), reset=True)
     assert options.as_list() == [
-        "--set storage.drop_tables true",
+        "--set storage.drop_tables=true",
     ]

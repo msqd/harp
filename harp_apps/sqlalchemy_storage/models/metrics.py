@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import TIMESTAMP, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, Repository, with_session
@@ -18,7 +18,7 @@ class MetricValue(Base):
 
     metric_id = mapped_column(ForeignKey("sa_metrics.id"), nullable=False, primary_key=True)
     metric: Mapped["Metric"] = relationship()
-    created_at = mapped_column(DateTime(), server_default=func.now(), primary_key=True)
+    created_at = mapped_column(TIMESTAMP(timezone=True), server_default=func.now(), primary_key=True)
 
     value = mapped_column(Integer())
 
@@ -36,7 +36,7 @@ class MetricsRepository(Repository[Metric]):
 
     @with_session
     async def insert_values(self, values: dict, /, session):
-        now = datetime.now(UTC).replace(tzinfo=None)
+        now = datetime.now(UTC)
         for name, value in values.items():
             metric = await self.find_or_create_one({"name": name}, session=session)
             await self.values.create({"metric_id": metric.id, "value": value, "created_at": now}, session=session)
