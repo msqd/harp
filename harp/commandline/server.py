@@ -41,7 +41,7 @@ def add_harp_server_click_options(f):
             "--set",
             "options",
             multiple=True,
-            help=f"Set proxy configuration options (e.g. {code('--set foo bar')}, can be used multiple times).",
+            help=f"Set proxy configuration options (e.g. {code('--set foo=bar')}, can be used multiple times).",
         ),
         click.option(
             "--endpoint",

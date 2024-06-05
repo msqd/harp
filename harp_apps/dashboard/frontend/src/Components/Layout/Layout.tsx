@@ -1,4 +1,4 @@
-import { TagIcon, UserCircleIcon } from "@heroicons/react/20/solid"
+import { QuestionMarkCircleIcon, TagIcon, UserCircleIcon } from "@heroicons/react/20/solid"
 import { Link, Outlet, useLocation } from "react-router-dom"
 import tw, { styled } from "twin.macro"
 
@@ -22,7 +22,11 @@ function RightNav() {
       {systemQuery.data.user ?? "anonymous"}
       <br />
       <span className="text-xs">
-        <TagIcon className="inline-block w-4 h-4 mr-1" />
+        <a href="https://harp-proxy.rtfd.io/en/0.5/user/?utm_source=dashboard&utm_medium=help" target="_blank">
+          <QuestionMarkCircleIcon className="inline-block w-4 h-4 mx-1" />
+          Help
+        </a>
+        <TagIcon className="inline-block w-4 h-4 mx-1" />
         {`v.${systemQuery.data.version}`}
       </span>
     </div>
