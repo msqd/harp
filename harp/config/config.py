@@ -100,12 +100,10 @@ class Config:
             raise ValueError(f"Invalid application name: {name}")
         self.reset()
         name = _resolve_application_aliases(name)
-        # if application is already in the list, do nothing
-        if name in self._raw_settings["applications"]:
-            return
-        self._raw_settings["applications"].append(name)
-        if debug:
-            self._debug_applications.add(name)
+        if name not in self._raw_settings["applications"]:
+            self._raw_settings["applications"].append(name)
+            if debug:
+                self._debug_applications.add(name)
 
     def remove_application(self, name):
         if not is_valid_dotted_identifier(name):
@@ -207,7 +205,7 @@ class Config:
             validated |= newly_validated
 
             if to_be_validated != {}:
-                raise ValueError(f"Unknown settings remaining: {to_be_validated}")
+                logger.warning(f"Unknown settings remaining: {to_be_validated}")
 
             # propagate for the world to use
             self._validated_settings = MappingProxyType(validated)

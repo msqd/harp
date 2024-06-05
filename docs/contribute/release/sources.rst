@@ -3,19 +3,19 @@ Releasing a new source version
 
 1. Pull and check dependencies are there.
 
-.. code-block:: shell-session
+.. code-block:: shell
 
     git pull --tags
     make install-dev
 
 2. Generate next version number
 
-.. code-block:: shell-session
+.. code-block:: shell
 
     poetry version <patch|minor|major|prepatch|preminor|premajor|prerelease>
     # ... or edit the version in pyproject.toml
 
-.. code-block:: shell-session
+.. code-block:: shell
 
     export VERSION=`poetry version --short`
     export OLD_VERSION=`git describe --tags --abbrev=0`
@@ -23,21 +23,21 @@ Releasing a new source version
 
 3. Update version numbers in other project files...
 
-.. code-block:: shell-session
+.. code-block:: shell
 
     gsed -i -e "s/^__version__ = .*/__version__ = \"$VERSION\"/" harp/__init__.py
     gsed -i -e "s/^appVersion: .*/appVersion: \"$VERSION\"/" misc/helm/charts/harp-proxy/Chart.yaml
 
 4. Generate a changelog...
 
-.. code-block:: shell-session
+.. code-block:: shell
 
     git log --oneline --no-merges --pretty=format:"* %s (%an)" $OLD_VERSION.. > docs/contribute/changelogs/$VERSION.rst
     git add docs/contribute/changelogs/$VERSION.rst
 
 5. Reboot computer and un the benchmarks on new version
 
-.. code-block:: shell-session
+.. code-block:: shell
 
     docker-compose up -d
     poetry run make benchmark-save
@@ -50,7 +50,7 @@ Releasing a new source version
 
 6. Add to git
 
-.. code-block:: shell-session
+.. code-block:: shell
 
     poetry run make preqa
     git add docs/reference
