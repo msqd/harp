@@ -26,6 +26,10 @@ export function TransactionListPage() {
   const [search, setSearch] = useState<string | undefined>(queryParams.get("search") || undefined)
   const query = useTransactionsListQuery({ filters, page, cursor, search })
 
+  // Keep refs of filters and search to reset page when a change is detected
+  const prevSearchRef = useRef<string | undefined>()
+  const prevFiltersRef = useRef<Filters>({})
+
   useEffect(() => {
     const queryParamsToUpdate = { page: page.toString(), cursor: cursor, search: search }
     const updateQueryParam = (paramName: string, paramValue: string | undefined) => {
@@ -52,16 +56,19 @@ export function TransactionListPage() {
     }
   }, [page, query])
 
-  const prevFiltersRef = useRef<Filters>({})
-
   useEffect(() => {
-    console.log("Filters", prevFiltersRef.current)
     if (!isEqual(filters, prevFiltersRef.current)) {
-      console.log("Filters changed")
       setPage((prevPage) => (prevPage > 1 ? 1 : prevPage))
       prevFiltersRef.current = filters
     }
   }, [filters])
+
+  useEffect(() => {
+    if (search !== prevSearchRef.current) {
+      setPage((prevPage) => (prevPage > 1 ? 1 : prevPage))
+      prevSearchRef.current = search
+    }
+  }, [search])
 
   return (
     <Page
