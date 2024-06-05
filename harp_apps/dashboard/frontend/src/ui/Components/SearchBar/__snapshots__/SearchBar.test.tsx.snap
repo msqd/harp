@@ -12,6 +12,7 @@ exports[`SearchBar > renders correctly 1`] = `
         id="search"
         name="search"
         type="text"
+        value=""
       />
       <div
         class="inset-y-0 right-0 flex py-1.5 pr-1.5 hover:cursor-pointer"
