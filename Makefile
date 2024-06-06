@@ -42,6 +42,13 @@ TESTC_COMMAND ?= poetry shell
 # constants
 FRONTEND_DIR = harp_apps/dashboard/frontend
 
+# default run options
+HARP_OPTIONS ?= --file examples/sqlite.yml --file examples/httpbin.yml
+
+.PHONY: start-dev
+start-dev:  # Starts a development instance with reasonable defaults (tune HARP_OPTIONS to replace).
+	$(POETRY) run harp start $(HARP_OPTIONS)
+
 
 ########################################################################################################################
 # Dependencies
