@@ -4,6 +4,7 @@ from typing import Optional
 from urllib.parse import urlencode, urljoin, urlparse
 
 import httpx
+from hishel._headers import parse_cache_control
 from httpx import AsyncClient, codes
 from whistle import IAsyncEventDispatcher
 
@@ -164,6 +165,12 @@ class HttpProxyController:
             endpoint=self.name,
             tags=tags,
         )
+
+        request_cache_control = request.headers.get("cache-control")
+        if request_cache_control:
+            request_cache_control = parse_cache_control([request_cache_control])
+            if request_cache_control.no_cache:
+                transaction.extras["no_cache"] = True
 
         # XXX for now, we use transaction "extras" to store searchable data for later
         transaction.extras["method"] = request.method

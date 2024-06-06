@@ -202,7 +202,7 @@ exports[`renders well when the query is successful 1`] = `
                       class=" css-157hpf5"
                     >
                       <div
-                        class="flex gap-x-0.5 items-center"
+                        class="flex gap-x-0.5 items-center font-normal"
                       >
                         <span>
                           0.06 seconds
@@ -287,7 +287,7 @@ exports[`renders well when the query is successful 1`] = `
                       class=" css-157hpf5"
                     >
                       <div
-                        class="flex gap-x-0.5 items-center"
+                        class="flex gap-x-0.5 items-center font-normal"
                       >
                         <span>
                           0.025 seconds

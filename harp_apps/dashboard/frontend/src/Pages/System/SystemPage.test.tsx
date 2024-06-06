@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react"
-import { act } from "react-dom/test-utils"
-import { expect, it, test, describe } from "vitest"
+import { act } from "react"
+import { describe, expect, it, test } from "vitest"
 
 import { renderWithClient } from "tests/utils"
 

@@ -1,13 +1,13 @@
-import { CircleStackIcon, StarIcon } from "@heroicons/react/24/outline"
-import { formatDistance, formatDuration } from "date-fns"
+import { StarIcon } from "@heroicons/react/24/outline"
+import { formatDistance } from "date-fns"
 import { useState } from "react"
 
-import ApdexBadge from "Components/Badges/ApdexBadge.tsx"
 import { useSetUserFlagMutation } from "Domain/Transactions"
 import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
 import { Message, Transaction } from "Models/Transaction"
 import { DataTable } from "ui/Components/DataTable"
 
+import { Duration } from "../Duration"
 import { MessageSummary } from "../MessageSummary.tsx"
 
 interface TransactionsDataTableProps {
@@ -82,18 +82,15 @@ const transactionColumnTypes = {
   },
   elapsed: {
     label: "Duration",
-    get: (row: Transaction) => [row.elapsed ? Math.trunc(row.elapsed) / 1000 : null, row.apdex, !!row.extras?.cached],
-    format: ([duration, apdex, cached]: [number | null, number | null, boolean]) => {
-      if (duration !== null) {
-        return (
-          <div className="flex gap-x-0.5 items-center">
-            {apdex !== null ? <ApdexBadge score={apdex} /> : null}
-            <span>{formatDuration({ seconds: duration })}</span>
-            {cached ? <CircleStackIcon className="w-4 text-xs text-gray-400 inline" title="From proxy cache" /> : null}
-          </div>
-        )
-      }
-    },
+    get: (row: Transaction) => [
+      row.elapsed ? Math.trunc(row.elapsed) / 1000 : null,
+      row.apdex,
+      !!row.extras?.cached,
+      !!row.extras?.no_cache,
+    ],
+    format: ([duration, apdex, cached, noCache]: [number | null, number | null, boolean, boolean]) => (
+      <Duration duration={duration} apdex={apdex} cached={cached} noCache={noCache} />
+    ),
   },
 }
 

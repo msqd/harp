@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import TIMESTAMP, Column, Float, ForeignKey, Index, Integer, String, Table, exists, insert
+from sqlalchemy import TIMESTAMP, Boolean, Column, Float, ForeignKey, Index, Integer, String, Table, exists, insert
 from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship, selectinload
 
 from harp.models.transactions import Transaction as TransactionModel
@@ -34,6 +34,7 @@ class Transaction(Base):
     x_method = mapped_column(String(16), nullable=True, index=True)
     x_status_class = mapped_column(String(3), nullable=True, index=True)
     x_cached = mapped_column(String(32), nullable=True)
+    x_no_cache = mapped_column(Boolean(), nullable=True, default=False)
 
     messages: Mapped[List["Message"]] = relationship(
         back_populates="transaction",
@@ -69,6 +70,7 @@ class Transaction(Base):
                 method=self.x_method,
                 status_class=self.x_status_class,
                 cached=bool(self.x_cached),
+                no_cache=bool(self.x_no_cache),
                 **(
                     {"flags": list(set(filter(None, (FLAGS_BY_TYPE.get(flag.type, None) for flag in self.flags))))}
                     if with_user_flags
@@ -140,6 +142,7 @@ class TransactionsRepository(Repository[Transaction]):
                 endpoint=values.endpoint,
                 started_at=values.started_at,
                 x_method=values.extras.get("method"),
+                x_no_cache=bool(values.extras.get("no_cache")),
                 tags=values.tags,
             )
         tags = values.pop("tags", {})

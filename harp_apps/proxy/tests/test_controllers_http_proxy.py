@@ -120,7 +120,7 @@ class TestHttpProxyControllerWithStorage(
             "finished_at": ANY,
             "messages": ANY,
             "tags": {},
-            "extras": {"flags": [], "method": "GET", "status_class": "2xx", "cached": False},
+            "extras": {"flags": [], "method": "GET", "status_class": "2xx", "cached": False, "no_cache": False},
         }
 
         # request
@@ -179,7 +179,7 @@ class TestHttpProxyControllerWithStorage(
             "finished_at": ANY,
             "messages": ANY,
             "tags": {"foo": "bar"},
-            "extras": {"flags": [], "method": "GET", "status_class": "2xx", "cached": False},
+            "extras": {"flags": [], "method": "GET", "status_class": "2xx", "cached": False, "no_cache": False},
         }
 
         assert (await storage.get_blob(request.headers)).data == (
