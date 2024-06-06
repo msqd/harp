@@ -33,6 +33,7 @@ class Transaction(Base):
     apdex = mapped_column(Integer(), nullable=True)
     x_method = mapped_column(String(16), nullable=True, index=True)
     x_status_class = mapped_column(String(3), nullable=True, index=True)
+    x_cached = mapped_column(String(32), nullable=True)
 
     messages: Mapped[List["Message"]] = relationship(
         back_populates="transaction",
@@ -67,6 +68,7 @@ class Transaction(Base):
             extras=dict(
                 method=self.x_method,
                 status_class=self.x_status_class,
+                cached=bool(self.x_cached),
                 **(
                     {"flags": list(set(filter(None, (FLAGS_BY_TYPE.get(flag.type, None) for flag in self.flags))))}
                     if with_user_flags

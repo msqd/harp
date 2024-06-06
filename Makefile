@@ -42,6 +42,13 @@ TESTC_COMMAND ?= poetry shell
 # constants
 FRONTEND_DIR = harp_apps/dashboard/frontend
 
+# default run options
+HARP_OPTIONS ?= --file examples/sqlite.yml --file examples/httpbin.yml
+
+.PHONY: start-dev
+start-dev:  # Starts a development instance with reasonable defaults (tune HARP_OPTIONS to replace).
+	$(POETRY) run harp start $(HARP_OPTIONS)
+
 
 ########################################################################################################################
 # Dependencies
@@ -115,6 +122,7 @@ format-backend:  ## Formats the backend codebase.
 	$(RUN) isort harp harp_apps tests
 	$(RUN) black harp harp_apps tests
 	$(RUN) ruff check --fix harp harp_apps tests
+	$(RUN) ruff format
 
 format-frontend: install-frontend  ## Formats the frontend codebase.
 	(cd $(FRONTEND_DIR); $(PNPM) lint:fix)
@@ -131,13 +139,15 @@ test-backend: install-backend-dev  ## Runs backend tests.
 	          $(PYTEST_OPTIONS)
 
 test-frontend: install-frontend lint-frontend  ## Runs frontend tests.
-	cd $(FRONTEND_DIR); $(PNPM) test
+	cd $(FRONTEND_DIR); $(PNPM) test:unit
+	cd $(FRONTEND_DIR); $(PNPM) test:browser
+	bin/runc_visualtests pnpm test:ui:dev
 
 test-frontend-update: install-frontend lint-frontend  ## Runs frontend tests while updating snapshots.
 	cd $(FRONTEND_DIR); $(PNPM) test:unit:update
 
 test-frontend-ui-update: install-frontend lint-frontend  ## Update user interface visual snapshots.
-	cd $(FRONTEND_DIR); $(PNPM) test:ui:update
+	bin/runc_visualtests pnpm test:ui:update
 
 lint-frontend: install-frontend  ## Lints the frontend codebase.
 	cd $(FRONTEND_DIR); $(PNPM) build

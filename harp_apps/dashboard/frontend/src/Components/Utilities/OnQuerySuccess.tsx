@@ -5,6 +5,7 @@ import { QueryObserverSuccessResult } from "react-query/types/core/types"
 
 interface OnQuerySuccessCommonProps<T> {
   children: (...queries: QueryObserverSuccessResult<T>[]) => ReactElement
+  onQueryError?: () => void
 }
 
 interface OnQuerySuccessProps<T> extends OnQuerySuccessCommonProps<T> {
@@ -31,6 +32,12 @@ function OnQuerySuccess<T>(props: OnQuerySuccessProps<T> | OnQueriesSuccessProps
   const queries = "query" in props ? [props.query] : props.queries
 
   const { showBoundary } = useErrorBoundary()
+
+  if (anyQueryIsError(queries)) {
+    if (props?.onQueryError) {
+      props.onQueryError()
+    }
+  }
 
   if (anyQueryIsLoading(queries)) {
     return <div>Loading...</div>

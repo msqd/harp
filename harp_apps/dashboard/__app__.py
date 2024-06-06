@@ -44,4 +44,5 @@ class DashboardApplication(Application):
             return
 
         # add our controller to the controller resolver
-        event.resolver.add(self.settings.port, event.provider.get("dashboard.controller"))
+        controller = event.provider.get("dashboard.controller")
+        event.resolver.add(self.settings.port, controller)
