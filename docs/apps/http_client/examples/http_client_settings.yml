@@ -1,0 +1,6 @@
+http_client:
+  timeout: 10.0
+  cache:
+    disabled: false
+    cacheable_methods: [GET]
+    cacheable_status_codes: [200, 300, 3001]
