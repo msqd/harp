@@ -16,12 +16,15 @@ class AsyncHttpClient(AsyncClient):
 
     def __init__(self, settings: HttpClientSettings):
         transport = AsyncHTTPTransport()
-        if settings.cache and not settings.cache.disabled:
+        if not (settings.cache and settings.cache.disabled):
             controller = Controller(
                 allow_heuristics=True,
-                cacheable_methods=settings.cache.cacheable_methods,
-                cacheable_status_codes=settings.cache.cacheable_status_codes
-                or list(HEURISTICALLY_CACHEABLE_STATUS_CODES),
+                cacheable_methods=settings.cache.cacheable_methods if settings.cache else None,
+                cacheable_status_codes=(
+                    settings.cache.cacheable_status_codes
+                    if settings.cache
+                    else None or list(HEURISTICALLY_CACHEABLE_STATUS_CODES)
+                ),
                 allow_stale=True,
             )
             transport = AsyncCacheTransport(transport=transport, controller=controller)
