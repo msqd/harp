@@ -127,6 +127,9 @@ class HttpProxyController:
         # XXX for now, we use transaction "extras" to store searchable data for later
         transaction.extras["status_class"] = f"{response_status // 100}xx"
 
+        if p_response.extensions.get("from_cache"):
+            transaction.extras["cached"] = p_response.extensions.get("cache_metadata", {}).get("cache_key", True)
+
         response = HttpResponse(p_response.content, status=response_status, headers=response_headers)
 
         await self.end_transaction(transaction, response)

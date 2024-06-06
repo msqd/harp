@@ -201,9 +201,12 @@ exports[`renders well when the query is successful 1`] = `
                     <td
                       class=" css-157hpf5"
                     >
-                      <div>
-                         
-                        0.06 seconds
+                      <div
+                        class="flex gap-x-0.5 items-center"
+                      >
+                        <span>
+                          0.06 seconds
+                        </span>
                       </div>
                     </td>
                     <td
@@ -283,9 +286,12 @@ exports[`renders well when the query is successful 1`] = `
                     <td
                       class=" css-157hpf5"
                     >
-                      <div>
-                         
-                        0.025 seconds
+                      <div
+                        class="flex gap-x-0.5 items-center"
+                      >
+                        <span>
+                          0.025 seconds
+                        </span>
                       </div>
                     </td>
                     <td

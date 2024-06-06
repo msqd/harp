@@ -8,7 +8,7 @@ from harp.utils.commandline import click, code
 
 @dataclass(kw_only=True)
 class ServerOptions(dict):
-    options: Iterable = field(default_factory=dict)
+    options: dict = field(default_factory=dict)
     endpoints: Iterable = field(default_factory=dict)
     files: tuple = ()
     enable: tuple = ()

@@ -405,6 +405,7 @@ class SqlAlchemyStorage(Storage):
                         elapsed=event.transaction.elapsed,
                         apdex=tpdex(event.transaction.elapsed),
                         x_status_class=event.transaction.extras.get("status_class"),
+                        x_cached=event.transaction.extras.get("cached"),
                     )
                 )
 

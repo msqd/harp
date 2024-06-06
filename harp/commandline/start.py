@@ -68,9 +68,11 @@ def start(with_docs, with_ui, services, server_subprocesses, mock, **kwargs):
         more_env.setdefault(HARP_DASHBOARD_SERVICE, {})["DISABLE_MOCKS"] = "true"
 
     options = ServerOptions(**kwargs)
+    _dashboard_devserver_port = options.options.get("dashboard.devserver_port", None)
 
     manager_factory = HonchoManagerFactory(
-        proxy_options=options.as_list(), dashboard_devserver_port=options.get("dashboard.devserver_port", None)
+        proxy_options=options.as_list(),
+        dashboard_devserver_port=_dashboard_devserver_port,
     )
 
     services = {f"harp:{_name}" for _name in services or ()} or set(manager_factory.defaults)

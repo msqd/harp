@@ -1,4 +1,4 @@
-from hishel import AsyncCacheTransport
+from hishel import HEURISTICALLY_CACHEABLE_STATUS_CODES, AsyncCacheTransport, Controller
 from httpx import AsyncClient, AsyncHTTPTransport
 
 from harp.config import Application
@@ -11,7 +11,14 @@ class HttpClientApplication(Application):
         # todo timeout config ?
         # todo lazy build ?
         transport = AsyncHTTPTransport()
-        cache_transport = AsyncCacheTransport(transport=transport)
+        cache_transport = AsyncCacheTransport(
+            transport=transport,
+            controller=Controller(
+                allow_heuristics=True,
+                cacheable_status_codes=HEURISTICALLY_CACHEABLE_STATUS_CODES,
+                allow_stale=True,
+            ),
+        )
         event.container.add_instance(
             AsyncClient(
                 timeout=DEFAULT_TIMEOUT,
