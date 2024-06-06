@@ -1,0 +1,39 @@
+#! /bin/bash
+
+# shellcheck disable=SC2164
+# shellcheck disable=SC2046
+__PATH__=$(cd $(dirname "$0")/..; pwd)
+FRONTEND_DIR=$__PATH__/harp_apps/dashboard/frontend
+ARGS="$*"
+entrypoint_script=$(mktemp)
+
+cat > $entrypoint_script <<EOF
+#! /bin/bash
+
+cd /app
+cp /app/package.json /tmp/package.json
+corepack enable pnpm
+corepack use pnpm@latest
+
+
+echo
+echo "Environment setup complete, you can start running tests now."
+echo " $ pnpm test:ui:dev"
+echo " $ pnpm test:ui:prod"
+echo " $ pnpm test:ui:update"
+echo
+
+(cd /app; /bin/bash -c "$ARGS" )
+mv /tmp/package.json /app/package.json
+EOF
+chmod +x $entrypoint_script
+
+docker run -it --rm \
+           --entrypoint=/entrypoint \
+           --volume $entrypoint_script:/entrypoint \
+           --volume "${FRONTEND_DIR}:/app" \
+           --volume "${__PATH__}/.cache/visualtests-modules:/app/node_modules" \
+           --volume "${__PATH__}/.cache/visualtests-pnpm-store:/app/.pnpm-store" \
+           mcr.microsoft.com/playwright:v1.44.1-jammy
+
+rm "$entrypoint_script"

@@ -132,13 +132,15 @@ test-backend: install-backend-dev  ## Runs backend tests.
 	          $(PYTEST_OPTIONS)
 
 test-frontend: install-frontend lint-frontend  ## Runs frontend tests.
-	cd $(FRONTEND_DIR); $(PNPM) test
+	cd $(FRONTEND_DIR); $(PNPM) test:unit
+	cd $(FRONTEND_DIR); $(PNPM) test:browser
+	bin/runc_visualtests pnpm test:ui:dev
 
 test-frontend-update: install-frontend lint-frontend  ## Runs frontend tests while updating snapshots.
 	cd $(FRONTEND_DIR); $(PNPM) test:unit:update
 
 test-frontend-ui-update: install-frontend lint-frontend  ## Update user interface visual snapshots.
-	cd $(FRONTEND_DIR); $(PNPM) test:ui:update
+	bin/runc_visualtests pnpm test:ui:update
 
 lint-frontend: install-frontend  ## Lints the frontend codebase.
 	cd $(FRONTEND_DIR); $(PNPM) build
