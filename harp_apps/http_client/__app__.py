@@ -23,7 +23,7 @@ class AsyncHttpClient(AsyncClient):
                 cacheable_status_codes=(
                     settings.cache.cacheable_status_codes
                     if settings.cache
-                    else None or list(HEURISTICALLY_CACHEABLE_STATUS_CODES)
+                    else list(HEURISTICALLY_CACHEABLE_STATUS_CODES)
                 ),
                 allow_stale=True,
             )
