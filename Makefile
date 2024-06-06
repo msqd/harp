@@ -115,6 +115,7 @@ format-backend:  ## Formats the backend codebase.
 	$(RUN) isort harp harp_apps tests
 	$(RUN) black harp harp_apps tests
 	$(RUN) ruff check --fix harp harp_apps tests
+	$(RUN) ruff format
 
 format-frontend: install-frontend  ## Formats the frontend codebase.
 	(cd $(FRONTEND_DIR); $(PNPM) lint:fix)
