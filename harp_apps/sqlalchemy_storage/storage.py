@@ -372,27 +372,30 @@ class SqlAlchemyStorage(Storage):
         headers_blob = BlobModel.from_data(serializer.headers, content_type="__headers__")
         content_blob = BlobModel.from_data(serializer.body, content_type=event.message.headers.get("content-type"))
 
-        def create_blob_storage_task(blob):
-            async def store_blob():
+        def create_store_blob_task(blob):
+            async def store_blob_task():
                 async with self.begin() as session:
-                    db_blob = Blob()
-                    db_blob.id = blob.id
-                    db_blob.content_type = blob.content_type
-                    db_blob.data = blob.data
-                    session.add(db_blob)
+                    if not (
+                        await session.execute(select(select(Blob.id).where(Blob.id == blob.id).exists()))
+                    ).scalar_one():
+                        db_blob = Blob()
+                        db_blob.id = blob.id
+                        db_blob.content_type = blob.content_type
+                        db_blob.data = blob.data
+                        session.add(db_blob)
 
-            return store_blob
+            return store_blob_task
 
-        await self.worker.push(create_blob_storage_task(headers_blob), ignore_errors=True)
-        await self.worker.push(create_blob_storage_task(content_blob), ignore_errors=True)
+        await self.worker.push(create_store_blob_task(headers_blob), ignore_errors=False)
+        await self.worker.push(create_store_blob_task(content_blob), ignore_errors=True)
 
-        async def store_message():
+        async def store_message_task():
             async with self.begin() as session:
                 session.add(
                     Message.from_models(event.transaction, event.message, headers_blob, content_blob),
                 )
 
-        await self.worker.push(store_message)
+        await self.worker.push(store_message_task)
 
     async def _on_transaction_ended(self, event: TransactionEvent):
         async def finalize_transaction():
