@@ -1,7 +1,7 @@
 http_client:
   timeout: 10.0
   cache:
-    disabled: false
+    enabled: true
     controller:
       allow_stale: true
       allow_heuristics: true
