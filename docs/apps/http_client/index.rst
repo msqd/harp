@@ -33,15 +33,28 @@ Below is an example configuration for the HTTP client:
 
 
 - **timeout:** Specifies the request timeout duration in seconds (default: 30 seconds).
+
 - **cache:** Configuration for caching behavior.
+
   - **disabled:** Boolean flag to enable or disable caching.
-  - **cacheable_methods:** List of HTTP methods that can be cached (e.g., GET).
-  - **cacheable_status_codes:** List of HTTP status codes that can be cached (e.g., 200, 300).
+
+  - **controller:** Configuration for controller settings.
+
+    - **allow_stale:** Boolean flag to allow serving stale cache data when the cache is expired (default: True).
+
+    - **allow_heuristics:** Boolean flag to allow heuristic caching (default: True).
+
+    - **cacheable_methods:** List of HTTP methods that can be cached (e.g., GET).
+
+    - **cacheable_status_codes:** List of HTTP status codes that can be cached (e.g., 200, 300).
 
 Internal Implementation
 -----------------------
 
 The internal implementation leverages the following classes:
 
+- :class:`ControllerSettings <harp_apps.http_client.settings.ControllerSettings>`
+
 - :class:`CacheSettings <harp_apps.http_client.settings.CacheSettings>`
+
 - :class:`HttpClientSettings <harp_apps.http_client.settings.HttpClientSettings>`

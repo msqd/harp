@@ -2,5 +2,8 @@ http_client:
   timeout: 10.0
   cache:
     disabled: false
-    cacheable_methods: [GET]
-    cacheable_status_codes: [200, 300, 3001]
+    controller:
+      allow_stale: true
+      allow_heuristics: true
+      cacheable_methods: [GET]
+      cacheable_status_codes: [200, 301, 308]
