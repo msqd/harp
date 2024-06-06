@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { QueryObserverSuccessResult } from "react-query/types/core/types"
+import { useLocation, useNavigate } from "react-router-dom"
 
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
 import { ItemList } from "Domain/Api/Types"
@@ -21,10 +22,28 @@ export function TransactionListOnQuerySuccess({
   filters: Filters
   setFilters: (filters: Filters) => void
 }) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const queryParams = new URLSearchParams(location.search)
+
   const [selected, setSelected] = useState<Transaction | null>(null)
-  const hasSelection = selected && selected.id
+  const selectedId = selected?.id || queryParams.get("selected")
+  const hasSelection = !!selectedId
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
-  const detailQuery = useTransactionsDetailQuery(selected?.id)
+  const detailQuery = useTransactionsDetailQuery(selected?.id || selectedId!)
+
+  const updateQueryParam = (paramName: string, paramValue: string | undefined) => {
+    if (paramValue) {
+      queryParams.set(paramName, paramValue)
+    } else {
+      queryParams.delete(paramName)
+    }
+
+    navigate({
+      pathname: location.pathname,
+      search: queryParams.toString(),
+    })
+  }
 
   return (
     <div className="flex w-full items-start gap-x-8 relative">
@@ -43,22 +62,29 @@ export function TransactionListOnQuerySuccess({
         <TransactionDataTable
           transactions={query.data.items}
           onSelectionChange={(newSelected) =>
-            newSelected && newSelected.id && (!hasSelection || selected.id != newSelected.id)
-              ? setSelected(newSelected)
-              : setSelected(null)
+            newSelected && newSelected.id && (!hasSelection || selected?.id != newSelected.id)
+              ? (setSelected(newSelected), updateQueryParam("selected", newSelected.id))
+              : (setSelected(null), updateQueryParam("selected", undefined))
           }
-          selected={hasSelection ? selected : undefined}
+          selected={selected ? selected : undefined}
         />
       </main>
 
       {hasSelection ? (
         <aside className="sticky top-8 w-2/5 min-w-96 shrink-0 block">
           <div className="text-right">
-            <OpenInNewWindowLink id={selected.id!} />
-            <DetailsCloseButton onClick={() => setSelected(null)} />
+            <OpenInNewWindowLink id={selectedId} />
+            <DetailsCloseButton onClick={() => (setSelected(null), updateQueryParam("selected", undefined))} />
           </div>
-          <OnQuerySuccess query={detailQuery}>
-            {(query) => <TransactionDetailOnQuerySuccess query={query} />}
+
+          <OnQuerySuccess
+            query={detailQuery}
+            onQueryError={() => (setSelected(null), updateQueryParam("selected", undefined))}
+          >
+            {(query) => {
+              setSelected(query.data)
+              return <TransactionDetailOnQuerySuccess query={query} />
+            }}
           </OnQuerySuccess>
         </aside>
       ) : null}

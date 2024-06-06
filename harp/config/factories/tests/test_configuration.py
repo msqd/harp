@@ -45,6 +45,9 @@ def test_add_application():
     assert new_config == config
 
     new_config.add_application("foo.bar")
+
+    # Try adding twice
+    new_config.add_application("foo.bar")
     assert new_config != config
     assert new_config.settings == {
         "applications": ["harp_apps.sqlalchemy_storage", "foo.bar"],

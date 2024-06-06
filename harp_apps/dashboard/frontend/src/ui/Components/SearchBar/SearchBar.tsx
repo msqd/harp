@@ -5,9 +5,10 @@ interface SearchBarProps {
   placeHolder?: string
   setSearch?: (value: string) => void
   className?: string
+  search?: string
 }
 
-export const SearchBar = ({ label, setSearch, className, placeHolder }: SearchBarProps) => {
+export const SearchBar = ({ label, setSearch, className, placeHolder, search }: SearchBarProps) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -42,6 +43,7 @@ export const SearchBar = ({ label, setSearch, className, placeHolder }: SearchBa
           id="search"
           placeholder={placeHolder}
           onKeyDown={handleKeyPress}
+          defaultValue={search}
           className="overflow-ellipsis w-full !border-0 !p-0 focus:!ring-0 !ml-1"
         />
         <div onClick={handleSearchClick} className="inset-y-0 right-0 flex py-1.5 pr-1.5 hover:cursor-pointer">
