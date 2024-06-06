@@ -6,4 +6,5 @@ Applications
 
     dashboard/index
     proxy/index
+    http_client/index
     sqlalchemy_storage/index
