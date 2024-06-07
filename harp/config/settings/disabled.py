@@ -5,8 +5,18 @@ from .base import BaseSetting, settings_dataclass
 
 @settings_dataclass
 class DisabledSettings(BaseSetting):
-    # todo we should not be able to set enabled = True for this class
+
     enabled: bool = False
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.enabled is True:
+            raise ValueError("Cannot set enabled to True in DisabledSettings")
+
+    def __setattr__(self, name, value):
+        if name == "enabled" and value is True:
+            raise ValueError("Cannot set enabled to True in DisabledSettings")
+        super().__setattr__(name, value)
 
     def __repr__(self):
         return "disabled"
