@@ -1,5 +1,5 @@
 import { isEqual } from "lodash"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 
 import { Page } from "Components/Page"
@@ -37,65 +37,60 @@ export function TransactionListPage() {
     return filtersMap
   }
 
-  const [filters, setFilters] = useState<Filters>(defaultFilters(searchParams))
+  const filters = defaultFilters(searchParams)
 
-  const [page, setPage] = useState(Number(searchParams.get("page")) || 1)
-  const [cursor, setCursor] = useState<string | undefined>(searchParams.get("cursor") || undefined)
-  const [search, setSearch] = useState<string | undefined>(searchParams.get("search") || undefined)
+  // const filters = defaultFilters(searchParams)
+  const cursor = searchParams.get("cursor")
+  const search = searchParams.get("search")
+  const page = searchParams.get("page") ? parseInt(searchParams.get("page")!) : 1
+
   const query = useTransactionsListQuery({ filters, page, cursor, search })
 
   // Keep refs of filters and search to reset page when a change is detected
-  const prevSearchRef = useRef<string | undefined>()
+  const prevSearchRef = useRef<string | null>()
   const prevFiltersRef = useRef<Filters>({})
 
-  // update search and page query params
-  useEffect(() => {
-    const queryParamsToUpdate = { page: page.toString(), search: search }
-    const updateQueryParam = (paramName: string, paramValue: string | undefined) => {
+  const updateQueryParam = useCallback(
+    (paramName: string, paramValue: string | undefined) => {
       if (paramValue) {
         searchParams.set(paramName, paramValue)
       } else {
         searchParams.delete(paramName)
       }
 
-      navigate({
-        pathname: location.pathname,
-        search: searchParams.toString(),
-      })
-    }
+      navigate(
+        {
+          pathname: location.pathname,
+          search: searchParams.toString(),
+        },
+        { replace: false },
+      )
+    },
+    [location.pathname, navigate, searchParams],
+  )
 
-    for (const [key, value] of Object.entries(queryParamsToUpdate)) {
-      updateQueryParam(key, value)
-    }
-  }, [location.pathname, navigate, search, page, searchParams])
-
+  // update cursor
   useEffect(() => {
     if (page == 1 && query.isSuccess && query.data.items.length && query.data.items[0].id) {
       if (cursor != query.data.items[0].id) {
-        setCursor(query.data.items[0].id)
-        searchParams.set("cursor", query.data.items[0].id)
-        navigate({
-          pathname: "/transactions",
-          search: searchParams.toString(),
-        })
+        updateQueryParam("cursor", query.data.items[0].id)
       }
     }
-  }, [page, navigate, query, cursor, searchParams])
+  }, [page, navigate, query, cursor, searchParams, location.pathname, updateQueryParam])
 
   // go back to page 1
   useEffect(() => {
-    if (!isEqual(filters, prevFiltersRef.current)) {
-      setPage((prevPage) => (prevPage > 1 ? 1 : prevPage))
+    if (!isEqual(filters, prevFiltersRef.current) || search !== prevSearchRef.current) {
+      updateQueryParam("page", "1")
       prevFiltersRef.current = filters
-    }
-  }, [filters])
-
-  useEffect(() => {
-    if (search !== prevSearchRef.current) {
-      setPage((prevPage) => (prevPage > 1 ? 1 : prevPage))
       prevSearchRef.current = search
     }
-  }, [search])
+  }, [filters, search, updateQueryParam])
+
+  useEffect(() => {
+    // This code will run whenever the location changes
+    console.log("Location changed:", location)
+  }, [location])
 
   return (
     <Page
@@ -104,14 +99,14 @@ export function TransactionListPage() {
           <div className="flex flex-col ml-24 w-full items-end lg:items-start justify-end lg:justify-between lg:flex-row lg:mt-12">
             <SearchBar
               placeHolder="Search transactions"
-              setSearch={setSearch}
+              setSearch={(search) => updateQueryParam("search", search)}
               className="w-96 order-last lg:order-first pr-6"
               search={search}
             />
             {query.isSuccess ? (
               <OptionalPaginator
                 current={page}
-                setPage={setPage}
+                setPage={(page) => updateQueryParam("page", page.toString())}
                 total={query.data.total}
                 pages={query.data.pages}
                 perPage={query.data.perPage}
@@ -124,7 +119,7 @@ export function TransactionListPage() {
       }
     >
       <OnQuerySuccess query={query}>
-        {(query) => <TransactionListOnQuerySuccess query={query} filters={filters} setFilters={setFilters} />}
+        {(query) => <TransactionListOnQuerySuccess query={query} filters={filters} />}
       </OnQuerySuccess>
     </Page>
   )

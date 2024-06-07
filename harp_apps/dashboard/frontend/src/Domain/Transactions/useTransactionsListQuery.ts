@@ -6,7 +6,7 @@ import { Transaction } from "Models/Transaction"
 import { Filter, Filters } from "Types/filters"
 
 function getQueryStringFromRecord(
-  filters: Record<string, Filter> | { page: number; cursor?: string; search?: string },
+  filters: Record<string, Filter> | { page: number; cursor?: string | null; search?: string | null },
 ) {
   const searchParams = new URLSearchParams()
 
@@ -26,8 +26,8 @@ export function useTransactionsListQuery({
 }: {
   filters?: Filters
   page?: number
-  cursor?: string
-  search?: string
+  cursor?: string | null
+  search?: string | null
 }) {
   const api = useApi()
   const qs = filters

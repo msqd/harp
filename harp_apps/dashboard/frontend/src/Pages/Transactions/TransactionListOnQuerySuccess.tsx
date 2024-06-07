@@ -16,18 +16,16 @@ import { TransactionDetailOnQuerySuccess } from "./TransactionDetailOnQuerySucce
 export function TransactionListOnQuerySuccess({
   query,
   filters,
-  setFilters,
 }: {
   query: QueryObserverSuccessResult<ItemList<Transaction> & { total: number; pages: number; perPage: number }>
   filters: Filters
-  setFilters: (filters: Filters) => void
 }) {
   const location = useLocation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
   const [selected, setSelected] = useState<Transaction | null>(null)
-  const selectedId = selected?.id || searchParams.get("selected")
+  const selectedId = searchParams.get("selected")
   const hasSelection = !!selectedId
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const detailQuery = useTransactionsDetailQuery(selected?.id || selectedId!)
@@ -39,10 +37,13 @@ export function TransactionListOnQuerySuccess({
       searchParams.delete(paramName)
     }
 
-    navigate({
-      pathname: location.pathname,
-      search: searchParams.toString(),
-    })
+    navigate(
+      {
+        pathname: location.pathname,
+        search: searchParams.toString(),
+      },
+      { replace: true },
+    )
   }
 
   return (
@@ -52,7 +53,7 @@ export function TransactionListOnQuerySuccess({
           <div className="text-right">
             <FiltersHideButton onClick={() => setIsFiltersOpen(false)} />
           </div>
-          <FiltersSidebar filters={filters} setFilters={setFilters} />
+          <FiltersSidebar filters={filters} />
         </aside>
       ) : (
         <FiltersShowButton onClick={() => setIsFiltersOpen(true)} />
