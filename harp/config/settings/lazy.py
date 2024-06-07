@@ -59,31 +59,30 @@ class ConstantDefinition(Definition):
         return self.value
 
 
-class Lazy:
-    def __new__(cls, path_or_factory, *args, _default=None, **kwargs):
-        if path_or_factory is None:
-            return ConstantDefinition(None)
+def Lazy(path_or_factory, *args, _default=None, **kwargs) -> Definition[type]:
+    if path_or_factory is None:
+        return ConstantDefinition(None)
 
-        if isinstance(path_or_factory, Definition):
-            return path_or_factory
+    if isinstance(path_or_factory, Definition):
+        return path_or_factory
 
-        if callable(path_or_factory):
-            # noinspection PyTypeChecker
-            return dataclass(kw_only=True, frozen=True)(
-                type(
-                    path_or_factory.__name__ + "Definition",
-                    (Definition,),
-                    {"factory": path_or_factory},
-                )
-            )(path=path_or_factory.__module__, name=path_or_factory.__name__, args=args, kwargs=kwargs)
+    if callable(path_or_factory):
+        # noinspection PyTypeChecker
+        return dataclass(kw_only=True, frozen=True)(
+            type(
+                path_or_factory.__name__ + "Definition",
+                (Definition,),
+                {"factory": path_or_factory},
+            )
+        )(path=path_or_factory.__module__, name=path_or_factory.__name__, args=args, kwargs=kwargs)
 
-        if isinstance(path_or_factory, dict):
-            path = path_or_factory.pop("@type", _default.factory if _default else None)
-            args = path_or_factory.pop("@args", ())
-            return cls(path, *args, **((_default.kwargs if _default else {}) | path_or_factory))
+    if isinstance(path_or_factory, dict):
+        path = path_or_factory.pop("@type", _default.factory if _default else None)
+        args = path_or_factory.pop("@args", ())
+        return Lazy(path, *args, **((_default.kwargs if _default else {}) | path_or_factory))
 
-        if isinstance(path_or_factory, str):
-            path, name = path_or_factory.rsplit(":", 1)
-            return Definition(path=path, name=name, args=args, kwargs=kwargs)
+    if isinstance(path_or_factory, str):
+        path, name = path_or_factory.rsplit(":", 1)
+        return Definition(path=path, name=name, args=args, kwargs=kwargs)
 
-        raise ValueError(f"Invalid lazy factory definition {repr(path_or_factory)}.")
+    raise ValueError(f"Invalid lazy factory definition {repr(path_or_factory)}.")
