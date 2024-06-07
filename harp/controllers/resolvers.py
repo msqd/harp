@@ -31,7 +31,7 @@ class ProxyControllerResolver(DefaultControllerResolver):
     def add(self, port: int | str, controller):
         port = int(port)
         self._ports[port] = controller
-        logger.info(f"🏭 {type(self).__name__}::add(:{port} -> {controller})")
+        logger.info(f"🏭 Map: *:{port} -> {controller}")
 
     async def resolve(self, request: "HttpRequest"):
         return self._ports.get(request.server_port, self.default_controller)
