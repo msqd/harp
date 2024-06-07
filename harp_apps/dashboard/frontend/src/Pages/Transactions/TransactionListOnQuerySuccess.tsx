@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { QueryObserverSuccessResult } from "react-query/types/core/types"
-import { useLocation, useNavigate } from "react-router-dom"
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
 import { ItemList } from "Domain/Api/Types"
@@ -24,24 +24,24 @@ export function TransactionListOnQuerySuccess({
 }) {
   const location = useLocation()
   const navigate = useNavigate()
-  const queryParams = new URLSearchParams(location.search)
+  const [searchParams] = useSearchParams()
 
   const [selected, setSelected] = useState<Transaction | null>(null)
-  const selectedId = selected?.id || queryParams.get("selected")
+  const selectedId = selected?.id || searchParams.get("selected")
   const hasSelection = !!selectedId
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const detailQuery = useTransactionsDetailQuery(selected?.id || selectedId!)
 
   const updateQueryParam = (paramName: string, paramValue: string | undefined) => {
     if (paramValue) {
-      queryParams.set(paramName, paramValue)
+      searchParams.set(paramName, paramValue)
     } else {
-      queryParams.delete(paramName)
+      searchParams.delete(paramName)
     }
 
     navigate({
       pathname: location.pathname,
-      search: queryParams.toString(),
+      search: searchParams.toString(),
     })
   }
 
@@ -82,7 +82,6 @@ export function TransactionListOnQuerySuccess({
             onQueryError={() => (setSelected(null), updateQueryParam("selected", undefined))}
           >
             {(query) => {
-              setSelected(query.data)
               return <TransactionDetailOnQuerySuccess query={query} />
             }}
           </OnQuerySuccess>

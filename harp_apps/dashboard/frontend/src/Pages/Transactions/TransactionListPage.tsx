@@ -40,7 +40,7 @@ export function TransactionListPage() {
   const [filters, setFilters] = useState<Filters>(defaultFilters(searchParams))
 
   const [page, setPage] = useState(Number(searchParams.get("page")) || 1)
-  const [cursor] = useState<string | undefined>(searchParams.get("cursor") || undefined)
+  const [cursor, setCursor] = useState<string | undefined>(searchParams.get("cursor") || undefined)
   const [search, setSearch] = useState<string | undefined>(searchParams.get("search") || undefined)
   const query = useTransactionsListQuery({ filters, page, cursor, search })
 
@@ -72,6 +72,7 @@ export function TransactionListPage() {
   useEffect(() => {
     if (page == 1 && query.isSuccess && query.data.items.length && query.data.items[0].id) {
       if (cursor != query.data.items[0].id) {
+        setCursor(query.data.items[0].id)
         searchParams.set("cursor", query.data.items[0].id)
         navigate({
           pathname: "/transactions",
