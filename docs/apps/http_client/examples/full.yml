@@ -5,7 +5,7 @@ http_client:
   # Customize the httpx transport layer (optional)
   transport:
     # This is the default, only set if you want to use a custom transport. Most users don't need to set this.
-    "@type": "httpx.AsyncHTTPTransport"
+    "@type": "httpx:AsyncHTTPTransport"
 
   # Cache configuration (optional, enabled by default)
   cache:

@@ -1,0 +1,11 @@
+http_client:
+  # HTTP timeout (default to `harp.settings.DEFAULT_TIMEOUT`)
+  timeout: 10.0
+
+  # Cache configuration (optional)
+  cache:
+    enabled: true  # Set to false to disable cache entirely (optional)
+
+    controller:  # Override the cache controller definition (optional)
+      cacheable_methods: [GET, HEAD]  # Which HTTP methods should be cacheable? (default: [GET, HEAD])
+      force_cache: true  # or any other hishel.Controller option ....

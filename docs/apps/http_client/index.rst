@@ -27,8 +27,11 @@ Configuration
 
 Below is an example configuration for the HTTP client:
 
-.. literalinclude:: ./examples/full.yml
+.. literalinclude:: ./examples/simple.yml
     :language: yaml
+
+You can refer to `hishel.Controller documentation <https://hishel.com/advanced/controllers/>`_ for all available
+options.
 
 
 - **timeout:** Specifies the request timeout duration in seconds (default: 30 seconds).
@@ -57,3 +60,9 @@ The internal implementation leverages the following classes:
 - :class:`CacheSettings <harp_apps.http_client.settings.CacheSettings>`
 
 - :class:`HttpClientSettings <harp_apps.http_client.settings.HttpClientSettings>`
+
+Full example
+------------
+
+.. literalinclude:: ./examples/full.yml
+    :language: yaml
