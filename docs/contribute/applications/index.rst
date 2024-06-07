@@ -31,6 +31,7 @@ Guides
     :maxdepth: 2
 
     creating
+    settings
     using
     testing
     faq

@@ -1,5 +1,5 @@
 import { CheckIcon } from "@heroicons/react/20/solid"
-import { XMarkIcon } from "@heroicons/react/24/outline"
+import { CodeBracketSquareIcon, XMarkIcon } from "@heroicons/react/24/outline"
 
 import { KeyValueSettings, Setting } from "Domain/System/useSystemSettingsQuery"
 
@@ -51,6 +51,20 @@ export const SettingsTable = ({ settings }: { settings: KeyValueSettings | Array
     <table className="min-w-fit divide-y divide-gray-300">
       <tbody className="divide-y divide-gray-200 bg-white">
         {Object.entries(settings).map(([key, value]) => {
+          if (key == "@type") {
+            return (
+              <tr key={key}>
+                <td
+                  colSpan={2}
+                  className="whitespace-nowrap py-2 px-4 text-sm font-medium font-mono text-xs text-gray-500 min-w-fit flex items-center"
+                  title={"This setting is a factory."}
+                >
+                  <CodeBracketSquareIcon className=" w-4 h-4 inline-block" />
+                  <Value value={value} />
+                </td>
+              </tr>
+            )
+          }
           return (
             <tr key={key}>
               <td className="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top">

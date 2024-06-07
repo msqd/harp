@@ -3,7 +3,7 @@ from typing import Type, cast
 from rodi import Container
 from whistle import IAsyncEventDispatcher
 
-from harp import get_logger
+from harp import __revision__, __version__, get_logger
 from harp.asgi import ASGIKernel
 from harp.asgi.events import EVENT_CONTROLLER_VIEW, EVENT_CORE_REQUEST, RequestEvent
 from harp.config import Config
@@ -45,11 +45,11 @@ class KernelFactory:
         self.hostname = "[::]"
 
     async def build(self):
+        logger.info(f"🎙 HARP v.{__version__} ({__revision__})")
         # we only work on validated configuration
         self.configuration.validate()
 
-        for application in self.configuration.applications:
-            logger.info(f"📦 {application}")
+        logger.info(f"📦 Apps: {', '.join(self.configuration.applications)}")
 
         dispatcher = self.build_event_dispatcher()
         container = self.build_container(dispatcher)

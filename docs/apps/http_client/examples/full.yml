@@ -1,0 +1,51 @@
+http_client:
+  # HTTP timeout (default to `harp.settings.DEFAULT_TIMEOUT`)
+  timeout: 10.0
+
+  # Customize the httpx transport layer (optional)
+  transport:
+    # This is the default, only set if you want to use a custom transport. Most users don't need to set this.
+    "@type": "httpx:AsyncHTTPTransport"
+
+  # Cache configuration (optional, enabled by default)
+  cache:
+    # Set to false to disable cache entirely
+    enabled: true
+
+    # Override the cache controller definition (optional)
+    controller:
+      # This is the default, only set if you want to use a custom controller.
+      "@type": "hishel:Controller"
+
+      # You can configure anything the hishel cache controller would accept as a keyword argument.
+      # See https://hishel.com/advanced/controllers/ for more information.
+
+      # Should stale cache entries be returned if the cache is being refreshed? (default: true)
+      allow_stale: true
+
+      # Should heuristics be used to determine cache expiration? (default: true)
+      allow_heuristics: true
+
+      # Which HTTP methods should be cacheable? (default: [GET, HEAD])
+      cacheable_methods: [GET, HEAD]
+
+      # Which status codes should be cacheable? (default: see `hishel.HEURISTICALLY_CACHEABLE_STATUS_CODES`)
+      cacheable_status_codes: [200, 301, 308]
+
+    # Customize the cache transport layer (optional). The cache transport layer is a decorator arount httpx transport
+    # layer extending the base http client features with caching.
+    transport:
+      # This is the default, only set if you want to use a custom cache transport.
+      "@type": "hishel:AsyncCacheTransport"
+
+      # If your hishel compatible transport class take more kwargs, you can pass more stuff here.
+      # See https://hishel.com/userguide/#clients-and-transports
+
+    # Customize the hishel cache storage (optional)
+    # Please note that we plan to allow to share other harp storages here in the future.
+    storage:
+      # This is the default, only set if you want to use a custom cache storage.
+      "@type": "hishel:AsyncFileStorage"
+
+      # If your hishel compatible storage class take more kwargs, you can pass more stuff here.
+      # See https://hishel.com/advanced/storages/
