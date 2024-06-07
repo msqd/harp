@@ -22,6 +22,7 @@ from .settings import (
     DisabledSettings,
     FromFileSetting,
     Lazy,
+    asdict,
     settings_dataclass,
 )
 
@@ -34,5 +35,6 @@ __all__ = [
     "DisabledSettings",
     "FromFileSetting",
     "Lazy",
+    "asdict",
     "settings_dataclass",
 ]

@@ -4,7 +4,7 @@ from decimal import Decimal
 import pytest
 from hishel import Controller
 
-from harp.config import Definition, Lazy
+from harp.config import BaseSetting, Definition, Lazy, asdict
 
 
 class TestFactoryDefinition:
@@ -87,3 +87,57 @@ class TestFactoryDefinition:
 
         setting = MySetting(dep={"@type": MyController})
         assert setting.dep.build()._force_cache is True
+
+    def test_serialize(self):
+        @dataclass
+        class Foo(BaseSetting):
+            dep: Definition = Lazy("decimal:Decimal")
+
+        assert asdict(Foo()) == {
+            "dep": {
+                "@type": "decimal:Decimal",
+            }
+        }
+
+        assert asdict(
+            Foo(
+                dep="io:StringIO",
+            )
+        ) == {
+            "dep": {
+                "@type": "io:StringIO",
+            }
+        }
+
+        assert asdict(
+            Foo(
+                dep={"@type": "io:StringIO"},
+            )
+        ) == {
+            "dep": {
+                "@type": "io:StringIO",
+            }
+        }
+
+        assert asdict(
+            Foo(
+                dep={"@type": "math:gcd", "@args": [10, 20, 30]},
+            )
+        ) == {
+            "dep": {
+                "@type": "math:gcd",
+                "@args": (10, 20, 30),
+            }
+        }
+
+        assert asdict(
+            Foo(
+                dep={"@type": "foo:bar", "@args": [1, 2, 3, 5, 8], "algorithm": "fibonacci"},
+            )
+        ) == {
+            "dep": {
+                "@args": (1, 2, 3, 5, 8),
+                "@type": "foo:bar",
+                "algorithm": "fibonacci",
+            },
+        }

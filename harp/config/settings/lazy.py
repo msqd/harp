@@ -36,6 +36,15 @@ class Definition(Generic[T]):
     def build(self, *args, **kwargs) -> T:
         return self.factory(*self.args, *args, **self.kwargs, **kwargs)
 
+    def _asdict(self):
+        return {
+            "@type": ":".join((self.path, self.name)),
+            **({"@args": self.args} if len(self.args) else {}),
+            **self.kwargs,
+        }
+
+    to_dict = _asdict
+
 
 @dataclass(frozen=True)
 class ConstantDefinition(Definition):
@@ -58,23 +67,29 @@ class ConstantDefinition(Definition):
     def build(self):
         return self.value
 
+    def _asdict(self):
+        return self.value
+
 
 def Lazy(path_or_factory, *args, _default=None, **kwargs) -> Definition[type]:
     if path_or_factory is None:
-        return ConstantDefinition(None)
+        return ConstantDefinition(value=None)
 
     if isinstance(path_or_factory, Definition):
         return path_or_factory
 
     if callable(path_or_factory):
         # noinspection PyTypeChecker
-        return dataclass(kw_only=True, frozen=True)(
-            type(
-                path_or_factory.__name__ + "Definition",
-                (Definition,),
-                {"factory": path_or_factory},
-            )
-        )(path=path_or_factory.__module__, name=path_or_factory.__name__, args=args, kwargs=kwargs)
+        return type(
+            path_or_factory.__name__ + "Definition",
+            (Definition,),
+            {"factory": path_or_factory},
+        )(
+            path=path_or_factory.__module__,
+            name=path_or_factory.__name__,
+            args=args,
+            kwargs=kwargs,
+        )
 
     if isinstance(path_or_factory, dict):
         path = path_or_factory.pop("@type", _default.factory if _default else None)

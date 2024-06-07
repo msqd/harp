@@ -5,7 +5,6 @@ from .base import BaseSetting, settings_dataclass
 
 @settings_dataclass
 class DisabledSettings(BaseSetting):
-
     enabled: bool = False
 
     def __init__(self, *args, **kwargs):
