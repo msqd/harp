@@ -49,7 +49,8 @@ class Application:
 
     @staticmethod
     def defaults(settings: Optional[dict] = None) -> dict:
-        return {}
+        settings = settings if settings is not None else {}
+        return settings
 
     @classmethod
     def supports(cls, settings: dict) -> bool:
