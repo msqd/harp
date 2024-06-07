@@ -1,36 +1,28 @@
 from dataclasses import field
-from typing import List, Optional
+from typing import TYPE_CHECKING, Optional
 
 from hishel import HEURISTICALLY_CACHEABLE_STATUS_CODES
 
-from harp.config.settings.base import BaseSetting, settings_dataclass
+if TYPE_CHECKING:
+    from hishel import AsyncCacheTransport, Controller
+    from hishel._async._storages import AsyncBaseStorage
+    from httpx import AsyncHTTPTransport
+
+from harp.config import BaseSetting, Definition, DisableableBaseSettings, Lazy, settings_dataclass
 from harp.settings import DEFAULT_TIMEOUT
 
 
-def default_status_codes() -> List[int]:
-    return list(HEURISTICALLY_CACHEABLE_STATUS_CODES)
-
-
 @settings_dataclass
-class ControllerSettings:
-    allow_heuristics: bool = True
-    allow_stale: bool = True
-    cacheable_methods: Optional[List[str]] = field(default_factory=lambda: ["GET"])
-    cacheable_status_codes: List[int] = field(default_factory=default_status_codes)
-
-
-@settings_dataclass
-class CacheSettings:
-    enabled: Optional[bool] = True
-    controller: ControllerSettings = field(default_factory=ControllerSettings)
-
-    def __post_init__(self):
-        if self.controller:
-            self.controller = (
-                self.controller
-                if isinstance(self.controller, ControllerSettings)
-                else ControllerSettings(**self.controller)
-            )
+class CacheSettings(DisableableBaseSettings):
+    transport: Definition["AsyncCacheTransport"] = Lazy("hishel:AsyncCacheTransport")
+    controller: Definition["Controller"] = Lazy(
+        "hishel:Controller",
+        allow_heuristics=True,
+        allow_stale=True,
+        cacheable_methods=["GET", "HEAD"],
+        cacheable_status_codes=list(HEURISTICALLY_CACHEABLE_STATUS_CODES),
+    )
+    storage: Definition["AsyncBaseStorage"] = Lazy(None)
 
 
 @settings_dataclass
@@ -38,6 +30,11 @@ class HttpClientSettings(BaseSetting):
     timeout: Optional[float] = DEFAULT_TIMEOUT
     cache: CacheSettings = field(default_factory=CacheSettings)
 
+    #: HTTP transport to use for the client. This is usually a httpx.AsyncHTTPTransport (or subclass) instance.
+    transport: Definition["AsyncHTTPTransport"] = Lazy("httpx:AsyncHTTPTransport")
+
     def __post_init__(self):
-        if self.cache:
-            self.cache = self.cache if isinstance(self.cache, CacheSettings) else CacheSettings(**self.cache)
+        super().__post_init__()
+
+        if self.cache and isinstance(self.cache, dict):
+            self.cache = CacheSettings(**self.cache)

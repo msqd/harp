@@ -27,9 +27,8 @@ Configuration
 
 Below is an example configuration for the HTTP client:
 
-.. literalinclude:: ./examples/http_client_settings.yml
+.. literalinclude:: ./examples/full.yml
     :language: yaml
-
 
 
 - **timeout:** Specifies the request timeout duration in seconds (default: 30 seconds).
