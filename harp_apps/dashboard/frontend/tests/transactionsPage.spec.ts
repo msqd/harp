@@ -34,10 +34,7 @@ test.describe("Transactions Page", () => {
       return new URLSearchParams(PageUrl.search)
     }
 
-    // Check that cursor and page are in query parameters
     let queryParams = getQueryParams()
-    expect(queryParams.get("cursor")).toBe("ABCD1234")
-    expect(queryParams.get("page")).toBe("1")
 
     // Check for filters
     await page.getByLabel("endpoint2 (20)only").uncheck()

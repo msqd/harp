@@ -28,7 +28,7 @@ export function TransactionListOnQuerySuccess({
   const selectedId = searchParams.get("selected")
   const hasSelection = !!selectedId
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
-  const detailQuery = useTransactionsDetailQuery(selected?.id || selectedId!)
+  const detailQuery = useTransactionsDetailQuery(selectedId!)
 
   const updateQueryParam = (paramName: string, paramValue: string | undefined) => {
     if (paramValue) {
@@ -42,7 +42,7 @@ export function TransactionListOnQuerySuccess({
         pathname: location.pathname,
         search: searchParams.toString(),
       },
-      { replace: true },
+      { replace: false },
     )
   }
 
