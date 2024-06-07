@@ -1,6 +1,6 @@
 import { isEqual } from "lodash"
-import { useEffect, useMemo, useRef, useState } from "react"
-import { useLocation, useNavigate } from "react-router-dom"
+import { useEffect, useRef, useState } from "react"
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 
 import { Page } from "Components/Page"
 import { PageTitle } from "Components/Page/PageTitle.tsx"
@@ -17,45 +17,71 @@ export function TransactionListPage() {
 
   const navigate = useNavigate()
 
-  const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search])
+  const [searchParams] = useSearchParams()
 
-  const [filters, setFilters] = useState<Filters>({})
+  const defaultFilters = (searchParams: URLSearchParams): Filters => {
+    const filtersMap: Partial<Filters> = {
+      endpoint: [],
+      method: [],
+      status: [],
+      flag: [],
+    }
 
-  const [page, setPage] = useState(Number(queryParams.get("page")) || 1)
-  const [cursor, setCursor] = useState<string | undefined>(queryParams.get("cursor") || undefined)
-  const [search, setSearch] = useState<string | undefined>(queryParams.get("search") || undefined)
+    for (const name of Object.keys(filtersMap)) {
+      const values = searchParams.getAll(name)
+      if (values.length > 0) {
+        filtersMap[name] = values
+      }
+    }
+
+    return filtersMap
+  }
+
+  const [filters, setFilters] = useState<Filters>(defaultFilters(searchParams))
+
+  const [page, setPage] = useState(Number(searchParams.get("page")) || 1)
+  const [cursor] = useState<string | undefined>(searchParams.get("cursor") || undefined)
+  const [search, setSearch] = useState<string | undefined>(searchParams.get("search") || undefined)
   const query = useTransactionsListQuery({ filters, page, cursor, search })
 
   // Keep refs of filters and search to reset page when a change is detected
   const prevSearchRef = useRef<string | undefined>()
   const prevFiltersRef = useRef<Filters>({})
 
+  // update search and page query params
   useEffect(() => {
-    const queryParamsToUpdate = { page: page.toString(), cursor: cursor, search: search }
+    const queryParamsToUpdate = { page: page.toString(), search: search }
     const updateQueryParam = (paramName: string, paramValue: string | undefined) => {
       if (paramValue) {
-        queryParams.set(paramName, paramValue)
+        searchParams.set(paramName, paramValue)
       } else {
-        queryParams.delete(paramName)
+        searchParams.delete(paramName)
       }
 
       navigate({
         pathname: location.pathname,
-        search: queryParams.toString(),
+        search: searchParams.toString(),
       })
     }
 
     for (const [key, value] of Object.entries(queryParamsToUpdate)) {
       updateQueryParam(key, value)
     }
-  }, [location.pathname, navigate, queryParams, search, cursor, page])
+  }, [location.pathname, navigate, search, page, searchParams])
 
   useEffect(() => {
-    if (page == 1 && query.isSuccess && query.data.items.length) {
-      setCursor(query.data.items[0].id)
+    if (page == 1 && query.isSuccess && query.data.items.length && query.data.items[0].id) {
+      if (cursor != query.data.items[0].id) {
+        searchParams.set("cursor", query.data.items[0].id)
+        navigate({
+          pathname: "/transactions",
+          search: searchParams.toString(),
+        })
+      }
     }
-  }, [page, query])
+  }, [page, navigate, query, cursor, searchParams])
 
+  // go back to page 1
   useEffect(() => {
     if (!isEqual(filters, prevFiltersRef.current)) {
       setPage((prevPage) => (prevPage > 1 ? 1 : prevPage))

@@ -1,5 +1,5 @@
-import { useCallback, useEffect } from "react"
-import { useLocation, useNavigate } from "react-router-dom"
+import { useCallback } from "react"
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 
 import { useTransactionsFiltersQuery } from "Domain/Transactions"
 import { Filter, Filters } from "Types/filters"
@@ -26,6 +26,7 @@ interface FiltersSidebarProps {
 export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   const filtersQuery = useTransactionsFiltersQuery()
 
@@ -33,6 +34,19 @@ export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
     useCallback(
       (value: Filter) => {
         setFilters({ ...filters, [name]: value })
+        searchParams.delete(name)
+        if (value) {
+          value.forEach((v) => {
+            if (v) {
+              searchParams.append(name, v.toString())
+            }
+          })
+        }
+
+        navigate({
+          pathname: location.pathname,
+          search: searchParams.toString(),
+        })
       },
       [name],
     )
@@ -41,52 +55,6 @@ export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
   const setMethodFilter = _createSetFilterFor("method")
   const setStatusFilter = _createSetFilterFor("status")
   const setFlagsFilter = _createSetFilterFor("flag")
-
-  // Set filters from query parameters
-  useEffect(() => {
-    const filtersMap = {
-      endpoint: setEndpointFilter,
-      method: setMethodFilter,
-      status: setStatusFilter,
-      flag: setFlagsFilter,
-    }
-    const queryParams = new URLSearchParams(location.search)
-    const updateFilter = (name: string, setFunction: (value: Filter) => void) => {
-      const values = queryParams.getAll(name)
-      if (values.length) {
-        setFunction(values)
-      }
-    }
-
-    for (const [name, setFunction] of Object.entries(filtersMap)) {
-      updateFilter(name, setFunction)
-    }
-  }, [location.search, setEndpointFilter, setMethodFilter, setStatusFilter, setFlagsFilter])
-
-  // Update query parameters from filters
-  useEffect(() => {
-    const queryParams = new URLSearchParams(location.search)
-
-    const updateQueryParams = (filterName: string) => {
-      if (!filters[filterName] || !filters[filterName]?.length) {
-        queryParams.delete(filterName)
-      } else {
-        // Delete existing query parameters for the filter
-        queryParams.delete(filterName)
-
-        // Append new query parameters for the filter
-        filters[filterName]?.forEach((value) => queryParams.append(filterName, String(value)))
-      }
-    }
-
-    // Update query parameters for each filter
-    Object.keys(filters).forEach(updateQueryParams)
-
-    navigate({
-      pathname: location.pathname,
-      search: queryParams.toString(),
-    })
-  }, [filters, location.pathname, location.search, navigate])
 
   return (
     <Pane hasDefaultPadding={false} className="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm">

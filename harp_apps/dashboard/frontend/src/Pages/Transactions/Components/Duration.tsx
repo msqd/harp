@@ -27,7 +27,6 @@ export const Duration = ({
   verbose?: boolean
 }) => {
   if (duration !== null) {
-    console.log("ya")
     return (
       <div className="flex gap-x-0.5 items-center font-normal">
         {apdex !== null ? <ApdexBadge score={apdex} /> : null}
