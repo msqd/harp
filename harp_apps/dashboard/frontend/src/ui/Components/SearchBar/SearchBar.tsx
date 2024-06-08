@@ -5,7 +5,7 @@ interface SearchBarProps {
   placeHolder?: string
   setSearch?: (value: string) => void
   className?: string
-  search?: string
+  search?: string | null
 }
 
 export const SearchBar = ({ label, setSearch, className, placeHolder, search }: SearchBarProps) => {
@@ -43,7 +43,7 @@ export const SearchBar = ({ label, setSearch, className, placeHolder, search }: 
           id="search"
           placeholder={placeHolder}
           onKeyDown={handleKeyPress}
-          defaultValue={search}
+          defaultValue={search || undefined}
           className="overflow-ellipsis w-full !border-0 !p-0 focus:!ring-0 !ml-1"
         />
         <div onClick={handleSearchClick} className="inset-y-0 right-0 flex py-1.5 pr-1.5 hover:cursor-pointer">

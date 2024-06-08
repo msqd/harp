@@ -1,4 +1,3 @@
-import { useCallback } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 
 import { useTransactionsFiltersQuery } from "Domain/Transactions"
@@ -20,36 +19,33 @@ const ratings = [
 
 interface FiltersSidebarProps {
   filters: Filters
-  setFilters: (filters: Filters) => unknown
 }
 
-export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
+export function FiltersSidebar({ filters }: FiltersSidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
   const filtersQuery = useTransactionsFiltersQuery()
 
-  const _createSetFilterFor = (name: string) =>
-    useCallback(
-      (value: Filter) => {
-        setFilters({ ...filters, [name]: value })
-        searchParams.delete(name)
-        if (value) {
-          value.forEach((v) => {
-            if (v) {
-              searchParams.append(name, v.toString())
-            }
-          })
+  const _createSetFilterFor = (name: string) => (value: Filter) => {
+    searchParams.delete(name)
+    if (value) {
+      value.forEach((v) => {
+        if (v) {
+          searchParams.append(name, v.toString())
         }
+      })
+    }
 
-        navigate({
-          pathname: location.pathname,
-          search: searchParams.toString(),
-        })
+    navigate(
+      {
+        pathname: location.pathname,
+        search: searchParams.toString(),
       },
-      [name],
+      { replace: false },
     )
+  }
 
   const setEndpointFilter = _createSetFilterFor("endpoint")
   const setMethodFilter = _createSetFilterFor("method")
@@ -58,10 +54,6 @@ export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
 
   return (
     <Pane hasDefaultPadding={false} className="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm">
-      {/* TODO implement search
-      <input className="h-12 w-full border-0 bg-transparent px-4 focus:ring-0" placeholder="Search..." />
-     */}
-
       {filtersQuery.isSuccess && filtersQuery.data.endpoint ? (
         <Facet
           title="Endpoint"
