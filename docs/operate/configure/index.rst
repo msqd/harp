@@ -18,5 +18,4 @@ Configuration is built from different sources that may override each other. From
 
     Dashboard <../apps/dashboard/index>
     Proxy <../apps/proxy/index>
-    logging
     storage

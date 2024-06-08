@@ -22,7 +22,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.coverage",
-    "sphinx.ext.githubpages",
     "sphinx.ext.graphviz",
     "sphinx.ext.ifconfig",
     "sphinx.ext.intersphinx",
@@ -71,5 +70,7 @@ pygments_style = "sphinx"
 graphviz_output_format = "svg"
 
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3.12", None),
+    "python": ("https://docs.python.org/3", None),
+    "structlog": ("https://www.structlog.org/en/stable", None),
+    "whistle": ("https://python-whistle.readthedocs.io/latest", None),
 }

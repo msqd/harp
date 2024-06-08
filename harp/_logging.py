@@ -51,10 +51,10 @@ LOGGING_FORMATTERS = {
     },
 }
 
-LOGGING_DEFAULT_FORMATTER = "pretty"
-LOGGING_FORMATTER = os.environ.get("LOGGING_FORMATTER", LOGGING_DEFAULT_FORMATTER)
-if LOGGING_FORMATTER not in LOGGING_FORMATTERS:
-    LOGGING_FORMATTER = LOGGING_DEFAULT_FORMATTER
+DEFAULT_LOGGING_FORMAT = "pretty"
+LOGGING_FORMAT = os.environ.get("LOGGING_FORMAT", DEFAULT_LOGGING_FORMAT)
+if LOGGING_FORMAT not in LOGGING_FORMATTERS:
+    LOGGING_FORMAT = DEFAULT_LOGGING_FORMAT
 
 logging_config = {
     "version": 1,
@@ -63,7 +63,7 @@ logging_config = {
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "formatter": LOGGING_FORMATTER,
+            "formatter": LOGGING_FORMAT,
         },
     },
     "root": {
@@ -74,8 +74,8 @@ logging_config = {
         "harp": {"level": os.environ.get("LOGGING_HARP", "INFO")},
         "harp_apps": {"level": os.environ.get("LOGGING_HARP", "INFO")},
         "harp.event_dispatcher": {"level": os.environ.get("LOGGING_HARP_EVENTS", "WARNING")},
-        "httpcore": {"level": os.environ.get("LOGGING_HTTPCORE", "INFO")},  # todo wrap in structlog
-        "httpx": {"level": os.environ.get("LOGGING_HTTPX", "WARNING")},  # todo wrap in structlog
+        "httpcore": {"level": os.environ.get("LOGGING_HTTP", "WARNING")},  # todo wrap in structlog
+        "httpx": {"level": os.environ.get("LOGGING_HTTP", "WARNING")},  # todo wrap in structlog
         "hypercorn.access": {"level": os.environ.get("LOGGING_HYPERCORN_ACCESS", "WARNING")},
         "hypercorn.error": {"level": os.environ.get("LOGGING_HYPERCORN_ERROR", "INFO")},
     },
