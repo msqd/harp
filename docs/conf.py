@@ -74,3 +74,11 @@ intersphinx_mapping = {
     "structlog": ("https://www.structlog.org/en/stable", None),
     "whistle": ("https://python-whistle.readthedocs.io/latest", None),
 }
+
+rst_prolog = """.. attention::
+    This is the documentation for `HARP Proxy <https://harp-proxy.net/>`_, actually published as an **early preview**.
+    Both the software and documentation are a work in progress, and although we already use it on various production
+    servers, they may contain inaccuracies, typographical errors, huge mistakes and empty pages. We work hard to
+    eradicate all mistakes and implement stuff, but it is a long and tedious process. We appreciate your patience and
+    understanding. Of course, any :doc:`help will be greatly appreciated </contribute/index>`.
+"""
