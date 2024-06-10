@@ -6,6 +6,7 @@ from harp.typing.storage import Storage
 class AbstractFacet:
     name = None
     choices = set()
+    exhaustive = True
 
     def __init__(self):
         self.meta = {}
@@ -29,3 +30,11 @@ class FacetWithStorage(AbstractFacet):
     def __init__(self, *, storage: Storage):
         super().__init__()
         self.storage = storage
+
+
+class NonExhaustiveFacet(AbstractFacet):
+    exhaustive = False
+
+    def __init__(self):
+        super().__init__()
+        self.choices.add("NULL")

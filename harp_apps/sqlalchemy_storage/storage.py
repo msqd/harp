@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from typing import Iterable, List, Optional, TypedDict, override
 
-from sqlalchemy import bindparam, case, delete, func, literal, literal_column, select, text, update
+from sqlalchemy import and_, bindparam, case, delete, func, literal, literal_column, null, or_, select, text, update
 from sqlalchemy.exc import DatabaseError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.sql.functions import count
@@ -74,14 +74,29 @@ def _filter_query(query, name, values):
 
 def _filter_query_for_user_flags(query, values, /, *, user_id):
     if values and values != "*":
-        query = query.join(UserFlag).filter(
-            UserFlag.user_id == user_id,
-            UserFlag.type.in_(
-                list(
-                    map(FLAGS_BY_NAME.get, values),
+        if "NULL" in values:
+            query = query.outerjoin(UserFlag).filter(
+                or_(
+                    and_(
+                        UserFlag.user_id == user_id,
+                        UserFlag.type.in_(
+                            list(
+                                map(FLAGS_BY_NAME.get, values),
+                            )
+                        ),
+                    ),
+                    UserFlag.id == null(),
                 )
-            ),
-        )
+            )
+        else:
+            query = query.join(UserFlag).filter(
+                UserFlag.user_id == user_id,
+                UserFlag.type.in_(
+                    list(
+                        map(FLAGS_BY_NAME.get, values),
+                    )
+                ),
+            )
     return query
 
 
