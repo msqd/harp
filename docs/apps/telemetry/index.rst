@@ -16,7 +16,6 @@ Features
 - **Anonymous Data Collection:** Ensures user privacy while collecting usage statistics.
 - **Regular Reporting:** Sends data periodically to provide continuous insights.
 - **Platform Detection:** Identifies the operating system and environment details.
-- **Configuration Options:** Allows customization of telemetry settings and endpoints.
 
 Loading
 -------

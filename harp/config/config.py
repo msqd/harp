@@ -19,6 +19,7 @@ from whistle import IAsyncEventDispatcher
 from harp import get_logger
 from harp.commandline.server import ServerOptions
 from harp.config.application import Application
+from harp.config.settings import DisabledSettings
 from harp.utils.identifiers import is_valid_dotted_identifier
 
 logger = get_logger(__name__)
@@ -195,8 +196,6 @@ class Config:
             application_types, to_be_validated = self._validate_round_1_import_applications(
                 application_names, to_be_validated
             )
-            for application in application_types:
-                validated["applications"].append(application.name)
 
             applications, newly_validated = self._validate_round_2_extract_and_validate_settings(
                 application_types, to_be_validated
@@ -210,6 +209,9 @@ class Config:
             # propagate for the world to use
             self._validated_settings = MappingProxyType(validated)
             self._applications = applications
+
+            for application in self._applications:
+                validated["applications"].append(application.name)
 
         logger.debug(f"Configuration validated: {pprint.pformat(self._validated_settings)}")
 
@@ -302,7 +304,11 @@ class Config:
             application_validated_settings = application.validate()
             if application_type.settings_namespace:
                 validated |= {application_type.settings_namespace: application_validated_settings}
-            applications.append(application)
+            # TODO if validated is DisabledSettings do not add app?
+            if isinstance(application_settings, DisabledSettings):
+                self.remove_application(application_type.name)
+            else:
+                applications.append(application)
 
         if len(self._debug_applications):
             print("DEBUG: Configuration > Round 2 > END")

@@ -20,10 +20,15 @@ from harp.config import Application
 from harp.config.events import FactoryBindEvent, FactoryBoundEvent
 from harp_apps.telemetry.manager import TelemetryManager
 
+from .settings import TelemetrySettings
+
 logger = get_logger(__name__)
 
 
 class TelemetryApplication(Application):
+    settings_namespace = "telemetry"
+    settings_type = TelemetrySettings
+
     def __init__(self, settings=None, /):
         super().__init__(settings)
 
