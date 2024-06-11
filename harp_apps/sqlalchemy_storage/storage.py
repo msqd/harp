@@ -85,7 +85,7 @@ def _filter_query_for_user_flags(query, values, /, *, user_id):
                             )
                         ),
                     ),
-                    UserFlag.id == null(),
+                    or_(UserFlag.user_id != user_id, (UserFlag.type.is_(null()))),
                 )
             )
         else:
