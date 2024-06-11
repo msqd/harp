@@ -2,11 +2,11 @@ import asyncio
 import re
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
+from functools import partial
 from typing import Iterable, List, Optional, TypedDict, override
 
 from sqlalchemy import bindparam, case, delete, func, literal, literal_column, select, text, update
-from sqlalchemy.exc import DatabaseError, OperationalError
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.sql.functions import count
 from whistle import IAsyncEventDispatcher
 
@@ -133,6 +133,7 @@ class SqlAlchemyStorage(Storage):
         dispatcher.add_listener(EVENT_TRANSACTION_STARTED, self._on_transaction_started)
         dispatcher.add_listener(EVENT_TRANSACTION_MESSAGE, self._on_transaction_message)
         dispatcher.add_listener(EVENT_TRANSACTION_ENDED, self._on_transaction_ended)
+        self._dispatcher = dispatcher
 
         self._is_ready = asyncio.Event()
         self._worker = None
@@ -153,23 +154,25 @@ class SqlAlchemyStorage(Storage):
             async with session.begin():
                 yield session
 
-    async def initialize(self, /, *, force_reset=False):
-        """Create the database tables. May drop them first if configured to do so."""
-        async with self.engine.begin() as conn:
-            if force_reset or self.settings.drop_tables:
-                await conn.run_sync(self.metadata.drop_all)
-
-        async with self.engine.begin() as conn:
-            await self.install_pg_trgm_extension(conn)
-
-        async with self.engine.begin() as conn:
-            await conn.run_sync(self.metadata.create_all)
-
-        async with self.engine.begin() as conn:
-            await self.create_full_text_indexes(conn)
-
+    async def initialize(self):
+        """Initialize database."""
+        if self.settings.migrate:
+            await self._run_migrations()
         await self.create_users(["anonymous"])
         self._is_ready.set()
+
+    async def _run_migrations(self):
+        """Convenience helper to run the migrations. This behaviour can be disabled by setting migrate=false in the
+        storage settings."""
+        from alembic import command
+
+        from harp.commandline.migrations import create_alembic_config, do_migrate
+
+        alembic_cfg = create_alembic_config(self.engine.url.render_as_string(hide_password=False))
+
+        migrator = partial(command.upgrade, alembic_cfg, "head")
+
+        await do_migrate(self.engine, migrator=migrator)
 
     @property
     def worker(self):
@@ -439,31 +442,3 @@ class SqlAlchemyStorage(Storage):
                     user = User()
                     user.username = username
                     session.add(user)
-
-    async def install_pg_trgm_extension(self, conn: AsyncConnection):
-        # Check the type of the current database
-        if conn.engine.dialect.name == "postgresql":
-            # Install the pg_trgm extension if possible
-            try:
-                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm;"))
-            except DatabaseError as e:
-                logger.error(f"Failed to install pg_trgm extension: {e}")
-
-    async def create_full_text_indexes(self, conn: AsyncConnection):
-        # Check the type of the current database
-        if conn.engine.dialect.name == "mysql":
-            # Create the full text index for transactions.endpoint
-            try:
-                await conn.execute(
-                    text(f"CREATE FULLTEXT INDEX endpoint_ft_index ON {Transaction.__tablename__} (endpoint);")
-                )
-                # Create the full text index for messages.summary
-                await conn.execute(
-                    text(f"CREATE FULLTEXT INDEX summary_ft_index ON {Message.__tablename__} (summary);")
-                )
-            except OperationalError as e:
-                # check for duplicate key error
-                if e.orig and e.orig.args[0] == 1061:
-                    pass
-                else:
-                    raise e

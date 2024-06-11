@@ -72,10 +72,10 @@ class TestAsgiProxyWithStubApi:
     async def kernel(self, test_api):
         config = Config({"dashboard": {"enabled": False}})
 
-        config.add_application("harp_apps.http_client")
-        config.add_application("harp_apps.proxy")
-        config.add_application("harp_apps.dashboard")
-        config.add_application("harp_apps.sqlalchemy_storage")
+        config.add_application("http_client")
+        config.add_application("proxy")
+        config.add_application("dashboard")
+        config.add_application("sqlalchemy_storage")
 
         config.set(
             "proxy.endpoints",

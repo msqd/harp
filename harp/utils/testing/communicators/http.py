@@ -30,7 +30,7 @@ class HTTPCommunicator(ApplicationCommunicator):
         self.sent_request = False
         super().__init__(application, self.scope)
 
-    async def get_response(self, timeout=1):
+    async def get_response(self, timeout=5):
         """
         Get the application's response. Returns a dict with keys of
         "body", "headers" and "status".

@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import TIMESTAMP, Boolean, Column, Float, ForeignKey, Index, Integer, String, Table, exists, insert
+from sqlalchemy import TIMESTAMP, Boolean, Column, Float, ForeignKey, Integer, String, Table, exists, insert
 from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship, selectinload
 
 from harp.models.transactions import Transaction as TransactionModel
@@ -14,15 +14,15 @@ if TYPE_CHECKING:
     from .messages import Message
 
 transaction_tag_values_association_table = Table(
-    "sa_trans_tag_values",
+    "trans_tag_values",
     Base.metadata,
-    Column("transaction_id", ForeignKey("sa_transactions.id", ondelete="CASCADE"), primary_key=True),
-    Column("value_id", ForeignKey("sa_tag_values.id", ondelete="CASCADE"), primary_key=True),
+    Column("transaction_id", ForeignKey("transactions.id", ondelete="CASCADE"), primary_key=True),
+    Column("value_id", ForeignKey("tag_values.id", ondelete="CASCADE"), primary_key=True),
 )
 
 
 class Transaction(Base):
-    __tablename__ = "sa_transactions"
+    __tablename__ = "transactions"
 
     id = mapped_column(String(27), primary_key=True, unique=True)
     type = mapped_column(String(10), index=True)
@@ -51,10 +51,6 @@ class Transaction(Base):
         secondary=transaction_tag_values_association_table,
         cascade="all, delete",
         passive_deletes=True,
-    )
-    # Add a GIN index on the endpoint column
-    endpoint_index = Index(
-        "endpoint_gin_index", endpoint, postgresql_using="gin", postgresql_ops={"endpoint": "gin_trgm_ops"}
     )
 
     def to_model(self, with_user_flags=False):

@@ -1,5 +1,6 @@
 volumes:
   postgres_data: {}
+  solr_data: {}
 
 services:
   httpbin:
@@ -15,3 +16,16 @@ services:
       POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  solr:
+    image: solr:9.6.1
+    ports:
+      - 8983:8983
+    volumes:
+      - solr_data:/var/solr
+    command:
+      - solr-precreate
+      - harp
+
+  keydb:
+    image: eqalpha/keydb

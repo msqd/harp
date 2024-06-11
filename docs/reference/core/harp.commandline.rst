@@ -13,4 +13,6 @@ Submodules
     :maxdepth: 1
 
     harp.commandline.install
+    harp.commandline.migrations
+    harp.commandline.options
     harp.commandline.utils

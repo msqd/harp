@@ -1,7 +1,7 @@
 from datetime import UTC
 from typing import TYPE_CHECKING
 
-from sqlalchemy import TIMESTAMP, ForeignKey, Index, Integer, String
+from sqlalchemy import TIMESTAMP, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from harp.http import get_serializer_for
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 class Message(Base):
-    __tablename__ = "sa_messages"
+    __tablename__ = "messages"
 
     id = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
     kind = mapped_column(String(10))
@@ -23,13 +23,8 @@ class Message(Base):
     body = mapped_column(String(40))
     created_at = mapped_column(TIMESTAMP(timezone=True))
 
-    transaction_id = mapped_column(ForeignKey("sa_transactions.id", ondelete="CASCADE"))
+    transaction_id = mapped_column(ForeignKey("transactions.id", ondelete="CASCADE"))
     transaction: Mapped["Transaction"] = relationship(back_populates="messages")
-
-    # add a GIN index on the summary column
-    summary_index = Index(
-        "summary_gin_index", summary, postgresql_using="gin", postgresql_ops={"summary": "gin_trgm_ops"}
-    )
 
     def to_model(self):
         return MessageModel(

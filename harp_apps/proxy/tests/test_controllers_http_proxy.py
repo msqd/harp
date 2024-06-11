@@ -7,6 +7,7 @@ from whistle import AsyncEventDispatcher
 
 from harp.utils.bytes import ensure_bytes
 from harp.utils.testing.mixins import ControllerTestFixtureMixin
+from harp_apps.sqlalchemy_storage.storage import SqlAlchemyStorage
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
 
 from ..controllers import HttpProxyController
@@ -28,10 +29,10 @@ class HttpProxyControllerTestFixtureMixin(ControllerTestFixtureMixin):
         with patch("harp_apps.proxy.controllers.HttpProxyController.user_agent", "test/1.0"):
             yield
 
-    def mock_http_endpoint(self, url, /, *, status=200, content=""):
+    def mock_http_endpoint(self, database_url, /, *, status=200, content=""):
         """Make sure you decorate your tests function using this with respx.mock decorator, otherwise the real network
         will be called and you may have some headaches..."""
-        return respx.get(url).mock(return_value=Response(status, content=ensure_bytes(content)))
+        return respx.get(database_url).mock(return_value=Response(status, content=ensure_bytes(content)))
 
     def create_controller(self, url=None, *args, http_client=None, **kwargs):
         return super().create_controller(
@@ -98,13 +99,11 @@ class TestHttpProxyControllerWithStorage(
         return transaction, transaction.messages[0], transaction.messages[1]
 
     @respx.mock
-    async def test_basic_get(self, database_url, dispatcher: AsyncEventDispatcher):
+    async def test_basic_get(self, storage: SqlAlchemyStorage):
         self.mock_http_endpoint("http://example.com/", content="Hello.")
 
         # register the storage
-        storage = await self.create_storage(dispatcher=dispatcher, url=database_url)
-
-        await self.call_controller(self.create_controller("http://example.com/", dispatcher=dispatcher))
+        await self.call_controller(self.create_controller("http://example.com/", dispatcher=storage._dispatcher))
         await storage.wait_for_background_tasks_to_be_processed()
 
         transaction, request, response = await self._find_one_transaction_with_messages_from_storage(storage)
@@ -150,15 +149,12 @@ class TestHttpProxyControllerWithStorage(
         }
 
     @respx.mock
-    async def test_get_with_tags(self, database_url, dispatcher: AsyncEventDispatcher):
+    async def test_get_with_tags(self, storage):
         self.mock_http_endpoint("http://example.com/", content="Hello.")
-
-        # register the storage
-        storage = await self.create_storage(dispatcher=dispatcher, url=database_url)
 
         # call our controller
         await self.call_controller(
-            self.create_controller("http://example.com/", dispatcher=dispatcher),
+            self.create_controller("http://example.com/", dispatcher=storage._dispatcher),
             headers={
                 "x-harp-foo": "bar",
                 "accept": "application/json",

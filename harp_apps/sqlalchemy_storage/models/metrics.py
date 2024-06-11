@@ -7,16 +7,16 @@ from .base import Base, Repository, with_session
 
 
 class Metric(Base):
-    __tablename__ = "sa_metrics"
+    __tablename__ = "metrics"
 
     id = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
     name = mapped_column(String(255), unique=True, nullable=False)
 
 
 class MetricValue(Base):
-    __tablename__ = "sa_metric_values"
+    __tablename__ = "metric_values"
 
-    metric_id = mapped_column(ForeignKey("sa_metrics.id"), nullable=False, primary_key=True)
+    metric_id = mapped_column(ForeignKey("metrics.id"), nullable=False, primary_key=True)
     metric: Mapped["Metric"] = relationship()
     created_at = mapped_column(TIMESTAMP(timezone=True), server_default=func.now(), primary_key=True)
 

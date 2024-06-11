@@ -1,7 +1,7 @@
 import importlib.util
 import sys
 
-from harp.commandline.server import ServerOptions, add_harp_server_click_options
+from harp.commandline.server import CommonServerOptions, add_harp_server_click_options
 from harp.commandline.utils.manager import HARP_DASHBOARD_SERVICE
 from harp.utils.commandline import click, code
 
@@ -67,7 +67,7 @@ def start(with_docs, with_ui, services, server_subprocesses, mock, **kwargs):
     if not mock:
         more_env.setdefault(HARP_DASHBOARD_SERVICE, {})["DISABLE_MOCKS"] = "true"
 
-    options = ServerOptions(**kwargs)
+    options = CommonServerOptions(**kwargs)
     _dashboard_devserver_port = options.options.get("dashboard.devserver_port", None)
 
     manager_factory = HonchoManagerFactory(

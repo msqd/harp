@@ -9,7 +9,7 @@ clone) that can spawn multiple processes to help you with development.
 Production environment will favour the lower-level `bin/entrypoint` script, that skips the process manager entirely
 and runs the application server directly.
 
-This may be subject to changes in the future (espacially to align/refactor arg parsers), but this approach works
+This may be subject to changes in the future (especially to align/refactor arg parsers), but this approach works
 well for now.
 
 .. todo::
@@ -37,9 +37,7 @@ well for now.
 
 """
 
-from harp.commandline.install import install_dev
 from harp.commandline.server import server
-from harp.commandline.start import start
 from harp.settings import HARP_ENV
 from harp.utils.commandline import check_packages, click
 
@@ -65,13 +63,26 @@ def entrypoint():
 
 
 if IS_DEVELOPMENT_ENVIRONMENT:
+    from harp.commandline.start import start
+
     entrypoint.add_command(start)
+
+    from harp.commandline.install import install_dev
+
     entrypoint.add_command(install_dev)
+
+if check_packages("alembic"):
+    from harp.commandline.migrations import create_migration, install_feature, upgrade
+
+    entrypoint.add_command(upgrade, "db:upgrade")
+    entrypoint.add_command(install_feature, "db:feature")
+
+    if IS_DEVELOPMENT_ENVIRONMENT:
+        entrypoint.add_command(create_migration, "db:create-migration")
+
 
 entrypoint.add_command(server)
 
 __all__ = [
     "entrypoint",
-    "start",
-    "install_dev",
 ]

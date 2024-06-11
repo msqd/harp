@@ -10,6 +10,7 @@ import pytest
 from harp import get_logger
 from harp.commandline.start import assert_development_packages_are_available
 from harp.utils.network import get_available_network_port, wait_for_port
+from harp_apps.sqlalchemy_storage.utils.testing.mixins import get_scoped_database_url
 
 logger = get_logger(__name__)
 
@@ -44,7 +45,7 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
     def join(self, timeout=None):
         # try to kill gracefully ...
         self.process.terminate()
-        self.process.wait(10.0)
+        self.process.wait(5.0)
 
         # ... and if it does not work, kill it with fire
         self.process.kill()
@@ -60,29 +61,30 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
 class AbstractProxyBenchmark:
     config = Template("")
 
-    @pytest.fixture(scope="class")
-    def proxy(self, httpbin, database_url):
-        port = get_available_network_port()
+    @pytest.fixture
+    async def proxy(self, httpbin, database_url, test_id):
+        async with get_scoped_database_url(database_url, test_id) as scoped_database_url:
+            port = get_available_network_port()
 
-        try:
-            thread = RunHarpProxyInSubprocessThread(
-                config=self.config.substitute(port=port, httpbin=httpbin, database=database_url)
-            )
-        except Exception as exc:
-            pytest.skip(f"Failed to create subprocess thread: {exc}")
-
-        try:
             try:
-                from pytest_cov.embed import cleanup_on_sigterm
-            except ImportError:
-                pass
-            else:
-                cleanup_on_sigterm()
-            thread.start()
-            wait_for_port(port, timeout=5.0)
-            yield f"localhost:{port}"
-        finally:
-            thread.join()
+                thread = RunHarpProxyInSubprocessThread(
+                    config=self.config.substitute(port=port, httpbin=httpbin, database=scoped_database_url)
+                )
+            except Exception as exc:
+                pytest.fail(f"Failed to create subprocess thread: {exc}")
+
+            try:
+                try:
+                    from pytest_cov.embed import cleanup_on_sigterm
+                except ImportError:
+                    pass
+                else:
+                    cleanup_on_sigterm()
+                thread.start()
+                wait_for_port(port, timeout=5.0)
+                yield f"localhost:{port}"
+            finally:
+                thread.join()
 
     def test_noproxy_get(self, benchmark, httpbin):
         @benchmark

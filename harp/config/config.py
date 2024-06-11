@@ -17,7 +17,7 @@ from rodi import Container
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.commandline.server import ServerOptions
+from harp.commandline.server import CommonServerOptions
 from harp.config.application import Application
 from harp.utils.identifiers import is_valid_dotted_identifier
 
@@ -114,7 +114,7 @@ class Config:
             self._raw_settings["applications"].remove(name)
         self._debug_applications.discard(name)
 
-    def read_env(self, options: ServerOptions, /):
+    def read_env(self, options: CommonServerOptions, /):
         """
         Parses sys.argv-like arguments.
 
@@ -185,7 +185,7 @@ class Config:
                 }
             )
 
-    def validate(self):
+    def validate(self, *, allow_extraneous_settings=False):
         if self._validated_settings is None:
             to_be_validated = deepcopy(self._raw_settings)
             application_names = to_be_validated.pop("applications", [])
@@ -204,7 +204,7 @@ class Config:
             newly_validated.pop("applications", None)  # not allowed xxx todo raise
             validated |= newly_validated
 
-            if to_be_validated != {}:
+            if to_be_validated != {} and not allow_extraneous_settings:
                 logger.warning(f"Unknown settings remaining: {to_be_validated}")
 
             # propagate for the world to use

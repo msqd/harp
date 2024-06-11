@@ -86,9 +86,12 @@ logging.config.dictConfig(logging_config)
 
 
 def get_logger(name, *args: Any, **initial_values: Any) -> Any:
-    pkg, mod = name.rsplit(".", 1)
-    if mod in ("__init__", "__main__", "__app__"):
-        name = pkg
+    if name == "env_py":
+        name = "__migrations__"
+    else:
+        pkg, mod = name.rsplit(".", 1)
+        if mod in ("__init__", "__main__", "__app__"):
+            name = pkg
 
     return structlog.get_logger(name, *args, **initial_values)
 
