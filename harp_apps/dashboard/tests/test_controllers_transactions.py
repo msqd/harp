@@ -2,6 +2,7 @@ from unittest.mock import ANY, Mock
 
 import orjson
 import pytest
+from freezegun import freeze_time
 from multidict import MultiDict
 
 from harp.http import HttpRequest
@@ -33,6 +34,25 @@ class TestTransactionsController(
             "method": {"current": None, "values": ANY},
             "status": {"current": None, "values": ANY},
         }
+
+    async def test_filters_meta_updated(self, controller: TransactionsController):
+        with freeze_time("2024-01-01 12:00:00"):
+            await self.create_transaction(controller.storage, endpoint="foo")
+
+            request = Mock(spec=HttpRequest, query=MultiDict())
+            response = await controller.filters(request)
+
+            assert response["endpoint"]["values"] == [{"count": 1, "name": "foo"}]
+
+            # Create two more transactions
+            await self.create_transaction(controller.storage, endpoint="foo")
+            await self.create_transaction(controller.storage, endpoint="foo")
+
+        # Move forward in time by 2 minutes
+        with freeze_time("2024-01-01 12:02:00"):
+            # Check the count again
+            response = await controller.filters(request)
+            assert response["endpoint"]["values"] == [{"count": 3, "name": "foo"}]
 
 
 class TestTransactionsControllerThroughASGI(
