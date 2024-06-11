@@ -72,6 +72,6 @@ class PgTrgmOptional:
         await self.run_sql("DROP INDEX IF EXISTS messages_summary_gin;")
         await self.run_sql("DROP INDEX IF EXISTS transactions_endpoint_gin;")
         if await self.is_pg_trgm_extension_installed():
-            logger.error(
+            logger.warning(
                 "pg_trgm extension is installed and wont be removed, if you need to, you can remove it by hand."
             )

@@ -70,11 +70,10 @@ class TestAsgiProxyWithStubApi:
 
     @pytest.fixture
     async def kernel(self, test_api):
-        config = Config({"dashboard": {"enabled": False}})
+        config = Config()
 
         config.add_application("http_client")
         config.add_application("proxy")
-        config.add_application("dashboard")
         config.add_application("sqlalchemy_storage")
 
         config.set(

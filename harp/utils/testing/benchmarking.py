@@ -38,7 +38,10 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
                 "start",
                 "server",
                 *(("--file", self.config_filename) if self.config_filename else ()),
-                *("--disable", "harp_apps.telemetry"),
+                "--disable",
+                "telemetry",
+                "--disable",
+                "dashboard",
             ]
         )
 
@@ -81,7 +84,7 @@ class AbstractProxyBenchmark:
                 else:
                     cleanup_on_sigterm()
                 thread.start()
-                wait_for_port(port, timeout=5.0)
+                wait_for_port(port)
                 yield f"localhost:{port}"
             finally:
                 thread.join()

@@ -60,14 +60,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("id"),
     )
-    # op.create_index(
-    #    "endpoint_gin_index",
-    #    "transactions",
-    #    ["endpoint"],
-    #    unique=False,
-    #    postgresql_using="gin",
-    #    postgresql_ops={"endpoint": "gin_trgm_ops"},
-    # )
     op.create_index(op.f("ix_transactions_endpoint"), "transactions", ["endpoint"], unique=False)
     op.create_index(op.f("ix_transactions_started_at"), "transactions", ["started_at"], unique=False)
     op.create_index(op.f("ix_transactions_type"), "transactions", ["type"], unique=False)
@@ -94,14 +86,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("id"),
     )
-    # op.create_index(
-    #    "summary_gin_index",
-    #    "messages",
-    #    ["summary"],
-    #    unique=False,
-    #    postgresql_using="gin",
-    #    postgresql_ops={"summary": "gin_trgm_ops"},
-    # )
     op.create_table(
         "metric_values",
         sa.Column("metric_id", sa.Integer(), nullable=False),
@@ -150,12 +134,6 @@ def downgrade() -> None:
     op.drop_table("trans_user_flags")
     op.drop_table("tag_values")
     op.drop_table("metric_values")
-    # op.drop_index(
-    #    "summary_gin_index",
-    #    table_name="messages",
-    #    postgresql_using="gin",
-    #    postgresql_ops={"summary": "gin_trgm_ops"},
-    # )
     op.drop_table("messages")
     op.drop_table("users")
     op.drop_index(op.f("ix_transactions_x_status_class"), table_name="transactions")
@@ -163,12 +141,6 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_transactions_type"), table_name="transactions")
     op.drop_index(op.f("ix_transactions_started_at"), table_name="transactions")
     op.drop_index(op.f("ix_transactions_endpoint"), table_name="transactions")
-    # op.drop_index(
-    #    "endpoint_gin_index",
-    #    table_name="transactions",
-    #    postgresql_using="gin",
-    #    postgresql_ops={"endpoint": "gin_trgm_ops"},
-    # )
     op.drop_table("transactions")
     op.drop_table("tags")
     op.drop_table("metrics")

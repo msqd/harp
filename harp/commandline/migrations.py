@@ -46,27 +46,27 @@ def create_harp_config_from_command_line_options(kwargs):
 
 
 async def do_migrate(engine, *, migrator, reset=False):
-    logger.info(f"[db:migrate] Begin (dialect={engine.dialect.name}, reset={reset}).")
+    logger.info(f"🛢  Starting database migrations... (dialect={engine.dialect.name}, reset={reset}).")
     if reset:
-        logger.info("[db:migrate reset=true] dropping all tables.")
+        logger.debug("🛢  [db:migrate reset=true] dropping all tables.")
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
 
     if engine.dialect.name == "sqlite":
-        logger.info("[db:migrate dialect=sqlite] creating all tables (without alembic).")
+        logger.debug("🛢  [db:migrate dialect=sqlite] creating all tables (without alembic).")
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
     else:
         # alembic manages migrations except for sqlite, because it's not trivial to make them work and an env using
         # sqlite does not really need to support upgrades (drop/recreate is fine when harp is upgraded).
-        logger.info("[db:migrate] Running alembic migrations...")
+        logger.debug("🛢  [db:migrate] Running alembic migrations...")
 
         with ThreadPoolExecutor() as executor:
             await asyncio.get_event_loop().run_in_executor(executor, migrator)
 
     if engine.dialect.name == "mysql":
-        logger.info("[db:migrate dialect=mysql] creating fulltext indexes.")
+        logger.debug("🛢  [db:migrate dialect=mysql] creating fulltext indexes.")
 
         try:
             async with engine.begin() as conn:
@@ -85,22 +85,30 @@ async def do_migrate(engine, *, migrator, reset=False):
             else:
                 raise e
 
-    logger.info("[db:migrate] Done.")
+    logger.debug("🛢  [db:migrate] Done.")
 
 
 @click.command()
 @add_harp_server_click_options
+@click.argument("operation", nargs=1, type=click.Choice(["up", "down"]))
+@click.argument("revision", nargs=1)
 @click.option("--reset", is_flag=True, help="Reset the database (drop all before migrations).")
-def upgrade(*, reset=False, **kwargs):
+def migrate(*, operation, revision, reset=False, **kwargs):
     config = create_harp_config_from_command_line_options(kwargs)
     alembic_cfg = create_alembic_config(config.settings.get("storage", {}).get("url", None))
     engine = create_async_engine(alembic_cfg.get_main_option("sqlalchemy.url"))
 
-    migrator = partial(command.upgrade, alembic_cfg, "head")
+    if operation == "up":
+        migrator = partial(command.upgrade, alembic_cfg, revision)
+    elif operation == "down":
+        migrator = partial(command.downgrade, alembic_cfg, revision)
+    else:
+        raise ValueError(f"Invalid operation {operation}.")
+
     asyncio.run(do_migrate(engine, migrator=migrator, reset=reset))
 
 
-upgrade = cast(BaseCommand, upgrade)
+migrate = cast(BaseCommand, migrate)
 
 
 @click.command()
@@ -128,8 +136,16 @@ def install_feature(features, operation, **kwargs):
 
     for feature in features:
         if operation == "add":
-            asyncio.run(implementations[feature].upgrade())
+            asyncio.run(implementations[feature].migrate())
         elif operation == "remove":
             asyncio.run(implementations[feature].downgrade())
         else:
             raise ValueError(f"Invalid operation {operation}.")
+
+
+@click.command()
+@add_harp_server_click_options
+def history(**kwargs):
+    config = create_harp_config_from_command_line_options(kwargs)
+    alembic_cfg = create_alembic_config(config.settings.get("storage", {}).get("url", None))
+    command.history(alembic_cfg)

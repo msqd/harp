@@ -40,9 +40,6 @@ class DashboardApplication(Application):
         event.container.add_alias("dashboard.controller", DashboardController)
 
     async def on_bound(self, event: FactoryBoundEvent):
-        if self.settings.enabled is False:
-            return
-
         # add our controller to the controller resolver
         controller = event.provider.get("dashboard.controller")
         event.resolver.add(self.settings.port, controller)

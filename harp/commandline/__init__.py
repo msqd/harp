@@ -72,10 +72,11 @@ if IS_DEVELOPMENT_ENVIRONMENT:
     entrypoint.add_command(install_dev)
 
 if check_packages("alembic"):
-    from harp.commandline.migrations import create_migration, install_feature, upgrade
+    from harp.commandline.migrations import create_migration, history, install_feature, migrate
 
-    entrypoint.add_command(upgrade, "db:upgrade")
+    entrypoint.add_command(migrate, "db:migrate")
     entrypoint.add_command(install_feature, "db:feature")
+    entrypoint.add_command(history, "db:history")
 
     if IS_DEVELOPMENT_ENVIRONMENT:
         entrypoint.add_command(create_migration, "db:create-migration")

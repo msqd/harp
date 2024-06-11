@@ -10,7 +10,6 @@ from harp.typing.storage import Storage
 
 from .settings import SqlAlchemyStorageSettings
 from .storage import SqlAlchemyStorage
-from .utils.testing.database import run_migrations
 
 logger = get_logger(__name__)
 
@@ -37,10 +36,3 @@ class SqlalchemyStorageApplication(Application):
 
     async def on_bind(self, event: FactoryBindEvent):
         event.container.add_singleton(Storage, SqlAlchemyStorage)
-
-        # execute the database migrations
-        result = await run_migrations(self.settings.url)
-
-        if not result.exit_code == 0:
-            raise RuntimeError(f"🛢 Failed to run migrations ({result.exception}).") from result.exception
-        logger.info("🛢 Migrations completed successfully.")

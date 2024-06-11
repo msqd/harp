@@ -7,10 +7,10 @@ from sqlalchemy import text
 from harp.commandline import migrations
 
 
-async def run_migrations(database_url):
+async def run_migrations(database_url, /, *, operation="up", revision="head"):
     def _migrate():
         cli = CliRunner()
-        return cli.invoke(migrations.upgrade, ["--set", "storage.url=" + database_url])
+        return cli.invoke(migrations.migrate, [operation, revision, "--set", "storage.url=" + database_url])
 
     with ThreadPoolExecutor() as executor:
         result = await asyncio.get_event_loop().run_in_executor(executor, _migrate)
