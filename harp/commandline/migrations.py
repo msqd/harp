@@ -113,10 +113,11 @@ migrate = cast(BaseCommand, migrate)
 
 @click.command()
 @add_harp_server_click_options
-def create_migration(**kwargs):
+@click.argument("message", nargs=1)
+def create_migration(*, message, **kwargs):
     config = create_harp_config_from_command_line_options(kwargs)
     alembic_cfg = create_alembic_config(config.settings.get("storage", {}).get("url", None))
-    command.revision(alembic_cfg, autogenerate=True, message="auto-generated migration")
+    command.revision(alembic_cfg, autogenerate=True, message=message or "auto-generated migration")
 
 
 @click.command()
