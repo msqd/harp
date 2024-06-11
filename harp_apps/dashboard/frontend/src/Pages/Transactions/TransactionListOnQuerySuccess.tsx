@@ -8,7 +8,13 @@ import { useTransactionsDetailQuery } from "Domain/Transactions"
 import { Transaction } from "Models/Transaction"
 import { Filters } from "Types/filters"
 
-import { DetailsCloseButton, FiltersHideButton, FiltersShowButton, OpenInNewWindowLink } from "./Components/Buttons.tsx"
+import {
+  DetailsCloseButton,
+  FiltersHideButton,
+  FiltersResetButton,
+  FiltersShowButton,
+  OpenInNewWindowLink,
+} from "./Components/Buttons.tsx"
 import { TransactionDataTable } from "./Components/List/index.ts"
 import { FiltersSidebar } from "./Containers/index.ts"
 import { TransactionDetailOnQuerySuccess } from "./TransactionDetailOnQuerySuccess.tsx"
@@ -29,6 +35,20 @@ export function TransactionListOnQuerySuccess({
   const hasSelection = !!selectedId
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const detailQuery = useTransactionsDetailQuery(selectedId!)
+
+  const resetFilters = () => {
+    searchParams.delete("endpoint")
+    searchParams.delete("method")
+    searchParams.delete("status")
+    searchParams.delete("flag")
+    navigate(
+      {
+        pathname: location.pathname,
+        search: searchParams.toString(),
+      },
+      { replace: false },
+    )
+  }
 
   const updateQueryParam = (paramName: string, paramValue: string | undefined) => {
     if (paramValue) {
@@ -51,6 +71,7 @@ export function TransactionListOnQuerySuccess({
       {isFiltersOpen ? (
         <aside className="sticky top-8 hidden w-1/5 min-w-40 max-w-60 2xl:min-w-52 2xl:max-w-72 shrink-0 lg:block">
           <div className="text-right">
+            <FiltersResetButton onClick={resetFilters} />
             <FiltersHideButton onClick={() => setIsFiltersOpen(false)} />
           </div>
           <FiltersSidebar filters={filters} />

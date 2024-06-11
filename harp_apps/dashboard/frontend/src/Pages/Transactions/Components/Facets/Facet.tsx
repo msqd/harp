@@ -73,11 +73,12 @@ export function Facet({
           {type === "checkboxes"
             ? meta.map((value) => (
                 <Checkbox
+                  disabled={meta?.length == 1}
                   name={value.name}
                   key={value.name}
                   label={
                     <FacetLabel {...value}>
-                      {setValues && !(values?.length == 1 && values[0] == value.name) ? (
+                      {setValues && !(meta?.length == 1) && !(values?.length == 1 && values[0] == value.name) ? (
                         <FacetInnerLightButton label="only" handler={() => setValues([value.name])} />
                       ) : null}
                     </FacetLabel>
