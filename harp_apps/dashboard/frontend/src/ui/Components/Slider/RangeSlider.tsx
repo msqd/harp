@@ -120,8 +120,8 @@ const RangeSlider = ({
   onChange: (value: { min?: number; max?: number }) => void
   thumbSize?: string
 }) => {
-  const [minValue, setMinValue] = useState(value ? value.min : min)
-  const [maxValue, setMaxValue] = useState(value ? value.max : max)
+  const [minValue, setMinValue] = useState(value && value.min ? value.min : min)
+  const [maxValue, setMaxValue] = useState(value && value.max ? value.max : max)
 
   useEffect(() => {
     if (value) {
@@ -139,19 +139,19 @@ const RangeSlider = ({
 
   const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault()
-    const newMinVal = Math.min(Number(e.target.value), maxValue! - step)
+    const newMinVal = Math.min(Number(e.target.value), maxValue - step)
     if (!value) setMinValue(newMinVal)
     onChange({ min: newMinVal, max: maxValue })
   }
 
   const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault()
-    const newMaxVal = Math.max(Number(e.target.value), minValue! + step)
+    const newMaxVal = Math.max(Number(e.target.value), minValue + step)
     if (!value) setMaxValue(newMaxVal)
     onChange({ min: minValue, max: newMaxVal })
   }
-  const minPos = ((minValue! - min) / (max - min)) * 100
-  const maxPos = ((maxValue! - min) / (max - min)) * 100
+  const minPos = ((minValue - min) / (max - min)) * 100
+  const maxPos = ((maxValue - min) / (max - min)) * 100
 
   return (
     <Wrapper thumbSize={thumbSize}>
