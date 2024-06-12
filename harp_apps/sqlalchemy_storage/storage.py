@@ -58,7 +58,26 @@ logger = get_logger(__name__)
 _FILTER_COLUMN_NAMES = {
     "method": "x_method",
     "status": "x_status_class",
+    "tpdex": "apdex",
 }
+
+
+def _numerical_filter_query(query, name: str, values: dict[str, float]):
+    if values:
+        column_name = _FILTER_COLUMN_NAMES.get(name, name)
+        column = getattr(Transaction, column_name)
+
+        min_val = values.get("min")
+        max_val = values.get("max")
+
+        if min_val is not None and max_val is not None:
+            query = query.filter(column.between(min_val, max_val))
+        elif min_val is not None:
+            query = query.filter(column >= min_val)
+        elif max_val is not None:
+            query = query.filter(column <= max_val)
+
+    return query
 
 
 def _filter_query(query, name, values):
@@ -237,6 +256,7 @@ class SqlAlchemyStorage(Storage):
             query = _filter_query(query, "method", filters.get("method", None))
             query = _filter_query(query, "status", filters.get("status", None))
             query = _filter_query_for_user_flags(query, filters.get("flag", None), user_id=user.id)
+            query = _numerical_filter_query(query, "tpdex", filters.get("tpdex", None))
 
         if text_search:
             query = _filter_transactions_based_on_text(query, text_search, dialect_name=self.engine.dialect.name)

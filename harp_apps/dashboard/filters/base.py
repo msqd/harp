@@ -3,7 +3,7 @@ from typing import Optional
 from multidict import MultiDictProxy
 
 from harp.typing.storage import Storage
-from harp_apps.dashboard.filters.utils import flatten_facet_value
+from harp_apps.dashboard.filters.utils import flatten_facet_value, str_to_float_or_none
 
 
 class AbstractFacet:
@@ -97,7 +97,9 @@ class AbstractMinMaxFacet(AbstractFacet):
         return self.get_filter(min, max)
 
     def _min_max_from_query(self, query: MultiDictProxy):
-        return query.get(self.name + "min", None), query.get(self.name + "max", None)
+        return str_to_float_or_none(query.get(self.name + "min", "")), str_to_float_or_none(
+            query.get(self.name + "max", "")
+        )
 
 
 class NonExhaustiveFacet(AbstractChoicesFacet):

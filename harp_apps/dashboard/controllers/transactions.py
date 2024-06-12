@@ -52,7 +52,6 @@ class TransactionsController(RoutingController):
             page = 1
 
         cursor = str(request.query.get("cursor", ""))
-        logger.info(request.query.keys())
 
         results = await self.storage.get_transaction_list(
             with_messages=True,
