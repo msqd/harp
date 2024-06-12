@@ -1,21 +1,11 @@
+import { useState } from "react"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
-
-import { useTransactionsFiltersQuery } from "Domain/Transactions"
-import { Filter, Filters } from "Types/filters"
 import { Pane } from "ui/Components/Pane"
 
-import { Facet } from "../Components/Facets"
+import { useTransactionsFiltersQuery } from "Domain/Transactions"
+import { Filters, ArrayFilter, MinMaxFilter } from "Types/filters"
 
-const ratings = [
-  { name: "A++" },
-  { name: "A+" },
-  { name: "A" },
-  { name: "B" },
-  { name: "C" },
-  { name: "D" },
-  { name: "E" },
-  { name: "F" },
-]
+import { Facet, RangeSliderFacet } from "../Components/Facets"
 
 interface FiltersSidebarProps {
   filters: Filters
@@ -27,8 +17,9 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
   const [searchParams] = useSearchParams()
 
   const filtersQuery = useTransactionsFiltersQuery()
+  const [value, setValue] = useState<MinMaxFilter | undefined>({ min: 0, max: 100 })
 
-  const _createSetFilterFor = (name: string) => (value: Filter) => {
+  const _createSetFilterFor = (name: string) => (value: ArrayFilter) => {
     searchParams.delete(name)
     if (value) {
       value.forEach((v) => {
@@ -59,7 +50,7 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
           title="Endpoint"
           name="endpoint"
           type="checkboxes"
-          values={filters["endpoint"]}
+          values={filters["endpoint"] as ArrayFilter}
           setValues={setEndpointFilter}
           meta={filtersQuery.data.endpoint.values}
         />
@@ -70,7 +61,7 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
           title="Request Method"
           name="method"
           type="checkboxes"
-          values={filters["method"]}
+          values={filters["method"] as ArrayFilter}
           setValues={setMethodFilter}
           meta={filtersQuery.data.method.values}
         />
@@ -81,7 +72,7 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
           title="Response Status"
           name="status"
           type="checkboxes"
-          values={filters["status"]}
+          values={filters["status"] as ArrayFilter}
           setValues={setStatusFilter}
           meta={filtersQuery.data.status.values}
         />
@@ -92,9 +83,19 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
           title="Flags"
           name="flags"
           type="checkboxes"
-          values={filters["flag"]}
+          values={filters["flag"] as ArrayFilter}
           setValues={setFlagsFilter}
           meta={filtersQuery.data.flag.values}
+        />
+      ) : null}
+
+      {filtersQuery.isSuccess ? (
+        <RangeSliderFacet
+          title="Performance Index"
+          name="performanceIndex"
+          values={value}
+          setValues={setValue}
+          type={"rangeSlider"}
         />
       ) : null}
 
@@ -106,11 +107,6 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
           meta={[{ name: "Last 24 hours" }, { name: "Last 7 days" }, { name: "Last 15 days" }]}
           type="radios"
         />
-      ) : null}
-
-      {/* TODO implement */}
-      {filtersQuery.isSuccess && filtersQuery.data.apdex ? (
-        <Facet title="Performance Index" name="tpdex" meta={ratings} type="checkboxes" defaultOpen={false} />
       ) : null}
     </Pane>
   )

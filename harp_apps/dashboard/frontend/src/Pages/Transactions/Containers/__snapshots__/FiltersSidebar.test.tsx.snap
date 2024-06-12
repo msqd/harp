@@ -583,6 +583,92 @@ exports[`renders the title and data when the query is successful 1`] = `
         </div>
       </fieldset>
     </div>
+    <div
+      class="px-4 py-3"
+    >
+      <fieldset
+        name="performanceIndex"
+      >
+        <legend
+          class="flex w-full cursor-pointer css-9ho516"
+        >
+          <span
+            class="grow"
+          >
+            Performance Index
+            <button
+              class="text-gray-400 mx-1 font-medium text-xs"
+            >
+              reset
+            </button>
+          </span>
+          <svg
+            aria-hidden="true"
+            class="h-4 w-4 text-gray-600"
+            data-slot="icon"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m4.5 15.75 7.5-7.5 7.5 7.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </legend>
+        <div
+          class="mt-2 space-y-2 "
+        >
+          <div
+            class="css-17sqiyq"
+          >
+            <div
+              class="css-1bggt6d"
+            >
+              <input
+                class="input css-gote3b"
+                max="100"
+                min="0"
+                step="1"
+                type="range"
+                value="0"
+              />
+              <input
+                class="input css-gote3b"
+                max="100"
+                min="0"
+                step="1"
+                type="range"
+                value="100"
+              />
+            </div>
+            <div
+              class="css-1yxx0tz"
+            >
+              <div
+                class="css-17wwvhj"
+                style="left: 0%;"
+              />
+              <div
+                class="css-8tc5wm"
+              >
+                <div
+                  class="css-18vir86"
+                  style="left: 0%; right: 0%;"
+                />
+              </div>
+              <div
+                class="css-17wwvhj"
+                style="left: 100%;"
+              />
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </div>
   </div>
 </div>
 `;

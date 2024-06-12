@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import tw, { styled, css } from "twin.macro"
+import { styled, css } from "twin.macro"
 
 const trackStyles = () => css`
   appearance: none;
@@ -113,11 +113,11 @@ const RangeSlider = ({
   onChange,
   thumbSize = "16px",
 }: {
-  min?: number
-  max?: number
-  value?: { min: number; max: number }
+  min: number
+  max: number
+  value?: { min?: number; max?: number }
   step?: number
-  onChange: (value: { min: number; max: number }) => void
+  onChange: (value: { min?: number; max?: number }) => void
   thumbSize?: string
 }) => {
   const [minValue, setMinValue] = useState(value ? value.min : min)
@@ -125,26 +125,33 @@ const RangeSlider = ({
 
   useEffect(() => {
     if (value) {
-      setMinValue(value.min)
-      setMaxValue(value.max)
+      if (value.min) {
+        setMinValue(value.min)
+      }
+      if (value.max) {
+        setMaxValue(value.max)
+      }
+    } else {
+      setMinValue(min)
+      setMaxValue(max)
     }
-  }, [value])
+  }, [max, min, value])
 
   const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault()
-    const newMinVal = Math.min(Number(e.target.value), maxValue - step)
+    const newMinVal = Math.min(Number(e.target.value), maxValue! - step)
     if (!value) setMinValue(newMinVal)
     onChange({ min: newMinVal, max: maxValue })
   }
 
   const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault()
-    const newMaxVal = Math.max(Number(e.target.value), minValue + step)
+    const newMaxVal = Math.max(Number(e.target.value), minValue! + step)
     if (!value) setMaxValue(newMaxVal)
     onChange({ min: minValue, max: newMaxVal })
   }
-  const minPos = ((minValue - min) / (max - min)) * 100
-  const maxPos = ((maxValue - min) / (max - min)) * 100
+  const minPos = ((minValue! - min) / (max - min)) * 100
+  const maxPos = ((maxValue! - min) / (max - min)) * 100
 
   return (
     <Wrapper thumbSize={thumbSize}>
