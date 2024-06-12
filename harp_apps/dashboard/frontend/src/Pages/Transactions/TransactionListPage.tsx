@@ -42,8 +42,6 @@ export function TransactionListPage() {
   }
 
   const filters = defaultFilters(searchParams)
-
-  // const filters = defaultFilters(searchParams)
   const cursorFromSearchParams = searchParams.get("cursor")
   const [cursor, setCursor] = useState<string>(cursorFromSearchParams || "")
   const search = searchParams.get("search")
