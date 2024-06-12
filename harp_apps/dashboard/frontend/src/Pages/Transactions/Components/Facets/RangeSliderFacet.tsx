@@ -1,9 +1,9 @@
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
 import { useState } from "react"
-import { RangeSlider } from "ui/Components/Slider/RangeSlider.tsx"
-import { H5 } from "ui/Components/Typography"
 
 import { MinMaxFilter } from "Types/filters"
+import { RangeSlider } from "ui/Components/Slider/RangeSlider.tsx"
+import { H5 } from "ui/Components/Typography"
 
 import { FacetInnerLightButton } from "./FacetInnerLightButton.tsx"
 

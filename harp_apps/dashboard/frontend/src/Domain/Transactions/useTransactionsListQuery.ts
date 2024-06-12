@@ -3,7 +3,7 @@ import { useQuery } from "react-query"
 import { useApi } from "Domain/Api"
 import { ItemList } from "Domain/Api/Types"
 import { Transaction } from "Models/Transaction"
-import { Filter, FilterValue, Filters, MinMaxFilter } from "Types/filters"
+import { FilterValue, Filters, MinMaxFilter } from "Types/filters"
 
 function getQueryStringFromRecord(
   filters: Record<string, FilterValue> | { page: number; cursor?: string | null; search?: string | null },

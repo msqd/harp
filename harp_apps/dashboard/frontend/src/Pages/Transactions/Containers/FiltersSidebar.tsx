@@ -1,8 +1,8 @@
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
-import { Pane } from "ui/Components/Pane"
 
 import { useTransactionsFiltersQuery } from "Domain/Transactions"
 import { Filters, ArrayFilter, MinMaxFilter } from "Types/filters"
+import { Pane } from "ui/Components/Pane"
 
 import { Facet, RangeSliderFacet } from "../Components/Facets"
 
