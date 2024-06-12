@@ -166,7 +166,9 @@ class SqlAlchemyStorage(Storage):
         storage settings."""
         from alembic import command
 
-        from harp.commandline.migrations import create_alembic_config, do_migrate
+        from harp_apps.sqlalchemy_storage.utils.migrations import create_alembic_config
+
+        from .utils.migrations import do_migrate
 
         alembic_cfg = create_alembic_config(self.engine.url.render_as_string(hide_password=False))
 

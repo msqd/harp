@@ -7,7 +7,8 @@ from sqlalchemy.exc import DatabaseError, ProgrammingError
 
 from harp.utils.testing.databases import parametrize_with_database_urls
 from harp_apps.sqlalchemy_storage.optionals.pg_trgm import PgTrgmOptional
-from harp_apps.sqlalchemy_storage.utils.testing.database import run_migrations, run_sql
+from harp_apps.sqlalchemy_storage.utils.sql import run_sql
+from harp_apps.sqlalchemy_storage.utils.testing.database import run_cli_migrate_command
 
 
 async def get_indexes(engine, table_name):
@@ -30,10 +31,10 @@ async def test_pg_trgm(database_url):
 
     # cannot execute because it needs the database to contain something first.
     with pytest.raises(ProgrammingError):
-        await opt.upgrade()
+        await opt.install()
 
     # run the migrations
-    result = await run_migrations(database_url)
+    result = await run_cli_migrate_command(database_url)
     assert result.exit_code == 0
 
     # we should not have gin indexes yet
@@ -41,18 +42,18 @@ async def test_pg_trgm(database_url):
     assert "transactions_endpoint_gin" not in await get_indexes(opt.engine, "transactions")
 
     # now we can actually install our optimized indexes
-    await opt.upgrade()
+    await opt.install()
 
     # extension and indexes should exist now
-    assert await opt.is_pg_trgm_extension_installed()
+    assert await opt._is_pg_trgm_extension_installed()
     assert "messages_summary_gin" in await get_indexes(opt.engine, "messages")
     assert "transactions_endpoint_gin" in await get_indexes(opt.engine, "transactions")
 
     # let's uninstall
-    await opt.downgrade()
+    await opt.uninstall()
 
     # we should not have gin indexes anymore, but the extension should still be there
-    assert await opt.is_pg_trgm_extension_installed()
+    assert await opt._is_pg_trgm_extension_installed()
     assert "messages_summary_gin" not in await get_indexes(opt.engine, "messages")
     assert "transactions_endpoint_gin" not in await get_indexes(opt.engine, "transactions")
 
@@ -62,19 +63,19 @@ async def test_pg_trgm_on_database_without_create_extension_privilege(database_u
     opt = PgTrgmOptional(database_url)
 
     # simulate a database without the privilege to create extensions
-    opt.is_pg_trgm_extension_installed = AsyncMock(return_value=False)
-    opt.install_pg_trgm_extension_if_possible = AsyncMock(side_effect=DatabaseError("nope.", None, Exception()))
-    assert not await opt.is_pg_trgm_extension_installed()
+    opt._is_pg_trgm_extension_installed = AsyncMock(return_value=False)
+    opt._install_pg_trgm_extension_if_possible = AsyncMock(side_effect=DatabaseError("nope.", None, Exception()))
+    assert not await opt._is_pg_trgm_extension_installed()
 
     # run the migrations
-    result = await run_migrations(database_url)
+    result = await run_cli_migrate_command(database_url)
     assert result.exit_code == 0
 
     # we should not have gin indexes ...
     assert "messages_summary_gin" not in await get_indexes(opt.engine, "messages")
     assert "transactions_endpoint_gin" not in await get_indexes(opt.engine, "transactions")
 
-    await opt.upgrade()
+    await opt.install()
 
     # ... but neither after upgrade
     assert "messages_summary_gin" not in await get_indexes(opt.engine, "messages")
@@ -87,4 +88,4 @@ async def test_pg_trgm_not_available_for_non_postgres_databases(database_url):
 
     # cannot install on not supported dialects
     with pytest.raises(RuntimeError):
-        await opt.upgrade()
+        await opt.install()
