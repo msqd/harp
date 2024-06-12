@@ -30,6 +30,14 @@ export function TransactionListPage() {
       }
     }
 
+    // tpdex
+    const tpdexMin = searchParams.get("tpdexmin")
+    const tpdexMax = searchParams.get("tpdexmax")
+    filtersMap["tpdex"] = {
+      min: tpdexMin ? parseFloat(tpdexMin) : undefined,
+      max: tpdexMax ? parseFloat(tpdexMax) : undefined,
+    }
+
     return filtersMap
   }
 

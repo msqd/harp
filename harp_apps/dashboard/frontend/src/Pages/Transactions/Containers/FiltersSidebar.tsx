@@ -17,7 +17,6 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
   const [searchParams] = useSearchParams()
 
   const filtersQuery = useTransactionsFiltersQuery()
-  const [value, setValue] = useState<MinMaxFilter | undefined>({ min: 0, max: 100 })
 
   const _createSetFilterFor = (name: string) => (value: ArrayFilter) => {
     searchParams.delete(name)
@@ -28,6 +27,19 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
         }
       })
     }
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: searchParams.toString(),
+      },
+      { replace: false },
+    )
+  }
+
+  const setTpdexValues = (value: MinMaxFilter | undefined) => {
+    value?.min !== undefined ? searchParams.set("tpdexmin", value.min.toString()) : searchParams.delete("tpdexMin")
+    value?.max !== undefined ? searchParams.set("tpdexmax", value.max.toString()) : searchParams.delete("tpdexMax")
 
     navigate(
       {
@@ -93,8 +105,8 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
         <RangeSliderFacet
           title="Performance Index"
           name="performanceIndex"
-          values={value}
-          setValues={setValue}
+          values={filters["tpdex"] as MinMaxFilter}
+          setValues={setTpdexValues}
           type={"rangeSlider"}
         />
       ) : null}
