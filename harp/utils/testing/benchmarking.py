@@ -79,7 +79,7 @@ class AbstractProxyBenchmark:
             else:
                 cleanup_on_sigterm()
             thread.start()
-            wait_for_port(port, timeout=5.0)
+            wait_for_port(port)
             yield f"localhost:{port}"
         finally:
             thread.join()

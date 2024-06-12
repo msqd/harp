@@ -1,16 +1,15 @@
-from functools import cached_property
-
 from harp.typing.storage import Storage
 
 
 class AbstractFacet:
     name = None
     choices = set()
+    exhaustive = True
 
     def __init__(self):
         self.meta = {}
 
-    @cached_property
+    @property
     def values(self):
         return [{"name": choice, "count": self.meta.get(choice, {}).get("count", None)} for choice in self.choices]
 
@@ -29,3 +28,11 @@ class FacetWithStorage(AbstractFacet):
     def __init__(self, *, storage: Storage):
         super().__init__()
         self.storage = storage
+
+
+class NonExhaustiveFacet(AbstractFacet):
+    exhaustive = False
+
+    def __init__(self):
+        super().__init__()
+        self.choices.add("NULL")
