@@ -62,7 +62,7 @@ _FILTER_COLUMN_NAMES = {
 
 
 def _filter_query(query, name, values):
-    if values and values != "*":
+    if values:
         query = query.filter(
             getattr(
                 Transaction,
@@ -73,7 +73,7 @@ def _filter_query(query, name, values):
 
 
 def _filter_query_for_user_flags(query, values, /, *, user_id):
-    if values and values != "*":
+    if values:
         if "NULL" in values:
             query = query.outerjoin(UserFlag).filter(
                 or_(
