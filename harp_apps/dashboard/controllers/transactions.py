@@ -14,7 +14,7 @@ from ..filters import (
     TransactionFlagFacet,
     TransactionMethodFacet,
     TransactionStatusFacet,
-    flatten_facet_value,
+    TransactionTpdexFacet,
 )
 
 logger = get_logger(__name__)
@@ -31,6 +31,7 @@ class TransactionsController(RoutingController):
                 TransactionMethodFacet(),
                 TransactionStatusFacet(),
                 TransactionFlagFacet(),
+                TransactionTpdexFacet(),
             )
         }
 
@@ -41,12 +42,7 @@ class TransactionsController(RoutingController):
         await self.facets["endpoint"].refresh()
 
         return json(
-            {
-                name: facet.filter(
-                    flatten_facet_value(request.query.getall(name, [])),
-                )
-                for name, facet in self.facets.items()
-            },
+            {name: facet.filter_from_query(request.query) for name, facet in self.facets.items()},
         )
 
     @GetHandler("/")
@@ -56,15 +52,11 @@ class TransactionsController(RoutingController):
             page = 1
 
         cursor = str(request.query.get("cursor", ""))
+        logger.info(request.query.keys())
 
         results = await self.storage.get_transaction_list(
             with_messages=True,
-            filters={
-                name: facet.get_filter(
-                    flatten_facet_value(request.query.getall(name, [])),
-                )
-                for name, facet in self.facets.items()
-            },
+            filters={name: facet.get_filter_from_query(request.query) for name, facet in self.facets.items()},
             page=page,
             cursor=cursor,
             username=request.context.get("user") or "anonymous",

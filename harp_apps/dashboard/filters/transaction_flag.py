@@ -1,6 +1,6 @@
-from .base import AbstractFacet
+from .base import AbstractChoicesFacet
 
 
-class TransactionFlagFacet(AbstractFacet):
+class TransactionFlagFacet(AbstractChoicesFacet):
     name = "flag"
     choices = {"favorite"}
