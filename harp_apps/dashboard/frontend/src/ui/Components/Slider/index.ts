@@ -1,1 +1,1 @@
-export { RangeSlider } from "./Slider"
+export { RangeSlider } from "./RangeSlider"

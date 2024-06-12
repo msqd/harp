@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { RangeSlider } from "./Slider"
+import { RangeSlider } from "./RangeSlider"
 
 export const Default = () => {
   const [value, setValue] = useState({ min: 0, max: 100 })
