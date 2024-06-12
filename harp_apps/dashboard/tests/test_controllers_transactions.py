@@ -48,6 +48,12 @@ class TestTransactionsController(
             await self.create_transaction(controller.storage, endpoint="foo")
             await self.create_transaction(controller.storage, endpoint="foo")
 
+        # Check the count again
+        with freeze_time("2024-01-01 12:00:20"):
+            # Check the count again
+            response = await controller.filters(request)
+            assert response["endpoint"]["values"] == [{"count": 1, "name": "foo"}]
+
         # Move forward in time by 2 minutes
         with freeze_time("2024-01-01 12:02:00"):
             # Check the count again
