@@ -31,6 +31,7 @@ class AbstractFacet:
 
 class AbstractChoicesFacet(AbstractFacet):
     choices = set()
+    exhaustive = True
 
     @property
     def values(self):
@@ -97,3 +98,11 @@ class AbstractMinMaxFacet(AbstractFacet):
 
     def _min_max_from_query(self, query: MultiDictProxy):
         return query.get(self.name + "min", None), query.get(self.name + "max", None)
+
+
+class NonExhaustiveFacet(AbstractChoicesFacet):
+    exhaustive = False
+
+    def __init__(self):
+        super().__init__()
+        self.choices.add("NULL")
