@@ -596,11 +596,6 @@ exports[`renders the title and data when the query is successful 1`] = `
             class="grow"
           >
             Performance Index
-            <button
-              class="text-gray-400 mx-1 font-medium text-xs"
-            >
-              reset
-            </button>
           </span>
           <svg
             aria-hidden="true"
