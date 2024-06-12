@@ -36,11 +36,8 @@ export function TransactionListOnQuerySuccess({
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const detailQuery = useTransactionsDetailQuery(selectedId!)
 
-  const resetFilters = () => {
-    searchParams.delete("endpoint")
-    searchParams.delete("method")
-    searchParams.delete("status")
-    searchParams.delete("flag")
+  const resetFilters = (keys: string[]) => {
+    keys.forEach((key) => searchParams.delete(key))
     navigate(
       {
         pathname: location.pathname,
@@ -48,6 +45,10 @@ export function TransactionListOnQuerySuccess({
       },
       { replace: false },
     )
+  }
+
+  const resetAllFilters = () => {
+    resetFilters(["endpoint", "method", "status", "flag"])
   }
 
   const updateQueryParam = (paramName: string, paramValue: string | undefined) => {
@@ -71,7 +72,7 @@ export function TransactionListOnQuerySuccess({
       {isFiltersOpen ? (
         <aside className="sticky top-8 hidden w-1/5 min-w-40 max-w-60 2xl:min-w-52 2xl:max-w-72 shrink-0 lg:block">
           <div className="text-right">
-            <FiltersResetButton onClick={resetFilters} />
+            <FiltersResetButton onClick={resetAllFilters} />
             <FiltersHideButton onClick={() => setIsFiltersOpen(false)} />
           </div>
           <FiltersSidebar filters={filters} />
