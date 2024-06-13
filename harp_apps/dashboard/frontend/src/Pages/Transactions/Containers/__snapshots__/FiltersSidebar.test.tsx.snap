@@ -596,6 +596,11 @@ exports[`renders the title and data when the query is successful 1`] = `
             class="grow"
           >
             Performance Index
+            <button
+              class="text-gray-400 mx-1 font-medium text-xs"
+            >
+              reset
+            </button>
           </span>
           <svg
             aria-hidden="true"
@@ -618,33 +623,33 @@ exports[`renders the title and data when the query is successful 1`] = `
           class="mt-2 space-y-2 "
         >
           <div
-            class="css-17sqiyq"
+            class="css-1azf1hu"
           >
             <div
-              class="css-1bggt6d"
+              class="css-1mb4ltm"
             >
               <input
-                class="input css-gote3b"
+                class="input css-1mns3hn"
                 max="100"
                 min="0"
-                step="1"
+                step="10"
                 type="range"
                 value="0"
               />
               <input
-                class="input css-gote3b"
+                class="input css-1mns3hn"
                 max="100"
                 min="0"
-                step="1"
+                step="10"
                 type="range"
                 value="100"
               />
             </div>
             <div
-              class="css-1yxx0tz"
+              class="css-ey7eqm"
             >
               <div
-                class="css-17wwvhj"
+                class="css-o6dulo"
                 style="left: 0%;"
               />
               <div
@@ -654,9 +659,117 @@ exports[`renders the title and data when the query is successful 1`] = `
                   class="css-18vir86"
                   style="left: 0%; right: 0%;"
                 />
+                <div
+                  style="position: absolute; left: 0%; top: 50%;"
+                >
+                  <div
+                    class="css-rjy332"
+                  />
+                  <div
+                    class="css-1bvaal1"
+                  >
+                    G
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 10%; top: 50%;"
+                >
+                  <div
+                    class="css-rjy332"
+                  />
+                  <div
+                    class="css-1bvaal1"
+                  >
+                    F
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 20%; top: 50%;"
+                >
+                  <div
+                    class="css-rjy332"
+                  />
+                  <div
+                    class="css-1bvaal1"
+                  >
+                    E
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 30%; top: 50%;"
+                >
+                  <div
+                    class="css-rjy332"
+                  />
+                  <div
+                    class="css-1bvaal1"
+                  >
+                    D
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 40%; top: 50%;"
+                >
+                  <div
+                    class="css-rjy332"
+                  />
+                  <div
+                    class="css-1bvaal1"
+                  >
+                    C
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 50%; top: 50%;"
+                >
+                  <div
+                    class="css-rjy332"
+                  />
+                  <div
+                    class="css-1bvaal1"
+                  >
+                    B
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 60%; top: 50%;"
+                >
+                  <div
+                    class="css-rjy332"
+                  />
+                  <div
+                    class="css-1bvaal1"
+                  >
+                    A
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 70%; top: 50%;"
+                >
+                  <div
+                    class="css-rjy332"
+                  />
+                  <div
+                    class="css-1bvaal1"
+                  >
+                    A+
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 80%; top: 50%;"
+                >
+                  <div
+                    class="css-rjy332"
+                  />
+                  <div
+                    class="css-1bvaal1"
+                  >
+                    A++
+                  </div>
+                </div>
               </div>
               <div
-                class="css-17wwvhj"
+                class="css-o6dulo"
                 style="left: 100%;"
               />
             </div>

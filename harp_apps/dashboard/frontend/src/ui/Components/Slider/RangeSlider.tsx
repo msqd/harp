@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { styled, css } from "twin.macro"
 
-type Mark = number | { value: number; label: string }
+export type Mark = number | { value: number; label: string }
 
 interface RangeSliderProps {
   min?: number
@@ -41,8 +41,7 @@ const Wrapper = styled.div(
     position: relative;
     display: flex;
     align-items: center;
-    margin: 40px calc(${thumbSize} / 2);
-    padding-top: 1.6rem;
+    margin: 16px calc(${thumbSize} / 2);
     height: calc(${thumbSize} + 1.6rem);
   `,
 )
@@ -124,8 +123,8 @@ const Mark = styled.div`
     position: absolute;
     top: 50%;
     transform: translate(-50%, -50%);
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: lightblue;
   `}
@@ -137,7 +136,8 @@ const Label = styled.div`
     top: 100%;
     transform: translateX(-50%);
     margin-top: 4px;
-    font-size: 12px;
+    font-size: 10px;
+    font-weight: 500;
     white-space: nowrap;
   `}
 `

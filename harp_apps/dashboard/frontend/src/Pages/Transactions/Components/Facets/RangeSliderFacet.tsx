@@ -2,7 +2,7 @@ import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
 import { useState } from "react"
 
 import { MinMaxFilter } from "Types/filters"
-import { RangeSlider } from "ui/Components/Slider/RangeSlider.tsx"
+import { RangeSlider, Mark } from "ui/Components/Slider/RangeSlider.tsx"
 import { H5 } from "ui/Components/Typography"
 
 import { FacetInnerLightButton } from "./FacetInnerLightButton.tsx"
@@ -14,24 +14,17 @@ interface RangeSliderFacetProps {
   defaultOpen?: boolean
   values?: MinMaxFilter
   setValues: (value?: MinMaxFilter) => void
+  marks?: Mark[]
 }
 
-/**
- * Facet component, renders a facet (group of values that can filter a given field) with checkboxes or radios.
- *
- * Radios for single selection, checkboxes for multiple selection. La base.
- */
 export function RangeSliderFacet({
   title,
   name,
   values = undefined,
   setValues,
   defaultOpen = true,
+  marks,
 }: RangeSliderFacetProps) {
-  /**
-   * Should this facet be open (aka, unfolded)? Default value can be passed as a prop, then the component will manage
-   * the open state.
-   */
   const [open, setOpen] = useState(defaultOpen)
 
   return (
@@ -49,7 +42,15 @@ export function RangeSliderFacet({
           )}
         </H5>
         <div className={"mt-2 space-y-2 " + (open ? "" : "hidden")}>
-          <RangeSlider min={0} max={100} defaultValue={values} onPointerUp={setValues} />
+          <RangeSlider
+            min={0}
+            max={100}
+            step={10}
+            defaultValue={values}
+            onPointerUp={setValues}
+            marks={marks}
+            thumbSize="8px"
+          />
         </div>
       </fieldset>
     </div>

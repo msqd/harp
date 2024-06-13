@@ -1,5 +1,6 @@
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 
+import { apdexScale } from "Components/Badges/constants"
 import { useTransactionsFiltersQuery } from "Domain/Transactions"
 import { Filters, ArrayFilter, MinMaxFilter } from "Types/filters"
 import { Pane } from "ui/Components/Pane"
@@ -16,6 +17,16 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
   const [searchParams] = useSearchParams()
 
   const filtersQuery = useTransactionsFiltersQuery()
+  const marks = [...apdexScale].reverse().map((rating, index) => ({ value: index * 10, label: rating.label }))
+
+  const markValueToThreshold = new Map([...apdexScale].reverse().map((rating, index) => [index * 10, rating.threshold]))
+  markValueToThreshold.set(0, 0)
+  markValueToThreshold.set(100, 100)
+
+  const thresholdToMarkValue = new Map<number, number>()
+  markValueToThreshold.forEach((value, key) => {
+    thresholdToMarkValue.set(value!, key)
+  })
 
   const _createSetFilterFor = (name: string) => (value: ArrayFilter) => {
     searchParams.delete(name)
@@ -37,8 +48,20 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
   }
 
   const setTpdexValues = (value: MinMaxFilter | undefined) => {
-    value?.min !== undefined ? searchParams.set("tpdexmin", value.min.toString()) : searchParams.delete("tpdexmin")
-    value?.max !== undefined ? searchParams.set("tpdexmax", value.max.toString()) : searchParams.delete("tpdexmax")
+    const minValue = markValueToThreshold.get(value?.min ?? -1)
+    const maxValue = markValueToThreshold.get(value?.max ?? -1)
+
+    if (minValue != null) {
+      searchParams.set("tpdexmin", minValue.toString())
+    } else {
+      searchParams.delete("tpdexmin")
+    }
+
+    if (maxValue != null) {
+      searchParams.set("tpdexmax", maxValue.toString())
+    } else {
+      searchParams.delete("tpdexmax")
+    }
 
     navigate(
       {
@@ -104,9 +127,13 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
         <RangeSliderFacet
           title="Performance Index"
           name="performanceIndex"
-          values={filters["tpdex"] as MinMaxFilter}
+          values={{
+            min: thresholdToMarkValue.get((filters["tpdex"] as MinMaxFilter)?.min ?? 0),
+            max: thresholdToMarkValue.get((filters["tpdex"] as MinMaxFilter)?.max ?? 100),
+          }}
           setValues={setTpdexValues}
           type={"rangeSlider"}
+          marks={marks}
         />
       ) : null}
 
