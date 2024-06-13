@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
     "process.env.NODE_ENV": JSON.stringify(env.NODE_ENV || "production"),
   }
   return {
-    define,
+    // define,
     build: {
       rollupOptions: {
         output: {

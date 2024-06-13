@@ -1,6 +1,20 @@
 import { useEffect, useState } from "react"
 import { styled, css } from "twin.macro"
 
+type Mark = number | { value: number; label: string }
+
+interface RangeSliderProps {
+  min?: number
+  max?: number
+  defaultValue?: { min?: number; max?: number }
+  value?: { min?: number; max?: number }
+  step?: number
+  onChange?: (value: { min?: number; max?: number }) => void
+  onPointerUp?: (value: { min?: number; max?: number }) => void
+  thumbSize?: string
+  marks?: Mark[]
+}
+
 const trackStyles = () => css`
   appearance: none;
   background: transparent;
@@ -105,7 +119,29 @@ const Control = styled.div(
   `,
 )
 
-const RangeSlider = ({
+const Mark = styled.div`
+  ${css`
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: lightblue;
+  `}
+`
+
+const Label = styled.div`
+  ${css`
+    position: absolute;
+    top: 100%;
+    transform: translateX(-50%);
+    margin-top: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+  `}
+`
+const RangeSlider: React.FC<RangeSliderProps> = ({
   min = 0,
   max = 10,
   defaultValue = undefined,
@@ -114,15 +150,7 @@ const RangeSlider = ({
   onChange,
   onPointerUp,
   thumbSize = "16px",
-}: {
-  min: number
-  max: number
-  defaultValue?: { min?: number; max?: number }
-  value?: { min?: number; max?: number }
-  step?: number
-  onChange?: (value: { min?: number; max?: number }) => void
-  onPointerUp?: (value: { min?: number; max?: number }) => void
-  thumbSize?: string
+  marks,
 }) => {
   const [minValue, setMinValue] = useState(
     value && value.min ? value.min : defaultValue && defaultValue.min ? defaultValue.min : min,
@@ -200,6 +228,17 @@ const RangeSlider = ({
         <Control thumbSize={thumbSize} style={{ left: `${minPos}%` }} />
         <Rail>
           <InnerRail style={{ left: `${minPos}%`, right: `${100 - maxPos}%` }} />
+          {marks?.map((mark, index) => {
+            const markValue = typeof mark === "number" ? mark : mark.value
+            const markLabel = typeof mark === "number" ? null : mark.label
+            const markPos = ((markValue - min) / (max - min)) * 100
+            return (
+              <div key={index} style={{ position: "absolute", left: `${markPos}%`, top: "50%" }}>
+                <Mark />
+                {markLabel && <Label>{markLabel}</Label>}
+              </div>
+            )
+          })}
         </Rail>
         <Control thumbSize={thumbSize} style={{ left: `${maxPos}%` }} />
       </ControlWrapper>
