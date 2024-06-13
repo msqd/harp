@@ -107,8 +107,8 @@ const Control = styled.div(
 
 const RangeSlider = ({
   min = 0,
-  max = 5,
-  defaultValue,
+  max = 10,
+  defaultValue = undefined,
   value,
   step = 1,
   onChange,
@@ -132,18 +132,20 @@ const RangeSlider = ({
   )
 
   useEffect(() => {
-    if (!defaultValue) {
-      if (value) {
-        if (value.min) {
-          setMinValue(value.min)
-        }
-        if (value.max) {
-          setMaxValue(value.max)
-        }
+    const setValues = (values: { min?: number; max?: number } | undefined) => {
+      if (values) {
+        values.min !== undefined ? setMinValue(values.min) : setMinValue(min)
+        values.max !== undefined ? setMaxValue(values.max) : setMaxValue(max)
       } else {
         setMinValue(min)
         setMaxValue(max)
       }
+    }
+
+    if (!defaultValue) {
+      setValues(value)
+    } else {
+      setValues(defaultValue)
     }
   }, [max, min, value, defaultValue])
 

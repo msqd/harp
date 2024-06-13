@@ -37,8 +37,8 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
   }
 
   const setTpdexValues = (value: MinMaxFilter | undefined) => {
-    value?.min !== undefined ? searchParams.set("tpdexmin", value.min.toString()) : searchParams.delete("tpdexMin")
-    value?.max !== undefined ? searchParams.set("tpdexmax", value.max.toString()) : searchParams.delete("tpdexMax")
+    value?.min !== undefined ? searchParams.set("tpdexmin", value.min.toString()) : searchParams.delete("tpdexmin")
+    value?.max !== undefined ? searchParams.set("tpdexmax", value.max.toString()) : searchParams.delete("tpdexmax")
 
     navigate(
       {

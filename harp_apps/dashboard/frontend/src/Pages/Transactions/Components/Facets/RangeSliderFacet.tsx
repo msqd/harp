@@ -49,7 +49,7 @@ export function RangeSliderFacet({
           )}
         </H5>
         <div className={"mt-2 space-y-2 " + (open ? "" : "hidden")}>
-          <RangeSlider min={0} max={100} value={values} onChange={setValues} />
+          <RangeSlider min={0} max={100} defaultValue={values} onPointerUp={setValues} />
         </div>
       </fieldset>
     </div>
