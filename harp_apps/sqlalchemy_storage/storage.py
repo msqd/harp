@@ -3,6 +3,7 @@ import re
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from functools import partial
+from operator import itemgetter
 from typing import Iterable, List, Optional, TypedDict, override
 
 from sqlalchemy import bindparam, case, delete, func, literal, literal_column, select, text, update
@@ -88,7 +89,7 @@ def _filter_query_for_user_flags(query, values, /, *, user_id):
 def _filter_transactions_based_on_text(query, search_text: str, dialect_name: str):
     # Escape special characters in search_text
     search_text = re.sub(r"([-\*\(\)~\"@<>\^+]+)", r"", search_text)
-    query = query.join(Message)
+    query = query.join(Message, isouter=True)
     # check dialect and use appropriate full text search
     if dialect_name == "mysql":
         return query.filter(
@@ -122,9 +123,9 @@ class SqlAlchemyStorage(Storage):
 
     def __init__(self, dispatcher: IAsyncEventDispatcher, settings: SqlAlchemyStorageSettings):
         self.settings = settings
-
         self.metadata = Base.metadata
-        self.engine = create_async_engine(self.settings.url, echo=self.settings.echo)
+
+        self.engine = create_async_engine(self.settings.url)
         self.session_factory = async_sessionmaker(self.engine, expire_on_commit=False)
 
         # TODO is this the right place ? (maybe it is, but maybe it causes tight coupling to the ed which may be not
@@ -148,11 +149,74 @@ class SqlAlchemyStorage(Storage):
         self.metric_values = MetricValuesRepository(self.session_factory)
         self.flags = FlagsRepository(self.session_factory)
 
+        self._debug = False
+
     @asynccontextmanager
     async def begin(self):
         async with self.session_factory() as session:
             async with session.begin():
                 yield session
+
+    def install_debugging_instrumentation(self, *, echo=False):
+        self._debug = True
+        self._original_session_factory = self.session_factory
+        self._debug_index = 1
+        self.sql_queries = []
+
+        if echo:
+            from rich.console import Console
+            from rich.syntax import Syntax
+
+            _console = Console(force_terminal=True, width=180)
+
+        @asynccontextmanager
+        async def _session_factory():
+            async with self._original_session_factory() as session:
+                original_execute = session.sync_session._execute_internal
+
+                def _instrumented_execute(statement, *args, **kwargs):
+                    sql_query = str(
+                        statement.compile(session.sync_session.bind, compile_kwargs={"literal_binds": True})
+                    )
+                    self.sql_queries.append(sql_query)
+
+                    final_result = original_execute(statement, *args, **kwargs)
+
+                    if echo:
+                        _console.print(f"🛢 SQL QUERY (#{self._debug_index})", style="bold")
+                        _console.print(
+                            Syntax(
+                                sql_query,
+                                "sql",
+                                word_wrap=True,
+                                theme="vs",
+                            )
+                        )
+
+                    if echo and self.engine.dialect.name == "postgresql":
+                        _get0 = itemgetter(0)
+                        _console.print(f"🛢 EXPLAIN ANALYZE (#{self._debug_index})", style="bold")
+                        _console.print(
+                            Syntax(
+                                "\n".join(
+                                    map(_get0, original_execute(text("EXPLAIN ANALYZE " + sql_query)).fetchall())
+                                ),
+                                "sql",
+                                word_wrap=True,
+                                theme="vs",
+                            )
+                        )
+
+                    self._debug_index += 1
+                    return final_result
+
+                session.sync_session._execute_internal = _instrumented_execute
+                try:
+                    yield session
+                finally:
+                    session.sync_session._execute_internal = original_execute
+
+        self.session_factory = _session_factory
 
     async def initialize(self):
         """Initialize database."""
@@ -255,13 +319,7 @@ class SqlAlchemyStorage(Storage):
         return result
 
     @override
-    async def get_transaction(
-        self,
-        id: str,
-        /,
-        *,
-        username: str,
-    ) -> Optional[TransactionModel]:
+    async def get_transaction(self, id: str, /, *, username: str) -> Optional[TransactionModel]:
         user = await self.users.find_one_by_username(username)
 
         return (

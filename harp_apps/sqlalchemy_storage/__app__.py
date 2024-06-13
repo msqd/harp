@@ -29,7 +29,6 @@ class SqlalchemyStorageApplication(Application):
         if cls.supports({"type": "sqlalchemy"} | settings):
             settings.setdefault("type", "sqlalchemy")
             settings.setdefault("url", "sqlite+aiosqlite:///:memory:")
-            settings.setdefault("echo", False)
             settings.setdefault("migrate", True)
 
         return settings

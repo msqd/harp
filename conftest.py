@@ -1,10 +1,12 @@
+import builtins
 import hashlib
 from unittest.mock import patch
 
 import pytest
 
-from harp.utils.network import wait_for_port
 from harp.utils.testing.databases import TEST_DATABASES
+
+builtins.__pytest__ = True
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -82,6 +84,8 @@ def create_database_container_for(dialect, image, driver):
 @pytest.fixture(scope="session")
 def httpbin():
     from testcontainers.core.container import DockerContainer
+
+    from harp.utils.network import wait_for_port
 
     with DockerContainer("mccutchen/go-httpbin:v2.13.2").with_exposed_ports(8080) as container:
         wait_for_port(int(container.get_exposed_port(8080)), container.get_container_host_ip())

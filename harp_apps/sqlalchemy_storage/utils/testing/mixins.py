@@ -64,7 +64,6 @@ async def get_scoped_database_url(database_url, test_id):
 class SqlalchemyStorageTestFixtureMixin:
     storage_settings = {
         "url": "sqlite+aiosqlite:///:memory:",
-        "echo": False,
     }
 
     def get_sqlalchemy_storage_settings(self, settings):
@@ -73,7 +72,9 @@ class SqlalchemyStorageTestFixtureMixin:
     @pytest.fixture
     async def storage(self, database_url, test_id) -> SqlAlchemyStorage:
         async with get_scoped_database_url(database_url, test_id) as scoped_database_url:
-            storage = await _create_storage(settings=self.get_sqlalchemy_storage_settings({"url": scoped_database_url}))
+            storage = await _create_storage(
+                settings=self.get_sqlalchemy_storage_settings({"url": scoped_database_url}),
+            )
             try:
                 yield storage
             finally:

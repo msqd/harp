@@ -47,27 +47,27 @@ def create_harp_config_with_sqlalchemy_storage_from_command_line_options(kwargs)
 
 
 async def do_migrate(engine, *, migrator, reset=False):
-    logger.info(f"🛢  Starting database migrations... (dialect={engine.dialect.name}, reset={reset}).")
+    logger.info(f"🛢 Starting database migrations... (dialect={engine.dialect.name}, reset={reset}).")
     if reset:
-        logger.debug("🛢  [db:migrate reset=true] dropping all tables.")
+        logger.debug("🛢 [db:migrate reset=true] dropping all tables.")
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
 
     if engine.dialect.name == "sqlite":
-        logger.debug("🛢  [db:migrate dialect=sqlite] creating all tables (without alembic).")
+        logger.debug("🛢 [db:migrate dialect=sqlite] creating all tables (without alembic).")
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
     else:
         # alembic manages migrations except for sqlite, because it's not trivial to make them work and an env using
         # sqlite does not really need to support upgrades (drop/recreate is fine when harp is upgraded).
-        logger.debug("🛢  [db:migrate] Running alembic migrations...")
+        logger.debug("🛢 [db:migrate] Running alembic migrations...")
 
         with ThreadPoolExecutor() as executor:
             await asyncio.get_event_loop().run_in_executor(executor, migrator)
 
     if engine.dialect.name == "mysql":
-        logger.debug("🛢  [db:migrate dialect=mysql] creating fulltext indexes.")
+        logger.debug("🛢 [db:migrate dialect=mysql] creating fulltext indexes.")
 
         try:
             async with engine.begin() as conn:
@@ -86,4 +86,4 @@ async def do_migrate(engine, *, migrator, reset=False):
             else:
                 raise e
 
-    logger.debug("🛢  [db:migrate] Done.")
+    logger.debug("🛢 [db:migrate] Done.")

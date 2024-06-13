@@ -45,9 +45,13 @@ Special cases
 SQL logs (SQLAlchemy)
 ---------------------
 
-To enable SQL logs, you should configure sqlalchemy for such logging. This is done using the ``storage.echo = true``
-configuration option (or ``--set storage.echo=true`` command line option).
+To enable SQL logs, you should configure the sqlalchemy logger minimum level to ``INFO``
 
+.. code-block:: shell
+
+    export LOGGING_SQL=INFO harp start ...
+
+This works for all execution contexts, including tests, etc.
 
 HTTP Client logs (HTTPX)
 ------------------------

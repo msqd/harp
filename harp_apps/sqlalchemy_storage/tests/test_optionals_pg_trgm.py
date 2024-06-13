@@ -9,6 +9,7 @@ from harp.utils.testing.databases import parametrize_with_database_urls
 from harp_apps.sqlalchemy_storage.optionals.pg_trgm import PgTrgmOptional
 from harp_apps.sqlalchemy_storage.utils.sql import run_sql
 from harp_apps.sqlalchemy_storage.utils.testing.database import run_cli_migrate_command
+from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
 
 
 async def get_indexes(engine, table_name):
@@ -84,8 +85,34 @@ async def test_pg_trgm_on_database_without_create_extension_privilege(database_u
 
 @parametrize_with_database_urls("mysql", "sqlite")
 async def test_pg_trgm_not_available_for_non_postgres_databases(database_url):
-    opt = PgTrgmOptional(database_url, echo=True)
+    opt = PgTrgmOptional(database_url)
 
     # cannot install on not supported dialects
     with pytest.raises(RuntimeError):
         await opt.install()
+
+
+class TestOptimizedQueries(SqlalchemyStorageTestFixtureMixin):
+    @parametrize_with_database_urls("postgresql")
+    async def test_optimized_queries(self, storage):
+        # store raw sql queries in `storage.sql_queries`, please
+        storage.install_debugging_instrumentation()
+
+        opt = PgTrgmOptional(storage.engine.url)
+        try:
+            await opt.install()
+
+            result = await storage.get_transaction_list(username="anonymous", with_messages=True, text_search="bar")
+
+            assert len(storage.sql_queries) == 2
+
+            for _ in range(100):
+                await self.create_transaction(storage, endpoint="/api/transactions/foo/bar/baz", tags={"foo": "bar"})
+
+            result = await storage.get_transaction_list(username="anonymous", with_messages=True, text_search="bar")
+
+            assert len(result) == 40
+            assert len(storage.sql_queries) == 2 + 4
+
+        finally:
+            await opt.engine.dispose()

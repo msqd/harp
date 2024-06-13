@@ -10,7 +10,6 @@ class TestSqlAlchemyStorageApplication(BaseTestForApplications):
     expected_defaults = {
         "type": "sqlalchemy",
         "url": "sqlite+aiosqlite:///:memory:",
-        "echo": False,
         "migrate": True,
     }
 
@@ -28,7 +27,6 @@ class TestSqlAlchemyStorageApplication(BaseTestForApplications):
         "settings",
         [
             {"type": "sqlalchemy", "url": "sqlite+aiosqlite:///harp.db"},
-            {"type": "sqlalchemy", "echo": True},
             {"type": "sqlalchemy", "migrate": True},
             {"type": "sqlalchemy", "migrate": False},
         ],

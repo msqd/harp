@@ -19,13 +19,12 @@ class PgTrgmOptional(BaseOptional):
 
     """
 
-    def __init__(self, db_url, *, echo=False):
+    def __init__(self, db_url):
         self._url = db_url
-        self._echo = echo
 
     @cached_property
     def engine(self):
-        engine = create_async_engine(self.url, echo=self._echo)
+        engine = create_async_engine(self.url)
 
         if engine.dialect.name != "postgresql":
             raise RuntimeError("This optional is only available for PostgreSQL databases.")

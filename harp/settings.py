@@ -9,6 +9,7 @@ Contents
 
 __title__ = "Settings"
 
+import builtins
 from os import environ
 
 #: Pagination size for api endpoints
@@ -23,3 +24,7 @@ if HARP_ENV is not None:
     HARP_ENV = HARP_ENV.strip().lower()
     if HARP_ENV not in ("dev", "prod"):
         HARP_ENV = None
+
+
+def is_test_context():
+    return getattr(builtins, "__pytest__", False)

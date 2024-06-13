@@ -69,7 +69,7 @@ def install_feature(features, operation, **kwargs):
 
     for feature in features:
         if operation == "add":
-            asyncio.run(implementations[feature].migrate())
+            asyncio.run(implementations[feature].install())
         elif operation == "remove":
             asyncio.run(implementations[feature].uninstall())
         else:
