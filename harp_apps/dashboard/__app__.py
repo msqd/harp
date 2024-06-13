@@ -24,13 +24,7 @@ class DashboardApplication(Application):
 
     @classmethod
     def defaults(cls, settings=None) -> dict:
-        settings = (
-            settings
-            if settings is not None
-            else {
-                "enabled": True,
-            }
-        )
+        settings = settings if settings is not None else {}
         settings.setdefault("port", 4080)
         settings.setdefault("auth", None)
         return settings

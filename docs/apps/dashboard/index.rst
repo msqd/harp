@@ -63,32 +63,11 @@ Explicit configurations for the dashboard's micro frontend dev server, served by
 
     You most likely don't need to configure the dev server unless you're working on harp's internals.
 
-
-
-
 Enable/disable
 --------------
 
-To disable the dashboard globally, set `dashboard.enabled` to `false`.
+To disable the dashboard globally, do not load the ``dashboard`` application.
 
-.. tab-set-code::
+.. code-block:: shell
 
-    .. code-block:: yaml
-
-        dashboard:
-            enabled: false
-
-    .. code-block:: shell
-
-        $ harp start ... --set dashboard.enabled=false
-
-
-.. todo::
-
-    Implement CLI to load or not load an application.
-
-    You can also disable the dashboard by not loading the `harp_apps.dashboard` application.
-
-    .. code-block:: shell
-
-        $ harp start ... --disable dashboard
+    $ harp start ... --disable dashboard
