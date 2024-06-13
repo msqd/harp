@@ -8,7 +8,7 @@ Database-related tests
 
 Database-related tests will spawn docker containers during the tests (using testcontainers) to test things.
 
-Tests that uses Storage
+Tests that use Storage
 :::::::::::::::::::::::
 
 Tests using storage can be writen either by subclassing :class:`SqlalchemyStorageTestFixtureMixin
