@@ -75,17 +75,7 @@ Common options
 Drop tables
 ...........
 
-To drop and recreate all tables, set the `drop_tables` option to `true`.
-
-.. tab-set-code::
-
-    .. code-block:: yaml
-
-        storage:
-            ...
-            drop_tables: true
-
-You can also set it using the CLI:
+To drop and recreate all tables, use ``--reset``. It will attempt to drop all tables before running the migrations.
 
 .. code-block:: bash
 

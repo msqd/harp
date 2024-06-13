@@ -1,4 +1,5 @@
 import asyncio
+import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import Union
 
@@ -7,6 +8,7 @@ from sqlalchemy.exc import OperationalError
 
 from harp import get_logger
 from harp.commandline.options.server import CommonServerOptions
+from harp_apps import sqlalchemy_storage
 from harp_apps.sqlalchemy_storage.models import Base, Message, Transaction
 
 logger = get_logger(__name__)
@@ -19,7 +21,7 @@ def create_alembic_config(url: Union[str, URL]):
     url = make_url(url)
 
     alembic_cfg = AlembicConfig()
-    alembic_cfg.set_main_option("script_location", "harp_apps/sqlalchemy_storage/migrations")
+    alembic_cfg.set_main_option("script_location", os.path.join(sqlalchemy_storage.__path__[0], "migrations"))
     alembic_cfg.set_main_option(
         "file_template", "%%(year)d%%(month).2d%%(day).2d%%(hour).2d%%(minute).2d%%(second).2d_%%(rev)s_%%(slug)s"
     )
