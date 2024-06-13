@@ -17,15 +17,18 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
   const [searchParams] = useSearchParams()
 
   const filtersQuery = useTransactionsFiltersQuery()
-  const marks = [...apdexScale].reverse().map((rating, index) => ({ value: index * 10, label: rating.label }))
 
+  // marks and setup for range slider for tpdex
+  const marks = [...apdexScale].reverse().map((rating, index) => ({ value: index * 10, label: rating.label }))
   const markValueToThreshold = new Map([...apdexScale].reverse().map((rating, index) => [index * 10, rating.threshold]))
-  markValueToThreshold.set(0, 0)
-  markValueToThreshold.set(100, 100)
+  const maxKey = Math.max(...Array.from(markValueToThreshold.keys()))
+  const minKey = Math.min(...Array.from(markValueToThreshold.keys()))
+  markValueToThreshold.set(maxKey, undefined)
+  markValueToThreshold.set(minKey, undefined)
 
   const thresholdToMarkValue = new Map<number, number>()
   markValueToThreshold.forEach((value, key) => {
-    thresholdToMarkValue.set(value!, key)
+    if (value != undefined) thresholdToMarkValue.set(value, key)
   })
 
   const _createSetFilterFor = (name: string) => (value: ArrayFilter) => {
@@ -134,6 +137,8 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
           setValues={setTpdexValues}
           type={"rangeSlider"}
           marks={marks}
+          max={maxKey}
+          min={minKey}
         />
       ) : null}
 

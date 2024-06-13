@@ -41,7 +41,7 @@ const Wrapper = styled.div(
     position: relative;
     display: flex;
     align-items: center;
-    margin: 16px calc(${thumbSize} / 2);
+    margin: 6px calc(${thumbSize} / 2);
     height: calc(${thumbSize} + 1.6rem);
   `,
 )

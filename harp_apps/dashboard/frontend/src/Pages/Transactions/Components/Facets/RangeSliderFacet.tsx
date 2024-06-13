@@ -15,6 +15,8 @@ interface RangeSliderFacetProps {
   values?: MinMaxFilter
   setValues: (value?: MinMaxFilter) => void
   marks?: Mark[]
+  min?: number
+  max?: number
 }
 
 export function RangeSliderFacet({
@@ -24,6 +26,8 @@ export function RangeSliderFacet({
   setValues,
   defaultOpen = true,
   marks,
+  min,
+  max,
 }: RangeSliderFacetProps) {
   const [open, setOpen] = useState(defaultOpen)
 
@@ -43,8 +47,8 @@ export function RangeSliderFacet({
         </H5>
         <div className={"mt-2 space-y-2 " + (open ? "" : "hidden")}>
           <RangeSlider
-            min={0}
-            max={100}
+            min={min}
+            max={max}
             step={10}
             defaultValue={values}
             onPointerUp={setValues}

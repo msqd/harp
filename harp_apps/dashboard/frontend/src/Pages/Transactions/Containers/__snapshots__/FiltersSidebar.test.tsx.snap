@@ -623,14 +623,14 @@ exports[`renders the title and data when the query is successful 1`] = `
           class="mt-2 space-y-2 "
         >
           <div
-            class="css-1azf1hu"
+            class="css-1atudf3"
           >
             <div
               class="css-1mb4ltm"
             >
               <input
                 class="input css-1mns3hn"
-                max="100"
+                max="80"
                 min="0"
                 step="10"
                 type="range"
@@ -638,11 +638,11 @@ exports[`renders the title and data when the query is successful 1`] = `
               />
               <input
                 class="input css-1mns3hn"
-                max="100"
+                max="80"
                 min="0"
                 step="10"
                 type="range"
-                value="100"
+                value="80"
               />
             </div>
             <div
@@ -672,7 +672,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   </div>
                 </div>
                 <div
-                  style="position: absolute; left: 10%; top: 50%;"
+                  style="position: absolute; left: 12.5%; top: 50%;"
                 >
                   <div
                     class="css-rjy332"
@@ -684,7 +684,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   </div>
                 </div>
                 <div
-                  style="position: absolute; left: 20%; top: 50%;"
+                  style="position: absolute; left: 25%; top: 50%;"
                 >
                   <div
                     class="css-rjy332"
@@ -696,7 +696,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   </div>
                 </div>
                 <div
-                  style="position: absolute; left: 30%; top: 50%;"
+                  style="position: absolute; left: 37.5%; top: 50%;"
                 >
                   <div
                     class="css-rjy332"
@@ -708,7 +708,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   </div>
                 </div>
                 <div
-                  style="position: absolute; left: 40%; top: 50%;"
+                  style="position: absolute; left: 50%; top: 50%;"
                 >
                   <div
                     class="css-rjy332"
@@ -720,7 +720,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   </div>
                 </div>
                 <div
-                  style="position: absolute; left: 50%; top: 50%;"
+                  style="position: absolute; left: 62.5%; top: 50%;"
                 >
                   <div
                     class="css-rjy332"
@@ -732,7 +732,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   </div>
                 </div>
                 <div
-                  style="position: absolute; left: 60%; top: 50%;"
+                  style="position: absolute; left: 75%; top: 50%;"
                 >
                   <div
                     class="css-rjy332"
@@ -744,7 +744,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   </div>
                 </div>
                 <div
-                  style="position: absolute; left: 70%; top: 50%;"
+                  style="position: absolute; left: 87.5%; top: 50%;"
                 >
                   <div
                     class="css-rjy332"
@@ -756,7 +756,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   </div>
                 </div>
                 <div
-                  style="position: absolute; left: 80%; top: 50%;"
+                  style="position: absolute; left: 100%; top: 50%;"
                 >
                   <div
                     class="css-rjy332"
