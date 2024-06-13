@@ -25,17 +25,22 @@ exports[`renders the title and data when the query is successful 1`] = `
         <section
           class="inline-block min-w-full max-w-full py-2 align-middle sm:px-6 lg:px-8"
         >
+          <h2
+            class="css-13yts7e"
+          >
+            Summary (24h)
+          </h2>
           <div
-            class="grid grid-cols-3 gap-4"
+            class="grid grid-cols-3 gap-4 mb-8"
           >
             <div
               class="css-kt11ky"
             >
-              <h2
-                class="css-13yts7e"
+              <h3
+                class="css-1hpno4e"
               >
                 Performances
-              </h2>
+              </h3>
               <div
                 class="flex self-center relative z-10"
               >
@@ -74,11 +79,11 @@ exports[`renders the title and data when the query is successful 1`] = `
             <div
               class="css-kt11ky"
             >
-              <h2
-                class="css-13yts7e"
+              <h3
+                class="css-1hpno4e"
               >
                 Transactions
-              </h2>
+              </h3>
               <div
                 class="flex self-center relative z-10"
               >
@@ -268,11 +273,11 @@ exports[`renders the title and data when the query is successful 1`] = `
             <div
               class="css-kt11ky"
             >
-              <h2
-                class="css-13yts7e"
+              <h3
+                class="css-1hpno4e"
               >
                 Errors
-              </h2>
+              </h3>
               <div
                 class="flex self-center relative z-10"
               >
@@ -463,6 +468,11 @@ exports[`renders the title and data when the query is successful 1`] = `
           <div
             class="flex justify-end my-2"
           >
+            <h2
+              class="grow css-13yts7e"
+            >
+              History
+            </h2>
             <span
               class="isolate inline-flex rounded-md shadow-sm"
             >

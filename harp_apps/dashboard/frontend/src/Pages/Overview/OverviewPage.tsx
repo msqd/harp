@@ -7,7 +7,7 @@ import { useSummaryDataQuery } from "Domain/Overview/useSummaryDataQuery.tsx"
 import { useSystemSettingsQuery } from "Domain/System"
 import { ButtonGroup } from "ui/Components/ButtonGroup"
 import { Pane } from "ui/Components/Pane"
-import { H2 } from "ui/Components/Typography"
+import { H2, H3 } from "ui/Components/Typography"
 
 import { PerformancesSummary } from "./Components/PerformancesSummary.tsx"
 import { RateSummary } from "./Components/RateSummary.tsx"
@@ -40,15 +40,16 @@ export const OverviewPage = () => {
 
   return (
     <Page title={<PageTitle title="Overview" />}>
-      <div className="grid grid-cols-3 gap-4">
+      <H2>Summary (24h)</H2>
+      <div className="grid grid-cols-3 gap-4 mb-8">
         <StyledSummaryPane>
-          <H2>Performances</H2>
+          <H3>Performances</H3>
           <OnQuerySuccess query={summaryQuery}>
             {(query) => <PerformancesSummary mean={query.data.apdex.mean} data={mapGetValues(query.data.apdex.data)} />}
           </OnQuerySuccess>
         </StyledSummaryPane>
         <StyledSummaryPane>
-          <H2>Transactions</H2>
+          <H3>Transactions</H3>
           <OnQuerySuccess query={summaryQuery}>
             {(query) => (
               <RateSummary
@@ -62,7 +63,7 @@ export const OverviewPage = () => {
           </OnQuerySuccess>
         </StyledSummaryPane>
         <StyledSummaryPane>
-          <H2>Errors</H2>
+          <H3>Errors</H3>
           <OnQuerySuccess query={summaryQuery}>
             {(query) => (
               <RateSummary
@@ -78,6 +79,7 @@ export const OverviewPage = () => {
       </div>
 
       <div className="flex justify-end my-2">
+        <H2 className="grow">History</H2>
         <ButtonGroup buttonProps={buttonProps} current={timeRange} setCurrent={setCurrentTimeRange} />
       </div>
 
