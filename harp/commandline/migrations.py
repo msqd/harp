@@ -20,7 +20,7 @@ from harp_apps.sqlalchemy_storage.utils.migrations import (
 logger = get_logger(__name__)
 
 
-@click.command()
+@click.command("db:migrate")
 @add_harp_server_click_options
 @click.argument("operation", nargs=1, type=click.Choice(["up", "down"]))
 @click.argument("revision", nargs=1)
@@ -43,7 +43,7 @@ def migrate(*, operation, revision, reset=False, **kwargs):
 migrate = cast(BaseCommand, migrate)
 
 
-@click.command()
+@click.command("db:create-migration")
 @add_harp_server_click_options
 @click.argument("message", nargs=1)
 def create_migration(*, message, **kwargs):
@@ -52,11 +52,11 @@ def create_migration(*, message, **kwargs):
     command.revision(alembic_cfg, autogenerate=True, message=message or "auto-generated migration")
 
 
-@click.command()
+@click.command("db:feature")
 @click.argument("operation", nargs=1, type=click.Choice(["add", "remove"]))
 @click.argument("features", nargs=-1)
 @add_harp_server_click_options
-def install_feature(features, operation, **kwargs):
+def feature(features, operation, **kwargs):
     config = create_harp_config_with_sqlalchemy_storage_from_command_line_options(kwargs)
     alembic_cfg = create_alembic_config(config.settings.get("storage", {}).get("url", None))
 
@@ -76,7 +76,7 @@ def install_feature(features, operation, **kwargs):
             raise ValueError(f"Invalid operation {operation}.")
 
 
-@click.command()
+@click.command("db:history")
 @add_harp_server_click_options
 def history(**kwargs):
     config = create_harp_config_with_sqlalchemy_storage_from_command_line_options(kwargs)
