@@ -39,8 +39,6 @@ class TestBlobsController(
         assert response.status == 404
         assert response.content_type == "text/plain"
 
-    test_get_more_existing = test_get_existing
-
 
 class TestBlobsControllerThroughASGI(
     BlobsControllerTestFixtureMixin,
