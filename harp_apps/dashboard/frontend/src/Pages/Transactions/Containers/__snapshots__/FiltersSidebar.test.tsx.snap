@@ -40,7 +40,7 @@ exports[`renders the title and data when the query is successful 1`] = `
           class="mt-2 space-y-2 "
         >
           <div
-            class="relative flex gap-x-3 cursor-pointer select-none"
+            class="relative flex gap-x-3 select-none cursor-pointer"
           >
             <div
               class="flex h-6 items-center"
@@ -57,7 +57,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="text-sm leading-6"
             >
               <label
-                class="font-medium text-gray-900 cursor-pointer"
+                class="font-medium text-gray-900  cursor-pointer"
                 for="endpoint1"
               >
                 <div>
@@ -79,7 +79,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             </div>
           </div>
           <div
-            class="relative flex gap-x-3 cursor-pointer select-none"
+            class="relative flex gap-x-3 select-none cursor-pointer"
           >
             <div
               class="flex h-6 items-center"
@@ -96,7 +96,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="text-sm leading-6"
             >
               <label
-                class="font-medium text-gray-900 cursor-pointer"
+                class="font-medium text-gray-900  cursor-pointer"
                 for="endpoint2"
               >
                 <div>
@@ -155,7 +155,7 @@ exports[`renders the title and data when the query is successful 1`] = `
           class="mt-2 space-y-2 "
         >
           <div
-            class="relative flex gap-x-3 cursor-pointer select-none"
+            class="relative flex gap-x-3 select-none cursor-pointer"
           >
             <div
               class="flex h-6 items-center"
@@ -172,7 +172,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="text-sm leading-6"
             >
               <label
-                class="font-medium text-gray-900 cursor-pointer"
+                class="font-medium text-gray-900  cursor-pointer"
                 for="GET"
               >
                 <div>
@@ -187,7 +187,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             </div>
           </div>
           <div
-            class="relative flex gap-x-3 cursor-pointer select-none"
+            class="relative flex gap-x-3 select-none cursor-pointer"
           >
             <div
               class="flex h-6 items-center"
@@ -204,7 +204,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="text-sm leading-6"
             >
               <label
-                class="font-medium text-gray-900 cursor-pointer"
+                class="font-medium text-gray-900  cursor-pointer"
                 for="POST"
               >
                 <div>
@@ -219,7 +219,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             </div>
           </div>
           <div
-            class="relative flex gap-x-3 cursor-pointer select-none"
+            class="relative flex gap-x-3 select-none cursor-pointer"
           >
             <div
               class="flex h-6 items-center"
@@ -236,7 +236,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="text-sm leading-6"
             >
               <label
-                class="font-medium text-gray-900 cursor-pointer"
+                class="font-medium text-gray-900  cursor-pointer"
                 for="PUT"
               >
                 <div>
@@ -251,7 +251,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             </div>
           </div>
           <div
-            class="relative flex gap-x-3 cursor-pointer select-none"
+            class="relative flex gap-x-3 select-none cursor-pointer"
           >
             <div
               class="flex h-6 items-center"
@@ -268,7 +268,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="text-sm leading-6"
             >
               <label
-                class="font-medium text-gray-900 cursor-pointer"
+                class="font-medium text-gray-900  cursor-pointer"
                 for="DELETE"
               >
                 <div>
@@ -283,7 +283,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             </div>
           </div>
           <div
-            class="relative flex gap-x-3 cursor-pointer select-none"
+            class="relative flex gap-x-3 select-none cursor-pointer"
           >
             <div
               class="flex h-6 items-center"
@@ -300,7 +300,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="text-sm leading-6"
             >
               <label
-                class="font-medium text-gray-900 cursor-pointer"
+                class="font-medium text-gray-900  cursor-pointer"
                 for="PATCH"
               >
                 <div>
@@ -352,7 +352,7 @@ exports[`renders the title and data when the query is successful 1`] = `
           class="mt-2 space-y-2 "
         >
           <div
-            class="relative flex gap-x-3 cursor-pointer select-none"
+            class="relative flex gap-x-3 select-none cursor-pointer"
           >
             <div
               class="flex h-6 items-center"
@@ -369,7 +369,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="text-sm leading-6"
             >
               <label
-                class="font-medium text-gray-900 cursor-pointer"
+                class="font-medium text-gray-900  cursor-pointer"
                 for="2xx"
               >
                 <div>
@@ -384,7 +384,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             </div>
           </div>
           <div
-            class="relative flex gap-x-3 cursor-pointer select-none"
+            class="relative flex gap-x-3 select-none cursor-pointer"
           >
             <div
               class="flex h-6 items-center"
@@ -401,7 +401,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="text-sm leading-6"
             >
               <label
-                class="font-medium text-gray-900 cursor-pointer"
+                class="font-medium text-gray-900  cursor-pointer"
                 for="3xx"
               >
                 <div>
@@ -416,7 +416,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             </div>
           </div>
           <div
-            class="relative flex gap-x-3 cursor-pointer select-none"
+            class="relative flex gap-x-3 select-none cursor-pointer"
           >
             <div
               class="flex h-6 items-center"
@@ -433,7 +433,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="text-sm leading-6"
             >
               <label
-                class="font-medium text-gray-900 cursor-pointer"
+                class="font-medium text-gray-900  cursor-pointer"
                 for="4xx"
               >
                 <div>
@@ -448,7 +448,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             </div>
           </div>
           <div
-            class="relative flex gap-x-3 cursor-pointer select-none"
+            class="relative flex gap-x-3 select-none cursor-pointer"
           >
             <div
               class="flex h-6 items-center"
@@ -465,7 +465,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="text-sm leading-6"
             >
               <label
-                class="font-medium text-gray-900 cursor-pointer"
+                class="font-medium text-gray-900  cursor-pointer"
                 for="5xx"
               >
                 <div>
@@ -517,7 +517,7 @@ exports[`renders the title and data when the query is successful 1`] = `
           class="mt-2 space-y-2 "
         >
           <div
-            class="relative flex gap-x-3 cursor-pointer select-none"
+            class="relative flex gap-x-3 select-none cursor-pointer"
           >
             <div
               class="flex h-6 items-center"
@@ -534,7 +534,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="text-sm leading-6"
             >
               <label
-                class="font-medium text-gray-900 cursor-pointer"
+                class="font-medium text-gray-900  cursor-pointer"
                 for="flag1"
               >
                 <div>
@@ -549,7 +549,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             </div>
           </div>
           <div
-            class="relative flex gap-x-3 cursor-pointer select-none"
+            class="relative flex gap-x-3 select-none cursor-pointer"
           >
             <div
               class="flex h-6 items-center"
@@ -566,7 +566,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="text-sm leading-6"
             >
               <label
-                class="font-medium text-gray-900 cursor-pointer"
+                class="font-medium text-gray-900  cursor-pointer"
                 for="flag2"
               >
                 <div>

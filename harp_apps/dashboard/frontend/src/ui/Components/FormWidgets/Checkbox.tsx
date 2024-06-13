@@ -8,6 +8,7 @@ export function Checkbox({
   checked = undefined,
   containerProps = {},
   labelProps = {},
+  disabled = false,
   ...inputProps
 }: {
   name: string
@@ -15,6 +16,7 @@ export function Checkbox({
   checked?: boolean
   containerProps?: React.HTMLAttributes<HTMLDivElement>
   labelProps?: React.HTMLAttributes<HTMLLabelElement>
+  disabled?: boolean
 } & React.HTMLAttributes<HTMLInputElement>) {
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -30,7 +32,11 @@ export function Checkbox({
   return (
     <div
       {...containerProps}
-      className={classNames("relative flex gap-x-3 cursor-pointer select-none", containerProps.className)}
+      className={classNames(
+        "relative flex gap-x-3 select-none",
+        containerProps.className,
+        disabled ? null : "cursor-pointer",
+      )}
       onClick={handleContainerClick}
     >
       <div className="flex h-6 items-center">
@@ -45,13 +51,14 @@ export function Checkbox({
             "h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer",
             inputProps.className,
           )}
+          disabled={disabled}
         />
       </div>
       <div className="text-sm leading-6">
         <label
           htmlFor={inputRef.current?.id ?? name}
           {...labelProps}
-          className={classNames("font-medium text-gray-900 cursor-pointer", labelProps.className)}
+          className={classNames("font-medium text-gray-900 ", labelProps.className, disabled ? null : "cursor-pointer")}
           onClick={(e) => {
             // prevent default because the container's click handler will already handle this
             e.preventDefault()

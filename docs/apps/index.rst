@@ -8,3 +8,4 @@ Applications
     proxy/index
     http_client/index
     sqlalchemy_storage/index
+    telemetry/index

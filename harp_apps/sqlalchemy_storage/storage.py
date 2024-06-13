@@ -6,7 +6,7 @@ from functools import partial
 from operator import itemgetter
 from typing import Iterable, List, Optional, TypedDict, override
 
-from sqlalchemy import bindparam, case, delete, func, literal, literal_column, select, text, update
+from sqlalchemy import and_, bindparam, case, delete, func, literal, literal_column, null, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.sql.functions import count
 from whistle import IAsyncEventDispatcher
@@ -63,7 +63,7 @@ _FILTER_COLUMN_NAMES = {
 
 
 def _filter_query(query, name, values):
-    if values and values != "*":
+    if values:
         query = query.filter(
             getattr(
                 Transaction,
@@ -74,15 +74,30 @@ def _filter_query(query, name, values):
 
 
 def _filter_query_for_user_flags(query, values, /, *, user_id):
-    if values and values != "*":
-        query = query.join(UserFlag).filter(
-            UserFlag.user_id == user_id,
-            UserFlag.type.in_(
-                list(
-                    map(FLAGS_BY_NAME.get, values),
+    if values:
+        if "NULL" in values:
+            query = query.outerjoin(UserFlag).filter(
+                or_(
+                    and_(
+                        UserFlag.user_id == user_id,
+                        UserFlag.type.in_(
+                            list(
+                                map(FLAGS_BY_NAME.get, values),
+                            )
+                        ),
+                    ),
+                    or_(UserFlag.user_id != user_id, (UserFlag.type.is_(null()))),
                 )
-            ),
-        )
+            )
+        else:
+            query = query.join(UserFlag).filter(
+                UserFlag.user_id == user_id,
+                UserFlag.type.in_(
+                    list(
+                        map(FLAGS_BY_NAME.get, values),
+                    )
+                ),
+            )
     return query
 
 

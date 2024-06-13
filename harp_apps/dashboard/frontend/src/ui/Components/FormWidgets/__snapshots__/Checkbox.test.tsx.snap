@@ -3,7 +3,7 @@
 exports[`Checkbox > renders correctly 1`] = `
 <div>
   <div
-    class="relative flex gap-x-3 cursor-pointer select-none"
+    class="relative flex gap-x-3 select-none cursor-pointer"
   >
     <div
       class="flex h-6 items-center"
@@ -19,7 +19,7 @@ exports[`Checkbox > renders correctly 1`] = `
       class="text-sm leading-6"
     >
       <label
-        class="font-medium text-gray-900 cursor-pointer"
+        class="font-medium text-gray-900  cursor-pointer"
         for="test-checkbox"
       >
         test-checkbox
