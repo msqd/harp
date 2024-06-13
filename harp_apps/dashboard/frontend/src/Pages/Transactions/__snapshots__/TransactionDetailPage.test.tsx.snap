@@ -1,0 +1,733 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renders the title and data when the query is successful 1`] = `
+<div>
+  <main>
+    <div
+      class="mt-4 flex"
+    >
+      <div
+        class="flex flex-col"
+      >
+        <h1
+          class="css-9lrcch"
+        >
+          Transaction details
+        </h1>
+      </div>
+    </div>
+    <div
+      class="mt-4"
+    >
+      <div
+        class="sm:-mx-6 lg:-mx-8"
+      >
+        <section
+          class="inline-block min-w-full max-w-full py-2 align-middle sm:px-6 lg:px-8"
+        >
+          <div
+            class="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm css-o0j4j7"
+          >
+            <div
+              class="px-4 py-3"
+            >
+              <h5
+                class="flex w-full whitespace-nowrap cursor-pointer css-9ho516"
+              >
+                <div
+                  class="grow font-normal truncate"
+                >
+                  <span
+                    class="font-semibold"
+                  >
+                    <div
+                      class="flex gap-x-0.5 items-center"
+                    >
+                      <span
+                        class="grow"
+                      >
+                        Transaction
+                      </span>
+                      <div
+                        class="flex gap-x-0.5 items-center font-normal pl-1 pr-2"
+                      >
+                        <span>
+                          0.06 seconds
+                        </span>
+                      </div>
+                    </div>
+                  </span>
+                </div>
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 min-w-4 text-gray-600"
+                  data-slot="icon"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m4.5 15.75 7.5-7.5 7.5 7.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </h5>
+              <div
+                class="mt-2 space-y-2 overflow-x-auto "
+              >
+                 
+                <div
+                  class="flex gap-x-1"
+                >
+                  <span
+                    class="text-xs text-gray-500"
+                  >
+                    foo
+                    =
+                    bar
+                  </span>
+                  <span
+                    class="text-xs text-gray-500"
+                  >
+                    bar
+                    =
+                    baz
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="px-4 py-3"
+            >
+              <h5
+                class="flex w-full whitespace-nowrap cursor-pointer css-9ho516"
+              >
+                <div
+                  class="grow font-normal truncate"
+                >
+                  <span
+                    class="font-semibold"
+                  >
+                    <span
+                      class="mr-2"
+                    >
+                      Request
+                    </span>
+                    <span
+                      class="font-normal"
+                    >
+                      <span
+                        class="css-pnlnkr"
+                        color="green"
+                      >
+                        GET
+                      </span>
+                      <span
+                        class="inline-flex items-center bg-gray-50 px-1 ml-2 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20"
+                      >
+                        endpoint1
+                      </span>
+                      <span
+                        class="text-gray-500 font-mono text-xs"
+                        title="/lorem/ipsum-dolor/sit/amet?this=is&a=very-long&request=path&that-will=demonstrate&how-the-ui=behave-when&the-full-content-with-is-very-large=which-may-happen-quite-often"
+                      >
+                        /lorem/ipsum-dolor/sit/amet?this=is&a=very-long&request=path&that-will=demonstrate&how-the-ui=behave-when&the-full-content-with-is-very-large=which-may-happen-quite-often
+                      </span>
+                    </span>
+                  </span>
+                </div>
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 min-w-4 text-gray-600"
+                  data-slot="icon"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m4.5 15.75 7.5-7.5 7.5 7.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </h5>
+              <span
+                class="text-xs text-gray-500"
+              >
+                Friday, August 20th, 2021 at 10:00:00 PM GMT+02:00
+              </span>
+              <div
+                class="mt-2 space-y-2 overflow-x-auto "
+              >
+                 
+                <table
+                  class="mb-2 w-full text-xs font-mono"
+                >
+                  <tbody>
+                    <tr>
+                      <td
+                        class="px-2 w-1 text-blue-600 truncate"
+                      >
+                        host
+                      </td>
+                      <td
+                        class="px-2 whitespace-nowrap"
+                      >
+                         localhost
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        class="px-2 w-1 text-blue-600 truncate"
+                      >
+                         accept-encoding
+                      </td>
+                      <td
+                        class="px-2 whitespace-nowrap"
+                      >
+                         identity 
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        class="px-2 w-1 text-blue-600 truncate"
+                      >
+                         x-long-header
+                      </td>
+                      <td
+                        class="px-2 whitespace-nowrap"
+                      >
+                         Foobar 3r51XEnyibdL3kRyAmts5BSfTyjjOrcbwgr3YOnwUMTcVVLzyhdzEKkQAje2XlXUva59GsJu1Z7IotiVYisO9vDjvHSyLt95SU7WEQNzhKhA7IlT2IQ11Onwmz7su9BT 
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div
+                  class="px-2"
+                >
+                  <pre
+                    class="w-fit overflow-x-auto text-black language-javascript max-w-full text-xs"
+                    style="color: rgb(57, 58, 52); font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; font-size: .9em; line-height: 1.2em; tab-size: 4; hyphens: none; padding: 0px; margin: .5em 0px; overflow: auto; border: 0px; background-color: white;"
+                  >
+                    <code
+                      class="language-javascript"
+                      style="color: rgb(57, 58, 52); font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; font-size: .9em; line-height: 1.2em; tab-size: 4; hyphens: none;"
+                    >
+                      <span>
+                        body1
+                      </span>
+                    </code>
+                  </pre>
+                </div>
+              </div>
+            </div>
+            <div
+              class="px-4 py-3"
+            >
+              <h5
+                class="flex w-full whitespace-nowrap cursor-pointer css-9ho516"
+              >
+                <div
+                  class="grow font-normal truncate"
+                >
+                  <span
+                    class="font-semibold"
+                  >
+                    <span
+                      class="mr-2"
+                    >
+                      Response
+                    </span>
+                    <span
+                      class="font-normal"
+                    >
+                      <span
+                        class="css-pnlnkr"
+                        color="green"
+                      >
+                        200
+                         
+                        OK
+                      </span>
+                    </span>
+                  </span>
+                </div>
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 min-w-4 text-gray-600"
+                  data-slot="icon"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m4.5 15.75 7.5-7.5 7.5 7.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </h5>
+              <span
+                class="text-xs text-gray-500"
+              >
+                Friday, August 20th, 2021 at 10:01:00 PM GMT+02:00
+              </span>
+              <div
+                class="mt-2 space-y-2 overflow-x-auto "
+              >
+                 
+                <table
+                  class="mb-2 w-full text-xs font-mono"
+                >
+                  <tbody>
+                    <tr>
+                      <td
+                        class="px-2 w-1 text-blue-600 truncate"
+                      >
+                        content-type
+                      </td>
+                      <td
+                        class="px-2 whitespace-nowrap"
+                      >
+                         application/json
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div
+                  class="px-2"
+                >
+                  <pre
+                    class="w-fit overflow-x-auto text-black language-javascript max-w-full text-xs"
+                    style="color: rgb(57, 58, 52); font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; font-size: .9em; line-height: 1.2em; tab-size: 4; hyphens: none; padding: 0px; margin: .5em 0px; overflow: auto; border: 0px; background-color: white;"
+                  >
+                    <code
+                      class="language-javascript"
+                      style="color: rgb(57, 58, 52); font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; font-size: .9em; line-height: 1.2em; tab-size: 4; hyphens: none;"
+                    >
+                      <span>
+                        body2
+                      </span>
+                    </code>
+                  </pre>
+                </div>
+              </div>
+            </div>
+            <div
+              class="px-4 py-3"
+            >
+              <h5
+                class="flex w-full whitespace-nowrap cursor-pointer css-9ho516"
+              >
+                <div
+                  class="grow font-normal truncate"
+                >
+                  <span
+                    class="font-semibold"
+                  >
+                    Raw
+                  </span>
+                </div>
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4 min-w-4 text-gray-600"
+                  data-slot="icon"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </h5>
+              <div
+                class="mt-2 space-y-2 overflow-x-auto hidden"
+              >
+                 
+                <table
+                  class="min-w-fit divide-y divide-gray-300"
+                >
+                  <tbody
+                    class="divide-y divide-gray-200 bg-white"
+                  >
+                    <tr>
+                      <td
+                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                      >
+                        id
+                      </td>
+                      <td
+                        class="whitespace-nowrap text-sm text-gray-500"
+                      >
+                        ABCD1234
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                      >
+                        type
+                      </td>
+                      <td
+                        class="whitespace-nowrap text-sm text-gray-500"
+                      >
+                        GET
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                      >
+                        endpoint
+                      </td>
+                      <td
+                        class="whitespace-nowrap text-sm text-gray-500"
+                      >
+                        endpoint1
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                      >
+                        started_at
+                      </td>
+                      <td
+                        class="whitespace-nowrap text-sm text-gray-500"
+                      >
+                        2021-08-20T20:00:00Z
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                      >
+                        finished_at
+                      </td>
+                      <td
+                        class="whitespace-nowrap text-sm text-gray-500"
+                      >
+                        2021-08-20T20:01:00Z
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                      >
+                        elapsed
+                      </td>
+                      <td
+                        class="whitespace-nowrap text-sm text-gray-500"
+                      >
+                        60
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                      >
+                        messages
+                      </td>
+                      <td
+                        class="whitespace-nowrap text-sm text-gray-500"
+                      >
+                        <table
+                          class="min-w-fit divide-y divide-gray-300"
+                        >
+                          <tbody
+                            class="divide-y divide-gray-200 bg-white"
+                          >
+                            <tr>
+                              <td
+                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                              >
+                                0
+                              </td>
+                              <td
+                                class="whitespace-nowrap text-sm text-gray-500"
+                              >
+                                <table
+                                  class="min-w-fit divide-y divide-gray-300"
+                                >
+                                  <tbody
+                                    class="divide-y divide-gray-200 bg-white"
+                                  >
+                                    <tr>
+                                      <td
+                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                      >
+                                        id
+                                      </td>
+                                      <td
+                                        class="whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        1
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td
+                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                      >
+                                        transaction_id
+                                      </td>
+                                      <td
+                                        class="whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        ABCD1234
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td
+                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                      >
+                                        kind
+                                      </td>
+                                      <td
+                                        class="whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        request
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td
+                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                      >
+                                        summary
+                                      </td>
+                                      <td
+                                        class="whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        GET /lorem/ipsum-dolor/sit/amet?this=is&a=very-long&request=path&that-will=demonstrate&how-the-ui=behave-when&the-full-content-with-is-very-large=which-may-happen-quite-often HTTP/1.1
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td
+                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                      >
+                                        headers
+                                      </td>
+                                      <td
+                                        class="whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        headers1
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td
+                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                      >
+                                        body
+                                      </td>
+                                      <td
+                                        class="whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        body1
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td
+                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                      >
+                                        created_at
+                                      </td>
+                                      <td
+                                        class="whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        2021-08-20T20:00:00Z
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td
+                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                              >
+                                1
+                              </td>
+                              <td
+                                class="whitespace-nowrap text-sm text-gray-500"
+                              >
+                                <table
+                                  class="min-w-fit divide-y divide-gray-300"
+                                >
+                                  <tbody
+                                    class="divide-y divide-gray-200 bg-white"
+                                  >
+                                    <tr>
+                                      <td
+                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                      >
+                                        id
+                                      </td>
+                                      <td
+                                        class="whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        2
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td
+                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                      >
+                                        transaction_id
+                                      </td>
+                                      <td
+                                        class="whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        ABCD1234
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td
+                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                      >
+                                        kind
+                                      </td>
+                                      <td
+                                        class="whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        response
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td
+                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                      >
+                                        summary
+                                      </td>
+                                      <td
+                                        class="whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        HTTP/1.1 200 OK
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td
+                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                      >
+                                        headers
+                                      </td>
+                                      <td
+                                        class="whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        headers2
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td
+                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                      >
+                                        body
+                                      </td>
+                                      <td
+                                        class="whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        body2
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td
+                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                      >
+                                        created_at
+                                      </td>
+                                      <td
+                                        class="whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        2021-08-20T20:01:00Z
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                      >
+                        tags
+                      </td>
+                      <td
+                        class="whitespace-nowrap text-sm text-gray-500"
+                      >
+                        <table
+                          class="min-w-fit divide-y divide-gray-300"
+                        >
+                          <tbody
+                            class="divide-y divide-gray-200 bg-white"
+                          >
+                            <tr>
+                              <td
+                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                              >
+                                foo
+                              </td>
+                              <td
+                                class="whitespace-nowrap text-sm text-gray-500"
+                              >
+                                bar
+                              </td>
+                            </tr>
+                            <tr>
+                              <td
+                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                              >
+                                bar
+                              </td>
+                              <td
+                                class="whitespace-nowrap text-sm text-gray-500"
+                              >
+                                baz
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td
+                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                      >
+                        extras
+                      </td>
+                      <td
+                        class="whitespace-nowrap text-sm text-gray-500"
+                      >
+                        <table
+                          class="min-w-fit divide-y divide-gray-300"
+                        >
+                          <tbody
+                            class="divide-y divide-gray-200 bg-white"
+                          />
+                        </table>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+`;
