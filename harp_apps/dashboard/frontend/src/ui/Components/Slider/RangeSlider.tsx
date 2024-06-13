@@ -107,48 +107,62 @@ const Control = styled.div(
 
 const RangeSlider = ({
   min = 0,
-  max = 100,
+  max = 5,
+  defaultValue,
   value,
   step = 1,
   onChange,
+  onPointerUp,
   thumbSize = "16px",
 }: {
   min: number
   max: number
+  defaultValue?: { min?: number; max?: number }
   value?: { min?: number; max?: number }
   step?: number
-  onChange: (value: { min?: number; max?: number }) => void
+  onChange?: (value: { min?: number; max?: number }) => void
+  onPointerUp?: (value: { min?: number; max?: number }) => void
   thumbSize?: string
 }) => {
-  const [minValue, setMinValue] = useState(value && value.min ? value.min : min)
-  const [maxValue, setMaxValue] = useState(value && value.max ? value.max : max)
+  const [minValue, setMinValue] = useState(
+    value && value.min ? value.min : defaultValue && defaultValue.min ? defaultValue.min : min,
+  )
+  const [maxValue, setMaxValue] = useState(
+    value && value.max ? value.max : defaultValue && defaultValue.max ? defaultValue.max : max,
+  )
 
   useEffect(() => {
-    if (value) {
-      if (value.min) {
-        setMinValue(value.min)
+    if (!defaultValue) {
+      if (value) {
+        if (value.min) {
+          setMinValue(value.min)
+        }
+        if (value.max) {
+          setMaxValue(value.max)
+        }
+      } else {
+        setMinValue(min)
+        setMaxValue(max)
       }
-      if (value.max) {
-        setMaxValue(value.max)
-      }
-    } else {
-      setMinValue(min)
-      setMaxValue(max)
     }
-  }, [max, min, value])
+  }, [max, min, value, defaultValue])
+
+  const handlePointerUp = () => {
+    if (onPointerUp) onPointerUp({ min: minValue, max: maxValue })
+  }
 
   const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault()
     const newMinVal = Math.min(Number(e.target.value), maxValue - step)
     if (!value) setMinValue(newMinVal)
-    onChange({ min: newMinVal, max: maxValue })
+    if (onChange) onChange({ min: newMinVal, max: maxValue })
   }
 
   const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault()
     const newMaxVal = Math.max(Number(e.target.value), minValue + step)
     if (!value) setMaxValue(newMaxVal)
-    onChange({ min: minValue, max: newMaxVal })
+    if (onChange) onChange({ min: minValue, max: newMaxVal })
   }
   const minPos = ((minValue - min) / (max - min)) * 100
   const maxPos = ((maxValue - min) / (max - min)) * 100
@@ -164,6 +178,7 @@ const RangeSlider = ({
           max={max}
           step={step}
           onChange={handleMinChange}
+          onPointerUp={handlePointerUp}
           thumbSize={thumbSize}
         />
         <Input
@@ -174,6 +189,7 @@ const RangeSlider = ({
           max={max}
           step={step}
           onChange={handleMaxChange}
+          onPointerUp={handlePointerUp}
           thumbSize={thumbSize}
         />
       </InputWrapper>
