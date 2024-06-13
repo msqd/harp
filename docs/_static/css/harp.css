@@ -28,3 +28,12 @@
     flex-basis: auto;
     text-align: center;
 }
+
+.sidebar-logo-container {
+    width: 75px;
+    margin: 0 auto;
+}
+
+.sidebar-brand-text {
+    text-align: center;
+}

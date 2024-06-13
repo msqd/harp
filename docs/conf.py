@@ -39,8 +39,13 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 root_doc = "index"
 
+html_title = project + " " + version
 html_theme = "furo"
 html_static_path = ["_static"]
+html_theme_options = {
+    "light_logo": "logo.png",
+    "dark_logo": "logo.png",
+}
 html_js_files = ["js/links-target-blank.js"]
 html_css_files = ["css/harp.css"]
 html_baseurl = "https://harp-proxy.readthedocs.io/en/latest/"
