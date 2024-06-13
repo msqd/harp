@@ -19,8 +19,6 @@ processors = [
     structlog.stdlib.PositionalArgumentsFormatter(),
     structlog.processors.StackInfoRenderer(),
     structlog.processors.UnicodeDecoder(),
-    # structlog.stdlib.render_to_log_kwargs,
-    # structlog.stdlib.render_to_log_kwargs,
     structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
 ]
 
