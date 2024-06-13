@@ -18,6 +18,7 @@ Submodules
     harp.utils.collections
     harp.utils.commandline
     harp.utils.dates
+    harp.utils.env
     harp.utils.guids
     harp.utils.identifiers
     harp.utils.json

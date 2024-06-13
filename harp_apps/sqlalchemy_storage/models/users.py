@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class User(Base):
-    __tablename__ = "sa_users"
+    __tablename__ = "users"
 
     id = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
     username = mapped_column(String(32), unique=True)

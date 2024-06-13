@@ -10,8 +10,6 @@ from harp.utils.testing.benchmarking import AbstractProxyBenchmark
 class TestPostgresHttpbinBenchmark(AbstractProxyBenchmark):
     config = Template(
         """
-        dashboard:
-          enabled: false
         proxy:
           endpoints:
             - port: "$port"
@@ -29,8 +27,6 @@ class TestPostgresHttpbinBenchmark(AbstractProxyBenchmark):
 class TestSqliteHttpbinBenchmark(AbstractProxyBenchmark):
     config = Template(
         """
-        dashboard:
-          enabled: false
         proxy:
           endpoints:
             - port: "$port"

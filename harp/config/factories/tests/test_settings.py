@@ -1,22 +1,15 @@
 from tempfile import NamedTemporaryFile
 
-import pytest
-
 from harp import Config
 
 
 class TestSettings:
     async def factory(self, settings=None):
         config = Config(settings)
-        config.add_application("harp_apps.sqlalchemy_storage")
-        config.add_application("harp_apps.dashboard")
+        config.add_application("sqlalchemy_storage")
+        config.add_application("dashboard")
         config.validate()
         return config.settings
-
-    @pytest.mark.parametrize("false_value", ["no", "false", "0", 0, None])
-    async def test_disabled_dashboard(self, false_value):
-        settings = await self.factory({"dashboard": {"enabled": false_value}})
-        assert settings["dashboard"] == {"enabled": False}
 
     async def test_dashboard_auth_basic(self):
         users = {"foo": "bar"}

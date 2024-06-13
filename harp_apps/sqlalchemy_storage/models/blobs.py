@@ -8,7 +8,7 @@ from .messages import Message
 
 
 class Blob(Base):
-    __tablename__ = "sa_blobs"
+    __tablename__ = "blobs"
 
     id = mapped_column(String(40), primary_key=True, unique=True)
     data = mapped_column(LargeBinary())

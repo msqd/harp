@@ -8,5 +8,6 @@ already installed harp, please refer to the :doc:`Start Guide </start/index>` if
     :maxdepth: 2
 
     configure/index
+    migrations
     logging
     runtime

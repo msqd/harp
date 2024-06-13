@@ -13,3 +13,5 @@ Submodules
     :maxdepth: 1
 
     harp_apps.sqlalchemy_storage.utils.dates
+    harp_apps.sqlalchemy_storage.utils.migrations
+    harp_apps.sqlalchemy_storage.utils.sql

@@ -1,12 +1,12 @@
-import asyncio
-import itertools
-from typing import Iterator
+import builtins
+import hashlib
 from unittest.mock import patch
 
 import pytest
-from pytest import FixtureRequest
 
-from harp.utils.network import wait_for_port
+from harp.utils.testing.databases import TEST_DATABASES
+
+builtins.__pytest__ = True
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -53,106 +53,13 @@ def patch_wrapt_for_pycharm():
         yield
 
 
-# redefine event loop fixture with a broad scope.
-# see https://pytest-asyncio.readthedocs.io/en/latest/reference/decorators/index.html
-# this is mostly to avoid to create one container per integration test, we'll reuse the third party services running in
-# docker from one test to another
-@pytest.fixture(scope="session")
-def event_loop(request: FixtureRequest) -> Iterator[asyncio.AbstractEventLoop]:
-    """Create an instance of the default event loop for each test case."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    try:
-        yield loop
-    finally:
-        loop.close()
-
-
-def get_bool_from_env(key, default):
-    import os
-
-    value = os.environ.get(key, None)
-    if value is None:
-        return default
-    elif value.lower() in ("true", "1", "yes"):
-        return True
-    elif value.lower() in ("false", "0", "no"):
-        return False
-    else:
-        raise ValueError(f"Invalid boolean value for {key}: {value!r}")
-
-
-TEST_ALL_DATABASES = get_bool_from_env("TEST_ALL_DATABASES", False)
-
-DBS = {
-    "sqlite": {"drivers": ["aiosqlite"]},
-    "postgresql": {
-        "images": [
-            *(
-                [
-                    "postgres:12",
-                    "postgres:12-alpine",
-                    "postgres:13",
-                    "postgres:13-alpine",
-                    "postgres:14",
-                    "postgres:14-alpine",
-                    "postgres:15",
-                    "postgres:15-alpine",
-                    "postgres:16",
-                    "postgres:16-alpine",
-                    "timescale/timescaledb:latest-pg13",
-                    "timescale/timescaledb:latest-pg14",
-                    "timescale/timescaledb:latest-pg15",
-                    "timescale/timescaledb:latest-pg16",
-                ]
-                if TEST_ALL_DATABASES
-                else [
-                    "postgres:16-alpine",
-                ]
-            ),
-        ],
-        "drivers": ["asyncpg"],
-    },
-    "mysql": {
-        "images": (
-            [
-                "mysql:8-oracle",
-                "mariadb:lts",
-                "mariadb:latest",
-            ]
-            if TEST_ALL_DATABASES
-            else ["mariadb:lts"]
-        ),
-        "drivers": ["aiomysql", "asyncmy"] if TEST_ALL_DATABASES else ["aiomysql"],
-    },
-    # disabled, does not install cleanly on osx+arm
-    # see https://github.com/pymssql/pymssql/issues/769
-    # supporting microsoft shit is not a priority unless someone wants to sponsor it
-    # "mssql": {"drivers": ["aioodbc"]},
-}
-
-DATABASES = list(
-    map(
-        "|".join,
-        itertools.chain(
-            *(
-                itertools.product(
-                    [dialect],
-                    DBS[dialect].get("images", [""]),
-                    DBS[dialect]["drivers"],
-                )
-                for dialect in DBS.keys()
-            )
-        ),
-    )
-)
-
-
-@pytest.fixture(
-    scope="session",
-    params=DATABASES,
-)
+@pytest.fixture(scope="session", params=TEST_DATABASES)
 def database_url(request):
     dialect, image, driver = request.param.split("|")
+    yield from create_database_container_for(dialect, image, driver)
+
+
+def create_database_container_for(dialect, image, driver):
     if dialect == "sqlite":
         yield f"{dialect}+{driver}:///:memory:"
     elif dialect == "postgresql":
@@ -178,6 +85,13 @@ def database_url(request):
 def httpbin():
     from testcontainers.core.container import DockerContainer
 
+    from harp.utils.network import wait_for_port
+
     with DockerContainer("mccutchen/go-httpbin:v2.13.2").with_exposed_ports(8080) as container:
         wait_for_port(int(container.get_exposed_port(8080)), container.get_container_host_ip())
         yield f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8080)}"
+
+
+@pytest.fixture
+def test_id(request):
+    return hashlib.md5(str(request.node.nodeid).encode("utf-8")).hexdigest()

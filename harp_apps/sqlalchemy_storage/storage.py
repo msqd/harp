@@ -2,11 +2,12 @@ import asyncio
 import re
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
+from functools import partial
+from operator import itemgetter
 from typing import Iterable, List, Optional, TypedDict, override
 
 from sqlalchemy import and_, bindparam, case, delete, func, literal, literal_column, null, or_, select, text, update
-from sqlalchemy.exc import DatabaseError, OperationalError
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.sql.functions import count
 from whistle import IAsyncEventDispatcher
 
@@ -103,7 +104,7 @@ def _filter_query_for_user_flags(query, values, /, *, user_id):
 def _filter_transactions_based_on_text(query, search_text: str, dialect_name: str):
     # Escape special characters in search_text
     search_text = re.sub(r"([-\*\(\)~\"@<>\^+]+)", r"", search_text)
-    query = query.join(Message)
+    query = query.join(Message, isouter=True)
     # check dialect and use appropriate full text search
     if dialect_name == "mysql":
         return query.filter(
@@ -137,9 +138,9 @@ class SqlAlchemyStorage(Storage):
 
     def __init__(self, dispatcher: IAsyncEventDispatcher, settings: SqlAlchemyStorageSettings):
         self.settings = settings
-
         self.metadata = Base.metadata
-        self.engine = create_async_engine(self.settings.url, echo=self.settings.echo)
+
+        self.engine = create_async_engine(self.settings.url)
         self.session_factory = async_sessionmaker(self.engine, expire_on_commit=False)
 
         # TODO is this the right place ? (maybe it is, but maybe it causes tight coupling to the ed which may be not
@@ -148,6 +149,7 @@ class SqlAlchemyStorage(Storage):
         dispatcher.add_listener(EVENT_TRANSACTION_STARTED, self._on_transaction_started)
         dispatcher.add_listener(EVENT_TRANSACTION_MESSAGE, self._on_transaction_message)
         dispatcher.add_listener(EVENT_TRANSACTION_ENDED, self._on_transaction_ended)
+        self._dispatcher = dispatcher
 
         self._is_ready = asyncio.Event()
         self._worker = None
@@ -162,29 +164,96 @@ class SqlAlchemyStorage(Storage):
         self.metric_values = MetricValuesRepository(self.session_factory)
         self.flags = FlagsRepository(self.session_factory)
 
+        self._debug = False
+
     @asynccontextmanager
     async def begin(self):
         async with self.session_factory() as session:
             async with session.begin():
                 yield session
 
-    async def initialize(self, /, *, force_reset=False):
-        """Create the database tables. May drop them first if configured to do so."""
-        async with self.engine.begin() as conn:
-            if force_reset or self.settings.drop_tables:
-                await conn.run_sync(self.metadata.drop_all)
+    def install_debugging_instrumentation(self, *, echo=False):
+        self._debug = True
+        self._original_session_factory = self.session_factory
+        self._debug_index = 1
+        self.sql_queries = []
 
-        async with self.engine.begin() as conn:
-            await self.install_pg_trgm_extension(conn)
+        if echo:
+            from rich.console import Console
+            from rich.syntax import Syntax
 
-        async with self.engine.begin() as conn:
-            await conn.run_sync(self.metadata.create_all)
+            _console = Console(force_terminal=True, width=180)
 
-        async with self.engine.begin() as conn:
-            await self.create_full_text_indexes(conn)
+        @asynccontextmanager
+        async def _session_factory():
+            async with self._original_session_factory() as session:
+                original_execute = session.sync_session._execute_internal
 
+                def _instrumented_execute(statement, *args, **kwargs):
+                    sql_query = str(
+                        statement.compile(session.sync_session.bind, compile_kwargs={"literal_binds": True})
+                    )
+                    self.sql_queries.append(sql_query)
+
+                    final_result = original_execute(statement, *args, **kwargs)
+
+                    if echo:
+                        _console.print(f"🛢 SQL QUERY (#{self._debug_index})", style="bold")
+                        _console.print(
+                            Syntax(
+                                sql_query,
+                                "sql",
+                                word_wrap=True,
+                                theme="vs",
+                            )
+                        )
+
+                    if echo and self.engine.dialect.name == "postgresql":
+                        _get0 = itemgetter(0)
+                        _console.print(f"🛢 EXPLAIN ANALYZE (#{self._debug_index})", style="bold")
+                        _console.print(
+                            Syntax(
+                                "\n".join(
+                                    map(_get0, original_execute(text("EXPLAIN ANALYZE " + sql_query)).fetchall())
+                                ),
+                                "sql",
+                                word_wrap=True,
+                                theme="vs",
+                            )
+                        )
+
+                    self._debug_index += 1
+                    return final_result
+
+                session.sync_session._execute_internal = _instrumented_execute
+                try:
+                    yield session
+                finally:
+                    session.sync_session._execute_internal = original_execute
+
+        self.session_factory = _session_factory
+
+    async def initialize(self):
+        """Initialize database."""
+        if self.settings.migrate:
+            await self._run_migrations()
         await self.create_users(["anonymous"])
         self._is_ready.set()
+
+    async def _run_migrations(self):
+        """Convenience helper to run the migrations. This behaviour can be disabled by setting migrate=false in the
+        storage settings."""
+        from alembic import command
+
+        from harp_apps.sqlalchemy_storage.utils.migrations import create_alembic_config
+
+        from .utils.migrations import do_migrate
+
+        alembic_cfg = create_alembic_config(self.engine.url.render_as_string(hide_password=False))
+
+        migrator = partial(command.upgrade, alembic_cfg, "head")
+
+        await do_migrate(self.engine, migrator=migrator)
 
     @property
     def worker(self):
@@ -265,13 +334,7 @@ class SqlAlchemyStorage(Storage):
         return result
 
     @override
-    async def get_transaction(
-        self,
-        id: str,
-        /,
-        *,
-        username: str,
-    ) -> Optional[TransactionModel]:
+    async def get_transaction(self, id: str, /, *, username: str) -> Optional[TransactionModel]:
         user = await self.users.find_one_by_username(username)
 
         return (
@@ -454,31 +517,3 @@ class SqlAlchemyStorage(Storage):
                     user = User()
                     user.username = username
                     session.add(user)
-
-    async def install_pg_trgm_extension(self, conn: AsyncConnection):
-        # Check the type of the current database
-        if conn.engine.dialect.name == "postgresql":
-            # Install the pg_trgm extension if possible
-            try:
-                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm;"))
-            except DatabaseError as e:
-                logger.error(f"Failed to install pg_trgm extension: {e}")
-
-    async def create_full_text_indexes(self, conn: AsyncConnection):
-        # Check the type of the current database
-        if conn.engine.dialect.name == "mysql":
-            # Create the full text index for transactions.endpoint
-            try:
-                await conn.execute(
-                    text(f"CREATE FULLTEXT INDEX endpoint_ft_index ON {Transaction.__tablename__} (endpoint);")
-                )
-                # Create the full text index for messages.summary
-                await conn.execute(
-                    text(f"CREATE FULLTEXT INDEX summary_ft_index ON {Message.__tablename__} (summary);")
-                )
-            except OperationalError as e:
-                # check for duplicate key error
-                if e.orig and e.orig.args[0] == 1061:
-                    pass
-                else:
-                    raise e

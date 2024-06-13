@@ -95,12 +95,8 @@ You can also set it using the CLI:
 Logging
 .......
 
-To instruct SQLAlchemy to log all queries, set the `echo` option to `true`.
+To instruct SQLAlchemy to log all queries, set ``LOGGING_SQLALCHEMY=INFO`` in your env.
 
-.. tab-set-code::
+.. code-block:: shell
 
-    .. code-block:: yaml
-
-        storage:
-            ...
-            echo: true
+    LOGGING_SQLALCHEMY=INFO harp start ...

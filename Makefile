@@ -104,7 +104,7 @@ build-frontend:  ## Builds the harp dashboard frontend (compiles typescript and 
 
 .PHONY: preqa qa qa-full types format format-backend format-frontend
 .PHONY: test test-backend test-frontend test-frontend-update test-frontend-ui-update
-.PHONY: lint-frontend coverage
+.PHONY: lint-frontend coverage cloc
 
 preqa: types format reference  ## Runs pre-qa checks (types generation, formatting, api reference).
 
@@ -158,6 +158,9 @@ coverage:  ## Generates coverage report.
 	          $(PYTEST_COVERAGE_OPTIONS) \
 	          $(PYTEST_COMMON_OPTIONS) \
 	          $(PYTEST_OPTIONS)
+
+cloc:
+	cloc harp harp_apps tests  --exclude-dir=node_modules,build,dist
 
 
 ########################################################################################################################

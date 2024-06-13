@@ -45,7 +45,7 @@ class KernelFactory:
         self.hostname = "[::]"
 
     async def build(self):
-        logger.info(f"🎙 HARP v.{__version__} ({__revision__})")
+        logger.info(f"🎙  HARP v.{__version__} ({__revision__})")
         # we only work on validated configuration
         self.configuration.validate()
 

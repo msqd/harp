@@ -1,9 +1,8 @@
 import pytest
 
-from harp.config.settings import DisabledSettings
 from harp.errors import ConfigurationError
 
-from ..settings import DashboardAuthSetting, DashboardSettings
+from ..settings import DashboardAuthSetting
 
 
 def test_no_auth():
@@ -30,8 +29,3 @@ def test_basic_auth():
         "algorithm": "plain",
         "users": {"foo": "bar"},
     }
-
-
-def test_disabled():
-    assert isinstance(DashboardSettings(enabled=False), DisabledSettings)
-    assert isinstance(DashboardSettings(), DashboardSettings)
