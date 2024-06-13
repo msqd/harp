@@ -17,8 +17,6 @@ settings:
   storage:
     type: sqlalchemy
     url: sqlite+aiosqlite:///data/harp.db
-    drop_tables: false
-    echo: false
 
 postgresql:
   enabled: false
