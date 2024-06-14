@@ -1,6 +1,7 @@
 import { format } from "date-fns"
 import { useEffect, useRef } from "react"
 import { QueryObserverSuccessResult } from "react-query/types/core/types"
+import { useLocation } from "react-router-dom"
 
 import { KeyValueSettings } from "Domain/System/useSystemSettingsQuery"
 import { Transaction } from "Models/Transaction"
@@ -28,6 +29,8 @@ function Tags({ tags }: { tags: [string, string] }) {
 }
 
 export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserverSuccessResult<Transaction> }) {
+  const location = useLocation()
+
   const messageRefs = useRef<(HTMLDivElement | null)[]>([])
   const transaction = query.data
   const [duration, apdex, cached, noCache] = [
@@ -37,7 +40,7 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
     !!transaction.extras?.no_cache,
   ]
   const tags = (transaction.tags ? Object.entries(transaction.tags) : []) as unknown as [string, string]
-
+  const transactionUrl = `${window.location.origin}${location.pathname}/${transaction.id}`
   useEffect(() => {
     // Ensure the ref array length matches the number of messages
     messageRefs.current = messageRefs.current.slice(0, transaction.messages?.length)
@@ -49,6 +52,7 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
         title={
           <div className="flex gap-x-0.5 items-center">
             <span className="grow">Transaction</span>
+            <CopyToClipboard text={transactionUrl} />
             <Duration
               duration={duration}
               apdex={apdex}
