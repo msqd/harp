@@ -104,9 +104,17 @@ class AbstractMinMaxFacet(AbstractFacet):
 
 class NonExhaustiveFacet(AbstractChoicesFacet):
     exhaustive = False
+    fallback_name = "NULL"
 
     def __init__(self):
         super().__init__()
         self.choices = list(self.choices) + [
             "NULL",
         ]
+
+    def filter(self, raw_data: list):
+        return {
+            "values": self.values,
+            "current": self.get_filter(raw_data),
+            "fallbackName": self.fallback_name,
+        }
