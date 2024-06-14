@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from multidict import MultiDictProxy
 
@@ -30,7 +30,7 @@ class AbstractFacet:
 
 
 class AbstractChoicesFacet(AbstractFacet):
-    choices = set()
+    choices: Union[set | list] = set()
     exhaustive = True
 
     @property
@@ -38,7 +38,7 @@ class AbstractChoicesFacet(AbstractFacet):
         return [{"name": choice, "count": self.meta.get(choice, {}).get("count", None)} for choice in self.choices]
 
     def get_filter(self, raw_data: list):
-        query_endpoints = self.choices.intersection(raw_data)
+        query_endpoints = set(self.choices).intersection(raw_data)
         return list(query_endpoints) if len(query_endpoints) else None
 
     def get_filter_from_query(self, query: MultiDictProxy):
@@ -107,4 +107,6 @@ class NonExhaustiveFacet(AbstractChoicesFacet):
 
     def __init__(self):
         super().__init__()
-        self.choices.add("NULL")
+        self.choices = list(self.choices) + [
+            "NULL",
+        ]

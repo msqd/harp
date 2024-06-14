@@ -1,3 +1,5 @@
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline"
+import { Link } from "react-router-dom"
 import tw, { styled } from "twin.macro"
 
 import ApdexBadge from "Components/Badges/ApdexBadge.tsx"
@@ -32,7 +34,13 @@ export const SummarySection = () => {
       <H2>Summary</H2>
       <div className="grid grid-cols-3 gap-4 mb-8">
         <StyledSummaryPane>
-          <H3>Performances (24h)</H3>
+          <div className="flex items-start ">
+            <H3>Performances (24h)</H3>
+            <Link to="/transactions" className="leading-7 text-gray-400 mx-1 font-medium text-xs px-2">
+              <ArrowTopRightOnSquareIcon className="h-3 w-3 inline-block" />
+              details
+            </Link>
+          </div>
           <OnQuerySuccess query={summaryQuery}>
             {(query) => (
               <SparklineChart data={mapGetValues(query.data.apdex.data)} color="#ADD8E6">
@@ -44,7 +52,13 @@ export const SummarySection = () => {
           </OnQuerySuccess>
         </StyledSummaryPane>
         <StyledSummaryPane>
-          <H3>Transactions (24h)</H3>
+          <div className="flex items-start ">
+            <H3>Transactions (24h)</H3>
+            <Link to="/transactions" className="leading-7 text-gray-400 mx-1 font-medium text-xs px-2">
+              <ArrowTopRightOnSquareIcon className="h-3 w-3 inline-block" />
+              details
+            </Link>
+          </div>
           <OnQuerySuccess query={summaryQuery}>
             {(query) => (
               <SparklineChart data={mapGetValues(query.data.transactions.data)} color="#ADD8E6">
@@ -58,7 +72,16 @@ export const SummarySection = () => {
           </OnQuerySuccess>
         </StyledSummaryPane>
         <StyledSummaryPane>
-          <H3>Errors (24h)</H3>
+          <div className="flex items-start ">
+            <H3>Errors (24h)</H3>
+            <Link
+              to="/transactions?status=5xx&status=ERR"
+              className="leading-7 text-gray-400 mx-1 font-medium text-xs px-2"
+            >
+              <ArrowTopRightOnSquareIcon className="h-3 w-3 inline-block" />
+              details
+            </Link>
+          </div>
           <OnQuerySuccess query={summaryQuery}>
             {(query) => (
               <SparklineChart data={mapGetValues(query.data.errors.data)} color="#e6b3ad">

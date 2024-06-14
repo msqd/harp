@@ -36,11 +36,37 @@ exports[`renders the title and data when the query is successful 1`] = `
             <div
               class="css-9dvziv"
             >
-              <h3
-                class="css-1hpno4e"
+              <div
+                class="flex items-start "
               >
-                Performances (24h)
-              </h3>
+                <h3
+                  class="css-1hpno4e"
+                >
+                  Performances (24h)
+                </h3>
+                <a
+                  class="leading-7 text-gray-400 mx-1 font-medium text-xs px-2"
+                  href="/transactions"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="h-3 w-3 inline-block"
+                    data-slot="icon"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  details
+                </a>
+              </div>
               <div
                 class="flex self-center relative z-10"
               >
@@ -223,11 +249,37 @@ exports[`renders the title and data when the query is successful 1`] = `
             <div
               class="css-9dvziv"
             >
-              <h3
-                class="css-1hpno4e"
+              <div
+                class="flex items-start "
               >
-                Transactions (24h)
-              </h3>
+                <h3
+                  class="css-1hpno4e"
+                >
+                  Transactions (24h)
+                </h3>
+                <a
+                  class="leading-7 text-gray-400 mx-1 font-medium text-xs px-2"
+                  href="/transactions"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="h-3 w-3 inline-block"
+                    data-slot="icon"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  details
+                </a>
+              </div>
               <div
                 class="flex flex-col self-center relative z-10 items-start"
               >
@@ -422,11 +474,37 @@ exports[`renders the title and data when the query is successful 1`] = `
             <div
               class="css-9dvziv"
             >
-              <h3
-                class="css-1hpno4e"
+              <div
+                class="flex items-start "
               >
-                Errors (24h)
-              </h3>
+                <h3
+                  class="css-1hpno4e"
+                >
+                  Errors (24h)
+                </h3>
+                <a
+                  class="leading-7 text-gray-400 mx-1 font-medium text-xs px-2"
+                  href="/transactions?status=5xx&status=ERR"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="h-3 w-3 inline-block"
+                    data-slot="icon"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  details
+                </a>
+              </div>
               <div
                 class="flex flex-col self-center relative z-10 items-start"
               >
