@@ -1,5 +1,5 @@
 import { format } from "date-fns"
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 import { QueryObserverSuccessResult } from "react-query/types/core/types"
 
 import { KeyValueSettings } from "Domain/System/useSystemSettingsQuery"
@@ -28,7 +28,7 @@ function Tags({ tags }: { tags: [string, string] }) {
 }
 
 export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserverSuccessResult<Transaction> }) {
-  const messageHeadersRef = useRef<HTMLDivElement>(null)
+  const messageRefs = useRef<(HTMLDivElement | null)[]>([])
   const transaction = query.data
   const [duration, apdex, cached, noCache] = [
     transaction.elapsed ? Math.trunc(transaction.elapsed) / 1000 : null,
@@ -37,6 +37,12 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
     !!transaction.extras?.no_cache,
   ]
   const tags = (transaction.tags ? Object.entries(transaction.tags) : []) as unknown as [string, string]
+
+  useEffect(() => {
+    // Ensure the ref array length matches the number of messages
+    messageRefs.current = messageRefs.current.slice(0, transaction.messages?.length)
+  }, [transaction.messages?.length])
+
   return (
     <Pane hasDefaultPadding={false} className="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm">
       <Foldable
@@ -55,7 +61,7 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
         }
         children={tags.length ? <Tags tags={tags} /> : null}
       />
-      {(transaction.messages || []).map((message) => (
+      {(transaction.messages || []).map((message, index) => (
         <Foldable
           key={message.id}
           title={
@@ -72,8 +78,12 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
           open={message.kind != "error"}
           className="relative"
         >
-          <CopyToClipboard targetRef={messageHeadersRef} className="absolute top-11 right-0" contentType="html" />
-          <div ref={messageHeadersRef}>
+          <CopyToClipboard
+            targetRef={{ current: messageRefs.current[index] }}
+            className="absolute top-11 right-0"
+            contentType="html"
+          />
+          <div ref={(el) => (messageRefs.current[index] = el)} key={message.id}>
             <MessageHeaders id={message.headers} />
           </div>
           <MessageBody id={message.body} />
