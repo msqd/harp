@@ -1,20 +1,18 @@
-from hishel import AsyncCacheTransport
-from httpx import AsyncClient, AsyncHTTPTransport
+from httpx import AsyncClient
 
+from harp import get_logger
 from harp.config import Application
 from harp.config.events import FactoryBindEvent
-from harp.settings import DEFAULT_TIMEOUT
+
+from .client import AsyncHttpClient
+from .settings import HttpClientSettings
+
+logger = get_logger(__name__)
 
 
 class HttpClientApplication(Application):
+    settings_namespace = "http_client"
+    settings_type = HttpClientSettings
+
     async def on_bind(self, event: FactoryBindEvent):
-        # todo timeout config ?
-        # todo lazy build ?
-        transport = AsyncHTTPTransport()
-        cache_transport = AsyncCacheTransport(transport=transport)
-        event.container.add_instance(
-            AsyncClient(
-                timeout=DEFAULT_TIMEOUT,
-                transport=cache_transport,
-            )
-        )
+        event.container.add_singleton(AsyncClient, AsyncHttpClient)

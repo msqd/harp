@@ -1,6 +1,6 @@
-from .base import AbstractFacet
+from .base import AbstractChoicesFacet
 
 
-class TransactionStatusFacet(AbstractFacet):
+class TransactionStatusFacet(AbstractChoicesFacet):
     name = "status"
-    choices = {"2xx", "3xx", "4xx", "5xx"}
+    choices = ["2xx", "3xx", "4xx", "5xx", "ERR"]

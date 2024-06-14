@@ -4,21 +4,52 @@ exports[`renders well when the query is successful 1`] = `
 <div>
   <main>
     <div
-      class="mt-4 mb-4"
+      class="mt-4 flex"
     >
       <div
-        class="float-end"
-      />
-      <h1
-        class="css-9lrcch"
+        class="flex flex-col"
       >
-        Transactions
-      </h1>
-      <p
-        class="css-11bp3eh"
+        <h1
+          class="css-9lrcch"
+        >
+          Transactions
+        </h1>
+        <p
+          class="css-11bp3eh"
+        >
+          Explore transactions that went through the proxy
+        </p>
+      </div>
+      <div
+        class="flex flex-col ml-24 w-full items-end lg:items-start justify-end lg:justify-between lg:flex-row lg:mt-12"
       >
-        Explore transactions that went through the proxy
-      </p>
+        <div
+          class="w-96 order-last lg:order-first pr-6"
+        >
+          <div
+            class="mt-2 space-x-1 py-1 pl-1.5 flex text-base items-center rounded ring-1 text-gray-900 ring-inset ring-gray-200 placeholder:text-gray-400"
+          >
+            <input
+              autocomplete="off"
+              class="overflow-ellipsis w-full !border-0 !p-0 focus:!ring-0 !ml-1"
+              id="search"
+              name="search"
+              placeholder="Search transactions"
+              type="text"
+              value=""
+            />
+            <div
+              class="inset-y-0 right-0 flex py-1.5 pr-1.5 hover:cursor-pointer"
+            >
+              <kbd
+                class="inline-flex items-center rounded border border-gray-200 px-1 py-0.5 font-sans text-sm text-gray-400"
+              >
+                Enter
+              </kbd>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div
       class="mt-4"
@@ -38,6 +69,25 @@ exports[`renders well when the query is successful 1`] = `
               <div
                 class="text-right"
               >
+                <button
+                  class="text-gray-400 mx-1 font-medium text-xs"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="h-3 w-3 inline-block"
+                    data-slot="icon"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      clip-rule="evenodd"
+                      d="M13.836 2.477a.75.75 0 0 1 .75.75v3.182a.75.75 0 0 1-.75.75h-3.182a.75.75 0 0 1 0-1.5h1.37l-.84-.841a4.5 4.5 0 0 0-7.08.932.75.75 0 0 1-1.3-.75 6 6 0 0 1 9.44-1.242l.842.84V3.227a.75.75 0 0 1 .75-.75Zm-.911 7.5A.75.75 0 0 1 13.199 11a6 6 0 0 1-9.44 1.241l-.84-.84v1.371a.75.75 0 0 1-1.5 0V9.591a.75.75 0 0 1 .75-.75H5.35a.75.75 0 0 1 0 1.5H3.98l.841.841a4.5 4.5 0 0 0 7.08-.932.75.75 0 0 1 1.025-.273Z"
+                      fill-rule="evenodd"
+                    />
+                  </svg>
+                   reset
+                </button>
                 <button
                   class="text-gray-400 mx-1 font-medium text-xs"
                 >
@@ -127,7 +177,7 @@ exports[`renders well when the query is successful 1`] = `
                       </svg>
                     </td>
                     <td
-                      class=" css-157hpf5"
+                      class="truncate max-w-0 w-full css-157hpf5"
                     >
                       <span
                         class="font-normal"
@@ -145,8 +195,9 @@ exports[`renders well when the query is successful 1`] = `
                         </span>
                         <span
                           class="text-gray-500 font-mono text-xs"
+                          title="/lorem/ipsum-dolor/sit/amet?this=is&a=very-long&request=path&that-will=demonstrate&how-the-ui=behave-when&the-full-content-with-is-very-large=which-may-happen-quite-often"
                         >
-                          /
+                          /lorem/ipsum-dolor/sit/amet?this=is&a=very-long&request=path&that-will=demonstrate&how-the-ui=behave-when&the-full-content-with-is-very-large=which-may-happen-quite-often
                         </span>
                       </span>
                     </td>
@@ -169,15 +220,12 @@ exports[`renders well when the query is successful 1`] = `
                     <td
                       class=" css-157hpf5"
                     >
-                      <div>
-                        <span
-                          class="px-1 py-0.5 text-white font-semibold bg-green-500"
-                        >
-                          A
+                      <div
+                        class="flex gap-x-0.5 items-center font-normal"
+                      >
+                        <span>
+                          0.06 seconds
                         </span>
-                         
-                        0.06 seconds
-                         
                       </div>
                     </td>
                     <td
@@ -186,7 +234,7 @@ exports[`renders well when the query is successful 1`] = `
                       <div
                         title="2021-08-20T20:00:00Z"
                       >
-                        over 2 years ago
+                        almost 3 years ago
                       </div>
                     </td>
                   </tr>
@@ -214,7 +262,7 @@ exports[`renders well when the query is successful 1`] = `
                       </svg>
                     </td>
                     <td
-                      class=" css-157hpf5"
+                      class="truncate max-w-0 w-full css-157hpf5"
                     >
                       <span
                         class="font-normal"
@@ -232,8 +280,9 @@ exports[`renders well when the query is successful 1`] = `
                         </span>
                         <span
                           class="text-gray-500 font-mono text-xs"
+                          title="/this/is/short"
                         >
-                          /
+                          /this/is/short
                         </span>
                       </span>
                     </td>
@@ -256,15 +305,12 @@ exports[`renders well when the query is successful 1`] = `
                     <td
                       class=" css-157hpf5"
                     >
-                      <div>
-                        <span
-                          class="px-1 py-0.5 text-white font-semibold bg-teal-400"
-                        >
-                          A++
+                      <div
+                        class="flex gap-x-0.5 items-center font-normal"
+                      >
+                        <span>
+                          0.025 seconds
                         </span>
-                         
-                        0.025 seconds
-                         
                       </div>
                     </td>
                     <td
@@ -273,7 +319,7 @@ exports[`renders well when the query is successful 1`] = `
                       <div
                         title="2021-08-20T20:00:00Z"
                       >
-                        over 2 years ago
+                        almost 3 years ago
                       </div>
                     </td>
                   </tr>

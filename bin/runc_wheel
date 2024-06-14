@@ -1,0 +1,33 @@
+#! /bin/bash
+
+if [ "$1" = "pypi" ]; then
+  wheel=harp-proxy
+  wheel_source="Python Package Index (PyPI)"
+  run_opts=
+elif [ -z "$1" ] || [ ! -e "$1" ]; then
+  echo "Usage: $0 <wheel> (use pypi to install from repository)"
+  exit 1
+else
+  wheel=/$(basename -- $1)
+  wheel_source="Local Wheel ${wheel}"
+  run_opts="--volume $(pwd)/$1:$wheel"
+fi
+
+entrypoint_script=$(mktemp)
+
+cat > $entrypoint_script <<EOF
+#! /bin/bash
+
+pip install $wheel
+
+echo
+echo "Harp installed from ${wheel_source}."
+echo "Start it using «harp server»."
+echo
+bash
+EOF
+chmod +x $entrypoint_script
+
+docker run -it --rm --entrypoint=/entrypoint $run_opts --volume $entrypoint_script:/entrypoint -p 4000-4100:4000-4100 python:3.12-bookworm
+
+rm "$entrypoint_script"

@@ -15,3 +15,4 @@ Submodules
     harp.config.settings.base
     harp.config.settings.disabled
     harp.config.settings.from_file
+    harp.config.settings.lazy

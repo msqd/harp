@@ -1,6 +1,7 @@
-from .base import AbstractFacet
+from .base import NonExhaustiveFacet
 
 
-class TransactionFlagFacet(AbstractFacet):
+class TransactionFlagFacet(NonExhaustiveFacet):
     name = "flag"
-    choices = {"favorite"}
+    choices = ["favorite"]
+    fallback_name = "no flag"

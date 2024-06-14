@@ -4,13 +4,17 @@ exports[`renders the title and data when the query is successful 1`] = `
 <div>
   <main>
     <div
-      class="mt-4 mb-4"
+      class="mt-4 flex"
     >
-      <h1
-        class="css-9lrcch"
+      <div
+        class="flex flex-col"
       >
-        Overview
-      </h1>
+        <h1
+          class="css-9lrcch"
+        >
+          Overview
+        </h1>
+      </div>
     </div>
     <div
       class="mt-4"
@@ -21,9 +25,686 @@ exports[`renders the title and data when the query is successful 1`] = `
         <section
           class="inline-block min-w-full max-w-full py-2 align-middle sm:px-6 lg:px-8"
         >
+          <h2
+            class="css-13yts7e"
+          >
+            Summary
+          </h2>
+          <div
+            class="grid grid-cols-3 gap-4 mb-8"
+          >
+            <div
+              class="css-9dvziv"
+            >
+              <div
+                class="flex items-start "
+              >
+                <h3
+                  class="css-1hpno4e"
+                >
+                  Performances (24h)
+                </h3>
+                <a
+                  class="leading-7 text-gray-400 mx-1 font-medium text-xs px-2"
+                  href="/transactions"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="h-3 w-3 inline-block"
+                    data-slot="icon"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  details
+                </a>
+              </div>
+              <div
+                class="flex self-center relative z-10"
+              >
+                <span
+                  class="bg-teal-400 ring-1 ring-white css-1g68g52"
+                  title="score: 100"
+                >
+                  A++
+                </span>
+              </div>
+              <svg
+                preserveAspectRatio="none"
+                style="margin: -3px; position: absolute; bottom: 0px; left: 0px; z-index: 0;"
+                viewBox="0 0 240 60"
+              >
+                <g>
+                  <circle
+                    cx="2"
+                    cy="2.5544554455445545"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="12.26086956521739"
+                    cy="11.980198019801982"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="22.52173913043478"
+                    cy="6.990099009900991"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="32.78260869565217"
+                    cy="9.762376237623762"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="43.04347826086956"
+                    cy="9.207920792079209"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="53.30434782608695"
+                    cy="5.326732673267327"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="63.565217391304344"
+                    cy="9.207920792079209"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="73.82608695652173"
+                    cy="9.762376237623762"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="84.08695652173913"
+                    cy="6.990099009900991"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="94.34782608695652"
+                    cy="11.980198019801982"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="104.6086956521739"
+                    cy="2.5544554455445545"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="114.8695652173913"
+                    cy="11.980198019801982"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="125.13043478260869"
+                    cy="6.990099009900991"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="135.39130434782606"
+                    cy="9.762376237623762"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="145.65217391304347"
+                    cy="9.207920792079209"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="155.91304347826087"
+                    cy="5.326732673267327"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="166.17391304347825"
+                    cy="9.207920792079209"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="176.43478260869563"
+                    cy="9.762376237623762"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="186.69565217391303"
+                    cy="6.990099009900991"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="196.95652173913044"
+                    cy="11.980198019801982"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="207.2173913043478"
+                    cy="2.5544554455445545"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="217.4782608695652"
+                    cy="11.980198019801982"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="227.7391304347826"
+                    cy="6.990099009900991"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="238"
+                    cy="9.762376237623762"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <polyline
+                    points="2 2.5544554455445545 12.26086956521739 11.980198019801982 22.52173913043478 6.990099009900991 32.78260869565217 9.762376237623762 43.04347826086956 9.207920792079209 53.30434782608695 5.326732673267327 63.565217391304344 9.207920792079209 73.82608695652173 9.762376237623762 84.08695652173913 6.990099009900991 94.34782608695652 11.980198019801982 104.6086956521739 2.5544554455445545 114.8695652173913 11.980198019801982 125.13043478260869 6.990099009900991 135.39130434782606 9.762376237623762 145.65217391304347 9.207920792079209 155.91304347826087 5.326732673267327 166.17391304347825 9.207920792079209 176.43478260869563 9.762376237623762 186.69565217391303 6.990099009900991 196.95652173913044 11.980198019801982 207.2173913043478 2.5544554455445545 217.4782608695652 11.980198019801982 227.7391304347826 6.990099009900991 238 9.762376237623762 238 58 2 58 2 2.5544554455445545"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <polyline
+                    points="2 2.5544554455445545 12.26086956521739 11.980198019801982 22.52173913043478 6.990099009900991 32.78260869565217 9.762376237623762 43.04347826086956 9.207920792079209 53.30434782608695 5.326732673267327 63.565217391304344 9.207920792079209 73.82608695652173 9.762376237623762 84.08695652173913 6.990099009900991 94.34782608695652 11.980198019801982 104.6086956521739 2.5544554455445545 114.8695652173913 11.980198019801982 125.13043478260869 6.990099009900991 135.39130434782606 9.762376237623762 145.65217391304347 9.207920792079209 155.91304347826087 5.326732673267327 166.17391304347825 9.207920792079209 176.43478260869563 9.762376237623762 186.69565217391303 6.990099009900991 196.95652173913044 11.980198019801982 207.2173913043478 2.5544554455445545 217.4782608695652 11.980198019801982 227.7391304347826 6.990099009900991 238 9.762376237623762"
+                    style="stroke: #ADD8E6; stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; fill: none;"
+                  />
+                </g>
+                <g>
+                  <circle
+                    cx="238"
+                    cy="9.762376237623762"
+                    r="2"
+                    style="fill: #ADD8E6;"
+                  />
+                </g>
+              </svg>
+            </div>
+            <div
+              class="css-9dvziv"
+            >
+              <div
+                class="flex items-start "
+              >
+                <h3
+                  class="css-1hpno4e"
+                >
+                  Transactions (24h)
+                </h3>
+                <a
+                  class="leading-7 text-gray-400 mx-1 font-medium text-xs px-2"
+                  href="/transactions"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="h-3 w-3 inline-block"
+                    data-slot="icon"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  details
+                </a>
+              </div>
+              <div
+                class="flex flex-col self-center relative z-10 items-start"
+              >
+                <span
+                  class="bg-white ring-1 ring-blue-200 css-14jvdk3"
+                  color="black"
+                >
+                  56
+                   
+                  <span
+                    class="font-light"
+                  >
+                    /
+                    min
+                  </span>
+                  <div
+                    class="text-xs font-normal text-gray-500 text-right"
+                  >
+                    over the last 24 hours
+                  </div>
+                </span>
+              </div>
+              <svg
+                preserveAspectRatio="none"
+                style="margin: -3px; position: absolute; bottom: 0px; left: 0px; z-index: 0;"
+                viewBox="0 0 240 60"
+              >
+                <g>
+                  <circle
+                    cx="2"
+                    cy="17.75"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="12.26086956521739"
+                    cy="2.875"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="22.52173913043478"
+                    cy="10.75"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="32.78260869565217"
+                    cy="6.375"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="43.04347826086956"
+                    cy="7.25"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="53.30434782608695"
+                    cy="13.375"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="63.565217391304344"
+                    cy="7.25"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="73.82608695652173"
+                    cy="6.375"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="84.08695652173913"
+                    cy="10.75"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="94.34782608695652"
+                    cy="2.875"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="104.6086956521739"
+                    cy="17.75"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="114.8695652173913"
+                    cy="2.875"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="125.13043478260869"
+                    cy="10.75"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="135.39130434782606"
+                    cy="6.375"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="145.65217391304347"
+                    cy="7.25"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="155.91304347826087"
+                    cy="13.375"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="166.17391304347825"
+                    cy="7.25"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="176.43478260869563"
+                    cy="6.375"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="186.69565217391303"
+                    cy="10.75"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="196.95652173913044"
+                    cy="2.875"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="207.2173913043478"
+                    cy="17.75"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="217.4782608695652"
+                    cy="2.875"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="227.7391304347826"
+                    cy="10.75"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="238"
+                    cy="6.375"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <polyline
+                    points="2 17.75 12.26086956521739 2.875 22.52173913043478 10.75 32.78260869565217 6.375 43.04347826086956 7.25 53.30434782608695 13.375 63.565217391304344 7.25 73.82608695652173 6.375 84.08695652173913 10.75 94.34782608695652 2.875 104.6086956521739 17.75 114.8695652173913 2.875 125.13043478260869 10.75 135.39130434782606 6.375 145.65217391304347 7.25 155.91304347826087 13.375 166.17391304347825 7.25 176.43478260869563 6.375 186.69565217391303 10.75 196.95652173913044 2.875 207.2173913043478 17.75 217.4782608695652 2.875 227.7391304347826 10.75 238 6.375 238 58 2 58 2 17.75"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <polyline
+                    points="2 17.75 12.26086956521739 2.875 22.52173913043478 10.75 32.78260869565217 6.375 43.04347826086956 7.25 53.30434782608695 13.375 63.565217391304344 7.25 73.82608695652173 6.375 84.08695652173913 10.75 94.34782608695652 2.875 104.6086956521739 17.75 114.8695652173913 2.875 125.13043478260869 10.75 135.39130434782606 6.375 145.65217391304347 7.25 155.91304347826087 13.375 166.17391304347825 7.25 176.43478260869563 6.375 186.69565217391303 10.75 196.95652173913044 2.875 207.2173913043478 17.75 217.4782608695652 2.875 227.7391304347826 10.75 238 6.375"
+                    style="stroke: #ADD8E6; stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; fill: none;"
+                  />
+                </g>
+                <g>
+                  <circle
+                    cx="238"
+                    cy="6.375"
+                    r="2"
+                    style="fill: #ADD8E6;"
+                  />
+                </g>
+              </svg>
+            </div>
+            <div
+              class="css-9dvziv"
+            >
+              <div
+                class="flex items-start "
+              >
+                <h3
+                  class="css-1hpno4e"
+                >
+                  Errors (24h)
+                </h3>
+                <a
+                  class="leading-7 text-gray-400 mx-1 font-medium text-xs px-2"
+                  href="/transactions?status=5xx&status=ERR"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="h-3 w-3 inline-block"
+                    data-slot="icon"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  details
+                </a>
+              </div>
+              <div
+                class="flex flex-col self-center relative z-10 items-start"
+              >
+                <span
+                  class="bg-white ring-1 ring-red-200 css-14jvdk3"
+                  color="black"
+                >
+                  11
+                   
+                  <span
+                    class="font-light"
+                  >
+                    /
+                    min
+                  </span>
+                  <div
+                    class="text-xs font-normal text-gray-500 text-right"
+                  >
+                    over the last 24 hours
+                  </div>
+                </span>
+              </div>
+              <svg
+                preserveAspectRatio="none"
+                style="margin: -3px; position: absolute; bottom: 0px; left: 0px; z-index: 0;"
+                viewBox="0 0 240 60"
+              >
+                <g>
+                  <circle
+                    cx="2"
+                    cy="35.6"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="12.26086956521739"
+                    cy="9.466666666666667"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="22.52173913043478"
+                    cy="5.733333333333333"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="32.78260869565217"
+                    cy="24.4"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="43.04347826086956"
+                    cy="28.133333333333333"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="53.30434782608695"
+                    cy="16.933333333333334"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="63.565217391304344"
+                    cy="28.133333333333333"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="73.82608695652173"
+                    cy="24.4"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="84.08695652173913"
+                    cy="5.733333333333333"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="94.34782608695652"
+                    cy="9.466666666666667"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="104.6086956521739"
+                    cy="35.6"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="114.8695652173913"
+                    cy="9.466666666666667"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="125.13043478260869"
+                    cy="5.733333333333333"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="135.39130434782606"
+                    cy="24.4"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="145.65217391304347"
+                    cy="28.133333333333333"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="155.91304347826087"
+                    cy="16.933333333333334"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="166.17391304347825"
+                    cy="28.133333333333333"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="176.43478260869563"
+                    cy="24.4"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="186.69565217391303"
+                    cy="5.733333333333333"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="196.95652173913044"
+                    cy="9.466666666666667"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="207.2173913043478"
+                    cy="35.6"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="217.4782608695652"
+                    cy="9.466666666666667"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="227.7391304347826"
+                    cy="5.733333333333333"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="238"
+                    cy="24.4"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <polyline
+                    points="2 35.6 12.26086956521739 9.466666666666667 22.52173913043478 5.733333333333333 32.78260869565217 24.4 43.04347826086956 28.133333333333333 53.30434782608695 16.933333333333334 63.565217391304344 28.133333333333333 73.82608695652173 24.4 84.08695652173913 5.733333333333333 94.34782608695652 9.466666666666667 104.6086956521739 35.6 114.8695652173913 9.466666666666667 125.13043478260869 5.733333333333333 135.39130434782606 24.4 145.65217391304347 28.133333333333333 155.91304347826087 16.933333333333334 166.17391304347825 28.133333333333333 176.43478260869563 24.4 186.69565217391303 5.733333333333333 196.95652173913044 9.466666666666667 207.2173913043478 35.6 217.4782608695652 9.466666666666667 227.7391304347826 5.733333333333333 238 24.4 238 58 2 58 2 35.6"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                  />
+                  <polyline
+                    points="2 35.6 12.26086956521739 9.466666666666667 22.52173913043478 5.733333333333333 32.78260869565217 24.4 43.04347826086956 28.133333333333333 53.30434782608695 16.933333333333334 63.565217391304344 28.133333333333333 73.82608695652173 24.4 84.08695652173913 5.733333333333333 94.34782608695652 9.466666666666667 104.6086956521739 35.6 114.8695652173913 9.466666666666667 125.13043478260869 5.733333333333333 135.39130434782606 24.4 145.65217391304347 28.133333333333333 155.91304347826087 16.933333333333334 166.17391304347825 28.133333333333333 176.43478260869563 24.4 186.69565217391303 5.733333333333333 196.95652173913044 9.466666666666667 207.2173913043478 35.6 217.4782608695652 9.466666666666667 227.7391304347826 5.733333333333333 238 24.4"
+                    style="stroke: #e6b3ad; stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; fill: none;"
+                  />
+                </g>
+                <g>
+                  <circle
+                    cx="238"
+                    cy="24.4"
+                    r="2"
+                    style="fill: #e6b3ad;"
+                  />
+                </g>
+              </svg>
+            </div>
+          </div>
           <div
             class="flex justify-end my-2"
           >
+            <h2
+              class="grow css-13yts7e"
+            >
+              History
+            </h2>
             <span
               class="isolate inline-flex rounded-md shadow-sm"
             >
@@ -63,11 +744,11 @@ exports[`renders the title and data when the query is successful 1`] = `
             class="mb-4 css-14upriz"
           >
             <div>
-              <h2
-                class="css-13yts7e"
+              <h3
+                class="css-1hpno4e"
               >
-                Transactions Overview
-              </h2>
+                Transactions
+              </h3>
               <div
                 style="display: flex; align-items: center;"
               >
@@ -75,12 +756,13 @@ exports[`renders the title and data when the query is successful 1`] = `
                   class="flex flex-col items-center"
                 >
                   <div
-                    class="flex self-center text-3xl"
+                    class="flex self-center"
                   >
                     <span
-                      class="px-1 py-0.5 text-white font-semibold bg-emerald-400"
+                      class="bg-green-500 css-1g68g52"
+                      title="score: 95"
                     >
-                      A+
+                      A
                     </span>
                   </div>
                   <div
@@ -120,11 +802,11 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="css-14upriz"
             >
               <div>
-                <h2
-                  class="css-13yts7e"
+                <h3
+                  class="css-1hpno4e"
                 >
                   endpoint1
-                </h2>
+                </h3>
                 <div
                   style="display: flex; align-items: center;"
                 >
@@ -132,12 +814,13 @@ exports[`renders the title and data when the query is successful 1`] = `
                     class="flex flex-col items-center"
                   >
                     <div
-                      class="flex self-center text-3xl"
+                      class="flex self-center"
                     >
                       <span
-                        class="px-1 py-0.5 text-white font-semibold bg-emerald-400"
+                        class="bg-green-500 css-1g68g52"
+                        title="score: 95"
                       >
-                        A+
+                        A
                       </span>
                     </div>
                     <div
@@ -174,11 +857,11 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="css-14upriz"
             >
               <div>
-                <h2
-                  class="css-13yts7e"
+                <h3
+                  class="css-1hpno4e"
                 >
                   endpoint2
-                </h2>
+                </h3>
                 <div
                   style="display: flex; align-items: center;"
                 >
@@ -186,12 +869,13 @@ exports[`renders the title and data when the query is successful 1`] = `
                     class="flex flex-col items-center"
                   >
                     <div
-                      class="flex self-center text-3xl"
+                      class="flex self-center"
                     >
                       <span
-                        class="px-1 py-0.5 text-white font-semibold bg-emerald-400"
+                        class="bg-green-500 css-1g68g52"
+                        title="score: 95"
                       >
-                        A+
+                        A
                       </span>
                     </div>
                     <div

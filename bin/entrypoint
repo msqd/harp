@@ -1,9 +1,0 @@
-#! /usr/bin/env python3
-
-from harp import Config, run
-
-config = Config()
-config.add_defaults()
-
-if __name__ == "__main__":
-    run(config)

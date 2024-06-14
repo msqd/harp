@@ -1,4 +1,4 @@
-from sqlalchemy import DateTime, LargeBinary, String, delete, func, select
+from sqlalchemy import TIMESTAMP, LargeBinary, String, delete, func, select
 from sqlalchemy.orm import aliased, mapped_column
 
 from harp.models import Blob as BlobModel
@@ -8,12 +8,12 @@ from .messages import Message
 
 
 class Blob(Base):
-    __tablename__ = "sa_blobs"
+    __tablename__ = "blobs"
 
     id = mapped_column(String(40), primary_key=True, unique=True)
     data = mapped_column(LargeBinary())
     content_type = mapped_column(String(64))
-    created_at = mapped_column(DateTime(), server_default=func.now())
+    created_at = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 
 
 class BlobsRepository(Repository[Blob]):

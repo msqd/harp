@@ -1,4 +1,5 @@
 import os
+import shlex
 import sys
 from string import Template
 
@@ -11,6 +12,10 @@ HARP_DASHBOARD_SERVICE = "harp:dashboard"
 HARP_DOCS_SERVICE = "harp:docs"
 HARP_SERVER_SERVICE = "harp:server"
 HARP_UI_SERVICE = "harp:ui"
+
+
+def quote(x):
+    return shlex.quote(str(x))
 
 
 class HonchoManagerFactory:
@@ -53,15 +58,15 @@ class HonchoManagerFactory:
     commands[HARP_DASHBOARD_SERVICE] = _get_dashboard_executable
 
     def _get_server_executable(self, processes):
-        cmd = f"{sys.executable} bin/entrypoint"
+        cmd = f"{sys.executable} -m harp server"
         proxy_options = list(self.proxy_options)
 
         if HARP_DASHBOARD_SERVICE in processes:
-            proxy_options.append(f"--set dashboard.devserver_port {self.ports[HARP_DASHBOARD_SERVICE]}")
+            proxy_options.append(f"--set dashboard.devserver_port={quote(self.ports[HARP_DASHBOARD_SERVICE])}")
 
         for _name, _port in self.proxy_ports.items():
-            proxy_options.append(f"--set proxy.endpoints.{_port}.name {_name}")
-            proxy_options.append(f"--set proxy.endpoints.{_port}.url http://localhost:{self.ports[_name]}")
+            proxy_options.append(f"--set proxy.endpoints.{_port}.name={quote(_name)}")
+            proxy_options.append(f"--set proxy.endpoints.{_port}.url={quote(f'http://localhost:{self.ports[_name]}')}")
 
         if proxy_options:
             cmd += " " + " ".join(proxy_options)
@@ -110,6 +115,7 @@ class HonchoManagerFactory:
 
 
 def parse_server_subprocesses_options(server_subprocesses):
+    # TODO uniformise with --endpoint to be in format name=port:cmd
     processes = {}
     for server_subprocess in server_subprocesses:
         try:

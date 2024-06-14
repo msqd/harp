@@ -2,6 +2,7 @@ import traceback
 from inspect import signature
 
 from asgiref.typing import ASGIReceiveCallable, ASGISendCallable, Scope
+from hypercorn.utils import LifespanFailureError
 from whistle import AsyncEventDispatcher, Event, IAsyncEventDispatcher
 
 from harp import get_logger
@@ -47,7 +48,11 @@ class ASGIKernel:
 
         if asgi_type == "lifespan":
             await receive()
-            await self.dispatcher.adispatch(EVENT_CORE_STARTED, Event())
+            try:
+                await self.dispatcher.adispatch(EVENT_CORE_STARTED, Event())
+            except Exception as exc:
+                raise LifespanFailureError(EVENT_CORE_STARTED, repr(exc)) from exc
+
             self.started = True
             return
 

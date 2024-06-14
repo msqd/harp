@@ -4,12 +4,13 @@ from typing import Optional
 from urllib.parse import urlencode, urljoin, urlparse
 
 import httpx
+from hishel._headers import parse_cache_control
 from httpx import AsyncClient, codes
 from whistle import IAsyncEventDispatcher
 
 from harp import __parsed_version__, get_logger
 from harp.asgi.events import MessageEvent, TransactionEvent
-from harp.http import HttpError, HttpRequest, HttpResponse
+from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
 from harp.http.requests import WrappedHttpRequest
 from harp.models import Transaction
 from harp.utils.guids import generate_transaction_id_ksuid
@@ -101,21 +102,15 @@ class HttpProxyController:
         try:
             p_response: httpx.Response = await self.http_client.send(p_request)
         except httpx.ConnectError as exc:
-            logger.error(f"▶▶ {request.method} {url} (unavailable)", transaction_id=transaction.id)
-            await self.adispatch(
-                EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, HttpError("Unavailable", exception=exc))
-            )
-
+            transaction.extras["status_class"] = "ERR"
+            await self.end_transaction(transaction, HttpError("Unavailable", exception=exc))
             # todo add web debug information if we are not on a production env
             return HttpResponse(
                 "Service Unavailable (remote server unavailable)", status=503, content_type="text/plain"
             )
         except httpx.TimeoutException as exc:
-            logger.error(f"▶▶ {request.method} {url} (timeout)", transaction_id=transaction.id)
-            await self.adispatch(
-                EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, HttpError("Timeout", exception=exc))
-            )
-
+            transaction.extras["status_class"] = "ERR"
+            await self.end_transaction(transaction, HttpError("Timeout", exception=exc))
             # todo add web debug information if we are not on a production env
             return HttpResponse("Gateway Timeout (remote server timeout)", status=504, content_type="text/plain")
 
@@ -133,25 +128,34 @@ class HttpProxyController:
         # XXX for now, we use transaction "extras" to store searchable data for later
         transaction.extras["status_class"] = f"{response_status // 100}xx"
 
+        if p_response.extensions.get("from_cache"):
+            transaction.extras["cached"] = p_response.extensions.get("cache_metadata", {}).get("cache_key", True)
+
         response = HttpResponse(p_response.content, status=response_status, headers=response_headers)
 
-        # END TRANSACTION
-        reason = codes.get_reason_phrase(response_status)
+        await self.end_transaction(transaction, response)
+
+        return response
+
+    async def end_transaction(self, transaction, response: BaseHttpMessage):
         spent = int((datetime.now(UTC).timestamp() - transaction.started_at.timestamp()) * 100000) / 100
-        logger.debug(f"◀ {response_status} {reason} ({spent}ms)", transaction_id=transaction.id)
+        transaction.finished_at = datetime.now(UTC)
+        transaction.elapsed = spent
+
+        if isinstance(response, HttpError):
+            logger.error(f"◀ {type(response).__name__} {response.message} ({spent}ms)", transaction_id=transaction.id)
+        elif isinstance(response, HttpResponse):
+            reason = codes.get_reason_phrase(response.status)
+            logger.debug(f"◀ {response.status} {reason} ({spent}ms)", transaction_id=transaction.id)
+        else:
+            raise ValueError(f"Invalid final message type: {type(response)}")
 
         # dispatch message event for response
         # TODO delay after response is sent ?
         await self.adispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, response))
-
-        transaction.finished_at = datetime.now(UTC)
-        transaction.elapsed = spent
-
         # dispatch transaction ended event
         # TODO delay after response is sent ?
         await self.adispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(transaction))
-
-        return response
 
     async def _create_transaction_from_request(self, request: HttpRequest, *, tags=None):
         transaction = Transaction(
@@ -161,6 +165,12 @@ class HttpProxyController:
             endpoint=self.name,
             tags=tags,
         )
+
+        request_cache_control = request.headers.get("cache-control")
+        if request_cache_control:
+            request_cache_control = parse_cache_control([request_cache_control])
+            if request_cache_control.no_cache:
+                transaction.extras["no_cache"] = True
 
         # XXX for now, we use transaction "extras" to store searchable data for later
         transaction.extras["method"] = request.method

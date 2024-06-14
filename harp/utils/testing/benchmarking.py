@@ -1,3 +1,4 @@
+import asyncio
 import os
 import subprocess
 import threading
@@ -10,6 +11,7 @@ import pytest
 from harp import get_logger
 from harp.commandline.start import assert_development_packages_are_available
 from harp.utils.network import get_available_network_port, wait_for_port
+from harp_apps.sqlalchemy_storage.utils.testing.mixins import get_scoped_database_url
 
 logger = get_logger(__name__)
 
@@ -19,7 +21,6 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
 
     def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, *, daemon=None, config=None):
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
-
         self.config_filename = None
         if config:
             with NamedTemporaryFile("w+", suffix=".yaml", delete=False) as _tmpfile_config:
@@ -37,52 +38,66 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
                 "start",
                 "server",
                 *(("--file", self.config_filename) if self.config_filename else ()),
-                *("--disable", "harp_apps.telemetry"),
+                "--disable",
+                "telemetry",
+                "--disable",
+                "dashboard",
             ]
         )
 
     def join(self, timeout=None):
-        # try to kill gracefully ...
-        self.process.terminate()
-        self.process.wait(10.0)
-
-        # ... and if it does not work, kill it with fire
-        self.process.kill()
-
-        # remove temporary config file ...
-        if self.config_filename:
-            os.unlink(self.config_filename)
-
-        # ... and let threading handle the rest.
-        return super().join(timeout)
+        try:
+            # try to kill gracefully ...
+            self.process.terminate()
+            self.process.wait(10.0)
+        except Exception as e:
+            logger.error(f"Error during process termination: {e}")
+            self.process.kill()
+        finally:
+            # remove temporary config file ...
+            if self.config_filename:
+                os.unlink(self.config_filename)
+            # ... and let threading handle the rest.
+            super().join(timeout)
+        logger.debug("Process terminated and joined successfully")
 
 
 class AbstractProxyBenchmark:
     config = Template("")
 
     @pytest.fixture(scope="class")
-    def proxy(self, httpbin, database_url):
-        port = get_available_network_port()
-
+    async def setup_event_loop(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         try:
-            thread = RunHarpProxyInSubprocessThread(
-                config=self.config.substitute(port=port, httpbin=httpbin, database=database_url)
-            )
-        except Exception as exc:
-            pytest.skip(f"Failed to create subprocess thread: {exc}")
-
-        try:
-            try:
-                from pytest_cov.embed import cleanup_on_sigterm
-            except ImportError:
-                pass
-            else:
-                cleanup_on_sigterm()
-            thread.start()
-            wait_for_port(port, timeout=5.0)
-            yield f"localhost:{port}"
+            yield loop
         finally:
-            thread.join()
+            loop.close()
+
+    @pytest.fixture
+    async def proxy(self, setup_event_loop, httpbin, database_url, test_id):
+        async with get_scoped_database_url(database_url, test_id) as scoped_database_url:
+            port = get_available_network_port()
+
+            try:
+                thread = RunHarpProxyInSubprocessThread(
+                    config=self.config.substitute(port=port, httpbin=httpbin, database=scoped_database_url)
+                )
+            except Exception as exc:
+                pytest.fail(f"Failed to create subprocess thread: {exc}")
+
+            try:
+                try:
+                    from pytest_cov.embed import cleanup_on_sigterm
+                except ImportError:
+                    pass
+                else:
+                    cleanup_on_sigterm()
+                thread.start()
+                wait_for_port(port)
+                yield f"localhost:{port}"
+            finally:
+                thread.join()
 
     def test_noproxy_get(self, benchmark, httpbin):
         @benchmark

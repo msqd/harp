@@ -6,9 +6,6 @@
 #
 # Usage: bin/sandbox some-command with some args
 #
-# Requires a valid python environment to run, as we'll need git-archive-all (we could avoid that, but then it becomes
-# very hard to create an archive with recursive submodules using the right versions).
-#
 # Brought to you by Makersquad and licensed under the DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE, version 2.
 #
 
@@ -35,7 +32,7 @@ SANDBOX=`mktemp -d`
 echo "Created sandbox directory: $SANDBOX"
 function cleanup {
   rm -rf $SANDBOX
-  echo "Removed sandbox directory."
+  echo "Removed sandbox directory: $SANDBOX."
 }
 trap cleanup EXIT
 
@@ -44,11 +41,12 @@ RELEASE=$SANDBOX/release
 
 # Clean clone
 (cd $SANDBOX; git clone $__PATH__ release --no-checkout)
-(cd $SANDBOX/release; git checkout $VERSION)
-(cd $SANDBOX/release; git submodule update --init --recursive)
-(cd $SANDBOX/release; rm -rf .git)
-(cd $SANDBOX/release; touch .env)
-(cd $SANDBOX/release; echo $VERSION > version.txt)
+(cd $RELEASE; git checkout $VERSION)
+(cd $RELEASE; git submodule update --init --recursive)
+(cd $RELEASE; rm -rf .git)
+(cd $RELEASE; touch .env)
+(cd $RELEASE; echo $VERSION > version.txt)
 
 # Execute
-(cd $RELEASE; "$@")
+ARGS="$*"
+(cd $RELEASE; bash -c "$ARGS" )

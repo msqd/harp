@@ -46,7 +46,7 @@ def _parse_version(version: str, /, *, default=None) -> Version:
 
 # last release
 __title__ = "Core"
-__version__ = "0.4.0"
+__version__ = "0.5.0b12"
 __revision__ = __version__  # we can't commit the not yet known revision
 
 # override with version.txt if available (after docker build for example)
@@ -79,15 +79,13 @@ def run(config: Config):
     :return:
     """
     import asyncio
-    import sys
 
     from harp.config.adapters.hypercorn import HypercornAdapter
     from harp.config.factories.kernel_factory import KernelFactory
 
-    config.read_env(sys.argv[1:])
     factory = KernelFactory(config)
     server = HypercornAdapter(factory)
-    asyncio.run(server.serve())
+    return asyncio.run(server.serve())
 
 
 __all__ = [

@@ -63,9 +63,7 @@ export default defineConfig(({ mode }) => {
 
       // visualizer(),
     ],
-
     server: { port: 4999, host: "127.0.0.1" },
-
     preview: {
       open: "none",
       host: "127.0.0.1",
@@ -90,6 +88,7 @@ export default defineConfig(({ mode }) => {
       environment: "jsdom",
       globals: true,
       setupFiles: ["vitest.setup.ts"],
+      globalSetup: "./vitest.global-setup.ts",
       exclude: ["node_modules", "dist", ".idea", ".git", ".cache", "build", "tests", "src/ui/tests/snapshot.spec.ts"],
     },
   }

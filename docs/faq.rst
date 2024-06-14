@@ -31,23 +31,42 @@ The full error may look like the following:
 All UI snapchot tests fails, it complains that browser (chromium) executables are not available.
 ------------------------------------------------------------------------------------------------
 
-If you get errors looking like the following...
+If you get the following error...
 
     Error: browserType.launch: Executable doesn't exist at /.../Chromium
-    ╔═════════════════════════════════════════════════════════════════════════╗
-    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
-    ║ Please run the following command to download new browsers:              ║
-    ║                                                                         ║
-    ║     pnpm exec playwright install                                        ║
-    ║                                                                         ║
-    ║ <3 Playwright Team                                                      ║
-    ╚═════════════════════════════════════════════════════════════════════════╝
+    Looks like Playwright Test or Playwright was just installed or updated.
+    Please run the following command to download new browsers:
+    ...
 
-... it means that you need to install the browsers that Playwright Test uses to run the tests, but within the user
-interface subpackage.
+... it means that you need to install the browsers that Playwright Test uses to run the tests.
 
-Try running the following command:
+Run::
 
-    (cd vendors/mkui; pnpm exec playwright install)
+    make install-dev
 
 It should download the expected browser versions in your local cache, allowing to run the interface tests.
+
+My M1/M2/M3 arm64-based mac complains about the absence of `ld-linux-x86-64.so` when starting the locally built image
+---------------------------------------------------------------------------------------------------------------------
+
+Error:
+
+    qemu-x86_64: Could not open '/lib64/ld-linux-x86-64.so.2': No such file or directory
+
+Solution:
+
+.. code-block:: shell-session
+
+    $ DOCKER_RUN_OPTIONS="--platform linux/x86_64" make build run
+
+Tests starts to complain about being unable to fetch the docker server API version (on OSX, at least)
+-----------------------------------------------------------------------------------------------------
+
+If you have errors that looks like `docker.errors.DockerException: Error while fetching server API version` when running
+the test suite, a docker for desktop upgrade may be the cause.
+
+You need to ask docker for desktop to «Allow the default Docker socket to be used».
+
+.. image:: images/faq/docker-for-desktop-allow-default-socket.png
+
+Restart your docker daemon and you should be good to go.

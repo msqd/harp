@@ -1,0 +1,9 @@
+Version 0.5.0b8 (2024-05-30)
+============================
+
+* feat: fix documentation url (Romain Dorgueil)
+* feat: fix concurrency problem with sqlite in memory: looks like transactions return before sqlite really commited data to the underlying storage, and memory storage make it too fast (Romain Dorgueil)
+* docs: minor tweaks and cleanup (Romain Dorgueil)
+* docs: working on installation guide (Romain Dorgueil)
+* feat: add ability to install from PyPI in runc_wheel script (Romain Dorgueil)
+* docs: only clean distributed files on building python wheel (Romain Dorgueil)

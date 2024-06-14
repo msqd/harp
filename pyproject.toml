@@ -3,74 +3,74 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "harp"
-version = "0.4.0"
-description = ""
+name = "harp-proxy"
+version = "0.5.0b12"
+description = "Harp is an API Runtime Proxy – A toolkit for Fast, Reliable and Observable external APIs"
 authors = ["Romain Dorgueil <romain@makersquad.fr>"]
 readme = "README.rst"
 packages = [
     { include = "harp" },
     { include = "harp_apps" },
 ]
+exclude = ["**/node_modules/", "harp_apps/dashboard/frontend", ]
 
 [tool.poetry.dependencies]
-python = "^3.11"
-aiohttp = "^3.9.1"
-aiosqlite = "^0.19.0"
-anyio = "^4.2.0"
+python = "^3.12"
+aiohttp = "^3.9.5"
+aiosqlite = ">=0.19,<0.21"
+alembic = "^1.13.1"
+anyio = "^4.4.0"
 asgimiddlewarestaticfile = "^0.6.0"
-asgiref = "^3.7.2"
+asgiref = "^3.8.1"
 asyncpg = "^0.29.0"
-dataclasses-json = "^0.6.3"
+dataclasses-json = "^0.6.7"
 dataclasses-jsonschema = "^2.16.0"
+essentials-configuration = "^2.0.4"
+hishel = ">=0.0.21,<0.0.28"
 honcho = { version = "^1.1.0", optional = true }
-http-router = "^4.0.0"
+http-router = "^4.1.2"
 httpx = ">=0.26,<0.28"
-hypercorn = "^0.16.0"
-multidict = "^6.0.4"
+hypercorn = "^0.17.2"
+multidict = "^6.0.5"
+orjson = "^3.10.4"
 passlib = "^1.7.4"
 psycopg2-binary = "^2.9.9"
-rich = "^13.7.0"
-sqlalchemy = { extras = ["asyncio"], version = "^2.0.24" }
-sqlalchemy-utils = "^0.41.1"
-structlog = "^24.1.0"
-svix-ksuid = "^0.6.2"
-watchfiles = { version = "^0.21.0", optional = true }
-orjson = "^3.9.10"
-hishel = ">=0.0.21,<0.0.26"
-sentry-sdk = "^1.39.2"
-networkx = "^3.2.1"
-bokeh = "^3.3.3"
-essentials-configuration = "^2.0.4"
+pyyaml = "^6.0.1"
+rich = "^13.7.1"
+rich-click = "^1.8.3"
 rodi = "^2.0.6"
+sentry-sdk = "^2.4.0"
+sqlalchemy = { extras = ["asyncio"], version = "^2.0.30" }
+sqlalchemy-utils = "^0.41.1"
+structlog = "^24.2.0"
+svix-ksuid = "^0.6.2"
+watchfiles = { version = "^0.22.0", optional = true }
+whistle = { version = "2.0.0b1", allow-prereleases = true }
+pyheck = "^0.1.5"
 
-[tool.poetry.dependencies.whistle]
-path = "./vendors/whistle"
-develop = true
 
 [tool.poetry.group.dev.dependencies]
 asgi-tools = "^0.76.0"
 black = ">=23.12,<25.0"
+freezegun = "^1.5.1"
 furo = ">=2023.9.10,<2025.0.0"
 isort = "^5.13.2"
-pre-commit = "^3.6.0"
-pytest = "^7.4.3"
-pytest-asyncio = "^0.21.1" # 0.23 breaks the test suite (https://github.com/pytest-dev/pytest-asyncio/releases/tag/v0.23.0)
-respx = "^0.20.2"
-sphinx = "^7.2.6"
-sphinx-autobuild = ">=2021.3.14,<2025.0.0"
-sphinx-design = "^0.5.0"
-sphinxcontrib-jquery = "^4.1"
+pre-commit = "^3.7.1"
+pytest = ">=7.4.3,<9.0.0"
+pytest-asyncio = ">=0.21.1,<0.23.0" # 0.23 breaks the test suite (https://github.com/pytest-dev/pytest-asyncio/releases/tag/v0.23.0)
 pytest-benchmark = { extras = ["histogram"], version = "^4.0.0" }
-pytest-cov = "^4.1.0"
+pytest-cov = ">=4.1,<6.0"
+pytest-xdist = { version = "^3.6.1", extras = ["psutil"] }
+respx = ">=0.20.2,<0.22.0"
+ruff = "^0.4.8"
+sphinx = "^7.3.7"
+sphinx-autobuild = ">=2021.3.14,<2025.0.0"
+sphinx-click = "^6.0.0"
 sphinx-copybutton = "^0.5.2"
-sphinx-sitemap = "^2.5.1"
-ruff = "^0.1.9"
-pytest-xdist = {version = "^3.5.0", extras = ["psutil"]}
-freezegun = "^1.4.0"
-testcontainers = {extras = ["postgres"], version = ">=3.7.1,<5.0.0"}
-sphinx-click = "^5.1.0"
-rich-click = "^1.7.4"
+sphinx-design = "^0.6.0"
+sphinx-sitemap = "^2.6.0"
+sphinxcontrib-jquery = "^4.1"
+testcontainers = { extras = ["postgres"], version = "~4.5.1" }
 
 
 [tool.poetry.group.mysql.dependencies]

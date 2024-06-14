@@ -12,10 +12,12 @@ export function PageTitle({ description, title, children }: PageTitleProps) {
   return (
     <>
       {title ? (
-        <div className="mt-4 mb-4">
-          {children ? <div className="float-end">{children}</div> : null}
-          <H1>{title}</H1>
-          {description ? <P>{description}</P> : null}
+        <div className="mt-4 flex">
+          <div className="flex flex-col">
+            <H1>{title}</H1>
+            {description ? <P>{description}</P> : null}
+          </div>
+          {children ? <>{children}</> : null}
         </div>
       ) : null}
     </>

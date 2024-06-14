@@ -1,0 +1,3 @@
+dashboard:
+  # external port to listen on
+  port: 4080

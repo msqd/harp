@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 // we can't create tests asynchronously, thus using the sync-fetch lib
 import fetch from "sync-fetch"
 
@@ -15,20 +15,30 @@ const url = "http://127.0.0.1:61110"
 
 // fetch Ladle's meta file
 // https://ladle.dev/docs/meta
-const stories = fetch(`${url}/meta.json`).json().stories
+const stories = (
+  fetch(`${url}/meta.json`).json() as {
+    stories: {
+      [k: string]: {
+        meta?: {
+          skip?: boolean
+        }
+      }
+    }
+  }
+).stories
 
 // iterate through stories
-Object.keys(stories).forEach((storyKey) => {
+Object.entries(stories).forEach(([name, story]) => {
   // create a test for each story
-  test(`${storyKey} - compare snapshots`, async ({ page }) => {
+  test(`${name} - compare snapshots`, async ({ page }) => {
     // skip stories that are marked as skipped
-    test.skip(stories[storyKey].meta.skip, "meta.skip is true")
+    test.skip(!!story.meta?.skip, "meta.skip is true")
     // navigate to the story
-    const previewUrl = `${url}/?story=${storyKey}&mode=preview`
+    const previewUrl = `${url}/?story=${name}&mode=preview`
     await page.goto(previewUrl)
     // stories are code-splitted, wait for them
     await page.waitForSelector("[data-storyloaded]")
     // take and compare a screenshot
-    await expect(page).toHaveScreenshot(`${storyKey}.png`)
+    await expect(page).toHaveScreenshot(`${name}.png`)
   })
 })

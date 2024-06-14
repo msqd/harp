@@ -1,10 +1,10 @@
 """
 Factory configuration, does nothing but can be used to instanciate a server.
 """
+
 import importlib.util
 import os
 import pprint
-from argparse import ArgumentParser
 from copy import deepcopy
 from types import MappingProxyType
 from typing import Self, Type
@@ -17,6 +17,7 @@ from rodi import Container
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
+from harp.commandline.server import CommonServerOptions
 from harp.config.application import Application
 from harp.utils.identifiers import is_valid_dotted_identifier
 
@@ -25,6 +26,14 @@ logger = get_logger(__name__)
 
 def get_application_class_name(name):
     return "".join(map(lambda x: x.title().replace("_", ""), name.rsplit(".", 1)[-1:])) + "Application"
+
+
+def _resolve_application_aliases(spec):
+    if "." not in spec:
+        _candidate = ".".join(("harp_apps", spec))
+        if importlib.util.find_spec(_candidate):
+            return _candidate
+    return spec
 
 
 class Config:
@@ -90,57 +99,34 @@ class Config:
         if not is_valid_dotted_identifier(name):
             raise ValueError(f"Invalid application name: {name}")
         self.reset()
-        self._raw_settings["applications"].append(name)
-        if debug:
-            self._debug_applications.add(name)
+        name = _resolve_application_aliases(name)
+        if name not in self._raw_settings["applications"]:
+            self._raw_settings["applications"].append(name)
+            if debug:
+                self._debug_applications.add(name)
 
     def remove_application(self, name):
         if not is_valid_dotted_identifier(name):
             raise ValueError(f"Invalid application name: {name}")
         self.reset()
+        name = _resolve_application_aliases(name)
         if name in self._raw_settings["applications"]:
             self._raw_settings["applications"].remove(name)
         self._debug_applications.discard(name)
 
-    def read_env(self, args=None):
+    def read_env(self, options: CommonServerOptions, /):
         """
         Parses sys.argv-like arguments.
 
         :param args:
+        :param files: list of filenames to load in order. Will happen after defaults env and files.
         :return: argparse.Namespace
 
         """
-        if not args:
-            args = []
-
-        parser = ArgumentParser()
-        parser.add_argument(
-            "--set",
-            "-s",
-            action="append",
-            dest="values",
-            nargs=2,
-            metavar=("KEY", "VALUE"),
-            help="Set a configuration value.",
-        )
-        parser.add_argument(
-            "--file",
-            "-f",
-            action="append",
-            dest="files",
-            help="Load configuration from file.",
-        )
-        parser.add_argument(
-            "--disable",
-            "-D",
-            action="append",
-            dest="disabled_applications",
-            help="Disable an application.",
-        )
-        options = parser.parse_args(args)
-
-        for disabled_application in options.disabled_applications or ():
-            self.remove_application(disabled_application)
+        for _enabled_application in options.enable or ():
+            self.add_application(_enabled_application)
+        for _disabled_application in options.disable or ():
+            self.remove_application(_disabled_application)
 
         from config.common import ConfigurationBuilder, MapSource
         from config.env import EnvVars
@@ -155,11 +141,13 @@ class Config:
         # current
         builder.add_source(MapSource(self._raw_settings))
 
+        # load default system config (if present)
         if os.path.exists("/etc/harp.yaml"):
             builder.add_source(YAMLFile("/etc/harp.yaml"))
         elif os.path.exists("/etc/harp.yml"):
             builder.add_source(YAMLFile("/etc/harp.yml"))
 
+        # load user config
         for file in options.files or ():
             _, ext = os.path.splitext(file)
             if ext in (".yaml", ".yml"):
@@ -175,12 +163,29 @@ class Config:
 
         builder.add_source(EnvVars(prefix="HARP_"))
 
-        for k, v in options.values or ():
+        for k, v in (options.options or {}).items():
             builder.add_value(k, v)
+
+        # reset option
+        if options.reset:
+            builder.add_value("storage.drop_tables", True)
 
         self._raw_settings = builder.build().values
 
-    def validate(self):
+        self._raw_settings.setdefault("proxy", {})
+        self._raw_settings["proxy"].setdefault("endpoints", [])
+
+        for k, v in (options.endpoints or {}).items():
+            _port, _url = v.split(":", 1)
+            self._raw_settings["proxy"]["endpoints"].append(
+                {
+                    "name": k,
+                    "port": int(_port),
+                    "url": _url,
+                }
+            )
+
+    def validate(self, *, allow_extraneous_settings=False):
         if self._validated_settings is None:
             to_be_validated = deepcopy(self._raw_settings)
             application_names = to_be_validated.pop("applications", [])
@@ -199,8 +204,8 @@ class Config:
             newly_validated.pop("applications", None)  # not allowed xxx todo raise
             validated |= newly_validated
 
-            if to_be_validated != {}:
-                raise ValueError(f"Unknown settings remaining: {to_be_validated}")
+            if to_be_validated != {} and not allow_extraneous_settings:
+                logger.warning(f"Unknown settings remaining: {to_be_validated}")
 
             # propagate for the world to use
             self._validated_settings = MappingProxyType(validated)

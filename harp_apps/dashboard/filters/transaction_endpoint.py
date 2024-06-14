@@ -14,7 +14,7 @@ class TransactionEndpointFacet(FacetWithStorage):
         self._refreshed_at = None
 
     async def refresh(self):
-        if not self._refreshed_at or (self._refreshed_at < datetime.now() - timedelta(minutes=1)):
+        if not self._refreshed_at or (self._refreshed_at < datetime.now() - timedelta(seconds=25)):
             self._refreshed_at = datetime.now()
             meta = await self.storage.get_facet_meta(self.name)
             self.choices = set(meta.keys())

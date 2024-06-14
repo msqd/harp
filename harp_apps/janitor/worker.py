@@ -15,7 +15,7 @@ class JanitorWorker:
     def __init__(self, storage: Storage):
         self.storage: SqlAlchemyStorage = cast(SqlAlchemyStorage, storage)
         self.running = False
-        self.session_factory = self.storage.session
+        self.session_factory = self.storage.session_factory
 
     def stop(self):
         """
@@ -47,15 +47,15 @@ class JanitorWorker:
         # Delete old transactions
         result = await self.delete_old_transactions()
         if result.rowcount:
-            logger.info("🧹 Deleted %d old transactions", result.rowcount)
+            logger.debug("🧹 Deleted %d old transactions", result.rowcount)
 
         # Delete orphan blobs
         result = await self.delete_orphan_blobs()
         if result.rowcount:
-            logger.info("🧹 Deleted %d orphan blobs", result.rowcount)
+            logger.debug("🧹 Deleted %d orphan blobs", result.rowcount)
 
         # Compute and store stored objecg counts as metrics
-        logger.info("🧹 Compute and store metrics...")
+        logger.debug("🧹 Compute and store metrics...")
         await self.compute_and_store_metrics()
 
     @with_session

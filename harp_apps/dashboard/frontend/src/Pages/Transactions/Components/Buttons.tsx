@@ -1,4 +1,10 @@
-import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon, LinkIcon, XMarkIcon } from "@heroicons/react/16/solid"
+import {
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
+  LinkIcon,
+  XMarkIcon,
+  ArrowPathIcon,
+} from "@heroicons/react/16/solid"
 import { Link } from "react-router-dom"
 
 interface PaneVisibilityButtonProps {
@@ -20,6 +26,14 @@ export function FiltersHideButton({ onClick }: PaneVisibilityButtonProps) {
   return (
     <button onClick={onClick} className="text-gray-400 mx-1 font-medium text-xs">
       <ChevronDoubleLeftIcon className="h-3 w-3 inline-block" /> hide
+    </button>
+  )
+}
+
+export function FiltersResetButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="text-gray-400 mx-1 font-medium text-xs">
+      <ArrowPathIcon className="h-3 w-3 inline-block" /> reset
     </button>
   )
 }

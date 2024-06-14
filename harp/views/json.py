@@ -1,10 +1,17 @@
 import traceback
+from decimal import Decimal
 
 import orjson
 from whistle import IAsyncEventDispatcher
 
 from harp.asgi.events import EVENT_CONTROLLER_VIEW, ControllerViewEvent
 from harp.http import HttpResponse
+
+
+def default(obj):
+    if isinstance(obj, Decimal):
+        return str(obj)
+    raise TypeError
 
 
 class json(dict):
@@ -28,6 +35,7 @@ async def on_json_response(event: ControllerViewEvent):
             serialized = orjson.dumps(
                 event.value,
                 option=orjson.OPT_NON_STR_KEYS | orjson.OPT_NAIVE_UTC,
+                default=default,
             )
             event.set_response(
                 HttpResponse(serialized, status=200, content_type=content_type),

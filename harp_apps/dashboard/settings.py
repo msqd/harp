@@ -1,9 +1,8 @@
 from functools import cached_property
 from typing import Literal, Optional
 
-from harp.config.settings import DisabledSettings, FromFileSetting
-from harp.config.settings.base import BaseSetting, settings_dataclass
-from harp.errors import ConfigurationRemovedSettingError, ConfigurationRuntimeError, ConfigurationValueError
+from harp.config import BaseSetting, FromFileSetting, settings_dataclass
+from harp.errors import ConfigurationRemovedSettingError, ConfigurationValueError
 
 
 def _plain(actual, expected):
@@ -75,27 +74,11 @@ class DashboardAuthSetting(BaseSetting):
 class DashboardSettings(BaseSetting):
     """Root settings for the dashboard."""
 
-    enabled: bool = True
     port: int | str = 4080
     auth: Optional[DashboardAuthSetting] = None
     devserver_port: Optional[int | str] = None
 
-    def __new__(cls, **kwargs):
-        # todo generic management of disablable settings
-        _enabled = kwargs.pop("enabled", True)
-        # todo better parsing of falsy values
-        if isinstance(_enabled, str) and _enabled.lower() in {"no", "false", "0"}:
-            _enabled = False
-
-        if not _enabled:
-            return DisabledSettings()
-
-        return super().__new__(cls)
-
     def __post_init__(self):
-        if not self.enabled:
-            raise ConfigurationRuntimeError("DashboardSettings should never be instanciated if disabled.")
-
         if isinstance(self.auth, str):
             raise ConfigurationRemovedSettingError(
                 "Invalid configuration for dashboard auth: string configuration is not supported anymore."

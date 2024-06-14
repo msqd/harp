@@ -28,6 +28,9 @@ class Transaction(Entity):
     elapsed: float = None
     """Elapsed time in seconds, if the transaction has ended."""
 
+    apdex: int = None
+    """Apdex score, if the transaction has ended."""
+
     # Relations
 
     messages: List[Message] = None

@@ -1,10 +1,11 @@
-from dataclasses import asdict, is_dataclass
+from dataclasses import is_dataclass
 from typing import Optional
 
 from rodi import Container
 from whistle import IAsyncEventDispatcher
 
-from harp.config.events import EVENT_FACTORY_BIND, EVENT_FACTORY_BOUND, EVENT_FACTORY_BUILD
+from .events import EVENT_FACTORY_BIND, EVENT_FACTORY_BOUND, EVENT_FACTORY_BUILD
+from .settings import asdict
 
 
 class Application:
@@ -49,7 +50,8 @@ class Application:
 
     @staticmethod
     def defaults(settings: Optional[dict] = None) -> dict:
-        return {}
+        settings = settings if settings is not None else {}
+        return settings
 
     @classmethod
     def supports(cls, settings: dict) -> bool:

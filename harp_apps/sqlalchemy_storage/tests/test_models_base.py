@@ -16,7 +16,7 @@ class TestModelsBase(SqlalchemyStorageTestFixtureMixin):
         Check how instance creation works with an explicit session scope created outside the "create" call.
 
         """
-        async with storage.session() as session:
+        async with storage.session_factory() as session:
             # we create a transaction with our own session
             db_transaction = await storage.transactions.create(
                 {

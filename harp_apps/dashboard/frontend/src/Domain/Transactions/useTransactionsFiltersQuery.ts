@@ -5,6 +5,7 @@ import { useApi } from "Domain/Api"
 interface TransactionFilter {
   values: Array<{ name: string; count?: number }>
   current: string[]
+  fallbackName?: string
 }
 
 export function useTransactionsFiltersQuery() {

@@ -1,4 +1,8 @@
 import logging
+import sys
+
+from asyncpg import PostgresError
+from hypercorn.utils import LifespanFailureError
 
 from harp import get_logger
 
@@ -32,4 +36,12 @@ class HypercornAdapter:
         asgi_app, binds = await self.factory.build()
         config = self._create_config(binds)
         logger.debug(f"🌎 {type(self).__name__}::serve({', '.join(config.bind)})")
-        return await serve(asgi_app, config)
+
+        try:
+            return await serve(asgi_app, config)
+        except LifespanFailureError as exc:
+            logger.exception(f"Server initiliation failed: {repr(exc.__cause__)}", exc_info=exc.__cause__)
+            if isinstance(exc.__cause__, PostgresError):
+                logger.error("Could not connect to underlying postgres storage backend, check your config.")
+
+            sys.exit(-1)

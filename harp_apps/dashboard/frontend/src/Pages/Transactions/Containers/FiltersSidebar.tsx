@@ -1,30 +1,84 @@
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
+
+import { apdexScale } from "Components/Badges/constants"
 import { useTransactionsFiltersQuery } from "Domain/Transactions"
-import { Filter, Filters } from "Types/filters"
+import { ArrayFilter, Filters, MinMaxFilter } from "Types/filters"
 import { Pane } from "ui/Components/Pane"
 
-import { Facet } from "../Components/Facets"
-
-const ratings = [
-  { name: "A++" },
-  { name: "A+" },
-  { name: "A" },
-  { name: "B" },
-  { name: "C" },
-  { name: "D" },
-  { name: "E" },
-  { name: "F" },
-]
+import { Facet, RangeSliderFacet } from "../Components/Facets"
 
 interface FiltersSidebarProps {
   filters: Filters
-  setFilters: (filters: Filters) => unknown
 }
 
-export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
+export function FiltersSidebar({ filters }: FiltersSidebarProps) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
   const filtersQuery = useTransactionsFiltersQuery()
 
-  const _createSetFilterFor = (name: string) => (value: Filter) => {
-    setFilters({ ...filters, [name]: value })
+  // marks and setup for range slider for tpdex
+  const marks = [...apdexScale].map((rating, index) => ({
+    value: index * 10,
+    label: rating.label,
+    className: rating.className,
+  }))
+  const markValueToThreshold = new Map([...apdexScale].map((rating, index) => [index * 10, rating.threshold]))
+  const maxKey = Math.max(...Array.from(markValueToThreshold.keys()))
+  const minKey = Math.min(...Array.from(markValueToThreshold.keys()))
+  markValueToThreshold.set(maxKey, undefined)
+  markValueToThreshold.set(minKey, undefined)
+
+  const thresholdToMarkValue = new Map<number, number>()
+  markValueToThreshold.forEach((value, key) => {
+    if (value != undefined) {
+      thresholdToMarkValue.set(value, key)
+    }
+  })
+
+  const _createSetFilterFor = (name: string) => (value: ArrayFilter) => {
+    searchParams.delete(name)
+    if (value) {
+      value.forEach((v) => {
+        if (v) {
+          searchParams.append(name, v.toString())
+        }
+      })
+    }
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: searchParams.toString(),
+      },
+      { replace: false },
+    )
+  }
+
+  const setTpdexValues = (value: MinMaxFilter | undefined) => {
+    const maxValue = markValueToThreshold.get(value?.min ?? -1)
+    const minValue = markValueToThreshold.get(value?.max ?? -1)
+
+    if (minValue != null) {
+      searchParams.set("tpdexmin", minValue.toString())
+    } else {
+      searchParams.delete("tpdexmin")
+    }
+
+    if (maxValue != null) {
+      searchParams.set("tpdexmax", maxValue.toString())
+    } else {
+      searchParams.delete("tpdexmax")
+    }
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: searchParams.toString(),
+      },
+      { replace: false },
+    )
   }
 
   const setEndpointFilter = _createSetFilterFor("endpoint")
@@ -34,16 +88,12 @@ export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
 
   return (
     <Pane hasDefaultPadding={false} className="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm">
-      {/* TODO implement search
-      <input className="h-12 w-full border-0 bg-transparent px-4 focus:ring-0" placeholder="Search..." />
-     */}
-
       {filtersQuery.isSuccess && filtersQuery.data.endpoint ? (
         <Facet
           title="Endpoint"
           name="endpoint"
           type="checkboxes"
-          values={filters["endpoint"]}
+          values={filters["endpoint"] as ArrayFilter}
           setValues={setEndpointFilter}
           meta={filtersQuery.data.endpoint.values}
         />
@@ -54,7 +104,7 @@ export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
           title="Request Method"
           name="method"
           type="checkboxes"
-          values={filters["method"]}
+          values={filters["method"] as ArrayFilter}
           setValues={setMethodFilter}
           meta={filtersQuery.data.method.values}
         />
@@ -65,7 +115,7 @@ export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
           title="Response Status"
           name="status"
           type="checkboxes"
-          values={filters["status"]}
+          values={filters["status"] as ArrayFilter}
           setValues={setStatusFilter}
           meta={filtersQuery.data.status.values}
         />
@@ -76,9 +126,25 @@ export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
           title="Flags"
           name="flags"
           type="checkboxes"
-          values={filters["flag"]}
+          values={filters["flag"] as ArrayFilter}
           setValues={setFlagsFilter}
           meta={filtersQuery.data.flag.values}
+          fallbackName={filtersQuery.data.flag.fallbackName}
+        />
+      ) : null}
+
+      {filtersQuery.isSuccess ? (
+        <RangeSliderFacet
+          title="Performances Index"
+          name="performanceIndex"
+          values={{
+            min: thresholdToMarkValue.get((filters["tpdex"] as MinMaxFilter)?.max ?? 0),
+            max: thresholdToMarkValue.get((filters["tpdex"] as MinMaxFilter)?.min ?? 100),
+          }}
+          setValues={setTpdexValues}
+          marks={marks}
+          max={maxKey}
+          min={minKey}
         />
       ) : null}
 
@@ -90,11 +156,6 @@ export function FiltersSidebar({ filters, setFilters }: FiltersSidebarProps) {
           meta={[{ name: "Last 24 hours" }, { name: "Last 7 days" }, { name: "Last 15 days" }]}
           type="radios"
         />
-      ) : null}
-
-      {/* TODO implement */}
-      {filtersQuery.isSuccess && filtersQuery.data.apdex ? (
-        <Facet title="Performance Index" name="tpdex" meta={ratings} type="checkboxes" defaultOpen={false} />
       ) : null}
     </Pane>
   )

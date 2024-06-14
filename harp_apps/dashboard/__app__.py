@@ -24,13 +24,7 @@ class DashboardApplication(Application):
 
     @classmethod
     def defaults(cls, settings=None) -> dict:
-        settings = (
-            settings
-            if settings is not None
-            else {
-                "enabled": True,
-            }
-        )
+        settings = settings if settings is not None else {}
         settings.setdefault("port", 4080)
         settings.setdefault("auth", None)
         return settings
@@ -40,8 +34,6 @@ class DashboardApplication(Application):
         event.container.add_alias("dashboard.controller", DashboardController)
 
     async def on_bound(self, event: FactoryBoundEvent):
-        if self.settings.enabled is False:
-            return
-
         # add our controller to the controller resolver
-        event.resolver.add(self.settings.port, event.provider.get("dashboard.controller"))
+        controller = event.provider.get("dashboard.controller")
+        event.resolver.add(self.settings.port, controller)

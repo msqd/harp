@@ -1,2 +1,0 @@
-Agregation and Splitting
-========================

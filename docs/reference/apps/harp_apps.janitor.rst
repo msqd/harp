@@ -1,5 +1,5 @@
-harp_apps.janitor
-=================
+Janitor (harp_apps.janitor)
+===========================
 
 .. automodule:: harp_apps.janitor
     :members:

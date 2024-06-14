@@ -1,8 +1,11 @@
 # Configuration file for the Sphinx documentation builder.
 
+import builtins
 import os
 import sys
 from datetime import datetime
+
+builtins.__sphinx__ = True
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -19,7 +22,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.coverage",
-    "sphinx.ext.githubpages",
     "sphinx.ext.graphviz",
     "sphinx.ext.ifconfig",
     "sphinx.ext.intersphinx",
@@ -37,10 +39,16 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 root_doc = "index"
 
+html_title = project + " " + version
 html_theme = "furo"
 html_static_path = ["_static"]
+html_theme_options = {
+    "light_logo": "logo.png",
+    "dark_logo": "logo.png",
+}
 html_js_files = ["js/links-target-blank.js"]
-html_baseurl = "https://msqd.github.io/harp/"
+html_css_files = ["css/harp.css"]
+html_baseurl = "https://harp-proxy.readthedocs.io/en/latest/"
 
 html_sidebars = {
     "**": [
@@ -67,5 +75,15 @@ pygments_style = "sphinx"
 graphviz_output_format = "svg"
 
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3.12", None),
+    "python": ("https://docs.python.org/3", None),
+    "structlog": ("https://www.structlog.org/en/stable", None),
+    "whistle": ("https://python-whistle.readthedocs.io/latest", None),
 }
+
+rst_prolog = """.. attention::
+    This is the documentation for `HARP Proxy <https://harp-proxy.net/>`_, actually published as an **early preview**.
+    Both the software and documentation are a work in progress, and although we already use it on various production
+    servers, they may contain inaccuracies, typographical errors, huge mistakes and empty pages. We work hard to
+    eradicate all mistakes and implement stuff, but it is a long and tedious process. We appreciate your patience and
+    understanding. Of course, any :doc:`help will be greatly appreciated </contribute/index>`.
+"""

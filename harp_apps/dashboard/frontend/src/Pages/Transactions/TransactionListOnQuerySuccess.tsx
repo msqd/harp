@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { QueryObserverSuccessResult } from "react-query/types/core/types"
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
 import { ItemList } from "Domain/Api/Types"
@@ -7,7 +8,13 @@ import { useTransactionsDetailQuery } from "Domain/Transactions"
 import { Transaction } from "Models/Transaction"
 import { Filters } from "Types/filters"
 
-import { DetailsCloseButton, FiltersHideButton, FiltersShowButton, OpenInNewWindowLink } from "./Components/Buttons.tsx"
+import {
+  DetailsCloseButton,
+  FiltersHideButton,
+  FiltersResetButton,
+  FiltersShowButton,
+  OpenInNewWindowLink,
+} from "./Components/Buttons.tsx"
 import { TransactionDataTable } from "./Components/List/index.ts"
 import { FiltersSidebar } from "./Containers/index.ts"
 import { TransactionDetailOnQuerySuccess } from "./TransactionDetailOnQuerySuccess.tsx"
@@ -15,25 +22,60 @@ import { TransactionDetailOnQuerySuccess } from "./TransactionDetailOnQuerySucce
 export function TransactionListOnQuerySuccess({
   query,
   filters,
-  setFilters,
 }: {
   query: QueryObserverSuccessResult<ItemList<Transaction> & { total: number; pages: number; perPage: number }>
   filters: Filters
-  setFilters: (filters: Filters) => void
 }) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
   const [selected, setSelected] = useState<Transaction | null>(null)
-  const hasSelection = selected && selected.id
+  const selectedId = searchParams.get("selected")
+  const hasSelection = !!selectedId
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
-  const detailQuery = useTransactionsDetailQuery(selected?.id)
+  const detailQuery = useTransactionsDetailQuery(selectedId!)
+
+  const resetFilters = (keys: string[]) => {
+    keys.forEach((key) => searchParams.delete(key))
+    navigate(
+      {
+        pathname: location.pathname,
+        search: searchParams.toString(),
+      },
+      { replace: false },
+    )
+  }
+
+  const resetAllFilters = () => {
+    resetFilters(["endpoint", "method", "status", "flag", "tpdexmin", "tpdexmax"])
+  }
+
+  const updateQueryParam = (paramName: string, paramValue: string | undefined) => {
+    if (paramValue) {
+      searchParams.set(paramName, paramValue)
+    } else {
+      searchParams.delete(paramName)
+    }
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: searchParams.toString(),
+      },
+      { replace: false },
+    )
+  }
 
   return (
     <div className="flex w-full items-start gap-x-8 relative">
       {isFiltersOpen ? (
         <aside className="sticky top-8 hidden w-1/5 min-w-40 max-w-60 2xl:min-w-52 2xl:max-w-72 shrink-0 lg:block">
           <div className="text-right">
+            <FiltersResetButton onClick={resetAllFilters} />
             <FiltersHideButton onClick={() => setIsFiltersOpen(false)} />
           </div>
-          <FiltersSidebar filters={filters} setFilters={setFilters} />
+          <FiltersSidebar filters={filters} />
         </aside>
       ) : (
         <FiltersShowButton onClick={() => setIsFiltersOpen(true)} />
@@ -43,22 +85,28 @@ export function TransactionListOnQuerySuccess({
         <TransactionDataTable
           transactions={query.data.items}
           onSelectionChange={(newSelected) =>
-            newSelected && newSelected.id && (!hasSelection || selected.id != newSelected.id)
-              ? setSelected(newSelected)
-              : setSelected(null)
+            newSelected && newSelected.id && (!hasSelection || selected?.id != newSelected.id)
+              ? (setSelected(newSelected), updateQueryParam("selected", newSelected.id))
+              : (setSelected(null), updateQueryParam("selected", undefined))
           }
-          selected={hasSelection ? selected : undefined}
+          selected={selected ? selected : undefined}
         />
       </main>
 
       {hasSelection ? (
         <aside className="sticky top-8 w-2/5 min-w-96 shrink-0 block">
           <div className="text-right">
-            <OpenInNewWindowLink id={selected.id!} />
-            <DetailsCloseButton onClick={() => setSelected(null)} />
+            <OpenInNewWindowLink id={selectedId} />
+            <DetailsCloseButton onClick={() => (setSelected(null), updateQueryParam("selected", undefined))} />
           </div>
-          <OnQuerySuccess query={detailQuery}>
-            {(query) => <TransactionDetailOnQuerySuccess query={query} />}
+
+          <OnQuerySuccess
+            query={detailQuery}
+            onQueryError={() => (setSelected(null), updateQueryParam("selected", undefined))}
+          >
+            {(query) => {
+              return <TransactionDetailOnQuerySuccess query={query} />
+            }}
           </OnQuerySuccess>
         </aside>
       ) : null}
