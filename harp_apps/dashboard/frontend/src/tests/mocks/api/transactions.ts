@@ -52,7 +52,7 @@ const mockTransaction1: Transaction = {
     } as Message,
   ],
 
-  tags: {},
+  tags: { foo: "bar", bar: "baz" },
   extras: {},
 }
 

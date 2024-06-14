@@ -5,7 +5,7 @@ import { renderWithClient } from "tests/utils"
 
 import { TransactionDetailPage } from "./TransactionDetailPage.tsx"
 
-it.skip("renders the title and data when the query is successful", async () => {
+it("renders the title and data when the query is successful", async () => {
   const result = renderWithClient(
     <MemoryRouter initialEntries={["/transactions/ABCD1234"]}>
       <Routes>
