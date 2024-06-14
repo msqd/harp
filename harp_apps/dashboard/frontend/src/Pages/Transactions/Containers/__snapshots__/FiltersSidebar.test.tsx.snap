@@ -663,10 +663,10 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 0%; top: 50%;"
                 >
                   <div
-                    class="css-rjy332"
+                    class="bg-red-700 css-mb7ol4"
                   />
                   <div
-                    class="css-1bvaal1"
+                    class="css-rx8plc"
                   >
                     G
                   </div>
@@ -675,10 +675,10 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 12.5%; top: 50%;"
                 >
                   <div
-                    class="css-rjy332"
+                    class="bg-red-500 text-red-500 css-28qr6v"
                   />
                   <div
-                    class="css-1bvaal1"
+                    class="css-rx8plc"
                   >
                     F
                   </div>
@@ -687,10 +687,10 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 25%; top: 50%;"
                 >
                   <div
-                    class="css-rjy332"
+                    class="bg-orange-500 css-13g6xzh"
                   />
                   <div
-                    class="css-1bvaal1"
+                    class="css-rx8plc"
                   >
                     E
                   </div>
@@ -699,10 +699,10 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 37.5%; top: 50%;"
                 >
                   <div
-                    class="css-rjy332"
+                    class="bg-amber-500 css-16v1ij1"
                   />
                   <div
-                    class="css-1bvaal1"
+                    class="css-rx8plc"
                   >
                     D
                   </div>
@@ -711,10 +711,10 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 50%; top: 50%;"
                 >
                   <div
-                    class="css-rjy332"
+                    class="bg-yellow-500 css-c8mre4"
                   />
                   <div
-                    class="css-1bvaal1"
+                    class="css-rx8plc"
                   >
                     C
                   </div>
@@ -723,10 +723,10 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 62.5%; top: 50%;"
                 >
                   <div
-                    class="css-rjy332"
+                    class="bg-lime-500 css-xywqyw"
                   />
                   <div
-                    class="css-1bvaal1"
+                    class="css-rx8plc"
                   >
                     B
                   </div>
@@ -735,10 +735,10 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 75%; top: 50%;"
                 >
                   <div
-                    class="css-rjy332"
+                    class="bg-green-500 css-3wj4yg"
                   />
                   <div
-                    class="css-1bvaal1"
+                    class="css-rx8plc"
                   >
                     A
                   </div>
@@ -747,10 +747,10 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 87.5%; top: 50%;"
                 >
                   <div
-                    class="css-rjy332"
+                    class="bg-emerald-400 css-t3aoyt"
                   />
                   <div
-                    class="css-1bvaal1"
+                    class="css-rx8plc"
                   >
                     A+
                   </div>
@@ -759,10 +759,10 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 100%; top: 50%;"
                 >
                   <div
-                    class="css-rjy332"
+                    class="bg-teal-400 css-j4awuo"
                   />
                   <div
-                    class="css-1bvaal1"
+                    class="css-rx8plc"
                   >
                     A++
                   </div>

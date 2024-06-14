@@ -6,6 +6,6 @@ export const apdexScale: { label: string; threshold?: number; className: string 
   { label: "C", threshold: 69, className: "bg-yellow-500" },
   { label: "D", threshold: 49, className: "bg-amber-500" },
   { label: "E", threshold: 31, className: "bg-orange-500" },
-  { label: "F", threshold: 17, className: "bg-red-500" },
+  { label: "F", threshold: 17, className: "bg-red-500 text-red-500" },
   { label: "G", className: "bg-red-700" },
 ]

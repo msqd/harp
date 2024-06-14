@@ -6,6 +6,7 @@ import { Filters, ArrayFilter, MinMaxFilter } from "Types/filters"
 import { Pane } from "ui/Components/Pane"
 
 import { Facet, RangeSliderFacet } from "../Components/Facets"
+import { classNames } from "ui/Utilities"
 
 interface FiltersSidebarProps {
   filters: Filters
@@ -19,7 +20,9 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
   const filtersQuery = useTransactionsFiltersQuery()
 
   // marks and setup for range slider for tpdex
-  const marks = [...apdexScale].reverse().map((rating, index) => ({ value: index * 10, label: rating.label }))
+  const marks = [...apdexScale]
+    .reverse()
+    .map((rating, index) => ({ value: index * 10, label: rating.label, className: rating.className }))
   const markValueToThreshold = new Map([...apdexScale].reverse().map((rating, index) => [index * 10, rating.threshold]))
   const maxKey = Math.max(...Array.from(markValueToThreshold.keys()))
   const minKey = Math.min(...Array.from(markValueToThreshold.keys()))

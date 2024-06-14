@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { styled, css } from "twin.macro"
 
-export type Mark = number | { value: number; label: string }
+export type Mark = number | { value: number; label: string; className?: string }
 
 interface RangeSliderProps {
   min?: number
@@ -118,20 +118,23 @@ const Control = styled.div(
   `,
 )
 
-const Mark = styled.div`
-  ${css`
+const Mark = styled.div(
+  ({ className }: { className?: string }) => css`
     position: absolute;
     top: 50%;
     transform: translate(-50%, -50%);
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: lightblue;
-  `}
-`
+    ${className &&
+    css`
+      @apply ${className};
+    `}
+  `,
+)
 
-const Label = styled.div`
-  ${css`
+const Label = styled.div(
+  ({ className }: { className?: string }) => css`
     position: absolute;
     top: 100%;
     transform: translateX(-50%);
@@ -139,8 +142,13 @@ const Label = styled.div`
     font-size: 10px;
     font-weight: 500;
     white-space: nowrap;
-  `}
-`
+    ${className &&
+    css`
+      @apply ${className};
+    `}
+  `,
+)
+
 const RangeSlider: React.FC<RangeSliderProps> = ({
   min = 0,
   max = 10,
@@ -231,10 +239,11 @@ const RangeSlider: React.FC<RangeSliderProps> = ({
           {marks?.map((mark, index) => {
             const markValue = typeof mark === "number" ? mark : mark.value
             const markLabel = typeof mark === "number" ? null : mark.label
+            const markClassName = typeof mark === "number" ? undefined : mark.className
             const markPos = ((markValue - min) / (max - min)) * 100
             return (
               <div key={index} style={{ position: "absolute", left: `${markPos}%`, top: "50%" }}>
-                <Mark />
+                <Mark className={markClassName} />
                 {markLabel && <Label>{markLabel}</Label>}
               </div>
             )
