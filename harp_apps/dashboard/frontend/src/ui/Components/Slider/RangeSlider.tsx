@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { styled, css } from "twin.macro"
+import tw, { css, styled } from "twin.macro"
 
 export type Mark = number | { value: number; label: string; className?: string }
 
@@ -26,7 +26,7 @@ const thumbStyles = ({ thumbSize }: { thumbSize: string }) => css`
   pointer-events: all;
   width: ${thumbSize};
   height: ${thumbSize};
-  border-radius: 0px;
+  border-radius: 0;
   border: 0 none;
   background-color: blue;
   cursor: grab;
@@ -91,17 +91,15 @@ const Rail = styled.div`
     transform: translateY(-50%);
     height: 6px;
     border-radius: 3px;
-    background: lightgrey;
+    background: ${tw`bg-gray-200`};
   `}
 `
 
 const InnerRail = styled.div`
-  ${css`
-    position: absolute;
-    height: 100%;
-    background: blue;
-    opacity: 0.5;
-  `}
+  position: absolute;
+  height: 100%;
+  opacity: 0.5;
+  ${tw`bg-primary-200`}
 `
 
 const Control = styled.div(
@@ -110,11 +108,12 @@ const Control = styled.div(
     height: ${thumbSize};
     border-radius: 50%;
     position: absolute;
-    background: blue;
+    ${tw`bg-primary-900`};
     top: 50%;
     margin-left: calc(${thumbSize} / -2);
     transform: translate3d(0, -50%, 0);
     z-index: 2;
+    ${tw`ring-1 ring-white`}
   `,
 )
 
@@ -123,13 +122,14 @@ const Mark = styled.div(
     position: absolute;
     top: 50%;
     transform: translate(-50%, -50%);
-    width: 6px;
-    height: 6px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     ${className &&
     css`
       @apply ${className};
     `}
+    ${tw`ring-1 ring-white`}
   `,
 )
 
@@ -186,21 +186,31 @@ const RangeSlider: React.FC<RangeSliderProps> = ({
   }, [max, min, value, defaultValue])
 
   const handlePointerUp = () => {
-    if (onPointerUp) onPointerUp({ min: minValue, max: maxValue })
+    if (onPointerUp) {
+      onPointerUp({ min: minValue, max: maxValue })
+    }
   }
 
   const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault()
     const newMinVal = Math.min(Number(e.target.value), maxValue - step)
-    if (!value) setMinValue(newMinVal)
-    if (onChange) onChange({ min: newMinVal, max: maxValue })
+    if (!value) {
+      setMinValue(newMinVal)
+    }
+    if (onChange) {
+      onChange({ min: newMinVal, max: maxValue })
+    }
   }
 
   const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault()
     const newMaxVal = Math.max(Number(e.target.value), minValue + step)
-    if (!value) setMaxValue(newMaxVal)
-    if (onChange) onChange({ min: minValue, max: newMaxVal })
+    if (!value) {
+      setMaxValue(newMaxVal)
+    }
+    if (onChange) {
+      onChange({ min: minValue, max: newMaxVal })
+    }
   }
   const minPos = ((minValue - min) / (max - min)) * 100
   const maxPos = ((maxValue - min) / (max - min)) * 100

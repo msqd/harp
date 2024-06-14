@@ -2,7 +2,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 
 import { apdexScale } from "Components/Badges/constants"
 import { useTransactionsFiltersQuery } from "Domain/Transactions"
-import { Filters, ArrayFilter, MinMaxFilter } from "Types/filters"
+import { ArrayFilter, Filters, MinMaxFilter } from "Types/filters"
 import { Pane } from "ui/Components/Pane"
 
 import { Facet, RangeSliderFacet } from "../Components/Facets"
@@ -19,10 +19,12 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
   const filtersQuery = useTransactionsFiltersQuery()
 
   // marks and setup for range slider for tpdex
-  const marks = [...apdexScale]
-    .reverse()
-    .map((rating, index) => ({ value: index * 10, label: rating.label, className: rating.className }))
-  const markValueToThreshold = new Map([...apdexScale].reverse().map((rating, index) => [index * 10, rating.threshold]))
+  const marks = [...apdexScale].map((rating, index) => ({
+    value: index * 10,
+    label: rating.label,
+    className: rating.className,
+  }))
+  const markValueToThreshold = new Map([...apdexScale].map((rating, index) => [index * 10, rating.threshold]))
   const maxKey = Math.max(...Array.from(markValueToThreshold.keys()))
   const minKey = Math.min(...Array.from(markValueToThreshold.keys()))
   markValueToThreshold.set(maxKey, undefined)
@@ -30,7 +32,9 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
 
   const thresholdToMarkValue = new Map<number, number>()
   markValueToThreshold.forEach((value, key) => {
-    if (value != undefined) thresholdToMarkValue.set(value, key)
+    if (value != undefined) {
+      thresholdToMarkValue.set(value, key)
+    }
   })
 
   const _createSetFilterFor = (name: string) => (value: ArrayFilter) => {
@@ -53,8 +57,8 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
   }
 
   const setTpdexValues = (value: MinMaxFilter | undefined) => {
-    const minValue = markValueToThreshold.get(value?.min ?? -1)
-    const maxValue = markValueToThreshold.get(value?.max ?? -1)
+    const maxValue = markValueToThreshold.get(value?.min ?? -1)
+    const minValue = markValueToThreshold.get(value?.max ?? -1)
 
     if (minValue != null) {
       searchParams.set("tpdexmin", minValue.toString())
@@ -130,14 +134,13 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
 
       {filtersQuery.isSuccess ? (
         <RangeSliderFacet
-          title="Performance Index"
+          title="Performances Index"
           name="performanceIndex"
           values={{
-            min: thresholdToMarkValue.get((filters["tpdex"] as MinMaxFilter)?.min ?? 0),
-            max: thresholdToMarkValue.get((filters["tpdex"] as MinMaxFilter)?.max ?? 100),
+            min: thresholdToMarkValue.get((filters["tpdex"] as MinMaxFilter)?.max ?? 0),
+            max: thresholdToMarkValue.get((filters["tpdex"] as MinMaxFilter)?.min ?? 100),
           }}
           setValues={setTpdexValues}
-          type={"rangeSlider"}
           marks={marks}
           max={maxKey}
           min={minKey}
