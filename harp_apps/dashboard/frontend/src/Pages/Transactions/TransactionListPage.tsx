@@ -30,12 +30,18 @@ export function TransactionListPage() {
       }
     }
 
+    // tpdex
+    const tpdexMin = searchParams.get("tpdexmin")
+    const tpdexMax = searchParams.get("tpdexmax")
+    filtersMap["tpdex"] = {
+      min: tpdexMin ? parseFloat(tpdexMin) : undefined,
+      max: tpdexMax ? parseFloat(tpdexMax) : undefined,
+    }
+
     return filtersMap
   }
 
   const filters = defaultFilters(searchParams)
-
-  // const filters = defaultFilters(searchParams)
   const cursorFromSearchParams = searchParams.get("cursor")
   const [cursor, setCursor] = useState<string>(cursorFromSearchParams || "")
   const search = searchParams.get("search")

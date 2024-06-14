@@ -1,7 +1,7 @@
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
 import { ChangeEvent, useState } from "react"
 
-import { Filter } from "Types/filters"
+import { ArrayFilter } from "Types/filters"
 import { Checkbox, Radio } from "ui/Components/FormWidgets"
 import { H5 } from "ui/Components/Typography"
 
@@ -14,8 +14,8 @@ interface FacetProps {
   type: "checkboxes" | "radios"
   defaultOpen?: boolean
   meta: Array<{ name: string; count?: number }>
-  values?: Filter
-  setValues?: (value: Filter) => unknown
+  values?: ArrayFilter
+  setValues?: (value: ArrayFilter) => unknown
   fallbackName?: string
 }
 

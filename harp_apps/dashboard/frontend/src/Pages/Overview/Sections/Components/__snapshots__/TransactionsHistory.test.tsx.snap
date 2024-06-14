@@ -1,15 +1,15 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`renders without crashing 1`] = `
+exports[`renders the title and data when the query is successful 1`] = `
 <div>
   <div
     class="test-class"
   >
-    <h2
-      class="css-13yts7e"
+    <h3
+      class="css-1hpno4e"
     >
       Test Title
-    </h2>
+    </h3>
     <div
       style="display: flex; align-items: center;"
     >
@@ -20,10 +20,10 @@ exports[`renders without crashing 1`] = `
           class="flex self-center"
         >
           <span
-            class="bg-lime-500 css-1g68g52"
-            title="score: 85"
+            class="bg-green-500 css-1g68g52"
+            title="score: 95"
           >
-            B
+            A
           </span>
         </div>
         <div
@@ -35,7 +35,7 @@ exports[`renders without crashing 1`] = `
             Mean duration:
           </span>
           <span>
-            2
+            0.03
              s
           </span>
           <span
@@ -44,7 +44,7 @@ exports[`renders without crashing 1`] = `
             Errors:
           </span>
           <span>
-            5
+            50
             %
           </span>
         </div>

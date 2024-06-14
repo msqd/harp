@@ -17,4 +17,5 @@ Submodules
     harp_apps.dashboard.filters.transaction_flag
     harp_apps.dashboard.filters.transaction_method
     harp_apps.dashboard.filters.transaction_status
+    harp_apps.dashboard.filters.transaction_tpdex
     harp_apps.dashboard.filters.utils

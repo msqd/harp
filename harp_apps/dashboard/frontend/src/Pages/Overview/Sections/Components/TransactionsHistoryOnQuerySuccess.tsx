@@ -1,22 +1,26 @@
 import ApdexBadge from "Components/Badges/ApdexBadge.tsx"
 import { OverviewData } from "Models/Overview"
-import { H2 } from "ui/Components/Typography"
+import { H3 } from "ui/Components/Typography"
 
 import { TransactionsChart } from "./Charts"
 
-export interface TransactionOverviewChartProps {
+export interface TransactionsHistoryOnQuerySuccessProps {
   data: OverviewData
   title?: string
   className?: string
 }
 
-export const BaseTransactionsOverview = ({ data, title, className }: TransactionOverviewChartProps) => {
+export const TransactionsHistoryOnQuerySuccess = ({
+  data,
+  title,
+  className,
+}: TransactionsHistoryOnQuerySuccessProps) => {
   const meanDurationSeconds = Math.trunc(data.meanDuration) / 1000
   const meanApdex = Math.trunc(data.meanApdex)
   const errorsRate = Math.trunc(data.errors.rate * 100)
   return (
     <div className={className}>
-      <H2>{title}</H2>
+      <H3>{title}</H3>
       <div style={{ display: "flex", alignItems: "center" }}>
         <div className="flex flex-col items-center">
           <div className="flex self-center">

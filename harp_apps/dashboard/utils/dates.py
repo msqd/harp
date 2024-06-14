@@ -4,13 +4,13 @@ from typing import List
 from harp.typing.storage import TransactionsGroupedByTimeBucket
 
 
-def get_start_datetime_from_range(range: str | None) -> datetime | None:
+def get_start_datetime_from_range(range: str | None, *, now=None) -> datetime | None:
     """
     Generate a list of datetime objects from a range string.
     """
     if not range:
         return None
-    now = datetime.now(UTC)
+    now = now or datetime.now(UTC)
     if range == "1h":
         start_datetime = now - timedelta(hours=1)
     elif range == "24h":
@@ -48,9 +48,6 @@ def generate_continuous_time_range(
     """
     Generate a list of datetime objects from a range string.
     """
-    if not discontinuous_transactions:
-        return discontinuous_transactions
-
     # Generate a list of datetime objects from a range string
     start_datetime = start_datetime if start_datetime else discontinuous_transactions[0]["datetime"]
     start_datetime = _truncate_datetime_for_time_bucket(start_datetime, time_bucket)

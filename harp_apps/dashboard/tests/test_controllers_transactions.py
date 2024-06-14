@@ -19,10 +19,7 @@ class TransactionsControllerTestFixtureMixin:
         return TransactionsController(storage=storage, handle_errors=False)
 
 
-class TestTransactionsController(
-    TransactionsControllerTestFixtureMixin,
-    SqlalchemyStorageTestFixtureMixin,
-):
+class TestTransactionsController(TransactionsControllerTestFixtureMixin, SqlalchemyStorageTestFixtureMixin):
     async def test_filters_using_handler(self, controller: TransactionsController):
         request = Mock(spec=HttpRequest, query=MultiDict())
         response = await controller.filters(request)
@@ -33,6 +30,7 @@ class TestTransactionsController(
             "flag": {"current": None, "values": ANY, "fallbackName": ANY},
             "method": {"current": None, "values": ANY},
             "status": {"current": None, "values": ANY},
+            "tpdex": {"current": {"min": ANY, "max": ANY}, "values": ANY},
         }
 
     async def test_filters_meta_updated(self, controller: TransactionsController):
@@ -81,4 +79,5 @@ class TestTransactionsControllerThroughASGI(
             "flag": {"current": None, "values": ANY, "fallbackName": ANY},
             "method": {"current": None, "values": ANY},
             "status": {"current": None, "values": ANY},
+            "tpdex": {"current": {"min": ANY, "max": ANY}, "values": ANY},
         }

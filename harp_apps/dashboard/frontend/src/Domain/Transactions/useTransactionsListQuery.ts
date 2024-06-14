@@ -3,16 +3,28 @@ import { useQuery } from "react-query"
 import { useApi } from "Domain/Api"
 import { ItemList } from "Domain/Api/Types"
 import { Transaction } from "Models/Transaction"
-import { Filter, Filters } from "Types/filters"
+import { FilterValue, Filters, MinMaxFilter } from "Types/filters"
 
 function getQueryStringFromRecord(
-  filters: Record<string, Filter> | { page: number; cursor?: string | null; search?: string | null },
+  filters: Record<string, FilterValue> | { page: number; cursor?: string | null; search?: string | null },
 ) {
   const searchParams = new URLSearchParams()
 
-  for (const [key, value] of Object.entries(filters) as [string, string | number | undefined][]) {
+  for (const [key, value] of Object.entries(filters)) {
     if (value) {
-      searchParams.append(key, value.toString())
+      if (Array.isArray(value)) {
+        searchParams.append(key, value.toString())
+      } else if (typeof value === "object") {
+        const minMaxFilter = value as MinMaxFilter
+        if (minMaxFilter.min !== undefined) {
+          searchParams.set(`${key}min`, minMaxFilter.min.toString())
+        }
+        if (minMaxFilter.max !== undefined) {
+          searchParams.set(`${key}max`, minMaxFilter.max.toString())
+        }
+      } else {
+        searchParams.set(key, value.toString())
+      }
     }
   }
   return searchParams.toString()

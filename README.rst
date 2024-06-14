@@ -26,7 +26,7 @@ How it works?
 Overview
 --------
 
-.. image:: docs/images/HowItWorks-Overview.png
+.. image:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-Overview.png
     :alt: An overview of how HARP works in your system
     :align: center
 
@@ -50,7 +50,7 @@ Overview
 Service
 -------
 
-.. image:: docs/images/HowItWorks-Service.png
+.. image:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-Service.png
     :alt: What happens within the harp service
     :align: center
 
@@ -63,7 +63,7 @@ An additional (optional) port serves a dashboard to observe your proxies in real
 Proxy
 -----
 
-.. image:: docs/images/HowItWorks-Proxy.png
+.. image:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-Proxy.png
     :alt: What happens within one harp proxy
     :align: center
 
