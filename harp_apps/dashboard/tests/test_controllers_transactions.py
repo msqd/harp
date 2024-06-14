@@ -30,6 +30,7 @@ class TestTransactionsController(TransactionsControllerTestFixtureMixin, Sqlalch
             "flag": {"current": None, "values": ANY},
             "method": {"current": None, "values": ANY},
             "status": {"current": None, "values": ANY},
+            "tpdex": {"current": {"min": ANY, "max": ANY}, "values": ANY},
         }
 
     async def test_filters_meta_updated(self, controller: TransactionsController):
@@ -78,4 +79,5 @@ class TestTransactionsControllerThroughASGI(
             "flag": {"current": None, "values": ANY},
             "method": {"current": None, "values": ANY},
             "status": {"current": None, "values": ANY},
+            "tpdex": {"current": {"min": ANY, "max": ANY}, "values": ANY},
         }

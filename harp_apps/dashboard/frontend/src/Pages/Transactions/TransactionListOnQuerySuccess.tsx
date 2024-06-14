@@ -48,7 +48,7 @@ export function TransactionListOnQuerySuccess({
   }
 
   const resetAllFilters = () => {
-    resetFilters(["endpoint", "method", "status", "flag"])
+    resetFilters(["endpoint", "method", "status", "flag", "tpdexmin", "tpdexmax"])
   }
 
   const updateQueryParam = (paramName: string, paramValue: string | undefined) => {
