@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from statistics import StatisticsError, mean
 
@@ -18,7 +19,7 @@ time_bucket_for_range = {
 }
 
 
-def _format_aggregate(items, count, key):
+def _format_aggregate(items, count, key, *, default=None):
     if count >= 86400:
         period = "sec"
         divider = 86400
@@ -40,7 +41,7 @@ def _format_aggregate(items, count, key):
         "period": period,
         "data": [
             {
-                "value": int(t[key]) if t[key] is not None else None,
+                "value": int(t[key]) if t[key] is not None else default,
             }
             for t in items
         ],
@@ -57,7 +58,9 @@ class OverviewController(RoutingController):
     async def get_summary_data(self, request: HttpRequest):
         time_span = "24h"
         time_bucket = time_bucket_for_range[time_span]
-        start_datetime = get_start_datetime_from_range(time_span)
+        now = datetime.now(UTC)
+        start_datetime = get_start_datetime_from_range(time_span, now=now + timedelta(hours=1))
+
         transactions_by_date_list = await self.storage.transactions_grouped_by_time_bucket(
             start_datetime=start_datetime, time_bucket=time_bucket
         )
@@ -66,7 +69,9 @@ class OverviewController(RoutingController):
         transactions_count = sum([t["count"] for t in transactions_by_date_list])
 
         transactions_by_date_list = generate_continuous_time_range(
-            discontinuous_transactions=transactions_by_date_list, time_bucket=time_bucket, start_datetime=start_datetime
+            discontinuous_transactions=transactions_by_date_list,
+            time_bucket=time_bucket,
+            start_datetime=start_datetime,
         )
         try:
             mean_apdex = mean(filter(None, [t["meanApdex"] for t in transactions_by_date_list]))
@@ -79,13 +84,13 @@ class OverviewController(RoutingController):
                     "mean": int(mean_apdex),
                     "data": [
                         {
-                            "value": int(t["meanApdex"]) if t["meanApdex"] is not None else None,
+                            "value": int(t["meanApdex"]) if t["meanApdex"] is not None else 100,
                         }
                         for t in transactions_by_date_list
                     ],
                 },
-                "transactions": _format_aggregate(transactions_by_date_list, transactions_count, "count"),
-                "errors": _format_aggregate(transactions_by_date_list, errors_count, "errors"),
+                "transactions": _format_aggregate(transactions_by_date_list, transactions_count, "count", default=0),
+                "errors": _format_aggregate(transactions_by_date_list, errors_count, "errors", default=0),
             }
         )
 

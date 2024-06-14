@@ -5,8 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from harp.typing.storage import TransactionsGroupedByTimeBucket
-
-from ...utils.dates import (
+from harp_apps.dashboard.utils.dates import (
     _truncate_datetime_for_time_bucket,
     generate_continuous_time_range,
     get_start_datetime_from_range,
@@ -62,3 +61,17 @@ def test_generate_continuous_time_range():
     assert result[2]["count"] == 20
     assert result[2]["errors"] == 1
     assert result[2]["meanDuration"] == 1.5
+
+
+def test_generate_continuous_time_range_from_empty_discontinuous():
+    discontinuous_transactions: List[TransactionsGroupedByTimeBucket]
+    discontinuous_transactions = []
+
+    start_datetime = datetime(2022, 1, 1, tzinfo=UTC)
+    time_bucket = "hour"
+    with patch("harp_apps.dashboard.utils.dates.datetime") as mock_datetime:
+        mock_datetime.now.return_value = datetime(2022, 1, 1, 7, 0, 0, tzinfo=UTC)
+        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+        result = generate_continuous_time_range(discontinuous_transactions, start_datetime, time_bucket)
+
+    assert len(result) == 8

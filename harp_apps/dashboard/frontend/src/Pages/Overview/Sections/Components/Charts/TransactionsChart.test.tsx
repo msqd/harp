@@ -3,7 +3,7 @@ import { ReactElement } from "react"
 import { ResponsiveContainer } from "recharts"
 import { describe, expect, it, vi } from "vitest"
 
-import { TransactionsChart } from "./TransactionsChart"
+import { TransactionsChart } from "./TransactionsChart.tsx"
 
 interface ModuleWithResponsiveContainer {
   ResponsiveContainer: typeof ResponsiveContainer
