@@ -95,6 +95,7 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
           values={filters["flag"]}
           setValues={setFlagsFilter}
           meta={filtersQuery.data.flag.values}
+          fallbackName={filtersQuery.data.flag.fallbackName}
         />
       ) : null}
 

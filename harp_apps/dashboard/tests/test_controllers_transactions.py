@@ -30,7 +30,7 @@ class TestTransactionsController(
         # todo this format may/will change, but we add this test to ensure we start to be meticulous about quality
         assert response == {
             "endpoint": {"current": None, "values": ANY},
-            "flag": {"current": None, "values": ANY},
+            "flag": {"current": None, "values": ANY, "fallbackName": ANY},
             "method": {"current": None, "values": ANY},
             "status": {"current": None, "values": ANY},
         }
@@ -78,7 +78,7 @@ class TestTransactionsControllerThroughASGI(
         # todo this format may/will change, but we add this test to ensure we start to be meticulous about quality
         assert orjson.loads(response["body"]) == {
             "endpoint": {"current": None, "values": ANY},
-            "flag": {"current": None, "values": ANY},
+            "flag": {"current": None, "values": ANY, "fallbackName": ANY},
             "method": {"current": None, "values": ANY},
             "status": {"current": None, "values": ANY},
         }

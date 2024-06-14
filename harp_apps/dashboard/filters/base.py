@@ -32,7 +32,15 @@ class FacetWithStorage(AbstractFacet):
 
 class NonExhaustiveFacet(AbstractFacet):
     exhaustive = False
+    fallback_name = "NULL"
 
     def __init__(self):
         super().__init__()
         self.choices.add("NULL")
+
+    def filter(self, raw_data: list):
+        return {
+            "values": self.values,
+            "current": self.get_filter(raw_data),
+            "fallbackName": self.fallback_name,
+        }
