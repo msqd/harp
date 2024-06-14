@@ -25,8 +25,10 @@ def event_loop():
         loop = asyncio.get_running_loop()
     except RuntimeError:
         loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
+    try:
+        yield loop
+    finally:
+        loop.close()
 
 
 @pytest.fixture(scope="session")

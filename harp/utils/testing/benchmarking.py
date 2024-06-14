@@ -69,8 +69,10 @@ class AbstractProxyBenchmark:
     async def setup_event_loop(self):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        yield loop
-        loop.close()
+        try:
+            yield loop
+        finally:
+            loop.close()
 
     @pytest.fixture
     async def proxy(self, setup_event_loop, httpbin, database_url, test_id):
@@ -102,7 +104,6 @@ class AbstractProxyBenchmark:
         def result():
             return httpx.get(f"{httpbin}/get")
 
-    @pytest.mark.asyncio
     async def test_httpbin_get(self, benchmark, proxy):
         @benchmark
         def result():
