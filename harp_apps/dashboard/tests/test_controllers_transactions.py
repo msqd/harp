@@ -19,10 +19,7 @@ class TransactionsControllerTestFixtureMixin:
         return TransactionsController(storage=storage, handle_errors=False)
 
 
-class TestTransactionsController(
-    TransactionsControllerTestFixtureMixin,
-    SqlalchemyStorageTestFixtureMixin,
-):
+class TestTransactionsController(TransactionsControllerTestFixtureMixin, SqlalchemyStorageTestFixtureMixin):
     async def test_filters_using_handler(self, controller: TransactionsController):
         request = Mock(spec=HttpRequest, query=MultiDict())
         response = await controller.filters(request)
