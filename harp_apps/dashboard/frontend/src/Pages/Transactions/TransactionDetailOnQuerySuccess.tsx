@@ -13,6 +13,18 @@ import { MessageBody } from "./Components/MessageBody"
 import { MessageHeaders } from "./Components/MessageHeaders"
 import { MessageSummary } from "./Components/MessageSummary"
 
+function Tags({ tags }: { tags: [string, string] }) {
+  return (
+    <div className="flex gap-x-1">
+      {tags.map(([tag, value]) => (
+        <span key={tag} className="text-xs text-gray-500">
+          {tag}={value}
+        </span>
+      ))}
+    </div>
+  )
+}
+
 export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserverSuccessResult<Transaction> }) {
   const transaction = query.data
   const [duration, apdex, cached, noCache] = [
@@ -21,16 +33,25 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
     !!transaction.extras?.cached,
     !!transaction.extras?.no_cache,
   ]
+  const tags = (transaction.tags ? Object.entries(transaction.tags) : []) as unknown as [string, string]
   return (
     <Pane hasDefaultPadding={false} className="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm">
       <Foldable
         title={
           <div className="flex gap-x-0.5 items-center">
             <span className="grow">Transaction</span>
-            <Duration duration={duration} apdex={apdex} cached={cached} noCache={noCache} verbose />
+            <Duration
+              duration={duration}
+              apdex={apdex}
+              cached={cached}
+              noCache={noCache}
+              verbose
+              className="pl-1 pr-2"
+            />
           </div>
         }
-      ></Foldable>
+        children={tags.length ? <Tags tags={tags} /> : null}
+      />
       {(transaction.messages || []).map((message) => (
         <Foldable
           key={message.id}

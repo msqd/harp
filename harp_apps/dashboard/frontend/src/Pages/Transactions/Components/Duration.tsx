@@ -3,6 +3,7 @@ import { CircleStackIcon } from "@heroicons/react/24/outline"
 import { formatDuration } from "date-fns"
 
 import ApdexBadge from "Components/Badges/ApdexBadge"
+import { classNames } from "ui/Utilities"
 
 export function NoCacheIcon() {
   return (
@@ -19,16 +20,18 @@ export const Duration = ({
   cached = false,
   noCache = false,
   verbose = false,
+  className = undefined,
 }: {
   duration: number | null
   apdex: number | null
   cached?: boolean
   noCache?: boolean
   verbose?: boolean
+  className?: string
 }) => {
   if (duration !== null) {
     return (
-      <div className="flex gap-x-0.5 items-center font-normal">
+      <div className={classNames("flex gap-x-0.5 items-center font-normal", className)}>
         {apdex !== null ? <ApdexBadge score={apdex} /> : null}
         <span>{formatDuration({ seconds: duration })}</span>
         {cached ? (
