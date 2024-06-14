@@ -104,7 +104,7 @@ class AbstractProxyBenchmark:
         def result():
             return httpx.get(f"{httpbin}/get")
 
-    async def test_httpbin_get(self, benchmark, proxy):
+    def test_httpbin_get(self, benchmark, proxy):
         @benchmark
         def result():
             return httpx.get(f"http://{proxy}/get")
