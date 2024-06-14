@@ -34,7 +34,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             class="grid grid-cols-3 gap-4 mb-8"
           >
             <div
-              class="css-9dvziv"
+              class="css-kt11ky"
             >
               <div
                 class="flex items-start "
@@ -67,187 +67,214 @@ exports[`renders the title and data when the query is successful 1`] = `
                   details
                 </a>
               </div>
-              <div
-                class="flex self-center relative z-10"
-              >
-                <span
-                  class="bg-teal-400 ring-1 ring-white css-1g68g52"
-                  title="score: 100"
+              <div>
+                <div
+                  class="flex self-center relative z-10"
                 >
-                  A++
-                </span>
+                  <span
+                    class="bg-teal-400 ring-1 ring-white css-1ubanwl"
+                    title="score: 100"
+                  >
+                    A++
+                    <div
+                      class="text-xs font-normal text-right"
+                    >
+                      24h average
+                    </div>
+                  </span>
+                </div>
+                <svg
+                  preserveAspectRatio="none"
+                  style="margin: -3px; position: absolute; bottom: 0px; left: 0px; z-index: 0; border-top: 1px dashed #E5E7EB;"
+                  viewBox="0 0 240 60"
+                >
+                  <g>
+                    <circle
+                      cx="2"
+                      cy="2"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="12.26086956521739"
+                      cy="11.520000000000001"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="22.52173913043478"
+                      cy="6.48"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="32.78260869565217"
+                      cy="9.280000000000001"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="43.04347826086956"
+                      cy="8.72"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="53.30434782608695"
+                      cy="4.800000000000001"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="63.565217391304344"
+                      cy="8.72"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="73.82608695652173"
+                      cy="9.280000000000001"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="84.08695652173913"
+                      cy="6.48"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="94.34782608695652"
+                      cy="11.520000000000001"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="104.6086956521739"
+                      cy="2"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="114.8695652173913"
+                      cy="11.520000000000001"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="125.13043478260869"
+                      cy="6.48"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="135.39130434782606"
+                      cy="9.280000000000001"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="145.65217391304347"
+                      cy="8.72"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="155.91304347826087"
+                      cy="4.800000000000001"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="166.17391304347825"
+                      cy="8.72"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="176.43478260869563"
+                      cy="9.280000000000001"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="186.69565217391303"
+                      cy="6.48"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="196.95652173913044"
+                      cy="11.520000000000001"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="207.2173913043478"
+                      cy="2"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="217.4782608695652"
+                      cy="11.520000000000001"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="227.7391304347826"
+                      cy="6.48"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="238"
+                      cy="9.280000000000001"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <polyline
+                      points="2 2 12.26086956521739 11.520000000000001 22.52173913043478 6.48 32.78260869565217 9.280000000000001 43.04347826086956 8.72 53.30434782608695 4.800000000000001 63.565217391304344 8.72 73.82608695652173 9.280000000000001 84.08695652173913 6.48 94.34782608695652 11.520000000000001 104.6086956521739 2 114.8695652173913 11.520000000000001 125.13043478260869 6.48 135.39130434782606 9.280000000000001 145.65217391304347 8.72 155.91304347826087 4.800000000000001 166.17391304347825 8.72 176.43478260869563 9.280000000000001 186.69565217391303 6.48 196.95652173913044 11.520000000000001 207.2173913043478 2 217.4782608695652 11.520000000000001 227.7391304347826 6.48 238 9.280000000000001 238 58 2 58 2 2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <polyline
+                      points="2 2 12.26086956521739 11.520000000000001 22.52173913043478 6.48 32.78260869565217 9.280000000000001 43.04347826086956 8.72 53.30434782608695 4.800000000000001 63.565217391304344 8.72 73.82608695652173 9.280000000000001 84.08695652173913 6.48 94.34782608695652 11.520000000000001 104.6086956521739 2 114.8695652173913 11.520000000000001 125.13043478260869 6.48 135.39130434782606 9.280000000000001 145.65217391304347 8.72 155.91304347826087 4.800000000000001 166.17391304347825 8.72 176.43478260869563 9.280000000000001 186.69565217391303 6.48 196.95652173913044 11.520000000000001 207.2173913043478 2 217.4782608695652 11.520000000000001 227.7391304347826 6.48 238 9.280000000000001"
+                      style="stroke: #ADD8E6; stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; fill: none;"
+                    />
+                  </g>
+                  <g>
+                    <circle
+                      cx="238"
+                      cy="9.280000000000001"
+                      r="2"
+                      style="fill: #ADD8E6;"
+                    />
+                  </g>
+                </svg>
+                <div
+                  class="absolute right-0 bottom-0 flex flex-col items-end"
+                  style="height: -3px;"
+                >
+                  <span
+                    class="bg-teal-400 opacity-50 border-2 border-white css-1ty0yov"
+                    title="score: 100"
+                  >
+                    A++
+                  </span>
+                  <div
+                    class="grow"
+                  />
+                  <span
+                    class="bg-red-700 opacity-50 border-2 border-white css-1ty0yov"
+                    title="score: 0"
+                  >
+                    G
+                  </span>
+                </div>
               </div>
-              <svg
-                preserveAspectRatio="none"
-                style="margin: -3px; position: absolute; bottom: 0px; left: 0px; z-index: 0;"
-                viewBox="0 0 240 60"
-              >
-                <g>
-                  <circle
-                    cx="2"
-                    cy="2.5544554455445545"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="12.26086956521739"
-                    cy="11.980198019801982"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="22.52173913043478"
-                    cy="6.990099009900991"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="32.78260869565217"
-                    cy="9.762376237623762"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="43.04347826086956"
-                    cy="9.207920792079209"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="53.30434782608695"
-                    cy="5.326732673267327"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="63.565217391304344"
-                    cy="9.207920792079209"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="73.82608695652173"
-                    cy="9.762376237623762"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="84.08695652173913"
-                    cy="6.990099009900991"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="94.34782608695652"
-                    cy="11.980198019801982"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="104.6086956521739"
-                    cy="2.5544554455445545"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="114.8695652173913"
-                    cy="11.980198019801982"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="125.13043478260869"
-                    cy="6.990099009900991"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="135.39130434782606"
-                    cy="9.762376237623762"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="145.65217391304347"
-                    cy="9.207920792079209"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="155.91304347826087"
-                    cy="5.326732673267327"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="166.17391304347825"
-                    cy="9.207920792079209"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="176.43478260869563"
-                    cy="9.762376237623762"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="186.69565217391303"
-                    cy="6.990099009900991"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="196.95652173913044"
-                    cy="11.980198019801982"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="207.2173913043478"
-                    cy="2.5544554455445545"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="217.4782608695652"
-                    cy="11.980198019801982"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="227.7391304347826"
-                    cy="6.990099009900991"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="238"
-                    cy="9.762376237623762"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <polyline
-                    points="2 2.5544554455445545 12.26086956521739 11.980198019801982 22.52173913043478 6.990099009900991 32.78260869565217 9.762376237623762 43.04347826086956 9.207920792079209 53.30434782608695 5.326732673267327 63.565217391304344 9.207920792079209 73.82608695652173 9.762376237623762 84.08695652173913 6.990099009900991 94.34782608695652 11.980198019801982 104.6086956521739 2.5544554455445545 114.8695652173913 11.980198019801982 125.13043478260869 6.990099009900991 135.39130434782606 9.762376237623762 145.65217391304347 9.207920792079209 155.91304347826087 5.326732673267327 166.17391304347825 9.207920792079209 176.43478260869563 9.762376237623762 186.69565217391303 6.990099009900991 196.95652173913044 11.980198019801982 207.2173913043478 2.5544554455445545 217.4782608695652 11.980198019801982 227.7391304347826 6.990099009900991 238 9.762376237623762 238 58 2 58 2 2.5544554455445545"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <polyline
-                    points="2 2.5544554455445545 12.26086956521739 11.980198019801982 22.52173913043478 6.990099009900991 32.78260869565217 9.762376237623762 43.04347826086956 9.207920792079209 53.30434782608695 5.326732673267327 63.565217391304344 9.207920792079209 73.82608695652173 9.762376237623762 84.08695652173913 6.990099009900991 94.34782608695652 11.980198019801982 104.6086956521739 2.5544554455445545 114.8695652173913 11.980198019801982 125.13043478260869 6.990099009900991 135.39130434782606 9.762376237623762 145.65217391304347 9.207920792079209 155.91304347826087 5.326732673267327 166.17391304347825 9.207920792079209 176.43478260869563 9.762376237623762 186.69565217391303 6.990099009900991 196.95652173913044 11.980198019801982 207.2173913043478 2.5544554455445545 217.4782608695652 11.980198019801982 227.7391304347826 6.990099009900991 238 9.762376237623762"
-                    style="stroke: #ADD8E6; stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; fill: none;"
-                  />
-                </g>
-                <g>
-                  <circle
-                    cx="238"
-                    cy="9.762376237623762"
-                    r="2"
-                    style="fill: #ADD8E6;"
-                  />
-                </g>
-              </svg>
             </div>
             <div
-              class="css-9dvziv"
+              class="css-kt11ky"
             >
               <div
                 class="flex items-start "
@@ -280,199 +307,201 @@ exports[`renders the title and data when the query is successful 1`] = `
                   details
                 </a>
               </div>
-              <div
-                class="flex flex-col self-center relative z-10 items-start"
-              >
-                <span
-                  class="bg-white ring-1 ring-blue-200 css-14jvdk3"
-                  color="black"
+              <div>
+                <div
+                  class="flex flex-col self-center relative z-10 items-start"
                 >
-                  56
-                   
                   <span
-                    class="font-light"
+                    class="bg-white ring-1 ring-blue-200 css-9yiat4"
+                    color="black"
                   >
-                    /
-                    min
+                    56
+                     
+                    <span
+                      class="font-light"
+                    >
+                      /
+                      min
+                    </span>
+                    <div
+                      class="text-xs font-normal text-gray-500 text-right"
+                    >
+                      24h average
+                    </div>
                   </span>
-                  <div
-                    class="text-xs font-normal text-gray-500 text-right"
-                  >
-                    over the last 24 hours
-                  </div>
-                </span>
+                </div>
+                <svg
+                  preserveAspectRatio="none"
+                  style="margin: -3px; position: absolute; bottom: 0px; left: 0px; z-index: 0;"
+                  viewBox="0 0 240 60"
+                >
+                  <g>
+                    <circle
+                      cx="2"
+                      cy="17.11111111111111"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="12.26086956521739"
+                      cy="2"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="22.52173913043478"
+                      cy="10"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="32.78260869565217"
+                      cy="5.555555555555555"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="43.04347826086956"
+                      cy="6.444444444444445"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="53.30434782608695"
+                      cy="12.666666666666666"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="63.565217391304344"
+                      cy="6.444444444444445"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="73.82608695652173"
+                      cy="5.555555555555555"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="84.08695652173913"
+                      cy="10"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="94.34782608695652"
+                      cy="2"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="104.6086956521739"
+                      cy="17.11111111111111"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="114.8695652173913"
+                      cy="2"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="125.13043478260869"
+                      cy="10"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="135.39130434782606"
+                      cy="5.555555555555555"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="145.65217391304347"
+                      cy="6.444444444444445"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="155.91304347826087"
+                      cy="12.666666666666666"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="166.17391304347825"
+                      cy="6.444444444444445"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="176.43478260869563"
+                      cy="5.555555555555555"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="186.69565217391303"
+                      cy="10"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="196.95652173913044"
+                      cy="2"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="207.2173913043478"
+                      cy="17.11111111111111"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="217.4782608695652"
+                      cy="2"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="227.7391304347826"
+                      cy="10"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="238"
+                      cy="5.555555555555555"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <polyline
+                      points="2 17.11111111111111 12.26086956521739 2 22.52173913043478 10 32.78260869565217 5.555555555555555 43.04347826086956 6.444444444444445 53.30434782608695 12.666666666666666 63.565217391304344 6.444444444444445 73.82608695652173 5.555555555555555 84.08695652173913 10 94.34782608695652 2 104.6086956521739 17.11111111111111 114.8695652173913 2 125.13043478260869 10 135.39130434782606 5.555555555555555 145.65217391304347 6.444444444444445 155.91304347826087 12.666666666666666 166.17391304347825 6.444444444444445 176.43478260869563 5.555555555555555 186.69565217391303 10 196.95652173913044 2 207.2173913043478 17.11111111111111 217.4782608695652 2 227.7391304347826 10 238 5.555555555555555 238 58 2 58 2 17.11111111111111"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                    />
+                    <polyline
+                      points="2 17.11111111111111 12.26086956521739 2 22.52173913043478 10 32.78260869565217 5.555555555555555 43.04347826086956 6.444444444444445 53.30434782608695 12.666666666666666 63.565217391304344 6.444444444444445 73.82608695652173 5.555555555555555 84.08695652173913 10 94.34782608695652 2 104.6086956521739 17.11111111111111 114.8695652173913 2 125.13043478260869 10 135.39130434782606 5.555555555555555 145.65217391304347 6.444444444444445 155.91304347826087 12.666666666666666 166.17391304347825 6.444444444444445 176.43478260869563 5.555555555555555 186.69565217391303 10 196.95652173913044 2 207.2173913043478 17.11111111111111 217.4782608695652 2 227.7391304347826 10 238 5.555555555555555"
+                      style="stroke: #ADD8E6; stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; fill: none;"
+                    />
+                  </g>
+                  <g>
+                    <circle
+                      cx="238"
+                      cy="5.555555555555555"
+                      r="2"
+                      style="fill: #ADD8E6;"
+                    />
+                  </g>
+                </svg>
               </div>
-              <svg
-                preserveAspectRatio="none"
-                style="margin: -3px; position: absolute; bottom: 0px; left: 0px; z-index: 0;"
-                viewBox="0 0 240 60"
-              >
-                <g>
-                  <circle
-                    cx="2"
-                    cy="17.75"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="12.26086956521739"
-                    cy="2.875"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="22.52173913043478"
-                    cy="10.75"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="32.78260869565217"
-                    cy="6.375"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="43.04347826086956"
-                    cy="7.25"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="53.30434782608695"
-                    cy="13.375"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="63.565217391304344"
-                    cy="7.25"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="73.82608695652173"
-                    cy="6.375"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="84.08695652173913"
-                    cy="10.75"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="94.34782608695652"
-                    cy="2.875"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="104.6086956521739"
-                    cy="17.75"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="114.8695652173913"
-                    cy="2.875"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="125.13043478260869"
-                    cy="10.75"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="135.39130434782606"
-                    cy="6.375"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="145.65217391304347"
-                    cy="7.25"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="155.91304347826087"
-                    cy="13.375"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="166.17391304347825"
-                    cy="7.25"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="176.43478260869563"
-                    cy="6.375"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="186.69565217391303"
-                    cy="10.75"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="196.95652173913044"
-                    cy="2.875"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="207.2173913043478"
-                    cy="17.75"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="217.4782608695652"
-                    cy="2.875"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="227.7391304347826"
-                    cy="10.75"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="238"
-                    cy="6.375"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <polyline
-                    points="2 17.75 12.26086956521739 2.875 22.52173913043478 10.75 32.78260869565217 6.375 43.04347826086956 7.25 53.30434782608695 13.375 63.565217391304344 7.25 73.82608695652173 6.375 84.08695652173913 10.75 94.34782608695652 2.875 104.6086956521739 17.75 114.8695652173913 2.875 125.13043478260869 10.75 135.39130434782606 6.375 145.65217391304347 7.25 155.91304347826087 13.375 166.17391304347825 7.25 176.43478260869563 6.375 186.69565217391303 10.75 196.95652173913044 2.875 207.2173913043478 17.75 217.4782608695652 2.875 227.7391304347826 10.75 238 6.375 238 58 2 58 2 17.75"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
-                  />
-                  <polyline
-                    points="2 17.75 12.26086956521739 2.875 22.52173913043478 10.75 32.78260869565217 6.375 43.04347826086956 7.25 53.30434782608695 13.375 63.565217391304344 7.25 73.82608695652173 6.375 84.08695652173913 10.75 94.34782608695652 2.875 104.6086956521739 17.75 114.8695652173913 2.875 125.13043478260869 10.75 135.39130434782606 6.375 145.65217391304347 7.25 155.91304347826087 13.375 166.17391304347825 7.25 176.43478260869563 6.375 186.69565217391303 10.75 196.95652173913044 2.875 207.2173913043478 17.75 217.4782608695652 2.875 227.7391304347826 10.75 238 6.375"
-                    style="stroke: #ADD8E6; stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; fill: none;"
-                  />
-                </g>
-                <g>
-                  <circle
-                    cx="238"
-                    cy="6.375"
-                    r="2"
-                    style="fill: #ADD8E6;"
-                  />
-                </g>
-              </svg>
             </div>
             <div
-              class="css-9dvziv"
+              class="css-kt11ky"
             >
               <div
                 class="flex items-start "
@@ -505,196 +534,198 @@ exports[`renders the title and data when the query is successful 1`] = `
                   details
                 </a>
               </div>
-              <div
-                class="flex flex-col self-center relative z-10 items-start"
-              >
-                <span
-                  class="bg-white ring-1 ring-red-200 css-14jvdk3"
-                  color="black"
+              <div>
+                <div
+                  class="flex flex-col self-center relative z-10 items-start"
                 >
-                  11
-                   
                   <span
-                    class="font-light"
+                    class="bg-white ring-1 ring-red-200 css-9yiat4"
+                    color="black"
                   >
-                    /
-                    min
+                    11
+                     
+                    <span
+                      class="font-light"
+                    >
+                      /
+                      min
+                    </span>
+                    <div
+                      class="text-xs font-normal text-gray-500 text-right"
+                    >
+                      24h average
+                    </div>
                   </span>
-                  <div
-                    class="text-xs font-normal text-gray-500 text-right"
-                  >
-                    over the last 24 hours
-                  </div>
-                </span>
+                </div>
+                <svg
+                  preserveAspectRatio="none"
+                  style="margin: -3px; position: absolute; bottom: 0px; left: 0px; z-index: 0;"
+                  viewBox="0 0 240 60"
+                >
+                  <g>
+                    <circle
+                      cx="2"
+                      cy="34"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="12.26086956521739"
+                      cy="6"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="22.52173913043478"
+                      cy="2"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="32.78260869565217"
+                      cy="22"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="43.04347826086956"
+                      cy="26"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="53.30434782608695"
+                      cy="14"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="63.565217391304344"
+                      cy="26"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="73.82608695652173"
+                      cy="22"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="84.08695652173913"
+                      cy="2"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="94.34782608695652"
+                      cy="6"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="104.6086956521739"
+                      cy="34"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="114.8695652173913"
+                      cy="6"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="125.13043478260869"
+                      cy="2"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="135.39130434782606"
+                      cy="22"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="145.65217391304347"
+                      cy="26"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="155.91304347826087"
+                      cy="14"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="166.17391304347825"
+                      cy="26"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="176.43478260869563"
+                      cy="22"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="186.69565217391303"
+                      cy="2"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="196.95652173913044"
+                      cy="6"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="207.2173913043478"
+                      cy="34"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="217.4782608695652"
+                      cy="6"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="227.7391304347826"
+                      cy="2"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <circle
+                      cx="238"
+                      cy="22"
+                      r="2"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <polyline
+                      points="2 34 12.26086956521739 6 22.52173913043478 2 32.78260869565217 22 43.04347826086956 26 53.30434782608695 14 63.565217391304344 26 73.82608695652173 22 84.08695652173913 2 94.34782608695652 6 104.6086956521739 34 114.8695652173913 6 125.13043478260869 2 135.39130434782606 22 145.65217391304347 26 155.91304347826087 14 166.17391304347825 26 176.43478260869563 22 186.69565217391303 2 196.95652173913044 6 207.2173913043478 34 217.4782608695652 6 227.7391304347826 2 238 22 238 58 2 58 2 34"
+                      style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
+                    />
+                    <polyline
+                      points="2 34 12.26086956521739 6 22.52173913043478 2 32.78260869565217 22 43.04347826086956 26 53.30434782608695 14 63.565217391304344 26 73.82608695652173 22 84.08695652173913 2 94.34782608695652 6 104.6086956521739 34 114.8695652173913 6 125.13043478260869 2 135.39130434782606 22 145.65217391304347 26 155.91304347826087 14 166.17391304347825 26 176.43478260869563 22 186.69565217391303 2 196.95652173913044 6 207.2173913043478 34 217.4782608695652 6 227.7391304347826 2 238 22"
+                      style="stroke: #e6b3ad; stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; fill: none;"
+                    />
+                  </g>
+                  <g>
+                    <circle
+                      cx="238"
+                      cy="22"
+                      r="2"
+                      style="fill: #e6b3ad;"
+                    />
+                  </g>
+                </svg>
               </div>
-              <svg
-                preserveAspectRatio="none"
-                style="margin: -3px; position: absolute; bottom: 0px; left: 0px; z-index: 0;"
-                viewBox="0 0 240 60"
-              >
-                <g>
-                  <circle
-                    cx="2"
-                    cy="35.6"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="12.26086956521739"
-                    cy="9.466666666666667"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="22.52173913043478"
-                    cy="5.733333333333333"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="32.78260869565217"
-                    cy="24.4"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="43.04347826086956"
-                    cy="28.133333333333333"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="53.30434782608695"
-                    cy="16.933333333333334"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="63.565217391304344"
-                    cy="28.133333333333333"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="73.82608695652173"
-                    cy="24.4"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="84.08695652173913"
-                    cy="5.733333333333333"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="94.34782608695652"
-                    cy="9.466666666666667"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="104.6086956521739"
-                    cy="35.6"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="114.8695652173913"
-                    cy="9.466666666666667"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="125.13043478260869"
-                    cy="5.733333333333333"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="135.39130434782606"
-                    cy="24.4"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="145.65217391304347"
-                    cy="28.133333333333333"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="155.91304347826087"
-                    cy="16.933333333333334"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="166.17391304347825"
-                    cy="28.133333333333333"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="176.43478260869563"
-                    cy="24.4"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="186.69565217391303"
-                    cy="5.733333333333333"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="196.95652173913044"
-                    cy="9.466666666666667"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="207.2173913043478"
-                    cy="35.6"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="217.4782608695652"
-                    cy="9.466666666666667"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="227.7391304347826"
-                    cy="5.733333333333333"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <circle
-                    cx="238"
-                    cy="24.4"
-                    r="2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <polyline
-                    points="2 35.6 12.26086956521739 9.466666666666667 22.52173913043478 5.733333333333333 32.78260869565217 24.4 43.04347826086956 28.133333333333333 53.30434782608695 16.933333333333334 63.565217391304344 28.133333333333333 73.82608695652173 24.4 84.08695652173913 5.733333333333333 94.34782608695652 9.466666666666667 104.6086956521739 35.6 114.8695652173913 9.466666666666667 125.13043478260869 5.733333333333333 135.39130434782606 24.4 145.65217391304347 28.133333333333333 155.91304347826087 16.933333333333334 166.17391304347825 28.133333333333333 176.43478260869563 24.4 186.69565217391303 5.733333333333333 196.95652173913044 9.466666666666667 207.2173913043478 35.6 217.4782608695652 9.466666666666667 227.7391304347826 5.733333333333333 238 24.4 238 58 2 58 2 35.6"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #e6b3ad; pointer-events: auto;"
-                  />
-                  <polyline
-                    points="2 35.6 12.26086956521739 9.466666666666667 22.52173913043478 5.733333333333333 32.78260869565217 24.4 43.04347826086956 28.133333333333333 53.30434782608695 16.933333333333334 63.565217391304344 28.133333333333333 73.82608695652173 24.4 84.08695652173913 5.733333333333333 94.34782608695652 9.466666666666667 104.6086956521739 35.6 114.8695652173913 9.466666666666667 125.13043478260869 5.733333333333333 135.39130434782606 24.4 145.65217391304347 28.133333333333333 155.91304347826087 16.933333333333334 166.17391304347825 28.133333333333333 176.43478260869563 24.4 186.69565217391303 5.733333333333333 196.95652173913044 9.466666666666667 207.2173913043478 35.6 217.4782608695652 9.466666666666667 227.7391304347826 5.733333333333333 238 24.4"
-                    style="stroke: #e6b3ad; stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; fill: none;"
-                  />
-                </g>
-                <g>
-                  <circle
-                    cx="238"
-                    cy="24.4"
-                    r="2"
-                    style="fill: #e6b3ad;"
-                  />
-                </g>
-              </svg>
             </div>
           </div>
           <div
@@ -759,10 +790,16 @@ exports[`renders the title and data when the query is successful 1`] = `
                     class="flex self-center"
                   >
                     <span
-                      class="bg-green-500 css-1g68g52"
+                      class="bg-green-500 css-1ubanwl"
                       title="score: 95"
                     >
                       A
+                      <div
+                        class="text-xs font-normal text-right"
+                      >
+                        1h
+                         average
+                      </div>
                     </span>
                   </div>
                   <div
@@ -783,8 +820,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                       Errors:
                     </span>
                     <span>
-                      50
-                      %
+                      50,0 %
                     </span>
                   </div>
                 </div>
@@ -817,10 +853,16 @@ exports[`renders the title and data when the query is successful 1`] = `
                       class="flex self-center"
                     >
                       <span
-                        class="bg-green-500 css-1g68g52"
+                        class="bg-green-500 css-1ubanwl"
                         title="score: 95"
                       >
                         A
+                        <div
+                          class="text-xs font-normal text-right"
+                        >
+                          1h
+                           average
+                        </div>
                       </span>
                     </div>
                     <div
@@ -841,8 +883,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                         Errors:
                       </span>
                       <span>
-                        50
-                        %
+                        50,0 %
                       </span>
                     </div>
                   </div>
@@ -872,10 +913,16 @@ exports[`renders the title and data when the query is successful 1`] = `
                       class="flex self-center"
                     >
                       <span
-                        class="bg-green-500 css-1g68g52"
+                        class="bg-green-500 css-1ubanwl"
                         title="score: 95"
                       >
                         A
+                        <div
+                          class="text-xs font-normal text-right"
+                        >
+                          1h
+                           average
+                        </div>
                       </span>
                     </div>
                     <div
@@ -896,8 +943,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                         Errors:
                       </span>
                       <span>
-                        50
-                        %
+                        50,0 %
                       </span>
                     </div>
                   </div>

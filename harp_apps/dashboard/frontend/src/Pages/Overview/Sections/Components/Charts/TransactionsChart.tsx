@@ -33,7 +33,7 @@ export const TransactionsChart = ({ data, timeRange, width }: TransactionsChartP
 
   const toolTipLabelFormatter = (label: string) => {
     const date = new Date(label)
-    return date.toLocaleString()
+    return <div className="font-normal text-sm">{date.toLocaleString()} foo</div>
   }
 
   return (
@@ -59,7 +59,29 @@ export const TransactionsChart = ({ data, timeRange, width }: TransactionsChartP
           tickFormatter={tickFormatter}
           minTickGap={20}
         />
-        <Tooltip isAnimationActive={false} filterNull={false} labelFormatter={toolTipLabelFormatter} />
+        <Tooltip
+          isAnimationActive={false}
+          filterNull={false}
+          labelFormatter={toolTipLabelFormatter}
+          formatter={(value, name, item) => {
+            if (name == "Errors") {
+              const payload = item.payload as { count: number; errors: number }
+              return (
+                <span>
+                  {value} (
+                  {payload.count
+                    ? (payload.errors / payload.count).toLocaleString(undefined, {
+                        style: "percent",
+                        minimumFractionDigits: 1,
+                      })
+                    : "-"}
+                  )
+                </span>
+              )
+            }
+            return value
+          }}
+        />
         <Legend verticalAlign="top" align="right" height={36} iconSize={10} />
         <Bar
           dataKey="count"

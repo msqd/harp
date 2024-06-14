@@ -14,14 +14,14 @@ import { SparklineChart } from "./Components/Charts/SparklineChart.tsx"
 
 import { mapGetValues } from "../utils.ts"
 
-const StyledSummaryPane = styled(Pane)(() => [tw`overflow-hidden h-32 xl:h-40 2xl:h-64 relative`])
+const StyledSummaryPane = styled(Pane)(() => [tw`overflow-hidden relative h-32 xl:h-40 2xl:h-48`])
 
 function RateLegend({ rate, period, className }: { rate: number; period: string; className?: string }) {
   return (
     <div className="flex flex-col self-center relative z-10 items-start">
       <StyledJumboBadge className={classNames("bg-white ring-1", className)} size="xl" color="black">
         {rate} <span className="font-light">/{period}</span>
-        <div className="text-xs font-normal text-gray-500 text-right">over the last 24 hours</div>
+        <div className="text-xs font-normal text-gray-500 text-right">24h average</div>
       </StyledJumboBadge>
     </div>
   )
@@ -43,9 +43,22 @@ export const SummarySection = () => {
           </div>
           <OnQuerySuccess query={summaryQuery}>
             {(query) => (
-              <SparklineChart data={mapGetValues(query.data.tpdex.data)} color="#ADD8E6">
+              <SparklineChart
+                data={mapGetValues(query.data.tpdex.data)}
+                color="#ADD8E6"
+                rightLegend={
+                  <>
+                    <TpdexBadge score={100} size="xs" className={"opacity-50 border-2 border-white"} />
+                    <div className="grow"></div>
+                    <TpdexBadge score={0} size="xs" className={"opacity-50 border-2 border-white"} />
+                  </>
+                }
+                showTopHBar
+              >
                 <div className="flex self-center relative z-10">
-                  <TpdexBadge score={query.data.tpdex.mean} size="xl" className="ring-1 ring-white" />
+                  <TpdexBadge score={query.data.tpdex.mean} size="xl" className="ring-1 ring-white">
+                    <div className="text-xs font-normal text-right">24h average</div>
+                  </TpdexBadge>
                 </div>
               </SparklineChart>
             )}

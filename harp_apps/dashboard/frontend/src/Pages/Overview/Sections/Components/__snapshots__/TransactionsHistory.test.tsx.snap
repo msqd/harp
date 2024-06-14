@@ -20,10 +20,16 @@ exports[`renders the title and data when the query is successful 1`] = `
           class="flex self-center"
         >
           <span
-            class="bg-green-500 css-1g68g52"
+            class="bg-green-500 css-1ubanwl"
             title="score: 95"
           >
             A
+            <div
+              class="text-xs font-normal text-right"
+            >
+              1h
+               average
+            </div>
           </span>
         </div>
         <div
@@ -44,8 +50,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             Errors:
           </span>
           <span>
-            50
-            %
+            50,0 %
           </span>
         </div>
       </div>
