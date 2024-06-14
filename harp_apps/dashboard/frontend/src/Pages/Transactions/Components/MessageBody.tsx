@@ -12,7 +12,7 @@ export function MessageBody({ id }: { id: string }) {
     if (query.data.content.byteLength) {
       return (
         <div>
-          <CopyToClipboard targetRef={ref} contentType="html" className="absolute right-0" />
+          <CopyToClipboard targetRef={ref} contentType="html" className="absolute right-2" />
 
           <div className="px-2 pt-4" ref={ref}>
             <PrettyBody content={query.data.content} contentType={query.data.contentType} />
