@@ -31,7 +31,6 @@ function Tags({ tags }: { tags: [string, string] }) {
 export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserverSuccessResult<Transaction> }) {
   const location = useLocation()
 
-  const messageRefs = useRef<(HTMLDivElement | null)[]>([])
   const transaction = query.data
   const [duration, apdex, cached, noCache] = [
     transaction.elapsed ? Math.trunc(transaction.elapsed) / 1000 : null,
@@ -41,11 +40,6 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
   ]
   const tags = (transaction.tags ? Object.entries(transaction.tags) : []) as unknown as [string, string]
   const transactionUrl = `${window.location.origin}${location.pathname}/${transaction.id}`
-  useEffect(() => {
-    // Ensure the ref array length matches the number of messages
-    messageRefs.current = messageRefs.current.slice(0, transaction.messages?.length)
-  }, [transaction.messages?.length])
-
   return (
     <Pane hasDefaultPadding={false} className="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm">
       <Foldable
@@ -82,14 +76,7 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
           open={message.kind != "error"}
           className="relative"
         >
-          <CopyToClipboard
-            targetRef={{ current: messageRefs.current[index] }}
-            className="absolute top-11 right-0"
-            contentType="html"
-          />
-          <div ref={(el) => (messageRefs.current[index] = el)} key={message.id}>
-            <MessageHeaders id={message.headers} />
-          </div>
+          <MessageHeaders id={message.headers} />
           <MessageBody id={message.body} />
         </Foldable>
       ))}
