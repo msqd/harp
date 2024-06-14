@@ -1,5 +1,6 @@
 import { isEqual } from "lodash"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { Helmet } from "react-helmet"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 
 import { Page } from "Components/Page"
@@ -124,6 +125,11 @@ export function TransactionListPage() {
         </PageTitle>
       }
     >
+      <Helmet>
+        <title>Transactions | Harp</title>
+        <meta name="description" content="Transactions list page" />
+      </Helmet>
+
       <OnQuerySuccess query={query}>
         {(query) => <TransactionListOnQuerySuccess query={query} filters={filters} />}
       </OnQuerySuccess>
