@@ -2,7 +2,7 @@ import { Sparklines, SparklinesCurve, SparklinesSpots } from "react-sparklines"
 
 import ApdexBadge from "Components/Badges/ApdexBadge.tsx"
 
-export function PerformancesSummary({ mean, data }: { mean: number; data: number[] }) {
+export function PerformancesSparklineGraph({ mean, data }: { mean: number; data: number[] }) {
   return (
     <>
       <div className="flex self-center relative z-10">

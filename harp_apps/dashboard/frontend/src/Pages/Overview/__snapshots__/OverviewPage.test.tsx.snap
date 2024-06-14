@@ -28,7 +28,7 @@ exports[`renders the title and data when the query is successful 1`] = `
           <h2
             class="css-13yts7e"
           >
-            Summary (24h)
+            Summary
           </h2>
           <div
             class="grid grid-cols-3 gap-4 mb-8"
@@ -39,7 +39,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               <h3
                 class="css-1hpno4e"
               >
-                Performances
+                Performances (24h)
               </h3>
               <div
                 class="flex self-center relative z-10"
@@ -82,7 +82,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               <h3
                 class="css-1hpno4e"
               >
-                Transactions
+                Transactions (24h)
               </h3>
               <div
                 class="flex self-center relative z-10"
@@ -276,7 +276,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               <h3
                 class="css-1hpno4e"
               >
-                Errors
+                Errors (24h)
               </h3>
               <div
                 class="flex self-center relative z-10"
@@ -512,11 +512,11 @@ exports[`renders the title and data when the query is successful 1`] = `
             class="mb-4 css-14upriz"
           >
             <div>
-              <h2
-                class="css-13yts7e"
+              <h3
+                class="css-1hpno4e"
               >
-                Transactions Overview
-              </h2>
+                Transactions
+              </h3>
               <div
                 style="display: flex; align-items: center;"
               >
@@ -570,11 +570,11 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="css-14upriz"
             >
               <div>
-                <h2
-                  class="css-13yts7e"
+                <h3
+                  class="css-1hpno4e"
                 >
                   endpoint1
-                </h2>
+                </h3>
                 <div
                   style="display: flex; align-items: center;"
                 >
@@ -625,11 +625,11 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="css-14upriz"
             >
               <div>
-                <h2
-                  class="css-13yts7e"
+                <h3
+                  class="css-1hpno4e"
                 >
                   endpoint2
-                </h2>
+                </h3>
                 <div
                   style="display: flex; align-items: center;"
                 >

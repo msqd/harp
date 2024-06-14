@@ -3,7 +3,7 @@ import { Sparklines, SparklinesLine, SparklinesSpots } from "react-sparklines"
 import { StyledJumboBadge } from "Components/Badges/StyledJumboBadge.tsx"
 import { classNames } from "ui/Utilities"
 
-export function RateSummary({
+export function RateSparklineGraph({
   rate,
   period,
   data,
