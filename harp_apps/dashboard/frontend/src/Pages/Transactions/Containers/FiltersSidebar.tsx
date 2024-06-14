@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 
-import { apdexScale } from "Components/Badges/constants"
+import { tpdexScale } from "Components/Badges/constants"
 import { useTransactionsFiltersQuery } from "Domain/Transactions"
 import { ArrayFilter, Filters, MinMaxFilter } from "Types/filters"
 import { Pane } from "ui/Components/Pane"
@@ -19,12 +19,12 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
   const filtersQuery = useTransactionsFiltersQuery()
 
   // marks and setup for range slider for tpdex
-  const marks = [...apdexScale].map((rating, index) => ({
+  const marks = [...tpdexScale].map((rating, index) => ({
     value: index * 10,
     label: rating.label,
     className: rating.className,
   }))
-  const markValueToThreshold = new Map([...apdexScale].map((rating, index) => [index * 10, rating.threshold]))
+  const markValueToThreshold = new Map([...tpdexScale].map((rating, index) => [index * 10, rating.threshold]))
   const maxKey = Math.max(...Array.from(markValueToThreshold.keys()))
   const minKey = Math.min(...Array.from(markValueToThreshold.keys()))
   markValueToThreshold.set(maxKey, undefined)

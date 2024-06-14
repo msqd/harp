@@ -51,7 +51,7 @@ class TestOverviewController(OverviewControllerTestFixtureMixin, SqlalchemyStora
         with freezegun.freeze_time(now):
             response = await controller.get_summary_data(request)
         assert response == {
-            "apdex": {"data": Any24IntegerValues, "mean": 100},
+            "tpdex": {"data": Any24IntegerValues, "mean": 100},
             "errors": {"data": Any24IntegerValues, "period": "day", "rate": 0},
             "transactions": {"data": Any24IntegerValues, "period": "day", "rate": 0},
         }
@@ -68,7 +68,7 @@ class TestOverviewController(OverviewControllerTestFixtureMixin, SqlalchemyStora
         with freezegun.freeze_time(now):
             response = await controller.get_summary_data(request)
         assert response == {
-            "apdex": {"data": Any24IntegerValues, "mean": 100},
+            "tpdex": {"data": Any24IntegerValues, "mean": 100},
             "errors": {"data": Any24IntegerValues, "period": "day", "rate": 0},
             "transactions": {"data": Any24IntegerValues, "period": "day", "rate": 3},
         }
@@ -94,7 +94,7 @@ class TestOverviewControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
 
         assert orjson.loads(response["body"]) == {
-            "apdex": {"data": Any24IntegerValues, "mean": 100},
+            "tpdex": {"data": Any24IntegerValues, "mean": 100},
             "errors": {"data": Any24IntegerValues, "period": "day", "rate": "0"},
             "transactions": {"data": Any24IntegerValues, "period": "day", "rate": "3"},
         }

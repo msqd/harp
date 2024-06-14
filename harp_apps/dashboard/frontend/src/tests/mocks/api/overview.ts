@@ -8,7 +8,7 @@ const mockOverviewData: OverviewData = {
   },
   count: 20,
   meanDuration: 30,
-  meanApdex: 95,
+  meanTpdex: 95,
   timeRange: "1h",
   transactions: [
     {

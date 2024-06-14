@@ -1,9 +1,9 @@
 import { classNames } from "ui/Utilities"
 
 import { StyledJumboBadge, StyledJumboBadgeProps } from "./StyledJumboBadge.tsx"
-import { apdexScale } from "./constants.ts"
+import { tpdexScale } from "./constants.ts"
 
-export default function ApdexBadge({
+export default function TpdexBadge({
   score,
   className = undefined,
   ...styledProps
@@ -12,7 +12,7 @@ export default function ApdexBadge({
     return null
   }
 
-  for (const rating of apdexScale) {
+  for (const rating of tpdexScale) {
     if (rating.threshold === undefined || score >= rating.threshold) {
       return (
         <StyledJumboBadge

@@ -9,7 +9,7 @@ import {
 it("renders without crashing", () => {
   const data: TransactionsHistoryOnQuerySuccessProps["data"] = {
     meanDuration: 2000,
-    meanApdex: 85,
+    meanTpdex: 85,
     errors: { count: 2, rate: 0.05 },
     transactions: [],
     timeRange: "month",

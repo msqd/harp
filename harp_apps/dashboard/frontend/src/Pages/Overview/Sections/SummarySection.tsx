@@ -2,8 +2,8 @@ import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline"
 import { Link } from "react-router-dom"
 import tw, { styled } from "twin.macro"
 
-import ApdexBadge from "Components/Badges/ApdexBadge.tsx"
 import { StyledJumboBadge } from "Components/Badges/StyledJumboBadge.tsx"
+import TpdexBadge from "Components/Badges/TpdexBadge.tsx"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
 import { useSummaryDataQuery } from "Domain/Overview/useSummaryDataQuery.tsx"
 import { Pane } from "ui/Components/Pane"
@@ -43,9 +43,9 @@ export const SummarySection = () => {
           </div>
           <OnQuerySuccess query={summaryQuery}>
             {(query) => (
-              <SparklineChart data={mapGetValues(query.data.apdex.data)} color="#ADD8E6">
+              <SparklineChart data={mapGetValues(query.data.tpdex.data)} color="#ADD8E6">
                 <div className="flex self-center relative z-10">
-                  <ApdexBadge score={query.data.apdex.mean} size="xl" className="ring-1 ring-white" />
+                  <TpdexBadge score={query.data.tpdex.mean} size="xl" className="ring-1 ring-white" />
                 </div>
               </SparklineChart>
             )}

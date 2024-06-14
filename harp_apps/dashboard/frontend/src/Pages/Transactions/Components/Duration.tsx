@@ -2,7 +2,7 @@ import { XMarkIcon } from "@heroicons/react/16/solid"
 import { CircleStackIcon } from "@heroicons/react/24/outline"
 import { formatDuration } from "date-fns"
 
-import ApdexBadge from "Components/Badges/ApdexBadge"
+import TpdexBadge from "Components/Badges/TpdexBadge.tsx"
 import { classNames } from "ui/Utilities"
 
 export function NoCacheIcon() {
@@ -16,14 +16,14 @@ export function NoCacheIcon() {
 
 export const Duration = ({
   duration,
-  apdex,
+  tpdex,
   cached = false,
   noCache = false,
   verbose = false,
   className = undefined,
 }: {
   duration: number | null
-  apdex: number | null
+  tpdex: number | null
   cached?: boolean
   noCache?: boolean
   verbose?: boolean
@@ -32,7 +32,7 @@ export const Duration = ({
   if (duration !== null) {
     return (
       <div className={classNames("flex gap-x-0.5 items-center font-normal", className)}>
-        {apdex !== null ? <ApdexBadge score={apdex} /> : null}
+        {tpdex !== null ? <TpdexBadge score={tpdex} /> : null}
         <span>{formatDuration({ seconds: duration })}</span>
         {cached ? (
           <span className="h-4 flex text-xs text-slate-800" title="Response was cached.">

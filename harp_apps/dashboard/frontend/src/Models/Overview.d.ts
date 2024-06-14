@@ -9,6 +9,6 @@ export interface OverviewData extends OverviewTransactionsReport {
   }
   count: number
   meanDuration: number
-  meanApdex: number
+  meanTpdex: number
   timeRange: string
 }

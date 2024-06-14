@@ -28,8 +28,8 @@ class Transaction(Entity):
     elapsed: float = None
     """Elapsed time in seconds, if the transaction has ended."""
 
-    apdex: int = None
-    """Apdex score, if the transaction has ended."""
+    tpdex: int = None
+    """TPDEX score, if the transaction has ended."""
 
     # Relations
 

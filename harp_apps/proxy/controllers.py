@@ -14,6 +14,7 @@ from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
 from harp.http.requests import WrappedHttpRequest
 from harp.models import Transaction
 from harp.utils.guids import generate_transaction_id_ksuid
+from harp.utils.tpdex import tpdex
 
 from .events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
 
@@ -149,6 +150,11 @@ class HttpProxyController:
             logger.debug(f"◀ {response.status} {reason} ({spent}ms)", transaction_id=transaction.id)
         else:
             raise ValueError(f"Invalid final message type: {type(response)}")
+
+        if transaction.extras.get("status_class") == "ERR":
+            transaction.tpdex = 0
+        else:
+            transaction.tpdex = tpdex(transaction.elapsed)
 
         # dispatch message event for response
         # TODO delay after response is sent ?

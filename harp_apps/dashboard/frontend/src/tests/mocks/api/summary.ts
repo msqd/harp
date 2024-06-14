@@ -2,7 +2,7 @@ import { http, HttpResponse } from "msw"
 import { SummaryData } from "Domain/Overview/useSummaryDataQuery.tsx"
 
 const mockSummaryData: SummaryData = {
-  apdex: {
+  tpdex: {
     mean: 100,
     data: [...Array(24).keys()].map((i) => ({
       value: 100 - ((i * i * 97) % 20),

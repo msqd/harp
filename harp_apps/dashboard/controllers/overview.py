@@ -74,17 +74,17 @@ class OverviewController(RoutingController):
             start_datetime=start_datetime,
         )
         try:
-            mean_apdex = mean(filter(None, [t["meanApdex"] for t in transactions_by_date_list]))
+            mean_tpdex = mean(filter(None, [t["meanTpdex"] for t in transactions_by_date_list]))
         except StatisticsError:
-            mean_apdex = 100
+            mean_tpdex = 100
 
         return json(
             {
-                "apdex": {
-                    "mean": int(mean_apdex),
+                "tpdex": {
+                    "mean": int(mean_tpdex),
                     "data": [
                         {
-                            "value": int(t["meanApdex"]) if t["meanApdex"] is not None else 100,
+                            "value": int(t["meanTpdex"]) if t["meanTpdex"] is not None else 100,
                         }
                         for t in transactions_by_date_list
                     ],
@@ -120,9 +120,9 @@ class OverviewController(RoutingController):
         )
 
         try:
-            mean_apdex = mean(filter(None, [t["meanApdex"] for t in transactions_by_date_list]))
+            mean_tpdex = mean(filter(None, [t["meanTpdex"] for t in transactions_by_date_list]))
         except StatisticsError:
-            mean_apdex = 100
+            mean_tpdex = 100
 
         return json(
             {
@@ -130,7 +130,7 @@ class OverviewController(RoutingController):
                 "errors": {"count": errors_count, "rate": errors_rate},
                 "count": transactions_count,
                 "meanDuration": mean_duration,
-                "meanApdex": mean_apdex,
+                "meanTpdex": mean_tpdex,
                 "timeRange": range,
             }
         )

@@ -84,12 +84,12 @@ const transactionColumnTypes = {
     label: "Duration",
     get: (row: Transaction) => [
       row.elapsed ? Math.trunc(row.elapsed) / 1000 : null,
-      row.apdex,
+      row.tpdex,
       !!row.extras?.cached,
       !!row.extras?.no_cache,
     ],
-    format: ([duration, apdex, cached, noCache]: [number | null, number | null, boolean, boolean]) => (
-      <Duration duration={duration} apdex={apdex} cached={cached} noCache={noCache} />
+    format: ([duration, tpdex, cached, noCache]: [number | null, number | null, boolean, boolean]) => (
+      <Duration duration={duration} tpdex={tpdex} cached={cached} noCache={noCache} />
     ),
   },
 }

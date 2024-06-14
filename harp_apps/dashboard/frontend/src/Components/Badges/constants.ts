@@ -1,4 +1,4 @@
-export const apdexScale: { label: string; threshold?: number; className: string }[] = [
+export const tpdexScale: { label: string; threshold?: number; className: string }[] = [
   { label: "A++", threshold: 98, className: "bg-teal-400" },
   { label: "A+", threshold: 96, className: "bg-emerald-400" },
   { label: "A", threshold: 93, className: "bg-green-500" },

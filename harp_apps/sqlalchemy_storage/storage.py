@@ -21,7 +21,6 @@ from harp.settings import PAGE_SIZE
 from harp.typing.storage import Storage
 from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_datetime
-from harp.utils.tpdex import tpdex
 from harp_apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
 
 from .constants import TimeBucket
@@ -59,7 +58,7 @@ logger = get_logger(__name__)
 _FILTER_COLUMN_NAMES = {
     "method": "x_method",
     "status": "x_status_class",
-    "tpdex": "apdex",
+    "tpdex": "tpdex",
 }
 
 
@@ -384,7 +383,7 @@ class SqlAlchemyStorage(Storage):
             func.count(),
             func.sum(case((Transaction.x_status_class.in_(("5xx", "ERR")), 1), else_=0)),
             func.avg(Transaction.elapsed),
-            func.avg(Transaction.apdex),
+            func.avg(Transaction.tpdex),
         )
 
         if endpoint:
@@ -402,7 +401,7 @@ class SqlAlchemyStorage(Storage):
                     "count": row[1],
                     "errors": int(row[2]),
                     "meanDuration": row[3] if row[3] else 0,
-                    "meanApdex": row[4],
+                    "meanTpdex": row[4],
                     # ! probably sqlite struggling with unfinished transactions
                 }
                 for row in result.fetchall()
@@ -504,7 +503,7 @@ class SqlAlchemyStorage(Storage):
                     .values(
                         finished_at=event.transaction.finished_at.astimezone(UTC),
                         elapsed=event.transaction.elapsed,
-                        apdex=tpdex(event.transaction.elapsed),
+                        tpdex=event.transaction.tpdex,
                         x_status_class=event.transaction.extras.get("status_class"),
                         x_cached=event.transaction.extras.get("cached"),
                     )
