@@ -2,7 +2,7 @@ import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
 import { useState } from "react"
 
 import { MinMaxFilter } from "Types/filters"
-import { RangeSlider, Mark } from "ui/Components/Slider/RangeSlider.tsx"
+import { Mark, RangeSlider } from "ui/Components/Slider/RangeSlider.tsx"
 import { H5 } from "ui/Components/Typography"
 
 import { FacetInnerLightButton } from "./FacetInnerLightButton.tsx"
@@ -10,7 +10,6 @@ import { FacetInnerLightButton } from "./FacetInnerLightButton.tsx"
 interface RangeSliderFacetProps {
   title: string
   name: string
-  type: "rangeSlider"
   defaultOpen?: boolean
   values?: MinMaxFilter
   setValues: (value?: MinMaxFilter) => void
@@ -50,10 +49,10 @@ export function RangeSliderFacet({
             min={min}
             max={max}
             step={10}
-            defaultValue={values}
+            defaultValue={values ?? {}}
             onPointerUp={setValues}
             marks={marks}
-            thumbSize="8px"
+            thumbSize="16px"
           />
         </div>
       </fieldset>

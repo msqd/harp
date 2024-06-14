@@ -595,7 +595,7 @@ exports[`renders the title and data when the query is successful 1`] = `
           <span
             class="grow"
           >
-            Performance Index
+            Performances Index
             <button
               class="text-gray-400 mx-1 font-medium text-xs"
             >
@@ -623,13 +623,13 @@ exports[`renders the title and data when the query is successful 1`] = `
           class="mt-2 space-y-2 "
         >
           <div
-            class="css-1atudf3"
+            class="css-1tvrs2d"
           >
             <div
-              class="css-1mb4ltm"
+              class="css-1bggt6d"
             >
               <input
-                class="input css-1mns3hn"
+                class="input css-9ckkig"
                 max="80"
                 min="0"
                 step="10"
@@ -637,7 +637,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                 value="0"
               />
               <input
-                class="input css-1mns3hn"
+                class="input css-9ckkig"
                 max="80"
                 min="0"
                 step="10"
@@ -646,72 +646,72 @@ exports[`renders the title and data when the query is successful 1`] = `
               />
             </div>
             <div
-              class="css-ey7eqm"
+              class="css-1yxx0tz"
             >
               <div
-                class="css-o6dulo"
+                class="css-14pv6h1"
                 style="left: 0%;"
               />
               <div
-                class="css-8tc5wm"
+                class="css-8op6yf"
               >
                 <div
-                  class="css-18vir86"
+                  class="css-fhc53s"
                   style="left: 0%; right: 0%;"
                 />
                 <div
                   style="position: absolute; left: 0%; top: 50%;"
                 >
                   <div
-                    class="bg-red-700 css-mb7ol4"
+                    class="bg-teal-400 css-1mbp5y2"
                   />
                   <div
                     class="css-rx8plc"
                   >
-                    G
+                    A++
                   </div>
                 </div>
                 <div
                   style="position: absolute; left: 12.5%; top: 50%;"
                 >
                   <div
-                    class="bg-red-500 css-1v10j1i"
+                    class="bg-emerald-400 css-8d6cle"
                   />
                   <div
                     class="css-rx8plc"
                   >
-                    F
+                    A+
                   </div>
                 </div>
                 <div
                   style="position: absolute; left: 25%; top: 50%;"
                 >
                   <div
-                    class="bg-orange-500 css-13g6xzh"
+                    class="bg-green-500 css-tsujdb"
                   />
                   <div
                     class="css-rx8plc"
                   >
-                    E
+                    A
                   </div>
                 </div>
                 <div
                   style="position: absolute; left: 37.5%; top: 50%;"
                 >
                   <div
-                    class="bg-amber-500 css-16v1ij1"
+                    class="bg-lime-500 css-1lvmgf3"
                   />
                   <div
                     class="css-rx8plc"
                   >
-                    D
+                    B
                   </div>
                 </div>
                 <div
                   style="position: absolute; left: 50%; top: 50%;"
                 >
                   <div
-                    class="bg-yellow-500 css-c8mre4"
+                    class="bg-yellow-500 css-1tqf926"
                   />
                   <div
                     class="css-rx8plc"
@@ -723,53 +723,53 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 62.5%; top: 50%;"
                 >
                   <div
-                    class="bg-lime-500 css-xywqyw"
+                    class="bg-amber-500 css-1dfhn4m"
                   />
                   <div
                     class="css-rx8plc"
                   >
-                    B
+                    D
                   </div>
                 </div>
                 <div
                   style="position: absolute; left: 75%; top: 50%;"
                 >
                   <div
-                    class="bg-green-500 css-3wj4yg"
+                    class="bg-orange-500 css-12ueco"
                   />
                   <div
                     class="css-rx8plc"
                   >
-                    A
+                    E
                   </div>
                 </div>
                 <div
                   style="position: absolute; left: 87.5%; top: 50%;"
                 >
                   <div
-                    class="bg-emerald-400 css-t3aoyt"
+                    class="bg-red-500 css-1ksflql"
                   />
                   <div
                     class="css-rx8plc"
                   >
-                    A+
+                    F
                   </div>
                 </div>
                 <div
                   style="position: absolute; left: 100%; top: 50%;"
                 >
                   <div
-                    class="bg-teal-400 css-j4awuo"
+                    class="bg-red-700 css-eb9nog"
                   />
                   <div
                     class="css-rx8plc"
                   >
-                    A++
+                    G
                   </div>
                 </div>
               </div>
               <div
-                class="css-o6dulo"
+                class="css-14pv6h1"
                 style="left: 100%;"
               />
             </div>
