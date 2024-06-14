@@ -11,7 +11,12 @@ export function SparklineChart({ data, color, children }: SparklineChartProps) {
   return (
     <>
       {children}
-      <Sparklines min={0} data={data} style={{ margin: "-3px", position: "absolute", bottom: 0, left: 0, zIndex: 0 }}>
+      <Sparklines
+        min={0}
+        max={Math.max(0, ...data) + 1}
+        data={data}
+        style={{ margin: "-3px", position: "absolute", bottom: 0, left: 0, zIndex: 0 }}
+      >
         <SparklinesLine color={color} />
         <SparklinesSpots
           spotColors={{
