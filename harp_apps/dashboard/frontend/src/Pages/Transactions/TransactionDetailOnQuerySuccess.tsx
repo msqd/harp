@@ -1,5 +1,4 @@
 import { format } from "date-fns"
-import { useEffect, useRef } from "react"
 import { QueryObserverSuccessResult } from "react-query/types/core/types"
 import { useLocation } from "react-router-dom"
 
@@ -59,7 +58,7 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
         }
         children={tags.length ? <Tags tags={tags} /> : null}
       />
-      {(transaction.messages || []).map((message, index) => (
+      {(transaction.messages || []).map((message) => (
         <Foldable
           key={message.id}
           title={

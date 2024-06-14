@@ -1,8 +1,9 @@
+import { useRef } from "react"
+
 import { useBlobQuery } from "Domain/Transactions/useBlobQuery.ts"
+import CopyToClipboard from "ui/Components/CopyToClipBoard/CopyToClipboard.tsx"
 
 import { NoCacheIcon } from "./Duration.tsx"
-import CopyToClipboard from "ui/Components/CopyToClipBoard/CopyToClipboard.tsx"
-import { useRef } from "react"
 
 interface MessageHeadersProps {
   id: string
