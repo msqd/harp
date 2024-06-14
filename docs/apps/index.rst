@@ -5,7 +5,8 @@ Applications
     :maxdepth: 1
 
     dashboard/index
-    proxy/index
     http_client/index
+    janitor/index
+    proxy/index
     sqlalchemy_storage/index
     telemetry/index
