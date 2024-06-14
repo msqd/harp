@@ -6,7 +6,6 @@ import { Filters, ArrayFilter, MinMaxFilter } from "Types/filters"
 import { Pane } from "ui/Components/Pane"
 
 import { Facet, RangeSliderFacet } from "../Components/Facets"
-import { classNames } from "ui/Utilities"
 
 interface FiltersSidebarProps {
   filters: Filters

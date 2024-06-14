@@ -675,7 +675,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 12.5%; top: 50%;"
                 >
                   <div
-                    class="bg-red-500 text-red-500 css-28qr6v"
+                    class="bg-red-500 css-1v10j1i"
                   />
                   <div
                     class="css-rx8plc"
