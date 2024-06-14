@@ -71,8 +71,8 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
         >
           <CopyToClipboardWrapper>
             <MessageHeaders id={message.headers} />
-            <MessageBody id={message.body} />
           </CopyToClipboardWrapper>
+          <MessageBody id={message.body} />
         </Foldable>
       ))}
       {import.meta.env.DEV ? (
