@@ -126,7 +126,7 @@ export function TransactionListPage() {
       }
     >
       <Helmet>
-        <title>Transactions | Harp UI</title>
+        <title>Transactions | Harp</title>
         <meta name="description" content="Transactions list page" />
       </Helmet>
 

@@ -11,7 +11,7 @@ export const SystemPage = () => {
   return (
     <Page title={<PageTitle title="System" description="Informations about the running instance." />}>
       <Helmet>
-        <title>System | Harp UI</title>
+        <title>System | Harp</title>
         <meta name="description" content="System page" />
       </Helmet>
       <Tab.Group>

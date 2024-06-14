@@ -8,8 +8,8 @@ export const OverviewPage = () => {
   return (
     <Page title={<PageTitle title="Overview" />}>
       <Helmet>
-        <title>Harp UI</title>
-        <meta name="description" content="System page" />
+        <title>Harp</title>
+        <meta name="description" content="Overview page" />
       </Helmet>
       <SummarySection />
       <HistorySection />
