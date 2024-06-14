@@ -13,8 +13,7 @@ import { MessageBody } from "./Components/MessageBody"
 import { MessageHeaders } from "./Components/MessageHeaders"
 import { MessageSummary } from "./Components/MessageSummary"
 
-import { SettingsTable } from "../System/Components/index.ts"
-import { CopyToClipboardWrapper } from "ui/Components/CopyToClipboardWrapper/CopyToClipboardWrapper.tsx"
+import { CopyToClipboardWrapper } from "ui/Components/CopyToClipboardWrapper/CopyToClipboardWrapper"
 function Tags({ tags }: { tags: [string, string] }) {
   return (
     <div className="flex gap-x-1">
