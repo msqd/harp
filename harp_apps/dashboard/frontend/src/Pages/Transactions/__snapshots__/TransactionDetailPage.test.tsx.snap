@@ -159,7 +159,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               <span
                 class="text-xs text-gray-500"
               >
-                Friday, August 20th, 2021 at 10:00:00 PM GMT+02:00
+                Friday, August 20th, 2021 at 4:00:00 PM GMT-04:00
               </span>
               <div
                 class="mt-2 space-y-2 overflow-x-auto "
@@ -277,7 +277,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               <span
                 class="text-xs text-gray-500"
               >
-                Friday, August 20th, 2021 at 10:01:00 PM GMT+02:00
+                Friday, August 20th, 2021 at 4:01:00 PM GMT-04:00
               </span>
               <div
                 class="mt-2 space-y-2 overflow-x-auto "
