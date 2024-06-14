@@ -187,7 +187,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                 <div>
                   <svg
                     aria-hidden="true"
-                    class="absolute right-0 m-2 h-4 w-4 cursor-pointer text-gray-500"
+                    class="absolute right-2 m-2 h-4 w-4 cursor-pointer text-gray-500"
                     data-slot="icon"
                     fill="none"
                     stroke="currentColor"
@@ -254,7 +254,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                 <div>
                   <svg
                     aria-hidden="true"
-                    class="absolute right-0 m-2 h-4 w-4 cursor-pointer text-gray-500"
+                    class="absolute right-2 m-2 h-4 w-4 cursor-pointer text-gray-500"
                     data-slot="icon"
                     fill="none"
                     stroke="currentColor"
@@ -351,7 +351,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                 <div>
                   <svg
                     aria-hidden="true"
-                    class="absolute right-0 m-2 h-4 w-4 cursor-pointer text-gray-500"
+                    class="absolute right-2 m-2 h-4 w-4 cursor-pointer text-gray-500"
                     data-slot="icon"
                     fill="none"
                     stroke="currentColor"
@@ -394,7 +394,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                 <div>
                   <svg
                     aria-hidden="true"
-                    class="absolute right-0 m-2 h-4 w-4 cursor-pointer text-gray-500"
+                    class="absolute right-2 m-2 h-4 w-4 cursor-pointer text-gray-500"
                     data-slot="icon"
                     fill="none"
                     stroke="currentColor"
