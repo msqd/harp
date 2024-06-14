@@ -10,13 +10,14 @@ interface FoldableProps {
   title: ReactNode
   subtitle?: ReactNode
   children?: ReactNode
+  className?: string
 }
 
-export function Foldable({ open = true, title, subtitle, children = undefined }: FoldableProps) {
+export function Foldable({ open = true, title, subtitle, children = undefined, className }: FoldableProps) {
   const [isOpen, setIsOpen] = useState(open)
 
   return (
-    <div className="px-4 py-3">
+    <div className={classNames(className, "px-4 py-3")}>
       <H5
         padding="pt-0"
         className={classNames("flex w-full whitespace-nowrap", children ? "cursor-pointer" : null)}

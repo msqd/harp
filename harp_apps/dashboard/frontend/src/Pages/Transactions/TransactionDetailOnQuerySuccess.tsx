@@ -12,8 +12,9 @@ import { Foldable } from "./Components/Foldable"
 import { MessageBody } from "./Components/MessageBody"
 import { MessageHeaders } from "./Components/MessageHeaders"
 import { MessageSummary } from "./Components/MessageSummary"
+import CopyToClipboard from "ui/Components/CopyToClipBoard/CopyToClipboard.tsx"
+import { useRef } from "react"
 
-import { CopyToClipboardWrapper } from "ui/Components/CopyToClipboardWrapper/CopyToClipboardWrapper"
 function Tags({ tags }: { tags: [string, string] }) {
   return (
     <div className="flex gap-x-1">
@@ -27,6 +28,7 @@ function Tags({ tags }: { tags: [string, string] }) {
 }
 
 export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserverSuccessResult<Transaction> }) {
+  const messageHeadersRef = useRef<HTMLDivElement>(null)
   const transaction = query.data
   const [duration, apdex, cached, noCache] = [
     transaction.elapsed ? Math.trunc(transaction.elapsed) / 1000 : null,
@@ -68,10 +70,12 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
             ) : undefined
           }
           open={message.kind != "error"}
+          className="relative"
         >
-          <CopyToClipboardWrapper>
+          <CopyToClipboard targetRef={messageHeadersRef} className="absolute  top-11 right-0" />
+          <div ref={messageHeadersRef}>
             <MessageHeaders id={message.headers} />
-          </CopyToClipboardWrapper>
+          </div>
           <MessageBody id={message.body} />
         </Foldable>
       ))}

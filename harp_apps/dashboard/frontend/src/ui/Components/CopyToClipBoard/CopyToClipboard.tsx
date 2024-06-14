@@ -1,17 +1,19 @@
-import { useRef, useState } from "react"
 import { ClipboardDocumentIcon, ClipboardDocumentCheckIcon } from "@heroicons/react/24/outline"
+import { useState } from "react"
 
-interface CopyToClipboardWrapperProps {
-  children: React.ReactNode
+import { classNames } from "ui/Utilities"
+
+interface CopyToClipboardProps {
+  targetRef: React.RefObject<HTMLElement>
+  className?: string
 }
 
-export function CopyToClipboardWrapper({ children }: CopyToClipboardWrapperProps) {
-  const ref = useRef<HTMLDivElement>(null)
+const CopyToClipboard: React.FC<CopyToClipboardProps> = ({ targetRef, className }) => {
   const [copySuccess, setCopySuccess] = useState(false)
 
   const handleCopy = () => {
-    if (ref.current) {
-      const html = ref.current.innerHTML
+    if (targetRef.current) {
+      const html = targetRef.current.innerHTML
       const blob = new Blob([html], { type: "text/html" })
       const data = [new ClipboardItem({ "text/html": blob })]
 
@@ -31,13 +33,12 @@ export function CopyToClipboardWrapper({ children }: CopyToClipboardWrapperProps
   const Icon = copySuccess ? ClipboardDocumentCheckIcon : ClipboardDocumentIcon
 
   return (
-    <div className="flex flex-col items-start top-1">
-      <Icon
-        title="Copy to clipboard"
-        className={`m-2 h-4 w-4 cursor-pointer ${copySuccess ? "text-blue-300" : "text-gray-500"}`}
-        onClick={handleCopy}
-      />
-      <div ref={ref}>{children}</div>
-    </div>
+    <Icon
+      title="Copy to clipboard"
+      className={classNames(className, `m-2 h-4 w-4 cursor-pointer ${copySuccess ? "text-blue-300" : "text-gray-500"}`)}
+      onClick={handleCopy}
+    />
   )
 }
+
+export default CopyToClipboard
