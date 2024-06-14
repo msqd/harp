@@ -583,6 +583,200 @@ exports[`renders the title and data when the query is successful 1`] = `
         </div>
       </fieldset>
     </div>
+    <div
+      class="px-4 py-3"
+    >
+      <fieldset
+        name="performanceIndex"
+      >
+        <legend
+          class="flex w-full cursor-pointer css-9ho516"
+        >
+          <span
+            class="grow"
+          >
+            Performance Index
+            <button
+              class="text-gray-400 mx-1 font-medium text-xs"
+            >
+              reset
+            </button>
+          </span>
+          <svg
+            aria-hidden="true"
+            class="h-4 w-4 text-gray-600"
+            data-slot="icon"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m4.5 15.75 7.5-7.5 7.5 7.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </legend>
+        <div
+          class="mt-2 space-y-2 "
+        >
+          <div
+            class="css-1atudf3"
+          >
+            <div
+              class="css-1mb4ltm"
+            >
+              <input
+                class="input css-1mns3hn"
+                max="80"
+                min="0"
+                step="10"
+                type="range"
+                value="0"
+              />
+              <input
+                class="input css-1mns3hn"
+                max="80"
+                min="0"
+                step="10"
+                type="range"
+                value="80"
+              />
+            </div>
+            <div
+              class="css-ey7eqm"
+            >
+              <div
+                class="css-o6dulo"
+                style="left: 0%;"
+              />
+              <div
+                class="css-8tc5wm"
+              >
+                <div
+                  class="css-18vir86"
+                  style="left: 0%; right: 0%;"
+                />
+                <div
+                  style="position: absolute; left: 0%; top: 50%;"
+                >
+                  <div
+                    class="bg-red-700 css-mb7ol4"
+                  />
+                  <div
+                    class="css-rx8plc"
+                  >
+                    G
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 12.5%; top: 50%;"
+                >
+                  <div
+                    class="bg-red-500 css-1v10j1i"
+                  />
+                  <div
+                    class="css-rx8plc"
+                  >
+                    F
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 25%; top: 50%;"
+                >
+                  <div
+                    class="bg-orange-500 css-13g6xzh"
+                  />
+                  <div
+                    class="css-rx8plc"
+                  >
+                    E
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 37.5%; top: 50%;"
+                >
+                  <div
+                    class="bg-amber-500 css-16v1ij1"
+                  />
+                  <div
+                    class="css-rx8plc"
+                  >
+                    D
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 50%; top: 50%;"
+                >
+                  <div
+                    class="bg-yellow-500 css-c8mre4"
+                  />
+                  <div
+                    class="css-rx8plc"
+                  >
+                    C
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 62.5%; top: 50%;"
+                >
+                  <div
+                    class="bg-lime-500 css-xywqyw"
+                  />
+                  <div
+                    class="css-rx8plc"
+                  >
+                    B
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 75%; top: 50%;"
+                >
+                  <div
+                    class="bg-green-500 css-3wj4yg"
+                  />
+                  <div
+                    class="css-rx8plc"
+                  >
+                    A
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 87.5%; top: 50%;"
+                >
+                  <div
+                    class="bg-emerald-400 css-t3aoyt"
+                  />
+                  <div
+                    class="css-rx8plc"
+                  >
+                    A+
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; left: 100%; top: 50%;"
+                >
+                  <div
+                    class="bg-teal-400 css-j4awuo"
+                  />
+                  <div
+                    class="css-rx8plc"
+                  >
+                    A++
+                  </div>
+                </div>
+              </div>
+              <div
+                class="css-o6dulo"
+                style="left: 100%;"
+              />
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </div>
   </div>
 </div>
 `;
