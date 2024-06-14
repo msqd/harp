@@ -34,6 +34,3 @@ class TestSqliteHttpbinBenchmark(AbstractProxyBenchmark):
               name: test
         """
     )
-
-    def test_httpbin_get(self, benchmark, proxy):
-        super().test_httpbin_get(benchmark, proxy)

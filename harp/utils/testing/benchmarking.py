@@ -1,3 +1,4 @@
+import asyncio
 import os
 import subprocess
 import threading
@@ -20,7 +21,6 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
 
     def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, *, daemon=None, config=None):
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
-
         self.config_filename = None
         if config:
             with NamedTemporaryFile("w+", suffix=".yaml", delete=False) as _tmpfile_config:
@@ -46,26 +46,34 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
         )
 
     def join(self, timeout=None):
-        # try to kill gracefully ...
-        self.process.terminate()
-        self.process.wait(5.0)
-
-        # ... and if it does not work, kill it with fire
-        self.process.kill()
-
-        # remove temporary config file ...
-        if self.config_filename:
-            os.unlink(self.config_filename)
-
-        # ... and let threading handle the rest.
-        return super().join(timeout)
+        try:
+            # try to kill gracefully ...
+            self.process.terminate()
+            self.process.wait(10.0)
+        except Exception as e:
+            logger.error(f"Error during process termination: {e}")
+            self.process.kill()
+        finally:
+            # remove temporary config file ...
+            if self.config_filename:
+                os.unlink(self.config_filename)
+            # ... and let threading handle the rest.
+            super().join(timeout)
+        logger.debug("Process terminated and joined successfully")
 
 
 class AbstractProxyBenchmark:
     config = Template("")
 
+    @pytest.fixture(scope="class")
+    async def setup_event_loop(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        yield loop
+        loop.close()
+
     @pytest.fixture
-    async def proxy(self, httpbin, database_url, test_id):
+    async def proxy(self, setup_event_loop, httpbin, database_url, test_id):
         async with get_scoped_database_url(database_url, test_id) as scoped_database_url:
             port = get_available_network_port()
 
@@ -94,7 +102,8 @@ class AbstractProxyBenchmark:
         def result():
             return httpx.get(f"{httpbin}/get")
 
-    def test_httpbin_get(self, benchmark, proxy):
+    @pytest.mark.asyncio
+    async def test_httpbin_get(self, benchmark, proxy):
         @benchmark
         def result():
             return httpx.get(f"http://{proxy}/get")
