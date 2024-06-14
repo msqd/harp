@@ -1,12 +1,12 @@
 import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
-interface RequestCHartProps {
+interface TransactionsChartProps {
   data: Array<{ datetime: string; count: number; errors: number }>
   timeRange?: string
   width?: string
 }
 
-export const TransactionsChart: React.FC<RequestCHartProps> = ({ data, timeRange, width }) => {
+export const TransactionsChart = ({ data, timeRange, width }: TransactionsChartProps) => {
   const tickFormatter = (tick: string) => {
     const date = new Date(tick)
     switch (timeRange) {

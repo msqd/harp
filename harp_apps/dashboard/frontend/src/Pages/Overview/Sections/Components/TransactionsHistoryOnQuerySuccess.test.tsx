@@ -2,12 +2,12 @@ import { render } from "@testing-library/react"
 import { expect, it } from "vitest"
 
 import {
-  TransactionOverviewChartProps,
   TransactionsHistoryOnQuerySuccess,
+  TransactionsHistoryOnQuerySuccessProps,
 } from "./TransactionsHistoryOnQuerySuccess.tsx"
 
 it("renders without crashing", () => {
-  const data: TransactionOverviewChartProps["data"] = {
+  const data: TransactionsHistoryOnQuerySuccessProps["data"] = {
     meanDuration: 2000,
     meanApdex: 85,
     errors: { count: 2, rate: 0.05 },

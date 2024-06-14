@@ -34,7 +34,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             class="grid grid-cols-3 gap-4 mb-8"
           >
             <div
-              class="css-kt11ky"
+              class="css-9dvziv"
             >
               <h3
                 class="css-1hpno4e"
@@ -57,12 +57,156 @@ exports[`renders the title and data when the query is successful 1`] = `
                 viewBox="0 0 240 60"
               >
                 <g>
-                  <path
-                    d="M2 2 C 4.565217391304348 2 9.695652173913043 11.520000000000001 12.26086956521739 11.520000000000001 C 14.826086956521738 11.520000000000001 19.956521739130434 6.48 22.52173913043478 6.48 C 25.08695652173913 6.48 30.217391304347824 9.280000000000001 32.78260869565217 9.280000000000001 C 35.347826086956516 9.280000000000001 40.47826086956522 8.72 43.04347826086956 8.72 C 45.60869565217391 8.72 50.73913043478261 4.800000000000001 53.30434782608695 4.800000000000001 C 55.8695652173913 4.800000000000001 61 8.72 63.565217391304344 8.72 C 66.13043478260869 8.72 71.26086956521739 9.280000000000001 73.82608695652173 9.280000000000001 C 76.39130434782608 9.280000000000001 81.52173913043478 6.48 84.08695652173913 6.48 C 86.65217391304347 6.48 91.78260869565217 11.520000000000001 94.34782608695652 11.520000000000001 C 96.91304347826086 11.520000000000001 102.04347826086956 2 104.6086956521739 2 C 107.17391304347825 2 112.30434782608695 11.520000000000001 114.8695652173913 11.520000000000001 C 117.43478260869564 11.520000000000001 122.56521739130434 6.48 125.13043478260869 6.48 C 127.69565217391303 6.48 132.82608695652172 9.280000000000001 135.39130434782606 9.280000000000001 C 137.9565217391304 9.280000000000001 143.08695652173913 8.72 145.65217391304347 8.72 C 148.2173913043478 8.72 153.34782608695653 4.800000000000001 155.91304347826087 4.800000000000001 C 158.47826086956522 4.800000000000001 163.6086956521739 8.72 166.17391304347825 8.72 C 168.7391304347826 8.72 173.86956521739128 9.280000000000001 176.43478260869563 9.280000000000001 C 178.99999999999997 9.280000000000001 184.1304347826087 6.48 186.69565217391303 6.48 C 189.26086956521738 6.48 194.3913043478261 11.520000000000001 196.95652173913044 11.520000000000001 C 199.52173913043478 11.520000000000001 204.65217391304347 2 207.2173913043478 2 C 209.78260869565216 2 214.91304347826085 11.520000000000001 217.4782608695652 11.520000000000001 C 220.04347826086953 11.520000000000001 225.17391304347825 6.48 227.7391304347826 6.48 C 230.30434782608694 6.48 235.43478260869566 9.280000000000001 238 9.280000000000001 L238 58 2 58 2 2"
-                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6;"
+                  <circle
+                    cx="2"
+                    cy="2"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
                   />
-                  <path
-                    d="M2 2 C 4.565217391304348 2 9.695652173913043 11.520000000000001 12.26086956521739 11.520000000000001 C 14.826086956521738 11.520000000000001 19.956521739130434 6.48 22.52173913043478 6.48 C 25.08695652173913 6.48 30.217391304347824 9.280000000000001 32.78260869565217 9.280000000000001 C 35.347826086956516 9.280000000000001 40.47826086956522 8.72 43.04347826086956 8.72 C 45.60869565217391 8.72 50.73913043478261 4.800000000000001 53.30434782608695 4.800000000000001 C 55.8695652173913 4.800000000000001 61 8.72 63.565217391304344 8.72 C 66.13043478260869 8.72 71.26086956521739 9.280000000000001 73.82608695652173 9.280000000000001 C 76.39130434782608 9.280000000000001 81.52173913043478 6.48 84.08695652173913 6.48 C 86.65217391304347 6.48 91.78260869565217 11.520000000000001 94.34782608695652 11.520000000000001 C 96.91304347826086 11.520000000000001 102.04347826086956 2 104.6086956521739 2 C 107.17391304347825 2 112.30434782608695 11.520000000000001 114.8695652173913 11.520000000000001 C 117.43478260869564 11.520000000000001 122.56521739130434 6.48 125.13043478260869 6.48 C 127.69565217391303 6.48 132.82608695652172 9.280000000000001 135.39130434782606 9.280000000000001 C 137.9565217391304 9.280000000000001 143.08695652173913 8.72 145.65217391304347 8.72 C 148.2173913043478 8.72 153.34782608695653 4.800000000000001 155.91304347826087 4.800000000000001 C 158.47826086956522 4.800000000000001 163.6086956521739 8.72 166.17391304347825 8.72 C 168.7391304347826 8.72 173.86956521739128 9.280000000000001 176.43478260869563 9.280000000000001 C 178.99999999999997 9.280000000000001 184.1304347826087 6.48 186.69565217391303 6.48 C 189.26086956521738 6.48 194.3913043478261 11.520000000000001 196.95652173913044 11.520000000000001 C 199.52173913043478 11.520000000000001 204.65217391304347 2 207.2173913043478 2 C 209.78260869565216 2 214.91304347826085 11.520000000000001 217.4782608695652 11.520000000000001 C 220.04347826086953 11.520000000000001 225.17391304347825 6.48 227.7391304347826 6.48 C 230.30434782608694 6.48 235.43478260869566 9.280000000000001 238 9.280000000000001"
+                  <circle
+                    cx="12.26086956521739"
+                    cy="11.520000000000001"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="22.52173913043478"
+                    cy="6.48"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="32.78260869565217"
+                    cy="9.280000000000001"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="43.04347826086956"
+                    cy="8.72"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="53.30434782608695"
+                    cy="4.800000000000001"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="63.565217391304344"
+                    cy="8.72"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="73.82608695652173"
+                    cy="9.280000000000001"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="84.08695652173913"
+                    cy="6.48"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="94.34782608695652"
+                    cy="11.520000000000001"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="104.6086956521739"
+                    cy="2"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="114.8695652173913"
+                    cy="11.520000000000001"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="125.13043478260869"
+                    cy="6.48"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="135.39130434782606"
+                    cy="9.280000000000001"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="145.65217391304347"
+                    cy="8.72"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="155.91304347826087"
+                    cy="4.800000000000001"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="166.17391304347825"
+                    cy="8.72"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="176.43478260869563"
+                    cy="9.280000000000001"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="186.69565217391303"
+                    cy="6.48"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="196.95652173913044"
+                    cy="11.520000000000001"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="207.2173913043478"
+                    cy="2"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="217.4782608695652"
+                    cy="11.520000000000001"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="227.7391304347826"
+                    cy="6.48"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <circle
+                    cx="238"
+                    cy="9.280000000000001"
+                    r="2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <polyline
+                    points="2 2 12.26086956521739 11.520000000000001 22.52173913043478 6.48 32.78260869565217 9.280000000000001 43.04347826086956 8.72 53.30434782608695 4.800000000000001 63.565217391304344 8.72 73.82608695652173 9.280000000000001 84.08695652173913 6.48 94.34782608695652 11.520000000000001 104.6086956521739 2 114.8695652173913 11.520000000000001 125.13043478260869 6.48 135.39130434782606 9.280000000000001 145.65217391304347 8.72 155.91304347826087 4.800000000000001 166.17391304347825 8.72 176.43478260869563 9.280000000000001 186.69565217391303 6.48 196.95652173913044 11.520000000000001 207.2173913043478 2 217.4782608695652 11.520000000000001 227.7391304347826 6.48 238 9.280000000000001 238 58 2 58 2 2"
+                    style="stroke: none; stroke-width: 0; fill-opacity: .1; fill: #ADD8E6; pointer-events: auto;"
+                  />
+                  <polyline
+                    points="2 2 12.26086956521739 11.520000000000001 22.52173913043478 6.48 32.78260869565217 9.280000000000001 43.04347826086956 8.72 53.30434782608695 4.800000000000001 63.565217391304344 8.72 73.82608695652173 9.280000000000001 84.08695652173913 6.48 94.34782608695652 11.520000000000001 104.6086956521739 2 114.8695652173913 11.520000000000001 125.13043478260869 6.48 135.39130434782606 9.280000000000001 145.65217391304347 8.72 155.91304347826087 4.800000000000001 166.17391304347825 8.72 176.43478260869563 9.280000000000001 186.69565217391303 6.48 196.95652173913044 11.520000000000001 207.2173913043478 2 217.4782608695652 11.520000000000001 227.7391304347826 6.48 238 9.280000000000001"
                     style="stroke: #ADD8E6; stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; fill: none;"
                   />
                 </g>
@@ -71,13 +215,13 @@ exports[`renders the title and data when the query is successful 1`] = `
                     cx="238"
                     cy="9.280000000000001"
                     r="2"
-                    style="fill: red;"
+                    style="fill: #ADD8E6;"
                   />
                 </g>
               </svg>
             </div>
             <div
-              class="css-kt11ky"
+              class="css-9dvziv"
             >
               <h3
                 class="css-1hpno4e"
@@ -85,7 +229,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                 Transactions (24h)
               </h3>
               <div
-                class="flex self-center relative z-10"
+                class="flex flex-col self-center relative z-10 items-start"
               >
                 <span
                   class="bg-white ring-1 ring-blue-200 css-14jvdk3"
@@ -99,11 +243,16 @@ exports[`renders the title and data when the query is successful 1`] = `
                     /
                     min
                   </span>
+                  <div
+                    class="text-xs font-normal text-gray-500 text-right"
+                  >
+                    over the last 24 hours
+                  </div>
                 </span>
               </div>
               <svg
                 preserveAspectRatio="none"
-                style="margin: -3px; position: absolute; bottom: 0px; left: 0px;"
+                style="margin: -3px; position: absolute; bottom: 0px; left: 0px; z-index: 0;"
                 viewBox="0 0 240 60"
               >
                 <g>
@@ -265,13 +414,13 @@ exports[`renders the title and data when the query is successful 1`] = `
                     cx="238"
                     cy="5.555555555555555"
                     r="2"
-                    style="fill: green;"
+                    style="fill: #ADD8E6;"
                   />
                 </g>
               </svg>
             </div>
             <div
-              class="css-kt11ky"
+              class="css-9dvziv"
             >
               <h3
                 class="css-1hpno4e"
@@ -279,7 +428,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                 Errors (24h)
               </h3>
               <div
-                class="flex self-center relative z-10"
+                class="flex flex-col self-center relative z-10 items-start"
               >
                 <span
                   class="bg-white ring-1 ring-red-200 css-14jvdk3"
@@ -293,11 +442,16 @@ exports[`renders the title and data when the query is successful 1`] = `
                     /
                     min
                   </span>
+                  <div
+                    class="text-xs font-normal text-gray-500 text-right"
+                  >
+                    over the last 24 hours
+                  </div>
                 </span>
               </div>
               <svg
                 preserveAspectRatio="none"
-                style="margin: -3px; position: absolute; bottom: 0px; left: 0px;"
+                style="margin: -3px; position: absolute; bottom: 0px; left: 0px; z-index: 0;"
                 viewBox="0 0 240 60"
               >
                 <g>
@@ -459,7 +613,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                     cx="238"
                     cy="22"
                     r="2"
-                    style="fill: red;"
+                    style="fill: #e6b3ad;"
                   />
                 </g>
               </svg>
