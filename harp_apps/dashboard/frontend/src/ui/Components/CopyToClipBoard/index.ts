@@ -1,1 +1,1 @@
-export { CopyToClipboard } from "./CopyToClipboard"
+export { default as CopyToClipboard } from "./CopyToClipboard"

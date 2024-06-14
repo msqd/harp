@@ -1,10 +1,12 @@
 import { format } from "date-fns"
+import { useRef } from "react"
 import { QueryObserverSuccessResult } from "react-query/types/core/types"
 
 import { KeyValueSettings } from "Domain/System/useSystemSettingsQuery"
 import { Transaction } from "Models/Transaction"
 import { SettingsTable } from "Pages/System/Components"
 import { ucfirst } from "Utils/Strings"
+import CopyToClipboard from "ui/Components/CopyToClipBoard/CopyToClipboard.tsx"
 import { Pane } from "ui/Components/Pane"
 
 import { Duration } from "./Components/Duration.tsx"
@@ -12,8 +14,6 @@ import { Foldable } from "./Components/Foldable"
 import { MessageBody } from "./Components/MessageBody"
 import { MessageHeaders } from "./Components/MessageHeaders"
 import { MessageSummary } from "./Components/MessageSummary"
-import CopyToClipboard from "ui/Components/CopyToClipBoard/CopyToClipboard.tsx"
-import { useRef } from "react"
 
 function Tags({ tags }: { tags: [string, string] }) {
   return (
@@ -72,7 +72,7 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
           open={message.kind != "error"}
           className="relative"
         >
-          <CopyToClipboard targetRef={messageHeadersRef} className="absolute  top-11 right-0" />
+          <CopyToClipboard targetRef={messageHeadersRef} className="absolute top-11 right-0" contentType="html" />
           <div ref={messageHeadersRef}>
             <MessageHeaders id={message.headers} />
           </div>
