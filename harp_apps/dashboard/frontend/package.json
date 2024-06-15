@@ -11,17 +11,17 @@
     "ui:serve:prod": "ladle preview -p 61110",
     "ui:serve:dev": "ladle serve -p 61110",
     "ui:serve": "pnpm ui:serve:dev",
-    "test:ui:dev": "cross-env TYPE=dev pnpm exec playwright test -c src/ui/playwright.config.ts",
-    "test:ui:prod": "cross-env TYPE=prod pnpm exec playwright test -c src/ui/playwright.config.ts",
-    "test:ui:update": "cross-env TYPE=update pnpm exec playwright test -c src/ui/playwright.config.ts -u",
+    "test:ui:dev": "cross-env TYPE=dev LANG=en_US.UTF-8 pnpm exec playwright test -c src/ui/playwright.config.ts",
+    "test:ui:prod": "cross-env TYPE=prod LANG=en_US.UTF-8 pnpm exec playwright test -c src/ui/playwright.config.ts",
+    "test:ui:update": "cross-env TYPE=update LANG=en_US.UTF-8 pnpm exec playwright test -c src/ui/playwright.config.ts -u",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix",
     "preview": "vite preview",
-    "test:unit": "vitest run",
-    "test:unit:update": "vitest run --update",
-    "test:browser": "playwright test",
-    "test:coverage": "vitest run --coverage",
-    "test": "pnpm run test:unit && pnpm run test:browser && pnpm test:ui:dev"
+    "test:unit": "cross-env LANG=en_US.UTF-8 vitest run",
+    "test:unit:update": "cross-env LANG=en_US.UTF-8 vitest run --update",
+    "test:browser": "cross-env LANG=en_US.UTF-8 playwright test",
+    "test:coverage": "cross-env LANG=en_US.UTF-8 vitest run --coverage",
+    "test": "pnpm run test:unit && pnpm run test:browser"
   },
   "babelMacros": {
     "twin": {
