@@ -56,7 +56,13 @@ Overview
 
 `Read the full documentation <https://harp-proxy.readthedocs.io/en/latest/>`_
 
-Of course, the same instance can be used by multiple consumers, each one with its own configuration and features.
+
+Using as a hub to external services
+...................................
+
+The same instance can be used by multiple consumers, each one with its own configuration and features. This allows to
+have a simpler topology than if each consumer had to directly access the external services, and allows to centralize
+the external services specific features that are mutualized for all apps (cache, bypassing, retry, prefetch, etc.).
 
 .. image:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-OverviewMultipleApps.png
     :alt: An overview of how HARP works in your system when you have multiple consumers
@@ -66,26 +72,30 @@ Of course, the same instance can be used by multiple consumers, each one with it
 Service
 -------
 
-.. image:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-Service.png
-    :alt: What happens within the harp service
-    :align: center
-
 Within the service, harp runs one or more proxies, each one listening to one port to instrument your external API calls
 with the features you need (auditing, caching, alerting, circuit breaker switch, health checks, etc.).
 
+Each proxy is configured to intercept and forward requests to a specific external API, with independent configuration.
+
 An additional (optional) port serves a dashboard to observe your proxies in real-time.
+
+.. image:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-Service.png
+    :alt: What happens within the harp service
+    :align: center
 
 
 Proxy
 -----
 
+As an HTTP Proxy, HARP does not change anything to the way you communicate with the external services. You were speaking
+HTTP before, you will still speak HTTP. The only change needed in your applications configuration to plug or unplug HARP
+is the base endpoint of the external services. In a modern 12factor-like application, it usually only means changing an
+environment variable.
+
 .. image:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-Proxy.png
     :alt: What happens within one harp proxy
     :align: center
 
-Each proxy is configured to intercept and forward requests to a specific external API, with independent configuration.
-
-The instance's storage is used by each proxy to store whatever it needs, depending on the activated features.
 
 Proxy features
 --------------
