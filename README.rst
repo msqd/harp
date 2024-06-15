@@ -25,10 +25,6 @@ external APIs.
 | `Issues <https://github.com/msqd/harp/issues>`_
 | `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
 
-.. image:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-Overview.png
-    :alt: An overview of how HARP works in your system
-    :align: center
-
 
 How it works?
 :::::::::::::
@@ -36,9 +32,11 @@ How it works?
 Overview
 --------
 
-.. image:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-Overview.png
+.. figure:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-Overview.png
     :alt: An overview of how HARP works in your system
     :align: center
+
+    Basic setup showing a single application that leveregaes HARP to access multiple external services.
 
 * **Easy Integration:** Integrating with your application is a breeze, because it speaks the same language you already
   use: HTTP. Simply run the proxy, update your API endpoints, and you're ready to go. No complex setup or extensive
@@ -64,9 +62,11 @@ The same instance can be used by multiple consumers, each one with its own confi
 have a simpler topology than if each consumer had to directly access the external services, and allows to centralize
 the external services specific features that are mutualized for all apps (cache, bypassing, retry, prefetch, etc.).
 
-.. image:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-OverviewMultipleApps.png
+.. figure:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-OverviewMultipleApps.png
     :alt: An overview of how HARP works in your system when you have multiple consumers
     :align: center
+
+    Simple setup showing multiple applications that leveregaes HARP to centralize acceses to multiple external services.
 
 
 Service
@@ -79,9 +79,13 @@ Each proxy is configured to intercept and forward requests to a specific externa
 
 An additional (optional) port serves a dashboard to observe your proxies in real-time.
 
-.. image:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-Service.png
+.. figure:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-Service.png
     :alt: What happens within the harp service
     :align: center
+
+    Focus on the harp service, showing the different internal components. each component is built as an optional plugin
+    that can be enabled or disabled at will (reasonable defaults are enabled by default, and disabling core features is
+    probably a bad idea).
 
 
 Proxy
@@ -92,15 +96,19 @@ HTTP before, you will still speak HTTP. The only change needed in your applicati
 is the base endpoint of the external services. In a modern 12factor-like application, it usually only means changing an
 environment variable.
 
-.. image:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-Proxy.png
+.. figure:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-Proxy.png
     :alt: What happens within one harp proxy
     :align: center
+
+    HARP sits between your application and the external services, intercepting, instrumenting and forwarding requests.
+    Integration is seamless as the proxy speaks the same language as your original external service (HTTP).
 
 
 Proxy features
 --------------
 
-.. todo:: Add a list of features with links to the documentation.
+.. note:: (TODO) Add a list of features with links to the documentation.
+
 
 Credits
 :::::::
