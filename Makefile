@@ -2,9 +2,6 @@
 NAME ?= harp-proxy
 VERSION ?= $(shell git describe 2>/dev/null || git rev-parse --short HEAD)
 
-# pre commit
-PRE_COMMIT ?= $(shell which pre-commit || echo "pre-commit")
-
 # poetry
 POETRY ?= $(shell which poetry || echo "poetry")
 POETRY_INSTALL_OPTIONS ?=
@@ -107,6 +104,7 @@ build-frontend:  ## Builds the harp dashboard frontend (compiles typescript and 
 .PHONY: lint-frontend coverage cloc
 
 preqa: types format reference  ## Runs pre-qa checks (types generation, formatting, api reference).
+	$(RUN) pre-commit
 
 qa: preqa test  ## Runs all QA checks, with most common databases.
 

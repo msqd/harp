@@ -50,7 +50,7 @@ exports[`renders without crashing 1`] = `
             Errors:
           </span>
           <span>
-            5,0 %
+            5.0%
           </span>
         </div>
       </div>

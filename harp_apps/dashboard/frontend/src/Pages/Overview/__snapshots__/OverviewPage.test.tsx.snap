@@ -820,7 +820,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                       Errors:
                     </span>
                     <span>
-                      50,0 %
+                      50.0%
                     </span>
                   </div>
                 </div>
@@ -883,7 +883,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                         Errors:
                       </span>
                       <span>
-                        50,0 %
+                        50.0%
                       </span>
                     </div>
                   </div>
@@ -943,7 +943,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                         Errors:
                       </span>
                       <span>
-                        50,0 %
+                        50.0%
                       </span>
                     </div>
                   </div>

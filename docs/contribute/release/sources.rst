@@ -62,8 +62,8 @@ Releasing a new source version
 
 .. todo::
 
-    - This should be done from a clean virtualenv, but it's not yet the case.
-    - Interface snapshots should be run in a repeatable environment (docker ?).
+    - This should be done from a clean virtualenv, but it's not yet the case (mitigated for now by using a clean git
+      worktree on each release, but this is undocumented for now).
 
 Git add is there to check nothing was modified by QA suite.
 
