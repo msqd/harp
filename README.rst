@@ -5,16 +5,11 @@ HARP is a powerful sidecar proxy service designed to elevate the reliability, pe
 of your application's external API interactions. Think of it as a reverse API gateway or a nearline service mesh for
 external APIs.
 
+**HARP is released as an Early Access Preview.**
 
-.. important::
-
-    HARP is released as an Early Access Preview.
-
-    Although we already use it for production workloads, it is still under heavy active development and some features
-    may not be available, or it may not be suitable for your applications.
-
-    We are actively looking for feedback, so please don't hesitate to reach out to us with your thoughts, ideas, or
-    issues. We are here to help you and make HARP better for everyone.
+*Although we already use it for production workloads, it is still under heavy active development and some features
+may not be available, or it may not be suitable for your applications. We are actively looking for feedback, please
+reach out with your thoughts, ideas, rants or issues. We can help.*
 
 
 **Quick links:** `Documentation <https://harp-proxy.readthedocs.io/en/latest/>`_
@@ -36,8 +31,6 @@ Overview
     :alt: An overview of how HARP works in your system
     :align: center
 
-    Basic setup showing a single application that leveregaes HARP to access multiple external services.
-
 * **Easy Integration:** Integrating with your application is a breeze, because it speaks the same language you already
   use: HTTP. Simply run the proxy, update your API endpoints, and you're ready to go. No complex setup or extensive
   configuration required. Of course, everything is modular and configurable, so you'll be able to fine-tune for your
@@ -55,18 +48,18 @@ Overview
 `Read the full documentation <https://harp-proxy.readthedocs.io/en/latest/>`_
 
 
-Using as a hub to external services
-...................................
-
-The same instance can be used by multiple consumers, each one with its own configuration and features. This allows to
-have a simpler topology than if each consumer had to directly access the external services, and allows to centralize
-the external services specific features that are mutualized for all apps (cache, bypassing, retry, prefetch, etc.).
+Hub to external services
+........................
 
 .. figure:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-OverviewMultipleApps.png
     :alt: An overview of how HARP works in your system when you have multiple consumers
     :align: center
 
-    Simple setup showing multiple applications that leveregaes HARP to centralize acceses to multiple external services.
+* **Mutualize Client Logic**: Having n API consumers does not mean you have to implement n times each client-side
+  feature. Use HARP as a hub and greatly reduce the amount of client code you need to write and maintain.
+* **Observes and Controls**: You get a central place to observe and control all your API interactions.
+* **Grow and Scale**: As your company grows and develop new applications, you can leverage the work done on existing
+  external services without having to write a single new line of code.
 
 
 Service
@@ -83,9 +76,12 @@ An additional (optional) port serves a dashboard to observe your proxies in real
     :alt: What happens within the harp service
     :align: center
 
-    Focus on the harp service, showing the different internal components. each component is built as an optional plugin
-    that can be enabled or disabled at will (reasonable defaults are enabled by default, and disabling core features is
-    probably a bad idea).
+* **Features**: Harp comes builtin with a set of industry-standard client side features that you can leverage with a few
+  lines of configuration.
+* **Flexibility**: Each feature is optional, and it's up to you to chose the setup that fits your needs.
+* **Customizable**: You can write code to extend the proxy features, using the same interface as all the builtin
+  features. It guarantees that you can basically implement pretty much anything that make sense inbetween your
+  applications and the external services.
 
 
 Proxy
@@ -100,9 +96,13 @@ environment variable.
     :alt: What happens within one harp proxy
     :align: center
 
-    HARP sits between your application and the external services, intercepting, instrumenting and forwarding requests.
-    Integration is seamless as the proxy speaks the same language as your original external service (HTTP).
-
+* **Reversibility**: By requiring 0 code change on your application side (except endpoint url configuration, that
+  should be outside the code if you follow the 12factor principles), HARP can be plugged and unplugged at a very low
+  cost. You have absolutely no vendor lock-in.
+* **Sidecar**: Harp runs in your infrastructure, implementing the client side features right next to your application.
+  The service is fast, and the minimum network distance between your application and the proxy makes it even faster.
+* **Open Core**: Harp is an open software. The core and reference implementation of the proxy is open source, and you
+  can extend it to fit your needs.
 
 Proxy features
 --------------
