@@ -1,6 +1,10 @@
 Harp — HTTP API Runtime Proxy
 =============================
 
+.. image:: images/logo.png
+   :alt: HARP logo
+   :align: center
+
 HARP operates as a sidecar proxy that sits between your application and remote APIs, elevating their reliability,
 performance, and security. By doing so, it also provides observability and reduces the amount of userland code required
 for common non-business functionalities.
