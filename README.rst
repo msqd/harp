@@ -5,6 +5,8 @@ HARP is a powerful sidecar proxy service designed to elevate the reliability, pe
 of your application's external API interactions. Think of it as a reverse API gateway or a nearline service mesh for
 external APIs.
 
+**HARP is released as an Early Access Preview.**
+
 .. image:: https://img.shields.io/pypi/v/harp-proxy.svg
     :target: https://pypi.python.org/pypi/harp-proxy
     :alt: PyPI
@@ -21,13 +23,9 @@ external APIs.
     :target: https://pypi.python.org/pypi/harp-proxy
     :alt: Versions
 
-
-**HARP is released as an Early Access Preview.**
-
-*Although we already use it for production workloads, it is still under heavy active development and some features
+*Although we use HARP for production workloads, it is still under heavy active development and some features
 may not be available, or it may not be suitable for your applications. We are actively looking for feedback, please
 reach out with your thoughts, ideas, rants or issues. We can help.*
-
 
 **Quick links:** `Documentation <https://harp-proxy.readthedocs.io/en/latest/>`_
 | `Getting Started <https://harp-proxy.readthedocs.io/en/latest/start/index.html>`_
