@@ -17,7 +17,17 @@ external APIs.
     issues. We are here to help you and make HARP better for everyone.
 
 
-**Quick links:** `Documentation <https://harp-proxy.readthedocs.io/en/latest/>`_ | `Repository <https://github.com/msqd/harp>`_ | `Issues <https://github.com/msqd/harp/issues>`_ | `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
+**Quick links:** `Documentation <https://harp-proxy.readthedocs.io/en/latest/>`_
+| `Getting Started <https://harp-proxy.readthedocs.io/en/latest/start/index.html>`_
+| `Install (Docker) <https://harp-proxy.readthedocs.io/en/latest/start/docker.html>`_
+| `Install (PIP) <https://harp-proxy.readthedocs.io/en/latest/start/python.html>`_
+| `GitHub Repository <https://github.com/msqd/harp>`_
+| `GitHub Issues <https://github.com/msqd/harp/issues>`_
+| `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
+
+.. image:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-Overview.png
+    :alt: An overview of how HARP works in your system
+    :align: center
 
 
 How it works?
@@ -45,6 +55,12 @@ Overview
   won't need to write.
 
 `Read the full documentation <https://harp-proxy.readthedocs.io/en/latest/>`_
+
+Of course, the same instance can be used by multiple consumers, each one with its own configuration and features.
+
+.. image:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-OverviewMultipleApps.png
+    :alt: An overview of how HARP works in your system when you have multiple consumers
+    :align: center
 
 
 Service
@@ -74,26 +90,7 @@ The instance's storage is used by each proxy to store whatever it needs, dependi
 Proxy features
 --------------
 
-
-Quick start
-:::::::::::
-
-Install
-
-TODO: fix once released
-
-Run
-
-TODO: fix once released
-
-Read the docs
-
-TODO: fix once released
-
-Tell us what you think
-
-TODO: fix once released
-
+.. todo:: Add a list of features with links to the documentation.
 
 Credits
 :::::::
