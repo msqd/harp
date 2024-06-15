@@ -47,7 +47,6 @@ Check that all tests are passing (they need background services, for now)
 
 .. code-block:: shell
 
-    docker compose up -d
     poetry run make qa
 
 
