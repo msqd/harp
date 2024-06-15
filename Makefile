@@ -102,7 +102,7 @@ build-frontend:  ## Builds the harp dashboard frontend (compiles typescript and 
 # QA, tests and other CI/CD related stuff
 ########################################################################################################################
 
-.PHONY: preqa qa qa-full types format format-backend format-frontend
+.PHONY: preqa qa qa-full types format format-backend format-frontend optimize-images
 .PHONY: test test-backend test-frontend test-frontend-update test-frontend-ui-update
 .PHONY: lint-frontend coverage cloc
 
@@ -127,6 +127,9 @@ format-backend:  ## Formats the backend codebase.
 format-frontend: install-frontend  ## Formats the frontend codebase.
 	(cd $(FRONTEND_DIR); $(PNPM) lint:fix)
 	(cd $(FRONTEND_DIR); $(PNPM) prettier -w src)
+
+optimize-images:
+	find docs -name \*.png | xargs optimizt
 
 test:  ## Runs all tests.
 	$(MAKE) test-backend
