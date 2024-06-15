@@ -21,8 +21,8 @@ external APIs.
 | `Getting Started <https://harp-proxy.readthedocs.io/en/latest/start/index.html>`_
 | `Install (Docker) <https://harp-proxy.readthedocs.io/en/latest/start/docker.html>`_
 | `Install (PIP) <https://harp-proxy.readthedocs.io/en/latest/start/python.html>`_
-| `GitHub Repository <https://github.com/msqd/harp>`_
-| `GitHub Issues <https://github.com/msqd/harp/issues>`_
+| `Repository (Git) <https://github.com/msqd/harp>`_
+| `Issues <https://github.com/msqd/harp/issues>`_
 | `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
 
 .. image:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-Overview.png

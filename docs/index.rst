@@ -8,7 +8,7 @@ for common non-business functionalities.
 Whether you are in the development phase or ready for production, HARP serves as a versatile tool that caters to
 different purposes.
 
-.. figure:: images/tldr.png
+.. figure:: images/HowItWorks-Proxy.png
    :alt: Basic proxy setup from the quickstart tl;dr
 
 The core runtime of HARP primarily consists of two components: a proxy (or a set of proxies) and a dashboard. Each proxy
