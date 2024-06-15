@@ -10,4 +10,5 @@ already installed harp, please refer to the :doc:`Start Guide </start/index>` if
     configure/index
     migrations
     logging
+    prometheus
     runtime

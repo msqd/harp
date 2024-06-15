@@ -4,7 +4,7 @@ import { describe, expect, it, test } from "vitest"
 
 import { renderWithClient } from "tests/utils"
 
-import { SystemPage } from "./SystemPage"
+import SystemPage from "./SystemPage"
 
 describe("SystemPage", () => {
   it("renders the title and data when the query is successful", async () => {

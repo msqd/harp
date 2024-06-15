@@ -3,7 +3,7 @@ import { ReactNode } from "react"
 import { classNames } from "ui/Utilities"
 
 import { StyledJumboBadge, StyledJumboBadgeProps } from "./StyledJumboBadge.tsx"
-import { tpdexScale } from "./constants.ts"
+import { getTpdexRating } from "./constants.ts"
 
 export default function TpdexBadge({
   score,
@@ -15,20 +15,12 @@ export default function TpdexBadge({
     return null
   }
 
-  for (const rating of tpdexScale) {
-    if (rating.threshold === undefined || score >= rating.threshold) {
-      return (
-        <StyledJumboBadge
-          title={`score: ${score}`}
-          className={classNames(rating.className, className)}
-          {...styledProps}
-        >
-          {rating.label}
-          {children}
-        </StyledJumboBadge>
-      )
-    }
-  }
+  const rating = getTpdexRating(score)
 
-  return <StyledJumboBadge title={`score: ${score}`}>?</StyledJumboBadge>
+  return (
+    <StyledJumboBadge title={`score: ${score}`} className={classNames(rating.className, className)} {...styledProps}>
+      {rating.label}
+      {children}
+    </StyledJumboBadge>
+  )
 }

@@ -43,6 +43,7 @@
 /benchmark_*.svg
 /frontend/stats.html
 /harp.db
+/harp_apps/dashboard/frontend/stats.html
 /misc/secrets
 /requirements*.txt
 /site

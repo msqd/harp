@@ -91,7 +91,7 @@ const Rail = styled.div`
     transform: translateY(-50%);
     height: 6px;
     border-radius: 3px;
-    background: ${tw`bg-gray-200`};
+    ${tw`bg-gray-200`};
   `}
 `
 

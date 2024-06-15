@@ -1,16 +1,11 @@
-import { StrictMode } from "react"
+import { lazy, StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { QueryClient, QueryClientProvider } from "react-query"
 import { ReactQueryDevtools } from "react-query/devtools"
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
 
 import { Layout } from "Components/Layout"
-import { OverviewPage } from "Pages/Overview"
-import { SystemPage } from "Pages/System"
 import GlobalStyles from "Styles/GlobalStyles"
-
-import { TransactionDetailPage, TransactionListPage } from "./Pages/Transactions"
-
 import "./index.css"
 
 const router = createBrowserRouter([
@@ -20,19 +15,19 @@ const router = createBrowserRouter([
     children: [
       {
         path: "",
-        element: <OverviewPage />,
+        Component: lazy(() => import("./Pages/Overview/OverviewPage")),
       },
       {
         path: "transactions/:id",
-        element: <TransactionDetailPage />,
+        Component: lazy(() => import("./Pages/Transactions/TransactionDetailPage")),
       },
       {
         path: "transactions",
-        element: <TransactionListPage />,
+        Component: lazy(() => import("./Pages/Transactions/TransactionListPage")),
       },
       {
         path: "system",
-        element: <SystemPage />,
+        Component: lazy(() => import("./Pages/System/SystemPage")),
       },
     ],
   },

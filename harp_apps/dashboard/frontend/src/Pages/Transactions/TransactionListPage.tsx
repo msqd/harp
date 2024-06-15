@@ -13,7 +13,7 @@ import { SearchBar } from "ui/Components/SearchBar/SearchBar"
 import { OptionalPaginator } from "./Components/OptionalPaginator.tsx"
 import { TransactionListOnQuerySuccess } from "./TransactionListOnQuerySuccess.tsx"
 
-export function TransactionListPage() {
+export default function TransactionListPage() {
   const location = useLocation()
 
   const navigate = useNavigate()

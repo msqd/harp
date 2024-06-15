@@ -263,11 +263,11 @@ clean-frontend-modules:  ## Cleans up the frontend node modules directory.
 	-rm -rf $(FRONTEND_DIR)/node_modules
 
 clean-dist:  ## Cleans up the distribution files (wheels...)
+	-rm -rf $(FRONTEND_DIR)/dist
 	-rm -rf dist
 
 clean-docs:  ## Cleanup the documentation builds.
 	-rm -rf docs/_build
 
 clean: clean-frontend-modules clean-dist clean-docs  ## Cleans up the project.
-	-rm -rf $(FRONTEND_DIR)/dist
 	-rm -f benchmark_*.svg

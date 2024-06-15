@@ -1,5 +1,11 @@
+export interface OverviewTransaction {
+  datetime: string
+  count: number
+  errors: number
+  cached: number
+}
 export interface OverviewTransactionsReport {
-  transactions: Array<{ datetime: string; count: number; errors: number }>
+  transactions: Array<OverviewTransaction>
 }
 
 export interface OverviewData extends OverviewTransactionsReport {

@@ -6,7 +6,7 @@ import { useTransactionsDetailQuery } from "Domain/Transactions"
 
 import { TransactionDetailOnQuerySuccess } from "./TransactionDetailOnQuerySuccess.tsx"
 
-export function TransactionDetailPage() {
+function TransactionDetailPage() {
   const { id } = useParams<{ id: string }>()
   const query = useTransactionsDetailQuery(id)
 
@@ -16,3 +16,5 @@ export function TransactionDetailPage() {
     </Page>
   )
 }
+
+export default TransactionDetailPage
