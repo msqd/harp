@@ -49,7 +49,7 @@ Overview
 
 
 Hub to external services
-........................
+------------------------
 
 .. figure:: https://github.com/msqd/harp/raw/dev/docs/images/HowItWorks-OverviewMultipleApps.png
     :alt: An overview of how HARP works in your system when you have multiple consumers
