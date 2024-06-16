@@ -49,7 +49,7 @@ WORKDIR /opt/harp
 
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    && apt-get install -y build-essential \
+    apt-get install -y build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 ADD --chown=harp:www-data . src
