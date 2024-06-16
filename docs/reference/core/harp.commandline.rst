@@ -15,4 +15,5 @@ Submodules
     harp.commandline.install
     harp.commandline.migrations
     harp.commandline.options
+    harp.commandline.start
     harp.commandline.utils
