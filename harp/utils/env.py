@@ -20,6 +20,6 @@ def get_bool_from_env(key, default):
         return default
 
     try:
-        return cast_bool(key)
+        return cast_bool(value)
     except ValueError:
         raise ValueError(f"Invalid boolean value for {key}: {value!r}")
