@@ -43,14 +43,17 @@ WORKDIR /opt/harp
 #
 FROM base as backend
 
-# Step: Add sources and install dependencies (prod)
-USER harp
-WORKDIR /opt/harp
-
+# Step: Add system build dependencies
+USER root
+WORKDIR /root
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get install -y build-essential \
     && rm -rf /var/lib/apt/lists/*
+
+# Step: Add sources and install dependencies (prod)
+USER harp
+WORKDIR /opt/harp
 
 ADD --chown=harp:www-data . src
 
@@ -71,7 +74,6 @@ FROM base as development
 # Step: Add system build dependencies
 USER root
 WORKDIR /root
-
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apt,sharing=locked \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
