@@ -13,49 +13,36 @@ interface CopyToClipboardProps {
 const CopyToClipboard: React.FC<CopyToClipboardProps> = ({ text, targetRef, className, contentType = "text" }) => {
   const [copySuccess, setCopySuccess] = useState(false)
 
+  const handleClipboardWrite = (clipboardData: string | ClipboardItem[]) => {
+    const writePromise =
+      typeof clipboardData === "string"
+        ? navigator.clipboard.writeText(clipboardData)
+        : navigator.clipboard.write(clipboardData)
+
+    writePromise
+      .then(() => {
+        setCopySuccess(true)
+        setTimeout(() => setCopySuccess(false), 2000)
+      })
+      .catch((err) => {
+        console.error("Copy failed!", err)
+        setCopySuccess(false)
+      })
+  }
+
   const handleCopy = () => {
     if (text) {
-      navigator.clipboard
-        .writeText(text)
-        .then(() => {
-          setCopySuccess(true)
-          setTimeout(() => setCopySuccess(false), 2000)
-        })
-        .catch((err) => {
-          console.error("Copy failed!", err)
-          setCopySuccess(false)
-        })
-    } else if (targetRef) {
-      if (targetRef.current) {
-        if (contentType === "html") {
-          const html = targetRef.current.innerHTML
-          const blob = new Blob([html], { type: "text/html" })
-          const data = [new ClipboardItem({ "text/html": blob })]
+      handleClipboardWrite(text)
+    } else if (targetRef?.current) {
+      if (contentType === "html") {
+        const html = targetRef.current.innerHTML
+        const blob = new Blob([html], { type: "text/html" })
+        const data = [new ClipboardItem({ "text/html": blob })]
 
-          navigator.clipboard
-            .write(data)
-            .then(() => {
-              setCopySuccess(true)
-              setTimeout(() => setCopySuccess(false), 2000)
-            })
-            .catch((err) => {
-              console.error("Copy failed!", err)
-              setCopySuccess(false)
-            })
-        } else {
-          const text = targetRef.current.textContent || ""
-
-          navigator.clipboard
-            .writeText(text)
-            .then(() => {
-              setCopySuccess(true)
-              setTimeout(() => setCopySuccess(false), 2000)
-            })
-            .catch((err) => {
-              console.error("Copy failed!", err)
-              setCopySuccess(false)
-            })
-        }
+        handleClipboardWrite(data)
+      } else {
+        const text = targetRef.current.textContent || ""
+        handleClipboardWrite(text)
       }
     }
   }
