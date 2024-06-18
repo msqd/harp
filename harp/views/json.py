@@ -2,15 +2,23 @@ import traceback
 from decimal import Decimal
 
 import orjson
-from freezegun.api import FakeDatetime
 from whistle import IAsyncEventDispatcher
 
 from harp.asgi.events import EVENT_CONTROLLER_VIEW, ControllerViewEvent
 from harp.http import HttpResponse
 
+STRINGIFIABLES = (Decimal,)
+
+try:
+    from freezegun.api import FakeDatetime
+
+    STRINGIFIABLES += (FakeDatetime,)
+except ImportError:
+    pass
+
 
 def default(obj):
-    if isinstance(obj, (Decimal, FakeDatetime)):
+    if isinstance(obj, STRINGIFIABLES):
         return str(obj)
     raise TypeError
 
