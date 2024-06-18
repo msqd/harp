@@ -31,8 +31,8 @@ const SummaryRateChart = ({
     ...defaultEchartOptions,
     grid: {
       ...defaultEchartOptions.grid,
-      left: 4,
-      right: 64,
+      left: 8,
+      right: 8,
       top: 64,
       bottom: 24,
     },

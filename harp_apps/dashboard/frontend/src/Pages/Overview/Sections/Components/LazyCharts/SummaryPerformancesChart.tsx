@@ -42,7 +42,7 @@ const SummaryPerformancesChart = ({ data }: { data: { value: number; datetime: s
     ...defaultEchartOptions,
     grid: {
       ...defaultEchartOptions.grid,
-      left: 4,
+      left: 8,
       right: 64,
       top: 64,
       bottom: 24,
