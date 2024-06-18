@@ -2,8 +2,7 @@ import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
 import { ReactNode, useState } from "react"
 
 import { H5 } from "ui/Components/Typography"
-
-import { classNames } from "../../../ui/Utilities"
+import { classNames } from "ui/Utilities"
 
 interface FoldableProps {
   open?: boolean

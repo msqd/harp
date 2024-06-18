@@ -70,11 +70,10 @@ exports[`renders well when the query is successful 1`] = `
                 class="text-right"
               >
                 <button
-                  class="text-gray-400 mx-1 font-medium text-xs"
+                  class="css-k2gmgi"
                 >
                   <svg
                     aria-hidden="true"
-                    class="h-3 w-3 inline-block"
                     data-slot="icon"
                     fill="currentColor"
                     viewBox="0 0 16 16"
@@ -89,11 +88,10 @@ exports[`renders well when the query is successful 1`] = `
                    reset
                 </button>
                 <button
-                  class="text-gray-400 mx-1 font-medium text-xs"
+                  class="css-k2gmgi"
                 >
                   <svg
                     aria-hidden="true"
-                    class="h-3 w-3 inline-block"
                     data-slot="icon"
                     fill="currentColor"
                     viewBox="0 0 16 16"
