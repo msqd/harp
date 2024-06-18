@@ -225,6 +225,25 @@ test = ["anyio[trio]", "coverage[toml] (>=7)", "exceptiongroup (>=1.2.0)", "hypo
 trio = ["trio (>=0.23)"]
 
 [[package]]
+name = "asgi-prometheus"
+version = "1.1.2"
+description = "Support Prometheus metrics for ASGI applications"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "asgi-prometheus-1.1.2.tar.gz", hash = "sha256:bcfe83b8c1391378ab7826b9ea5171e779d83e09407c7d9f84028f909361fd73"},
+    {file = "asgi_prometheus-1.1.2-py3-none-any.whl", hash = "sha256:8199c6ed19b4f71065e3e5e9f12cb26d647f2c57e9f682f35eb48a212be74e7b"},
+]
+
+[package.dependencies]
+asgi-tools = ">=0.71.0"
+prometheus-client = ">=0.10.1"
+
+[package.extras]
+dev = ["bump2version", "pre-commit", "refurb", "tox"]
+tests = ["pytest", "pytest-aio[curio,trio] (>=1.1.0)", "pytest-mypy", "ruff"]
+
+[[package]]
 name = "asgi-tools"
 version = "0.76.0"
 description = "ASGI Toolkit to build web applications"
@@ -1942,6 +1961,20 @@ files = [
 ]
 
 [[package]]
+name = "prometheus-client"
+version = "0.20.0"
+description = "Python client for the Prometheus monitoring system."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "prometheus_client-0.20.0-py3-none-any.whl", hash = "sha256:cde524a85bce83ca359cc837f28b8c0db5cac7aa653a588fd7e84ba061c329e7"},
+    {file = "prometheus_client-0.20.0.tar.gz", hash = "sha256:287629d00b147a32dcb2be0b9df905da599b2d82f80377083ec8463309a4bb89"},
+]
+
+[package.extras]
+twisted = ["twisted"]
+
+[[package]]
 name = "psutil"
 version = "5.9.8"
 description = "Cross-platform lib for process and system monitoring in Python."
@@ -3642,4 +3675,4 @@ dev = ["honcho", "watchfiles"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "d5c888e9d669af3a02ed55feee4639bc2fb6b63d61cf806f176cd92f4fa92bf7"
+content-hash = "8409ac0a705f380703c200f7c7b405e002e86725ce4a5b3fc6a3110e36b39ea3"

@@ -1,6 +1,12 @@
-Version 0.5.0rc1 (2024-06-15)
-=============================
+Version 0.5.0 (2024-06-16)
+==========================
 
+* feat: simple prometheus asgi optional integration (experimental, will change) (Romain Dorgueil)
+* feat: favicon (Romain Dorgueil)
+* docs: misc (Romain Dorgueil)
+* feat: add badges to readme (Romain Dorgueil)
+* release: 0.5.0rc2 (Romain Dorgueil)
+* release: 0.5.0rc1 (Romain Dorgueil)
 * feat: update dependencies (Romain Dorgueil)
 * feat: add logo to docs (Romain Dorgueil)
 * feat: update readme (Romain Dorgueil)
