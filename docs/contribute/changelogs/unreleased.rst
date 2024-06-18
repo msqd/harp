@@ -2,6 +2,7 @@ Added
 :::::
 
 * Previous and next button in transaction detail pane allows to navigate through transactions (#394).
+* Transaction list can be easily refreshed (#396).
 
 Changed
 :::::::

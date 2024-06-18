@@ -11,7 +11,7 @@ import { Link } from "react-router-dom"
 import tw, { styled } from "twin.macro"
 
 interface ButtonProps {
-  onClick: () => void
+  onClick?: () => unknown
 }
 
 const StyledButton = styled.button`
@@ -69,6 +69,14 @@ export function NextButton({ onClick }: ButtonProps) {
   return (
     <StyledButton onClick={onClick}>
       <ArrowDownIcon /> next
+    </StyledButton>
+  )
+}
+
+export function RefreshButton({ onClick, ...moreProps }: ButtonProps & HTMLAttributes<HTMLButtonElement>) {
+  return (
+    <StyledButton onClick={onClick} {...moreProps}>
+      <ArrowPathIcon />
     </StyledButton>
   )
 }
