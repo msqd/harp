@@ -41,6 +41,7 @@ def _format_aggregate(items, count, key, *, default=None):
         "period": period,
         "data": [
             {
+                "datetime": t["datetime"],
                 "value": int(t[key]) if t[key] is not None else default,
             }
             for t in items
@@ -84,6 +85,7 @@ class OverviewController(RoutingController):
                     "mean": int(mean_tpdex),
                     "data": [
                         {
+                            "datetime": t["datetime"],
                             "value": int(t["meanTpdex"]) if t["meanTpdex"] is not None else 100,
                         }
                         for t in transactions_by_date_list

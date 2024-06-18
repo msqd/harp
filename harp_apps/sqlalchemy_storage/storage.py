@@ -382,6 +382,12 @@ class SqlAlchemyStorage(Storage):
             s_date,
             func.count(),
             func.sum(case((Transaction.x_status_class.in_(("5xx", "ERR")), 1), else_=0)),
+            func.sum(
+                case(
+                    (and_(Transaction.x_cached is not None, Transaction.x_cached != ""), 1),
+                    else_=0,
+                )
+            ),
             func.avg(Transaction.elapsed),
             func.avg(Transaction.tpdex),
         )
@@ -400,8 +406,9 @@ class SqlAlchemyStorage(Storage):
                     "datetime": ensure_datetime(row[0], UTC),
                     "count": row[1],
                     "errors": int(row[2]),
-                    "meanDuration": row[3] if row[3] else 0,
-                    "meanTpdex": row[4],
+                    "cached": int(row[3]),
+                    "meanDuration": row[4] if row[4] else 0,
+                    "meanTpdex": row[5],
                     # ! probably sqlite struggling with unfinished transactions
                 }
                 for row in result.fetchall()

@@ -1,4 +1,4 @@
-import { ReactElement } from "react"
+import { ReactElement, ReactNode } from "react"
 import { useErrorBoundary } from "react-error-boundary"
 import { UseQueryResult } from "react-query"
 import { QueryObserverSuccessResult } from "react-query/types/core/types"
@@ -28,7 +28,7 @@ function anyQueryIsNotSuccess<T>(queries: UseQueryResult<T>[]): boolean {
   return queries.some((query) => !query.isSuccess)
 }
 
-function OnQuerySuccess<T>(props: OnQuerySuccessProps<T> | OnQueriesSuccessProps<T>) {
+function OnQuerySuccess<T>(props: (OnQuerySuccessProps<T> | OnQueriesSuccessProps<T>) & { fallback?: ReactNode }) {
   const queries = "query" in props ? [props.query] : props.queries
 
   const { showBoundary } = useErrorBoundary()
@@ -40,7 +40,7 @@ function OnQuerySuccess<T>(props: OnQuerySuccessProps<T> | OnQueriesSuccessProps
   }
 
   if (anyQueryIsLoading(queries)) {
-    return <div>Loading...</div>
+    return props.fallback ?? <div>Loading...</div>
   }
 
   if (anyQueryIsError(queries) || anyQueryIsNotSuccess(queries)) {

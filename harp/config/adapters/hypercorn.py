@@ -26,6 +26,7 @@ class HypercornAdapter:
         config.bind = [*map(str, binds)]
         config.accesslog = logging.getLogger("hypercorn.access")
         config.errorlog = logging.getLogger("hypercorn.error")
+        config.workers = 8
         return config
 
     async def serve(self):

@@ -1,6 +1,6 @@
 // extend Jest's `expect` with matchers that are useful when testing DOM elements.
 import "@testing-library/jest-dom"
-
+import "vitest-canvas-mock"
 // retrieve our global server mock implementation for auto-registration
 import { afterAll, afterEach, beforeAll } from "vitest"
 

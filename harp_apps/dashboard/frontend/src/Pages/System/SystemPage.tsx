@@ -7,7 +7,7 @@ import { SystemDependenciesTabPanel } from "./SystemDependenciesTabPanel.tsx"
 import { SystemSettingsTabPanel } from "./SystemSettingsTabPanel.tsx"
 import { SystemStorageTabPanel } from "./SystemStorageTabPanel.tsx"
 
-export const SystemPage = () => {
+const SystemPage = () => {
   return (
     <Page title={<PageTitle title="System" description="Informations about the running instance." />}>
       <Helmet>
@@ -29,3 +29,5 @@ export const SystemPage = () => {
     </Page>
   )
 }
+
+export default SystemPage
