@@ -15,6 +15,7 @@ from harp_apps.sqlalchemy_storage.utils.migrations import (
     create_alembic_config,
     create_harp_config_with_sqlalchemy_storage_from_command_line_options,
     do_migrate,
+    do_reset,
 )
 
 logger = get_logger(__name__)
@@ -82,3 +83,13 @@ def history(**kwargs):
     config = create_harp_config_with_sqlalchemy_storage_from_command_line_options(kwargs)
     alembic_cfg = create_alembic_config(config.settings.get("storage", {}).get("url", None))
     command.history(alembic_cfg)
+
+
+@click.command("db:reset")
+@add_harp_server_click_options
+def reset(**kwargs):
+    config = create_harp_config_with_sqlalchemy_storage_from_command_line_options(kwargs)
+    alembic_cfg = create_alembic_config(config.settings.get("storage", {}).get("url", None))
+    engine = create_async_engine(alembic_cfg.get_main_option("sqlalchemy.url"))
+
+    asyncio.run(do_reset(engine))

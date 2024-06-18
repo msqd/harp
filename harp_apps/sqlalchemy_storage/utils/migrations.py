@@ -48,19 +48,24 @@ def create_harp_config_with_sqlalchemy_storage_from_command_line_options(kwargs)
     return cfg
 
 
+async def do_reset(engine):
+    logger.info("🛢 [db:reset] dropping all tables.")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.execute(text("DROP TABLE IF EXISTS alembic_version;"))
+
+
 async def do_migrate(engine, *, migrator, reset=False):
     logger.info(f"🛢 Starting database migrations... (dialect={engine.dialect.name}, reset={reset}).")
     if reset:
-        logger.debug("🛢 [db:migrate reset=true] dropping all tables.")
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
+        await do_reset(engine)
 
     if engine.dialect.name == "sqlite":
         logger.debug("🛢 [db:migrate dialect=sqlite] creating all tables (without alembic).")
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
-    else:
+    elif migrator:
         # alembic manages migrations except for sqlite, because it's not trivial to make them work and an env using
         # sqlite does not really need to support upgrades (drop/recreate is fine when harp is upgraded).
         logger.debug("🛢 [db:migrate] Running alembic migrations...")

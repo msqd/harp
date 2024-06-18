@@ -1,7 +1,10 @@
 import asyncio
 from typing import cast
 
+from prometheus_client import Gauge
+
 from harp import get_logger
+from harp.settings import USE_PROMETHEUS
 from harp.typing import Storage
 from harp_apps.sqlalchemy_storage.storage import SqlAlchemyStorage
 
@@ -16,6 +19,14 @@ class JanitorWorker:
         self.storage: SqlAlchemyStorage = cast(SqlAlchemyStorage, storage)
         self.running = False
         self.session_factory = self.storage.session_factory
+
+        if USE_PROMETHEUS:
+            self.prometheus_metrics = {
+                "harp_storage_transactions": Gauge("harp_storage_transactions", "Transactions currently in storage."),
+                "harp_storage_messages": Gauge("harp_storage_messages", "Messages currently in storage."),
+                "harp_storage_blobs": Gauge("harp_storage_blobs", "Blob objects currently in storage."),
+                "harp_storage_blobs_orphans": Gauge("harp_storage_blobs_orphans", "Orphan blobs currently in storage."),
+            }
 
     def stop(self):
         """
@@ -85,12 +96,18 @@ class JanitorWorker:
         await self.storage.metrics.insert_values(await self.compute_metrics(session))
 
     async def compute_metrics(self, session):
-        return {
+        values = {
             "storage.transactions": await self.do_count(session, "transactions"),
             "storage.messages": await self.do_count(session, "messages"),
             "storage.blobs": await self.do_count(session, "blobs"),
             "storage.blobs.orphans": await self.do_count(session, "blobs", method="count_orphans"),
         }
+
+        if USE_PROMETHEUS:
+            for key, value in values.items():
+                self.prometheus_metrics["harp_" + key.replace(".", "_")].set(value)
+
+        return values
 
     async def do_count(self, session, name: str, /, *, method="count"):
         """

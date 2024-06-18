@@ -5,7 +5,7 @@ from asyncpg import PostgresError
 from hypercorn.utils import LifespanFailureError
 
 from harp import get_logger
-from harp.utils.env import get_bool_from_env
+from harp.settings import USE_PROMETHEUS
 
 logger = get_logger(__name__)
 
@@ -37,7 +37,7 @@ class HypercornAdapter:
 
         asgi_app, binds = await self.factory.build()
 
-        if get_bool_from_env("USE_ASGI_PROMETHEUS_MIDDLEWARE", False):
+        if USE_PROMETHEUS:
             from asgi_prometheus import PrometheusMiddleware
 
             _metrics_url = "/.prometheus/metrics"

@@ -4,6 +4,8 @@ Added
 * Previous and next button in transaction detail pane allows to navigate through transactions (#394).
 * Transaction list can be easily refreshed (#396).
 * Transaction lists shows a summary of transaction count shown and total (#395).
+* Stores storage metrics in prometheus gauges to monitor evolution.
+* Adds a ``db:reset`` command to reset the database.
 
 Changed
 :::::::

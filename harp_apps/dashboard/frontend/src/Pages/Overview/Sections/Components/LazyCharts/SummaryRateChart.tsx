@@ -11,7 +11,7 @@ echarts.use([LineChart, BarChart, CanvasRenderer, GridComponent, TooltipComponen
 const tooltipFormatter = (params: { name: string; value: number }[]) => {
   const serie = params[0]
   let tooltipContent = `<strong>${serie.name}</strong><br/>`
-  tooltipContent += `<small>Errors: ${serie.value}</small>`
+  tooltipContent += `<small>${serie.value}</small>`
   return tooltipContent
 }
 
