@@ -38,7 +38,7 @@ exports[`renders well when the query is successful 1`] = `
         </p>
       </div>
       <div
-        class="flex flex-col ml-24 w-full items-end lg:items-start justify-end lg:justify-between lg:flex-row lg:mt-12"
+        class="flex flex-col ml-24 w-full items-end lg:items-start justify-end lg:justify-between lg:flex-row mt-8"
       >
         <div
           class="w-96 order-last lg:order-first pr-6"
@@ -64,6 +64,18 @@ exports[`renders well when the query is successful 1`] = `
                 Enter
               </kbd>
             </div>
+          </div>
+        </div>
+        <div
+          class="flex flex-col items-end"
+        >
+          <div
+            class="px-4 sm:px-6 text-sm text-secondary-400"
+          >
+            Showing 
+            2
+             of 
+             transactions
           </div>
         </div>
       </div>

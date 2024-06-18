@@ -109,7 +109,7 @@ export default function TransactionListPage() {
           }
           description="Explore transactions that went through the proxy"
         >
-          <div className="flex flex-col ml-24 w-full items-end lg:items-start justify-end lg:justify-between lg:flex-row lg:mt-12">
+          <div className="flex flex-col ml-24 w-full items-end lg:items-start justify-end lg:justify-between lg:flex-row mt-8">
             <SearchBar
               placeHolder="Search transactions"
               setSearch={(search) => updateQueryParams({ search: search })}
@@ -117,19 +117,24 @@ export default function TransactionListPage() {
               search={search}
             />
             {query.isSuccess ? (
-              <OptionalPaginator
-                current={page}
-                setPage={(page) => {
-                  if (page > 1) {
-                    updateQueryParams({ page: page.toString(), cursor: cursor })
-                  } else {
-                    updateQueryParams({ page: undefined, cursor: undefined })
-                  }
-                }}
-                total={query.data.total}
-                pages={query.data.pages}
-                perPage={query.data.perPage}
-              />
+              <div className="flex flex-col items-end">
+                <OptionalPaginator
+                  current={page}
+                  setPage={(page) => {
+                    if (page > 1) {
+                      updateQueryParams({ page: page.toString(), cursor: cursor })
+                    } else {
+                      updateQueryParams({ page: undefined, cursor: undefined })
+                    }
+                  }}
+                  total={query.data.total}
+                  pages={query.data.pages}
+                  perPage={query.data.perPage}
+                />
+                <div className="px-4 sm:px-6 text-sm text-secondary-400">
+                  Showing {query.data.items.length} of {query.data.total} transactions
+                </div>
+              </div>
             ) : (
               <div className="block order-first lg:order-last"></div>
             )}
