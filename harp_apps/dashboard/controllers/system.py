@@ -1,14 +1,14 @@
-import re
 from copy import deepcopy
 from typing import cast
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import aliased, joinedload
 
-from harp import __revision__, __version__, get_logger
+from harp import Config, __revision__, __version__, get_logger
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest
-from harp.typing import GlobalSettings, Storage
+from harp.typing import Storage
+from harp.typing.global_settings import GlobalSettings
 from harp.views.json import json
 from harp_apps.sqlalchemy_storage.models import MetricValue
 from harp_apps.sqlalchemy_storage.storage import SqlAlchemyStorage
@@ -21,12 +21,7 @@ logger = get_logger(__name__)
 @RouterPrefix("/api/system")
 class SystemController(RoutingController):
     def __init__(self, *, storage: Storage, settings: GlobalSettings, handle_errors=True, router=None):
-        # a bit of scrambling for passwords etc.
-        if "storage" in settings:
-            if "url" in settings["storage"]:
-                settings["storage"]["url"] = re.sub(r"//[^@]*@", "//***@", settings["storage"]["url"])
-
-        self.settings = deepcopy(dict(settings))
+        self.settings = Config(deepcopy(dict(settings))).validate(secure=True)
         self.storage: SqlAlchemyStorage = cast(SqlAlchemyStorage, storage)
 
         self._dependencies = None

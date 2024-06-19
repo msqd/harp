@@ -14,3 +14,6 @@ Changed
 :::::::
 
 * Dashboard overview is now implemented using Apache ECharts and shows more information, in a clearer way.
+* Settings can now be validated in a secure or unsecure way, allowing each settings to define the security logic
+  (related to #54).
+* SQLAlchemy ``url`` setting now use the ``sqlalchemy.URL`` type to prepare for subfields overriding (related to #54).

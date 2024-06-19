@@ -35,17 +35,20 @@ def _resolve_application_aliases(spec):
 
 class Config:
     DEFAULT_APPLICATIONS = [
-        "harp_apps.http_client",
-        "harp_apps.proxy",
-        "harp_apps.dashboard",
-        "harp_apps.sqlalchemy_storage",
-        "harp_apps.telemetry",
-        "harp_apps.janitor",
+        "http_client",
+        "proxy",
+        "dashboard",
+        "sqlalchemy_storage",
+        "telemetry",
+        "janitor",
         "harp_apps.contrib.sentry",  # todo: allow to extend application list in config file without overriding all
     ]
 
     def __init__(self, settings=None, /, applications=None):
         self._raw_settings = {"applications": applications or []} | (settings or {})
+        self._raw_settings["applications"] = [
+            _resolve_application_aliases(app) for app in self._raw_settings["applications"]
+        ]
         self._validated_settings = None
         self._debug_applications = set()
         self._application_types = {}
@@ -163,7 +166,7 @@ class Config:
                 }
             )
 
-    def validate(self, *, allow_extraneous_settings=False):
+    def validate(self, /, *, allow_extraneous_settings=False, secure=False):
         if self._validated_settings is None:
             to_be_validated = deepcopy(self._raw_settings)
             application_names = to_be_validated.pop("applications", [])
@@ -177,7 +180,7 @@ class Config:
                 validated["applications"].append(application.name)
 
             applications, newly_validated = self._validate_round_2_extract_and_validate_settings(
-                application_types, to_be_validated
+                application_types, to_be_validated, secure=secure
             )
             newly_validated.pop("applications", None)  # not allowed xxx todo raise
             validated |= newly_validated
@@ -249,7 +252,7 @@ class Config:
 
         return types, to_be_validated
 
-    def _validate_round_2_extract_and_validate_settings(self, application_types, to_be_validated):
+    def _validate_round_2_extract_and_validate_settings(self, application_types, to_be_validated, /, *, secure=False):
         applications = []
         validated = {}
         # round 2: validate and extract settings
@@ -277,7 +280,7 @@ class Config:
                 )
 
             application = application_type(application_settings)
-            application_validated_settings = application.validate()
+            application_validated_settings = application.validate(secure=secure)
             if application_type.settings_namespace:
                 validated |= {application_type.settings_namespace: application_validated_settings}
             applications.append(application)

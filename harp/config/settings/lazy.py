@@ -36,7 +36,7 @@ class Definition(Generic[T]):
     def build(self, *args, **kwargs) -> T:
         return self.factory(*self.args, *args, **self.kwargs, **kwargs)
 
-    def _asdict(self):
+    def _asdict(self, /, *, secure=True):
         return {
             "@type": ":".join((self.path, self.name)),
             **({"@args": self.args} if len(self.args) else {}),
@@ -67,7 +67,7 @@ class ConstantDefinition(Definition):
     def build(self):
         return self.value
 
-    def _asdict(self):
+    def _asdict(self, /, *, secure=True):
         return self.value
 
 

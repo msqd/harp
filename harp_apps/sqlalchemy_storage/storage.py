@@ -184,6 +184,8 @@ class SqlAlchemyStorage(Storage):
 
         self._debug = False
 
+        logger.info(f"🛢 {type(self).__name__} url={self.settings.url}")
+
     @asynccontextmanager
     async def begin(self):
         async with self.session_factory() as session:
