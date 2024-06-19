@@ -3,6 +3,8 @@ import os
 from config.common import ConfigurationBuilder as BaseConfigurationBuilder
 from config.common import ConfigurationSource
 
+from harp.config.examples import get_example_filename
+
 
 class ConfigurationBuilder(BaseConfigurationBuilder):
     def __init__(self, *sources: ConfigurationSource) -> None:
@@ -11,12 +13,8 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
     def add_examples(self, examples):
         from config.yaml import YAMLFile
 
-        from harp.config import examples as examples_package
-
-        _examples_dirname = os.path.dirname(examples_package.__file__)
         for example in examples or ():
-            _example_file = os.path.join(_examples_dirname, f"{example}.yml")
-            self.add_source(YAMLFile(_example_file))
+            self.add_source(YAMLFile(get_example_filename(example)))
 
     def add_files(self, files):
         for file in files or ():

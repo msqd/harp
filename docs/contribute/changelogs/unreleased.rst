@@ -8,6 +8,7 @@ Added
 * Adds a ``db:reset`` command to reset the database.
 * Examples are now bundled within the ``harp.config.examples`` subpackage and can be loaded from commandline using
   ``-e name`` or ``--example name`` (#379).
+* All example files are now parsed and validated in the test suite (#378).
 
 Changed
 :::::::
