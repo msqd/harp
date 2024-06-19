@@ -10,9 +10,6 @@ from types import MappingProxyType
 from typing import Self, Type
 
 import orjson
-from config.ini import INIFile
-from config.json import JSONFile
-from config.toml import TOMLFile
 from rodi import Container
 from whistle import IAsyncEventDispatcher
 
@@ -128,18 +125,17 @@ class Config:
         for _disabled_application in options.disable or ():
             self.remove_application(_disabled_application)
 
-        from config.common import ConfigurationBuilder, MapSource
+        from config.common import MapSource
         from config.env import EnvVars
         from config.yaml import YAMLFile
 
-        builder = ConfigurationBuilder()
+        from .builder import ConfigurationBuilder
 
-        # default config
-        builder.add_source(MapSource({}))
-        builder.add_source(EnvVars(prefix="DEFAULT__HARP_"))
-
-        # current
-        builder.add_source(MapSource(self._raw_settings))
+        builder = ConfigurationBuilder(
+            MapSource({}),
+            EnvVars(prefix="DEFAULT__HARP_"),
+            MapSource(self._raw_settings),
+        )
 
         # load default system config (if present)
         if os.path.exists("/etc/harp.yaml"):
@@ -147,28 +143,10 @@ class Config:
         elif os.path.exists("/etc/harp.yml"):
             builder.add_source(YAMLFile("/etc/harp.yml"))
 
-        # load user config
-        for file in options.files or ():
-            _, ext = os.path.splitext(file)
-            if ext in (".yaml", ".yml"):
-                builder.add_source(YAMLFile(file))
-            elif ext in (".json",):
-                builder.add_source(JSONFile(file))
-            elif ext in (".ini", ".conf"):
-                builder.add_source(INIFile(file))
-            elif ext in (".toml",):
-                builder.add_source(TOMLFile(file))
-            else:
-                raise ValueError(f"Unknown file extension: {ext}")
-
+        builder.add_examples(options.examples)
+        builder.add_files(options.files)
         builder.add_source(EnvVars(prefix="HARP_"))
-
-        for k, v in (options.options or {}).items():
-            builder.add_value(k, v)
-
-        # reset option
-        if options.reset:
-            builder.add_value("storage.drop_tables", True)
+        builder.add_values(options.options or {})
 
         self._raw_settings = builder.build().values
 

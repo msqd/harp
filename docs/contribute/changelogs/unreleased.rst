@@ -6,6 +6,8 @@ Added
 * Transaction lists shows a summary of transaction count shown and total (#395).
 * Stores storage metrics in prometheus gauges to monitor evolution.
 * Adds a ``db:reset`` command to reset the database.
+* Examples are now bundled within the ``harp.config.examples`` subpackage and can be loaded from commandline using
+  ``-e name`` or ``--example name`` (#379).
 
 Changed
 :::::::

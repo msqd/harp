@@ -15,11 +15,9 @@ class CommonServerOptions(dict):
     options: dict = field(default_factory=dict)
     endpoints: Iterable = field(default_factory=dict)
     files: tuple = ()
+    examples: tuple = ()
     enable: tuple = ()
     disable: tuple = ()
-
-    # TODO maybe run reset as a pre-start command, so it does not run on each reload?
-    reset: bool = False
 
     def as_list(self):
         return list(
@@ -29,7 +27,7 @@ class CommonServerOptions(dict):
                 ("--enable {app}".format(app=app) for app in self.enable),
                 ("--disable {app}".format(app=app) for app in self.disable),
                 ("--file " + file for file in self.files),
-                (("--set storage.drop_tables=true",) if self.reset else ()),
+                ("--example " + example for example in self.examples),
             )
         )
 
@@ -64,6 +62,14 @@ def add_harp_server_click_options(f):
             multiple=True,
             help="""Load configuration from file (configuration format will be detected from file extension, can be
             used multiple times).""",
+        ),
+        click.option(
+            "--example",
+            "-e",
+            "examples",
+            default=(),
+            multiple=True,
+            help="""Load example configuration (can be used multiple times).""",
         ),
         click.option("--enable", default=(), multiple=True, help="Enable some applications."),
         click.option("--disable", default=(), multiple=True, help="Disable some applications."),
