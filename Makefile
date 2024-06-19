@@ -40,7 +40,7 @@ TESTC_COMMAND ?= poetry shell
 FRONTEND_DIR = harp_apps/dashboard/frontend
 
 # default run options
-HARP_OPTIONS ?= --file examples/sqlite.yml --file examples/httpbin.yml
+HARP_OPTIONS ?= --example sqlite --example httpbin
 
 .PHONY: start-dev
 start-dev:  # Starts a development instance with reasonable defaults (tune HARP_OPTIONS to replace).
@@ -216,7 +216,7 @@ runc-shell:  ## Runs a shell within the docker image.
 	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
 runc-example-repositories:  ## Runs harp with the "repositories" example within the docker image.
-	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 -p 9001-9012:9001-9012 --rm $(DOCKER_IMAGE) --file examples/repositories.yml --set storage.url postgresql+asyncpg://harp:harp@harp-postgres-1/repositories
+	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 -p 9001-9012:9001-9012 --rm $(DOCKER_IMAGE) --example repositories --set storage.url postgresql+asyncpg://harp:harp@harp-postgres-1/repositories
 
 
 .PHONY: buildc-dev pushc-dev runc-dev runc-dev-shell
