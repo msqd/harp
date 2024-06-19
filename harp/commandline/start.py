@@ -1,5 +1,8 @@
 import importlib.util
 import sys
+from typing import cast
+
+from click import BaseCommand
 
 from harp.commandline.server import CommonServerOptions, add_harp_server_click_options
 from harp.commandline.utils.manager import HARP_DASHBOARD_SERVICE
@@ -108,3 +111,6 @@ def start(with_docs, with_ui, services, server_subprocesses, mock, **kwargs):
         manager.kill()
 
     sys.exit(manager.returncode)
+
+
+start = cast(BaseCommand, start)

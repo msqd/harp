@@ -91,7 +91,7 @@ class DashboardController:
         return f"{type(self).__name__}({'+'.join(f for f in features if features[f])})"
 
     def _create_ui_devserver_proxy_controller(self, *, port):
-        return HttpProxyController(f"http://localhost:{port}/", http_client=self.http_client)
+        return HttpProxyController(f"http://localhost:{port}/", http_client=self.http_client, logging=False)
 
     def _create_internal_api_controller(self):
         root = RoutingController(handle_errors=False)

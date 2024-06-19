@@ -1,3 +1,7 @@
+from typing import cast
+
+from click import BaseCommand
+
 from harp.commandline.options.server import CommonServerOptions, add_harp_server_click_options
 from harp.utils.commandline import click
 
@@ -18,3 +22,6 @@ def server(**kwargs):
     config.read_env(options)
 
     return run(config)
+
+
+server = cast(BaseCommand, server)

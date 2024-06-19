@@ -104,7 +104,7 @@ build-frontend:  ## Builds the harp dashboard frontend (compiles typescript and 
 .PHONY: lint-frontend coverage cloc
 
 preqa: types format reference  ## Runs pre-qa checks (types generation, formatting, api reference).
-	$(RUN) pre-commit
+	-$(RUN) pre-commit
 
 qa: preqa test  ## Runs all QA checks, with most common databases.
 

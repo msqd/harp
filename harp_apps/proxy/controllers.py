@@ -40,10 +40,11 @@ class HttpProxyController:
         """Read-only reference to the event dispatcher."""
         return self._dispatcher
 
-    def __init__(self, url, *, http_client: AsyncClient, dispatcher=None, name=None):
+    def __init__(self, url, *, http_client: AsyncClient, dispatcher=None, name=None, logging=True):
         self.http_client = http_client
         self.url = url or self.url
         self.name = name or self.name
+        self._logging = logging
         self._dispatcher = dispatcher or self._dispatcher
 
         self.parsed_url = urlparse(self.url)
@@ -64,6 +65,15 @@ class HttpProxyController:
         if self._dispatcher:
             return await self._dispatcher.adispatch(event_id, event)
 
+    def debug(self, message, *args, **kwargs):
+        if not self._logging:
+            return
+        transaction: Transaction | None = kwargs.pop("transaction", None)
+        if transaction:
+            kwargs["transaction"] = transaction.id
+            kwargs.update(transaction.extras)
+        logger.debug(message, *args, **kwargs)
+
     async def __call__(self, request: HttpRequest):
         """Handle an incoming request and proxy it to the configured URL.
 
@@ -77,19 +87,15 @@ class HttpProxyController:
         request = WrappedHttpRequest(request)
         request.headers["host"] = self.parsed_url.netloc
 
-        # BEGIN TRANSACTION AND PREPARE DATA FOR PROXY REQUEST
-        tags = {}
-
-        for header in request.headers:
-            header = header.lower()
-            if header.startswith("x-harp-"):
-                tags[header[7:]] = request.headers.pop(header)
-
         # override user agent (later, may be customizable behavior)
         if self.user_agent:
             request.headers["user-agent"] = self.user_agent
 
-        transaction = await self._create_transaction_from_request(request, tags=tags)
+        # create transaction
+        transaction = await self._create_transaction_from_request(
+            request,
+            tags=self._extract_tags_from_request(request),
+        )
         await request.join()
         url = urljoin(self.url, request.path) + (f"?{urlencode(request.query)}" if request.query else "")
 
@@ -97,7 +103,7 @@ class HttpProxyController:
         p_request: httpx.Request = self.http_client.build_request(
             request.method, url, headers=list(request.headers.items()), content=request.body
         )
-        logger.debug(f"▶▶ {request.method} {url}", transaction_id=transaction.id)
+        self.debug(f"▶▶ {request.method} {url}", transaction=transaction)
 
         # PROXY RESPONSE
         try:
@@ -115,9 +121,9 @@ class HttpProxyController:
             # todo add web debug information if we are not on a production env
             return HttpResponse("Gateway Timeout (remote server timeout)", status=504, content_type="text/plain")
 
-        logger.debug(
+        self.debug(
             f"◀◀ {p_response.status_code} {p_response.reason_phrase} ({p_response.elapsed.total_seconds()}s)",
-            transaction_id=transaction.id,
+            transaction=transaction,
         )
 
         response_status = p_response.status_code
@@ -147,7 +153,7 @@ class HttpProxyController:
             logger.error(f"◀ {type(response).__name__} {response.message} ({spent}ms)", transaction_id=transaction.id)
         elif isinstance(response, HttpResponse):
             reason = codes.get_reason_phrase(response.status)
-            logger.debug(f"◀ {response.status} {reason} ({spent}ms)", transaction_id=transaction.id)
+            self.debug(f"◀ {response.status} {reason} ({spent}ms)", transaction=transaction)
         else:
             raise ValueError(f"Invalid final message type: {type(response)}")
 
@@ -175,13 +181,14 @@ class HttpProxyController:
         request_cache_control = request.headers.get("cache-control")
         if request_cache_control:
             request_cache_control = parse_cache_control([request_cache_control])
+            self.debug(f"Cache-Control: {request_cache_control}", transaction=transaction)
             if request_cache_control.no_cache:
                 transaction.extras["no_cache"] = True
 
         # XXX for now, we use transaction "extras" to store searchable data for later
         transaction.extras["method"] = request.method
 
-        logger.debug(f"▶ {request.method} {request.path}", transaction_id=transaction.id)
+        self.debug(f"▶ {request.method} {request.path}", transaction=transaction)
 
         # dispatch transaction started event
         # we don't really want to await this, should run in background ? or use an async queue ?
@@ -191,6 +198,18 @@ class HttpProxyController:
         await self.adispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, request))
 
         return transaction
+
+    def _extract_tags_from_request(self, request: WrappedHttpRequest):
+        """
+        Convert special request headers (x-harp-*) into tags (key-value pairs) that we'll attach to the
+        transaction. Headers are "consumed", meaning they are removed from the request headers.
+        """
+        tags = {}
+        for header in request.headers:
+            header = header.lower()
+            if header.startswith("x-harp-"):
+                tags[header[7:]] = request.headers.pop(header)
+        return tags
 
     def __repr__(self):
         return f"{type(self).__name__}({self.url!r}, name={self.name!r})"

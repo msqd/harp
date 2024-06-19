@@ -42,6 +42,7 @@ class HypercornAdapter:
 
             _metrics_url = "/.prometheus/metrics"
             asgi_app = PrometheusMiddleware(asgi_app, metrics_url=_metrics_url, group_paths=["/"])
+            asgi_app.scopes = ("http",)
             logger.info(f"🌎 PrometheusMiddleware enabled, metrics under {_metrics_url}.")
 
         config = self._create_config(binds)

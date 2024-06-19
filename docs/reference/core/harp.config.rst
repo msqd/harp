@@ -16,5 +16,6 @@ Submodules
     harp.config.application
     harp.config.config
     harp.config.events
+    harp.config.examples
     harp.config.factories
     harp.config.settings
