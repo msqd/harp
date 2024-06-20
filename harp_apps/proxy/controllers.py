@@ -13,12 +13,21 @@ from harp.asgi.events import MessageEvent, TransactionEvent
 from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
 from harp.http.requests import WrappedHttpRequest
 from harp.models import Transaction
+from harp.settings import USE_PROMETHEUS
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.tpdex import tpdex
 
 from .events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
 
 logger = get_logger(__name__)
+
+_prometheus = None
+if USE_PROMETHEUS:
+    from prometheus_client import Counter
+
+    _prometheus = {
+        "call": Counter("proxy_calls", "Requests to the proxy.", ["name", "method"]),
+    }
 
 
 class HttpProxyController:
@@ -82,6 +91,9 @@ class HttpProxyController:
         :return:
 
         """
+
+        if _prometheus:
+            _prometheus["call"].labels(self.name or "-", request.method).inc()
 
         # create an envelope to override things, without touching the original request
         request = WrappedHttpRequest(request)

@@ -84,13 +84,15 @@ def start(with_docs, with_ui, services, server_subprocesses, mock, **kwargs):
     if with_ui or HARP_UI_SERVICE in services:
         services.add(HARP_UI_SERVICE)
 
-    for _name, (_proxy_port, _cmd, _port) in parse_server_subprocesses_options(server_subprocesses).items():
-        if _name in services:
+    for _name, (_proxy_port, _path, _cmd, _port) in parse_server_subprocesses_options(server_subprocesses).items():
+        if _name in services or _name in manager_factory.names:
             raise click.UsageError(f"Duplicate process name: {_name}.")
         services.add(_name)
+        manager_factory.names.add(_name)
         manager_factory.proxy_ports[_name] = _proxy_port
         manager_factory.ports[_name] = _port
         manager_factory.commands[_name] = _cmd
+        manager_factory.cwds[_name] = _path
 
     # allow to limit the services to start
     if services:

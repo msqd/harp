@@ -1,8 +1,6 @@
 import asyncio
 from typing import cast
 
-from prometheus_client import Gauge
-
 from harp import get_logger
 from harp.settings import USE_PROMETHEUS
 from harp.typing import Storage
@@ -21,11 +19,13 @@ class JanitorWorker:
         self.session_factory = self.storage.session_factory
 
         if USE_PROMETHEUS:
-            self.prometheus_metrics = {
-                "harp_storage_transactions": Gauge("harp_storage_transactions", "Transactions currently in storage."),
-                "harp_storage_messages": Gauge("harp_storage_messages", "Messages currently in storage."),
-                "harp_storage_blobs": Gauge("harp_storage_blobs", "Blob objects currently in storage."),
-                "harp_storage_blobs_orphans": Gauge("harp_storage_blobs_orphans", "Orphan blobs currently in storage."),
+            from prometheus_client import Gauge
+
+            self._prometheus = {
+                "storage.transactions": Gauge("storage_transactions", "Transactions currently in storage."),
+                "storage.messages": Gauge("storage_messages", "Messages currently in storage."),
+                "storage.blobs": Gauge("storage_blobs", "Blob objects currently in storage."),
+                "storage.blobs.orphans": Gauge("storage_blobs_orphans", "Orphan blobs currently in storage."),
             }
 
     def stop(self):
@@ -105,7 +105,7 @@ class JanitorWorker:
 
         if USE_PROMETHEUS:
             for key, value in values.items():
-                self.prometheus_metrics["harp_" + key.replace(".", "_")].set(value)
+                self._prometheus[key].set(value)
 
         return values
 
