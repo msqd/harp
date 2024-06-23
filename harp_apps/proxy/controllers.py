@@ -1,3 +1,4 @@
+import time
 from datetime import UTC, datetime
 from functools import cached_property
 from typing import Optional
@@ -23,10 +24,12 @@ logger = get_logger(__name__)
 
 _prometheus = None
 if USE_PROMETHEUS:
-    from prometheus_client import Counter
+    from prometheus_client import Counter, Histogram
 
     _prometheus = {
         "call": Counter("proxy_calls", "Requests to the proxy.", ["name", "method"]),
+        "time.full": Histogram("proxy_time_full", "Requests to the proxy including overhead.", ["name", "method"]),
+        "time.forward": Histogram("proxy_time_forward", "Forward time.", ["name", "method"]),
     }
 
 
@@ -92,8 +95,10 @@ class HttpProxyController:
 
         """
 
+        prometheus_labels = (self.name or "-", request.method)
+        before_time = time.perf_counter()
         if _prometheus:
-            _prometheus["call"].labels(self.name or "-", request.method).inc()
+            _prometheus["call"].labels(*prometheus_labels).inc()
 
         # create an envelope to override things, without touching the original request
         request = WrappedHttpRequest(request)
@@ -118,9 +123,14 @@ class HttpProxyController:
         self.debug(f"▶▶ {request.method} {url}", transaction=transaction)
 
         # PROXY RESPONSE
+        before_forward_time = time.perf_counter()
         try:
             p_response: httpx.Response = await self.http_client.send(p_request)
         except httpx.ConnectError as exc:
+            if _prometheus:
+                _prometheus["time.forward"].labels(*prometheus_labels).observe(
+                    time.perf_counter() - before_forward_time
+                )
             transaction.extras["status_class"] = "ERR"
             await self.end_transaction(transaction, HttpError("Unavailable", exception=exc))
             # todo add web debug information if we are not on a production env
@@ -128,10 +138,17 @@ class HttpProxyController:
                 "Service Unavailable (remote server unavailable)", status=503, content_type="text/plain"
             )
         except httpx.TimeoutException as exc:
+            if _prometheus:
+                _prometheus["time.forward"].labels(*prometheus_labels).observe(
+                    time.perf_counter() - before_forward_time
+                )
             transaction.extras["status_class"] = "ERR"
             await self.end_transaction(transaction, HttpError("Timeout", exception=exc))
             # todo add web debug information if we are not on a production env
             return HttpResponse("Gateway Timeout (remote server timeout)", status=504, content_type="text/plain")
+
+        if _prometheus:
+            _prometheus["time.forward"].labels(*prometheus_labels).observe(time.perf_counter() - before_forward_time)
 
         self.debug(
             f"◀◀ {p_response.status_code} {p_response.reason_phrase} ({p_response.elapsed.total_seconds()}s)",
@@ -153,6 +170,11 @@ class HttpProxyController:
         response = HttpResponse(p_response.content, status=response_status, headers=response_headers)
 
         await self.end_transaction(transaction, response)
+
+        if _prometheus:
+            _prometheus["time.full"].labels(*prometheus_labels).observe(
+                time.perf_counter() - before_time,
+            )
 
         return response
 
