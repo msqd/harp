@@ -2,7 +2,7 @@ import copy
 import dataclasses
 from dataclasses import dataclass
 
-from .lazy import Definition, Lazy
+from .lazy import ConstantDefinition, Definition, Lazy
 
 settings_dataclass = dataclass
 
@@ -57,4 +57,8 @@ class BaseSetting:
                     pass
 
             if is_definition:
-                setattr(self, _name, Lazy(getattr(self, _name), _default=getattr(type(self), _name, None)))
+                _default = getattr(type(self), _name, None)
+                if isinstance(_default, ConstantDefinition):
+                    setattr(self, _name, _default.value)
+                else:
+                    setattr(self, _name, Lazy(getattr(self, _name), _default=_default))

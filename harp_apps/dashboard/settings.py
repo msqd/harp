@@ -1,7 +1,7 @@
 from functools import cached_property
 from typing import Literal, Optional
 
-from harp.config import BaseSetting, FromFileSetting, settings_dataclass
+from harp.config import BaseSetting, DisableableBaseSettings, FromFileSetting, settings_dataclass
 from harp.errors import ConfigurationRemovedSettingError, ConfigurationValueError
 
 
@@ -71,12 +71,17 @@ class DashboardAuthSetting(BaseSetting):
 
 
 @settings_dataclass
+class DashboardDevserverSettings(DisableableBaseSettings):
+    port: Optional[int | str] = None
+
+
+@settings_dataclass
 class DashboardSettings(BaseSetting):
     """Root settings for the dashboard."""
 
     port: int | str = 4080
     auth: Optional[DashboardAuthSetting] = None
-    devserver_port: Optional[int | str] = None
+    devserver: Optional[DashboardDevserverSettings] = None
 
     def __post_init__(self):
         if isinstance(self.auth, str):
@@ -86,3 +91,6 @@ class DashboardSettings(BaseSetting):
 
         if isinstance(self.auth, dict):
             object.__setattr__(self, "auth", DashboardAuthSetting(**self.auth))
+
+        if isinstance(self.devserver, dict):
+            object.__setattr__(self, "devserver", DashboardDevserverSettings(**self.devserver))

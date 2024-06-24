@@ -60,9 +60,9 @@ class DashboardController:
             asyncio.create_task(self.storage.create_users_once_ready(self.settings.auth.users))
 
         # controllers for delegating requests
-        if self.settings.devserver_port:
+        if self.settings.devserver.enabled and self.settings.devserver.port:
             self._ui_devserver_proxy_controller = self._create_ui_devserver_proxy_controller(
-                port=self.settings.devserver_port
+                port=self.settings.devserver.port
             )
 
         # register the subcontrollers, aka the api handlers
