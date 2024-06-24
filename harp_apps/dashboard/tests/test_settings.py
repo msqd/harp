@@ -2,7 +2,7 @@ import pytest
 
 from harp.errors import ConfigurationError
 
-from ..settings import DashboardAuthSetting
+from ..settings import DashboardAuthSetting, DashboardSettings
 
 
 def test_no_auth():
@@ -29,3 +29,15 @@ def test_basic_auth():
         "algorithm": "plain",
         "users": {"foo": "bar"},
     }
+
+
+def test_no_devserver():
+    settings = DashboardSettings()
+
+    assert settings.devserver.enabled is True
+
+
+def test_devserver_disable():
+    settings = DashboardSettings(devserver={"enabled": False})
+
+    assert settings.devserver.enabled is False

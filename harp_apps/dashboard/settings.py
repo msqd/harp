@@ -92,5 +92,8 @@ class DashboardSettings(BaseSetting):
         if isinstance(self.auth, dict):
             object.__setattr__(self, "auth", DashboardAuthSetting(**self.auth))
 
+        if self.devserver is None:
+            object.__setattr__(self, "devserver", DashboardDevserverSettings())
+
         if isinstance(self.devserver, dict):
             object.__setattr__(self, "devserver", DashboardDevserverSettings(**self.devserver))
