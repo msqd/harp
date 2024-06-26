@@ -18,7 +18,14 @@ from harp.settings import USE_PROMETHEUS
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.tpdex import tpdex
 
-from .events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
+from .events import (
+    EVENT_FILTER_REQUEST,
+    EVENT_FILTER_RESPONSE,
+    EVENT_TRANSACTION_ENDED,
+    EVENT_TRANSACTION_MESSAGE,
+    EVENT_TRANSACTION_STARTED,
+    ProxyFilterEvent,
+)
 
 logger = get_logger(__name__)
 
@@ -101,31 +108,38 @@ class HttpProxyController:
             _prometheus["call"].labels(*prometheus_labels).inc()
 
         # create an envelope to override things, without touching the original request
-        request = WrappedHttpRequest(request)
-        request.headers["host"] = self.parsed_url.netloc
+        context = ProxyFilterEvent(self.name, request=WrappedHttpRequest(request))
+        await self.adispatch(EVENT_FILTER_REQUEST, context)
 
+        context.request.headers["host"] = self.parsed_url.netloc
         # override user agent (later, may be customizable behavior)
         if self.user_agent:
-            request.headers["user-agent"] = self.user_agent
+            context.request.headers["user-agent"] = self.user_agent
 
         # create transaction
         transaction = await self._create_transaction_from_request(
-            request,
-            tags=self._extract_tags_from_request(request),
+            context.request,
+            tags=self._extract_tags_from_request(context.request),
         )
-        await request.join()
-        url = urljoin(self.url, request.path) + (f"?{urlencode(request.query)}" if request.query else "")
+        await context.request.join()
+        url = urljoin(self.url, context.request.path) + (
+            f"?{urlencode(context.request.query)}" if context.request.query else ""
+        )
 
         # PROXY REQUEST
-        p_request: httpx.Request = self.http_client.build_request(
-            request.method, url, headers=list(request.headers.items()), content=request.body
+        proxy_request = self.http_client.build_request(
+            context.request.method,
+            url,
+            headers=list(context.request.headers.items()),
+            content=context.request.body,
+            extensions={"harp": {"endpoint": self.name}},
         )
-        self.debug(f"▶▶ {request.method} {url}", transaction=transaction)
+        self.debug(f"▶▶ {context.request.method} {url}", transaction=transaction, extensions=proxy_request.extensions)
 
         # PROXY RESPONSE
         before_forward_time = time.perf_counter()
         try:
-            p_response: httpx.Response = await self.http_client.send(p_request)
+            proxy_response = await self.http_client.send(proxy_request)
         except httpx.ConnectError as exc:
             if _prometheus:
                 _prometheus["time.forward"].labels(*prometheus_labels).observe(
@@ -151,32 +165,33 @@ class HttpProxyController:
             _prometheus["time.forward"].labels(*prometheus_labels).observe(time.perf_counter() - before_forward_time)
 
         self.debug(
-            f"◀◀ {p_response.status_code} {p_response.reason_phrase} ({p_response.elapsed.total_seconds()}s)",
+            f"◀◀ {proxy_response.status_code} {proxy_response.reason_phrase} ({proxy_response.elapsed.total_seconds()}s{' cached' if proxy_response.extensions.get('from_cache') else ''})",
             transaction=transaction,
         )
 
-        response_status = p_response.status_code
+        response_status = proxy_response.status_code
         response_headers = {
             k: v
-            for k, v in p_response.headers.multi_items()
+            for k, v in proxy_response.headers.multi_items()
             if k.lower() not in ("server", "date", "content-encoding", "content-length")
         }
         # XXX for now, we use transaction "extras" to store searchable data for later
         transaction.extras["status_class"] = f"{response_status // 100}xx"
 
-        if p_response.extensions.get("from_cache"):
-            transaction.extras["cached"] = p_response.extensions.get("cache_metadata", {}).get("cache_key", True)
+        if proxy_response.extensions.get("from_cache"):
+            transaction.extras["cached"] = proxy_response.extensions.get("cache_metadata", {}).get("cache_key", True)
 
-        response = HttpResponse(p_response.content, status=response_status, headers=response_headers)
+        context.response = HttpResponse(proxy_response.content, status=response_status, headers=response_headers)
 
-        await self.end_transaction(transaction, response)
+        await self.end_transaction(transaction, context.response)
+        await self.adispatch(EVENT_FILTER_RESPONSE, context)
 
         if _prometheus:
             _prometheus["time.full"].labels(*prometheus_labels).observe(
                 time.perf_counter() - before_time,
             )
 
-        return response
+        return context.response
 
     async def end_transaction(self, transaction, response: BaseHttpMessage):
         spent = int((datetime.now(UTC).timestamp() - transaction.started_at.timestamp()) * 100000) / 100

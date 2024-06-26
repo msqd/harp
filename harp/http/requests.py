@@ -93,6 +93,9 @@ class HttpRequest(BaseHttpMessage):
                 self._body.append(chunk)
             self._closed = True
 
+    def __str__(self):
+        return f"{self.method} {self.path}"
+
 
 class WrappedHttpRequest(HttpRequest):
     def __init__(self, wrapped: HttpRequest, /):

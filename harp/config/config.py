@@ -39,9 +39,9 @@ class Config:
         "proxy",
         "dashboard",
         "sqlalchemy_storage",
+        "harp_apps.contrib.sentry",  # todo: allow to extend application list in config file without overriding all
         "telemetry",
         "janitor",
-        "harp_apps.contrib.sentry",  # todo: allow to extend application list in config file without overriding all
     ]
 
     def __init__(self, settings=None, /, applications=None):

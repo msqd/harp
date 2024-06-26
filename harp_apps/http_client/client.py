@@ -1,6 +1,8 @@
 from httpx import AsyncClient
+from whistle import IAsyncEventDispatcher
 
 from harp_apps.http_client.settings import HttpClientSettings
+from harp_apps.http_client.transport import AsyncFilterableTransport
 
 
 def _resolve(x, *args, **kwargs):
@@ -16,8 +18,11 @@ def _resolve(x, *args, **kwargs):
 class AsyncHttpClient(AsyncClient):
     settings: HttpClientSettings
 
-    def __init__(self, settings: HttpClientSettings):
+    def __init__(self, settings: HttpClientSettings, dispatcher: IAsyncEventDispatcher):
+        self._dispatcher = dispatcher
+
         transport = _resolve(settings.transport)
+        transport = AsyncFilterableTransport(transport=transport, dispatcher=dispatcher)
 
         if settings.cache.enabled:
             transport = _resolve(
@@ -28,3 +33,7 @@ class AsyncHttpClient(AsyncClient):
             )
 
         super().__init__(transport=transport, timeout=settings.timeout)
+
+    @property
+    def dispatcher(self):
+        return self._dispatcher
