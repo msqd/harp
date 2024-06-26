@@ -55,7 +55,7 @@ Recipes
 :::::::
 
 Force some (sub) endpoints to cache the response for a given time
-:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+-----------------------------------------------------------------
 
 .. code-block:: yaml
 
