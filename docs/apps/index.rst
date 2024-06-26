@@ -10,3 +10,4 @@ Applications
     proxy/index
     sqlalchemy_storage/index
     telemetry/index
+    rules/index

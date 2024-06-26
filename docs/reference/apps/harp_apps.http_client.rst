@@ -13,4 +13,6 @@ Submodules
     :maxdepth: 1
 
     harp_apps.http_client.client
+    harp_apps.http_client.events
     harp_apps.http_client.settings
+    harp_apps.http_client.transport

@@ -49,7 +49,7 @@ class KernelFactory:
         # we only work on validated configuration
         self.configuration.validate()
 
-        logger.info(f"📦 Apps: {', '.join(self.configuration.applications)}")
+        logger.info(f"📦 Apps: {', '.join(map(lambda name: name.split('.')[-1], self.configuration.applications))}")
 
         dispatcher = self.build_event_dispatcher()
         container = self.build_container(dispatcher)

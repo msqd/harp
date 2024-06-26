@@ -26,6 +26,7 @@ def test_documentation_examples_list():
         "docs/apps/http_client/examples/full.yml",
         "docs/apps/http_client/examples/simple.yml",
         "docs/apps/proxy/examples/swapi.yml",
+        "docs/apps/rules/examples/rules.yml",
     ]
 
 
@@ -46,10 +47,16 @@ def test_load_example(example):
 def test_load_documentation_example(configfile):
     from harp.config.builder import ConfigurationBuilder
 
+    applications = []
+    if "/apps/rules/" in configfile:
+        applications.append("rules")
+
     builder = ConfigurationBuilder()
     builder.add_files([configfile])
     settings = builder.build().values
 
     config = Config(settings)
+    for application in applications:
+        config.add_application(application)
     config.add_defaults()
     assert config.validate()

@@ -65,7 +65,7 @@ class HonchoManagerFactory:
         proxy_options = list(self.proxy_options)
 
         if HARP_DASHBOARD_SERVICE in processes:
-            proxy_options.append(f"--set dashboard.devserver_port={quote(self.ports[HARP_DASHBOARD_SERVICE])}")
+            proxy_options.append(f"--set dashboard.devserver.port={quote(self.ports[HARP_DASHBOARD_SERVICE])}")
 
         for _name, _port in self.proxy_ports.items():
             proxy_options.append(f"--endpoint {quote(_name)}={_port}:http://localhost:{self.ports[_name]}")
@@ -110,6 +110,8 @@ class HonchoManagerFactory:
             e = os.environ.copy()
             more_env = more_env or {}
             manager.add_process(name, command, cwd=working_directory, env=e | more_env.get(name, {}))
+
+            logger.debug(f"Added process {name}: {command}")
 
             # this hack will change the class impl at runtime for frontend process to avoid misleading log at start.
             if name == HARP_DASHBOARD_SERVICE:

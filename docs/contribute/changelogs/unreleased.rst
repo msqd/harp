@@ -9,6 +9,7 @@ Added
 * Examples are now bundled within the ``harp.config.examples`` subpackage and can be loaded from commandline using
   ``-e name`` or ``--example name`` (#379).
 * All example files are now parsed and validated in the test suite (#378).
+* Prototype of the ``rules`` application, implementing a rule engine to tune transactions with basically anything.
 
 Changed
 :::::::

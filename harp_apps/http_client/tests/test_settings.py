@@ -1,5 +1,8 @@
+from typing import Optional
+
 import hishel
 import httpx
+from whistle import AsyncEventDispatcher, IAsyncEventDispatcher
 
 from harp.config import DisabledSettings
 from harp_apps.http_client.client import AsyncHttpClient
@@ -7,14 +10,19 @@ from harp_apps.http_client.settings import CacheSettings, HttpClientSettings
 
 
 class TestHttpClientSettings:
+    def create_http_client(
+        self, settings: HttpClientSettings, /, *, dispatcher: Optional[IAsyncEventDispatcher] = None
+    ):
+        return AsyncHttpClient(settings, dispatcher=dispatcher or AsyncEventDispatcher())
+
     def test_without_cache(self):
         settings = HttpClientSettings(cache={"enabled": False})
 
         assert settings.cache.enabled is False
         assert isinstance(settings.cache, DisabledSettings)
 
-        client = AsyncHttpClient(settings)
-        assert isinstance(client._transport, httpx.AsyncHTTPTransport)
+        client = self.create_http_client(settings)
+        assert isinstance(client._transport._transport, httpx.AsyncHTTPTransport)
 
     def test_without_cache_with_custom_client(self):
         settings = HttpClientSettings(
@@ -25,8 +33,8 @@ class TestHttpClientSettings:
         assert settings.cache.enabled is False
         assert isinstance(settings.cache, DisabledSettings)
 
-        client = AsyncHttpClient(settings)
-        assert isinstance(client._transport, httpx._client.BaseClient)
+        client = self.create_http_client(settings)
+        assert isinstance(client._transport._transport, httpx._client.BaseClient)
 
     def test_with_default_cache(self):
         settings = HttpClientSettings()
@@ -34,7 +42,7 @@ class TestHttpClientSettings:
         assert settings.cache.enabled is True
         assert isinstance(settings.cache, CacheSettings)
 
-        client = AsyncHttpClient(settings)
+        client = self.create_http_client(settings)
         assert isinstance(client._transport, hishel.AsyncCacheTransport)
         assert client._transport._controller._allow_heuristics is True
         assert client._transport._controller._allow_stale is True
@@ -58,7 +66,7 @@ class TestHttpClientSettings:
         assert settings.cache.enabled is True
         assert isinstance(settings.cache, CacheSettings)
 
-        client = AsyncHttpClient(settings)
+        client = self.create_http_client(settings)
         assert isinstance(client._transport, hishel.AsyncCacheTransport)
 
         assert isinstance(client._transport._controller, hishel.Controller)
