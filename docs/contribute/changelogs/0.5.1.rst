@@ -1,0 +1,39 @@
+Version 0.5.1 (2024-06-27)
+==========================
+
+Added
+:::::
+
+* Previous and next button in transaction detail pane allows to navigate through transactions (#394).
+* Transaction list can be easily refreshed (#396).
+* Transaction lists shows a summary of transaction count shown and total (#395).
+* Stores storage metrics in prometheus gauges to monitor evolution.
+* Adds a ``db:reset`` command to reset the database.
+* Examples are now bundled within the ``harp.config.examples`` subpackage and can be loaded from commandline using
+  ``-e name`` or ``--example name`` (#379).
+* All example files are now parsed and validated in the test suite (#378).
+
+Changed
+:::::::
+
+* Dashboard overview is now implemented using Apache ECharts and shows more information, in a clearer way.
+* Settings can now be validated in a secure or unsecure way, allowing each settings to define the security logic
+  (related to #54).
+* SQLAlchemy ``url`` setting now use the ``sqlalchemy.URL`` type to prepare for subfields overriding (related to #54).
+* Default cache settings now sets allow_heuristics=False and allow_stale=False to avoid unexpected behavior due to
+  premature cache eagerness.
+
+Fixed
+:::::
+
+* Ability to run devserver with custom port
+
+Updated
+:::::::
+
+* bump alembic from 1.13.1 to 1.13.2
+* bump hishel from 0.0.27 to 0.0.29
+* bump ruff from 0.4.9 to 0.4.10
+* bump sentry-sdk from 2.5.1 to 2.7.0
+* bump sqlalchemy from 2.0.30 to 2.0.31
+* bump testcontainers from 4.5.1 to 4.6.0
