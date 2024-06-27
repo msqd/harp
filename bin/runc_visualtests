@@ -34,6 +34,6 @@ docker run -it --rm \
            --volume "${FRONTEND_DIR}:/app" \
            --volume "${__PATH__}/.cache/visualtests-modules:/app/node_modules" \
            --volume "${__PATH__}/.cache/visualtests-pnpm-store:/app/.pnpm-store" \
-           mcr.microsoft.com/playwright:v1.44.1-jammy
+           mcr.microsoft.com/playwright:v1.45.0-jammy
 
 rm "$entrypoint_script"

@@ -1,14 +1,16 @@
 HttpClient
 ==========
 
-The `harp_apps.http_client` application implements the core HTTP client features. It uses caching to store responses and avoid making the same request multiple times, improving the efficiency of your application.
+The `harp_apps.http_client` application implements the core HTTP client features. It uses caching to store responses
+and avoid making the same request multiple times, improving the efficiency of your application.
+
 The caching mechanism is implemented using `Hishel <https://hishel.com/>`_ a powerful caching library.
 
 Overview
 --------
 
 The HTTP client provides efficient and configurable HTTP request handling with caching capabilities.
-It is designed to be integrated seamlessly into the `harp` framework.
+It is designed to be integrated seamlessly into the ``harp`` framework.
 
 Features
 --------
@@ -42,9 +44,9 @@ options.
 
   - **controller:** Configuration for controller settings.
 
-    - **allow_stale:** Boolean flag to allow serving stale cache data when the cache is expired (default: True).
+    - **allow_stale:** Boolean flag to allow serving stale cache data when the cache is expired (default: False).
 
-    - **allow_heuristics:** Boolean flag to allow heuristic caching (default: True).
+    - **allow_heuristics:** Boolean flag to allow heuristic caching (default: False).
 
     - **cacheable_methods:** List of HTTP methods that can be cached (e.g., GET).
 

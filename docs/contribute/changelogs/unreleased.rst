@@ -17,3 +17,5 @@ Changed
 * Settings can now be validated in a secure or unsecure way, allowing each settings to define the security logic
   (related to #54).
 * SQLAlchemy ``url`` setting now use the ``sqlalchemy.URL`` type to prepare for subfields overriding (related to #54).
+* Default cache settings now sets allow_heuristics=False and allow_stale=False to avoid unexpected behavior due to
+  premature cache eagerness.
