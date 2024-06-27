@@ -16,7 +16,7 @@ external APIs.
     :alt: GitLab CI/CD Pipeline Status
 
 .. image:: https://readthedocs.org/projects/harp-proxy/badge/?version=latest
-    :target: https://harp-proxy.readthedocs.io/
+    :target: https://docs.harp-proxy.net/
     :alt: Documentation
 
 .. image:: https://img.shields.io/pypi/pyversions/harp-proxy.svg
@@ -27,10 +27,10 @@ external APIs.
 may not be available, or it may not be suitable for your applications. We are actively looking for feedback, please
 reach out with your thoughts, ideas, rants or issues. We can help.*
 
-**Quick links:** `Documentation <https://harp-proxy.readthedocs.io/en/latest/>`_
-| `Getting Started <https://harp-proxy.readthedocs.io/en/latest/start/index.html>`_
-| `Install (Docker) <https://harp-proxy.readthedocs.io/en/latest/start/docker.html>`_
-| `Install (PIP) <https://harp-proxy.readthedocs.io/en/latest/start/python.html>`_
+**Quick links:** `Documentation <https://docs.harp-proxy.net/en/latest/>`_
+| `Getting Started <https://docs.harp-proxy.net/en/latest/start/index.html>`_
+| `Install (Docker) <https://docs.harp-proxy.net/en/latest/start/docker.html>`_
+| `Install (PIP) <https://docs.harp-proxy.net/en/latest/start/python.html>`_
 | `Repository (Git) <https://github.com/msqd/harp>`_
 | `Issues <https://github.com/msqd/harp/issues>`_
 | `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
@@ -60,7 +60,7 @@ Overview
   that the integration or removal cost is virtually zero, or even negative when considering the reduction in code you
   won't need to write.
 
-`Read the full documentation <https://harp-proxy.readthedocs.io/en/latest/>`_
+`Read the full documentation <https://docs.harp-proxy.net/en/latest/>`_
 
 
 Hub to external services
@@ -139,4 +139,4 @@ Credits
 
 * Sponsored by `Makersquad <https://www.makersquad.fr/>`_
 
-`There are many ways you can contribute to HARP! <https://harp-proxy.readthedocs.io/en/latest/contribute/>`_
+`There are many ways you can contribute to HARP! <https://docs.harp-proxy.net/en/latest/contribute/>`_
