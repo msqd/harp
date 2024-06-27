@@ -8,13 +8,17 @@ from harp.utils.testing.databases import TEST_DATABASES
 
 builtins.__pytest__ = True
 
+DISABLED_APPLICATIONS_FOR_TESTS = ("telemetry", "harp_apps.telemetry")
+
 
 @pytest.fixture(scope="session", autouse=True)
 def default_session_fixture():
     from harp.config import Config
 
     DEFAULT_APPLICATIONS_FOR_TESTS = list(Config.DEFAULT_APPLICATIONS)
-    DEFAULT_APPLICATIONS_FOR_TESTS.remove("harp_apps.telemetry")
+    for app in DISABLED_APPLICATIONS_FOR_TESTS:
+        if app in DEFAULT_APPLICATIONS_FOR_TESTS:
+            DEFAULT_APPLICATIONS_FOR_TESTS.remove(app)
 
     with patch("harp.config.Config.DEFAULT_APPLICATIONS", DEFAULT_APPLICATIONS_FOR_TESTS):
         yield

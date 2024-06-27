@@ -36,7 +36,7 @@ class Definition(Generic[T]):
     def build(self, *args, **kwargs) -> T:
         return self.factory(*self.args, *args, **self.kwargs, **kwargs)
 
-    def _asdict(self):
+    def _asdict(self, /, *, secure=True):
         return {
             "@type": ":".join((self.path, self.name)),
             **({"@args": self.args} if len(self.args) else {}),
@@ -67,7 +67,7 @@ class ConstantDefinition(Definition):
     def build(self):
         return self.value
 
-    def _asdict(self):
+    def _asdict(self, /, *, secure=True):
         return self.value
 
 
@@ -94,7 +94,8 @@ def Lazy(path_or_factory, *args, _default=None, **kwargs) -> Definition[type]:
     if isinstance(path_or_factory, dict):
         path = path_or_factory.pop("@type", _default.factory if _default else None)
         args = path_or_factory.pop("@args", ())
-        return Lazy(path, *args, **((_default.kwargs if _default else {}) | path_or_factory))
+        kwargs = (_default.kwargs if _default else {}) | path_or_factory
+        return Lazy(path, *args, **kwargs)
 
     if isinstance(path_or_factory, str):
         path, name = path_or_factory.rsplit(":", 1)

@@ -2,7 +2,6 @@ import http
 
 import pytest
 
-from harp.http.utils import HTTP_METHODS
 from harp.typing import Maybe, NotSet
 
 
@@ -29,6 +28,8 @@ def parametrize_with_http_methods(
     include_not_having_response_body=NotSet,
     exclude=(),
 ):
+    from harp.http.utils import HTTP_METHODS
+
     if {
         include_safe,
         include_unsafe,

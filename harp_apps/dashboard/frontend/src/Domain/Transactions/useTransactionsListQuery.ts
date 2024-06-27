@@ -3,7 +3,7 @@ import { useQuery } from "react-query"
 import { useApi } from "Domain/Api"
 import { ItemList } from "Domain/Api/Types"
 import { Transaction } from "Models/Transaction"
-import { FilterValue, Filters, MinMaxFilter } from "Types/filters"
+import { Filters, FilterValue, MinMaxFilter } from "Types/filters"
 
 function getQueryStringFromRecord(
   filters: Record<string, FilterValue> | { page: number; cursor?: string | null; search?: string | null },
@@ -50,7 +50,7 @@ export function useTransactionsListQuery({
     ["transactions", qs],
     () => api.fetch("/transactions" + (qs ? `?${qs}` : "")).then((r) => r.json()),
     {
-      refetchInterval: 30000,
+      refetchInterval: 10000,
     },
   )
 }

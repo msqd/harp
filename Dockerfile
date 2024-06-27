@@ -170,8 +170,7 @@ COPY --from=backend --chown=harp:www-data ${BASE}/src ${BASE}/src
 
 RUN ln -s /var/lib/harp/data \
     && ln -s /etc/harp.yaml \
-    && mv src/bin/runtime ./bin \
-    && mv src/examples ./examples
+    && mv src/bin/runtime ./bin
 
 
 ENV DEFAULT__HARP__STORAGE__TYPE="sqlalchemy"

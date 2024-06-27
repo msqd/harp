@@ -40,7 +40,7 @@ TESTC_COMMAND ?= poetry shell
 FRONTEND_DIR = harp_apps/dashboard/frontend
 
 # default run options
-HARP_OPTIONS ?= --file examples/sqlite.yml --file examples/httpbin.yml
+HARP_OPTIONS ?= --example sqlite --example httpbin
 
 .PHONY: start-dev
 start-dev:  # Starts a development instance with reasonable defaults (tune HARP_OPTIONS to replace).
@@ -104,7 +104,7 @@ build-frontend:  ## Builds the harp dashboard frontend (compiles typescript and 
 .PHONY: lint-frontend coverage cloc
 
 preqa: types format reference  ## Runs pre-qa checks (types generation, formatting, api reference).
-	$(RUN) pre-commit
+	-$(RUN) pre-commit
 
 qa: preqa test  ## Runs all QA checks, with most common databases.
 
@@ -216,7 +216,7 @@ runc-shell:  ## Runs a shell within the docker image.
 	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
 runc-example-repositories:  ## Runs harp with the "repositories" example within the docker image.
-	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 -p 9001-9012:9001-9012 --rm $(DOCKER_IMAGE) --file examples/repositories.yml --set storage.url postgresql+asyncpg://harp:harp@harp-postgres-1/repositories
+	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 -p 9001-9012:9001-9012 --rm $(DOCKER_IMAGE) --example repositories --set storage.url postgresql+asyncpg://harp:harp@harp-postgres-1/repositories
 
 
 .PHONY: buildc-dev pushc-dev runc-dev runc-dev-shell
@@ -263,11 +263,11 @@ clean-frontend-modules:  ## Cleans up the frontend node modules directory.
 	-rm -rf $(FRONTEND_DIR)/node_modules
 
 clean-dist:  ## Cleans up the distribution files (wheels...)
+	-rm -rf $(FRONTEND_DIR)/dist
 	-rm -rf dist
 
 clean-docs:  ## Cleanup the documentation builds.
 	-rm -rf docs/_build
 
 clean: clean-frontend-modules clean-dist clean-docs  ## Cleans up the project.
-	-rm -rf $(FRONTEND_DIR)/dist
 	-rm -f benchmark_*.svg

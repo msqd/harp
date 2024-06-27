@@ -3,9 +3,9 @@ import { useQuery } from "react-query"
 import { useApi } from "Domain/Api"
 
 export interface SummaryData {
-  tpdex: { mean: number; data: { value: number }[] }
-  transactions: { rate: number; period: string; data: { value: number }[] }
-  errors: { rate: number; period: string; data: { value: number }[] }
+  tpdex: { mean: number; data: { datetime: string; value: number }[] }
+  transactions: { rate: number; period: string; data: { datetime: string; value: number }[] }
+  errors: { rate: number; period: string; data: { datetime: string; value: number }[] }
 }
 
 export function useSummaryDataQuery() {

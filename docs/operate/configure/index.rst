@@ -16,6 +16,6 @@ Configuration is built from different sources that may override each other. From
 .. toctree::
     :maxdepth: 2
 
-    Dashboard <../apps/dashboard/index>
-    Proxy <../apps/proxy/index>
+    Dashboard </apps/dashboard/index>
+    Proxy & Endpoints </apps/proxy/index>
     storage

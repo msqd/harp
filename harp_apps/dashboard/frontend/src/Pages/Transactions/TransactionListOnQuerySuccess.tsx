@@ -12,11 +12,13 @@ import {
   DetailsCloseButton,
   FiltersHideButton,
   FiltersResetButton,
-  FiltersShowButton,
+  NextButton,
   OpenInNewWindowLink,
+  PreviousButton,
+  VerticalFiltersShowButton,
 } from "./Components/Buttons.tsx"
-import { TransactionDataTable } from "./Components/List/index.ts"
-import { FiltersSidebar } from "./Containers/index.ts"
+import { TransactionDataTable } from "./Components/List"
+import { FiltersSidebar } from "./Containers"
 import { TransactionDetailOnQuerySuccess } from "./TransactionDetailOnQuerySuccess.tsx"
 
 export function TransactionListOnQuerySuccess({
@@ -30,11 +32,20 @@ export function TransactionListOnQuerySuccess({
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
-  const [selected, setSelected] = useState<Transaction | null>(null)
-  const selectedId = searchParams.get("selected")
-  const hasSelection = !!selectedId
+  const selectedIdFromUrl = searchParams.get("selected")
+  const [selected, setLocalSelected] = useState<Transaction | null>(
+    (selectedIdFromUrl ? query.data.items.find((item) => item.id === selectedIdFromUrl) : null) ?? null,
+  )
+  const selectedIndex = query.data.items.findIndex((item) => (selected ? item.id === selected.id : undefined))
+  const hasSelection = selected && selected.id
+
+  const setSelected = (newSelected?: Transaction | null) => {
+    setLocalSelected(newSelected ?? null)
+    updateQueryParam("selected", newSelected ? newSelected.id : undefined)
+  }
+
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
-  const detailQuery = useTransactionsDetailQuery(selectedId!)
+  const detailQuery = useTransactionsDetailQuery(selected?.id ?? undefined)
 
   const resetFilters = (keys: string[]) => {
     keys.forEach((key) => searchParams.delete(key))
@@ -78,16 +89,16 @@ export function TransactionListOnQuerySuccess({
           <FiltersSidebar filters={filters} />
         </aside>
       ) : (
-        <FiltersShowButton onClick={() => setIsFiltersOpen(true)} />
+        <VerticalFiltersShowButton onClick={() => setIsFiltersOpen(true)} />
       )}
 
       <main className="flex-1 overflow-auto">
         <TransactionDataTable
           transactions={query.data.items}
           onSelectionChange={(newSelected) =>
-            newSelected && newSelected.id && (!hasSelection || selected?.id != newSelected.id)
-              ? (setSelected(newSelected), updateQueryParam("selected", newSelected.id))
-              : (setSelected(null), updateQueryParam("selected", undefined))
+            newSelected && newSelected.id && (!hasSelection || selected.id != newSelected.id)
+              ? setSelected(newSelected)
+              : setSelected()
           }
           selected={selected ? selected : undefined}
         />
@@ -95,15 +106,22 @@ export function TransactionListOnQuerySuccess({
 
       {hasSelection ? (
         <aside className="sticky top-8 w-2/5 min-w-96 shrink-0 block">
-          <div className="text-right">
-            <OpenInNewWindowLink id={selectedId} />
-            <DetailsCloseButton onClick={() => (setSelected(null), updateQueryParam("selected", undefined))} />
+          <div className="flex mb-1">
+            <div className="flex grow">
+              {selectedIndex !== undefined && selectedIndex > 0 ? (
+                <PreviousButton onClick={() => setSelected(query.data.items[selectedIndex - 1])} />
+              ) : null}
+              {selectedIndex !== undefined && selectedIndex >= 0 && selectedIndex < query.data.items.length - 1 ? (
+                <NextButton onClick={() => setSelected(query.data.items[selectedIndex + 1])} />
+              ) : null}
+            </div>
+            <div className="flex">
+              {selected.id ? <OpenInNewWindowLink id={selected.id} /> : null}
+              <DetailsCloseButton onClick={() => setSelected()} className="place-self-end" />
+            </div>
           </div>
 
-          <OnQuerySuccess
-            query={detailQuery}
-            onQueryError={() => (setSelected(null), updateQueryParam("selected", undefined))}
-          >
+          <OnQuerySuccess query={detailQuery} onQueryError={() => setSelected()}>
             {(query) => {
               return <TransactionDetailOnQuerySuccess query={query} />
             }}

@@ -1,16 +1,19 @@
 Proxy
 =====
 
-The `harp_apps.proxy` application implements the core harp proxy features.
+The `harp_apps.proxy` application implements the core harp proxy features, and includes the configuration logic for
+endpoints.
 
-Loading
-:::::::
+Setup
+:::::
 
-The proxy application is loaded by default when using the `harp start` command.
+The proxy application is loaded by default when using ``harp start ...`` or ``harp server ...`` commands.
 
 
 Configuration
 :::::::::::::
+
+To configure proxy endpoints, you can use a yaml configuration file:
 
 .. literalinclude:: ./examples/swapi.yml
     :language: yaml
@@ -19,6 +22,19 @@ Proxy endpoints are the remote APIs that your proxy will serve. Each endpoint ha
 
 Internal implementation: :class:`ProxySettings <harp_apps.proxy.settings.ProxySettings>`,
 :class:`ProxyEndpointSetting <harp_apps.proxy.settings.ProxyEndpointSetting>`
+
+
+Command line
+::::::::::::
+
+It is also possible to add endpoints using the command line:
+
+.. code-block:: bash
+
+    harp start --endpoint starwars=1234:https://swapi.dev/
+
+You can use multiple ``--endpoint ...`` arguments and the option is available for all server-like commands
+(``harp start ...``, ``harp server ...``, ...).
 
 
 .. warning::

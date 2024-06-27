@@ -5,6 +5,7 @@ const mockSummaryData: SummaryData = {
   tpdex: {
     mean: 100,
     data: [...Array(24).keys()].map((i) => ({
+      datetime: new Date(Date.now() - 3600 * 1000 * (24 - i)).toISOString(),
       value: 100 - ((i * i * 97) % 20),
     })),
   },
@@ -12,6 +13,7 @@ const mockSummaryData: SummaryData = {
     rate: 56,
     period: "min",
     data: [...Array(24).keys()].map((i) => ({
+      datetime: new Date(Date.now() - 3600 * 1000 * (24 - i)).toISOString(),
       value: 56 - 10 + ((i * i * 97) % 20),
     })),
   },
@@ -19,6 +21,7 @@ const mockSummaryData: SummaryData = {
     rate: 11,
     period: "min",
     data: [...Array(24).keys()].map((i) => ({
+      datetime: new Date(Date.now() - 3600 * 1000 * (24 - i)).toISOString(),
       value: 11 - 5 + ((i * i * 97) % 10),
     })),
   },

@@ -9,11 +9,11 @@ import { H2 } from "ui/Components/Typography"
 import { TransactionsHistory } from "./Components/TransactionsHistory.tsx"
 
 const buttonProps = [
-  { key: "1h", title: "1h" },
-  { key: "24h", title: "24h" },
-  { key: "7d", title: "7d" },
-  { key: "1m", title: "1m" },
-  { key: "1y", title: "1y" },
+  { key: "1h", title: "1 hour" },
+  { key: "24h", title: "24 hours" },
+  { key: "7d", title: "7 days" },
+  { key: "1m", title: "1 month" },
+  /*{ key: "3m", title: "3 months" },*/
 ]
 
 interface ProxyData {

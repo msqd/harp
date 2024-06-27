@@ -15,6 +15,7 @@ from harp_apps.sqlalchemy_storage.utils.migrations import (
     create_alembic_config,
     create_harp_config_with_sqlalchemy_storage_from_command_line_options,
     do_migrate,
+    do_reset,
 )
 
 logger = get_logger(__name__)
@@ -52,6 +53,9 @@ def create_migration(*, message, **kwargs):
     command.revision(alembic_cfg, autogenerate=True, message=message or "auto-generated migration")
 
 
+create_migration = cast(BaseCommand, create_migration)
+
+
 @click.command("db:feature")
 @click.argument("operation", nargs=1, type=click.Choice(["add", "remove"]))
 @click.argument("features", nargs=-1)
@@ -76,9 +80,28 @@ def feature(features, operation, **kwargs):
             raise ValueError(f"Invalid operation {operation}.")
 
 
+feature = cast(BaseCommand, feature)
+
+
 @click.command("db:history")
 @add_harp_server_click_options
 def history(**kwargs):
     config = create_harp_config_with_sqlalchemy_storage_from_command_line_options(kwargs)
     alembic_cfg = create_alembic_config(config.settings.get("storage", {}).get("url", None))
     command.history(alembic_cfg)
+
+
+history = cast(BaseCommand, history)
+
+
+@click.command("db:reset")
+@add_harp_server_click_options
+def reset(**kwargs):
+    config = create_harp_config_with_sqlalchemy_storage_from_command_line_options(kwargs)
+    alembic_cfg = create_alembic_config(config.settings.get("storage", {}).get("url", None))
+    engine = create_async_engine(alembic_cfg.get_main_option("sqlalchemy.url"))
+
+    asyncio.run(do_reset(engine))
+
+
+reset = cast(BaseCommand, reset)

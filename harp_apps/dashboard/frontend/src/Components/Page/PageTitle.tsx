@@ -3,7 +3,7 @@ import { ReactNode } from "react"
 import { H1, P } from "ui/Components/Typography"
 
 interface PageTitleProps {
-  title?: string
+  title?: ReactNode
   description?: string
   children?: ReactNode
 }
@@ -14,7 +14,7 @@ export function PageTitle({ description, title, children }: PageTitleProps) {
       {title ? (
         <div className="mt-4 flex">
           <div className="flex flex-col">
-            <H1>{title}</H1>
+            {typeof title === "string" ? <H1>{title}</H1> : title}
             {description ? <P>{description}</P> : null}
           </div>
           {children ? <>{children}</> : null}

@@ -60,9 +60,9 @@ class DashboardController:
             asyncio.create_task(self.storage.create_users_once_ready(self.settings.auth.users))
 
         # controllers for delegating requests
-        if self.settings.devserver_port:
+        if self.settings.devserver.enabled and self.settings.devserver.port:
             self._ui_devserver_proxy_controller = self._create_ui_devserver_proxy_controller(
-                port=self.settings.devserver_port
+                port=self.settings.devserver.port
             )
 
         # register the subcontrollers, aka the api handlers
@@ -91,7 +91,9 @@ class DashboardController:
         return f"{type(self).__name__}({'+'.join(f for f in features if features[f])})"
 
     def _create_ui_devserver_proxy_controller(self, *, port):
-        return HttpProxyController(f"http://localhost:{port}/", http_client=self.http_client)
+        return HttpProxyController(
+            f"http://localhost:{port}/", http_client=self.http_client, logging=False, name="dashboard-devserver"
+        )
 
     def _create_internal_api_controller(self):
         root = RoutingController(handle_errors=False)

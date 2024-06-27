@@ -1,55 +1,90 @@
 import {
+  ArrowPathIcon,
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
   LinkIcon,
   XMarkIcon,
-  ArrowPathIcon,
 } from "@heroicons/react/16/solid"
+import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/outline"
+import { HTMLAttributes } from "react"
 import { Link } from "react-router-dom"
+import tw, { styled } from "twin.macro"
 
-interface PaneVisibilityButtonProps {
-  onClick: () => void
+interface ButtonProps {
+  onClick?: () => unknown
 }
 
-export function FiltersShowButton({ onClick }: PaneVisibilityButtonProps) {
+const StyledButton = styled.button`
+  ${tw`text-gray-400 mx-1 font-medium text-xs`}
+
+  > svg {
+    ${tw`h-3 w-3 inline-block`}
+  }
+`
+
+export function VerticalFiltersShowButton({ onClick }: ButtonProps) {
   return (
-    <button onClick={onClick} className="text-gray-400 mx-1 font-medium text-xs">
-      <ChevronDoubleRightIcon className="h-3 w-3 inline-block" />
+    <StyledButton onClick={onClick}>
+      <ChevronDoubleRightIcon />
       <div className="w-4">
         <div className="rotate-90">filters</div>
       </div>
-    </button>
+    </StyledButton>
   )
 }
 
-export function FiltersHideButton({ onClick }: PaneVisibilityButtonProps) {
+export function FiltersHideButton({ onClick }: ButtonProps) {
   return (
-    <button onClick={onClick} className="text-gray-400 mx-1 font-medium text-xs">
-      <ChevronDoubleLeftIcon className="h-3 w-3 inline-block" /> hide
-    </button>
+    <StyledButton onClick={onClick}>
+      <ChevronDoubleLeftIcon /> hide
+    </StyledButton>
   )
 }
 
-export function FiltersResetButton({ onClick }: { onClick: () => void }) {
+export function FiltersResetButton({ onClick }: ButtonProps) {
   return (
-    <button onClick={onClick} className="text-gray-400 mx-1 font-medium text-xs">
-      <ArrowPathIcon className="h-3 w-3 inline-block" /> reset
-    </button>
+    <StyledButton onClick={onClick}>
+      <ArrowPathIcon /> reset
+    </StyledButton>
   )
 }
 
-export function DetailsCloseButton({ onClick }: PaneVisibilityButtonProps) {
+export function DetailsCloseButton({ onClick, ...moreProps }: ButtonProps & HTMLAttributes<HTMLButtonElement>) {
   return (
-    <button onClick={onClick} className="text-gray-400 mx-1 font-medium text-xs">
-      <XMarkIcon className="h-3 w-3 inline-block" /> close
-    </button>
+    <StyledButton onClick={onClick} {...moreProps}>
+      <XMarkIcon /> close
+    </StyledButton>
+  )
+}
+
+export function PreviousButton({ onClick }: ButtonProps) {
+  return (
+    <StyledButton onClick={onClick}>
+      <ArrowUpIcon /> previous
+    </StyledButton>
+  )
+}
+
+export function NextButton({ onClick }: ButtonProps) {
+  return (
+    <StyledButton onClick={onClick}>
+      <ArrowDownIcon /> next
+    </StyledButton>
+  )
+}
+
+export function RefreshButton({ onClick, ...moreProps }: ButtonProps & HTMLAttributes<HTMLButtonElement>) {
+  return (
+    <StyledButton onClick={onClick} {...moreProps}>
+      <ArrowPathIcon />
+    </StyledButton>
   )
 }
 
 export function OpenInNewWindowLink({ id }: { id: string }) {
   return (
-    <Link target="_blank" to={`/transactions/${id}`} className="text-gray-400 mx-1 font-medium text-xs">
-      <LinkIcon className="h-3 w-3 inline-block" /> open in new window
-    </Link>
+    <StyledButton as={(props) => <Link {...props} target="_blank" to={`/transactions/${id}`} />}>
+      <LinkIcon /> open in new window
+    </StyledButton>
   )
 }

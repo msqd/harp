@@ -1,6 +1,7 @@
 import { isEqual } from "lodash"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Helmet } from "react-helmet"
+import { useQueryClient } from "react-query"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 
 import { Page } from "Components/Page"
@@ -9,14 +10,17 @@ import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { useTransactionsListQuery } from "Domain/Transactions"
 import { Filters } from "Types/filters"
 import { SearchBar } from "ui/Components/SearchBar/SearchBar"
+import { H1 } from "ui/Components/Typography"
 
+import { RefreshButton } from "./Components/Buttons.tsx"
 import { OptionalPaginator } from "./Components/OptionalPaginator.tsx"
 import { TransactionListOnQuerySuccess } from "./TransactionListOnQuerySuccess.tsx"
 
-export function TransactionListPage() {
+export default function TransactionListPage() {
   const location = useLocation()
 
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const [searchParams] = useSearchParams()
 
@@ -96,8 +100,16 @@ export function TransactionListPage() {
   return (
     <Page
       title={
-        <PageTitle title="Transactions" description="Explore transactions that went through the proxy">
-          <div className="flex flex-col ml-24 w-full items-end lg:items-start justify-end lg:justify-between lg:flex-row lg:mt-12">
+        <PageTitle
+          title={
+            <H1 className="flex">
+              Transactions
+              <RefreshButton onClick={() => void queryClient.invalidateQueries(["transactions"])} />
+            </H1>
+          }
+          description="Explore transactions that went through the proxy"
+        >
+          <div className="flex flex-col ml-24 w-full items-end lg:items-start justify-end lg:justify-between lg:flex-row mt-8">
             <SearchBar
               placeHolder="Search transactions"
               setSearch={(search) => updateQueryParams({ search: search })}
@@ -105,19 +117,24 @@ export function TransactionListPage() {
               search={search}
             />
             {query.isSuccess ? (
-              <OptionalPaginator
-                current={page}
-                setPage={(page) => {
-                  if (page > 1) {
-                    updateQueryParams({ page: page.toString(), cursor: cursor })
-                  } else {
-                    updateQueryParams({ page: undefined, cursor: undefined })
-                  }
-                }}
-                total={query.data.total}
-                pages={query.data.pages}
-                perPage={query.data.perPage}
-              />
+              <div className="flex flex-col items-end">
+                <OptionalPaginator
+                  current={page}
+                  setPage={(page) => {
+                    if (page > 1) {
+                      updateQueryParams({ page: page.toString(), cursor: cursor })
+                    } else {
+                      updateQueryParams({ page: undefined, cursor: undefined })
+                    }
+                  }}
+                  total={query.data.total}
+                  pages={query.data.pages}
+                  perPage={query.data.perPage}
+                />
+                <div className="px-4 sm:px-6 text-sm text-secondary-400">
+                  Showing {query.data.items.length} of {query.data.total} transactions
+                </div>
+              </div>
             ) : (
               <div className="block order-first lg:order-last"></div>
             )}

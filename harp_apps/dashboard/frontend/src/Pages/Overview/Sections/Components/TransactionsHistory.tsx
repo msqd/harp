@@ -1,3 +1,4 @@
+import { Loader } from "Components/Layout/Layout.tsx"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
 import { useOverviewDataQuery } from "Domain/Overview"
 
@@ -14,7 +15,7 @@ export const TransactionsHistory = ({ endpoint, title, className, timeRange }: T
   const query = useOverviewDataQuery(endpoint, timeRange)
 
   return (
-    <OnQuerySuccess query={query} queries={[query, query]}>
+    <OnQuerySuccess query={query} queries={[query, query]} fallback={<Loader style={{ height: "300px" }} />}>
       {(query) => {
         return <TransactionsHistoryOnQuerySuccess data={query.data} title={title} className={className} />
       }}

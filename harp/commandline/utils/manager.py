@@ -5,7 +5,7 @@ from string import Template
 
 import rich_click as click
 
-from harp import ROOT_DIR
+from harp import ROOT_DIR, get_logger
 from harp.utils.network import get_available_network_port
 
 HARP_DASHBOARD_SERVICE = "harp:dashboard"
@@ -13,13 +13,14 @@ HARP_DOCS_SERVICE = "harp:docs"
 HARP_SERVER_SERVICE = "harp:server"
 HARP_UI_SERVICE = "harp:ui"
 
+logger = get_logger(__name__)
+
 
 def quote(x):
     return shlex.quote(str(x))
 
 
 class HonchoManagerFactory:
-    names = {HARP_DASHBOARD_SERVICE, HARP_SERVER_SERVICE, HARP_DOCS_SERVICE, HARP_UI_SERVICE}
     defaults = {HARP_DASHBOARD_SERVICE, HARP_SERVER_SERVICE}
     commands = {}
 
@@ -27,8 +28,10 @@ class HonchoManagerFactory:
         self.ports = {HARP_DASHBOARD_SERVICE: dashboard_devserver_port or get_available_network_port()}
         self.proxy_ports = {}
         self.proxy_options = proxy_options
+        self.cwds = {}
 
         # copy to allow changes on this instance only
+        self.names = {HARP_DASHBOARD_SERVICE, HARP_SERVER_SERVICE, HARP_DOCS_SERVICE, HARP_UI_SERVICE}
         self.commands = {**self.commands}
 
     def _get_dashboard_executable(self, processes):
@@ -65,8 +68,7 @@ class HonchoManagerFactory:
             proxy_options.append(f"--set dashboard.devserver_port={quote(self.ports[HARP_DASHBOARD_SERVICE])}")
 
         for _name, _port in self.proxy_ports.items():
-            proxy_options.append(f"--set proxy.endpoints.{_port}.name={quote(_name)}")
-            proxy_options.append(f"--set proxy.endpoints.{_port}.url={quote(f'http://localhost:{self.ports[_name]}')}")
+            proxy_options.append(f"--endpoint {quote(_name)}={_port}:http://localhost:{self.ports[_name]}")
 
         if proxy_options:
             cmd += " " + " ".join(proxy_options)
@@ -99,7 +101,11 @@ class HonchoManagerFactory:
             if callable(self.commands[name]):
                 working_directory, command = self.commands[name](self, processes)
             else:
-                working_directory, command = os.getcwd(), self.commands[name]
+                working_directory, command = self.cwds.get(name, None), self.commands[name]
+                if working_directory is None:
+                    working_directory = os.getcwd()
+                else:
+                    working_directory = os.path.join(os.getcwd(), working_directory)
 
             e = os.environ.copy()
             more_env = more_env or {}
@@ -119,13 +125,13 @@ def parse_server_subprocesses_options(server_subprocesses):
     processes = {}
     for server_subprocess in server_subprocesses:
         try:
-            _name, _port, _command = server_subprocess.split(":", 2)
+            _name, _port, _path, _command = server_subprocess.split(":", 3)
         except ValueError as exc:
             raise click.UsageError(
-                "Invalid server subprocess configuration. Expected format: <name>:<port>:<command>."
+                "Invalid server subprocess configuration. Expected format: <name>:<port>:<path>:<command>."
             ) from exc
         _target_port = get_available_network_port()
         _command = Template(_command).safe_substitute(port=_target_port)
-        processes[_name] = (_port, _command, _target_port)
+        processes[_name] = (_port, _path, _command, _target_port)
 
     return processes

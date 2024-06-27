@@ -57,9 +57,9 @@ class Application:
     def supports(cls, settings: dict) -> bool:
         return True
 
-    def validate(self):
+    def validate(self, /, *, secure=False):
         if is_dataclass(self.settings):
-            return asdict(self.settings)
+            return asdict(self.settings, secure=secure)
         return self.settings
 
     def register_events(self, dispatcher: IAsyncEventDispatcher):
