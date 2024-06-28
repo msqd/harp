@@ -4,7 +4,7 @@ from typing import Optional
 from rodi import Container
 from whistle import IAsyncEventDispatcher
 
-from .events import EVENT_FACTORY_BIND, EVENT_FACTORY_BOUND, EVENT_FACTORY_BUILD
+from .events import EVENT_FACTORY_BIND, EVENT_FACTORY_BOUND, EVENT_FACTORY_BUILD, EVENT_FACTORY_DISPOSE
 from .settings import asdict
 
 
@@ -42,6 +42,8 @@ class Application:
     factory dispatcher automatically.
     """
 
+    on_dispose = None
+
     def __init__(self, settings=None, /):
         settings = settings or {}
         if isinstance(settings, dict) and self.settings_type is not None:
@@ -69,6 +71,10 @@ class Application:
             dispatcher.add_listener(EVENT_FACTORY_BOUND, self.on_bound)
         if self.on_build is not None:
             dispatcher.add_listener(EVENT_FACTORY_BUILD, self.on_build)
+
+    def register_end_of_life_events(self, dispatcher: IAsyncEventDispatcher):
+        if self.on_dispose is not None:
+            dispatcher.add_listener(EVENT_FACTORY_DISPOSE, self.on_dispose)
 
     def register_services(self, container: Container):
         if self.settings and self.settings_type:

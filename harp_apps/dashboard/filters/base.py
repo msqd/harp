@@ -2,8 +2,8 @@ from typing import Optional, Union
 
 from multidict import MultiDictProxy
 
-from harp.typing.storage import Storage
 from harp_apps.dashboard.filters.utils import flatten_facet_value, str_to_float_or_none
+from harp_apps.sqlalchemy_storage.types import Storage
 
 
 class AbstractFacet:
@@ -68,9 +68,6 @@ class FacetWithStorage(AbstractChoicesFacet):
 class AbstractMinMaxFacet(AbstractFacet):
     min: float = 0.0
     max: float = 100.0
-
-    def __init__(self):
-        self.meta = {}
 
     @property
     def values(self):

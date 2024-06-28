@@ -1,3 +1,6 @@
+from copy import deepcopy
+from unittest.mock import ANY
+
 import pytest
 
 from harp import Config
@@ -11,8 +14,13 @@ from ..controllers import SystemController
 
 class SystemControllerTestFixtureMixin:
     @pytest.fixture
-    def controller(self, request, storage):
-        config = Config(request.param)
+    def controller(self, request, storage, blob_storage):
+        # retrieve settings overrides
+        raw_settings = deepcopy(request.param)
+        raw_settings.setdefault("storage", {})
+        raw_settings["storage"].setdefault("blobs", {})
+        raw_settings["storage"]["blobs"].setdefault("type", blob_storage.type)
+        config = Config(raw_settings)
         settings = config.validate()
         return SystemController(storage=storage, settings=settings, handle_errors=False)
 
@@ -39,7 +47,12 @@ class TestSystemController(
         response = await controller.get_settings()
         assert response == {
             "applications": ["harp_apps.sqlalchemy_storage"],
-            "storage": {"migrate": True, "type": "sqlalchemy", "url": "sqlite+aiosqlite:///:memory:"},
+            "storage": {
+                "migrate": True,
+                "type": "sqlalchemy",
+                "url": "sqlite+aiosqlite:///:memory:",
+                "blobs": {"type": ANY},
+            },
         }
 
     @parametrize_with_settings(
@@ -50,7 +63,12 @@ class TestSystemController(
         response = await controller.get_settings()
         assert response == {
             "applications": ["harp_apps.sqlalchemy_storage"],
-            "storage": {"migrate": True, "type": "sqlalchemy", "url": "postgresql://user:***@localhost:5432/db"},
+            "storage": {
+                "migrate": True,
+                "type": "sqlalchemy",
+                "url": "postgresql://user:***@localhost:5432/db",
+                "blobs": {"type": ANY},
+            },
         }
 
 
@@ -72,26 +90,29 @@ class TestSystemControllerThroughASGI(
         {"applications": ["sqlalchemy_storage"], "storage": {"url": "sqlite+aiosqlite:///:memory:"}}
     )
     @parametrize_with_database_urls("sqlite")
-    async def test_get_settings_sqlalchemy(self, client: ASGICommunicator):
+    async def test_get_settings_sqlalchemy(self, client: ASGICommunicator, blob_storage):
         response = await client.http_get("/api/system/settings")
 
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.sqlalchemy_storage"],"storage":{"type":"sqlalche'
-            b'my","url":"sqlite+aiosqlite:///:memory:","migrate":true}}'
+            b'my","url":"sqlite+aiosqlite:///:memory:","migrate":true,"blobs":{"type":"'
+            + blob_storage.type.encode()
+            + b'"}}}'
         )
 
     @parametrize_with_settings(
         {"applications": ["sqlalchemy_storage"], "storage": {"url": "postgresql://user:password@localhost:5432/db"}}
     )
     @parametrize_with_database_urls("sqlite")
-    async def test_get_settings_sqlalchemy_secure(self, client: ASGICommunicator):
+    async def test_get_settings_sqlalchemy_secure(self, client: ASGICommunicator, blob_storage):
         response = await client.http_get("/api/system/settings")
 
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.sqlalchemy_storage"],"storage":{"type":"sqlalche'
-            b'my","url":"postgresql://user:***@localhost:5432/db","migrate":true}}'
+            b'my","url":"postgresql://user:***@localhost:5432/db","migrate":true,"blobs":{'
+            b'"type":"' + blob_storage.type.encode() + b'"}}}'
         )

@@ -7,27 +7,24 @@ from operator import itemgetter
 from typing import Iterable, List, Optional, TypedDict, override
 
 from sqlalchemy import and_, bindparam, case, delete, func, literal, literal_column, null, or_, select, text, update
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from sqlalchemy.sql.functions import count
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.asgi.events import EVENT_CORE_STARTED, MessageEvent, TransactionEvent
+from harp.asgi.events import HttpMessageEvent, TransactionEvent
 from harp.http import get_serializer_for
 from harp.models import Blob as BlobModel
 from harp.models.base import Results
 from harp.models.transactions import Transaction as TransactionModel
 from harp.settings import PAGE_SIZE
-from harp.typing.storage import Storage
 from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_datetime
 from harp_apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
-
-from .constants import TimeBucket
-from .models import (
+from harp_apps.sqlalchemy_storage.constants import TimeBucket
+from harp_apps.sqlalchemy_storage.models import (
     FLAGS_BY_NAME,
     Base,
-    Blob,
     BlobsRepository,
     FlagsRepository,
     Message,
@@ -42,8 +39,9 @@ from .models import (
     UserFlag,
     UsersRepository,
 )
-from .settings import SqlAlchemyStorageSettings
-from .utils.dates import TruncDatetime
+from harp_apps.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
+from harp_apps.sqlalchemy_storage.types import BlobStorage, Storage
+from harp_apps.sqlalchemy_storage.utils.dates import TruncDatetime
 
 
 class TransactionsGroupedByTimeBucket(TypedDict):
@@ -154,16 +152,25 @@ class SqlAlchemyStorage(Storage):
     """Reference to the sqlalchemy async engine, which is a gateway to the database connectivity, able to provide a
     connection used to execute queries."""
 
-    def __init__(self, dispatcher: IAsyncEventDispatcher, settings: SqlAlchemyStorageSettings):
-        self.settings = settings
+    def __init__(
+        self,
+        engine: AsyncEngine,
+        dispatcher: IAsyncEventDispatcher,
+        blob_storage: BlobStorage,
+        settings: SqlAlchemyStorageSettings,
+    ):
+        # XXX lokks like settings are not used anymore, except to know if we should run migrations or not
+        self._should_migrate = settings.migrate
+
         self.metadata = Base.metadata
 
-        self.engine = create_async_engine(self.settings.url)
+        self.blob_storage = blob_storage
+
+        self.engine = engine
         self.session_factory = async_sessionmaker(self.engine, expire_on_commit=False)
 
         # TODO is this the right place ? (maybe it is, but maybe it causes tight coupling to the ed which may be not
         #      right, especially if we want to be able to use the storage out of the special context of harp proxy)
-        dispatcher.add_listener(EVENT_CORE_STARTED, self._on_startup_actions, priority=-20)
         dispatcher.add_listener(EVENT_TRANSACTION_STARTED, self._on_transaction_started)
         dispatcher.add_listener(EVENT_TRANSACTION_MESSAGE, self._on_transaction_message)
         dispatcher.add_listener(EVENT_TRANSACTION_ENDED, self._on_transaction_ended)
@@ -184,7 +191,7 @@ class SqlAlchemyStorage(Storage):
 
         self._debug = False
 
-        logger.info(f"🛢 {type(self).__name__} url={self.settings.url}")
+        logger.info(f"🛢 {type(self).__name__} url={self.engine.url}")
 
     @asynccontextmanager
     async def begin(self):
@@ -255,19 +262,23 @@ class SqlAlchemyStorage(Storage):
 
     async def initialize(self):
         """Initialize database."""
-        if self.settings.migrate:
+        if self._should_migrate:
             await self._run_migrations()
         await self.create_users(["anonymous"])
         self._is_ready.set()
 
+    async def finalize(self):
+        await self.worker.close()
+        await self.engine.dispose()
+
     async def _run_migrations(self):
         """Convenience helper to run the migrations. This behaviour can be disabled by setting migrate=false in the
         storage settings."""
+
+        # todo refactor ? see harp_apps.sqlalchemy_storage.utils.testing.mixins.SqlalchemyStorageTestFixtureMixin
         from alembic import command
 
-        from harp_apps.sqlalchemy_storage.utils.migrations import create_alembic_config
-
-        from .utils.migrations import do_migrate
+        from harp_apps.sqlalchemy_storage.utils.migrations import create_alembic_config, do_migrate
 
         alembic_cfg = create_alembic_config(self.engine.url.render_as_string(hide_password=False))
 
@@ -423,25 +434,6 @@ class SqlAlchemyStorage(Storage):
             )
             return (await session.execute(query)).scalar_one_or_none()
 
-    @override
-    async def get_blob(self, blob_id):
-        """
-        Retrieve a blob from the database, using its hash.
-        Returns None if not found.
-
-        :param blob_id: sha1 hash of the blob
-        :return: Blob or None
-        """
-        async with self.begin() as session:
-            row = (
-                await session.execute(
-                    select(Blob).where(Blob.id == blob_id),
-                )
-            ).fetchone()
-
-        if row:
-            return BlobModel(id=blob_id, data=row[0].data, content_type=row[0].content_type)
-
     async def _on_startup_actions(self, TransactionEvent):
         """Event handler to create the database tables on startup. May drop them first if configured to do so."""
         await self.initialize()
@@ -470,30 +462,18 @@ class SqlAlchemyStorage(Storage):
         """Event handler to store the transaction in the database."""
         return await self.transactions.create(event.transaction)
 
-    async def _on_transaction_message(self, event: MessageEvent):
+    async def _on_transaction_message(self, event: HttpMessageEvent):
         await event.message.join()
         serializer = get_serializer_for(event.message)
 
+        # Eventually store the headers blob (later)
         # todo is the "__headers__" dunder content type any good idea ? maybe it's just a waste of bytes.
         headers_blob = BlobModel.from_data(serializer.headers, content_type="__headers__")
+        await self.worker.push(partial(self.blob_storage.put, headers_blob), ignore_errors=True)
+
+        # Eventually store the content blob (later)
         content_blob = BlobModel.from_data(serializer.body, content_type=event.message.headers.get("content-type"))
-
-        def create_store_blob_task(blob):
-            async def store_blob_task():
-                async with self.begin() as session:
-                    if not (
-                        await session.execute(select(select(Blob.id).where(Blob.id == blob.id).exists()))
-                    ).scalar_one():
-                        db_blob = Blob()
-                        db_blob.id = blob.id
-                        db_blob.content_type = blob.content_type
-                        db_blob.data = blob.data
-                        session.add(db_blob)
-
-            return store_blob_task
-
-        await self.worker.push(create_store_blob_task(headers_blob), ignore_errors=False)
-        await self.worker.push(create_store_blob_task(content_blob), ignore_errors=True)
+        await self.worker.push(partial(self.blob_storage.put, content_blob), ignore_errors=True)
 
         async def store_message_task():
             async with self.begin() as session:

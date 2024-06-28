@@ -1,29 +1,33 @@
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from functools import partial
 
 import pytest
+from alembic import command
 from sqlalchemy import make_url, text
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from testcontainers.redis import AsyncRedisContainer
 from whistle import AsyncEventDispatcher
 
 from harp.models import Blob, Message, Transaction
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp_apps.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
-from harp_apps.sqlalchemy_storage.storage import SqlAlchemyStorage
-
-
-async def _create_storage(*, settings, dispatcher=None) -> SqlAlchemyStorage:
-    storage = SqlAlchemyStorage(
-        dispatcher=dispatcher or AsyncEventDispatcher(),
-        settings=SqlAlchemyStorageSettings(**settings),
-    )
-    await storage.initialize()
-
-    return storage
+from harp_apps.sqlalchemy_storage.storages.sql import SqlAlchemyStorage
+from harp_apps.sqlalchemy_storage.types import BlobStorage
+from harp_apps.sqlalchemy_storage.utils.migrations import create_alembic_config, do_migrate
 
 
 @asynccontextmanager
 async def get_scoped_database_url(database_url, test_id):
+    """
+    Returns a "scoped" database URL that is unique to the test_id, with a database available to run some tests. Logic
+    differs a bit depending on the target dialect, but the idea is to create a new database for each test, and drop it
+    afterward. For sqlite, we bypass this as the "migration" process is a simple reset+recreate all.
+
+    :param database_url:
+    :param test_id:
+    :return:
+    """
     admin_url = make_url(database_url)
     dialect = admin_url.get_dialect().name
 
@@ -61,24 +65,55 @@ async def get_scoped_database_url(database_url, test_id):
         raise RuntimeError(f"Unsupported dialect «{admin_engine.dialect.name}»")
 
 
-class SqlalchemyStorageTestFixtureMixin:
-    storage_settings = {
-        "url": "sqlite+aiosqlite:///:memory:",
-    }
+DEFAULT_STORAGE_SETTINGS = {
+    "url": "sqlite+aiosqlite:///:memory:",
+    "migrate": False,
+}
 
-    def get_sqlalchemy_storage_settings(self, settings):
-        return {**self.storage_settings, **settings}
+
+class SqlalchemyStorageTestFixtureMixin:
+    @pytest.fixture
+    async def sql_engine(self, database_url, test_id) -> AsyncEngine:
+        async with get_scoped_database_url(database_url, test_id) as scoped_database_url:
+            engine = create_async_engine(scoped_database_url)
+            try:
+                # todo refactor (dup in sqlstorage.initialize / sqlstorage._run_migrations)
+                alembic_cfg = create_alembic_config(engine.url.render_as_string(hide_password=False))
+                migrator = partial(command.upgrade, alembic_cfg, "head")
+                await do_migrate(engine, migrator=migrator)
+
+                yield engine
+            finally:
+                await engine.dispose()
 
     @pytest.fixture
-    async def storage(self, database_url, test_id) -> SqlAlchemyStorage:
-        async with get_scoped_database_url(database_url, test_id) as scoped_database_url:
-            storage = await _create_storage(
-                settings=self.get_sqlalchemy_storage_settings({"url": scoped_database_url}),
-            )
-            try:
-                yield storage
-            finally:
-                await storage.engine.dispose()
+    def storage_settings(self, sql_engine) -> SqlAlchemyStorageSettings:
+        return SqlAlchemyStorageSettings(**(DEFAULT_STORAGE_SETTINGS | {"url": sql_engine.url}))
+
+    @pytest.fixture(params=["sql", "redis"])
+    async def blob_storage(self, request, sql_engine, storage_settings) -> BlobStorage:
+        if request.param == "sql":
+            from harp_apps.sqlalchemy_storage.storages.blobs.sql import SqlBlobStorage
+
+            yield SqlBlobStorage(sql_engine)
+        elif request.param == "redis":
+            with AsyncRedisContainer() as redis_container:
+                from harp_apps.sqlalchemy_storage.storages.blobs.redis import RedisBlobStorage
+
+                yield RedisBlobStorage(await redis_container.get_async_client())
+
+    @pytest.fixture
+    async def storage(self, sql_engine, blob_storage, storage_settings) -> SqlAlchemyStorage:
+        storage = SqlAlchemyStorage(
+            sql_engine,
+            dispatcher=AsyncEventDispatcher(),
+            blob_storage=blob_storage,
+            settings=storage_settings,
+        )
+        # migrations are disabled because already done by the sql_engine fixture, but we still need to do additional
+        # initialization steps.
+        await storage.initialize()
+        yield storage
 
     async def create_transaction(self, storage: SqlAlchemyStorage, **kwargs):
         return await storage.transactions.create(

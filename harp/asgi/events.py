@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from whistle import Event
 
-from harp.http import BaseMessage, HttpRequest
+from harp.http import BaseHttpMessage, HttpRequest
 from harp.models.transactions import Transaction
 
 if TYPE_CHECKING:
@@ -85,7 +85,7 @@ class TransactionEvent(Event):
         self.transaction = transaction
 
 
-class MessageEvent(TransactionEvent):
-    def __init__(self, transaction: Transaction, message: BaseMessage):
+class HttpMessageEvent(TransactionEvent):
+    def __init__(self, transaction: Transaction, message: BaseHttpMessage):
         super().__init__(transaction)
         self.message = message

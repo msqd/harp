@@ -36,7 +36,8 @@ def test_add_application():
 
     assert serialized == (
         b'{"applications":["harp_apps.sqlalchemy_storage"],"storage":{"type":"sqlalche'
-        b'my","url":"sqlite+aiosqlite:///:memory:","migrate":true}}'
+        b'my","url":"sqlite+aiosqlite:///:memory:","migrate":true,"blobs":{"type":"sql'
+        b'"}}}'
     )
 
     # is the unserialized result the same as before serialization?
@@ -50,13 +51,18 @@ def test_add_application():
     assert new_config != config
     assert new_config.settings == {
         "applications": ["harp_apps.sqlalchemy_storage", "foo.bar"],
-        "storage": {"migrate": True, "type": "sqlalchemy", "url": "sqlite+aiosqlite:///:memory:"},
+        "storage": {
+            "blobs": {"type": "sql"},
+            "migrate": True,
+            "type": "sqlalchemy",
+            "url": "sqlite+aiosqlite:///:memory:",
+        },
     }
 
     new_config._application_types["foo.bar"] = type("MockedExtension", (Application,), {"name": "foo.bar"})
 
     assert new_config.serialize() == (
         b'{"applications":["harp_apps.sqlalchemy_storage","foo.bar"],"storage":{"type"'
-        b':"sqlalchemy","url":"sqlite+aiosqlite:///:memory:","migrate":tr'
-        b"ue}}"
+        b':"sqlalchemy","url":"sqlite+aiosqlite:///:memory:","migrate":true,"blobs":{"'
+        b'type":"sql"}}}'
     )

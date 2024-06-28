@@ -2,8 +2,8 @@ import asyncio
 
 from harp.config import Application
 from harp.config.events import FactoryBindEvent, FactoryBoundEvent
-from harp.typing import Storage
 from harp_apps.janitor.worker import JanitorWorker
+from harp_apps.sqlalchemy_storage.types import Storage
 
 
 class JanitorApplication(Application):

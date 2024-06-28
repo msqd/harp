@@ -10,7 +10,7 @@ from harp.http import HttpRequest
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
 from harp_apps.dashboard.controllers import OverviewController
-from harp_apps.sqlalchemy_storage.storage import SqlAlchemyStorage
+from harp_apps.sqlalchemy_storage.storages.sql import SqlAlchemyStorage
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
 
 

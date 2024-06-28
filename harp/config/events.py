@@ -58,3 +58,14 @@ class FactoryBuildEvent(Event):
 
 
 EVENT_FACTORY_BUILD = FactoryBuildEvent.name
+
+
+class FactoryDisposeEvent(Event):
+    name = "harp.config.dispose"
+
+    def __init__(self, kernel, provider):
+        self.kernel = kernel
+        self.provider = provider
+
+
+EVENT_FACTORY_DISPOSE = FactoryDisposeEvent.name

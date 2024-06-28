@@ -9,6 +9,7 @@ def test_empty_settings():
         "migrate": True,
         "type": "sqlalchemy",
         "url": "sqlite+aiosqlite:///harp.db",
+        "blobs": {"type": "sql"},
     }
 
 
@@ -19,11 +20,13 @@ def test_secure():
         "migrate": True,
         "type": "sqlalchemy",
         "url": "postgresql://user:***@localhost:5432/db",
+        "blobs": {"type": "sql"},
     }
     assert asdict(settings, secure=False) == {
         "migrate": True,
         "type": "sqlalchemy",
         "url": "postgresql://user:password@localhost:5432/db",
+        "blobs": {"type": "sql"},
     }
 
 
@@ -34,6 +37,7 @@ def test_override():
         "migrate": True,
         "type": "sqlalchemy",
         "url": "sqlite+aiosqlite:///toto.db",
+        "blobs": {"type": "sql"},
     }
 
     settings.url = settings.url.set(database=":memory:")
@@ -41,4 +45,15 @@ def test_override():
         "migrate": True,
         "type": "sqlalchemy",
         "url": "sqlite+aiosqlite:///:memory:",
+        "blobs": {"type": "sql"},
+    }
+
+
+def test_override_blob_storage_type():
+    settings = SqlAlchemyStorageSettings(blobs={"type": "redis"})
+    assert asdict(settings) == {
+        "migrate": True,
+        "type": "sqlalchemy",
+        "url": "sqlite+aiosqlite:///harp.db",
+        "blobs": {"type": "redis"},
     }

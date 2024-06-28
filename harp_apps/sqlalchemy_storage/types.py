@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Iterable, List, Optional, Protocol, TypedDict
 
+from harp.models import Blob
+
 
 class TransactionsGroupedByTimeBucket(TypedDict):
     datetime: datetime
@@ -33,12 +35,6 @@ class Storage(Protocol):
         """Find a transaction, by id."""
         ...
 
-    async def get_blob(self, blob_id):
-        """Retrieve a blob, by id. Blobs are content adressable, although the hash is built on the source data and
-        blob filters may be applied to the source data before storage, meaning that the hash may not be re-computable
-        once storage is done."""
-        ...
-
     async def get_facet_meta(self, name):
         """Retrieve a facet's metadata, by name."""
         ...
@@ -62,3 +58,20 @@ class Storage(Protocol):
     async def get_usage(self):
         """Get storage usage."""
         ...
+
+
+class BlobStorage(Protocol):
+    async def get(self, blob_id: str): ...
+
+    async def put(self, blob: Blob): ...
+
+    async def delete(self, blob_id: str): ...
+
+    async def exists(self, blob_id: str) -> bool: ...
+
+
+class TransactionsGroupedByTimeBucket(TypedDict):
+    datetime: datetime
+    count: int
+    errors: int
+    meanDuration: float

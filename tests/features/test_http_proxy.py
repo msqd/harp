@@ -87,7 +87,11 @@ class TestAsgiProxyWithStubApi:
             ],
         )
         factory = KernelFactory(config)
-        return (await factory.build())[0]
+        try:
+            _kernel = (await factory.build())[0]
+            yield _kernel
+        finally:
+            await factory.dispose()
 
     @pytest.fixture
     async def client(self, kernel):

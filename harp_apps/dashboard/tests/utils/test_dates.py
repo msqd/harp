@@ -4,12 +4,12 @@ from unittest.mock import patch
 
 import pytest
 
-from harp.typing.storage import TransactionsGroupedByTimeBucket
 from harp_apps.dashboard.utils.dates import (
     _truncate_datetime_for_time_bucket,
     generate_continuous_time_range,
     get_start_datetime_from_range,
 )
+from harp_apps.sqlalchemy_storage.types import TransactionsGroupedByTimeBucket
 
 
 def test_get_start_datetime_from_range():

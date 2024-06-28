@@ -3,10 +3,10 @@ from typing import cast
 
 from harp import get_logger
 from harp.settings import USE_PROMETHEUS
-from harp.typing import Storage
-from harp_apps.sqlalchemy_storage.storage import SqlAlchemyStorage
 
 from ..sqlalchemy_storage.models.base import with_session
+from ..sqlalchemy_storage.storages.sql import SqlAlchemyStorage
+from ..sqlalchemy_storage.types import Storage
 from .settings import OLD_AFTER, PERIOD
 
 logger = get_logger(__name__)

@@ -16,5 +16,6 @@ Submodules
     harp_apps.sqlalchemy_storage.models
     harp_apps.sqlalchemy_storage.optionals
     harp_apps.sqlalchemy_storage.settings
-    harp_apps.sqlalchemy_storage.storage
+    harp_apps.sqlalchemy_storage.storages
+    harp_apps.sqlalchemy_storage.types
     harp_apps.sqlalchemy_storage.utils

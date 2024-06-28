@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 from harp_apps.janitor.settings import OLD_AFTER
 from harp_apps.janitor.worker import JanitorWorker
-from harp_apps.sqlalchemy_storage.storage import SqlAlchemyStorage
+from harp_apps.sqlalchemy_storage.storages.sql import SqlAlchemyStorage
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
 
 

@@ -11,6 +11,7 @@ class TestSqlAlchemyStorageApplication(BaseTestForApplications):
         "type": "sqlalchemy",
         "url": "sqlite+aiosqlite:///:memory:",
         "migrate": True,
+        "blobs": {"type": "sql"},
     }
 
     @pytest.mark.parametrize(
@@ -29,6 +30,7 @@ class TestSqlAlchemyStorageApplication(BaseTestForApplications):
             {"type": "sqlalchemy", "url": "sqlite+aiosqlite:///harp.db"},
             {"type": "sqlalchemy", "migrate": True},
             {"type": "sqlalchemy", "migrate": False},
+            {"blobs": {"type": "redis"}},
         ],
     )
     def test_defaults_fills_missing_values_for_sqlalchemy_type(self, ApplicationType, settings):

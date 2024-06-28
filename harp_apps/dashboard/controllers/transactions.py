@@ -5,9 +5,9 @@ from harp.controllers import GetHandler, RouteHandler, RouterPrefix, RoutingCont
 from harp.http import HttpRequest, JsonHttpResponse
 from harp.models.transactions import Transaction
 from harp.settings import PAGE_SIZE
-from harp.typing.storage import Storage
 from harp.views.json import json
 from harp_apps.sqlalchemy_storage.models.flags import FLAGS_BY_NAME
+from harp_apps.sqlalchemy_storage.types import Storage
 
 from ..filters import (
     TransactionEndpointFacet,

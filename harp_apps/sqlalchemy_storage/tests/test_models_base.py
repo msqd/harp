@@ -6,7 +6,7 @@ from sqlalchemy.exc import MissingGreenlet, StatementError
 from sqlalchemy.orm.exc import DetachedInstanceError
 
 from harp.utils.guids import generate_transaction_id_ksuid
-from harp_apps.sqlalchemy_storage.storage import SqlAlchemyStorage
+from harp_apps.sqlalchemy_storage.storages.sql import SqlAlchemyStorage
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
 
 

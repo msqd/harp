@@ -294,6 +294,9 @@ class Config:
         for application in self._applications:
             application.register_events(dispatcher)
 
+        for application in reversed(self._applications):
+            application.register_end_of_life_events(dispatcher)
+
     def register_services(self, container: Container):
         self.validate()
         for application in self._applications:

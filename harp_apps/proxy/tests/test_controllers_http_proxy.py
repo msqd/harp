@@ -7,7 +7,8 @@ from whistle import AsyncEventDispatcher
 
 from harp.utils.bytes import ensure_bytes
 from harp.utils.testing.mixins import ControllerTestFixtureMixin
-from harp_apps.sqlalchemy_storage.storage import SqlAlchemyStorage
+from harp_apps.sqlalchemy_storage.storages.sql import SqlAlchemyStorage
+from harp_apps.sqlalchemy_storage.types import BlobStorage
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
 
 from ..controllers import HttpProxyController
@@ -99,7 +100,7 @@ class TestHttpProxyControllerWithStorage(
         return transaction, transaction.messages[0], transaction.messages[1]
 
     @respx.mock
-    async def test_basic_get(self, storage: SqlAlchemyStorage):
+    async def test_basic_get(self, storage: SqlAlchemyStorage, blob_storage: BlobStorage):
         self.mock_http_endpoint("http://example.com/", content="Hello.")
 
         # register the storage
@@ -123,8 +124,8 @@ class TestHttpProxyControllerWithStorage(
         }
 
         # request
-        assert (await storage.get_blob(request.headers)).data == b"host: example.com\nuser-agent: test/1.0"
-        assert (await storage.get_blob(request.body)).data == b""
+        assert (await blob_storage.get(request.headers)).data == b"host: example.com\nuser-agent: test/1.0"
+        assert (await blob_storage.get(request.body)).data == b""
         assert request.to_dict(omit_none=False) == {
             "id": 1,
             "transaction_id": ANY,
@@ -136,8 +137,8 @@ class TestHttpProxyControllerWithStorage(
         }
 
         # response
-        assert (await storage.get_blob(response.headers)).data == b""
-        assert (await storage.get_blob(response.body)).data == b"Hello."
+        assert (await blob_storage.get(response.headers)).data == b""
+        assert (await blob_storage.get(response.body)).data == b"Hello."
         assert response.to_dict(omit_none=False) == {
             "id": 2,
             "transaction_id": ANY,
@@ -149,7 +150,7 @@ class TestHttpProxyControllerWithStorage(
         }
 
     @respx.mock
-    async def test_get_with_tags(self, storage):
+    async def test_get_with_tags(self, storage: SqlAlchemyStorage, blob_storage: BlobStorage):
         self.mock_http_endpoint("http://example.com/", content="Hello.")
 
         # call our controller
@@ -178,10 +179,10 @@ class TestHttpProxyControllerWithStorage(
             "extras": {"flags": [], "method": "GET", "status_class": "2xx", "cached": False, "no_cache": False},
         }
 
-        assert (await storage.get_blob(request.headers)).data == (
+        assert (await blob_storage.get(request.headers)).data == (
             b"accept: application/json\nvary: custom\nhost: example.com\nuser-agent: test/1.0"
         )
-        assert (await storage.get_blob(request.body)).data == b""
+        assert (await blob_storage.get(request.body)).data == b""
         assert request.to_dict(omit_none=False) == {
             "id": 1,
             "transaction_id": ANY,
@@ -192,8 +193,8 @@ class TestHttpProxyControllerWithStorage(
             "created_at": ANY,
         }
 
-        assert (await storage.get_blob(response.headers)).data == b""
-        assert (await storage.get_blob(response.body)).data == b"Hello."
+        assert (await blob_storage.get(response.headers)).data == b""
+        assert (await blob_storage.get(response.body)).data == b"Hello."
         assert response.to_dict(omit_none=False) == {
             "id": 2,
             "transaction_id": ANY,

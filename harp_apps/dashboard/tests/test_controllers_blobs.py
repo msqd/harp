@@ -3,6 +3,7 @@ import pytest
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
 from harp_apps.sqlalchemy_storage.models import Blob
+from harp_apps.sqlalchemy_storage.types import BlobStorage
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
 
 from ..controllers import BlobsController
@@ -10,8 +11,8 @@ from ..controllers import BlobsController
 
 class BlobsControllerTestFixtureMixin:
     @pytest.fixture
-    def controller(self, storage):
-        return BlobsController(storage=storage, handle_errors=False)
+    async def controller(self, blob_storage):
+        return BlobsController(storage=blob_storage, handle_errors=False)
 
 
 class TestBlobsController(
@@ -23,13 +24,8 @@ class TestBlobsController(
         assert response.status == 404
         assert response.content_type == "text/plain"
 
-    async def test_get_existing(self, controller, storage):
-        async with storage.begin() as session:
-            blob = Blob(
-                id="blob-1",
-                data=b"hello",
-            )
-            session.add(blob)
+    async def test_get_existing(self, controller, blob_storage: BlobStorage):
+        await blob_storage.put(Blob(id="blob-1", data=b"hello"))
 
         response = await controller.get("blob-1")
         assert response.status == 200

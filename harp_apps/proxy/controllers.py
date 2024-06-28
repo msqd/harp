@@ -10,7 +10,7 @@ from httpx import AsyncClient, codes
 from whistle import IAsyncEventDispatcher
 
 from harp import __parsed_version__, get_logger
-from harp.asgi.events import MessageEvent, TransactionEvent
+from harp.asgi.events import HttpMessageEvent, TransactionEvent
 from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
 from harp.http.requests import WrappedHttpRequest
 from harp.models import Transaction
@@ -198,7 +198,7 @@ class HttpProxyController:
 
         # dispatch message event for response
         # TODO delay after response is sent ?
-        await self.adispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, response))
+        await self.adispatch(EVENT_TRANSACTION_MESSAGE, HttpMessageEvent(transaction, response))
         # dispatch transaction ended event
         # TODO delay after response is sent ?
         await self.adispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(transaction))
@@ -229,7 +229,7 @@ class HttpProxyController:
         await self.adispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(transaction))
 
         # dispatch message event for request
-        await self.adispatch(EVENT_TRANSACTION_MESSAGE, MessageEvent(transaction, request))
+        await self.adispatch(EVENT_TRANSACTION_MESSAGE, HttpMessageEvent(transaction, request))
 
         return transaction
 

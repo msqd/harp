@@ -7,11 +7,11 @@ from sqlalchemy.orm import aliased, joinedload
 from harp import Config, __revision__, __version__, get_logger
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest
-from harp.typing import Storage
 from harp.typing.global_settings import GlobalSettings
 from harp.views.json import json
 from harp_apps.sqlalchemy_storage.models import MetricValue
-from harp_apps.sqlalchemy_storage.storage import SqlAlchemyStorage
+from harp_apps.sqlalchemy_storage.storages.sql import SqlAlchemyStorage
+from harp_apps.sqlalchemy_storage.types import Storage
 
 from ..utils.dependencies import get_python_dependencies, parse_dependencies
 

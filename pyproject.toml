@@ -48,6 +48,7 @@ watchfiles = { version = "^0.22.0", optional = true }
 whistle = { version = "2.0.0b1", allow-prereleases = true }
 pyheck = "^0.1.5"
 asgi-prometheus = "^1.1.2"
+redis = "^5.0.7"
 
 
 [tool.poetry.group.dev.dependencies]
