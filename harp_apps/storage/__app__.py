@@ -9,7 +9,7 @@ from harp.config import Application
 from harp.config.events import FactoryBindEvent, FactoryBoundEvent, FactoryDisposeEvent
 from harp_apps.storage.services.sql import SqlStorage
 
-from .factories import AsyncEngineFactory
+from .factories import AsyncEngineFactory, RedisClientFactory
 from .settings import StorageSettings
 from .types import IBlobStorage, IStorage
 
@@ -53,7 +53,11 @@ class StorageApplication(Application):
 
             event.container.add_singleton(IBlobStorage, SqlBlobStorage)
         elif blob_storage_type == "redis":
+            from redis.asyncio import Redis
+
             from harp_apps.storage.services.blob_storages.redis import RedisBlobStorage
+
+            event.container.add_singleton(Redis, RedisClientFactory)
 
             event.container.add_singleton(IBlobStorage, RedisBlobStorage)
         else:

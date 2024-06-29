@@ -55,5 +55,5 @@ def test_override_blob_storage_type():
         "migrate": True,
         "type": "sqlalchemy",
         "url": "sqlite+aiosqlite:///harp.db",
-        "blobs": {"type": "redis"},
+        "blobs": {"type": "redis", "url": "redis://localhost:6379/0"},
     }
