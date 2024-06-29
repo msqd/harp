@@ -7,12 +7,11 @@ from whistle import AsyncEventDispatcher
 
 from harp.utils.bytes import ensure_bytes
 from harp.utils.testing.mixins import ControllerTestFixtureMixin
+from harp_apps.proxy.controllers import HttpProxyController
+from harp_apps.proxy.events import EVENT_TRANSACTION_STARTED
 from harp_apps.sqlalchemy_storage.storages.sql import SqlStorage
 from harp_apps.sqlalchemy_storage.types import IBlobStorage
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
-
-from ..controllers import HttpProxyController
-from ..events import EVENT_TRANSACTION_STARTED
 
 
 class DispatcherTestFixtureMixin:

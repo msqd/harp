@@ -8,8 +8,8 @@ from sqlalchemy.exc import DatabaseError, ProgrammingError
 from harp.utils.testing.databases import parametrize_with_database_urls
 from harp_apps.sqlalchemy_storage.optionals.pg_trgm import PgTrgmOptional
 from harp_apps.sqlalchemy_storage.utils.sql import run_sql
-from harp_apps.sqlalchemy_storage.utils.testing.database import run_cli_migrate_command
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
+from harp_apps.sqlalchemy_storage.utils.testing.rdbms import run_cli_migrate_command
 
 
 async def get_indexes(engine, table_name):

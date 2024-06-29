@@ -12,6 +12,7 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
+    harp_apps.sqlalchemy_storage.conftest
     harp_apps.sqlalchemy_storage.constants
     harp_apps.sqlalchemy_storage.models
     harp_apps.sqlalchemy_storage.optionals
