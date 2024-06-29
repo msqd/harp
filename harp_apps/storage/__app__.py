@@ -1,33 +1,19 @@
 """Storage Application"""
 
-from typing import Callable, Optional, Type, TypeVar, cast
+from typing import Optional
 
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from harp import get_logger
 from harp.config import Application
 from harp.config.events import FactoryBindEvent, FactoryBoundEvent, FactoryDisposeEvent
-from harp_apps.storage.storages.sql import SqlStorage
+from harp_apps.storage.services.sql import SqlStorage
 
+from .factories import AsyncEngineFactory
 from .settings import StorageSettings
 from .types import IBlobStorage, IStorage
 
 logger = get_logger(__name__)
-
-
-T = TypeVar("T")
-
-
-def factory(t: Type[T]) -> Callable[..., Type[T]]:
-    def decorator(f) -> Type[T]:
-        return cast(Type[T], type(f.__name__, (t,), {"__new__": f, "__init__": f}))
-
-    return decorator
-
-
-@factory(AsyncEngine)
-def AsyncEngineFactory(self, settings: StorageSettings) -> AsyncEngine:
-    return create_async_engine(settings.url)
 
 
 class StorageApplication(Application):
@@ -63,11 +49,11 @@ class StorageApplication(Application):
 
         blob_storage_type = self.settings.blobs.type
         if blob_storage_type == "sql":
-            from harp_apps.storage.storages.blobs.sql import SqlBlobStorage
+            from harp_apps.storage.services.blob_storages.sql import SqlBlobStorage
 
             event.container.add_singleton(IBlobStorage, SqlBlobStorage)
         elif blob_storage_type == "redis":
-            from harp_apps.storage.storages.blobs.redis import RedisBlobStorage
+            from harp_apps.storage.services.blob_storages.redis import RedisBlobStorage
 
             event.container.add_singleton(IBlobStorage, RedisBlobStorage)
         else:

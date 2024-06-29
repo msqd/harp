@@ -2,7 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import override
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 from harp.models import Blob
@@ -74,7 +74,7 @@ class SqlBlobStorage(IBlobStorage):
         """
         async with self.begin() as session:
             await session.execute(
-                select(SqlBlob).where(SqlBlob.id == blob_id).delete(),
+                delete(SqlBlob).where(SqlBlob.id == blob_id),
             )
 
     @override

@@ -1,4 +1,4 @@
-from harp_apps.storage.storages.sql import SqlStorage
+from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 

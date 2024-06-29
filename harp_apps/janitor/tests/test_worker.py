@@ -4,7 +4,7 @@ import pytest
 
 from harp_apps.janitor.settings import OLD_AFTER
 from harp_apps.janitor.worker import JanitorWorker
-from harp_apps.storage.storages.sql import SqlStorage
+from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.types import IBlobStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 

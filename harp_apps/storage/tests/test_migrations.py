@@ -1,4 +1,4 @@
-from harp_apps.storage.utils.testing.rdbms import run_cli_migrate_command
+from harp_apps.storage.utils.testing.sql import run_cli_migrate_command
 
 
 async def test_migrations(database_url):

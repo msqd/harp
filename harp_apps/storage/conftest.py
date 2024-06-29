@@ -7,26 +7,39 @@ from whistle import AsyncEventDispatcher
 
 from conftest import DEFAULT_STORAGE_SETTINGS
 from harp.utils.testing.databases import TEST_DATABASES
+from harp_apps.storage.services import SqlStorage
 
+from .services.blob_storages.redis import RedisBlobStorage
 from .settings import StorageSettings
-from .storages.sql import SqlStorage
 from .utils.migrations import create_alembic_config, do_migrate
-from .utils.testing.rdbms import create_database_container_for, get_scoped_database_url
+from .utils.testing.redis import create_redis_client
+from .utils.testing.sql import create_database_container_for, get_scoped_database_url
+
+
+@pytest.fixture
+async def redis_blob_storage():
+    async with create_redis_client() as async_client:
+        from harp_apps.storage.services.blob_storages.redis import RedisBlobStorage
+
+        yield RedisBlobStorage(async_client)
+
+
+@pytest.fixture
+async def sql_blob_storage(sql_engine):
+    from harp_apps.storage.services.blob_storages.sql import SqlBlobStorage
+
+    yield SqlBlobStorage(sql_engine)
 
 
 @pytest.fixture(params=["sql", "redis"])
 async def blob_storage(request, sql_engine):
     if request.param == "sql":
-        from harp_apps.storage.storages.blobs.sql import SqlBlobStorage
+        from harp_apps.storage.services.blob_storages.sql import SqlBlobStorage
 
         yield SqlBlobStorage(sql_engine)
     elif request.param == "redis":
-        from testcontainers.redis import AsyncRedisContainer
-
-        with AsyncRedisContainer() as redis_container:
-            from harp_apps.storage.storages.blobs.redis import RedisBlobStorage
-
-            yield RedisBlobStorage(await redis_container.get_async_client())
+        async with create_redis_client() as async_client:
+            yield RedisBlobStorage(async_client)
     else:
         raise ValueError(f"Unsupported blob storage type: {request.param}")
 

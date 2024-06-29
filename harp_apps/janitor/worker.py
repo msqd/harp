@@ -3,9 +3,9 @@ from typing import cast
 
 from harp import get_logger
 from harp.settings import USE_PROMETHEUS
+from harp_apps.storage.services import SqlStorage
 
 from ..storage.models.base import with_session
-from ..storage.storages.sql import SqlStorage
 from ..storage.types import IBlobStorage, IStorage
 from .settings import OLD_AFTER, PERIOD
 

@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 from harp.models import Blob, Message, Transaction
 from harp.utils.guids import generate_transaction_id_ksuid
-from harp_apps.storage.storages.sql import SqlStorage
+from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.types import IBlobStorage
 
 

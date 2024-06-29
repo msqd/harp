@@ -9,7 +9,7 @@ from harp.utils.testing.databases import parametrize_with_database_urls
 from harp_apps.storage.optionals.pg_trgm import PgTrgmOptional
 from harp_apps.storage.utils.sql import run_sql
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
-from harp_apps.storage.utils.testing.rdbms import run_cli_migrate_command
+from harp_apps.storage.utils.testing.sql import run_cli_migrate_command
 
 
 async def get_indexes(engine, table_name):

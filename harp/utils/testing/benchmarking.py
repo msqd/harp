@@ -11,7 +11,7 @@ import pytest
 from harp import get_logger
 from harp.commandline.start import assert_development_packages_are_available
 from harp.utils.network import get_available_network_port, wait_for_port
-from harp_apps.storage.utils.testing.rdbms import get_scoped_database_url
+from harp_apps.storage.utils.testing.sql import get_scoped_database_url
 
 logger = get_logger(__name__)
 

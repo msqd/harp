@@ -26,7 +26,7 @@ class RedisBlobStorage(IBlobStorage):
 
     @override
     async def delete(self, blob_id):
-        return await self.client.delete(blob_id)
+        await self.client.delete(blob_id)
 
     @override
     async def exists(self, blob_id: str) -> bool:
