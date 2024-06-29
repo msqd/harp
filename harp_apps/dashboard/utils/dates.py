@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from typing import List
 
-from harp_apps.sqlalchemy_storage.types import TransactionsGroupedByTimeBucket
+from harp_apps.storage.types import TransactionsGroupedByTimeBucket
 
 
 def get_start_datetime_from_range(range: str | None, *, now=None) -> datetime | None:

@@ -6,8 +6,8 @@ from harp.http import HttpRequest, JsonHttpResponse
 from harp.models.transactions import Transaction
 from harp.settings import PAGE_SIZE
 from harp.views.json import json
-from harp_apps.sqlalchemy_storage.models.flags import FLAGS_BY_NAME
-from harp_apps.sqlalchemy_storage.types import IStorage
+from harp_apps.storage.models.flags import FLAGS_BY_NAME
+from harp_apps.storage.types import IStorage
 
 from ..filters import (
     TransactionEndpointFacet,

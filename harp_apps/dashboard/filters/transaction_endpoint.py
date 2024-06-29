@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from harp_apps.sqlalchemy_storage.types import IStorage
+from harp_apps.storage.types import IStorage
 
 from .base import FacetWithStorage
 

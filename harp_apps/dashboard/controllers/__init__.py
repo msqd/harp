@@ -12,7 +12,7 @@ from harp.errors import ConfigurationError
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
 from harp.typing.global_settings import GlobalSettings
 from harp_apps.proxy.controllers import HttpProxyController
-from harp_apps.sqlalchemy_storage.types import IBlobStorage, IStorage
+from harp_apps.storage.types import IBlobStorage, IStorage
 
 from ..settings import DashboardAuthBasicSetting, DashboardSettings
 from .blobs import BlobsController

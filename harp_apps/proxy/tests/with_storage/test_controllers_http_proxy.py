@@ -9,9 +9,9 @@ from harp.utils.bytes import ensure_bytes
 from harp.utils.testing.mixins import ControllerTestFixtureMixin
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.events import EVENT_TRANSACTION_STARTED
-from harp_apps.sqlalchemy_storage.storages.sql import SqlStorage
-from harp_apps.sqlalchemy_storage.types import IBlobStorage
-from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
+from harp_apps.storage.storages.sql import SqlStorage
+from harp_apps.storage.types import IBlobStorage
+from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 
 class DispatcherTestFixtureMixin:
@@ -88,7 +88,7 @@ class TestHttpProxyController(HttpProxyControllerTestFixtureMixin, DispatcherTes
 
 class TestHttpProxyControllerWithStorage(
     HttpProxyControllerTestFixtureMixin,
-    SqlalchemyStorageTestFixtureMixin,
+    StorageTestFixtureMixin,
     DispatcherTestFixtureMixin,
 ):
     async def _find_one_transaction_with_messages_from_storage(self, storage):

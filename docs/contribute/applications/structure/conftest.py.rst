@@ -17,7 +17,7 @@ For example, if your application's tests depend on the storage application, you 
 
 .. code-block:: python
 
-    from harp_apps.sqlalchemy_storage.conftest import *  # noqa
+    from harp_apps.storage.conftest import *  # noqa
 
 It is also possible if you're writing only some integrations test that use an optional dependency to add a
 ``conftest.py`` file with the dependency import in the integration test directory.

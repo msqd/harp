@@ -9,7 +9,7 @@ from harp_apps.dashboard.utils.dates import (
     generate_continuous_time_range,
     get_start_datetime_from_range,
 )
-from harp_apps.sqlalchemy_storage.types import TransactionsGroupedByTimeBucket
+from harp_apps.storage.types import TransactionsGroupedByTimeBucket
 
 
 def test_get_start_datetime_from_range():

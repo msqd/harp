@@ -2,9 +2,9 @@ import pytest
 
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
-from harp_apps.sqlalchemy_storage.models import Blob
-from harp_apps.sqlalchemy_storage.types import IBlobStorage
-from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
+from harp_apps.storage.models import Blob
+from harp_apps.storage.types import IBlobStorage
+from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 from ..controllers import BlobsController
 
@@ -17,7 +17,7 @@ class BlobsControllerTestFixtureMixin:
 
 class TestBlobsController(
     BlobsControllerTestFixtureMixin,
-    SqlalchemyStorageTestFixtureMixin,
+    StorageTestFixtureMixin,
 ):
     async def test_get_not_found(self, controller):
         response = await controller.get("not-a-blob")
@@ -38,7 +38,7 @@ class TestBlobsController(
 
 class TestBlobsControllerThroughASGI(
     BlobsControllerTestFixtureMixin,
-    SqlalchemyStorageTestFixtureMixin,
+    StorageTestFixtureMixin,
     ControllerThroughASGIFixtureMixin,
 ):
     async def test_get_not_found(self, client: ASGICommunicator):

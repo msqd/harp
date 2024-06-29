@@ -5,8 +5,8 @@ from statistics import StatisticsError, mean
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest
 from harp.views import json
-from harp_apps.sqlalchemy_storage.constants import TimeBucket
-from harp_apps.sqlalchemy_storage.types import IStorage
+from harp_apps.storage.constants import TimeBucket
+from harp_apps.storage.types import IStorage
 
 from ..utils.dates import generate_continuous_time_range, get_start_datetime_from_range
 

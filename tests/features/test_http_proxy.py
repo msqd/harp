@@ -74,7 +74,7 @@ class TestAsgiProxyWithStubApi:
 
         config.add_application("http_client")
         config.add_application("proxy")
-        config.add_application("sqlalchemy_storage")
+        config.add_application("storage")
 
         config.set(
             "proxy.endpoints",

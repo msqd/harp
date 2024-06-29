@@ -10,8 +10,8 @@ from harp.http import HttpRequest
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
 from harp_apps.dashboard.controllers import OverviewController
-from harp_apps.sqlalchemy_storage.storages.sql import SqlStorage
-from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
+from harp_apps.storage.storages.sql import SqlStorage
+from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 
 class OverviewControllerTestFixtureMixin:
@@ -44,7 +44,7 @@ parametrize_with_now = pytest.mark.parametrize(
 )
 
 
-class TestOverviewController(OverviewControllerTestFixtureMixin, SqlalchemyStorageTestFixtureMixin):
+class TestOverviewController(OverviewControllerTestFixtureMixin, StorageTestFixtureMixin):
     @parametrize_with_now
     async def test_get_summary_data_no_transactions(self, controller: OverviewController, now):
         request = Mock(spec=HttpRequest, query=MultiDict())
@@ -76,7 +76,7 @@ class TestOverviewController(OverviewControllerTestFixtureMixin, SqlalchemyStora
 
 class TestOverviewControllerThroughASGI(
     OverviewControllerTestFixtureMixin,
-    SqlalchemyStorageTestFixtureMixin,
+    StorageTestFixtureMixin,
     ControllerThroughASGIFixtureMixin,
 ):
     @parametrize_with_now

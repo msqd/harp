@@ -1,6 +1,6 @@
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.http import HttpResponse
-from harp_apps.sqlalchemy_storage.types import IBlobStorage
+from harp_apps.storage.types import IBlobStorage
 
 
 @RouterPrefix("/api/blobs")

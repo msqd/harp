@@ -1,1 +1,1 @@
-from harp_apps.sqlalchemy_storage.conftest import *  # noqa
+from harp_apps.storage.conftest import *  # noqa

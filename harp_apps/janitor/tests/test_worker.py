@@ -4,12 +4,12 @@ import pytest
 
 from harp_apps.janitor.settings import OLD_AFTER
 from harp_apps.janitor.worker import JanitorWorker
-from harp_apps.sqlalchemy_storage.storages.sql import SqlStorage
-from harp_apps.sqlalchemy_storage.types import IBlobStorage
-from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
+from harp_apps.storage.storages.sql import SqlStorage
+from harp_apps.storage.types import IBlobStorage
+from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 
-class TestJanitorWorker(SqlalchemyStorageTestFixtureMixin):
+class TestJanitorWorker(StorageTestFixtureMixin):
     async def test_delete_old_transactions(self, storage: SqlStorage, blob_storage: IBlobStorage):
         worker = JanitorWorker(storage, blob_storage)
 

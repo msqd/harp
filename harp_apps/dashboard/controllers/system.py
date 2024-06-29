@@ -9,9 +9,9 @@ from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest
 from harp.typing.global_settings import GlobalSettings
 from harp.views.json import json
-from harp_apps.sqlalchemy_storage.models import MetricValue
-from harp_apps.sqlalchemy_storage.storages.sql import SqlStorage
-from harp_apps.sqlalchemy_storage.types import IStorage
+from harp_apps.storage.models import MetricValue
+from harp_apps.storage.storages.sql import SqlStorage
+from harp_apps.storage.types import IStorage
 
 from ..utils.dependencies import get_python_dependencies, parse_dependencies
 

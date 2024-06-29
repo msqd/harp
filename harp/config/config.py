@@ -38,7 +38,7 @@ class Config:
         "http_client",
         "proxy",
         "dashboard",
-        "sqlalchemy_storage",
+        "storage",
         "telemetry",
         "janitor",
         "harp_apps.contrib.sentry",  # todo: allow to extend application list in config file without overriding all

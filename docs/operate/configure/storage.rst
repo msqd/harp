@@ -8,4 +8,4 @@ Some features (including the dashboard) requires a storage engine to be configur
 .. toctree::
     :maxdepth: 2
 
-    SQLAlchemy <../apps/sqlalchemy_storage/index>
+    SQLAlchemy <../apps/storage/index>

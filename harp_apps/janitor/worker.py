@@ -4,9 +4,9 @@ from typing import cast
 from harp import get_logger
 from harp.settings import USE_PROMETHEUS
 
-from ..sqlalchemy_storage.models.base import with_session
-from ..sqlalchemy_storage.storages.sql import SqlStorage
-from ..sqlalchemy_storage.types import IBlobStorage, IStorage
+from ..storage.models.base import with_session
+from ..storage.storages.sql import SqlStorage
+from ..storage.types import IBlobStorage, IStorage
 from .settings import OLD_AFTER, PERIOD
 
 logger = get_logger(__name__)

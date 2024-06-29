@@ -1,13 +1,13 @@
 import asyncio
 import dataclasses
 
-import pytest
+import pytest  # noqa
 from hypercorn import Config
 from hypercorn.asyncio import serve
 
 from harp.utils.network import get_available_network_port
 from harp.utils.testing.stub_api import stub_api
-from harp_apps.sqlalchemy_storage.conftest import *  # noqa
+from harp_apps.storage.conftest import *  # noqa
 
 
 @dataclasses.dataclass
