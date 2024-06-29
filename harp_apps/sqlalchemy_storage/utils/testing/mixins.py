@@ -12,7 +12,7 @@ from whistle import AsyncEventDispatcher
 from harp.models import Blob, Message, Transaction
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp_apps.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
-from harp_apps.sqlalchemy_storage.storages.sql import SqlAlchemyStorage
+from harp_apps.sqlalchemy_storage.storages.sql import SqlStorage
 from harp_apps.sqlalchemy_storage.types import IBlobStorage
 from harp_apps.sqlalchemy_storage.utils.migrations import create_alembic_config, do_migrate
 
@@ -90,21 +90,23 @@ class SqlalchemyStorageTestFixtureMixin:
     def storage_settings(self, sql_engine) -> SqlAlchemyStorageSettings:
         return SqlAlchemyStorageSettings(**(DEFAULT_STORAGE_SETTINGS | {"url": sql_engine.url}))
 
-    @pytest.fixture(params=["sql", "redis"])
-    async def blob_storage(self, request, sql_engine, storage_settings) -> IBlobStorage:
-        if request.param == "sql":
+    @pytest.fixture
+    async def blob_storage(self, blob_storage_type, sql_engine, storage_settings) -> IBlobStorage:
+        if blob_storage_type == "sql":
             from harp_apps.sqlalchemy_storage.storages.blobs.sql import SqlBlobStorage
 
             yield SqlBlobStorage(sql_engine)
-        elif request.param == "redis":
+        elif blob_storage_type == "redis":
             with AsyncRedisContainer() as redis_container:
                 from harp_apps.sqlalchemy_storage.storages.blobs.redis import RedisBlobStorage
 
                 yield RedisBlobStorage(await redis_container.get_async_client())
+        else:
+            raise ValueError(f"Unsupported blob storage type: {blob_storage_type}")
 
     @pytest.fixture
-    async def storage(self, sql_engine, blob_storage, storage_settings) -> SqlAlchemyStorage:
-        storage = SqlAlchemyStorage(
+    async def storage(self, sql_engine, blob_storage, storage_settings) -> SqlStorage:
+        storage = SqlStorage(
             sql_engine,
             dispatcher=AsyncEventDispatcher(),
             blob_storage=blob_storage,
@@ -115,7 +117,7 @@ class SqlalchemyStorageTestFixtureMixin:
         await storage.initialize()
         yield storage
 
-    async def create_transaction(self, storage: SqlAlchemyStorage, **kwargs):
+    async def create_transaction(self, storage: SqlStorage, **kwargs):
         return await storage.transactions.create(
             Transaction(
                 **{
@@ -130,8 +132,8 @@ class SqlalchemyStorageTestFixtureMixin:
             )
         )
 
-    async def create_blob(self, storage: SqlAlchemyStorage, data, /, **kwargs):
-        return await storage.blobs.create(Blob.from_data(data, **kwargs))
+    async def create_blob(self, blob_storage: IBlobStorage, data, /, **kwargs):
+        return await blob_storage.put(Blob.from_data(data, **kwargs))
 
-    async def create_message(self, storage: SqlAlchemyStorage, **kwargs):
+    async def create_message(self, storage: SqlStorage, **kwargs):
         return await storage.messages.create(Message(**kwargs))

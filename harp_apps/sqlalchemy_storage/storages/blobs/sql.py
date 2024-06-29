@@ -7,11 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 from harp.models import Blob
 from harp_apps.sqlalchemy_storage.models import Blob as SqlBlob
+from harp_apps.sqlalchemy_storage.types import IBlobStorage
 
-from .base import AbstractBlobStorage
 
-
-class SqlBlobStorage(AbstractBlobStorage):
+class SqlBlobStorage(IBlobStorage):
     type = "sql"
 
     def __init__(self, engine: AsyncEngine):
@@ -45,7 +44,7 @@ class SqlBlobStorage(AbstractBlobStorage):
             return Blob(id=blob_id, data=row[0].data, content_type=row[0].content_type)
 
     @override
-    async def put(self, blob: Blob):
+    async def put(self, blob: Blob) -> Blob:
         """
         Store a blob in the database.
 
@@ -64,6 +63,7 @@ class SqlBlobStorage(AbstractBlobStorage):
                             data=blob.data,
                         )
                     )
+        return blob
 
     @override
     async def delete(self, blob_id):
@@ -78,7 +78,7 @@ class SqlBlobStorage(AbstractBlobStorage):
             )
 
     @override
-    async def exists(self, blob_id):
+    async def exists(self, blob_id: str) -> bool:
         """
         Check if a blob exists in the database.
 

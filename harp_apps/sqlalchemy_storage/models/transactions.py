@@ -53,6 +53,10 @@ class Transaction(Base):
         passive_deletes=True,
     )
 
+    @property
+    def tags(self):
+        return {tag_value.tag.name: tag_value.value for tag_value in self._tag_values}
+
     def to_model(self, with_user_flags=False):
         return TransactionModel(
             id=self.id,
@@ -76,10 +80,6 @@ class Transaction(Base):
             messages=[message.to_model() for message in self.messages] if self.messages else [],
             tags=self.tags,
         )
-
-    @property
-    def tags(self):
-        return {tag_value.tag.name: tag_value.value for tag_value in self._tag_values}
 
 
 class TransactionsRepository(Repository[Transaction]):
@@ -131,16 +131,7 @@ class TransactionsRepository(Repository[Transaction]):
     async def create(self, values: dict | TransactionModel, /, *, session=None):
         # convert model to dict
         if isinstance(values, TransactionModel):
-            # todo in to_dict method ? but how to keep prototype of parent ?
-            values = dict(
-                id=values.id,
-                type=values.type,
-                endpoint=values.endpoint,
-                started_at=values.started_at,
-                x_method=values.extras.get("method"),
-                x_no_cache=bool(values.extras.get("no_cache")),
-                tags=values.tags,
-            )
+            values = values.as_storable_dict()
         tags = values.pop("tags", {})
         transaction = await super().create(values, session=session)
         if len(tags):

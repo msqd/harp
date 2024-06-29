@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from harp import get_logger
 from harp.config import Application
 from harp.config.events import FactoryBindEvent, FactoryBoundEvent, FactoryDisposeEvent
-from harp_apps.sqlalchemy_storage.storages.sql import SqlAlchemyStorage
+from harp_apps.sqlalchemy_storage.storages.sql import SqlStorage
 
 from .settings import SqlAlchemyStorageSettings
 from .types import IBlobStorage, IStorage
@@ -61,7 +61,7 @@ class SqlalchemyStorageApplication(Application):
         return settings
 
     async def on_bind(self, event: FactoryBindEvent):
-        event.container.add_singleton(IStorage, SqlAlchemyStorage)
+        event.container.add_singleton(IStorage, SqlStorage)
         event.container.add_singleton(AsyncEngine, AsyncEngineFactory)
 
         blob_storage_type = self.settings.blobs.type

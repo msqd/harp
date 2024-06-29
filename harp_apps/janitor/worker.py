@@ -5,18 +5,21 @@ from harp import get_logger
 from harp.settings import USE_PROMETHEUS
 
 from ..sqlalchemy_storage.models.base import with_session
-from ..sqlalchemy_storage.storages.sql import SqlAlchemyStorage
-from ..sqlalchemy_storage.types import IStorage
+from ..sqlalchemy_storage.storages.sql import SqlStorage
+from ..sqlalchemy_storage.types import IBlobStorage, IStorage
 from .settings import OLD_AFTER, PERIOD
 
 logger = get_logger(__name__)
 
 
 class JanitorWorker:
-    def __init__(self, storage: IStorage):
-        self.storage: SqlAlchemyStorage = cast(SqlAlchemyStorage, storage)
+    def __init__(self, storage: IStorage, blob_storage: IBlobStorage):
+        self.storage: SqlStorage = cast(SqlStorage, storage)
+        self.blob_storage: IBlobStorage = blob_storage
+
         self.running = False
         self.session_factory = self.storage.session_factory
+        self._running_lock = asyncio.Lock()
 
         if USE_PROMETHEUS:
             from prometheus_client import Gauge
@@ -28,11 +31,13 @@ class JanitorWorker:
                 "storage.blobs.orphans": Gauge("storage_blobs_orphans", "Orphan blobs currently in storage."),
             }
 
-    def stop(self):
+    async def finalize(self):
         """
         Mark the loop for termination.
         """
         self.running = False
+        if self._running_lock.locked():
+            await self._running_lock.acquire()
 
     async def run(self):
         """
@@ -40,15 +45,17 @@ class JanitorWorker:
         `stop()` is called.
         """
         # do not start before storage is ready
-        await self.storage.ready()
+        async with self._running_lock:
+            self.running = True
 
-        self.running = True
-        while self.running:
-            try:
-                await self.loop()
-            except Exception as exc:
-                logger.exception(exc)
-            await asyncio.sleep(PERIOD)
+            await self.storage.ready()
+
+            while self.running:
+                try:
+                    await self.loop()
+                except Exception as exc:
+                    logger.exception(exc)
+                await asyncio.sleep(PERIOD)
 
     async def loop(self):
         """
@@ -60,10 +67,7 @@ class JanitorWorker:
         if result.rowcount:
             logger.debug("🧹 Deleted %d old transactions", result.rowcount)
 
-        # Delete orphan blobs
-        result = await self.delete_orphan_blobs()
-        if result.rowcount:
-            logger.debug("🧹 Deleted %d orphan blobs", result.rowcount)
+        await self.delete_orphan_blobs()
 
         # Compute and store stored objecg counts as metrics
         logger.debug("🧹 Compute and store metrics...")
@@ -75,6 +79,9 @@ class JanitorWorker:
         Remove transactions older than OLD_AFTER days. On correct database implementations (postgresql for example), it
         will cascade to related objects. On sqlite, there will be garbage left, but it's not a big deal.
         """
+
+        # TODO to storage
+
         result = await session.execute(self.storage.transactions.delete_old(OLD_AFTER))
         await session.commit()
         return result
@@ -84,15 +91,35 @@ class JanitorWorker:
         """
         Find and remove blobs that are not referenced anymore by any transaction.
         """
-        result = await session.execute(self.storage.blobs.delete_orphans())
-        await session.commit()
-        return result
+
+        count = None
+
+        if self.blob_storage.type == "sql":
+            result = await session.execute(self.storage.blobs.delete_orphans())
+            await session.commit()
+            count = result.rowcount if result.rowcount else 0
+        elif self.blob_storage.type == "redis":
+            pass
+        else:
+            pass
+
+        if count is None:
+            # The blob storage may need to clean orphans but no implementation is available
+            logger.debug("🧹 DeleteOrphanBlobs[%s] Not implemented.", self.blob_storage.type)
+        elif count is False:
+            # The blob storage does not NEED to delete orphans (for example for a NullBlobStorage)
+            pass
+        else:
+            logger.debug("🧹 DeleteOrphanBlobs[%s] Removed %d blobs.", self.blob_storage.type, count)
 
     @with_session
     async def compute_and_store_metrics(self, /, *, session):
         """
         Compute counts of objects in storage, and store them as metrics.
         """
+
+        # TODO to storage
+
         await self.storage.metrics.insert_values(await self.compute_metrics(session))
 
     async def compute_metrics(self, session):
@@ -119,6 +146,8 @@ class JanitorWorker:
         :param method: method name to call on the repository to get the actual sqlalchemy query, default as "count"
         :return: integer
         """
+
+        # TODO to storage
         return (
             await session.execute(
                 getattr(

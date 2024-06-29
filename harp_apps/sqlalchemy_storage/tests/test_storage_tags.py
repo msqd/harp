@@ -1,9 +1,9 @@
-from harp_apps.sqlalchemy_storage.storages.sql import SqlAlchemyStorage
+from harp_apps.sqlalchemy_storage.storages.sql import SqlStorage
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
 
 
 class TestStorageTags(SqlalchemyStorageTestFixtureMixin):
-    async def test_get_transaction_list_with_tags(self, storage: SqlAlchemyStorage):
+    async def test_get_transaction_list_with_tags(self, storage: SqlStorage):
         t1 = await self.create_transaction(storage)
 
         tags = {"version": "42", "env": "tests"}

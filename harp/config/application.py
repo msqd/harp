@@ -43,6 +43,10 @@ class Application:
     """
 
     on_dispose = None
+    """
+    Placeholder for factory dispose event, happening after the kernel is disposed. If set, it will be attached to the
+    factory dispatcher automatically, in reverse order of appearance (first loaded application will be disposed last).
+    """
 
     def __init__(self, settings=None, /):
         settings = settings or {}

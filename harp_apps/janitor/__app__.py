@@ -1,20 +1,21 @@
 import asyncio
 
 from harp.config import Application
-from harp.config.events import FactoryBindEvent, FactoryBoundEvent
+from harp.config.events import FactoryBindEvent, FactoryBoundEvent, FactoryDisposeEvent
 from harp_apps.janitor.worker import JanitorWorker
-from harp_apps.sqlalchemy_storage.types import IStorage
 
 
 class JanitorApplication(Application):
     depends_on = {"storage"}
 
     async def on_bind(self, event: FactoryBindEvent):
-        pass
+        event.container.add_singleton(JanitorWorker)
 
     async def on_bound(self, event: FactoryBoundEvent):
-        self.worker = JanitorWorker(event.provider.get(IStorage))
-        self.worker_task = asyncio.create_task(self.worker.run())
+        self.task = asyncio.create_task(
+            event.provider.get(JanitorWorker).run(),
+        )
 
-    async def unmount(self):
-        self.worker.stop()
+    async def on_dispose(self, event: FactoryDisposeEvent):
+        await event.provider.get(JanitorWorker).finalize()
+        await self.task

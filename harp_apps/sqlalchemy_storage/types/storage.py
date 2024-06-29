@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Iterable, List, Optional, Protocol
+from typing import Iterable, Protocol
 
 from harp_apps.sqlalchemy_storage.types import TransactionsGroupedByTimeBucket
 
@@ -30,7 +30,6 @@ class IStorage(Protocol):
     async def get_transaction(
         self,
         id: str,
-        /,
         *,
         username: str,
     ):
@@ -42,12 +41,8 @@ class IStorage(Protocol):
         ...
 
     async def transactions_grouped_by_time_bucket(
-        self,
-        *,
-        endpoint=None,
-        time_bucket: Optional[str],
-        start_datetime: Optional[datetime],
-    ) -> List[TransactionsGroupedByTimeBucket]: ...
+        self, *, endpoint: str | None, time_bucket: str, start_datetime: datetime
+    ) -> list[TransactionsGroupedByTimeBucket]: ...
 
     async def set_user_flag(self, *, transaction_id: str, username: str, flag: int, value=True):
         """Sets or unsets a user flag on a transaction."""

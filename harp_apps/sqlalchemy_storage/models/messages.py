@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import TIMESTAMP, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from harp.http import get_serializer_for
+from harp.http import BaseMessage, get_serializer_for
 from harp.models.messages import Message as MessageModel
 
 from .base import Base, Repository, with_session
@@ -38,7 +38,7 @@ class Message(Base):
         )
 
     @classmethod
-    def from_models(cls, transaction, message, headers, content):
+    def from_models(cls, transaction, message: BaseMessage, headers, content):
         serializer = get_serializer_for(message)
 
         obj = cls()

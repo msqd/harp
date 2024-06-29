@@ -21,6 +21,9 @@ class TestPostgresHttpbinBenchmark(AbstractProxyBenchmark):
         """
     )
 
+    def test_httpbin_get(self, benchmark, proxy):
+        return super().test_httpbin_get(benchmark, proxy)
+
 
 @pytest.mark.benchmark(group="sqlite")
 @pytest.mark.subprocess

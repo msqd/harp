@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from functools import partial
 from operator import itemgetter
-from typing import Iterable, List, Optional, TypedDict, override
+from typing import Iterable, Optional, override
 
 from sqlalchemy import and_, bindparam, case, delete, func, literal, literal_column, null, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
@@ -14,43 +14,24 @@ from whistle import IAsyncEventDispatcher
 from harp import get_logger
 from harp.asgi.events import HttpMessageEvent, TransactionEvent
 from harp.http import get_serializer_for
-from harp.models import Blob as BlobModel
-from harp.models.base import Results
-from harp.models.transactions import Transaction as TransactionModel
+from harp.models import Blob, Results, Transaction
 from harp.settings import PAGE_SIZE
 from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_datetime
 from harp_apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
 
 from ..constants import TimeBucket
-from ..models import (
-    FLAGS_BY_NAME,
-    Base,
-    BlobsRepository,
-    FlagsRepository,
-    Message,
-    MessagesRepository,
-    MetricsRepository,
-    MetricValuesRepository,
-    TagsRepository,
-    TagValuesRepository,
-    Transaction,
-    TransactionsRepository,
-    User,
-    UserFlag,
-    UsersRepository,
-)
+from ..models import FLAGS_BY_NAME, Base, BlobsRepository, FlagsRepository
+from ..models import Message as SqlMessage
+from ..models import MessagesRepository, MetricsRepository, MetricValuesRepository, TagsRepository, TagValuesRepository
+from ..models import Transaction as SqlTransaction
+from ..models import TransactionsRepository
+from ..models import User as SqlUser
+from ..models import UserFlag as SqlUserFlag
+from ..models import UsersRepository
 from ..settings import SqlAlchemyStorageSettings
-from ..types import IBlobStorage, IStorage
+from ..types import IBlobStorage, IStorage, TransactionsGroupedByTimeBucket
 from ..utils.dates import TruncDatetime
-
-
-class TransactionsGroupedByTimeBucket(TypedDict):
-    datetime: datetime | None
-    count: int
-    errors: int
-    meanDuration: float
-
 
 logger = get_logger(__name__)
 
@@ -64,7 +45,7 @@ _FILTER_COLUMN_NAMES = {
 def _numerical_filter_query(query, name: str, values: dict[str, float]):
     if values:
         column_name = _FILTER_COLUMN_NAMES.get(name, name)
-        column = getattr(Transaction, column_name)
+        column = getattr(SqlTransaction, column_name)
 
         min_val = values.get("min")
         max_val = values.get("max")
@@ -83,7 +64,7 @@ def _filter_query(query, name, values):
     if values:
         query = query.filter(
             getattr(
-                Transaction,
+                SqlTransaction,
                 _FILTER_COLUMN_NAMES.get(name, name),
             ).in_(values)
         )
@@ -93,23 +74,23 @@ def _filter_query(query, name, values):
 def _filter_query_for_user_flags(query, values, /, *, user_id):
     if values:
         if "NULL" in values:
-            query = query.outerjoin(UserFlag).filter(
+            query = query.outerjoin(SqlUserFlag).filter(
                 or_(
                     and_(
-                        UserFlag.user_id == user_id,
-                        UserFlag.type.in_(
+                        SqlUserFlag.user_id == user_id,
+                        SqlUserFlag.type.in_(
                             list(
                                 map(FLAGS_BY_NAME.get, values),
                             )
                         ),
                     ),
-                    or_(UserFlag.user_id != user_id, (UserFlag.type.is_(null()))),
+                    or_(SqlUserFlag.user_id != user_id, (SqlUserFlag.type.is_(null()))),
                 )
             )
         else:
-            query = query.join(UserFlag).filter(
-                UserFlag.user_id == user_id,
-                UserFlag.type.in_(
+            query = query.join(SqlUserFlag).filter(
+                SqlUserFlag.user_id == user_id,
+                SqlUserFlag.type.in_(
                     list(
                         map(FLAGS_BY_NAME.get, values),
                     )
@@ -121,31 +102,40 @@ def _filter_query_for_user_flags(query, values, /, *, user_id):
 def _filter_transactions_based_on_text(query, search_text: str, dialect_name: str):
     # Escape special characters in search_text
     search_text = re.sub(r"([-\*\(\)~\"@<>\^+]+)", r"", search_text)
-    query = query.join(Message, isouter=True)
+    query = query.join(SqlMessage, isouter=True)
     # check dialect and use appropriate full text search
     if dialect_name == "mysql":
         return query.filter(
             text(
-                f"MATCH ({Transaction.__tablename__}.endpoint) "
+                f"MATCH ({SqlTransaction.__tablename__}.endpoint) "
                 f"AGAINST (:search_text IN BOOLEAN MODE) OR "
-                f"MATCH ({Message.__tablename__}.summary) "
+                f"MATCH ({SqlMessage.__tablename__}.summary) "
                 f"AGAINST (:search_text IN BOOLEAN MODE)",
             ).bindparams(bindparam("search_text", literal_column(f"'{search_text}*'")))
         )
 
     return query.filter(
-        (Transaction.endpoint.ilike(bindparam("search_text", f"%{search_text}%")))
-        | Message.summary.ilike(bindparam("search_text", f"%{search_text}%"))
+        (SqlTransaction.endpoint.ilike(bindparam("search_text", f"%{search_text}%")))
+        | SqlMessage.summary.ilike(bindparam("search_text", f"%{search_text}%"))
     )
 
 
-class SqlAlchemyStorage(IStorage):
+class SqlStorage(IStorage):
     """
-    Storage implementation using SQL Alchemy Core, with async drivers.
+    Storage implementation using SQLAlchemy (async).
 
     Currently supported/tested database drivers:
 
+    - asyncpg (postgresql+asyncpg://...)
+    - aiomysql (mysql+aiomysql://...)
+    - asyncmy (mysql+asyncmy://...)
+
+    And also, for development/testing purposes:
+
     - aiosqlite (sqlite+aiosqlite://...)
+
+    Other async postgresql drivers may work, but as they're not included in the test suite, you may have surprises.
+    Contributions welcome.
 
     """
 
@@ -302,7 +292,7 @@ class SqlAlchemyStorage(IStorage):
         if name == "endpoint":
             # get transaction count grouped by endpoint
             async with self.begin() as session:
-                query = select(Transaction.endpoint, func.count()).group_by(Transaction.endpoint)
+                query = select(SqlTransaction.endpoint, func.count()).group_by(SqlTransaction.endpoint)
                 result = await session.execute(query)
                 return {row[0]: row[1] for row in result.fetchall()}
 
@@ -343,16 +333,16 @@ class SqlAlchemyStorage(IStorage):
         if text_search:
             query = _filter_transactions_based_on_text(query, text_search, dialect_name=self.engine.dialect.name)
 
-        query = query.order_by(Transaction.started_at.desc())
+        query = query.order_by(SqlTransaction.started_at.desc())
 
         # apply cursor (before count)
         if page and cursor:
-            query = query.filter(Transaction.id <= cursor)
+            query = query.filter(SqlTransaction.id <= cursor)
 
         async with self.begin() as session:
             # count items from query
             result.meta["total"] = await session.scalar(
-                query.with_only_columns(func.count(Transaction.id)).order_by(None)
+                query.with_only_columns(func.count(SqlTransaction.id)).order_by(None)
             )
 
         # apply limit/offset (after count)
@@ -367,7 +357,7 @@ class SqlAlchemyStorage(IStorage):
         return result
 
     @override
-    async def get_transaction(self, id: str, /, *, username: str) -> Optional[TransactionModel]:
+    async def get_transaction(self, id: str, /, *, username: str) -> Optional[Transaction]:
         user = await self.users.find_one_by_username(username)
 
         return (
@@ -382,56 +372,56 @@ class SqlAlchemyStorage(IStorage):
     @override
     async def transactions_grouped_by_time_bucket(
         self,
+        *,
         endpoint: Optional[str] = None,
         time_bucket: str = TimeBucket.DAY.value,
         start_datetime: Optional[datetime] = None,
-    ) -> List[TransactionsGroupedByTimeBucket]:
+    ) -> list[TransactionsGroupedByTimeBucket]:
         if time_bucket not in [e.value for e in TimeBucket]:
             raise ValueError(
                 f"Invalid time bucket: {time_bucket}. Must be one of {', '.join([e.value for e in TimeBucket])}."
             )
 
-        s_date = TruncDatetime(literal(time_bucket), Transaction.started_at).label("tb")
+        s_date = TruncDatetime(literal(time_bucket), SqlTransaction.started_at).label("tb")
         query = select(
             s_date,
             func.count(),
-            func.sum(case((Transaction.x_status_class.in_(("5xx", "ERR")), 1), else_=0)),
+            func.sum(case((SqlTransaction.x_status_class.in_(("5xx", "ERR")), 1), else_=0)),
             func.sum(
                 case(
-                    (and_(Transaction.x_cached is not None, Transaction.x_cached != ""), 1),
+                    (and_(SqlTransaction.x_cached is not None, SqlTransaction.x_cached != ""), 1),
                     else_=0,
                 )
             ),
-            func.avg(Transaction.elapsed),
-            func.avg(Transaction.tpdex),
+            func.avg(SqlTransaction.elapsed),
+            func.avg(SqlTransaction.tpdex),
         )
 
         if endpoint:
-            query = query.where(Transaction.endpoint == endpoint)
+            query = query.where(SqlTransaction.endpoint == endpoint)
 
         if start_datetime:
-            query = query.where(Transaction.started_at >= start_datetime.astimezone(UTC))
+            query = query.where(SqlTransaction.started_at >= start_datetime.astimezone(UTC))
 
         query = query.group_by(s_date).order_by(s_date.asc())
         async with self.begin() as session:
             result = await session.execute(query)
             return [
-                {
-                    "datetime": ensure_datetime(row[0], UTC),
-                    "count": row[1],
-                    "errors": int(row[2]),
-                    "cached": int(row[3]),
-                    "meanDuration": row[4] if row[4] else 0,
-                    "meanTpdex": row[5],
-                    # ! probably sqlite struggling with unfinished transactions
-                }
+                TransactionsGroupedByTimeBucket(
+                    datetime=ensure_datetime(row[0], UTC),
+                    count=row[1],
+                    errors=int(row[2]),
+                    cached=int(row[3]),
+                    meanDuration=row[4] if row[4] else 0,
+                    meanTpdex=row[5],
+                )
                 for row in result.fetchall()
             ]
 
     async def get_usage(self):
         async with self.begin() as session:
-            query = select(count(Transaction.id)).where(
-                Transaction.started_at > (datetime.now(UTC) - timedelta(hours=24))
+            query = select(count(SqlTransaction.id)).where(
+                SqlTransaction.started_at > (datetime.now(UTC) - timedelta(hours=24))
             )
             return (await session.execute(query)).scalar_one_or_none()
 
@@ -448,7 +438,7 @@ class SqlAlchemyStorage(IStorage):
 
             if value:
                 session.add(
-                    UserFlag(
+                    SqlUserFlag(
                         transaction_id=transaction.id,
                         user_id=user.id,
                         type=flag,
@@ -456,12 +446,24 @@ class SqlAlchemyStorage(IStorage):
                 )
             else:
                 await session.execute(
-                    delete(UserFlag).where(UserFlag.transaction_id == transaction.id, UserFlag.user_id == user.id)
+                    delete(SqlUserFlag).where(
+                        SqlUserFlag.transaction_id == transaction.id, SqlUserFlag.user_id == user.id
+                    )
                 )
 
     async def _on_transaction_started(self, event: TransactionEvent):
         """Event handler to store the transaction in the database."""
-        return await self.transactions.create(event.transaction)
+
+        # Copy fields into a dict that won't change before the task is handled
+        transaction = event.transaction.as_storable_dict(with_tags=True)
+
+        # Define storage closure
+        async def create_transaction():
+            nonlocal transaction
+            return await self.transactions.create(transaction)
+
+        # Schedule
+        await self.worker.push(create_transaction)
 
     async def _on_transaction_message(self, event: HttpMessageEvent):
         await event.message.join()
@@ -469,27 +471,28 @@ class SqlAlchemyStorage(IStorage):
 
         # Eventually store the headers blob (later)
         # todo is the "__headers__" dunder content type any good idea ? maybe it's just a waste of bytes.
-        headers_blob = BlobModel.from_data(serializer.headers, content_type="__headers__")
+        headers_blob = Blob.from_data(serializer.headers, content_type="__headers__")
         await self.worker.push(partial(self.blob_storage.put, headers_blob), ignore_errors=True)
 
         # Eventually store the content blob (later)
-        content_blob = BlobModel.from_data(serializer.body, content_type=event.message.headers.get("content-type"))
+        content_blob = Blob.from_data(serializer.body, content_type=event.message.headers.get("content-type"))
         await self.worker.push(partial(self.blob_storage.put, content_blob), ignore_errors=True)
 
-        async def store_message_task():
+        async def create_message():
+            nonlocal event, headers_blob, content_blob
             async with self.begin() as session:
                 session.add(
-                    Message.from_models(event.transaction, event.message, headers_blob, content_blob),
+                    SqlMessage.from_models(event.transaction, event.message, headers_blob, content_blob),
                 )
 
-        await self.worker.push(store_message_task)
+        await self.worker.push(create_message)
 
     async def _on_transaction_ended(self, event: TransactionEvent):
-        async def finalize_transaction():
+        async def update_transaction():
             async with self.begin() as session:
                 await session.execute(
-                    update(Transaction)
-                    .where(Transaction.id == event.transaction.id)
+                    update(SqlTransaction)
+                    .where(SqlTransaction.id == event.transaction.id)
                     .values(
                         finished_at=event.transaction.finished_at.astimezone(UTC),
                         elapsed=event.transaction.elapsed,
@@ -499,7 +502,7 @@ class SqlAlchemyStorage(IStorage):
                     )
                 )
 
-        await self.worker.push(finalize_transaction)
+        await self.worker.push(update_transaction)
 
     async def ready(self):
         await self._is_ready.wait()
@@ -518,11 +521,11 @@ class SqlAlchemyStorage(IStorage):
         async with self.begin() as session:
             for username in users:
                 # Check if the username already exists
-                result = await session.execute(select(User).where(User.username == username))
+                result = await session.execute(select(SqlUser).where(SqlUser.username == username))
                 existing_user = result.scalar_one_or_none()
 
                 # If the username does not exist, create a new user
                 if existing_user is None:
-                    user = User()
+                    user = SqlUser()
                     user.username = username
                     session.add(user)

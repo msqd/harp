@@ -10,7 +10,7 @@ from harp.http import HttpRequest
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
 from harp_apps.dashboard.controllers import OverviewController
-from harp_apps.sqlalchemy_storage.storages.sql import SqlAlchemyStorage
+from harp_apps.sqlalchemy_storage.storages.sql import SqlStorage
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
 
 
@@ -58,7 +58,7 @@ class TestOverviewController(OverviewControllerTestFixtureMixin, SqlalchemyStora
 
     @parametrize_with_now
     async def test_get_summary_data_with_a_few_transactions(
-        self, controller: OverviewController, storage: SqlAlchemyStorage, now
+        self, controller: OverviewController, storage: SqlStorage, now
     ):
         with freezegun.freeze_time(now):
             await self.create_transaction(storage)
@@ -81,7 +81,7 @@ class TestOverviewControllerThroughASGI(
 ):
     @parametrize_with_now
     async def test_get_summary_data_with_a_few_transactions_using_asgi(
-        self, client: ASGICommunicator, storage: SqlAlchemyStorage, now
+        self, client: ASGICommunicator, storage: SqlStorage, now
     ):
         with freezegun.freeze_time(now):
             await self.create_transaction(storage)

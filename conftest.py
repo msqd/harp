@@ -85,6 +85,11 @@ def create_database_container_for(dialect, image, driver):
         raise ValueError(f"Unsupported or invalid dialect: {dialect!r}")
 
 
+@pytest.fixture(scope="session", params=["sql", "redis"])
+def blob_storage_type(request):
+    yield request.param
+
+
 @pytest.fixture(scope="session")
 def httpbin():
     from testcontainers.core.container import DockerContainer

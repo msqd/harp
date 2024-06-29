@@ -1,14 +1,17 @@
 from datetime import UTC, datetime, timedelta
 
+import pytest
+
 from harp_apps.janitor.settings import OLD_AFTER
 from harp_apps.janitor.worker import JanitorWorker
-from harp_apps.sqlalchemy_storage.storages.sql import SqlAlchemyStorage
+from harp_apps.sqlalchemy_storage.storages.sql import SqlStorage
+from harp_apps.sqlalchemy_storage.types import IBlobStorage
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
 
 
 class TestJanitorWorker(SqlalchemyStorageTestFixtureMixin):
-    async def test_delete_old_transactions(self, storage: SqlAlchemyStorage):
-        worker = JanitorWorker(storage)
+    async def test_delete_old_transactions(self, storage: SqlStorage, blob_storage: IBlobStorage):
+        worker = JanitorWorker(storage, blob_storage)
 
         await self.create_transaction(storage, started_at=datetime.now(UTC) - OLD_AFTER - timedelta(hours=1))
         await self.create_transaction(storage, started_at=datetime.now(UTC) - OLD_AFTER - timedelta(minutes=1))
@@ -22,12 +25,16 @@ class TestJanitorWorker(SqlalchemyStorageTestFixtureMixin):
         async with storage.session_factory() as session:
             assert (await worker.compute_metrics(session))["storage.transactions"] == 1
 
-    async def test_delete_orphan_blobs(self, storage: SqlAlchemyStorage):
-        worker = JanitorWorker(storage)
+    async def test_delete_orphan_blobs(self, storage: SqlStorage, blob_storage: IBlobStorage):
+        if blob_storage.type == "redis":
+            # explicit skip because it should be implemented later
+            return pytest.skip("Redis implementation does not support cleaning up orphan blobs yet.")
 
-        b1 = await self.create_blob(storage, "foo")
-        b2 = await self.create_blob(storage, "bar")
-        await self.create_blob(storage, "baz")
+        worker = JanitorWorker(storage, blob_storage)
+
+        b1 = await self.create_blob(blob_storage, "foo")
+        b2 = await self.create_blob(blob_storage, "bar")
+        await self.create_blob(blob_storage, "baz")
 
         async with storage.session_factory() as session:
             metrics = await worker.compute_metrics(session)
@@ -49,8 +56,8 @@ class TestJanitorWorker(SqlalchemyStorageTestFixtureMixin):
             assert metrics["storage.blobs"] == 2
             assert metrics["storage.blobs.orphans"] == 0
 
-    async def test_delete_old_transactions_but_keep_flagged_ones(self, storage: SqlAlchemyStorage):
-        worker = JanitorWorker(storage)
+    async def test_delete_old_transactions_but_keep_flagged_ones(self, storage: SqlStorage, blob_storage: IBlobStorage):
+        worker = JanitorWorker(storage, blob_storage)
 
         t1 = await self.create_transaction(storage, started_at=datetime.now(UTC) - OLD_AFTER - timedelta(hours=1))
         await self.create_transaction(storage, started_at=datetime.now(UTC) - OLD_AFTER - timedelta(minutes=1))

@@ -73,6 +73,7 @@ sphinx-design = "^0.6.0"
 sphinx-sitemap = "^2.6.0"
 sphinxcontrib-jquery = "^4.1"
 testcontainers = { extras = ["postgres"], version = ">=4.5.1,<4.7.0" }
+pytest-timeout = "^2.3.1"
 
 
 [tool.poetry.group.mysql.dependencies]
