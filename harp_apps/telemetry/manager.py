@@ -10,7 +10,7 @@ from whistle import IAsyncEventDispatcher
 from harp import __version__, get_logger
 from harp.asgi.events import EVENT_CORE_STARTED
 from harp.typing import GlobalSettings
-from harp_apps.sqlalchemy_storage.types import Storage
+from harp_apps.sqlalchemy_storage.types import IStorage
 
 logger = get_logger(__name__)
 
@@ -23,7 +23,7 @@ class TelemetryManager:
         self,
         global_settings: GlobalSettings,
         client: AsyncClient,
-        storage: Storage = None,
+        storage: IStorage = None,
         dispatcher: IAsyncEventDispatcher = None,
         **kwargs,
     ):

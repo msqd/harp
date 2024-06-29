@@ -22,6 +22,8 @@ class DashboardApplication(Application):
     settings_namespace = "dashboard"
     settings_type = DashboardSettings
 
+    depends_on = {"storage"}
+
     @classmethod
     def defaults(cls, settings=None) -> dict:
         settings = settings if settings is not None else {}

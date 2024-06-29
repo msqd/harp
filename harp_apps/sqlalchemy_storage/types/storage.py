@@ -1,17 +1,19 @@
 from datetime import datetime
-from typing import Iterable, List, Optional, Protocol, TypedDict
+from typing import Iterable, List, Optional, Protocol
 
-from harp.models import Blob
-
-
-class TransactionsGroupedByTimeBucket(TypedDict):
-    datetime: datetime
-    count: int
-    errors: int
-    meanDuration: float
+from harp_apps.sqlalchemy_storage.types import TransactionsGroupedByTimeBucket
 
 
-class Storage(Protocol):
+class IStorage(Protocol):
+    async def initialize(self):
+        """Coroutine function to initialize the instance."""
+        ...
+
+    async def finalize(self):
+        """Coroutine function to finalize the instance. Should release resources, close files etc... The caller should
+        make sure to call finalize on all cases where the instance is not needed anymore to get a clean shutdown."""
+        ...
+
     async def get_transaction_list(
         self,
         *,
@@ -58,20 +60,3 @@ class Storage(Protocol):
     async def get_usage(self):
         """Get storage usage."""
         ...
-
-
-class BlobStorage(Protocol):
-    async def get(self, blob_id: str): ...
-
-    async def put(self, blob: Blob): ...
-
-    async def delete(self, blob_id: str): ...
-
-    async def exists(self, blob_id: str) -> bool: ...
-
-
-class TransactionsGroupedByTimeBucket(TypedDict):
-    datetime: datetime
-    count: int
-    errors: int
-    meanDuration: float

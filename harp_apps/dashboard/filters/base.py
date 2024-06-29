@@ -3,7 +3,7 @@ from typing import Optional, Union
 from multidict import MultiDictProxy
 
 from harp_apps.dashboard.filters.utils import flatten_facet_value, str_to_float_or_none
-from harp_apps.sqlalchemy_storage.types import Storage
+from harp_apps.sqlalchemy_storage.types import IStorage
 
 
 class AbstractFacet:
@@ -60,7 +60,7 @@ class AbstractChoicesFacet(AbstractFacet):
 
 
 class FacetWithStorage(AbstractChoicesFacet):
-    def __init__(self, *, storage: Storage):
+    def __init__(self, *, storage: IStorage):
         super().__init__()
         self.storage = storage
 

@@ -3,7 +3,7 @@ import pytest
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
 from harp_apps.sqlalchemy_storage.models import Blob
-from harp_apps.sqlalchemy_storage.types import BlobStorage
+from harp_apps.sqlalchemy_storage.types import IBlobStorage
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
 
 from ..controllers import BlobsController
@@ -24,7 +24,7 @@ class TestBlobsController(
         assert response.status == 404
         assert response.content_type == "text/plain"
 
-    async def test_get_existing(self, controller, blob_storage: BlobStorage):
+    async def test_get_existing(self, controller, blob_storage: IBlobStorage):
         await blob_storage.put(Blob(id="blob-1", data=b"hello"))
 
         response = await controller.get("blob-1")

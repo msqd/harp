@@ -8,7 +8,7 @@ from whistle import AsyncEventDispatcher
 from harp.utils.bytes import ensure_bytes
 from harp.utils.testing.mixins import ControllerTestFixtureMixin
 from harp_apps.sqlalchemy_storage.storages.sql import SqlAlchemyStorage
-from harp_apps.sqlalchemy_storage.types import BlobStorage
+from harp_apps.sqlalchemy_storage.types import IBlobStorage
 from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
 
 from ..controllers import HttpProxyController
@@ -100,7 +100,7 @@ class TestHttpProxyControllerWithStorage(
         return transaction, transaction.messages[0], transaction.messages[1]
 
     @respx.mock
-    async def test_basic_get(self, storage: SqlAlchemyStorage, blob_storage: BlobStorage):
+    async def test_basic_get(self, storage: SqlAlchemyStorage, blob_storage: IBlobStorage):
         self.mock_http_endpoint("http://example.com/", content="Hello.")
 
         # register the storage
@@ -150,7 +150,7 @@ class TestHttpProxyControllerWithStorage(
         }
 
     @respx.mock
-    async def test_get_with_tags(self, storage: SqlAlchemyStorage, blob_storage: BlobStorage):
+    async def test_get_with_tags(self, storage: SqlAlchemyStorage, blob_storage: IBlobStorage):
         self.mock_http_endpoint("http://example.com/", content="Hello.")
 
         # call our controller

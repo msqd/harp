@@ -3,7 +3,7 @@ SqlAlchemy Storage Extension
 
 """
 
-from typing import Callable, Type, TypeVar, cast
+from typing import Callable, Optional, Type, TypeVar, cast
 
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
@@ -13,7 +13,7 @@ from harp.config.events import FactoryBindEvent, FactoryBoundEvent, FactoryDispo
 from harp_apps.sqlalchemy_storage.storages.sql import SqlAlchemyStorage
 
 from .settings import SqlAlchemyStorageSettings
-from .types import BlobStorage, Storage
+from .types import IBlobStorage, IStorage
 
 logger = get_logger(__name__)
 
@@ -37,6 +37,12 @@ class SqlalchemyStorageApplication(Application):
     settings_namespace = "storage"
     settings_type = SqlAlchemyStorageSettings
 
+    storage: Optional[IStorage]
+
+    def __init__(self, settings=None, /):
+        super().__init__(settings)
+        self.storage = None
+
     @classmethod
     def supports(cls, settings):
         return settings.get("type", None) == "sqlalchemy"
@@ -55,25 +61,25 @@ class SqlalchemyStorageApplication(Application):
         return settings
 
     async def on_bind(self, event: FactoryBindEvent):
-        event.container.add_singleton(Storage, SqlAlchemyStorage)
+        event.container.add_singleton(IStorage, SqlAlchemyStorage)
         event.container.add_singleton(AsyncEngine, AsyncEngineFactory)
 
         blob_storage_type = self.settings.blobs.type
         if blob_storage_type == "sql":
             from harp_apps.sqlalchemy_storage.storages.blobs.sql import SqlBlobStorage
 
-            event.container.add_singleton(BlobStorage, SqlBlobStorage)
+            event.container.add_singleton(IBlobStorage, SqlBlobStorage)
         elif blob_storage_type == "redis":
             from harp_apps.sqlalchemy_storage.storages.blobs.redis import RedisBlobStorage
 
-            event.container.add_singleton(BlobStorage, RedisBlobStorage)
+            event.container.add_singleton(IBlobStorage, RedisBlobStorage)
         else:
             raise ValueError(f"Unsupported blob storage type: {blob_storage_type}")
 
     async def on_bound(self, event: FactoryBoundEvent):
-        event.provider.get(BlobStorage)
+        event.provider.get(IBlobStorage)
 
-        self.storage = event.provider.get(Storage)
+        self.storage = event.provider.get(IStorage)
         await self.storage.initialize()
 
     async def on_dispose(self, event: FactoryDisposeEvent):

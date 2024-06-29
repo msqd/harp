@@ -1,11 +1,11 @@
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.http import HttpResponse
-from harp_apps.sqlalchemy_storage.types import BlobStorage
+from harp_apps.sqlalchemy_storage.types import IBlobStorage
 
 
 @RouterPrefix("/api/blobs")
 class BlobsController(RoutingController):
-    def __init__(self, *, storage: BlobStorage, handle_errors=True, router=None):
+    def __init__(self, *, storage: IBlobStorage, handle_errors=True, router=None):
         self.storage = storage
         super().__init__(handle_errors=handle_errors, router=router)
 

@@ -13,7 +13,7 @@ from harp.models import Blob, Message, Transaction
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp_apps.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
 from harp_apps.sqlalchemy_storage.storages.sql import SqlAlchemyStorage
-from harp_apps.sqlalchemy_storage.types import BlobStorage
+from harp_apps.sqlalchemy_storage.types import IBlobStorage
 from harp_apps.sqlalchemy_storage.utils.migrations import create_alembic_config, do_migrate
 
 
@@ -91,7 +91,7 @@ class SqlalchemyStorageTestFixtureMixin:
         return SqlAlchemyStorageSettings(**(DEFAULT_STORAGE_SETTINGS | {"url": sql_engine.url}))
 
     @pytest.fixture(params=["sql", "redis"])
-    async def blob_storage(self, request, sql_engine, storage_settings) -> BlobStorage:
+    async def blob_storage(self, request, sql_engine, storage_settings) -> IBlobStorage:
         if request.param == "sql":
             from harp_apps.sqlalchemy_storage.storages.blobs.sql import SqlBlobStorage
 

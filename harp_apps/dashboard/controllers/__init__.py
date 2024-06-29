@@ -12,7 +12,7 @@ from harp.errors import ConfigurationError
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
 from harp.typing.global_settings import GlobalSettings
 from harp_apps.proxy.controllers import HttpProxyController
-from harp_apps.sqlalchemy_storage.types import BlobStorage, Storage
+from harp_apps.sqlalchemy_storage.types import IBlobStorage, IStorage
 
 from ..settings import DashboardAuthBasicSetting, DashboardSettings
 from .blobs import BlobsController
@@ -34,8 +34,8 @@ STATIC_BUILD_PATHS = [
 class DashboardController:
     name = "ui"
 
-    storage: Storage
-    blob_storage: BlobStorage
+    storage: IStorage
+    blob_storage: IBlobStorage
     settings: DashboardSettings
     global_settings: GlobalSettings
     http_client: AsyncClient
@@ -45,8 +45,8 @@ class DashboardController:
 
     def __init__(
         self,
-        storage: Storage,
-        blob_storage: BlobStorage,
+        storage: IStorage,
+        blob_storage: IBlobStorage,
         all_settings: GlobalSettings,
         local_settings: DashboardSettings,
         http_client: AsyncClient,

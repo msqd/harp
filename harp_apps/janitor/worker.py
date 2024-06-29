@@ -6,14 +6,14 @@ from harp.settings import USE_PROMETHEUS
 
 from ..sqlalchemy_storage.models.base import with_session
 from ..sqlalchemy_storage.storages.sql import SqlAlchemyStorage
-from ..sqlalchemy_storage.types import Storage
+from ..sqlalchemy_storage.types import IStorage
 from .settings import OLD_AFTER, PERIOD
 
 logger = get_logger(__name__)
 
 
 class JanitorWorker:
-    def __init__(self, storage: Storage):
+    def __init__(self, storage: IStorage):
         self.storage: SqlAlchemyStorage = cast(SqlAlchemyStorage, storage)
         self.running = False
         self.session_factory = self.storage.session_factory

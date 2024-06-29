@@ -21,8 +21,9 @@ from harp.settings import PAGE_SIZE
 from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_datetime
 from harp_apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
-from harp_apps.sqlalchemy_storage.constants import TimeBucket
-from harp_apps.sqlalchemy_storage.models import (
+
+from ..constants import TimeBucket
+from ..models import (
     FLAGS_BY_NAME,
     Base,
     BlobsRepository,
@@ -39,9 +40,9 @@ from harp_apps.sqlalchemy_storage.models import (
     UserFlag,
     UsersRepository,
 )
-from harp_apps.sqlalchemy_storage.settings import SqlAlchemyStorageSettings
-from harp_apps.sqlalchemy_storage.types import BlobStorage, Storage
-from harp_apps.sqlalchemy_storage.utils.dates import TruncDatetime
+from ..settings import SqlAlchemyStorageSettings
+from ..types import IBlobStorage, IStorage
+from ..utils.dates import TruncDatetime
 
 
 class TransactionsGroupedByTimeBucket(TypedDict):
@@ -138,7 +139,7 @@ def _filter_transactions_based_on_text(query, search_text: str, dialect_name: st
     )
 
 
-class SqlAlchemyStorage(Storage):
+class SqlAlchemyStorage(IStorage):
     """
     Storage implementation using SQL Alchemy Core, with async drivers.
 
@@ -156,7 +157,7 @@ class SqlAlchemyStorage(Storage):
         self,
         engine: AsyncEngine,
         dispatcher: IAsyncEventDispatcher,
-        blob_storage: BlobStorage,
+        blob_storage: IBlobStorage,
         settings: SqlAlchemyStorageSettings,
     ):
         # XXX lokks like settings are not used anymore, except to know if we should run migrations or not

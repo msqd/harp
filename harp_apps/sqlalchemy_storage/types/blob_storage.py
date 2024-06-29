@@ -1,0 +1,13 @@
+from typing import Protocol
+
+from harp.models import Blob
+
+
+class IBlobStorage(Protocol):
+    async def get(self, blob_id: str): ...
+
+    async def put(self, blob: Blob): ...
+
+    async def delete(self, blob_id: str): ...
+
+    async def exists(self, blob_id: str) -> bool: ...

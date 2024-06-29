@@ -1,10 +1,10 @@
 from abc import ABCMeta, abstractmethod
 
 from harp.models import Blob
-from harp_apps.sqlalchemy_storage.types import BlobStorage
+from harp_apps.sqlalchemy_storage.types import IBlobStorage
 
 
-class AbstractBlobStorage(BlobStorage, metaclass=ABCMeta):
+class AbstractBlobStorage(IBlobStorage, metaclass=ABCMeta):
     type = None
 
     @abstractmethod

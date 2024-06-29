@@ -11,7 +11,7 @@ from harp.typing.global_settings import GlobalSettings
 from harp.views.json import json
 from harp_apps.sqlalchemy_storage.models import MetricValue
 from harp_apps.sqlalchemy_storage.storages.sql import SqlAlchemyStorage
-from harp_apps.sqlalchemy_storage.types import Storage
+from harp_apps.sqlalchemy_storage.types import IStorage
 
 from ..utils.dependencies import get_python_dependencies, parse_dependencies
 
@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 
 @RouterPrefix("/api/system")
 class SystemController(RoutingController):
-    def __init__(self, *, storage: Storage, settings: GlobalSettings, handle_errors=True, router=None):
+    def __init__(self, *, storage: IStorage, settings: GlobalSettings, handle_errors=True, router=None):
         self.settings = Config(deepcopy(dict(settings))).validate(secure=True)
         self.storage: SqlAlchemyStorage = cast(SqlAlchemyStorage, storage)
 
