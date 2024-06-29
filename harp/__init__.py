@@ -46,7 +46,8 @@ def _parse_version(version: str, /, *, default=None) -> Version:
 
 # last release
 __title__ = "Core"
-__version__ = "0.5.1"
+__version__ = "0.6"
+__hardcoded_version__ = __version__
 __revision__ = __version__  # we can't commit the not yet known revision
 
 # override with version.txt if available (after docker build for example)
