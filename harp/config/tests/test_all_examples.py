@@ -26,6 +26,11 @@ def test_documentation_examples_list():
         "docs/apps/http_client/examples/full.yml",
         "docs/apps/http_client/examples/simple.yml",
         "docs/apps/proxy/examples/swapi.yml",
+        "docs/apps/storage/examples/mysql-aiomysql.yml",
+        "docs/apps/storage/examples/mysql-asyncmy.yml",
+        "docs/apps/storage/examples/postgres-asyncpg.yml",
+        "docs/apps/storage/examples/redis.yml",
+        "docs/apps/storage/examples/sqlite-aiosqlite.yml",
     ]
 
 

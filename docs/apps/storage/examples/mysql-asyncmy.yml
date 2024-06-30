@@ -1,0 +1,2 @@
+storage:
+  url: mysql+asyncmy://user:password@localhost:3306/harp
