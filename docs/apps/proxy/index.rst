@@ -1,6 +1,8 @@
 Proxy
 =====
 
+.. versionadded:: 0.5
+
 The `harp_apps.proxy` application implements the core harp proxy features, and includes the configuration logic for
 endpoints.
 

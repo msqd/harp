@@ -1,6 +1,13 @@
 Storage
 =======
 
+.. versionadded:: 0.5
+
+.. versionchanged:: 0.6
+
+    * The ``harp_apps.storage`` application was previously named ``harp_apps.sqlalchemy_storage``.
+    * The blob storage system was added, and now supports both SQL or Redis backends.
+
 The ``harp_apps.storage`` application implements various storage systems for your proxies to use.
 
 There are two different storage kinds:
