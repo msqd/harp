@@ -8,5 +8,5 @@ Applications
     http_client/index
     janitor/index
     proxy/index
-    sqlalchemy_storage/index
+    storage/index
     telemetry/index

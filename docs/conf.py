@@ -87,3 +87,8 @@ rst_prolog = """.. attention::
     eradicate all mistakes and implement stuff, but it is a long and tedious process. We appreciate your patience and
     understanding. Of course, any :doc:`help will be greatly appreciated </contribute/index>`.
 """
+if version == "0.6":
+    rst_prolog = """.. warning::
+    **THIS IS THE DOCUMENTATION FOR THE 0.6 VERSION OF HARP PROXY. IT IS A FUTURE RELEASE AND THE DOCUMENTATION IS
+    NOT IN SYNC WITH THE CODEBASE, AS IT CONTAINS NOT-YET-MERGED FEATURES. PLEASE REFER TO THE LATEST RELEASE INSTEAD.**
+    """

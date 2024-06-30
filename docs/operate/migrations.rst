@@ -2,7 +2,7 @@ Database Migrations
 ===================
 
 Database migrations are managed by `alembic`, a database migration  library for sqlalchemy. For now, we only have models
-in the `sqlalchemy_storage` application, and the implementation shared between this application and the command line
+in the `storage` application, and the implementation shared between this application and the command line
 package in the main `harp` package.
 
 We use custom wrappers around the alembic CLI because we need to handle migrations slightly differently for different
@@ -12,7 +12,7 @@ database engines.
 Running Migrations
 ::::::::::::::::::
 
-To run migrations, you can either start your harp server with the `sqlalchemy_storage` application enabled and the
+To run migrations, you can either start your harp server with the `storage` application enabled and the
 ``storage.migrate = true`` setting (which are the default), or use the dedicated command line tool:
 
 .. code-block:: shell

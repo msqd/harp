@@ -37,3 +37,12 @@
 .sidebar-brand-text {
     text-align: center;
 }
+
+
+.intro,
+.intro table,
+.intro table tr,
+.intro table td {
+    border: none;
+    box-shadow: none;
+}

@@ -11,18 +11,18 @@ Database-related tests will spawn docker containers during the tests (using test
 Tests that use Storage
 :::::::::::::::::::::::
 
-Tests using storage can be writen either by subclassing :class:`SqlalchemyStorageTestFixtureMixin
-<harp_apps.sqlalchemy_storage.utils.testing.mixins.SqlalchemyStorageTestFixtureMixin>` and then using the `storage`
+Tests using storage can be writen either by subclassing :class:`StorageTestFixtureMixin
+<harp_apps.storage.utils.testing.mixins.StorageTestFixtureMixin>` and then using the `storage`
 fixture or by using the lower-level tools.
 
-Using `SqlalchemyStorageTestFixtureMixin` and the  ``storage`` fixture
+Using `StorageTestFixtureMixin` and the  ``storage`` fixture
 ----------------------------------------------------------------------
 
 .. code-block::
 
-    from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
+    from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
-    class TestMyFeature(SqlalchemyStorageTestFixtureMixin):
+    class TestMyFeature(StorageTestFixtureMixin):
         def test_my_feature(self, storage):
             ...
 
@@ -53,7 +53,7 @@ decorator to change the behaviour of ``database_url`` (and ``storage``, which de
 
 .. code-block::
 
-    class TestMyPostgresqlSpecificFeature(SqlalchemyStorageTestFixtureMixin):
+    class TestMyPostgresqlSpecificFeature(StorageTestFixtureMixin):
         @parametrize_with_database_urls('postgresql')
         def test_my_postgresql_specific_feature(self, database_url):
             ...
@@ -62,7 +62,7 @@ decorator to change the behaviour of ``database_url`` (and ``storage``, which de
         def test_my_postgresql_specific_feature(self, storage):
             ...
 
-    class TestSomeWiderSpecificFeature(SqlalchemyStorageTestFixtureMixin):
+    class TestSomeWiderSpecificFeature(StorageTestFixtureMixin):
         @parametrize_with_database_urls('postgresql', 'mysql')
         def test_my_not_really_specific_feature(self, storage):
             ...
@@ -102,14 +102,14 @@ The storage can be instrumented to log all the queries it receives. This can be 
 tests that needs to access to the sql queries (can count, chek content, explain analyze, ...).
 
 Once you get a storage, call
-:func:`install_debugging_instrumentation() <harp_apps.sqlalchemy_storage.storage.SqlAlchemyStorage.install_debugging_instrumentation>`
+:func:`install_debugging_instrumentation() <harp_apps.storage.storage.Storage.install_debugging_instrumentation>`
 on your instance and all sql queries will find their way into ``your_storage.sql_queries``.
 
 .. code-block:: python
 
-    from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
+    from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
-    class TestWithInstrumentation(SqlalchemyStorageTestFixtureMixin):
+    class TestWithInstrumentation(StorageTestFixtureMixin):
         @parametrize_with_database_urls("postgresql")
         async def test_sql_queries_instrumentation(self, storage):
             # create a rich console to display the queries with syntax highlighting
