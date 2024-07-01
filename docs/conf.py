@@ -16,7 +16,7 @@ author = "Romain Dorgueil"
 copyright = f"{current_year}, {author}"
 if current_year > first_year:
     copyright = str(first_year) + "-" + copyright
-version = release = ".".join(__import__("harp").__version__.split(".")[0:2])
+version = release = ".".join(__import__("harp").__hardcoded_version__.split(".")[0:2])
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -86,4 +86,9 @@ rst_prolog = """.. attention::
     servers, they may contain inaccuracies, typographical errors, huge mistakes and empty pages. We work hard to
     eradicate all mistakes and implement stuff, but it is a long and tedious process. We appreciate your patience and
     understanding. Of course, any :doc:`help will be greatly appreciated </contribute/index>`.
+"""
+if version == "0.6":
+    rst_prolog = """.. attention::
+    **THIS IS THE DOCUMENTATION FOR THE 0.6 VERSION OF HARP PROXY. IT IS A FUTURE RELEASE AND THE DOCUMENTATION IS
+    NOT IN SYNC WITH THE CODEBASE, AS IT CONTAINS NOT-YET-MERGED FEATURES. PLEASE REFER TO THE LATEST RELEASE INSTEAD.**
 """

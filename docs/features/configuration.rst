@@ -1,6 +1,8 @@
 Configuration
 =============
 
+.. versionadded:: 0.5
+
 HARP leverages a powerful and composable configuration system to fit in any target environment and requirements.
 
 Basically, HARP configuration is a big dictionary that is fed by various sources:

@@ -1,6 +1,7 @@
 Telemetry
 ========
 
+.. versionadded:: 0.5
 
 The ``harp_apps.telemetry`` application is responsible for sending anonymous usage statistics. This helps developers understand how the application is being used and identify potential areas for improvement.
 The telemetry data includes information about the platform, installed applications, and usage patterns.
