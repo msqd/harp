@@ -108,3 +108,31 @@ def parametrize_with_database_urls(*databases):
         return inner
 
     return wrapper
+
+
+BLOB_STORAGE_TYPES = ["sql", "redis"]
+
+
+def parametrize_with_blob_storages_urls(*types):
+    """
+    Decorator to parametrize with all supported blob storages.
+
+    Usage::
+
+    @parametrize_with_blob_storages()
+    def test_all_blob_storages(blob_storage):
+        ... # will receive all supported blob storages, while a matching container runs
+    """
+
+    if len(types) and not all(x in BLOB_STORAGE_TYPES for x in types):
+        raise ValueError(f"Unsupported blob storage types: {types}")
+
+    def wrapper(func):
+        @pytest.mark.parametrize("blob_storage", types if len(types) else BLOB_STORAGE_TYPES, indirect=True)
+        @functools.wraps(func)
+        async def inner(*args, **kwargs):
+            return await func(*args, **kwargs)
+
+        return inner
+
+    return wrapper

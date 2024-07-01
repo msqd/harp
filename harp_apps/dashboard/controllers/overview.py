@@ -4,9 +4,9 @@ from statistics import StatisticsError, mean
 
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest
-from harp.typing.storage import Storage
 from harp.views import json
-from harp_apps.sqlalchemy_storage.constants import TimeBucket
+from harp_apps.storage.constants import TimeBucket
+from harp_apps.storage.types import IStorage
 
 from ..utils.dates import generate_continuous_time_range, get_start_datetime_from_range
 
@@ -51,7 +51,7 @@ def _format_aggregate(items, count, key, *, default=None):
 
 @RouterPrefix("/api/overview")
 class OverviewController(RoutingController):
-    def __init__(self, *, storage: Storage, handle_errors=True, router=None):
+    def __init__(self, *, storage: IStorage, handle_errors=True, router=None):
         self.storage = storage
         super().__init__(handle_errors=handle_errors, router=router)
 

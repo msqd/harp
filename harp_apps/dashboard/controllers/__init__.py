@@ -11,8 +11,8 @@ from harp.controllers import RoutingController
 from harp.errors import ConfigurationError
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
 from harp.typing.global_settings import GlobalSettings
-from harp.typing.storage import Storage
 from harp_apps.proxy.controllers import HttpProxyController
+from harp_apps.storage.types import IBlobStorage, IStorage
 
 from ..settings import DashboardAuthBasicSetting, DashboardSettings
 from .blobs import BlobsController
@@ -34,7 +34,8 @@ STATIC_BUILD_PATHS = [
 class DashboardController:
     name = "ui"
 
-    storage: Storage
+    storage: IStorage
+    blob_storage: IBlobStorage
     settings: DashboardSettings
     global_settings: GlobalSettings
     http_client: AsyncClient
@@ -44,7 +45,8 @@ class DashboardController:
 
     def __init__(
         self,
-        storage: Storage,
+        storage: IStorage,
+        blob_storage: IBlobStorage,
         all_settings: GlobalSettings,
         local_settings: DashboardSettings,
         http_client: AsyncClient,
@@ -52,6 +54,7 @@ class DashboardController:
         # context for usage in handlers
         self.http_client = http_client
         self.storage = storage
+        self.blob_storage = blob_storage
         self.global_settings = all_settings
         self.settings = local_settings
 
@@ -99,7 +102,7 @@ class DashboardController:
         root = RoutingController(handle_errors=False)
 
         self.children = [
-            BlobsController(storage=self.storage, router=root.router),
+            BlobsController(storage=self.blob_storage, router=root.router),
             SystemController(storage=self.storage, settings=self.global_settings, router=root.router),
             TransactionsController(storage=self.storage, router=root.router),
             OverviewController(storage=self.storage, router=root.router),

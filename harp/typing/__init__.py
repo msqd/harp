@@ -8,7 +8,6 @@ Contents
 
 from .global_settings import GlobalSettings
 from .signs import Default, Maybe, NotSet
-from .storage import Storage
 
 __title__ = "Typing"
 
@@ -17,5 +16,4 @@ __all__ = [
     "GlobalSettings",
     "Maybe",
     "NotSet",
-    "Storage",
 ]

@@ -14,4 +14,3 @@ Submodules
 
     harp.typing.global_settings
     harp.typing.signs
-    harp.typing.storage

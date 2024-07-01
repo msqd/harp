@@ -1,6 +1,6 @@
 from typing import Type, cast
 
-from rodi import Container
+from rodi import Container, Services
 from whistle import IAsyncEventDispatcher
 
 from harp import __revision__, __version__, get_logger
@@ -11,9 +11,11 @@ from harp.config.events import (
     EVENT_FACTORY_BIND,
     EVENT_FACTORY_BOUND,
     EVENT_FACTORY_BUILD,
+    EVENT_FACTORY_DISPOSE,
     FactoryBindEvent,
     FactoryBoundEvent,
     FactoryBuildEvent,
+    FactoryDisposeEvent,
 )
 from harp.controllers import ProxyControllerResolver
 from harp.event_dispatcher import LoggingAsyncEventDispatcher
@@ -40,6 +42,12 @@ class KernelFactory:
     ContainerType: Type[Container] = Container
     KernelType: Type[ASGIKernel] = ASGIKernel
 
+    # references for external treatments
+    container: Container
+    provider: Services
+    dispatcher: IAsyncEventDispatcher
+    resolver: ProxyControllerResolver
+
     def __init__(self, configuration: Config):
         self.configuration = configuration
         self.hostname = "[::]"
@@ -51,16 +59,16 @@ class KernelFactory:
 
         logger.info(f"📦 Apps: {', '.join(self.configuration.applications)}")
 
-        dispatcher = self.build_event_dispatcher()
-        container = self.build_container(dispatcher)
-        resolver = ProxyControllerResolver()
+        self.dispatcher = self.build_event_dispatcher()
+        self.container = self.build_container(self.dispatcher)
+        self.resolver = ProxyControllerResolver()
 
         # dispatch "bind" event: this is the last chance to add services to the container
         try:
-            await dispatcher.adispatch(
+            await self.dispatcher.adispatch(
                 EVENT_FACTORY_BIND,
                 FactoryBindEvent(
-                    container,
+                    self.container,
                     self.configuration.settings,
                 ),
             )
@@ -70,27 +78,32 @@ class KernelFactory:
 
         # this can fail if configuration is not valid, but we let the container raise exception which is more explicit
         # that what we can show here.
-        provider = container.build_provider()
+        self.provider = self.container.build_provider()
 
         # dispatch "bound" event: you get a resolved container, do your thing
         try:
-            await dispatcher.adispatch(
+            await self.dispatcher.adispatch(
                 EVENT_FACTORY_BOUND,
                 FactoryBoundEvent(
-                    provider,
-                    resolver,
+                    self.provider,
+                    self.resolver,
                 ),
             )
         except Exception as exc:
             logger.fatal("Fatal while dispatching «factory bound» event: %s", exc)
             raise
 
-        kernel = self.KernelType(dispatcher=dispatcher, resolver=resolver)
-        binds = [Bind(host=self.hostname, port=port) for port in resolver.ports]
-        event = FactoryBuildEvent(kernel, binds)
-        await dispatcher.adispatch(EVENT_FACTORY_BUILD, event)
+        self.kernel = self.KernelType(dispatcher=self.dispatcher, resolver=self.resolver)
+        binds = [Bind(host=self.hostname, port=port) for port in self.resolver.ports]
+        event = FactoryBuildEvent(self.kernel, binds)
+        await self.dispatcher.adispatch(EVENT_FACTORY_BUILD, event)
 
         return event.kernel, event.binds
+
+    async def dispose(self):
+        if self.kernel:
+            event = FactoryDisposeEvent(self.kernel, self.provider)
+            await self.dispatcher.adispatch(EVENT_FACTORY_DISPOSE, event)
 
     def build_container(self, dispatcher: IAsyncEventDispatcher) -> Container:
         """Factory method responsible for the service injection container creation, registering initial services."""

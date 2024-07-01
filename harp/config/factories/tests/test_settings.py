@@ -6,7 +6,7 @@ from harp import Config
 class TestSettings:
     async def factory(self, settings=None):
         config = Config(settings)
-        config.add_application("sqlalchemy_storage")
+        config.add_application("storage")
         config.add_application("dashboard")
         config.validate()
         return config.settings

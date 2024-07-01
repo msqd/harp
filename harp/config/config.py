@@ -38,7 +38,7 @@ class Config:
         "http_client",
         "proxy",
         "dashboard",
-        "sqlalchemy_storage",
+        "storage",
         "telemetry",
         "janitor",
         "harp_apps.contrib.sentry",  # todo: allow to extend application list in config file without overriding all
@@ -293,6 +293,9 @@ class Config:
         self.validate()
         for application in self._applications:
             application.register_events(dispatcher)
+
+        for application in reversed(self._applications):
+            application.register_end_of_life_events(dispatcher)
 
     def register_services(self, container: Container):
         self.validate()

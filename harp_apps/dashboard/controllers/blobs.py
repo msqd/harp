@@ -1,17 +1,17 @@
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.http import HttpResponse
-from harp.typing.storage import Storage
+from harp_apps.storage.types import IBlobStorage
 
 
 @RouterPrefix("/api/blobs")
 class BlobsController(RoutingController):
-    def __init__(self, *, storage: Storage, handle_errors=True, router=None):
+    def __init__(self, *, storage: IBlobStorage, handle_errors=True, router=None):
         self.storage = storage
         super().__init__(handle_errors=handle_errors, router=router)
 
     @GetHandler("/{id}")
     async def get(self, id):
-        blob = await self.storage.get_blob(id)
+        blob = await self.storage.get(id)
         if not blob:
             return HttpResponse(b"Blob not found.", status=404, content_type="text/plain")
 

@@ -8,7 +8,7 @@ from multidict import MultiDict
 from harp.http import HttpRequest
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
-from harp_apps.sqlalchemy_storage.utils.testing.mixins import SqlalchemyStorageTestFixtureMixin
+from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 from ..controllers import TransactionsController
 
@@ -19,7 +19,7 @@ class TransactionsControllerTestFixtureMixin:
         return TransactionsController(storage=storage, handle_errors=False)
 
 
-class TestTransactionsController(TransactionsControllerTestFixtureMixin, SqlalchemyStorageTestFixtureMixin):
+class TestTransactionsController(TransactionsControllerTestFixtureMixin, StorageTestFixtureMixin):
     async def test_filters_using_handler(self, controller: TransactionsController):
         request = Mock(spec=HttpRequest, query=MultiDict())
         response = await controller.filters(request)
@@ -61,7 +61,7 @@ class TestTransactionsController(TransactionsControllerTestFixtureMixin, Sqlalch
 
 class TestTransactionsControllerThroughASGI(
     TransactionsControllerTestFixtureMixin,
-    SqlalchemyStorageTestFixtureMixin,
+    StorageTestFixtureMixin,
     ControllerThroughASGIFixtureMixin,
 ):
     async def test_filters_using_asgi(self, client: ASGICommunicator):
