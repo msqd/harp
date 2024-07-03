@@ -24,5 +24,6 @@ Submodules
     harp.utils.json
     harp.utils.network
     harp.utils.processes
+    harp.utils.services
     harp.utils.tpdex
     harp.utils.urls

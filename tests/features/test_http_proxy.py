@@ -74,7 +74,7 @@ class TestAsgiProxyWithStubApi:
 
         config.add_application("http_client")
         config.add_application("proxy")
-        config.add_application("sqlalchemy_storage")
+        config.add_application("storage")
 
         config.set(
             "proxy.endpoints",
@@ -87,7 +87,11 @@ class TestAsgiProxyWithStubApi:
             ],
         )
         factory = KernelFactory(config)
-        return (await factory.build())[0]
+        try:
+            _kernel = (await factory.build())[0]
+            yield _kernel
+        finally:
+            await factory.dispose()
 
     @pytest.fixture
     async def client(self, kernel):

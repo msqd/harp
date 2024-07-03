@@ -1,6 +1,8 @@
 HttpClient
 ==========
 
+.. versionadded:: 0.5
+
 The `harp_apps.http_client` application implements the core HTTP client features. It uses caching to store responses
 and avoid making the same request multiple times, improving the efficiency of your application.
 

@@ -25,5 +25,12 @@ For advanced users and fellow pythonistas, you can use pip. But maybe, you'll pr
     python
     sources
 
+What next?
+::::::::::
+
 Once you're able to successfully run the proxy, you may want to head over to the
 :doc:`Configuration </operate/configure/index>` section of the :doc:`/operate/index`.
+
+You can also jump to one of the following guides:
+
+.. include:: /_quicktoc.rst

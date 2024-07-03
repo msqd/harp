@@ -10,6 +10,7 @@ class AsyncWorkerQueue:
     def __init__(self):
         self._queue = asyncio.Queue()
         self._task = asyncio.create_task(self())
+        self._running = True
 
     async def __call__(self):
         while True:
@@ -27,6 +28,8 @@ class AsyncWorkerQueue:
                 self._queue.task_done()
 
     async def push(self, item, /, *, ignore_errors=False):
+        if not self._running:
+            raise RuntimeError("Queue is closed.")
         if not iscoroutinefunction(item):
             raise ValueError(f"Unknown item type: {type(item)}, expecting coroutine function.")
 
@@ -34,3 +37,7 @@ class AsyncWorkerQueue:
 
     async def wait_until_empty(self):
         await self._queue.join()
+
+    async def close(self):
+        self._running = False
+        await self.wait_until_empty()

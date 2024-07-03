@@ -37,5 +37,23 @@ class Transaction(Entity):
     tags: dict = dataclasses.field(default_factory=dict)
 
     # Extra attributes
-
     extras: dict = dataclasses.field(default_factory=dict)
+
+    def as_storable_dict(self, /, *, with_messages=False, with_tags=False):
+        """Create a dict that can be passed to a storage creation method."""
+        data = dataclasses.asdict(self)
+
+        if not with_messages:
+            data.pop("messages", None)
+
+        if not with_tags:
+            data.pop("tags", None)
+
+        extras = data.pop("extras", {})
+
+        data["x_cached"] = extras.get("cached")
+        data["x_method"] = extras.get("method")
+        data["x_no_cache"] = bool(extras.get("no_cache"))
+        data["x_status_class"] = extras.get("status_class")
+
+        return data

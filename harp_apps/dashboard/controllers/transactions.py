@@ -5,9 +5,9 @@ from harp.controllers import GetHandler, RouteHandler, RouterPrefix, RoutingCont
 from harp.http import HttpRequest, JsonHttpResponse
 from harp.models.transactions import Transaction
 from harp.settings import PAGE_SIZE
-from harp.typing.storage import Storage
 from harp.views.json import json
-from harp_apps.sqlalchemy_storage.models.flags import FLAGS_BY_NAME
+from harp_apps.storage.models.flags import FLAGS_BY_NAME
+from harp_apps.storage.types import IStorage
 
 from ..filters import (
     TransactionEndpointFacet,
@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 
 @RouterPrefix("/api/transactions")
 class TransactionsController(RoutingController):
-    def __init__(self, *, storage: Storage, handle_errors=True, router=None):
+    def __init__(self, *, storage: IStorage, handle_errors=True, router=None):
         self.storage = storage
         self.facets = {
             facet.name: facet

@@ -31,6 +31,7 @@ Guides
     :maxdepth: 2
 
     creating
+    structure/index
     settings
     using
     testing

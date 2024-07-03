@@ -1,0 +1,4 @@
+storage:
+  blobs:
+    type: redis
+    url: redis://localhost:6379/0  # this is the default, only set to override

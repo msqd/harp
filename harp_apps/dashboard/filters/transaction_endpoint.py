@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from harp.typing.storage import Storage
+from harp_apps.storage.types import IStorage
 
 from .base import FacetWithStorage
 
@@ -8,7 +8,7 @@ from .base import FacetWithStorage
 class TransactionEndpointFacet(FacetWithStorage):
     name = "endpoint"
 
-    def __init__(self, *, storage: Storage):
+    def __init__(self, *, storage: IStorage):
         super().__init__(storage=storage)
         self.choices = set()
         self._refreshed_at = None

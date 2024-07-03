@@ -1,0 +1,2 @@
+storage:
+  url: postgresql+asyncpg://user:password@localhost:5432/harp
