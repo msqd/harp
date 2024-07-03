@@ -70,6 +70,14 @@ if IS_DEVELOPMENT_ENVIRONMENT:
     from harp.commandline.install import install_dev
 
     entrypoint.add_command(install_dev)
+else:
+
+    @entrypoint.add_command
+    def start(*args, **kwargs):
+        raise NotImplementedError(
+            "This command is not available in production environment, please install the dev extra if you need it."
+        )
+
 
 if check_packages("alembic"):
     from harp.commandline.migrations import create_migration, feature, history, migrate, reset

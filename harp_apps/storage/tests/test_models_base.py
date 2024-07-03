@@ -11,14 +11,14 @@ from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 
 class TestModelsBase(StorageTestFixtureMixin):
-    async def test_create_using_explicit_session(self, storage: SqlStorage):
+    async def test_create_using_explicit_session(self, sql_storage: SqlStorage):
         """
         Check how instance creation works with an explicit session scope created outside the "create" call.
 
         """
-        async with storage.session_factory() as session:
+        async with sql_storage.session_factory() as session:
             # we create a transaction with our own session
-            db_transaction = await storage.transactions.create(
+            db_transaction = await sql_storage.transactions.create(
                 {
                     "id": generate_transaction_id_ksuid(),
                     "type": "http",
@@ -46,13 +46,13 @@ class TestModelsBase(StorageTestFixtureMixin):
         assert inspect(db_transaction).detached is True
         assert inspect(db_transaction).expired is False
 
-    async def test_create_using_inplicit_session(self, storage: SqlStorage):
+    async def test_create_using_inplicit_session(self, sql_storage: SqlStorage):
         """
         Check how instance creation works with an implicit session.
 
         """
         # we create a transaction without an explicit session
-        db_transaction = await storage.transactions.create(
+        db_transaction = await sql_storage.transactions.create(
             {
                 "id": generate_transaction_id_ksuid(),
                 "type": "http",

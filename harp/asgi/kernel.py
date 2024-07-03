@@ -9,6 +9,7 @@ from harp import get_logger
 from harp.controllers import DefaultControllerResolver
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
 
+from ..utils.performances import performances_observer
 from .bridge.requests import HttpRequestAsgiBridge
 from .bridge.responses import HttpResponseAsgiBridge
 from .events import (
@@ -40,28 +41,29 @@ class ASGIKernel:
     async def __call__(self, scope: Scope, receive: ASGIReceiveCallable, send: ASGISendCallable):
         asgi_type = scope.get("type", None)
 
-        if asgi_type == "http":
-            response = await self.handle_http(scope, receive, send)
-            if isinstance(response, AlreadyHandledHttpResponse):
+        with performances_observer("kernel", labels={"type": asgi_type}):
+            if asgi_type == "http":
+                response = await self.handle_http(scope, receive, send)
+                if isinstance(response, AlreadyHandledHttpResponse):
+                    return
+                return await HttpResponseAsgiBridge(response, send).send()
+
+            if asgi_type == "lifespan":
+                await receive()
+                try:
+                    await self.dispatcher.adispatch(EVENT_CORE_STARTED, Event())
+                except Exception as exc:
+                    raise LifespanFailureError(EVENT_CORE_STARTED, repr(exc)) from exc
+
+                self.started = True
                 return
-            return await HttpResponseAsgiBridge(response, send).send()
 
-        if asgi_type == "lifespan":
-            await receive()
-            try:
-                await self.dispatcher.adispatch(EVENT_CORE_STARTED, Event())
-            except Exception as exc:
-                raise LifespanFailureError(EVENT_CORE_STARTED, repr(exc)) from exc
+            if asgi_type == "websocket":
+                # NOT IMPLEMENTED YET!
+                # This is ignored here to avoid huge errors in the console.
+                return
 
-            self.started = True
-            return
-
-        if asgi_type == "websocket":
-            # NOT IMPLEMENTED YET!
-            # This is ignored here to avoid huge errors in the console.
-            return
-
-        raise RuntimeError(f'Unable to handle request, invalid type "{asgi_type}".')
+            raise RuntimeError(f'Unable to handle request, invalid type "{asgi_type}".')
 
     def _resolve_arguments(self, subject, **candidates):
         """

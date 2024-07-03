@@ -16,8 +16,8 @@ from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 class OverviewControllerTestFixtureMixin:
     @pytest.fixture
-    def controller(self, storage):
-        return OverviewController(storage=storage, handle_errors=False)
+    def controller(self, sql_storage):
+        return OverviewController(storage=sql_storage, handle_errors=False)
 
 
 class _Any24IntegerValues(object):
@@ -58,12 +58,12 @@ class TestOverviewController(OverviewControllerTestFixtureMixin, StorageTestFixt
 
     @parametrize_with_now
     async def test_get_summary_data_with_a_few_transactions(
-        self, controller: OverviewController, storage: SqlStorage, now
+        self, controller: OverviewController, sql_storage: SqlStorage, now
     ):
         with freezegun.freeze_time(now):
-            await self.create_transaction(storage)
-            await self.create_transaction(storage)
-            await self.create_transaction(storage)
+            await self.create_transaction(sql_storage)
+            await self.create_transaction(sql_storage)
+            await self.create_transaction(sql_storage)
         request = Mock(spec=HttpRequest, query=MultiDict())
         with freezegun.freeze_time(now):
             response = await controller.get_summary_data(request)
@@ -81,12 +81,12 @@ class TestOverviewControllerThroughASGI(
 ):
     @parametrize_with_now
     async def test_get_summary_data_with_a_few_transactions_using_asgi(
-        self, client: ASGICommunicator, storage: SqlStorage, now
+        self, client: ASGICommunicator, sql_storage: SqlStorage, now
     ):
         with freezegun.freeze_time(now):
-            await self.create_transaction(storage)
-            await self.create_transaction(storage)
-            await self.create_transaction(storage)
+            await self.create_transaction(sql_storage)
+            await self.create_transaction(sql_storage)
+            await self.create_transaction(sql_storage)
 
             response = await client.http_get("/api/overview/summary")
 

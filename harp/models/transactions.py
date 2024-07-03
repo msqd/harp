@@ -39,9 +39,12 @@ class Transaction(Entity):
     # Extra attributes
     extras: dict = dataclasses.field(default_factory=dict)
 
+    # Markers, used for transaction management (e.g. skip storage on high pressure)
+    markers: set = dataclasses.field(default_factory=set)
+
     def as_storable_dict(self, /, *, with_messages=False, with_tags=False):
         """Create a dict that can be passed to a storage creation method."""
-        data = dataclasses.asdict(self)
+        data = self._asdict()
 
         if not with_messages:
             data.pop("messages", None)
@@ -57,3 +60,8 @@ class Transaction(Entity):
         data["x_status_class"] = extras.get("status_class")
 
         return data
+
+    def _asdict(self, /, *, secure=True):
+        result = dataclasses.asdict(self)
+        del result["markers"]
+        return result

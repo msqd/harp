@@ -39,9 +39,6 @@ def asdict(obj, /, *, secure=True):
 
 @settings_dataclass
 class BaseSetting:
-    def to_dict(self, /, *, secure=True):
-        return asdict(self, secure=secure)
-
     def __post_init__(self):
         for _name, _hint in self.__annotations__.items():
             try:
