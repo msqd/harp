@@ -3159,13 +3159,13 @@ python-baseconv = "*"
 
 [[package]]
 name = "testcontainers"
-version = "4.7.0"
+version = "4.7.1"
 description = "Python library for throwaway instances of anything that can run in a Docker container"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "testcontainers-4.7.0-py3-none-any.whl", hash = "sha256:7c37dc610395940e5f0c67c97eeba1889ab7ec9b689f0c8b73d7fa7fe7baf3c9"},
-    {file = "testcontainers-4.7.0.tar.gz", hash = "sha256:89c11f02f98093e3811346556707209278a7b7a4d9e18170cdae80668909cb8b"},
+    {file = "testcontainers-4.7.1-py3-none-any.whl", hash = "sha256:20f45c8a95c0062001d6c8c7030ffcae679b22b585543bb9368902f71d8e09eb"},
+    {file = "testcontainers-4.7.1.tar.gz", hash = "sha256:64f78e18c82d523720dbcb02d2404b10aae7a506e929579a29fd256fbfad0c8b"},
 ]
 
 [package.dependencies]
@@ -3186,6 +3186,7 @@ influxdb = ["influxdb", "influxdb-client"]
 k3s = ["kubernetes", "pyyaml"]
 keycloak = ["python-keycloak"]
 localstack = ["boto3"]
+mailpit = ["cryptography"]
 minio = ["minio"]
 mongodb = ["pymongo"]
 mssql = ["pymssql", "sqlalchemy"]
@@ -3200,7 +3201,8 @@ rabbitmq = ["pika"]
 redis = ["redis"]
 registry = ["bcrypt"]
 selenium = ["selenium"]
-testmoduleimport = ["httpx"]
+sftp = ["cryptography"]
+test-module-import = ["httpx"]
 weaviate = ["weaviate-client (>=4.5.4,<5.0.0)"]
 
 [[package]]
