@@ -23,6 +23,7 @@ Submodules
     harp.utils.identifiers
     harp.utils.json
     harp.utils.network
+    harp.utils.performances
     harp.utils.processes
     harp.utils.services
     harp.utils.tpdex

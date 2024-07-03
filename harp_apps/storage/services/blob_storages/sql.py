@@ -1,13 +1,47 @@
-import asyncio
-from contextlib import asynccontextmanager
+from collections import OrderedDict
 from typing import override
 
-from sqlalchemy import delete, select
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
+from sqlalchemy import delete, insert, select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncEngine
 
+from harp import get_logger
 from harp.models import Blob
 from harp_apps.storage.models import Blob as SqlBlob
 from harp_apps.storage.types import IBlobStorage
+
+logger = get_logger(__name__)
+
+
+class LRUSet:
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.items = OrderedDict()
+
+    def add(self, item):
+        if item in self.items:
+            # Move to the end to mark as recently used
+            self.items.move_to_end(item)
+        else:
+            self.items[item] = True
+            if len(self.items) > self.capacity:
+                # Remove the least recently used item
+                self.items.popitem(last=False)
+
+    def remove(self, item):
+        if item in self.items:
+            del self.items[item]
+
+    def exists(self, item):
+        return item in self.items
+
+    def get_lru(self):
+        if self.items:
+            return next(iter(self.items))
+        return None
+
+    def __repr__(self):
+        return f"LRUSet({set(self.items.keys())})"
 
 
 class SqlBlobStorage(IBlobStorage):
@@ -15,14 +49,7 @@ class SqlBlobStorage(IBlobStorage):
 
     def __init__(self, engine: AsyncEngine):
         self.engine = engine
-        self.session_factory = async_sessionmaker(self.engine, expire_on_commit=False)
-        self._write_lock = asyncio.Lock()
-
-    @asynccontextmanager
-    async def begin(self):
-        async with self.session_factory() as session:
-            async with session.begin():
-                yield session
+        self.seen = LRUSet(1000)
 
     @override
     async def get(self, blob_id):
@@ -33,15 +60,13 @@ class SqlBlobStorage(IBlobStorage):
         :param blob_id: sha1 hash of the blob
         :return: Blob or None
         """
-        async with self.begin() as session:
-            row = (
-                await session.execute(
-                    select(SqlBlob).where(SqlBlob.id == blob_id),
-                )
-            ).fetchone()
-
+        async with self.engine.connect() as conn:
+            result = await conn.execute(
+                select(SqlBlob).where(SqlBlob.id == blob_id),
+            )
+            row = result.fetchone()
         if row:
-            return Blob(id=blob_id, data=row[0].data, content_type=row[0].content_type)
+            return Blob(id=blob_id, data=row.data, content_type=row.content_type)
 
     @override
     async def put(self, blob: Blob) -> Blob:
@@ -51,18 +76,24 @@ class SqlBlobStorage(IBlobStorage):
         :param blob_id: sha1 hash of the blob
         :param data: blob data
         """
-        async with self._write_lock:
-            async with self.begin() as session:
-                if not (
-                    await session.execute(select(select(SqlBlob.id).where(SqlBlob.id == blob.id).exists()))
-                ).scalar_one():
-                    session.add(
-                        SqlBlob(
-                            id=blob.id,
-                            content_type=blob.content_type,
-                            data=blob.data,
-                        )
+        if self.seen.exists(blob.id):
+            return blob
+
+        async with self.engine.connect() as conn:
+            if not (
+                await conn.execute(
+                    select(
+                        select(SqlBlob.id).where(SqlBlob.id == blob.id).exists(),
+                    ),
+                )
+            ).scalar_one():
+                try:
+                    await conn.execute(
+                        insert(SqlBlob).values(id=blob.id, data=blob.data, content_type=blob.content_type),
                     )
+                    await conn.commit()
+                except IntegrityError:
+                    pass  # already there? that's fine!
         return blob
 
     @override
@@ -72,10 +103,12 @@ class SqlBlobStorage(IBlobStorage):
 
         :param blob_id: sha1 hash of the blob
         """
-        async with self.begin() as session:
-            await session.execute(
+        self.seen.remove(blob_id)
+        async with self.engine.connect() as conn:
+            await conn.execute(
                 delete(SqlBlob).where(SqlBlob.id == blob_id),
             )
+            await conn.commit()
 
     @override
     async def exists(self, blob_id: str) -> bool:
@@ -85,11 +118,16 @@ class SqlBlobStorage(IBlobStorage):
         :param blob_id: sha1 hash of the blob
         :return: True if the blob exists, False otherwise
         """
-        async with self.begin() as session:
-            row = (
-                await session.execute(
-                    select(SqlBlob).where(SqlBlob.id == blob_id),
-                )
-            ).fetchone()
+        if self.seen.exists(blob_id):
+            return True
 
-        return bool(row)
+        async with self.engine.connect() as conn:
+            return bool(
+                (
+                    await conn.execute(
+                        select(
+                            select(SqlBlob.id).where(SqlBlob.id == blob_id).exists(),
+                        ),
+                    )
+                ).scalar_one()
+            )

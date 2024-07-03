@@ -36,13 +36,16 @@ LOGGING_FORMATTERS = {
     },
     "plain": {
         "()": structlog.stdlib.ProcessorFormatter,
-        "processor": structlog.dev.ConsoleRenderer(exception_formatter=structlog.dev.plain_traceback, colors=False),
+        "processor": structlog.dev.ConsoleRenderer(
+            exception_formatter=structlog.dev.plain_traceback,
+            colors=False,
+        ),
         "foreign_pre_chain": shared_processors,
     },
     "pretty": {
         "()": structlog.stdlib.ProcessorFormatter,
         "processor": structlog.dev.ConsoleRenderer(
-            exception_formatter=structlog.dev.RichTracebackFormatter(**_exc_formatter_options)
+            exception_formatter=structlog.dev.plain_traceback,
         ),
         "foreign_pre_chain": shared_processors,
     },
@@ -73,15 +76,15 @@ logging_config = {
         "level": logging.INFO,
     },
     "loggers": {
-        "harp": {"level": os.environ.get("LOGGING_HARP", "INFO")},
-        "harp_apps": {"level": os.environ.get("LOGGING_HARP", "INFO")},
-        "harp_apps.proxy": {"level": os.environ.get("LOGGING_HARP_PROXY", "INFO")},
-        "harp_apps.http_client": {"level": os.environ.get("LOGGING_HARP_HTTP_CLIENT", "INFO")},
+        "harp": {"level": os.environ.get("LOGGING_HARP", "WARNING")},
+        "harp_apps": {"level": os.environ.get("LOGGING_HARP", "WARNING")},
+        "harp_apps.proxy": {"level": os.environ.get("LOGGING_HARP_PROXY", "WARNING")},
+        "harp_apps.http_client": {"level": os.environ.get("LOGGING_HARP_HTTP_CLIENT", "WARNING")},
         "harp.event_dispatcher": {"level": os.environ.get("LOGGING_HARP_EVENTS", "WARNING")},
         "httpcore": {"level": os.environ.get("LOGGING_HTTP", "WARNING")},  # todo wrap in structlog
         "httpx": {"level": os.environ.get("LOGGING_HTTP", "WARNING")},  # todo wrap in structlog
         "hypercorn.access": {"level": os.environ.get("LOGGING_HYPERCORN_ACCESS", "WARNING")},
-        "hypercorn.error": {"level": os.environ.get("LOGGING_HYPERCORN_ERROR", "INFO")},
+        "hypercorn.error": {"level": os.environ.get("LOGGING_HYPERCORN_ERROR", "WARNING")},
         "sqlalchemy.engine": {"level": os.environ.get("LOGGING_SQLALCHEMY", "WARNING")},
     },
 }

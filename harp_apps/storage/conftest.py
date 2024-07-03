@@ -3,7 +3,6 @@ from functools import partial
 import pytest
 from alembic import command
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from whistle import AsyncEventDispatcher
 
 from conftest import DEFAULT_STORAGE_SETTINGS
 from harp.utils.testing.databases import TEST_DATABASES
@@ -77,10 +76,9 @@ async def sql_engine(database_url, test_id) -> AsyncEngine:
 
 
 @pytest.fixture
-async def storage(sql_engine, blob_storage) -> SqlStorage:
+async def sql_storage(sql_engine, blob_storage) -> SqlStorage:
     storage = SqlStorage(
         sql_engine,
-        dispatcher=AsyncEventDispatcher(),
         blob_storage=blob_storage,
         settings=StorageSettings(**(DEFAULT_STORAGE_SETTINGS | {"url": sql_engine.url})),
     )

@@ -15,8 +15,8 @@ from ..controllers import TransactionsController
 
 class TransactionsControllerTestFixtureMixin:
     @pytest.fixture
-    def controller(self, storage):
-        return TransactionsController(storage=storage, handle_errors=False)
+    def controller(self, sql_storage):
+        return TransactionsController(storage=sql_storage, handle_errors=False)
 
 
 class TestTransactionsController(TransactionsControllerTestFixtureMixin, StorageTestFixtureMixin):

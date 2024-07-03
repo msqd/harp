@@ -94,25 +94,27 @@ async def test_pg_trgm_not_available_for_non_postgres_databases(database_url):
 
 class TestOptimizedQueries(StorageTestFixtureMixin):
     @parametrize_with_database_urls("postgresql")
-    async def test_optimized_queries(self, storage):
+    async def test_optimized_queries(self, sql_storage):
         # store raw sql queries in `storage.sql_queries`, please
-        storage.install_debugging_instrumentation()
+        sql_storage.install_debugging_instrumentation()
 
-        opt = PgTrgmOptional(storage.engine.url)
+        opt = PgTrgmOptional(sql_storage.engine.url)
         try:
             await opt.install()
 
-            result = await storage.get_transaction_list(username="anonymous", with_messages=True, text_search="bar")
+            result = await sql_storage.get_transaction_list(username="anonymous", with_messages=True, text_search="bar")
 
-            assert len(storage.sql_queries) == 2
+            assert len(sql_storage.sql_queries) == 2
 
             for _ in range(100):
-                await self.create_transaction(storage, endpoint="/api/transactions/foo/bar/baz", tags={"foo": "bar"})
+                await self.create_transaction(
+                    sql_storage, endpoint="/api/transactions/foo/bar/baz", tags={"foo": "bar"}
+                )
 
-            result = await storage.get_transaction_list(username="anonymous", with_messages=True, text_search="bar")
+            result = await sql_storage.get_transaction_list(username="anonymous", with_messages=True, text_search="bar")
 
             assert len(result) == 40
-            assert len(storage.sql_queries) == 2 + 4
+            assert len(sql_storage.sql_queries) == 2 + 4
 
         finally:
             await opt.engine.dispose()

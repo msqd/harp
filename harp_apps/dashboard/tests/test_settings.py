@@ -1,5 +1,6 @@
 import pytest
 
+from harp.config import asdict
 from harp.errors import ConfigurationError
 
 from ..settings import DashboardAuthSetting, DashboardSettings
@@ -20,11 +21,12 @@ def test_invalid_auth():
 
 
 def test_basic_auth():
-    assert DashboardAuthSetting(
+    settings = DashboardAuthSetting(
         type="basic",
         algorithm="plain",
         users={"foo": "bar"},
-    ).to_dict() == {
+    )
+    assert asdict(settings) == {
         "type": "basic",
         "algorithm": "plain",
         "users": {"foo": "bar"},

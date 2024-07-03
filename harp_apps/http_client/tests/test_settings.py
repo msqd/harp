@@ -5,15 +5,16 @@ import httpx
 from whistle import AsyncEventDispatcher, IAsyncEventDispatcher
 
 from harp.config import DisabledSettings
-from harp_apps.http_client.client import AsyncHttpClient
+from harp_apps.http_client.client import AsyncClientFactory
 from harp_apps.http_client.settings import CacheSettings, HttpClientSettings
+from harp_apps.storage.services.blob_storages.null import NullBlobStorage
 
 
 class TestHttpClientSettings:
     def create_http_client(
         self, settings: HttpClientSettings, /, *, dispatcher: Optional[IAsyncEventDispatcher] = None
     ):
-        return AsyncHttpClient(settings, dispatcher=dispatcher or AsyncEventDispatcher())
+        return AsyncClientFactory(settings, dispatcher=dispatcher or AsyncEventDispatcher(), storage=NullBlobStorage())
 
     def test_without_cache(self):
         settings = HttpClientSettings(cache={"enabled": False})

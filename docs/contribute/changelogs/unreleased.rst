@@ -1,12 +1,34 @@
 Added
 :::::
 
-* Prototype of the ``rules`` application, implementing a rule engine to tune transactions with basically anything.
-* Redis support for blob storage.
+* Cache: the hishel-based cache implementation now shares the blob storage with the rest of the application, to avoid
+  duplicate work and storage.
+* DX: when out of development environment, a ``start`` command stub is available so that the unadvised user does not
+  wonder where it went.
+* Monitoring: monitoring of background worker tasks pressure.
+* Storage: redis support for blob storage.
+* Storage: audit log will now react to background worker tasks pressure by disabling storage partially or entirely based
+  on the pressure amount: >10 disables content blob storage, >100 disables header blob storage, > 1000 disables message
+  storage and > 10000 disables all storage for the transaction.
+* Storage: added a ``NullBlobStorage`` implementation for testing purposes (or to disable blob storage easily).
+* Rules: prototype of the ``rules`` application, implementing a rule engine to tune transactions with basically anything.
 
 Changed
 :::::::
 
-* Blob storage is now separated from the main storage, to allow different underlying implementations.
-* Application ``harp_apps.sqlalchemy_storage`` was renamed to ``harp_apps.storage``, to reflect the fact that
+* Logging: reverted the exception formatter to plain_traceback, as it's the usual default python formatter. It works
+  better with external tools and is more readable because of the reduced verbosity.
+* Logging: all loggers have now the WARNING default level.
+* Monitoring: normalized, enhanced and complemented prometheus observability.
+* Storage: blob storage is now separated from the main storage, to allow different underlying implementations.
+* Storage: application ``harp_apps.sqlalchemy_storage`` was renamed to ``harp_apps.storage``, to reflect the fact that
   ``sqlalchemy`` is an implementation detail, and that it now handles more than just sql or sqlalchemy-based storage.
+* Storage: SQL blob storage now keeps a LRU cache of known blobs to avoid querying the database if the answer can be closer.
+* Storage: background worker queue for storage is now separated from the storage implementation.
+* Storage: test fixture ``storage`` has been renamed to ``sql_storage`` for expliciteness and less linter conflicts.
+
+Fixed
+:::::
+
+* Proxy: some errors happening when the server unexpectedly closes the connection although the client is waiting for
+  data are now caught and logged like other network/system related errors.

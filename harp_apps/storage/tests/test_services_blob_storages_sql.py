@@ -12,12 +12,12 @@ async def test_basics(sql_blob_storage: SqlBlobStorage):
 
     assert _storage.type == "sql"
     assert await _storage.get("foo") is None
-    async with _storage.begin() as conn:
+    async with _storage.engine.connect() as conn:
         assert (await conn.execute(text("SELECT * FROM blobs WHERE id = 'foo'"))).fetchone() is None
 
     assert await _storage.put(blob) == blob
     assert await _storage.get("foo") == blob
-    async with _storage.begin() as conn:
+    async with _storage.engine.connect() as conn:
         assert (
             await conn.execute(
                 text("SELECT * FROM blobs WHERE id = 'foo'"),
@@ -28,5 +28,5 @@ async def test_basics(sql_blob_storage: SqlBlobStorage):
     assert await _storage.delete("foo") is None
     assert not await _storage.exists("foo")
     assert await _storage.get("foo") is None
-    async with _storage.begin() as conn:
+    async with _storage.engine.connect() as conn:
         assert (await conn.execute(text("SELECT * FROM blobs WHERE id = 'foo'"))).fetchone() is None

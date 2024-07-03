@@ -12,6 +12,7 @@ from harp_apps.storage.services.sql import SqlStorage
 from .factories import AsyncEngineFactory, RedisClientFactory
 from .settings import StorageSettings
 from .types import IBlobStorage, IStorage
+from .worker import StorageAsyncWorkerQueue
 
 logger = get_logger(__name__)
 
@@ -68,6 +69,11 @@ class StorageApplication(Application):
 
         self.storage = event.provider.get(IStorage)
         await self.storage.initialize()
+
+        self.worker = StorageAsyncWorkerQueue(
+            event.provider.get(AsyncEngine), self.storage, event.provider.get(IBlobStorage)
+        )
+        self.worker.register_events(event.dispatcher)
 
     async def on_dispose(self, event: FactoryDisposeEvent):
         await self.storage.finalize()

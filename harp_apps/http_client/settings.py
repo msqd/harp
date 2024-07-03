@@ -23,6 +23,8 @@ class CacheSettings(DisableableBaseSettings):
         cacheable_status_codes=list(HEURISTICALLY_CACHEABLE_STATUS_CODES),
     )
     storage: Definition["AsyncBaseStorage"] = Lazy(None)
+    ttl: Optional[float] = None
+    check_ttl_every: float = 60
 
 
 @settings_dataclass

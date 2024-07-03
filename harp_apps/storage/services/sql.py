@@ -6,19 +6,15 @@ from functools import partial
 from operator import itemgetter
 from typing import Iterable, Optional, override
 
-from sqlalchemy import and_, bindparam, case, delete, func, literal, literal_column, null, or_, select, text, update
+from sqlalchemy import and_, bindparam, case, delete, func, literal, literal_column, null, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from sqlalchemy.sql.functions import count
-from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.asgi.events import HttpMessageEvent, TransactionEvent
-from harp.http import get_serializer_for
-from harp.models import Blob, Results, Transaction
+from harp.models import Results, Transaction
 from harp.settings import PAGE_SIZE
 from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_datetime
-from harp_apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE, EVENT_TRANSACTION_STARTED
 from harp_apps.storage.constants import TimeBucket
 from harp_apps.storage.models import FLAGS_BY_NAME, Base, BlobsRepository, FlagsRepository
 from harp_apps.storage.models import Message as SqlMessage
@@ -148,13 +144,7 @@ class SqlStorage(IStorage):
     """Reference to the sqlalchemy async engine, which is a gateway to the database connectivity, able to provide a
     connection used to execute queries."""
 
-    def __init__(
-        self,
-        engine: AsyncEngine,
-        dispatcher: IAsyncEventDispatcher,
-        blob_storage: IBlobStorage,
-        settings: StorageSettings,
-    ):
+    def __init__(self, engine: AsyncEngine, blob_storage: IBlobStorage, settings: StorageSettings):
         # XXX lokks like settings are not used anymore, except to know if we should run migrations or not
         self._should_migrate = settings.migrate
 
@@ -164,13 +154,6 @@ class SqlStorage(IStorage):
 
         self.engine = engine
         self.session_factory = async_sessionmaker(self.engine, expire_on_commit=False)
-
-        # TODO is this the right place ? (maybe it is, but maybe it causes tight coupling to the ed which may be not
-        #      right, especially if we want to be able to use the storage out of the special context of harp proxy)
-        dispatcher.add_listener(EVENT_TRANSACTION_STARTED, self._on_transaction_started)
-        dispatcher.add_listener(EVENT_TRANSACTION_MESSAGE, self._on_transaction_message)
-        dispatcher.add_listener(EVENT_TRANSACTION_ENDED, self._on_transaction_ended)
-        self._dispatcher = dispatcher
 
         self._is_ready = asyncio.Event()
         self._worker = None
@@ -287,10 +270,6 @@ class SqlStorage(IStorage):
         if not self._worker:
             self._worker = AsyncWorkerQueue()
         return self._worker
-
-    async def wait_for_background_tasks_to_be_processed(self):
-        if self._worker:
-            await self._worker.wait_until_empty()
 
     @override
     async def get_facet_meta(self, name):
@@ -455,59 +434,6 @@ class SqlStorage(IStorage):
                         SqlUserFlag.transaction_id == transaction.id, SqlUserFlag.user_id == user.id
                     )
                 )
-
-    async def _on_transaction_started(self, event: TransactionEvent):
-        """Event handler to store the transaction in the database."""
-
-        # Copy fields into a dict that won't change before the task is handled
-        transaction = event.transaction.as_storable_dict(with_tags=True)
-
-        # Define storage closure
-        async def create_transaction():
-            nonlocal transaction
-            return await self.transactions.create(transaction)
-
-        # Schedule
-        await self.worker.push(create_transaction)
-
-    async def _on_transaction_message(self, event: HttpMessageEvent):
-        await event.message.join()
-        serializer = get_serializer_for(event.message)
-
-        # Eventually store the headers blob (later)
-        # todo is the "__headers__" dunder content type any good idea ? maybe it's just a waste of bytes.
-        headers_blob = Blob.from_data(serializer.headers, content_type="__headers__")
-        await self.worker.push(partial(self.blob_storage.put, headers_blob), ignore_errors=True)
-
-        # Eventually store the content blob (later)
-        content_blob = Blob.from_data(serializer.body, content_type=event.message.headers.get("content-type"))
-        await self.worker.push(partial(self.blob_storage.put, content_blob), ignore_errors=True)
-
-        async def create_message():
-            nonlocal event, headers_blob, content_blob
-            async with self.begin() as session:
-                session.add(
-                    SqlMessage.from_models(event.transaction, event.message, headers_blob, content_blob),
-                )
-
-        await self.worker.push(create_message)
-
-    async def _on_transaction_ended(self, event: TransactionEvent):
-        async def update_transaction():
-            async with self.begin() as session:
-                await session.execute(
-                    update(SqlTransaction)
-                    .where(SqlTransaction.id == event.transaction.id)
-                    .values(
-                        finished_at=event.transaction.finished_at.astimezone(UTC),
-                        elapsed=event.transaction.elapsed,
-                        tpdex=event.transaction.tpdex,
-                        x_status_class=event.transaction.extras.get("status_class"),
-                        x_cached=event.transaction.extras.get("cached"),
-                    )
-                )
-
-        await self.worker.push(update_transaction)
 
     async def ready(self):
         await self._is_ready.wait()

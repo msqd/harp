@@ -1,9 +1,9 @@
-import time
 from datetime import UTC, datetime
 from functools import cached_property
 from typing import Optional
 from urllib.parse import urlencode, urljoin, urlparse
 
+import httpcore
 import httpx
 from hishel._headers import parse_cache_control
 from httpx import AsyncClient, codes
@@ -16,6 +16,7 @@ from harp.http.requests import WrappedHttpRequest
 from harp.models import Transaction
 from harp.settings import USE_PROMETHEUS
 from harp.utils.guids import generate_transaction_id_ksuid
+from harp.utils.performances import performances_observer
 from harp.utils.tpdex import tpdex
 
 from .events import (
@@ -59,7 +60,15 @@ class HttpProxyController:
         """Read-only reference to the event dispatcher."""
         return self._dispatcher
 
-    def __init__(self, url, *, http_client: AsyncClient, dispatcher=None, name=None, logging=True):
+    def __init__(
+        self,
+        url,
+        *,
+        http_client: AsyncClient,
+        dispatcher: Optional[IAsyncEventDispatcher] = None,
+        name=None,
+        logging=True,
+    ):
         self.http_client = http_client
         self.url = url or self.url
         self.name = name or self.name
@@ -93,6 +102,24 @@ class HttpProxyController:
             kwargs.update(transaction.extras)
         logger.debug(message, *args, **kwargs)
 
+    def info(self, message, *args, **kwargs):
+        if not self._logging:
+            return
+        transaction: Transaction | None = kwargs.pop("transaction", None)
+        if transaction:
+            kwargs["transaction"] = transaction.id
+            kwargs.update(transaction.extras)
+        logger.info(message, *args, **kwargs)
+
+    def warning(self, message, *args, **kwargs):
+        if not self._logging:
+            return
+        transaction: Transaction | None = kwargs.pop("transaction", None)
+        if transaction:
+            kwargs["transaction"] = transaction.id
+            kwargs.update(transaction.extras)
+        logger.warning(message, *args, **kwargs)
+
     async def __call__(self, request: HttpRequest):
         """Handle an incoming request and proxy it to the configured URL.
 
@@ -102,96 +129,92 @@ class HttpProxyController:
 
         """
 
-        prometheus_labels = (self.name or "-", request.method)
-        before_time = time.perf_counter()
-        if _prometheus:
-            _prometheus["call"].labels(*prometheus_labels).inc()
+        labels = {"name": self.name or "-", "method": request.method}
 
-        # create an envelope to override things, without touching the original request
-        context = ProxyFilterEvent(self.name, request=WrappedHttpRequest(request))
-        await self.adispatch(EVENT_FILTER_REQUEST, context)
+        with performances_observer("proxy", labels=labels):
+            # create an envelope to override things, without touching the original request
+            context = ProxyFilterEvent(self.name, request=WrappedHttpRequest(request))
+            await self.adispatch(EVENT_FILTER_REQUEST, context)
 
-        context.request.headers["host"] = self.parsed_url.netloc
-        # override user agent (later, may be customizable behavior)
-        if self.user_agent:
-            context.request.headers["user-agent"] = self.user_agent
+            # replace host with target host
+            context.request.headers["host"] = self.parsed_url.netloc
 
-        # create transaction
-        transaction = await self._create_transaction_from_request(
-            context.request,
-            tags=self._extract_tags_from_request(context.request),
-        )
-        await context.request.join()
-        url = urljoin(self.url, context.request.path) + (
-            f"?{urlencode(context.request.query)}" if context.request.query else ""
-        )
+            # override user agent (later, may be customizable behavior)
+            if self.user_agent:
+                context.request.headers["user-agent"] = self.user_agent
 
-        # PROXY REQUEST
-        proxy_request = self.http_client.build_request(
-            context.request.method,
-            url,
-            headers=list(context.request.headers.items()),
-            content=context.request.body,
-            extensions={"harp": {"endpoint": self.name}},
-        )
-        self.debug(f"▶▶ {context.request.method} {url}", transaction=transaction, extensions=proxy_request.extensions)
-
-        # PROXY RESPONSE
-        before_forward_time = time.perf_counter()
-        try:
-            proxy_response = await self.http_client.send(proxy_request)
-        except httpx.ConnectError as exc:
-            if _prometheus:
-                _prometheus["time.forward"].labels(*prometheus_labels).observe(
-                    time.perf_counter() - before_forward_time
-                )
-            transaction.extras["status_class"] = "ERR"
-            await self.end_transaction(transaction, HttpError("Unavailable", exception=exc))
-            # todo add web debug information if we are not on a production env
-            return HttpResponse(
-                "Service Unavailable (remote server unavailable)", status=503, content_type="text/plain"
+            # create transaction
+            transaction = await self._create_transaction_from_request(
+                context.request,
+                tags=self._extract_tags_from_request(context.request),
             )
-        except httpx.TimeoutException as exc:
-            if _prometheus:
-                _prometheus["time.forward"].labels(*prometheus_labels).observe(
-                    time.perf_counter() - before_forward_time
-                )
-            transaction.extras["status_class"] = "ERR"
-            await self.end_transaction(transaction, HttpError("Timeout", exception=exc))
-            # todo add web debug information if we are not on a production env
-            return HttpResponse("Gateway Timeout (remote server timeout)", status=504, content_type="text/plain")
-
-        if _prometheus:
-            _prometheus["time.forward"].labels(*prometheus_labels).observe(time.perf_counter() - before_forward_time)
-
-        self.debug(
-            f"◀◀ {proxy_response.status_code} {proxy_response.reason_phrase} ({proxy_response.elapsed.total_seconds()}s{' cached' if proxy_response.extensions.get('from_cache') else ''})",
-            transaction=transaction,
-        )
-
-        response_status = proxy_response.status_code
-        response_headers = {
-            k: v
-            for k, v in proxy_response.headers.multi_items()
-            if k.lower() not in ("server", "date", "content-encoding", "content-length")
-        }
-        # XXX for now, we use transaction "extras" to store searchable data for later
-        transaction.extras["status_class"] = f"{response_status // 100}xx"
-
-        if proxy_response.extensions.get("from_cache"):
-            transaction.extras["cached"] = proxy_response.extensions.get("cache_metadata", {}).get("cache_key", True)
-
-        context.response = HttpResponse(proxy_response.content, status=response_status, headers=response_headers)
-
-        await self.end_transaction(transaction, context.response)
-        await self.adispatch(EVENT_FILTER_RESPONSE, context)
-
-        if _prometheus:
-            _prometheus["time.full"].labels(*prometheus_labels).observe(
-                time.perf_counter() - before_time,
+            await context.request.join()
+            url = urljoin(self.url, context.request.path) + (
+                f"?{urlencode(context.request.query)}" if context.request.query else ""
             )
 
-        return context.response
+            with performances_observer("http", labels=labels):
+                # PROXY REQUEST
+                proxy_request: httpx.Request = self.http_client.build_request(
+                    context.request.method,
+                    url,
+                    headers=list(context.request.headers.items()),
+                    content=context.request.body,
+                    extensions={"harp": {"endpoint": self.name}},
+                )
+                self.debug(
+                    f"▶▶ {context.request.method} {url}", transaction=transaction, extensions=proxy_request.extensions
+                )
+
+                # PROXY RESPONSE
+                try:
+                    proxy_response: httpx.Response = await self.http_client.send(proxy_request)
+                except (httpcore.NetworkError, httpx.NetworkError) as exc:
+                    transaction.extras["status_class"] = "ERR"
+                    await self.end_transaction(transaction, HttpError("Unavailable", exception=exc))
+                    # todo add web debug information if we are not on a production env
+                    return HttpResponse(
+                        "Service Unavailable (remote server unavailable)", status=503, content_type="text/plain"
+                    )
+                except (httpcore.TimeoutException, httpx.TimeoutException) as exc:
+                    transaction.extras["status_class"] = "ERR"
+                    await self.end_transaction(transaction, HttpError("Timeout", exception=exc))
+                    # todo add web debug information if we are not on a production env
+                    return HttpResponse(
+                        "Gateway Timeout (remote server timeout)", status=504, content_type="text/plain"
+                    )
+                except (httpcore.RemoteProtocolError, httpx.RemoteProtocolError):
+                    transaction.extras["status_class"] = "ERR"
+                    await self.end_transaction(transaction, HttpError("Remote server disconnected"))
+                    return HttpResponse(
+                        "Bad Gateway (remote server disconnected)", status=502, content_type="text/plain"
+                    )
+
+                self.debug(
+                    f"◀◀ {proxy_response.status_code} {proxy_response.reason_phrase} ({proxy_response.elapsed.total_seconds()}s{' cached' if proxy_response.extensions.get('from_cache') else ''})",
+                    transaction=transaction,
+                )
+
+            response_status = proxy_response.status_code
+            response_headers = {
+                k: v
+                for k, v in proxy_response.headers.multi_items()
+                if k.lower() not in ("server", "date", "content-encoding", "content-length")
+            }
+            # XXX for now, we use transaction "extras" to store searchable data for later
+            transaction.extras["status_class"] = f"{response_status // 100}xx"
+
+            if proxy_response.extensions.get("from_cache"):
+                transaction.extras["cached"] = proxy_response.extensions.get("cache_metadata", {}).get(
+                    "cache_key", True
+                )
+
+            context.response = HttpResponse(proxy_response.content, status=response_status, headers=response_headers)
+
+            await self.end_transaction(transaction, context.response)
+            await self.adispatch(EVENT_FILTER_RESPONSE, context)
+
+            return context.response
 
     async def end_transaction(self, transaction, response: BaseHttpMessage):
         spent = int((datetime.now(UTC).timestamp() - transaction.started_at.timestamp()) * 100000) / 100
@@ -199,10 +222,10 @@ class HttpProxyController:
         transaction.elapsed = spent
 
         if isinstance(response, HttpError):
-            logger.error(f"◀ {type(response).__name__} {response.message} ({spent}ms)", transaction_id=transaction.id)
+            self.warning(f"◀ {type(response).__name__} {response.message} ({spent}ms)", transaction=transaction)
         elif isinstance(response, HttpResponse):
             reason = codes.get_reason_phrase(response.status)
-            self.debug(f"◀ {response.status} {reason} ({spent}ms)", transaction=transaction)
+            self.info(f"◀ {response.status} {reason} ({spent}ms)", transaction=transaction)
         else:
             raise ValueError(f"Invalid final message type: {type(response)}")
 
@@ -230,14 +253,13 @@ class HttpProxyController:
         request_cache_control = request.headers.get("cache-control")
         if request_cache_control:
             request_cache_control = parse_cache_control([request_cache_control])
-            self.debug(f"Cache-Control: {request_cache_control}", transaction=transaction)
             if request_cache_control.no_cache:
                 transaction.extras["no_cache"] = True
 
         # XXX for now, we use transaction "extras" to store searchable data for later
         transaction.extras["method"] = request.method
 
-        self.debug(f"▶ {request.method} {request.path}", transaction=transaction)
+        self.info(f"▶ {request.method} {request.path}", transaction=transaction)
 
         # dispatch transaction started event
         # we don't really want to await this, should run in background ? or use an async queue ?
