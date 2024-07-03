@@ -17,8 +17,8 @@ class CacheSettings(DisableableBaseSettings):
     transport: Definition["AsyncCacheTransport"] = Lazy("hishel:AsyncCacheTransport")
     controller: Definition["Controller"] = Lazy(
         "hishel:Controller",
-        allow_heuristics=True,
-        allow_stale=True,
+        allow_heuristics=False,
+        allow_stale=False,
         cacheable_methods=["GET", "HEAD"],
         cacheable_status_codes=list(HEURISTICALLY_CACHEABLE_STATUS_CODES),
     )

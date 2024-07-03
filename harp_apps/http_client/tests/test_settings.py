@@ -44,8 +44,8 @@ class TestHttpClientSettings:
 
         client = self.create_http_client(settings)
         assert isinstance(client._transport, hishel.AsyncCacheTransport)
-        assert client._transport._controller._allow_heuristics is True
-        assert client._transport._controller._allow_stale is True
+        assert client._transport._controller._allow_heuristics is False
+        assert client._transport._controller._allow_stale is False
         assert client._transport._controller._cacheable_methods == ["GET", "HEAD"]
         assert client._transport._controller._cacheable_status_codes == list(
             hishel.HEURISTICALLY_CACHEABLE_STATUS_CODES
@@ -56,7 +56,7 @@ class TestHttpClientSettings:
             cache={
                 "enabled": True,
                 "controller": {
-                    "allow_heuristics": False,
+                    "allow_stale": True,
                     "cacheable_methods": ["GET"],
                     "cacheable_status_codes": [200],
                 },
