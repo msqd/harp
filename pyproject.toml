@@ -64,7 +64,7 @@ pytest-benchmark = { extras = ["histogram"], version = "^4.0.0" }
 pytest-cov = ">=4.1,<6.0"
 pytest-xdist = { version = "^3.6.1", extras = ["psutil"] }
 respx = ">=0.20.2,<0.22.0"
-ruff = "^0.4.8"
+ruff = ">=0.4.8,<0.6.0"
 sphinx = "^7.3.7"
 sphinx-autobuild = ">=2021.3.14,<2025.0.0"
 sphinx-click = "^6.0.0"
