@@ -11,6 +11,7 @@ Added
   on the pressure amount: >10 disables content blob storage, >100 disables header blob storage, > 1000 disables message
   storage and > 10000 disables all storage for the transaction.
 * Storage: added a ``NullBlobStorage`` implementation for testing purposes (or to disable blob storage easily).
+* Rules: prototype of the ``rules`` application, implementing a rule engine to tune transactions with basically anything.
 
 Changed
 :::::::

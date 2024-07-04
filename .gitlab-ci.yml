@@ -10,7 +10,7 @@ variables:
   DOCKER_BUILD: docker image build --pull
   DOCKER_BUILDKIT: "1"
   DOCKER_CLI_EXPERIMENTAL: enabled
-  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_HOST: "tcp://172.16.0.55:2375/"
   GIT_FETCH_EXTRA_FLAGS: --tags
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
@@ -18,18 +18,19 @@ variables:
   DOCKER_IMAGE: registry.gitlab.com/makersquad/oss/harp
   DOCKER_IMAGE_DEV: registry.gitlab.com/makersquad/oss/harp
   CI_REGISTRY_PASSWORD: ${CI_JOB_TOKEN}
+  KUBERNETES_CPU_REQUEST: "0.5"
+  KUBERNETES_CPU_LIMIT: "1"
 
 .DockerBuild: &DockerBuild
   image: docker:24.0.6
   stage: build
-  services:
-    - docker:24.0.6-dind
-  tags:
-    - gitlab-org-docker
   before_script:
     - apk add git make py3-pip py3-jinja2 bash
     - pip install 'poetry==1.7.1'
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  retry:
+    max: 2
+    when: runner_system_failure
 
 build:runtime:
   <<: *DockerBuild
@@ -46,26 +47,44 @@ build:dev:
   script:
     - bash bin/sandbox make buildc-dev pushc-dev
 
-test:backend:
+.TestBackend: &TestBackend
   needs: ["build:dev"]
   image: ${DOCKER_IMAGE}:${DOCKER_TAGS}-dev
   stage: test
-  services:
-    - docker:24.0.6-dind
-  variables:
+  variables: &TestBackendVariables
     GIT_STRATEGY: none
     PYTEST: /opt/venv/bin/pytest
     PYTEST_OPTIONS: "-m 'not subprocess'"
+  before_script:
+    - 'export DOCKER_HOST=tcp://$(curl -sSk -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" "https://kubernetes.default.svc/api/v1/namespaces/cicd/pods" | jq -r ''.items[] | select(.metadata.labels.app=="dind") | .status.podIP''):2375/'
   script:
     - (cd /opt/harp/src; poetry run make test-backend)
+
+test:backend:core:
+  <<: *TestBackend
+  variables:
+    <<: *TestBackendVariables
+    PYTEST_TARGETS: "harp"
+
+test:backend:apps:
+  <<: *TestBackend
+  variables:
+    <<: *TestBackendVariables
+    PYTEST_TARGETS: "harp_apps"
+
+test:backend:e2e:
+  <<: *TestBackend
+  variables:
+    <<: *TestBackendVariables
+    PYTEST_TARGETS: "tests"
 
 test:frontend:
   needs: ["build:dev"]
   image: ${DOCKER_IMAGE}:${DOCKER_TAGS}-dev
   stage: test
-  services:
-    - docker:24.0.6-dind
   variables:
+    KUBERNETES_CPU_REQUEST: "1.5"
+    KUBERNETES_CPU_LIMIT: "2"
     GIT_STRATEGY: none
   script:
     - (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm test:unit)
@@ -103,14 +122,12 @@ storybook:
 
 release:
   image: docker:24.0.6
-  needs: ["build:runtime", "test:backend", "test:frontend"]
+  needs: ["build:runtime", "test:backend:core", "test:backend:apps", "test:backend:e2e", "test:frontend"]
   stage: release
   only:
     - main
     - dev
     - tags
-  services:
-    - docker:24.0.6-dind
   variables:
     GIT_STRATEGY: none
     SOURCE_IMAGE: registry.gitlab.com/makersquad/oss/harp:${DOCKER_TAGS}

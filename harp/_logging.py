@@ -79,6 +79,7 @@ logging_config = {
         "harp": {"level": os.environ.get("LOGGING_HARP", "WARNING")},
         "harp_apps": {"level": os.environ.get("LOGGING_HARP", "WARNING")},
         "harp_apps.proxy": {"level": os.environ.get("LOGGING_HARP_PROXY", "WARNING")},
+        "harp_apps.http_client": {"level": os.environ.get("LOGGING_HARP_HTTP_CLIENT", "WARNING")},
         "harp.event_dispatcher": {"level": os.environ.get("LOGGING_HARP_EVENTS", "WARNING")},
         "httpcore": {"level": os.environ.get("LOGGING_HTTP", "WARNING")},  # todo wrap in structlog
         "httpx": {"level": os.environ.get("LOGGING_HTTP", "WARNING")},  # todo wrap in structlog

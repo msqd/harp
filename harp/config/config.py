@@ -37,11 +37,11 @@ class Config:
     DEFAULT_APPLICATIONS = [
         "http_client",
         "proxy",
-        "dashboard",
         "storage",
+        "dashboard",
+        "harp_apps.contrib.sentry",  # todo: allow to extend application list in config file without overriding all
         "telemetry",
         "janitor",
-        "harp_apps.contrib.sentry",  # todo: allow to extend application list in config file without overriding all
     ]
 
     def __init__(self, settings=None, /, applications=None):

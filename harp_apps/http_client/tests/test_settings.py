@@ -1,21 +1,29 @@
+from typing import Optional
+
 import hishel
 import httpx
+from whistle import AsyncEventDispatcher, IAsyncEventDispatcher
 
 from harp.config import DisabledSettings
-from harp_apps.http_client.client import AsyncClientFactory
+from harp_apps.http_client.factories import AsyncClientFactory
 from harp_apps.http_client.settings import CacheSettings, HttpClientSettings
 from harp_apps.storage.services.blob_storages.null import NullBlobStorage
 
 
 class TestHttpClientSettings:
+    def create_http_client(
+        self, settings: HttpClientSettings, /, *, dispatcher: Optional[IAsyncEventDispatcher] = None
+    ):
+        return AsyncClientFactory(settings, dispatcher=dispatcher or AsyncEventDispatcher(), storage=NullBlobStorage())
+
     def test_without_cache(self):
         settings = HttpClientSettings(cache={"enabled": False})
 
         assert settings.cache.enabled is False
         assert isinstance(settings.cache, DisabledSettings)
 
-        client = AsyncClientFactory(settings, NullBlobStorage())
-        assert isinstance(client._transport, httpx.AsyncHTTPTransport)
+        client = self.create_http_client(settings)
+        assert isinstance(client._transport._transport, httpx.AsyncHTTPTransport)
 
     def test_without_cache_with_custom_client(self):
         settings = HttpClientSettings(
@@ -26,8 +34,8 @@ class TestHttpClientSettings:
         assert settings.cache.enabled is False
         assert isinstance(settings.cache, DisabledSettings)
 
-        client = AsyncClientFactory(settings, NullBlobStorage())
-        assert isinstance(client._transport, httpx._client.BaseClient)
+        client = self.create_http_client(settings)
+        assert isinstance(client._transport._transport, httpx._client.BaseClient)
 
     def test_with_default_cache(self):
         settings = HttpClientSettings()
@@ -35,8 +43,8 @@ class TestHttpClientSettings:
         assert settings.cache.enabled is True
         assert isinstance(settings.cache, CacheSettings)
 
-        client = AsyncClientFactory(settings, NullBlobStorage())
-        assert isinstance(client._transport, hishel.AsyncCacheTransport)
+        client = self.create_http_client(settings)
+        assert type(client._transport).__name__ == "AsyncCacheTransport"
         assert client._transport._controller._allow_heuristics is False
         assert client._transport._controller._allow_stale is False
         assert client._transport._controller._cacheable_methods == ["GET", "HEAD"]
@@ -59,8 +67,8 @@ class TestHttpClientSettings:
         assert settings.cache.enabled is True
         assert isinstance(settings.cache, CacheSettings)
 
-        client = AsyncClientFactory(settings, NullBlobStorage())
-        assert isinstance(client._transport, hishel.AsyncCacheTransport)
+        client = self.create_http_client(settings)
+        assert type(client._transport).__name__ == "AsyncCacheTransport"
 
         assert isinstance(client._transport._controller, hishel.Controller)
         assert client._transport._controller._allow_heuristics is False

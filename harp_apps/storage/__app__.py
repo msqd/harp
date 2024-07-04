@@ -52,6 +52,8 @@ class StorageApplication(Application):
         if blob_storage_type == "sql":
             from harp_apps.storage.services.blob_storages.sql import SqlBlobStorage
 
+            if IBlobStorage in event.container:
+                del event.container._map[IBlobStorage]
             event.container.add_singleton(IBlobStorage, SqlBlobStorage)
         elif blob_storage_type == "redis":
             from redis.asyncio import Redis
@@ -60,6 +62,8 @@ class StorageApplication(Application):
 
             event.container.add_singleton(Redis, RedisClientFactory)
 
+            if IBlobStorage in event.container:
+                del event.container._map[IBlobStorage]
             event.container.add_singleton(IBlobStorage, RedisBlobStorage)
         else:
             raise ValueError(f"Unsupported blob storage type: {blob_storage_type}")
@@ -70,9 +74,8 @@ class StorageApplication(Application):
         self.storage = event.provider.get(IStorage)
         await self.storage.initialize()
 
-        self.worker = StorageAsyncWorkerQueue(
-            event.provider.get(AsyncEngine), self.storage, event.provider.get(IBlobStorage)
-        )
+        blob_storage = event.provider.get(IBlobStorage)
+        self.worker = StorageAsyncWorkerQueue(event.provider.get(AsyncEngine), self.storage, blob_storage)
         self.worker.register_events(event.dispatcher)
 
     async def on_dispose(self, event: FactoryDisposeEvent):

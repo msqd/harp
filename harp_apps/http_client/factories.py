@@ -1,7 +1,9 @@
 from httpx import AsyncClient
+from whistle import IAsyncEventDispatcher
 
 from harp.utils.services import factory
 from harp_apps.http_client.settings import HttpClientSettings
+from harp_apps.http_client.transport import AsyncFilterableTransport
 from harp_apps.storage.types import IBlobStorage
 
 
@@ -16,8 +18,9 @@ def _resolve(x, *args, **kwargs):
 
 
 @factory(AsyncClient)
-def AsyncClientFactory(self, settings: HttpClientSettings, storage: IBlobStorage):
+def AsyncClientFactory(self, settings: HttpClientSettings, dispatcher: IAsyncEventDispatcher, storage: IBlobStorage):
     transport = _resolve(settings.transport)
+    transport = AsyncFilterableTransport(transport=transport, dispatcher=dispatcher)
 
     if settings.cache.enabled:
         from harp_apps.http_client.contrib.hishel.storages import AsyncStorage

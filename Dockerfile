@@ -81,7 +81,7 @@ RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     && curl -sSL https://get.docker.com/ | sh \
     && apt-get install -y build-essential \
     && apt-get install -y nodejs \
-    && apt-get install -y vim net-tools iputils-ping netcat-openbsd bind9-host \
+    && apt-get install -y vim net-tools iputils-ping netcat-openbsd bind9-host jq \
     && rm -rf /var/lib/apt/lists/* \
     && npm install -g pnpm
 

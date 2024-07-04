@@ -1,7 +1,7 @@
-harp_apps.http_client.client
+harp_apps.http_client.events
 ============================
 
-.. automodule:: harp_apps.http_client.client
+.. automodule:: harp_apps.http_client.events
     :members:
     :undoc-members:
     :show-inheritance:

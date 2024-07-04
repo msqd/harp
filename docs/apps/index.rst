@@ -10,3 +10,4 @@ Applications
     proxy/index
     storage/index
     telemetry/index
+    rules/index

@@ -52,12 +52,12 @@ class KernelFactory:
         self.configuration = configuration
         self.hostname = "[::]"
 
-    async def build(self):
+    async def build(self) -> tuple[ASGIKernel, list[Bind]]:
         logger.info(f"🎙  HARP v.{__version__} ({__revision__})")
         # we only work on validated configuration
         self.configuration.validate()
 
-        logger.info(f"📦 Apps: {', '.join(self.configuration.applications)}")
+        logger.info(f"📦 Apps: {', '.join(map(lambda name: name.split('.')[-1], self.configuration.applications))}")
 
         self.dispatcher = self.build_event_dispatcher()
         self.container = self.build_container(self.dispatcher)
