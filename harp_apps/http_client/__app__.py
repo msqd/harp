@@ -4,7 +4,7 @@ from harp import get_logger
 from harp.config import Application
 from harp.config.events import FactoryBindEvent
 
-from .client import AsyncClientFactory
+from .factories import AsyncClientFactory
 from .settings import HttpClientSettings
 
 logger = get_logger(__name__)

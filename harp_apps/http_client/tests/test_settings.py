@@ -5,7 +5,7 @@ import httpx
 from whistle import AsyncEventDispatcher, IAsyncEventDispatcher
 
 from harp.config import DisabledSettings
-from harp_apps.http_client.client import AsyncClientFactory
+from harp_apps.http_client.factories import AsyncClientFactory
 from harp_apps.http_client.settings import CacheSettings, HttpClientSettings
 from harp_apps.storage.services.blob_storages.null import NullBlobStorage
 
@@ -44,7 +44,7 @@ class TestHttpClientSettings:
         assert isinstance(settings.cache, CacheSettings)
 
         client = self.create_http_client(settings)
-        assert isinstance(client._transport, hishel.AsyncCacheTransport)
+        assert type(client._transport).__name__ == "AsyncCacheTransport"
         assert client._transport._controller._allow_heuristics is False
         assert client._transport._controller._allow_stale is False
         assert client._transport._controller._cacheable_methods == ["GET", "HEAD"]
@@ -68,7 +68,7 @@ class TestHttpClientSettings:
         assert isinstance(settings.cache, CacheSettings)
 
         client = self.create_http_client(settings)
-        assert isinstance(client._transport, hishel.AsyncCacheTransport)
+        assert type(client._transport).__name__ == "AsyncCacheTransport"
 
         assert isinstance(client._transport._controller, hishel.Controller)
         assert client._transport._controller._allow_heuristics is False

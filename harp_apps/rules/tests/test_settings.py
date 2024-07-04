@@ -27,9 +27,17 @@ def test_idempotence():
     settings = RulesSettings(**example_rules)
     normalized_sources = settings._asdict()
     assert normalized_sources == {
-        "~= ^.*$": {"~= ^.*$": {"~= ^on_request$": ["request.headers['X-Forwarded-For'] " "= 'Joe'"]}},
-        "~= ^httpbin\\-.*$": {
-            "~= ^GET\\ /.*$": {"~= ^on_remote_response$": ["response.headers['Cache-Control'] " "= " "'max-age=3600'"]}
+        "=~ ^.*$": {
+            "=~ ^.*$": {
+                "=~ ^on_request$": ["request.headers['X-Forwarded-For'] = 'Joe'"],
+            }
+        },
+        "=~ ^httpbin\\-.*$": {
+            "=~ ^GET\\ /.*$": {
+                "=~ ^on_remote_response$": [
+                    "response.headers['Cache-Control'] = 'max-age=3600'",
+                ]
+            }
         },
     }
 

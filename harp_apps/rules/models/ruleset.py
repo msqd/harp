@@ -3,7 +3,7 @@ import re
 
 
 def _to_rule_regex(pattern):
-    if pattern.startswith("~= "):
+    if pattern.startswith("=~ "):
         return re.compile(pattern[3:])
     return re.compile("^" + ".*".join([re.escape(x) for x in pattern.split("*")]) + "$")
 
@@ -50,9 +50,9 @@ class RuleSet:
         for key, value in source.items():
             _regex = _to_rule_regex(key)
             if isinstance(value, list):
-                rules[_regex], normalized[f"~= {_regex.pattern}"] = self._compile_rule_list(value, level=level + 1)
+                rules[_regex], normalized[f"=~ {_regex.pattern}"] = self._compile_rule_list(value, level=level + 1)
             elif isinstance(value, dict):
-                rules[_regex], normalized[f"~= {_regex.pattern}"] = self._compile_rule_dict(
+                rules[_regex], normalized[f"=~ {_regex.pattern}"] = self._compile_rule_dict(
                     value, level=level + 1, levels=levels
                 )
             else:

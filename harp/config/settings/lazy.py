@@ -71,6 +71,13 @@ class ConstantDefinition(Definition):
         return self.value
 
 
+_ALIASES = {
+    "hishel:AsyncCacheTransport": "harp_apps.http_client._vendors._hishel.transports:AsyncCacheTransport",
+    "hishel._async._transports:AsyncCacheTransport": "harp_apps.http_client._vendors._hishel.transports:AsyncCacheTransport",
+    "hishel._async:AsyncCacheTransport": "harp_apps.http_client._vendors._hishel.transports:AsyncCacheTransport",
+}
+
+
 def Lazy(path_or_factory, *args, _default=None, **kwargs) -> Definition[type]:
     if path_or_factory is None:
         return ConstantDefinition(value=None)
@@ -98,6 +105,7 @@ def Lazy(path_or_factory, *args, _default=None, **kwargs) -> Definition[type]:
         return Lazy(path, *args, **kwargs)
 
     if isinstance(path_or_factory, str):
+        path_or_factory = _ALIASES.get(path_or_factory, path_or_factory)
         path, name = path_or_factory.rsplit(":", 1)
         return Definition(path=path, name=name, args=args, kwargs=kwargs)
 
