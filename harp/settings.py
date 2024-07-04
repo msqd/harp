@@ -27,7 +27,7 @@ if HARP_ENV is not None:
     if HARP_ENV not in ("dev", "prod"):
         HARP_ENV = None
 
-USE_PROMETHEUS = get_bool_from_env("USE_ASGI_PROMETHEUS_MIDDLEWARE", False)
+USE_PROMETHEUS = get_bool_from_env("USE_PROMETHEUS", False)
 
 
 def is_test_context():
