@@ -33,10 +33,10 @@ class HttpProxyControllerTestFixtureMixin(ControllerTestFixtureMixin):
         with patch("harp_apps.proxy.controllers.HttpProxyController.user_agent", "test/1.0"):
             yield
 
-    def mock_http_endpoint(self, database_url, /, *, status=200, content=""):
+    def mock_http_endpoint(self, url, /, *, status=200, content=""):
         """Make sure you decorate your tests function using this with respx.mock decorator, otherwise the real network
         will be called and you may have some headaches..."""
-        return respx.get(database_url).mock(return_value=Response(status, content=ensure_bytes(content)))
+        return respx.get(url).mock(return_value=Response(status, content=ensure_bytes(content)))
 
     def create_controller(self, url=None, *args, dispatcher: IAsyncEventDispatcher, http_client=None, **kwargs):
         return super().create_controller(

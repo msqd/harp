@@ -1,11 +1,11 @@
-from asgiref.typing import LifespanScope, LifespanStartupEvent
+from asgiref.typing import ASGIApplication, LifespanScope, LifespanStartupEvent
 
 
 class ASGICommunicator:
     default_host = "localhost"
     default_port = 80
 
-    def __init__(self, asgi_app, *, default_host=None, default_port=None):
+    def __init__(self, asgi_app: ASGIApplication, *, default_host=None, default_port=None):
         self.asgi_app = asgi_app
         self.default_host = default_host or self.default_host
         self.default_port = default_port or self.default_port
