@@ -24,8 +24,6 @@ variables:
   stage: build
   services:
     - docker:24.0.6-dind
-  tags:
-    - gitlab-org-docker
   before_script:
     - apk add git make py3-pip py3-jinja2 bash
     - pip install 'poetry==1.7.1'
