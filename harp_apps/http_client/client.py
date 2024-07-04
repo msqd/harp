@@ -1,6 +1,8 @@
 from httpx import AsyncClient
 
+from harp.utils.services import factory
 from harp_apps.http_client.settings import HttpClientSettings
+from harp_apps.storage.types import IBlobStorage
 
 
 def _resolve(x, *args, **kwargs):
@@ -13,18 +15,22 @@ def _resolve(x, *args, **kwargs):
     return x
 
 
-class AsyncHttpClient(AsyncClient):
-    settings: HttpClientSettings
+@factory(AsyncClient)
+def AsyncClientFactory(self, settings: HttpClientSettings, storage: IBlobStorage):
+    transport = _resolve(settings.transport)
 
-    def __init__(self, settings: HttpClientSettings):
-        transport = _resolve(settings.transport)
+    if settings.cache.enabled:
+        from harp_apps.http_client.contrib.hishel.storages import AsyncStorage
 
-        if settings.cache.enabled:
-            transport = _resolve(
-                settings.cache.transport,
-                transport=transport,
-                controller=_resolve(settings.cache.controller),
-                storage=_resolve(settings.cache.storage),
-            )
+        transport = _resolve(
+            settings.cache.transport,
+            transport=transport,
+            controller=_resolve(settings.cache.controller),
+            storage=AsyncStorage(
+                storage,
+                ttl=settings.cache.ttl,
+                check_ttl_every=settings.cache.check_ttl_every,
+            ),
+        )
 
-        super().__init__(transport=transport, timeout=settings.timeout)
+    return AsyncClient(transport=transport, timeout=settings.timeout)

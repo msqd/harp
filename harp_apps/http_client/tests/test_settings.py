@@ -2,8 +2,9 @@ import hishel
 import httpx
 
 from harp.config import DisabledSettings
-from harp_apps.http_client.client import AsyncHttpClient
+from harp_apps.http_client.client import AsyncClientFactory
 from harp_apps.http_client.settings import CacheSettings, HttpClientSettings
+from harp_apps.storage.services.blob_storages.null import NullBlobStorage
 
 
 class TestHttpClientSettings:
@@ -13,7 +14,7 @@ class TestHttpClientSettings:
         assert settings.cache.enabled is False
         assert isinstance(settings.cache, DisabledSettings)
 
-        client = AsyncHttpClient(settings)
+        client = AsyncClientFactory(settings, NullBlobStorage())
         assert isinstance(client._transport, httpx.AsyncHTTPTransport)
 
     def test_without_cache_with_custom_client(self):
@@ -25,7 +26,7 @@ class TestHttpClientSettings:
         assert settings.cache.enabled is False
         assert isinstance(settings.cache, DisabledSettings)
 
-        client = AsyncHttpClient(settings)
+        client = AsyncClientFactory(settings, NullBlobStorage())
         assert isinstance(client._transport, httpx._client.BaseClient)
 
     def test_with_default_cache(self):
@@ -34,7 +35,7 @@ class TestHttpClientSettings:
         assert settings.cache.enabled is True
         assert isinstance(settings.cache, CacheSettings)
 
-        client = AsyncHttpClient(settings)
+        client = AsyncClientFactory(settings, NullBlobStorage())
         assert isinstance(client._transport, hishel.AsyncCacheTransport)
         assert client._transport._controller._allow_heuristics is False
         assert client._transport._controller._allow_stale is False
@@ -58,7 +59,7 @@ class TestHttpClientSettings:
         assert settings.cache.enabled is True
         assert isinstance(settings.cache, CacheSettings)
 
-        client = AsyncHttpClient(settings)
+        client = AsyncClientFactory(settings, NullBlobStorage())
         assert isinstance(client._transport, hishel.AsyncCacheTransport)
 
         assert isinstance(client._transport._controller, hishel.Controller)

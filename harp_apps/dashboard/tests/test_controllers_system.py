@@ -14,7 +14,7 @@ from ..controllers import SystemController
 
 class SystemControllerTestFixtureMixin:
     @pytest.fixture
-    def controller(self, request, storage, blob_storage):
+    def controller(self, request, sql_storage, blob_storage):
         # retrieve settings overrides
         raw_settings = deepcopy(request.param)
         raw_settings.setdefault("storage", {})
@@ -22,7 +22,7 @@ class SystemControllerTestFixtureMixin:
         raw_settings["storage"]["blobs"].setdefault("type", blob_storage.type)
         config = Config(raw_settings)
         settings = config.validate()
-        return SystemController(storage=storage, settings=settings, handle_errors=False)
+        return SystemController(storage=sql_storage, settings=settings, handle_errors=False)
 
 
 def parametrize_with_settings(*args):
