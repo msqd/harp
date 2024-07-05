@@ -36,7 +36,7 @@ def event_loop():
 async def test_api(event_loop):
     shutdown_event = asyncio.Event()
     config = Config()
-    host, port = "localhost", get_available_network_port()
+    host, port = "127.0.0.1", get_available_network_port()
     config.bind = [f"{host}:{port}"]
 
     # starts the async server in the background
