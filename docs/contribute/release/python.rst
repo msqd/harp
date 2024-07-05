@@ -24,7 +24,7 @@ To test a wheel you just built, a script is available to run a brand new contain
 
 .. code-block:: shell
 
-    bin/runc_wheel dist/<filename>.whl
+    bin/runc_wheel dist/*.whl
 
 Once your container is up and running, you can run a server using, for example:
 
