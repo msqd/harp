@@ -79,4 +79,5 @@ class StorageApplication(Application):
         self.worker.register_events(event.dispatcher)
 
     async def on_dispose(self, event: FactoryDisposeEvent):
+        await self.worker.wait_until_empty()
         await self.storage.finalize()

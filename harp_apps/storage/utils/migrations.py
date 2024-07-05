@@ -64,6 +64,7 @@ async def do_migrate(engine, *, migrator, reset=False):
         logger.debug("🛢 [db:migrate dialect=sqlite] creating all tables (without alembic).")
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+            await conn.commit()
 
     elif migrator:
         # alembic manages migrations except for sqlite, because it's not trivial to make them work and an env using
