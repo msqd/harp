@@ -11,12 +11,12 @@ external APIs.
     :target: https://pypi.python.org/pypi/harp-proxy
     :alt: PyPI
 
-.. image:: https://www.gitlab.com/makersquad/oss/harp/badges/dev/pipeline.svg
+.. image:: https://www.gitlab.com/makersquad/oss/harp/badges/0.6/pipeline.svg
     :target: https://www.gitlab.com/makersquad/oss/harp/pipelines
     :alt: GitLab CI/CD Pipeline Status
 
-.. image:: https://readthedocs.org/projects/harp-proxy/badge/?version=latest
-    :target: https://docs.harp-proxy.net/
+.. image:: https://readthedocs.org/projects/harp-proxy/badge/?version=0.6
+    :target: https://docs.harp-proxy.net/en/0.6/
     :alt: Documentation
 
 .. image:: https://img.shields.io/pypi/pyversions/harp-proxy.svg
