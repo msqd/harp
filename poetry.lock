@@ -1236,13 +1236,13 @@ hyperframe = ">=6.0,<7"
 
 [[package]]
 name = "hishel"
-version = "0.0.29"
+version = "0.0.30"
 description = "Persistent cache implementation for httpx and httpcore"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "hishel-0.0.29-py3-none-any.whl", hash = "sha256:b050ef4f7224d2e56e88e2f6c57aea76dc712822e1148947519128023b04e800"},
-    {file = "hishel-0.0.29.tar.gz", hash = "sha256:2e49e444ff0dd412962de060ea8803b6bf1a1daca6365221ffb5a160a015126b"},
+    {file = "hishel-0.0.30-py3-none-any.whl", hash = "sha256:0c73a779a6b554b52dff75e5962057df25764fd798c31b9435ce6398b1b171c8"},
+    {file = "hishel-0.0.30.tar.gz", hash = "sha256:656393ee77e9c39a0d6c527c74810e15d96e598dcb9b191f20a788608ceaca99"},
 ]
 
 [package.dependencies]
@@ -3687,4 +3687,4 @@ dev = ["honcho", "watchfiles"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "fa7118198d6f2d78d2d3635fb99ec1cff19948958cf79afdebc0042e668fe9e9"
+content-hash = "656e42797c26463da3e41c6cd101ed90413181de6c75922dd1d66db8d6810d07"
