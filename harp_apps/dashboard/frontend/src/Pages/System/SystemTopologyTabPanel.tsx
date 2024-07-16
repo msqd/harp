@@ -21,16 +21,16 @@ function Node({
   labelOffsetY?: number
   h?: number
   name: string
-  shape?: "rect" | "db"
+  shape?: "rect" | "db" | "globe"
 }) {
   return (
-    <g transform={`translate(${x}, ${y})`}>
+    <g transform={`translate(${x}, ${y + 4 * (h - 1)})`}>
       {
         {
           rect: (
             <rect
               width={16}
-              height={8 * (h + 1)}
+              height={16}
               rx={2}
               ry={2}
               fill={theme`colors.slate.100`}
@@ -44,7 +44,17 @@ function Node({
               strokeLinecap="round"
               strokeLinejoin="round"
               fill={theme`colors.slate.100`}
-              strokeWidth={2}
+              strokeWidth={1.5}
+              stroke={theme`colors.slate.600`}
+            />
+          ),
+          globe: (
+            <path
+              d="m7.85,15.7a7.85,7.85 0 0 0 7.61,-5.89m-7.61,5.89a7.85,7.85 0 0 1 -7.61,-5.89m7.61,5.89c2.16,0 3.93,-3.52 3.93,-7.85s-1.76,-7.85 -3.93,-7.85m0,15.7c-2.16,0 -3.93,-3.52 -3.93,-7.85s1.76,-7.85 3.93,-7.85m0,0a7.85,7.85 0 0 1 6.84,3.99m-6.84,-3.99a7.85,7.85 0 0 0 -6.84,3.99m13.68,0a10.42,10.42 0 0 1 -6.84,2.55c-2.62,0 -5.01,-0.96 -6.84,-2.55m13.68,0a7.82,7.82 0 0 1 1.01,3.86c0,0.68 -0.09,1.33 -0.24,1.96m0,0a15.63,15.63 0 0 1 -7.61,1.96c-2.76,0 -5.35,-0.71 -7.61,-1.96m0,0a7.87,7.87 0 0 1 -0.24,-1.96c0,-1.4 0.37,-2.71 1.01,-3.86"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill={theme`colors.slate.100`}
+              strokeWidth={1.5}
               stroke={theme`colors.slate.600`}
             />
           ),
@@ -146,7 +156,7 @@ export function SystemTopologyTabPanel() {
 
             {data.clients.map((client, i) => (
               <Fragment key={`client-${i}`}>
-                <Node x={clientsXOffset} y={clientsYOffset + i * 48} h={2} name={client.name} />
+                <Node x={clientsXOffset} y={clientsYOffset + i * 48} h={2} name={client.name} shape="globe" />
                 <Link x1={clientsXOffset + 16} y1={clientsYOffset + i * 48 + 8} x2={210} y2={100 + 8} />
                 <Link x1={clientsXOffset + 16} y1={clientsYOffset + i * 48 + 8 + 8} x2={210} y2={140 + 8} />
               </Fragment>
