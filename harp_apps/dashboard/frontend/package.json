@@ -59,6 +59,7 @@
     "react-router-dom": "^6.25.1",
     "react-syntax-highlighter": "^15.5.0",
     "sort-by": "^1.2.0",
+    "three": "^0.166.1",
     "url-join": "^5.0.0"
   },
   "devDependencies": {
@@ -77,6 +78,7 @@
     "@types/sync-fetch": "^0.4.3",
     "@typescript-eslint/eslint-plugin": "^7.17.0",
     "@typescript-eslint/parser": "^7.17.0",
+    "@types/three": "^0.166.0",
     "@vitejs/plugin-react": "^4.3.1",
     "@vitest/coverage-v8": "^2.0.5",
     "autoprefixer": "^10.4.19",

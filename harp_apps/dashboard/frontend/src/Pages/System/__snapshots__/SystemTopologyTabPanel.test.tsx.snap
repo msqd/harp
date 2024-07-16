@@ -25,114 +25,460 @@ exports[`renders the title and data when the query is successful 1`] = `
           Topology
         </h2>
         <svg
-          class="container"
-          viewBox="0 0 700 250"
+          height="400px"
+          width="800px"
         >
-          <defs>
-            <marker
-              id="arrow"
-              markerHeight="10"
-              markerUnits="strokeWidth"
-              markerWidth="10"
-              orient="auto"
-              refX="0"
-              refY="3"
-            >
-              <path
-                d="M0,0 L0,6 L9,3 z"
-                fill="#000"
-              />
-            </marker>
-          </defs>
-          <rect
-            fill="lightblue"
-            height="50"
-            width="100"
-            x="50"
-            y="100"
-          />
-          <text
-            dominant-baseline="middle"
-            fill="black"
-            text-anchor="middle"
-            x="100"
-            y="125"
-          >
-            Localhost
-          </text>
-          <rect
-            fill="lightblue"
-            height="170"
-            width="150"
-            x="250"
-            y="50"
-          />
-          <text
-            fill="black"
-            x="300"
-            y="125"
-          >
-            HARP
-          </text>
-          <line
-            marker-end="url(#arrow)"
-            stroke="black"
-            x1="150"
-            x2="240"
-            y1="125"
-            y2="125"
-          />
           <g>
             <rect
-              fill="lightblue"
-              height="50"
-              width="92"
-              x="500"
+              fill="#f8fafc"
+              height="184"
+              stroke="#e2e8f0"
+              stroke-dasharray="4 4"
+              stroke-width="2"
+              width="200"
+              x="186"
               y="60"
             />
             <text
-              dominant-baseline="middle"
-              fill="black"
-              text-anchor="middle"
-              x="546"
-              y="90"
+              fill="#94a3b8"
+              font-size="12"
+              font-weight="600"
+              x="200"
+              y="84"
             >
-              endpoint1
+              HARP (proxy)
             </text>
-            <line
-              marker-end="url(#arrow)"
-              stroke="black"
-              x1="400"
-              x2="490"
-              y1="85"
-              y2="85"
-            />
-          </g>
-          <g>
-            <rect
-              fill="lightblue"
-              height="50"
-              width="92"
-              x="500"
-              y="160"
-            />
-            <text
-              dominant-baseline="middle"
-              fill="black"
-              text-anchor="middle"
-              x="546"
-              y="190"
+            <g
+              transform="translate(10, 76)"
             >
-              endpoint2
-            </text>
-            <line
-              marker-end="url(#arrow)"
-              stroke="black"
-              x1="400"
-              x2="490"
-              y1="185"
-              y2="185"
-            />
+              <rect
+                fill="#f1f5f9"
+                height="24"
+                rx="2"
+                ry="2"
+                stroke="#475569"
+                stroke-width="2"
+                width="16"
+              />
+              <text
+                font-size="10"
+                x="0"
+                y="36"
+              >
+                default
+              </text>
+            </g>
+            <g>
+              <path
+                d="M28.974801233558665,84.38801755220331 L207.02519876644135,107.61198244779669"
+                stroke="white"
+                stroke-width="7"
+              />
+              <path
+                d="M29.2334796016942,82.40481672983086 L207.28387713457687,105.62878162542425 L197.75589057491794,101.3605885511879"
+                fill="none"
+                stroke="#67e8f9"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+              <path
+                d="M206.7665203983058,109.59518327016914 L28.71612286542313,86.37121837457575 L38.244109425082044,90.6394114488121"
+                fill="none"
+                stroke="#bef264"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+            </g>
+            <g>
+              <path
+                d="M28.870021641286577,92.87348484734808 L207.12997835871343,147.1265151526519"
+                stroke="white"
+                stroke-width="7"
+              />
+              <path
+                d="M29.452344872851967,90.96013708649038 L207.71230159027883,145.2131673917942 L199.01904763333832,139.43152959268068"
+                fill="none"
+                stroke="#67e8f9"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+              <path
+                d="M206.54765512714803,149.03986291350964 L28.287698409721184,94.7868326082058 L36.98095236666168,100.56847040731932"
+                fill="none"
+                stroke="#bef264"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+            </g>
+            <g
+              transform="translate(10, 124)"
+            >
+              <rect
+                fill="#f1f5f9"
+                height="24"
+                rx="2"
+                ry="2"
+                stroke="#475569"
+                stroke-width="2"
+                width="16"
+              />
+              <text
+                font-size="10"
+                x="0"
+                y="36"
+              >
+                dmz
+              </text>
+            </g>
+            <g>
+              <path
+                d="M28.974801233558665,131.6119824477967 L207.02519876644135,108.38801755220331"
+                stroke="white"
+                stroke-width="7"
+              />
+              <path
+                d="M28.716122865423127,129.62878162542424 L206.7665203983058,106.40481672983087 L196.46249873424028,104.72340733694989"
+                fill="none"
+                stroke="#67e8f9"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+              <path
+                d="M207.28387713457687,110.37121837457575 L29.233479601694203,133.59518327016914 L39.53750126575973,135.2765926630501"
+                fill="none"
+                stroke="#bef264"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+            </g>
+            <g>
+              <path
+                d="M28.99716847506518,140.13031167282892 L207.00283152493483,147.86968832717108"
+                stroke="white"
+                stroke-width="7"
+              />
+              <path
+                d="M29.084042923617794,138.1321993561188 L207.08970597348744,145.87157601046096 L197.22945606276576,142.4400352926327"
+                fill="none"
+                stroke="#67e8f9"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+              <path
+                d="M206.9159570763822,149.8678006438812 L28.910294026512567,142.12842398953904 L38.770543937234244,145.5599647073673"
+                fill="none"
+                stroke="#bef264"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+            </g>
+            <g
+              transform="translate(10, 172)"
+            >
+              <rect
+                fill="#f1f5f9"
+                height="24"
+                rx="2"
+                ry="2"
+                stroke="#475569"
+                stroke-width="2"
+                width="16"
+              />
+              <text
+                font-size="10"
+                x="0"
+                y="36"
+              >
+                internal
+              </text>
+            </g>
+            <g>
+              <path
+                d="M28.79372833911726,178.90680195425847 L207.20627166088275,109.09319804574153"
+                stroke="white"
+                stroke-width="7"
+              />
+              <path
+                d="M28.064929641956237,177.04431639484696 L206.4774729637217,107.23071248633003 L196.07184712092263,108.0809776330179"
+                fill="none"
+                stroke="#67e8f9"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+              <path
+                d="M207.93507035804376,110.95568360515304 L29.522527036278284,180.76928751366998 L39.92815287907735,179.91902236698212"
+                fill="none"
+                stroke="#bef264"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+            </g>
+            <g>
+              <path
+                d="M28.931529091768404,187.36271106700687 L207.0684709082316,148.63728893299313"
+                stroke="white"
+                stroke-width="7"
+              />
+              <path
+                d="M28.506669803106316,185.40835833916125 L206.6436116195695,146.68293620514754 L196.23455904734837,145.8757035566896"
+                fill="none"
+                stroke="#67e8f9"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+              <path
+                d="M207.49333019689368,150.59164166083875 L29.35638838043049,189.31706379485246 L39.76544095265163,190.1242964433104"
+                fill="none"
+                stroke="#bef264"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+            </g>
+            <g
+              transform="translate(10, 220)"
+            >
+              <rect
+                fill="#f1f5f9"
+                height="24"
+                rx="2"
+                ry="2"
+                stroke="#475569"
+                stroke-width="2"
+                width="16"
+              />
+              <text
+                font-size="10"
+                x="0"
+                y="36"
+              >
+                contractors
+              </text>
+            </g>
+            <g>
+              <path
+                d="M28.512831790515843,226.36119665835923 L207.48716820948417,109.63880334164077"
+                stroke="white"
+                stroke-width="7"
+              />
+              <path
+                d="M27.420296229422,224.685975464682 L206.3946326483903,107.96358214796354 L196.37972333836342,110.91342816291692"
+                fill="none"
+                stroke="#67e8f9"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+              <path
+                d="M208.579703770578,111.314024535318 L29.605367351609686,228.03641785203646 L39.620276661636595,225.08657183708308"
+                fill="none"
+                stroke="#bef264"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+            </g>
+            <g>
+              <path
+                d="M28.70640266490694,234.70563350808797 L207.29359733509307,149.29436649191203"
+                stroke="white"
+                stroke-width="7"
+              />
+              <path
+                d="M27.843491670298928,232.9013650648167 L206.43068634048504,147.49009804864073 L196.11497763221655,149.09825035677386"
+                fill="none"
+                stroke="#67e8f9"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+              <path
+                d="M208.15650832970107,151.0986349351833 L29.56931365951495,236.50990195135927 L39.88502236778343,234.90174964322617"
+                fill="none"
+                stroke="#bef264"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+            </g>
+            <g>
+              <path
+                d="M218,119 L218,197"
+                stroke="white"
+                stroke-width="7"
+              />
+              <path
+                d="M220,119 L220,197 L223,187"
+                fill="none"
+                stroke="#67e8f9"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+              <path
+                d="M216,197 L216,119 L213,129"
+                fill="none"
+                stroke="#bef264"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+            </g>
+            <g
+              transform="translate(210, 100)"
+            >
+              <rect
+                fill="#f1f5f9"
+                height="16"
+                rx="2"
+                ry="2"
+                stroke="#475569"
+                stroke-width="2"
+                width="16"
+              />
+              <text
+                font-size="10"
+                x="16"
+                y="28"
+              >
+                httpbin-1
+              </text>
+            </g>
+            <g>
+              <path
+                d="M218,159 L218,197"
+                stroke="white"
+                stroke-width="7"
+              />
+              <path
+                d="M220,159 L220,197 L223,187"
+                fill="none"
+                stroke="#67e8f9"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+              <path
+                d="M216,197 L216,159 L213,169"
+                fill="none"
+                stroke="#bef264"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+            </g>
+            <g
+              transform="translate(210, 140)"
+            >
+              <rect
+                fill="#f1f5f9"
+                height="16"
+                rx="2"
+                ry="2"
+                stroke="#475569"
+                stroke-width="2"
+                width="16"
+              />
+              <text
+                font-size="10"
+                x="16"
+                y="28"
+              >
+                httpbin-2
+              </text>
+            </g>
+            <g
+              transform="translate(210, 200)"
+            >
+              <path
+                d="m14.7,3.36c0,1.84 -3,3.34 -6.7,3.34s-6.7,-1.5 -6.7,-3.34m13.4,0c0,-1.86 -3,-3.36 -6.7,-3.36s-6.7,1.5 -6.7,3.36m13.4,0l0,9.14c0,1.84 -3,3.34 -6.7,3.34s-6.7,-1.5 -6.7,-3.34l0,-9.14m13.4,0l0,3.05m-13.4,-3.05l0,3.05m13.4,0l0,3.05c0,1.84 -3,3.34 -6.7,3.34s-6.7,-1.5 -6.7,-3.34l0,-3.05m13.4,0c0,1.84 -3,3.34 -6.7,3.34s-6.7,-1.5 -6.7,-3.34"
+                fill="#f1f5f9"
+                stroke="#475569"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+              />
+              <text
+                font-size="10"
+                x="0"
+                y="28"
+              >
+                Cache
+              </text>
+            </g>
+            <g>
+              <path
+                d="M229,108 L407,108"
+                stroke="white"
+                stroke-width="7"
+              />
+              <path
+                d="M229,106 L407,106 L397,103"
+                fill="none"
+                stroke="#67e8f9"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+              <path
+                d="M407,110 L229,110 L239,113"
+                fill="none"
+                stroke="#bef264"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+            </g>
+            <g
+              transform="translate(410, 100)"
+            >
+              <rect
+                fill="#f1f5f9"
+                height="16"
+                rx="2"
+                ry="2"
+                stroke="#475569"
+                stroke-width="2"
+                width="16"
+              />
+              <text
+                font-size="10"
+                x="0"
+                y="28"
+              >
+                httpbin-1 (remote)
+              </text>
+            </g>
+            <g>
+              <path
+                d="M229,148 L407,148"
+                stroke="white"
+                stroke-width="7"
+              />
+              <path
+                d="M229,146 L407,146 L397,143"
+                fill="none"
+                stroke="#67e8f9"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+              <path
+                d="M407,150 L229,150 L239,153"
+                fill="none"
+                stroke="#bef264"
+                stroke-width="3"
+                style="filter: saturate(.2);"
+              />
+            </g>
+            <g
+              transform="translate(410, 140)"
+            >
+              <rect
+                fill="#f1f5f9"
+                height="16"
+                rx="2"
+                ry="2"
+                stroke="#475569"
+                stroke-width="2"
+                width="16"
+              />
+              <text
+                font-size="10"
+                x="0"
+                y="28"
+              >
+                httpbin-2 (remote)
+              </text>
+            </g>
           </g>
         </svg>
       </div>
