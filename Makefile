@@ -35,6 +35,7 @@ PNPM ?= $(shell which pnpm || echo "pnpm")
 # misc.
 SED ?= $(shell which gsed || which sed || echo "sed")
 TESTC_COMMAND ?= poetry shell
+TEST_SKIP_FRONT ?=
 
 # constants
 FRONTEND_DIR = harp_apps/dashboard/frontend
@@ -111,10 +112,15 @@ qa: preqa test  ## Runs all QA checks, with most common databases.
 qa-full:  ## Runs all QA checks, including all supported databases.
 	TEST_ALL_DATABASES=true $(MAKE) qa
 
+qa-nofront:
+	TEST_SKIP_FRONT=1 $(MAKE) qa
+
 types:  ## Generates frontend types from the python code.
 	$(RUN) bin/generate_types
 
-format: format-backend format-frontend  ## Formats the full codebase (backend and frontend).
+format:  ## Formats the full codebase (backend and frontend).
+	$(MAKE) format-backend
+	test -z "$(TEST_SKIP_FRONT)" && $(MAKE) format-frontend || (cd $(FRONTEND_DIR); $(PNPM) prettier -w src/Models)
 
 format-backend:  ## Formats the backend codebase.
 	$(RUN) isort harp harp_apps tests
@@ -131,7 +137,7 @@ optimize-images:
 
 test:  ## Runs all tests.
 	$(MAKE) test-backend
-	$(MAKE) test-frontend
+	test -z "$(TEST_SKIP_FRONT)" && $(MAKE) test-frontend || echo "Skipped."
 
 test-backend: install-backend-dev  ## Runs backend tests.
 	$(PYTEST) $(PYTEST_TARGETS) \

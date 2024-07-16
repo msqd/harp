@@ -10,7 +10,7 @@ variables:
   DOCKER_BUILD: docker image build --pull
   DOCKER_BUILDKIT: "1"
   DOCKER_CLI_EXPERIMENTAL: enabled
-  DOCKER_HOST: "tcp://172.16.0.55:2375/"
+  DOCKER_HOST: "tcp://dind:2375/"
   GIT_FETCH_EXTRA_FLAGS: --tags
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
@@ -47,18 +47,29 @@ build:dev:
   script:
     - bash bin/sandbox make buildc-dev pushc-dev
 
-.TestBackend: &TestBackend
+.TestBase: &TestBase
   needs: ["build:dev"]
   image: ${DOCKER_IMAGE}:${DOCKER_TAGS}-dev
   stage: test
-  variables: &TestBackendVariables
+  variables: &TestBaseVariables
     GIT_STRATEGY: none
-    PYTEST: /opt/venv/bin/pytest
-    PYTEST_OPTIONS: "-m 'not subprocess'"
   before_script:
     - 'export DOCKER_HOST=tcp://$(curl -sSk -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" "https://kubernetes.default.svc/api/v1/namespaces/cicd/pods" | jq -r ''.items[] | select(.metadata.labels.app=="dind") | .status.podIP''):2375/'
+    - 'echo DOCKER_HOST=$DOCKER_HOST'
+
+.TestBackend: &TestBackend
+  <<: *TestBase
+  variables: &TestBackendVariables
+    <<: *TestBaseVariables
+    PYTEST: /opt/venv/bin/pytest
+    PYTEST_OPTIONS: "-m 'not subprocess'"
   script:
     - (cd /opt/harp/src; poetry run make test-backend)
+
+.TestFrontend: &TestFrontend
+  <<: *TestBase
+  variables: &TestFrontendVariables
+    <<: *TestBaseVariables
 
 test:backend:core:
   <<: *TestBackend
@@ -71,23 +82,38 @@ test:backend:apps:
   variables:
     <<: *TestBackendVariables
     PYTEST_TARGETS: "harp_apps"
+    KUBERNETES_CPU_REQUEST: "1"
+    KUBERNETES_CPU_LIMIT: "2"
 
 test:backend:e2e:
   <<: *TestBackend
   variables:
     <<: *TestBackendVariables
     PYTEST_TARGETS: "tests"
+    PYTEST_CPUS: "1"
 
-test:frontend:
-  needs: ["build:dev"]
-  image: ${DOCKER_IMAGE}:${DOCKER_TAGS}-dev
-  stage: test
+test:frontend:unit:
+  <<: *TestFrontend
   variables:
-    KUBERNETES_CPU_REQUEST: "1.5"
-    KUBERNETES_CPU_LIMIT: "2"
-    GIT_STRATEGY: none
+    <<: *TestFrontendVariables
+    KUBERNETES_CPU_REQUEST: "2"
+    KUBERNETES_CPU_LIMIT: "3"
   script:
     - (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm test:unit)
+
+#test:frontend:browser:
+#  <<: *TestFrontend
+#  variables:
+#    <<: *TestFrontendVariables
+#  script:
+#    - (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm test:browser)
+#
+#test:frontend:visual:
+#  <<: *TestFrontend
+#  variables:
+#    <<: *TestFrontendVariables
+#  script:
+#    - (cd /opt/harp/src; bin/runc_visualtests pnpm test:ui:dev)
 
 doc:html:
   needs: ["build:dev"]
@@ -122,7 +148,14 @@ storybook:
 
 release:
   image: docker:24.0.6
-  needs: ["build:runtime", "test:backend:core", "test:backend:apps", "test:backend:e2e", "test:frontend"]
+  needs:
+    - "build:runtime"
+    - "test:backend:core"
+    - "test:backend:apps"
+    - "test:backend:e2e"
+    - "test:frontend:unit"
+    # - "test:frontend:browser"
+    # - "test:frontend:visual"
   stage: release
   only:
     - /^[0-9]+\.[0-9]+$/
@@ -131,16 +164,26 @@ release:
     GIT_STRATEGY: none
     SOURCE_IMAGE: registry.gitlab.com/makersquad/oss/harp:${DOCKER_TAGS}
   before_script:
-    - apk add git make py3-pip py3-jinja2 bash
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker pull ${SOURCE_IMAGE}
     - docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD docker.io
   script:
-    - test -n "$CI_COMMIT_BRANCH" && \
-          docker tag ${SOURCE_IMAGE} makersquad/harp-proxy:git-$CI_COMMIT_BRANCH
-    - test -n "$CI_COMMIT_TAG" && \
-          docker tag ${SOURCE_IMAGE} makersquad/harp-proxy:$CI_COMMIT_TAG
-    - test -n "$CI_COMMIT_TAG" && \
-          (echo "$CI_COMMIT_TAG" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$') && \
-          docker tag ${SOURCE_IMAGE} makersquad/harp-proxy:latest
-    - docker push makersquad/harp-proxy --all-tags
+    - echo "CI_COMMIT_BRANCH = $CI_COMMIT_BRANCH"
+    - echo "CI_COMMIT_TAG = $CI_COMMIT_TAG"
+    - if [ -n "$CI_COMMIT_BRANCH" ]; then
+        docker tag ${SOURCE_IMAGE} makersquad/harp-proxy:git-$CI_COMMIT_BRANCH;
+        docker push makersquad/harp-proxy:git-$CI_COMMIT_BRANCH;
+      fi
+    - if [ -n "$CI_COMMIT_TAG" ]; then
+        docker tag ${SOURCE_IMAGE} makersquad/harp-proxy:$CI_COMMIT_TAG;
+        docker push makersquad/harp-proxy:$CI_COMMIT_TAG;
+      fi
+    - if [ -n "$CI_COMMIT_TAG" ]; then
+        if echo "$CI_COMMIT_TAG" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+          docker tag ${SOURCE_IMAGE} makersquad/harp-proxy:latest;
+          docker push makersquad/harp-proxy:latest;
+        fi;
+      fi
+  retry:
+    max: 2
+    when: runner_system_failure
