@@ -127,11 +127,11 @@ const data = {
 }
 
 const clientsXOffset = 10
-const clientsYOffset = 76
+const clientsYOffset = 24
 const portsXOffset = 210
-const portsYOffset = 100
+const portsYOffset = 48
 const remotesXOffset = 410
-const remotesYOffset = 100
+const remotesYOffset = 48
 
 export function SystemTopologyTabPanel() {
   return (
@@ -141,16 +141,22 @@ export function SystemTopologyTabPanel() {
         <svg height="400px" width="800px">
           <g>
             <rect
-              x={210 - 24}
-              y={100 - 8 - 32}
+              x={portsXOffset - 24}
+              y={remotesYOffset - 40}
               width={200}
-              height={32 + 40 * 3.5 + 12}
+              height={32 + 40 * 4.5 + 24}
               fill={theme`colors.slate.50`}
               stroke={theme`colors.slate.200`}
               strokeWidth={2}
               strokeDasharray="4 4"
             />
-            <text x={210 - 2 - 8} y={100 - 16} fontSize={12} fontWeight={600} fill={theme`colors.slate.400`}>
+            <text
+              x={portsXOffset - 2 - 8}
+              y={portsYOffset - 16}
+              fontSize={12}
+              fontWeight={600}
+              fill={theme`colors.slate.400`}
+            >
               HARP (proxy)
             </text>
 
