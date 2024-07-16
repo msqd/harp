@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => {
             sentry: ["@sentry/browser"],
             dateFns: ["date-fns"],
             echarts: ["echarts"],
+            three: ["three"],
           },
         },
       },

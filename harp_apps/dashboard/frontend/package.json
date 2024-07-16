@@ -59,6 +59,7 @@
     "react-router-dom": "^6.24.1",
     "react-syntax-highlighter": "^15.5.0",
     "sort-by": "^1.2.0",
+    "three": "^0.166.1",
     "url-join": "^5.0.0"
   },
   "devDependencies": {
@@ -75,6 +76,7 @@
     "@types/react-sparklines": "^1.7.5",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/sync-fetch": "^0.4.3",
+    "@types/three": "^0.166.0",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "@typescript-eslint/parser": "^7.15.0",
     "@vitejs/plugin-react": "^4.3.1",
