@@ -4,7 +4,6 @@ from whistle import AsyncEventDispatcher, IDispatchedEvent, IEvent, IListener
 
 from harp import get_logger
 
-logger = get_logger(__name__)
 __title__ = "Event Dispatcher"
 
 
@@ -16,21 +15,25 @@ class LoggingAsyncEventDispatcher(AsyncEventDispatcher):
     todo: add check for non-coroutines listeners which is wrong but leads to an undecypherable error message
     """
 
+    def __init__(self, *, logger=None):
+        self.logger = logger or get_logger(__name__)
+        super().__init__()
+
     def add_listener(self, event_id: str, listener: IListener, /, *, priority: int = 0):
-        logger.info(f"👂 [Add] {event_id} ({listener})")
+        self.logger.debug(f"👂 [Add] {event_id} ({listener})")
         super().add_listener(event_id, listener, priority=priority)
 
     async def adispatch(self, event_id: str, event: Optional[IEvent] = None, /) -> IDispatchedEvent:
-        logger.info(f"⚡ [Dispatch] {event_id} ({type(event).__name__})")
+        self.logger.info(f"⚡️ [Dispatch] {event_id} ({type(event).__name__})")
         try:
             return await super().adispatch(event_id, event)
         except Exception as e:
-            logger.error(f"⚡ [Error] {event_id} ({type(event).__name__}) failed: {e}")
+            self.logger.error(f"⚡️ [Error] {event_id} ({type(event).__name__}) failed: {e}")
             raise
 
     async def _adispatch(self, listeners, event):
         for listener in listeners:
-            logger.debug(f"⚡ [DispatchOne] listener: {listener}")
+            self.logger.debug(f"⚡️ [DispatchOne] listener: {listener}")
             await listener(event)
             if event.propagation_stopped:
                 break

@@ -136,14 +136,13 @@ class HttpProxyController:
             context = ProxyFilterEvent(self.name, request=WrappedHttpRequest(request))
             await self.adispatch(EVENT_FILTER_REQUEST, context)
 
-            # replace host with target host
+            # override a few required headers. That may be done in the httpx request instead of here.
+            # And that would remove the need for WrappedHttpRequest? Maybe not because of our custom filters.
             context.request.headers["host"] = self.parsed_url.netloc
-
-            # override user agent (later, may be customizable behavior)
             if self.user_agent:
                 context.request.headers["user-agent"] = self.user_agent
 
-            # create transaction
+            # create transaction (shouldn't that be before the filter operation ? it's debatable.)
             transaction = await self._create_transaction_from_request(
                 context.request,
                 tags=self._extract_tags_from_request(context.request),
@@ -153,63 +152,73 @@ class HttpProxyController:
                 f"?{urlencode(context.request.query)}" if context.request.query else ""
             )
 
-            with performances_observer("http", labels=labels):
-                # PROXY REQUEST
-                proxy_request: httpx.Request = self.http_client.build_request(
-                    context.request.method,
-                    url,
-                    headers=list(context.request.headers.items()),
-                    content=context.request.body,
-                    extensions={"harp": {"endpoint": self.name}},
-                )
-                self.debug(
-                    f"▶▶ {context.request.method} {url}", transaction=transaction, extensions=proxy_request.extensions
-                )
+            if not context.response:
+                with performances_observer("http", labels=labels):
+                    # PROXY REQUEST
+                    remote_request: httpx.Request = self.http_client.build_request(
+                        context.request.method,
+                        url,
+                        headers=list(context.request.headers.items()),
+                        content=context.request.body,
+                        extensions={"harp": {"endpoint": self.name}},
+                    )
+                    self.debug(
+                        f"▶▶ {context.request.method} {url}",
+                        transaction=transaction,
+                        extensions=remote_request.extensions,
+                    )
 
-                # PROXY RESPONSE
+                    # PROXY RESPONSE
+                    try:
+                        remote_response: httpx.Response = await self.http_client.send(remote_request)
+                    except (httpcore.NetworkError, httpx.NetworkError) as exc:
+                        transaction.extras["status_class"] = "ERR"
+                        await self.end_transaction(transaction, HttpError("Unavailable", exception=exc))
+                        # todo add web debug information if we are not on a production env
+                        return HttpResponse(
+                            "Service Unavailable (remote server unavailable)", status=503, content_type="text/plain"
+                        )
+                    except (httpcore.TimeoutException, httpx.TimeoutException) as exc:
+                        transaction.extras["status_class"] = "ERR"
+                        await self.end_transaction(transaction, HttpError("Timeout", exception=exc))
+                        # todo add web debug information if we are not on a production env
+                        return HttpResponse(
+                            "Gateway Timeout (remote server timeout)", status=504, content_type="text/plain"
+                        )
+                    except (httpcore.RemoteProtocolError, httpx.RemoteProtocolError):
+                        transaction.extras["status_class"] = "ERR"
+                        await self.end_transaction(transaction, HttpError("Remote server disconnected"))
+                        return HttpResponse(
+                            "Bad Gateway (remote server disconnected)", status=502, content_type="text/plain"
+                        )
+                    await remote_response.aread()
+                    await remote_response.aclose()
+
                 try:
-                    proxy_response: httpx.Response = await self.http_client.send(proxy_request)
-                except (httpcore.NetworkError, httpx.NetworkError) as exc:
-                    transaction.extras["status_class"] = "ERR"
-                    await self.end_transaction(transaction, HttpError("Unavailable", exception=exc))
-                    # todo add web debug information if we are not on a production env
-                    return HttpResponse(
-                        "Service Unavailable (remote server unavailable)", status=503, content_type="text/plain"
-                    )
-                except (httpcore.TimeoutException, httpx.TimeoutException) as exc:
-                    transaction.extras["status_class"] = "ERR"
-                    await self.end_transaction(transaction, HttpError("Timeout", exception=exc))
-                    # todo add web debug information if we are not on a production env
-                    return HttpResponse(
-                        "Gateway Timeout (remote server timeout)", status=504, content_type="text/plain"
-                    )
-                except (httpcore.RemoteProtocolError, httpx.RemoteProtocolError):
-                    transaction.extras["status_class"] = "ERR"
-                    await self.end_transaction(transaction, HttpError("Remote server disconnected"))
-                    return HttpResponse(
-                        "Bad Gateway (remote server disconnected)", status=502, content_type="text/plain"
-                    )
-
+                    _elapsed = f"{remote_response.elapsed.total_seconds()}s"
+                except RuntimeError:
+                    _elapsed = "n/a"
                 self.debug(
-                    f"◀◀ {proxy_response.status_code} {proxy_response.reason_phrase} ({proxy_response.elapsed.total_seconds()}s{' cached' if proxy_response.extensions.get('from_cache') else ''})",
+                    f"◀◀ {remote_response.status_code} {remote_response.reason_phrase} ({_elapsed}{' cached' if remote_response.extensions.get('from_cache') else ''})",
                     transaction=transaction,
                 )
 
-            response_status = proxy_response.status_code
-            response_headers = {
-                k: v
-                for k, v in proxy_response.headers.multi_items()
-                if k.lower() not in ("server", "date", "content-encoding", "content-length")
-            }
-            # XXX for now, we use transaction "extras" to store searchable data for later
-            transaction.extras["status_class"] = f"{response_status // 100}xx"
+                response_headers = {
+                    k: v
+                    for k, v in remote_response.headers.multi_items()
+                    if k.lower() not in ("server", "date", "content-encoding", "content-length")
+                }
+                # XXX for now, we use transaction "extras" to store searchable data for later
+                transaction.extras["status_class"] = f"{remote_response.status_code // 100}xx"
 
-            if proxy_response.extensions.get("from_cache"):
-                transaction.extras["cached"] = proxy_response.extensions.get("cache_metadata", {}).get(
-                    "cache_key", True
+                if remote_response.extensions.get("from_cache"):
+                    transaction.extras["cached"] = remote_response.extensions.get("cache_metadata", {}).get(
+                        "cache_key", True
+                    )
+
+                context.response = HttpResponse(
+                    remote_response.content, status=remote_response.status_code, headers=response_headers
                 )
-
-            context.response = HttpResponse(proxy_response.content, status=response_status, headers=response_headers)
 
             await self.end_transaction(transaction, context.response)
             await self.adispatch(EVENT_FILTER_RESPONSE, context)

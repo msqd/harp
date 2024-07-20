@@ -17,6 +17,7 @@ Submodules
     harp.utils.bytes
     harp.utils.collections
     harp.utils.commandline
+    harp.utils.config
     harp.utils.dates
     harp.utils.env
     harp.utils.guids

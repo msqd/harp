@@ -21,7 +21,7 @@ class HttpRequestStubBridge(HttpRequestBridge):
     ):
         self._server_ipaddr = server_ipaddr
         self._server_port = server_port
-        self._method = method
+        self._method = str(method).upper()
         self._path = path
 
         if isinstance(body, bytes):
