@@ -124,7 +124,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                 class="text-xs"
               >
                 <a
-                  href="https://harp-proxy.rtfd.io/en/0.5/user/?utm_source=dashboard&utm_medium=help"
+                  href="https://docs.harp-proxy.net/en/0.6/user/?utm_source=dashboard&utm_medium=help"
                   target="_blank"
                 >
                   <svg

@@ -32,7 +32,7 @@ class BlobStorageSettings(BaseSetting):
 @settings_dataclass
 class StorageSettings(BaseSetting):
     type: str = "sqlalchemy"
-    url: URL = make_url("sqlite+aiosqlite:///harp.db")
+    url: URL = make_url("sqlite+aiosqlite:///:memory:")
     migrate: bool = True
     blobs: BlobStorageSettings = field(default_factory=BlobStorageSettings)
 

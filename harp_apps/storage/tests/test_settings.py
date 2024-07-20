@@ -8,7 +8,7 @@ def test_empty_settings():
     assert asdict(settings) == {
         "migrate": True,
         "type": "sqlalchemy",
-        "url": "sqlite+aiosqlite:///harp.db",
+        "url": "sqlite+aiosqlite:///:memory:",
         "blobs": {"type": "sql"},
     }
 
@@ -40,11 +40,11 @@ def test_override():
         "blobs": {"type": "sql"},
     }
 
-    settings.url = settings.url.set(database=":memory:")
+    settings.url = settings.url.set(database="foo.db")
     assert asdict(settings) == {
         "migrate": True,
         "type": "sqlalchemy",
-        "url": "sqlite+aiosqlite:///:memory:",
+        "url": "sqlite+aiosqlite:///foo.db",
         "blobs": {"type": "sql"},
     }
 
@@ -54,6 +54,6 @@ def test_override_blob_storage_type():
     assert asdict(settings) == {
         "migrate": True,
         "type": "sqlalchemy",
-        "url": "sqlite+aiosqlite:///harp.db",
+        "url": "sqlite+aiosqlite:///:memory:",
         "blobs": {"type": "redis", "url": "redis://localhost:6379/0"},
     }

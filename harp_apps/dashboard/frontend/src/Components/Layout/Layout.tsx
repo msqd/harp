@@ -24,7 +24,7 @@ function RightNav() {
       {systemQuery.data.user ?? "anonymous"}
       <br />
       <span className="text-xs">
-        <a href="https://harp-proxy.rtfd.io/en/0.5/user/?utm_source=dashboard&utm_medium=help" target="_blank">
+        <a href="https://docs.harp-proxy.net/en/0.6/user/?utm_source=dashboard&utm_medium=help" target="_blank">
           <QuestionMarkCircleIcon className="inline-block w-4 h-4 mx-1" />
           Help
         </a>

@@ -3,6 +3,7 @@ Initial implementation : https://trello.com/c/yCdcY7Og/1-5-http-proxy
 """
 
 import os
+from http import HTTPStatus
 
 import pytest
 from httpx import AsyncClient
@@ -12,7 +13,7 @@ from harp.asgi.kernel import ASGIKernel
 from harp.config.factories.kernel_factory import KernelFactory
 from harp.controllers import ProxyControllerResolver
 from harp.utils.testing.communicators import ASGICommunicator
-from harp.utils.testing.http import parametrize_with_http_methods, parametrize_with_http_status_codes
+from harp.utils.testing.http import parametrize_with_http_methods
 from harp_apps.proxy.controllers import HttpProxyController
 
 
@@ -134,11 +135,13 @@ class TestAsgiProxyWithStubApi:
         assert len(response["body"]) == 32
         assert response["headers"] == ((b"content-type", b"application/octet-stream"),)
 
-    @parametrize_with_http_status_codes(include=(2, 3, 4, 5))
     @parametrize_with_http_methods(exclude={"CONNECT", "HEAD"})
-    async def test_response_status(self, client: ASGICommunicator, method, status_code):
-        response = await client.http_request(method, f"/status/{status_code}")
-        assert response["status"] == status_code
+    async def test_response_status(self, client: ASGICommunicator, method):
+        statuses = list(map(lambda x: x.value, HTTPStatus))
+        statuses = list(filter(lambda x: x // 100 in (2, 3, 4, 5), statuses))
+        for status_code in statuses:
+            response = await client.http_request(method, f"/status/{status_code}")
+            assert response["status"] == status_code
 
     @parametrize_with_http_methods(exclude={"CONNECT", "HEAD"})
     async def test_headers(self, client: ASGICommunicator, method):
