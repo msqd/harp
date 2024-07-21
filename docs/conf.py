@@ -11,6 +11,10 @@ sys.path.insert(0, os.path.abspath(".."))
 
 project = "Harp Proxy"
 
+import pprint
+
+pprint.pprint(os.environ)
+
 first_year, current_year = 2023, datetime.now().year
 author = "Romain Dorgueil"
 copyright = f"{current_year}, {author}"
