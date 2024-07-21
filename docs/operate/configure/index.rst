@@ -18,4 +18,5 @@ Configuration is built from different sources that may override each other. From
 
     Dashboard </apps/dashboard/index>
     Proxy & Endpoints </apps/proxy/index>
-    storage
+    Rules Engine </apps/rules/index>
+    Storage </apps/storage/index>
