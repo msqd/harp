@@ -6,6 +6,8 @@ Dashboard (harp_apps.dashboard)
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp_apps.dashboard
+
 Submodules
 ----------
 

@@ -5,3 +5,5 @@ harp.http.typing.bridges
     :members:
     :undoc-members:
     :show-inheritance:
+
+    .. inheritance-diagram:: harp.http.typing.bridges

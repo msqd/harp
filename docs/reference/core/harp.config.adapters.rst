@@ -6,6 +6,8 @@ harp.config.adapters
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp.config.adapters
+
 Submodules
 ----------
 

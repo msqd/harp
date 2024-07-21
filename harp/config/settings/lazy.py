@@ -71,11 +71,9 @@ class ConstantDefinition(Definition):
         return self.value
 
 
-_ALIASES = {
-    "hishel:AsyncCacheTransport": "harp_apps.http_client._vendors._hishel.transports:AsyncCacheTransport",
-    "hishel._async._transports:AsyncCacheTransport": "harp_apps.http_client._vendors._hishel.transports:AsyncCacheTransport",
-    "hishel._async:AsyncCacheTransport": "harp_apps.http_client._vendors._hishel.transports:AsyncCacheTransport",
-}
+# This allows to override a class with another, for exemple for temporary vendoring while a patch to another library
+# is waiting merge upstream.
+_OVERRIDES = {}
 
 
 def Lazy(path_or_factory, *args, _default=None, **kwargs) -> Definition[type]:
@@ -105,7 +103,7 @@ def Lazy(path_or_factory, *args, _default=None, **kwargs) -> Definition[type]:
         return Lazy(path, *args, **kwargs)
 
     if isinstance(path_or_factory, str):
-        path_or_factory = _ALIASES.get(path_or_factory, path_or_factory)
+        path_or_factory = _OVERRIDES.get(path_or_factory, path_or_factory)
         path, name = path_or_factory.rsplit(":", 1)
         return Definition(path=path, name=name, args=args, kwargs=kwargs)
 

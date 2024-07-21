@@ -6,6 +6,8 @@ ASGI (harp.asgi)
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp.asgi
+
 Submodules
 ----------
 

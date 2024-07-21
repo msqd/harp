@@ -1,0 +1,6 @@
+[rules."*"."GET *"]
+
+# language=python
+on_remote_response = """
+response.headers['Cache-Control'] = 'public, max-age=3600'
+"""

@@ -6,6 +6,8 @@ harp.config.factories
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp.config.factories
+
 Submodules
 ----------
 

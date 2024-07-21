@@ -1,0 +1,9 @@
+[rules."*"."*"]
+on_request = """
+request.headers["X-Forwarded-For"] = "Joe"
+"""
+
+[rules."httpbin-*"."GET /*"]
+on_remote_response = """
+response.headers["Cache-Control"] = "max-age=3600"
+"""

@@ -6,6 +6,8 @@ SQLAlchemy Storage (harp_apps.storage)
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp_apps.storage
+
 Submodules
 ----------
 

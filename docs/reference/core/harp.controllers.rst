@@ -6,6 +6,8 @@ Controllers (harp.controllers)
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp.controllers
+
 Submodules
 ----------
 

@@ -6,6 +6,8 @@ Contrib (harp_apps.contrib)
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp_apps.contrib
+
 Submodules
 ----------
 

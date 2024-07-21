@@ -6,6 +6,8 @@ Proxy (harp_apps.proxy)
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp_apps.proxy
+
 Submodules
 ----------
 

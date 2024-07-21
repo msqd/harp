@@ -18,7 +18,9 @@ def _resolve(x, *args, **kwargs):
 
 
 @factory(AsyncClient)
-def AsyncClientFactory(self, settings: HttpClientSettings, dispatcher: IAsyncEventDispatcher, storage: IBlobStorage):
+def AsyncClientFactory(
+    self, settings: HttpClientSettings, dispatcher: IAsyncEventDispatcher, storage: IBlobStorage
+) -> AsyncClient:
     transport = _resolve(settings.transport)
     transport = AsyncFilterableTransport(transport=transport, dispatcher=dispatcher)
 

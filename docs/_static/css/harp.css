@@ -46,3 +46,12 @@
     border: none;
     box-shadow: none;
 }
+
+
+article[role=main] .graphviz {
+    text-align: center;
+}
+
+div.graphviz >object {
+    margin: 0 auto;
+}

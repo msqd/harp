@@ -5,3 +5,5 @@ Settings (harp.settings)
     :members:
     :undoc-members:
     :show-inheritance:
+
+    .. inheritance-diagram:: harp.settings

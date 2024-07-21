@@ -6,6 +6,8 @@ Views (harp.views)
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp.views
+
 Submodules
 ----------
 
