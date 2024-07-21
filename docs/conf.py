@@ -16,7 +16,11 @@ author = "Romain Dorgueil"
 copyright = f"{current_year}, {author}"
 if current_year > first_year:
     copyright = str(first_year) + "-" + copyright
-version = release = ".".join(__import__("harp").__hardcoded_version__.split(".")[0:2])
+
+if os.environ.get("READTHEDOCS_GIT_IDENTIFIER"):
+    version = release = os.environ["READTHEDOCS_GIT_IDENTIFIER"]
+else:
+    version = release = ".".join(__import__("harp").__hardcoded_version__.split(".")[0:2])
 
 extensions = [
     "sphinx.ext.autodoc",
