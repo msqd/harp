@@ -1,5 +1,5 @@
 from .errors import HttpError
-from .requests import HttpRequest
+from .requests import HttpRequest, WrappedHttpRequest
 from .responses import AlreadyHandledHttpResponse, HttpResponse, JsonHttpResponse
 from .serializers import HttpRequestSerializer, get_serializer_for
 from .typing import BaseHttpMessage, BaseMessage, HttpRequestBridge, HttpResponseBridge
@@ -17,5 +17,6 @@ __all__ = [
     "HttpResponse",
     "HttpResponseBridge",
     "JsonHttpResponse",
+    "WrappedHttpRequest",
     "get_serializer_for",
 ]

@@ -5,8 +5,8 @@ from harp_apps.rules import examples
 from harp_apps.rules.settings import RulesSettings
 
 
-class TestShorthandSyntaxExample:
-    source = examples.load("shorthand_syntax.yml").get("rules")
+class TestTeapotExample:
+    source = examples.load("teapot.yml").get("rules")
 
     def create_request(self, **kwargs):
         return HttpRequest(HttpRequestStubBridge(**kwargs))

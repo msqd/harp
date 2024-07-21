@@ -1,5 +1,6 @@
 import httpx
-from httpx import ResponseNotRead
+from hishel import ParseError
+from httpx import RequestNotRead, ResponseNotRead
 from rich.console import Console
 from rich.padding import Padding
 from rich.panel import Panel
@@ -7,12 +8,23 @@ from rich.syntax import Syntax
 
 from harp.http import HttpRequestSerializer
 from harp.http.serializers import HttpResponseSerializer
+from harp.http.utils import parse_cache_control
+
+BODY_MAX_LENGTH_TO_DISPLAY = 4096
 
 console = Console(force_terminal=True)
 
 
-def typeof(x):
+def typeof(x, *, short=False):
+    if short:
+        return f"{type(x).__qualname__}"
     return f"{type(x).__module__}.{type(x).__qualname__}"
+
+
+def truncate_string(s, max_length):
+    if len(s) > max_length:
+        return s[: max_length - 3] + "..."
+    return s
 
 
 async def on_proxy_request_dump(event):
@@ -21,11 +33,17 @@ async def on_proxy_request_dump(event):
     console.print(
         Panel(
             Syntax(
-                "\n".join((serializer.summary, serializer.headers, serializer.body.decode())).strip(),
+                "\n".join(
+                    (
+                        serializer.summary,
+                        serializer.headers,
+                        truncate_string(serializer.body.decode(), BODY_MAX_LENGTH_TO_DISPLAY),
+                    )
+                ).strip(),
                 "http",
                 background_color="default",
             ),
-            title=f"[blue]▶[/blue] [bright_white]Request[/bright_white] ({typeof(event.request)})",
+            title=f"[blue]▶[/blue] Request ({typeof(event.request)})",
             title_align="left",
         )
     )
@@ -37,7 +55,13 @@ async def on_proxy_response_dump(event):
     console.print(
         Panel(
             Syntax(
-                "\n".join((serializer.summary, serializer.headers, serializer.body.decode())).strip(),
+                "\n".join(
+                    (
+                        serializer.summary,
+                        serializer.headers,
+                        truncate_string(serializer.body.decode(), BODY_MAX_LENGTH_TO_DISPLAY),
+                    )
+                ).strip(),
                 "http",
                 background_color="default",
             ),
@@ -53,7 +77,11 @@ def dump_httpx_request(request: httpx.Request) -> str:
 
     # Access the request body; for non-streaming bodies, you can directly use request.content
     # For streaming bodies, you might need to handle them differently depending on your use case
-    body_str = request.content.decode("utf-8") if request.content else ""
+    try:
+        body_str = request.content.decode("utf-8") if request.content else ""
+    except RequestNotRead:
+        body_str = ""
+    body_str = truncate_string(body_str, BODY_MAX_LENGTH_TO_DISPLAY)
 
     # Combine method, URL, headers, and body into a formatted string
     request_dump = f"{request.method} {request.url.raw_path.decode()} HTTP/1.1\n{headers_str}\n\n{body_str}"
@@ -71,6 +99,7 @@ def dump_httpx_response(response: httpx.Response) -> str:
         body_str = response.text
     except ResponseNotRead:
         body_str = ""
+    body_str = truncate_string(body_str, BODY_MAX_LENGTH_TO_DISPLAY)
 
     # Combine status code, headers, and body into a formatted string
     response_dump = (
@@ -104,3 +133,28 @@ async def on_remote_response_dump(event):
             (0, 0, 0, 4),
         )
     )
+
+
+async def on_remote_response_show_cache_control(event):
+    response = event.response
+    cache_control = response.headers.get_list("Cache-Control")
+    if cache_control:
+        try:
+            parsed_cached_control = parse_cache_control(cache_control)
+        except ParseError as exc:
+            parsed_cached_control = exc
+
+        console.print(
+            Padding(
+                Panel(
+                    Syntax(
+                        f"{typeof(parsed_cached_control, short=True)}: {parsed_cached_control}",
+                        "http",
+                        background_color="default",
+                    ),
+                    title="[green]◀◀[/green] Cache Control",
+                    title_align="left",
+                ),
+                (0, 0, 0, 8),
+            )
+        )

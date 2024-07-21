@@ -5,14 +5,13 @@ from urllib.parse import urlencode, urljoin, urlparse
 
 import httpcore
 import httpx
-from hishel._headers import parse_cache_control
 from httpx import AsyncClient, codes
 from whistle import IAsyncEventDispatcher
 
 from harp import __parsed_version__, get_logger
 from harp.asgi.events import HttpMessageEvent, TransactionEvent
-from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
-from harp.http.requests import WrappedHttpRequest
+from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse, WrappedHttpRequest
+from harp.http.utils import parse_cache_control
 from harp.models import Transaction
 from harp.settings import USE_PROMETHEUS
 from harp.utils.guids import generate_transaction_id_ksuid
@@ -144,8 +143,7 @@ class HttpProxyController:
 
             # create transaction (shouldn't that be before the filter operation ? it's debatable.)
             transaction = await self._create_transaction_from_request(
-                context.request,
-                tags=self._extract_tags_from_request(context.request),
+                context.request, tags=self._extract_tags_from_request(context.request)
             )
             await context.request.join()
             url = urljoin(self.url, context.request.path) + (

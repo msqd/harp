@@ -1,3 +1,5 @@
+from typing import cast
+
 from httpx import AsyncClient
 
 from harp import get_logger
@@ -19,4 +21,4 @@ class HttpClientApplication(Application):
     async def on_bind(self, event: FactoryBindEvent):
         if IBlobStorage not in event.container:
             event.container.add_singleton(IBlobStorage, NullBlobStorage)
-        event.container.add_singleton(AsyncClient, AsyncClientFactory)
+        event.container.add_singleton(AsyncClient, cast(type(AsyncClient), AsyncClientFactory))

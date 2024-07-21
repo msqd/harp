@@ -19,7 +19,7 @@ class HttpClientFilterEvent(Event):
 
     @property
     def endpoint(self):
-        return self.request.extensions.get("harp", {}).get("endpoint")
+        return self.request.extensions.get("harp", {}).get("endpoint", "unknown")
 
     @property
     def fingerprint(self):
