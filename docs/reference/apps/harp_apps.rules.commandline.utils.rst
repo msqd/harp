@@ -6,6 +6,8 @@ harp_apps.rules.commandline.utils
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp_apps.rules.commandline.utils
+
 Submodules
 ----------
 

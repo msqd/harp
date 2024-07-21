@@ -1,3 +1,5 @@
+from functools import reduce
+
 from harp_apps.rules.constants import DEFAULT_LEVELS, DEFAULT_RULES_LEVELS
 from harp_apps.rules.models.compilers import BaseRuleSetCompiler
 
@@ -21,6 +23,10 @@ def _rules_as_human_dict(rules: dict):
             if len(result[k.source]) == 1:
                 result[k.source] = result[k.source][0]
     return result
+
+
+def _recursive_len(rules: dict):
+    return reduce(lambda x, y: x + _recursive_len(y[1]) if hasattr(y[1], "items") else x + 1, rules.items(), 0)
 
 
 class BaseRuleSet:
@@ -57,6 +63,9 @@ class BaseRuleSet:
 
     def _asdict(self, /, *, secure=True):
         return _rules_as_human_dict(self.rules)
+
+    def __len__(self):
+        return _recursive_len(self.rules)
 
 
 class RuleSet(BaseRuleSet):

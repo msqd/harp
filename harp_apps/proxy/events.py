@@ -35,7 +35,7 @@ class ProxyFilterEvent(Event):
 
     @cached_property
     def globals(self):
-        return {"Response": HttpResponse, "logger": logger}
+        return {"logger": logger}
 
     @property
     def locals(self):

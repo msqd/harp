@@ -31,7 +31,7 @@ class HttpClientFilterEvent(Event):
 
     @cached_property
     def globals(self):
-        return {"Response": Response, "logger": logger}
+        return {"logger": logger}
 
     @property
     def locals(self):

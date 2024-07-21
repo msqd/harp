@@ -6,6 +6,8 @@ Command Line (harp.commandline)
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp.commandline
+
 Submodules
 ----------
 

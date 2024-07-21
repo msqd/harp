@@ -16,7 +16,8 @@ class RulesApplication(Application):
     subscriber = None
 
     async def on_bind(self, event: FactoryBindEvent):
-        logger.warning("Rules application is currently an experimental early prototype. THE API MAY CHANGE A LOT.")
+        logger.warning("📦 Rules are currently experimental. THE API MAY CHANGE A LOT.")
+        logger.warning("📦 Rules: found %d rules.", len(self.settings.rules))
 
     async def on_bound(self, event: FactoryBoundEvent):
         dispatcher = event.provider.get(IAsyncEventDispatcher)

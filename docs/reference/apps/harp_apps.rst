@@ -6,6 +6,8 @@ Apps (harp_apps)
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp_apps
+
 Submodules
 ----------
 

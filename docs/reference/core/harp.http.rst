@@ -6,6 +6,8 @@ HTTP (harp.http)
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp.http
+
 Submodules
 ----------
 

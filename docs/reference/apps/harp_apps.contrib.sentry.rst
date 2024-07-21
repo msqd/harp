@@ -6,6 +6,8 @@ Sentry (harp_apps.contrib.sentry)
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp_apps.contrib.sentry
+
 Submodules
 ----------
 

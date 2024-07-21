@@ -6,6 +6,8 @@ harp.asgi.bridge
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp.asgi.bridge
+
 Submodules
 ----------
 

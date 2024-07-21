@@ -6,6 +6,8 @@ harp.http.typing
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp.http.typing
+
 Submodules
 ----------
 

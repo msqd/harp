@@ -1,10 +1,12 @@
-harp_apps.rules
-===============
+Rules Engine (harp_apps.rules)
+==============================
 
 .. automodule:: harp_apps.rules
     :members:
     :undoc-members:
     :show-inheritance:
+
+    .. inheritance-diagram:: harp_apps.rules
 
 Submodules
 ----------

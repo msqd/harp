@@ -6,6 +6,8 @@ Telemetry (harp_apps.telemetry)
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp_apps.telemetry
+
 Submodules
 ----------
 

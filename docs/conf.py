@@ -27,6 +27,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
+    "sphinx.ext.inheritance_diagram",
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_sitemap",
@@ -73,6 +74,8 @@ autoclass_content = "both"
 add_module_names = False
 pygments_style = "sphinx"
 graphviz_output_format = "svg"
+
+inheritance_graph_attrs = {"rankdir": "TB", "size": '"8.0, 12.0"', "fontsize": 14, "ratio": "compress"}
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),

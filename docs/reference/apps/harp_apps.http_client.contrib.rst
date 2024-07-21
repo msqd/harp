@@ -6,6 +6,8 @@ harp_apps.http_client.contrib
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp_apps.http_client.contrib
+
 Submodules
 ----------
 

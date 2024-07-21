@@ -6,6 +6,8 @@ harp_apps.storage.types
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp_apps.storage.types
+
 Submodules
 ----------
 

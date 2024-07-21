@@ -6,6 +6,8 @@ Janitor (harp_apps.janitor)
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp_apps.janitor
+
 Submodules
 ----------
 

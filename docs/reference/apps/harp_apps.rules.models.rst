@@ -6,6 +6,8 @@ harp_apps.rules.models
     :undoc-members:
     :show-inheritance:
 
+    .. inheritance-diagram:: harp_apps.rules.models
+
 Submodules
 ----------
 

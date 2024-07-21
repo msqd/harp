@@ -44,6 +44,8 @@ def generate_doc(desc, /, *, root, level=0):
             f.write("    :members:\n")
             f.write("    :undoc-members:\n")
             f.write("    :show-inheritance:\n")
+            f.write("\n")
+            f.write(f"    .. inheritance-diagram:: {desc['name']}\n")
 
             if len(desc.get("children", [])):
                 f.write("\n")
