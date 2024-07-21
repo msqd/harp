@@ -11,16 +11,16 @@ sys.path.insert(0, os.path.abspath(".."))
 
 project = "Harp Proxy"
 
-import pprint
-
-pprint.pprint(os.environ)
-
 first_year, current_year = 2023, datetime.now().year
 author = "Romain Dorgueil"
 copyright = f"{current_year}, {author}"
 if current_year > first_year:
     copyright = str(first_year) + "-" + copyright
-version = release = ".".join(__import__("harp").__version__.split(".")[0:2])
+
+if os.environ.get("READTHEDOCS_GIT_IDENTIFIER"):
+    version = release = os.environ["READTHEDOCS_GIT_IDENTIFIER"]
+else:
+    version = release = ".".join(__import__("harp").__version__.split(".")[0:2])
 
 extensions = [
     "sphinx.ext.autodoc",
