@@ -5,7 +5,7 @@ import pytest  # noqa
 from hypercorn import Config
 from hypercorn.asyncio import serve
 
-from harp.utils.network import get_available_network_port
+from harp.utils.network import get_available_network_port, wait_for_port
 from harp.utils.testing.stub_api import stub_api
 from harp_apps.storage.conftest import *  # noqa
 
@@ -48,8 +48,7 @@ async def test_api(event_loop):
         ),
         loop=event_loop,
     )
-    # wait for the server to be accepting connections
-    await asyncio.open_connection(host, port)
+    await asyncio.to_thread(wait_for_port, port, host, 10.0)
 
     try:
         yield StubServerDescription(host, port)
