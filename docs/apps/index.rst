@@ -8,6 +8,6 @@ Applications
     http_client/index
     janitor/index
     proxy/index
+    rules/index
     storage/index
     telemetry/index
-    rules/index

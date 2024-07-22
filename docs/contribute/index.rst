@@ -39,4 +39,4 @@ Releases and Changelogs
     changelogs/index
 
 
-.. todo:: move changelog to root, it' for more people than contributors, no need to hide it here.
+.. todo:: move changelog to root, no need to hide it here as it concerns all users.

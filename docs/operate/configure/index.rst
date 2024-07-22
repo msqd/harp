@@ -13,10 +13,13 @@ Configuration is built from different sources that may override each other. From
 
     This section is a work in progress.
 
-.. toctree::
-    :maxdepth: 2
+Table of Content
+::::::::::::::::
 
-    Dashboard </apps/dashboard/index>
-    Proxy & Endpoints </apps/proxy/index>
-    Rules Engine </apps/rules/index>
-    Storage </apps/storage/index>
+* :doc:`Dashboard </apps/dashboard/index>`: web interface
+* :doc:`Http Client </apps/http_client/index>`: timeouts, cache, ...
+* :doc:`Janitor </apps/janitor/index>`: housekeeping
+* :doc:`Proxy & Endpoints </apps/proxy/index>`: endpoints, names, ports, ...
+* :doc:`Storage </apps/storage/index>`: relational and non-relational storages
+* :doc:`Telemetry </apps/telemetry/index>`: usage reporting
+* :doc:`Rules Engine </apps/rules/index>`: fine tuning request lifecycle

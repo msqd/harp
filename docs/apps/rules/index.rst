@@ -15,14 +15,17 @@ to apply a set of user-provided scripts at different stages of the transaction l
 Scripts are written in python, and are applied conditionally based on patterns matching the transaction's properties.
 
 
-Reference
-:::::::::
+Table of Content
+::::::::::::::::
+
+.. include:: /apps/rules/_toc.rst
 
 .. toctree::
+    :hidden:
     :maxdepth: 2
 
     quickstart
     patterns
     lifecycle
     recipes
-    Reference </reference/apps/harp_apps.rules>
+    commands
