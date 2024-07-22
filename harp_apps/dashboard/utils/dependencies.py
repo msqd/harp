@@ -8,16 +8,27 @@ def parse_dependencies(dependencies: list[str]) -> dict[str, str]:
     parsed = {}
 
     for dependency in dependencies:
+        # Skip empty lines or comments
+        if not dependency or dependency.startswith("#"):
+            continue
+
+        # Handle editable packages
         if dependency.startswith("-e"):
             pkg_repo, pkg_name = dependency.rsplit("/", 1)
-            if pkg_name in parsed:
-                raise ValueError(f"Duplicate package name {pkg_name} in dependencies.")
-            parsed[pkg_name] = pkg_repo + "/" + pkg_name
+            pkg_name = pkg_name.split("#egg=")[-1]  # Extract package name
+            pkg_version = "editable"
         else:
-            pkg_name, pkg_version = dependency.split("==")
-            if pkg_name in parsed:
-                raise ValueError(f"Duplicate package name {pkg_name} in dependencies.")
-            parsed[pkg_name] = pkg_version
+            parts = dependency.split("==")
+            if len(parts) == 2:
+                pkg_name, pkg_version = parts
+            else:
+                # Handle packages without a version or with unusual formatting
+                pkg_name, pkg_version = parts[0], "unknown"
+
+        # Check for duplicates
+        if pkg_name in parsed:
+            raise ValueError(f"Duplicate package name {pkg_name} found.")
+        parsed[pkg_name] = pkg_version
     return parsed
 
 
