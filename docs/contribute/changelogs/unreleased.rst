@@ -25,11 +25,12 @@ Fixed
 Updated
 :::::::
 
+* bump cryptography from 42.0.8 to 43.0.0
+* bump furo from 2024.5.6 to 2024.7.18
 * bump hishel from 0.0.29 to 0.0.30
 * bump orjson from 3.10.5 to 3.10.6
-* bump sentry-sdk from 2.7.0 to 2.10.0
-* bump structlog from 24.2.0 to 24.4.0
-* bump furo from 2024.5.6 to 2024.7.18
 * bump ruff from 0.4.10 to 0.5.2
+* bump sentry-sdk from 2.7.0 to 2.10.0
 * bump sphinx from 7.3.7 to 7.4.6
+* bump structlog from 24.2.0 to 24.4.0
 * bump testcontainers from 4.6.0 to 4.7.2
