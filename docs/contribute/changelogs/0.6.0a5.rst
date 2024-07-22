@@ -1,4 +1,4 @@
-Version 0.6.0a4 (2024-07-22)
+Version 0.6.0a5 (2024-07-22)
 ============================
 
 Added
@@ -44,6 +44,8 @@ Fixed
 
 * CI/CD: issues with connections checks on certain environments
 * Core: server process now corretly uses current working directory as base for relative paths
+* Dashboard: fixed a bug where the dashboard would not show python dependencies when the application was installed as a
+  wheel.
 * DX: default logging level shows harp infos, access logs and server listening infos.
 * Proxy: some errors happening when the server unexpectedly closes the connection although the client is waiting for
   data are now caught and logged like other network/system related errors.
