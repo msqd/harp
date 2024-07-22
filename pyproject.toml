@@ -80,7 +80,7 @@ pytest-timeout = "^2.3.1"
 [tool.poetry.group.mysql.dependencies]
 asyncmy = "^0.2.9"
 aiomysql = "^0.2.0"
-cryptography = ">=41.0.7,<43.0.0"
+cryptography = ">=41.0.7,<44.0.0"
 
 
 [tool.poetry.group.postgresql.dependencies]
