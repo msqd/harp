@@ -30,8 +30,12 @@ class ProxyFilterEvent(Event):
         self.response = response
 
     @property
+    def rule(self) -> str:
+        return "on_" + self.name.rsplit(".", 1)[-1]
+
+    @property
     def criteria(self):
-        return self.endpoint, str(self.request), "on_" + self.name.rsplit(".", 1)[-1]
+        return self.endpoint, str(self.request), self.rule
 
     @cached_property
     def globals(self):
@@ -40,7 +44,7 @@ class ProxyFilterEvent(Event):
     @property
     def locals(self):
         return {
-            "event": self,
+            "rule": self.rule,
             "endpoint": self.endpoint,
             "request": self.request,
             "response": self.response,

@@ -40,7 +40,6 @@ class HttpClientFilterEvent(Event):
     @property
     def locals(self):
         return {
-            "event": self.name,
             "rule": self.rule,
             "endpoint": self.endpoint,
             "request": self.request,
