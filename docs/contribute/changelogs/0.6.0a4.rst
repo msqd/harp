@@ -1,4 +1,4 @@
-Version 0.6.0a3 (2024-07-05)
+Version 0.6.0a4 (2024-07-22)
 ============================
 
 Added
@@ -6,6 +6,10 @@ Added
 
 * Cache: the hishel-based cache implementation now shares the blob storage with the rest of the application, to avoid
   duplicate work and storage.
+* CLI: it's now possible to load examples from the command line using the ``-e <name>`` flag, and also to load examples
+  from an application using ``-e <app:name>``; extension is now detected automatically.
+* CLI/Rules: the ``rules`` application now has a command line interface to interact with the rule engine, and allows to
+  ``harp rules lint`` and/or ``harp rules run`` a set of rules using a given test request.
 * DX: when out of development environment, a ``start`` command stub is available so that the unadvised user does not
   wonder where it went.
 * Monitoring: monitoring of background worker tasks pressure.
@@ -15,6 +19,7 @@ Added
   storage and > 10000 disables all storage for the transaction.
 * Storage: added a ``NullBlobStorage`` implementation for testing purposes (or to disable blob storage easily).
 * Rules: prototype of the ``rules`` application, implementing a rule engine to tune transactions with basically anything.
+* Rules: examples and documentation
 
 Changed
 :::::::
@@ -22,6 +27,8 @@ Changed
 * Logging: reverted the exception formatter to plain_traceback, as it's the usual default python formatter. It works
   better with external tools and is more readable because of the reduced verbosity.
 * Logging: all loggers have now the WARNING default level.
+* Install(helm): the helm chart now accepts arguments to be passed to the application, and the default values are now
+  set in the ``values.yaml`` file.
 * Monitoring: normalized, enhanced and complemented prometheus observability.
 * Storage: blob storage is now separated from the main storage, to allow different underlying implementations.
 * Storage: application ``harp_apps.sqlalchemy_storage`` was renamed to ``harp_apps.storage``, to reflect the fact that
@@ -35,14 +42,21 @@ Changed
 Fixed
 :::::
 
+* CI/CD: issues with connections checks on certain environments
+* Core: server process now corretly uses current working directory as base for relative paths
+* DX: default logging level shows harp infos, access logs and server listening infos.
 * Proxy: some errors happening when the server unexpectedly closes the connection although the client is waiting for
   data are now caught and logged like other network/system related errors.
-* DX: default logging level shows harp infos, access logs and server listening infos.
 
 Updated
 :::::::
 
+* bump cryptography from 42.0.8 to 43.0.0
+* bump furo from 2024.5.6 to 2024.7.18
+* bump hishel from 0.0.29 to 0.0.30
 * bump orjson from 3.10.5 to 3.10.6
-* bump ruff from 0.4.10 to 0.5.0
-* bump sentry-sdk from 2.7.0 to 2.7.1
-* bump testcontainers from 4.6.0 to 4.7.1
+* bump ruff from 0.4.10 to 0.5.2
+* bump sentry-sdk from 2.7.0 to 2.10.0
+* bump sphinx from 7.3.7 to 7.4.6
+* bump structlog from 24.2.0 to 24.4.0
+* bump testcontainers from 4.6.0 to 4.7.2
