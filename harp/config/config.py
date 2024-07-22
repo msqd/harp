@@ -25,11 +25,21 @@ def get_application_class_name(name):
     return "".join(map(lambda x: x.title().replace("_", ""), name.rsplit(".", 1)[-1:])) + "Application"
 
 
+AUTODETECT_NAMESPACES = []
+for _namespace in ("harp_enterprise", "harp_pro", "harp_apps"):
+    try:
+        if importlib.util.find_spec(_namespace):
+            AUTODETECT_NAMESPACES.append(_namespace)
+    except ModuleNotFoundError:
+        pass
+
+
 def _resolve_application_aliases(spec):
     if "." not in spec:
-        _candidate = ".".join(("harp_apps", spec))
-        if importlib.util.find_spec(_candidate):
-            return _candidate
+        for namespace in AUTODETECT_NAMESPACES:
+            _candidate = ".".join((namespace, spec))
+            if importlib.util.find_spec(_candidate):
+                return _candidate
     return spec
 
 
@@ -53,10 +63,18 @@ class Config:
         self._debug_applications = set()
         self._application_types = {}
         self._applications = []
+        self._applications_by_name = {}
         self._disabled_applications = set()
 
     def __eq__(self, other: Self):
         return self.settings == other.settings
+
+    def __contains__(self, item):
+        return _resolve_application_aliases(item) in self._raw_settings["applications"]
+
+    def __getitem__(self, item):
+        self.raise_if_not_validated()
+        return self._applications_by_name[_resolve_application_aliases(item)]
 
     def __repr__(self):
         return (
@@ -71,10 +89,17 @@ class Config:
         return self._raw_settings
 
     @property
+    def validated(self):
+        return bool(self._validated_settings)
+
+    @property
     def applications(self):
-        if not self._validated_settings:
-            raise RuntimeError("Configuration not validated.")
+        self.raise_if_not_validated()
         return self._validated_settings.get("applications", [])
+
+    def raise_if_not_validated(self):
+        if not self.validated:
+            raise RuntimeError("Configuration not validated.")
 
     def reset(self):
         self._validated_settings = None
@@ -191,6 +216,7 @@ class Config:
             # propagate for the world to use
             self._validated_settings = MappingProxyType(validated)
             self._applications = applications
+            self._applications_by_name = {app.name: app for app in applications}
 
         logger.debug(f"Configuration validated: {pprint.pformat(self._validated_settings)}")
 

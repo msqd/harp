@@ -26,8 +26,12 @@ class HttpClientFilterEvent(Event):
         return f"{self.request.method} {self.request.url.raw_path.decode()}"
 
     @property
+    def rule(self) -> str:
+        return "on_remote_" + self.name.rsplit(".", 1)[-1]
+
+    @property
     def criteria(self):
-        return self.endpoint, self.fingerprint, "on_remote_" + self.name.rsplit(".", 1)[-1]
+        return self.endpoint, self.fingerprint, self.rule
 
     @cached_property
     def globals(self):
@@ -36,7 +40,8 @@ class HttpClientFilterEvent(Event):
     @property
     def locals(self):
         return {
-            "event": self,
+            "event": self.name,
+            "rule": self.rule,
             "endpoint": self.endpoint,
             "request": self.request,
             "response": self.response,

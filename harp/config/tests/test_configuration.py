@@ -1,3 +1,5 @@
+import pytest
+
 from harp import Config
 from harp.config.application import Application
 from harp.utils.identifiers import is_valid_dotted_identifier
@@ -66,3 +68,16 @@ def test_add_application():
         b':"sqlalchemy","url":"sqlite+aiosqlite:///:memory:","migrate":true,"blobs":{"'
         b'type":"sql"}}}'
     )
+
+
+def test_config_get_applications():
+    config = Config()
+    config.add_application("storage")
+
+    assert "storage" in config
+    with pytest.raises(RuntimeError):
+        assert config["storage"]
+
+    config.validate()
+    assert "storage" in config
+    assert config["storage"]

@@ -7,8 +7,9 @@ from harp_apps.http_client.events import (
     HttpClientFilterEvent,
 )
 from harp_apps.proxy.events import EVENT_FILTER_REQUEST, EVENT_FILTER_RESPONSE, ProxyFilterEvent
-from harp_apps.rules.models.rulesets import RuleSet
-from harp_apps.rules.models.scripts import Script
+
+from .models.rulesets import RuleSet
+from .models.scripts import Script
 
 logger = get_logger(__name__)
 

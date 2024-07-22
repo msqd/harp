@@ -48,7 +48,7 @@ async def test_api(event_loop):
         ),
         loop=event_loop,
     )
-    await asyncio.to_thread(wait_for_port, port, host, 10.0)
+    await asyncio.to_thread(wait_for_port, port, host)
 
     try:
         yield StubServerDescription(host, port)

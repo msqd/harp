@@ -1,4 +1,5 @@
 import ast
+from typing import Callable
 
 
 def _get_normalized_sources_from_ast(code_ast: ast.AST, /):
@@ -58,3 +59,11 @@ class Script:
         _type = type(self).__name__
         _source = self.source
         return f"{_type}({repr(_source)}, filename={repr(self.filename)})"
+
+
+class ExecutableObject:
+    def __init__(self, target: Callable):
+        self._target = target
+
+    def execute(self, locals: dict, /, *, globals: dict | None = None):
+        return self._target(**(globals or {}), **locals)
