@@ -22,6 +22,31 @@ def _get_system_configuration_sources():
 
 
 class ConfigurationBuilder(BaseConfigurationBuilder):
+    """
+    A builder class for assembling the global configuration settings for HARP from various sources.
+
+    This class extends config.ConfigurationBuilder, incorporating additional functionality specific to HARP,
+    such as handling default applications and integrating with the ApplicationsRegistry. It supports adding
+    configuration from files, environment variables, and direct values, with a focus on flexibility and ease of use.
+
+    Attributes:
+        _defaults (dict): Default values for the configuration, typically loaded from internal defaults or specified by the user.
+        applications (ApplicationsRegistryType): An instance of ApplicationsRegistry or a subclass, managing the registration and configuration of HARP applications.
+
+    Methods:
+        add_file(filename: str): Adds a single configuration file by its filename.
+        add_files(filenames: Iterable[str]): Adds multiple configuration files by their filenames.
+        add_values(values: dict): Adds configuration values directly from a dictionary.
+        normalize(x: dict): Normalizes the configuration values, potentially transforming them based on application-specific logic.
+        build() -> GlobalSettings: Constructs the final, aggregated configuration settings as a GlobalSettings instance.
+        from_commandline_options(options): Class method to create an instance of ConfigurationBuilder from command line options.
+        from_bytes(serialized: bytes, **kwargs) -> Self: Class method to create an instance of ConfigurationBuilder from serialized bytes.
+
+    The ConfigurationBuilder is central to the dynamic configuration system in HARP, allowing configurations to be built
+    and modified in a flexible and intuitive manner.
+
+    """
+
     def __init__(
         self,
         default_values=None,
@@ -30,6 +55,14 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         use_default_applications=True,
         ApplicationsRegistryType=ApplicationsRegistry,
     ) -> None:
+        """
+        Initializes a new instance of the ConfigurationBuilder.
+
+        Parameters:
+            default_values (dict, optional): A dictionary of default configuration values. Defaults to None.
+            use_default_applications (bool, optional): Whether to automatically include default HARP applications in the configuration. Defaults to True.
+            ApplicationsRegistryType (type, optional): The class to use for the applications registry. Defaults to ApplicationsRegistry.
+        """
         self._defaults = default_values or {}
         self.applications = ApplicationsRegistryType()
 
@@ -41,6 +74,15 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         super().__init__()
 
     def add_file(self, filename: str):
+        """
+        Adds a configuration file to the builder.
+
+        Parameters:
+            filename (str): The path to the configuration file to add.
+
+        Raises:
+            ValueError: If the file extension is not recognized.
+        """
         _, ext = os.path.splitext(filename)
         if ext in (".yaml", ".yml"):
             from config.yaml import YAMLFile
@@ -62,14 +104,35 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
             raise ValueError(f"Unknown file extension: {ext}")
 
     def add_files(self, filenames: Iterable[str]):
+        """
+        Adds multiple configuration files to the builder.
+
+        Parameters:
+            filenames (Iterable[str]): An iterable of file paths to add.
+        """
         for filename in filenames or ():
             self.add_file(filename)
 
     def add_values(self, values: dict):
+        """
+        Adds configuration values directly from a dictionary.
+
+        Parameters:
+            values (dict): A dictionary of configuration values to add.
+        """
         for k, v in values.items():
             self.add_value(k, v)
 
     def normalize(self, x: dict):
+        """
+        Normalizes the configuration values, potentially transforming them based on application-specific logic.
+
+        Parameters:
+            x (dict): The configuration values to normalize.
+
+        Returns:
+            dict: The normalized configuration values.
+        """
         # todo: support recursive doted notation key. The easiest way would probably be to convert "a.b": ... into
         #  a: {b: ...}, meanwhile, let's be carfeul with those keys.
         return {
@@ -82,6 +145,12 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         }
 
     def build(self) -> GlobalSettings:
+        """
+        Constructs the final, aggregated configuration settings as a GlobalSettings instance.
+
+        Returns:
+            GlobalSettings: The aggregated global settings derived from all added sources.
+        """
         settings = {}
         for source in (
             EnvVars(prefix="DEFAULT__HARP_"),
@@ -108,6 +177,15 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
 
     @classmethod
     def from_commandline_options(cls, options) -> Self:
+        """
+        Creates an instance of ConfigurationBuilder from command line options.
+
+        Parameters:
+            options: The command line options to use for building the configuration.
+
+        Returns:
+            ConfigurationBuilder: An instance of ConfigurationBuilder configured according to the provided command line options.
+        """
         # todo: config instead of sources in constructor ? for example no_default_apps, etc.
         builder = cls()
 
@@ -134,5 +212,15 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
 
     @classmethod
     def from_bytes(cls, serialized: bytes, **kwargs) -> Self:
+        """
+        Creates an instance of ConfigurationBuilder from serialized bytes.
+
+        Parameters:
+            serialized (bytes): The serialized configuration data.
+            **kwargs: Additional keyword arguments to pass to the constructor.
+
+        Returns:
+            ConfigurationBuilder: An instance of ConfigurationBuilder initialized with the deserialized configuration data.
+        """
         unserialized = orjson.loads(serialized)
         return cls(unserialized, use_default_applications=False, **kwargs)

@@ -5,14 +5,14 @@ from whistle import IAsyncEventDispatcher
 
 from harp import __revision__, __version__, get_logger
 from harp.asgi import ASGIKernel
+from harp.asgi.events import EVENT_CONTROLLER_VIEW, EVENT_CORE_REQUEST
 from harp.controllers import ProxyControllerResolver
+from harp.controllers.default import on_health_request
 from harp.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.typing import GlobalSettings
+from harp.utils.network import Bind
+from harp.views.json import on_json_response
 
-from ...asgi.events import EVENT_CONTROLLER_VIEW, EVENT_CORE_REQUEST
-from ...controllers.default import on_health_request
-from ...utils.network import Bind
-from ...views.json import on_json_response
 from ..events import (
     EVENT_FACTORY_BIND,
     EVENT_FACTORY_BOUND,
@@ -29,6 +29,24 @@ logger = get_logger(__name__)
 
 
 class System:
+    """
+    The core, global-like system objects, encapsulated together. Useful to manipulate the system from a high-level
+    perspective, either from a server adapter point of view or from tests.
+
+    Bootstrapping will create a System instance, which will be used to start the various subsystems. Then, the
+    subsystems will work on their own, and should not need to have a system view.
+
+    Attributes:
+        config (GlobalSettings): The global configuration settings for the application.
+        dispatcher (IAsyncEventDispatcher): The event dispatcher for handling application-wide events.
+        provider (Services): The service provider for dependency injection and service management.
+        kernel (ASGIKernel): The ASGI kernel for handling HTTP requests.
+        binds (list[Bind]): A list of network binds specifying where the application should listen for incoming requests.
+
+    Methods:
+        dispose(): Asynchronously disposes of the system resources, primarily the ASGI kernel.
+    """
+
     def __init__(
         self,
         config: GlobalSettings,
@@ -66,6 +84,9 @@ class System:
         return self._binds
 
     async def dispose(self):
+        """
+        Asynchronously disposes of the system resources, primarily the ASGI kernel.
+        """
         if self.kernel:
             event = FactoryDisposeEvent(self.kernel, self.provider)
             await self.dispatcher.adispatch(EVENT_FACTORY_DISPOSE, event)
@@ -73,6 +94,23 @@ class System:
 
 
 class SystemBuilder:
+    """
+    A builder class for constructing the System instance, which represents the core of the HARP application.
+
+    This class is responsible for assembling the necessary components of the System, including the global configuration,
+    event dispatcher, service provider, and ASGI kernel, based on the provided configuration.
+
+    Attributes:
+        AsyncEventDispatcherType (Type[IAsyncEventDispatcher]): The type of the event dispatcher to use.
+        ContainerType (Type[Container]): The type of the container to use for dependency injection.
+        KernelType (Type[ASGIKernel]): The type of the ASGI kernel to use for handling HTTP requests.
+        configuration_builder (ConfigurationBuilder): The configuration builder used to assemble the global configuration.
+        hostname (str): The hostname where the application should listen for incoming requests.
+
+    Methods:
+        abuild() -> System: Asynchronously builds and returns an instance of the System class.
+    """
+
     AsyncEventDispatcherType: Type[IAsyncEventDispatcher] = LoggingAsyncEventDispatcher
     ContainerType: Type[Container] = Container
     KernelType: Type[ASGIKernel] = ASGIKernel
@@ -86,6 +124,12 @@ class SystemBuilder:
         return self.configuration_builder.applications
 
     async def abuild(self) -> System:
+        """
+        Asynchronously builds and returns an instance of the System class, ready for use.
+
+        Returns:
+            System: An instance of the System class, assembled based on the provided configuration and components.
+        """
         logger.info(f"🎙  HARP v.{__version__} ({__revision__})")
 
         # Get the config ready.
