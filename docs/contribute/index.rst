@@ -23,6 +23,7 @@ Table of Content
     :maxdepth: 2
 
     introduction
+    architecture
     extending
     applications/index
     storage/index
