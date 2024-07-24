@@ -1,7 +1,6 @@
-import pytest
+import orjson
 
-from harp import Config
-from harp.config.application import Application
+from harp.config import Application, ApplicationsRegistry, ConfigurationBuilder, asdict
 from harp.utils.identifiers import is_valid_dotted_identifier
 
 
@@ -25,59 +24,30 @@ def test_is_valid_extension_name():
     assert is_valid_dotted_identifier("raise_")
 
 
-def test_add_application():
-    config = Config()
-    config.add_application("harp_apps.storage")
-
-    assert config.settings == {
-        "applications": ["harp_apps.storage"],
-    }
-
-    # can we serialize it?
-    serialized = config.serialize()
-
-    assert serialized == (
-        b'{"applications":["harp_apps.storage"],"storage":{"type":"sqlalche'
-        b'my","url":"sqlite+aiosqlite:///:memory:","migrate":true,"blobs":{"type":"sql'
-        b'"}}}'
-    )
-
-    # is the unserialized result the same as before serialization?
-    new_config = Config.deserialize(serialized)
-    assert new_config == config
-
-    new_config.add_application("foo.bar")
-
-    # Try adding twice
-    new_config.add_application("foo.bar")
-    assert new_config != config
-    assert new_config.settings == {
-        "applications": ["harp_apps.storage", "foo.bar"],
-        "storage": {
-            "blobs": {"type": "sql"},
-            "migrate": True,
-            "type": "sqlalchemy",
-            "url": "sqlite+aiosqlite:///:memory:",
-        },
-    }
-
-    new_config._application_types["foo.bar"] = type("MockedExtension", (Application,), {"name": "foo.bar"})
-
-    assert new_config.serialize() == (
-        b'{"applications":["harp_apps.storage","foo.bar"],"storage":{"type"'
-        b':"sqlalchemy","url":"sqlite+aiosqlite:///:memory:","migrate":true,"blobs":{"'
-        b'type":"sql"}}}'
-    )
+class ApplicationsRegistryMock(ApplicationsRegistry):
+    def add_mock(self, name, impl):
+        self._applications[name] = impl
 
 
-def test_config_get_applications():
-    config = Config()
-    config.add_application("storage")
+def test_add_application(snapshot):
+    builder = ConfigurationBuilder(use_default_applications=False)
+    builder.applications.add("storage")
 
-    assert "storage" in config
-    with pytest.raises(RuntimeError):
-        assert config["storage"]
+    assert len(builder.applications) == 1
+    assert builder.applications["storage"].__module__ == "harp_apps.storage.__app__"
 
-    config.validate()
-    assert "storage" in config
-    assert config["storage"]
+    settings = builder.build()
+
+    serialized = orjson.dumps(asdict(settings))
+    assert serialized == snapshot
+
+    new_builder = ConfigurationBuilder.from_bytes(serialized, ApplicationsRegistryType=ApplicationsRegistryMock)
+    assert asdict(new_builder.build()) == asdict(settings)
+
+    new_builder.applications.add_mock("foo.bar", type("MockedApplication", (Application,), {"name": "foo.bar"}))
+
+    new_settings = new_builder.build()
+    assert asdict(new_settings) != asdict(settings)
+
+    assert asdict(new_settings) == snapshot
+    assert orjson.dumps(asdict(new_settings)) == snapshot

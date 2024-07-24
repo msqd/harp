@@ -24,14 +24,11 @@ logger = get_logger(__name__)
 
 
 class TelemetryApplication(Application):
-    def __init__(self, settings=None, /):
-        super().__init__(settings)
+    class Lifecycle:
+        @staticmethod
+        async def on_bind(event: FactoryBindEvent):
+            event.container.add_singleton(TelemetryManager)
 
-        # keep a reference for application garbage collection (later)
-        self.manager = None
-
-    async def on_bind(self, event: FactoryBindEvent):
-        event.container.add_singleton(TelemetryManager)
-
-    async def on_bound(self, event: FactoryBoundEvent):
-        self.manager = event.provider.get(TelemetryManager)
+        @staticmethod
+        async def on_bound(event: FactoryBoundEvent):
+            event.provider.get(TelemetryManager)

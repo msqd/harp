@@ -16,7 +16,6 @@ class TestPostgresHttpbinBenchmark(AbstractProxyBenchmark):
               url: "$httpbin"
               name: test
         storage:
-          type: sqlalchemy
           url: "$database"
         """
     )

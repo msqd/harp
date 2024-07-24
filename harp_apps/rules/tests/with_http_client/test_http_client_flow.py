@@ -2,8 +2,6 @@ from unittest.mock import Mock
 
 from httpx import AsyncClient
 
-from harp.config.factories.kernel_factory import KernelFactory
-
 from .._base import BaseRulesFlowTest
 
 
@@ -12,14 +10,10 @@ class TestHttpClientRulesFlow(BaseRulesFlowTest):
 
     async def test_http_client_flow(self, httpbin):
         mock = Mock()
-        config = self.create_config({}, mock=mock)
-
-        # build our services (!!!badly named)
-        factory = KernelFactory(config)
-        await factory.build()
+        system = await self.create_system({}, mock=mock)
 
         # make a request
-        http_client = factory.provider.get(AsyncClient)
+        http_client = system.provider.get(AsyncClient)
         response = await http_client.get(httpbin)
         assert response.status_code == 200
 

@@ -31,13 +31,11 @@ class JanitorWorker:
                 "storage.blobs.orphans": Gauge("storage_blobs_orphans", "Orphan blobs currently in storage."),
             }
 
-    async def finalize(self):
+    def stop(self):
         """
         Mark the loop for termination.
         """
         self.running = False
-        if self._running_lock.locked():
-            await self._running_lock.acquire()
 
     async def run(self):
         """
@@ -47,8 +45,6 @@ class JanitorWorker:
         # do not start before storage is ready
         async with self._running_lock:
             self.running = True
-
-            await self.storage.ready()
 
             while self.running:
                 try:

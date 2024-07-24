@@ -1,11 +1,13 @@
-from harp import Config
+from harp.config import ConfigurationBuilder, SystemBuilder
 
 
 class BaseRulesFlowTest:
     applications = []
 
-    def create_config(self, settings, /, *, mock):
-        config = Config(settings, applications=self.applications)
-        config.validate()
-        config["rules"].settings.rules.add({"*": {"*": {"*": [mock]}}})
-        return config
+    async def create_system(self, settings, /, *, mock):
+        config = ConfigurationBuilder(
+            (settings or {}) | {"applications": self.applications},
+            use_default_applications=False,
+        )
+        config.add_values({"rules": {"*": {"*": {"*": [mock]}}}})
+        return await SystemBuilder(config).abuild()

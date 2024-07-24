@@ -15,10 +15,10 @@ Submodules
     :maxdepth: 1
 
     harp.config.adapters
-    harp.config.application
-    harp.config.builder
-    harp.config.config
+    harp.config.applications
+    harp.config.builders
+    harp.config.defaults
     harp.config.events
     harp.config.examples
-    harp.config.factories
     harp.config.settings
+    harp.config.utils

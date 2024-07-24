@@ -1,20 +1,23 @@
 import logging
 import sys
+from typing import cast
 
+from asgi_tools.types import TASGIApp
 from asyncpg import PostgresError
-from hypercorn.utils import LifespanFailureError
 
 from harp import get_logger
 from harp.settings import USE_PROMETHEUS
+
+from ..builders import System
 
 logger = get_logger(__name__)
 
 
 class HypercornAdapter:
-    def __init__(self, factory):
-        self.factory = factory
+    def __init__(self, system: System):
+        self.system = system
 
-    def _create_config(self, binds):
+    def _create_hypercorn_config(self, binds):
         """
         Creates a hypercorn config object.
 
@@ -26,7 +29,6 @@ class HypercornAdapter:
         config.bind = [*map(str, binds)]
         config.accesslog = logging.getLogger("hypercorn.access")
         config.errorlog = logging.getLogger("hypercorn.error")
-        config.workers = 8
         return config
 
     async def serve(self):
@@ -34,9 +36,10 @@ class HypercornAdapter:
         Creates and serves the proxy using hypercorn.
         """
         from hypercorn.asyncio import serve
+        from hypercorn.typing import Framework
+        from hypercorn.utils import LifespanFailureError
 
-        asgi_app, binds = await self.factory.build()
-
+        asgi_app = cast(TASGIApp, self.system.kernel)
         if USE_PROMETHEUS:
             from asgi_prometheus import PrometheusMiddleware
 
@@ -45,11 +48,11 @@ class HypercornAdapter:
             asgi_app.scopes = ("http",)
             logger.info(f"🌎 PrometheusMiddleware enabled, metrics under {_metrics_url}.")
 
-        config = self._create_config(binds)
-        logger.debug(f"🌎 {type(self).__name__}::serve({', '.join(config.bind)})")
+        hypercorn_config = self._create_hypercorn_config(self.system.binds)
+        logger.debug(f"🌎 {type(self).__name__}::serve({', '.join(hypercorn_config.bind)})")
 
         try:
-            return await serve(asgi_app, config, mode="asgi")
+            return await serve(cast(Framework, asgi_app), hypercorn_config, mode="asgi")
         except LifespanFailureError as exc:
             logger.exception(f"Server initiliation failed: {repr(exc.__cause__)}", exc_info=exc.__cause__)
             if isinstance(exc.__cause__, PostgresError):

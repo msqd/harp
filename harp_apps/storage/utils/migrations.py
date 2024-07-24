@@ -7,7 +7,7 @@ from sqlalchemy import URL, make_url, text
 from sqlalchemy.exc import OperationalError
 
 from harp import get_logger
-from harp.commandline.options.server import CommonServerOptions
+from harp.config import ConfigurationBuilder
 from harp_apps import storage
 from harp_apps.storage.models import Base, Message, Transaction
 
@@ -33,19 +33,18 @@ def create_alembic_config(url: Union[str, URL]):
     return alembic_cfg
 
 
-def create_harp_config_with_storage_from_command_line_options(kwargs):
+def create_harp_settings_with_storage_from_command_line_options(kwargs):
     """Create a Harp configuration object using common server command line options (--set...) with the sqlalchemy
     storage application installed so that the storage is properly configured."""
-    from harp import Config as HarpConfig
+
+    from harp.commandline.options.server import CommonServerOptions
 
     options = CommonServerOptions(**kwargs)
 
-    cfg = HarpConfig()
-    cfg.add_application("storage")
-    cfg.read_env(options)
-    cfg.validate(allow_extraneous_settings=True)
+    builder = ConfigurationBuilder.from_commandline_options(options)
+    builder.applications.add("storage")
 
-    return cfg
+    return builder.build()
 
 
 async def do_reset(engine):

@@ -3,6 +3,7 @@ import SyntaxHighlighter from "react-syntax-highlighter/dist/esm/prism-light"
 import BaseStyle from "react-syntax-highlighter/dist/esm/styles/prism/vs"
 
 import { Button } from "ui/Components/Button"
+
 const Style = { ...BaseStyle }
 
 export function PrettyBody({

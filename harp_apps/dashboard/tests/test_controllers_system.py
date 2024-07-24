@@ -3,7 +3,7 @@ from unittest.mock import ANY
 
 import pytest
 
-from harp import Config
+from harp.config import ConfigurationBuilder
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.databases import parametrize_with_blob_storages_urls, parametrize_with_database_urls
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
@@ -20,8 +20,8 @@ class SystemControllerTestFixtureMixin:
         raw_settings.setdefault("storage", {})
         raw_settings["storage"].setdefault("blobs", {})
         raw_settings["storage"]["blobs"].setdefault("type", blob_storage.type)
-        config = Config(raw_settings)
-        settings = config.validate()
+        config = ConfigurationBuilder(raw_settings, use_default_applications=False)
+        settings = config.build()
         return SystemController(storage=sql_storage, settings=settings, handle_errors=False)
 
 
@@ -47,7 +47,6 @@ class TestSystemController(
             "applications": ["harp_apps.storage"],
             "storage": {
                 "migrate": True,
-                "type": "sqlalchemy",
                 "url": "sqlite+aiosqlite:///:memory:",
                 "blobs": ANY,
             },
@@ -63,7 +62,6 @@ class TestSystemController(
             "applications": ["harp_apps.storage"],
             "storage": {
                 "migrate": True,
-                "type": "sqlalchemy",
                 "url": "postgresql://user:***@localhost:5432/db",
                 "blobs": ANY,
             },
@@ -93,8 +91,8 @@ class TestSystemControllerThroughASGI(
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
-            b'{"applications":["harp_apps.storage"],"storage":{"type":"sqlalchemy","url":"'
-            b'sqlite+aiosqlite:///:memory:","migrate":true,"blobs":{"type":"sql"}}}'
+            b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
+            b':memory:","migrate":true,"blobs":{"type":"sql"}}}'
         )
 
     @parametrize_with_settings(
@@ -108,9 +106,9 @@ class TestSystemControllerThroughASGI(
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
-            b'{"applications":["harp_apps.storage"],"storage":{"type":"sqlalchemy","url":"'
-            b'sqlite+aiosqlite:///:memory:","migrate":true,"blobs":{"type":"redis","url":"'
-            b'redis://localhost:6379/0"}}}'
+            b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
+            b':memory:","migrate":true,"blobs":{"type":"redis","url":"redis://localhost:63'
+            b'79/0"}}}'
         )
 
     @parametrize_with_settings(
@@ -124,8 +122,8 @@ class TestSystemControllerThroughASGI(
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
-            b'{"applications":["harp_apps.storage"],"storage":{"type":"sqlalchemy","url":"'
-            b'postgresql://user:***@localhost:5432/db","migrate":true,"blobs":{"type":"sql"}}}'
+            b'{"applications":["harp_apps.storage"],"storage":{"url":"postgresql://user:**'
+            b'*@localhost:5432/db","migrate":true,"blobs":{"type":"sql"}}}'
         )
 
     @parametrize_with_settings(
@@ -145,7 +143,7 @@ class TestSystemControllerThroughASGI(
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
-            b'{"applications":["harp_apps.storage"],"storage":{"type":"sqlalchemy","url":"'
-            b'postgresql://user:***@localhost:5432/db","migrate":true,"blobs":{"type":"red'
-            b'is","url":"redis://user:***@localhost:6379/0"}}}'
+            b'{"applications":["harp_apps.storage"],"storage":{"url":"postgresql://user:**'
+            b'*@localhost:5432/db","migrate":true,"blobs":{"type":"redis","url":"redis://u'
+            b'ser:***@localhost:6379/0"}}}'
         )

@@ -1,6 +1,7 @@
 import { useState } from "react"
 
 import { RangeSlider } from "./RangeSlider"
+
 type SliderValue = { min?: number; max?: number }
 
 const marks = [

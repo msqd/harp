@@ -31,8 +31,7 @@ class BlobStorageSettings(BaseSetting):
 
 @settings_dataclass
 class StorageSettings(BaseSetting):
-    type: str = "sqlalchemy"
-    url: URL = make_url("sqlite+aiosqlite:///:memory:")
+    url: URL = make_url("sqlite+aiosqlite:///:memory:?cache=shared")
     migrate: bool = True
     blobs: BlobStorageSettings = field(default_factory=BlobStorageSettings)
 
@@ -45,7 +44,6 @@ class StorageSettings(BaseSetting):
 
     def _asdict(self, /, *, secure=True):
         return {
-            "type": self.type,
             "url": self.url.render_as_string(hide_password=secure),
             "migrate": self.migrate,
             "blobs": self.blobs._asdict(secure=secure),

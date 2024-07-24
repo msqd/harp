@@ -1,5 +1,4 @@
 storage:
-  type: sqlalchemy
   url: postgresql+asyncpg://harp:harp@127.0.0.1/repositories
 
 proxy:

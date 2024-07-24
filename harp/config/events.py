@@ -1,8 +1,9 @@
-from config.common import Configuration
 from rodi import Container, Services
 from whistle import Event
 
+from harp.asgi import ASGIKernel
 from harp.controllers import ProxyControllerResolver
+from harp.utils.network import Bind
 
 
 class FactoryBindEvent(Event):
@@ -16,7 +17,7 @@ class FactoryBindEvent(Event):
 
     name = "harp.config.bind"
 
-    def __init__(self, container: Container, settings: Configuration):
+    def __init__(self, container: Container, settings):
         self.container = container
         self.settings = settings
 
@@ -52,7 +53,8 @@ class FactoryBuildEvent(Event):
 
     name = "harp.config.build"
 
-    def __init__(self, kernel, binds):
+    def __init__(self, provider: Services, kernel: ASGIKernel, binds: list[Bind]):
+        self.provider = provider
         self.kernel = kernel
         self.binds = binds
 
@@ -63,7 +65,7 @@ EVENT_FACTORY_BUILD = FactoryBuildEvent.name
 class FactoryDisposeEvent(Event):
     name = "harp.config.dispose"
 
-    def __init__(self, kernel, provider):
+    def __init__(self, kernel: ASGIKernel, provider: Services):
         self.kernel = kernel
         self.provider = provider
 

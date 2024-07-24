@@ -3187,6 +3187,20 @@ files = [
 python-baseconv = "*"
 
 [[package]]
+name = "syrupy"
+version = "4.6.1"
+description = "Pytest Snapshot Test Utility"
+optional = false
+python-versions = ">=3.8.1,<4"
+files = [
+    {file = "syrupy-4.6.1-py3-none-any.whl", hash = "sha256:203e52f9cb9fa749cf683f29bd68f02c16c3bc7e7e5fe8f2fc59bdfe488ce133"},
+    {file = "syrupy-4.6.1.tar.gz", hash = "sha256:37a835c9ce7857eeef86d62145885e10b3cb9615bc6abeb4ce404b3f18e1bb36"},
+]
+
+[package.dependencies]
+pytest = ">=7.0.0,<9.0.0"
+
+[[package]]
 name = "testcontainers"
 version = "4.7.2"
 description = "Python library for throwaway instances of anything that can run in a Docker container"
@@ -3712,4 +3726,4 @@ dev = ["honcho", "watchfiles"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "4fcb9b30d8c6c990741b9a573cc42d65fa90db0d54d8dea79626fcbfab8002fc"
+content-hash = "f7fe91d2d228d1986635c758b37715e55d27ee5f59a3701aa403bbdc7da55a87"

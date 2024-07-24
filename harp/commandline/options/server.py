@@ -7,6 +7,16 @@ from harp.utils.commandline import click, code
 
 
 @dataclass(kw_only=True)
+class ConfigOptions:
+    files: tuple = ()
+    examples: tuple = ()
+    options: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        self.options = dict(map(lambda x: x.split("=", 1), self.options))
+
+
+@dataclass(kw_only=True)
 class CommonServerOptions(dict):
     """
     Common server options, in a dataclass.
@@ -53,7 +63,6 @@ def add_harp_config_options(f):
         ),
         click.option(
             "--example",
-            "-e",
             "examples",
             default=(),
             multiple=True,

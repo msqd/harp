@@ -1,15 +1,14 @@
 from tempfile import NamedTemporaryFile
 
-from harp import Config
+from harp.config import ConfigurationBuilder, asdict
 
 
 class TestSettings:
     async def factory(self, settings=None):
-        config = Config(settings)
-        config.add_application("storage")
-        config.add_application("dashboard")
-        config.validate()
-        return config.settings
+        config = ConfigurationBuilder(settings)
+        config.applications.add("storage")
+        config.applications.add("dashboard")
+        return asdict(config.build())
 
     async def test_dashboard_auth_basic(self):
         users = {"foo": "bar"}

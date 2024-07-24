@@ -8,9 +8,8 @@ from http import HTTPStatus
 import pytest
 from httpx import AsyncClient
 
-from harp import Config
 from harp.asgi.kernel import ASGIKernel
-from harp.config.factories.kernel_factory import KernelFactory
+from harp.config import ConfigurationBuilder, SystemBuilder
 from harp.controllers import ProxyControllerResolver
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.http import parametrize_with_http_methods
@@ -71,28 +70,18 @@ class TestAsgiProxyWithStubApi:
 
     @pytest.fixture
     async def kernel(self, test_api):
-        config = Config()
+        builder = ConfigurationBuilder(use_default_applications=False)
+        builder.applications.add("http_client")
+        builder.applications.add("proxy")
+        builder.applications.add("storage")
+        builder.add_values({"proxy.endpoints": [{"port": 80, "name": "test", "url": test_api.url}]})
 
-        config.add_application("http_client")
-        config.add_application("proxy")
-        config.add_application("storage")
+        system = await SystemBuilder(builder).abuild()
 
-        config.set(
-            "proxy.endpoints",
-            [
-                {
-                    "port": 80,
-                    "name": "test",
-                    "url": test_api.url,
-                }
-            ],
-        )
-        factory = KernelFactory(config)
         try:
-            _kernel = (await factory.build())[0]
-            yield _kernel
+            yield system.kernel
         finally:
-            await factory.dispose()
+            await system.dispose()
 
     @pytest.fixture
     async def client(self, kernel):

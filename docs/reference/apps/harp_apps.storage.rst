@@ -17,6 +17,7 @@ Submodules
     harp_apps.storage.conftest
     harp_apps.storage.constants
     harp_apps.storage.factories
+    harp_apps.storage.lifecycle
     harp_apps.storage.models
     harp_apps.storage.optionals
     harp_apps.storage.services

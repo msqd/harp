@@ -21,18 +21,23 @@ class TestFactoryDefinition:
             assert definition.validate()
 
     def test_existing(self):
-        definition = Lazy("harp.config:Application", {"foo": "bar"})
+        definition = Lazy("harp.http:HttpResponse", "Hello.", status=200)
         assert isinstance(definition, Definition)
 
-        assert definition.path == "harp.config"
-        assert definition.name == "Application"
+        assert definition.path == "harp.http"
+        assert definition.name == "HttpResponse"
         assert len(definition.args) == 1
-        assert len(definition.kwargs) == 0
+        assert len(definition.kwargs) == 1
 
         assert definition.validate()
 
         instance = definition.build()
-        assert instance.settings == {"foo": "bar"}
+
+        from harp.http import HttpResponse
+
+        assert isinstance(instance, HttpResponse)
+        assert instance.body == b"Hello."
+        assert instance.status == 200
 
     def test_using_type(self):
         definition = Lazy(Decimal)

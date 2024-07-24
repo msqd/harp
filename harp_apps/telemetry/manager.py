@@ -27,6 +27,7 @@ class TelemetryManager:
         dispatcher: IAsyncEventDispatcher = None,
         **kwargs,
     ):
+
         self.global_settings = global_settings
         self.client = client
         self.storage = storage

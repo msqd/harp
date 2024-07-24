@@ -1,70 +1,41 @@
 import pytest
 
 import harp
-from harp import Config
-from harp.config.examples import _get_available_documentation_examples_filenames, get_available_examples
+from harp.config.examples import (
+    _get_available_documentation_examples_filenames,
+    get_available_examples,
+    get_example_filename,
+)
 
 
-def test_examples_list():
-    assert get_available_examples() == [
-        "auth.basic",
-        "httpbin",
-        "httpbins",
-        "postgres",
-        "repositories",
-        "sentry",
-        "sqlite",
-    ]
+def test_examples_list(snapshot):
+    assert get_available_examples() == snapshot
 
 
-def test_documentation_examples_list():
-    assert [x.removeprefix(harp.ROOT_DIR + "/") for x in _get_available_documentation_examples_filenames()] == [
-        "docs/apps/dashboard/examples/auth.basic.yml",
-        "docs/apps/dashboard/examples/auth.yml",
-        "docs/apps/dashboard/examples/devserver.yml",
-        "docs/apps/dashboard/examples/main.yml",
-        "docs/apps/http_client/examples/full.yml",
-        "docs/apps/http_client/examples/simple.yml",
-        "docs/apps/proxy/examples/swapi.yml",
-        "docs/apps/rules/examples/rules.yml",
-        "docs/apps/storage/examples/mysql-aiomysql.yml",
-        "docs/apps/storage/examples/mysql-asyncmy.yml",
-        "docs/apps/storage/examples/postgres-asyncpg.yml",
-        "docs/apps/storage/examples/redis.yml",
-        "docs/apps/storage/examples/sqlite-aiosqlite.yml",
-    ]
+def test_documentation_examples_list(snapshot):
+    assert [x.removeprefix(harp.ROOT_DIR + "/") for x in _get_available_documentation_examples_filenames()] == snapshot
 
 
 @pytest.mark.parametrize("example", get_available_examples())
 def test_load_example(example):
-    from harp.config.builder import ConfigurationBuilder
+    from harp.config import ConfigurationBuilder
 
     builder = ConfigurationBuilder()
-    builder.add_examples([example])
-    settings = builder.build().values
+    builder.add_file(get_example_filename(example))
+    settings = builder.build()
 
-    config = Config(settings)
-    config.add_defaults()
-    assert config.validate()
+    assert settings
 
 
 @pytest.mark.parametrize("configfile", _get_available_documentation_examples_filenames())
 def test_load_documentation_example(configfile):
-    if "docs/apps/storage/examples/redis.yml" in configfile:
-        pytest.skip("Redis example is not working, waiting merge of feature.")
-
-    from harp.config.builder import ConfigurationBuilder
-
-    applications = []
-    if "/apps/rules/" in configfile:
-        applications.append("rules")
+    from harp.config import ConfigurationBuilder
 
     builder = ConfigurationBuilder()
-    builder.add_files([configfile])
-    settings = builder.build().values
-
-    config = Config(settings)
-    for application in applications:
-        config.add_application(application)
-    config.add_defaults()
-    assert config.validate()
+    if "/apps/rules/" in configfile:
+        builder.applications.add("rules")
+    builder.add_file(configfile)
+    settings = builder.build()
+    applications = settings.pop("applications", [])
+    assert len(set(settings.keys()).difference(set(builder.applications.keys()))) == 0
+    assert len(applications) >= len(settings)

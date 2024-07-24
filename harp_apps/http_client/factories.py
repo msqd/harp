@@ -21,15 +21,15 @@ def _resolve(x, *args, **kwargs):
 def AsyncClientFactory(
     self, settings: HttpClientSettings, dispatcher: IAsyncEventDispatcher, storage: IBlobStorage
 ) -> AsyncClient:
-    transport = _resolve(settings.transport)
-    transport = AsyncFilterableTransport(transport=transport, dispatcher=dispatcher)
+    httpx_transport = _resolve(settings.transport)
+    httpx_transport = AsyncFilterableTransport(transport=httpx_transport, dispatcher=dispatcher)
 
     if settings.cache.enabled:
         from harp_apps.http_client.contrib.hishel.storages import AsyncStorage
 
-        transport = _resolve(
+        httpx_transport = _resolve(
             settings.cache.transport,
-            transport=transport,
+            transport=httpx_transport,
             controller=_resolve(settings.cache.controller),
             storage=AsyncStorage(
                 storage,
@@ -38,4 +38,4 @@ def AsyncClientFactory(
             ),
         )
 
-    return AsyncClient(transport=transport, timeout=settings.timeout)
+    return AsyncClient(transport=httpx_transport, timeout=settings.timeout)

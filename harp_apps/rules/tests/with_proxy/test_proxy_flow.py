@@ -1,6 +1,5 @@
 from unittest.mock import Mock
 
-from harp.config.factories.kernel_factory import KernelFactory
 from harp.utils.testing.communicators import ASGICommunicator
 
 from .._base import BaseRulesFlowTest
@@ -11,15 +10,11 @@ class TestProxyRulesFlow(BaseRulesFlowTest):
 
     async def test_proxy_flow(self, httpbin):
         mock = Mock()
-        config = self.create_config(
+        system = await self.create_system(
             {"proxy": {"endpoints": [{"name": "httpbin", "port": 80, "url": httpbin}]}}, mock=mock
         )
 
-        # build our services (!!!badly named)
-        factory = KernelFactory(config)
-        kernel, binds = await factory.build()
-
-        client = ASGICommunicator(kernel)
+        client = ASGICommunicator(system.kernel)
         await client.asgi_lifespan_startup()
 
         await client.http_get("/")

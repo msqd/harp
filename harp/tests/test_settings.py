@@ -1,8 +1,7 @@
 import os
 from tempfile import NamedTemporaryFile
 
-from harp.config import asdict
-from harp.config.settings import DisabledSettings, FromFileSetting
+from harp.config import DisabledSettings, FromFileSetting, asdict
 
 
 def test_from_file_setting_not_existing():

@@ -61,6 +61,11 @@ LOGGING_FORMAT = os.environ.get("LOGGING_FORMAT", DEFAULT_LOGGING_FORMAT)
 if LOGGING_FORMAT not in LOGGING_FORMATTERS:
     LOGGING_FORMAT = DEFAULT_LOGGING_FORMAT
 
+
+def _get_logging_level(name, *, default="warning"):
+    return os.environ.get("LOGGING_" + name.upper(), default).upper()
+
+
 logging_config = {
     "version": 1,
     "disable_existing_loggers": True,
@@ -76,16 +81,16 @@ logging_config = {
         "level": logging.INFO,
     },
     "loggers": {
-        "harp": {"level": os.environ.get("LOGGING_HARP", "INFO")},
-        "harp_apps": {"level": os.environ.get("LOGGING_HARP", "WARNING")},
-        "harp_apps.proxy": {"level": os.environ.get("LOGGING_HARP_PROXY", "WARNING")},
-        "harp_apps.http_client": {"level": os.environ.get("LOGGING_HARP_HTTP_CLIENT", "WARNING")},
-        "harp.event_dispatcher": {"level": os.environ.get("LOGGING_HARP_EVENTS", "WARNING")},
-        "httpcore": {"level": os.environ.get("LOGGING_HTTP", "WARNING")},  # todo wrap in structlog
-        "httpx": {"level": os.environ.get("LOGGING_HTTP", "WARNING")},  # todo wrap in structlog
-        "hypercorn.access": {"level": os.environ.get("LOGGING_HYPERCORN_ACCESS", "INFO")},
-        "hypercorn.error": {"level": os.environ.get("LOGGING_HYPERCORN_ERROR", "INFO")},
-        "sqlalchemy.engine": {"level": os.environ.get("LOGGING_SQLALCHEMY", "WARNING")},
+        "harp": {"level": _get_logging_level("harp", default="info")},
+        "harp_apps": {"level": _get_logging_level("harp")},
+        "harp_apps.proxy": {"level": _get_logging_level("proxy")},
+        "harp_apps.http_client": {"level": _get_logging_level("http_client")},
+        "harp.event_dispatcher": {"level": _get_logging_level("events")},
+        "httpcore": {"level": _get_logging_level("http")},  # todo wrap in structlog
+        "httpx": {"level": _get_logging_level("http")},  # todo wrap in structlog
+        "hypercorn.access": {"level": _get_logging_level("hypercorn", default="info")},
+        "hypercorn.error": {"level": _get_logging_level("hypercorn", default="info")},
+        "sqlalchemy.engine": {"level": _get_logging_level("sqlalchemy")},
     },
 }
 
