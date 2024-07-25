@@ -82,15 +82,15 @@ logging_config = {
     },
     "loggers": {
         "harp": {"level": _get_logging_level("harp", default="info")},
-        "harp_apps": {"level": _get_logging_level("harp")},
-        "harp_apps.proxy": {"level": _get_logging_level("proxy")},
-        "harp_apps.http_client": {"level": _get_logging_level("http_client")},
         "harp.event_dispatcher": {"level": _get_logging_level("events")},
-        "httpcore": {"level": _get_logging_level("http")},  # todo wrap in structlog
-        "httpx": {"level": _get_logging_level("http")},  # todo wrap in structlog
-        "hypercorn.access": {"level": _get_logging_level("hypercorn", default="info")},
-        "hypercorn.error": {"level": _get_logging_level("hypercorn", default="info")},
-        "sqlalchemy.engine": {"level": _get_logging_level("sqlalchemy")},
+        "harp_apps": {"level": _get_logging_level("harp")},
+        "harp_apps.http_client": {"level": _get_logging_level("http_client")},
+        "harp_apps.proxy": {"level": _get_logging_level("proxy")},
+        "httpcore": {"level": _get_logging_level("http_client")},
+        "httpx": {"level": _get_logging_level("http_client")},
+        "hypercorn.access": {"level": _get_logging_level("http", default="info")},
+        "hypercorn.error": {"level": _get_logging_level("http", default="info")},
+        "sqlalchemy.engine": {"level": _get_logging_level("sql")},
     },
 }
 
