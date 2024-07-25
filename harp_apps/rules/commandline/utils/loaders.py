@@ -15,5 +15,5 @@ def load_ruleset_from_files(files, examples, options):
         settings.load(file)
     for example in examples:
         settings.load(get_example_filename(example))
-    ruleset = settings.ruleset
-    return ruleset
+
+    return settings.ruleset
