@@ -14,14 +14,14 @@ from harp.utils.network import Bind
 from harp.views.json import on_json_response
 
 from ..events import (
-    EVENT_FACTORY_BIND,
-    EVENT_FACTORY_BOUND,
-    EVENT_FACTORY_BUILD,
-    EVENT_FACTORY_DISPOSE,
-    FactoryBindEvent,
-    FactoryBoundEvent,
-    FactoryBuildEvent,
-    FactoryDisposeEvent,
+    EVENT_BIND,
+    EVENT_BOUND,
+    EVENT_READY,
+    EVENT_SHUTDOWN,
+    OnBindEvent,
+    OnBoundEvent,
+    OnReadyEvent,
+    OnShutdownEvent,
 )
 from .configuration import ConfigurationBuilder
 
@@ -88,8 +88,8 @@ class System:
         Asynchronously disposes of the system resources, primarily the ASGI kernel.
         """
         if self.kernel:
-            event = FactoryDisposeEvent(self.kernel, self.provider)
-            await self.dispatcher.adispatch(EVENT_FACTORY_DISPOSE, event)
+            event = OnShutdownEvent(self.kernel, self.provider)
+            await self.dispatcher.adispatch(EVENT_SHUTDOWN, event)
             self._kernel = None
 
 
@@ -179,15 +179,15 @@ class SystemBuilder:
         dispatcher: IAsyncEventDispatcher,
         container: Container,
         config,
-    ) -> FactoryBindEvent:
+    ) -> OnBindEvent:
         # dispatch "bind" event: this is the last chance to add services to the container
         try:
             return cast(
-                FactoryBindEvent,
-                await dispatcher.adispatch(EVENT_FACTORY_BIND, FactoryBindEvent(container, config)),
+                OnBindEvent,
+                await dispatcher.adispatch(EVENT_BIND, OnBindEvent(container, config)),
             )
         except Exception as exc:
-            logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_FACTORY_BIND, exc)
+            logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_BIND, exc)
             raise
 
     async def dispatch_bound_event(
@@ -195,15 +195,15 @@ class SystemBuilder:
         dispatcher: IAsyncEventDispatcher,
         provider: Services,
         resolver: ProxyControllerResolver,
-    ) -> FactoryBoundEvent:
+    ) -> OnBoundEvent:
         # dispatch "bound" event: you get a resolved container, do your thing
         try:
             return cast(
-                FactoryBoundEvent,
-                await dispatcher.adispatch(EVENT_FACTORY_BOUND, FactoryBoundEvent(provider, resolver)),
+                OnBoundEvent,
+                await dispatcher.adispatch(EVENT_BOUND, OnBoundEvent(provider, resolver)),
             )
         except Exception as exc:
-            logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_FACTORY_BOUND, exc)
+            logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_BOUND, exc)
             raise
 
     async def dispatch_build_event(
@@ -218,9 +218,9 @@ class SystemBuilder:
         binds = [Bind(host=self.hostname, port=port) for port in controller_resolver.ports]
         try:
             return cast(
-                FactoryBuildEvent,
-                await dispatcher.adispatch(EVENT_FACTORY_BUILD, FactoryBuildEvent(provider, kernel, binds)),
+                OnReadyEvent,
+                await dispatcher.adispatch(EVENT_READY, OnReadyEvent(provider, kernel, binds)),
             )
         except Exception as exc:
-            logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_FACTORY_BUILD, exc)
+            logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_READY, exc)
             raise

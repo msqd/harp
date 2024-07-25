@@ -16,14 +16,14 @@ __title__ = "Config"
 from .applications import Application, ApplicationsRegistry
 from .builders import ConfigurationBuilder, System, SystemBuilder
 from .events import (
-    EVENT_FACTORY_BIND,
-    EVENT_FACTORY_BOUND,
-    EVENT_FACTORY_BUILD,
-    EVENT_FACTORY_DISPOSE,
-    FactoryBindEvent,
-    FactoryBoundEvent,
-    FactoryBuildEvent,
-    FactoryDisposeEvent,
+    EVENT_BIND,
+    EVENT_BOUND,
+    EVENT_READY,
+    EVENT_SHUTDOWN,
+    OnBindEvent,
+    OnBoundEvent,
+    OnReadyEvent,
+    OnShutdownEvent,
 )
 from .settings import (
     BaseSetting,
@@ -35,7 +35,7 @@ from .settings import (
     asdict,
     settings_dataclass,
 )
-from .utils import get_application_type
+from .utils import get_application
 
 __all__ = [
     "Application",
@@ -45,19 +45,19 @@ __all__ = [
     "Definition",
     "DisableableBaseSettings",
     "DisabledSettings",
-    "EVENT_FACTORY_BIND",
-    "EVENT_FACTORY_BOUND",
-    "EVENT_FACTORY_BUILD",
-    "EVENT_FACTORY_DISPOSE",
-    "FactoryBindEvent",
-    "FactoryBoundEvent",
-    "FactoryBuildEvent",
-    "FactoryDisposeEvent",
+    "EVENT_BIND",
+    "EVENT_BOUND",
+    "EVENT_READY",
+    "EVENT_SHUTDOWN",
     "FromFileSetting",
     "Lazy",
+    "OnBindEvent",
+    "OnBoundEvent",
+    "OnReadyEvent",
+    "OnShutdownEvent",
     "System",
     "SystemBuilder",
     "asdict",
-    "get_application_type",
+    "get_application",
     "settings_dataclass",
 ]

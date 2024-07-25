@@ -14,5 +14,4 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
-    harp_apps.acme.lifecycle
     harp_apps.acme.settings

@@ -9,5 +9,6 @@ class BaseRulesFlowTest:
             (settings or {}) | {"applications": self.applications},
             use_default_applications=False,
         )
-        config.add_values({"rules": {"*": {"*": {"*": [mock]}}}})
-        return await SystemBuilder(config).abuild()
+        system = await SystemBuilder(config).abuild()
+        system.config["rules"].rules.add({"*": {"*": {"*": [mock]}}})
+        return system

@@ -9,7 +9,7 @@ remove repetition of configuration namespace ?
 """
 
 from harp import get_logger
-from harp.config import Application, FactoryBindEvent, FactoryBoundEvent
+from harp.config import Application, OnBindEvent, OnBoundEvent
 
 from .controllers import DashboardController
 from .settings import DashboardSettings
@@ -17,19 +17,21 @@ from .settings import DashboardSettings
 logger = get_logger(__name__)
 
 
-class DashboardApplication(Application):
-    depends_on = {"storage"}
-    Settings = DashboardSettings
+async def on_bind(event: OnBindEvent):
+    event.container.register(DashboardController)
+    event.container.add_alias("dashboard.controller", DashboardController)
 
-    class Lifecycle:
-        @staticmethod
-        async def on_bind(event: FactoryBindEvent):
-            event.container.register(DashboardController)
-            event.container.add_alias("dashboard.controller", DashboardController)
 
-        @staticmethod
-        async def on_bound(event: FactoryBoundEvent):
-            # add our controller to the controller resolver
-            controller = event.provider.get("dashboard.controller")
-            settings = event.provider.get(DashboardSettings)
-            event.resolver.add(settings.port, controller)
+async def on_bound(event: OnBoundEvent):
+    # add our controller to the controller resolver
+    controller = event.provider.get("dashboard.controller")
+    settings = event.provider.get(DashboardSettings)
+    event.resolver.add(settings.port, controller)
+
+
+application = Application(
+    settings_type=DashboardSettings,
+    on_bind=on_bind,
+    on_bound=on_bound,
+    dependencies=["storage"],
+)

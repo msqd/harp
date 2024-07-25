@@ -2,8 +2,8 @@ from functools import cached_property
 
 import pytest
 
-from harp.config import ConfigurationBuilder, asdict
-from harp.config.utils import get_application_type
+from harp.config import Application, ConfigurationBuilder, asdict
+from harp.config.utils import get_application
 
 
 class BaseTestForApplications:
@@ -12,8 +12,8 @@ class BaseTestForApplications:
     expected_defaults = {}
 
     @cached_property
-    def ApplicationType(self):
-        return get_application_type(self.name)
+    def application(self) -> Application:
+        return get_application(self.name)
 
     @pytest.fixture
     def configuration(self):
@@ -23,11 +23,11 @@ class BaseTestForApplications:
 
     def test_default_settings(self):
         """Checks that default settings are as expected by the implementation."""
-        computed_defaults = asdict(self.ApplicationType.Settings())
+        computed_defaults = asdict(self.application.settings_type())
         assert computed_defaults == self.expected_defaults
 
     def test_default_settings_idempotence(self):
         """Checks that default settings, if used to recrete settings, will keep the same values."""
-        defaults_settings = asdict(self.ApplicationType.Settings())
-        reparsed_settings = asdict(self.ApplicationType.Settings(**defaults_settings))
+        defaults_settings = asdict(self.application.settings_type())
+        reparsed_settings = asdict(self.application.settings_type(**defaults_settings))
         assert reparsed_settings == defaults_settings

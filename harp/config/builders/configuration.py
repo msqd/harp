@@ -135,14 +135,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         """
         # todo: support recursive doted notation key. The easiest way would probably be to convert "a.b": ... into
         #  a: {b: ...}, meanwhile, let's be carfeul with those keys.
-        return {
-            k: (
-                self.applications[k].Settings.normalize(v)
-                if k in self.applications and hasattr(self.applications[k].Settings, "normalize")
-                else v
-            )
-            for k, v in x.items()
-        }
+        return {k: (self.applications[k].normalize(v) if k in self.applications else v) for k, v in x.items()}
 
     def build(self) -> GlobalSettings:
         """
@@ -162,8 +155,9 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
             merge_values(settings, self.normalize(source.get_values()))
 
         all_settings = (
-            (name, self.applications.settings_for(name)(**settings.get(name, {})))
+            (name, self.applications[name].settings_type(**settings.get(name, {})))
             for name, application in self.applications.items()
+            if self.applications[name].settings_type
         )
         all_settings = list(all_settings)
 
@@ -187,7 +181,14 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
             ConfigurationBuilder: An instance of ConfigurationBuilder configured according to the provided command line options.
         """
         # todo: config instead of sources in constructor ? for example no_default_apps, etc.
-        builder = cls()
+
+        try:
+            applications = options.applications
+        except AttributeError:
+            applications = None
+        builder = cls(
+            {"applications": applications} if applications else None, use_default_applications=not applications
+        )
 
         # todo: raise if enabling AND disabling an app at the same time? maybe not but instructions should be taken in
         #  order, which looks hard to do using click...

@@ -6,7 +6,7 @@
   dict({
     'applications': list([
       'harp_apps.storage',
-      'harp.config.tests.test_configuration.MockedApplication',
+      'foo.bar',
     ]),
     'storage': dict({
       'blobs': dict({
@@ -18,5 +18,5 @@
   })
 # ---
 # name: test_add_application.2
-  b'{"applications":["harp_apps.storage","harp.config.tests.test_configuration.MockedApplication"],"storage":{"url":"sqlite+aiosqlite:///:memory:?cache=shared","migrate":true,"blobs":{"type":"sql"}}}'
+  b'{"applications":["harp_apps.storage","foo.bar"],"storage":{"url":"sqlite+aiosqlite:///:memory:?cache=shared","migrate":true,"blobs":{"type":"sql"}}}'
 # ---

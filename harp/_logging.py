@@ -109,7 +109,10 @@ def get_logger(name, *args: Any, **initial_values: Any) -> Any:
     if name == "env_py":
         name = "__migrations__"
     else:
-        pkg, mod = name.rsplit(".", 1)
+        try:
+            pkg, mod = name.rsplit(".", 1)
+        except ValueError:
+            return structlog.get_logger(name, *args, **initial_values)
         if mod in ("__init__", "__main__", "__app__"):
             name = pkg
 

@@ -1,5 +1,6 @@
 import asyncio
 import os
+import shlex
 import subprocess
 import threading
 from string import Template
@@ -32,18 +33,18 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
         assert_development_packages_are_available()
 
     def run(self):
-        self.process = subprocess.Popen(
-            [
-                "harp",
-                "start",
-                "server",
-                *(("--file", self.config_filename) if self.config_filename else ()),
-                "--disable",
-                "telemetry",
-                "--disable",
-                "dashboard",
-            ]
-        )
+        command = [
+            "harp",
+            "start",
+            "server",
+            *(("--file", self.config_filename) if self.config_filename else ()),
+            "--disable",
+            "telemetry",
+            "--disable",
+            "dashboard",
+        ]
+        logger.info(f"Running command: {shlex.join(command)}")
+        self.process = subprocess.Popen(command)
 
     def join(self, timeout=None):
         try:

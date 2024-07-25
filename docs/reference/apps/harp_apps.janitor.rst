@@ -14,6 +14,5 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
-    harp_apps.janitor.lifecycle
     harp_apps.janitor.settings
     harp_apps.janitor.worker

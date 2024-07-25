@@ -1,3 +1,7 @@
+from importlib.machinery import ModuleSpec
+from types import ModuleType
+from unittest.mock import patch
+
 import orjson
 
 from harp.config import Application, ApplicationsRegistry, ConfigurationBuilder, asdict
@@ -34,7 +38,6 @@ def test_add_application(snapshot):
     builder.applications.add("storage")
 
     assert len(builder.applications) == 1
-    assert builder.applications["storage"].__module__ == "harp_apps.storage.__app__"
 
     settings = builder.build()
 
@@ -44,9 +47,17 @@ def test_add_application(snapshot):
     new_builder = ConfigurationBuilder.from_bytes(serialized, ApplicationsRegistryType=ApplicationsRegistryMock)
     assert asdict(new_builder.build()) == asdict(settings)
 
-    new_builder.applications.add_mock("foo.bar", type("MockedApplication", (Application,), {"name": "foo.bar"}))
+    module = ModuleType("foo.bar")
+    module.__spec__ = ModuleSpec(name="foo.bar", loader=None)
 
-    new_settings = new_builder.build()
+    app_module = ModuleType("foo.bar.__app__")
+    app_module.application = Application()
+    app_module.__spec__ = ModuleSpec(name="foo.bar.__app__", loader=None)
+
+    with patch.dict("sys.modules", {"foo.bar": module, "foo.bar.__app__": app_module}):
+        new_builder.applications.add("foo.bar")
+        new_settings = new_builder.build()
+
     assert asdict(new_settings) != asdict(settings)
 
     assert asdict(new_settings) == snapshot

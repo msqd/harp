@@ -1,14 +1,10 @@
 import importlib.util
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING
 
 from .defaults import DEFAULT_NAMESPACES
 
 if TYPE_CHECKING:
     from .applications import Application
-
-
-def get_application_class_name(name):
-    return "".join(map(lambda x: x.title().replace("_", ""), name.rsplit(".", 1)[-1:])) + "Application"
 
 
 def resolve_application_name(spec):
@@ -17,24 +13,29 @@ def resolve_application_name(spec):
             _candidate = ".".join((namespace, spec))
             if importlib.util.find_spec(_candidate):
                 return _candidate
+
     if importlib.util.find_spec(spec):
         return spec
 
     raise ModuleNotFoundError(f"No application named {spec}.")
 
 
-#: Cache for application types
-_application_types = {}
+#: Cache for applications
+_applications = {}
 
 
-def get_application_type(name: str) -> Type["Application"]:
+def get_application(name: str) -> "Application":
     """
     Returns the application class for the given application name.
+
+    todo: add name/full_name attributes with raise if already set to different value ?
 
     :param name:
     :return:
     """
-    if name not in _application_types:
+    name = resolve_application_name(name)
+
+    if name not in _applications:
         application_spec = importlib.util.find_spec(name)
         if not application_spec:
             raise ValueError(f'Unable to find application "{name}".')
@@ -47,14 +48,12 @@ def get_application_type(name: str) -> Type["Application"]:
                 'Did you forget to add an "__app__.py"?'
             ) from exc
 
-        application_class_name = get_application_class_name(name)
-        if not hasattr(application_module, application_class_name):
-            raise AttributeError(f'Application module for {name} does not contain a "{application_class_name}" class.')
+        if not hasattr(application_module, "application"):
+            raise AttributeError(f'Application module for {name} does not contain a "application" attribute.')
 
-        _application_types[application_spec.name] = getattr(application_module, application_class_name)
-        _application_types[application_spec.name].name = application_spec.name
+        _applications[application_spec.name] = getattr(application_module, "application")
 
-    if name not in _application_types:
+    if name not in _applications:
         raise RuntimeError(f'Unable to load application "{name}", application class definition not found.')
 
-    return _application_types[name]
+    return _applications[name]

@@ -1,4 +1,4 @@
-from harp.config import asdict
+from harp.config import Application, asdict
 from harp_apps.storage.settings import StorageSettings
 
 
@@ -51,3 +51,9 @@ def test_override_blob_storage_type():
         "url": "sqlite+aiosqlite:///:memory:?cache=shared",
         "blobs": {"type": "redis", "url": "redis://localhost:6379/0"},
     }
+
+
+def test_settings_normalization_does_not_hide_password():
+    app = Application(settings_type=StorageSettings)
+    settings = app.normalize({"url": "postgresql://user:password@localhost:5432/db"})
+    assert settings["url"] == "postgresql://user:password@localhost:5432/db"
