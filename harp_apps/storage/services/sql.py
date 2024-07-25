@@ -240,8 +240,6 @@ class SqlStorage(IStorage):
 
     async def initialize(self):
         """Initialize database."""
-        # if self._should_migrate:
-        #    await self._run_migrations()
         await self.create_users(["anonymous"])
         self._is_ready.set()
 
