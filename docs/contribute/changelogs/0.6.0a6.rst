@@ -1,4 +1,4 @@
-Version 0.6.0a5 (2024-07-22)
+Version 0.6.0a6 (2024-07-25)
 ============================
 
 Added
@@ -24,12 +24,18 @@ Added
 Changed
 :::::::
 
+* Applications: simpler and cleaner interface for defining applications and their configuration.
+* Core: configuration building and system instanciation was refactored and is now WAY simpler. As a result, the
+  bootstrapping (internal) API has changed and there is no more "kernel factory" or complex "Config" object. Instead,
+  we have a ConfigurationBuilder and a SystemBuilder that will expose a simple and understandable output api.
 * Logging: reverted the exception formatter to plain_traceback, as it's the usual default python formatter. It works
   better with external tools and is more readable because of the reduced verbosity.
 * Logging: all loggers have now the WARNING default level.
 * Install(helm): the helm chart now accepts arguments to be passed to the application, and the default values are now
   set in the ``values.yaml`` file.
 * Monitoring: normalized, enhanced and complemented prometheus observability.
+* Rules: removed the need to call set_response in a rule to override the response. Now, you can simply return a response
+  object from the rule and it will be used as the response.
 * Storage: blob storage is now separated from the main storage, to allow different underlying implementations.
 * Storage: application ``harp_apps.sqlalchemy_storage`` was renamed to ``harp_apps.storage``, to reflect the fact that
   ``sqlalchemy`` is an implementation detail, and that it now handles more than just sql or sqlalchemy-based storage.
@@ -38,6 +44,7 @@ Changed
 * Storage: test fixture ``storage`` has been renamed to ``sql_storage`` for expliciteness and less linter conflicts.
 * Storage: the default sqlite settings is set to in-memory instead of memory or file depending on where the default
   comes from.
+* Storage: removed unused storage "type" where the only valid value in the foreseeable future was "sqlalchemy".
 
 Fixed
 :::::
@@ -58,7 +65,7 @@ Updated
 * bump hishel from 0.0.29 to 0.0.30
 * bump orjson from 3.10.5 to 3.10.6
 * bump ruff from 0.4.10 to 0.5.2
-* bump sentry-sdk from 2.7.0 to 2.10.0
+* bump sentry-sdk from 2.7.0 to 2.11.0
 * bump sphinx from 7.3.7 to 7.4.6
 * bump structlog from 24.2.0 to 24.4.0
 * bump testcontainers from 4.6.0 to 4.7.2
