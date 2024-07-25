@@ -1,4 +1,4 @@
-Version 0.6.0a6 (2024-07-25)
+Version 0.6.0a7 (2024-07-25)
 ============================
 
 Added
@@ -50,6 +50,7 @@ Fixed
 :::::
 
 * CI/CD: issues with connections checks on certain environments
+* CI/CD: fix issues with container and helm chart that caused broken 0.6.0a6 release
 * Core: server process now corretly uses current working directory as base for relative paths
 * Dashboard: fixed a bug where the dashboard would not show python dependencies when the application was installed as a
   wheel.
