@@ -16,7 +16,7 @@ def lint_command(files, examples, options):
     ruleset = load_ruleset_from_files(files, examples, options)
 
     rules_tree = Tree(":shuffle_tracks_button: Rules")
-    for endpoint_pattern, endpoint_rules in ruleset.ruleset.items():
+    for endpoint_pattern, endpoint_rules in ruleset.rules.items():
         endpoint_tree = rules_tree.add(
             Syntax("endpoint LIKE " + repr(endpoint_pattern.source), "sql", background_color="default")
         )
