@@ -21,7 +21,6 @@ endpoints:
 
 settings:
   storage:
-    type: sqlalchemy
     url: sqlite+aiosqlite:///data/harp.db
 
 postgresql:
