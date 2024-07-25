@@ -18,7 +18,7 @@ Example
         from harp.http import HttpResponse
 
         if request.headers.get("Authorization") == "I'm root, let me in":
-            set_response(HttpResponse("Ok, then."))
+            response = HttpResponse("Ok, then.")
         else:
             request.headers["Via"] = "Ferrata"
         """

@@ -5,4 +5,3 @@ rules:
       on_request: |
         from harp.http import HttpResponse
         response = HttpResponse("I'm a teapot.", status=418)
-        set_response(response)

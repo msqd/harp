@@ -19,8 +19,8 @@ class TestHttpClientRulesFlow(BaseRulesFlowTest):
 
         assert mock.call_count == 2
 
-        assert mock.call_args_list[0].kwargs["rule"] == "on_remote_request"
-        assert mock.call_args_list[0].kwargs["response"] is None
+        assert mock.call_args_list[0].args[0]["rule"] == "on_remote_request"
+        assert mock.call_args_list[0].args[0]["response"] is None
 
-        assert mock.call_args_list[1].kwargs["rule"] == "on_remote_response"
-        assert mock.call_args_list[1].kwargs["response"].status_code == 200
+        assert mock.call_args_list[1].args[0]["rule"] == "on_remote_response"
+        assert mock.call_args_list[1].args[0]["response"].status_code == 200

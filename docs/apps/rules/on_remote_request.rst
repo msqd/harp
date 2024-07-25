@@ -50,16 +50,15 @@ You can add a header to the outgoing request:
 Forging a response
 ::::::::::::::::::
 
-If a :class:`Response <httpx.Response>` is set in this event (using
-:meth:`set_response(...) <harp_apps.http_client.events.HttpClientFilterEvent.set_response>`), the outgoing request
-will not be sent, and your response will be used instead.
+If a :class:`Response <httpx.Response>` is set in this event, the outgoing request will not be sent, and your response
+will be used instead.
 
 .. code-block:: toml
 
     [rules."*"."*"]
     on_remote_request = """
     from httpx import Response
-    set_response(Response(200, content=b'Hello, World!'))
+    response = Response(200, content=b'Hello, World!')
     """
 
 Context reference
@@ -71,11 +70,6 @@ The following variables are available in the context of the ``on_remote_request`
 - ``event``: the :class:`HttpClientFilterEvent <harp_apps.http_client.events.HttpClientFilterEvent>` instance.
 - ``endpoint``: the endpoint name for this transaction, as defined in your configuration.
 - ``request``: the prepared :class:`httpx.Request` instance, ready to be sent.
-- ``response``: an eventual :class:`httpx.Response` instance, but most probably None. It will be
-  set if the script (or another script that happened before this one) calls
-  :meth:`harp_apps.http_client.events.HttpClientFilterEvent.set_response(...) <.set_response>`. After the event is
-  processed, the http client will bypass sending the outgoing request this response if it is set. Please note that
-  you must use the setter function, setting the response value using ``response = ...`` will not work.
-- ``set_response``: a function to set the :class:`httpx.Response` to be returned to the client (bypassing the outgoing
-  http request).
+- ``response``: an eventual :class:`httpx.Response` instance, but most probably None. Set this to a
+  :class:`httpx.Response` to forge a response, bypassing the remote request.
 - ``stop_propagation``: a function to stop the event propagation to the next event in the chain.

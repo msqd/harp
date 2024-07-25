@@ -80,7 +80,7 @@ Although the reason may be debatable, if you need to, you can replace the respon
     [rules."*"."*"]
     on_remote_response = """
     from httpx import Response
-    set_response(Response(200, content=b'Goodbye, World!'))
+    response = Response(200, content=b'Goodbye, World!')
     """
 
 Context reference
@@ -91,8 +91,7 @@ The following variables are available in the context of the ``on_remote_response
 - ``logger``: the logger instance.
 - ``event``: the :class:`HttpClientFilterEvent <harp_apps.http_client.events.HttpClientFilterEvent>` instance.
 - ``request``: the :class:`httpx.Request` instance.
-- ``response``: the :class:`httpx.Response` instance.
-- ``set_response``: a function to set the response to be sent back to the proxy controller.
+- ``response``: the :class:`httpx.Response` instance. You can amend or replace it.
 - ``stop_propagation``: a function to stop the event propagation to the next lifecycle event.
 
 .. warning::

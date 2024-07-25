@@ -21,14 +21,14 @@ class TestProxyRulesFlow(BaseRulesFlowTest):
 
         assert mock.call_count == 4
 
-        assert mock.call_args_list[0].kwargs["rule"] == "on_request"
-        assert mock.call_args_list[0].kwargs["response"] is None
+        assert mock.call_args_list[0].args[0]["rule"] == "on_request"
+        assert mock.call_args_list[0].args[0]["response"] is None
 
-        assert mock.call_args_list[1].kwargs["rule"] == "on_remote_request"
-        assert mock.call_args_list[1].kwargs["response"] is None
+        assert mock.call_args_list[1].args[0]["rule"] == "on_remote_request"
+        assert mock.call_args_list[1].args[0]["response"] is None
 
-        assert mock.call_args_list[2].kwargs["rule"] == "on_remote_response"
-        assert mock.call_args_list[2].kwargs["response"].status_code == 200
+        assert mock.call_args_list[2].args[0]["rule"] == "on_remote_response"
+        assert mock.call_args_list[2].args[0]["response"].status_code == 200
 
-        assert mock.call_args_list[3].kwargs["rule"] == "on_response"
-        assert mock.call_args_list[3].kwargs["response"].status == 200
+        assert mock.call_args_list[3].args[0]["rule"] == "on_response"
+        assert mock.call_args_list[3].args[0]["response"].status == 200

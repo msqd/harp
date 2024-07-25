@@ -11,7 +11,7 @@ from harp.http.tests.stubs import HttpRequestStubBridge
 from harp.utils.urls import validate_url
 from harp_apps.http_client.events import EVENT_FILTER_HTTP_CLIENT_REQUEST, EVENT_FILTER_HTTP_CLIENT_RESPONSE
 from harp_apps.proxy.controllers import HttpProxyController
-from harp_apps.proxy.events import EVENT_FILTER_REQUEST, EVENT_FILTER_RESPONSE
+from harp_apps.proxy.events import EVENT_FILTER_PROXY_REQUEST, EVENT_FILTER_PROXY_RESPONSE
 
 from .utils.dump import (
     on_proxy_request_dump,
@@ -46,12 +46,12 @@ def run_command(files, examples, options, endpoint, method, path):
 
     http_client = AsyncClientFactory(HttpClientSettings(), dispatcher, MemoryBlobStorage())
 
-    dispatcher.add_listener(EVENT_FILTER_REQUEST, on_proxy_request_dump, priority=-100)
+    dispatcher.add_listener(EVENT_FILTER_PROXY_REQUEST, on_proxy_request_dump, priority=-100)
     dispatcher.add_listener(EVENT_FILTER_HTTP_CLIENT_REQUEST, on_remote_request_dump, priority=-100)
     dispatcher.add_listener(EVENT_FILTER_HTTP_CLIENT_RESPONSE, on_remote_response_dump, priority=-100)
     dispatcher.add_listener(EVENT_FILTER_HTTP_CLIENT_RESPONSE, on_remote_response_show_cache_control, priority=-100)
     dispatcher.add_listener(EVENT_FILTER_HTTP_CLIENT_RESPONSE, on_remote_response_show_cache_control, priority=100)
-    dispatcher.add_listener(EVENT_FILTER_RESPONSE, on_proxy_response_dump, priority=-100)
+    dispatcher.add_listener(EVENT_FILTER_PROXY_RESPONSE, on_proxy_response_dump, priority=-100)
     controller = HttpProxyController(
         endpoint_target,
         name=endpoint_name,

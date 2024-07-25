@@ -13,12 +13,12 @@ RULES_SUBSCRIBER = "rules.subscriber"
 async def on_bind(event: OnBindEvent):
     settings = event.settings.get("rules")
     logger.warning("📦 Rules are currently experimental. THE API MAY CHANGE A LOT.")
-    logger.warning("📦 Rules: found %d rules.", len(settings.rules))
+    logger.warning("📦 Rules: found %d rules.", len(settings.ruleset))
 
 
 async def on_bound(event: OnBoundEvent):
     settings = event.provider.get(RulesSettings)
-    subscriber = RulesSubscriber(settings.rules)
+    subscriber = RulesSubscriber(settings.ruleset)
     subscriber.subscribe(event.dispatcher)
     event.provider.set(RULES_SUBSCRIBER, subscriber)
 
