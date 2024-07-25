@@ -173,7 +173,6 @@ RUN ln -s /var/lib/harp/data \
     && mv src/bin/runtime ./bin
 
 
-ENV DEFAULT__HARP__STORAGE__TYPE="sqlalchemy"
 ENV DEFAULT__HARP__STORAGE__URL="sqlite+aiosqlite:///data/harp.db"
 
 EXPOSE 4080
