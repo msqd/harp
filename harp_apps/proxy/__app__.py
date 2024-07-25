@@ -5,34 +5,28 @@ Proxy Application
 
 from httpx import AsyncClient
 
-from harp.config.application import Application
-from harp.config.events import FactoryBoundEvent
+from harp.config import Application
+from harp.config.events import OnBoundEvent
 
 from .controllers import HttpProxyController
 from .settings import ProxySettings
 
 
-class ProxyApplication(Application):
-    depends_on = ["harp.services.http"]
+async def on_bound(event: OnBoundEvent):
+    settings = event.provider.get(ProxySettings)
+    for endpoint in settings.endpoints:
+        event.resolver.add(
+            endpoint.port,
+            HttpProxyController(
+                endpoint.url,
+                name=endpoint.name,
+                dispatcher=event.dispatcher,
+                http_client=event.provider.get(AsyncClient),
+            ),
+        )
 
-    settings_namespace = "proxy"
-    settings_type = ProxySettings
-    settings: ProxySettings
 
-    @classmethod
-    def defaults(cls, settings=None) -> dict:
-        settings = settings or super().defaults()
-        settings.setdefault("endpoints", [])
-        return settings
-
-    async def on_bound(self, event: FactoryBoundEvent):
-        for endpoint in self.settings.endpoints:
-            event.resolver.add(
-                endpoint.port,
-                HttpProxyController(
-                    endpoint.url,
-                    name=endpoint.name,
-                    dispatcher=event.dispatcher,
-                    http_client=event.provider.get(AsyncClient),
-                ),
-            )
+application = Application(
+    on_bound=on_bound,
+    settings_type=ProxySettings,
+)

@@ -1,24 +1,25 @@
-from harp.config import BaseSetting, settings_dataclass
 from harp_apps.rules.models.rulesets import RuleSet
 
 
-@settings_dataclass
-class RulesSettings(BaseSetting):
+class RulesSettings:
     def __init__(self, /, **sources):
-        self.rules = RuleSet()
-        self.rules.add(sources)
+        self.ruleset = RuleSet()
+        self.ruleset.add(sources)
 
     def _asdict(self, /, *, secure=True):
-        return self.rules._asdict(secure=secure)
+        return self.ruleset._asdict(secure=secure)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(rules={self.ruleset})"
 
     def load(self, /, filename, *, prefix="rules"):
         if filename.endswith(".yaml") or filename.endswith(".yml"):
             from harp.utils.config import yaml
 
-            self.rules.add(yaml.load(filename).get(prefix, {}))
+            self.ruleset.add(yaml.load(filename).get(prefix, {}))
         elif filename.endswith(".toml"):
             from harp.utils.config import toml
 
-            self.rules.add(toml.load(filename).get(prefix, {}))
+            self.ruleset.add(toml.load(filename).get(prefix, {}))
         else:
             raise ValueError(f"Unsupported file format: {filename}")

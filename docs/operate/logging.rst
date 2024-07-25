@@ -1,78 +1,65 @@
 Logging
 =======
 
-For logging purposes, Harp uses the standard python `logging` module, with `structlog` on top of it.
+Logging is a crucial part of any application. It helps developers understand what's happening inside their application
+by recording events, errors, and other significant activities. HARP utilizes Python's built-in ``logging`` module,
+enhanced with ``structlog`` for structured logging.
 
-Logs are organized in a hierarchical manner according to the python package structure. The root logger sets up global
-configurations which can be modified for each package or subpackage. The configurations for a package are inherited by
-all its subpackages.
-
-
-Log levels
-::::::::::
-
-To adjust the logs verbosity, set a lower minimum level for one of the loggers. Available log levels are, from most
-verbose to least, ``DEBUG``, ``INFO``, ``WARNING``, ``ERROR``, ``CRITICAL``.
-
-- :code:`LOGGING_HARP=...`: log level for ``harp.*`` and ``harp_app.*`` loggers [default: ``INFO``].
-- :code:`LOGGING_HARP_EVENTS=...`: log level for ``harp.event_dispatcher_*`` loggers [default: ``WARNING``]. Allows to
-  get debug information about the events happening (managed by :mod:`whistle`).
-- :code:`LOGGING_HTTP=...`: log level for ``httpcore.*`` and ``httpx.*`` loggers [default: ``WARNING``].
-- :code:`LOGGING_HYPERCORN_ACCESS=...`: log level for ``hypercorn.access`` logger [default: ``WARNING``].
-- :code:`LOGGING_HYPERCORN_ERROR=...`: log level for ``hypercorn.error`` logger [default: ``INFO``].
+Logs are organized based on the Python package hierarchy. This means you can set up global logging configurations that
+apply to the entire application, and then adjust settings for specific packages or components as needed. These settings
+are inherited by any sub-packages, allowing for fine-grained control over log output.
 
 
-Formatters
-::::::::::
+Log Verbosity
+:::::::::::::
 
-There are a few different logs formatters that you can use depending on your needs:
+Log verbosity determines how much detail is logged. HARP supports several log levels:
 
-- :code:`plain` is the simplest formatter, using a simple console output without colors (no ansi codes).
-- :code:`pretty` is the default formatter, using colors so that the logs are easier to read.
-- :code:`json` will format each log line as a small json, making it easy to ingest in log processing systems.
-- :code:`keyvalue` is another structured formatter, using key=value pairs.
+* ``DEBUG``: Logs detailed information, typically of interest only when diagnosing problems.
+* ``INFO``: Logs general system information.
+* ``WARNING``: Logs potential issues that should be addressed.
+* ``ERROR``: Logs serious issues that have occurred.
+* ``CRITICAL``: Logs very serious issues that might cause the application to stop running.
 
-To choose a formatter, set the `LOGGING_FORMAT` environment variable:
+You can adjust the verbosity for different parts of HARP using environment variables:
+
+* ``LOGGING_HARP``: Log level for HARP's core and applications.
+* ``LOGGING_EVENTS``: Log level for internal event dispatching.
+* ``LOGGING_HTTP_CLIENT``: Log level for HTTP client (httpcore and httpx) related logs.
+* ``LOGGING_PROXY``: Log level for proxy related logs.
+* ``LOGGING_HTTP``: Log level for HTTP server (hypercorn) related logs.
+* ``LOGGING_SQL``: Log level for SQL related logs.
+
+
+Choosing a Log Format
+:::::::::::::::::::::
+
+HARP supports multiple log formats to suit different needs:
+
+* ``plain``: Simple text output without color.
+* ``pretty``: Colorized output for easier reading.
+* ``json``: Structured JSON output for integration with log processing systems.
+* ``keyvalue``: Key-value pair output for structured logging.
+
+Set the ``LOGGING_FORMAT`` environment variable to choose a format:
 
 .. code-block:: bash
 
-    export LOGGING_FORMAT=json harp start ...
-
-
-Special cases
-:::::::::::::
-
-SQL logs (SQLAlchemy)
----------------------
-
-To enable SQL logs, you should configure the sqlalchemy logger minimum level to ``INFO``
-
-.. code-block:: shell
-
-    export LOGGING_SQL=INFO harp start ...
-
-This works for all execution contexts, including tests, etc.
-
-HTTP Client logs (HTTPX)
-------------------------
-
-.. todo:: Document how to enable HTTPX logs and the low level logs.
+    LOGGING_FORMAT=json harp start ...
 
 
 Questions
 :::::::::
 
-Why can't I configure the logger in harm regular config files?
---------------------------------------------------------------
+Why is logging configured via environment variables?
+----------------------------------------------------
 
-The logger is a special case that needs to be configured at the earliest possible time in the application lifecycle.
-We may consider about pre-reading config files to configure the logger in the future, but this creates some complexity
-that we do not want to consider, for now.
+Logging needs to be set up early in the application's lifecycle, before most of the configuration is read. Using
+environment variables allows for immediate application of log settings.
 
 
-Why does the logger-related environment variables have a different prefix?
---------------------------------------------------------------------------
+Why do logging environment variables use a different prefix?
+------------------------------------------------------------
 
-The reason is basically the same as for the config files: as all ``HARP_`` prefixed environment variables are used to
-extend the regular harp configuration, we decided to use a different prefix for the logger-related variables to avoid
-confusion or hacks to discriminate between regular config and logger-related config.
+To avoid confusion with HARP's main configuration, logging settings use a different prefix. This ensures a clear
+distinction between general application settings and logging-specific configurations.

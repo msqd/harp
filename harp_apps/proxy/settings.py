@@ -1,3 +1,4 @@
+from dataclasses import field
 from typing import Optional
 
 from harp.config.settings.base import BaseSetting, settings_dataclass
@@ -14,7 +15,7 @@ class ProxyEndpointSetting(BaseSetting):
 
 @settings_dataclass
 class ProxySettings(BaseSetting):
-    endpoints: Optional[list[ProxyEndpointSetting]]
+    endpoints: Optional[list[ProxyEndpointSetting]] = field(default_factory=list)
 
     def __post_init__(self):
         if self.endpoints is None:

@@ -69,28 +69,33 @@ if not os.environ.get("CI", False) and os.path.exists(os.path.join(ROOT_DIR, ".g
         __version__ = __revision__[:7]
 
 from ._logging import get_logger  # noqa: E402, isort: skip
-from harp.config import Config  # noqa: E402, isort: skip
 
 
-def run(config: Config):
+async def arun(builder):
+    from harp.config import SystemBuilder
+    from harp.config.adapters.hypercorn import HypercornAdapter
+
+    system = await SystemBuilder(builder).abuild()
+    server = HypercornAdapter(system)
+    try:
+        return await server.serve()
+    finally:
+        await system.dispose()
+
+
+def run(builder):
     """
     Run the default server using provided configuration.
 
-    :param config: Config
+    :param builder: Config
     :return:
     """
     import asyncio
 
-    from harp.config.adapters.hypercorn import HypercornAdapter
-    from harp.config.factories.kernel_factory import KernelFactory
-
-    factory = KernelFactory(config)
-    server = HypercornAdapter(factory)
-    return asyncio.run(server.serve())
+    return asyncio.run(arun(builder))
 
 
 __all__ = [
-    "Config",
     "ROOT_DIR",
     "__revision__",
     "__version__",

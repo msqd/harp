@@ -9,7 +9,7 @@ def test_script_from_sources():
     assert script.source == "print('Hello, World!')"
 
     print_mock = Mock()
-    script.execute({"print": print_mock})
+    script({"print": print_mock})
 
     assert print_mock.called
     assert print_mock.call_count == 1
@@ -24,7 +24,7 @@ def test_script_from_file():
     assert script.source == "print('Hello, World!')"
 
     print_mock = Mock()
-    script.execute({"print": print_mock})
+    script({"print": print_mock})
 
     assert print_mock.called
     assert print_mock.call_count == 1

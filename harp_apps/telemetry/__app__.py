@@ -17,21 +17,21 @@ todo:
 
 from harp import get_logger
 from harp.config import Application
-from harp.config.events import FactoryBindEvent, FactoryBoundEvent
+from harp.config.events import OnBindEvent, OnBoundEvent
 from harp_apps.telemetry.manager import TelemetryManager
 
 logger = get_logger(__name__)
 
 
-class TelemetryApplication(Application):
-    def __init__(self, settings=None, /):
-        super().__init__(settings)
+async def on_bind(event: OnBindEvent):
+    event.container.add_singleton(TelemetryManager)
 
-        # keep a reference for application garbage collection (later)
-        self.manager = None
 
-    async def on_bind(self, event: FactoryBindEvent):
-        event.container.add_singleton(TelemetryManager)
+async def on_bound(event: OnBoundEvent):
+    event.provider.get(TelemetryManager)
 
-    async def on_bound(self, event: FactoryBoundEvent):
-        self.manager = event.provider.get(TelemetryManager)
+
+application = Application(
+    on_bind=on_bind,
+    on_bound=on_bound,
+)

@@ -1,0 +1,29 @@
+# serializer version: 1
+# name: test_documentation_examples_list
+  list([
+    'docs/apps/dashboard/examples/auth.basic.yml',
+    'docs/apps/dashboard/examples/auth.yml',
+    'docs/apps/dashboard/examples/devserver.yml',
+    'docs/apps/dashboard/examples/main.yml',
+    'docs/apps/http_client/examples/full.yml',
+    'docs/apps/http_client/examples/simple.yml',
+    'docs/apps/proxy/examples/swapi.yml',
+    'docs/apps/rules/examples/rules.yml',
+    'docs/apps/storage/examples/mysql-aiomysql.yml',
+    'docs/apps/storage/examples/mysql-asyncmy.yml',
+    'docs/apps/storage/examples/postgres-asyncpg.yml',
+    'docs/apps/storage/examples/redis.yml',
+    'docs/apps/storage/examples/sqlite-aiosqlite.yml',
+  ])
+# ---
+# name: test_examples_list
+  list([
+    'auth.basic',
+    'httpbin',
+    'httpbins',
+    'postgres',
+    'repositories',
+    'sentry',
+    'sqlite',
+  ])
+# ---

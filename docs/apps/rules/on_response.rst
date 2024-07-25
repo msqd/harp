@@ -52,7 +52,7 @@ Although the reason may be debatable, if you need to, you can replace the respon
     [rules."*"."*"]
     on_response = """
     from harp.http import HttpResponse
-    set_response(HttpResponse('Goodbye, World!'))
+    response = HttpResponse('Goodbye, World!')
     """
 
 The event instance passed to ``on_response`` lifecycle event scripts is a :class:`ProxyFilterEvent
@@ -67,9 +67,7 @@ The following variables are available in the context of the ``on_response`` life
 - ``event``: the :class:`ProxyFilterEvent <harp_apps.proxy.events.ProxyFilterEvent>` instance.
 - ``endpoint``: the endpoint name for this transaction, as defined in your configuration.
 - ``request``: the :class:`HttpRequest <harp.http.HttpRequest>` instance.
-- ``response``: the :class:`HttpResponse <harp.http.HttpResponse>` instance.
-- ``set_response``: a function to override the :class:`Response <harp.http.HttpResponse>` to be returned to the client
-  (bypassing the proxy logic).
+- ``response``: the :class:`HttpResponse <harp.http.HttpResponse>` instance. You can amend or replace it.
 - ``stop_propagation``: a function to stop the event propagation to the next event in the chain.
 
 .. warning::

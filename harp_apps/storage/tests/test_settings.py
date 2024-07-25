@@ -1,4 +1,4 @@
-from harp.config import asdict
+from harp.config import Application, asdict
 from harp_apps.storage.settings import StorageSettings
 
 
@@ -7,8 +7,7 @@ def test_empty_settings():
 
     assert asdict(settings) == {
         "migrate": True,
-        "type": "sqlalchemy",
-        "url": "sqlite+aiosqlite:///:memory:",
+        "url": "sqlite+aiosqlite:///:memory:?cache=shared",
         "blobs": {"type": "sql"},
     }
 
@@ -18,13 +17,11 @@ def test_secure():
 
     assert asdict(settings) == {
         "migrate": True,
-        "type": "sqlalchemy",
         "url": "postgresql://user:***@localhost:5432/db",
         "blobs": {"type": "sql"},
     }
     assert asdict(settings, secure=False) == {
         "migrate": True,
-        "type": "sqlalchemy",
         "url": "postgresql://user:password@localhost:5432/db",
         "blobs": {"type": "sql"},
     }
@@ -35,7 +32,6 @@ def test_override():
 
     assert asdict(settings) == {
         "migrate": True,
-        "type": "sqlalchemy",
         "url": "sqlite+aiosqlite:///toto.db",
         "blobs": {"type": "sql"},
     }
@@ -43,7 +39,6 @@ def test_override():
     settings.url = settings.url.set(database="foo.db")
     assert asdict(settings) == {
         "migrate": True,
-        "type": "sqlalchemy",
         "url": "sqlite+aiosqlite:///foo.db",
         "blobs": {"type": "sql"},
     }
@@ -53,7 +48,12 @@ def test_override_blob_storage_type():
     settings = StorageSettings(blobs={"type": "redis"})
     assert asdict(settings) == {
         "migrate": True,
-        "type": "sqlalchemy",
-        "url": "sqlite+aiosqlite:///:memory:",
+        "url": "sqlite+aiosqlite:///:memory:?cache=shared",
         "blobs": {"type": "redis", "url": "redis://localhost:6379/0"},
     }
+
+
+def test_settings_normalization_does_not_hide_password():
+    app = Application(settings_type=StorageSettings)
+    settings = app.normalize({"url": "postgresql://user:password@localhost:5432/db"})
+    assert settings["url"] == "postgresql://user:password@localhost:5432/db"

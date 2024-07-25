@@ -2,7 +2,6 @@ import asyncio
 import re
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
-from functools import partial
 from operator import itemgetter
 from typing import Iterable, Optional, override
 
@@ -241,29 +240,12 @@ class SqlStorage(IStorage):
 
     async def initialize(self):
         """Initialize database."""
-        if self._should_migrate:
-            await self._run_migrations()
         await self.create_users(["anonymous"])
         self._is_ready.set()
 
     async def finalize(self):
         await self.worker.close()
         await self.engine.dispose()
-
-    async def _run_migrations(self):
-        """Convenience helper to run the migrations. This behaviour can be disabled by setting migrate=false in the
-        storage settings."""
-
-        # todo refactor ? see harp_apps.storage.utils.testing.mixins.StorageTestFixtureMixin
-        from alembic import command
-
-        from harp_apps.storage.utils.migrations import create_alembic_config, do_migrate
-
-        alembic_cfg = create_alembic_config(self.engine.url.render_as_string(hide_password=False))
-
-        migrator = partial(command.upgrade, alembic_cfg, "head")
-
-        await do_migrate(self.engine, migrator=migrator)
 
     @property
     def worker(self):

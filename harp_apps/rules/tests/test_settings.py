@@ -46,6 +46,6 @@ def test_apply():
     )
 
     context = {}
-    for script in settings.rules.match("api1", "GET /foo", "on_request"):
-        script.execute(context)
+    for script in settings.ruleset.match("api1", "GET /foo", "on_request"):
+        script(context)
     assert context == {"foo": 42}

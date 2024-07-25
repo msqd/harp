@@ -1,27 +1,21 @@
-from harp.config import Application
-from harp.config.events import FactoryBuildEvent
+from harp.config import Application, OnReadyEvent
 
 from .settings import SentrySettings
 
 
-class SentryApplication(Application):
-    settings_namespace = "sentry"
-    settings_type = SentrySettings
+async def on_ready(event: OnReadyEvent):
+    settings = event.provider.get(SentrySettings)
+    if not settings.dsn:
+        return
 
-    @classmethod
-    def defaults(cls, settings=None):
-        return settings if settings is not None else {"dsn": None}
+    import sentry_sdk
+    from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
-    async def on_build(self, event: FactoryBuildEvent):
-        if not self.settings.dsn:
-            return
+    sentry_sdk.init(dsn=settings.dsn, traces_sample_rate=1.0)
+    event.kernel = SentryAsgiMiddleware(event.kernel)
 
-        import sentry_sdk
-        from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
-        sentry_sdk.init(
-            dsn=self.settings.dsn,
-            traces_sample_rate=1.0,
-        )
-
-        event.kernel = SentryAsgiMiddleware(event.kernel)
+application = Application(
+    on_ready=on_ready,
+    settings_type=SentrySettings,
+)

@@ -10,6 +10,7 @@ from harp.controllers import DefaultControllerResolver
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
 
 from ..utils.performances import performances_observer
+from ..utils.types import typeof
 from .bridge.requests import HttpRequestAsgiBridge
 from .bridge.responses import HttpResponseAsgiBridge
 from .events import (
@@ -117,13 +118,13 @@ class ASGIKernel:
         if not isinstance(response, HttpResponse):
             event = ControllerViewEvent(request, response)
             await self.dispatcher.adispatch(EVENT_CONTROLLER_VIEW, event)
-            response = event.response
+            response = event.response or response
 
         # if after the view event has been dispatched we still don't have a response, we have to raise an error.
         if not isinstance(response, HttpResponse):
             raise RuntimeError(
                 f"Response did not start despite the efforts made (controller return value is "
-                f"{type(response).__name__} after controller view event was dispatched)."
+                f"{typeof(response)} after controller view event was dispatched)."
             )
 
         # the core response event may want to filter the response, for example to add some headers, etc.

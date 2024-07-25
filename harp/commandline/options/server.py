@@ -7,6 +7,16 @@ from harp.utils.commandline import click, code
 
 
 @dataclass(kw_only=True)
+class ConfigOptions:
+    files: tuple = ()
+    examples: tuple = ()
+    options: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        self.options = dict(map(lambda x: x.split("=", 1), self.options))
+
+
+@dataclass(kw_only=True)
 class CommonServerOptions(dict):
     """
     Common server options, in a dataclass.
@@ -16,6 +26,8 @@ class CommonServerOptions(dict):
     endpoints: Iterable = field(default_factory=dict)
     files: tuple = ()
     examples: tuple = ()
+
+    applications: tuple = ()
     enable: tuple = ()
     disable: tuple = ()
 
@@ -53,7 +65,6 @@ def add_harp_config_options(f):
         ),
         click.option(
             "--example",
-            "-e",
             "examples",
             default=(),
             multiple=True,
@@ -86,6 +97,13 @@ def add_harp_server_click_options(f):
             multiple=True,
             help=f"""Add an endpoint (e.g. {code('--endpoint httpbin=4000:http://httpbin.org/')}, can be used multiple
             times).""",
+        ),
+        click.option(
+            "--applications",
+            default=None,
+            type=click.STRING,
+            help="List of applications to enable.",
+            callback=lambda ctx, param, value: value.split(",") if value else (),
         ),
         click.option("--enable", default=(), multiple=True, help="Enable some applications."),
         click.option("--disable", default=(), multiple=True, help="Disable some applications."),

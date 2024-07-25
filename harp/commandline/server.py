@@ -2,7 +2,9 @@ from typing import cast
 
 from click import BaseCommand
 
+from harp import run
 from harp.commandline.options.server import CommonServerOptions, add_harp_server_click_options
+from harp.config import ConfigurationBuilder
 from harp.settings import USE_PROMETHEUS
 from harp.utils.commandline import click
 
@@ -21,19 +23,13 @@ def server(**kwargs):
         _info = Enum("harp", "HARP status information.", states=["setup", "up", "teardown", "down"])
         _info.state("setup")
 
-    options = CommonServerOptions(**kwargs)
-
-    from harp import Config, run
-
-    config = Config()
-    config.add_defaults()
-    config.read_env(options)
+    builder = ConfigurationBuilder.from_commandline_options(CommonServerOptions(**kwargs))
 
     if _info:
         _info.state("up")
 
     try:
-        return run(config)
+        return run(builder)
     finally:
         if _info:
             _info.state("down")

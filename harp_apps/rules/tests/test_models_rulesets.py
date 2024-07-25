@@ -52,3 +52,10 @@ def test_multilevel():
         Script("print('Hello, World!')"),
         Script("print('Eat at Joe\\'s.')"),
     ]
+
+
+def test_repr():
+    levels = ("first", "second")
+    compiler = BaseRuleSetCompiler(levels=levels)
+    ruleset = BaseRuleSet(compiler.compile({"foo": {"bar": "print('Hello, World!')"}}))
+    assert repr(ruleset) == 'BaseRuleSet({"foo":{"bar":"..."}})'

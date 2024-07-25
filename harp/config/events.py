@@ -1,13 +1,16 @@
-from config.common import Configuration
+from typing import Awaitable, Callable
+
 from rodi import Container, Services
 from whistle import Event
 
+from harp.asgi import ASGIKernel
 from harp.controllers import ProxyControllerResolver
+from harp.utils.network import Bind
 
 
-class FactoryBindEvent(Event):
+class OnBindEvent(Event):
     """
-    «Factory Bind» event happens before the service container is resolved.
+    «Bind» event happens before the service container is resolved.
 
     It is the right place to define services that may not be resolvable yet (because their dependencies may, or may not,
     be defined already).
@@ -16,17 +19,19 @@ class FactoryBindEvent(Event):
 
     name = "harp.config.bind"
 
-    def __init__(self, container: Container, settings: Configuration):
+    def __init__(self, container: Container, settings):
         self.container = container
         self.settings = settings
 
 
-EVENT_FACTORY_BIND = FactoryBindEvent.name
+EVENT_BIND = OnBindEvent.name
+
+OnBindHandler = Callable[[OnBindEvent], Awaitable[None]]
 
 
-class FactoryBoundEvent(Event):
+class OnBoundEvent(Event):
     """
-    «Factory Bound» event happens after the service container is resolved, before the kernel creation.
+    «Bound» event happens after the service container is resolved, before the kernel creation.
 
     It is the right place to setup things that needs the container to be resolved (thus, you get a `provider` instead
     of a `container`).
@@ -40,32 +45,45 @@ class FactoryBoundEvent(Event):
         self.resolver = resolver
 
 
-EVENT_FACTORY_BOUND = FactoryBoundEvent.name
+EVENT_BOUND = OnBoundEvent.name
+
+OnBoundHandler = Callable[[OnBoundEvent], Awaitable[None]]
 
 
-class FactoryBuildEvent(Event):
+class OnReadyEvent(Event):
     """
-    «Factory Build» event happens after the asgi kernel is created.
+    «Ready» event happens after the asgi kernel is created, just before the application starts.
 
     It is the right place to decorate the kernel with middlewares.
+
     """
 
-    name = "harp.config.build"
+    name = "harp.config.ready"
 
-    def __init__(self, kernel, binds):
+    def __init__(self, provider: Services, kernel: ASGIKernel, binds: list[Bind]):
+        self.provider = provider
         self.kernel = kernel
         self.binds = binds
 
 
-EVENT_FACTORY_BUILD = FactoryBuildEvent.name
+EVENT_READY = OnReadyEvent.name
+
+OnReadyHandler = Callable[[OnReadyEvent], Awaitable[None]]
 
 
-class FactoryDisposeEvent(Event):
-    name = "harp.config.dispose"
+class OnShutdownEvent(Event):
+    """
+    «Shutdown» event happens when the application is stopping.
 
-    def __init__(self, kernel, provider):
+    """
+
+    name = "harp.config.shutdown"
+
+    def __init__(self, kernel: ASGIKernel, provider: Services):
         self.kernel = kernel
         self.provider = provider
 
 
-EVENT_FACTORY_DISPOSE = FactoryDisposeEvent.name
+EVENT_SHUTDOWN = OnShutdownEvent.name
+
+OnShutdownHandler = Callable[[OnShutdownEvent], Awaitable[None]]

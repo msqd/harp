@@ -19,8 +19,8 @@ from harp.utils.performances import performances_observer
 from harp.utils.tpdex import tpdex
 
 from .events import (
-    EVENT_FILTER_REQUEST,
-    EVENT_FILTER_RESPONSE,
+    EVENT_FILTER_PROXY_REQUEST,
+    EVENT_FILTER_PROXY_RESPONSE,
     EVENT_TRANSACTION_ENDED,
     EVENT_TRANSACTION_MESSAGE,
     EVENT_TRANSACTION_STARTED,
@@ -133,7 +133,7 @@ class HttpProxyController:
         with performances_observer("proxy", labels=labels):
             # create an envelope to override things, without touching the original request
             context = ProxyFilterEvent(self.name, request=WrappedHttpRequest(request))
-            await self.adispatch(EVENT_FILTER_REQUEST, context)
+            await self.adispatch(EVENT_FILTER_PROXY_REQUEST, context)
 
             # override a few required headers. That may be done in the httpx request instead of here.
             # And that would remove the need for WrappedHttpRequest? Maybe not because of our custom filters.
@@ -219,7 +219,7 @@ class HttpProxyController:
                 )
 
             await self.end_transaction(transaction, context.response)
-            await self.adispatch(EVENT_FILTER_RESPONSE, context)
+            await self.adispatch(EVENT_FILTER_PROXY_RESPONSE, context)
 
             return context.response
 

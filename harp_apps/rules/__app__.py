@@ -1,30 +1,36 @@
-from whistle import IAsyncEventDispatcher
-
 from harp import get_logger
-from harp.config import Application
-from harp.config.events import FactoryBindEvent, FactoryBoundEvent, FactoryDisposeEvent
+from harp.config.applications import Application
+from harp.config.events import OnBindEvent, OnBoundEvent, OnShutdownEvent
 
 from .settings import RulesSettings
 from .subscribers import RulesSubscriber
 
 logger = get_logger(__name__)
 
+RULES_SUBSCRIBER = "rules.subscriber"
 
-class RulesApplication(Application):
-    settings_namespace = "rules"
-    settings_type = RulesSettings
-    subscriber = None
 
-    async def on_bind(self, event: FactoryBindEvent):
-        logger.warning("📦 Rules are currently experimental. THE API MAY CHANGE A LOT.")
-        logger.warning("📦 Rules: found %d rules.", len(self.settings.rules))
+async def on_bind(event: OnBindEvent):
+    settings = event.settings.get("rules")
+    logger.warning("📦 Rules are currently experimental. THE API MAY CHANGE A LOT.")
+    logger.warning("📦 Rules: found %d rules.", len(settings.ruleset))
 
-    async def on_bound(self, event: FactoryBoundEvent):
-        dispatcher = event.provider.get(IAsyncEventDispatcher)
-        self.subscriber = RulesSubscriber(self.settings.rules)
-        self.subscriber.subscribe(dispatcher)
 
-    async def on_dispose(self, event: FactoryDisposeEvent):
-        dispatcher = event.provider.get(IAsyncEventDispatcher)
-        self.subscriber.unsubscribe(dispatcher)
-        self.subscriber = None
+async def on_bound(event: OnBoundEvent):
+    settings = event.provider.get(RulesSettings)
+    subscriber = RulesSubscriber(settings.ruleset)
+    subscriber.subscribe(event.dispatcher)
+    event.provider.set(RULES_SUBSCRIBER, subscriber)
+
+
+async def on_shutdown(event: OnShutdownEvent):
+    subscriber = event.provider.get(RULES_SUBSCRIBER)
+    subscriber.unsubscribe(event.dispatcher)
+
+
+application = Application(
+    settings_type=RulesSettings,
+    on_bind=on_bind,
+    on_bound=on_bound,
+    on_shutdown=on_shutdown,
+)

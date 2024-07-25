@@ -29,5 +29,7 @@ Submodules
     harp.utils.performances
     harp.utils.processes
     harp.utils.services
+    harp.utils.strings
     harp.utils.tpdex
+    harp.utils.types
     harp.utils.urls

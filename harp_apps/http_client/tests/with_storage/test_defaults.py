@@ -2,8 +2,10 @@ from unittest.mock import ANY
 
 import pytest
 
-from harp_apps.http_client.tests.base import BaseTestDefaultsWith
+from harp.config import asdict
 from harp_apps.storage.types import IBlobStorage
+
+from .._base import BaseTestDefaultsWith
 
 
 class TestDefaultsWithStorage(BaseTestDefaultsWith):
@@ -15,10 +17,9 @@ class TestDefaultsWithStorage(BaseTestDefaultsWith):
         ],
     )
     async def test_defaults_with_storage(self, applications):
-        factory, kernel = await self.build(applications=applications)
-        validated_config = factory.configuration.validate()
-        assert set(validated_config["applications"]) == {"harp_apps.http_client", "harp_apps.storage"}
-        assert validated_config["http_client"] == {
+        system = await self.create_system(applications=applications)
+        assert set(system.config["applications"]) == {"harp_apps.http_client", "harp_apps.storage"}
+        assert asdict(system.config["http_client"]) == {
             "cache": {
                 "enabled": True,
                 "controller": ANY,
@@ -30,11 +31,10 @@ class TestDefaultsWithStorage(BaseTestDefaultsWith):
             "timeout": 30.0,
             "transport": {"@type": "httpx:AsyncHTTPTransport"},
         }
-        assert validated_config["storage"] == {
-            "type": "sqlalchemy",
+        assert asdict(system.config["storage"]) == {
             "blobs": {"type": "sql"},
             "migrate": ANY,
             "url": ANY,
         }
 
-        assert type(factory.provider.get(IBlobStorage)).__name__ == "SqlBlobStorage"
+        assert type(system.provider.get(IBlobStorage)).__name__ == "SqlBlobStorage"

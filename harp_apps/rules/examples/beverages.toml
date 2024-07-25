@@ -11,13 +11,13 @@ on_remote_request = """
 from httpx import Response
 beverage = request.headers.get('X-Beverage')
 if beverage == 'tea':
-    set_response(Response(418, content=b"I'm a teapot"))
+    response = Response(418, content=b"I'm a teapot")
 elif beverage == 'beer':
-    set_response(Response(418, content=b"I'm a drunk teapot"))
+    response = Response(418, content=b"I'm a drunk teapot")
 elif beverage == 'coffee':
     request.extensions.pop('harp')
-    set_response(Response(307, headers={'Location': 'https://raw.githubusercontent.com/python/peps/main/peps/pep-0020.rst'}))
+    response = Response(307, headers={'Location': 'https://raw.githubusercontent.com/python/peps/main/peps/pep-0020.rst'})
 else:
     request.extensions.pop('harp')
-    set_response(Response(307, headers={'Location': 'https://perdu.com/'}))
+    response = Response(307, headers={'Location': 'https://perdu.com/'})
 """

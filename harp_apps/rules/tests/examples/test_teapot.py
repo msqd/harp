@@ -18,7 +18,7 @@ class TestTeapotExample:
 
     def get_rules(self):
         settings = RulesSettings(**self.source)
-        return settings.rules
+        return settings.ruleset
 
     def test_on_proxy_filter_request(self):
         rules = self.get_rules()
@@ -27,5 +27,5 @@ class TestTeapotExample:
         scripts = list(rules.match(*event.criteria))
         assert len(scripts) == 1
 
-        scripts[0].execute(event.locals, globals=event.globals)
+        event.execute_script(scripts[0])
         assert event.response.status == 418

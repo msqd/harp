@@ -9,22 +9,12 @@ from rich.syntax import Syntax
 from harp.http import HttpRequestSerializer
 from harp.http.serializers import HttpResponseSerializer
 from harp.http.utils import parse_cache_control
+from harp.utils.strings import truncate_string
+from harp.utils.types import typeof
 
 BODY_MAX_LENGTH_TO_DISPLAY = 4096
 
 console = Console(force_terminal=True)
-
-
-def typeof(x, *, short=False):
-    if short:
-        return f"{type(x).__qualname__}"
-    return f"{type(x).__module__}.{type(x).__qualname__}"
-
-
-def truncate_string(s, max_length):
-    if len(s) > max_length:
-        return s[: max_length - 3] + "..."
-    return s
 
 
 async def on_proxy_request_dump(event):

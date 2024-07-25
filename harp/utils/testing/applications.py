@@ -1,32 +1,33 @@
-from _pytest.fixtures import fixture
+from functools import cached_property
 
-from harp import Config
+import pytest
+
+from harp.config import Application, ConfigurationBuilder, asdict
+from harp.config.utils import get_application
 
 
 class BaseTestForApplications:
     name = None
     config_key = None
-
     expected_defaults = {}
 
-    @fixture
+    @cached_property
+    def application(self) -> Application:
+        return get_application(self.name)
+
+    @pytest.fixture
     def configuration(self):
-        config = Config()
-        config.add_application(self.name)
+        config = ConfigurationBuilder(use_default_applications=False)
+        config.applications.add(self.name)
         return config
 
-    @fixture
-    def ApplicationType(self, configuration):
-        return configuration.get_application_type(self.name)
+    def test_default_settings(self):
+        """Checks that default settings are as expected by the implementation."""
+        computed_defaults = asdict(self.application.settings_type())
+        assert computed_defaults == self.expected_defaults
 
-    def test_default_settings_on_none_passed(self, ApplicationType):
-        assert ApplicationType.defaults() == self.expected_defaults
-
-    def test_default_settings_on_empty_dict_passed(self, ApplicationType):
-        settings = {}
-        assert ApplicationType.defaults(settings) == self.expected_defaults
-
-    def test_instanciate_with_default_settings(self, ApplicationType):
-        defaults = ApplicationType.defaults()
-        application = ApplicationType(defaults)
-        assert application.validate() == defaults
+    def test_default_settings_idempotence(self):
+        """Checks that default settings, if used to recrete settings, will keep the same values."""
+        defaults_settings = asdict(self.application.settings_type())
+        reparsed_settings = asdict(self.application.settings_type(**defaults_settings))
+        assert reparsed_settings == defaults_settings

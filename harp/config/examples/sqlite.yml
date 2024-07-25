@@ -1,3 +1,2 @@
 storage:
-  type: sqlalchemy
   url: sqlite+aiosqlite:///harp.db

@@ -1,10 +1,10 @@
-from copy import deepcopy
 from typing import cast
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import aliased, joinedload
 
-from harp import Config, __revision__, __version__, get_logger
+from harp import __revision__, __version__, get_logger
+from harp.config import asdict
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest
 from harp.typing.global_settings import GlobalSettings
@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 @RouterPrefix("/api/system")
 class SystemController(RoutingController):
     def __init__(self, *, storage: IStorage, settings: GlobalSettings, handle_errors=True, router=None):
-        self.settings = Config(deepcopy(dict(settings))).validate(secure=True)
+        self.settings = {k: asdict(v, secure=True) for k, v in settings.items()}
         self.storage: SqlStorage = cast(SqlStorage, storage)
 
         self._dependencies = None

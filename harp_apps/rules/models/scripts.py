@@ -1,4 +1,5 @@
 import ast
+from typing import Callable
 
 
 def _get_normalized_sources_from_ast(code_ast: ast.AST, /):
@@ -13,7 +14,7 @@ def _get_normalized_sources_from_ast(code_ast: ast.AST, /):
     return ("\n".join(statements)).strip()
 
 
-class Script:
+class Script(Callable):
     """
     A script object represents a small python script that can be executed in a controlled environment. For example, it
     will hold your scripts defined in rules.
@@ -42,11 +43,12 @@ class Script:
 
     @classmethod
     def from_file(cls, filename: str):
+        """Constructor from a file content, by filename."""
         with open(filename) as f:
             return cls(f.read(), filename=filename)
 
-    def execute(self, locals: dict, /, *, globals: dict | None = None):
-        exec(self._code, globals or {}, locals)
+    def __call__(self, context: dict):
+        exec(self._code, None, context)
 
     def __eq__(self, other):
         return isinstance(other, Script) and self._code == other._code
@@ -58,3 +60,11 @@ class Script:
         _type = type(self).__name__
         _source = self.source
         return f"{_type}({repr(_source)}, filename={repr(self.filename)})"
+
+
+class ExecutableObject(Callable):
+    def __init__(self, target: Callable):
+        self._target = target
+
+    def __call__(self, context: dict):
+        return self._target(context)

@@ -1,10 +1,12 @@
 import builtins
 import hashlib
-from unittest.mock import patch
 
 import pytest
 
+from harp.config import defaults
+
 builtins.__pytest__ = True
+
 
 DISABLED_APPLICATIONS_FOR_TESTS = ("telemetry", "harp_apps.telemetry")
 
@@ -21,15 +23,17 @@ def test_id(request):
 
 @pytest.fixture(scope="session", autouse=True)
 def default_session_fixture():
-    from harp.config import Config
+    DEFAULT_APPLICATIONS_BACKUP = defaults.DEFAULT_APPLICATIONS
 
-    DEFAULT_APPLICATIONS_FOR_TESTS = list(Config.DEFAULT_APPLICATIONS)
+    DEFAULT_APPLICATIONS_FOR_TESTS = list(defaults.DEFAULT_APPLICATIONS)
     for app in DISABLED_APPLICATIONS_FOR_TESTS:
         if app in DEFAULT_APPLICATIONS_FOR_TESTS:
             DEFAULT_APPLICATIONS_FOR_TESTS.remove(app)
-
-    with patch("harp.config.Config.DEFAULT_APPLICATIONS", DEFAULT_APPLICATIONS_FOR_TESTS):
+    defaults.DEFAULT_APPLICATIONS = tuple(DEFAULT_APPLICATIONS_FOR_TESTS)
+    try:
         yield
+    finally:
+        defaults.DEFAULT_APPLICATIONS = DEFAULT_APPLICATIONS_BACKUP
 
 
 # see https://github.com/GrahamDumpleton/wrapt/issues/257

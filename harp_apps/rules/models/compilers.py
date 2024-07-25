@@ -1,6 +1,8 @@
+from typing import Callable
+
 from harp_apps.rules.constants import DEFAULT_LEVELS
 from harp_apps.rules.models.patterns import Pattern
-from harp_apps.rules.models.scripts import Script
+from harp_apps.rules.models.scripts import ExecutableObject, Script
 
 
 class BaseRuleSetCompiler:
@@ -19,14 +21,17 @@ class BaseRuleSetCompiler:
     def compile_pattern(cls, level: str, pattern: str):
         return Pattern(pattern)
 
-    def compile_scripts(self, source: list | str, /, *, level=0):
+    def compile_scripts(self, source: list | str | Callable, /, *, level=0):
         # only one script? let's work on it as a (one item) list anyway.
-        if isinstance(source, str):
+        if isinstance(source, str) or callable(source):
             source = [source]
 
         for raw_source in source:
-            yield Script(raw_source, filename=f"<rule:{self._index}>")
-            self._index += 1
+            if callable(raw_source):
+                yield ExecutableObject(raw_source)
+            else:
+                yield Script(raw_source, filename=f"<rule:{self._index}>")
+                self._index += 1
 
     def compile(self, source: dict, /, *, target: dict | None = None, level=0, _levels=None):
         """
@@ -55,7 +60,7 @@ class BaseRuleSetCompiler:
 
             # are we at the last level? then we should compile scripts
             if not remaining_levels:
-                if isinstance(value, (list, str)):
+                if isinstance(value, (list, str)) or callable(value):
                     if _pattern not in target:
                         target[_pattern] = []
                     target[_pattern].extend(self.compile_scripts(value, level=level + 1))

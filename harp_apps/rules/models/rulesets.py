@@ -1,5 +1,7 @@
 from functools import reduce
 
+import orjson
+
 from harp_apps.rules.constants import DEFAULT_LEVELS, DEFAULT_RULES_LEVELS
 from harp_apps.rules.models.compilers import BaseRuleSetCompiler
 
@@ -13,15 +15,18 @@ def _match_level(rules, against):
                 yield from rules
 
 
-def _rules_as_human_dict(rules: dict):
+def _rules_as_human_dict(rules: dict, *, show_scripts=True):
     result = {}
     for k, v in rules.items():
         if isinstance(v, dict):
-            result[k.source] = _rules_as_human_dict(v)
+            result[k.source] = _rules_as_human_dict(v, show_scripts=show_scripts)
         else:
-            result[k.source] = [script.source.strip() for script in v]
-            if len(result[k.source]) == 1:
-                result[k.source] = result[k.source][0]
+            if show_scripts:
+                result[k.source] = [script.source.strip() for script in v]
+                if len(result[k.source]) == 1:
+                    result[k.source] = result[k.source][0]
+            else:
+                result[k.source] = "..."
     return result
 
 
@@ -66,6 +71,9 @@ class BaseRuleSet:
 
     def __len__(self):
         return _recursive_len(self.rules)
+
+    def __repr__(self):
+        return f"{type(self).__name__}({orjson.dumps(_rules_as_human_dict(self.rules, show_scripts=False)).decode()})"
 
 
 class RuleSet(BaseRuleSet):
