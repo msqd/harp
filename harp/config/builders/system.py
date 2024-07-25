@@ -148,8 +148,8 @@ class SystemBuilder:
         provider = container.build_provider()
         await self.dispatch_bound_event(dispatcher, provider, controller_resolver)
 
-        # Build the kernel and dispatch «build» event.
-        event = await self.dispatch_build_event(dispatcher, provider, controller_resolver)
+        # Build the kernel and dispatch «ready» event.
+        event = await self.dispatch_ready_event(dispatcher, provider, controller_resolver)
 
         # Send back a coherent view of the system.
         return System(config, dispatcher, provider, kernel=event.kernel, binds=event.binds)
@@ -206,7 +206,7 @@ class SystemBuilder:
             logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_BOUND, exc)
             raise
 
-    async def dispatch_build_event(
+    async def dispatch_ready_event(
         self,
         dispatcher: IAsyncEventDispatcher,
         provider: Services,
