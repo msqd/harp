@@ -130,7 +130,7 @@ class HttpProxyController:
 
         labels = {"name": self.name or "-", "method": request.method}
 
-        with performances_observer("proxy", labels=labels):
+        with performances_observer("harp_proxy", labels=labels):
             # create an envelope to override things, without touching the original request
             context = ProxyFilterEvent(self.name, request=WrappedHttpRequest(request))
             await self.adispatch(EVENT_FILTER_PROXY_REQUEST, context)
@@ -150,8 +150,8 @@ class HttpProxyController:
                 f"?{urlencode(context.request.query)}" if context.request.query else ""
             )
 
-            if not context.response:
-                with performances_observer("http", labels=labels):
+            with performances_observer("harp_http", labels=labels):
+                if not context.response:
                     # PROXY REQUEST
                     remote_request: httpx.Request = self.http_client.build_request(
                         context.request.method,
