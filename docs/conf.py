@@ -99,9 +99,13 @@ rst_prolog = (
     + "\n\n"
 )
 if version == "0.7":
-    rst_prolog = """.. attention::
+    rst_prolog = (
+        """
+.. attention::
 
-    **THIS IS THE DOCUMENTATION FOR THE 0.6 VERSION OF HARP PROXY. IT IS A FUTURE RELEASE AND THE DOCUMENTATION IS
+    **THIS IS THE DOCUMENTATION FOR THE 0.7 VERSION OF HARP PROXY. IT IS A FUTURE RELEASE AND THE DOCUMENTATION IS
     NOT IN SYNC WITH THE CODEBASE, AS IT CONTAINS NOT-YET-MERGED FEATURES. PLEASE REFER TO THE LATEST RELEASE INSTEAD.**
 
-"""
+""".strip()
+        + "\n\n"
+    )
