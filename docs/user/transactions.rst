@@ -11,6 +11,7 @@ List (default)
 ::::::::::::::
 
 .. figure:: images/transactions.png
+    :class: screenshot
 
 Details
 :::::::

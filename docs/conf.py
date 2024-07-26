@@ -51,6 +51,7 @@ html_theme_options = {
     "light_logo": "logo.png",
     "dark_logo": "logo.png",
 }
+html_favicon = "favicon.ico"
 html_js_files = ["js/links-target-blank.js"]
 html_css_files = ["css/harp.css"]
 html_baseurl = "https://docs.harp-proxy.net/en/latest/"
@@ -87,15 +88,20 @@ intersphinx_mapping = {
     "whistle": ("https://python-whistle.readthedocs.io/latest", None),
 }
 
-rst_prolog = """.. attention::
-    This is the documentation for `HARP Proxy <https://harp-proxy.net/>`_, actually published as an **early preview**.
-    Both the software and documentation are a work in progress, and although we already use it on various production
-    servers, they may contain inaccuracies, typographical errors, huge mistakes and empty pages. We work hard to
-    eradicate all mistakes and implement stuff, but it is a long and tedious process. We appreciate your patience and
-    understanding. Of course, any :doc:`help will be greatly appreciated </contribute/index>`.
-"""
+rst_prolog = (
+    """
+.. admonition:: HARP Proxy is currently an Early Preview
+
+   Please apologize for mistakes, typos, etc. We put great effort into writing good docs, but we are humans... If you
+   spot anything strange, :doc:`help will be greatly appreciated </contribute/index>`.
+
+""".strip()
+    + "\n\n"
+)
 if version == "0.7":
     rst_prolog = """.. attention::
+
     **THIS IS THE DOCUMENTATION FOR THE 0.6 VERSION OF HARP PROXY. IT IS A FUTURE RELEASE AND THE DOCUMENTATION IS
     NOT IN SYNC WITH THE CODEBASE, AS IT CONTAINS NOT-YET-MERGED FEATURES. PLEASE REFER TO THE LATEST RELEASE INSTEAD.**
+
 """
