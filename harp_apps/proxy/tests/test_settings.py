@@ -18,8 +18,10 @@ simple_config_with_probe = {
             "name": "test",
             "port": 8080,
             "remote": {
-                "urls": ["http://example.com"],
-                "fallback_urls": ["http://fallback.example.com"],
+                "endpoints": [
+                    {"url": "http://example.com"},
+                    {"url": "http://fallback.example.com"},
+                ],
                 "probe": {
                     "method": "GET",
                     "path": "/",
@@ -41,9 +43,8 @@ def test_short_syntax():
                 "description": None,
                 "port": 8080,
                 "remote": {
-                    "min_pool_size": 1,
                     "endpoints": [
-                        {"failure_threshold": 3, "success_threshold": 1, "url": "http://example.com/"},
+                        {"url": "http://example.com/"},
                     ],
                 },
             }
@@ -66,11 +67,10 @@ def test_probe_syntax():
                 "port": 8080,
                 "remote": {
                     "endpoints": [
-                        {"failure_threshold": 3, "success_threshold": 1, "url": "http://example.com/"},
-                        {"failure_threshold": 3, "success_threshold": 1, "url": "http://fallback.example.com/"},
+                        {"url": "http://example.com/"},
+                        {"url": "http://fallback.example.com/"},
                     ],
-                    "min_pool_size": 1,
-                    "probe": {"type": "http", "method": "GET", "path": "/", "timeout": 5},
+                    "probe": {"type": "http", "method": "GET", "path": "/", "timeout": 5.0},
                 },
             }
         ]

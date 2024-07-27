@@ -1,3 +1,4 @@
+from typing import cast
 from unittest.mock import ANY, AsyncMock, patch
 
 import pytest
@@ -12,6 +13,7 @@ from harp.utils.bytes import ensure_bytes
 from harp.utils.testing.mixins import ControllerTestFixtureMixin
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.events import EVENT_TRANSACTION_STARTED
+from harp_apps.proxy.models.remotes import HttpRemote
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.types import IBlobStorage, IStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
@@ -40,7 +42,7 @@ class HttpProxyControllerTestFixtureMixin(ControllerTestFixtureMixin):
 
     def create_controller(self, url=None, *args, dispatcher: IAsyncEventDispatcher, http_client=None, **kwargs):
         return super().create_controller(
-            url or "http://example.com/",
+            HttpRemote(url or "http://example.com/"),
             *args,
             dispatcher=dispatcher,
             http_client=http_client or AsyncClient(),
@@ -125,7 +127,7 @@ class TestHttpProxyControllerWithStorage(
         method="GET",
         headers=None,
     ) -> tuple[HttpRequest, HttpResponse]:
-        dispatcher: IAsyncEventDispatcher = dispatcher or AsyncEventDispatcher()
+        dispatcher: IAsyncEventDispatcher = cast(IAsyncEventDispatcher, dispatcher or AsyncEventDispatcher())
         controller = controller or self.create_controller(dispatcher=dispatcher)
         worker = self.create_worker(dispatcher, engine, sql_storage, blob_storage)
         try:

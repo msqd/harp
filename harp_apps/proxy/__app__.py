@@ -13,12 +13,12 @@ from .settings import ProxySettings
 
 
 async def on_bound(event: OnBoundEvent):
-    settings = event.provider.get(ProxySettings)
+    settings: ProxySettings = event.provider.get(ProxySettings)
     for endpoint in settings.endpoints:
         event.resolver.add(
             endpoint.port,
             HttpProxyController(
-                endpoint.url,
+                endpoint.remote,
                 name=endpoint.name,
                 dispatcher=event.dispatcher,
                 http_client=event.provider.get(AsyncClient),

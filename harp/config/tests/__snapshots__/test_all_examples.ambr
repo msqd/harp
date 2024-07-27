@@ -16,13 +16,15 @@
     'docs/apps/storage/examples/sqlite-aiosqlite.yml',
   ])
 # ---
-# name: test_examples_list
+# name: test_get_available_examples
   list([
     'auth.basic',
-    'httpbin',
-    'httpbins',
     'postgres',
+    'proxy:httpbin',
+    'proxy:httpbins',
+    'proxy:pooled',
     'repositories',
+    'rules:teapot',
     'sentry',
     'sqlite',
   ])

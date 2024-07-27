@@ -8,12 +8,17 @@ from harp.config.examples import (
 )
 
 
-def test_examples_list(snapshot):
+def test_get_available_examples(snapshot):
     assert get_available_examples() == snapshot
 
 
 def test_documentation_examples_list(snapshot):
-    assert [x.removeprefix(harp.ROOT_DIR + "/") for x in _get_available_documentation_examples_filenames()] == snapshot
+    assert [
+        x.removeprefix(
+            harp.ROOT_DIR + "/",
+        )
+        for x in _get_available_documentation_examples_filenames()
+    ] == snapshot
 
 
 @pytest.mark.parametrize("example", get_available_examples())

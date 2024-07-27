@@ -26,6 +26,7 @@ from .events import (
     EVENT_TRANSACTION_STARTED,
     ProxyFilterEvent,
 )
+from .models.remotes import HttpRemote
 
 logger = get_logger(__name__)
 
@@ -51,7 +52,7 @@ class HttpProxyController:
     _dispatcher: Optional[IAsyncEventDispatcher] = None
     """Event dispatcher for this controller."""
 
-    url: str
+    remote: HttpRemote
     """Base URL to proxy requests to."""
 
     @cached_property
@@ -61,7 +62,7 @@ class HttpProxyController:
 
     def __init__(
         self,
-        url,
+        remote: HttpRemote,
         *,
         http_client: AsyncClient,
         dispatcher: Optional[IAsyncEventDispatcher] = None,
@@ -69,12 +70,10 @@ class HttpProxyController:
         logging=True,
     ):
         self.http_client = http_client
-        self.url = url or self.url
+        self.remote = remote or self.remote
         self.name = name or self.name
         self._logging = logging
         self._dispatcher = dispatcher or self._dispatcher
-
-        self.parsed_url = urlparse(self.url)
 
         # we only expose minimal information about the exact version
         if not self.user_agent:
@@ -135,9 +134,12 @@ class HttpProxyController:
             context = ProxyFilterEvent(self.name, request=WrappedHttpRequest(request))
             await self.adispatch(EVENT_FILTER_PROXY_REQUEST, context)
 
+            remote_url = self.remote.get_url()
+            parsed_remote_url = urlparse(remote_url)
+
             # override a few required headers. That may be done in the httpx request instead of here.
             # And that would remove the need for WrappedHttpRequest? Maybe not because of our custom filters.
-            context.request.headers["host"] = self.parsed_url.netloc
+            context.request.headers["host"] = parsed_remote_url.netloc
             if self.user_agent:
                 context.request.headers["user-agent"] = self.user_agent
 
@@ -145,8 +147,9 @@ class HttpProxyController:
             transaction = await self._create_transaction_from_request(
                 context.request, tags=self._extract_tags_from_request(context.request)
             )
+
             await context.request.join()
-            url = urljoin(self.url, context.request.path) + (
+            url = urljoin(remote_url, context.request.path) + (
                 f"?{urlencode(context.request.query)}" if context.request.query else ""
             )
 
@@ -290,4 +293,4 @@ class HttpProxyController:
         return tags
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.url!r}, name={self.name!r})"
+        return f"{type(self).__name__}({self.remote!r}, name={self.name!r})"
