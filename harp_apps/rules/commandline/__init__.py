@@ -1,6 +1,6 @@
 from typing import cast
 
-from click import BaseCommand
+from click import Command
 
 from harp import get_logger
 from harp.utils.commandline import click
@@ -17,5 +17,5 @@ def entrypoint():
     pass
 
 
-entrypoint.add_command(cast(BaseCommand, lint_command))
-entrypoint.add_command(cast(BaseCommand, run_command))
+entrypoint.add_command(cast(Command, lint_command))
+entrypoint.add_command(cast(Command, run_command))

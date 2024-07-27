@@ -3,8 +3,8 @@ from rich.tree import Tree
 
 from harp.commandline.options.server import add_harp_config_options
 from harp.utils.commandline import click
+from harp.utils.console import console
 
-from .utils.console import console
 from .utils.loaders import load_ruleset_from_files
 
 

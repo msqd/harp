@@ -14,7 +14,6 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
-    harp_apps.rules.commandline.utils.console
     harp_apps.rules.commandline.utils.dump
     harp_apps.rules.commandline.utils.loaders
     harp_apps.rules.commandline.utils.subscribers
