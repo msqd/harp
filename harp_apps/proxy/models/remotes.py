@@ -71,13 +71,13 @@ class Probe:
         self.headers = headers or {}
         self.timeout = timeout
 
-        # not the right place
+        # todo not the right place
         self.initial_delay = initial_delay
         self.period = period
 
-    def check(self, client: httpx.Client, url: Url):
+    async def check(self, client: httpx.AsyncClient, url: Url):
         try:
-            response = client.request(
+            response = await client.request(
                 self.method, urljoin(url.url, self.path), headers=copy(self.headers), timeout=self.timeout
             )
             if 200 <= response.status_code < 400:
@@ -122,6 +122,9 @@ class Remote:
         self.current_pool = deque()
         self.refresh()
 
+    def __getitem__(self, url):
+        return self.urls[normalize_url(url)]
+
     def refresh(self):
         refreshed = deque()
         for url in self.urls.values():
@@ -148,23 +151,20 @@ class Remote:
             self.current_pool.rotate(-1)
 
     def set_down(self, url):
-        url = normalize_url(url)
-        url = self.urls[url]
-        url.status = DOWN
+        self[url].status = DOWN
+        self.refresh()
+
+    def set_checking(self, url):
+        self[url].status = CHECKING
         self.refresh()
 
     def set_up(self, url):
-        url = normalize_url(url)
-        url = self.urls[url]
-        url.status = UP
+        self[url].status = UP
         self.refresh()
 
-    def check(self):
+    async def check(self):
         """Uses the probe (luke), to check the health of each urls. It is also done on fallback and inactive urls, to
         ensure that they are ready in case we need them."""
-        with httpx.Client() as client:
+        async with httpx.AsyncClient() as client:
             for url in self.urls.values():
-                self.probe.check(client, url)
-
-    def __getitem__(self, url):
-        return self.urls[normalize_url(url)]
+                await self.probe.check(client, url)
