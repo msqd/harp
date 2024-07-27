@@ -4,7 +4,7 @@ from decimal import Decimal
 import pytest
 from hishel import Controller
 
-from harp.config import BaseSetting, Definition, Lazy, asdict
+from harp.config import Definition, Lazy, Settings, asdict
 
 
 class TestFactoryDefinition:
@@ -95,7 +95,7 @@ class TestFactoryDefinition:
 
     def test_serialize(self):
         @dataclass
-        class Foo(BaseSetting):
+        class Foo(Settings):
             dep: Definition = Lazy("decimal:Decimal")
 
         assert asdict(Foo()) == {

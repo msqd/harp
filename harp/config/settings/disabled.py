@@ -1,10 +1,10 @@
 from typing import Optional
 
-from .base import BaseSetting, settings_dataclass
+from .base import Settings, settings_dataclass
 
 
 @settings_dataclass
-class DisabledSettings(BaseSetting):
+class DisabledSettings(Settings):
     enabled: bool = False
 
     def __init__(self, *args, **kwargs):
@@ -22,7 +22,7 @@ class DisabledSettings(BaseSetting):
 
 
 @settings_dataclass
-class DisableableBaseSettings(BaseSetting):
+class DisableableBaseSettings(Settings):
     enabled: Optional[bool] = True
 
     def __new__(cls, **kwargs):

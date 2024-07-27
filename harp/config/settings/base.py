@@ -38,7 +38,7 @@ def asdict(obj, /, *, secure=True):
 
 
 @settings_dataclass
-class BaseSetting:
+class Settings:
     def __post_init__(self):
         for _name, _hint in self.__annotations__.items():
             try:
