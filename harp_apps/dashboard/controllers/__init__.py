@@ -14,6 +14,7 @@ from harp.typing.global_settings import GlobalSettings
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.storage.types import IBlobStorage, IStorage
 
+from ...proxy.models.remotes import HttpRemote
 from ..settings import DashboardAuthBasicSetting, DashboardSettings
 from .blobs import BlobsController
 from .overview import OverviewController
@@ -95,7 +96,10 @@ class DashboardController:
 
     def _create_ui_devserver_proxy_controller(self, *, port):
         return HttpProxyController(
-            f"http://localhost:{port}/", http_client=self.http_client, logging=False, name="dashboard-devserver"
+            HttpRemote([{"url": f"http://localhost:{port}/"}]),
+            http_client=self.http_client,
+            logging=False,
+            name="dashboard-devserver",
         )
 
     def _create_internal_api_controller(self):

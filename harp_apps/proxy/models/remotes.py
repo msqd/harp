@@ -33,6 +33,10 @@ class HttpEndpoint:
 
     def __post_init__(self):
         self.url = normalize_url(self.url)
+        self.pools = set(self.pools)
+        unknown_pools = self.pools.difference({DEFAULT_POOL, FALLBACK_POOL})
+        if len(unknown_pools):
+            raise ValueError(f"Invalid pool names: {unknown_pools}")
 
     def probe_success(self):
         self.failure_score = 0
@@ -62,23 +66,33 @@ class HttpEndpoint:
     def _asdict(self, /, *, secure=True):
         return {
             "url": self.url,
-            "failure_threshold": self.failure_threshold,
-            "success_threshold": self.success_threshold,
+            **(
+                {"failure_threshold": self.failure_threshold}
+                if self.failure_threshold != type(self).failure_threshold
+                else {}
+            ),
+            **(
+                {"success_threshold": self.success_threshold}
+                if self.success_threshold != type(self).success_threshold
+                else {}
+            ),
         }
 
 
 class HttpProbe:
+    timeout = 10.0
+
     def __init__(
         self,
         method: str,
         path: str,
         headers=None,
-        timeout=10,
+        timeout=None,
     ):
         self.method = method
         self.path = path
         self.headers = headers or {}
-        self.timeout = timeout
+        self.timeout = float(timeout) if timeout else self.timeout
 
     async def check(self, client: httpx.AsyncClient, url: HttpEndpoint):
         try:
@@ -98,21 +112,22 @@ class HttpProbe:
             "method": self.method,
             "path": self.path,
             **({"headers": self.headers} if self.headers else {}),
-            "timeout": self.timeout,
+            **({"timeout": self.timeout} if self.timeout != type(self).timeout else {}),
         }
 
 
 class HttpRemote:
-    name = None
     endpoints = None
-    current_pool = None
+    current_pool: deque[HttpEndpoint] = None
     current_pool_name = None
+
+    min_pool_size = 1
 
     def __init__(
         self,
-        urls: Iterable = (),
-        fallback_urls: Iterable = (),
-        min_pool_size=1,
+        endpoints: Iterable[HttpEndpoint | dict] | str = (),
+        *,
+        min_pool_size=None,
         probe: HttpProbe = None,
     ):
         self.current_pool_name = DEFAULT_POOL
@@ -122,17 +137,17 @@ class HttpRemote:
         self.probe = probe
 
         self.endpoints = {}
-        for _url in urls:
-            endpoint = HttpEndpoint(url=_url)
+        if isinstance(endpoints, str):
+            endpoints = [endpoints]
+        for endpoint in endpoints:
+            if isinstance(endpoint, str):
+                endpoint = {"url": endpoint}
+            endpoint = HttpEndpoint(**endpoint)
             self.endpoints.setdefault(endpoint.url, endpoint)
-            self.endpoints[endpoint.url].pools.add(DEFAULT_POOL)
+            if not self.endpoints[endpoint.url].pools:
+                self.endpoints[endpoint.url].pools.add(DEFAULT_POOL)
 
-        for _url in fallback_urls:
-            endpoint = HttpEndpoint(url=_url)
-            self.endpoints.setdefault(endpoint.url, endpoint)
-            self.endpoints[endpoint.url].pools.add(FALLBACK_POOL)
-
-        self.min_pool_size = max(0, min_pool_size)
+        self.min_pool_size = max(0, min_pool_size or self.min_pool_size)
         self.current_pool = deque()
         self.refresh()
 
@@ -140,16 +155,16 @@ class HttpRemote:
         return self.endpoints[normalize_url(url)]
 
     def refresh(self):
-        refreshed = deque()
-        for url in self.endpoints.values():
-            if DEFAULT_POOL in url.pools and url.status >= CHECKING:
-                refreshed.append(url)
+        refreshed: deque[HttpEndpoint] = deque()
+        for endpoint in self.endpoints.values():
+            if DEFAULT_POOL in endpoint.pools and endpoint.status >= CHECKING:
+                refreshed.append(endpoint)
 
         if len(refreshed) < self.min_pool_size:
-            for url in self.endpoints.values():
-                if FALLBACK_POOL in url.pools and url.status >= CHECKING:
+            for endpoint in self.endpoints.values():
+                if FALLBACK_POOL in endpoint.pools and endpoint.status >= CHECKING:
                     self.current_pool_name = FALLBACK_POOL
-                    refreshed.append(url)
+                    refreshed.append(endpoint)
         else:
             self.current_pool_name = DEFAULT_POOL
 
@@ -186,6 +201,6 @@ class HttpRemote:
     def _asdict(self, /, *, secure=True):
         return {
             "endpoints": [endpoint._asdict(secure=secure) for endpoint in self.endpoints.values()],
-            "min_pool_size": self.min_pool_size,
+            **({"min_pool_size": self.min_pool_size} if self.min_pool_size != type(self).min_pool_size else {}),
             **({"probe": self.probe._asdict(secure=secure)} if self.probe else {}),
         }
