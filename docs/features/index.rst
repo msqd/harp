@@ -2,10 +2,15 @@ Features
 ========
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    configuration
-   http-client
+   proxy
    auditlog
-   caching
    rules
+
+
+.. todo::
+
+   logging
+   security

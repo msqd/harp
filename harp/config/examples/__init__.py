@@ -1,6 +1,7 @@
 import os
 from functools import lru_cache
 from glob import glob
+from itertools import chain
 from os.path import dirname
 
 import harp
@@ -83,4 +84,8 @@ def get_available_examples():
 
 
 def _get_available_documentation_examples_filenames():
-    return list(sorted((glob(harp.ROOT_DIR + "/docs/**/examples/*.yml", recursive=True))))
+    files = chain(
+        *(glob(harp.ROOT_DIR + f"/docs/**/examples/*.{format}", recursive=True) for format in ("yml", "yaml", "toml"))
+    )
+
+    return list(sorted(files))

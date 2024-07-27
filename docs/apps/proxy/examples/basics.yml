@@ -1,0 +1,5 @@
+proxy:
+  endpoints:
+    - name: httpbin
+      port: 4000
+      url: "https://httpbin.org/"

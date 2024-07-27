@@ -1,0 +1,8 @@
+proxy:
+  endpoints:
+    - name: geo
+      port: 4000
+      url: "https://geo.api.gouv.fr/"
+    - name: adresse
+      port: 4001
+      url: "https://api-adresse.data.gouv.fr/"
