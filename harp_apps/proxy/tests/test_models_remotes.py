@@ -4,11 +4,11 @@ import pytest
 import respx
 from httpx import Response
 
-from harp_apps.proxy.models.remotes import Probe, Remote
+from harp_apps.proxy.models.remotes import HttpProbe, HttpRemote
 
 
 def test_remote_round_robin():
-    remote = Remote("api", base_urls=("http://api0.example.com/", "http://api1.example.com/"))
+    remote = HttpRemote("api", base_urls=("http://api0.example.com/", "http://api1.example.com/"))
 
     assert remote.name == "api"
     assert remote.get_url() == "http://api0.example.com/"
@@ -25,7 +25,7 @@ def test_remote_round_robin():
 
 
 def test_remote_fallback():
-    remote = Remote(
+    remote = HttpRemote(
         "api",
         base_urls=("http://api0.example.com/", "http://api1.example.com/"),
         fallback_urls=("http://fallback.example.com",),
@@ -51,13 +51,13 @@ def test_remote_fallback():
 
 
 def test_empty_pool():
-    remote = Remote("test")
+    remote = HttpRemote("test")
     with pytest.raises(IndexError):
         remote.get_url()
 
 
 def test_empty_pool_after_set_down():
-    remote = Remote("api", base_urls=["http://example.com"])
+    remote = HttpRemote("api", base_urls=["http://example.com"])
     assert remote.get_url() == "http://example.com/"
     remote.set_down("http://example.com")
     with pytest.raises(IndexError):
@@ -68,7 +68,7 @@ def test_empty_pool_after_set_down():
 
 @respx.mock
 async def test_basic_probe():
-    remote = Remote("api", base_urls=["https://example.com"], probe=Probe("GET", "/health"))
+    remote = HttpRemote("api", base_urls=["https://example.com"], probe=HttpProbe("GET", "/health"))
     healthcheck = respx.get("https://example.com/health")
     url = remote["https://example.com"]
 
@@ -105,7 +105,7 @@ async def test_basic_probe():
 
 @respx.mock
 async def test_probe_errors():
-    remote = Remote("api", base_urls=["https://example.com"], probe=Probe("GET", "/health"))
+    remote = HttpRemote("api", base_urls=["https://example.com"], probe=HttpProbe("GET", "/health"))
     healthcheck = respx.get("https://example.com/health")
     url = remote["https://example.com"]
 
@@ -146,7 +146,7 @@ async def test_probe_errors():
 
 
 async def test_probe_timeout():
-    remote = Remote("api", base_urls=["https://example.com"], probe=Probe("GET", "/health", timeout=0.1))
+    remote = HttpRemote("api", base_urls=["https://example.com"], probe=HttpProbe("GET", "/health", timeout=0.1))
     healthcheck = respx.get("https://example.com/health")
     url = remote["https://example.com"]
 

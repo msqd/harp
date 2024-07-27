@@ -55,7 +55,7 @@ class Url:
             self.failure_reasons.add(reason)
 
 
-class Probe:
+class HttpProbe:
     def __init__(
         self,
         method: str,
@@ -88,7 +88,7 @@ class Probe:
             url.probe_failure(shouty_snake(type(exc).__name__))
 
 
-class Remote:
+class HttpRemote:
     name = None
     urls = None
     current_pool = None
@@ -101,7 +101,7 @@ class Remote:
         base_urls: Iterable = (),
         fallback_urls: Iterable = (),
         min_pool_size=1,
-        probe: Probe = None,
+        probe: HttpProbe = None,
     ):
         self.name = name
         self.mode = DEFAULT_POOL
