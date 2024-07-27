@@ -1,0 +1,23 @@
+[rules."*"."GET *"]
+
+on_request = """
+from harp.http import HttpResponse
+
+if request.headers.get("Authorization") == "I'm root, let me in":
+    response = HttpResponse("Ok, then.")
+else:
+    request.headers["Via"] = "Ferrata"
+"""
+
+on_remote_request = """
+if not request.headers.get("Authorization"):
+    request.headers["Authorization"] = "Passphrase I shall pass."
+"""
+
+on_remote_response = """
+response.headers["Cache-Control"] = "max-age=3600"
+"""
+
+on_response = """
+response.headers["X-Signature"] = "Best regards, Joe."
+"""

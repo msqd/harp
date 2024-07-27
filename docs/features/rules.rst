@@ -3,34 +3,18 @@ Rules Engine
 
 .. versionadded:: 0.6
 
-Anything can be customized, on a per-request basis, using the rules engine.
+The rules engine is a straightforward yet powerful configuration tool that allows you to write small scripts applied at
+various stages of the request lifecycle. This can be used to enforce security policies, cache policies, add headers,
+modify responses, and more.
 
 Example
 :::::::
 
 .. tab-set-code::
 
-    .. code:: toml
+    .. literalinclude:: ../apps/rules/examples/overview.toml
+        :language: toml
 
-        [rules."*"."GET *"]
-
-        on_request = """
-        from harp.http import HttpResponse
-
-        if request.headers.get("Authorization") == "I'm root, let me in":
-            response = HttpResponse("Ok, then.")
-        else:
-            request.headers["Via"] = "Ferrata"
-        """
-
-        on_remote_request = """
-        if not request.headers.get("Authorization"):
-            request.headers["Authorization"] = "Passphrase I shall pass."
-        """
-
-        on_remote_response = """
-        response.headers["Cache-Control"] = "max-age=3600"
-        """
 
 :doc:`Documentation </apps/rules/index>`
 ::::::::::::::::::::::::::::::::::::::::

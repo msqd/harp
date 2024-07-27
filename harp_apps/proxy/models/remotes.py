@@ -88,7 +88,11 @@ class HttpProbe:
         path: str,
         headers=None,
         timeout=None,
+        type="http",
     ):
+        if type != "http":
+            raise ValueError(f"Invalid probe type: {type}")
+
         self.method = method
         self.path = path
         self.headers = headers or {}
@@ -120,15 +124,14 @@ class HttpRemote:
     endpoints = None
     current_pool: deque[HttpEndpoint] = None
     current_pool_name = None
-
     min_pool_size = 1
 
     def __init__(
         self,
-        endpoints: Iterable[HttpEndpoint | dict] | str = (),
+        endpoints: Iterable[HttpEndpoint | dict | str] | str = (),
         *,
         min_pool_size=None,
-        probe: HttpProbe = None,
+        probe: HttpProbe | dict = None,
     ):
         self.current_pool_name = DEFAULT_POOL
 
@@ -137,11 +140,14 @@ class HttpRemote:
         self.probe = probe
 
         self.endpoints = {}
+
         if isinstance(endpoints, str):
             endpoints = [endpoints]
+
         for endpoint in endpoints:
             if isinstance(endpoint, str):
                 endpoint = {"url": endpoint}
+
             endpoint = HttpEndpoint(**endpoint)
             self.endpoints.setdefault(endpoint.url, endpoint)
             if not self.endpoints[endpoint.url].pools:
