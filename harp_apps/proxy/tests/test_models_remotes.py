@@ -67,7 +67,7 @@ def test_empty_pool_after_set_down():
 
 
 @respx.mock
-def test_basic_probe():
+async def test_basic_probe():
     remote = Remote("api", base_urls=["https://example.com"], probe=Probe("GET", "/health"))
     healthcheck = respx.get("https://example.com/health")
     url = remote["https://example.com"]
@@ -79,32 +79,32 @@ def test_basic_probe():
     healthcheck.mock(return_value=Response(200))
 
     # first check is performed, then the status should be up, (success threshold is 1)
-    remote.check()
+    await remote.check()
     assert url.status > 0
 
     # subsequent checks call the health endpoint, and keep the status up
-    remote.check()
+    await remote.check()
     assert url.status > 0
 
     # service down :(
     healthcheck.mock(return_value=Response(418))
 
     # if the health endpoint returns a 4xx or 5xx status, we start counting failures
-    remote.check()
+    await remote.check()
     assert url.status == 0
-    remote.check()
+    await remote.check()
     assert url.status == 0
-    remote.check()
+    await remote.check()
     assert url.status < 0
 
     # service up again (what a relief) :)
     healthcheck.mock(return_value=Response(200))
-    remote.check()
+    await remote.check()
     assert url.status > 0
 
 
 @respx.mock
-def test_probe_errors():
+async def test_probe_errors():
     remote = Remote("api", base_urls=["https://example.com"], probe=Probe("GET", "/health"))
     healthcheck = respx.get("https://example.com/health")
     url = remote["https://example.com"]
@@ -115,43 +115,43 @@ def test_probe_errors():
     # service in error ...
     healthcheck.mock(side_effect=TimeoutError)
 
-    remote.check()
-    remote.check()
+    await remote.check()
+    await remote.check()
     assert url.status == 0
     assert url.failure_reasons == {"TIMEOUT_ERROR"}
 
-    remote.check()
+    await remote.check()
     assert url.status < 0
     assert url.failure_reasons == {"TIMEOUT_ERROR"}
 
     healthcheck.mock(return_value=Response(200))
-    remote.check()
+    await remote.check()
     assert url.status > 0
     assert url.failure_reasons is None
 
     healthcheck.mock(return_value=Response(418))
-    remote.check()
-    remote.check()
+    await remote.check()
+    await remote.check()
     assert url.status == 0
     assert url.failure_reasons == {"HTTP_418"}
 
-    remote.check()
+    await remote.check()
     assert url.status < 0
     assert url.failure_reasons == {"HTTP_418"}
 
     healthcheck.mock(return_value=Response(200))
-    remote.check()
+    await remote.check()
     assert url.status > 0
     assert url.failure_reasons is None
 
 
-def test_probe_timeout():
+async def test_probe_timeout():
     remote = Remote("api", base_urls=["https://example.com"], probe=Probe("GET", "/health", timeout=0.1))
     healthcheck = respx.get("https://example.com/health")
     url = remote["https://example.com"]
 
     healthcheck.mock(side_effect=lambda x: sleep(0.2))
 
-    remote.check()
+    await remote.check()
     assert url.status == 0
     assert url.failure_reasons == {"CONNECT_TIMEOUT"}
