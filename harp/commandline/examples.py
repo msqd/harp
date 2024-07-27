@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 @click.group("examples")
 def entrypoint():
-    """Rules engine related commands."""
+    """Examples related commands."""
     pass
 
 
