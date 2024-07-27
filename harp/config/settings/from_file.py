@@ -1,10 +1,10 @@
 import os
 
-from .base import BaseSetting, settings_dataclass
+from .base import Settings, settings_dataclass
 
 
 @settings_dataclass
-class FromFileSetting(BaseSetting):
+class FromFileSetting(Settings):
     from_file: str
 
     @classmethod

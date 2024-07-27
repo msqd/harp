@@ -2,12 +2,12 @@ from dataclasses import field
 
 from sqlalchemy import URL, make_url
 
-from harp.config import BaseSetting, settings_dataclass
+from harp.config import Settings, settings_dataclass
 from harp.utils.env import cast_bool
 
 
 @settings_dataclass
-class BlobStorageSettings(BaseSetting):
+class BlobStorageSettings(Settings):
     type: str = "sql"
     url: URL = None
 
@@ -30,7 +30,7 @@ class BlobStorageSettings(BaseSetting):
 
 
 @settings_dataclass
-class StorageSettings(BaseSetting):
+class StorageSettings(Settings):
     url: URL = make_url("sqlite+aiosqlite:///:memory:?cache=shared")
     migrate: bool = True
     blobs: BlobStorageSettings = field(default_factory=BlobStorageSettings)

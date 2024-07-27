@@ -3,7 +3,6 @@
   list([
     'Application',
     'ApplicationsRegistry',
-    'BaseSetting',
     'ConfigurationBuilder',
     'Definition',
     'DisableableBaseSettings',
@@ -18,6 +17,7 @@
     'OnBoundEvent',
     'OnReadyEvent',
     'OnShutdownEvent',
+    'Settings',
     'System',
     'SystemBuilder',
     'applications',

@@ -26,12 +26,12 @@ from .events import (
     OnShutdownEvent,
 )
 from .settings import (
-    BaseSetting,
     Definition,
     DisableableBaseSettings,
     DisabledSettings,
     FromFileSetting,
     Lazy,
+    Settings,
     asdict,
     settings_dataclass,
 )
@@ -40,7 +40,6 @@ from .utils import get_application
 __all__ = [
     "Application",
     "ApplicationsRegistry",
-    "BaseSetting",
     "ConfigurationBuilder",
     "Definition",
     "DisableableBaseSettings",
@@ -55,6 +54,7 @@ __all__ = [
     "OnBoundEvent",
     "OnReadyEvent",
     "OnShutdownEvent",
+    "Settings",
     "System",
     "SystemBuilder",
     "asdict",

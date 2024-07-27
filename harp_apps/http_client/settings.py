@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from hishel._async._storages import AsyncBaseStorage
     from httpx import AsyncHTTPTransport
 
-from harp.config import BaseSetting, Definition, DisableableBaseSettings, Lazy, settings_dataclass
+from harp.config import Definition, DisableableBaseSettings, Lazy, Settings, settings_dataclass
 from harp.settings import DEFAULT_TIMEOUT
 
 
@@ -28,7 +28,7 @@ class CacheSettings(DisableableBaseSettings):
 
 
 @settings_dataclass
-class HttpClientSettings(BaseSetting):
+class HttpClientSettings(Settings):
     timeout: Optional[float] = DEFAULT_TIMEOUT
     cache: CacheSettings = field(default_factory=CacheSettings)
 
