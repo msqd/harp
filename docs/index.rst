@@ -1,4 +1,4 @@
-Harp — HTTP API Runtime Proxy
+HARP — HTTP API Runtime Proxy
 =============================
 
 .. table::
