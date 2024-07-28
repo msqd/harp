@@ -6,6 +6,7 @@ them based on various criteria.
 
 .. figure:: proxy.svg
 
+
 Basics
 ::::::
 
