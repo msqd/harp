@@ -6,5 +6,6 @@ Features
 
    configuration
    proxy
+   caching
    auditlog
    rules
