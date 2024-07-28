@@ -17,9 +17,11 @@
     | Discover HARP Proxy, feature by feature.                                                                        |
     |                                                                                                                 |
     | - :doc:`/features/configuration`                                                                                |
-    | - :doc:`/features/http-client`                                                                                  |
+    | - :doc:`Proxy </features/proxy>`                                                                                |
+    | - :ref:`Caching <cache>`                                                                                        |
+    | - :ref:`Circuit Breaker <circuit-breaker>`                                                                      |
+    | - :ref:`Probes <probes>`                                                                                        |
     | - :doc:`/features/auditlog`                                                                                     |
-    | - :doc:`/features/caching`                                                                                      |
     | - :doc:`/features/rules`                                                                                        |
     +--------------------------------------------------------+--------------------------------------------------------+
     | :doc:`User's Guide </user/index>`                      | :doc:`Operator's Guide </operate/index>`               |

@@ -6,7 +6,6 @@ from hypercorn.utils import LifespanFailureError
 from whistle import AsyncEventDispatcher, Event, IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.controllers import DefaultControllerResolver
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
 
 from ..utils.performances import performances_observer
@@ -32,6 +31,8 @@ class ASGIKernel:
     dispatcher: IAsyncEventDispatcher
 
     def __init__(self, *, dispatcher=None, resolver=None, debug=False, handle_errors=True):
+        from harp.controllers import DefaultControllerResolver
+
         self.dispatcher = dispatcher or AsyncEventDispatcher()
         # TODO IControllerResolver ? What contract do we expect ?
         self.resolver = resolver or DefaultControllerResolver()

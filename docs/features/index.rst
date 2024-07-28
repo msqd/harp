@@ -8,9 +8,3 @@ Features
    proxy
    auditlog
    rules
-
-
-.. todo::
-
-   logging
-   security

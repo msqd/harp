@@ -19,6 +19,18 @@ FALLBACK_POOL = "fallback"
 
 @dataclass
 class HttpEndpoint:
+    """
+    A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
+    configuration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.
+
+    .. code-block:: yaml
+
+        url: "http://my-endpoint:8080"
+        failure_threshold: 3
+        success_threshold: 1
+        pools: [fallback]  # omit for default pool
+    """
+
     url: str
     status: int = CHECKING
     # todo is this the right place ? we don't use pools here but we need to define it in config. Maybe the pool logic
@@ -80,6 +92,20 @@ class HttpEndpoint:
 
 
 class HttpProbe:
+    """
+    A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the
+    configuration parser for ``proxy.endpoints[].remote.probe`` settings.
+
+    .. code-block:: yaml
+
+        type: http
+        method: GET
+        path: /health
+        headers:
+          x-purpose: "health probe"
+        timeout: 5.0
+    """
+
     timeout = 10.0
 
     def __init__(
@@ -121,6 +147,22 @@ class HttpProbe:
 
 
 class HttpRemote:
+    """
+    A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
+    configuration parser for ``proxy.endpoints[].remote`` settings.
+
+    .. code-block:: yaml
+
+        min_pool_size: 1
+        endpoints:
+          # see HttpEndpoint
+          - ...
+        probe:
+          # see HttpProbe
+          ...
+
+    """
+
     endpoints = None
     current_pool: deque[HttpEndpoint] = None
     current_pool_name = None
