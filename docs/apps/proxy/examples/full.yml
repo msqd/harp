@@ -1,0 +1,20 @@
+proxy:
+  endpoints:
+    - name: httpbins # a unique name for the endpoint, used to reference it in code, rules and dashboard
+      description: An informative description of the endpoint (optional)
+      port: 4000 # the local listening port for this endpoint
+      remote:
+        min_pool_size: 2 # the minimum number of endpoints to try to keep in the active pool
+        endpoints:
+          - url: "https://api1.example.com/"
+            failure_threshold: 2
+            success_threshold: 2
+          - url: "https://api2.example.com/"
+            failure_threshold: 2
+            success_threshold: 2
+          - url: "https://fallback.example.com/"
+            pools: [fallback]
+        probe:
+          method: GET
+          path: /healthz
+          timeout: 10.0

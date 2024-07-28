@@ -3,27 +3,38 @@ Proxy
 
 .. versionadded:: 0.5
 
-The `harp_apps.proxy` application implements the core harp proxy features, and includes the configuration logic for
+The ``harp_apps.proxy`` application provides the core proxy features for HARP and includes the configuration logic for
 endpoints.
+
 
 Setup
 :::::
 
-The proxy application is loaded by default when using ``harp start ...`` or ``harp server ...`` commands.
+The proxy application is enabled by default when using the harp start ... or harp server ... commands.
+
+You can disable it with the --disable proxy option, although this is generally not recommended.
 
 
 Configuration
 :::::::::::::
 
-To configure proxy endpoints, you can use a yaml configuration file:
+Shorthand syntax example:
 
-.. literalinclude:: ./examples/swapi.yml
+.. literalinclude:: ./examples/full-shorthand.yml
     :language: yaml
 
-Proxy endpoints are the remote APIs that your proxy will serve. Each endpoint have a local port, a name, and a base URL.
+Full example:
 
-Internal implementation: :class:`ProxySettings <harp_apps.proxy.settings.ProxySettings>`,
-:class:`ProxyEndpointSetting <harp_apps.proxy.settings.ProxyEndpointSetting>`
+.. literalinclude:: ./examples/full.yml
+    :language: yaml
+
+**Reference**
+
+* :class:`proxy (ProxySettings) <harp_apps.proxy.settings.ProxySettings>`
+* :class:`proxy.endpoints[] (ProxyEndpoint) <harp_apps.proxy.settings.ProxyEndpoint>`
+* :class:`proxy.endpoints[].remote (HttpRemote) <harp_apps.proxy.models.remotes.HttpRemote>`
+* :class:`proxy.endpoints[].remote.endpoints[] (HttpEndpoint) <harp_apps.proxy.models.remotes.HttpEndpoint>`
+* :class:`proxy.endpoints[].remote.probe (HttpProbe) <harp_apps.proxy.models.remotes.HttpProbe>`
 
 
 Command line

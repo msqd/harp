@@ -1,5 +1,5 @@
-HTTP Proxy
-==========
+Proxy
+=====
 
 The main feature of HARP Proxy is the HTTP Proxy, enabling to define pools of upstream servers, and route requests to
 them based on various criteria.
@@ -54,8 +54,9 @@ setting can be modified.
     :language: yaml
 
 
-Healchecks probes
-:::::::::::::::::
+.. _probes:
+Healthchecks probes
+:::::::::::::::::::
 
 .. versionadded:: 0.7
 
@@ -70,6 +71,7 @@ remote service's health.
     :language: yaml
 
 
+.. _circuit-breaker:
 Circuit breaker
 :::::::::::::::
 
@@ -78,8 +80,8 @@ Circuit breaker
 .. todo:: implement & document
 
 
-HTTP Client
-:::::::::::
+Client
+::::::
 
 .. versionadded:: 0.5
 
@@ -90,6 +92,7 @@ headers, and more.
     :language: yaml
 
 
+.. _cache:
 Caching
 :::::::
 
@@ -108,7 +111,5 @@ aggressive or even switch it entirely to your own implementation.
 Reference
 :::::::::
 
-* configuration
-* app
-* python api
-* more ?
+* :doc:`Proxy & Endpoints </apps/proxy/index>`: Configuration for endpoints, names, ports, and routing.
+* :doc:`Http Client </apps/http_client/index>`: Configuration for timeouts, caching, and other HTTP client behaviors.
