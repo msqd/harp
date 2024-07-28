@@ -18,7 +18,7 @@
     |                                                                                                                 |
     | - :doc:`/features/configuration`                                                                                |
     | - :doc:`Proxy </features/proxy>`                                                                                |
-    | - :ref:`Caching <cache>`                                                                                        |
+    | - :doc:`Cache </features/caching>`                                                                              |
     | - :ref:`Circuit Breaker <circuit-breaker>`                                                                      |
     | - :ref:`Probes <probes>`                                                                                        |
     | - :doc:`/features/auditlog`                                                                                     |
