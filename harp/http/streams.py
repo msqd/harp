@@ -1,27 +1,8 @@
 from typing import AsyncIterator, Iterator
 
+from httpx import AsyncByteStream
+
 from .typing import HttpRequestBridge
-
-
-class AsyncByteStream:
-    async def __aiter__(self) -> AsyncIterator[bytes]:
-        raise NotImplementedError("The '__aiter__' method must be implemented.")  # pragma: no cover
-        yield b""  # pragma: no cover
-
-    async def aclose(self) -> None:
-        pass
-
-
-class SyncByteStream:
-    def __iter__(self) -> Iterator[bytes]:
-        raise NotImplementedError("The '__iter__' method must be implemented.")  # pragma: no cover
-        yield b""  # pragma: no cover
-
-    def close(self) -> None:
-        """
-        Subclasses can override this method to release any network resources
-        after a request/response cycle is complete.
-        """
 
 
 class ByteStream(AsyncByteStream):

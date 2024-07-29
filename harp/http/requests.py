@@ -1,11 +1,10 @@
 import binascii
 from base64 import b64decode
 from functools import cached_property
-from typing import TYPE_CHECKING, MutableMapping, cast
 
-from multidict import CIMultiDict, CIMultiDictProxy, MultiDictProxy
+from httpx import AsyncByteStream
+from multidict import CIMultiDict, MultiDictProxy
 
-from ..utils.collections import MultiChainMap
 from .streams import AsyncStreamFromAsgiBridge, ByteStream
 from .typing import BaseHttpMessage, HttpRequestBridge
 from .utils.cookies import parse_cookie
@@ -18,48 +17,67 @@ class HttpRequest(BaseHttpMessage):
         super().__init__()
         self._impl = impl
         self._closed = False
-        self.stream = AsyncStreamFromAsgiBridge(self._impl)
+        self._stream: AsyncByteStream = AsyncStreamFromAsgiBridge(self._impl)
 
-    @cached_property
+        # Initialize properties from the implementation bridge
+        self._method = self._impl.get_method()
+        self._path = self._impl.get_path()
+        self._query = MultiDictProxy(self._impl.get_query())
+        self._server_ipaddr = self._impl.get_server_ipaddr()
+        self._server_port = self._impl.get_server_port()
+        self._headers = CIMultiDict(self._impl.get_headers())
+
+    @property
+    def stream(self):
+        return self._stream
+
+    @stream.setter
+    def stream(self, stream):
+        self._stream = stream
+        if hasattr(self, "_body"):
+            delattr(self, "_body")
+
+    @property
     def server_ipaddr(self) -> str:
-        """Get the server IP address from the implementation bridge."""
-        return self._impl.get_server_ipaddr()
+        """The server IP address."""
+        return self._server_ipaddr
 
     @cached_property
     def server_port(self) -> int:
-        """Get the server port from the implementation bridge."""
-        return self._impl.get_server_port()
+        """The server port."""
+        return self._server_port
 
-    @cached_property
+    @property
     def method(self) -> str:
-        """Get the HTTP method from the implementation bridge."""
-        return self._impl.get_method()
+        """The HTTP method."""
+        return self._method
 
-    @cached_property
+    @property
     def path(self) -> str:
-        """Get the HTTP path from the implementation bridge."""
-        return self._impl.get_path()
+        """The HTTP path."""
+        return self._path
 
-    @cached_property
+    @property
     def query(self) -> MultiDictProxy:
-        """Get the query string from the implementation bridge, as a read only proxy."""
-        return MultiDictProxy(self._impl.get_query())
+        """The query string."""
+        return self._query
 
-    @cached_property
-    def headers(self) -> CIMultiDictProxy:
-        return CIMultiDictProxy(self._impl.get_headers())
+    @property
+    def headers(self) -> CIMultiDict:
+        return self._headers
 
-    # body, content, raw_body
+    @headers.setter
+    def headers(self, headers):
+        self._headers = CIMultiDict(headers)
 
-    @cached_property
+    @property
     def cookies(self) -> dict:
-        """Parse and returns cookies from headers."""
         cookies = {}
         for header in self.headers.getall("cookie", []):
             cookies.update(parse_cookie(header))
         return cookies
 
-    @cached_property
+    @property
     def basic_auth(self) -> tuple[str, str] | None:
         """Parse and returns basic auth from headers."""
         for header in self.headers.getall("authorization", []):
@@ -89,31 +107,10 @@ class HttpRequest(BaseHttpMessage):
         """Read all chunks from request. We may want to be able to read partial body later, but for now it's all or
         nothing. This method does nothing if the body has already been read."""
         if not hasattr(self, "_body"):
-            self._body = b"".join([part async for part in self.stream])
-        if not isinstance(self.stream, ByteStream):
-            self.stream = ByteStream(self._body)
+            self._body = b"".join([part async for part in self._stream])
+        if not isinstance(self._stream, ByteStream):
+            self._stream = ByteStream(self._body)
         return self.body
 
     def __str__(self):
         return f"{self.method} {self.path}"
-
-
-class WrappedHttpRequest(HttpRequest):
-    def __init__(self, wrapped: HttpRequest, /):
-        # we do not need to call super, but we don't want linters to complain
-        if TYPE_CHECKING:
-            super().__init__(wrapped._impl)
-
-        self._wrapped = wrapped
-        self._headers = CIMultiDict()
-
-    @property
-    def _impl(self):
-        return self._wrapped._impl
-
-    @property
-    def headers(self) -> MutableMapping:
-        return MultiChainMap(self._headers, cast(MutableMapping, self._wrapped.headers))
-
-    def __getattr__(self, item):
-        return getattr(self._wrapped, item)

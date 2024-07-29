@@ -10,7 +10,7 @@ from whistle import IAsyncEventDispatcher
 
 from harp import __parsed_version__, get_logger
 from harp.asgi.events import HttpMessageEvent, TransactionEvent
-from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse, WrappedHttpRequest
+from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
 from harp.http.utils import parse_cache_control
 from harp.models import Transaction
 from harp.settings import USE_PROMETHEUS
@@ -132,7 +132,7 @@ class HttpProxyController:
 
         with performances_observer("proxy", labels=labels):
             # create an envelope to override things, without touching the original request
-            context = ProxyFilterEvent(self.name, request=WrappedHttpRequest(request))
+            context = ProxyFilterEvent(self.name, request=request)
             await self.adispatch(EVENT_FILTER_PROXY_REQUEST, context)
 
             # override a few required headers. That may be done in the httpx request instead of here.
@@ -279,16 +279,24 @@ class HttpProxyController:
 
         return transaction
 
-    def _extract_tags_from_request(self, request: WrappedHttpRequest):
+    def _extract_tags_from_request(self, request: HttpRequest):
         """
         Convert special request headers (x-harp-*) into tags (key-value pairs) that we'll attach to the
         transaction. Headers are "consumed", meaning they are removed from the request headers.
         """
+
         tags = {}
+        headers_to_remove = []
+
         for header in request.headers:
-            header = header.lower()
-            if header.startswith("x-harp-"):
-                tags[header[7:]] = request.headers.pop(header)
+            lower_header = header.lower()
+            if lower_header.startswith("x-harp-"):
+                tags[lower_header[7:]] = request.headers[header]
+                headers_to_remove.append(header)
+
+        for header in headers_to_remove:
+            request.headers.pop(header)
+
         return tags
 
     def __repr__(self):
