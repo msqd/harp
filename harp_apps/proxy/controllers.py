@@ -145,7 +145,7 @@ class HttpProxyController:
             transaction = await self._create_transaction_from_request(
                 context.request, tags=self._extract_tags_from_request(context.request)
             )
-            await context.request.read()
+            await context.request.aread()
             url = urljoin(self.url, context.request.path) + (
                 f"?{urlencode(context.request.query)}" if context.request.query else ""
             )
@@ -217,9 +217,11 @@ class HttpProxyController:
                 context.response = HttpResponse(
                     remote_response.content, status=remote_response.status_code, headers=response_headers
                 )
+            await self.adispatch(EVENT_FILTER_PROXY_RESPONSE, context)
+
+            await context.response.aread()
 
             await self.end_transaction(transaction, context.response)
-            await self.adispatch(EVENT_FILTER_PROXY_RESPONSE, context)
 
             return context.response
 

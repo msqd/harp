@@ -3,6 +3,7 @@ from multidict import CIMultiDict
 
 from harp.utils.bytes import ensure_bytes
 
+from .streams import ByteStream
 from .typing import BaseHttpMessage
 
 
@@ -15,12 +16,24 @@ class HttpResponse(BaseHttpMessage):
         self._body = ensure_bytes(body)
         self._status = int(status)
         self._headers = CIMultiDict(headers or {})
+        self._stream = ByteStream(self._body)
 
         if content_type:
             self._headers["content-type"] = content_type
 
     @property
+    def stream(self):
+        return self._stream
+
+    @stream.setter
+    def stream(self, stream):
+        self._stream = stream
+        delattr(self, "_body")
+
+    @property
     def body(self) -> bytes:
+        if not hasattr(self, "_body"):
+            raise RuntimeError("The 'body' attribute is not available, please await `aread()` first.")
         return self._body
 
     @property
@@ -34,6 +47,13 @@ class HttpResponse(BaseHttpMessage):
     @property
     def content_type(self) -> str:
         return self._headers.get("content-type", "text/plain")
+
+    async def aread(self):
+        if not hasattr(self, "_body"):
+            self._body = b"".join([part async for part in self.stream])
+        if not isinstance(self.stream, ByteStream):
+            self.stream = ByteStream(self._body)
+        return self.body
 
 
 class JsonHttpResponse(HttpResponse):
