@@ -46,6 +46,10 @@ class HttpResponse(BaseHttpMessage):
     def headers(self) -> CIMultiDict:
         return self._headers
 
+    @headers.setter
+    def headers(self, headers: CIMultiDict):
+        self._headers = CIMultiDict(headers)
+
     @property
     def content_type(self) -> str:
         return self._headers.get("content-type", "text/plain")
