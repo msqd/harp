@@ -17,7 +17,7 @@ class BaseMessage:
     def context(self) -> dict:
         return self._context
 
-    async def join(self):
+    async def read(self):
         pass
 
 

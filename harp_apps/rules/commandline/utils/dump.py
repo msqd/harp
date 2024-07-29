@@ -19,7 +19,7 @@ console = Console(force_terminal=True)
 
 async def on_proxy_request_dump(event):
     serializer = HttpRequestSerializer(event.request)
-    await event.request.join()
+    await event.request.read()
     console.print(
         Panel(
             Syntax(
@@ -41,7 +41,7 @@ async def on_proxy_request_dump(event):
 
 async def on_proxy_response_dump(event):
     serializer = HttpResponseSerializer(event.response)
-    await event.response.join()
+    await event.response.read()
     console.print(
         Panel(
             Syntax(

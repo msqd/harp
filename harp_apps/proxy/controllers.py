@@ -145,7 +145,7 @@ class HttpProxyController:
             transaction = await self._create_transaction_from_request(
                 context.request, tags=self._extract_tags_from_request(context.request)
             )
-            await context.request.join()
+            await context.request.read()
             url = urljoin(self.url, context.request.path) + (
                 f"?{urlencode(context.request.query)}" if context.request.query else ""
             )

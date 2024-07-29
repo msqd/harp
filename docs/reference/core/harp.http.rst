@@ -18,5 +18,6 @@ Submodules
     harp.http.requests
     harp.http.responses
     harp.http.serializers
+    harp.http.streams
     harp.http.typing
     harp.http.utils

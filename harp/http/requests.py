@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, MutableMapping, cast
 from multidict import CIMultiDict, CIMultiDictProxy, MultiDictProxy
 
 from ..utils.collections import MultiChainMap
+from .streams import AsyncStreamFromAsgiBridge, ByteStream
 from .typing import BaseHttpMessage, HttpRequestBridge
 from .utils.cookies import parse_cookie
 
@@ -15,10 +16,9 @@ class HttpRequest(BaseHttpMessage):
 
     def __init__(self, impl: HttpRequestBridge):
         super().__init__()
-
         self._impl = impl
-        self._body = []
         self._closed = False
+        self.stream = AsyncStreamFromAsgiBridge(self._impl)
 
     @cached_property
     def server_ipaddr(self) -> str:
@@ -76,22 +76,23 @@ class HttpRequest(BaseHttpMessage):
 
                 return user, passwd
 
-    @cached_property
+    @property
     def body(self) -> bytes:
         """Returns the previously read body of the request. Raises a RuntimeError if the body has not been read yet,
         you must await the `read()` asynchronous method first, which cannot be done here because properties are
         synchronous, so we let the user explicitely call it before."""
-        if not self._closed:
+        if not hasattr(self, "_body"):
             raise RuntimeError("Request body has not been read yet, please await `read()` first.")
-        return b"".join(self._body)
+        return self._body
 
-    async def join(self):
+    async def read(self):
         """Read all chunks from request. We may want to be able to read partial body later, but for now it's all or
         nothing. This method does nothing if the body has already been read."""
-        if not self._closed:
-            async for chunk in self._impl.stream():
-                self._body.append(chunk)
-            self._closed = True
+        if not hasattr(self, "_body"):
+            self._body = b"".join([part async for part in self.stream])
+        if not isinstance(self.stream, ByteStream):
+            self.stream = ByteStream(self._body)
+        return self.body
 
     def __str__(self):
         return f"{self.method} {self.path}"
