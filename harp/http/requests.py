@@ -108,7 +108,7 @@ class HttpRequest(BaseHttpMessage):
         nothing. This method does nothing if the body has already been read."""
         if not hasattr(self, "_body"):
             self._body = b"".join([part async for part in self._stream])
-            self.headers["content-length"] = str(len(self.body))
+            # self.headers["content-length"] = str(len(self.body))
         if not isinstance(self._stream, ByteStream):
             self._stream = ByteStream(self._body)
         return self.body
