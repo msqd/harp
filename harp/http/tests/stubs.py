@@ -63,3 +63,6 @@ class HttpRequestStubBridge(HttpRequestBridge):
             yield chunk
 
         self._closed = True
+
+    async def read(self) -> bytes:
+        return b"".join(self._body)
