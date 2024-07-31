@@ -19,7 +19,7 @@
     | - :doc:`/features/configuration`                                                                                |
     | - :doc:`Proxy </features/proxy>`                                                                                |
     | - :doc:`Cache </features/caching>`                                                                              |
-    | - :ref:`Circuit Breaker <circuit-breaker>`                                                                      |
+    | - :doc:`Circuit Breaker </features/circuit-breaker>`                                                            |
     | - :ref:`Probes <probes>`                                                                                        |
     | - :doc:`/features/auditlog`                                                                                     |
     | - :doc:`/features/rules`                                                                                        |

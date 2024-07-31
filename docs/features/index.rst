@@ -7,5 +7,6 @@ Features
    configuration
    proxy
    caching
+   circuit-breaker
    auditlog
    rules
