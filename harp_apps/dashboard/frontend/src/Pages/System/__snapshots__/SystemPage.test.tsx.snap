@@ -30,273 +30,579 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
         <section
           class="inline-block min-w-full max-w-full py-2 align-middle sm:px-6 lg:px-8"
         >
-          <nav
-            aria-label="Tabs"
-            aria-orientation="horizontal"
-            class="css-tvjki7"
-            role="tablist"
-          >
-            <button
-              aria-controls="headlessui-tabs-panel-:r3:"
-              aria-selected="true"
-              class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
-              data-headlessui-state="selected"
-              id="headlessui-tabs-tab-:r0:"
-              role="tab"
-              tabindex="0"
-              type="button"
+          <div>
+            <nav
+              aria-label="Tabs"
+              aria-orientation="horizontal"
+              class="css-tvjki7"
+              role="tablist"
             >
-              <span
-                class="css-7lc9z"
+              <button
+                aria-controls="headlessui-tabs-panel-:r8:"
+                aria-selected="true"
+                class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
+                data-headlessui-state="selected"
+                data-selected=""
+                id="headlessui-tabs-tab-:r0:"
+                role="tab"
+                tabindex="0"
+                type="button"
               >
-                Settings
-              </span>
-            </button>
-            <button
-              aria-controls="headlessui-tabs-panel-:r4:"
-              aria-selected="false"
-              class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
-              data-headlessui-state=""
-              id="headlessui-tabs-tab-:r1:"
-              role="tab"
-              tabindex="-1"
-              type="button"
-            >
-              <span
-                class="css-gebh7q"
+                <span
+                  class="css-7lc9z"
+                >
+                  Topology
+                </span>
+              </button>
+              <button
+                aria-controls="headlessui-tabs-panel-:ra:"
+                aria-selected="false"
+                class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
+                data-headlessui-state=""
+                id="headlessui-tabs-tab-:r2:"
+                role="tab"
+                tabindex="-1"
+                type="button"
               >
-                Storage
-              </span>
-            </button>
-            <button
-              aria-controls="headlessui-tabs-panel-:r5:"
-              aria-selected="false"
-              class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
-              data-headlessui-state=""
-              id="headlessui-tabs-tab-:r2:"
-              role="tab"
-              tabindex="-1"
-              type="button"
-            >
-              <span
-                class="css-gebh7q"
+                <span
+                  class="css-gebh7q"
+                >
+                  Settings
+                </span>
+              </button>
+              <button
+                aria-controls="headlessui-tabs-panel-:rc:"
+                aria-selected="false"
+                class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
+                data-headlessui-state=""
+                id="headlessui-tabs-tab-:r4:"
+                role="tab"
+                tabindex="-1"
+                type="button"
               >
-                Dependencies
-              </span>
-            </button>
-          </nav>
-          <div
-            class="css-ii4d2e"
-          >
+                <span
+                  class="css-gebh7q"
+                >
+                  Storage
+                </span>
+              </button>
+              <button
+                aria-controls="headlessui-tabs-panel-:re:"
+                aria-selected="false"
+                class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
+                data-headlessui-state=""
+                id="headlessui-tabs-tab-:r6:"
+                role="tab"
+                tabindex="-1"
+                type="button"
+              >
+                <span
+                  class="css-gebh7q"
+                >
+                  Dependencies
+                </span>
+              </button>
+            </nav>
             <div
-              aria-labelledby="headlessui-tabs-tab-:r0:"
-              class="css-hu3rmt"
-              data-headlessui-state="selected"
-              id="headlessui-tabs-panel-:r3:"
-              role="tabpanel"
-              tabindex="0"
+              class="css-ii4d2e"
             >
               <div
-                class="css-o0j4j7"
+                aria-labelledby="headlessui-tabs-tab-:r0:"
+                class="css-hu3rmt"
+                data-headlessui-state="selected"
+                data-selected=""
+                id="headlessui-tabs-panel-:r8:"
+                role="tabpanel"
+                tabindex="0"
               >
-                <table
-                  class="min-w-fit divide-y divide-gray-300"
+                <div
+                  class="css-14upriz"
                 >
-                  <tbody
-                    class="divide-y divide-gray-200 bg-white"
+                  <h2
+                    class="css-13yts7e"
                   >
-                    <tr>
-                      <td
-                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                    Topology
+                  </h2>
+                  <svg
+                    height="400px"
+                    width="800px"
+                  >
+                    <g>
+                      <rect
+                        fill="#f8fafc"
+                        height="236"
+                        stroke="#e2e8f0"
+                        stroke-dasharray="4 4"
+                        stroke-width="2"
+                        width="200"
+                        x="186"
+                        y="8"
+                      />
+                      <text
+                        fill="#94a3b8"
+                        font-size="12"
+                        font-weight="600"
+                        x="200"
+                        y="32"
                       >
-                        proxy
-                      </td>
-                      <td
-                        class="whitespace-nowrap text-sm text-gray-500"
+                        HARP (proxy)
+                      </text>
+                      <g
+                        transform="translate(10, 28)"
                       >
-                        <table
-                          class="min-w-fit divide-y divide-gray-300"
+                        <path
+                          d="m7.85,15.7a7.85,7.85 0 0 0 7.61,-5.89m-7.61,5.89a7.85,7.85 0 0 1 -7.61,-5.89m7.61,5.89c2.16,0 3.93,-3.52 3.93,-7.85s-1.76,-7.85 -3.93,-7.85m0,15.7c-2.16,0 -3.93,-3.52 -3.93,-7.85s1.76,-7.85 3.93,-7.85m0,0a7.85,7.85 0 0 1 6.84,3.99m-6.84,-3.99a7.85,7.85 0 0 0 -6.84,3.99m13.68,0a10.42,10.42 0 0 1 -6.84,2.55c-2.62,0 -5.01,-0.96 -6.84,-2.55m13.68,0a7.82,7.82 0 0 1 1.01,3.86c0,0.68 -0.09,1.33 -0.24,1.96m0,0a15.63,15.63 0 0 1 -7.61,1.96c-2.76,0 -5.35,-0.71 -7.61,-1.96m0,0a7.87,7.87 0 0 1 -0.24,-1.96c0,-1.4 0.37,-2.71 1.01,-3.86"
+                          fill="#f1f5f9"
+                          stroke="#475569"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="1.5"
+                        />
+                        <text
+                          font-size="10"
+                          x="0"
+                          y="36"
                         >
-                          <tbody
-                            class="divide-y divide-gray-200 bg-white"
-                          >
-                            <tr>
-                              <td
-                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                              >
-                                endpoints
-                              </td>
-                              <td
-                                class="whitespace-nowrap text-sm text-gray-500"
-                              >
-                                <table
-                                  class="min-w-fit divide-y divide-gray-300"
-                                >
-                                  <tbody
-                                    class="divide-y divide-gray-200 bg-white"
-                                  >
-                                    <tr>
-                                      <td
-                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                      >
-                                        0
-                                      </td>
-                                      <td
-                                        class="whitespace-nowrap text-sm text-gray-500"
-                                      >
-                                        <table
-                                          class="min-w-fit divide-y divide-gray-300"
-                                        >
-                                          <tbody
-                                            class="divide-y divide-gray-200 bg-white"
-                                          >
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                name
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                endpoint1
-                                              </td>
-                                            </tr>
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                port
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                8080
-                                              </td>
-                                            </tr>
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                url
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                http://localhost:8080
-                                              </td>
-                                            </tr>
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                description
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                description1
-                                              </td>
-                                            </tr>
-                                          </tbody>
-                                        </table>
-                                      </td>
-                                    </tr>
-                                    <tr>
-                                      <td
-                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                      >
-                                        1
-                                      </td>
-                                      <td
-                                        class="whitespace-nowrap text-sm text-gray-500"
-                                      >
-                                        <table
-                                          class="min-w-fit divide-y divide-gray-300"
-                                        >
-                                          <tbody
-                                            class="divide-y divide-gray-200 bg-white"
-                                          >
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                name
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                endpoint2
-                                              </td>
-                                            </tr>
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                port
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                8081
-                                              </td>
-                                            </tr>
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                url
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                http://localhost:8081
-                                              </td>
-                                            </tr>
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                description
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                description2
-                                              </td>
-                                            </tr>
-                                          </tbody>
-                                        </table>
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                </table>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                          default
+                        </text>
+                      </g>
+                      <g>
+                        <path
+                          d="M28.772784279470073,33.145280463259375 L207.22721572052993,106.85471953674062"
+                          stroke="white"
+                          stroke-width="7"
+                        />
+                        <path
+                          d="M29.53630458830966,31.29675761027933 L207.99073602936951,105.00619668376058 L199.89340222772864,98.41581086009258"
+                          fill="none"
+                          stroke="#67e8f9"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                        <path
+                          d="M206.46369541169034,108.70324238972067 L28.00926397063049,34.99380331623943 L36.10659777227136,41.58418913990743"
+                          fill="none"
+                          stroke="#bef264"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                      </g>
+                      <g>
+                        <path
+                          d="M28.587247351461585,41.51860170629267 L207.4127526485384,146.48139829370734"
+                          stroke="white"
+                          stroke-width="7"
+                        />
+                        <path
+                          d="M29.59964848899003,39.79377013865161 L208.42515378606686,144.75656672606627 L201.31959765415425,137.10731368696244"
+                          fill="none"
+                          stroke="#67e8f9"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                        <path
+                          d="M206.40035151100997,148.2062298613484 L27.57484621393314,43.243433273933725 L34.680402345845756,50.892686313037544"
+                          fill="none"
+                          stroke="#bef264"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                      </g>
+                      <g
+                        transform="translate(10, 76)"
+                      >
+                        <path
+                          d="m7.85,15.7a7.85,7.85 0 0 0 7.61,-5.89m-7.61,5.89a7.85,7.85 0 0 1 -7.61,-5.89m7.61,5.89c2.16,0 3.93,-3.52 3.93,-7.85s-1.76,-7.85 -3.93,-7.85m0,15.7c-2.16,0 -3.93,-3.52 -3.93,-7.85s1.76,-7.85 3.93,-7.85m0,0a7.85,7.85 0 0 1 6.84,3.99m-6.84,-3.99a7.85,7.85 0 0 0 -6.84,3.99m13.68,0a10.42,10.42 0 0 1 -6.84,2.55c-2.62,0 -5.01,-0.96 -6.84,-2.55m13.68,0a7.82,7.82 0 0 1 1.01,3.86c0,0.68 -0.09,1.33 -0.24,1.96m0,0a15.63,15.63 0 0 1 -7.61,1.96c-2.76,0 -5.35,-0.71 -7.61,-1.96m0,0a7.87,7.87 0 0 1 -0.24,-1.96c0,-1.4 0.37,-2.71 1.01,-3.86"
+                          fill="#f1f5f9"
+                          stroke="#475569"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="1.5"
+                        />
+                        <text
+                          font-size="10"
+                          x="0"
+                          y="36"
+                        >
+                          dmz
+                        </text>
+                      </g>
+                      <g>
+                        <path
+                          d="M28.965856512018835,80.45132599095939 L207.03414348798117,107.54867400904061"
+                          stroke="white"
+                          stroke-width="7"
+                        />
+                        <path
+                          d="M29.26674050599176,78.47408831628016 L207.33502748195409,105.5714363343614 L197.90016509951735,101.10115985247793"
+                          fill="none"
+                          stroke="#67e8f9"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                        <path
+                          d="M206.73325949400825,109.52591168371984 L28.66497251804591,82.4285636656386 L38.099834900482634,86.89884014752207"
+                          fill="none"
+                          stroke="#bef264"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                      </g>
+                      <g>
+                        <path
+                          d="M28.852189518444437,88.93006179949275 L207.14781048155555,147.06993820050724"
+                          stroke="white"
+                          stroke-width="7"
+                        />
+                        <path
+                          d="M29.47223071810627,87.0286021205298 L207.7678516812174,145.1684785215443 L199.19061508589536,139.2160830047907"
+                          fill="none"
+                          stroke="#67e8f9"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                        <path
+                          d="M206.52776928189374,148.9713978794702 L28.232148318782603,90.83152147845571 L36.80938491410464,96.78391699520931"
+                          fill="none"
+                          stroke="#bef264"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                      </g>
+                      <g
+                        transform="translate(10, 124)"
+                      >
+                        <path
+                          d="m7.85,15.7a7.85,7.85 0 0 0 7.61,-5.89m-7.61,5.89a7.85,7.85 0 0 1 -7.61,-5.89m7.61,5.89c2.16,0 3.93,-3.52 3.93,-7.85s-1.76,-7.85 -3.93,-7.85m0,15.7c-2.16,0 -3.93,-3.52 -3.93,-7.85s1.76,-7.85 3.93,-7.85m0,0a7.85,7.85 0 0 1 6.84,3.99m-6.84,-3.99a7.85,7.85 0 0 0 -6.84,3.99m13.68,0a10.42,10.42 0 0 1 -6.84,2.55c-2.62,0 -5.01,-0.96 -6.84,-2.55m13.68,0a7.82,7.82 0 0 1 1.01,3.86c0,0.68 -0.09,1.33 -0.24,1.96m0,0a15.63,15.63 0 0 1 -7.61,1.96c-2.76,0 -5.35,-0.71 -7.61,-1.96m0,0a7.87,7.87 0 0 1 -0.24,-1.96c0,-1.4 0.37,-2.71 1.01,-3.86"
+                          fill="#f1f5f9"
+                          stroke="#475569"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="1.5"
+                        />
+                        <text
+                          font-size="10"
+                          x="0"
+                          y="36"
+                        >
+                          internal
+                        </text>
+                      </g>
+                      <g>
+                        <path
+                          d="M28.98243338920837,127.67582245769474 L207.01756661079162,108.32417754230526"
+                          stroke="white"
+                          stroke-width="7"
+                        />
+                        <path
+                          d="M28.76631502767153,125.68753353155583 L206.8014482492548,106.33588861616634 L196.53582607625498,104.43404703464216"
+                          fill="none"
+                          stroke="#67e8f9"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                        <path
+                          d="M207.23368497232846,110.31246646844417 L29.19855175074521,129.66411138383364 L39.46417392374504,131.5659529653578"
+                          fill="none"
+                          stroke="#bef264"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                      </g>
+                      <g>
+                        <path
+                          d="M28.993640317897455,136.1952374120368 L207.00635968210256,147.8047625879632"
+                          stroke="white"
+                          stroke-width="7"
+                        />
+                        <path
+                          d="M29.12379859258865,134.19947720010515 L207.13651795679374,145.80900237603157 L197.35295430917233,142.16457068467815"
+                          fill="none"
+                          stroke="#67e8f9"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                        <path
+                          d="M206.87620140741134,149.80052279989485 L28.86348204320626,138.19099762396843 L38.64704569082765,141.83542931532185"
+                          fill="none"
+                          stroke="#bef264"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                      </g>
+                      <g
+                        transform="translate(10, 172)"
+                      >
+                        <path
+                          d="m7.85,15.7a7.85,7.85 0 0 0 7.61,-5.89m-7.61,5.89a7.85,7.85 0 0 1 -7.61,-5.89m7.61,5.89c2.16,0 3.93,-3.52 3.93,-7.85s-1.76,-7.85 -3.93,-7.85m0,15.7c-2.16,0 -3.93,-3.52 -3.93,-7.85s1.76,-7.85 3.93,-7.85m0,0a7.85,7.85 0 0 1 6.84,3.99m-6.84,-3.99a7.85,7.85 0 0 0 -6.84,3.99m13.68,0a10.42,10.42 0 0 1 -6.84,2.55c-2.62,0 -5.01,-0.96 -6.84,-2.55m13.68,0a7.82,7.82 0 0 1 1.01,3.86c0,0.68 -0.09,1.33 -0.24,1.96m0,0a15.63,15.63 0 0 1 -7.61,1.96c-2.76,0 -5.35,-0.71 -7.61,-1.96m0,0a7.87,7.87 0 0 1 -0.24,-1.96c0,-1.4 0.37,-2.71 1.01,-3.86"
+                          fill="#f1f5f9"
+                          stroke="#475569"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="1.5"
+                        />
+                        <text
+                          font-size="10"
+                          x="0"
+                          y="36"
+                        >
+                          contractors
+                        </text>
+                      </g>
+                      <g>
+                        <path
+                          d="M28.81398349648734,174.96004957738512 L207.18601650351266,109.0399504226149"
+                          stroke="white"
+                          stroke-width="7"
+                        />
+                        <path
+                          d="M28.12068321474408,173.0840605797269 L206.4927162217694,107.16396142495667 L196.0728208108634,107.81647933718563"
+                          fill="none"
+                          stroke="#67e8f9"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                        <path
+                          d="M207.87931678525592,110.91593942027312 L29.507283778230597,176.83603857504335 L39.927179189136616,176.1835206628144"
+                          fill="none"
+                          stroke="#bef264"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                      </g>
+                      <g>
+                        <path
+                          d="M28.944177964580064,183.42396518084303 L207.05582203541994,148.57603481915697"
+                          stroke="white"
+                          stroke-width="7"
+                        />
+                        <path
+                          d="M28.56015475180875,181.461179871123 L206.6717988226486,146.61324950943694 L196.28183745489144,145.58918760871344"
+                          fill="none"
+                          stroke="#67e8f9"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                        <path
+                          d="M207.43984524819126,150.538820128877 L29.328201177351374,185.38675049056306 L39.718162545108555,186.41081239128656"
+                          fill="none"
+                          stroke="#bef264"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                      </g>
+                      <g>
+                        <path
+                          d="M218,67 L218,197"
+                          stroke="white"
+                          stroke-width="7"
+                        />
+                        <path
+                          d="M220,67 L220,197 L223,187"
+                          fill="none"
+                          stroke="#67e8f9"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                        <path
+                          d="M216,197 L216,67 L213,77"
+                          fill="none"
+                          stroke="#bef264"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                      </g>
+                      <g
+                        transform="translate(210, 48)"
+                      >
+                        <rect
+                          fill="#f1f5f9"
+                          height="16"
+                          rx="2"
+                          ry="2"
+                          stroke="#475569"
+                          stroke-width="2"
+                          width="16"
+                        />
+                        <text
+                          font-size="10"
+                          x="16"
+                          y="28"
+                        >
+                          httpbin-1
+                        </text>
+                      </g>
+                      <g>
+                        <path
+                          d="M218,107 L218,197"
+                          stroke="white"
+                          stroke-width="7"
+                        />
+                        <path
+                          d="M220,107 L220,197 L223,187"
+                          fill="none"
+                          stroke="#67e8f9"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                        <path
+                          d="M216,197 L216,107 L213,117"
+                          fill="none"
+                          stroke="#bef264"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                      </g>
+                      <g
+                        transform="translate(210, 88)"
+                      >
+                        <rect
+                          fill="#f1f5f9"
+                          height="16"
+                          rx="2"
+                          ry="2"
+                          stroke="#475569"
+                          stroke-width="2"
+                          width="16"
+                        />
+                        <text
+                          font-size="10"
+                          x="16"
+                          y="28"
+                        >
+                          httpbin-2
+                        </text>
+                      </g>
+                      <g
+                        transform="translate(210, 200)"
+                      >
+                        <path
+                          d="m14.7,3.36c0,1.84 -3,3.34 -6.7,3.34s-6.7,-1.5 -6.7,-3.34m13.4,0c0,-1.86 -3,-3.36 -6.7,-3.36s-6.7,1.5 -6.7,3.36m13.4,0l0,9.14c0,1.84 -3,3.34 -6.7,3.34s-6.7,-1.5 -6.7,-3.34l0,-9.14m13.4,0l0,3.05m-13.4,-3.05l0,3.05m13.4,0l0,3.05c0,1.84 -3,3.34 -6.7,3.34s-6.7,-1.5 -6.7,-3.34l0,-3.05m13.4,0c0,1.84 -3,3.34 -6.7,3.34s-6.7,-1.5 -6.7,-3.34"
+                          fill="#f1f5f9"
+                          stroke="#475569"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="1.5"
+                        />
+                        <text
+                          font-size="10"
+                          x="0"
+                          y="28"
+                        >
+                          Cache
+                        </text>
+                      </g>
+                      <g>
+                        <path
+                          d="M229,56 L407,56"
+                          stroke="white"
+                          stroke-width="7"
+                        />
+                        <path
+                          d="M229,54 L407,54 L397,51"
+                          fill="none"
+                          stroke="#67e8f9"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                        <path
+                          d="M407,58 L229,58 L239,61"
+                          fill="none"
+                          stroke="#bef264"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                      </g>
+                      <g
+                        transform="translate(410, 48)"
+                      >
+                        <rect
+                          fill="#f1f5f9"
+                          height="16"
+                          rx="2"
+                          ry="2"
+                          stroke="#475569"
+                          stroke-width="2"
+                          width="16"
+                        />
+                        <text
+                          font-size="10"
+                          x="0"
+                          y="28"
+                        >
+                          httpbin-1 (remote)
+                        </text>
+                      </g>
+                      <g>
+                        <path
+                          d="M229,96 L407,96"
+                          stroke="white"
+                          stroke-width="7"
+                        />
+                        <path
+                          d="M229,94 L407,94 L397,91"
+                          fill="none"
+                          stroke="#67e8f9"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                        <path
+                          d="M407,98 L229,98 L239,101"
+                          fill="none"
+                          stroke="#bef264"
+                          stroke-width="3"
+                          style="filter: saturate(.2);"
+                        />
+                      </g>
+                      <g
+                        transform="translate(410, 88)"
+                      >
+                        <rect
+                          fill="#f1f5f9"
+                          height="16"
+                          rx="2"
+                          ry="2"
+                          stroke="#475569"
+                          stroke-width="2"
+                          width="16"
+                        />
+                        <text
+                          font-size="10"
+                          x="0"
+                          y="28"
+                        >
+                          httpbin-2 (remote)
+                        </text>
+                      </g>
+                    </g>
+                  </svg>
+                </div>
               </div>
+              <span
+                aria-hidden="true"
+                aria-labelledby="headlessui-tabs-tab-:r2:"
+                id="headlessui-tabs-panel-:ra:"
+                role="tabpanel"
+                style="position: fixed; top: 1px; left: 1px; width: 1px; height: 0px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border-width: 0px;"
+                tabindex="-1"
+              />
+              <span
+                aria-hidden="true"
+                aria-labelledby="headlessui-tabs-tab-:r4:"
+                id="headlessui-tabs-panel-:rc:"
+                role="tabpanel"
+                style="position: fixed; top: 1px; left: 1px; width: 1px; height: 0px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border-width: 0px;"
+                tabindex="-1"
+              />
+              <span
+                aria-hidden="true"
+                aria-labelledby="headlessui-tabs-tab-:r6:"
+                id="headlessui-tabs-panel-:re:"
+                role="tabpanel"
+                style="position: fixed; top: 1px; left: 1px; width: 1px; height: 0px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border-width: 0px;"
+                tabindex="-1"
+              />
             </div>
-            <span
-              aria-hidden="true"
-              aria-labelledby="headlessui-tabs-tab-:r1:"
-              id="headlessui-tabs-panel-:r4:"
-              role="tabpanel"
-              style="position: fixed; top: 1px; left: 1px; width: 1px; height: 0px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border-width: 0px;"
-              tabindex="-1"
-            />
-            <span
-              aria-hidden="true"
-              aria-labelledby="headlessui-tabs-tab-:r2:"
-              id="headlessui-tabs-panel-:r5:"
-              role="tabpanel"
-              style="position: fixed; top: 1px; left: 1px; width: 1px; height: 0px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border-width: 0px;"
-              tabindex="-1"
-            />
           </div>
         </section>
       </div>
