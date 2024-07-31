@@ -1,7 +1,7 @@
 import pytest
+from httpx import ByteStream
 
 from harp.http import HttpRequest, HttpRequestSerializer
-from harp.http.streams import ByteStream
 from harp.http.tests.stubs import HttpRequestStubBridge
 
 

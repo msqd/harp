@@ -1,10 +1,9 @@
 import orjson
-from httpx import AsyncByteStream
+from httpx import AsyncByteStream, ByteStream
 from multidict import CIMultiDict
 
 from harp.utils.bytes import ensure_bytes
 
-from .streams import ByteStream
 from .typing import BaseHttpMessage
 
 

@@ -176,7 +176,7 @@ class TestHttpRequestAsgiBridgeBody(BaseHttpRequestAsgiBridgeTest):
 
         chunks = []
         assert len(messages)
-        async for chunk in bridge.stream():
+        async for chunk in bridge.get_stream():
             chunks.append(chunk)
 
         assert b"".join(chunks) == b'{"foo": "bar"}'
@@ -192,7 +192,7 @@ class TestHttpRequestAsgiBridgeBody(BaseHttpRequestAsgiBridgeTest):
 
         chunks = []
         assert len(messages)
-        async for chunk in bridge.stream():
+        async for chunk in bridge.get_stream():
             chunks.append(chunk)
 
         assert b"".join(chunks) == b'{"foo": "bar"}'

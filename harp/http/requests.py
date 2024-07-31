@@ -1,11 +1,9 @@
 import binascii
 from base64 import b64decode
-from functools import cached_property
 
-from httpx import AsyncByteStream
-from multidict import CIMultiDict, MultiDictProxy
+from httpx import AsyncByteStream, ByteStream
+from multidict import CIMultiDict
 
-from .streams import AsyncStreamFromAsgiBridge, ByteStream
 from .typing import BaseHttpMessage, HttpRequestBridge
 from .utils.cookies import parse_cookie
 
@@ -16,51 +14,25 @@ class HttpRequest(BaseHttpMessage):
     def __init__(self, impl: HttpRequestBridge):
         super().__init__()
         self._impl = impl
-        self._closed = False
-        self._stream: AsyncByteStream = AsyncStreamFromAsgiBridge(self._impl)
 
         # Initialize properties from the implementation bridge
-        self._method = self._impl.get_method()
-        self._path = self._impl.get_path()
-        self._query = MultiDictProxy(self._impl.get_query())
-        self._server_ipaddr = self._impl.get_server_ipaddr()
-        self._server_port = self._impl.get_server_port()
-        self._headers = CIMultiDict(self._impl.get_headers())
+        self.method = self._impl.get_method()
+        self.path = self._impl.get_path()
+        self.query = self._impl.get_query()
+        self.server_ipaddr = self._impl.get_server_ipaddr()
+        self.server_port = self._impl.get_server_port()
+        self._headers = self._impl.get_headers()
+        self._stream = self._impl.get_stream()
 
     @property
     def stream(self):
         return self._stream
 
     @stream.setter
-    def stream(self, stream):
+    def stream(self, stream: AsyncByteStream):
         self._stream = stream
         if hasattr(self, "_body"):
             delattr(self, "_body")
-
-    @property
-    def server_ipaddr(self) -> str:
-        """The server IP address."""
-        return self._server_ipaddr
-
-    @cached_property
-    def server_port(self) -> int:
-        """The server port."""
-        return self._server_port
-
-    @property
-    def method(self) -> str:
-        """The HTTP method."""
-        return self._method
-
-    @property
-    def path(self) -> str:
-        """The HTTP path."""
-        return self._path
-
-    @property
-    def query(self) -> MultiDictProxy:
-        """The query string."""
-        return self._query
 
     @property
     def headers(self) -> CIMultiDict:
