@@ -1,7 +1,7 @@
 from collections import deque
 from copy import copy
 from dataclasses import dataclass, field
-from typing import Iterable
+from typing import Deque, Iterable, Optional
 from urllib.parse import urljoin
 
 import httpx
@@ -164,7 +164,7 @@ class HttpRemote:
     """
 
     endpoints = None
-    current_pool: deque[HttpEndpoint] = None
+    current_pool: Deque[HttpEndpoint] | None = None
     current_pool_name = None
     min_pool_size = 1
 
@@ -173,7 +173,7 @@ class HttpRemote:
         endpoints: Iterable[HttpEndpoint | dict | str] | str = (),
         *,
         min_pool_size=None,
-        probe: HttpProbe | dict = None,
+        probe: Optional[HttpProbe | dict] = None,
     ):
         self.current_pool_name = DEFAULT_POOL
 
