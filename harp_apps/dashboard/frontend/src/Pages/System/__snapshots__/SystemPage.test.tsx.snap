@@ -30,273 +30,277 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
         <section
           class="inline-block min-w-full max-w-full py-2 align-middle sm:px-6 lg:px-8"
         >
-          <nav
-            aria-label="Tabs"
-            aria-orientation="horizontal"
-            class="css-tvjki7"
-            role="tablist"
-          >
-            <button
-              aria-controls="headlessui-tabs-panel-:r3:"
-              aria-selected="true"
-              class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
-              data-headlessui-state="selected"
-              id="headlessui-tabs-tab-:r0:"
-              role="tab"
-              tabindex="0"
-              type="button"
+          <div>
+            <nav
+              aria-label="Tabs"
+              aria-orientation="horizontal"
+              class="css-tvjki7"
+              role="tablist"
             >
-              <span
-                class="css-7lc9z"
+              <button
+                aria-controls="headlessui-tabs-panel-:r6:"
+                aria-selected="true"
+                class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
+                data-headlessui-state="selected"
+                data-selected=""
+                id="headlessui-tabs-tab-:r0:"
+                role="tab"
+                tabindex="0"
+                type="button"
               >
-                Settings
-              </span>
-            </button>
-            <button
-              aria-controls="headlessui-tabs-panel-:r4:"
-              aria-selected="false"
-              class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
-              data-headlessui-state=""
-              id="headlessui-tabs-tab-:r1:"
-              role="tab"
-              tabindex="-1"
-              type="button"
-            >
-              <span
-                class="css-gebh7q"
+                <span
+                  class="css-7lc9z"
+                >
+                  Settings
+                </span>
+              </button>
+              <button
+                aria-controls="headlessui-tabs-panel-:r8:"
+                aria-selected="false"
+                class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
+                data-headlessui-state=""
+                id="headlessui-tabs-tab-:r2:"
+                role="tab"
+                tabindex="-1"
+                type="button"
               >
-                Storage
-              </span>
-            </button>
-            <button
-              aria-controls="headlessui-tabs-panel-:r5:"
-              aria-selected="false"
-              class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
-              data-headlessui-state=""
-              id="headlessui-tabs-tab-:r2:"
-              role="tab"
-              tabindex="-1"
-              type="button"
-            >
-              <span
-                class="css-gebh7q"
+                <span
+                  class="css-gebh7q"
+                >
+                  Storage
+                </span>
+              </button>
+              <button
+                aria-controls="headlessui-tabs-panel-:ra:"
+                aria-selected="false"
+                class="focus:ring-0 focus:ring-offset-0 focus:outline-none"
+                data-headlessui-state=""
+                id="headlessui-tabs-tab-:r4:"
+                role="tab"
+                tabindex="-1"
+                type="button"
               >
-                Dependencies
-              </span>
-            </button>
-          </nav>
-          <div
-            class="css-ii4d2e"
-          >
+                <span
+                  class="css-gebh7q"
+                >
+                  Dependencies
+                </span>
+              </button>
+            </nav>
             <div
-              aria-labelledby="headlessui-tabs-tab-:r0:"
-              class="css-hu3rmt"
-              data-headlessui-state="selected"
-              id="headlessui-tabs-panel-:r3:"
-              role="tabpanel"
-              tabindex="0"
+              class="css-ii4d2e"
             >
               <div
-                class="css-o0j4j7"
+                aria-labelledby="headlessui-tabs-tab-:r0:"
+                class="css-hu3rmt"
+                data-headlessui-state="selected"
+                data-selected=""
+                id="headlessui-tabs-panel-:r6:"
+                role="tabpanel"
+                tabindex="0"
               >
-                <table
-                  class="min-w-fit divide-y divide-gray-300"
+                <div
+                  class="css-o0j4j7"
                 >
-                  <tbody
-                    class="divide-y divide-gray-200 bg-white"
+                  <table
+                    class="min-w-fit divide-y divide-gray-300"
                   >
-                    <tr>
-                      <td
-                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                      >
-                        proxy
-                      </td>
-                      <td
-                        class="whitespace-nowrap text-sm text-gray-500"
-                      >
-                        <table
-                          class="min-w-fit divide-y divide-gray-300"
+                    <tbody
+                      class="divide-y divide-gray-200 bg-white"
+                    >
+                      <tr>
+                        <td
+                          class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
                         >
-                          <tbody
-                            class="divide-y divide-gray-200 bg-white"
+                          proxy
+                        </td>
+                        <td
+                          class="whitespace-nowrap text-sm text-gray-500"
+                        >
+                          <table
+                            class="min-w-fit divide-y divide-gray-300"
                           >
-                            <tr>
-                              <td
-                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                              >
-                                endpoints
-                              </td>
-                              <td
-                                class="whitespace-nowrap text-sm text-gray-500"
-                              >
-                                <table
-                                  class="min-w-fit divide-y divide-gray-300"
+                            <tbody
+                              class="divide-y divide-gray-200 bg-white"
+                            >
+                              <tr>
+                                <td
+                                  class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
                                 >
-                                  <tbody
-                                    class="divide-y divide-gray-200 bg-white"
+                                  endpoints
+                                </td>
+                                <td
+                                  class="whitespace-nowrap text-sm text-gray-500"
+                                >
+                                  <table
+                                    class="min-w-fit divide-y divide-gray-300"
                                   >
-                                    <tr>
-                                      <td
-                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                      >
-                                        0
-                                      </td>
-                                      <td
-                                        class="whitespace-nowrap text-sm text-gray-500"
-                                      >
-                                        <table
-                                          class="min-w-fit divide-y divide-gray-300"
+                                    <tbody
+                                      class="divide-y divide-gray-200 bg-white"
+                                    >
+                                      <tr>
+                                        <td
+                                          class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
                                         >
-                                          <tbody
-                                            class="divide-y divide-gray-200 bg-white"
-                                          >
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                name
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                endpoint1
-                                              </td>
-                                            </tr>
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                port
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                8080
-                                              </td>
-                                            </tr>
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                url
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                http://localhost:8080
-                                              </td>
-                                            </tr>
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                description
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                description1
-                                              </td>
-                                            </tr>
-                                          </tbody>
-                                        </table>
-                                      </td>
-                                    </tr>
-                                    <tr>
-                                      <td
-                                        class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                      >
-                                        1
-                                      </td>
-                                      <td
-                                        class="whitespace-nowrap text-sm text-gray-500"
-                                      >
-                                        <table
-                                          class="min-w-fit divide-y divide-gray-300"
+                                          0
+                                        </td>
+                                        <td
+                                          class="whitespace-nowrap text-sm text-gray-500"
                                         >
-                                          <tbody
-                                            class="divide-y divide-gray-200 bg-white"
+                                          <table
+                                            class="min-w-fit divide-y divide-gray-300"
                                           >
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                name
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                endpoint2
-                                              </td>
-                                            </tr>
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                port
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                8081
-                                              </td>
-                                            </tr>
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                url
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                http://localhost:8081
-                                              </td>
-                                            </tr>
-                                            <tr>
-                                              <td
-                                                class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
-                                              >
-                                                description
-                                              </td>
-                                              <td
-                                                class="whitespace-nowrap text-sm text-gray-500"
-                                              >
-                                                description2
-                                              </td>
-                                            </tr>
-                                          </tbody>
-                                        </table>
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                </table>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                                            <tbody
+                                              class="divide-y divide-gray-200 bg-white"
+                                            >
+                                              <tr>
+                                                <td
+                                                  class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                                >
+                                                  name
+                                                </td>
+                                                <td
+                                                  class="whitespace-nowrap text-sm text-gray-500"
+                                                >
+                                                  endpoint1
+                                                </td>
+                                              </tr>
+                                              <tr>
+                                                <td
+                                                  class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                                >
+                                                  port
+                                                </td>
+                                                <td
+                                                  class="whitespace-nowrap text-sm text-gray-500"
+                                                >
+                                                  8080
+                                                </td>
+                                              </tr>
+                                              <tr>
+                                                <td
+                                                  class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                                >
+                                                  url
+                                                </td>
+                                                <td
+                                                  class="whitespace-nowrap text-sm text-gray-500"
+                                                >
+                                                  http://localhost:8080
+                                                </td>
+                                              </tr>
+                                              <tr>
+                                                <td
+                                                  class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                                >
+                                                  description
+                                                </td>
+                                                <td
+                                                  class="whitespace-nowrap text-sm text-gray-500"
+                                                >
+                                                  description1
+                                                </td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+                                        </td>
+                                      </tr>
+                                      <tr>
+                                        <td
+                                          class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                        >
+                                          1
+                                        </td>
+                                        <td
+                                          class="whitespace-nowrap text-sm text-gray-500"
+                                        >
+                                          <table
+                                            class="min-w-fit divide-y divide-gray-300"
+                                          >
+                                            <tbody
+                                              class="divide-y divide-gray-200 bg-white"
+                                            >
+                                              <tr>
+                                                <td
+                                                  class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                                >
+                                                  name
+                                                </td>
+                                                <td
+                                                  class="whitespace-nowrap text-sm text-gray-500"
+                                                >
+                                                  endpoint2
+                                                </td>
+                                              </tr>
+                                              <tr>
+                                                <td
+                                                  class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                                >
+                                                  port
+                                                </td>
+                                                <td
+                                                  class="whitespace-nowrap text-sm text-gray-500"
+                                                >
+                                                  8081
+                                                </td>
+                                              </tr>
+                                              <tr>
+                                                <td
+                                                  class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                                >
+                                                  url
+                                                </td>
+                                                <td
+                                                  class="whitespace-nowrap text-sm text-gray-500"
+                                                >
+                                                  http://localhost:8081
+                                                </td>
+                                              </tr>
+                                              <tr>
+                                                <td
+                                                  class="whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 min-w-fit align-top"
+                                                >
+                                                  description
+                                                </td>
+                                                <td
+                                                  class="whitespace-nowrap text-sm text-gray-500"
+                                                >
+                                                  description2
+                                                </td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
+              <span
+                aria-hidden="true"
+                aria-labelledby="headlessui-tabs-tab-:r2:"
+                id="headlessui-tabs-panel-:r8:"
+                role="tabpanel"
+                style="position: fixed; top: 1px; left: 1px; width: 1px; height: 0px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border-width: 0px;"
+                tabindex="-1"
+              />
+              <span
+                aria-hidden="true"
+                aria-labelledby="headlessui-tabs-tab-:r4:"
+                id="headlessui-tabs-panel-:ra:"
+                role="tabpanel"
+                style="position: fixed; top: 1px; left: 1px; width: 1px; height: 0px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border-width: 0px;"
+                tabindex="-1"
+              />
             </div>
-            <span
-              aria-hidden="true"
-              aria-labelledby="headlessui-tabs-tab-:r1:"
-              id="headlessui-tabs-panel-:r4:"
-              role="tabpanel"
-              style="position: fixed; top: 1px; left: 1px; width: 1px; height: 0px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border-width: 0px;"
-              tabindex="-1"
-            />
-            <span
-              aria-hidden="true"
-              aria-labelledby="headlessui-tabs-tab-:r2:"
-              id="headlessui-tabs-panel-:r5:"
-              role="tabpanel"
-              style="position: fixed; top: 1px; left: 1px; width: 1px; height: 0px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border-width: 0px;"
-              tabindex="-1"
-            />
           </div>
         </section>
       </div>
