@@ -12,9 +12,9 @@ from harp.errors import ConfigurationError
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
 from harp.typing.global_settings import GlobalSettings
 from harp_apps.proxy.controllers import HttpProxyController
+from harp_apps.proxy.models.remotes import HttpRemote
 from harp_apps.storage.types import IBlobStorage, IStorage
 
-from ...proxy.models.remotes import HttpRemote
 from ..settings import DashboardAuthBasicSetting, DashboardSettings
 from .blobs import BlobsController
 from .overview import OverviewController
