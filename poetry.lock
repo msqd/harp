@@ -238,13 +238,13 @@ trio = ["trio (>=0.23)"]
 
 [[package]]
 name = "asgi-prometheus"
-version = "1.1.2"
+version = "1.2.3"
 description = "Support Prometheus metrics for ASGI applications"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.9"
 files = [
-    {file = "asgi-prometheus-1.1.2.tar.gz", hash = "sha256:bcfe83b8c1391378ab7826b9ea5171e779d83e09407c7d9f84028f909361fd73"},
-    {file = "asgi_prometheus-1.1.2-py3-none-any.whl", hash = "sha256:8199c6ed19b4f71065e3e5e9f12cb26d647f2c57e9f682f35eb48a212be74e7b"},
+    {file = "asgi_prometheus-1.2.3-py3-none-any.whl", hash = "sha256:c37e0d8dbd7561fd169511d4f0fde0c040d4e89e58ee4889a29fcf4bff0fef78"},
+    {file = "asgi_prometheus-1.2.3.tar.gz", hash = "sha256:8e047959ff1cef1b1bad9ddce46723a8f030ad7e7b98bb3d58e1b1619ad166b8"},
 ]
 
 [package.dependencies]
@@ -257,40 +257,40 @@ tests = ["pytest", "pytest-aio[curio,trio] (>=1.1.0)", "pytest-mypy", "ruff"]
 
 [[package]]
 name = "asgi-tools"
-version = "0.76.0"
+version = "1.0.10"
 description = "ASGI Toolkit to build web applications"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "asgi-tools-0.76.0.tar.gz", hash = "sha256:dc30ae9fff8e16cdd57d34e0c5cba3321ae67989eaa21b3b94ae88876008d217"},
-    {file = "asgi_tools-0.76.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:fcf736deb7bf1b99e6d81894c99fd00e35f1c2851adf1db6eb7d0911dfbbb121"},
-    {file = "asgi_tools-0.76.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:5feb459a1d03bf0d278cba971206a7243a55a122575945c230fa276b33fd08ae"},
-    {file = "asgi_tools-0.76.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c3e3cba07f89ac41bb7dfb1bcb9fed7127a02146924c12602d6141aecb8ba9fe"},
-    {file = "asgi_tools-0.76.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3941e52a85c11118f84815d351f136c5d2e18123e751e5c9ee6486b7622ffcbd"},
-    {file = "asgi_tools-0.76.0-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:b082efecda027949841db7a5e2a724f04bcc538acde9d8bf87c0eca60d95f310"},
-    {file = "asgi_tools-0.76.0-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:49ba2a4281bc2eec984e967583383e35d4b3d5481123c9ba4bf78d35712c3ff5"},
-    {file = "asgi_tools-0.76.0-cp310-cp310-win_amd64.whl", hash = "sha256:61c216b6053a62ed871c95c92df416f97fd7425453ad742515b61ade1d7ac962"},
-    {file = "asgi_tools-0.76.0-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:ddfbf889536c893d070a07b296454d54d7c6ed95424d4bae54b7c079a24bc540"},
-    {file = "asgi_tools-0.76.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:0fa294c6e93761db6337cf485c2a20ab1bf874dba7c47592602d98c22d545dfb"},
-    {file = "asgi_tools-0.76.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:49b00c37bf9539d8852cb8e5c5ed0e91eedfb930155bd159cb4a8f896a9066ad"},
-    {file = "asgi_tools-0.76.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e08b9b381876df9881780b2f0b2c021d70e1fe366f22ad46fc219e9e557b4b98"},
-    {file = "asgi_tools-0.76.0-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:24a4736e9d7acfc560d04d60ef707f88bde5260cf4bbb8a14244c8b81f629896"},
-    {file = "asgi_tools-0.76.0-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:c32b0f4faf0a6021cc897c1a1284334b8370c87015a869d2507e25e56b8cc69b"},
-    {file = "asgi_tools-0.76.0-cp311-cp311-win_amd64.whl", hash = "sha256:592d176990006c83ea60d3b1cd15f97e83c37476e90704846eeb296272bdd318"},
-    {file = "asgi_tools-0.76.0-cp38-cp38-macosx_10_9_universal2.whl", hash = "sha256:113b0d84105410a78ac50dd5a8a076c234c4156a5eb0f1a4893ec8ac306e9b97"},
-    {file = "asgi_tools-0.76.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:0592ee764c71df9a0b1ef4479376ff7bf591d9dead9564b5bf4624351894bf1d"},
-    {file = "asgi_tools-0.76.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:877db6b88e08c685659aa4b59cb002f2c366e8e7eb2f84cacf88032b53fc23cd"},
-    {file = "asgi_tools-0.76.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:306077e705bd6d53acae375b2e42e74bc90cb878c5bdd57c6b64382872ccf484"},
-    {file = "asgi_tools-0.76.0-cp38-cp38-musllinux_1_1_aarch64.whl", hash = "sha256:85c45041b680aaeebac6ca571c65386d8c3a66b84a2f54f08cdff6a097f89cb2"},
-    {file = "asgi_tools-0.76.0-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:40fe59b5d6d6c1b61f66819b985bd0a98bb9fabe4b3963d7c2bfebb7114da911"},
-    {file = "asgi_tools-0.76.0-cp38-cp38-win_amd64.whl", hash = "sha256:1c954b09a32c7db621ec826ebd83cf1cd04a1533289b89679d188936b1757c4e"},
-    {file = "asgi_tools-0.76.0-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:0d7cac6c9202f63f332e92775a327356517efd61fcc682269c68b3c145eae4dd"},
-    {file = "asgi_tools-0.76.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:1df1191143c66120c410a306f1ca887ca191e1fcc66f93b5f92a9c220c869856"},
-    {file = "asgi_tools-0.76.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:213fc906c90203fdf08a5157f6e8db0ad969e809fcf0cc4c627e86386bf6cbfa"},
-    {file = "asgi_tools-0.76.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a03f2c0c7772a2c1d900d8b66bbfc92fdf9f3c9314b3cad11dc5c2046703e6d0"},
-    {file = "asgi_tools-0.76.0-cp39-cp39-musllinux_1_1_aarch64.whl", hash = "sha256:469f32a1a5b17ad2380e51e2b3ba06c0bcf510de7a6b97b3b9be3ec4e327811e"},
-    {file = "asgi_tools-0.76.0-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:4cb0f30adb0c2208d5ba3700ad7a388b039f363fddfaca32fb221686c4540cbc"},
-    {file = "asgi_tools-0.76.0-cp39-cp39-win_amd64.whl", hash = "sha256:454d0808b8b1b5814c95c3e5773988b3dd08976325241e2a904d9f846bae9d47"},
+    {file = "asgi_tools-1.0.10-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:a64314a530081ba5b0072a880ce381366dc526a4049f41127eb99ff286dffdea"},
+    {file = "asgi_tools-1.0.10-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:9d275bedfbb7e91d0e8e86c5d54fae84ac83d69eb3f5ea615ebb710e70cb5079"},
+    {file = "asgi_tools-1.0.10-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:108f22232275d70353adf590b4aab2cc2407f7684bc1fb9e54ba952a24cd6d18"},
+    {file = "asgi_tools-1.0.10-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e49925fd2e11266cb1410bc0b480b0647f4dbfb5b581ba2f88bb43200f10a968"},
+    {file = "asgi_tools-1.0.10-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:d9e05077dc6c630c0a6c9553d075836a7489d70c2b758ab4879d873d6a4d0cd3"},
+    {file = "asgi_tools-1.0.10-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:74d6a393b3e39a782c587f5aadf0afdb976c015fcef4414915315677f0cb400e"},
+    {file = "asgi_tools-1.0.10-cp310-cp310-win_amd64.whl", hash = "sha256:f8fac92f8efd606afb295ced2687ab3d3cb1d6bf727a6c0b5813df8975adc676"},
+    {file = "asgi_tools-1.0.10-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:7e9d4e15ff3358d0704f3329265c372f5aecf10b1ecd75ced78acb7b69e68673"},
+    {file = "asgi_tools-1.0.10-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:6cf1197fe0d179074c9156e50b5b7ceada5974d96d4fd46641711b7c8d1aac4d"},
+    {file = "asgi_tools-1.0.10-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e3f81e3b73f4f28c900ad8db9ed3ddf56c9f9c456d4ac2b95b9eb6d837fa21da"},
+    {file = "asgi_tools-1.0.10-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5e11c0224f86a842489614a5be9f67aa05c027e34da25009156a5e5ce80c24da"},
+    {file = "asgi_tools-1.0.10-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:1193d17486efcd1bc3cd4149bf000000518043b7e2762f66675744cc1f1ba602"},
+    {file = "asgi_tools-1.0.10-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:70b03ec78c9bf1047c3880a911d0ce6ea3c5de713c3fd155ff8111087edca0f2"},
+    {file = "asgi_tools-1.0.10-cp311-cp311-win_amd64.whl", hash = "sha256:f8cc0b80451776d419ec337aaf8fc88107006f673b146bdf769c3ae2f37a2555"},
+    {file = "asgi_tools-1.0.10-cp312-cp312-macosx_10_9_universal2.whl", hash = "sha256:74c5b650e4df446044606696c4789afda6d8f533dce4065d7766b7723cf04d5a"},
+    {file = "asgi_tools-1.0.10-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:107819fc540013fa85b7084339b73e7236caa0a4cdf5b8ebb89185e733e22b90"},
+    {file = "asgi_tools-1.0.10-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:15822d3834be0ec9eb40d26f5b25a13600abf4e462b4e5e11bbe73f6c6a3734c"},
+    {file = "asgi_tools-1.0.10-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fff3ec4f0f37a317d3f2d30070efda74151147a36b1aa6ed271bd571893ff6b5"},
+    {file = "asgi_tools-1.0.10-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:e265459dab2df0ff688eefed39207fdf0d1a2598fc14f4cd9f1d2955026f18cb"},
+    {file = "asgi_tools-1.0.10-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:174ed76b04147d23edee73eb786a92b2cf4b6f89981093989a100fa8fe87d983"},
+    {file = "asgi_tools-1.0.10-cp312-cp312-win_amd64.whl", hash = "sha256:e733a5fe8e4df1bb81614f11a97c41f0dd87f272292d038ccf63614e7a623044"},
+    {file = "asgi_tools-1.0.10-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:820c9a78550872b62909b07cdb98eec5672a1401f298d5023902e24a095bd604"},
+    {file = "asgi_tools-1.0.10-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:0c17f334de55f9fc1e426505e90903b31c820381a38df383b0af9358f141bdd3"},
+    {file = "asgi_tools-1.0.10-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:77eedd7ef5f33332534dd94c3738d48a745543f726922043b86336555659233d"},
+    {file = "asgi_tools-1.0.10-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:441c4fe37d22d6481382f8974037effec795410e6d975b1a4685b2a0b4728e5a"},
+    {file = "asgi_tools-1.0.10-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:b3e7190485632e85aa2c27b2b4e59e176901bbfcd77f2b5ef7e02c77f26b776b"},
+    {file = "asgi_tools-1.0.10-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:94f9c290758606750099a95dd198208696b5776e91b3c611f30be4a03039784d"},
+    {file = "asgi_tools-1.0.10-cp39-cp39-win_amd64.whl", hash = "sha256:2cb9a206cc67ac9d82a8a8b41bfa0dda2b19438d195d1594288d00115573f9ac"},
+    {file = "asgi_tools-1.0.10.tar.gz", hash = "sha256:7894e4d189b4095210512c546609f03904b18cf75580bd033c5f49bcf9b88229"},
 ]
 
 [package.dependencies]
@@ -300,10 +300,10 @@ sniffio = "*"
 yarl = ">=1.8.2"
 
 [package.extras]
-dev = ["bump2version", "cython", "pre-commit", "pydata-sphinx-theme", "refurb", "sphinx", "tox"]
+dev = ["bump2version", "cython", "pre-commit", "pydata-sphinx-theme", "sphinx", "tox"]
 examples = ["httpx", "jinja2", "uvicorn[standard]"]
 orjson = ["orjson"]
-tests = ["PyYAML", "aiofile", "pytest", "pytest-aio[curio,trio] (>=1.1.0)", "pytest-benchmark", "pytest-mypy", "ruff", "ujson", "uvloop"]
+tests = ["PyYAML", "aiofile", "exceptiongroup", "pytest", "pytest-aio[curio,trio] (>=1.1.0)", "pytest-benchmark", "pytest-mypy", "ruff", "ujson", "uvloop"]
 ujson = ["ujson"]
 
 [[package]]
@@ -2688,13 +2688,13 @@ files = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.11.0"
+version = "2.12.0"
 description = "Python client for Sentry (https://sentry.io)"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "sentry_sdk-2.11.0-py2.py3-none-any.whl", hash = "sha256:d964710e2dbe015d9dc4ff0ad16225d68c3b36936b742a6fe0504565b760a3b7"},
-    {file = "sentry_sdk-2.11.0.tar.gz", hash = "sha256:4ca16e9f5c7c6bc2fb2d5c956219f4926b148e511fffdbbde711dc94f1e0468f"},
+    {file = "sentry_sdk-2.12.0-py2.py3-none-any.whl", hash = "sha256:7a8d5163d2ba5c5f4464628c6b68f85e86972f7c636acc78aed45c61b98b7a5e"},
+    {file = "sentry_sdk-2.12.0.tar.gz", hash = "sha256:8763840497b817d44c49b3fe3f5f7388d083f2337ffedf008b2cdb63b5c86dc6"},
 ]
 
 [package.dependencies]
@@ -2724,7 +2724,7 @@ langchain = ["langchain (>=0.0.210)"]
 loguru = ["loguru (>=0.5)"]
 openai = ["openai (>=1.0.0)", "tiktoken (>=0.3.0)"]
 opentelemetry = ["opentelemetry-distro (>=0.35b0)"]
-opentelemetry-experimental = ["opentelemetry-instrumentation-aio-pika (==0.46b0)", "opentelemetry-instrumentation-aiohttp-client (==0.46b0)", "opentelemetry-instrumentation-aiopg (==0.46b0)", "opentelemetry-instrumentation-asgi (==0.46b0)", "opentelemetry-instrumentation-asyncio (==0.46b0)", "opentelemetry-instrumentation-asyncpg (==0.46b0)", "opentelemetry-instrumentation-aws-lambda (==0.46b0)", "opentelemetry-instrumentation-boto (==0.46b0)", "opentelemetry-instrumentation-boto3sqs (==0.46b0)", "opentelemetry-instrumentation-botocore (==0.46b0)", "opentelemetry-instrumentation-cassandra (==0.46b0)", "opentelemetry-instrumentation-celery (==0.46b0)", "opentelemetry-instrumentation-confluent-kafka (==0.46b0)", "opentelemetry-instrumentation-dbapi (==0.46b0)", "opentelemetry-instrumentation-django (==0.46b0)", "opentelemetry-instrumentation-elasticsearch (==0.46b0)", "opentelemetry-instrumentation-falcon (==0.46b0)", "opentelemetry-instrumentation-fastapi (==0.46b0)", "opentelemetry-instrumentation-flask (==0.46b0)", "opentelemetry-instrumentation-grpc (==0.46b0)", "opentelemetry-instrumentation-httpx (==0.46b0)", "opentelemetry-instrumentation-jinja2 (==0.46b0)", "opentelemetry-instrumentation-kafka-python (==0.46b0)", "opentelemetry-instrumentation-logging (==0.46b0)", "opentelemetry-instrumentation-mysql (==0.46b0)", "opentelemetry-instrumentation-mysqlclient (==0.46b0)", "opentelemetry-instrumentation-pika (==0.46b0)", "opentelemetry-instrumentation-psycopg (==0.46b0)", "opentelemetry-instrumentation-psycopg2 (==0.46b0)", "opentelemetry-instrumentation-pymemcache (==0.46b0)", "opentelemetry-instrumentation-pymongo (==0.46b0)", "opentelemetry-instrumentation-pymysql (==0.46b0)", "opentelemetry-instrumentation-pyramid (==0.46b0)", "opentelemetry-instrumentation-redis (==0.46b0)", "opentelemetry-instrumentation-remoulade (==0.46b0)", "opentelemetry-instrumentation-requests (==0.46b0)", "opentelemetry-instrumentation-sklearn (==0.46b0)", "opentelemetry-instrumentation-sqlalchemy (==0.46b0)", "opentelemetry-instrumentation-sqlite3 (==0.46b0)", "opentelemetry-instrumentation-starlette (==0.46b0)", "opentelemetry-instrumentation-system-metrics (==0.46b0)", "opentelemetry-instrumentation-threading (==0.46b0)", "opentelemetry-instrumentation-tornado (==0.46b0)", "opentelemetry-instrumentation-tortoiseorm (==0.46b0)", "opentelemetry-instrumentation-urllib (==0.46b0)", "opentelemetry-instrumentation-urllib3 (==0.46b0)", "opentelemetry-instrumentation-wsgi (==0.46b0)"]
+opentelemetry-experimental = ["opentelemetry-distro"]
 pure-eval = ["asttokens", "executing", "pure-eval"]
 pymongo = ["pymongo (>=3.1)"]
 pyspark = ["pyspark (>=2.4.4)"]
@@ -3738,4 +3738,4 @@ dev = ["honcho", "watchfiles"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "f7fe91d2d228d1986635c758b37715e55d27ee5f59a3701aa403bbdc7da55a87"
+content-hash = "9c4fd0c55bb0a9eda0b7b5e45ac41ed607dcf5d7be56b4a35dbce7f85e7c0d0a"
