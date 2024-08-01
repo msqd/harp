@@ -238,13 +238,13 @@ trio = ["trio (>=0.23)"]
 
 [[package]]
 name = "asgi-prometheus"
-version = "1.1.2"
+version = "1.2.3"
 description = "Support Prometheus metrics for ASGI applications"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.9"
 files = [
-    {file = "asgi-prometheus-1.1.2.tar.gz", hash = "sha256:bcfe83b8c1391378ab7826b9ea5171e779d83e09407c7d9f84028f909361fd73"},
-    {file = "asgi_prometheus-1.1.2-py3-none-any.whl", hash = "sha256:8199c6ed19b4f71065e3e5e9f12cb26d647f2c57e9f682f35eb48a212be74e7b"},
+    {file = "asgi_prometheus-1.2.3-py3-none-any.whl", hash = "sha256:c37e0d8dbd7561fd169511d4f0fde0c040d4e89e58ee4889a29fcf4bff0fef78"},
+    {file = "asgi_prometheus-1.2.3.tar.gz", hash = "sha256:8e047959ff1cef1b1bad9ddce46723a8f030ad7e7b98bb3d58e1b1619ad166b8"},
 ]
 
 [package.dependencies]
