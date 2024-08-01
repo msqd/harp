@@ -1,4 +1,5 @@
 import pytest
+from httpx import ByteStream
 
 from harp.http import HttpRequest, HttpRequestSerializer
 from harp.http.tests.stubs import HttpRequestStubBridge
@@ -168,22 +169,37 @@ class TestHttpRequestBody(BaseHttpRequestTest):
 
     async def test_body_empty(self):
         request = self.create_request()
-        await request.join()
+        await request.aread()
         assert request.body == b""
 
     async def test_body_one_chunk(self):
         request = self.create_request(body=b"foobar")
-        await request.join()
+        await request.aread()
         assert request.body == b"foobar"
 
     async def test_body_many_chunks(self):
         request = self.create_request(body=[b"foo", b"bar", b"baz"])
-        await request.join()
+        await request.aread()
         assert request.body == b"foobarbaz"
 
     async def test_body_can_be_read_more_than_once(self):
         request = self.create_request(body=[b"foo", b"bar", b"baz"])
-        await request.join()
-        await request.join()
-        await request.join()
+        await request.aread()
+        await request.aread()
+        await request.aread()
         assert request.body == b"foobarbaz"
+
+    async def test_stream_can_be_accessed_before_reading_body(self):
+        request = self.create_request(body=[b"foo", b"bar", b"baz"])
+        assert [chunk async for chunk in request.stream] == [b"foo", b"bar", b"baz"]
+        request.stream = ByteStream(b"foobarbaz")
+        await request.aread()
+        assert request.body == b"foobarbaz"
+
+    async def test_stream_can_be_accessed_after_reading_body(self):
+        request = self.create_request(body=[b"foo", b"bar", b"baz"])
+        await request.aread()
+        assert [chunk async for chunk in request.stream] == [b"foobarbaz"]
+        assert request.body == b"foobarbaz"
+        assert isinstance(request.body, bytes)
+        assert isinstance(request.stream, ByteStream)

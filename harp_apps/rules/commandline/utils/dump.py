@@ -11,15 +11,17 @@ from harp.http.serializers import HttpResponseSerializer
 from harp.http.utils import parse_cache_control
 from harp.utils.strings import truncate_string
 from harp.utils.types import typeof
+from harp_apps.http_client.events import HttpClientFilterEvent
+from harp_apps.proxy.events import ProxyFilterEvent
 
 BODY_MAX_LENGTH_TO_DISPLAY = 4096
 
 console = Console(force_terminal=True)
 
 
-async def on_proxy_request_dump(event):
+async def on_proxy_request_dump(event: ProxyFilterEvent):
     serializer = HttpRequestSerializer(event.request)
-    await event.request.join()
+    await event.request.aread()
     console.print(
         Panel(
             Syntax(
@@ -39,9 +41,9 @@ async def on_proxy_request_dump(event):
     )
 
 
-async def on_proxy_response_dump(event):
+async def on_proxy_response_dump(event: ProxyFilterEvent):
     serializer = HttpResponseSerializer(event.response)
-    await event.response.join()
+    await event.response.aread()
     console.print(
         Panel(
             Syntax(
@@ -99,7 +101,7 @@ def dump_httpx_response(response: httpx.Response) -> str:
     return response_dump.strip()
 
 
-async def on_remote_request_dump(event):
+async def on_remote_request_dump(event: HttpClientFilterEvent):
     console.print(
         Padding(
             Panel(
@@ -112,7 +114,7 @@ async def on_remote_request_dump(event):
     )
 
 
-async def on_remote_response_dump(event):
+async def on_remote_response_dump(event: HttpClientFilterEvent):
     console.print(
         Padding(
             Panel(
@@ -125,7 +127,7 @@ async def on_remote_response_dump(event):
     )
 
 
-async def on_remote_response_show_cache_control(event):
+async def on_remote_response_show_cache_control(event: HttpClientFilterEvent):
     response = event.response
     cache_control = response.headers.get_list("Cache-Control")
     if cache_control:

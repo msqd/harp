@@ -1,9 +1,22 @@
 from typing import AsyncIterator, Mapping
 from urllib.parse import parse_qsl
 
+from httpx import AsyncByteStream
 from multidict import CIMultiDict, MultiDict
 
 from harp.http import HttpRequestBridge
+
+
+class AsyncByteStreamFromBody(AsyncByteStream):
+    def __init__(self, body) -> None:
+        self._body = body
+
+    async def __aiter__(self) -> AsyncIterator[bytes]:
+        for chunk in self._body:
+            yield chunk
+
+    async def aclose(self) -> None:
+        pass
 
 
 class HttpRequestStubBridge(HttpRequestBridge):
@@ -55,11 +68,8 @@ class HttpRequestStubBridge(HttpRequestBridge):
     def get_headers(self) -> CIMultiDict:
         return self._headers
 
-    async def stream(self) -> AsyncIterator[bytes]:
-        if self._closed:
-            raise RuntimeError("Request body has already been read.")
+    def get_stream(self) -> AsyncByteStream:
+        return AsyncByteStreamFromBody(self._body)
 
-        for chunk in self._body:
-            yield chunk
-
-        self._closed = True
+    async def aread(self) -> bytes:
+        return b"".join(self._body)

@@ -60,7 +60,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         if SKIP_STORAGE in event.transaction.markers or self.pressure >= 3:
             return
 
-        await event.message.join()
+        await event.message.aread()
         serializer = get_serializer_for(event.message)
 
         message_data = {
