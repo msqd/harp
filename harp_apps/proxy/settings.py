@@ -1,7 +1,7 @@
 from dataclasses import field
 from typing import Optional
 
-from harp.config import Settings, asdict, settings_dataclass
+from harp.config import Settings, settings_dataclass
 from harp_apps.proxy.models.remotes import HttpRemote
 
 
@@ -82,10 +82,10 @@ class ProxyEndpoint(Settings):
         if not isinstance(self.remote, HttpRemote):
             raise ValueError(f"Invalid remote configuration: {self.remote}")
 
-    def _asdict(self, /, *, secure=True):
+    def _asdict(self, /, *, secure=True, with_status=False):
         return {
             "name": self.name,
             "port": self.port,
             "description": self.description,
-            "remote": asdict(self.remote, secure=secure),
+            "remote": self.remote._asdict(secure=secure, with_status=with_status),
         }

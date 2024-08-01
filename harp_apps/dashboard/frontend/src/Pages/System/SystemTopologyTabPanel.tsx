@@ -5,6 +5,11 @@ import { theme } from "twin.macro"
 import { Pane } from "ui/Components/Pane"
 import { Tab } from "ui/Components/Tabs"
 import { H2 } from "ui/Components/Typography"
+import { useSystemProxyQuery } from "../../Domain/System"
+
+import ClosedIcon from "./Icons/ClosedIcon"
+import HalfOpenIcon from "./Icons/HalfOpenIcon.tsx"
+import OpenIcon from "./Icons/OpenIcon.tsx"
 
 function Node({
   x,
@@ -133,12 +138,91 @@ const portsYOffset = 48
 const remotesXOffset = 410
 const remotesYOffset = 48
 
+class SystemTopologyGraphLayout {
+  private nodes: Array<any>
+  private edges: Array<any>
+
+  constructor() {
+    this.nodes = []
+    this.edges = []
+  }
+
+  addNode(node) {
+    this.nodes.push(node)
+  }
+
+  addEdge(edge) {
+    this.edges.push(edge)
+  }
+}
+
 export function SystemTopologyTabPanel() {
+  const query = useSystemProxyQuery()
+
+  if (query.isSuccess) {
+    return (
+      <Tab.Panel>
+        <Pane>
+          <H2>Topology</H2>
+          <Pane>
+            <table>
+              <tbody>
+                <tr>
+                  <td>Proxy</td>
+                  <td className="pl-4">
+                    {query.data.endpoints.map((endpoint, i) => (
+                      <Pane>
+                        <table key={i} className="min-w-full divide-y divide-gray-300">
+                          <tbody>
+                            <tr>
+                              <td>{endpoint.name}</td>
+                              <td className="pl-4">
+                                <Pane>
+                                  <table>
+                                    <tbody className="divide-y divide-gray-200">
+                                      {endpoint.remote.endpoints.map((remoteEndpoint, j) => (
+                                        <tr key={j}>
+                                          <td>
+                                            {remoteEndpoint.status === "closed" && <ClosedIcon className="size-6" />}
+                                            {remoteEndpoint.status === "half-open" && (
+                                              <HalfOpenIcon className="size-6" />
+                                            )}
+                                            {remoteEndpoint.status === "open" && <OpenIcon className="size-6" />}
+                                          </td>
+                                          <td>
+                                            {endpoint.remote.current_pool.includes(remoteEndpoint.url)
+                                              ? "active"
+                                              : "inactive"}
+                                          </td>
+                                          <td>{remoteEndpoint.url}</td>
+                                          <td>{remoteEndpoint.pools}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </Pane>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </Pane>
+                    ))}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </Pane>
+          <pre>{JSON.stringify(query.data, null, 4)}</pre>
+        </Pane>
+      </Tab.Panel>
+    )
+  }
+
   return (
     <Tab.Panel>
       <Pane>
         <H2>Topology</H2>
-        <svg height="400px" width="800px">
+        <svg viewBox="0 0 600 260" className="max-w-7xl mx-auto">
           <g>
             <rect
               x={portsXOffset - 24}
@@ -190,6 +274,7 @@ export function SystemTopologyTabPanel() {
             ))}
           </g>
         </svg>
+        {query.isSuccess ? <pre>{JSON.stringify(query.data, null, 4)}</pre> : null}
       </Pane>
     </Tab.Panel>
   )

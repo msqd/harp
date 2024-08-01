@@ -9,12 +9,16 @@ from pyheck import shouty_snake
 
 from harp.utils.urls import normalize_url
 
-CHECKING = 0
-UP = 1
-DOWN = -1
+HALF_OPEN = 0
+CLOSED = 1
+OPEN = -1
 
 DEFAULT_POOL = "default"
 FALLBACK_POOL = "fallback"
+
+
+def humanize_status(status):
+    return {HALF_OPEN: "half-open", CLOSED: "closed", OPEN: "open"}.get(status, "unknown")
 
 
 @dataclass
@@ -32,7 +36,7 @@ class HttpEndpoint:
     """
 
     url: str
-    status: int = CHECKING
+    status: int = HALF_OPEN
     # todo is this the right place ? we don't use pools here but we need to define it in config. Maybe the pool logic
     #  should stay in HttpRemote
     pools: set = field(default_factory=set)
@@ -55,9 +59,9 @@ class HttpEndpoint:
         self.success_score += 1
 
         if self.success_score >= self.success_threshold:
-            self.status = UP
+            self.status = CLOSED
         else:
-            self.status = CHECKING
+            self.status = HALF_OPEN
 
         self.failure_reasons = None
 
@@ -66,16 +70,16 @@ class HttpEndpoint:
         self.failure_score += 1
 
         if self.failure_score >= self.failure_threshold:
-            self.status = DOWN
+            self.status = OPEN
         else:
-            self.status = CHECKING
+            self.status = HALF_OPEN
 
         if self.failure_reasons is None:
             self.failure_reasons = set()
         if reason:
             self.failure_reasons.add(reason)
 
-    def _asdict(self, /, *, secure=True):
+    def _asdict(self, /, *, secure=True, with_status=False):
         return {
             "url": self.url,
             **(
@@ -88,6 +92,8 @@ class HttpEndpoint:
                 if self.success_threshold != type(self).success_threshold
                 else {}
             ),
+            **({"pools": list(self.pools)} if len(self.pools) > 0 else {}),
+            **({"status": humanize_status(self.status)} if with_status else {}),
         }
 
 
@@ -205,12 +211,12 @@ class HttpRemote:
     def refresh(self):
         refreshed: deque[HttpEndpoint] = deque()
         for endpoint in self.endpoints.values():
-            if DEFAULT_POOL in endpoint.pools and endpoint.status >= CHECKING:
+            if DEFAULT_POOL in endpoint.pools and endpoint.status >= HALF_OPEN:
                 refreshed.append(endpoint)
 
         if len(refreshed) < self.min_pool_size:
             for endpoint in self.endpoints.values():
-                if FALLBACK_POOL in endpoint.pools and endpoint.status >= CHECKING:
+                if FALLBACK_POOL in endpoint.pools and endpoint.status >= HALF_OPEN:
                     self.current_pool_name = FALLBACK_POOL
                     refreshed.append(endpoint)
         else:
@@ -228,15 +234,15 @@ class HttpRemote:
             self.current_pool.rotate(-1)
 
     def set_down(self, url):
-        self[url].status = DOWN
+        self[url].status = OPEN
         self.refresh()
 
     def set_checking(self, url):
-        self[url].status = CHECKING
+        self[url].status = HALF_OPEN
         self.refresh()
 
     def set_up(self, url):
-        self[url].status = UP
+        self[url].status = CLOSED
         self.refresh()
 
     async def check(self):
@@ -246,9 +252,12 @@ class HttpRemote:
             for url in self.endpoints.values():
                 await self.probe.check(client, url)
 
-    def _asdict(self, /, *, secure=True):
+    def _asdict(self, /, *, secure=True, with_status=False):
         return {
-            "endpoints": [endpoint._asdict(secure=secure) for endpoint in self.endpoints.values()],
+            "endpoints": [
+                endpoint._asdict(secure=secure, with_status=with_status) for endpoint in self.endpoints.values()
+            ],
             **({"min_pool_size": self.min_pool_size} if self.min_pool_size != type(self).min_pool_size else {}),
             **({"probe": self.probe._asdict(secure=secure)} if self.probe else {}),
+            **({"current_pool": list(x.url for x in self.current_pool)} if with_status else {}),
         }
