@@ -7,6 +7,23 @@ from httpx import AsyncClient, NetworkError, RemoteProtocolError, Response, Time
 from harp.http import HttpRequest
 from harp.http.tests.stubs import HttpRequestStubBridge
 from harp_apps.proxy.controllers import HttpProxyController
+from harp_apps.proxy.notifications.notification_manager import NotificationManager
+
+
+async def test_send_one_notification_per_sender():
+    notification_manager = NotificationManager()
+    notification_manager.senders = [mock.Mock(), mock.Mock()]
+    for sender in notification_manager.senders:
+        sender.send_notification = mock.AsyncMock()
+
+    await notification_manager.send_notification("GET", "http://example.com/", 500, "Internal Server Error", "123")
+
+    assert all(sender.send_notification.called for sender in notification_manager.senders)
+    assert all(  # Check if the arguments are passed correctly
+        sender.send_notification.call_args
+        == mock.call("GET", "http://example.com/", 500, "Internal Server Error", "123")
+        for sender in notification_manager.senders
+    )
 
 
 @pytest.mark.parametrize(
