@@ -84,7 +84,6 @@ async def test_send_notification_on_http_client_exception(exception, status_code
     controller.notification_manager = NotificationManager(NotificationsSettings())
 
     with mock.patch.object(controller.notification_manager, "send_notification") as mock_send_notification:
-
         # Call the controller which should handle the exception
         await controller(request)
 
