@@ -1,5 +1,5 @@
-harp_apps.notifications
-=======================
+Notifications (harp_apps.notifications)
+=======================================
 
 .. automodule:: harp_apps.notifications
     :members:
