@@ -82,6 +82,7 @@ class DashboardSettings(BaseSetting):
     port: int | str = 4080
     auth: Optional[DashboardAuthSetting] = None
     devserver: Optional[DashboardDevserverSettings] = None
+    public_url: Optional[str] = None
 
     def __post_init__(self):
         if isinstance(self.auth, str):

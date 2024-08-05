@@ -6,12 +6,13 @@ from httpx import AsyncClient, NetworkError, RemoteProtocolError, Response, Time
 
 from harp.http import HttpRequest
 from harp.http.tests.stubs import HttpRequestStubBridge
+from harp_apps.notifications.settings import NotificationsSettings
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.notifications.notification_manager import NotificationManager
 
 
 async def test_send_one_notification_per_sender():
-    notification_manager = NotificationManager()
+    notification_manager = NotificationManager(NotificationsSettings())
     notification_manager.senders = [mock.Mock(), mock.Mock()]
     for sender in notification_manager.senders:
         sender.send_notification = mock.AsyncMock()
@@ -49,8 +50,9 @@ async def test_send_notification_when_error(status_code, reason_phrase):
     respx.get("http://example.com/").mock(return_value=Response(status_code, content=b"{}"))
 
     request = HttpRequest(HttpRequestStubBridge(method="GET"))
+    controller.notification_manager = NotificationManager(NotificationsSettings())
 
-    with mock.patch("harp_apps.proxy.controllers.notification_manager.send_notification") as mock_send_notification:
+    with mock.patch.object(controller.notification_manager, "send_notification") as mock_send_notification:
         # Call the controller which should trigger the slack notification
         await controller(request)
 
@@ -79,7 +81,10 @@ async def test_send_notification_on_http_client_exception(exception, status_code
     respx.get("http://example.com/").mock(side_effect=exception)
     request = HttpRequest(HttpRequestStubBridge(method="GET"))
 
-    with mock.patch("harp_apps.proxy.controllers.notification_manager.send_notification") as mock_send_notification:
+    controller.notification_manager = NotificationManager(NotificationsSettings())
+
+    with mock.patch.object(controller.notification_manager, "send_notification") as mock_send_notification:
+
         # Call the controller which should handle the exception
         await controller(request)
 

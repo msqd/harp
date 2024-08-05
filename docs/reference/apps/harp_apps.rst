@@ -19,6 +19,7 @@ Submodules
     harp_apps.dashboard
     harp_apps.http_client
     harp_apps.janitor
+    harp_apps.notifications
     harp_apps.proxy
     harp_apps.rules
     harp_apps.storage

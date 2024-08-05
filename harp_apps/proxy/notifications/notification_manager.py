@@ -1,11 +1,11 @@
 import asyncio
-import os
-from typing import List, Protocol
+from typing import List, Optional, Protocol
 
+from harp_apps.notifications.settings import NotificationsSettings
 from harp_apps.proxy.notifications.google_chat import GoogleChatNotificationSender
 from harp_apps.proxy.notifications.slack import SlackNotificationSender
 
-WEBHOOK_URLS = {"google_chat": os.getenv("GOOGLE_CHAT_WEBHOOK_URL"), "slack": os.getenv("SLACK_WEBHOOK_URL")}
+AVAILABLE_WEBHOOK_URLS = ["slack_webhook_url", "google_chat_webhook_url"]
 
 
 class NotificationSender(Protocol):
@@ -15,14 +15,21 @@ class NotificationSender(Protocol):
 
 
 class NotificationManager:
-    def __init__(self):
+    def __init__(self, settings: NotificationsSettings, public_url: Optional[str] = None):
         self.senders: List[NotificationSender] = []
-        for name, url in WEBHOOK_URLS.items():
-            if url:
-                if name == "google_chat":
-                    self.senders.append(GoogleChatNotificationSender(url)) if url else None
-                elif name == "slack":
-                    self.senders.append(SlackNotificationSender(url)) if url else None
+        for name in AVAILABLE_WEBHOOK_URLS:
+            if name == "google_chat_webhook_url":
+                try:
+                    webhook_url = getattr(settings, name)
+                    self.senders.append(GoogleChatNotificationSender(webhook_url, public_url)) if webhook_url else None
+                except AttributeError:
+                    pass
+            elif name == "slack_webhook_url":
+                try:
+                    webhook_url = getattr(settings, name)
+                    self.senders.append(SlackNotificationSender(webhook_url, public_url)) if webhook_url else None
+                except AttributeError:
+                    pass
 
     async def send_notification(
         self, method: str, url: str, status_code: int, message: str, transaction_id: str
