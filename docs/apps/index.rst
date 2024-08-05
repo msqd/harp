@@ -11,3 +11,4 @@ Applications
     rules/index
     storage/index
     telemetry/index
+    notifications/index

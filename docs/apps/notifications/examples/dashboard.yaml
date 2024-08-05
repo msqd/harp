@@ -1,0 +1,6 @@
+notifications:
+  slack_webhook_url: https://hooks.slack.com/services/XXXXXXXXX/XXXXXXXXX/XXXXXXX
+  google_chat_webhook_url: https://chat.googleapis.com/v1/spaces/XXXXXXXX
+
+dashboard:
+  public_url: http://localhost:4080
