@@ -26,27 +26,21 @@ from harp_apps.proxy.controllers import HttpProxyController
     ],
 )
 @respx.mock
-async def test_send_slack_notification_when_error(status_code, reason_phrase):
+async def test_send_notification_when_error(status_code, reason_phrase):
     http_client = AsyncClient()
     controller = HttpProxyController("http://example.com/", http_client=http_client)
     respx.get("http://example.com/").mock(return_value=Response(status_code, content=b"{}"))
 
     request = HttpRequest(HttpRequestStubBridge(method="GET"))
 
-    with mock.patch("harp_apps.proxy.controllers.send_slack_notification") as mock_send_slack_notification, mock.patch(
-        "asyncio.create_task"
-    ) as mock_create_task:
+    with mock.patch("harp_apps.proxy.controllers.notification_manager.send_notification") as mock_send_notification:
         # Call the controller which should trigger the slack notification
         await controller(request)
 
         # Check if create_task was called
-        assert mock_create_task.called
+        assert mock_send_notification.called
 
-        # Check if send_slack_notification was called within create_task
-        assert mock_send_slack_notification.called
-
-        # Extract the arguments passed to send_slack_notification
-        _, notification_kwargs = mock_send_slack_notification.call_args
+        _, notification_kwargs = mock_send_notification.call_args
 
         # Validate the arguments of send_slack_notification
         assert notification_kwargs["status_code"] == status_code
@@ -62,26 +56,21 @@ async def test_send_slack_notification_when_error(status_code, reason_phrase):
     ],
 )
 @respx.mock
-async def test_send_slack_notification_on_http_client_exception(exception, status_code, expected_message):
+async def test_send_notification_on_http_client_exception(exception, status_code, expected_message):
     http_client = AsyncClient()
     controller = HttpProxyController("http://example.com/", http_client=http_client)
     respx.get("http://example.com/").mock(side_effect=exception)
     request = HttpRequest(HttpRequestStubBridge(method="GET"))
 
-    with mock.patch("harp_apps.proxy.controllers.send_slack_notification") as mock_send_slack_notification, mock.patch(
-        "asyncio.create_task"
-    ) as mock_create_task:
+    with mock.patch("harp_apps.proxy.controllers.notification_manager.send_notification") as mock_send_notification:
         # Call the controller which should handle the exception
         await controller(request)
 
         # Check if create_task was called
-        assert mock_create_task.called
-
-        # Check if send_slack_notification was called within create_task
-        assert mock_send_slack_notification.called
+        assert mock_send_notification.called
 
         # Extract the arguments passed to send_slack_notification
-        _, notification_kwargs = mock_send_slack_notification.call_args
+        _, notification_kwargs = mock_send_notification.call_args
 
         # Validate the arguments of send_slack_notification
         assert notification_kwargs["status_code"] == status_code

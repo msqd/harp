@@ -14,4 +14,6 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
+    harp_apps.proxy.notifications.google_chat
+    harp_apps.proxy.notifications.notification_manager
     harp_apps.proxy.notifications.slack

@@ -1,4 +1,3 @@
-import asyncio
 from datetime import UTC, datetime
 from functools import cached_property
 from typing import Optional
@@ -18,6 +17,7 @@ from harp.settings import USE_PROMETHEUS
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.performances import performances_observer
 from harp.utils.tpdex import tpdex
+from harp_apps.proxy.notifications.notification_manager import NotificationManager
 
 from .events import (
     EVENT_FILTER_PROXY_REQUEST,
@@ -27,10 +27,10 @@ from .events import (
     EVENT_TRANSACTION_STARTED,
     ProxyFilterEvent,
 )
-from .notifications.slack import send_slack_notification
 
 logger = get_logger(__name__)
 
+notification_manager = NotificationManager()
 _prometheus = None
 if USE_PROMETHEUS:
     from prometheus_client import Counter, Histogram
@@ -175,14 +175,12 @@ class HttpProxyController:
                         message = "Service Unavailable (remote server unavailable)"
                         transaction.extras["status_class"] = "ERR"
                         await self.end_transaction(transaction, HttpError("Unavailable", exception=exc))
-                        asyncio.create_task(
-                            send_slack_notification(
-                                method=context.request.method,
-                                url=url,
-                                status_code=503,
-                                message=message,
-                                transaction_id=transaction.id,
-                            )
+                        await notification_manager.send_notification(
+                            method=context.request.method,
+                            url=url,
+                            status_code=503,
+                            message=message,
+                            transaction_id=transaction.id,
                         )
                         # todo add web debug information if we are not on a production env
                         return HttpResponse(message, status=503, content_type="text/plain")
@@ -192,14 +190,12 @@ class HttpProxyController:
                         await self.end_transaction(transaction, HttpError("Timeout", exception=exc))
 
                         message = "Gateway Timeout (remote server timeout)"
-                        asyncio.create_task(
-                            send_slack_notification(
-                                method=context.request.method,
-                                url=url,
-                                status_code=504,
-                                message=message,
-                                transaction_id=transaction.id,
-                            )
+                        await notification_manager.send_notification(
+                            method=context.request.method,
+                            url=url,
+                            status_code=504,
+                            message=message,
+                            transaction_id=transaction.id,
                         )
                         # todo add web debug information if we are not on a production env
                         return HttpResponse(message, status=504, content_type="text/plain")
@@ -208,14 +204,12 @@ class HttpProxyController:
                         transaction.extras["status_class"] = "ERR"
                         await self.end_transaction(transaction, HttpError("Remote server disconnected"))
                         message = "Bad Gateway (remote server disconnected)"
-                        asyncio.create_task(
-                            send_slack_notification(
-                                method=context.request.method,
-                                url=url,
-                                status_code=502,
-                                message=message,
-                                transaction_id=transaction.id,
-                            )
+                        await notification_manager.send_notification(
+                            method=context.request.method,
+                            url=url,
+                            status_code=502,
+                            message=message,
+                            transaction_id=transaction.id,
                         )
                         return HttpResponse(message, status=502, content_type="text/plain")
 
@@ -223,14 +217,12 @@ class HttpProxyController:
                     await remote_response.aclose()
 
                     if 500 <= remote_response.status_code < 600:
-                        asyncio.create_task(
-                            send_slack_notification(
-                                method=context.request.method,
-                                url=url,
-                                status_code=remote_response.status_code,
-                                message=remote_response.reason_phrase,
-                                transaction_id=transaction.id,
-                            )
+                        await notification_manager.send_notification(
+                            method=context.request.method,
+                            url=url,
+                            status_code=remote_response.status_code,
+                            message=remote_response.reason_phrase,
+                            transaction_id=transaction.id,
                         )
 
                 try:
