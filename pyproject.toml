@@ -8,11 +8,8 @@ version = "0.7.0a0"
 description = "Harp is an API Runtime Proxy – A toolkit for Fast, Reliable and Observable external APIs"
 authors = ["Romain Dorgueil <romain@makersquad.fr>"]
 readme = "README.rst"
-packages = [
-    { include = "harp" },
-    { include = "harp_apps" },
-]
-exclude = ["**/node_modules/", "harp_apps/dashboard/frontend", ]
+packages = [{ include = "harp" }, { include = "harp_apps" }]
+exclude = ["**/node_modules/", "harp_apps/dashboard/frontend"]
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -44,6 +41,7 @@ rich = "^13.7.1"
 rich-click = "^1.8.3"
 rodi = "^2.0.6"
 sentry-sdk = "^2.5.1"
+slack-sdk = "^3.31.0"
 sqlalchemy = { extras = ["asyncio"], version = "^2.0.30" }
 sqlalchemy-utils = "^0.41.1"
 structlog = "^24.2.0"
@@ -68,7 +66,7 @@ furo = ">=2023.9.10,<2025.0.0"
 isort = "^5.13.2"
 pre-commit = "^3.7.1"
 pytest = ">=7.4.3,<9.0.0"
-pytest-asyncio = ">=0.21.1,<0.23.0" # 0.23 breaks the test suite (https://github.com/pytest-dev/pytest-asyncio/releases/tag/v0.23.0)
+pytest-asyncio = ">=0.21.1,<0.23.0"                                # 0.23 breaks the test suite (https://github.com/pytest-dev/pytest-asyncio/releases/tag/v0.23.0)
 pytest-benchmark = { extras = ["histogram"], version = "^4.0.0" }
 pytest-cov = ">=4.1,<6.0"
 pytest-timeout = "^2.3.1"
@@ -121,6 +119,4 @@ filterwarnings = [
     "ignore:Deprecated call to:DeprecationWarning",
     "ignore:pkg_resources is deprecated as an API:DeprecationWarning",
 ]
-markers = [
-    "subprocess"
-]
+markers = ["subprocess"]

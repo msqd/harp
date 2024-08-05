@@ -1,3 +1,4 @@
+import asyncio
 from datetime import UTC, datetime
 from functools import cached_property
 from typing import Optional
@@ -26,6 +27,7 @@ from .events import (
     EVENT_TRANSACTION_STARTED,
     ProxyFilterEvent,
 )
+from .notifications.slack import send_slack_notification
 
 logger = get_logger(__name__)
 
@@ -170,27 +172,66 @@ class HttpProxyController:
                     try:
                         remote_response: httpx.Response = await self.http_client.send(remote_request)
                     except (httpcore.NetworkError, httpx.NetworkError) as exc:
+                        message = "Service Unavailable (remote server unavailable)"
                         transaction.extras["status_class"] = "ERR"
                         await self.end_transaction(transaction, HttpError("Unavailable", exception=exc))
-                        # todo add web debug information if we are not on a production env
-                        return HttpResponse(
-                            "Service Unavailable (remote server unavailable)", status=503, content_type="text/plain"
+                        asyncio.create_task(
+                            send_slack_notification(
+                                method=context.request.method,
+                                url=url,
+                                status_code=503,
+                                message=message,
+                                transaction_id=transaction.id,
+                            )
                         )
+                        # todo add web debug information if we are not on a production env
+                        return HttpResponse(message, status=503, content_type="text/plain")
+
                     except (httpcore.TimeoutException, httpx.TimeoutException) as exc:
                         transaction.extras["status_class"] = "ERR"
                         await self.end_transaction(transaction, HttpError("Timeout", exception=exc))
-                        # todo add web debug information if we are not on a production env
-                        return HttpResponse(
-                            "Gateway Timeout (remote server timeout)", status=504, content_type="text/plain"
+
+                        message = "Gateway Timeout (remote server timeout)"
+                        asyncio.create_task(
+                            send_slack_notification(
+                                method=context.request.method,
+                                url=url,
+                                status_code=504,
+                                message=message,
+                                transaction_id=transaction.id,
+                            )
                         )
+                        # todo add web debug information if we are not on a production env
+                        return HttpResponse(message, status=504, content_type="text/plain")
+
                     except (httpcore.RemoteProtocolError, httpx.RemoteProtocolError):
                         transaction.extras["status_class"] = "ERR"
                         await self.end_transaction(transaction, HttpError("Remote server disconnected"))
-                        return HttpResponse(
-                            "Bad Gateway (remote server disconnected)", status=502, content_type="text/plain"
+                        message = "Bad Gateway (remote server disconnected)"
+                        asyncio.create_task(
+                            send_slack_notification(
+                                method=context.request.method,
+                                url=url,
+                                status_code=502,
+                                message=message,
+                                transaction_id=transaction.id,
+                            )
                         )
+                        return HttpResponse(message, status=502, content_type="text/plain")
+
                     await remote_response.aread()
                     await remote_response.aclose()
+
+                    if 500 <= remote_response.status_code < 600:
+                        asyncio.create_task(
+                            send_slack_notification(
+                                method=context.request.method,
+                                url=url,
+                                status_code=remote_response.status_code,
+                                message=remote_response.reason_phrase,
+                                transaction_id=transaction.id,
+                            )
+                        )
 
                 try:
                     _elapsed = f"{remote_response.elapsed.total_seconds()}s"
