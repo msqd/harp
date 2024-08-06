@@ -1,5 +1,6 @@
 import binascii
 from base64 import b64decode
+from typing import Optional
 
 from httpx import AsyncByteStream, ByteStream
 from multidict import CIMultiDict
@@ -11,8 +12,8 @@ from .utils.cookies import parse_cookie
 class HttpRequest(BaseHttpMessage):
     kind = "request"
 
-    def __init__(self, impl: HttpRequestBridge):
-        super().__init__()
+    def __init__(self, impl: HttpRequestBridge, extensions: Optional[dict] = None):
+        super().__init__(extensions=extensions)
         self._impl = impl
 
         # Initialize properties from the implementation bridge

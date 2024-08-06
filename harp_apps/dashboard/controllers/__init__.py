@@ -111,15 +111,15 @@ class DashboardController:
         return root
 
     async def __call__(self, request: HttpRequest, asgi_send: ASGISendCallable, *, transaction_id=None):
-        request.context.setdefault("user", None)
+        request.extensions.setdefault("user", None)
 
         if self.settings.auth:
             current_auth = request.basic_auth
 
             if current_auth:
-                request.context["user"] = self.settings.auth.check(current_auth[0], current_auth[1])
+                request.extensions["user"] = self.settings.auth.check(current_auth[0], current_auth[1])
 
-            if not request.context["user"]:
+            if not request.extensions["user"]:
                 return HttpResponse(
                     b"Unauthorized",
                     status=401,

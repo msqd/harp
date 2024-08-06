@@ -48,7 +48,7 @@ EVENT_CORE_CONTROLLER = ControllerEvent.name
 class ResponseEvent(RequestEvent):
     name = "core.response"
 
-    def __init__(self, request: HttpRequest, response):
+    def __init__(self, request: HttpRequest, response: "HttpResponse"):
         super().__init__(request)
         self.response = response
 

@@ -1,5 +1,7 @@
+from typing import Optional
+
 import orjson
-from httpx import AsyncByteStream, ByteStream
+from httpx import AsyncByteStream, ByteStream, codes
 from multidict import CIMultiDict
 
 from harp.utils.bytes import ensure_bytes
@@ -10,8 +12,17 @@ from .typing import BaseHttpMessage
 class HttpResponse(BaseHttpMessage):
     kind = "response"
 
-    def __init__(self, body: bytes | str, /, *, status: int = 200, headers: dict = None, content_type=None):
-        super().__init__()
+    def __init__(
+        self,
+        body: bytes | str,
+        /,
+        *,
+        status: int = 200,
+        headers: Optional[dict] = None,
+        content_type=None,
+        extensions: Optional[dict] = None,
+    ):
+        super().__init__(extensions=extensions)
 
         self._body = ensure_bytes(body)
         self._status = int(status)
@@ -40,6 +51,15 @@ class HttpResponse(BaseHttpMessage):
     @property
     def status(self) -> int:
         return self._status
+
+    @property
+    def reason_phrase(self) -> str:
+        try:
+            reason_phrase: bytes = self.extensions["reason_phrase"]
+        except KeyError:
+            return codes.get_reason_phrase(self.status)
+        else:
+            return reason_phrase.decode("ascii", errors="ignore")
 
     @property
     def headers(self) -> CIMultiDict:

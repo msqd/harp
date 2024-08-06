@@ -16,5 +16,4 @@ Submodules
 
     harp_apps.proxy.controllers
     harp_apps.proxy.events
-    harp_apps.proxy.notifications
     harp_apps.proxy.settings

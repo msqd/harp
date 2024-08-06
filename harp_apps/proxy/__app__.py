@@ -7,7 +7,6 @@ from httpx import AsyncClient
 
 from harp.config import Application
 from harp.config.events import OnBoundEvent
-from harp.typing import GlobalSettings
 
 from .controllers import HttpProxyController
 from .settings import ProxySettings
@@ -15,7 +14,6 @@ from .settings import ProxySettings
 
 async def on_bound(event: OnBoundEvent):
     settings = event.provider.get(ProxySettings)
-    global_settings = event.provider.get(GlobalSettings)
     for endpoint in settings.endpoints:
         event.resolver.add(
             endpoint.port,
@@ -24,7 +22,6 @@ async def on_bound(event: OnBoundEvent):
                 name=endpoint.name,
                 dispatcher=event.dispatcher,
                 http_client=event.provider.get(AsyncClient),
-                global_settings=global_settings,
             ),
         )
 

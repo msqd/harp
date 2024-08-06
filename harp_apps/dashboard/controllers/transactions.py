@@ -58,7 +58,7 @@ class TransactionsController(RoutingController):
             filters={name: facet.get_filter_from_query(request.query) for name, facet in self.facets.items()},
             page=page,
             cursor=cursor,
-            username=request.context.get("user") or "anonymous",
+            username=request.extensions.get("user") or "anonymous",
             text_search=request.query.get("search", ""),
         )
 
@@ -75,7 +75,7 @@ class TransactionsController(RoutingController):
     async def get(self, request: HttpRequest, id):
         transaction = await self.storage.get_transaction(
             id,
-            username=request.context.get("user") or "anonymous",
+            username=request.extensions.get("user") or "anonymous",
         )
 
         if not transaction:
@@ -85,7 +85,7 @@ class TransactionsController(RoutingController):
 
     @RouteHandler("/{id}/flags/{flag}", methods=["PUT", "DELETE"])
     async def set_user_flag(self, request: HttpRequest, id, flag):
-        username = request.context.get("user", None) or "anonymous"
+        username = request.extensions.get("user", None) or "anonymous"
         flag_id = FLAGS_BY_NAME.get(flag)
 
         await self.storage.set_user_flag(

@@ -128,9 +128,9 @@ class ASGIKernel:
             )
 
         # the core response event may want to filter the response, for example to add some headers, etc.
-        await self.dispatcher.adispatch(EVENT_CORE_RESPONSE, ResponseEvent(request, response))
-
-        return response
+        event = ResponseEvent(request, response)
+        await self.dispatcher.adispatch(EVENT_CORE_RESPONSE, event)
+        return event.response or response
 
     async def handle_http(self, scope: Scope, receive: ASGIReceiveCallable, send: ASGISendCallable):
         request = HttpRequest(HttpRequestAsgiBridge(scope, receive))

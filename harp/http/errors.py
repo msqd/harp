@@ -1,4 +1,5 @@
 from functools import cached_property
+from typing import Optional
 
 from multidict import MultiDict, MultiDictProxy
 
@@ -8,10 +9,12 @@ from .typing import BaseHttpMessage
 class HttpError(BaseHttpMessage):
     kind = "error"
 
-    def __init__(self, message: str, /, *, exception: Exception = None):
+    def __init__(self, message: str, /, *, exception: Optional[Exception] = None, status=500, verbose_message=None):
         super().__init__()
         self.message = message
         self.exception = exception
+        self.status = status
+        self.verbose_message = verbose_message or message
 
     @cached_property
     def headers(self) -> MultiDictProxy:

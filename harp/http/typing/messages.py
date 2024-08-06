@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import Optional
 
 from multidict import MultiDictProxy
 
@@ -8,14 +9,14 @@ class BaseMessage:
     kind: str
     created_at: datetime
 
-    def __init__(self):
+    def __init__(self, *, extensions: Optional[dict] = None):
         self.created_at = datetime.now(UTC)
 
-        self._context = {}
+        self._extensions = extensions or {}
 
     @property
-    def context(self) -> dict:
-        return self._context
+    def extensions(self) -> dict:
+        return self._extensions
 
     async def aread(self):
         pass

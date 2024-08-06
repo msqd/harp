@@ -7,6 +7,8 @@
     'docs/apps/dashboard/examples/main.yml',
     'docs/apps/http_client/examples/full.yml',
     'docs/apps/http_client/examples/simple.yml',
+    'docs/apps/notifications/examples/dashboard.yml',
+    'docs/apps/notifications/examples/main.yml',
     'docs/apps/proxy/examples/swapi.yml',
     'docs/apps/rules/examples/rules.yml',
     'docs/apps/storage/examples/mysql-aiomysql.yml',

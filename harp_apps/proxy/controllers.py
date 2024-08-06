@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from functools import cached_property
-from typing import Optional
+from typing import Optional, cast
 from urllib.parse import urlencode, urljoin, urlparse
 
 import httpcore
@@ -14,11 +14,9 @@ from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
 from harp.http.utils import parse_cache_control
 from harp.models import Transaction
 from harp.settings import USE_PROMETHEUS
-from harp.typing import GlobalSettings
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.performances import performances_observer
 from harp.utils.tpdex import tpdex
-from harp_apps.proxy.notifications.notification_manager import NotificationManager
 
 from .events import (
     EVENT_FILTER_PROXY_REQUEST,
@@ -43,17 +41,15 @@ if USE_PROMETHEUS:
 
 
 class HttpProxyController:
-    name: str = None
+    name: Optional[str] = None
     """Controller name, also refered as endpoint name (for example in
     :class:`Transaction <harp.models.Transaction>`)."""
 
-    user_agent: str = None
+    user_agent: Optional[str] = None
     """User agent to use when proxying requests (will default to harp/<version>)."""
 
     _dispatcher: Optional[IAsyncEventDispatcher] = None
     """Event dispatcher for this controller."""
-
-    notification_manager: Optional[NotificationManager] = None
 
     url: str
     """Base URL to proxy requests to."""
@@ -71,7 +67,6 @@ class HttpProxyController:
         dispatcher: Optional[IAsyncEventDispatcher] = None,
         name=None,
         logging=True,
-        global_settings: Optional[GlobalSettings] = None,
     ):
         self.http_client = http_client
         self.url = url or self.url
@@ -87,12 +82,6 @@ class HttpProxyController:
                 self.user_agent = f"harp/{__parsed_version__.major}.{__parsed_version__.minor}"
             except AttributeError:
                 self.user_agent = "harp"
-
-        if global_settings:
-            notification_settings = global_settings.get("notifications")
-            public_url = global_settings.get("dashboard").public_url if global_settings.get("dashboard") else None
-            if notification_settings and notification_settings.enabled:
-                self.notification_manager = NotificationManager(notification_settings, public_url)
 
     async def adispatch(self, event_id, event=None):
         """
@@ -171,6 +160,9 @@ class HttpProxyController:
                         content=context.request.body,
                         extensions={"harp": {"endpoint": self.name}},
                     )
+                    context.request.extensions["remote_method"] = remote_request.method
+                    context.request.extensions["remote_url"] = remote_request.url
+
                     self.debug(
                         f"▶▶ {context.request.method} {url}",
                         transaction=transaction,
@@ -181,62 +173,40 @@ class HttpProxyController:
                     try:
                         remote_response: httpx.Response = await self.http_client.send(remote_request)
                     except (httpcore.NetworkError, httpx.NetworkError) as exc:
-                        message = "Service Unavailable (remote server unavailable)"
-                        transaction.extras["status_class"] = "ERR"
-                        await self.end_transaction(transaction, HttpError("Unavailable", exception=exc))
-                        if self.notification_manager:
-                            await self.notification_manager.send_notification(
-                                method=context.request.method,
-                                url=url,
-                                status_code=503,
-                                message=message,
-                                transaction_id=transaction.id,
-                            )
-                        # todo add web debug information if we are not on a production env
-                        return HttpResponse(message, status=503, content_type="text/plain")
+                        return await self.end_transaction(
+                            transaction,
+                            HttpError(
+                                "Unavailable",
+                                exception=exc,
+                                status=503,
+                                verbose_message="Service Unavailable (remote server unavailable)",
+                            ),
+                        )
 
                     except (httpcore.TimeoutException, httpx.TimeoutException) as exc:
-                        transaction.extras["status_class"] = "ERR"
-                        await self.end_transaction(transaction, HttpError("Timeout", exception=exc))
+                        return await self.end_transaction(
+                            transaction,
+                            HttpError(
+                                "Timeout",
+                                exception=exc,
+                                status=504,
+                                verbose_message="Gateway Timeout (remote server timeout)",
+                            ),
+                        )
 
-                        message = "Gateway Timeout (remote server timeout)"
-                        if self.notification_manager:
-                            await self.notification_manager.send_notification(
-                                method=context.request.method,
-                                url=url,
-                                status_code=504,
-                                message=message,
-                                transaction_id=transaction.id,
-                            )
-                        # todo add web debug information if we are not on a production env
-                        return HttpResponse(message, status=504, content_type="text/plain")
-
-                    except (httpcore.RemoteProtocolError, httpx.RemoteProtocolError):
-                        transaction.extras["status_class"] = "ERR"
-                        await self.end_transaction(transaction, HttpError("Remote server disconnected"))
-                        message = "Bad Gateway (remote server disconnected)"
-                        if self.notification_manager:
-                            await self.notification_manager.send_notification(
-                                method=context.request.method,
-                                url=url,
-                                status_code=502,
-                                message=message,
-                                transaction_id=transaction.id,
-                            )
-                        return HttpResponse(message, status=502, content_type="text/plain")
+                    except (httpcore.RemoteProtocolError, httpx.RemoteProtocolError) as exc:
+                        return await self.end_transaction(
+                            transaction,
+                            HttpError(
+                                "Remote server disconnected",
+                                exception=exc,
+                                status=502,
+                                verbose_message="Bad Gateway (remote server disconnected)",
+                            ),
+                        )
 
                     await remote_response.aread()
                     await remote_response.aclose()
-
-                    if 500 <= remote_response.status_code < 600:
-                        if self.notification_manager:
-                            await self.notification_manager.send_notification(
-                                method=context.request.method,
-                                url=url,
-                                status_code=remote_response.status_code,
-                                message=remote_response.reason_phrase,
-                                transaction_id=transaction.id,
-                            )
 
                 try:
                     _elapsed = f"{remote_response.elapsed.total_seconds()}s"
@@ -267,16 +237,15 @@ class HttpProxyController:
 
             await context.response.aread()
 
-            await self.end_transaction(transaction, context.response)
+            return await self.end_transaction(transaction, context.response)
 
-            return context.response
-
-    async def end_transaction(self, transaction, response: BaseHttpMessage):
+    async def end_transaction(self, transaction: Transaction, response: BaseHttpMessage):
         spent = int((datetime.now(UTC).timestamp() - transaction.started_at.timestamp()) * 100000) / 100
         transaction.finished_at = datetime.now(UTC)
         transaction.elapsed = spent
 
         if isinstance(response, HttpError):
+            transaction.extras["status_class"] = "ERR"
             self.warning(f"◀ {type(response).__name__} {response.message} ({spent}ms)", transaction=transaction)
         elif isinstance(response, HttpResponse):
             reason = codes.get_reason_phrase(response.status)
@@ -296,6 +265,16 @@ class HttpProxyController:
         # TODO delay after response is sent ?
         await self.adispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(transaction))
 
+        if isinstance(response, HttpError):
+            return HttpResponse(
+                response.verbose_message,
+                status=response.status,
+                content_type="text/plain",
+                extensions={"reason_phrase": response.verbose_message},
+            )
+
+        return cast(HttpResponse, response)
+
     async def _create_transaction_from_request(self, request: HttpRequest, *, tags=None):
         transaction = Transaction(
             id=generate_transaction_id_ksuid(),
@@ -304,6 +283,7 @@ class HttpProxyController:
             endpoint=self.name,
             tags=tags,
         )
+        request.extensions["transaction"] = transaction
 
         request_cache_control = request.headers.get("cache-control")
         if request_cache_control:
