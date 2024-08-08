@@ -12,6 +12,7 @@
     'docs/apps/proxy/examples/full-shorthand.yml',
     'docs/apps/proxy/examples/full.yml',
     'docs/apps/proxy/examples/multiple.yml',
+    'docs/apps/proxy/examples/pooled-aggressive.yml',
     'docs/apps/proxy/examples/pooled-fallback.yml',
     'docs/apps/proxy/examples/pooled-healthcheck.yml',
     'docs/apps/proxy/examples/pooled.yml',

@@ -70,7 +70,12 @@ def test_empty_pool_after_set_down():
 
 @respx.mock
 async def test_basic_probe():
-    remote = HttpRemote([{"url": "https://example.com/"}], probe=HttpProbe("GET", "/health"))
+    remote = HttpRemote(
+        [
+            HttpEndpoint(url="https://example.com/", failure_threshold=3),
+        ],
+        probe=HttpProbe("GET", "/health"),
+    )
     healthcheck = respx.get("https://example.com/health")
     url = remote["https://example.com"]
 
@@ -107,7 +112,12 @@ async def test_basic_probe():
 
 @respx.mock
 async def test_probe_errors():
-    remote = HttpRemote([{"url": "https://example.com"}], probe=HttpProbe("GET", "/health"))
+    remote = HttpRemote(
+        [
+            HttpEndpoint("https://example.com", failure_threshold=3),
+        ],
+        probe=HttpProbe("GET", "/health"),
+    )
     healthcheck = respx.get("https://example.com/health")
     url = remote["https://example.com"]
 
@@ -148,7 +158,12 @@ async def test_probe_errors():
 
 
 async def test_probe_timeout():
-    remote = HttpRemote([{"url": "https://example.com"}], probe=HttpProbe("GET", "/health", timeout=0.1))
+    remote = HttpRemote(
+        [
+            HttpEndpoint("https://example.com", failure_threshold=3),
+        ],
+        probe=HttpProbe("GET", "/health", timeout=0.1),
+    )
     healthcheck = respx.get("https://example.com/health")
     url = remote["https://example.com"]
 

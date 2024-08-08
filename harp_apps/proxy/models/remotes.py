@@ -9,7 +9,10 @@ from urllib.parse import urljoin
 import httpx
 from pyheck import shouty_snake
 
+from harp import get_logger
 from harp.utils.urls import normalize_url
+
+logger = get_logger(__name__)
 
 DOWN = -1
 CHECKING = 0
@@ -42,7 +45,7 @@ class HttpEndpoint:
     # todo is this the right place ? we don't use pools here but we need to define it in config. Maybe the pool logic
     #  should stay in HttpRemote
     pools: set = field(default_factory=set)
-    failure_threshold: int = 3
+    failure_threshold: int = 1
     success_threshold: int = 1
 
     failure_score = 0
@@ -56,30 +59,44 @@ class HttpEndpoint:
         if len(unknown_pools):
             raise ValueError(f"Invalid pool names: {unknown_pools}")
 
-    def probe_success(self):
+    def success(self):
+        """Returns a boolean indicating if a state change happened."""
         self.failure_score = 0
         self.success_score += 1
 
         if self.success_score >= self.success_threshold:
-            self.status = UP
+            if self.status != UP:
+                self.failure_reasons = None
+                self.status = UP
+                return True
         else:
-            self.status = CHECKING
+            if self.status != CHECKING:
+                self.status = CHECKING
+                return True
 
-        self.failure_reasons = None
+        return False
 
-    def probe_failure(self, reason: str = None):
+    def failure(self, reason: str = None):
+        """Returns a boolean indicating if a state change happened."""
         self.success_score = 0
         self.failure_score += 1
 
-        if self.failure_score >= self.failure_threshold:
-            self.status = DOWN
-        else:
-            self.status = CHECKING
-
         if self.failure_reasons is None:
             self.failure_reasons = set()
+
         if reason:
             self.failure_reasons.add(reason)
+
+        if self.failure_score >= self.failure_threshold:
+            if self.status != DOWN:
+                self.status = DOWN
+                return True
+        else:
+            if self.status != CHECKING:
+                self.status = CHECKING
+                return True
+
+        return False
 
     def _asdict(self, /, *, secure=True, with_status=False):
         return {
@@ -96,6 +113,7 @@ class HttpEndpoint:
             ),
             **({"pools": list(self.pools)} if len(self.pools) > 0 else {}),
             **({"status": humanize_status(self.status)} if with_status else {}),
+            **({"failure_reasons": list(sorted(self.failure_reasons))} if with_status and self.failure_reasons else {}),
         }
 
 
@@ -114,15 +132,19 @@ class HttpProbe:
         timeout: 5.0
     """
 
+    interval = 10.0
     timeout = 10.0
+    verify = True
 
     def __init__(
         self,
         method: str,
         path: str,
+        verify=True,
         headers=None,
         timeout=None,
         type="http",
+        interval=None,
     ):
         if type != "http":
             raise ValueError(f"Invalid probe type: {type}")
@@ -131,18 +153,30 @@ class HttpProbe:
         self.path = path
         self.headers = headers or {}
         self.timeout = float(timeout) if timeout else self.timeout
+        self.interval = float(interval) if interval else self.interval
+        self.verify = bool(verify)
 
     async def check(self, client: httpx.AsyncClient, url: HttpEndpoint):
+        probe_url = urljoin(url.url, self.path)
+        failure = None
         try:
             response = await client.request(
-                self.method, urljoin(url.url, self.path), headers=copy(self.headers), timeout=self.timeout
+                self.method,
+                probe_url,
+                headers=copy(self.headers),
+                timeout=self.timeout,
             )
             if 200 <= response.status_code < 400:
-                url.probe_success()
+                return url.success()
             else:
-                url.probe_failure(f"HTTP_{response.status_code}")
+                failure = f"HTTP_{response.status_code}"
+                return url.failure(failure)
         except Exception as exc:
-            url.probe_failure(shouty_snake(type(exc).__name__))
+            failure = shouty_snake(type(exc).__name__)
+            return url.failure(failure)
+        finally:
+            if failure:
+                logger.info(f"Probe failure: {url.url} -> {failure}")
 
     def _asdict(self, /, *, secure=True):
         return {
@@ -151,6 +185,8 @@ class HttpProbe:
             "path": self.path,
             **({"headers": self.headers} if self.headers else {}),
             **({"timeout": self.timeout} if self.timeout != type(self).timeout else {}),
+            **({"interval": self.interval} if self.interval != type(self).interval else {}),
+            **({"verify": self.verify} if self.verify != type(self).verify else {}),
         }
 
 
@@ -178,6 +214,7 @@ class HttpRemote:
     current_pool: Deque[HttpEndpoint] | None = None
     current_pool_name = None
     min_pool_size = 1
+    probe: Optional[HttpProbe] = None
 
     #: Events triggering the circuit breaker.
     break_on = {"network_error"}
@@ -225,7 +262,7 @@ class HttpRemote:
         # compute first pool
         self.refresh()
 
-    def __getitem__(self, url):
+    def __getitem__(self, url) -> HttpEndpoint:
         return self.endpoints[normalize_url(url)]
 
     def refresh(self):
@@ -258,10 +295,11 @@ class HttpRemote:
         Take into account an http status code to update the status of the url. Behaviour differs depending on the
         instance configuration (some considers 5xx as down, some ignores non-network errors).
         """
-        if "http_5xx" in self.break_on and 500 <= status < 600:
-            self.set_down(url)
-        elif "http_4xx" in self.break_on and 400 <= status < 500:
-            self.set_down(url)
+        if ("http_5xx" in self.break_on and 500 <= status < 600) or (
+            "http_4xx" in self.break_on and 400 <= status < 500
+        ):
+            if self[url].failure(f"HTTP_{status}"):
+                self.refresh()
 
     def set_down(self, url):
         old_status = self[url].status
@@ -294,9 +332,26 @@ class HttpRemote:
     async def check(self):
         """Uses the probe (luke), to check the health of each urls. It is also done on fallback and inactive urls, to
         ensure that they are ready in case we need them."""
-        async with httpx.AsyncClient() as client:
+        if self.probe is None:
+            return
+
+        state_changed = False
+
+        async with httpx.AsyncClient(verify=self.probe.verify) as client:
             for url in self.endpoints.values():
-                await self.probe.check(client, url)
+                url_state_changed = await self.probe.check(client, url)
+                state_changed |= url_state_changed
+
+        if state_changed:
+            self.refresh()
+
+    async def check_forever(self):
+        while True:
+            try:
+                await self.check()
+            except Exception as exc:
+                logger.error(f"Failed to check remote health: {exc}")
+            await asyncio.sleep(self.probe.interval)
 
     def _asdict(self, /, *, secure=True, with_status=False):
         return {

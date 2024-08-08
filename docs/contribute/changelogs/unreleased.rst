@@ -4,7 +4,12 @@ Unreleased
 Added
 :::::
 
-* Core/Http: Stream attribute in both HttpRequest and HttpResponse to allow handling streaming objects and to get closer to httpx interfaces.
+* Core/Http: Stream attribute in both HttpRequest and HttpResponse to allow handling streaming objects and to get
+  closer to httpx interfaces.
+* Proxy: Added support for multiple remote urls for a given endpoint.
+* Proxy: Added support for default/fallback pools in remote configuration for resilience.
+* Proxy: Added a simple but functional circuit breaker implementation.
+* Proxy: Add probe implementation in background.
 
 Changed
 :::::::

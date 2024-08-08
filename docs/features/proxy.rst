@@ -78,7 +78,7 @@ Circuit breaker
 
 .. versionadded:: 0.7
 
-.. todo:: implement & document
+For now, see :doc:`Circuit Breaker </features/circuit-breaker>`.
 
 
 Client

@@ -16,7 +16,7 @@ export default function TopologyRemoteTable({
   return (
     <Pane className="flex flex-col divide-y divide-gray-200">
       {remoteEndpoints.map((remoteEndpoint, j) => (
-        <div key={j} className="flex items-start">
+        <div key={j} className="flex items-center">
           <span className="inline-flex items-center gap-x-1 px-2 py-0.5 text-sm font-medium text-gray-800">
             {current_pool.includes(remoteEndpoint.url) ? (
               <span title="Remote endpoint is active">
@@ -36,6 +36,9 @@ export default function TopologyRemoteTable({
             </a>
           </span>
           <StatusDropDown endpoint={endpoint} remoteEndpoint={remoteEndpoint} />
+          {remoteEndpoint.failure_reasons ? (
+            <code className="inline-flex font-mono text-xs">{remoteEndpoint.failure_reasons.join(",")}</code>
+          ) : null}
           {(remoteEndpoint.pools || ["default"]).map((pool, k) => (
             <span className="inline-flex items-center gap-x-1 rounded-full px-2 py-0.5 text-xs font-medium text-gray-500 ring-1 ring-inset ring-gray-200 mx-1">
               <InboxIcon key={k} className="size-3" /> {pool}

@@ -6,6 +6,7 @@ from urllib.parse import urlencode, urljoin, urlparse
 import httpcore
 import httpx
 from httpx import AsyncClient, codes
+from pyheck import shouty_snake
 from whistle import IAsyncEventDispatcher
 
 from harp import __parsed_version__, get_logger
@@ -180,7 +181,8 @@ class HttpProxyController:
                         remote_response: httpx.Response = await self.http_client.send(remote_request)
                     except (httpcore.NetworkError, httpx.NetworkError) as exc:
                         if "network_error" in self.remote.break_on:
-                            self.remote.set_down(remote_url)
+                            if self.remote[remote_url].failure(shouty_snake(type(exc).__name__)):
+                                self.remote.refresh()
                         transaction.extras["status_class"] = "ERR"
                         await self.end_transaction(transaction, HttpError("Unavailable", exception=exc))
                         # todo add web debug information if we are not on a production env
@@ -189,16 +191,18 @@ class HttpProxyController:
                         )
                     except (httpcore.TimeoutException, httpx.TimeoutException) as exc:
                         if "network_error" in self.remote.break_on:
-                            self.remote.set_down(remote_url)
+                            if self.remote[remote_url].failure(shouty_snake(type(exc).__name__)):
+                                self.remote.refresh()
                         transaction.extras["status_class"] = "ERR"
                         await self.end_transaction(transaction, HttpError("Timeout", exception=exc))
                         # todo add web debug information if we are not on a production env
                         return HttpResponse(
                             "Gateway Timeout (remote server timeout)", status=504, content_type="text/plain"
                         )
-                    except (httpcore.RemoteProtocolError, httpx.RemoteProtocolError):
+                    except (httpcore.RemoteProtocolError, httpx.RemoteProtocolError) as exc:
                         if "network_error" in self.remote.break_on:
-                            self.remote.set_down(remote_url)
+                            if self.remote[remote_url].failure(shouty_snake(type(exc).__name__)):
+                                self.remote.refresh()
                         transaction.extras["status_class"] = "ERR"
                         await self.end_transaction(transaction, HttpError("Remote server disconnected"))
                         return HttpResponse(
