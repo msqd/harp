@@ -75,7 +75,7 @@ class HttpRequest(BaseHttpMessage):
             raise RuntimeError("Request body has not been read yet, please await `read()` first.")
         return self._body
 
-    async def aread(self):
+    async def aread(self) -> bytes:
         """Read all chunks from request. We may want to be able to read partial body later, but for now it's all or
         nothing. This method does nothing if the body has already been read."""
         if not hasattr(self, "_body"):

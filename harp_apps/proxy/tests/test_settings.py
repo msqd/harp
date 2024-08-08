@@ -44,7 +44,7 @@ def test_short_syntax():
                 "port": 8080,
                 "remote": {
                     "endpoints": [
-                        {"url": "http://example.com/"},
+                        {"url": "http://example.com/", "pools": ["default"]},
                     ],
                 },
             }
@@ -67,8 +67,8 @@ def test_probe_syntax():
                 "port": 8080,
                 "remote": {
                     "endpoints": [
-                        {"url": "http://example.com/"},
-                        {"url": "http://fallback.example.com/"},
+                        {"url": "http://example.com/", "pools": ["default"]},
+                        {"url": "http://fallback.example.com/", "pools": ["default"]},
                     ],
                     "probe": {"type": "http", "method": "GET", "path": "/", "timeout": 5.0},
                 },

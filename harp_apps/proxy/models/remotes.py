@@ -1,3 +1,5 @@
+import asyncio
+import warnings
 from collections import deque
 from copy import copy
 from dataclasses import dataclass, field
@@ -9,16 +11,16 @@ from pyheck import shouty_snake
 
 from harp.utils.urls import normalize_url
 
-HALF_OPEN = 0
-CLOSED = 1
-OPEN = -1
+DOWN = -1
+CHECKING = 0
+UP = 1
 
 DEFAULT_POOL = "default"
 FALLBACK_POOL = "fallback"
 
 
 def humanize_status(status):
-    return {HALF_OPEN: "half-open", CLOSED: "closed", OPEN: "open"}.get(status, "unknown")
+    return {CHECKING: "checking", UP: "up", DOWN: "down"}.get(status, "unknown")
 
 
 @dataclass
@@ -36,7 +38,7 @@ class HttpEndpoint:
     """
 
     url: str
-    status: int = HALF_OPEN
+    status: int = CHECKING
     # todo is this the right place ? we don't use pools here but we need to define it in config. Maybe the pool logic
     #  should stay in HttpRemote
     pools: set = field(default_factory=set)
@@ -59,9 +61,9 @@ class HttpEndpoint:
         self.success_score += 1
 
         if self.success_score >= self.success_threshold:
-            self.status = CLOSED
+            self.status = UP
         else:
-            self.status = HALF_OPEN
+            self.status = CHECKING
 
         self.failure_reasons = None
 
@@ -70,9 +72,9 @@ class HttpEndpoint:
         self.failure_score += 1
 
         if self.failure_score >= self.failure_threshold:
-            self.status = OPEN
+            self.status = DOWN
         else:
-            self.status = HALF_OPEN
+            self.status = CHECKING
 
         if self.failure_reasons is None:
             self.failure_reasons = set()
@@ -152,6 +154,9 @@ class HttpProbe:
         }
 
 
+ALL_BREAK_ON_VALUES = {"http_4xx", "http_5xx", "network_error"}
+
+
 class HttpRemote:
     """
     A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
@@ -174,35 +179,50 @@ class HttpRemote:
     current_pool_name = None
     min_pool_size = 1
 
+    #: Events triggering the circuit breaker.
+    break_on = {"network_error"}
+
+    #: Delay after which endpoints that are marked as down will be checked again.
+    delay_for_checking_down_endpoints = 10.0
+
     def __init__(
         self,
         endpoints: Iterable[HttpEndpoint | dict | str] | str = (),
         *,
         min_pool_size=None,
         probe: Optional[HttpProbe | dict] = None,
+        break_on: Optional[set] = None,
     ):
-        self.current_pool_name = DEFAULT_POOL
-
-        if isinstance(probe, dict):
-            probe = HttpProbe(**probe)
-        self.probe = probe
-
+        # endpoints
         self.endpoints = {}
-
+        self.current_pool_name = DEFAULT_POOL
+        self.current_pool = deque()
         if isinstance(endpoints, str):
             endpoints = [endpoints]
-
         for endpoint in endpoints:
             if isinstance(endpoint, str):
                 endpoint = {"url": endpoint}
-
-            endpoint = HttpEndpoint(**endpoint)
+            if not isinstance(endpoint, HttpEndpoint):
+                endpoint = HttpEndpoint(**endpoint)
             self.endpoints.setdefault(endpoint.url, endpoint)
             if not self.endpoints[endpoint.url].pools:
                 self.endpoints[endpoint.url].pools.add(DEFAULT_POOL)
 
+        # min pool size
         self.min_pool_size = max(0, min_pool_size or self.min_pool_size)
-        self.current_pool = deque()
+
+        # probe
+        if isinstance(probe, dict):
+            probe = HttpProbe(**probe)
+        self.probe = probe
+
+        # break on
+        break_on = set(break_on) if break_on is not None else self.break_on
+        if not break_on.issubset(ALL_BREAK_ON_VALUES):
+            raise ValueError(f"Invalid break_on values: {break_on}")
+        self.break_on = break_on
+
+        # compute first pool
         self.refresh()
 
     def __getitem__(self, url):
@@ -210,13 +230,15 @@ class HttpRemote:
 
     def refresh(self):
         refreshed: deque[HttpEndpoint] = deque()
+        available_count = 0
         for endpoint in self.endpoints.values():
-            if DEFAULT_POOL in endpoint.pools and endpoint.status >= HALF_OPEN:
+            if DEFAULT_POOL in endpoint.pools and endpoint.status >= CHECKING:
                 refreshed.append(endpoint)
+                available_count += 1
 
-        if len(refreshed) < self.min_pool_size:
+        if available_count < self.min_pool_size:
             for endpoint in self.endpoints.values():
-                if FALLBACK_POOL in endpoint.pools and endpoint.status >= HALF_OPEN:
+                if FALLBACK_POOL in endpoint.pools and endpoint.status >= CHECKING:
                     self.current_pool_name = FALLBACK_POOL
                     refreshed.append(endpoint)
         else:
@@ -233,16 +255,42 @@ class HttpRemote:
         finally:
             self.current_pool.rotate(-1)
 
+    def notify_url_status(self, url, status):
+        """
+        Take into account an http status code to update the status of the url. Behaviour differs depending on the
+        instance configuration (some considers 5xx as down, some ignores non-network errors).
+        """
+        if "http_5xx" in self.break_on and 500 <= status < 600:
+            self.set_down(url)
+        elif "http_4xx" in self.break_on and 400 <= status < 500:
+            self.set_down(url)
+
     def set_down(self, url):
-        self[url].status = OPEN
+        old_status = self[url].status
+
+        self[url].status = DOWN
+
+        if old_status >= DOWN:
+
+            async def delayed_set_checking():
+                await asyncio.sleep(self.delay_for_checking_down_endpoints)
+                if self[url].status == DOWN:
+                    self.set_checking(url)
+                del self[url].delayed_set_checking
+
+            try:
+                self[url].delayed_set_checking = asyncio.create_task(delayed_set_checking())
+            except RuntimeError as exc:
+                warnings.warn(f"Failed to schedule delayed checking state: {exc}")
+
         self.refresh()
 
     def set_checking(self, url):
-        self[url].status = HALF_OPEN
+        self[url].status = CHECKING
         self.refresh()
 
     def set_up(self, url):
-        self[url].status = CLOSED
+        self[url].status = UP
         self.refresh()
 
     async def check(self):
@@ -260,4 +308,5 @@ class HttpRemote:
             **({"min_pool_size": self.min_pool_size} if self.min_pool_size != type(self).min_pool_size else {}),
             **({"probe": self.probe._asdict(secure=secure)} if self.probe else {}),
             **({"current_pool": list(x.url for x in self.current_pool)} if with_status else {}),
+            **({"break_on": list(sorted(self.break_on))} if self.break_on != type(self).break_on else {}),
         }

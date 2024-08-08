@@ -1,11 +1,12 @@
 from typing import cast
 
+import orjson
 from sqlalchemy import func, select
 from sqlalchemy.orm import aliased, joinedload
 
 from harp import __revision__, __version__, get_logger
 from harp.config import asdict
-from harp.controllers import GetHandler, RouterPrefix, RoutingController
+from harp.controllers import GetHandler, PutHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest, HttpResponse
 from harp.typing.global_settings import GlobalSettings
 from harp.views.json import json
@@ -47,6 +48,37 @@ class SystemController(RoutingController):
         if not settings:
             return HttpResponse(b"Proxy is not configured", status=404)
         return json({"endpoints": [endpoint._asdict(with_status=True) for endpoint in settings.endpoints]})
+
+    @PutHandler("/proxy")
+    async def put_proxy(self, request: HttpRequest):
+        settings: ProxySettings | None = self.settings.get("proxy", None)
+        if not settings:
+            return HttpResponse(b"Proxy is not configured", status=404)
+
+        try:
+            data = orjson.loads(await request.aread())
+        except orjson.JSONDecodeError as exc:
+            return HttpResponse(f"Invalid JSON: {exc}", status=400)
+
+        # find endpoint
+        endpoint = None
+        for _endpoint in settings.endpoints:
+            if _endpoint.name == data.get("endpoint"):
+                endpoint = _endpoint
+                break
+        if not endpoint:
+            return HttpResponse(f"Endpoint not found: {request.query.get('endpoint')}", status=404)
+
+        if data.get("action") == "up":
+            endpoint.remote.set_up(data.get("url"))
+        elif data.get("action") == "down":
+            endpoint.remote.set_down(data.get("url"))
+        elif data.get("action") == "checking":
+            endpoint.remote.set_checking(data.get("url"))
+        else:
+            return HttpResponse(b"Invalid action", status=400)
+
+        return await self.get_proxy()
 
     @GetHandler("/settings")
     async def get_settings(self):

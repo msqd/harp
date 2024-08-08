@@ -26,7 +26,7 @@ from .events import (
     EVENT_TRANSACTION_STARTED,
     ProxyFilterEvent,
 )
-from .models.remotes import HttpRemote
+from .models.remotes import CHECKING, HttpRemote
 
 logger = get_logger(__name__)
 
@@ -118,7 +118,7 @@ class HttpProxyController:
             kwargs.update(transaction.extras)
         logger.warning(message, *args, **kwargs)
 
-    async def __call__(self, request: HttpRequest):
+    async def __call__(self, request: HttpRequest) -> HttpResponse:
         """Handle an incoming request and proxy it to the configured URL.
 
         :param request: ASGI request
@@ -134,12 +134,18 @@ class HttpProxyController:
             context = ProxyFilterEvent(self.name, request=request)
             await self.adispatch(EVENT_FILTER_PROXY_REQUEST, context)
 
-            remote_url = self.remote.get_url()
-            parsed_remote_url = urlparse(remote_url)
+            remote_err = None
+            try:
+                remote_url = self.remote.get_url()
+            except IndexError as exc:
+                remote_url = None
+                remote_err = exc
+            parsed_remote_url = urlparse(remote_url) if remote_url else None
 
             # override a few required headers. That may be done in the httpx request instead of here.
             # And that would remove the need for WrappedHttpRequest? Maybe not because of our custom filters.
-            context.request.headers["host"] = parsed_remote_url.netloc
+            if parsed_remote_url:
+                context.request.headers["host"] = parsed_remote_url.netloc
             if self.user_agent:
                 context.request.headers["user-agent"] = self.user_agent
 
@@ -147,6 +153,13 @@ class HttpProxyController:
             transaction = await self._create_transaction_from_request(
                 context.request, tags=self._extract_tags_from_request(context.request)
             )
+            if not remote_url:
+                transaction.extras["status_class"] = "ERR"
+                await self.end_transaction(transaction, HttpError("No remote", exception=remote_err))
+                # todo add web debug information if we are not on a production env
+                return HttpResponse(
+                    "Service Unavailable (no remote endpoint available)", status=503, content_type="text/plain"
+                )
             await context.request.aread()
             url = urljoin(remote_url, context.request.path) + (
                 f"?{urlencode(context.request.query)}" if context.request.query else ""
@@ -172,6 +185,8 @@ class HttpProxyController:
                     try:
                         remote_response: httpx.Response = await self.http_client.send(remote_request)
                     except (httpcore.NetworkError, httpx.NetworkError) as exc:
+                        if "network_error" in self.remote.break_on:
+                            self.remote.set_down(remote_url)
                         transaction.extras["status_class"] = "ERR"
                         await self.end_transaction(transaction, HttpError("Unavailable", exception=exc))
                         # todo add web debug information if we are not on a production env
@@ -179,6 +194,8 @@ class HttpProxyController:
                             "Service Unavailable (remote server unavailable)", status=503, content_type="text/plain"
                         )
                     except (httpcore.TimeoutException, httpx.TimeoutException) as exc:
+                        if "network_error" in self.remote.break_on:
+                            self.remote.set_down(remote_url)
                         transaction.extras["status_class"] = "ERR"
                         await self.end_transaction(transaction, HttpError("Timeout", exception=exc))
                         # todo add web debug information if we are not on a production env
@@ -186,13 +203,21 @@ class HttpProxyController:
                             "Gateway Timeout (remote server timeout)", status=504, content_type="text/plain"
                         )
                     except (httpcore.RemoteProtocolError, httpx.RemoteProtocolError):
+                        if "network_error" in self.remote.break_on:
+                            self.remote.set_down(remote_url)
                         transaction.extras["status_class"] = "ERR"
                         await self.end_transaction(transaction, HttpError("Remote server disconnected"))
                         return HttpResponse(
                             "Bad Gateway (remote server disconnected)", status=502, content_type="text/plain"
                         )
+
+                    self.remote.notify_url_status(remote_url, remote_response.status_code)
+
                     await remote_response.aread()
                     await remote_response.aclose()
+
+                if self.remote[remote_url].status == CHECKING and 200 <= remote_response.status_code < 400:
+                    self.remote.set_up(remote_url)
 
                 try:
                     _elapsed = f"{remote_response.elapsed.total_seconds()}s"

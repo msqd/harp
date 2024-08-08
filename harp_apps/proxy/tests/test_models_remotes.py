@@ -195,6 +195,7 @@ def test_remote_asdict():
         "endpoints": [
             {
                 "url": "http://example.com/",
+                "pools": ["default"],
             },
         ],
     }
@@ -208,6 +209,7 @@ def test_remote_asdict_with_nondefault_poolsize_and_thresholds():
         "endpoints": [
             {
                 "url": "http://example.com/",
+                "pools": ["default"],
                 "success_threshold": 2,
                 "failure_threshold": 4,
             },

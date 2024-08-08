@@ -20,7 +20,7 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": "./src"
   },
-  "include": ["src", "types", "vitest.setup.ts", ".ladle", "twin.d.ts", "vite.config.ts"],
+  "include": ["src", "types/**/*.d.ts", "vitest.setup.ts", ".ladle", "vite.config.ts", "../../**/*.py.d.ts"],
   "references": [
     {
       "path": "./tsconfig.node.json"

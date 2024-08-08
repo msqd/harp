@@ -120,6 +120,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         Parameters:
             values (dict): A dictionary of configuration values to add.
         """
+        # TODO: split first key on dots, with quote escaping, and create a recursive dict to apply correct merging.
         for k, v in values.items():
             self.add_value(k, v)
 
