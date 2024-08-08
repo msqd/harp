@@ -230,13 +230,11 @@ class HttpRemote:
 
     def refresh(self):
         refreshed: deque[HttpEndpoint] = deque()
-        available_count = 0
         for endpoint in self.endpoints.values():
             if DEFAULT_POOL in endpoint.pools and endpoint.status >= CHECKING:
                 refreshed.append(endpoint)
-                available_count += 1
 
-        if available_count < self.min_pool_size:
+        if len(refreshed) < self.min_pool_size:
             for endpoint in self.endpoints.values():
                 if FALLBACK_POOL in endpoint.pools and endpoint.status >= CHECKING:
                     self.current_pool_name = FALLBACK_POOL

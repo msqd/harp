@@ -62,7 +62,7 @@ class HttpProxyController:
 
     def __init__(
         self,
-        remote: HttpRemote,
+        remote: HttpRemote = None,
         *,
         http_client: AsyncClient,
         dispatcher: Optional[IAsyncEventDispatcher] = None,
@@ -119,13 +119,7 @@ class HttpProxyController:
         logger.warning(message, *args, **kwargs)
 
     async def __call__(self, request: HttpRequest) -> HttpResponse:
-        """Handle an incoming request and proxy it to the configured URL.
-
-        :param request: ASGI request
-        :param response: ASGI response
-        :return:
-
-        """
+        """Handle an incoming request and proxy it to the configured URL."""
 
         labels = {"name": self.name or "-", "method": request.method}
 
