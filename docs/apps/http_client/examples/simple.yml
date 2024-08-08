@@ -1,11 +1,14 @@
 http_client:
-  # HTTP timeout (default to `harp.settings.DEFAULT_TIMEOUT`)
+  # Timeout error will occur if the HTTP client does not receive a response within 10
+  # seconds (default is 30 seconds).
   timeout: 10.0
 
-  # Cache configuration (optional)
-  cache:
-    enabled: true  # Set to false to disable cache entirely (optional)
-
-    controller:  # Override the cache controller definition (optional)
-      cacheable_methods: [GET, HEAD]  # Which HTTP methods should be cacheable? (default: [GET, HEAD])
-      force_cache: true  # or any other hishel.Controller option ....
+  # Transport configuration (optional)
+  transport:
+    # You can customize the default transport implementation. The values shown are the
+    # defaults, and you only need to set them if you want to provide different values.
+    "@type": "httpx:AsyncHTTPTransport"
+    retries: 0
+    verify: true
+    http1: true
+    http2: false

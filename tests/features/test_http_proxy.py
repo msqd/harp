@@ -74,7 +74,17 @@ class TestAsgiProxyWithStubApi:
         builder.applications.add("http_client")
         builder.applications.add("proxy")
         builder.applications.add("storage")
-        builder.add_values({"proxy.endpoints": [{"port": 80, "name": "test", "url": test_api.url}]})
+        builder.add_values(
+            {
+                "proxy.endpoints": [
+                    {
+                        "port": 80,
+                        "name": "test",
+                        "url": test_api.url,
+                    }
+                ]
+            }
+        )
 
         system = await SystemBuilder(builder).abuild()
 

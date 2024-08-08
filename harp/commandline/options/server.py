@@ -16,6 +16,15 @@ class ConfigOptions:
         self.options = dict(map(lambda x: x.split("=", 1), self.options))
 
 
+def _parse_option(x):
+    key, value = x.split("=", 1)
+    if value == "true":
+        value = True
+    elif value == "false":
+        value = False
+    return key, value
+
+
 @dataclass(kw_only=True)
 class CommonServerOptions(dict):
     """
@@ -44,7 +53,7 @@ class CommonServerOptions(dict):
         )
 
     def __post_init__(self):
-        self.options = dict(map(lambda x: x.split("=", 1), self.options))
+        self.options = dict(map(_parse_option, self.options))
         self.endpoints = dict(map(lambda x: x.split("=", 1), self.endpoints))
 
 

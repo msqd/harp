@@ -1,8 +1,11 @@
 import os
 from functools import lru_cache
 from glob import glob
+from itertools import chain
+from os.path import dirname
 
 import harp
+import harp_apps
 
 EXTENSIONS = [".yml", ".yaml", ".toml"]
 
@@ -39,10 +42,50 @@ def get_example_filename(name):
     return guess_extension(os.path.join(get_examples_dirname(), name))
 
 
+def get_available_examples_namespaces():
+    _default_examples = dirname(__import__("harp.config.examples", fromlist=["__file__"]).__file__)
+
+    _namespaces = {
+        None: _default_examples,
+    }
+
+    _apps_root_dir = dirname(harp_apps.__file__)
+
+    for _dirname in glob("**/examples", root_dir=_apps_root_dir, recursive=True):
+        _pkg, _ = _dirname.rsplit("/", 1)
+        _pkg = ".".join(("harp_apps", *_pkg.split("/")))
+        _app_pkg = _pkg + ".__app__"
+        try:
+            __import__(_app_pkg)
+        except ImportError:
+            continue
+        try:
+            _example_dirname = dirname(__import__(_pkg + ".examples", fromlist=["__file__"]).__file__)
+        except (ImportError, AttributeError):
+            continue
+
+        _namespace = _pkg.rsplit(".")[-1]
+        if os.path.isdir(_example_dirname):
+            _namespaces[_namespace] = _example_dirname
+    return _namespaces
+
+
 @lru_cache
 def get_available_examples():
-    return list(sorted((os.path.splitext(os.path.basename(x))[0] for x in glob(get_examples_dirname() + "/*.yml"))))
+    examples = []
+    for _namespace, _dirname in get_available_examples_namespaces().items():
+        examples.extend(
+            (
+                ":".join(filter(None, (_namespace, os.path.splitext(os.path.basename(x))[0])))
+                for x in glob(_dirname + "/*.yml")
+            )
+        )
+    return list(sorted(examples))
 
 
 def _get_available_documentation_examples_filenames():
-    return list(sorted((glob(harp.ROOT_DIR + "/docs/**/examples/*.yml", recursive=True))))
+    files = chain(
+        *(glob(harp.ROOT_DIR + f"/docs/**/examples/*.{format}", recursive=True) for format in ("yml", "yaml", "toml"))
+    )
+
+    return list(sorted(files))

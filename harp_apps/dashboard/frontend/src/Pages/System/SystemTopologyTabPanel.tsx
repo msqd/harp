@@ -1,31 +1,26 @@
-import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
-import { useSystemSettingsQuery } from "Domain/System"
+import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
+import { useSystemProxyQuery } from "Domain/System"
 import { Pane } from "ui/Components/Pane"
 import { Tab } from "ui/Components/Tabs"
 import { H2 } from "ui/Components/Typography"
 
-import { Topology } from "./Components/Topology"
+import { TopologyTable } from "./Topology/TopologyTable.tsx"
 
 export function SystemTopologyTabPanel() {
-  const query = useSystemSettingsQuery()
-  interface ProxyData {
-    endpoints?: { name: string; port: number; url: string; description?: string }[]
-  }
+  const query = useSystemProxyQuery()
 
   return (
-    <Tab.Panel>
-      <OnQuerySuccess query={query}>
-        {(query) => {
-          const proxyData = query.data.proxy as ProxyData
-          const endpoints = proxyData.endpoints
-          return (
+    <OnQuerySuccess query={query}>
+      {(query) => {
+        return (
+          <Tab.Panel>
             <Pane>
               <H2>Topology</H2>
-              <Topology endpoints={endpoints} />
+              <TopologyTable endpoints={query.data.endpoints} />
             </Pane>
-          )
-        }}
-      </OnQuerySuccess>
-    </Tab.Panel>
+          </Tab.Panel>
+        )
+      }}
+    </OnQuerySuccess>
   )
 }

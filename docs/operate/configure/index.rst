@@ -1,9 +1,15 @@
 Configuration
 =============
 
+.. versionadded:: 0.5
+
 Configuration in HARP is dynamically built from various sources, with each subsequent source having the ability to
 override the previous ones. This design ensures maximum flexibility and adaptability to different environments and
 deployment scenarios.
+
+.. figure:: /operate/configure/overview.svg
+   :alt: Configuration Sources
+   :align: center
 
 The sources of configuration, listed from the lowest to the highest precedence, are:
 

@@ -9,7 +9,7 @@ builtins.__sphinx__ = True
 
 sys.path.insert(0, os.path.abspath(".."))
 
-project = "Harp Proxy"
+project = "HARP Proxy"
 
 first_year, current_year = 2023, datetime.now().year
 author = "Romain Dorgueil"

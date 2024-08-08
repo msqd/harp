@@ -1,7 +1,7 @@
 from functools import cached_property
 from typing import Literal, Optional
 
-from harp.config import BaseSetting, DisableableBaseSettings, FromFileSetting, settings_dataclass
+from harp.config import DisableableBaseSettings, FromFileSetting, Settings, settings_dataclass
 from harp.errors import ConfigurationRemovedSettingError, ConfigurationValueError
 
 
@@ -10,7 +10,7 @@ def _plain(actual, expected):
 
 
 @settings_dataclass
-class DashboardAuthBasicSetting(BaseSetting):
+class DashboardAuthBasicSetting(Settings):
     type: str = "basic"
     algorithm: str = "pbkdf2_sha256"
     users: Optional[FromFileSetting | dict[str, str]] = None
@@ -44,7 +44,7 @@ class DashboardAuthBasicSetting(BaseSetting):
 
 
 @settings_dataclass
-class DashboardAuthSetting(BaseSetting):
+class DashboardAuthSetting(Settings):
     type: Optional[Literal["basic"] | None] = None
 
     def __new__(cls, **kwargs):
@@ -76,7 +76,7 @@ class DashboardDevserverSettings(DisableableBaseSettings):
 
 
 @settings_dataclass
-class DashboardSettings(BaseSetting):
+class DashboardSettings(Settings):
     """Root settings for the dashboard."""
 
     port: int | str = 4080

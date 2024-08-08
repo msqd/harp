@@ -20,6 +20,7 @@ Submodules
     harp.utils.collections
     harp.utils.commandline
     harp.utils.config
+    harp.utils.console
     harp.utils.dates
     harp.utils.env
     harp.utils.guids

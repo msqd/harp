@@ -1,10 +1,10 @@
-from .base import BaseSetting, asdict, settings_dataclass
+from .base import Settings, asdict, settings_dataclass
 from .disabled import DisableableBaseSettings, DisabledSettings
 from .from_file import FromFileSetting
 from .lazy import Definition, Lazy
 
 __all__ = [
-    "BaseSetting",
+    "Settings",
     "Definition",
     "DisableableBaseSettings",
     "DisabledSettings",

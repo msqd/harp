@@ -1,0 +1,6 @@
+proxy:
+  endpoints:
+    - name: httpbin # a unique name for the endpoint, used to reference it in code, rules and dashboard
+      description: An informative description of the endpoint (optional)
+      port: 4000 # the local listening port for this endpoint
+      url: "https://api1.example.com/"

@@ -1,0 +1,17 @@
+proxy:
+  endpoints:
+    - name: pooled
+      port: 4010
+      remote:
+        min_pool_size: 2
+        endpoints:
+          - { url: "https://api1-internal.harp.demo/" }
+          - { url: "https://api2-internal.harp.demo/" }
+          - { url: "https://api3-internal.harp.demo/", pools: [fallback] }
+          - { url: "https://api4-internal.harp.demo/", pools: [fallback] }
+        probe:
+          method: GET
+          path: "/get"
+          interval: 5
+          verify: False
+        break_on: [http_5xx, network_error]

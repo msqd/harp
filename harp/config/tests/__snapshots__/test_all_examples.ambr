@@ -5,11 +5,22 @@
     'docs/apps/dashboard/examples/auth.yml',
     'docs/apps/dashboard/examples/devserver.yml',
     'docs/apps/dashboard/examples/main.yml',
+    'docs/apps/http_client/examples/cache.yml',
     'docs/apps/http_client/examples/full.yml',
     'docs/apps/http_client/examples/simple.yml',
     'docs/apps/notifications/examples/dashboard.yml',
     'docs/apps/notifications/examples/main.yml',
+    'docs/apps/proxy/examples/basics.yml',
+    'docs/apps/proxy/examples/full-shorthand.yml',
+    'docs/apps/proxy/examples/full.yml',
+    'docs/apps/proxy/examples/multiple.yml',
+    'docs/apps/proxy/examples/pooled-aggressive.yml',
+    'docs/apps/proxy/examples/pooled-fallback.yml',
+    'docs/apps/proxy/examples/pooled-healthcheck.yml',
+    'docs/apps/proxy/examples/pooled.yml',
     'docs/apps/proxy/examples/swapi.yml',
+    'docs/apps/rules/examples/overview.toml',
+    'docs/apps/rules/examples/rules.toml',
     'docs/apps/rules/examples/rules.yml',
     'docs/apps/storage/examples/mysql-aiomysql.yml',
     'docs/apps/storage/examples/mysql-asyncmy.yml',
@@ -18,13 +29,15 @@
     'docs/apps/storage/examples/sqlite-aiosqlite.yml',
   ])
 # ---
-# name: test_examples_list
+# name: test_get_available_examples
   list([
     'auth.basic',
-    'httpbin',
-    'httpbins',
     'postgres',
+    'proxy:httpbin',
+    'proxy:httpbins',
+    'proxy:pooled',
     'repositories',
+    'rules:teapot',
     'sentry',
     'sqlite',
   ])

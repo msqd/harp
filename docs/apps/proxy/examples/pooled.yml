@@ -1,0 +1,8 @@
+proxy:
+  endpoints:
+    - name: examples
+      port: 4000
+      remote:
+        endpoints:
+          - { url: "https://api1.example.com/" }
+          - { url: "https://api2.example.com/" }

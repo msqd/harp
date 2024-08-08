@@ -1,0 +1,15 @@
+proxy:
+  endpoints:
+    - name: httpbins
+      port: 4001
+      remote:
+        endpoints:
+          - { url: "https://api1.example.com/" }
+          - { url: "https://api2.example.com/" }
+          - { url: "https://api3.example.com/", pools: [fallback] }
+          - { url: "https://api4.example.com/", pools: [fallback] }
+        probe:
+          method: GET
+          path: /health
+          headers: { x-probe: "true" }
+          timeout: 10

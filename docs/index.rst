@@ -1,4 +1,4 @@
-Harp — HTTP API Runtime Proxy
+HARP — HTTP API Runtime Proxy
 =============================
 
 .. table::
@@ -6,13 +6,14 @@ Harp — HTTP API Runtime Proxy
     :widths: 10 90
 
     +-----------------------------+------------------------------------------------------------------------------------+
-    | .. figure:: images/logo.png | HARP Proxy operates as a sidecar sitting between your application and remote       |
-    |    :alt: HARP logo          | APIs, elevating their reliability, performance, and security. It adds builtin      |
-    |                             | observability features via its dashboard and monitoring, and reduces the amount of |
-    |                             | userland code required for common HTTP-related, non-business features.             |
+    | .. figure:: images/logo.png | `HARP Proxy <https://harp-proxy.net/>`_ operates as a sidecar sitting between your |
+    |    :alt: HARP logo          | application and remote APIs, elevating their reliability, performance, and         |
+    |                             | security. It adds builtin observability features via its dashboard and monitoring, |
+    |                             | and reduces the amount of userland code required for common HTTP-related,          |
+    |                             | non-business features.                                                             |
     |                             |                                                                                    |
     |                             | Whether you are in the development phase or ready for production, HARP serves as a |
-    |                             | versatile tool that caters to different purposes.                                  |
+    |                             | handy companion for API consumers.                                                 |
     +-----------------------------+------------------------------------------------------------------------------------+
 
 .. include:: /_quicktoc.rst

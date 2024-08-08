@@ -6,6 +6,7 @@ from urllib.parse import urlencode, urljoin, urlparse
 import httpcore
 import httpx
 from httpx import AsyncClient, codes
+from pyheck import shouty_snake
 from whistle import IAsyncEventDispatcher
 
 from harp import __parsed_version__, get_logger
@@ -26,6 +27,7 @@ from .events import (
     EVENT_TRANSACTION_STARTED,
     ProxyFilterEvent,
 )
+from .models.remotes import CHECKING, HttpRemote
 
 logger = get_logger(__name__)
 
@@ -51,7 +53,7 @@ class HttpProxyController:
     _dispatcher: Optional[IAsyncEventDispatcher] = None
     """Event dispatcher for this controller."""
 
-    url: str
+    remote: HttpRemote
     """Base URL to proxy requests to."""
 
     @cached_property
@@ -61,7 +63,7 @@ class HttpProxyController:
 
     def __init__(
         self,
-        url,
+        remote: HttpRemote = None,
         *,
         http_client: AsyncClient,
         dispatcher: Optional[IAsyncEventDispatcher] = None,
@@ -69,12 +71,10 @@ class HttpProxyController:
         logging=True,
     ):
         self.http_client = http_client
-        self.url = url or self.url
+        self.remote = remote or self.remote
         self.name = name or self.name
         self._logging = logging
         self._dispatcher = dispatcher or self._dispatcher
-
-        self.parsed_url = urlparse(self.url)
 
         # we only expose minimal information about the exact version
         if not self.user_agent:
@@ -119,25 +119,28 @@ class HttpProxyController:
             kwargs.update(transaction.extras)
         logger.warning(message, *args, **kwargs)
 
-    async def __call__(self, request: HttpRequest):
-        """Handle an incoming request and proxy it to the configured URL.
-
-        :param request: ASGI request
-        :param response: ASGI response
-        :return:
-
-        """
+    async def __call__(self, request: HttpRequest) -> HttpResponse:
+        """Handle an incoming request and proxy it to the configured URL."""
 
         labels = {"name": self.name or "-", "method": request.method}
 
-        with performances_observer("proxy", labels=labels):
+        with performances_observer("harp_proxy", labels=labels):
             # create an envelope to override things, without touching the original request
             context = ProxyFilterEvent(self.name, request=request)
             await self.adispatch(EVENT_FILTER_PROXY_REQUEST, context)
 
+            remote_err = None
+            try:
+                remote_url = self.remote.get_url()
+            except IndexError as exc:
+                remote_url = None
+                remote_err = exc
+            parsed_remote_url = urlparse(remote_url) if remote_url else None
+
             # override a few required headers. That may be done in the httpx request instead of here.
             # And that would remove the need for WrappedHttpRequest? Maybe not because of our custom filters.
-            context.request.headers["host"] = self.parsed_url.netloc
+            if parsed_remote_url:
+                context.request.headers["host"] = parsed_remote_url.netloc
             if self.user_agent:
                 context.request.headers["user-agent"] = self.user_agent
 
@@ -145,13 +148,20 @@ class HttpProxyController:
             transaction = await self._create_transaction_from_request(
                 context.request, tags=self._extract_tags_from_request(context.request)
             )
+            if not remote_url:
+                transaction.extras["status_class"] = "ERR"
+                await self.end_transaction(transaction, HttpError("No remote", exception=remote_err))
+                # todo add web debug information if we are not on a production env
+                return HttpResponse(
+                    "Service Unavailable (no remote endpoint available)", status=503, content_type="text/plain"
+                )
             await context.request.aread()
-            url = urljoin(self.url, context.request.path) + (
+            url = urljoin(remote_url, context.request.path) + (
                 f"?{urlencode(context.request.query)}" if context.request.query else ""
             )
 
-            if not context.response:
-                with performances_observer("http", labels=labels):
+            with performances_observer("harp_http", labels=labels):
+                if not context.response:
                     # PROXY REQUEST
                     remote_request: httpx.Request = self.http_client.build_request(
                         context.request.method,
@@ -173,6 +183,9 @@ class HttpProxyController:
                     try:
                         remote_response: httpx.Response = await self.http_client.send(remote_request)
                     except (httpcore.NetworkError, httpx.NetworkError) as exc:
+                        if "network_error" in self.remote.break_on:
+                            if self.remote[remote_url].failure(shouty_snake(type(exc).__name__)):
+                                self.remote.refresh()
                         return await self.end_transaction(
                             transaction,
                             HttpError(
@@ -184,6 +197,9 @@ class HttpProxyController:
                         )
 
                     except (httpcore.TimeoutException, httpx.TimeoutException) as exc:
+                        if "network_error" in self.remote.break_on:
+                            if self.remote[remote_url].failure(shouty_snake(type(exc).__name__)):
+                                self.remote.refresh()
                         return await self.end_transaction(
                             transaction,
                             HttpError(
@@ -195,6 +211,9 @@ class HttpProxyController:
                         )
 
                     except (httpcore.RemoteProtocolError, httpx.RemoteProtocolError) as exc:
+                        if "network_error" in self.remote.break_on:
+                            if self.remote[remote_url].failure(shouty_snake(type(exc).__name__)):
+                                self.remote.refresh()
                         return await self.end_transaction(
                             transaction,
                             HttpError(
@@ -205,8 +224,13 @@ class HttpProxyController:
                             ),
                         )
 
+                    self.remote.notify_url_status(remote_url, remote_response.status_code)
+
                     await remote_response.aread()
                     await remote_response.aclose()
+
+                if self.remote[remote_url].status == CHECKING and 200 <= remote_response.status_code < 400:
+                    self.remote.set_up(remote_url)
 
                 try:
                     _elapsed = f"{remote_response.elapsed.total_seconds()}s"
@@ -326,4 +350,4 @@ class HttpProxyController:
         return tags
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.url!r}, name={self.name!r})"
+        return f"{type(self).__name__}({self.remote!r}, name={self.name!r})"

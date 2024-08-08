@@ -16,6 +16,6 @@ it("renders the title and data when the query is successful", async () => {
     </ErrorBoundary>,
   )
 
-  await result.findByText("endpoint1")
+  await result.findByText("Topology")
   expect(result.container).toMatchSnapshot()
 })

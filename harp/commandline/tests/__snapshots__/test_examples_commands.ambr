@@ -1,0 +1,28 @@
+# serializer version: 1
+# name: test_list_examples_command
+  '''
+  List of available examples
+  ├── auth.basic
+  ├── postgres
+  ├── proxy:httpbin
+  ├── proxy:httpbins
+  ├── proxy:pooled
+  ├── repositories
+  ├── rules:teapot
+  ├── sentry
+  └── sqlite
+  '''
+# ---
+# name: test_list_examples_command.1
+  '''
+  auth.basic
+  postgres
+  proxy:httpbin
+  proxy:httpbins
+  proxy:pooled
+  repositories
+  rules:teapot
+  sentry
+  sqlite
+  '''
+# ---
