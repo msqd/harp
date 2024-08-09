@@ -20,6 +20,7 @@ Changed
 * Config: the ``harp.config.BaseSetting``class has been renamed to ``harp.config.Settings``.
 * Core/Http: Removed WrappedHttpRequest, inner HttpRequests can now be accessed directly.
 * DX: adds a ``harp examples list`` command to list available examples
+* DX/Helm: adds the ability to override environment in helm chart's values
 
 
 Fixed
