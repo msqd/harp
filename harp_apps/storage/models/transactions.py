@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, List
 
 from sqlalchemy import TIMESTAMP, Boolean, Column, Float, ForeignKey, Integer, String, Table, exists, insert
-from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship, selectinload
+from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
 
 from harp.models.transactions import Transaction as TransactionModel
 
@@ -24,17 +24,17 @@ transaction_tag_values_association_table = Table(
 class Transaction(Base):
     __tablename__ = "transactions"
 
-    id = mapped_column(String(27), primary_key=True, unique=True)
-    type = mapped_column(String(10), index=True)
-    endpoint = mapped_column(String(32), nullable=True, index=True)
-    started_at = mapped_column(TIMESTAMP(timezone=True), index=True)
-    finished_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
-    elapsed = mapped_column(Float(), nullable=True)
-    tpdex = mapped_column(Integer(), nullable=True)
-    x_method = mapped_column(String(16), nullable=True, index=True)
-    x_status_class = mapped_column(String(3), nullable=True, index=True)
-    x_cached = mapped_column(String(32), nullable=True)
-    x_no_cache = mapped_column(Boolean(), nullable=True, default=False)
+    id: Mapped[int] = mapped_column(String(27), primary_key=True, unique=True)
+    type: Mapped[str] = mapped_column(String(10), index=True)
+    endpoint: Mapped[str] = mapped_column(String(32), nullable=True, index=True)
+    started_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), index=True)
+    finished_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    elapsed: Mapped[float] = mapped_column(Float(), nullable=True)
+    tpdex: Mapped[int] = mapped_column(Integer(), nullable=True)
+    x_method: Mapped[str] = mapped_column(String(16), nullable=True, index=True)
+    x_status_class: Mapped[str] = mapped_column(String(3), nullable=True, index=True)
+    x_cached: Mapped[str] = mapped_column(String(32), nullable=True)
+    x_no_cache: Mapped[bool] = mapped_column(Boolean(), nullable=True, default=False)
 
     messages: Mapped[List["Message"]] = relationship(
         back_populates="transaction",
@@ -97,7 +97,7 @@ class TransactionsRepository(Repository[Transaction]):
         # should we join transaction messages?
         if with_messages:
             query = query.options(
-                joinedload(
+                selectinload(
                     self.Type.messages,
                 )
             )

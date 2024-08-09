@@ -20,3 +20,9 @@ Changed
 * Config: the ``harp.config.BaseSetting``class has been renamed to ``harp.config.Settings``.
 * Core/Http: Removed WrappedHttpRequest, inner HttpRequests can now be accessed directly.
 * DX: adds a ``harp examples list`` command to list available examples
+
+
+Fixed
+:::::
+
+* Storage: added missing index on messages.transaction_id to speed up dashboard search queries.

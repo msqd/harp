@@ -1,7 +1,7 @@
-from datetime import UTC
-from typing import TYPE_CHECKING
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import TIMESTAMP, ForeignKey, Integer, String
+from sqlalchemy import TIMESTAMP, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from harp.http import BaseMessage, get_serializer_for
@@ -16,15 +16,17 @@ if TYPE_CHECKING:
 class Message(Base):
     __tablename__ = "messages"
 
-    id = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
-    kind = mapped_column(String(10))
-    summary = mapped_column(String(255))
-    headers = mapped_column(String(40))
-    body = mapped_column(String(40))
-    created_at = mapped_column(TIMESTAMP(timezone=True))
+    id: Mapped[int] = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
+    kind: Mapped[str] = mapped_column(String(10))
+    summary: Mapped[str] = mapped_column(String(255))
+    headers: Mapped[str] = mapped_column(String(40))
+    body: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True))
 
-    transaction_id = mapped_column(ForeignKey("transactions.id", ondelete="CASCADE"))
+    transaction_id: Mapped[str] = mapped_column(ForeignKey("transactions.id", ondelete="CASCADE"))
     transaction: Mapped["Transaction"] = relationship(back_populates="messages")
+
+    __table_args__ = (Index("ix_transaction_id", "transaction_id"),)
 
     def to_model(self):
         return MessageModel(
@@ -66,4 +68,8 @@ class MessagesRepository(Repository[Message]):
                 body=values.body,
                 created_at=values.created_at,
             )
+
+        if not values.get("created_at"):
+            values["created_at"] = datetime.now(UTC)
+
         return await super().create(values, session=session)

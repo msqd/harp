@@ -36,8 +36,10 @@ spec:
           command:
             {{- toYaml (concat .Values.harp.container.command .Values.harp.container.subcommand .Values.harp.container.arguments) | nindent 12 }}
           env:
-            - name: USE_PROMETHEUS
-              value: 'true'
+            {{- range $k, $v := .Values.harp.container.env }}
+            - name: {{ $k | quote }}
+              value: {{ $v | quote }}
+            {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

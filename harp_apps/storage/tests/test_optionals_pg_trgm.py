@@ -104,6 +104,7 @@ class TestOptimizedQueries(StorageTestFixtureMixin):
 
             result = await sql_storage.get_transaction_list(username="anonymous", with_messages=True, text_search="bar")
 
+            # count + select
             assert len(sql_storage.sql_queries) == 2
 
             for _ in range(100):
@@ -114,7 +115,8 @@ class TestOptimizedQueries(StorageTestFixtureMixin):
             result = await sql_storage.get_transaction_list(username="anonymous", with_messages=True, text_search="bar")
 
             assert len(result) == 40
-            assert len(sql_storage.sql_queries) == 2 + 4
+            # first queries, then count + select + flags,tags,messages
+            assert len(sql_storage.sql_queries) == 2 + 2 + 3
 
         finally:
             await opt.engine.dispose()

@@ -1,6 +1,4 @@
 # Default values for harp-proxy.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
 
 replicaCount: 1
 
@@ -13,15 +11,17 @@ harp:
     command: ["/tini", "--", "/opt/venv/bin/python3", "-m", "harp"]
     subcommand: ["server"]
     arguments: []
+    env:
+      USE_PROMETHEUS: "true"
+  settings: {}
 
 endpoints:
   - name: httpbin
     port: "8080"
-    url: https://httpbin.org/
-
-settings:
-  storage:
-    url: sqlite+aiosqlite:///data/harp.db
+    remote:
+      endpoints:
+        url: https://httpbin.org/
+        break_on: [network_error]
 
 postgresql:
   enabled: false
