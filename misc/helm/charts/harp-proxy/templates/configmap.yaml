@@ -9,9 +9,13 @@ data:
         {{- range .Values.endpoints }}
         - port: "{{ .port }}"
           name: "{{ .name }}"
-          #url: "{{ .url }}"
+          {{- if .url }}
+          url: "{{ .url }}"
+          {{- end }}
+          {{- if .remote }}
           remote:
             {{ toYaml .remote | nindent 12 }}
+          {{- end }}
         {{- end }}
 
     {{ toYaml .Values.settings | nindent 4 }}
