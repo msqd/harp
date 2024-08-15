@@ -83,7 +83,7 @@ sphinx-design = "^0.6.0"
 sphinx-sitemap = "^2.6.0"
 sphinxcontrib-jquery = "^4.1"
 syrupy = "^4.6.1"
-testcontainers = { extras = ["postgres"], version = ">=4.7,<4.8" }
+testcontainers = { extras = ["postgres"], version = ">=4.7,<4.9" }
 
 
 [tool.poetry.group.mysql.dependencies]
