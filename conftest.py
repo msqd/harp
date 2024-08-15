@@ -11,7 +11,7 @@ builtins.__pytest__ = True
 DISABLED_APPLICATIONS_FOR_TESTS = ("telemetry", "harp_apps.telemetry")
 
 DEFAULT_STORAGE_SETTINGS = {
-    "url": "sqlite+aiosqlite:///:memory:",
+    "url": "sqlite:///:memory:",
     "migrate": False,
 }
 

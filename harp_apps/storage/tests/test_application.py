@@ -24,7 +24,7 @@ class TestStorageApplication(BaseTestForApplications):
         ],
     )
     def test_defaults_fills_missing_values_for_sqlalchemy_type(self, settings: dict, more_settings: dict | None):
-        assert asdict(self.application.settings_type(**settings)) == {
+        assert asdict(self.application.settings_type(**settings), verbose=True) == {
             **self.expected_defaults,
             **settings,
             **(more_settings or {}),

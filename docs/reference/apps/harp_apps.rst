@@ -22,5 +22,6 @@ Submodules
     harp_apps.notifications
     harp_apps.proxy
     harp_apps.rules
+    harp_apps.services
     harp_apps.storage
     harp_apps.telemetry

@@ -1,5 +1,4 @@
 from harp.http import HttpRequest
-from harp.http.tests.stubs import HttpRequestStubBridge
 from harp_apps.proxy.events import ProxyFilterEvent
 from harp_apps.rules import examples
 from harp_apps.rules.settings import RulesSettings
@@ -9,7 +8,7 @@ class TestTeapotExample:
     source = examples.load("teapot.yml").get("rules")
 
     def create_request(self, **kwargs):
-        return HttpRequest(HttpRequestStubBridge(**kwargs))
+        return HttpRequest(**kwargs)
 
     def create_proxy_filter_event(self, event_name, /, *, endpoint, **kwargs):
         event = ProxyFilterEvent(endpoint, **kwargs)

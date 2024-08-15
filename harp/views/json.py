@@ -20,6 +20,8 @@ except ImportError:
 def default(obj):
     if isinstance(obj, STRINGIFIABLES):
         return str(obj)
+    if isinstance(obj, set):
+        return list(sorted(obj))
     raise TypeError
 
 

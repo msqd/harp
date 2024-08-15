@@ -155,12 +155,15 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         ):
             merge_values(settings, self.normalize(source.get_values()))
 
-        all_settings = (
-            (name, self.applications[name].settings_type(**settings.get(name, {})))
-            for name, application in self.applications.items()
-            if self.applications[name].settings_type
-        )
-        all_settings = list(all_settings)
+        all_settings = []
+        for name, application in self.applications.items():
+            settings_type = self.applications[name].settings_type
+            if not settings_type:
+                continue
+            _local_settings = settings.get(name, {})
+            if not isinstance(_local_settings, settings_type):
+                _local_settings = settings_type(**_local_settings)
+            all_settings.append((name, _local_settings))
 
         return cast(
             GlobalSettings,

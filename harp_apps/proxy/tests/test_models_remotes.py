@@ -5,11 +5,19 @@ import respx
 from httpx import Response
 
 from harp.config import asdict
-from harp_apps.proxy.models.remotes import HttpEndpoint, HttpProbe, HttpRemote
+from harp_apps.proxy.models import Remote
+from harp_apps.proxy.settings.remote import RemoteEndpointSettings, RemoteSettings
 
 
 def test_remote_round_robin():
-    remote = HttpRemote([{"url": "http://api0.example.com/"}, {"url": "http://api1.example.com/"}])
+    remote = Remote.from_settings_dict(
+        {
+            "endpoints": [
+                {"url": "http://api0.example.com/"},
+                {"url": "http://api1.example.com/"},
+            ]
+        }
+    )
 
     assert remote.get_url() == "http://api0.example.com/"
     assert remote.get_url() == "http://api1.example.com/"
@@ -25,13 +33,15 @@ def test_remote_round_robin():
 
 
 def test_remote_fallback():
-    remote = HttpRemote(
-        [
-            {"url": "http://api0.example.com/"},
-            {"url": "http://api1.example.com/"},
-            {"url": "http://fallback.example.com/", "pools": ["fallback"]},
-        ],
-        min_pool_size=2,
+    remote = Remote.from_settings_dict(
+        {
+            "endpoints": [
+                {"url": "http://api0.example.com/"},
+                {"url": "http://api1.example.com/"},
+                {"url": "http://fallback.example.com/", "pools": ["fallback"]},
+            ],
+            "min_pool_size": 2,
+        }
     )
 
     assert remote.get_url() == "http://api0.example.com/"
@@ -53,13 +63,13 @@ def test_remote_fallback():
 
 
 def test_empty_pool():
-    remote = HttpRemote()
+    remote = Remote(RemoteSettings())
     with pytest.raises(IndexError):
         remote.get_url()
 
 
 def test_empty_pool_after_set_down():
-    remote = HttpRemote([{"url": "http://example.com"}])
+    remote = Remote.from_settings_dict({"endpoints": [{"url": "http://example.com"}]})
     assert remote.get_url() == "http://example.com/"
     remote.set_down("http://example.com")
     with pytest.raises(IndexError):
@@ -70,11 +80,11 @@ def test_empty_pool_after_set_down():
 
 @respx.mock
 async def test_basic_probe():
-    remote = HttpRemote(
-        [
-            HttpEndpoint(url="https://example.com/", failure_threshold=3),
-        ],
-        probe=HttpProbe("GET", "/health"),
+    remote = Remote.from_settings_dict(
+        {
+            "endpoints": [{"url": "https://example.com", "failure_threshold": 3}],
+            "probe": {"method": "GET", "path": "/health"},
+        }
     )
     healthcheck = respx.get("https://example.com/health")
     url = remote["https://example.com"]
@@ -112,11 +122,11 @@ async def test_basic_probe():
 
 @respx.mock
 async def test_probe_errors():
-    remote = HttpRemote(
-        [
-            HttpEndpoint("https://example.com", failure_threshold=3),
-        ],
-        probe=HttpProbe("GET", "/health"),
+    remote = Remote.from_settings_dict(
+        {
+            "endpoints": [{"url": "https://example.com", "failure_threshold": 3}],
+            "probe": {"method": "GET", "path": "/health"},
+        }
     )
     healthcheck = respx.get("https://example.com/health")
     url = remote["https://example.com"]
@@ -158,11 +168,11 @@ async def test_probe_errors():
 
 
 async def test_probe_timeout():
-    remote = HttpRemote(
-        [
-            HttpEndpoint("https://example.com", failure_threshold=3),
-        ],
-        probe=HttpProbe("GET", "/health", timeout=0.1),
+    remote = Remote.from_settings_dict(
+        {
+            "endpoints": [{"url": "https://example.com", "failure_threshold": 3}],
+            "probe": {"method": "GET", "path": "/health", "timeout": 0.1},
+        }
     )
     healthcheck = respx.get("https://example.com/health")
     url = remote["https://example.com"]
@@ -175,56 +185,46 @@ async def test_probe_timeout():
 
 
 def test_endpoint_asdict():
-    endpoint = HttpEndpoint("http://example.com")
+    endpoint = RemoteEndpointSettings(url="http://example.com")
     assert asdict(endpoint) == {
         "url": "http://example.com/",
     }
 
     # idempotence
-    endpoint = HttpEndpoint(**asdict(endpoint))
+    endpoint = RemoteEndpointSettings(**asdict(endpoint))
     assert asdict(endpoint) == {
         "url": "http://example.com/",
     }
 
 
 def test_endpoint_asdict_with_nondefault_thresholds():
-    endpoint = HttpEndpoint("http://example.com", success_threshold=2, failure_threshold=4)
-    assert asdict(endpoint) == {
+    endpoint = RemoteEndpointSettings(url="http://example.com", success_threshold=2, failure_threshold=4)
+
+    expected = {
         "url": "http://example.com/",
         "success_threshold": 2,
         "failure_threshold": 4,
     }
+    assert asdict(endpoint) == expected
 
     # idempotence
-    endpoint = HttpEndpoint(**asdict(endpoint))
-    assert asdict(endpoint) == {
-        "url": "http://example.com/",
-        "success_threshold": 2,
-        "failure_threshold": 4,
-    }
+    endpoint = RemoteEndpointSettings(**asdict(endpoint))
+    assert asdict(endpoint) == expected
 
 
 def test_remote_asdict():
-    remote = HttpRemote([{"url": "http://example.com"}])
-    assert asdict(remote) == {
-        "endpoints": [
-            {
-                "url": "http://example.com/",
-                "pools": ["default"],
-            },
-        ],
-    }
+    remote = RemoteSettings(endpoints=[RemoteEndpointSettings(url="http://example.com")])
+    assert asdict(remote) == {"endpoints": [{"url": "http://example.com/"}]}
 
 
 def test_remote_asdict_with_nondefault_poolsize_and_thresholds():
-    remote = HttpRemote([{"url": "http://example.com"}], min_pool_size=2)
+    remote = RemoteSettings(endpoints=[RemoteEndpointSettings(url="http://example.com")], min_pool_size=2)
     remote["http://example.com"].success_threshold = 2
     remote["http://example.com"].failure_threshold = 4
     assert asdict(remote) == {
         "endpoints": [
             {
                 "url": "http://example.com/",
-                "pools": ["default"],
                 "success_threshold": 2,
                 "failure_threshold": 4,
             },
@@ -232,4 +232,4 @@ def test_remote_asdict_with_nondefault_poolsize_and_thresholds():
         "min_pool_size": 2,
     }
 
-    assert asdict(HttpRemote(**asdict(remote))) == asdict(remote)
+    assert asdict(RemoteSettings(**asdict(remote))) == asdict(remote)

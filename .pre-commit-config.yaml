@@ -4,7 +4,7 @@ repos:
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        exclude: '\.tsx\.snap$'
+        exclude: '\.(tsx\.snap|ambr)$'
       - id: end-of-file-fixer
       - id: check-yaml
         exclude: misc

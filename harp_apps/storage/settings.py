@@ -1,50 +1,27 @@
-from dataclasses import field
+from typing import Literal, Union
 
-from sqlalchemy import URL, make_url
+from pydantic import Field, model_validator
 
-from harp.config import Settings, settings_dataclass
-from harp.utils.env import cast_bool
-
-
-@settings_dataclass
-class BlobStorageSettings(Settings):
-    type: str = "sql"
-    url: URL = None
-
-    def __post_init__(self):
-        if self.type == "sql":
-            if self.url is not None:
-                raise ValueError("SQL blob storage does not support custom URLs, it will use the parent storage URL.")
-
-        elif self.type == "redis":
-            if self.url is None:
-                self.url = make_url("redis://localhost:6379/0")
-            elif isinstance(self.url, str):
-                self.url = make_url(self.url)
-
-    def _asdict(self, /, *, secure=True):
-        return {
-            "type": self.type,
-            **({"url": self.url.render_as_string(hide_password=secure)} if self.url else {}),
-        }
+from harp.config import Configurable
+from harp_apps.services.settings import DatabaseSettings, RedisSettings
 
 
-@settings_dataclass
-class StorageSettings(Settings):
-    url: URL = make_url("sqlite+aiosqlite:///:memory:?cache=shared")
+class SqlBlobStorageSettings(Configurable):
+    type: Literal["sql"] = "sql"
+
+
+class RedisBlobStorageSettings(RedisSettings):
+    type: Literal["redis"]
+
+    @model_validator(mode="before")
+    @classmethod
+    def _set_default_type(cls, values):
+        values["type"] = "redis"
+        return values
+
+
+class StorageSettings(DatabaseSettings):
     migrate: bool = True
-    blobs: BlobStorageSettings = field(default_factory=BlobStorageSettings)
-
-    def __post_init__(self):
-        self.migrate = cast_bool(self.migrate)
-        self.url = make_url(self.url)
-
-        if isinstance(self.blobs, dict):
-            self.blobs = BlobStorageSettings(**self.blobs)
-
-    def _asdict(self, /, *, secure=True):
-        return {
-            "url": self.url.render_as_string(hide_password=secure),
-            "migrate": self.migrate,
-            "blobs": self.blobs._asdict(secure=secure),
-        }
+    blobs: Union[SqlBlobStorageSettings, RedisBlobStorageSettings] = Field(
+        default_factory=SqlBlobStorageSettings, discriminator="type"
+    )

@@ -1,4 +1,4 @@
-from typing import Type, cast
+from typing import TYPE_CHECKING, Type, cast
 
 from rodi import Container, Services
 from whistle import IAsyncEventDispatcher
@@ -6,8 +6,6 @@ from whistle import IAsyncEventDispatcher
 from harp import __revision__, __version__, get_logger
 from harp.asgi import ASGIKernel
 from harp.asgi.events import EVENT_CONTROLLER_VIEW, EVENT_CORE_REQUEST
-from harp.controllers import ProxyControllerResolver
-from harp.controllers.default import on_health_request
 from harp.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.typing import GlobalSettings
 from harp.utils.network import Bind
@@ -24,6 +22,9 @@ from ..events import (
     OnShutdownEvent,
 )
 from .configuration import ConfigurationBuilder
+
+if TYPE_CHECKING:
+    from harp.controllers import ProxyControllerResolver
 
 logger = get_logger(__name__)
 
@@ -88,9 +89,14 @@ class System:
         Asynchronously disposes of the system resources, primarily the ASGI kernel.
         """
         if self.kernel:
-            event = OnShutdownEvent(self.kernel, self.provider)
-            await self.dispatcher.adispatch(EVENT_SHUTDOWN, event)
-            self._kernel = None
+            try:
+                event = OnShutdownEvent(self.kernel, self.provider)
+                await self.dispatcher.adispatch(EVENT_SHUTDOWN, event)
+            except Exception as exc:
+                logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_SHUTDOWN, exc)
+                raise
+            finally:
+                self._kernel = None
 
 
 class SystemBuilder:
@@ -141,6 +147,8 @@ class SystemBuilder:
         await self.dispatch_bind_event(dispatcher, container, config)
 
         # todo: this looks like not the right place, should not be tightly coupled to the factory
+        from harp.controllers import ProxyControllerResolver
+
         controller_resolver = ProxyControllerResolver()
         container.add_instance(controller_resolver, ProxyControllerResolver)
 
@@ -164,6 +172,8 @@ class SystemBuilder:
 
     def __setup_core_events(self, dispatcher):
         # todo move into core or extension, this is not system or proxy related
+        from harp.controllers.default import on_health_request
+
         dispatcher.add_listener(EVENT_CORE_REQUEST, on_health_request, priority=-100)
         dispatcher.add_listener(EVENT_CONTROLLER_VIEW, on_json_response)
 
@@ -194,7 +204,7 @@ class SystemBuilder:
         self,
         dispatcher: IAsyncEventDispatcher,
         provider: Services,
-        resolver: ProxyControllerResolver,
+        resolver: "ProxyControllerResolver",
     ) -> OnBoundEvent:
         # dispatch "bound" event: you get a resolved container, do your thing
         try:
@@ -210,7 +220,7 @@ class SystemBuilder:
         self,
         dispatcher: IAsyncEventDispatcher,
         provider: Services,
-        controller_resolver: ProxyControllerResolver,
+        controller_resolver: "ProxyControllerResolver",
     ):
         # todo: this should be instanciated by the service container, probably using a factory to dispatch the event,
         #  etc. Binds should not sit here, but where?
@@ -223,4 +233,11 @@ class SystemBuilder:
             )
         except Exception as exc:
             logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_READY, exc)
+            raise
+
+    async def dispatch_shutdown_event(self, dispatcher: IAsyncEventDispatcher, kernel: ASGIKernel, provider: Services):
+        try:
+            await dispatcher.adispatch(EVENT_SHUTDOWN, OnShutdownEvent(kernel, provider))
+        except Exception as exc:
+            logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_SHUTDOWN, exc)
             raise

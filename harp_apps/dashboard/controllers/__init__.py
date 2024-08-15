@@ -7,15 +7,16 @@ from http_router import NotFoundError
 from httpx import AsyncClient
 
 from harp import ROOT_DIR, get_logger
-from harp.controllers import RoutingController
+from harp.controllers import ProxyControllerResolver, RoutingController
 from harp.errors import ConfigurationError
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
 from harp.typing.global_settings import GlobalSettings
 from harp_apps.proxy.controllers import HttpProxyController
-from harp_apps.proxy.models.remotes import HttpRemote
 from harp_apps.storage.types import IBlobStorage, IStorage
 
-from ..settings import DashboardAuthBasicSetting, DashboardSettings
+from ...proxy.models import Remote
+from ..settings import DashboardSettings
+from ..settings.auth import BasicAuthSettings
 from .blobs import BlobsController
 from .overview import OverviewController
 from .system import SystemController
@@ -40,6 +41,7 @@ class DashboardController:
     settings: DashboardSettings
     global_settings: GlobalSettings
     http_client: AsyncClient
+    resolver: ProxyControllerResolver
 
     _ui_static_middleware = None
     _ui_devserver_proxy_controller = None
@@ -51,6 +53,7 @@ class DashboardController:
         all_settings: GlobalSettings,
         local_settings: DashboardSettings,
         http_client: AsyncClient,
+        resolver: ProxyControllerResolver,
     ):
         # context for usage in handlers
         self.http_client = http_client
@@ -58,9 +61,10 @@ class DashboardController:
         self.blob_storage = blob_storage
         self.global_settings = all_settings
         self.settings = local_settings
+        self.resolver = resolver
 
         # create users if they don't exist
-        if isinstance(self.settings.auth, DashboardAuthBasicSetting):
+        if isinstance(self.settings.auth, BasicAuthSettings):
             asyncio.create_task(self.storage.create_users_once_ready(self.settings.auth.users))
 
         # controllers for delegating requests
@@ -96,7 +100,7 @@ class DashboardController:
 
     def _create_ui_devserver_proxy_controller(self, *, port):
         return HttpProxyController(
-            HttpRemote([{"url": f"http://localhost:{port}/"}]),
+            Remote.from_settings_dict({"endpoints": [{"url": f"http://localhost:{port}/"}]}),
             http_client=self.http_client,
             logging=False,
             name="dashboard-devserver",
@@ -107,14 +111,16 @@ class DashboardController:
 
         self.children = [
             BlobsController(storage=self.blob_storage, router=root.router),
-            SystemController(storage=self.storage, settings=self.global_settings, router=root.router),
+            SystemController(
+                storage=self.storage, settings=self.global_settings, router=root.router, resolver=self.resolver
+            ),
             TransactionsController(storage=self.storage, router=root.router),
             OverviewController(storage=self.storage, router=root.router),
         ]
 
         return root
 
-    async def __call__(self, request: HttpRequest, asgi_send: ASGISendCallable, *, transaction_id=None):
+    async def __call__(self, request: HttpRequest, asgi_send: ASGISendCallable, *, transaction_id=None) -> HttpResponse:
         request.extensions.setdefault("user", None)
 
         if self.settings.auth:
@@ -131,8 +137,13 @@ class DashboardController:
                     content_type="text/plain",
                 )
 
-        # Is this a prebuilt static asset?
-        if self._ui_static_middleware and not request.path.startswith("/api/"):
+        # Is this a prebuilt static asset? Can we serve it using our middleware? This wil need refactoring, as it ties
+        # the controller implementation to the underlying webserver protocol implementation, but for now, it works.
+        if (
+            self._ui_static_middleware
+            and not request.path.startswith("/api/")
+            and hasattr(request._impl, "asgi_receive")
+        ):
             # XXX todo fix
             await self._ui_static_middleware(
                 {

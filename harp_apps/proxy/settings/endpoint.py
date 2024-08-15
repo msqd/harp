@@ -1,37 +1,12 @@
-from dataclasses import field
 from typing import Optional
 
-from harp.config import Settings, settings_dataclass
-from harp_apps.proxy.models.remotes import HttpRemote
+from pydantic import model_validator
+
+from harp.config import Configurable
+from harp_apps.proxy.settings.remote import RemoteEndpointSettings, RemoteSettings
 
 
-@settings_dataclass
-class ProxySettings(Settings):
-    """
-    Configuration parser for ``proxy`` settings.
-
-    .. code-block:: yaml
-
-        endpoints:
-          # see ProxyEndpoint
-          - ...
-
-    """
-
-    endpoints: list["ProxyEndpoint"] | None = field(default_factory=list)
-
-    def __post_init__(self):
-        if self.endpoints is None:
-            self.endpoints = []
-
-        self.endpoints = [
-            endpoint if isinstance(endpoint, ProxyEndpoint) else ProxyEndpoint(**endpoint)
-            for endpoint in self.endpoints
-        ]
-
-
-@settings_dataclass
-class ProxyEndpoint(Settings):
+class EndpointSettings(Configurable):
     """
     Configuration parser for ``proxy.endpoints[]`` settings.
 
@@ -61,11 +36,25 @@ class ProxyEndpoint(Settings):
     description: Optional[str] = None
 
     # for backward compatibility, "short syntax"
-    url: str | None = None
+    url: Optional[str] = None
 
     # resilience-compatible remote definition, with url pools, probes, etc.
-    remote: HttpRemote | None = None
+    remote: Optional[RemoteSettings] = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def convert_old_school_urls_to_remote(cls, values):
+        if "url" in values and values["url"] is not None:
+            if "remote" in values and values["remote"] is not None:
+                raise ValueError(
+                    "You can't define both proxy.endpoints[].remote and proxy.endpoints[].url, the second one is just "
+                    "a historical shorthand syntax for the first one."
+                )
+            values["remote"] = RemoteSettings(endpoints=[RemoteEndpointSettings(url=values.pop("url"))])
+        return values
+
+
+"""
     def __post_init__(self):
         if self.remote is not None and self.url is not None:
             raise ValueError(
@@ -89,3 +78,4 @@ class ProxyEndpoint(Settings):
             "description": self.description,
             "remote": self.remote._asdict(secure=secure, with_status=with_status),
         }
+"""

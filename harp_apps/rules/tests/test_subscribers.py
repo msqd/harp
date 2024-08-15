@@ -5,7 +5,6 @@ import httpx
 from whistle import AsyncEventDispatcher, IAsyncEventDispatcher
 
 from harp.http import HttpRequest, HttpResponse
-from harp.http.tests.stubs import HttpRequestStubBridge
 from harp_apps.http_client.events import (
     EVENT_FILTER_HTTP_CLIENT_REQUEST,
     EVENT_FILTER_HTTP_CLIENT_RESPONSE,
@@ -27,7 +26,7 @@ async def _dispatch_proxy_filter_event(dispatcher, endpoint, event_name) -> Mock
     return await _dispatch_filter_event(
         dispatcher,
         event_name,
-        ProxyFilterEvent(endpoint, request=HttpRequest(HttpRequestStubBridge())),
+        ProxyFilterEvent(endpoint, request=HttpRequest()),
     )
 
 

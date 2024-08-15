@@ -12,8 +12,17 @@ from .utils.cookies import parse_cookie
 class HttpRequest(BaseHttpMessage):
     kind = "request"
 
-    def __init__(self, impl: HttpRequestBridge, extensions: Optional[dict] = None):
+    def __init__(self, impl: Optional[HttpRequestBridge] = None, *, extensions: Optional[dict] = None, **kwargs):
         super().__init__(extensions=extensions)
+
+        if impl is None:
+            from .tests.stubs import HttpRequestStubBridge
+
+            impl = HttpRequestStubBridge(**kwargs)
+        else:
+            if len(kwargs) > 0:
+                raise ValueError("Cannot pass both an implementation and non-explicit keyword arguments.")
+
         self._impl = impl
 
         # Initialize properties from the implementation bridge

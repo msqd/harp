@@ -3,9 +3,8 @@ from unittest.mock import ANY
 import pytest
 
 from harp.config import asdict
+from harp_apps.http_client.tests._base import BaseTestDefaultsWith
 from harp_apps.storage.types import IBlobStorage
-
-from .._base import BaseTestDefaultsWith
 
 
 class TestDefaultsWithStorage(BaseTestDefaultsWith):
@@ -31,7 +30,7 @@ class TestDefaultsWithStorage(BaseTestDefaultsWith):
             "timeout": 30.0,
             "transport": {"@type": "httpx:AsyncHTTPTransport"},
         }
-        assert asdict(system.config["storage"]) == {
+        assert asdict(system.config["storage"], verbose=True) == {
             "blobs": {"type": "sql"},
             "migrate": ANY,
             "url": ANY,

@@ -14,4 +14,4 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
-    harp_apps.proxy.models.remotes
+    harp_apps.proxy.models.remote

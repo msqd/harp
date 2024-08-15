@@ -7,7 +7,6 @@ from whistle import IAsyncEventDispatcher
 from harp.commandline.options.server import add_harp_config_options
 from harp.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.http import HttpRequest
-from harp.http.tests.stubs import HttpRequestStubBridge
 from harp.utils.urls import normalize_url
 from harp_apps.http_client.events import EVENT_FILTER_HTTP_CLIENT_REQUEST, EVENT_FILTER_HTTP_CLIENT_RESPONSE
 from harp_apps.proxy.controllers import HttpProxyController
@@ -62,5 +61,5 @@ def run_command(files, examples, options, endpoint, method, path):
     rules_subscriber = DebugRulesSubscriber(ruleset)
     rules_subscriber.subscribe(dispatcher)
 
-    request = HttpRequest(HttpRequestStubBridge(method=method, path=path))
+    request = HttpRequest(method=method, path=path)
     asyncio.run(controller(request))

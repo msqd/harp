@@ -26,7 +26,7 @@ async def on_bound(event: OnBoundEvent):
     # add our controller to the controller resolver
     controller = event.provider.get("dashboard.controller")
     settings = event.provider.get(DashboardSettings)
-    event.resolver.add(settings.port, controller)
+    event.resolver.add_controller(int(settings.port), controller)
 
 
 application = Application(

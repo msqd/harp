@@ -64,7 +64,9 @@ class Application:
 
     def normalize(self, settings):
         if self.settings_type:
-            return asdict(self.settings_type(**settings), secure=False)
+            if not isinstance(settings, self.settings_type):
+                settings = self.settings_type(**settings)
+            return asdict(settings, secure=False)
         return settings
 
 

@@ -39,6 +39,1972 @@
     'repositories',
     'rules:teapot',
     'sentry',
+    'services:database',
+    'services:empty',
+    'services:redis',
     'sqlite',
   ])
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/dashboard/examples/auth.basic.yml]
+  '''
+  dashboard:
+    auth:
+      type: basic
+      users:
+        admin:
+          password: $pbkdf2-sha256$29000$f4.RkvLeG2OstfZ.D8F4zw$4ONvNXnHCX.8Q.40SU9KjvBsAEAhqdrGJ80tsfLPA/s
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/dashboard/examples/auth.yml]
+  '''
+  dashboard:
+    auth:
+      algorithm: plaintext
+      type: basic
+      users:
+        admin:
+          password: not-so-secret
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/dashboard/examples/devserver.yml]
+  '''
+  dashboard:
+    devserver:
+      port: 11111
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/dashboard/examples/main.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/http_client/examples/cache.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel._controller:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+        force_cache: true
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/http_client/examples/full.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: true
+        allow_stale: true
+        cacheable_methods:
+        - GET
+        - HEAD
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+        - 200
+        - 301
+        - 308
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 10.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/http_client/examples/simple.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 10.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+      http1: true
+      http2: false
+      retries: 0
+      verify: true
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/notifications/examples/dashboard.yml]
+  '''
+  dashboard:
+    public_url: http://localhost:4080
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/notifications/examples/main.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/basics.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy:
+    endpoints:
+    - name: httpbin
+      port: 4000
+      remote:
+        endpoints:
+        - url: https://httpbin.org/
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/full-shorthand.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy:
+    endpoints:
+    - description: An informative description of the endpoint (optional)
+      name: httpbin
+      port: 4000
+      remote:
+        endpoints:
+        - url: https://api1.example.com/
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/full.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy:
+    endpoints:
+    - description: An informative description of the endpoint (optional)
+      name: httpbins
+      port: 4000
+      remote:
+        endpoints:
+        - failure_threshold: 2
+          success_threshold: 2
+          url: https://api1.example.com/
+        - failure_threshold: 2
+          success_threshold: 2
+          url: https://api2.example.com/
+        - pools:
+          - fallback
+          url: https://fallback.example.com/
+        min_pool_size: 2
+        probe:
+          path: /healthz
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/multiple.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy:
+    endpoints:
+    - name: geo
+      port: 4000
+      remote:
+        endpoints:
+        - url: https://geo.api.gouv.fr/
+    - name: adresse
+      port: 4001
+      remote:
+        endpoints:
+        - url: https://api-adresse.data.gouv.fr/
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/pooled-aggressive.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy:
+    endpoints:
+    - name: examples
+      port: 4000
+      remote:
+        break_on:
+        - http_4xx
+        - http_5xx
+        - network_error
+        endpoints:
+        - url: https://api1.example.com/
+        - url: https://api2.example.com/
+        - pools:
+          - fallback
+          url: https://api3.example.com/
+        - pools:
+          - fallback
+          url: https://api4.example.com/
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/pooled-fallback.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy:
+    endpoints:
+    - name: httpbins
+      port: 4001
+      remote:
+        endpoints:
+        - url: https://api1.example.com/
+        - url: https://api2.example.com/
+        - pools:
+          - fallback
+          url: https://api3.example.com/
+        - pools:
+          - fallback
+          url: https://api4.example.com/
+        min_pool_size: 2
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/pooled-healthcheck.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy:
+    endpoints:
+    - name: httpbins
+      port: 4001
+      remote:
+        endpoints:
+        - url: https://api1.example.com/
+        - url: https://api2.example.com/
+        - pools:
+          - fallback
+          url: https://api3.example.com/
+        - pools:
+          - fallback
+          url: https://api4.example.com/
+        probe:
+          headers:
+            x-probe: 'true'
+          path: /health
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/pooled.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy:
+    endpoints:
+    - name: examples
+      port: 4000
+      remote:
+        endpoints:
+        - url: https://api1.example.com/
+        - url: https://api2.example.com/
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/swapi.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy:
+    endpoints:
+    - name: starwars
+      port: 1234
+      remote:
+        endpoints:
+        - url: https://swapi.dev/
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/rules/examples/overview.toml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  rules:
+    '*':
+      GET *:
+        on_remote_request: "if not request.headers.get('Authorization'):\n    request.headers['Authorization']
+          = 'Passphrase I shall pass.'"
+        on_remote_response: response.headers['Cache-Control'] = 'max-age=3600'
+        on_request: "from harp.http import HttpResponse\nif request.headers.get('Authorization')
+          == \"I'm root, let me in\":\n    response = HttpResponse('Ok, then.')\nelse:\n
+          \   request.headers['Via'] = 'Ferrata'"
+        on_response: response.headers['X-Signature'] = 'Best regards, Joe.'
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/rules/examples/rules.toml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  rules:
+    '*':
+      '*':
+        on_request: request.headers['X-Forwarded-For'] = 'Joe'
+    httpbin-*:
+      GET /*:
+        on_remote_response: response.headers['Cache-Control'] = 'max-age=3600'
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/rules/examples/rules.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  rules:
+    '*':
+      '*':
+        on_request: request.headers['X-Forwarded-For'] = 'Joe'
+    httpbin-*:
+      GET /*:
+        on_remote_response: response.headers['Cache-Control'] = 'max-age=3600'
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/storage/examples/mysql-aiomysql.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage:
+    url: mysql+aiomysql://user:password@localhost:3306/harp
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/storage/examples/mysql-asyncmy.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage:
+    url: mysql+asyncmy://user:password@localhost:3306/harp
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/storage/examples/postgres-asyncpg.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage:
+    url: postgresql+asyncpg://user:password@localhost:5432/harp
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/storage/examples/redis.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage:
+    blobs:
+      type: redis
+  
+  '''
+# ---
+# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/storage/examples/sqlite-aiosqlite.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage:
+    url: sqlite+aiosqlite:///harp.db
+  
+  '''
+# ---
+# name: test_load_example[auth.basic]
+  '''
+  applications:
+  - harp_apps.http_client
+  - harp_apps.proxy
+  - harp_apps.storage
+  - harp_apps.dashboard
+  - harp_apps.contrib.sentry
+  - harp_apps.telemetry
+  - harp_apps.janitor
+  dashboard:
+    auth:
+      type: basic
+      users:
+        admin:
+          password: $pbkdf2-sha256$29000$f4.RkvLeG2OstfZ.D8F4zw$4ONvNXnHCX.8Q.40SU9KjvBsAEAhqdrGJ80tsfLPA/s
+        charles:
+          password: $pbkdf2-sha256$29000$pVSK0ZpTytlb611LifF.bw$WtNQjr67hyS0DSSRtRSp6zU59KSk3pqvWdVCrxZhcEA
+        john:
+          password: $pbkdf2-sha256$29000$DqE0hnCuVYoRIiREaM35Pw$vSB9/zMmcHwQQKdtcOtkZQNR43MA9fyvB8Gd114EZ.U
+        miles:
+          password: $pbkdf2-sha256$29000$kTKmtPbeO2ds7R2DcA5BiA$UlJJGi.dHPxrTS2Jv8RXEXcpUNR7r1OYQmHmmheVjLE
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_example[postgres]
+  '''
+  applications:
+  - harp_apps.http_client
+  - harp_apps.proxy
+  - harp_apps.storage
+  - harp_apps.dashboard
+  - harp_apps.contrib.sentry
+  - harp_apps.telemetry
+  - harp_apps.janitor
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage:
+    url: postgresql+asyncpg://harp:harp@127.0.0.1/harp
+  
+  '''
+# ---
+# name: test_load_example[proxy:httpbin]
+  '''
+  applications:
+  - harp_apps.http_client
+  - harp_apps.proxy
+  - harp_apps.storage
+  - harp_apps.dashboard
+  - harp_apps.contrib.sentry
+  - harp_apps.telemetry
+  - harp_apps.janitor
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy:
+    endpoints:
+    - name: httpbin
+      port: 4000
+      remote:
+        endpoints:
+        - url: http://httpbin.org/
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_example[proxy:httpbins]
+  '''
+  applications:
+  - harp_apps.http_client
+  - harp_apps.proxy
+  - harp_apps.storage
+  - harp_apps.dashboard
+  - harp_apps.contrib.sentry
+  - harp_apps.telemetry
+  - harp_apps.janitor
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy:
+    endpoints:
+    - name: httpbin
+      port: 4000
+      remote:
+        endpoints:
+        - url: http://httpbin.org/
+    - name: httpbin2
+      port: 4001
+      remote:
+        endpoints:
+        - url: http://httpbin.org/
+    - name: httpbin3
+      port: 4002
+      remote:
+        endpoints:
+        - url: http://httpbin.org/
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_example[proxy:pooled]
+  '''
+  applications:
+  - harp_apps.http_client
+  - harp_apps.proxy
+  - harp_apps.storage
+  - harp_apps.dashboard
+  - harp_apps.contrib.sentry
+  - harp_apps.telemetry
+  - harp_apps.janitor
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy:
+    endpoints:
+    - name: pooled
+      port: 4010
+      remote:
+        break_on:
+        - http_5xx
+        - network_error
+        endpoints:
+        - url: https://api1-internal.harp.demo/
+        - url: https://api2-internal.harp.demo/
+        - pools:
+          - fallback
+          url: https://api3-internal.harp.demo/
+        - pools:
+          - fallback
+          url: https://api4-internal.harp.demo/
+        min_pool_size: 2
+        probe:
+          interval: '5'
+          path: /get
+          verify: false
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_example[repositories]
+  '''
+  applications:
+  - harp_apps.http_client
+  - harp_apps.proxy
+  - harp_apps.storage
+  - harp_apps.dashboard
+  - harp_apps.contrib.sentry
+  - harp_apps.telemetry
+  - harp_apps.janitor
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy:
+    endpoints:
+    - description: Python Package Index (Python)
+      name: pypi
+      port: 9001
+      remote:
+        endpoints:
+        - url: https://pypi.org/
+    - description: Node Package Manager Registry (JavaScript)
+      name: npm
+      port: 9002
+      remote:
+        endpoints:
+        - url: https://registry.npmjs.org/
+    - description: Ruby Gems (Ruby)
+      name: rubygems
+      port: 9003
+      remote:
+        endpoints:
+        - url: https://rubygems.org/
+    - description: Maven Central Repository (Java)
+      name: maven
+      port: 9004
+      remote:
+        endpoints:
+        - url: https://repo.maven.apache.org/maven2/
+    - description: NuGet Gallery (.NET)
+      name: nuget
+      port: 9005
+      remote:
+        endpoints:
+        - url: https://api.nuget.org/v3/index.json
+    - description: The Comprehensive R Archive Network (R)
+      name: cran
+      port: 9006
+      remote:
+        endpoints:
+        - url: https://cran.r-project.org/
+    - description: Conda package manager (Python)
+      name: conda
+      port: 9007
+      remote:
+        endpoints:
+        - url: https://conda.anaconda.org/
+    - description: Clojars (Clojure)
+      name: clojars
+      port: 9008
+      remote:
+        endpoints:
+        - url: https://clojars.org/repo/
+    - description: The Haskell Package Repository (Haskell)
+      name: hackage
+      port: 9010
+      remote:
+        endpoints:
+        - url: https://hackage.haskell.org/
+    - description: Composer Repository (PHP)
+      name: packagist
+      port: 9011
+      remote:
+        endpoints:
+        - url: https://packagist.org/
+    - description: Yarn Registry (JavaScript)
+      name: yarn
+      port: 9012
+      remote:
+        endpoints:
+        - url: https://registry.yarnpkg.com/
+  storage:
+    url: postgresql+asyncpg://harp:harp@127.0.0.1/repositories
+  
+  '''
+# ---
+# name: test_load_example[rules:teapot]
+  '''
+  applications:
+  - harp_apps.http_client
+  - harp_apps.proxy
+  - harp_apps.storage
+  - harp_apps.dashboard
+  - harp_apps.contrib.sentry
+  - harp_apps.telemetry
+  - harp_apps.janitor
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_example[sentry]
+  '''
+  applications:
+  - harp_apps.http_client
+  - harp_apps.proxy
+  - harp_apps.storage
+  - harp_apps.dashboard
+  - harp_apps.contrib.sentry
+  - harp_apps.telemetry
+  - harp_apps.janitor
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_example[services:database]
+  '''
+  applications:
+  - harp_apps.http_client
+  - harp_apps.proxy
+  - harp_apps.storage
+  - harp_apps.dashboard
+  - harp_apps.contrib.sentry
+  - harp_apps.telemetry
+  - harp_apps.janitor
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_example[services:empty]
+  '''
+  applications:
+  - harp_apps.http_client
+  - harp_apps.proxy
+  - harp_apps.storage
+  - harp_apps.dashboard
+  - harp_apps.contrib.sentry
+  - harp_apps.telemetry
+  - harp_apps.janitor
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_example[services:redis]
+  '''
+  applications:
+  - harp_apps.http_client
+  - harp_apps.proxy
+  - harp_apps.storage
+  - harp_apps.dashboard
+  - harp_apps.contrib.sentry
+  - harp_apps.telemetry
+  - harp_apps.janitor
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_example[sqlite]
+  '''
+  applications:
+  - harp_apps.http_client
+  - harp_apps.proxy
+  - harp_apps.storage
+  - harp_apps.dashboard
+  - harp_apps.contrib.sentry
+  - harp_apps.telemetry
+  - harp_apps.janitor
+  dashboard: {}
+  harp_apps.contrib.sentry:
+    dsn: null
+  http_client:
+    cache:
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+    timeout: 30.0
+    transport:
+      '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage:
+    url: sqlite+aiosqlite:///harp.db
+  
+  '''
 # ---

@@ -1,0 +1,186 @@
+# serializer version: 1
+# name: test_all_applications_default_settings[harp_apps.acme]
+  dict({
+    'harp_apps.acme.settings.AcmeSettings': '''
+      owner: Joe
+  
+    ''',
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.contrib.sentry]
+  dict({
+    'harp_apps.contrib.sentry.settings.SentrySettings': '''
+      dsn: null
+  
+    ''',
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.dashboard]
+  dict({
+    'harp_apps.dashboard.settings.DashboardSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.dashboard.settings.auth.BasicAuthSettings': '''
+      type: basic
+  
+    ''',
+    'harp_apps.dashboard.settings.auth.User': '''
+      password: secret
+  
+    ''',
+    'harp_apps.dashboard.settings.devserver.DevserverSettings': '''
+      {}
+  
+    ''',
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.http_client]
+  dict({
+    'harp_apps.http_client.settings.CacheSettings': '''
+      check_ttl_every: 60
+      controller:
+        '@type': hishel:Controller
+        allow_heuristics: false
+        allow_stale: false
+        cacheable_methods:
+        - GET
+        - HEAD
+        cacheable_status_codes:
+        - 200
+        - 203
+        - 204
+        - 206
+        - 300
+        - 301
+        - 308
+        - 404
+        - 405
+        - 410
+        - 414
+        - 501
+      enabled: true
+      storage: null
+      transport:
+        '@type': hishel:AsyncCacheTransport
+      ttl: null
+  
+    ''',
+    'harp_apps.http_client.settings.HttpClientSettings': '''
+      cache:
+        check_ttl_every: 60
+        controller:
+          '@type': hishel:Controller
+          allow_heuristics: false
+          allow_stale: false
+          cacheable_methods:
+          - GET
+          - HEAD
+          cacheable_status_codes:
+          - 200
+          - 203
+          - 204
+          - 206
+          - 300
+          - 301
+          - 308
+          - 404
+          - 405
+          - 410
+          - 414
+          - 501
+        enabled: true
+        storage: null
+        transport:
+          '@type': hishel:AsyncCacheTransport
+        ttl: null
+      timeout: 30.0
+      transport:
+        '@type': httpx:AsyncHTTPTransport
+  
+    ''',
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.janitor]
+  dict({
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.notifications]
+  dict({
+    'harp_apps.notifications.settings.NotificationsSettings': '''
+      enabled: true
+      google_chat_webhook_url: null
+      slack_webhook_url: null
+  
+    ''',
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.proxy]
+  dict({
+    'harp_apps.proxy.settings.ProxySettings': '''
+      {}
+  
+    ''',
+    'harp_apps.proxy.settings.endpoint.EndpointSettings': '''
+      name: api
+      port: 4000
+  
+    ''',
+    'harp_apps.proxy.settings.remote.RemoteSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.proxy.settings.remote.endpoint.RemoteEndpointSettings': '''
+      url: https://www.example.com/
+  
+    ''',
+    'harp_apps.proxy.settings.remote.probe.RemoteProbeSettings': '''
+      {}
+  
+    ''',
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.rules]
+  dict({
+    'harp_apps.rules.models.rulesets.RuleSet': '''
+      {}
+  
+    ''',
+    'harp_apps.rules.settings.RulesSettings': '''
+      {}
+  
+    ''',
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.services]
+  dict({
+    'harp_apps.services.settings.ServicesSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.services.settings.database.DatabaseSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.services.settings.redis.RedisSettings': '''
+      {}
+  
+    ''',
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.storage]
+  dict({
+    'harp_apps.storage.settings.RedisBlobStorageSettings': '''
+      type: redis
+  
+    ''',
+    'harp_apps.storage.settings.SqlBlobStorageSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.storage.settings.StorageSettings': '''
+      {}
+  
+    ''',
+  })
+# ---

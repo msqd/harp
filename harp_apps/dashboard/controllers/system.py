@@ -6,7 +6,7 @@ from sqlalchemy.orm import aliased, joinedload
 
 from harp import __revision__, __version__, get_logger
 from harp.config import asdict
-from harp.controllers import GetHandler, PutHandler, RouterPrefix, RoutingController
+from harp.controllers import GetHandler, ProxyControllerResolver, PutHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest, HttpResponse
 from harp.typing.global_settings import GlobalSettings
 from harp.views.json import json
@@ -22,9 +22,18 @@ logger = get_logger(__name__)
 
 @RouterPrefix("/api/system")
 class SystemController(RoutingController):
-    def __init__(self, *, storage: IStorage, settings: GlobalSettings, handle_errors=True, router=None):
+    def __init__(
+        self,
+        *,
+        storage: IStorage,
+        settings: GlobalSettings,
+        resolver: ProxyControllerResolver,
+        handle_errors=True,
+        router=None,
+    ):
         self.settings = settings
         self.storage: SqlStorage = cast(SqlStorage, storage)
+        self.resolver = resolver
 
         self._dependencies = None
 
@@ -44,10 +53,8 @@ class SystemController(RoutingController):
 
     @GetHandler("/proxy")
     async def get_proxy(self):
-        settings: ProxySettings | None = self.settings.get("proxy", None)
-        if not settings:
-            return HttpResponse(b"Proxy is not configured", status=404)
-        return json({"endpoints": [endpoint._asdict(with_status=True) for endpoint in settings.endpoints]})
+        endpoints = list(self.resolver.endpoints.values())
+        return json({"endpoints": asdict(endpoints, verbose=True)})
 
     @PutHandler("/proxy")
     async def put_proxy(self, request: HttpRequest):
@@ -82,7 +89,8 @@ class SystemController(RoutingController):
 
     @GetHandler("/settings")
     async def get_settings(self):
-        return json(asdict(self.settings, secure=True))
+        settings_dict = asdict(self.settings, verbose=True, secure=True, mode="python")
+        return json(settings_dict)
 
     @GetHandler("/dependencies")
     async def get_dependencies(self):
@@ -102,7 +110,7 @@ class SystemController(RoutingController):
 
         return json(
             {
-                "settings": asdict(self.settings.get("storage", {}), secure=True),
+                "settings": asdict(self.settings.get("storage", {}), secure=True, mode="python"),
                 "counts": {value.metric.name.split(".", 1)[-1]: value.value for value in result},
             }
         )

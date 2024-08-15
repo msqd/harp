@@ -3,7 +3,7 @@
 from functools import partial
 from typing import cast
 
-from sqlalchemy import StaticPool
+from sqlalchemy import StaticPool, make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from harp import get_logger
@@ -44,10 +44,12 @@ async def on_bind(event: OnBindEvent):
     # Created directly because of migrations, way easier to ensure the database is up and ready for whatever needs
     # it. Of course, it'd be better to have async factories, but that's not the case (yet).
 
-    if settings.url.get_dialect() == "sqlite" and settings.url.database == ":memory:":
-        engine = create_async_engine(settings.url, connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    database_url = make_url(str(settings.url))
+
+    if database_url.get_dialect() == "sqlite" and database_url.database == ":memory:":
+        engine = create_async_engine(database_url, connect_args={"check_same_thread": False}, poolclass=StaticPool)
     else:
-        engine = create_async_engine(settings.url)
+        engine = create_async_engine(database_url)
 
     if settings.migrate:
         await _run_migrations(engine)

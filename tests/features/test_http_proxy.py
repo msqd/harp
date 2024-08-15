@@ -13,7 +13,7 @@ from harp.config import ConfigurationBuilder, SystemBuilder
 from harp.controllers import ProxyControllerResolver
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.http import parametrize_with_http_methods
-from harp_apps.proxy.controllers import HttpProxyController
+from harp_apps.proxy.settings import EndpointSettings
 
 
 class TestAsgiProxyWithoutEndpoints:
@@ -44,7 +44,8 @@ class TestAsgiProxyWithMissingStartup:
     @pytest.fixture
     def kernel(self, test_api):
         resolver = ProxyControllerResolver()
-        resolver.add(80, HttpProxyController(test_api.url, http_client=AsyncClient()))
+        http_client = AsyncClient()
+        resolver.add(EndpointSettings(name="test", port=80, url=test_api.url), http_client=http_client)
         return ASGIKernel(resolver=resolver)
 
     @pytest.fixture
@@ -76,13 +77,15 @@ class TestAsgiProxyWithStubApi:
         builder.applications.add("storage")
         builder.add_values(
             {
-                "proxy.endpoints": [
-                    {
-                        "port": 80,
-                        "name": "test",
-                        "url": test_api.url,
-                    }
-                ]
+                "proxy": {
+                    "endpoints": [
+                        {
+                            "port": 80,
+                            "name": "test",
+                            "url": test_api.url,
+                        }
+                    ]
+                }
             }
         )
 

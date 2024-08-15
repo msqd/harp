@@ -1,0 +1,3 @@
+services:
+  database:
+    url: postgresql://user:pass@localhost/harp

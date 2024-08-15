@@ -20,7 +20,7 @@ simple_config_with_probe = {
             "remote": {
                 "endpoints": [
                     {"url": "http://example.com"},
-                    {"url": "http://fallback.example.com"},
+                    {"url": "http://fallback.example.com", "pools": ["fallback"]},
                 ],
                 "probe": {
                     "method": "GET",
@@ -34,18 +34,17 @@ simple_config_with_probe = {
 
 
 def test_short_syntax():
-    settings = ProxySettings(**short_syntax_simple_config)
+    settings = ProxySettings.from_dict(short_syntax_simple_config)
 
     assert asdict(settings) == {
         "endpoints": [
             {
                 "name": "test",
-                "description": None,
                 "port": 8080,
                 "remote": {
                     "endpoints": [
-                        {"url": "http://example.com/", "pools": ["default"]},
-                    ],
+                        {"url": "http://example.com/"},
+                    ]
                 },
             }
         ]
@@ -54,23 +53,22 @@ def test_short_syntax():
 
 def test_default_settings():
     settings = ProxySettings()
-    assert asdict(settings) == {"endpoints": []}
+    assert asdict(settings) == {}
 
 
 def test_probe_syntax():
-    settings = ProxySettings(**simple_config_with_probe)
+    settings = ProxySettings.from_dict(simple_config_with_probe)
     assert asdict(settings) == {
         "endpoints": [
             {
-                "description": None,
                 "name": "test",
                 "port": 8080,
                 "remote": {
                     "endpoints": [
-                        {"url": "http://example.com/", "pools": ["default"]},
-                        {"url": "http://fallback.example.com/", "pools": ["default"]},
+                        {"url": "http://example.com/"},
+                        {"pools": ["fallback"], "url": "http://fallback.example.com/"},
                     ],
-                    "probe": {"type": "http", "method": "GET", "path": "/", "timeout": 5.0},
+                    "probe": {"timeout": "5"},
                 },
             }
         ]

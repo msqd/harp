@@ -1,11 +1,13 @@
-from typing import Awaitable, Callable
+from typing import TYPE_CHECKING, Awaitable, Callable
 
 from rodi import Container, Services
 from whistle import Event
 
 from harp.asgi import ASGIKernel
-from harp.controllers import ProxyControllerResolver
 from harp.utils.network import Bind
+
+if TYPE_CHECKING:
+    from harp.controllers import ProxyControllerResolver
 
 
 class OnBindEvent(Event):
@@ -40,7 +42,7 @@ class OnBoundEvent(Event):
 
     name = "harp.config.bound"
 
-    def __init__(self, provider: Services, resolver: ProxyControllerResolver):
+    def __init__(self, provider: Services, resolver: "ProxyControllerResolver"):
         self.provider = provider
         self.resolver = resolver
 

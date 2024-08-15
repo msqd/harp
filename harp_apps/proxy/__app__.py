@@ -11,7 +11,6 @@ from httpx import AsyncClient
 from harp.config import Application
 from harp.config.events import OnBoundEvent, OnShutdownEvent
 
-from .controllers import HttpProxyController
 from .settings import ProxySettings
 
 PROXY_HEALTHCHECKS_TASK = "proxy.healthchecks"
@@ -30,13 +29,9 @@ async def on_bound(event: OnBoundEvent):
     settings: ProxySettings = event.provider.get(ProxySettings)
     for endpoint in settings.endpoints:
         event.resolver.add(
-            endpoint.port,
-            HttpProxyController(
-                endpoint.remote,
-                name=endpoint.name,
-                dispatcher=event.dispatcher,
-                http_client=event.provider.get(AsyncClient),
-            ),
+            endpoint,
+            dispatcher=event.dispatcher,
+            http_client=event.provider.get(AsyncClient),
         )
 
     event.provider.set(
@@ -52,6 +47,7 @@ async def on_shutdown(event: OnShutdownEvent):
 
 
 application = Application(
+    dependencies=["services"],
     on_bound=on_bound,
     settings_type=ProxySettings,
 )

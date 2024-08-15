@@ -3,6 +3,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import Union
 
+from pydantic_core import MultiHostUrl, Url
 from sqlalchemy import URL, make_url, text
 from sqlalchemy.exc import OperationalError
 
@@ -14,9 +15,12 @@ from harp_apps.storage.models import Base, Message, Transaction
 logger = get_logger(__name__)
 
 
-def create_alembic_config(url: Union[str, URL]):
+def create_alembic_config(url: Union[str, URL, Url, MultiHostUrl]):
     """Create our alembic configuration object, to run alembic commands."""
     from alembic.config import Config as AlembicConfig
+
+    if isinstance(url, (Url, MultiHostUrl)):
+        url = str(url)
 
     url = make_url(url)
 
