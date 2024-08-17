@@ -27,24 +27,31 @@ class TestSystemControllerProxy(SystemControllerTestFixtureMixin):
         assert response == {
             "endpoints": [
                 {
-                    "description": None,
-                    "name": "api",
-                    "port": 4000,
                     "remote": {
-                        "break_on": ["network_error", "unhandled_exception"],
-                        "check_after": 10.0,
+                        "current_pool": ["http://example.com/"],
+                        "current_pool_name": "default",
                         "endpoints": [
                             {
-                                "failure_threshold": 1,
-                                "pools": ["default"],
-                                "success_threshold": 1,
-                                "url": "http://example.com/",
+                                "failure_reasons": None,
+                                "failure_score": 0,
+                                "settings": {
+                                    "failure_threshold": 1,
+                                    "pools": ["default"],
+                                    "success_threshold": 1,
+                                    "url": "http://example.com/",
+                                },
+                                "status": 0,
+                                "success_score": 0,
                             }
                         ],
-                        "min_pool_size": 1,
                         "probe": None,
+                        "settings": {
+                            "break_on": ["network_error", "unhandled_exception"],
+                            "check_after": 10.0,
+                            "min_pool_size": 1,
+                        },
                     },
-                    "url": None,
+                    "settings": {"description": None, "name": "api", "port": 4000},
                 }
             ]
         }

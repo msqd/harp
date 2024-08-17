@@ -19,8 +19,7 @@ Changed
 
 * Config: the settings are now implemented using pydantic, with more strictness so that settings only contains settings
   and state-related things are moved to wrappers. The new ``harp.config.Configurable`` base class is now used for all
-  settings classes, and a new ``harp.config.StatefulConfigurableWrapper`` allows to define settings wrappers for
-  stateful objects.
+  settings classes, and a new ``harp.config.Stateful`` allows to define settings wrappers for stateful objects.
 * Core/Http: Removed WrappedHttpRequest, inner HttpRequests can now be accessed directly.
 * DX: adds a ``harp examples list`` command to list available examples
 * DX/Core: HttpRequest can now be instanciated without an explicit implementation. If no implementation is provided,

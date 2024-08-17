@@ -8,7 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 from harp import ROOT_DIR
-from harp.config import asdict
+from harp.config import Stateful, asdict
 from harp.utils.config import yaml
 
 
@@ -45,7 +45,7 @@ def get_all_settings_classes(modname):
 # subsettings that does not really make sense unless relevant configuration is passed. In that case, we provide the
 # minimal set of settings required to instanciate it.
 REQUIRED_SETTINGS = {
-    "harp_apps.proxy.settings.endpoint.EndpointSettings": {
+    "harp_apps.proxy.settings.endpoint.BaseEndpointSettings": {
         "name": "api",
         "port": 4000,
     },
@@ -57,6 +57,10 @@ REQUIRED_SETTINGS = {
     },
 }
 
+REQUIRED_SETTINGS["harp_apps.proxy.settings.endpoint.EndpointSettings"] = REQUIRED_SETTINGS[
+    "harp_apps.proxy.settings.endpoint.BaseEndpointSettings"
+]
+
 
 @pytest.mark.parametrize("app", all_apps)
 def test_all_applications_default_settings(app, snapshot):
@@ -65,23 +69,33 @@ def test_all_applications_default_settings(app, snapshot):
     if "settings" not in submodules:
         pytest.skip(f"No settings submodule found in {app}.")
 
-    all_settings_classes = {}
-    for _name, _impl in get_all_settings_classes(app + ".settings"):
-        _fullname = f"{_impl.__module__}.{_impl.__qualname__}"
-        if _fullname not in all_settings_classes:
-            all_settings_classes[_fullname] = _name, _impl
+    _types = _get_all_configurable_types_for_application(app)
 
     all_defaults = {}
-    for _fullname, (_name, _impl) in all_settings_classes.items():
+    for _fullname, (_name, _type) in _types.items():
+        _kwargs: dict = REQUIRED_SETTINGS.get(_fullname, {})
+
+        if issubclass(_type, Stateful):
+            _settings_type = _type.get_settings_type()
+            _kwargs["settings"] = REQUIRED_SETTINGS.get(
+                f"{_settings_type.__module__}.{_settings_type.__qualname__}", {}
+            )
+
         if _fullname in REQUIRED_SETTINGS:
             with pytest.raises(ValidationError):
-                _impl()
-            settings_with_defaults = _impl(**REQUIRED_SETTINGS[_fullname])
-        else:
-            try:
-                settings_with_defaults = _impl()
-            except ValidationError as exc:
-                raise ValueError(f"Invalid default settings for {_fullname}") from exc
-        all_defaults[_fullname] = yaml.dump(asdict(settings_with_defaults))
+                _type()
+
+        instance = _type(**_kwargs)
+
+        all_defaults[_fullname] = yaml.dump(asdict(instance))
 
     assert all_defaults == snapshot
+
+
+def _get_all_configurable_types_for_application(app):
+    all_settings_classes = {}
+    for _name, _type in get_all_settings_classes(app + ".settings"):
+        _fullname = f"{_type.__module__}.{_type.__qualname__}"
+        if _fullname not in all_settings_classes:
+            all_settings_classes[_fullname] = _name, _type
+    return all_settings_classes

@@ -35,7 +35,7 @@ from .events import (
     EVENT_TRANSACTION_STARTED,
     ProxyFilterEvent,
 )
-from .models import Remote
+from .settings.remote import Remote
 
 logger = get_logger(__name__)
 
@@ -258,7 +258,7 @@ class HttpProxyController:
                     verbose_message=ERR_UNHANDLED_VERBOSE_MESSAGE,
                 )
 
-            if error_kind in self.remote.break_on:
+            if error_kind in self.remote.settings.break_on:
                 if self.remote[remote_url].failure(shouty_snake(type(response).__name__)):
                     self.remote.refresh()
 

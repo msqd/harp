@@ -2,47 +2,58 @@ import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react"
 import { ChevronDownIcon } from "@heroicons/react/20/solid"
 import tw, { styled } from "twin.macro"
 
-import { useSystemProxyMutation } from "../../../Domain/System/useSystemProxyQuery.ts"
+import { useSystemProxyMutation } from "Domain/System/useSystemProxyQuery.ts"
 
 const StyledButtonMenuItem = styled.button`
   ${tw`block w-full px-2 py-1 text-left text-gray-700 data-[focus]:bg-gray-100 data-[focus]:text-gray-900`}
 `
+function getHumanStatus(status: number) {
+  if (status > 0) {
+    return "up"
+  }
+  if (status < 0) {
+    return "down"
+  }
+  return "checking"
+}
 
-export default function StatusDropDown({
-  endpoint,
+export default function RemoteEndpointStatusDropDown({
+  endpointName,
   remoteEndpoint,
 }: {
-  endpoint: string
-  remoteEndpoint: Settings.Proxy.RemoteEndpoint
+  endpointName: string
+  remoteEndpoint: Apps.Proxy.RemoteEndpoint
 }) {
   const mutation = useSystemProxyMutation()
+  const status = remoteEndpoint.status ?? 0
+  const humanStatus = getHumanStatus(status)
 
   return (
     <Menu as="div" className="relative text-left">
       <div className="flex">
         <MenuButton className="inline-flex w-full justify-center rounded bg-white px-2 py-0.5 text-xs text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 capitalize items-center gap-x-1 mx-1">
-          {remoteEndpoint.status === "up" && (
+          {humanStatus == "up" && (
             <span title="Remote endpoint is up and running">
               <svg viewBox="0 0 6 6" aria-hidden="true" className="h-1.5 w-1.5 fill-green-500">
                 <circle r={3} cx={3} cy={3} />
               </svg>
             </span>
           )}
-          {remoteEndpoint.status === "checking" && (
+          {humanStatus == "checking" && (
             <span title="Remote endpoint is half-open, will recheck the remote status conservatively.">
               <svg viewBox="0 0 6 6" aria-hidden="true" className="h-1.5 w-1.5 fill-yellow-500">
                 <circle r={3} cx={3} cy={3} />
               </svg>
             </span>
           )}
-          {remoteEndpoint.status === "down" && (
+          {humanStatus == "down" && (
             <span title="Remote endpoint is down, will not be used for routing.">
               <svg viewBox="0 0 6 6" aria-hidden="true" className="h-1.5 w-1.5 fill-red-500">
                 <circle r={3} cx={3} cy={3} />
               </svg>
             </span>
           )}
-          <span>{remoteEndpoint.status}</span>
+          <span>{humanStatus}</span>
           <ChevronDownIcon aria-hidden="true" className="-mx-1 size-4 text-gray-400" />
         </MenuButton>
       </div>
@@ -53,11 +64,13 @@ export default function StatusDropDown({
       >
         <div className="py-1">
           {["up", "checking", "down"].map((status) =>
-            remoteEndpoint.status != status ? (
+            humanStatus != status ? (
               <MenuItem key={status}>
                 <StyledButtonMenuItem
                   type="button"
-                  onClick={() => mutation.mutate({ endpoint, url: remoteEndpoint.url, action: status })}
+                  onClick={() =>
+                    mutation.mutate({ endpoint: endpointName, url: remoteEndpoint.settings.url, action: status })
+                  }
                 >
                   Set {status}
                 </StyledButtonMenuItem>

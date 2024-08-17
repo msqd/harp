@@ -1,12 +1,18 @@
 from typing import Optional
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
-from harp.config import Configurable
-from harp_apps.proxy.settings.remote import RemoteEndpointSettings, RemoteSettings
+from harp.config import Configurable, Stateful
+from harp_apps.proxy.settings.remote import Remote, RemoteEndpointSettings, RemoteSettings
 
 
-class EndpointSettings(Configurable):
+class BaseEndpointSettings(Configurable):
+    name: str
+    port: int
+    description: Optional[str] = None
+
+
+class EndpointSettings(BaseEndpointSettings):
     """
     Configuration parser for ``proxy.endpoints[]`` settings.
 
@@ -31,19 +37,13 @@ class EndpointSettings(Configurable):
 
     """
 
-    name: str
-    port: int
-    description: Optional[str] = None
-
-    # for backward compatibility, "short syntax"
-    url: Optional[str] = None
-
     # resilience-compatible remote definition, with url pools, probes, etc.
-    remote: Optional[RemoteSettings] = None
+    remote: Optional[RemoteSettings] = Field(None, repr=False)
 
     @model_validator(mode="before")
     @classmethod
-    def convert_old_school_urls_to_remote(cls, values):
+    def __prepare(cls, values):
+        # Convert old school urls into new style remotes
         if "url" in values and values["url"] is not None:
             if "remote" in values and values["remote"] is not None:
                 raise ValueError(
@@ -54,28 +54,9 @@ class EndpointSettings(Configurable):
         return values
 
 
-"""
-    def __post_init__(self):
-        if self.remote is not None and self.url is not None:
-            raise ValueError(
-                "You can't define both proxy.endpoints[].remote and proxy.endpoints[].url, the second one is just a "
-                "shorthand syntax for the first one."
-            )
+class Endpoint(Stateful[EndpointSettings]):
+    remote: Remote = None
 
-        if self.url is not None:
-            self.remote = HttpRemote([self.url])
-
-        if isinstance(self.remote, dict):
-            self.remote = HttpRemote(**self.remote)
-
-        if not isinstance(self.remote, HttpRemote):
-            raise ValueError(f"Invalid remote configuration: {self.remote}")
-
-    def _asdict(self, /, *, secure=True, with_status=False):
-        return {
-            "name": self.name,
-            "port": self.port,
-            "description": self.description,
-            "remote": self.remote._asdict(secure=secure, with_status=with_status),
-        }
-"""
+    @model_validator(mode="after")
+    def __initialize(self):
+        self.remote = Remote(settings=self.settings.remote) if self.settings.remote else None

@@ -5,7 +5,7 @@ import respx
 from harp.http import HttpRequest
 from harp_apps.proxy.constants import DOWN, UP
 from harp_apps.proxy.controllers import HttpProxyController
-from harp_apps.proxy.models import Remote
+from harp_apps.proxy.settings.remote import Remote
 
 BASE_URL = "http://example.com"
 

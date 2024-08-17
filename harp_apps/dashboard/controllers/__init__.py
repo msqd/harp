@@ -14,7 +14,7 @@ from harp.typing.global_settings import GlobalSettings
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.storage.types import IBlobStorage, IStorage
 
-from ...proxy.models import Remote
+from ...proxy.settings.remote import Remote
 from ..settings import DashboardSettings
 from ..settings.auth import BasicAuthSettings
 from .blobs import BlobsController

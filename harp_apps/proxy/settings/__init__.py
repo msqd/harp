@@ -1,9 +1,25 @@
-from harp.config import Configurable
+from harp.config import Configurable, Stateful
 
 from .endpoint import EndpointSettings
+from .remote import Remote, RemoteEndpoint, RemoteEndpointSettings, RemoteProbe, RemoteProbeSettings, RemoteSettings
+
+__all__ = [
+    "Proxy",
+    "ProxySettings",
+    "Remote",
+    "RemoteEndpoint",
+    "RemoteEndpointSettings",
+    "RemoteProbe",
+    "RemoteProbeSettings",
+    "RemoteSettings",
+]
 
 
-class ProxySettings(Configurable):
+class BaseProxySettings(Configurable):
+    pass
+
+
+class ProxySettings(BaseProxySettings):
     """
     Configuration parser for ``proxy`` settings.
 
@@ -16,3 +32,7 @@ class ProxySettings(Configurable):
     """
 
     endpoints: list[EndpointSettings] = []
+
+
+class Proxy(Stateful[ProxySettings]):
+    pass

@@ -1,0 +1,279 @@
+# serializer version: 1
+# name: TestRemoteEndpointSettings.test_jsonschema_for_serialization
+  dict({
+    'additionalProperties': False,
+    'properties': dict({
+      'failure_threshold': dict({
+        'default': 1,
+        'exclusiveMinimum': 0,
+        'title': 'Failure Threshold',
+        'type': 'integer',
+      }),
+      'pools': dict({
+        'default': list([
+          'default',
+        ]),
+        'items': dict({
+          'type': 'string',
+        }),
+        'title': 'Pools',
+        'type': 'array',
+        'uniqueItems': True,
+      }),
+      'success_threshold': dict({
+        'default': 1,
+        'exclusiveMinimum': 0,
+        'title': 'Success Threshold',
+        'type': 'integer',
+      }),
+      'url': dict({
+        'format': 'uri',
+        'maxLength': 2083,
+        'minLength': 1,
+        'title': 'Url',
+        'type': 'string',
+      }),
+    }),
+    'required': list([
+      'url',
+    ]),
+    'title': 'RemoteEndpointSettings',
+    'type': 'object',
+  })
+# ---
+# name: TestRemoteEndpointSettings.test_jsonschema_for_validation
+  dict({
+    'additionalProperties': False,
+    'properties': dict({
+      'failure_threshold': dict({
+        'default': 1,
+        'exclusiveMinimum': 0,
+        'title': 'Failure Threshold',
+        'type': 'integer',
+      }),
+      'pools': dict({
+        'default': list([
+          'default',
+        ]),
+        'items': dict({
+          'type': 'string',
+        }),
+        'title': 'Pools',
+        'type': 'array',
+        'uniqueItems': True,
+      }),
+      'success_threshold': dict({
+        'default': 1,
+        'exclusiveMinimum': 0,
+        'title': 'Success Threshold',
+        'type': 'integer',
+      }),
+      'url': dict({
+        'format': 'uri',
+        'maxLength': 2083,
+        'minLength': 1,
+        'title': 'Url',
+        'type': 'string',
+      }),
+    }),
+    'required': list([
+      'url',
+    ]),
+    'title': 'RemoteEndpointSettings',
+    'type': 'object',
+  })
+# ---
+# name: TestRemoteEndpointStateful.test_jsonschema_for_serialization
+  dict({
+    '$defs': dict({
+      'RemoteEndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              url: "http://my-endpoint:8080"
+              pools: [fallback]  # omit for default pool
+              failure_threshold: 3
+              success_threshold: 1
+        ''',
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'pools': dict({
+            'default': list([
+              'default',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Pools',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'url': dict({
+            'format': 'uri',
+            'maxLength': 2083,
+            'minLength': 1,
+            'title': 'Url',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'url',
+        ]),
+        'title': 'RemoteEndpointSettings',
+        'type': 'object',
+      }),
+    }),
+    'properties': dict({
+      'failure_reasons': dict({
+        'anyOf': list([
+          dict({
+            'items': dict({
+            }),
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+        'title': 'Failure Reasons',
+      }),
+      'failure_score': dict({
+        'default': 0,
+        'title': 'Failure Score',
+        'type': 'integer',
+      }),
+      'settings': dict({
+        '$ref': '#/$defs/RemoteEndpointSettings',
+      }),
+      'status': dict({
+        'default': 0,
+        'title': 'Status',
+        'type': 'integer',
+      }),
+      'success_score': dict({
+        'default': 0,
+        'title': 'Success Score',
+        'type': 'integer',
+      }),
+    }),
+    'required': list([
+      'settings',
+    ]),
+    'title': 'RemoteEndpoint',
+    'type': 'object',
+  })
+# ---
+# name: TestRemoteEndpointStateful.test_jsonschema_for_validation
+  dict({
+    '$defs': dict({
+      'RemoteEndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              url: "http://my-endpoint:8080"
+              pools: [fallback]  # omit for default pool
+              failure_threshold: 3
+              success_threshold: 1
+        ''',
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'pools': dict({
+            'default': list([
+              'default',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Pools',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'url': dict({
+            'format': 'uri',
+            'maxLength': 2083,
+            'minLength': 1,
+            'title': 'Url',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'url',
+        ]),
+        'title': 'RemoteEndpointSettings',
+        'type': 'object',
+      }),
+    }),
+    'properties': dict({
+      'failure_reasons': dict({
+        'anyOf': list([
+          dict({
+            'items': dict({
+            }),
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+        'title': 'Failure Reasons',
+      }),
+      'failure_score': dict({
+        'default': 0,
+        'title': 'Failure Score',
+        'type': 'integer',
+      }),
+      'settings': dict({
+        '$ref': '#/$defs/RemoteEndpointSettings',
+      }),
+      'status': dict({
+        'default': 0,
+        'title': 'Status',
+        'type': 'integer',
+      }),
+      'success_score': dict({
+        'default': 0,
+        'title': 'Success Score',
+        'type': 'integer',
+      }),
+    }),
+    'required': list([
+      'settings',
+    ]),
+    'title': 'RemoteEndpoint',
+    'type': 'object',
+  })
+# ---

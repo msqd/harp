@@ -1,12 +1,9 @@
-from typing import Generic, Self, Type, TypeVar, get_args
+from typing import Annotated, Generic, Self, Type, TypeVar
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_serializer
 
 
-class Configurable(BaseModel):
-    class Config:
-        extra = "forbid"
-
+class BaseConfigurable(BaseModel):
     @classmethod
     def from_dict(cls: Type[Self], data: dict) -> Self:
         return cls(**data)
@@ -16,25 +13,35 @@ class Configurable(BaseModel):
         return cls(**kwargs)
 
 
-TWrappedConfigurable = TypeVar("TWrappedConfigurable", bound=Configurable)
+class Configurable(BaseConfigurable):
+    class Config:
+        extra = "forbid"
 
 
-class StatefulConfigurableWrapper(Generic[TWrappedConfigurable]):
-    settings: TWrappedConfigurable
+TConfigurable = TypeVar("TConfigurable", bound=Configurable)
 
-    def __init__(self, settings: TWrappedConfigurable):
-        self.settings = settings
 
-    def __getattr__(self, item: str):
-        try:
-            return getattr(self.settings, item)
-        except AttributeError as exc:
-            raise AttributeError(
-                f"'{type(self).__name__}' and wrapped '{type(self.settings).__name__}' objects have no attribute '{item}'"
-            ) from exc
+class Stateful(BaseConfigurable, Generic[TConfigurable]):
+    settings: Annotated[TConfigurable, Field(repr=False)]
+
+    @classmethod
+    def get_settings_type(cls) -> Type[Configurable]:
+        return cls.model_fields["settings"].annotation
 
     @classmethod
     def from_settings_dict(cls: Type[Self], data: dict) -> Self:
-        # this is probably weak in case of multiple inheritance, it assumes too much
-        wrapped_type = get_args(cls.__orig_bases__[0])[0]
-        return cls(wrapped_type(**data))
+        settings_type = cls.get_settings_type()
+        return cls(settings=settings_type(**data))
+
+    @classmethod
+    def from_settings_kwargs(cls: Type[Self], **kwargs) -> Self:
+        settings_type = cls.get_settings_type()
+        return cls(settings=settings_type(**kwargs))
+
+    @field_serializer("settings", when_used="json")
+    @classmethod
+    def __serialize_settings(cls, settings: TConfigurable):
+        BaseType = type(settings).__mro__[type(settings).__mro__.index(Configurable) - 1]
+        return BaseType.model_construct(
+            **{k: v for k, v in settings.model_dump().items() if k in BaseType.model_fields}
+        ).model_dump()

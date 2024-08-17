@@ -19,5 +19,4 @@ Submodules
     harp_apps.proxy.events
     harp_apps.proxy.examples
     harp_apps.proxy.helpers
-    harp_apps.proxy.models
     harp_apps.proxy.settings

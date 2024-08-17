@@ -117,6 +117,7 @@ qa-nofront:
 
 types:  ## Generates frontend types from the python code.
 	$(RUN) bin/generate_types
+	$(RUN) bin/generate_ts_types
 
 format:  ## Formats the full codebase (backend and frontend).
 	$(MAKE) format-backend

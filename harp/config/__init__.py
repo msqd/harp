@@ -15,7 +15,7 @@ __title__ = "Config"
 
 from .applications import Application, ApplicationsRegistry
 from .builders import ConfigurationBuilder, System, SystemBuilder
-from .configurables import Configurable, StatefulConfigurableWrapper
+from .configurables import Configurable, Stateful
 from .events import (
     EVENT_BIND,
     EVENT_BOUND,
@@ -32,6 +32,7 @@ from .utils import get_application
 __all__ = [
     "Application",
     "ApplicationsRegistry",
+    "Configurable",
     "ConfigurationBuilder",
     "Definition",
     "DisableableBaseSettings",
@@ -46,11 +47,10 @@ __all__ = [
     "OnReadyEvent",
     "OnShutdownEvent",
     "Settings",
+    "Stateful",
     "System",
     "SystemBuilder",
     "asdict",
     "get_application",
     "settings_dataclass",
-    "Configurable",
-    "StatefulConfigurableWrapper",
 ]

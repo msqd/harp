@@ -1,17 +1,52 @@
-from decimal import Decimal
-from typing import Iterable, Optional
+import asyncio
+import warnings
+from collections import deque
+from typing import Iterable, List, Mapping, Optional
 
-from pydantic import field_serializer, field_validator
+from _operator import attrgetter
+from pydantic import computed_field, field_serializer, field_validator, model_validator
 
-from harp.config import Configurable
+from harp import get_logger
+from harp.config import Configurable, Stateful
 from harp.utils.urls import normalize_url
-from harp_apps.proxy.constants import ALL_BREAK_ON_VALUES, BREAK_ON_NETWORK_ERROR, BREAK_ON_UNHANDLED_EXCEPTION
-from harp_apps.proxy.settings.remote.probe import RemoteProbeSettings
+from harp_apps.proxy.constants import (
+    ALL_BREAK_ON_VALUES,
+    BREAK_ON_NETWORK_ERROR,
+    BREAK_ON_UNHANDLED_EXCEPTION,
+    CHECKING,
+    DEFAULT_POOL,
+    DOWN,
+    FALLBACK_POOL,
+    UP,
+)
 
-from .endpoint import RemoteEndpointSettings
+from .endpoint import RemoteEndpoint, RemoteEndpointSettings
+from .probe import RemoteProbe, RemoteProbeSettings
+
+logger = get_logger(__name__)
+
+__all__ = [
+    "Remote",
+    "RemoteEndpoint",
+    "RemoteEndpointSettings",
+    "RemoteProbe",
+    "RemoteProbeSettings",
+    "RemoteSettings",
+]
 
 
-class RemoteSettings(Configurable):
+class BaseRemoteSettings(Configurable):
+    #: Minimum number of active endpoints to (try to) keep in the pool.
+    min_pool_size: int = 1
+
+    #: Events triggering the circuit breaker.
+    break_on: set = [BREAK_ON_NETWORK_ERROR, BREAK_ON_UNHANDLED_EXCEPTION]
+
+    #: Delay after which endpoints that are marked as down will be checked again.
+    check_after: float = 10.0
+
+
+class RemoteSettings(BaseRemoteSettings):
     """
     A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
     configuration parser for ``proxy.endpoints[].remote`` settings.
@@ -25,18 +60,10 @@ class RemoteSettings(Configurable):
         probe:
           # see HttpProbe
           ...
-
     """
 
-    min_pool_size: int = 1
     endpoints: list[RemoteEndpointSettings] = None
     probe: Optional[RemoteProbeSettings] = None
-
-    #: Events triggering the circuit breaker.
-    break_on: set = {BREAK_ON_NETWORK_ERROR, BREAK_ON_UNHANDLED_EXCEPTION}
-
-    #: Delay after which endpoints that are marked as down will be checked again.
-    check_after: Decimal = 10.0
 
     def __getitem__(self, item):
         item = normalize_url(item)
@@ -55,69 +82,133 @@ class RemoteSettings(Configurable):
     @field_serializer("break_on", when_used="json")
     @classmethod
     def serialize_in_order(cls, value: Iterable[str]):
-        return sorted(value)
-
-    """
-    XXX: This is a work in progress
+        return list(sorted(value))
 
 
-    current_pool: Deque[RemoteEndpointSettings] | None = None
-    current_pool_name = None
-    def __init__(
-        self,
-        endpoints: Iterable[HttpEndpoint | dict | str] | str = (),
-        *,
-        min_pool_size=None,
-        probe: Optional[HttpProbe | dict] = None,
-        break_on: Optional[set] = None,
-    ):
-        # endpoints
-        self.endpoints = {}
-        self.current_pool_name = DEFAULT_POOL
-        self.current_pool = deque()
+class Remote(Stateful[RemoteSettings]):
+    #: Current pool deque contains the list of available URLs, from least recently used to most recently used. It will
+    #: be rotated on each request to implement a naive round-robin strategy.
+    _current_pool: deque[RemoteEndpoint] = None
 
-        if isinstance(endpoints, str):
-            endpoints = [endpoints]
-        for endpoint in endpoints:
-            if isinstance(endpoint, str):
-                endpoint = {"url": endpoint}
-            if not isinstance(endpoint, HttpEndpoint):
-                endpoint = HttpEndpoint(**endpoint)
-            self.endpoints.setdefault(endpoint.url, endpoint)
-            if not self.endpoints[endpoint.url].pools:
-                self.endpoints[endpoint.url].pools.add(DEFAULT_POOL)
+    #: Name of the currently used pool. This does not mean that all urls come from this pool, as the fallback pool may
+    #: be active although some urls from default pool are still available.
+    current_pool_name: str = DEFAULT_POOL
 
-        # min pool size
-        self.min_pool_size = max(0, min_pool_size or self.min_pool_size)
+    #: Remote endpoints with current status.
+    _endpoints: Mapping[str, RemoteEndpoint] = None
 
-        # probe
-        if isinstance(probe, dict):
-            probe = HttpProbe(**probe)
-        self.probe = probe
+    #: Probe reference
+    probe: Optional[RemoteProbe] = None
 
-        # break on
-        break_on = set(break_on) if break_on is not None else self.break_on
-        if not break_on.issubset(ALL_BREAK_ON_VALUES):
-            raise ValueError(f"Invalid break_on values: {break_on}")
-        self.break_on = break_on
+    @computed_field
+    @property
+    def current_pool(self) -> List[str]:
+        return list(map(attrgetter("settings.url"), self._current_pool))
 
-        # compute first pool
+    @computed_field
+    @property
+    def endpoints(self) -> List[RemoteEndpoint]:
+        return list(self._endpoints.values())
+
+    @model_validator(mode="after")
+    def __initialize(self):
+        self._endpoints = {
+            normalize_url(str(endpoint_settings.url)): RemoteEndpoint(settings=endpoint_settings)
+            for endpoint_settings in (self.settings.endpoints or ())
+        }
+        self._current_pool = deque()
+        self.probe = RemoteProbe(settings=self.settings.probe) if self.settings.probe else None
         self.refresh()
 
+    def __getitem__(self, url: str) -> RemoteEndpoint:
+        return self._endpoints[normalize_url(url)]
 
+    def refresh(self):
+        """Recompute the current pool of endpoints."""
+        refreshed: deque[RemoteEndpoint] = deque()
+        for endpoint in self._endpoints.values():
+            if DEFAULT_POOL in endpoint.settings.pools and endpoint.status >= CHECKING:
+                refreshed.append(endpoint)
 
+        if len(refreshed) < self.settings.min_pool_size:
+            for endpoint in self._endpoints.values():
+                if FALLBACK_POOL in endpoint.settings.pools and endpoint.status >= CHECKING:
+                    self.current_pool_name = FALLBACK_POOL
+                    refreshed.append(endpoint)
+        else:
+            self.current_pool_name = DEFAULT_POOL
 
+        self._current_pool = refreshed
 
+    def get_url(self) -> str:
+        """Get next candidate url from the current pool, then rotate."""
+        try:
+            return str(self._current_pool[0].settings.url)
+        except IndexError as exc:
+            raise IndexError("No available URLs for remote.") from exc
 
-    def _asdict(self, /, *, secure=True, with_status=False):
-        return {
-            "endpoints": [
-                endpoint._asdict(secure=secure, with_status=with_status) for endpoint in self.endpoints.values()
-            ],
-            **({"min_pool_size": self.min_pool_size} if self.min_pool_size != type(self).min_pool_size else {}),
-            **({"probe": self.probe._asdict(secure=secure)} if self.probe else {}),
-            **({"current_pool": list(x.url for x in self.current_pool)} if with_status else {}),
-            **({"break_on": list(sorted(self.break_on))} if self.break_on != type(self).break_on else {}),
-        }
+        finally:
+            self._current_pool.rotate(-1)
 
-"""
+    def notify_url_status(self, url, status):
+        """
+        Take into account a http status code to update the status of the url. Behaviour differs depending on the
+        instance configuration (some considers 5xx as down, some ignores non-network errors).
+        """
+        if ("http_5xx" in self.settings.break_on and 500 <= status < 600) or (
+            "http_4xx" in self.settings.break_on and 400 <= status < 500
+        ):
+            if self[url].failure(f"HTTP_{status}"):
+                self.refresh()
+
+    def set_down(self, url):
+        old_status = self[url].status
+
+        self[url].status = DOWN
+
+        if old_status >= DOWN:
+
+            async def delayed_set_checking():
+                await asyncio.sleep(self.settings.check_after)
+                if self[url].status == DOWN:
+                    self.set_checking(url)
+                del self[url]._delayed_set_checking
+
+            try:
+                self[url]._delayed_set_checking = asyncio.create_task(delayed_set_checking())
+            except RuntimeError as exc:
+                warnings.warn(f"Failed to schedule delayed checking state: {exc}")
+
+        self.refresh()
+
+    def set_checking(self, url):
+        self[url].status = CHECKING
+        self.refresh()
+
+    def set_up(self, url):
+        self[url].status = UP
+        self.refresh()
+
+    async def check(self):
+        """Uses the probe (luke), to check the health of each urls. It is also done on fallback and inactive urls, to
+        ensure that they are ready in case we need them."""
+        if self.probe is None:
+            return
+
+        state_changed = False
+
+        async with self.probe.async_client() as client:
+            for url in self._endpoints.values():
+                url_state_changed = await self.probe.check(client, url)
+                state_changed |= url_state_changed
+
+        if state_changed:
+            self.refresh()
+
+    async def check_forever(self):
+        while True:
+            try:
+                await self.check()
+            except Exception as exc:
+                logger.error(f"Failed to check remote health: {exc}")
+            await asyncio.sleep(self.probe.interval)

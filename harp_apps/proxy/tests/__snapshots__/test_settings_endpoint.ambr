@@ -1,0 +1,2167 @@
+# serializer version: 1
+# name: TestEndpointSettings.test_jsonschema_for_serialization
+  dict({
+    '$defs': dict({
+      'RemoteEndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              url: "http://my-endpoint:8080"
+              pools: [fallback]  # omit for default pool
+              failure_threshold: 3
+              success_threshold: 1
+        ''',
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'pools': dict({
+            'default': list([
+              'default',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Pools',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'url': dict({
+            'format': 'uri',
+            'maxLength': 2083,
+            'minLength': 1,
+            'title': 'Url',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'url',
+        ]),
+        'title': 'RemoteEndpointSettings',
+        'type': 'object',
+      }),
+      'RemoteProbeSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.probe`` settings.
+          
+          .. code-block:: yaml
+          
+              type: http
+              method: GET
+              path: /health
+              headers:
+                x-purpose: "health probe"
+              timeout: 5.0
+        ''',
+        'properties': dict({
+          'headers': dict({
+            'title': 'Headers',
+            'type': 'object',
+          }),
+          'interval': dict({
+            'default': '10.0',
+            'title': 'Interval',
+            'type': 'string',
+          }),
+          'method': dict({
+            'default': 'GET',
+            'title': 'Method',
+            'type': 'string',
+          }),
+          'path': dict({
+            'default': '/',
+            'title': 'Path',
+            'type': 'string',
+          }),
+          'timeout': dict({
+            'default': '10.0',
+            'title': 'Timeout',
+            'type': 'string',
+          }),
+          'verify': dict({
+            'default': True,
+            'title': 'Verify',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'RemoteProbeSettings',
+        'type': 'object',
+      }),
+      'RemoteSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote`` settings.
+          
+          .. code-block:: yaml
+          
+              min_pool_size: 1
+              endpoints:
+                # see HttpEndpoint
+                - ...
+              probe:
+                # see HttpProbe
+                ...
+        ''',
+        'properties': dict({
+          'break_on': dict({
+            'default': list([
+              'network_error',
+              'unhandled_exception',
+            ]),
+            'items': dict({
+            }),
+            'title': 'Break On',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'check_after': dict({
+            'default': 10.0,
+            'title': 'Check After',
+            'type': 'number',
+          }),
+          'endpoints': dict({
+            'default': None,
+            'items': dict({
+              '$ref': '#/$defs/RemoteEndpointSettings',
+            }),
+            'title': 'Endpoints',
+            'type': 'array',
+          }),
+          'min_pool_size': dict({
+            'default': 1,
+            'title': 'Min Pool Size',
+            'type': 'integer',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbeSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'title': 'RemoteSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'description': dict({
+        'anyOf': list([
+          dict({
+            'type': 'string',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+        'title': 'Description',
+      }),
+      'name': dict({
+        'title': 'Name',
+        'type': 'string',
+      }),
+      'port': dict({
+        'title': 'Port',
+        'type': 'integer',
+      }),
+      'remote': dict({
+        'anyOf': list([
+          dict({
+            '$ref': '#/$defs/RemoteSettings',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+      }),
+    }),
+    'required': list([
+      'name',
+      'port',
+    ]),
+    'title': 'EndpointSettings',
+    'type': 'object',
+  })
+# ---
+# name: TestEndpointSettings.test_jsonschema_for_validation
+  dict({
+    '$defs': dict({
+      'RemoteEndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              url: "http://my-endpoint:8080"
+              pools: [fallback]  # omit for default pool
+              failure_threshold: 3
+              success_threshold: 1
+        ''',
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'pools': dict({
+            'default': list([
+              'default',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Pools',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'url': dict({
+            'format': 'uri',
+            'maxLength': 2083,
+            'minLength': 1,
+            'title': 'Url',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'url',
+        ]),
+        'title': 'RemoteEndpointSettings',
+        'type': 'object',
+      }),
+      'RemoteProbeSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.probe`` settings.
+          
+          .. code-block:: yaml
+          
+              type: http
+              method: GET
+              path: /health
+              headers:
+                x-purpose: "health probe"
+              timeout: 5.0
+        ''',
+        'properties': dict({
+          'headers': dict({
+            'title': 'Headers',
+            'type': 'object',
+          }),
+          'interval': dict({
+            'anyOf': list([
+              dict({
+                'type': 'number',
+              }),
+              dict({
+                'type': 'string',
+              }),
+            ]),
+            'default': '10.0',
+            'title': 'Interval',
+          }),
+          'method': dict({
+            'default': 'GET',
+            'title': 'Method',
+            'type': 'string',
+          }),
+          'path': dict({
+            'default': '/',
+            'title': 'Path',
+            'type': 'string',
+          }),
+          'timeout': dict({
+            'anyOf': list([
+              dict({
+                'type': 'number',
+              }),
+              dict({
+                'type': 'string',
+              }),
+            ]),
+            'default': '10.0',
+            'title': 'Timeout',
+          }),
+          'verify': dict({
+            'default': True,
+            'title': 'Verify',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'RemoteProbeSettings',
+        'type': 'object',
+      }),
+      'RemoteSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote`` settings.
+          
+          .. code-block:: yaml
+          
+              min_pool_size: 1
+              endpoints:
+                # see HttpEndpoint
+                - ...
+              probe:
+                # see HttpProbe
+                ...
+        ''',
+        'properties': dict({
+          'break_on': dict({
+            'default': list([
+              'network_error',
+              'unhandled_exception',
+            ]),
+            'items': dict({
+            }),
+            'title': 'Break On',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'check_after': dict({
+            'default': 10.0,
+            'title': 'Check After',
+            'type': 'number',
+          }),
+          'endpoints': dict({
+            'default': None,
+            'items': dict({
+              '$ref': '#/$defs/RemoteEndpointSettings',
+            }),
+            'title': 'Endpoints',
+            'type': 'array',
+          }),
+          'min_pool_size': dict({
+            'default': 1,
+            'title': 'Min Pool Size',
+            'type': 'integer',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbeSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'title': 'RemoteSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'description': dict({
+        'anyOf': list([
+          dict({
+            'type': 'string',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+        'title': 'Description',
+      }),
+      'name': dict({
+        'title': 'Name',
+        'type': 'string',
+      }),
+      'port': dict({
+        'title': 'Port',
+        'type': 'integer',
+      }),
+      'remote': dict({
+        'anyOf': list([
+          dict({
+            '$ref': '#/$defs/RemoteSettings',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+      }),
+    }),
+    'required': list([
+      'name',
+      'port',
+    ]),
+    'title': 'EndpointSettings',
+    'type': 'object',
+  })
+# ---
+# name: TestEndpointSettingsWithRemote.test_jsonschema_for_serialization
+  dict({
+    '$defs': dict({
+      'RemoteEndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              url: "http://my-endpoint:8080"
+              pools: [fallback]  # omit for default pool
+              failure_threshold: 3
+              success_threshold: 1
+        ''',
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'pools': dict({
+            'default': list([
+              'default',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Pools',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'url': dict({
+            'format': 'uri',
+            'maxLength': 2083,
+            'minLength': 1,
+            'title': 'Url',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'url',
+        ]),
+        'title': 'RemoteEndpointSettings',
+        'type': 'object',
+      }),
+      'RemoteProbeSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.probe`` settings.
+          
+          .. code-block:: yaml
+          
+              type: http
+              method: GET
+              path: /health
+              headers:
+                x-purpose: "health probe"
+              timeout: 5.0
+        ''',
+        'properties': dict({
+          'headers': dict({
+            'title': 'Headers',
+            'type': 'object',
+          }),
+          'interval': dict({
+            'default': '10.0',
+            'title': 'Interval',
+            'type': 'string',
+          }),
+          'method': dict({
+            'default': 'GET',
+            'title': 'Method',
+            'type': 'string',
+          }),
+          'path': dict({
+            'default': '/',
+            'title': 'Path',
+            'type': 'string',
+          }),
+          'timeout': dict({
+            'default': '10.0',
+            'title': 'Timeout',
+            'type': 'string',
+          }),
+          'verify': dict({
+            'default': True,
+            'title': 'Verify',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'RemoteProbeSettings',
+        'type': 'object',
+      }),
+      'RemoteSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote`` settings.
+          
+          .. code-block:: yaml
+          
+              min_pool_size: 1
+              endpoints:
+                # see HttpEndpoint
+                - ...
+              probe:
+                # see HttpProbe
+                ...
+        ''',
+        'properties': dict({
+          'break_on': dict({
+            'default': list([
+              'network_error',
+              'unhandled_exception',
+            ]),
+            'items': dict({
+            }),
+            'title': 'Break On',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'check_after': dict({
+            'default': 10.0,
+            'title': 'Check After',
+            'type': 'number',
+          }),
+          'endpoints': dict({
+            'default': None,
+            'items': dict({
+              '$ref': '#/$defs/RemoteEndpointSettings',
+            }),
+            'title': 'Endpoints',
+            'type': 'array',
+          }),
+          'min_pool_size': dict({
+            'default': 1,
+            'title': 'Min Pool Size',
+            'type': 'integer',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbeSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'title': 'RemoteSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'description': dict({
+        'anyOf': list([
+          dict({
+            'type': 'string',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+        'title': 'Description',
+      }),
+      'name': dict({
+        'title': 'Name',
+        'type': 'string',
+      }),
+      'port': dict({
+        'title': 'Port',
+        'type': 'integer',
+      }),
+      'remote': dict({
+        'anyOf': list([
+          dict({
+            '$ref': '#/$defs/RemoteSettings',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+      }),
+    }),
+    'required': list([
+      'name',
+      'port',
+    ]),
+    'title': 'EndpointSettings',
+    'type': 'object',
+  })
+# ---
+# name: TestEndpointSettingsWithRemote.test_jsonschema_for_validation
+  dict({
+    '$defs': dict({
+      'RemoteEndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              url: "http://my-endpoint:8080"
+              pools: [fallback]  # omit for default pool
+              failure_threshold: 3
+              success_threshold: 1
+        ''',
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'pools': dict({
+            'default': list([
+              'default',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Pools',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'url': dict({
+            'format': 'uri',
+            'maxLength': 2083,
+            'minLength': 1,
+            'title': 'Url',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'url',
+        ]),
+        'title': 'RemoteEndpointSettings',
+        'type': 'object',
+      }),
+      'RemoteProbeSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.probe`` settings.
+          
+          .. code-block:: yaml
+          
+              type: http
+              method: GET
+              path: /health
+              headers:
+                x-purpose: "health probe"
+              timeout: 5.0
+        ''',
+        'properties': dict({
+          'headers': dict({
+            'title': 'Headers',
+            'type': 'object',
+          }),
+          'interval': dict({
+            'anyOf': list([
+              dict({
+                'type': 'number',
+              }),
+              dict({
+                'type': 'string',
+              }),
+            ]),
+            'default': '10.0',
+            'title': 'Interval',
+          }),
+          'method': dict({
+            'default': 'GET',
+            'title': 'Method',
+            'type': 'string',
+          }),
+          'path': dict({
+            'default': '/',
+            'title': 'Path',
+            'type': 'string',
+          }),
+          'timeout': dict({
+            'anyOf': list([
+              dict({
+                'type': 'number',
+              }),
+              dict({
+                'type': 'string',
+              }),
+            ]),
+            'default': '10.0',
+            'title': 'Timeout',
+          }),
+          'verify': dict({
+            'default': True,
+            'title': 'Verify',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'RemoteProbeSettings',
+        'type': 'object',
+      }),
+      'RemoteSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote`` settings.
+          
+          .. code-block:: yaml
+          
+              min_pool_size: 1
+              endpoints:
+                # see HttpEndpoint
+                - ...
+              probe:
+                # see HttpProbe
+                ...
+        ''',
+        'properties': dict({
+          'break_on': dict({
+            'default': list([
+              'network_error',
+              'unhandled_exception',
+            ]),
+            'items': dict({
+            }),
+            'title': 'Break On',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'check_after': dict({
+            'default': 10.0,
+            'title': 'Check After',
+            'type': 'number',
+          }),
+          'endpoints': dict({
+            'default': None,
+            'items': dict({
+              '$ref': '#/$defs/RemoteEndpointSettings',
+            }),
+            'title': 'Endpoints',
+            'type': 'array',
+          }),
+          'min_pool_size': dict({
+            'default': 1,
+            'title': 'Min Pool Size',
+            'type': 'integer',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbeSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'title': 'RemoteSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'description': dict({
+        'anyOf': list([
+          dict({
+            'type': 'string',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+        'title': 'Description',
+      }),
+      'name': dict({
+        'title': 'Name',
+        'type': 'string',
+      }),
+      'port': dict({
+        'title': 'Port',
+        'type': 'integer',
+      }),
+      'remote': dict({
+        'anyOf': list([
+          dict({
+            '$ref': '#/$defs/RemoteSettings',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+      }),
+    }),
+    'required': list([
+      'name',
+      'port',
+    ]),
+    'title': 'EndpointSettings',
+    'type': 'object',
+  })
+# ---
+# name: TestEndpointStateful.test_jsonschema_for_serialization
+  dict({
+    '$defs': dict({
+      'EndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          Configuration parser for ``proxy.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              name: my-endpoint
+              port: 8080
+              description: My endpoint
+              remote:
+                # see HttpRemote
+                ...
+          
+          A shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require
+          fine-tuning the endpoint settings:
+          
+          .. code-block:: yaml
+          
+              name: my-endpoint
+              port: 8080
+              description: My endpoint
+              url: http://my-endpoint:8080
+        ''',
+        'properties': dict({
+          'description': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Description',
+          }),
+          'name': dict({
+            'title': 'Name',
+            'type': 'string',
+          }),
+          'port': dict({
+            'title': 'Port',
+            'type': 'integer',
+          }),
+          'remote': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'required': list([
+          'name',
+          'port',
+        ]),
+        'title': 'EndpointSettings',
+        'type': 'object',
+      }),
+      'Remote': dict({
+        'properties': dict({
+          'current_pool': dict({
+            'items': dict({
+              'type': 'string',
+            }),
+            'readOnly': True,
+            'title': 'Current Pool',
+            'type': 'array',
+          }),
+          'current_pool_name': dict({
+            'default': 'default',
+            'title': 'Current Pool Name',
+            'type': 'string',
+          }),
+          'endpoints': dict({
+            'items': dict({
+              '$ref': '#/$defs/RemoteEndpoint',
+            }),
+            'readOnly': True,
+            'title': 'Endpoints',
+            'type': 'array',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbe',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+          'settings': dict({
+            '$ref': '#/$defs/RemoteSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+          'current_pool',
+          'endpoints',
+        ]),
+        'title': 'Remote',
+        'type': 'object',
+      }),
+      'RemoteEndpoint': dict({
+        'description': 'Stateful version of a remote endpoint definition.',
+        'properties': dict({
+          'failure_reasons': dict({
+            'anyOf': list([
+              dict({
+                'items': dict({
+                }),
+                'type': 'array',
+                'uniqueItems': True,
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Failure Reasons',
+          }),
+          'failure_score': dict({
+            'default': 0,
+            'title': 'Failure Score',
+            'type': 'integer',
+          }),
+          'settings': dict({
+            '$ref': '#/$defs/RemoteEndpointSettings',
+          }),
+          'status': dict({
+            'default': 0,
+            'title': 'Status',
+            'type': 'integer',
+          }),
+          'success_score': dict({
+            'default': 0,
+            'title': 'Success Score',
+            'type': 'integer',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'RemoteEndpoint',
+        'type': 'object',
+      }),
+      'RemoteEndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              url: "http://my-endpoint:8080"
+              pools: [fallback]  # omit for default pool
+              failure_threshold: 3
+              success_threshold: 1
+        ''',
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'pools': dict({
+            'default': list([
+              'default',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Pools',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'url': dict({
+            'format': 'uri',
+            'maxLength': 2083,
+            'minLength': 1,
+            'title': 'Url',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'url',
+        ]),
+        'title': 'RemoteEndpointSettings',
+        'type': 'object',
+      }),
+      'RemoteProbe': dict({
+        'description': 'Stateful version of a probe definition.',
+        'properties': dict({
+          'settings': dict({
+            '$ref': '#/$defs/RemoteProbeSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'RemoteProbe',
+        'type': 'object',
+      }),
+      'RemoteProbeSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.probe`` settings.
+          
+          .. code-block:: yaml
+          
+              type: http
+              method: GET
+              path: /health
+              headers:
+                x-purpose: "health probe"
+              timeout: 5.0
+        ''',
+        'properties': dict({
+          'headers': dict({
+            'title': 'Headers',
+            'type': 'object',
+          }),
+          'interval': dict({
+            'default': '10.0',
+            'title': 'Interval',
+            'type': 'string',
+          }),
+          'method': dict({
+            'default': 'GET',
+            'title': 'Method',
+            'type': 'string',
+          }),
+          'path': dict({
+            'default': '/',
+            'title': 'Path',
+            'type': 'string',
+          }),
+          'timeout': dict({
+            'default': '10.0',
+            'title': 'Timeout',
+            'type': 'string',
+          }),
+          'verify': dict({
+            'default': True,
+            'title': 'Verify',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'RemoteProbeSettings',
+        'type': 'object',
+      }),
+      'RemoteSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote`` settings.
+          
+          .. code-block:: yaml
+          
+              min_pool_size: 1
+              endpoints:
+                # see HttpEndpoint
+                - ...
+              probe:
+                # see HttpProbe
+                ...
+        ''',
+        'properties': dict({
+          'break_on': dict({
+            'default': list([
+              'network_error',
+              'unhandled_exception',
+            ]),
+            'items': dict({
+            }),
+            'title': 'Break On',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'check_after': dict({
+            'default': 10.0,
+            'title': 'Check After',
+            'type': 'number',
+          }),
+          'endpoints': dict({
+            'default': None,
+            'items': dict({
+              '$ref': '#/$defs/RemoteEndpointSettings',
+            }),
+            'title': 'Endpoints',
+            'type': 'array',
+          }),
+          'min_pool_size': dict({
+            'default': 1,
+            'title': 'Min Pool Size',
+            'type': 'integer',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbeSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'title': 'RemoteSettings',
+        'type': 'object',
+      }),
+    }),
+    'properties': dict({
+      'remote': dict({
+        'allOf': list([
+          dict({
+            '$ref': '#/$defs/Remote',
+          }),
+        ]),
+        'default': None,
+      }),
+      'settings': dict({
+        '$ref': '#/$defs/EndpointSettings',
+      }),
+    }),
+    'required': list([
+      'settings',
+    ]),
+    'title': 'Endpoint',
+    'type': 'object',
+  })
+# ---
+# name: TestEndpointStateful.test_jsonschema_for_validation
+  dict({
+    '$defs': dict({
+      'EndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          Configuration parser for ``proxy.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              name: my-endpoint
+              port: 8080
+              description: My endpoint
+              remote:
+                # see HttpRemote
+                ...
+          
+          A shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require
+          fine-tuning the endpoint settings:
+          
+          .. code-block:: yaml
+          
+              name: my-endpoint
+              port: 8080
+              description: My endpoint
+              url: http://my-endpoint:8080
+        ''',
+        'properties': dict({
+          'description': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Description',
+          }),
+          'name': dict({
+            'title': 'Name',
+            'type': 'string',
+          }),
+          'port': dict({
+            'title': 'Port',
+            'type': 'integer',
+          }),
+          'remote': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'required': list([
+          'name',
+          'port',
+        ]),
+        'title': 'EndpointSettings',
+        'type': 'object',
+      }),
+      'Remote': dict({
+        'properties': dict({
+          'current_pool_name': dict({
+            'default': 'default',
+            'title': 'Current Pool Name',
+            'type': 'string',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbe',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+          'settings': dict({
+            '$ref': '#/$defs/RemoteSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'Remote',
+        'type': 'object',
+      }),
+      'RemoteEndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              url: "http://my-endpoint:8080"
+              pools: [fallback]  # omit for default pool
+              failure_threshold: 3
+              success_threshold: 1
+        ''',
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'pools': dict({
+            'default': list([
+              'default',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Pools',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'url': dict({
+            'format': 'uri',
+            'maxLength': 2083,
+            'minLength': 1,
+            'title': 'Url',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'url',
+        ]),
+        'title': 'RemoteEndpointSettings',
+        'type': 'object',
+      }),
+      'RemoteProbe': dict({
+        'description': 'Stateful version of a probe definition.',
+        'properties': dict({
+          'settings': dict({
+            '$ref': '#/$defs/RemoteProbeSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'RemoteProbe',
+        'type': 'object',
+      }),
+      'RemoteProbeSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.probe`` settings.
+          
+          .. code-block:: yaml
+          
+              type: http
+              method: GET
+              path: /health
+              headers:
+                x-purpose: "health probe"
+              timeout: 5.0
+        ''',
+        'properties': dict({
+          'headers': dict({
+            'title': 'Headers',
+            'type': 'object',
+          }),
+          'interval': dict({
+            'anyOf': list([
+              dict({
+                'type': 'number',
+              }),
+              dict({
+                'type': 'string',
+              }),
+            ]),
+            'default': '10.0',
+            'title': 'Interval',
+          }),
+          'method': dict({
+            'default': 'GET',
+            'title': 'Method',
+            'type': 'string',
+          }),
+          'path': dict({
+            'default': '/',
+            'title': 'Path',
+            'type': 'string',
+          }),
+          'timeout': dict({
+            'anyOf': list([
+              dict({
+                'type': 'number',
+              }),
+              dict({
+                'type': 'string',
+              }),
+            ]),
+            'default': '10.0',
+            'title': 'Timeout',
+          }),
+          'verify': dict({
+            'default': True,
+            'title': 'Verify',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'RemoteProbeSettings',
+        'type': 'object',
+      }),
+      'RemoteSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote`` settings.
+          
+          .. code-block:: yaml
+          
+              min_pool_size: 1
+              endpoints:
+                # see HttpEndpoint
+                - ...
+              probe:
+                # see HttpProbe
+                ...
+        ''',
+        'properties': dict({
+          'break_on': dict({
+            'default': list([
+              'network_error',
+              'unhandled_exception',
+            ]),
+            'items': dict({
+            }),
+            'title': 'Break On',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'check_after': dict({
+            'default': 10.0,
+            'title': 'Check After',
+            'type': 'number',
+          }),
+          'endpoints': dict({
+            'default': None,
+            'items': dict({
+              '$ref': '#/$defs/RemoteEndpointSettings',
+            }),
+            'title': 'Endpoints',
+            'type': 'array',
+          }),
+          'min_pool_size': dict({
+            'default': 1,
+            'title': 'Min Pool Size',
+            'type': 'integer',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbeSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'title': 'RemoteSettings',
+        'type': 'object',
+      }),
+    }),
+    'properties': dict({
+      'remote': dict({
+        'allOf': list([
+          dict({
+            '$ref': '#/$defs/Remote',
+          }),
+        ]),
+        'default': None,
+      }),
+      'settings': dict({
+        '$ref': '#/$defs/EndpointSettings',
+      }),
+    }),
+    'required': list([
+      'settings',
+    ]),
+    'title': 'Endpoint',
+    'type': 'object',
+  })
+# ---
+# name: TestEndpointStatefulWithRemote.test_jsonschema_for_serialization
+  dict({
+    '$defs': dict({
+      'EndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          Configuration parser for ``proxy.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              name: my-endpoint
+              port: 8080
+              description: My endpoint
+              remote:
+                # see HttpRemote
+                ...
+          
+          A shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require
+          fine-tuning the endpoint settings:
+          
+          .. code-block:: yaml
+          
+              name: my-endpoint
+              port: 8080
+              description: My endpoint
+              url: http://my-endpoint:8080
+        ''',
+        'properties': dict({
+          'description': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Description',
+          }),
+          'name': dict({
+            'title': 'Name',
+            'type': 'string',
+          }),
+          'port': dict({
+            'title': 'Port',
+            'type': 'integer',
+          }),
+          'remote': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'required': list([
+          'name',
+          'port',
+        ]),
+        'title': 'EndpointSettings',
+        'type': 'object',
+      }),
+      'Remote': dict({
+        'properties': dict({
+          'current_pool': dict({
+            'items': dict({
+              'type': 'string',
+            }),
+            'readOnly': True,
+            'title': 'Current Pool',
+            'type': 'array',
+          }),
+          'current_pool_name': dict({
+            'default': 'default',
+            'title': 'Current Pool Name',
+            'type': 'string',
+          }),
+          'endpoints': dict({
+            'items': dict({
+              '$ref': '#/$defs/RemoteEndpoint',
+            }),
+            'readOnly': True,
+            'title': 'Endpoints',
+            'type': 'array',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbe',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+          'settings': dict({
+            '$ref': '#/$defs/RemoteSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+          'current_pool',
+          'endpoints',
+        ]),
+        'title': 'Remote',
+        'type': 'object',
+      }),
+      'RemoteEndpoint': dict({
+        'description': 'Stateful version of a remote endpoint definition.',
+        'properties': dict({
+          'failure_reasons': dict({
+            'anyOf': list([
+              dict({
+                'items': dict({
+                }),
+                'type': 'array',
+                'uniqueItems': True,
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Failure Reasons',
+          }),
+          'failure_score': dict({
+            'default': 0,
+            'title': 'Failure Score',
+            'type': 'integer',
+          }),
+          'settings': dict({
+            '$ref': '#/$defs/RemoteEndpointSettings',
+          }),
+          'status': dict({
+            'default': 0,
+            'title': 'Status',
+            'type': 'integer',
+          }),
+          'success_score': dict({
+            'default': 0,
+            'title': 'Success Score',
+            'type': 'integer',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'RemoteEndpoint',
+        'type': 'object',
+      }),
+      'RemoteEndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              url: "http://my-endpoint:8080"
+              pools: [fallback]  # omit for default pool
+              failure_threshold: 3
+              success_threshold: 1
+        ''',
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'pools': dict({
+            'default': list([
+              'default',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Pools',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'url': dict({
+            'format': 'uri',
+            'maxLength': 2083,
+            'minLength': 1,
+            'title': 'Url',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'url',
+        ]),
+        'title': 'RemoteEndpointSettings',
+        'type': 'object',
+      }),
+      'RemoteProbe': dict({
+        'description': 'Stateful version of a probe definition.',
+        'properties': dict({
+          'settings': dict({
+            '$ref': '#/$defs/RemoteProbeSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'RemoteProbe',
+        'type': 'object',
+      }),
+      'RemoteProbeSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.probe`` settings.
+          
+          .. code-block:: yaml
+          
+              type: http
+              method: GET
+              path: /health
+              headers:
+                x-purpose: "health probe"
+              timeout: 5.0
+        ''',
+        'properties': dict({
+          'headers': dict({
+            'title': 'Headers',
+            'type': 'object',
+          }),
+          'interval': dict({
+            'default': '10.0',
+            'title': 'Interval',
+            'type': 'string',
+          }),
+          'method': dict({
+            'default': 'GET',
+            'title': 'Method',
+            'type': 'string',
+          }),
+          'path': dict({
+            'default': '/',
+            'title': 'Path',
+            'type': 'string',
+          }),
+          'timeout': dict({
+            'default': '10.0',
+            'title': 'Timeout',
+            'type': 'string',
+          }),
+          'verify': dict({
+            'default': True,
+            'title': 'Verify',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'RemoteProbeSettings',
+        'type': 'object',
+      }),
+      'RemoteSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote`` settings.
+          
+          .. code-block:: yaml
+          
+              min_pool_size: 1
+              endpoints:
+                # see HttpEndpoint
+                - ...
+              probe:
+                # see HttpProbe
+                ...
+        ''',
+        'properties': dict({
+          'break_on': dict({
+            'default': list([
+              'network_error',
+              'unhandled_exception',
+            ]),
+            'items': dict({
+            }),
+            'title': 'Break On',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'check_after': dict({
+            'default': 10.0,
+            'title': 'Check After',
+            'type': 'number',
+          }),
+          'endpoints': dict({
+            'default': None,
+            'items': dict({
+              '$ref': '#/$defs/RemoteEndpointSettings',
+            }),
+            'title': 'Endpoints',
+            'type': 'array',
+          }),
+          'min_pool_size': dict({
+            'default': 1,
+            'title': 'Min Pool Size',
+            'type': 'integer',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbeSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'title': 'RemoteSettings',
+        'type': 'object',
+      }),
+    }),
+    'properties': dict({
+      'remote': dict({
+        'allOf': list([
+          dict({
+            '$ref': '#/$defs/Remote',
+          }),
+        ]),
+        'default': None,
+      }),
+      'settings': dict({
+        '$ref': '#/$defs/EndpointSettings',
+      }),
+    }),
+    'required': list([
+      'settings',
+    ]),
+    'title': 'Endpoint',
+    'type': 'object',
+  })
+# ---
+# name: TestEndpointStatefulWithRemote.test_jsonschema_for_validation
+  dict({
+    '$defs': dict({
+      'EndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          Configuration parser for ``proxy.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              name: my-endpoint
+              port: 8080
+              description: My endpoint
+              remote:
+                # see HttpRemote
+                ...
+          
+          A shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require
+          fine-tuning the endpoint settings:
+          
+          .. code-block:: yaml
+          
+              name: my-endpoint
+              port: 8080
+              description: My endpoint
+              url: http://my-endpoint:8080
+        ''',
+        'properties': dict({
+          'description': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Description',
+          }),
+          'name': dict({
+            'title': 'Name',
+            'type': 'string',
+          }),
+          'port': dict({
+            'title': 'Port',
+            'type': 'integer',
+          }),
+          'remote': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'required': list([
+          'name',
+          'port',
+        ]),
+        'title': 'EndpointSettings',
+        'type': 'object',
+      }),
+      'Remote': dict({
+        'properties': dict({
+          'current_pool_name': dict({
+            'default': 'default',
+            'title': 'Current Pool Name',
+            'type': 'string',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbe',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+          'settings': dict({
+            '$ref': '#/$defs/RemoteSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'Remote',
+        'type': 'object',
+      }),
+      'RemoteEndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              url: "http://my-endpoint:8080"
+              pools: [fallback]  # omit for default pool
+              failure_threshold: 3
+              success_threshold: 1
+        ''',
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'pools': dict({
+            'default': list([
+              'default',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Pools',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'url': dict({
+            'format': 'uri',
+            'maxLength': 2083,
+            'minLength': 1,
+            'title': 'Url',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'url',
+        ]),
+        'title': 'RemoteEndpointSettings',
+        'type': 'object',
+      }),
+      'RemoteProbe': dict({
+        'description': 'Stateful version of a probe definition.',
+        'properties': dict({
+          'settings': dict({
+            '$ref': '#/$defs/RemoteProbeSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'RemoteProbe',
+        'type': 'object',
+      }),
+      'RemoteProbeSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.probe`` settings.
+          
+          .. code-block:: yaml
+          
+              type: http
+              method: GET
+              path: /health
+              headers:
+                x-purpose: "health probe"
+              timeout: 5.0
+        ''',
+        'properties': dict({
+          'headers': dict({
+            'title': 'Headers',
+            'type': 'object',
+          }),
+          'interval': dict({
+            'anyOf': list([
+              dict({
+                'type': 'number',
+              }),
+              dict({
+                'type': 'string',
+              }),
+            ]),
+            'default': '10.0',
+            'title': 'Interval',
+          }),
+          'method': dict({
+            'default': 'GET',
+            'title': 'Method',
+            'type': 'string',
+          }),
+          'path': dict({
+            'default': '/',
+            'title': 'Path',
+            'type': 'string',
+          }),
+          'timeout': dict({
+            'anyOf': list([
+              dict({
+                'type': 'number',
+              }),
+              dict({
+                'type': 'string',
+              }),
+            ]),
+            'default': '10.0',
+            'title': 'Timeout',
+          }),
+          'verify': dict({
+            'default': True,
+            'title': 'Verify',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'RemoteProbeSettings',
+        'type': 'object',
+      }),
+      'RemoteSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote`` settings.
+          
+          .. code-block:: yaml
+          
+              min_pool_size: 1
+              endpoints:
+                # see HttpEndpoint
+                - ...
+              probe:
+                # see HttpProbe
+                ...
+        ''',
+        'properties': dict({
+          'break_on': dict({
+            'default': list([
+              'network_error',
+              'unhandled_exception',
+            ]),
+            'items': dict({
+            }),
+            'title': 'Break On',
+            'type': 'array',
+            'uniqueItems': True,
+          }),
+          'check_after': dict({
+            'default': 10.0,
+            'title': 'Check After',
+            'type': 'number',
+          }),
+          'endpoints': dict({
+            'default': None,
+            'items': dict({
+              '$ref': '#/$defs/RemoteEndpointSettings',
+            }),
+            'title': 'Endpoints',
+            'type': 'array',
+          }),
+          'min_pool_size': dict({
+            'default': 1,
+            'title': 'Min Pool Size',
+            'type': 'integer',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbeSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'title': 'RemoteSettings',
+        'type': 'object',
+      }),
+    }),
+    'properties': dict({
+      'remote': dict({
+        'allOf': list([
+          dict({
+            '$ref': '#/$defs/Remote',
+          }),
+        ]),
+        'default': None,
+      }),
+      'settings': dict({
+        '$ref': '#/$defs/EndpointSettings',
+      }),
+    }),
+    'required': list([
+      'settings',
+    ]),
+    'title': 'Endpoint',
+    'type': 'object',
+  })
+# ---

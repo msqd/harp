@@ -33,4 +33,5 @@ Submodules
     harp.utils.strings
     harp.utils.tpdex
     harp.utils.types
+    harp.utils.typescript
     harp.utils.urls

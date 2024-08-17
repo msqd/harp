@@ -6,7 +6,7 @@ const QUERY_KEY = ["system", "proxy"]
 
 export function useSystemProxyQuery() {
   const api = useApi()
-  return useQuery<{ endpoints: Settings.Proxy.Endpoint[] }>(
+  return useQuery<{ endpoints: Apps.Proxy.Endpoint[] }>(
     QUERY_KEY,
     () => api.fetch("/system/proxy").then((r) => r.json()),
     { refetchInterval: 5000 },

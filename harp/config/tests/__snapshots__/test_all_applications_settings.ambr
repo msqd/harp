@@ -117,8 +117,28 @@
 # ---
 # name: test_all_applications_default_settings[harp_apps.proxy]
   dict({
+    'harp_apps.proxy.settings.BaseProxySettings': '''
+      {}
+  
+    ''',
+    'harp_apps.proxy.settings.Proxy': '''
+      settings: {}
+  
+    ''',
     'harp_apps.proxy.settings.ProxySettings': '''
       {}
+  
+    ''',
+    'harp_apps.proxy.settings.endpoint.BaseEndpointSettings': '''
+      name: api
+      port: 4000
+  
+    ''',
+    'harp_apps.proxy.settings.endpoint.Endpoint': '''
+      settings:
+        description: null
+        name: api
+        port: 4000
   
     ''',
     'harp_apps.proxy.settings.endpoint.EndpointSettings': '''
@@ -126,12 +146,46 @@
       port: 4000
   
     ''',
+    'harp_apps.proxy.settings.remote.BaseRemoteSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.proxy.settings.remote.Remote': '''
+      current_pool: []
+      endpoints: []
+      settings:
+        break_on:
+        - network_error
+        - unhandled_exception
+        check_after: 10.0
+        min_pool_size: 1
+  
+    ''',
     'harp_apps.proxy.settings.remote.RemoteSettings': '''
       {}
   
     ''',
+    'harp_apps.proxy.settings.remote.endpoint.RemoteEndpoint': '''
+      settings:
+        failure_threshold: 1
+        pools:
+        - default
+        success_threshold: 1
+        url: https://www.example.com/
+  
+    ''',
     'harp_apps.proxy.settings.remote.endpoint.RemoteEndpointSettings': '''
       url: https://www.example.com/
+  
+    ''',
+    'harp_apps.proxy.settings.remote.probe.RemoteProbe': '''
+      settings:
+        headers: {}
+        interval: '10.0'
+        method: GET
+        path: /
+        timeout: '10.0'
+        verify: true
   
     ''',
     'harp_apps.proxy.settings.remote.probe.RemoteProbeSettings': '''

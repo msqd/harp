@@ -1,5 +1,9 @@
 import re
 
+import pytest
+
+pytest.register_assert_rewrite("harp.utils.testing.benchmarking")
+
 
 class RE(object):
     def __init__(self, pattern):

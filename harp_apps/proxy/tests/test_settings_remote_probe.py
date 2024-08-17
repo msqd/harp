@@ -1,17 +1,23 @@
-from harp.config import asdict
-from harp_apps.proxy.settings.remote import RemoteProbeSettings
+from harp_apps.proxy.settings.remote.probe import RemoteProbe, RemoteProbeSettings
+from harp_apps.proxy.tests._base import BaseModelTest
 
 
-def test_defaults():
-    settings = RemoteProbeSettings()
-
-    assert asdict(settings) == {}
-
-    assert asdict(settings, verbose=True) == {
+class TestRemoteProbeSettings(BaseModelTest):
+    type = RemoteProbeSettings
+    initial = {}
+    expected = {}
+    expected_verbose = {
+        "headers": {},
+        "interval": "10.0",
         "method": "GET",
         "path": "/",
-        "headers": {},
-        "interval": 10.0,
-        "timeout": 10.0,
+        "timeout": "10.0",
         "verify": True,
     }
+
+
+class TestRemoteProbeModel(BaseModelTest):
+    type = RemoteProbe
+    initial = {"settings": TestRemoteProbeSettings.initial}
+    expected = {"settings": TestRemoteProbeSettings.expected_verbose}
+    expected_verbose = {"settings": TestRemoteProbeSettings.expected_verbose}
