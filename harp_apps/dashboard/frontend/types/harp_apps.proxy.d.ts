@@ -106,8 +106,8 @@ declare namespace Apps.Proxy {
     method?: string;
     path?: string;
     headers?: Headers;
-    interval?: string;
-    timeout?: string;
+    interval?: number;
+    timeout?: number;
     verify?: boolean;
   }
   export interface Headers {

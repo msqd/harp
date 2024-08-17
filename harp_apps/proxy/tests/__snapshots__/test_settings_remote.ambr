@@ -74,9 +74,9 @@
             'type': 'object',
           }),
           'interval': dict({
-            'default': '10.0',
+            'default': 10.0,
             'title': 'Interval',
-            'type': 'string',
+            'type': 'number',
           }),
           'method': dict({
             'default': 'GET',
@@ -89,9 +89,9 @@
             'type': 'string',
           }),
           'timeout': dict({
-            'default': '10.0',
+            'default': 10.0,
             'title': 'Timeout',
-            'type': 'string',
+            'type': 'number',
           }),
           'verify': dict({
             'default': True,
@@ -225,16 +225,9 @@
             'type': 'object',
           }),
           'interval': dict({
-            'anyOf': list([
-              dict({
-                'type': 'number',
-              }),
-              dict({
-                'type': 'string',
-              }),
-            ]),
-            'default': '10.0',
+            'default': 10.0,
             'title': 'Interval',
+            'type': 'number',
           }),
           'method': dict({
             'default': 'GET',
@@ -247,16 +240,9 @@
             'type': 'string',
           }),
           'timeout': dict({
-            'anyOf': list([
-              dict({
-                'type': 'number',
-              }),
-              dict({
-                'type': 'string',
-              }),
-            ]),
-            'default': '10.0',
+            'default': 10.0,
             'title': 'Timeout',
+            'type': 'number',
           }),
           'verify': dict({
             'default': True,
@@ -446,9 +432,9 @@
             'type': 'object',
           }),
           'interval': dict({
-            'default': '10.0',
+            'default': 10.0,
             'title': 'Interval',
-            'type': 'string',
+            'type': 'number',
           }),
           'method': dict({
             'default': 'GET',
@@ -461,9 +447,9 @@
             'type': 'string',
           }),
           'timeout': dict({
-            'default': '10.0',
+            'default': 10.0,
             'title': 'Timeout',
-            'type': 'string',
+            'type': 'number',
           }),
           'verify': dict({
             'default': True,
@@ -670,16 +656,9 @@
             'type': 'object',
           }),
           'interval': dict({
-            'anyOf': list([
-              dict({
-                'type': 'number',
-              }),
-              dict({
-                'type': 'string',
-              }),
-            ]),
-            'default': '10.0',
+            'default': 10.0,
             'title': 'Interval',
+            'type': 'number',
           }),
           'method': dict({
             'default': 'GET',
@@ -692,16 +671,9 @@
             'type': 'string',
           }),
           'timeout': dict({
-            'anyOf': list([
-              dict({
-                'type': 'number',
-              }),
-              dict({
-                'type': 'string',
-              }),
-            ]),
-            'default': '10.0',
+            'default': 10.0,
             'title': 'Timeout',
+            'type': 'number',
           }),
           'verify': dict({
             'default': True,

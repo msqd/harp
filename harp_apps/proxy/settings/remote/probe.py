@@ -1,5 +1,4 @@
 from contextlib import asynccontextmanager
-from decimal import Decimal
 from typing import TYPE_CHECKING
 from urllib.parse import urljoin
 
@@ -34,8 +33,8 @@ class RemoteProbeSettings(Configurable):
     method: str = "GET"
     path: str = "/"
     headers: dict = Field(default_factory=dict)
-    interval: Decimal = Decimal("10.0")
-    timeout: Decimal = Decimal("10.0")
+    interval: float = 10.0
+    timeout: float = 10.0
     verify: bool = True
 
 
@@ -49,7 +48,7 @@ class RemoteProbe(Stateful[RemoteProbeSettings]):
 
     async def check(self, client: httpx.AsyncClient, endpoint: "RemoteEndpoint"):
         probe_url = urljoin(str(endpoint.settings.url), self.settings.path)
-        failure = None
+        response, failure = None, None
         try:
             response = await client.request(
                 self.settings.method,
@@ -60,11 +59,13 @@ class RemoteProbe(Stateful[RemoteProbeSettings]):
             if 200 <= response.status_code < 400:
                 return endpoint.success()
             else:
-                failure = f"HTTP_{response.status_code}"
+                failure = f"PROBE_HTTP_{response.status_code}"
                 return endpoint.failure(failure)
         except Exception as exc:
-            failure = shouty_snake(type(exc).__name__)
+            failure = "PROBE_" + shouty_snake(type(exc).__name__)
             return endpoint.failure(failure)
         finally:
             if failure:
-                logger.info(f"Probe failure: {endpoint.settings.url} -> {failure}")
+                logger.warning(f"Probe failure: {probe_url} -> {failure}")
+            elif response:
+                logger.debug(f"Probe request: {probe_url} -> {response.status_code}")

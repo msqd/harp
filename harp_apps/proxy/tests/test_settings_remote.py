@@ -200,11 +200,11 @@ class TestRemoteStateful(BaseModelTest):
         await remote.check()
         await remote.check()
         assert url.status == 0
-        assert url.failure_reasons == {"TIMEOUT_ERROR"}
+        assert url.failure_reasons == {"PROBE_TIMEOUT_ERROR"}
 
         await remote.check()
         assert url.status < 0
-        assert url.failure_reasons == {"TIMEOUT_ERROR"}
+        assert url.failure_reasons == {"PROBE_TIMEOUT_ERROR"}
 
         healthcheck.mock(return_value=httpx.Response(200))
         await remote.check()
@@ -215,11 +215,11 @@ class TestRemoteStateful(BaseModelTest):
         await remote.check()
         await remote.check()
         assert url.status == 0
-        assert url.failure_reasons == {"HTTP_418"}
+        assert url.failure_reasons == {"PROBE_HTTP_418"}
 
         await remote.check()
         assert url.status < 0
-        assert url.failure_reasons == {"HTTP_418"}
+        assert url.failure_reasons == {"PROBE_HTTP_418"}
 
         healthcheck.mock(return_value=httpx.Response(200))
         await remote.check()
@@ -240,4 +240,4 @@ class TestRemoteStateful(BaseModelTest):
 
         await remote.check()
         assert url.status == 0
-        assert url.failure_reasons == {"CONNECT_TIMEOUT"}
+        assert url.failure_reasons == {"PROBE_CONNECT_TIMEOUT"}

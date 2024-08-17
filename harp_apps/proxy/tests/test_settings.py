@@ -68,7 +68,7 @@ def test_probe_syntax():
                         {"url": "http://example.com/"},
                         {"pools": ["fallback"], "url": "http://fallback.example.com/"},
                     ],
-                    "probe": {"timeout": "5"},
+                    "probe": {"timeout": 5.0},
                 },
             }
         ]

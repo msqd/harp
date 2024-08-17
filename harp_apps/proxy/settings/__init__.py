@@ -1,9 +1,13 @@
+from functools import cached_property
+
 from harp.config import Configurable, Stateful
 
-from .endpoint import EndpointSettings
+from .endpoint import Endpoint, EndpointSettings
 from .remote import Remote, RemoteEndpoint, RemoteEndpointSettings, RemoteProbe, RemoteProbeSettings, RemoteSettings
 
 __all__ = [
+    "Endpoint",
+    "EndpointSettings",
     "Proxy",
     "ProxySettings",
     "Remote",
@@ -35,4 +39,6 @@ class ProxySettings(BaseProxySettings):
 
 
 class Proxy(Stateful[ProxySettings]):
-    pass
+    @cached_property
+    def endpoints(self) -> list[Endpoint]:
+        return [Endpoint(settings=settings) for settings in self.settings.endpoints]

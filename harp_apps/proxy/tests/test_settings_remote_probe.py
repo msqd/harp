@@ -8,10 +8,10 @@ class TestRemoteProbeSettings(BaseModelTest):
     expected = {}
     expected_verbose = {
         "headers": {},
-        "interval": "10.0",
+        "interval": 10.0,
         "method": "GET",
         "path": "/",
-        "timeout": "10.0",
+        "timeout": 10.0,
         "verify": True,
     }
 

@@ -6,7 +6,6 @@ from whistle import IAsyncEventDispatcher
 from harp import get_logger
 from harp.http import HttpRequest
 from harp_apps.proxy.controllers import HttpProxyController
-from harp_apps.proxy.settings import EndpointSettings
 from harp_apps.proxy.settings.endpoint import Endpoint
 
 from .default import not_found_controller
@@ -45,23 +44,23 @@ class ProxyControllerResolver(DefaultControllerResolver):
 
     def add(
         self,
-        settings: EndpointSettings,
+        endpoint: Endpoint,
         *,
         http_client: AsyncClient,
         dispatcher: Optional[IAsyncEventDispatcher] = None,
     ):
-        if settings.name in self._endpoints:
-            raise RuntimeError(f"Endpoint «{settings.name}» already exists.")
+        if endpoint.settings.name in self._endpoints:
+            raise RuntimeError(f"Endpoint «{endpoint.settings.name}» already exists.")
 
-        if settings.port in self._ports:
-            raise RuntimeError(f"Port «{settings.port}» already in use.")
+        if endpoint.settings.port in self._ports:
+            raise RuntimeError(f"Port «{endpoint.settings.port}» already in use.")
 
-        self._endpoints[settings.name] = endpoint = Endpoint(settings=settings)
+        self._endpoints[endpoint.settings.name] = endpoint
         controller = HttpProxyController(
-            endpoint.remote, dispatcher=dispatcher, http_client=http_client, name=settings.name
+            endpoint.remote, dispatcher=dispatcher, http_client=http_client, name=endpoint.settings.name
         )
-        self._ports[settings.port] = controller
-        logger.info(f"🏭 Map: *:{settings.port} -> {controller}")
+        self._ports[endpoint.settings.port] = controller
+        logger.info(f"🏭 Map: *:{endpoint.settings.port} -> {controller}")
 
     def add_controller(self, port: int, controller: IAsyncController):
         if port in self._ports:

@@ -211,4 +211,4 @@ class Remote(Stateful[RemoteSettings]):
                 await self.check()
             except Exception as exc:
                 logger.error(f"Failed to check remote health: {exc}")
-            await asyncio.sleep(self.probe.interval)
+            await asyncio.sleep(self.probe.settings.interval)
