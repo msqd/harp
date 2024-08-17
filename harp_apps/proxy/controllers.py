@@ -22,6 +22,7 @@ from .constants import (
     BREAK_ON_NETWORK_ERROR,
     BREAK_ON_UNHANDLED_EXCEPTION,
     CHECKING,
+    ERR_UNAVAILABLE_STATUS_CODE,
     ERR_UNHANDLED_MESSAGE,
     ERR_UNHANDLED_STATUS_CODE,
     ERR_UNHANDLED_VERBOSE_MESSAGE,
@@ -160,11 +161,17 @@ class HttpProxyController:
             )
             if not remote_url:
                 transaction.extras["status_class"] = "ERR"
-                await self.end_transaction(remote_url, transaction, HttpError("No remote", exception=remote_err))
-                # todo add web debug information if we are not on a production env
-                return HttpResponse(
-                    "Service Unavailable (no remote endpoint available)", status=503, content_type="text/plain"
+                return await self.end_transaction(
+                    remote_url,
+                    transaction,
+                    HttpError(
+                        "Unavailable",
+                        exception=remote_err,
+                        verbose_message="Service Unavailable (no remote endpoint available)",
+                        status=ERR_UNAVAILABLE_STATUS_CODE,
+                    ),
                 )
+
             await context.request.aread()
             url = urljoin(remote_url, context.request.path) + (
                 f"?{urlencode(context.request.query)}" if context.request.query else ""
@@ -243,12 +250,16 @@ class HttpProxyController:
 
         if isinstance(response, Exception):
             error_kind = BREAK_ON_UNHANDLED_EXCEPTION
+            error_name = shouty_snake(type(response).__name__)
 
             if network_error_type := _get_base_network_error_type(type(response)):
                 error_kind = BREAK_ON_NETWORK_ERROR
                 _status_code, _message, _verbose_message = NETWORK_ERRORS[network_error_type]
                 response = HttpError(
-                    _message, exception=response, status=_status_code, verbose_message=_verbose_message
+                    _message,
+                    exception=response,
+                    status=_status_code,
+                    verbose_message=_verbose_message,
                 )
             else:
                 response = HttpError(
@@ -259,7 +270,7 @@ class HttpProxyController:
                 )
 
             if error_kind in self.remote.settings.break_on:
-                if self.remote[remote_url].failure(shouty_snake(type(response).__name__)):
+                if self.remote[remote_url].failure(error_name):
                     self.remote.refresh()
 
         if isinstance(response, HttpError):
