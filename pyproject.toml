@@ -72,7 +72,7 @@ pytest-cov = ">=4.1,<6.0"
 pytest-timeout = "^2.3.1"
 pytest-xdist = { version = "^3.6.1", extras = ["psutil"] }
 respx = ">=0.20.2,<0.22.0"
-ruff = ">=0.5,<0.6"
+ruff = ">=0.5,<0.7"
 sphinx = ">=7.3.7,<9.0.0"
 sphinx-autobuild = ">=2021.3.14,<2025.0.0"
 sphinx-click = "^6.0.0"
@@ -81,7 +81,7 @@ sphinx-design = "^0.6.0"
 sphinx-sitemap = "^2.6.0"
 sphinxcontrib-jquery = "^4.1"
 syrupy = "^4.6.1"
-testcontainers = { extras = ["postgres"], version = ">=4.7,<4.8" }
+testcontainers = { extras = ["postgres"], version = ">=4.7,<4.9" }
 
 
 [tool.poetry.group.mysql.dependencies]
