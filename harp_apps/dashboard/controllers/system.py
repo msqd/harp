@@ -1,6 +1,6 @@
-from typing import cast
+from typing import Literal, cast
 
-import orjson
+from pydantic import BaseModel, ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.orm import aliased, joinedload
 
@@ -10,7 +10,6 @@ from harp.controllers import GetHandler, ProxyControllerResolver, PutHandler, Ro
 from harp.http import HttpRequest, HttpResponse
 from harp.typing.global_settings import GlobalSettings
 from harp.views.json import json
-from harp_apps.proxy.settings import ProxySettings
 from harp_apps.storage.models import MetricValue
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.types import IStorage
@@ -18,6 +17,12 @@ from harp_apps.storage.types import IStorage
 from ..utils.dependencies import get_python_dependencies, parse_dependencies
 
 logger = get_logger(__name__)
+
+
+class SystemPutProxyInput(BaseModel):
+    endpoint: str
+    action: Literal["up", "down", "checking"]
+    url: str
 
 
 @RouterPrefix("/api/system")
@@ -58,30 +63,33 @@ class SystemController(RoutingController):
 
     @PutHandler("/proxy")
     async def put_proxy(self, request: HttpRequest):
-        settings: ProxySettings | None = self.settings.get("proxy", None)
-        if not settings:
-            return HttpResponse(b"Proxy is not configured", status=404)
+        endpoints = list(self.resolver.endpoints.values())
 
         try:
-            data = orjson.loads(await request.aread())
-        except orjson.JSONDecodeError as exc:
-            return HttpResponse(f"Invalid JSON: {exc}", status=400)
+            input_data = SystemPutProxyInput.model_validate_json(await request.aread())
+        except ValidationError as exc:
+            return HttpResponse(f"Invalid input: {exc}", status=400)
 
         # find endpoint
         endpoint = None
-        for _endpoint in settings.endpoints:
-            if _endpoint.name == data.get("endpoint"):
+        for _endpoint in endpoints:
+            if _endpoint.settings.name == input_data.endpoint:
                 endpoint = _endpoint
                 break
         if not endpoint:
             return HttpResponse(f"Endpoint not found: {request.query.get('endpoint')}", status=404)
 
-        if data.get("action") == "up":
-            endpoint.remote.set_up(data.get("url"))
-        elif data.get("action") == "down":
-            endpoint.remote.set_down(data.get("url"))
-        elif data.get("action") == "checking":
-            endpoint.remote.set_checking(data.get("url"))
+        try:
+            endpoint.remote[input_data.url]
+        except KeyError:
+            return HttpResponse(f"Endpoint URL not found: {input_data.url}", status=404)
+
+        if input_data.action == "up":
+            endpoint.remote.set_up(input_data.url)
+        elif input_data.action == "down":
+            endpoint.remote.set_down(input_data.url)
+        elif input_data.action == "checking":
+            endpoint.remote.set_checking(input_data.url)
         else:
             return HttpResponse(b"Invalid action", status=400)
 
