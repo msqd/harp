@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING, Awaitable, Callable
 
-from rodi import Container, Services
 from whistle import Event
 
 from harp.asgi import ASGIKernel
+from harp.services import Container, Services
+from harp.typing import GlobalSettings
 from harp.utils.network import Bind
 
 if TYPE_CHECKING:
@@ -21,7 +22,7 @@ class OnBindEvent(Event):
 
     name = "harp.config.bind"
 
-    def __init__(self, container: Container, settings):
+    def __init__(self, container: Container, settings: GlobalSettings):
         self.container = container
         self.settings = settings
 

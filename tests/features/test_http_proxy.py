@@ -9,7 +9,7 @@ import pytest
 from httpx import AsyncClient
 
 from harp.asgi.kernel import ASGIKernel
-from harp.config import ConfigurationBuilder, SystemBuilder
+from harp.config import ConfigurationBuilder
 from harp.controllers import ProxyControllerResolver
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.http import parametrize_with_http_methods
@@ -98,7 +98,7 @@ class TestAsgiProxyWithStubApi:
             }
         )
 
-        system = await SystemBuilder(builder).abuild()
+        system = await builder.abuild_system()
 
         try:
             yield system.kernel

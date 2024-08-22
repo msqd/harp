@@ -14,8 +14,8 @@ Contents
 __title__ = "Config"
 
 from .applications import Application, ApplicationsRegistry
-from .builders import ConfigurationBuilder, System, SystemBuilder
-from .configurables import Configurable, Stateful
+from .builders import ConfigurationBuilder
+from .configurables import Configurable, Service, Stateful
 from .events import (
     EVENT_BIND,
     EVENT_BOUND,
@@ -46,10 +46,9 @@ __all__ = [
     "OnBoundEvent",
     "OnReadyEvent",
     "OnShutdownEvent",
+    "Service",
     "Settings",
     "Stateful",
-    "System",
-    "SystemBuilder",
     "asdict",
     "get_application",
     "settings_dataclass",

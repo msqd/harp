@@ -3,13 +3,13 @@ from pydantic import ValidationError
 
 from harp.config import asdict
 from harp.utils.collections import all_combinations
+from harp.utils.testing.config import BaseConfigurableTest
 from harp_apps.proxy.constants import AVAILABLE_POOLS
 from harp_apps.proxy.settings.remote import RemoteEndpointSettings
 from harp_apps.proxy.settings.remote.endpoint import RemoteEndpoint
-from harp_apps.proxy.tests._base import BaseModelTest
 
 
-class TestRemoteEndpointSettings(BaseModelTest):
+class TestRemoteEndpointSettings(BaseConfigurableTest):
     type = RemoteEndpointSettings
     initial = {"url": "http://example.com"}
     expected = {"url": "http://example.com/"}
@@ -78,7 +78,7 @@ class TestRemoteEndpointSettings(BaseModelTest):
         assert asdict(endpoint) == expected
 
 
-class TestRemoteEndpointStateful(BaseModelTest):
+class TestRemoteEndpointStateful(BaseConfigurableTest):
     type = RemoteEndpoint
     initial = {"settings": TestRemoteEndpointSettings.initial}
     expected = {

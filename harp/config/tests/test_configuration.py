@@ -39,13 +39,13 @@ def test_add_application(snapshot):
 
     assert len(builder.applications) == 1
 
-    settings = builder.build()
+    settings = builder()
 
     serialized = orjson.dumps(asdict(settings))
     assert serialized == snapshot
 
     new_builder = ConfigurationBuilder.from_bytes(serialized, ApplicationsRegistryType=ApplicationsRegistryMock)
-    assert asdict(new_builder.build()) == asdict(settings)
+    assert asdict(new_builder()) == asdict(settings)
 
     module = ModuleType("foo.bar")
     module.__spec__ = ModuleSpec(name="foo.bar", loader=None)
@@ -56,7 +56,7 @@ def test_add_application(snapshot):
 
     with patch.dict("sys.modules", {"foo.bar": module, "foo.bar.__app__": app_module}):
         new_builder.applications.add("foo.bar")
-        new_settings = new_builder.build()
+        new_settings = new_builder()
 
     assert asdict(new_settings) != asdict(settings)
 

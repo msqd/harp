@@ -22,20 +22,26 @@ class TestSystemController(
         response = await controller.get_settings()
         assert response == {
             "applications": ["harp_apps.storage"],
-            "storage": {"blobs": {"type": "sql"}, "migrate": True, "url": "sqlite+aiosqlite:///:memory:"},
+            "storage": {
+                "blobs": {"type": "sql"},
+                "migrate": True,
+                "url": "sqlite+aiosqlite:///:memory:",
+                "redis": None,
+            },
         }
 
-    @parametrize_with_settings({})
+    @parametrize_with_settings({"storage": {"redis": {"url": "redis://redis.example.com:1234/42"}}})
     @parametrize_with_database_urls("sqlite")
     @parametrize_with_blob_storages_urls("redis")
-    async def test_get_settings_empty_redis(self, controller: SystemController):
+    async def test_get_settings_redis(self, controller: SystemController):
         response = await controller.get_settings()
         assert response == {
             "applications": ["harp_apps.storage"],
             "storage": {
-                "blobs": {"type": "redis", "url": "redis://localhost:6379/0"},
+                "blobs": {"type": "redis"},
                 "migrate": True,
                 "url": "sqlite+aiosqlite:///:memory:",
+                "redis": {"url": "redis://redis.example.com:1234/42"},
             },
         }
 
@@ -45,7 +51,12 @@ class TestSystemController(
         response = await controller.get_settings()
         assert response == {
             "applications": ["harp_apps.storage"],
-            "storage": {"blobs": ANY, "migrate": True, "url": "sqlite+aiosqlite:///:memory:"},
+            "storage": {
+                "blobs": ANY,
+                "migrate": True,
+                "url": "sqlite+aiosqlite:///:memory:",
+                "redis": None,
+            },
         }
 
     @parametrize_with_settings({"applications": ["storage"]})
@@ -58,6 +69,7 @@ class TestSystemController(
                 "migrate": True,
                 "url": RE(r".*://test:\*\*\*@.*"),
                 "blobs": ANY,
+                "redis": None,
             },
         }
 
@@ -77,7 +89,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","migrate":true,"blobs":{"type":"sql"}}}'
+            b':memory:","migrate":true,"blobs":{"type":"sql"},"redis":null}}'
         )
 
     @parametrize_with_settings({})
@@ -90,8 +102,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","migrate":true,"blobs":{"url":"redis://localhost:6379/0","type":"r'
-            b'edis"}}}'
+            b':memory:","migrate":true,"blobs":{"type":"redis"},"redis":null}}'
         )
 
     @parametrize_with_settings({"applications": ["storage"], "storage": {"url": "sqlite+aiosqlite:///:memory:"}})
@@ -104,7 +115,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","migrate":true,"blobs":{"type":"sql"}}}'
+            b':memory:","migrate":true,"blobs":{"type":"sql"},"redis":null}}'
         )
 
     @parametrize_with_settings(
@@ -119,8 +130,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","migrate":true,"blobs":{"url":"redis://localhost:6379/0","type":"r'
-            b'edis"}}}'
+            b':memory:","migrate":true,"blobs":{"type":"redis"},"redis":null}}'
         )
 
     @parametrize_with_database_urls("postgresql")
@@ -135,14 +145,15 @@ class TestSystemControllerThroughASGI(
                 b'{"applications":["harp_apps.storage"],"storage":{"url":"postgresql+asyncpg://test:***@localhost:'
             )
             + b"\\d+"  # port number will vary
-            + re.escape(b'/test_b238114489d2135dfbd3b9b5ddfc56ab","migrate":true,"blobs":{"type":"sql"}}}')
+            + re.escape(b'/test_b238114489d2135dfbd3b9b5ddfc56ab","migrate":true,"blobs":{"type":"sql"},"redis":null}}')
         )
 
     @parametrize_with_settings(
         {
             "applications": ["storage"],
             "storage": {
-                "blobs": {"type": "redis", "url": "redis://user:secret@localhost:6379/0"},
+                "blobs": {"type": "redis"},
+                "redis": {"url": "redis://user:password@localhost:6379/0"},
             },
         }
     )
@@ -155,6 +166,6 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","migrate":true,"blobs":{"url":"redis://user:***@localhost:6379/0",'
-            b'"type":"redis"}}}'
+            b':memory:","migrate":true,"blobs":{"type":"redis"},"redis":{"url":"redis://us'
+            b'er:***@localhost:6379/0"}}}'
         )

@@ -37,6 +37,7 @@ extensions = [
     "sphinx_sitemap",
     "sphinxcontrib.jquery",
     "sphinx_click",
+    "docs._extensions.services",
 ]
 
 templates_path = ["_templates"]
@@ -86,6 +87,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "structlog": ("https://www.structlog.org/en/stable", None),
     "whistle": ("https://python-whistle.readthedocs.io/latest", None),
+    "redis": ("https://redis-py.readthedocs.io/en/stable", None),
 }
 
 rst_prolog = (

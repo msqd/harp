@@ -10,9 +10,6 @@
   ├── repositories
   ├── rules:teapot
   ├── sentry
-  ├── services:database
-  ├── services:empty
-  ├── services:redis
   └── sqlite
   '''
 # ---
@@ -26,9 +23,6 @@
   repositories
   rules:teapot
   sentry
-  services:database
-  services:empty
-  services:redis
   sqlite
   '''
 # ---

@@ -8,6 +8,7 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
         exclude: misc
+        args: ["--unsafe"]
       - id: check-added-large-files
   - repo: https://github.com/PyCQA/isort
     rev: 5.13.2
@@ -21,4 +22,4 @@ repos:
     rev: v0.5.0
     hooks:
       - id: ruff
-        args: [--fix ]
+        args: [--fix]

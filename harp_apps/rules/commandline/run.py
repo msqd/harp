@@ -5,12 +5,14 @@ import click
 from whistle import IAsyncEventDispatcher
 
 from harp.commandline.options.server import add_harp_config_options
+from harp.config import ConfigurationBuilder
 from harp.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.http import HttpRequest
 from harp.utils.urls import normalize_url
 from harp_apps.http_client.events import EVENT_FILTER_HTTP_CLIENT_REQUEST, EVENT_FILTER_HTTP_CLIENT_RESPONSE
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.events import EVENT_FILTER_PROXY_REQUEST, EVENT_FILTER_PROXY_RESPONSE
+from harp_apps.proxy.settings import Remote
 
 from .utils.dump import (
     on_proxy_request_dump,
@@ -39,11 +41,11 @@ def run_command(files, examples, options, endpoint, method, path):
 
     dispatcher: IAsyncEventDispatcher = cast(IAsyncEventDispatcher, LoggingAsyncEventDispatcher())
 
-    from harp_apps.http_client.factories import AsyncClientFactory
-    from harp_apps.http_client.settings import HttpClientSettings
-    from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
+    system = asyncio.run(
+        ConfigurationBuilder({"applications": ["http_client", "rules"]}, use_default_applications=False).abuild_system()
+    )
 
-    http_client = AsyncClientFactory(HttpClientSettings(), dispatcher, MemoryBlobStorage())
+    http_client = system.provider.get("http_client")
 
     dispatcher.add_listener(EVENT_FILTER_PROXY_REQUEST, on_proxy_request_dump, priority=-100)
     dispatcher.add_listener(EVENT_FILTER_HTTP_CLIENT_REQUEST, on_remote_request_dump, priority=-100)
@@ -51,8 +53,10 @@ def run_command(files, examples, options, endpoint, method, path):
     dispatcher.add_listener(EVENT_FILTER_HTTP_CLIENT_RESPONSE, on_remote_response_show_cache_control, priority=-100)
     dispatcher.add_listener(EVENT_FILTER_HTTP_CLIENT_RESPONSE, on_remote_response_show_cache_control, priority=100)
     dispatcher.add_listener(EVENT_FILTER_PROXY_RESPONSE, on_proxy_response_dump, priority=-100)
+
+    # Create a proxy controller to mimic the real behavious of the proxy.
     controller = HttpProxyController(
-        endpoint_target,
+        Remote.from_settings_dict({"endpoints": [{"url": endpoint_target}]}),
         name=endpoint_name,
         dispatcher=dispatcher,
         http_client=http_client,

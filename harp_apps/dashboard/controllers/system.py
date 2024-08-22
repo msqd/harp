@@ -1,6 +1,6 @@
-from typing import Literal, cast
+from typing import cast
 
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.orm import aliased, joinedload
 
@@ -15,14 +15,9 @@ from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.types import IStorage
 
 from ..utils.dependencies import get_python_dependencies, parse_dependencies
+from .models.system import SystemPutProxyInput
 
 logger = get_logger(__name__)
-
-
-class SystemPutProxyInput(BaseModel):
-    endpoint: str
-    action: Literal["up", "down", "checking"]
-    url: str
 
 
 @RouterPrefix("/api/system")
@@ -84,14 +79,15 @@ class SystemController(RoutingController):
         except KeyError:
             return HttpResponse(f"Endpoint URL not found: {input_data.url}", status=404)
 
-        if input_data.action == "up":
-            endpoint.remote.set_up(input_data.url)
-        elif input_data.action == "down":
-            endpoint.remote.set_down(input_data.url)
-        elif input_data.action == "checking":
-            endpoint.remote.set_checking(input_data.url)
-        else:
-            return HttpResponse(b"Invalid action", status=400)
+        match input_data.action:
+            case "up":
+                endpoint.remote.set_up(input_data.url)
+            case "down":
+                endpoint.remote.set_down(input_data.url)
+            case "checking":
+                endpoint.remote.set_checking(input_data.url)
+            case _:
+                return HttpResponse(b"Invalid action", status=400)
 
         return await self.get_proxy()
 

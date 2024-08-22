@@ -1,8 +1,8 @@
+from harp.utils.testing.config import BaseConfigurableTest
 from harp_apps.proxy.settings.remote.probe import RemoteProbe, RemoteProbeSettings
-from harp_apps.proxy.tests._base import BaseModelTest
 
 
-class TestRemoteProbeSettings(BaseModelTest):
+class TestRemoteProbeSettings(BaseConfigurableTest):
     type = RemoteProbeSettings
     initial = {}
     expected = {}
@@ -16,7 +16,7 @@ class TestRemoteProbeSettings(BaseModelTest):
     }
 
 
-class TestRemoteProbeModel(BaseModelTest):
+class TestRemoteProbeStateful(BaseConfigurableTest):
     type = RemoteProbe
     initial = {"settings": TestRemoteProbeSettings.initial}
     expected = {"settings": TestRemoteProbeSettings.expected_verbose}

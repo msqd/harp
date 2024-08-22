@@ -6,10 +6,12 @@ from config.common import ConfigurationBuilder as BaseConfigurationBuilder
 from config.common import MapSource, merge_values
 from config.env import EnvVars
 
-from ...typing import GlobalSettings
+from harp.typing import GlobalSettings
+
 from ..applications import ApplicationsRegistry
 from ..defaults import DEFAULT_APPLICATIONS, DEFAULT_SYSTEM_CONFIG_FILENAMES
 from ..examples import get_example_filename
+from .system import System
 
 
 def _get_system_configuration_sources():
@@ -71,6 +73,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
 
         if use_default_applications:
             self.applications.add(*DEFAULT_APPLICATIONS)
+
         super().__init__()
 
     def add_file(self, filename: str):
@@ -172,6 +175,14 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
                 **{name: value for name, value in sorted(all_settings) if value},
             },
         )
+
+    def __call__(self) -> GlobalSettings:
+        return self.build()
+
+    async def abuild_system(self) -> System:
+        from .system import SystemBuilder
+
+        return await SystemBuilder(self.applications, self.build).abuild()
 
     @classmethod
     def from_commandline_options(cls, options) -> Self:

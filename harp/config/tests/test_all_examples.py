@@ -29,7 +29,7 @@ def test_load_example(example, snapshot):
 
     builder = ConfigurationBuilder()
     builder.add_file(get_example_filename(example))
-    settings = builder.build()
+    settings = builder()
     assert yaml.dump(asdict(settings)) == snapshot
 
 
@@ -41,7 +41,7 @@ def test_load_documentation_example(configfile, snapshot):
     if "/apps/rules/" in configfile:
         builder.applications.add("rules")
     builder.add_file(configfile)
-    settings = builder.build()
+    settings = builder()
     applications = settings.pop("applications", [])
     assert len(set(settings.keys()).difference(set(builder.applications.keys()))) == 0
     assert len(applications) >= len(settings)

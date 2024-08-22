@@ -7,7 +7,7 @@ from rich.syntax import Syntax
 from rich.tree import Tree
 
 from harp.commandline.options.server import CommonServerOptions, add_harp_server_click_options
-from harp.config import ConfigurationBuilder, SystemBuilder, asdict
+from harp.config import ConfigurationBuilder, asdict
 from harp.utils.commandline import click
 
 
@@ -27,8 +27,11 @@ def config(raw=False, json=False, unsecure=False, **kwargs):
     if raw and json:
         raise click.UsageError("Cannot use both --raw and --json.")
 
-    builder = ConfigurationBuilder.from_commandline_options(CommonServerOptions(**kwargs))
-    system = asyncio.run(SystemBuilder(builder).abuild())
+    system = asyncio.run(
+        ConfigurationBuilder.from_commandline_options(
+            CommonServerOptions(**kwargs),
+        ).abuild_system()
+    )
 
     console = Console()
     if raw:
@@ -36,7 +39,13 @@ def config(raw=False, json=False, unsecure=False, **kwargs):
     elif json:
         console.print(
             Syntax(
-                orjson.dumps(asdict(system.config, secure=not unsecure), option=orjson.OPT_INDENT_2).decode(),
+                orjson.dumps(
+                    asdict(
+                        system.config,
+                        secure=not unsecure,
+                    ),
+                    option=orjson.OPT_INDENT_2,
+                ).decode(),
                 "json",
                 background_color="default",
             )

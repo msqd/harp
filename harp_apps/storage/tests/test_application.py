@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 
 from harp.config import asdict
@@ -11,21 +13,22 @@ class TestStorageApplication(BaseTestForApplications):
     expected_defaults = {
         "blobs": {"type": "sql"},
         "migrate": True,
+        "redis": None,
         "url": "sqlite+aiosqlite:///:memory:?cache=shared",
     }
 
     @pytest.mark.parametrize(
-        ["settings", "more_settings"],
+        ["settings"],
         [
-            [{"url": "sqlite+aiosqlite:///harp.db"}, None],
-            [{"migrate": True}, None],
-            [{"migrate": False}, None],
-            [{"blobs": {"type": "redis"}}, {"blobs": {"type": "redis", "url": "redis://localhost:6379/0"}}],
+            [{"url": "sqlite+aiosqlite:///harp.db"}],
+            [{"migrate": True}],
+            [{"migrate": False}],
+            [{"blobs": {"type": "redis"}, "redis": {"url": "redis://localhost:6379/1"}}],
         ],
     )
-    def test_defaults_fills_missing_values_for_sqlalchemy_type(self, settings: dict, more_settings: dict | None):
-        assert asdict(self.application.settings_type(**settings), verbose=True) == {
+    def test_defaults_fills_missing_values_for_sqlalchemy_type(self, settings: dict):
+        application_settings = self.application.settings_type(**copy.deepcopy(settings))
+        assert asdict(application_settings, verbose=True) == {
             **self.expected_defaults,
             **settings,
-            **(more_settings or {}),
         }

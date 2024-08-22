@@ -9,6 +9,7 @@ def test_empty_settings():
         "migrate": True,
         "url": "sqlite+aiosqlite:///:memory:?cache=shared",
         "blobs": {"type": "sql"},
+        "redis": None,
     }
 
     assert asdict(settings) == {}
@@ -21,6 +22,7 @@ def test_secure():
         "migrate": True,
         "url": "postgresql+asyncpg://user:***@localhost:5432/db",
         "blobs": {"type": "sql"},
+        "redis": None,
     }
 
     assert asdict(settings, mode="python") == {
@@ -31,6 +33,7 @@ def test_secure():
         "migrate": True,
         "url": "postgresql+asyncpg://user:password@localhost:5432/db",
         "blobs": {"type": "sql"},
+        "redis": None,
     }
 
     assert asdict(settings, secure=False) == {
@@ -43,11 +46,26 @@ def test_override_blob_storage_type():
     assert asdict(settings, verbose=True) == {
         "migrate": True,
         "url": "sqlite+aiosqlite:///:memory:?cache=shared",
-        "blobs": {"type": "redis", "url": "redis://localhost:6379/0"},
+        "blobs": {"type": "redis"},
+        "redis": None,
     }
 
     assert asdict(settings) == {
         "blobs": {"type": "redis"},
+    }
+
+
+def test_override_redis_url():
+    settings = StorageSettings.from_kwargs(blobs={"type": "redis"}, redis={"url": "redis://example.com:1234/42"})
+    assert asdict(settings, verbose=True) == {
+        "blobs": {"type": "redis"},
+        "migrate": True,
+        "redis": {"url": "redis://example.com:1234/42"},
+        "url": "sqlite+aiosqlite:///:memory:?cache=shared",
+    }
+    assert asdict(settings) == {
+        "blobs": {"type": "redis"},
+        "redis": {"url": "redis://example.com:1234/42"},
     }
 
 

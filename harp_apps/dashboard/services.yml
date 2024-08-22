@@ -1,0 +1,12 @@
+services:
+  - name: "dashboard.controller"
+    type: harp_apps.dashboard.Dashboard
+    arguments:
+      http_client: !ref "http_client"
+      cache: !ref "cache"
+      config: !ref "config"
+
+  - name: "dashboard.controller.blobs"
+  - name: "dashboard.controller.overview"
+  - name: "dashboard.controller.system"
+  - name: "dashboard.controller.transactions"

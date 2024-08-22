@@ -1,7 +1,7 @@
 from harp.config import asdict
+from harp.utils.testing.config import BaseConfigurableTest
 from harp_apps.proxy.settings import EndpointSettings
 from harp_apps.proxy.settings.endpoint import Endpoint
-from harp_apps.proxy.tests._base import BaseModelTest
 
 base_settings = {
     "name": "my-endpoint",
@@ -10,7 +10,7 @@ base_settings = {
 remote_settings = {"endpoints": [{"url": "http://example.com/"}]}
 
 
-class TestEndpointSettings(BaseModelTest):
+class TestEndpointSettings(BaseConfigurableTest):
     type = EndpointSettings
     initial = {**base_settings}
     expected = {**initial}
@@ -24,7 +24,7 @@ class TestEndpointSettings(BaseModelTest):
         }
 
 
-class TestEndpointSettingsWithRemote(BaseModelTest):
+class TestEndpointSettingsWithRemote(BaseConfigurableTest):
     type = EndpointSettings
     initial = {
         **base_settings,
@@ -46,7 +46,7 @@ class TestEndpointSettingsWithRemote(BaseModelTest):
     }
 
 
-class TestEndpointStateful(BaseModelTest):
+class TestEndpointStateful(BaseConfigurableTest):
     type = Endpoint
     initial = {
         "settings": TestEndpointSettings.initial,
@@ -67,7 +67,7 @@ class TestEndpointStateful(BaseModelTest):
         assert repr(obj) == "Endpoint(remote=None)"
 
 
-class TestEndpointStatefulWithRemote(BaseModelTest):
+class TestEndpointStatefulWithRemote(BaseConfigurableTest):
     type = Endpoint
     initial = {
         "settings": TestEndpointSettingsWithRemote.initial,

@@ -1,16 +1,17 @@
-from typing import TYPE_CHECKING, Type, cast
+from typing import TYPE_CHECKING, Callable, Type, cast
 
-from rodi import Container, Services
 from whistle import IAsyncEventDispatcher
 
 from harp import __revision__, __version__, get_logger
 from harp.asgi import ASGIKernel
 from harp.asgi.events import EVENT_CONTROLLER_VIEW, EVENT_CORE_REQUEST
 from harp.event_dispatcher import LoggingAsyncEventDispatcher
+from harp.services import Container, Services
 from harp.typing import GlobalSettings
 from harp.utils.network import Bind
 from harp.views.json import on_json_response
 
+from .. import ApplicationsRegistry
 from ..events import (
     EVENT_BIND,
     EVENT_BOUND,
@@ -21,7 +22,6 @@ from ..events import (
     OnReadyEvent,
     OnShutdownEvent,
 )
-from .configuration import ConfigurationBuilder
 
 if TYPE_CHECKING:
     from harp.controllers import ProxyControllerResolver
@@ -121,13 +121,29 @@ class SystemBuilder:
     ContainerType: Type[Container] = Container
     KernelType: Type[ASGIKernel] = ASGIKernel
 
-    def __init__(self, configuration_builder: ConfigurationBuilder, /, *, hostname: str = "[::]"):
-        self.configuration_builder = configuration_builder
+    def __init__(
+        self,
+        applications=ApplicationsRegistry | Callable[[], ApplicationsRegistry],
+        configuration=GlobalSettings | Callable[[], GlobalSettings],
+        /,
+        *,
+        hostname: str = "[::]",
+    ):
+        self._applications = applications
+        self._configuration = configuration
         self.hostname = hostname
 
     @property
-    def applications(self):
-        return self.configuration_builder.applications
+    def applications(self) -> ApplicationsRegistry:
+        if callable(self._applications):
+            self._applications = self._applications()
+        return self._applications
+
+    @property
+    def configuration(self) -> GlobalSettings:
+        if callable(self._configuration):
+            self._configuration = self._configuration()
+        return self._configuration
 
     async def abuild(self) -> System:
         """
@@ -138,8 +154,8 @@ class SystemBuilder:
         """
         logger.info(f"🎙  HARP v.{__version__} ({__revision__})")
 
-        # Get the config ready.
-        config = self.configuration_builder.build()
+        # Get lazy configuration.
+        config = self.configuration
 
         # Prepare and dispatch «bind» event.
         dispatcher = self.build_dispatcher()
@@ -233,11 +249,4 @@ class SystemBuilder:
             )
         except Exception as exc:
             logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_READY, exc)
-            raise
-
-    async def dispatch_shutdown_event(self, dispatcher: IAsyncEventDispatcher, kernel: ASGIKernel, provider: Services):
-        try:
-            await dispatcher.adispatch(EVENT_SHUTDOWN, OnShutdownEvent(kernel, provider))
-        except Exception as exc:
-            logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_SHUTDOWN, exc)
             raise

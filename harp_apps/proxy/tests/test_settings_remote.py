@@ -5,11 +5,11 @@ import pytest
 import respx
 
 from harp.config import asdict
+from harp.utils.testing.config import BaseConfigurableTest
 from harp_apps.proxy.settings.remote import Remote, RemoteSettings
-from harp_apps.proxy.tests._base import BaseModelTest
 
 
-class TestRemoteSettings(BaseModelTest):
+class TestRemoteSettings(BaseConfigurableTest):
     type = RemoteSettings
     expected_verbose = {
         "break_on": ["network_error", "unhandled_exception"],
@@ -56,7 +56,7 @@ class TestRemoteSettings(BaseModelTest):
         assert asdict(RemoteSettings(**asdict(remote))) == asdict(remote)
 
 
-class TestRemoteStateful(BaseModelTest):
+class TestRemoteStateful(BaseConfigurableTest):
     type = Remote
     initial = {"settings": TestRemoteSettings.initial}
     expected = {

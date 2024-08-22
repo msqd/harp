@@ -1,7 +1,8 @@
 from typing import Type
 
-from rodi import Container
 from whistle import IAsyncEventDispatcher
+
+from harp.services import Container
 
 from .events import (
     EVENT_BIND,

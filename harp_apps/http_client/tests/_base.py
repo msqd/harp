@@ -1,4 +1,5 @@
-from harp.config import ConfigurationBuilder, System, SystemBuilder
+from harp.config import ConfigurationBuilder
+from harp.config.builders.system import System
 
 
 class BaseTestDefaultsWith:
@@ -7,4 +8,4 @@ class BaseTestDefaultsWith:
     async def create_system(self, /, *, applications=None) -> System:
         applications = applications or self.default_applications
         config = ConfigurationBuilder({"applications": applications}, use_default_applications=False)
-        return await SystemBuilder(config).abuild()
+        return await config.abuild_system()

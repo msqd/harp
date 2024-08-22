@@ -16,7 +16,7 @@ from harp_apps.proxy.events import ProxyFilterEvent
 
 BODY_MAX_LENGTH_TO_DISPLAY = 4096
 
-console = Console(force_terminal=True)
+console = Console()
 
 
 async def on_proxy_request_dump(event: ProxyFilterEvent):

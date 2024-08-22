@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import pytest
 
-from harp.config import ConfigurationBuilder, SystemBuilder
+from harp.config import ConfigurationBuilder
 from harp.controllers import ProxyControllerResolver
 from harp_apps.dashboard.controllers import SystemController
 
@@ -28,14 +28,13 @@ class SystemControllerTestFixtureMixin:
 
         raw_settings["storage"].setdefault("blobs", {})
         raw_settings["storage"]["blobs"].setdefault("type", blob_storage.type)
-        config = ConfigurationBuilder(raw_settings, use_default_applications=False)
-        system = await SystemBuilder(config).abuild()
 
-        settings = config.build()
+        system = await ConfigurationBuilder(raw_settings, use_default_applications=False).abuild_system()
+
         try:
             yield SystemController(
                 storage=sql_storage,
-                settings=settings,
+                settings=system.config,
                 handle_errors=False,
                 resolver=system.provider.get(ProxyControllerResolver),
             )

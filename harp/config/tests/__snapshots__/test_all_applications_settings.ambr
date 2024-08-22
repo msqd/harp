@@ -37,66 +37,12 @@
 # ---
 # name: test_all_applications_default_settings[harp_apps.http_client]
   dict({
-    'harp_apps.http_client.settings.CacheSettings': '''
-      check_ttl_every: 60
-      controller:
-        '@type': hishel:Controller
-        allow_heuristics: false
-        allow_stale: false
-        cacheable_methods:
-        - GET
-        - HEAD
-        cacheable_status_codes:
-        - 200
-        - 203
-        - 204
-        - 206
-        - 300
-        - 301
-        - 308
-        - 404
-        - 405
-        - 410
-        - 414
-        - 501
-      enabled: true
-      storage: null
-      transport:
-        '@type': hishel:AsyncCacheTransport
-      ttl: null
+    'harp_apps.http_client.settings.HttpClientSettings': '''
+      {}
   
     ''',
-    'harp_apps.http_client.settings.HttpClientSettings': '''
-      cache:
-        check_ttl_every: 60
-        controller:
-          '@type': hishel:Controller
-          allow_heuristics: false
-          allow_stale: false
-          cacheable_methods:
-          - GET
-          - HEAD
-          cacheable_status_codes:
-          - 200
-          - 203
-          - 204
-          - 206
-          - 300
-          - 301
-          - 308
-          - 404
-          - 405
-          - 410
-          - 414
-          - 501
-        enabled: true
-        storage: null
-        transport:
-          '@type': hishel:AsyncCacheTransport
-        ttl: null
-      timeout: 30.0
-      transport:
-        '@type': httpx:AsyncHTTPTransport
+    'harp_apps.http_client.settings.cache.CacheSettings': '''
+      {}
   
     ''',
   })
@@ -181,10 +127,10 @@
     'harp_apps.proxy.settings.remote.probe.RemoteProbe': '''
       settings:
         headers: {}
-        interval: '10.0'
+        interval: 10.0
         method: GET
         path: /
-        timeout: '10.0'
+        timeout: 10.0
         verify: true
   
     ''',
@@ -206,33 +152,21 @@
     ''',
   })
 # ---
-# name: test_all_applications_default_settings[harp_apps.services]
-  dict({
-    'harp_apps.services.settings.ServicesSettings': '''
-      {}
-  
-    ''',
-    'harp_apps.services.settings.database.DatabaseSettings': '''
-      {}
-  
-    ''',
-    'harp_apps.services.settings.redis.RedisSettings': '''
-      {}
-  
-    ''',
-  })
-# ---
 # name: test_all_applications_default_settings[harp_apps.storage]
   dict({
-    'harp_apps.storage.settings.RedisBlobStorageSettings': '''
-      type: redis
-  
-    ''',
-    'harp_apps.storage.settings.SqlBlobStorageSettings': '''
+    'harp_apps.storage.settings.StorageSettings': '''
       {}
   
     ''',
-    'harp_apps.storage.settings.StorageSettings': '''
+    'harp_apps.storage.settings.blobs.BlobStorageSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.storage.settings.database.DatabaseSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.storage.settings.redis.RedisSettings': '''
       {}
   
     ''',

@@ -6,9 +6,8 @@ from asgi_tools.types import TASGIApp
 from asyncpg import PostgresError
 
 from harp import get_logger
+from harp.config.builders.system import System
 from harp.settings import USE_PROMETHEUS
-
-from ..builders import System
 
 logger = get_logger(__name__)
 

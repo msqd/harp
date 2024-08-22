@@ -1,0 +1,247 @@
+# serializer version: 1
+# name: TestCacheSettings.test_jsonschema_for_serialization
+  dict({
+    '$defs': dict({
+      'Service': dict({
+        'additionalProperties': True,
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Constructor',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Type',
+          }),
+        }),
+        'title': 'Service',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'controller': dict({
+        'allOf': list([
+          dict({
+            '$ref': '#/$defs/Service',
+          }),
+        ]),
+        'default': dict({
+          'allow_heuristics': False,
+          'allow_stale': False,
+          'cacheable_methods': list([
+            'GET',
+            'HEAD',
+          ]),
+          'cacheable_status_codes': list([
+            200,
+            203,
+            204,
+            206,
+            300,
+            301,
+            308,
+            404,
+            405,
+            410,
+            414,
+            501,
+          ]),
+          'type': 'hishel.Controller',
+        }),
+      }),
+      'enabled': dict({
+        'default': True,
+        'title': 'Enabled',
+        'type': 'boolean',
+      }),
+      'storage': dict({
+        'allOf': list([
+          dict({
+            '$ref': '#/$defs/Service',
+          }),
+        ]),
+        'default': dict({
+          'base': 'hishel.AsyncBaseStorage',
+          'check_ttl_every': 60.0,
+          'ttl': None,
+          'type': 'harp_apps.http_client.contrib.hishel.storages.AsyncStorage',
+        }),
+      }),
+      'transport': dict({
+        'allOf': list([
+          dict({
+            '$ref': '#/$defs/Service',
+          }),
+        ]),
+        'default': dict({
+          'type': 'hishel.AsyncCacheTransport',
+        }),
+      }),
+    }),
+    'title': 'CacheSettings',
+    'type': 'object',
+  })
+# ---
+# name: TestCacheSettings.test_jsonschema_for_validation
+  dict({
+    '$defs': dict({
+      'Service': dict({
+        'additionalProperties': True,
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Constructor',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Type',
+          }),
+        }),
+        'title': 'Service',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'controller': dict({
+        'allOf': list([
+          dict({
+            '$ref': '#/$defs/Service',
+          }),
+        ]),
+        'default': dict({
+          'allow_heuristics': False,
+          'allow_stale': False,
+          'cacheable_methods': list([
+            'GET',
+            'HEAD',
+          ]),
+          'cacheable_status_codes': list([
+            200,
+            203,
+            204,
+            206,
+            300,
+            301,
+            308,
+            404,
+            405,
+            410,
+            414,
+            501,
+          ]),
+          'type': 'hishel.Controller',
+        }),
+      }),
+      'enabled': dict({
+        'default': True,
+        'title': 'Enabled',
+        'type': 'boolean',
+      }),
+      'storage': dict({
+        'allOf': list([
+          dict({
+            '$ref': '#/$defs/Service',
+          }),
+        ]),
+        'default': dict({
+          'base': 'hishel.AsyncBaseStorage',
+          'check_ttl_every': 60.0,
+          'ttl': None,
+          'type': 'harp_apps.http_client.contrib.hishel.storages.AsyncStorage',
+        }),
+      }),
+      'transport': dict({
+        'allOf': list([
+          dict({
+            '$ref': '#/$defs/Service',
+          }),
+        ]),
+        'default': dict({
+          'type': 'hishel.AsyncCacheTransport',
+        }),
+      }),
+    }),
+    'title': 'CacheSettings',
+    'type': 'object',
+  })
+# ---
