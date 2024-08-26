@@ -261,7 +261,7 @@ exports[`renders well when the query is successful 1`] = `
                       <div
                         title="2021-08-20T20:00:00Z"
                       >
-                        almost 3 years ago
+                        about 3 years ago
                       </div>
                     </td>
                   </tr>
@@ -346,7 +346,7 @@ exports[`renders well when the query is successful 1`] = `
                       <div
                         title="2021-08-20T20:00:00Z"
                       >
-                        almost 3 years ago
+                        about 3 years ago
                       </div>
                     </td>
                   </tr>
