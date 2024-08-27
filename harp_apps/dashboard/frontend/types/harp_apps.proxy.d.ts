@@ -67,7 +67,7 @@ declare namespace Apps.Proxy {
    */
   export interface RemoteSettings {
     min_pool_size?: number;
-    break_on?: unknown[];
+    break_on?: string[];
     check_after?: number;
     endpoints?: RemoteEndpointSettings[];
     probe?: RemoteProbeSettings | null;
@@ -151,7 +151,7 @@ declare namespace Apps.Proxy {
   }
   export interface BaseRemoteSettings {
     min_pool_size?: number;
-    break_on?: unknown[];
+    break_on?: string[];
     check_after?: number;
   }
 }

@@ -4,6 +4,8 @@ import glob
 import os
 from shutil import copyfile
 
+import pyheck
+
 from harp import ROOT_DIR
 from harp.utils.typescript import generate_schema, generate_typescript
 
@@ -15,11 +17,19 @@ def generate_typescript_definitions_for_application(application_name, destinatio
         mod_path = mod_path.split(os.sep)
         if mod_path[-1] == "__init__":
             mod_path = mod_path[:-1]
-        if "tests" in mod_path or (mod_path[-1].startswith("__") and mod_path[-1].endswith("__")):
+        if (
+            "tests" in mod_path
+            or "node_modules" in mod_path
+            or (mod_path[-1].startswith("__") and mod_path[-1].endswith("__"))
+        ):
             continue
         mod_fullpath = ".".join(mod_path)
         mod_path, mod_name = mod_fullpath.rsplit(".", 1)
-        module = getattr(__import__(mod_path, fromlist=[mod_name]), mod_name)
+        try:
+            module = getattr(__import__(mod_path, fromlist=[mod_name]), mod_name)
+        except Exception as e:
+            print(f"{mod_fullpath} (skip: {e})")
+            continue
         for name in dir(module):
             # ignore private
             if name.startswith("_"):
@@ -47,8 +57,9 @@ def generate_typescript_definitions_for_application(application_name, destinatio
 
 
 if __name__ == "__main__":
-    generate_typescript_definitions_for_application(
-        "proxy",
-        os.path.join(ROOT_DIR, "harp_apps/dashboard/frontend/types/harp_apps.proxy.d.ts"),
-        namespace="Apps.Proxy",
-    )
+    for app in ("dashboard", "http_client", "proxy", "storage"):
+        generate_typescript_definitions_for_application(
+            app,
+            os.path.join(ROOT_DIR, f"harp_apps/dashboard/frontend/types/harp_apps.{app}.d.ts"),
+            namespace="Apps." + pyheck.upper_camel(app),
+        )

@@ -1,4 +1,4 @@
-from typing import Annotated, FrozenSet, Optional, Set
+from typing import Annotated, List, Optional
 
 from pydantic import Field, HttpUrl, field_serializer, field_validator
 
@@ -20,21 +20,22 @@ class RemoteEndpointSettings(Configurable):
     """
 
     url: HttpUrl
-    pools: Set[str] = {"default"}
+    pools: List[str] = ["default"]
     failure_threshold: Annotated[int, Field(gt=0)] = 1
     success_threshold: Annotated[int, Field(gt=0)] = 1
 
     @field_validator("pools")
     @classmethod
-    def validate_pools(cls, pools: FrozenSet[str]) -> FrozenSet[str]:
+    def validate_pools(cls, pools: List[str]) -> List[str]:
+        pools = set(pools)
         if not pools.issubset(AVAILABLE_POOLS):
             raise ValueError(f"Invalid pool names: {', '.join(pools.difference(AVAILABLE_POOLS))}.")
-        return pools
+        return list(pools)
 
     @field_serializer("pools", when_used="json")
     @classmethod
-    def serialize_in_order(cls, value: Set[str]):
-        return sorted(value)
+    def serialize_in_order(cls, value: List[str]):
+        return list(sorted(value))
 
 
 class RemoteEndpoint(Stateful[RemoteEndpointSettings]):

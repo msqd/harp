@@ -141,10 +141,8 @@ class TestSystemControllerThroughASGI(
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == RE(
-            re.escape(
-                b'{"applications":["harp_apps.storage"],"storage":{"url":"postgresql+asyncpg://test:***@localhost:'
-            )
-            + b"\\d+"  # port number will vary
+            re.escape(b'{"applications":["harp_apps.storage"],"storage":{"url":"postgresql+asyncpg://test:***@')
+            + b".*:\\d+"  # host and port number will vary
             + re.escape(b'/test_b238114489d2135dfbd3b9b5ddfc56ab","migrate":true,"blobs":{"type":"sql"},"redis":null}}')
         )
 

@@ -8,6 +8,7 @@ from pydantic import computed_field, field_serializer, field_validator, model_va
 
 from harp import get_logger
 from harp.config import Configurable, Stateful
+from harp.utils.background import is_event_loop_running
 from harp.utils.urls import normalize_url
 from harp_apps.proxy.constants import (
     ALL_BREAK_ON_VALUES,
@@ -40,10 +41,23 @@ class BaseRemoteSettings(Configurable):
     min_pool_size: int = 1
 
     #: Events triggering the circuit breaker.
-    break_on: set = [BREAK_ON_NETWORK_ERROR, BREAK_ON_UNHANDLED_EXCEPTION]
+    break_on: list[str] = [BREAK_ON_NETWORK_ERROR, BREAK_ON_UNHANDLED_EXCEPTION]
 
     #: Delay after which endpoints that are marked as down will be checked again.
     check_after: float = 10.0
+
+    @field_validator("break_on")
+    @classmethod
+    def __validate_break_on(cls, value: list) -> list:
+        value = set(value)
+        if not value.issubset(ALL_BREAK_ON_VALUES):
+            raise ValueError(f"Invalid break_on values: {value}")
+        return list(value)
+
+    @field_serializer("break_on", when_used="json")
+    @classmethod
+    def __serialize_break_on(cls, value: Iterable[str]):
+        return list(sorted(value))
 
 
 class RemoteSettings(BaseRemoteSettings):
@@ -71,18 +85,6 @@ class RemoteSettings(BaseRemoteSettings):
             if str(endpoint.url) == item:
                 return endpoint
         raise KeyError(f'Endpoint "{item}" not found.')
-
-    @field_validator("break_on")
-    @classmethod
-    def validate_break_on(cls, value: set) -> set:
-        if not value.issubset(ALL_BREAK_ON_VALUES):
-            raise ValueError(f"Invalid break_on values: {value}")
-        return value
-
-    @field_serializer("break_on", when_used="json")
-    @classmethod
-    def serialize_in_order(cls, value: Iterable[str]):
-        return list(sorted(value))
 
 
 class Remote(Stateful[RemoteSettings]):
@@ -167,17 +169,18 @@ class Remote(Stateful[RemoteSettings]):
         self[url].status = DOWN
 
         if old_status >= DOWN:
+            if is_event_loop_running():
 
-            async def delayed_set_checking():
-                await asyncio.sleep(self.settings.check_after)
-                if self[url].status == DOWN:
-                    self.set_checking(url)
-                del self[url]._delayed_set_checking
+                async def delayed_set_checking():
+                    await asyncio.sleep(self.settings.check_after)
+                    if self[url].status == DOWN:
+                        self.set_checking(url)
+                    del self[url]._delayed_set_checking
 
-            try:
-                self[url]._delayed_set_checking = asyncio.create_task(delayed_set_checking())
-            except RuntimeError as exc:
-                warnings.warn(f"Failed to schedule delayed checking state: {exc}")
+                try:
+                    self[url]._delayed_set_checking = asyncio.create_task(delayed_set_checking())
+                except RuntimeError as exc:
+                    warnings.warn(f"Failed to schedule delayed checking state: {exc}")
 
         self.refresh()
 

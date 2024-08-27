@@ -1,10 +1,6 @@
 from typing import Annotated, Generic, Optional, Self, Type, TypeVar
 
-from pydantic import BaseModel, Field, field_serializer, model_serializer, model_validator
-
-
-class FactoryDefinition(BaseModel):
-    pass
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, model_serializer, model_validator
 
 
 class BaseConfigurable(BaseModel):
@@ -24,8 +20,7 @@ class BaseConfigurable(BaseModel):
 
 
 class Configurable(BaseConfigurable):
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 TConfigurable = TypeVar("TConfigurable", bound=Configurable)
@@ -58,8 +53,7 @@ class Stateful(BaseConfigurable, Generic[TConfigurable]):
 
 
 class Service(Configurable):
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
     base: Optional[str] = None
     type: Optional[str] = None

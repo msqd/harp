@@ -62,3 +62,11 @@ class AsyncWorkerQueue:
     async def close(self):
         self._running = False
         await self.wait_until_empty()
+
+
+def is_event_loop_running() -> bool:
+    try:
+        asyncio.get_running_loop()
+        return True
+    except RuntimeError:
+        return False

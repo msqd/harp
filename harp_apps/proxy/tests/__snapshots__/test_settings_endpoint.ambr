@@ -31,7 +31,6 @@
             }),
             'title': 'Pools',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'success_threshold': dict({
             'default': 1,
@@ -125,10 +124,10 @@
               'unhandled_exception',
             ]),
             'items': dict({
+              'type': 'string',
             }),
             'title': 'Break On',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'check_after': dict({
             'default': 10.0,
@@ -238,7 +237,6 @@
             }),
             'title': 'Pools',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'success_threshold': dict({
             'default': 1,
@@ -332,10 +330,10 @@
               'unhandled_exception',
             ]),
             'items': dict({
+              'type': 'string',
             }),
             'title': 'Break On',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'check_after': dict({
             'default': 10.0,
@@ -445,7 +443,6 @@
             }),
             'title': 'Pools',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'success_threshold': dict({
             'default': 1,
@@ -539,10 +536,10 @@
               'unhandled_exception',
             ]),
             'items': dict({
+              'type': 'string',
             }),
             'title': 'Break On',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'check_after': dict({
             'default': 10.0,
@@ -652,7 +649,6 @@
             }),
             'title': 'Pools',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'success_threshold': dict({
             'default': 1,
@@ -746,10 +742,10 @@
               'unhandled_exception',
             ]),
             'items': dict({
+              'type': 'string',
             }),
             'title': 'Break On',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'check_after': dict({
             'default': 10.0,
@@ -1012,7 +1008,6 @@
             }),
             'title': 'Pools',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'success_threshold': dict({
             'default': 1,
@@ -1119,10 +1114,10 @@
               'unhandled_exception',
             ]),
             'items': dict({
+              'type': 'string',
             }),
             'title': 'Break On',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'check_after': dict({
             'default': 10.0,
@@ -1302,7 +1297,6 @@
             }),
             'title': 'Pools',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'success_threshold': dict({
             'default': 1,
@@ -1409,10 +1403,10 @@
               'unhandled_exception',
             ]),
             'items': dict({
+              'type': 'string',
             }),
             'title': 'Break On',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'check_after': dict({
             'default': 10.0,
@@ -1653,7 +1647,6 @@
             }),
             'title': 'Pools',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'success_threshold': dict({
             'default': 1,
@@ -1760,10 +1753,10 @@
               'unhandled_exception',
             ]),
             'items': dict({
+              'type': 'string',
             }),
             'title': 'Break On',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'check_after': dict({
             'default': 10.0,
@@ -1943,7 +1936,6 @@
             }),
             'title': 'Pools',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'success_threshold': dict({
             'default': 1,
@@ -2050,10 +2042,10 @@
               'unhandled_exception',
             ]),
             'items': dict({
+              'type': 'string',
             }),
             'title': 'Break On',
             'type': 'array',
-            'uniqueItems': True,
           }),
           'check_after': dict({
             'default': 10.0,

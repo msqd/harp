@@ -1,6 +1,6 @@
 from typing import Annotated, Any, Iterable, Literal, Mapping, Optional, Self, Sequence, Tuple, Union
 
-from pydantic import BaseModel, Discriminator, Tag
+from pydantic import BaseModel, ConfigDict, Discriminator, Tag
 
 from harp.utils.config import yaml
 
@@ -27,8 +27,7 @@ def _resolve(value: Optional[ExtendedStringOrRef | Iterable[ExtendedStringOrRef]
 
 
 class Service(BaseModel):
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
     #: service name (todo: constraints ?)
     name: str
