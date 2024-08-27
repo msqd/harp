@@ -28,7 +28,6 @@ logger = get_logger(__name__)
 STATIC_BUILD_PATHS = [
     os.path.realpath(os.path.join(ROOT_DIR, "harp_apps/dashboard/frontend/dist")),
     os.path.realpath(os.path.join(ROOT_DIR, "harp_apps/dashboard/web")),
-    os.path.realpath(os.path.join(ROOT_DIR, "frontend/dist")),
     "/opt/harp/public",
 ]
 

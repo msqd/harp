@@ -49,7 +49,7 @@ async def test_controller_auth_plaintext():
 
 
 async def _create_mock_controller(settings: DashboardSettings = None):
-    return DashboardController(
+    controller = DashboardController(
         storage=cast(IStorage, Mock(spec=IStorage)),
         blob_storage=cast(IBlobStorage, Mock(spec=IBlobStorage)),
         all_settings=Mock(),
@@ -57,6 +57,8 @@ async def _create_mock_controller(settings: DashboardSettings = None):
         http_client=Mock(spec=AsyncClient),
         resolver=Mock(),
     )
+    controller._ui_devserver_proxy_controller = None
+    return controller
 
 
 def _get_auth_headers(username, password):
