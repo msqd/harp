@@ -251,7 +251,7 @@ testc-shell:  ## Runs a shell in the development test suite environment.
 	$(DOCKER) rm docker
 
 testc-backend:  ## Runs the backend test suite within the development docker image, with a docker in docker sidecar service.
-	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" TESTC_COMMAND="poetry run make test-backend" $(MAKE) testc-shell
+	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" TESTC_COMMAND="PYTEST_OPTIONS=-vv poetry run make test-backend" $(MAKE) testc-shell
 
 
 ########################################################################################################################

@@ -1,13 +1,24 @@
+import os.path
+from glob import glob
+from itertools import chain
+
 import pytest
 
 import harp
 from harp.config import asdict
-from harp.config.examples import (
-    _get_available_documentation_examples_filenames,
-    get_available_examples,
-    get_example_filename,
-)
+from harp.config.examples import get_available_examples, get_example_filename
 from harp.utils.config import yaml
+
+
+def _get_available_documentation_examples_filenames():
+    files = chain(
+        *(
+            glob(f"docs/**/examples/*.{format}", root_dir=harp.ROOT_DIR, recursive=True)
+            for format in ("yml", "yaml", "toml")
+        )
+    )
+
+    return list(sorted(files))
 
 
 def test_get_available_examples(snapshot):
@@ -38,9 +49,9 @@ def test_load_documentation_example(configfile, snapshot):
     from harp.config import ConfigurationBuilder
 
     builder = ConfigurationBuilder()
-    if "/apps/rules/" in configfile:
+    if configfile.startswith("docs/apps/rules/"):
         builder.applications.add("rules")
-    builder.add_file(configfile)
+    builder.add_file(os.path.join(harp.ROOT_DIR, configfile))
     settings = builder()
     applications = settings.pop("applications", [])
     assert len(set(settings.keys()).difference(set(builder.applications.keys()))) == 0

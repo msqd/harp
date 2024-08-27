@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from harp.config import ConfigurationBuilder as _ConfigurationBuilder
 
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def _parse_version(version: str, /, *, default=None) -> Version:

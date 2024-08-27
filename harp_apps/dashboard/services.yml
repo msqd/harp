@@ -7,6 +7,13 @@ services:
       config: !ref "config"
 
   - name: "dashboard.controller.blobs"
+    type: harp_apps.dashboard.controllers.blobs.BlobsController
+
   - name: "dashboard.controller.overview"
+    type: harp_apps.dashboard.controllers.overview.OverviewController
+
   - name: "dashboard.controller.system"
+    type: harp_apps.dashboard.controllers.system.SystemController
+
   - name: "dashboard.controller.transactions"
+    type: harp_apps.dashboard.controllers.transactions.TransactionsController

@@ -42,7 +42,7 @@
     'sqlite',
   ])
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/dashboard/examples/auth.basic.yml]
+# name: test_load_documentation_example[docs/apps/dashboard/examples/auth.basic.yml]
   '''
   dashboard:
     auth:
@@ -58,7 +58,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/dashboard/examples/auth.yml]
+# name: test_load_documentation_example[docs/apps/dashboard/examples/auth.yml]
   '''
   dashboard:
     auth:
@@ -75,7 +75,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/dashboard/examples/devserver.yml]
+# name: test_load_documentation_example[docs/apps/dashboard/examples/devserver.yml]
   '''
   dashboard:
     devserver:
@@ -88,7 +88,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/dashboard/examples/main.yml]
+# name: test_load_documentation_example[docs/apps/dashboard/examples/main.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -99,7 +99,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/http_client/examples/cache.yml]
+# name: test_load_documentation_example[docs/apps/http_client/examples/cache.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -116,7 +116,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/http_client/examples/full.yml]
+# name: test_load_documentation_example[docs/apps/http_client/examples/full.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -146,7 +146,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/http_client/examples/simple.yml]
+# name: test_load_documentation_example[docs/apps/http_client/examples/simple.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -164,7 +164,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/notifications/examples/dashboard.yml]
+# name: test_load_documentation_example[docs/apps/notifications/examples/dashboard.yml]
   '''
   dashboard:
     public_url: http://localhost:4080
@@ -176,7 +176,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/notifications/examples/main.yml]
+# name: test_load_documentation_example[docs/apps/notifications/examples/main.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -187,7 +187,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/basics.yml]
+# name: test_load_documentation_example[docs/apps/proxy/examples/basics.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -204,7 +204,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/full-shorthand.yml]
+# name: test_load_documentation_example[docs/apps/proxy/examples/full-shorthand.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -222,7 +222,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/full.yml]
+# name: test_load_documentation_example[docs/apps/proxy/examples/full.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -251,7 +251,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/multiple.yml]
+# name: test_load_documentation_example[docs/apps/proxy/examples/multiple.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -273,7 +273,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/pooled-aggressive.yml]
+# name: test_load_documentation_example[docs/apps/proxy/examples/pooled-aggressive.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -301,7 +301,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/pooled-fallback.yml]
+# name: test_load_documentation_example[docs/apps/proxy/examples/pooled-fallback.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -326,7 +326,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/pooled-healthcheck.yml]
+# name: test_load_documentation_example[docs/apps/proxy/examples/pooled-healthcheck.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -354,7 +354,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/pooled.yml]
+# name: test_load_documentation_example[docs/apps/proxy/examples/pooled.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -372,7 +372,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/proxy/examples/swapi.yml]
+# name: test_load_documentation_example[docs/apps/proxy/examples/swapi.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -389,7 +389,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/rules/examples/overview.toml]
+# name: test_load_documentation_example[docs/apps/rules/examples/overview.toml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -410,7 +410,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/rules/examples/rules.toml]
+# name: test_load_documentation_example[docs/apps/rules/examples/rules.toml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -428,7 +428,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/rules/examples/rules.yml]
+# name: test_load_documentation_example[docs/apps/rules/examples/rules.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -446,7 +446,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/storage/examples/mysql-aiomysql.yml]
+# name: test_load_documentation_example[docs/apps/storage/examples/mysql-aiomysql.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -458,7 +458,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/storage/examples/mysql-asyncmy.yml]
+# name: test_load_documentation_example[docs/apps/storage/examples/mysql-asyncmy.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -470,7 +470,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/storage/examples/postgres-asyncpg.yml]
+# name: test_load_documentation_example[docs/apps/storage/examples/postgres-asyncpg.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -482,7 +482,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/storage/examples/redis.yml]
+# name: test_load_documentation_example[docs/apps/storage/examples/redis.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
@@ -496,7 +496,7 @@
   
   '''
 # ---
-# name: test_load_documentation_example[/Users/rd/Work/OpenSource/harp/docs/apps/storage/examples/sqlite-aiosqlite.yml]
+# name: test_load_documentation_example[docs/apps/storage/examples/sqlite-aiosqlite.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry:
