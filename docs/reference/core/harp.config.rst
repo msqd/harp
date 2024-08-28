@@ -21,5 +21,4 @@ Submodules
     harp.config.defaults
     harp.config.events
     harp.config.examples
-    harp.config.settings
     harp.config.utils

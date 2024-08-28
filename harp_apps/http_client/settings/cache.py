@@ -1,7 +1,6 @@
 from hishel import HEURISTICALLY_CACHEABLE_STATUS_CODES
 
-from harp.config import Configurable
-from harp.config.configurables import Service
+from harp.config import Configurable, Service
 
 
 class CacheSettings(Configurable):

@@ -1,6 +1,6 @@
 from tempfile import NamedTemporaryFile
 
-from harp.config import asdict
+from harp.config.asdict import asdict
 from harp_apps.dashboard.settings import BasicAuthSettings, DashboardSettings
 
 

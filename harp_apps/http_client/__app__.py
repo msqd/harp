@@ -10,7 +10,7 @@ logger = get_logger(__name__)
 
 
 async def on_bind(event: OnBindEvent):
-    # load service definitions, bound to our settings
+    # Load service definitions, bound to our settings.
     event.container.load(Path(dirname(__file__)) / "services.yml", bind_settings=event.settings["http_client"])
 
 

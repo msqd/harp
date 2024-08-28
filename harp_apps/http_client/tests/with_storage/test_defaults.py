@@ -2,7 +2,7 @@ from unittest.mock import ANY
 
 import pytest
 
-from harp.config import asdict
+from harp.config.asdict import asdict
 from harp_apps.http_client.tests._base import BaseTestDefaultsWith
 from harp_apps.storage.types import IBlobStorage
 

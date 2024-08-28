@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock
 
 from httpx import AsyncClient
 
-from harp.config import asdict
+from harp.config.asdict import asdict
 from harp.http import HttpRequest
 from harp.utils.bytes import ensure_bytes
 from harp_apps.dashboard.controllers import DashboardController

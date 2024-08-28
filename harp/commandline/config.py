@@ -7,7 +7,8 @@ from rich.syntax import Syntax
 from rich.tree import Tree
 
 from harp.commandline.options.server import CommonServerOptions, add_harp_server_click_options
-from harp.config import ConfigurationBuilder, asdict
+from harp.config import ConfigurationBuilder
+from harp.config.asdict import asdict
 from harp.utils.commandline import click
 
 

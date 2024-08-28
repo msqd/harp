@@ -54,9 +54,7 @@
 # name: test_all_applications_default_settings[harp_apps.notifications]
   dict({
     'harp_apps.notifications.settings.NotificationsSettings': '''
-      enabled: true
-      google_chat_webhook_url: null
-      slack_webhook_url: null
+      {}
   
     ''',
   })

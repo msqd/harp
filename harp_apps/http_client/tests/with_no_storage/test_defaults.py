@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 import respx
 from httpx import AsyncClient, Response
 
-from harp.config import asdict
+from harp.config.asdict import asdict
 from harp_apps.http_client.contrib.hishel.storages import AsyncStorage
 from harp_apps.http_client.events import EVENT_FILTER_HTTP_CLIENT_REQUEST, EVENT_FILTER_HTTP_CLIENT_RESPONSE
 from harp_apps.http_client.tests._base import BaseTestDefaultsWith

@@ -1,4 +1,4 @@
-from harp.config import asdict
+from harp.config.asdict import asdict
 from harp.utils.testing.config import BaseConfigurableTest
 from harp_apps.proxy.settings import EndpointSettings
 from harp_apps.proxy.settings.endpoint import Endpoint

@@ -1,11 +1,6 @@
 """
 Dashboard Application
 
-todo:
-
-remove self ?
-remove repetition of configuration namespace ?
-
 """
 
 from os.path import dirname
@@ -20,7 +15,7 @@ logger = get_logger(__name__)
 
 
 async def on_bind(event: OnBindEvent):
-    # load service definitions, bound to our settings
+    # Load service definitions, bound to our settings.
     event.container.load(Path(dirname(__file__)) / "services.yml", bind_settings=event.settings["dashboard"])
 
 
@@ -39,7 +34,9 @@ async def on_bound(event: OnBoundEvent):
         ],
     )
 
-    # add our controller to the controller resolver, using the configured dashboard port
+    # Add our controller to the controller resolver, using the configured dashboard port. This is what will actually
+    # make the server to route requests to the dashboard controller when an incoming request is received on the
+    # dashboard port.
     event.resolver.add_controller(
         event.provider.get(DashboardSettings).port, event.provider.get("dashboard.controller")
     )

@@ -2,7 +2,8 @@ from functools import cached_property
 
 import pytest
 
-from harp.config import Application, ConfigurationBuilder, asdict
+from harp.config import Application, ConfigurationBuilder
+from harp.config.asdict import asdict
 from harp.config.utils import get_application
 
 

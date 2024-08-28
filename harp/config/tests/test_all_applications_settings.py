@@ -8,7 +8,8 @@ import pytest
 from pydantic import ValidationError
 
 from harp import ROOT_DIR
-from harp.config import Stateful, asdict
+from harp.config import Stateful
+from harp.config.asdict import asdict
 from harp.utils.config import yaml
 
 

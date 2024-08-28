@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import aliased, joinedload
 
 from harp import __revision__, __version__, get_logger
-from harp.config import asdict
+from harp.config.asdict import asdict
 from harp.controllers import GetHandler, ProxyControllerResolver, PutHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest, HttpResponse
 from harp.typing.global_settings import GlobalSettings

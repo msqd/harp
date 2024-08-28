@@ -7,3 +7,13 @@ harp.config.configurables
     :show-inheritance:
 
     .. inheritance-diagram:: harp.config.configurables
+
+Submodules
+----------
+
+.. toctree::
+    :maxdepth: 1
+
+    harp.config.configurables.base
+    harp.config.configurables.service
+    harp.config.configurables.stateful

@@ -5,7 +5,7 @@ from itertools import chain
 import pytest
 
 import harp
-from harp.config import asdict
+from harp.config.asdict import asdict
 from harp.config.examples import get_available_examples, get_example_filename
 from harp.utils.config import yaml
 

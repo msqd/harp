@@ -12,6 +12,9 @@ declare namespace Apps.HttpClient {
     controller?: Service;
     storage?: Service;
   }
+  /**
+   * A settings base class for service definitions.
+   */
   export interface Service {
     base?: string | null;
     type?: string | null;

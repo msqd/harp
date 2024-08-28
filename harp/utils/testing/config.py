@@ -1,7 +1,7 @@
 from typing import Generic, Type, TypeVar
 
-from harp.config import asdict
-from harp.config.configurables import BaseConfigurable
+from harp.config.asdict import asdict
+from harp.config.configurables.base import BaseConfigurable
 
 TConfigurable = TypeVar("TConfigurable", bound=BaseConfigurable)
 

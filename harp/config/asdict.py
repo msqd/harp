@@ -1,16 +1,10 @@
 import copy
 import dataclasses
 import re
-from dataclasses import dataclass
 from functools import partial
 from typing import Literal
 
 from pydantic_core import MultiHostUrl, Url
-
-from .lazy import ConstantDefinition, Definition, Lazy
-
-settings_dataclass = dataclass
-
 
 mask_password_re = re.compile(r"(://[^:]+:)([^@]+)(@)")
 
@@ -63,27 +57,3 @@ def asdict(obj, /, *, secure=True, verbose=False, mode: Literal["json", "python"
         return type(obj)((_asdict(k), _asdict(v)) for k, v in obj.items())
 
     return copy.deepcopy(obj)
-
-
-@settings_dataclass
-class Settings:
-    def __post_init__(self):
-        for _name, _hint in self.__annotations__.items():
-            try:
-                is_definition = issubclass(_hint, Definition)
-            except TypeError:
-                is_definition = False
-
-            if hasattr(_hint, "__origin__"):
-                try:
-                    if issubclass(_hint.__origin__, Definition):
-                        is_definition = True
-                except TypeError:
-                    pass
-
-            if is_definition:
-                _default = getattr(type(self), _name, None)
-                if isinstance(_default, ConstantDefinition):
-                    setattr(self, _name, _default.value)
-                else:
-                    setattr(self, _name, Lazy(getattr(self, _name), _default=_default))

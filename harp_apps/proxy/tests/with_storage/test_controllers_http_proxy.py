@@ -7,7 +7,7 @@ from httpx import AsyncClient, Response
 from sqlalchemy.ext.asyncio import AsyncEngine
 from whistle import AsyncEventDispatcher, IAsyncEventDispatcher
 
-from harp.config import asdict
+from harp.config.asdict import asdict
 from harp.http import HttpRequest, HttpResponse
 from harp.utils.bytes import ensure_bytes
 from harp.utils.testing.mixins import ControllerTestFixtureMixin

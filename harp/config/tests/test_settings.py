@@ -2,7 +2,8 @@ from tempfile import NamedTemporaryFile
 
 from sqlalchemy import make_url
 
-from harp.config import ConfigurationBuilder, asdict
+from harp.config import ConfigurationBuilder
+from harp.config.asdict import asdict
 
 
 def create_settings(settings=None):

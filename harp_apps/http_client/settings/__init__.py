@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from harp.config.configurables import Service
+from harp.config import Service
 from harp_apps.http_client.settings.cache import CacheSettings
 
 if TYPE_CHECKING:

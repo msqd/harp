@@ -1,6 +1,7 @@
 from copy import deepcopy
 
-from harp.config import ConfigurationBuilder, asdict
+from harp.config import ConfigurationBuilder
+from harp.config.asdict import asdict
 from harp.config.builders.system import System
 
 from ..controllers.blobs import BlobsController

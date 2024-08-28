@@ -1,4 +1,4 @@
-from harp.config import asdict
+from harp.config.asdict import asdict
 
 from ..settings import AcmeSettings
 

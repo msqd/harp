@@ -4,7 +4,8 @@ from unittest.mock import patch
 
 import orjson
 
-from harp.config import Application, ApplicationsRegistry, ConfigurationBuilder, asdict
+from harp.config import Application, ApplicationsRegistry, ConfigurationBuilder
+from harp.config.asdict import asdict
 from harp.utils.identifiers import is_valid_dotted_identifier
 
 

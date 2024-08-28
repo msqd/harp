@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from harp.config import asdict
+from harp.config.asdict import asdict
 from harp.utils.collections import all_combinations
 from harp.utils.testing.config import BaseConfigurableTest
 from harp_apps.proxy.constants import AVAILABLE_POOLS

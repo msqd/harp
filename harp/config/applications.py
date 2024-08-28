@@ -4,6 +4,7 @@ from whistle import IAsyncEventDispatcher
 
 from harp.services import Container
 
+from .asdict import asdict
 from .events import (
     EVENT_BIND,
     EVENT_BOUND,
@@ -14,7 +15,6 @@ from .events import (
     OnReadyHandler,
     OnShutdownHandler,
 )
-from .settings.base import asdict
 from .utils import get_application, resolve_application_name
 
 

@@ -2,7 +2,7 @@ import copy
 
 import pytest
 
-from harp.config import asdict
+from harp.config.asdict import asdict
 from harp.utils.testing.applications import BaseTestForApplications
 
 

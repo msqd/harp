@@ -4,6 +4,7 @@
     '$defs': dict({
       'Service': dict({
         'additionalProperties': True,
+        'description': 'A settings base class for service definitions.',
         'properties': dict({
           'arguments': dict({
             'anyOf': list([
@@ -127,6 +128,7 @@
     '$defs': dict({
       'Service': dict({
         'additionalProperties': True,
+        'description': 'A settings base class for service definitions.',
         'properties': dict({
           'arguments': dict({
             'anyOf': list([

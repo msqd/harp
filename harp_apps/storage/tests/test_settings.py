@@ -1,4 +1,5 @@
-from harp.config import Application, asdict
+from harp.config import Application
+from harp.config.asdict import asdict
 from harp_apps.storage.settings import StorageSettings
 
 
