@@ -10,6 +10,7 @@ def test_defaults():
     assert asdict(DashboardSettings(), verbose=True) == {
         "auth": None,
         "devserver": {"enabled": True, "port": None},
+        "enable_ui": True,
         "port": 4080,
         "public_url": None,
     }

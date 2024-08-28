@@ -13,4 +13,5 @@ class DashboardSettings(Configurable):
     port: int = 4080
     auth: Union[BasicAuthSettings] = Field(None, discriminator="type")
     devserver: Optional[DevserverSettings] = DevserverSettings()
+    enable_ui: bool = True
     public_url: Optional[str] = None

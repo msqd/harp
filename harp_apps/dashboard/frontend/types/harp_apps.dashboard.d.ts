@@ -74,6 +74,7 @@ declare namespace Apps.Dashboard {
     port?: number;
     auth?: BasicAuthSettings;
     devserver?: DevserverSettings | null;
+    enable_ui?: boolean;
     public_url?: string | null;
   }
   export interface SystemPutProxyInput {

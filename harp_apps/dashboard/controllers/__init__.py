@@ -40,7 +40,7 @@ class DashboardController(RoutingController):
     def __init__(
         self,
         storage: IStorage,
-        local_settings: DashboardSettings,
+        settings: DashboardSettings,
         http_client: AsyncClient,
         router: Router = None,
     ):
@@ -49,12 +49,16 @@ class DashboardController(RoutingController):
         # context for usage in handlers
         self.http_client = http_client
         self.storage = storage
-        self.settings = local_settings
+        self.settings = settings
 
         # create users if they don't exist
         if isinstance(self.settings.auth, BasicAuthSettings):
             asyncio.create_task(self.storage.create_users_once_ready(self.settings.auth.users))
 
+        if self.settings.enable_ui:
+            self._initialize_ui()
+
+    def _initialize_ui(self):
         # controllers for delegating requests
         if self.settings.devserver.enabled and self.settings.devserver.port:
             self._ui_devserver_proxy_controller = self._create_ui_devserver_proxy_controller(

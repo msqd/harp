@@ -1,9 +1,10 @@
 from copy import deepcopy
 
-from harp.config import ConfigurationBuilder
+from harp.config import ConfigurationBuilder, asdict
 from harp.config.builders.system import System
 
 from ..controllers.blobs import BlobsController
+from ..settings import DashboardSettings
 
 
 class BaseSystemTest:
@@ -22,7 +23,7 @@ class BaseSystemTest:
 
 class TestBlobsControllerService(BaseSystemTest):
     applications = ["http_client", "storage", "harp_apps.dashboard"]
-    settings = {"dashboard": {}}
+    settings = {"dashboard": asdict(DashboardSettings(enable_ui=False))}
 
     async def test_get_instances(self):
         system = await self.create_system()
