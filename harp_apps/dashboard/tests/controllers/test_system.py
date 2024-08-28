@@ -1,14 +1,15 @@
-import re
+from re import escape
 from unittest.mock import ANY
+
+import orjson
 
 from harp.utils.testing import RE
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.databases import parametrize_with_blob_storages_urls, parametrize_with_database_urls
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
+from harp_apps.dashboard.controllers.system import SystemController
+from harp_apps.dashboard.tests._mixins import SystemControllerTestFixtureMixin, parametrize_with_settings
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
-
-from ..controllers import SystemController
-from ._mixins import SystemControllerTestFixtureMixin, parametrize_with_settings
 
 
 class TestSystemController(
@@ -140,11 +141,15 @@ class TestSystemControllerThroughASGI(
 
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
-        assert response["body"] == RE(
-            re.escape(b'{"applications":["harp_apps.storage"],"storage":{"url":"postgresql+asyncpg://test:***@')
-            + b".*:\\d+"  # host and port number will vary
-            + re.escape(b'/test_b238114489d2135dfbd3b9b5ddfc56ab","migrate":true,"blobs":{"type":"sql"},"redis":null}}')
-        )
+        assert orjson.loads(response["body"]) == {
+            "applications": ["harp_apps.storage"],
+            "storage": {
+                "blobs": {"type": "sql"},
+                "migrate": True,
+                "redis": None,
+                "url": RE(escape("postgresql+asyncpg://test:***@") + r".*"),
+            },
+        }
 
     @parametrize_with_settings(
         {

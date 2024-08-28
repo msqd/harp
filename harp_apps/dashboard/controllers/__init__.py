@@ -3,7 +3,7 @@ import os
 
 from asgi_middleware_static_file import ASGIMiddlewareStaticFile
 from asgiref.typing import ASGISendCallable
-from http_router import NotFoundError
+from http_router import NotFoundError, Router
 from httpx import AsyncClient
 
 from harp import ROOT_DIR, get_logger
@@ -17,10 +17,6 @@ from harp_apps.storage.types import IBlobStorage, IStorage
 
 from ..settings import DashboardSettings
 from ..settings.auth import BasicAuthSettings
-from .blobs import BlobsController
-from .overview import OverviewController
-from .system import SystemController
-from .transactions import TransactionsController
 
 logger = get_logger(__name__)
 
@@ -32,7 +28,7 @@ STATIC_BUILD_PATHS = [
 ]
 
 
-class DashboardController:
+class DashboardController(RoutingController):
     name = "ui"
 
     storage: IStorage
@@ -53,7 +49,10 @@ class DashboardController:
         local_settings: DashboardSettings,
         http_client: AsyncClient,
         resolver: ProxyControllerResolver,
+        router: Router = None,
     ):
+        super().__init__(router=router, handle_errors=False)
+
         # context for usage in handlers
         self.http_client = http_client
         self.storage = storage
@@ -72,9 +71,6 @@ class DashboardController:
                 port=self.settings.devserver.port
             )
 
-        # register the subcontrollers, aka the api handlers
-        self._internal_api_controller = self._create_internal_api_controller()
-
         # if no devserver is configured, we may need to serve static files
         if not self._ui_devserver_proxy_controller:
             for _path in STATIC_BUILD_PATHS:
@@ -91,7 +87,7 @@ class DashboardController:
 
     def __repr__(self):
         features = {
-            "api": bool(self._internal_api_controller),
+            "api": True,
             "devserver": bool(self._ui_devserver_proxy_controller),
             "static": bool(self._ui_static_middleware),
         }
@@ -104,20 +100,6 @@ class DashboardController:
             logging=False,
             name="dashboard-devserver",
         )
-
-    def _create_internal_api_controller(self):
-        root = RoutingController(handle_errors=False)
-
-        self.children = [
-            BlobsController(storage=self.blob_storage, router=root.router),
-            SystemController(
-                storage=self.storage, settings=self.global_settings, router=root.router, resolver=self.resolver
-            ),
-            TransactionsController(storage=self.storage, router=root.router),
-            OverviewController(storage=self.storage, router=root.router),
-        ]
-
-        return root
 
     async def __call__(self, request: HttpRequest, asgi_send: ASGISendCallable, *, transaction_id=None) -> HttpResponse:
         request.extensions.setdefault("user", None)
@@ -156,7 +138,7 @@ class DashboardController:
             return AlreadyHandledHttpResponse()
 
         try:
-            return await self._internal_api_controller(request)
+            return await super().__call__(request)
         except NotFoundError:
             if self._ui_devserver_proxy_controller:
                 return await self._ui_devserver_proxy_controller(request)

@@ -4,7 +4,8 @@ import pytest
 
 from harp.config import ConfigurationBuilder
 from harp.controllers import ProxyControllerResolver
-from harp_apps.dashboard.controllers import SystemController
+
+from ..controllers.system import SystemController
 
 
 class SystemControllerTestFixtureMixin:

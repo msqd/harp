@@ -6,8 +6,10 @@ from shutil import copyfile
 
 import pyheck
 
-from harp import ROOT_DIR
+from harp import ROOT_DIR, get_logger
 from harp.utils.typescript import generate_schema, generate_typescript
+
+logger = get_logger(__name__)
 
 
 def generate_typescript_definitions_for_application(application_name, destination, *, namespace=None):
@@ -28,7 +30,7 @@ def generate_typescript_definitions_for_application(application_name, destinatio
         try:
             module = getattr(__import__(mod_path, fromlist=[mod_name]), mod_name)
         except Exception as e:
-            print(f"{mod_fullpath} (skip: {e})")
+            logger.debug(f"{mod_fullpath} (skip: {e})")
             continue
         for name in dir(module):
             # ignore private
@@ -46,7 +48,7 @@ def generate_typescript_definitions_for_application(application_name, destinatio
                 continue
 
             if not hasattr(obj, "model_json_schema"):
-                print(f"{mod_fullpath}.{name} (skip: no json schema generator)")
+                logger.debug(f"{mod_fullpath}.{name} (skip: no json schema generator)")
                 continue
 
             models.append(obj)

@@ -2,11 +2,10 @@ import pytest
 
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
+from harp_apps.dashboard.controllers.blobs import BlobsController
 from harp_apps.storage.models import Blob
 from harp_apps.storage.types import IBlobStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
-
-from ..controllers import BlobsController
 
 
 class BlobsControllerTestFixtureMixin:

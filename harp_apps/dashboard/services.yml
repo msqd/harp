@@ -1,19 +1,34 @@
 services:
-  - name: "dashboard.controller"
-    type: harp_apps.dashboard.Dashboard
+  - name: "dashboard.router"
+    type: http_router.Router
     arguments:
-      http_client: !ref "http_client"
-      cache: !ref "cache"
-      config: !ref "config"
+      trim_last_slash: true
+
+  - name: "dashboard.controller"
+    type: harp_apps.dashboard.controllers.DashboardController
+    arguments:
+      router: !ref dashboard.router
 
   - name: "dashboard.controller.blobs"
     type: harp_apps.dashboard.controllers.blobs.BlobsController
+    arguments:
+      router: !ref dashboard.router
+      storage: !ref storage.blobs
 
   - name: "dashboard.controller.overview"
     type: harp_apps.dashboard.controllers.overview.OverviewController
+    arguments:
+      router: !ref dashboard.router
+      storage: !ref storage
 
   - name: "dashboard.controller.system"
     type: harp_apps.dashboard.controllers.system.SystemController
+    arguments:
+      router: !ref dashboard.router
+      storage: !ref storage
 
   - name: "dashboard.controller.transactions"
     type: harp_apps.dashboard.controllers.transactions.TransactionsController
+    arguments:
+      router: !ref dashboard.router
+      storage: !ref storage

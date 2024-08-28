@@ -12,7 +12,6 @@ from harp import get_logger
 from harp.config import Application
 from harp.config.events import OnBindEvent, OnBoundEvent, OnShutdownEvent
 from harp_apps.storage.models import Base
-from harp_apps.storage.services import SqlStorage
 from harp_apps.storage.settings import StorageSettings
 from harp_apps.storage.types import IStorage
 from harp_apps.storage.worker import StorageAsyncWorkerQueue
@@ -55,8 +54,6 @@ async def on_bind(event: OnBindEvent):
     if settings.migrate:
         await _run_migrations(engine)
     event.container.add_instance(engine, AsyncEngine)
-
-    event.container.add_singleton(IStorage, SqlStorage)
 
     # load service definitions, bound to our settings
     event.container.load(Path(dirname(__file__)) / "services.yml", bind_settings=settings)

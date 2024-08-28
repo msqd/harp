@@ -4,9 +4,8 @@ import orjson
 
 from harp.http import HttpRequest
 from harp.utils.testing.databases import parametrize_with_database_urls
-
-from ..controllers import SystemController
-from ._mixins import SystemControllerTestFixtureMixin, parametrize_with_settings
+from harp_apps.dashboard.controllers.system import SystemController
+from harp_apps.dashboard.tests._mixins import SystemControllerTestFixtureMixin, parametrize_with_settings
 
 PROXY_SETTINGS = {
     "applications": ["proxy", "http_client"],

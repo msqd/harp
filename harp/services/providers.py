@@ -1,5 +1,5 @@
 from functools import cached_property
-from inspect import BoundArguments, signature
+from inspect import BoundArguments, Parameter, Signature, signature
 
 from rodi import (
     ActivationScope,
@@ -34,7 +34,17 @@ class ServiceProvider:
     def _resolve_arguments(self, scope: ActivationScope, parent_type) -> BoundArguments:
         """Create a bound argument object after resolving all the arguments (aka transforming "provider" type values
         into their actual alive counterpart."""
-        sig = signature(self.constructor)
+        try:
+            sig = signature(self.constructor)
+        except ValueError:
+            # for objects that cannot give their signatures, we try to forge one. Of course, this will be limited, but
+            # we need to somehow support it because of cython obejcts, for example.
+            sig = Signature(
+                [
+                    *(Parameter(str(i), Parameter.POSITIONAL_ONLY) for i in range(len(self._args))),
+                    *(Parameter(k, Parameter.KEYWORD_ONLY) for k in self._kwargs),
+                ]
+            )
 
         def _resolve(arg):
             if isinstance(arg, PROVIDER_TYPES):
@@ -57,7 +67,7 @@ class ServiceProvider:
         parent_type = parent_type or self._type
 
         # singleton lifestyle will get instanciated only once (by provider, two different providers for the same service
-        # would create 2 intances.
+        # would create 2 instances-.
         if self._lifestyle == ServiceLifeStyle.SINGLETON:
             if not self._instance:
                 self._instance = self._create_instance(scope, parent_type)

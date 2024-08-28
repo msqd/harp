@@ -8,9 +8,8 @@ from multidict import MultiDict
 from harp.http import HttpRequest
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
+from harp_apps.dashboard.controllers.transactions import TransactionsController
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
-
-from ..controllers import TransactionsController
 
 
 class TransactionsControllerTestFixtureMixin:

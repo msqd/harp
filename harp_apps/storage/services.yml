@@ -1,4 +1,9 @@
 services:
+  - name: "storage"
+    description: "Main storage facade, most probably based on the underlying sql/sqlalchemy implementation."
+    base: harp_apps.storage.types.storage.IStorage
+    type: harp_apps.storage.services.sql.SqlStorage
+
   - name: "storage.blobs"
     description: Placeholder for Blob Storage. Will be overriden by specific implementations.
     base: harp_apps.storage.types.IBlobStorage

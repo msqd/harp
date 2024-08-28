@@ -9,7 +9,7 @@ from multidict import MultiDict
 from harp.http import HttpRequest
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
-from harp_apps.dashboard.controllers import OverviewController
+from harp_apps.dashboard.controllers.overview import OverviewController
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
