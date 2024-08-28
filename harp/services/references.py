@@ -14,7 +14,11 @@ class _NotSet:
 _notset = _NotSet()
 
 
-class Reference(BaseModel):
+class LazyServiceReference(BaseModel):
+    """
+    Reference to a service, that will be resolved the latest possible, when the instance will actually be needed.
+    """
+
     target: str | list[str]
 
     @classmethod
@@ -42,7 +46,11 @@ operators = {
 }
 
 
-class SettingReference(BaseModel):
+class LazySettingReference(BaseModel):
+    """
+    Reference to a setting value, that will be resolved later (actually, on settings bind so quite soon).
+    """
+
     target: str
     default: Any = _notset
 
@@ -93,5 +101,5 @@ class SettingReference(BaseModel):
         return f"!cfg {self.target}"
 
 
-yaml.add_constructor("!ref", Reference._yaml_construct, Loader=yaml.Loader)
-yaml.add_constructor("!cfg", SettingReference._yaml_construct, Loader=yaml.Loader)
+yaml.add_constructor("!ref", LazyServiceReference._yaml_construct, Loader=yaml.Loader)
+yaml.add_constructor("!cfg", LazySettingReference._yaml_construct, Loader=yaml.Loader)

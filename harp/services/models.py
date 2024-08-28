@@ -4,20 +4,20 @@ from pydantic import BaseModel, ConfigDict, Discriminator, Tag
 
 from harp.utils.config import yaml
 
-from .references import Reference, SettingReference
+from .references import LazyServiceReference, LazySettingReference
 
-StringOrRef = str | SettingReference | Reference
+StringOrRef = str | LazySettingReference | LazyServiceReference
 ExtendedStringOrRef = StringOrRef | bool
 
 
 def _resolve(value: Optional[ExtendedStringOrRef | Iterable[ExtendedStringOrRef]], settings: Any):
     if value is None:
         return None
-    if isinstance(value, (bool, str, Reference)):
+    if isinstance(value, (bool, str, LazyServiceReference)):
         return value
     if isinstance(value, Mapping):
         return {k: _resolve(v, settings) for k, v in value.items()}
-    if isinstance(value, SettingReference):
+    if isinstance(value, LazySettingReference):
         return value.resolve(settings)
     for x in value:
         x = _resolve(x, settings)
@@ -50,8 +50,8 @@ class Service(BaseModel):
     #: constructor name, if not default one
     constructor: Optional[StringOrRef | Sequence[StringOrRef]] = None
 
-    arguments: Optional[Mapping[str, Any] | Sequence[Mapping[str, Any] | SettingReference]] = None
-    defaults: Optional[Mapping[str, Any] | Sequence[Mapping[str, Any] | SettingReference]] = None
+    arguments: Optional[Mapping[str, Any] | Sequence[Mapping[str, Any] | LazySettingReference]] = None
+    defaults: Optional[Mapping[str, Any] | Sequence[Mapping[str, Any] | LazySettingReference]] = None
     positionals: Optional[Tuple[Any, ...]] = None
 
     def override_with(self, other: Self) -> Self:
@@ -104,7 +104,7 @@ class BaseServiceCollection(BaseModel):
 
 
 class ConditionalServiceCollection(BaseServiceCollection):
-    condition: Optional[Union[str | bool | SettingReference, Sequence[str | bool | SettingReference]]] = None
+    condition: Optional[Union[str | bool | LazySettingReference, Sequence[str | bool | LazySettingReference]]] = None
 
     def bind_settings(self, settings: Any):
         if self.condition:

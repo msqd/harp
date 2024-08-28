@@ -11,7 +11,7 @@ from rodi import (
 )
 
 from .containers import Container
-from .references import Reference
+from .references import LazyServiceReference
 
 __all__ = [
     "CannotResolveParameterException",
@@ -22,7 +22,7 @@ __all__ = [
     "FactoryMissingContextException",
     "MissingTypeException",
     "OverridingServiceException",
-    "Reference",
+    "LazyServiceReference",
     "Services",
     "UnsupportedUnionTypeException",
 ]

@@ -9,7 +9,7 @@ from harp.utils.packages import import_string
 from .containers import Container
 from .models import Service
 from .providers import ServiceProvider
-from .references import Reference
+from .references import LazyServiceReference
 
 
 class ServiceResolver:
@@ -104,14 +104,14 @@ class ServiceResolver:
 
         args = []
         for arg in self.positionals:
-            if isinstance(arg, Reference):
+            if isinstance(arg, LazyServiceReference):
                 args.append(self._get_resolver(arg.target, context))
             else:
                 args.append(arg)
 
         kwargs = {}
         for _name, _value in self.defaults.items():
-            if isinstance(_value, Reference):
+            if isinstance(_value, LazyServiceReference):
                 kwargs[_name] = _value.resolve(self._get_resolver, context)
             else:
                 kwargs[_name] = _value
@@ -122,7 +122,7 @@ class ServiceResolver:
                     kwargs.setdefault(_name, self._get_resolver(_value.annotation, context))
 
         for _name, _value in self.arguments.items():
-            if isinstance(_value, Reference):
+            if isinstance(_value, LazyServiceReference):
                 kwargs[_name] = _value.resolve(self._get_resolver, context)
             else:
                 kwargs[_name] = _value
