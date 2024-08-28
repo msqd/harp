@@ -10,7 +10,7 @@ from harp.utils.bytes import ensure_bytes
 from harp_apps.dashboard.controllers import DashboardController
 from harp_apps.dashboard.settings import BasicAuthSettings, DashboardSettings
 from harp_apps.dashboard.settings.auth import User
-from harp_apps.storage.types import IBlobStorage, IStorage
+from harp_apps.storage.types import IStorage
 
 
 async def test_controller_no_auth():
@@ -51,11 +51,8 @@ async def test_controller_auth_plaintext():
 async def _create_mock_controller(settings: DashboardSettings = None):
     controller = DashboardController(
         storage=cast(IStorage, Mock(spec=IStorage)),
-        blob_storage=cast(IBlobStorage, Mock(spec=IBlobStorage)),
-        all_settings=Mock(),
         local_settings=settings or DashboardSettings(),
         http_client=Mock(spec=AsyncClient),
-        resolver=Mock(),
     )
     controller._ui_devserver_proxy_controller = None
     return controller

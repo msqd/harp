@@ -7,13 +7,12 @@ from http_router import NotFoundError, Router
 from httpx import AsyncClient
 
 from harp import ROOT_DIR, get_logger
-from harp.controllers import ProxyControllerResolver, RoutingController
+from harp.controllers import RoutingController
 from harp.errors import ConfigurationError
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
-from harp.typing.global_settings import GlobalSettings
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.settings.remote import Remote
-from harp_apps.storage.types import IBlobStorage, IStorage
+from harp_apps.storage.types import IStorage
 
 from ..settings import DashboardSettings
 from ..settings.auth import BasicAuthSettings
@@ -32,11 +31,8 @@ class DashboardController(RoutingController):
     name = "ui"
 
     storage: IStorage
-    blob_storage: IBlobStorage
     settings: DashboardSettings
-    global_settings: GlobalSettings
     http_client: AsyncClient
-    resolver: ProxyControllerResolver
 
     _ui_static_middleware = None
     _ui_devserver_proxy_controller = None
@@ -44,11 +40,8 @@ class DashboardController(RoutingController):
     def __init__(
         self,
         storage: IStorage,
-        blob_storage: IBlobStorage,
-        all_settings: GlobalSettings,
         local_settings: DashboardSettings,
         http_client: AsyncClient,
-        resolver: ProxyControllerResolver,
         router: Router = None,
     ):
         super().__init__(router=router, handle_errors=False)
@@ -56,10 +49,7 @@ class DashboardController(RoutingController):
         # context for usage in handlers
         self.http_client = http_client
         self.storage = storage
-        self.blob_storage = blob_storage
-        self.global_settings = all_settings
         self.settings = local_settings
-        self.resolver = resolver
 
         # create users if they don't exist
         if isinstance(self.settings.auth, BasicAuthSettings):
