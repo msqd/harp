@@ -73,3 +73,16 @@ To disable the dashboard globally, do not load the ``dashboard`` application.
 .. code-block:: shell
 
     $ harp start ... --disable dashboard
+
+Table of Content
+::::::::::::::::
+
+.. include:: /apps/dashboard/_toc.rst
+
+.. toctree::
+    :hidden:
+    :maxdepth: 1
+
+    quickstart
+    services
+    recipes
