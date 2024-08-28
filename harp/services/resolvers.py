@@ -7,17 +7,17 @@ from rodi import CannotResolveTypeException, ResolutionContext, ServiceLifeStyle
 from harp.utils.packages import import_string
 
 from .containers import Container
-from .models import Service
+from .models import ServiceDefinition
 from .providers import ServiceProvider
 from .references import LazyServiceReference
 
 
 class ServiceResolver:
     container: Container
-    service: Service
+    service: ServiceDefinition
     lifestyle: ServiceLifeStyle
 
-    def __init__(self, container: Container, service: Service, lifestyle: ServiceLifeStyle):
+    def __init__(self, container: Container, service: ServiceDefinition, lifestyle: ServiceLifeStyle):
         self.container = container
         self.service = service
         self.lifestyle = lifestyle

@@ -26,7 +26,13 @@ def _resolve(value: Optional[ExtendedStringOrRef | Iterable[ExtendedStringOrRef]
     return None
 
 
-class Service(BaseModel):
+class ServiceDefinition(BaseModel):
+    """
+    Describes a service that our container is able to register. Services within a collection can override each other,
+    if explicitely stated. This is useful for conditional service change (for example, based on a configuration value).
+
+    """
+
     model_config = ConfigDict(extra="forbid")
 
     #: service name (todo: constraints ?)
@@ -50,8 +56,15 @@ class Service(BaseModel):
     #: constructor name, if not default one
     constructor: Optional[StringOrRef | Sequence[StringOrRef]] = None
 
-    arguments: Optional[Mapping[str, Any] | Sequence[Mapping[str, Any] | LazySettingReference]] = None
+    #: default named arguments for the service constructor. Can be both positionnal or keyword based, but the
+    # parameter choice is always based on parameter name, by key.
     defaults: Optional[Mapping[str, Any] | Sequence[Mapping[str, Any] | LazySettingReference]] = None
+
+    #: named arguments for the service constructor. Mapped after the annotation parsing, so it can override default
+    # attributions from type annotations.
+    arguments: Optional[Mapping[str, Any] | Sequence[Mapping[str, Any] | LazySettingReference]] = None
+
+    #: positionnal arguments for the service constructor.
     positionals: Optional[Tuple[Any, ...]] = None
 
     def override_with(self, other: Self) -> Self:
@@ -80,20 +93,26 @@ class Service(BaseModel):
         self.arguments = _resolve(self.arguments, settings)
 
 
-class BaseServiceCollection(BaseModel):
+class BaseServiceDefinitionCollection(BaseModel):
+    """
+    Base class for coherent sequences of services. The traverse() method can be used to get a flat iterator over all
+    the service definitions in the collection and its children, ordered.
+
+    """
+
     services: Sequence[
         Annotated[
             Union[
-                Annotated["Service", Tag("service")],
-                Annotated["ConditionalServiceCollection", Tag("collection")],
+                Annotated["ServiceDefinition", Tag("service")],
+                Annotated["ConditionalServiceDefinitionCollection", Tag("collection")],
             ],
             Discriminator(lambda obj: "collection" if "services" in obj else "service"),
         ]
     ]
 
-    def traverse(self) -> Iterable[Service]:
+    def traverse(self) -> Iterable[ServiceDefinition]:
         for service_or_collection in iter(self.services):
-            if isinstance(service_or_collection, Service):
+            if isinstance(service_or_collection, ServiceDefinition):
                 yield service_or_collection
             else:
                 yield from service_or_collection.traverse()
@@ -103,7 +122,13 @@ class BaseServiceCollection(BaseModel):
             service.bind_settings(settings)
 
 
-class ConditionalServiceCollection(BaseServiceCollection):
+class ConditionalServiceDefinitionCollection(BaseServiceDefinitionCollection):
+    """
+    A collection of services that are only registered if a condition is met. This is useful for conditional service
+    registration, for example based on a configuration value.
+
+    """
+
     condition: Optional[Union[str | bool | LazySettingReference, Sequence[str | bool | LazySettingReference]]] = None
 
     def bind_settings(self, settings: Any):
@@ -111,13 +136,19 @@ class ConditionalServiceCollection(BaseServiceCollection):
             self.condition = _resolve(self.condition, settings)
         super().bind_settings(settings)
 
-    def traverse(self) -> Iterable[Service]:
+    def traverse(self) -> Iterable[ServiceDefinition]:
         if self.condition:
             yield from super().traverse()
 
 
-class ServiceCollection(BaseServiceCollection):
-    def __iter__(self) -> Iterable[Service]:
+class ServiceDefinitionCollection(BaseServiceDefinitionCollection):
+    """
+    Final class for a service collection. Iterate on it to get a flattened (one level) and merged (services with same
+    name that allows overrides are merged together) list of services.
+
+    """
+
+    def __iter__(self) -> Iterable[ServiceDefinition]:
         _map = {}
         for service in self.traverse():
             if service.name in _map:

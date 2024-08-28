@@ -1,7 +1,7 @@
 from rodi import Container as BaseContainer
 from rodi import OverridingServiceException, ServiceLifeStyle
 
-from .models import ServiceCollection
+from .models import ServiceDefinitionCollection
 
 
 class Container(BaseContainer):
@@ -19,7 +19,7 @@ class Container(BaseContainer):
         """
         from .resolvers import ServiceResolver
 
-        collection = ServiceCollection.model_validate_yaml(filename)
+        collection = ServiceDefinitionCollection.model_validate_yaml(filename)
 
         if bind_settings:
             collection.bind_settings(bind_settings)
