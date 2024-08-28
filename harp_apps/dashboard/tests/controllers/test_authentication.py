@@ -26,7 +26,8 @@ async def test_controller_auth_plaintext():
                 type="basic",
                 algorithm="plaintext",
                 users={"admin": User(password="admin")},
-            )
+            ),
+            enable_ui=False,
         )
     )
     assert asdict(controller.settings.auth) == {
