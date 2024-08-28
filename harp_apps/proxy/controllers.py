@@ -229,34 +229,34 @@ class HttpProxyController:
                     await remote_response.aread()
                     await remote_response.aclose()
 
-                if self.remote[remote_url].status == CHECKING and 200 <= remote_response.status_code < 400:
-                    self.remote.set_up(remote_url)
+                    if self.remote[remote_url].status == CHECKING and 200 <= remote_response.status_code < 400:
+                        self.remote.set_up(remote_url)
 
-                try:
-                    _elapsed = f"{remote_response.elapsed.total_seconds()}s"
-                except RuntimeError:
-                    _elapsed = "n/a"
-                self.debug(
-                    f"◀◀ {remote_response.status_code} {remote_response.reason_phrase} ({_elapsed}{' cached' if remote_response.extensions.get('from_cache') else ''})",
-                    transaction=transaction,
-                )
-
-                response_headers = {
-                    k: v
-                    for k, v in remote_response.headers.multi_items()
-                    if k.lower() not in ("server", "date", "content-encoding", "content-length")
-                }
-                # XXX for now, we use transaction "extras" to store searchable data for later
-                transaction.extras["status_class"] = f"{remote_response.status_code // 100}xx"
-
-                if remote_response.extensions.get("from_cache"):
-                    transaction.extras["cached"] = remote_response.extensions.get("cache_metadata", {}).get(
-                        "cache_key", True
+                    try:
+                        _elapsed = f"{remote_response.elapsed.total_seconds()}s"
+                    except RuntimeError:
+                        _elapsed = "n/a"
+                    self.debug(
+                        f"◀◀ {remote_response.status_code} {remote_response.reason_phrase} ({_elapsed}{' cached' if remote_response.extensions.get('from_cache') else ''})",
+                        transaction=transaction,
                     )
 
-                context.response = HttpResponse(
-                    remote_response.content, status=remote_response.status_code, headers=response_headers
-                )
+                    response_headers = {
+                        k: v
+                        for k, v in remote_response.headers.multi_items()
+                        if k.lower() not in ("server", "date", "content-encoding", "content-length")
+                    }
+                    # XXX for now, we use transaction "extras" to store searchable data for later
+                    transaction.extras["status_class"] = f"{remote_response.status_code // 100}xx"
+
+                    if remote_response.extensions.get("from_cache"):
+                        transaction.extras["cached"] = remote_response.extensions.get("cache_metadata", {}).get(
+                            "cache_key", True
+                        )
+
+                    context.response = HttpResponse(
+                        remote_response.content, status=remote_response.status_code, headers=response_headers
+                    )
             await self.adispatch(EVENT_FILTER_PROXY_RESPONSE, context)
 
             await context.response.aread()
