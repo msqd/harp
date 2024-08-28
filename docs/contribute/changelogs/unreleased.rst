@@ -37,3 +37,10 @@ Fixed
 :::::
 
 * Storage: added missing index on messages.transaction_id to speed up dashboard search queries.
+
+
+Deleted
+:::::::
+
+* Config: old settings classes have been removed (Definition, DisableableBaseSettings, DisabledSettings, Lazy, Settings)
+  along with related helper (settings_dataclass).
