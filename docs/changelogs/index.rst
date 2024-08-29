@@ -1,5 +1,5 @@
-Changelogs
-==========
+Changelogs & History
+====================
 
 .. toctree::
     :maxdepth: 1

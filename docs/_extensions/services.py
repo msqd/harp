@@ -9,7 +9,7 @@ from sphinx.domains.python import PyClasslike
 from sphinx.ext.autodoc import Documenter, ObjectMember, identity
 from sphinx.util.typing import OptionSpec
 
-from harp.services.models import Service, ServiceCollection
+from harp.services.models import ServiceDefinition, ServiceDefinitionCollection
 from harp.utils.config import yaml
 
 logger = logging.getLogger(__name__)
@@ -73,13 +73,13 @@ class ServiceCollectionDocumenter(Documenter):
     @classmethod
     def can_document_member(cls: type[Documenter], member: Any, membername: str, isattr: bool, parent: Any) -> bool:
         try:
-            return isinstance(member, ServiceCollection)
+            return isinstance(member, ServiceDefinitionCollection)
         except TypeError:
             return False
 
     def import_object(self, raiseerror: bool = False) -> bool:
         filename = adapt_path(self.options.get("file"), self.env.docname, self.env.srcdir)
-        collection = ServiceCollection.model_validate_yaml(filename)
+        collection = ServiceDefinitionCollection.model_validate_yaml(filename)
         collection.bind_settings(PartialSettings(self.settings))
         self.object = collection
         return True
@@ -133,7 +133,7 @@ class ServiceDocumenter(Documenter):
     @classmethod
     def can_document_member(cls: type[Documenter], member: Any, membername: str, isattr: bool, parent: Any) -> bool:
         try:
-            return isinstance(member, Service)
+            return isinstance(member, ServiceDefinition)
         except TypeError:
             return False
 
@@ -170,7 +170,7 @@ class ServiceDocumenter(Documenter):
                     return True
 
         filename = adapt_path(self.options.get("file"), self.env.docname, self.env.srcdir)
-        collection = ServiceCollection.model_validate_yaml(filename)
+        collection = ServiceDefinitionCollection.model_validate_yaml(filename)
         collection.bind_settings(PartialSettings({}))
         for service in collection:
             if service.name == self.name:

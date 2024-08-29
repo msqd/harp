@@ -41,6 +41,7 @@ Table of Content
    /apps/index
    /reference/index
    /faq
+   /changelogs/index
 
 
 Indices and tables
