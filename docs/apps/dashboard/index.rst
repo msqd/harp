@@ -77,7 +77,7 @@ To disable the dashboard globally, do not load the ``dashboard`` application.
 Table of Content
 ::::::::::::::::
 
-.. include:: /apps/dashboard/_toc.rst
+.. include:: _toc.rst
 
 .. toctree::
     :hidden:

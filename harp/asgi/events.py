@@ -3,8 +3,7 @@ from typing import TYPE_CHECKING, Any, Callable, Optional
 
 from whistle import Event
 
-from harp.http import BaseHttpMessage, HttpRequest
-from harp.models.transactions import Transaction
+from harp.http import HttpRequest
 
 if TYPE_CHECKING:
     from harp.http import HttpResponse
@@ -92,14 +91,3 @@ class ControllerViewEvent(RequestEvent):
 #: Event fired when the ASGI Kernel has called the resolved controller but got a non-HttpResponse return value, to allow
 #: transforming it into a response.
 EVENT_CONTROLLER_VIEW = ControllerViewEvent.name
-
-
-class TransactionEvent(Event):
-    def __init__(self, transaction: Transaction):
-        self.transaction = transaction
-
-
-class HttpMessageEvent(TransactionEvent):
-    def __init__(self, transaction: Transaction, message: BaseHttpMessage):
-        super().__init__(transaction)
-        self.message = message

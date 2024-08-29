@@ -22,7 +22,7 @@ response passes through the proxy, and you can listen to these events to impleme
 Defining and exposing Events
 ::::::::::::::::::::::::::::
 
-An event is usually just a symbolic name (as a :func:`str`) that represents something happening in the system. If your
+An event is usually just a symbolic name (a string) that represents something happening in the system. If your
 an event is also associated with some context that the listeners might be interested in, you can associate it with a
 custom :class:`whistle.Event` class that will serve as an envelope for this context.
 
@@ -115,5 +115,8 @@ Event List
 
 In HARP Proxy (CE), there are a few applications that expose events, here is a list of the most important ones:
 
-- :doc:`Events dispatched by HARP Core <../core/events>`
-- :doc:`Events dispatched by the Dashboard Application <../apps/dashboard/events>`
+- :doc:`Events dispatched by HARP Core <../core/events>`: configuration and low-level asgi hooks.
+- :doc:`Events dispatched by the HTTP Client Application <../apps/http_client/events>`: hooks to filter outbound
+  HTTP requests and their associated responses.
+- :doc:`Events dispatched by the Proxy Application <../apps/proxy/events>`: hooks to filter transactions and their
+  associated messages.

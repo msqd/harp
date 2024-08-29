@@ -78,12 +78,13 @@ Full example
 Table of Content
 ::::::::::::::::
 
-.. include:: /apps/http_client/_toc.rst
+.. include:: _toc.rst
 
 .. toctree::
     :hidden:
     :maxdepth: 1
 
     quickstart
+    events
     services
     recipes

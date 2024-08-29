@@ -1,5 +1,5 @@
-Core
-====
+Core Packages
+=============
 
 .. toctree::
     :maxdepth: 2

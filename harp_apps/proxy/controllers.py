@@ -9,7 +9,6 @@ from pyheck import shouty_snake
 from whistle import IAsyncEventDispatcher
 
 from harp import __parsed_version__, get_logger
-from harp.asgi.events import HttpMessageEvent, TransactionEvent
 from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
 from harp.http.utils import parse_cache_control
 from harp.models import Transaction
@@ -34,7 +33,9 @@ from .events import (
     EVENT_TRANSACTION_ENDED,
     EVENT_TRANSACTION_MESSAGE,
     EVENT_TRANSACTION_STARTED,
+    HttpMessageEvent,
     ProxyFilterEvent,
+    TransactionEvent,
 )
 from .settings.remote import Remote
 
