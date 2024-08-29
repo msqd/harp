@@ -57,7 +57,14 @@ Both principles are implemented to make the code more modular and easier to test
 Event Driven Architecture
 -------------------------
 
-.. todo:: XXX Write this section
+An :ref:`Event Driven Architecture (EDA) <eda>` emits or receives events occurring in different parts of a system.
+Events can be network-based, like in microservice architectures with an event bus (e.g., CQRS or event-sourcing
+systems), or internal to a process, like in HARP, allowing components to communicate and extend each other without tight
+coupling. This makes the software easier to maintain, as listeners do not need to know about the emitters and vice
+versa.
+
+HARP implements it using :mod:`Whistle <whistle>`, a dead simple Python event dispatcher, allowing applications easily
+expose or hook into what happens in the system.
 
 Pluggable Applications
 ----------------------

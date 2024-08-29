@@ -6,6 +6,13 @@ extending or modifying the system. This container implements automatic :ref:`Dep
 configuration files and type annotations. Along with the :doc:`Event Dispatcher <events>`, it provides all the tools you
 need to write loosely coupled :doc:`Applications <applications>` (our term for extensions/plugins).
 
+.. todo::
+
+    - Add details the container configuration format
+    - Add links to api reference for components described here
+    - Add a section about the container conditionals
+    - Add a section about the system-wide container intance (ref: dic)
+
 
 .. _di:
 

@@ -226,6 +226,7 @@ class TestRemoteStateful(BaseConfigurableTest):
         assert url.status > 0
         assert url.failure_reasons is None
 
+    @respx.mock
     async def test_probe_timeout(self):
         remote = self.create(
             settings={
@@ -234,9 +235,9 @@ class TestRemoteStateful(BaseConfigurableTest):
             }
         )
         healthcheck = respx.get("https://example.com/health")
-        url = remote["https://example.com"]
-
         healthcheck.mock(side_effect=lambda x: sleep(0.2))
+
+        url = remote["https://example.com"]
 
         await remote.check()
         assert url.status == 0
