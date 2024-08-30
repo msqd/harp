@@ -2,7 +2,7 @@
 # name: test_all_applications_default_settings[harp_apps.acme]
   dict({
     'harp_apps.acme.settings.AcmeSettings': '''
-      owner: Joe
+      {}
   
     ''',
   })

@@ -1,6 +1,5 @@
-from dataclasses import dataclass
+from harp.config import Configurable
 
 
-@dataclass
-class AcmeSettings:
+class AcmeSettings(Configurable):
     owner: str = "Joe"

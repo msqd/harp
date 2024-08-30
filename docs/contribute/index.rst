@@ -1,22 +1,20 @@
 Contributor's Guide
 ===================
 
+This guide helps you either contribute to HARP or extend it by writing applications.
+
 This guide will guide you through the journey of either **contributing to HARP**, or **extending it** by writing your
 applications. Both topics are covered together because the plugin-based architecture makes it quite similar. This is our
 way to create a limit-less system: whatever can be done in the core system can be done in a userland application. And
 most of harp core features are actually implemented as applications.
 
-.. note::
+This guide will help you either contribute to HARP Proxy or extend it by writing your own applications. Most core
+features of HARP are implemented as such, making your own applications as powerful as the core ones.
 
-    HARP development (either for internals or new applications) **heavily depends on containers**, you should have a
-    **working docker environment** first (which is out of the scope of this guide).
+You can also contribute to HARP without writing code: send feedback, proofread documentation, join `discussions
+<https://github.com/msqd/harp/discussions>` on GitHub, report issues, sponsor the project, or suggest new features.
 
-Although this guide is mostly written to help you contributing code (or extending the system for your own needs), you
-can also **contribute to HARP in many ways that does not involve writing code**: sending feedback, proof-reading
-documentation, `opening or contributing to discussions on github <https://github.com/msqd/harp/discussions>`_, reporting
-issues, sponsoring the project or suggesting new features (subject to core-team approval), etc.
-
-Don't hesitate to `reach out <https://harp-proxy.net/contact>`_ to us if you want to help but do not know how.
+Don't hesitate to `reach out <https://harp-proxy.net/contact>`_ to us!
 
 .. table::
     :class: guide-intro

@@ -1,8 +1,7 @@
-from time import sleep
-
 import httpx
 import pytest
 import respx
+from httpx import ConnectTimeout
 
 from harp.config.asdict import asdict
 from harp.utils.testing.config import BaseConfigurableTest
@@ -228,14 +227,15 @@ class TestRemoteStateful(BaseConfigurableTest):
 
     @respx.mock
     async def test_probe_timeout(self):
+        healthcheck = respx.get("https://example.com/health")
+        healthcheck.mock(side_effect=ConnectTimeout)
+
         remote = self.create(
             settings={
                 "endpoints": [{"url": "https://example.com", "failure_threshold": 3}],
                 "probe": {"method": "GET", "path": "/health", "timeout": 0.1},
             }
         )
-        healthcheck = respx.get("https://example.com/health")
-        healthcheck.mock(side_effect=lambda x: sleep(0.2))
 
         url = remote["https://example.com"]
 

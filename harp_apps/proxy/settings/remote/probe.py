@@ -48,7 +48,7 @@ class RemoteProbe(Stateful[RemoteProbeSettings]):
 
     async def check(self, client: httpx.AsyncClient, endpoint: "RemoteEndpoint"):
         probe_url = urljoin(str(endpoint.settings.url), self.settings.path)
-        response, failure = None, None
+        response = None
         try:
             response = await client.request(
                 self.settings.method,
@@ -60,12 +60,12 @@ class RemoteProbe(Stateful[RemoteProbeSettings]):
                 return endpoint.success()
             else:
                 failure = f"PROBE_HTTP_{response.status_code}"
+                logger.warning(f"Probe failure: {probe_url} -> {failure}")
                 return endpoint.failure(failure)
         except Exception as exc:
             failure = "PROBE_" + shouty_snake(type(exc).__name__)
+            logger.exception(f"Probe failure: {probe_url} -> {failure}")
             return endpoint.failure(failure)
         finally:
-            if failure:
-                logger.warning(f"Probe failure: {probe_url} -> {failure}")
-            elif response:
+            if response:
                 logger.debug(f"Probe request: {probe_url} -> {response.status_code}")

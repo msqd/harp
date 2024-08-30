@@ -201,8 +201,8 @@ class Remote(Stateful[RemoteSettings]):
         state_changed = False
 
         async with self.probe.async_client() as client:
-            for url in self._endpoints.values():
-                url_state_changed = await self.probe.check(client, url)
+            for endpoint in self._endpoints.values():
+                url_state_changed = await self.probe.check(client, endpoint)
                 state_changed |= url_state_changed
 
         if state_changed:
