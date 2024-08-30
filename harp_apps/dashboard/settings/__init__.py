@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional
 
 from pydantic import Field
 
@@ -11,7 +11,7 @@ class DashboardSettings(Configurable):
     """Root settings for the dashboard application."""
 
     port: int = 4080
-    auth: Union[BasicAuthSettings] = Field(None, discriminator="type")
+    auth: BasicAuthSettings = Field(None, discriminator="type")
     devserver: Optional[DevserverSettings] = DevserverSettings()
     enable_ui: bool = True
     public_url: Optional[str] = None
