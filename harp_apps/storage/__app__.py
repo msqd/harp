@@ -1,19 +1,19 @@
 """Storage Application"""
 
 from functools import partial
+from os.path import dirname
+from pathlib import Path
 from typing import cast
 
-from sqlalchemy import StaticPool
+from sqlalchemy import StaticPool, make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from harp import get_logger
 from harp.config import Application
 from harp.config.events import OnBindEvent, OnBoundEvent, OnShutdownEvent
-from harp_apps.storage.factories import RedisClientFactory
 from harp_apps.storage.models import Base
-from harp_apps.storage.services import SqlStorage
 from harp_apps.storage.settings import StorageSettings
-from harp_apps.storage.types import IBlobStorage, IStorage
+from harp_apps.storage.types import IStorage
 from harp_apps.storage.worker import StorageAsyncWorkerQueue
 
 logger = get_logger(__name__)
@@ -38,43 +38,25 @@ async def _run_migrations(engine: AsyncEngine):
 
 
 async def on_bind(event: OnBindEvent):
-    settings: StorageSettings = event.settings.get("storage")
+    settings: StorageSettings = cast(StorageSettings, event.settings["storage"])
 
     # SQLAlchemy Engine
     # Created directly because of migrations, way easier to ensure the database is up and ready for whatever needs
     # it. Of course, it'd be better to have async factories, but that's not the case (yet).
 
-    if settings.url.get_dialect() == "sqlite" and settings.url.database == ":memory:":
-        engine = create_async_engine(settings.url, connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    database_url = make_url(str(settings.url))
+
+    if database_url.get_dialect() == "sqlite" and database_url.database == ":memory:":
+        engine = create_async_engine(database_url, connect_args={"check_same_thread": False}, poolclass=StaticPool)
     else:
-        engine = create_async_engine(settings.url)
+        engine = create_async_engine(database_url)
 
     if settings.migrate:
         await _run_migrations(engine)
     event.container.add_instance(engine, AsyncEngine)
 
-    event.container.add_singleton(IStorage, SqlStorage)
-
-    blob_storage_type = settings.blobs.type
-
-    if blob_storage_type == "sql":
-        from harp_apps.storage.services.blob_storages.sql import SqlBlobStorage
-
-        if IBlobStorage in event.container:
-            del event.container._map[IBlobStorage]
-        event.container.add_singleton(IBlobStorage, SqlBlobStorage)
-    elif blob_storage_type == "redis":
-        from redis.asyncio import Redis
-
-        from harp_apps.storage.services.blob_storages.redis import RedisBlobStorage
-
-        event.container.add_singleton(Redis, cast(type, RedisClientFactory))
-
-        if IBlobStorage in event.container:
-            del event.container._map[IBlobStorage]
-        event.container.add_singleton(IBlobStorage, RedisBlobStorage)
-    else:
-        raise ValueError(f"Unsupported blob storage type: {blob_storage_type}")
+    # load service definitions, bound to our settings
+    event.container.load(Path(dirname(__file__)) / "services.yml", bind_settings=settings)
 
     event.container.add_singleton(StorageAsyncWorkerQueue)
 

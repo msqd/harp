@@ -9,11 +9,11 @@ import pytest
 from httpx import AsyncClient
 
 from harp.asgi.kernel import ASGIKernel
-from harp.config import ConfigurationBuilder, SystemBuilder
+from harp.config import ConfigurationBuilder
 from harp.controllers import ProxyControllerResolver
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.http import parametrize_with_http_methods
-from harp_apps.proxy.controllers import HttpProxyController
+from harp_apps.proxy.settings import Endpoint
 
 
 class TestAsgiProxyWithoutEndpoints:
@@ -44,7 +44,17 @@ class TestAsgiProxyWithMissingStartup:
     @pytest.fixture
     def kernel(self, test_api):
         resolver = ProxyControllerResolver()
-        resolver.add(80, HttpProxyController(test_api.url, http_client=AsyncClient()))
+        http_client = AsyncClient()
+        resolver.add(
+            Endpoint.from_kwargs(
+                settings={
+                    "name": "test",
+                    "port": 80,
+                    "url": test_api.url,
+                }
+            ),
+            http_client=http_client,
+        )
         return ASGIKernel(resolver=resolver)
 
     @pytest.fixture
@@ -76,17 +86,19 @@ class TestAsgiProxyWithStubApi:
         builder.applications.add("storage")
         builder.add_values(
             {
-                "proxy.endpoints": [
-                    {
-                        "port": 80,
-                        "name": "test",
-                        "url": test_api.url,
-                    }
-                ]
+                "proxy": {
+                    "endpoints": [
+                        {
+                            "port": 80,
+                            "name": "test",
+                            "url": test_api.url,
+                        }
+                    ]
+                }
             }
         )
 
-        system = await SystemBuilder(builder).abuild()
+        system = await builder.abuild_system()
 
         try:
             yield system.kernel

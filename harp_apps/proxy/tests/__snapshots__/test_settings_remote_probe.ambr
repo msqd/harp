@@ -1,0 +1,207 @@
+# serializer version: 1
+# name: TestRemoteProbeSettings.test_jsonschema_for_serialization
+  dict({
+    'additionalProperties': False,
+    'properties': dict({
+      'headers': dict({
+        'title': 'Headers',
+        'type': 'object',
+      }),
+      'interval': dict({
+        'default': 10.0,
+        'title': 'Interval',
+        'type': 'number',
+      }),
+      'method': dict({
+        'default': 'GET',
+        'title': 'Method',
+        'type': 'string',
+      }),
+      'path': dict({
+        'default': '/',
+        'title': 'Path',
+        'type': 'string',
+      }),
+      'timeout': dict({
+        'default': 10.0,
+        'title': 'Timeout',
+        'type': 'number',
+      }),
+      'verify': dict({
+        'default': True,
+        'title': 'Verify',
+        'type': 'boolean',
+      }),
+    }),
+    'title': 'RemoteProbeSettings',
+    'type': 'object',
+  })
+# ---
+# name: TestRemoteProbeSettings.test_jsonschema_for_validation
+  dict({
+    'additionalProperties': False,
+    'properties': dict({
+      'headers': dict({
+        'title': 'Headers',
+        'type': 'object',
+      }),
+      'interval': dict({
+        'default': 10.0,
+        'title': 'Interval',
+        'type': 'number',
+      }),
+      'method': dict({
+        'default': 'GET',
+        'title': 'Method',
+        'type': 'string',
+      }),
+      'path': dict({
+        'default': '/',
+        'title': 'Path',
+        'type': 'string',
+      }),
+      'timeout': dict({
+        'default': 10.0,
+        'title': 'Timeout',
+        'type': 'number',
+      }),
+      'verify': dict({
+        'default': True,
+        'title': 'Verify',
+        'type': 'boolean',
+      }),
+    }),
+    'title': 'RemoteProbeSettings',
+    'type': 'object',
+  })
+# ---
+# name: TestRemoteProbeStateful.test_jsonschema_for_serialization
+  dict({
+    '$defs': dict({
+      'RemoteProbeSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.probe`` settings.
+          
+          .. code-block:: yaml
+          
+              type: http
+              method: GET
+              path: /health
+              headers:
+                x-purpose: "health probe"
+              timeout: 5.0
+        ''',
+        'properties': dict({
+          'headers': dict({
+            'title': 'Headers',
+            'type': 'object',
+          }),
+          'interval': dict({
+            'default': 10.0,
+            'title': 'Interval',
+            'type': 'number',
+          }),
+          'method': dict({
+            'default': 'GET',
+            'title': 'Method',
+            'type': 'string',
+          }),
+          'path': dict({
+            'default': '/',
+            'title': 'Path',
+            'type': 'string',
+          }),
+          'timeout': dict({
+            'default': 10.0,
+            'title': 'Timeout',
+            'type': 'number',
+          }),
+          'verify': dict({
+            'default': True,
+            'title': 'Verify',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'RemoteProbeSettings',
+        'type': 'object',
+      }),
+    }),
+    'properties': dict({
+      'settings': dict({
+        '$ref': '#/$defs/RemoteProbeSettings',
+      }),
+    }),
+    'required': list([
+      'settings',
+    ]),
+    'title': 'RemoteProbe',
+    'type': 'object',
+  })
+# ---
+# name: TestRemoteProbeStateful.test_jsonschema_for_validation
+  dict({
+    '$defs': dict({
+      'RemoteProbeSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.probe`` settings.
+          
+          .. code-block:: yaml
+          
+              type: http
+              method: GET
+              path: /health
+              headers:
+                x-purpose: "health probe"
+              timeout: 5.0
+        ''',
+        'properties': dict({
+          'headers': dict({
+            'title': 'Headers',
+            'type': 'object',
+          }),
+          'interval': dict({
+            'default': 10.0,
+            'title': 'Interval',
+            'type': 'number',
+          }),
+          'method': dict({
+            'default': 'GET',
+            'title': 'Method',
+            'type': 'string',
+          }),
+          'path': dict({
+            'default': '/',
+            'title': 'Path',
+            'type': 'string',
+          }),
+          'timeout': dict({
+            'default': 10.0,
+            'title': 'Timeout',
+            'type': 'number',
+          }),
+          'verify': dict({
+            'default': True,
+            'title': 'Verify',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'RemoteProbeSettings',
+        'type': 'object',
+      }),
+    }),
+    'properties': dict({
+      'settings': dict({
+        '$ref': '#/$defs/RemoteProbeSettings',
+      }),
+    }),
+    'required': list([
+      'settings',
+    ]),
+    'title': 'RemoteProbe',
+    'type': 'object',
+  })
+# ---

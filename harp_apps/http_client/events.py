@@ -8,11 +8,21 @@ from harp import get_logger
 logger = get_logger(__name__)
 
 
+#: Event fired when an external request is about to be sent by the HTTP client.
 EVENT_FILTER_HTTP_CLIENT_REQUEST = "http_client.filter.request"
+
+#: Event fired when an external response is received by the HTTP client.
 EVENT_FILTER_HTTP_CLIENT_RESPONSE = "http_client.filter.response"
 
 
 class HttpClientFilterEvent(Event):
+    """
+    Custom event class embedding an :class:`httpx.Request` and an optional :class:`httpx.Response`, allowing to filter
+    external requests made by the client. It also allows script execution, providing some context for systems like
+    filtering rules (see ``rules`` application).
+
+    """
+
     def __init__(self, request: Request, response: Optional[Response] = None):
         self.request = request
         self.response = response

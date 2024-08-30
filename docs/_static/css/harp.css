@@ -47,6 +47,22 @@
     box-shadow: none;
 }
 
+.guide-intro,
+.guide-intro table,
+.guide-intro table tr,
+.guide-intro table td {
+    border: none;
+    box-shadow: none;
+    vertical-align: top;
+}
+
+.guide-intro table tr td:first-child {
+    padding-top: 2em;
+}
+.guide-intro table tr td:nth-child(2) {
+    padding-left: 2em;
+}
+
 
 article[role=main] .graphviz {
     text-align: center;

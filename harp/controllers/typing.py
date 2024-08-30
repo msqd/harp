@@ -1,7 +1,11 @@
 from typing import Protocol
 
-from harp.http import HttpRequest
+from harp.http import HttpRequest, HttpResponse
 
 
-class ControllerResolver(Protocol):
+class IControllerResolver(Protocol):
     async def resolve(self, request: HttpRequest): ...
+
+
+class IAsyncController(Protocol):
+    async def __call__(self, request: HttpRequest) -> HttpResponse: ...

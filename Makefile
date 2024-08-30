@@ -25,7 +25,7 @@ DOCKER_TAGS ?=
 DOCKER_TAGS_SUFFIX ?=
 DOCKER_BUILD_OPTIONS ?= --platform=$(PLATFORM)
 DOCKER_BUILD_TARGET ?= runtime
-DOCKER_NETWORK ?= bridge
+DOCKER_NETWORK ?= harp
 DOCKER_RUN_COMMAND ?=
 DOCKER_RUN_OPTIONS ?=
 
@@ -117,6 +117,7 @@ qa-nofront:
 
 types:  ## Generates frontend types from the python code.
 	$(RUN) bin/generate_types
+	$(RUN) bin/generate_ts_types
 
 format:  ## Formats the full codebase (backend and frontend).
 	$(MAKE) format-backend
@@ -250,7 +251,7 @@ testc-shell:  ## Runs a shell in the development test suite environment.
 	$(DOCKER) rm docker
 
 testc-backend:  ## Runs the backend test suite within the development docker image, with a docker in docker sidecar service.
-	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" TESTC_COMMAND="PYTEST_CPUS=2 make test-backend" $(MAKE) testc-shell
+	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" TESTC_COMMAND="PYTEST_OPTIONS=-vv poetry run make test-backend" $(MAKE) testc-shell
 
 
 ########################################################################################################################

@@ -1,30 +1,39 @@
 from typing import cast
 
-import orjson
+from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.orm import aliased, joinedload
 
 from harp import __revision__, __version__, get_logger
-from harp.config import asdict
-from harp.controllers import GetHandler, PutHandler, RouterPrefix, RoutingController
+from harp.config.asdict import asdict
+from harp.controllers import GetHandler, ProxyControllerResolver, PutHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest, HttpResponse
 from harp.typing.global_settings import GlobalSettings
 from harp.views.json import json
-from harp_apps.proxy.settings import ProxySettings
 from harp_apps.storage.models import MetricValue
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.types import IStorage
 
 from ..utils.dependencies import get_python_dependencies, parse_dependencies
+from .models.system import SystemPutProxyInput
 
 logger = get_logger(__name__)
 
 
 @RouterPrefix("/api/system")
 class SystemController(RoutingController):
-    def __init__(self, *, storage: IStorage, settings: GlobalSettings, handle_errors=True, router=None):
+    def __init__(
+        self,
+        *,
+        storage: IStorage,
+        settings: GlobalSettings,
+        resolver: ProxyControllerResolver,
+        handle_errors=True,
+        router=None,
+    ):
         self.settings = settings
         self.storage: SqlStorage = cast(SqlStorage, storage)
+        self.resolver = resolver
 
         self._dependencies = None
 
@@ -44,45 +53,48 @@ class SystemController(RoutingController):
 
     @GetHandler("/proxy")
     async def get_proxy(self):
-        settings: ProxySettings | None = self.settings.get("proxy", None)
-        if not settings:
-            return HttpResponse(b"Proxy is not configured", status=404)
-        return json({"endpoints": [endpoint._asdict(with_status=True) for endpoint in settings.endpoints]})
+        endpoints = list(self.resolver.endpoints.values())
+        return json({"endpoints": asdict(endpoints, verbose=True)})
 
     @PutHandler("/proxy")
     async def put_proxy(self, request: HttpRequest):
-        settings: ProxySettings | None = self.settings.get("proxy", None)
-        if not settings:
-            return HttpResponse(b"Proxy is not configured", status=404)
+        endpoints = list(self.resolver.endpoints.values())
 
         try:
-            data = orjson.loads(await request.aread())
-        except orjson.JSONDecodeError as exc:
-            return HttpResponse(f"Invalid JSON: {exc}", status=400)
+            input_data = SystemPutProxyInput.model_validate_json(await request.aread())
+        except ValidationError as exc:
+            return HttpResponse(f"Invalid input: {exc}", status=400)
 
         # find endpoint
         endpoint = None
-        for _endpoint in settings.endpoints:
-            if _endpoint.name == data.get("endpoint"):
+        for _endpoint in endpoints:
+            if _endpoint.settings.name == input_data.endpoint:
                 endpoint = _endpoint
                 break
         if not endpoint:
             return HttpResponse(f"Endpoint not found: {request.query.get('endpoint')}", status=404)
 
-        if data.get("action") == "up":
-            endpoint.remote.set_up(data.get("url"))
-        elif data.get("action") == "down":
-            endpoint.remote.set_down(data.get("url"))
-        elif data.get("action") == "checking":
-            endpoint.remote.set_checking(data.get("url"))
-        else:
-            return HttpResponse(b"Invalid action", status=400)
+        try:
+            endpoint.remote[input_data.url]
+        except KeyError:
+            return HttpResponse(f"Endpoint URL not found: {input_data.url}", status=404)
+
+        match input_data.action:
+            case "up":
+                endpoint.remote.set_up(input_data.url)
+            case "down":
+                endpoint.remote.set_down(input_data.url)
+            case "checking":
+                endpoint.remote.set_checking(input_data.url)
+            case _:
+                return HttpResponse(b"Invalid action", status=400)
 
         return await self.get_proxy()
 
     @GetHandler("/settings")
     async def get_settings(self):
-        return json(asdict(self.settings, secure=True))
+        settings_dict = asdict(self.settings, verbose=True, secure=True, mode="python")
+        return json(settings_dict)
 
     @GetHandler("/dependencies")
     async def get_dependencies(self):
@@ -102,7 +114,7 @@ class SystemController(RoutingController):
 
         return json(
             {
-                "settings": asdict(self.settings.get("storage", {}), secure=True),
+                "settings": asdict(self.settings.get("storage", {}), secure=True, mode="python"),
                 "counts": {value.metric.name.split(".", 1)[-1]: value.value for value in result},
             }
         )

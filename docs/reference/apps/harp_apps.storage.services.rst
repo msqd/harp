@@ -15,4 +15,5 @@ Submodules
     :maxdepth: 1
 
     harp_apps.storage.services.blob_storages
+    harp_apps.storage.services.redis
     harp_apps.storage.services.sql

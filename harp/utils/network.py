@@ -31,7 +31,7 @@ def wait_for_port(port: int, host: str = "localhost", timeout: float = 10.0):
             time.sleep(0.01)
             if time.perf_counter() - start_time >= timeout:
                 raise TimeoutError(
-                    "Waited too long for the port {} on host {} to start accepting " "connections.".format(port, host)
+                    "Waited too long for the port {} on host {} to start accepting connections.".format(port, host)
                 ) from ex
 
 

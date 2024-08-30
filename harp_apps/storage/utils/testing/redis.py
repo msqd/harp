@@ -1,9 +1,15 @@
 from contextlib import asynccontextmanager
 
+from redis.asyncio import Redis
+
 
 @asynccontextmanager
-async def create_redis_client():
+async def create_redis_client() -> Redis:
     from testcontainers.redis import AsyncRedisContainer
 
     with AsyncRedisContainer() as redis_container:
-        yield await redis_container.get_async_client()
+        client = await redis_container.get_async_client()
+        try:
+            yield client
+        finally:
+            await client.aclose()

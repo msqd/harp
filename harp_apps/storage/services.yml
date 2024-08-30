@@ -1,0 +1,38 @@
+services:
+  - name: "storage"
+    description: "Main storage facade, most probably based on the underlying sql/sqlalchemy implementation."
+    base: harp_apps.storage.types.storage.IStorage
+    type: harp_apps.storage.services.sql.SqlStorage
+
+  - name: "storage.blobs"
+    description: Placeholder for Blob Storage. Will be overriden by specific implementations.
+    base: harp_apps.storage.types.IBlobStorage
+    arguments: [!cfg "blobs.arguments", {}]
+
+  - condition: [!cfg "blobs.type == 'sql'", !!bool "true"]
+    services:
+      - name: "storage.blobs"
+        description: "SQL based Blob Storage."
+        override: "merge"
+        type: harp_apps.storage.services.blob_storages.sql.SqlBlobStorage
+        defaults: {} #db: !ref "storage.sql"
+
+  - condition: !cfg "blobs.type == 'redis'"
+    services:
+      - name: "storage.blobs"
+        description: "Redis based Blob Storage."
+        override: "merge"
+        type: harp_apps.storage.services.blob_storages.redis.RedisBlobStorage
+        defaults:
+          client: !ref "storage.redis"
+
+  - condition: [!cfg "redis is not None", !cfg "blobs.type == 'redis'"]
+    services:
+      - name: "storage.redis"
+        description: "Asynchronous Redis Client."
+        base: [!cfg "redis.base", "redis.asyncio.Redis"]
+        type: [!cfg "redis.type", "harp_apps.storage.services.redis.Redis"]
+        constructor: [!cfg "redis.constructor", "from_url"]
+        defaults:
+          url: !cfg ["redis.url", "redis://localhost:6379/0"]
+        arguments: [!cfg "redis.arguments", {}]

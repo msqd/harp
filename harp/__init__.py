@@ -29,10 +29,15 @@ Contents
 
 import os
 from subprocess import check_output
+from typing import TYPE_CHECKING
 
 from packaging.version import InvalidVersion, Version
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if TYPE_CHECKING:
+    from harp.config import ConfigurationBuilder as _ConfigurationBuilder
+
+
+ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def _parse_version(version: str, /, *, default=None) -> Version:
@@ -71,11 +76,10 @@ if not os.environ.get("CI", False) and os.path.exists(os.path.join(ROOT_DIR, ".g
 from ._logging import get_logger  # noqa: E402, isort: skip
 
 
-async def arun(builder):
-    from harp.config import SystemBuilder
+async def arun(builder: "_ConfigurationBuilder"):
     from harp.config.adapters.hypercorn import HypercornAdapter
 
-    system = await SystemBuilder(builder).abuild()
+    system = await builder.abuild_system()
     server = HypercornAdapter(system)
     try:
         return await server.serve()
@@ -83,7 +87,7 @@ async def arun(builder):
         await system.dispose()
 
 
-def run(builder):
+def run(builder: "_ConfigurationBuilder"):
     """
     Run the default server using provided configuration.
 

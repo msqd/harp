@@ -2,11 +2,10 @@
 Notifications Application
 """
 
-from rodi import CannotResolveTypeException
-
 from harp import get_logger
 from harp.config import Application
 from harp.config.events import OnBoundEvent, OnShutdownEvent
+from harp.services import CannotResolveTypeException
 from harp_apps.dashboard.settings import DashboardSettings
 from harp_apps.notifications.settings import NotificationsSettings
 from harp_apps.notifications.subscriber import NotificationSubscriber

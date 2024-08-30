@@ -55,3 +55,15 @@ You can use multiple ``--endpoint ...`` arguments and the option is available fo
     For now, endpoints does not support subpaths on remote side. For exemple: http://example.com/ is supported as
     an endpoint base url but not http://example.com/foo/bar. Proxy will still forward requests to sub paths but no
     rewriting will be done on the request path.
+
+
+Table of Content
+::::::::::::::::
+
+.. include:: _toc.rst
+
+.. toctree::
+    :hidden:
+    :maxdepth: 1
+
+    events

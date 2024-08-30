@@ -1,6 +1,6 @@
 from unittest import mock
 
-from harp.config import ConfigurationBuilder, SystemBuilder
+from harp.config import ConfigurationBuilder
 from harp.utils.testing.communicators import ASGICommunicator
 
 
@@ -14,12 +14,7 @@ async def test_notifications_with_proxy(httpbin):
         },
     }
 
-    config = ConfigurationBuilder(
-        settings,
-        use_default_applications=False,
-    )
-
-    system = await SystemBuilder(config).abuild()
+    system = await ConfigurationBuilder(settings, use_default_applications=False).abuild_system()
 
     client = ASGICommunicator(system.kernel)
     await client.asgi_lifespan_startup()

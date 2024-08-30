@@ -1,8 +1,10 @@
 from typing import Type
 
-from rodi import Container
 from whistle import IAsyncEventDispatcher
 
+from harp.services import Container
+
+from .asdict import asdict
 from .events import (
     EVENT_BIND,
     EVENT_BOUND,
@@ -13,7 +15,6 @@ from .events import (
     OnReadyHandler,
     OnShutdownHandler,
 )
-from .settings.base import asdict
 from .utils import get_application, resolve_application_name
 
 
@@ -64,7 +65,9 @@ class Application:
 
     def normalize(self, settings):
         if self.settings_type:
-            return asdict(self.settings_type(**settings), secure=False)
+            if not isinstance(settings, self.settings_type):
+                settings = self.settings_type(**settings)
+            return asdict(settings, secure=False)
         return settings
 
 

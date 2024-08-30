@@ -1,11 +1,14 @@
-from typing import Awaitable, Callable
+from typing import TYPE_CHECKING, Awaitable, Callable
 
-from rodi import Container, Services
 from whistle import Event
 
 from harp.asgi import ASGIKernel
-from harp.controllers import ProxyControllerResolver
+from harp.services import Container, Services
+from harp.typing import GlobalSettings
 from harp.utils.network import Bind
+
+if TYPE_CHECKING:
+    from harp.controllers import ProxyControllerResolver
 
 
 class OnBindEvent(Event):
@@ -19,11 +22,19 @@ class OnBindEvent(Event):
 
     name = "harp.config.bind"
 
-    def __init__(self, container: Container, settings):
+    #: Service container.
+    container: Container
+
+    #: Global settings.
+    settings: GlobalSettings
+
+    def __init__(self, container: Container, settings: GlobalSettings):
         self.container = container
         self.settings = settings
 
 
+#: Event fired when the service container is being configured, before the dependencies are resolved. You can configure
+#: any services in a listener to this event, but all dependencies must be resolvable once the event is fully dispatched.
 EVENT_BIND = OnBindEvent.name
 
 OnBindHandler = Callable[[OnBindEvent], Awaitable[None]]
@@ -40,11 +51,19 @@ class OnBoundEvent(Event):
 
     name = "harp.config.bound"
 
-    def __init__(self, provider: Services, resolver: ProxyControllerResolver):
+    #: Services provider.
+    provider: Services
+
+    #: Proxy controller resolver.
+    resolver: "ProxyControllerResolver"
+
+    def __init__(self, provider: Services, resolver: "ProxyControllerResolver"):
         self.provider = provider
         self.resolver = resolver
 
 
+#: Event fired when the service container is fully resolved, before the kernel is created. You can setup things that
+#: require live instance of services here.
 EVENT_BOUND = OnBoundEvent.name
 
 OnBoundHandler = Callable[[OnBoundEvent], Awaitable[None]]
@@ -66,6 +85,7 @@ class OnReadyEvent(Event):
         self.binds = binds
 
 
+#: Event fired when the application is ready to start. You can decorate the kernel with middlewares here.
 EVENT_READY = OnReadyEvent.name
 
 OnReadyHandler = Callable[[OnReadyEvent], Awaitable[None]]
@@ -84,6 +104,7 @@ class OnShutdownEvent(Event):
         self.provider = provider
 
 
+#: Event fired when the application is shutting down. You can cleanup resources here.
 EVENT_SHUTDOWN = OnShutdownEvent.name
 
 OnShutdownHandler = Callable[[OnShutdownEvent], Awaitable[None]]

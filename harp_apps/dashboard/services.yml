@@ -1,0 +1,40 @@
+services:
+  - name: "dashboard.router"
+    description: "Router for the dashboard controllers, shared between different subcontrollers."
+    type: http_router.Router
+    arguments:
+      trim_last_slash: true
+
+  - name: "dashboard.controller"
+    description: "Main controller for the dashboard."
+    type: harp_apps.dashboard.controllers.DashboardController
+    arguments:
+      router: !ref dashboard.router
+
+  - name: "dashboard.controller.blobs"
+    description: "Sub-controller for the blobs-related routes of the dashboard."
+    type: harp_apps.dashboard.controllers.blobs.BlobsController
+    arguments:
+      router: !ref dashboard.router
+      storage: !ref storage.blobs
+
+  - name: "dashboard.controller.overview"
+    description: "Sub-controller for the overview-related routes of the dashboard."
+    type: harp_apps.dashboard.controllers.overview.OverviewController
+    arguments:
+      router: !ref dashboard.router
+      storage: !ref storage
+
+  - name: "dashboard.controller.system"
+    description: "Sub-controller for the system-related routes of the dashboard."
+    type: harp_apps.dashboard.controllers.system.SystemController
+    arguments:
+      router: !ref dashboard.router
+      storage: !ref storage
+
+  - name: "dashboard.controller.transactions"
+    description: "Sub-controller for the transactions-related routes of the dashboard."
+    type: harp_apps.dashboard.controllers.transactions.TransactionsController
+    arguments:
+      router: !ref dashboard.router
+      storage: !ref storage

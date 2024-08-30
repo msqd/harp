@@ -2,7 +2,6 @@ import pytest
 from httpx import ByteStream
 
 from harp.http import HttpRequest, HttpRequestSerializer
-from harp.http.tests.stubs import HttpRequestStubBridge
 
 
 class BaseHttpRequestTest:
@@ -13,7 +12,7 @@ class BaseHttpRequestTest:
     RequestType = HttpRequest
 
     def create_request(self, **kwargs) -> HttpRequest:
-        return self.RequestType(HttpRequestStubBridge(**kwargs))
+        return self.RequestType(**kwargs)
 
 
 class TestHttpRequestPath(BaseHttpRequestTest):

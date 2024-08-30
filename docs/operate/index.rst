@@ -2,13 +2,13 @@ Operator's Guide
 ================
 
 This guide is intended for operators that want to run HARP instances on live servers. It assumes you have
-already installed harp, please refer to the :doc:`Start Guide </start/index>` if this is not the case.
+already installed HARP Proxy, please refer to the :doc:`Start Guide </start/index>` if this is not the case.
 
-.. toctree::
-    :maxdepth: 2
+.. table::
+    :class: guide-intro
+    :widths: 30 70
 
-    configure/index
-    migrations
-    logging
-    prometheus
-    runtime
+    +------------------------------------+-----------------------------------------------------------------------------+
+    | .. figure:: operator-guide.jpg     | .. include:: _toc.rst                                                       |
+    |    :alt: HARP Proxy Operator Guide |                                                                             |
+    +------------------------------------+-----------------------------------------------------------------------------+
