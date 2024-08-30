@@ -46,9 +46,12 @@ class HttpRequestSerializer(BaseHttpMessageSerializer):
     wrapped: HttpRequest
 
     @cached_property
+    def query_string(self) -> str:
+        return urlencode(self.wrapped.query) if self.wrapped.query else ""
+
+    @cached_property
     def summary(self) -> str:
-        query_string = "?" + urlencode(self.wrapped.query) if self.wrapped.query else ""
-        return f"{self.wrapped.method} {self.wrapped.path}{query_string} HTTP/1.1"
+        return f"{self.wrapped.method} {self.wrapped.path}{self.query_string} HTTP/1.1"
 
 
 class HttpResponseSerializer(BaseHttpMessageSerializer):
