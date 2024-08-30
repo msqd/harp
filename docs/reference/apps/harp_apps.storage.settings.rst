@@ -7,3 +7,13 @@ harp_apps.storage.settings
     :show-inheritance:
 
     .. inheritance-diagram:: harp_apps.storage.settings
+
+Submodules
+----------
+
+.. toctree::
+    :maxdepth: 1
+
+    harp_apps.storage.settings.blobs
+    harp_apps.storage.settings.database
+    harp_apps.storage.settings.redis

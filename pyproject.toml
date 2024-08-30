@@ -46,6 +46,7 @@ sqlalchemy = { extras = ["asyncio"], version = "^2.0.30" }
 sqlalchemy-utils = "^0.41.1"
 structlog = "^24.2.0"
 svix-ksuid = "^0.6.2"
+pydantic = "^2.8.2"
 
 [tool.poetry.dependencies.honcho]
 version = "^1.1.0"
@@ -66,7 +67,7 @@ furo = ">=2023.9.10,<2025.0.0"
 isort = "^5.13.2"
 pre-commit = "^3.7.1"
 pytest = ">=7.4.3,<9.0.0"
-pytest-asyncio = ">=0.21.1,<0.23.0"                                # 0.23 breaks the test suite (https://github.com/pytest-dev/pytest-asyncio/releases/tag/v0.23.0)
+pytest-asyncio = ">=0.24.0,<0.25.0"
 pytest-benchmark = { extras = ["histogram"], version = "^4.0.0" }
 pytest-cov = ">=4.1,<6.0"
 pytest-timeout = "^2.3.1"
@@ -115,7 +116,9 @@ known_third_party = "asgiref,httpx,rich,structlog,sqlalchemy,whistle,config,rodi
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
+    "ignore:'crypt' is deprecated:DeprecationWarning",
     "ignore:Deprecated call to:DeprecationWarning",
     "ignore:pkg_resources is deprecated as an API:DeprecationWarning",
 ]

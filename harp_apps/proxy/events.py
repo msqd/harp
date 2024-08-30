@@ -3,15 +3,25 @@ from typing import Callable, Optional
 from whistle import Event
 
 from harp import get_logger
-from harp.http import HttpResponse
+from harp.http import BaseHttpMessage, HttpResponse
 from harp.http.requests import HttpRequest
+from harp.models import Transaction
 
 logger = get_logger(__name__)
 
+#: Event fired when a transaction is created.
 EVENT_TRANSACTION_STARTED = "proxy.transaction.started"
+
+#: Event fired when a message is sent to a transaction (either request or response).
 EVENT_TRANSACTION_MESSAGE = "proxy.transaction.message"
+
+#: Event fired when a transaction is finished, before the response is sent back to the caller.
 EVENT_TRANSACTION_ENDED = "proxy.transaction.ended"
+
+#: Event fired when an incoming request is ready to be filtered, for example by the rules application.
 EVENT_FILTER_PROXY_REQUEST = "proxy.filter.request"
+
+#: Event fired when an outgoing response is ready to be filtered, for example by the rules application.
 EVENT_FILTER_PROXY_RESPONSE = "proxy.filter.response"
 
 
@@ -58,3 +68,14 @@ class ProxyFilterEvent(Event):
                     )
             self.set_response(context["response"])
         return context
+
+
+class TransactionEvent(Event):
+    def __init__(self, transaction: Transaction):
+        self.transaction = transaction
+
+
+class HttpMessageEvent(TransactionEvent):
+    def __init__(self, transaction: Transaction, message: BaseHttpMessage):
+        super().__init__(transaction)
+        self.message = message

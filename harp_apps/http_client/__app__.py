@@ -1,22 +1,17 @@
-from typing import cast
-
-from httpx import AsyncClient
+from os.path import dirname
+from pathlib import Path
 
 from harp import get_logger
 from harp.config import Application, OnBindEvent
-from harp_apps.storage.services.blob_storages.null import NullBlobStorage
-from harp_apps.storage.types import IBlobStorage
 
-from .factories import AsyncClientFactory
 from .settings import HttpClientSettings
 
 logger = get_logger(__name__)
 
 
 async def on_bind(event: OnBindEvent):
-    if IBlobStorage not in event.container:
-        event.container.add_singleton(IBlobStorage, NullBlobStorage)
-    event.container.add_singleton(AsyncClient, cast(type(AsyncClient), AsyncClientFactory))
+    # Load service definitions, bound to our settings.
+    event.container.load(Path(dirname(__file__)) / "services.yml", bind_settings=event.settings["http_client"])
 
 
 application = Application(

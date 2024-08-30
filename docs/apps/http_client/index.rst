@@ -6,28 +6,31 @@ HttpClient
 The `harp_apps.http_client` application implements the core HTTP client features. It uses caching to store responses
 and avoid making the same request multiple times, improving the efficiency of your application.
 
+The application wioll mostly define a coherent set of :doc:`services <services>` that will be used to interact with external http
+services, allowing other mechanisms to hook into the request/response lifecycle (cache, rules, ...).
+
 The caching mechanism is implemented using `Hishel <https://hishel.com/>`_ a powerful caching library.
 
 Overview
---------
+::::::::
 
 The HTTP client provides efficient and configurable HTTP request handling with caching capabilities.
 It is designed to be integrated seamlessly into the ``harp`` framework.
 
 Features
---------
+::::::::
 
 - **Caching:** Reduces redundant network calls by storing responses.
 - **Configurable Timeouts:** Allows setting custom timeout values for requests.
 - **Flexible Cache Settings:** Offers options to configure cacheable methods and status codes.
 
 Loading
--------
+:::::::
 
 The HTTP client application is loaded by default when using the `harp start` command.
 
 Configuration
--------------
+:::::::::::::
 
 Below is an example configuration for the HTTP client:
 
@@ -55,7 +58,7 @@ options.
     - **cacheable_status_codes:** List of HTTP status codes that can be cached (e.g., 200, 300).
 
 Internal Implementation
------------------------
+:::::::::::::::::::::::
 
 The internal implementation leverages the following classes:
 
@@ -66,7 +69,22 @@ The internal implementation leverages the following classes:
 - :class:`HttpClientSettings <harp_apps.http_client.settings.HttpClientSettings>`
 
 Full example
-------------
+::::::::::::
 
 .. literalinclude:: ./examples/full.yml
     :language: yaml
+
+
+Table of Content
+::::::::::::::::
+
+.. include:: _toc.rst
+
+.. toctree::
+    :hidden:
+    :maxdepth: 1
+
+    quickstart
+    events
+    services
+    recipes

@@ -27,10 +27,12 @@ Submodules
     harp.utils.identifiers
     harp.utils.json
     harp.utils.network
+    harp.utils.packages
     harp.utils.performances
     harp.utils.processes
     harp.utils.services
     harp.utils.strings
     harp.utils.tpdex
     harp.utils.types
+    harp.utils.typescript
     harp.utils.urls

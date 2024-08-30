@@ -16,10 +16,14 @@ try:
 except ImportError:
     pass
 
+LISTIFIABLES = (set,)
+
 
 def default(obj):
     if isinstance(obj, STRINGIFIABLES):
         return str(obj)
+    if isinstance(obj, LISTIFIABLES):
+        return list(sorted(obj))
     raise TypeError
 
 

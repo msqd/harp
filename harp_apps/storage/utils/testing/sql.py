@@ -4,13 +4,14 @@ from contextlib import asynccontextmanager
 from typing import Union
 
 from click.testing import CliRunner
+from pydantic_core import MultiHostUrl, Url
 from sqlalchemy import URL, make_url, text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from harp.commandline import migrations
 
 
-async def run_cli_migrate_command(url: Union[str | URL], /, *, operation="up", revision="head"):
+async def run_cli_migrate_command(url: Union[str | URL | Url | MultiHostUrl], /, *, operation="up", revision="head"):
     """
     Run the `migrate` command from the CLI, synchronously, in a thread (via ThreadPoolExecutor). This uses click's
     CliRunner which is a testing helper. You should not use this outside tests, as it will setup a fully separate harp
@@ -21,6 +22,9 @@ async def run_cli_migrate_command(url: Union[str | URL], /, *, operation="up", r
     :param revision: target revision ("head" for latest, "base" for initial or specific revision number)
     :return:
     """
+    if isinstance(url, (Url, MultiHostUrl)):
+        url = str(url)
+
     url = make_url(url)
 
     def _migrate():

@@ -1,0 +1,67 @@
+#! /usr/bin/env python
+
+import glob
+import os
+from shutil import copyfile
+
+import pyheck
+
+from harp import ROOT_DIR, get_logger
+from harp.utils.typescript import generate_schema, generate_typescript
+
+logger = get_logger(__name__)
+
+
+def generate_typescript_definitions_for_application(application_name, destination, *, namespace=None):
+    models = []
+    for file in glob.glob(f"harp_apps/{application_name}/**/*.py", root_dir=ROOT_DIR, recursive=True):
+        mod_path, _ = os.path.splitext(file)
+        mod_path = mod_path.split(os.sep)
+        if mod_path[-1] == "__init__":
+            mod_path = mod_path[:-1]
+        if (
+            "tests" in mod_path
+            or "node_modules" in mod_path
+            or (mod_path[-1].startswith("__") and mod_path[-1].endswith("__"))
+        ):
+            continue
+        mod_fullpath = ".".join(mod_path)
+        mod_path, mod_name = mod_fullpath.rsplit(".", 1)
+        try:
+            module = getattr(__import__(mod_path, fromlist=[mod_name]), mod_name)
+        except Exception as e:
+            logger.debug(f"{mod_fullpath} (skip: {e})")
+            continue
+        for name in dir(module):
+            # ignore private
+            if name.startswith("_"):
+                continue
+
+            obj = getattr(module, name)
+
+            # ignore non-type
+            if not isinstance(obj, type):
+                continue
+
+            # ignore non local
+            if obj.__module__ != mod_fullpath:
+                continue
+
+            if not hasattr(obj, "model_json_schema"):
+                logger.debug(f"{mod_fullpath}.{name} (skip: no json schema generator)")
+                continue
+
+            models.append(obj)
+
+    schema = generate_schema(models)
+    with generate_typescript(schema, namespace=namespace) as f:
+        copyfile(f.name, destination)
+
+
+if __name__ == "__main__":
+    for app in ("dashboard", "http_client", "proxy", "storage"):
+        generate_typescript_definitions_for_application(
+            app,
+            os.path.join(ROOT_DIR, f"harp_apps/dashboard/frontend/types/harp_apps.{app}.d.ts"),
+            namespace="Apps." + pyheck.upper_camel(app),
+        )

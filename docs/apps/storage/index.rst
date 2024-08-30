@@ -134,3 +134,16 @@ To instruct SQLAlchemy to log all queries, set ``LOGGING_SQLALCHEMY=INFO`` in yo
     LOGGING_SQLALCHEMY=INFO harp start ...
 
 It works with all HARP commands, not just ``start``.
+
+Table of Content
+::::::::::::::::
+
+.. include:: /apps/storage/_toc.rst
+
+.. toctree::
+    :hidden:
+    :maxdepth: 1
+
+    quickstart
+    services
+    recipes

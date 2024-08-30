@@ -1,5 +1,6 @@
 import asyncio
 import dataclasses
+from asyncio import get_running_loop
 
 import pytest  # noqa
 from hypercorn import Config
@@ -20,20 +21,8 @@ class StubServerDescription:
         return f"http://{self.host}:{self.port}"
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-    try:
-        yield loop
-    finally:
-        loop.close()
-
-
-@pytest.fixture(scope="session")
-async def test_api(event_loop):
+@pytest.fixture
+async def test_api():
     shutdown_event = asyncio.Event()
     config = Config()
     host, port = "localhost", get_available_network_port()
@@ -46,7 +35,7 @@ async def test_api(event_loop):
             config=config,
             shutdown_trigger=shutdown_event.wait,
         ),
-        loop=event_loop,
+        loop=get_running_loop(),
     )
     await asyncio.to_thread(wait_for_port, port, host)
 

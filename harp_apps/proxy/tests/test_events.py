@@ -3,7 +3,6 @@ from decimal import Decimal
 import pytest
 
 from harp.http import HttpRequest, HttpResponse
-from harp.http.tests.stubs import HttpRequestStubBridge
 
 from ..events import ProxyFilterEvent
 
@@ -21,7 +20,7 @@ def none_response_script(context):
 
 
 def test_execution():
-    event = ProxyFilterEvent("api", request=HttpRequest(HttpRequestStubBridge()))
+    event = ProxyFilterEvent("api", request=HttpRequest())
 
     event.execute_script(valid_response_script)
     assert event.response.status == 200

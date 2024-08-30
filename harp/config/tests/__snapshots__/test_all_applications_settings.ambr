@@ -1,0 +1,172 @@
+# serializer version: 1
+# name: test_all_applications_default_settings[harp_apps.acme]
+  dict({
+    'harp_apps.acme.settings.AcmeSettings': '''
+      {}
+  
+    ''',
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.contrib.sentry]
+  dict({
+    'harp_apps.contrib.sentry.settings.SentrySettings': '''
+      dsn: null
+  
+    ''',
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.dashboard]
+  dict({
+    'harp_apps.dashboard.settings.DashboardSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.dashboard.settings.auth.BasicAuthSettings': '''
+      type: basic
+  
+    ''',
+    'harp_apps.dashboard.settings.auth.User': '''
+      password: secret
+  
+    ''',
+    'harp_apps.dashboard.settings.devserver.DevserverSettings': '''
+      {}
+  
+    ''',
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.http_client]
+  dict({
+    'harp_apps.http_client.settings.HttpClientSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.http_client.settings.cache.CacheSettings': '''
+      {}
+  
+    ''',
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.janitor]
+  dict({
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.notifications]
+  dict({
+    'harp_apps.notifications.settings.NotificationsSettings': '''
+      {}
+  
+    ''',
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.proxy]
+  dict({
+    'harp_apps.proxy.settings.BaseProxySettings': '''
+      {}
+  
+    ''',
+    'harp_apps.proxy.settings.Proxy': '''
+      settings: {}
+  
+    ''',
+    'harp_apps.proxy.settings.ProxySettings': '''
+      {}
+  
+    ''',
+    'harp_apps.proxy.settings.endpoint.BaseEndpointSettings': '''
+      name: api
+      port: 4000
+  
+    ''',
+    'harp_apps.proxy.settings.endpoint.Endpoint': '''
+      settings:
+        description: null
+        name: api
+        port: 4000
+  
+    ''',
+    'harp_apps.proxy.settings.endpoint.EndpointSettings': '''
+      name: api
+      port: 4000
+  
+    ''',
+    'harp_apps.proxy.settings.remote.BaseRemoteSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.proxy.settings.remote.Remote': '''
+      current_pool: []
+      endpoints: []
+      settings:
+        break_on:
+        - network_error
+        - unhandled_exception
+        check_after: 10.0
+        min_pool_size: 1
+  
+    ''',
+    'harp_apps.proxy.settings.remote.RemoteSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.proxy.settings.remote.endpoint.RemoteEndpoint': '''
+      settings:
+        failure_threshold: 1
+        pools:
+        - default
+        success_threshold: 1
+        url: https://www.example.com/
+  
+    ''',
+    'harp_apps.proxy.settings.remote.endpoint.RemoteEndpointSettings': '''
+      url: https://www.example.com/
+  
+    ''',
+    'harp_apps.proxy.settings.remote.probe.RemoteProbe': '''
+      settings:
+        headers: {}
+        interval: 10.0
+        method: GET
+        path: /
+        timeout: 10.0
+        verify: true
+  
+    ''',
+    'harp_apps.proxy.settings.remote.probe.RemoteProbeSettings': '''
+      {}
+  
+    ''',
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.rules]
+  dict({
+    'harp_apps.rules.models.rulesets.RuleSet': '''
+      {}
+  
+    ''',
+    'harp_apps.rules.settings.RulesSettings': '''
+      {}
+  
+    ''',
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.storage]
+  dict({
+    'harp_apps.storage.settings.StorageSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.storage.settings.blobs.BlobStorageSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.storage.settings.database.DatabaseSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.storage.settings.redis.RedisSettings': '''
+      {}
+  
+    ''',
+  })
+# ---

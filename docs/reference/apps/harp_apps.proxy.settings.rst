@@ -7,3 +7,12 @@ harp_apps.proxy.settings
     :show-inheritance:
 
     .. inheritance-diagram:: harp_apps.proxy.settings
+
+Submodules
+----------
+
+.. toctree::
+    :maxdepth: 1
+
+    harp_apps.proxy.settings.endpoint
+    harp_apps.proxy.settings.remote

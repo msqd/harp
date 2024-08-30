@@ -1,12 +1,13 @@
-from unittest.mock import ANY, AsyncMock
+from unittest.mock import AsyncMock
 
 import respx
 from httpx import AsyncClient, Response
 
-from harp.config import asdict
+from harp.config.asdict import asdict
+from harp_apps.http_client.contrib.hishel.storages import AsyncStorage
 from harp_apps.http_client.events import EVENT_FILTER_HTTP_CLIENT_REQUEST, EVENT_FILTER_HTTP_CLIENT_RESPONSE
 from harp_apps.http_client.tests._base import BaseTestDefaultsWith
-from harp_apps.storage.types import IBlobStorage
+from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
 
 URL = "http://www.example.com/"
 
@@ -15,23 +16,37 @@ class TestDefaultsWithNoStorage(BaseTestDefaultsWith):
     async def test_defaults(self):
         system = await self.create_system()
 
-        assert asdict(system.config) == {
+        assert asdict(system.config) == {"applications": ["harp_apps.http_client"], "http_client": {}}
+        assert asdict(system.config, verbose=True) == {
             "applications": ["harp_apps.http_client"],
             "http_client": {
                 "cache": {
+                    "controller": {
+                        "allow_heuristics": False,
+                        "allow_stale": False,
+                        "cacheable_methods": ["GET", "HEAD"],
+                        "cacheable_status_codes": [200, 203, 204, 206, 300, 301, 308, 404, 405, 410, 414, 501],
+                        "type": "hishel.Controller",
+                    },
                     "enabled": True,
-                    "controller": ANY,
-                    "storage": ANY,
-                    "transport": {"@type": ANY},
-                    "ttl": ANY,
-                    "check_ttl_every": ANY,
+                    "storage": {
+                        "base": "hishel.AsyncBaseStorage",
+                        "check_ttl_every": 60.0,
+                        "ttl": None,
+                        "type": "harp_apps.http_client.contrib.hishel.storages.AsyncStorage",
+                    },
+                    "transport": {"type": "hishel.AsyncCacheTransport"},
                 },
+                "proxy_transport": {"type": "harp_apps.http_client.transport.AsyncFilterableTransport"},
                 "timeout": 30.0,
-                "transport": {"@type": "httpx:AsyncHTTPTransport"},
+                "transport": {"retries": 0, "type": "httpx.AsyncHTTPTransport", "verify": True},
+                "type": "httpx.AsyncClient",
             },
         }
 
-        assert type(system.provider.get(IBlobStorage)).__name__ == "NullBlobStorage"
+        storage = system.provider.get("http_client.cache.storage")
+        assert isinstance(storage, AsyncStorage)
+        assert isinstance(storage._storage, MemoryBlobStorage)
 
     @respx.mock
     async def test_events(self):

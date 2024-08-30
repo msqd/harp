@@ -3,9 +3,9 @@ import pytest
 import respx
 
 from harp.http import HttpRequest
-from harp.http.tests.stubs import HttpRequestStubBridge
+from harp_apps.proxy.constants import DOWN, UP
 from harp_apps.proxy.controllers import HttpProxyController
-from harp_apps.proxy.models.remotes import DOWN, UP, HttpEndpoint, HttpRemote
+from harp_apps.proxy.settings.remote import Remote
 
 BASE_URL = "http://example.com"
 
@@ -14,13 +14,12 @@ BASE_URL = "http://example.com"
 async def test_basic():
     respx.get(BASE_URL).mock(return_value=httpx.Response(200))
 
-    endpoint = HttpEndpoint(url=BASE_URL)
-    remote = HttpRemote(endpoints=[endpoint])
+    remote = Remote.from_settings_dict({"endpoints": [{"url": BASE_URL}]})
     controller = HttpProxyController(remote, http_client=httpx.AsyncClient())
-    response = await controller(HttpRequest(HttpRequestStubBridge()))
+    response = await controller(HttpRequest())
 
     assert response.status == 200
-    assert endpoint.status == UP
+    assert remote[BASE_URL].status == UP
 
 
 @respx.mock
@@ -29,14 +28,18 @@ async def test_basic():
 async def test_break_on_5xx(status, is_http_server_error_a_down_signal):
     respx.get(BASE_URL).mock(return_value=httpx.Response(status))
 
-    endpoint = HttpEndpoint(url=BASE_URL)
-    remote = HttpRemote(
-        endpoints=[endpoint], break_on={"http_5xx", "network_error"} if is_http_server_error_a_down_signal else None
+    remote = Remote.from_settings_dict(
+        {
+            "endpoints": [{"url": BASE_URL}],
+            "break_on": ["http_5xx", "network_error"] if is_http_server_error_a_down_signal else ["network_error"],
+        }
     )
+    endpoint = remote[BASE_URL]
+
     controller = HttpProxyController(remote, http_client=httpx.AsyncClient())
     initial_status = endpoint.status
 
-    response = await controller(HttpRequest(HttpRequestStubBridge()))
+    response = await controller(HttpRequest())
     if is_http_server_error_a_down_signal:
         assert response.status == status
         assert endpoint.status == DOWN
@@ -44,7 +47,7 @@ async def test_break_on_5xx(status, is_http_server_error_a_down_signal):
         assert response.status == status
         assert endpoint.status == initial_status
 
-    response = await controller(HttpRequest(HttpRequestStubBridge()))
+    response = await controller(HttpRequest())
     if is_http_server_error_a_down_signal:
         assert response.status == 503
         assert endpoint.status == DOWN
@@ -59,14 +62,18 @@ async def test_break_on_5xx(status, is_http_server_error_a_down_signal):
 async def test_break_on_4xx(status, is_client_error_a_down_signal):
     respx.get(BASE_URL).mock(return_value=httpx.Response(status))
 
-    endpoint = HttpEndpoint(url=BASE_URL)
-    remote = HttpRemote(
-        endpoints=[endpoint], break_on={"http_4xx", "network_error"} if is_client_error_a_down_signal else None
+    remote = Remote.from_settings_dict(
+        {
+            "endpoints": [{"url": BASE_URL}],
+            "break_on": ["http_4xx", "network_error"] if is_client_error_a_down_signal else ["network_error"],
+        }
     )
+    endpoint = remote[BASE_URL]
+
     controller = HttpProxyController(remote, http_client=httpx.AsyncClient())
     initial_status = endpoint.status
 
-    response = await controller(HttpRequest(HttpRequestStubBridge()))
+    response = await controller(HttpRequest())
     if is_client_error_a_down_signal:
         assert response.status == status
         assert endpoint.status == DOWN
@@ -74,7 +81,7 @@ async def test_break_on_4xx(status, is_client_error_a_down_signal):
         assert response.status == status
         assert endpoint.status == initial_status
 
-    response = await controller(HttpRequest(HttpRequestStubBridge()))
+    response = await controller(HttpRequest())
     if is_client_error_a_down_signal:
         assert response.status == 503
         assert endpoint.status == DOWN
@@ -88,16 +95,22 @@ async def test_break_on_4xx(status, is_client_error_a_down_signal):
 async def test_do_not_break_if_explicitely_set(status):
     respx.get(BASE_URL).mock(return_value=httpx.Response(status))
 
-    endpoint = HttpEndpoint(url=BASE_URL)
-    remote = HttpRemote(endpoints=[endpoint], break_on=set())
+    remote = Remote.from_settings_dict(
+        {
+            "endpoints": [{"url": BASE_URL}],
+            "break_on": [],
+        }
+    )
+    endpoint = remote[BASE_URL]
+
     controller = HttpProxyController(remote, http_client=httpx.AsyncClient())
     initial_status = endpoint.status
 
-    response = await controller(HttpRequest(HttpRequestStubBridge()))
+    response = await controller(HttpRequest())
     assert response.status == status
     assert endpoint.status == initial_status
 
-    response = await controller(HttpRequest(HttpRequestStubBridge()))
+    response = await controller(HttpRequest())
     assert response.status == status
     assert endpoint.status == initial_status
 
@@ -114,14 +127,15 @@ async def test_do_not_break_if_explicitely_set(status):
 async def test_break_on_network_error(error, error_status):
     respx.get(BASE_URL).mock(side_effect=error)
 
-    endpoint = HttpEndpoint(url=BASE_URL)
-    remote = HttpRemote(endpoints=[endpoint])
+    remote = Remote.from_settings_dict({"endpoints": [{"url": BASE_URL}]})
+    endpoint = remote[BASE_URL]
+
     controller = HttpProxyController(remote, http_client=httpx.AsyncClient())
 
-    response = await controller(HttpRequest(HttpRequestStubBridge()))
+    response = await controller(HttpRequest())
     assert response.status == error_status
     assert endpoint.status == DOWN
 
-    response = await controller(HttpRequest(HttpRequestStubBridge()))
+    response = await controller(HttpRequest())
     assert response.status == 503
     assert endpoint.status == DOWN

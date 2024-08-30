@@ -39,6 +39,7 @@ async def blob_storage(request, sql_engine):
     elif request.param == "redis":
         async with create_redis_client() as async_client:
             yield RedisBlobStorage(async_client)
+
     else:
         raise ValueError(f"Unsupported blob storage type: {request.param}")
 

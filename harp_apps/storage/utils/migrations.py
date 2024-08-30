@@ -3,6 +3,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import Union
 
+from pydantic_core import MultiHostUrl, Url
 from sqlalchemy import URL, make_url, text
 from sqlalchemy.exc import OperationalError
 
@@ -14,9 +15,12 @@ from harp_apps.storage.models import Base, Message, Transaction
 logger = get_logger(__name__)
 
 
-def create_alembic_config(url: Union[str, URL]):
+def create_alembic_config(url: Union[str, URL, Url, MultiHostUrl]):
     """Create our alembic configuration object, to run alembic commands."""
     from alembic.config import Config as AlembicConfig
+
+    if isinstance(url, (Url, MultiHostUrl)):
+        url = str(url)
 
     url = make_url(url)
 
@@ -54,7 +58,7 @@ async def do_reset(engine):
         await conn.execute(text("DROP TABLE IF EXISTS alembic_version;"))
 
 
-async def do_migrate(engine, *, migrator, reset=False):
+async def _do_migrate(engine, *, migrator, reset=False):
     logger.info(f"🛢 Starting database migrations... (dialect={engine.dialect.name}, reset={reset}).")
     if reset:
         await do_reset(engine)
@@ -68,7 +72,7 @@ async def do_migrate(engine, *, migrator, reset=False):
     elif migrator:
         # alembic manages migrations except for sqlite, because it's not trivial to make them work and an env using
         # sqlite does not really need to support upgrades (drop/recreate is fine when harp is upgraded).
-        logger.debug("🛢 [db:migrate] Running alembic migrations...")
+        logger.info("🛢 [db:migrate] Running database migrations...")
 
         with ThreadPoolExecutor() as executor:
             await asyncio.get_event_loop().run_in_executor(executor, migrator)
@@ -94,3 +98,11 @@ async def do_migrate(engine, *, migrator, reset=False):
                 raise e
 
     logger.debug("🛢 [db:migrate] Done.")
+
+
+async def do_migrate(engine, *, migrator, reset=False):
+    try:
+        await _do_migrate(engine, migrator=migrator, reset=reset)
+    except Exception as e:
+        logger.error(f"🛢 [db:migrate] Migrations failed: {e}")
+        raise RuntimeError(f"Could not run migrations ({e}).") from e

@@ -1,4 +1,5 @@
 from collections import ChainMap
+from itertools import chain, combinations
 
 from multidict import CIMultiDict
 
@@ -60,3 +61,7 @@ class MultiChainMap(ChainMap):
 
     def popitem(self):
         raise NotImplementedError()
+
+
+def all_combinations(iterable):
+    return set(chain(*(combinations(iterable, n + 1) for n in range(len(iterable)))))

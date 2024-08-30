@@ -20,12 +20,6 @@ class TestPostgresHttpbinBenchmark(AbstractProxyBenchmark):
         """
     )
 
-    def test_noproxy_get(self, benchmark, httpbin):
-        super().test_noproxy_get(benchmark, httpbin)
-
-    def test_httpbin_get(self, benchmark, proxy):
-        super().test_httpbin_get(benchmark, proxy)
-
 
 @pytest.mark.benchmark(group="sqlite")
 @pytest.mark.subprocess
@@ -39,9 +33,3 @@ class TestSqliteHttpbinBenchmark(AbstractProxyBenchmark):
               name: test
         """
     )
-
-    def test_noproxy_get(self, benchmark, httpbin):
-        super().test_noproxy_get(benchmark, httpbin)
-
-    def test_httpbin_get(self, benchmark, proxy):
-        super().test_httpbin_get(benchmark, proxy)

@@ -1,18 +1,17 @@
-from typing import Type, cast
+from typing import TYPE_CHECKING, Callable, Type, cast
 
-from rodi import Container, Services
 from whistle import IAsyncEventDispatcher
 
 from harp import __revision__, __version__, get_logger
 from harp.asgi import ASGIKernel
 from harp.asgi.events import EVENT_CONTROLLER_VIEW, EVENT_CORE_REQUEST
-from harp.controllers import ProxyControllerResolver
-from harp.controllers.default import on_health_request
 from harp.event_dispatcher import LoggingAsyncEventDispatcher
+from harp.services import Container, Services
 from harp.typing import GlobalSettings
 from harp.utils.network import Bind
 from harp.views.json import on_json_response
 
+from .. import ApplicationsRegistry
 from ..events import (
     EVENT_BIND,
     EVENT_BOUND,
@@ -23,7 +22,9 @@ from ..events import (
     OnReadyEvent,
     OnShutdownEvent,
 )
-from .configuration import ConfigurationBuilder
+
+if TYPE_CHECKING:
+    from harp.controllers import ProxyControllerResolver
 
 logger = get_logger(__name__)
 
@@ -88,9 +89,14 @@ class System:
         Asynchronously disposes of the system resources, primarily the ASGI kernel.
         """
         if self.kernel:
-            event = OnShutdownEvent(self.kernel, self.provider)
-            await self.dispatcher.adispatch(EVENT_SHUTDOWN, event)
-            self._kernel = None
+            try:
+                event = OnShutdownEvent(self.kernel, self.provider)
+                await self.dispatcher.adispatch(EVENT_SHUTDOWN, event)
+            except Exception as exc:
+                logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_SHUTDOWN, exc)
+                raise
+            finally:
+                self._kernel = None
 
 
 class SystemBuilder:
@@ -115,13 +121,29 @@ class SystemBuilder:
     ContainerType: Type[Container] = Container
     KernelType: Type[ASGIKernel] = ASGIKernel
 
-    def __init__(self, configuration_builder: ConfigurationBuilder, /, *, hostname: str = "[::]"):
-        self.configuration_builder = configuration_builder
+    def __init__(
+        self,
+        applications=ApplicationsRegistry | Callable[[], ApplicationsRegistry],
+        configuration=GlobalSettings | Callable[[], GlobalSettings],
+        /,
+        *,
+        hostname: str = "[::]",
+    ):
+        self._applications = applications
+        self._configuration = configuration
         self.hostname = hostname
 
     @property
-    def applications(self):
-        return self.configuration_builder.applications
+    def applications(self) -> ApplicationsRegistry:
+        if callable(self._applications):
+            self._applications = self._applications()
+        return self._applications
+
+    @property
+    def configuration(self) -> GlobalSettings:
+        if callable(self._configuration):
+            self._configuration = self._configuration()
+        return self._configuration
 
     async def abuild(self) -> System:
         """
@@ -132,8 +154,8 @@ class SystemBuilder:
         """
         logger.info(f"🎙  HARP v.{__version__} ({__revision__})")
 
-        # Get the config ready.
-        config = self.configuration_builder.build()
+        # Get lazy configuration.
+        config = self.configuration
 
         # Prepare and dispatch «bind» event.
         dispatcher = self.build_dispatcher()
@@ -141,6 +163,8 @@ class SystemBuilder:
         await self.dispatch_bind_event(dispatcher, container, config)
 
         # todo: this looks like not the right place, should not be tightly coupled to the factory
+        from harp.controllers import ProxyControllerResolver
+
         controller_resolver = ProxyControllerResolver()
         container.add_instance(controller_resolver, ProxyControllerResolver)
 
@@ -164,6 +188,8 @@ class SystemBuilder:
 
     def __setup_core_events(self, dispatcher):
         # todo move into core or extension, this is not system or proxy related
+        from harp.controllers.default import on_health_request
+
         dispatcher.add_listener(EVENT_CORE_REQUEST, on_health_request, priority=-100)
         dispatcher.add_listener(EVENT_CONTROLLER_VIEW, on_json_response)
 
@@ -194,7 +220,7 @@ class SystemBuilder:
         self,
         dispatcher: IAsyncEventDispatcher,
         provider: Services,
-        resolver: ProxyControllerResolver,
+        resolver: "ProxyControllerResolver",
     ) -> OnBoundEvent:
         # dispatch "bound" event: you get a resolved container, do your thing
         try:
@@ -210,7 +236,7 @@ class SystemBuilder:
         self,
         dispatcher: IAsyncEventDispatcher,
         provider: Services,
-        controller_resolver: ProxyControllerResolver,
+        controller_resolver: "ProxyControllerResolver",
     ):
         # todo: this should be instanciated by the service container, probably using a factory to dispatch the event,
         #  etc. Binds should not sit here, but where?

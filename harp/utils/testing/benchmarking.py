@@ -1,4 +1,3 @@
-import asyncio
 import os
 import shlex
 import subprocess
@@ -66,17 +65,8 @@ class RunHarpProxyInSubprocessThread(threading.Thread):
 class AbstractProxyBenchmark:
     config = Template("")
 
-    @pytest.fixture(scope="class")
-    async def setup_event_loop(self):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            yield loop
-        finally:
-            loop.close()
-
     @pytest.fixture
-    async def proxy(self, setup_event_loop, httpbin, database_url, test_id):
+    async def proxy(self, httpbin, database_url, test_id):
         async with get_scoped_database_url(database_url, test_id) as scoped_database_url:
             port = get_available_network_port()
 

@@ -1,16 +1,14 @@
 from datetime import UTC, datetime
-from functools import cached_property
+from functools import cached_property, lru_cache
 from typing import Optional, cast
 from urllib.parse import urlencode, urljoin, urlparse
 
-import httpcore
 import httpx
 from httpx import AsyncClient, codes
 from pyheck import shouty_snake
 from whistle import IAsyncEventDispatcher
 
 from harp import __parsed_version__, get_logger
-from harp.asgi.events import HttpMessageEvent, TransactionEvent
 from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
 from harp.http.utils import parse_cache_control
 from harp.models import Transaction
@@ -19,15 +17,27 @@ from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.performances import performances_observer
 from harp.utils.tpdex import tpdex
 
+from .constants import (
+    BREAK_ON_NETWORK_ERROR,
+    BREAK_ON_UNHANDLED_EXCEPTION,
+    CHECKING,
+    ERR_UNAVAILABLE_STATUS_CODE,
+    ERR_UNHANDLED_MESSAGE,
+    ERR_UNHANDLED_STATUS_CODE,
+    ERR_UNHANDLED_VERBOSE_MESSAGE,
+    NETWORK_ERRORS,
+)
 from .events import (
     EVENT_FILTER_PROXY_REQUEST,
     EVENT_FILTER_PROXY_RESPONSE,
     EVENT_TRANSACTION_ENDED,
     EVENT_TRANSACTION_MESSAGE,
     EVENT_TRANSACTION_STARTED,
+    HttpMessageEvent,
     ProxyFilterEvent,
+    TransactionEvent,
 )
-from .models.remotes import CHECKING, HttpRemote
+from .settings.remote import Remote
 
 logger = get_logger(__name__)
 
@@ -53,7 +63,7 @@ class HttpProxyController:
     _dispatcher: Optional[IAsyncEventDispatcher] = None
     """Event dispatcher for this controller."""
 
-    remote: HttpRemote
+    remote: Remote
     """Base URL to proxy requests to."""
 
     @cached_property
@@ -63,7 +73,7 @@ class HttpProxyController:
 
     def __init__(
         self,
-        remote: HttpRemote = None,
+        remote: Remote,
         *,
         http_client: AsyncClient,
         dispatcher: Optional[IAsyncEventDispatcher] = None,
@@ -71,7 +81,9 @@ class HttpProxyController:
         logging=True,
     ):
         self.http_client = http_client
-        self.remote = remote or self.remote
+        self.remote = remote
+        if not isinstance(remote, Remote):
+            raise TypeError(f"Expected Remote, got {type(remote).__name__}.")
         self.name = name or self.name
         self._logging = logging
         self._dispatcher = dispatcher or self._dispatcher
@@ -150,11 +162,17 @@ class HttpProxyController:
             )
             if not remote_url:
                 transaction.extras["status_class"] = "ERR"
-                await self.end_transaction(transaction, HttpError("No remote", exception=remote_err))
-                # todo add web debug information if we are not on a production env
-                return HttpResponse(
-                    "Service Unavailable (no remote endpoint available)", status=503, content_type="text/plain"
+                return await self.end_transaction(
+                    remote_url,
+                    transaction,
+                    HttpError(
+                        "Unavailable",
+                        exception=remote_err,
+                        verbose_message="Service Unavailable (no remote endpoint available)",
+                        status=ERR_UNAVAILABLE_STATUS_CODE,
+                    ),
                 )
+
             await context.request.aread()
             url = urljoin(remote_url, context.request.path) + (
                 f"?{urlencode(context.request.query)}" if context.request.query else ""
@@ -182,47 +200,8 @@ class HttpProxyController:
                     # PROXY RESPONSE
                     try:
                         remote_response: httpx.Response = await self.http_client.send(remote_request)
-                    except (httpcore.NetworkError, httpx.NetworkError) as exc:
-                        if "network_error" in self.remote.break_on:
-                            if self.remote[remote_url].failure(shouty_snake(type(exc).__name__)):
-                                self.remote.refresh()
-                        return await self.end_transaction(
-                            transaction,
-                            HttpError(
-                                "Unavailable",
-                                exception=exc,
-                                status=503,
-                                verbose_message="Service Unavailable (remote server unavailable)",
-                            ),
-                        )
-
-                    except (httpcore.TimeoutException, httpx.TimeoutException) as exc:
-                        if "network_error" in self.remote.break_on:
-                            if self.remote[remote_url].failure(shouty_snake(type(exc).__name__)):
-                                self.remote.refresh()
-                        return await self.end_transaction(
-                            transaction,
-                            HttpError(
-                                "Timeout",
-                                exception=exc,
-                                status=504,
-                                verbose_message="Gateway Timeout (remote server timeout)",
-                            ),
-                        )
-
-                    except (httpcore.RemoteProtocolError, httpx.RemoteProtocolError) as exc:
-                        if "network_error" in self.remote.break_on:
-                            if self.remote[remote_url].failure(shouty_snake(type(exc).__name__)):
-                                self.remote.refresh()
-                        return await self.end_transaction(
-                            transaction,
-                            HttpError(
-                                "Remote server disconnected",
-                                exception=exc,
-                                status=502,
-                                verbose_message="Bad Gateway (remote server disconnected)",
-                            ),
-                        )
+                    except Exception as exc:
+                        return await self.end_transaction(remote_url, transaction, exc)
 
                     self.remote.notify_url_status(remote_url, remote_response.status_code)
 
@@ -261,12 +240,39 @@ class HttpProxyController:
 
             await context.response.aread()
 
-            return await self.end_transaction(transaction, context.response)
+            return await self.end_transaction(remote_url, transaction, context.response)
 
-    async def end_transaction(self, transaction: Transaction, response: BaseHttpMessage):
+    async def end_transaction(
+        self, remote_url: Optional[str], transaction: Transaction, response: BaseHttpMessage | Exception
+    ):
         spent = int((datetime.now(UTC).timestamp() - transaction.started_at.timestamp()) * 100000) / 100
         transaction.finished_at = datetime.now(UTC)
         transaction.elapsed = spent
+
+        if isinstance(response, Exception):
+            error_kind = BREAK_ON_UNHANDLED_EXCEPTION
+            error_name = shouty_snake(type(response).__name__)
+
+            if network_error_type := _get_base_network_error_type(type(response)):
+                error_kind = BREAK_ON_NETWORK_ERROR
+                _status_code, _message, _verbose_message = NETWORK_ERRORS[network_error_type]
+                response = HttpError(
+                    _message,
+                    exception=response,
+                    status=_status_code,
+                    verbose_message=_verbose_message,
+                )
+            else:
+                response = HttpError(
+                    ERR_UNHANDLED_MESSAGE,
+                    exception=response,
+                    status=ERR_UNHANDLED_STATUS_CODE,
+                    verbose_message=ERR_UNHANDLED_VERBOSE_MESSAGE,
+                )
+
+            if error_kind in self.remote.settings.break_on:
+                if self.remote[remote_url].failure(error_name):
+                    self.remote.refresh()
 
         if isinstance(response, HttpError):
             transaction.extras["status_class"] = "ERR"
@@ -351,3 +357,10 @@ class HttpProxyController:
 
     def __repr__(self):
         return f"{type(self).__name__}({self.remote!r}, name={self.name!r})"
+
+
+@lru_cache
+def _get_base_network_error_type(exc_type):
+    for _type in NETWORK_ERRORS:
+        if issubclass(exc_type, _type):
+            return _type

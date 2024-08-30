@@ -38,9 +38,12 @@ Table of Content
    /operate/index
    /develop/index
    /contribute/index
+   /core/index
    /apps/index
    /reference/index
+   /changelogs/index
    /faq
+   /glossary
 
 
 Indices and tables

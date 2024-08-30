@@ -7,7 +7,6 @@ from whistle import AsyncEventDispatcher, IAsyncEventDispatcher
 
 from harp.asgi.events import EVENT_CORE_RESPONSE, ResponseEvent
 from harp.http import HttpRequest, HttpResponse
-from harp.http.tests.stubs import HttpRequestStubBridge
 from harp_apps.notifications.settings import NotificationsSettings
 from harp_apps.notifications.subscriber import NotificationSubscriber
 
@@ -46,9 +45,7 @@ async def test_send_one_notification_per_sender():
 )
 @respx.mock
 async def test_notification_subscriber(status_code, reason_phrase):
-    request = HttpRequest(
-        HttpRequestStubBridge(), extensions={"remote_url": "http://example.com", "remote_method": "GET"}
-    )
+    request = HttpRequest(extensions={"remote_url": "http://example.com", "remote_method": "GET"})
     response = HttpResponse(b"", status=status_code)
     event = ResponseEvent(request, response)
     dispatcher = cast(IAsyncEventDispatcher, AsyncEventDispatcher())
