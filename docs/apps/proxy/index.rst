@@ -67,3 +67,4 @@ Table of Content
     :maxdepth: 1
 
     events
+    settings
