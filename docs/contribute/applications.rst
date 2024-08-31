@@ -73,6 +73,7 @@ All hooks are python coroutines, taking a specific :class:`whistle.Event` instan
 Hooks must be registered in the application definition.
 
 
+.. _on_bind:
 On Bind
 -------
 
@@ -93,6 +94,7 @@ Triggered during system setup but before service instances are created. Ideal fo
 Reference: :class:`harp.config.OnBindEvent`
 
 
+.. _on_bound:
 On Bound
 --------
 
@@ -113,6 +115,7 @@ Occurs when the system can instantiate services. Use this to access and manipula
 Reference: :class:`harp.config.OnBoundEvent`
 
 
+.. _on_ready:
 On Ready
 --------
 
@@ -133,6 +136,7 @@ Called when the system starts, after all services are ready. A good place to add
 Reference: :class:`harp.config.OnReadyEvent`
 
 
+.. _on_shutdown:
 On Shutdown
 -----------
 

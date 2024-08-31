@@ -3,6 +3,10 @@ Events
 
 HARP Core dispatches a few events.
 
+Class Diagram
+:::::::::::::
+
+
 Configuration Events
 ::::::::::::::::::::
 
@@ -13,34 +17,106 @@ components to register themselves with the system.
 
 You can add listeners to those events using the :doc:`Application Protocol </contribute/applications>`.
 
-* :attr:`EVENT_BIND` is dispatched by :meth:`SystemBuilder.dispatch_bind_event(...)
-  <harp.config.builders.system.SystemBuilder.dispatch_bind_event>` during the assembly of core components, during the
-  process setup.
 
-  It happens after the configuration, dispatcher and container have been created and is a good place to load service
-  definitions.
+EVENT_BIND
+----------
 
-  It is dispatched with a :class:`OnBindEvent` instance.
+Dispatched by :meth:`SystemBuilder.dispatch_bind_event(...)
+<harp.config.builders.system.SystemBuilder.dispatch_bind_event>` during the assembly of core components on startup.
 
-* :attr:`EVENT_BOUND` is dispatched by :meth:`SystemBuilder.dispatch_bound_event(...)
-  <harp.config.builders.system.SystemBuilder.dispatch_bound_event>` after the container has been compiled to a provider,
-  meaning that all service dependencies are resolved and thus instances can be requested.
+.. code:: python
 
-  It is dispatched with a :class:`OnBoundEvent` instance.
+    from harp.config.events import EVENT_BIND, OnBindEvent
+    from whistle import IAsyncEventDispatcher
 
-* :attr:`EVENT_READY` is dispatched by :meth:`SystemBuilder.dispatch_ready_event(...)
-  <harp.config.builders.system.SystemBuilder.dispatch_ready_event>` after the system has been fully assembled and is
-  ready to start processing requests.
+    async def on_bind(event: OnBindEvent):
+        print("System is being bound")
 
-  The :class:`ASGI Kernel <harp.asgi.ASGIKernel>` is available here, and this event is mostly used to replace it by a
-  decorated version using ASGI middlewares that must run at a very low level (for example, Sentry integration).
+    if __name__ == "__main__":
+        # for example completeness only, you should use the system dispatcher
+        dispatcher: IAsyncEventDispatcher = ...
+        dispatcher.add_listener(EVENT_BIND, on_bind)
 
-  It is dispatched with a :class:`OnReadyEvent` instance.
+Dispatched as :attr:`EVENT_BIND` with a :class:`OnBindEvent` instance, its main purpose is to allow applications to
+:ref:`define services on startup <on_bind>`.
 
-* :attr:`EVENT_SHUTDOWN` is dispatched by :meth:`System.dispose(...)
-  <harp.config.builders.system.System.dispose>` when the system is about to be shut down.
 
-  It is dispatched with a :class:`OnShutdownEvent` instance.
+EVENT_BOUND
+-----------
+
+Dispatched by :meth:`SystemBuilder.dispatch_bound_event(...)
+<harp.config.builders.system.SystemBuilder.dispatch_bound_event>` after the container has been compiled to a provider.
+All service dependencies are resolved, instances can be requested from the provider.
+
+.. code:: python
+
+    from harp.config.events import EVENT_BOUND, OnBoundEvent
+    from whistle import IAsyncEventDispatcher
+
+    async def on_bound(event: OnBoundEvent):
+        print("System is bound")
+
+    if __name__ == "__main__":
+        # for example completeness only, you should use the system dispatcher
+        dispatcher: IAsyncEventDispatcher = ...
+        dispatcher.add_listener(EVENT_BOUND, on_bound)
+
+Dispatched as :attr:`EVENT_BOUND` with a :class:`OnBoundEvent` instance, its main purpose is to allow applications to
+:ref:`instanciate and manipulate live services on startup <on_bound>`.
+
+
+EVENT_READY
+-----------
+
+Dispatched by :meth:`SystemBuilder.dispatch_ready_event(...)
+<harp.config.builders.system.SystemBuilder.dispatch_ready_event>` after the system has been fully assembled and is
+(about to be) ready to start processing requests.
+
+.. code:: python
+
+    from harp.config.events import EVENT_READY, OnReadyEvent
+    from whistle import IAsyncEventDispatcher
+
+    async def on_ready(event: OnReadyEvent):
+        print("System is ready")
+
+    if __name__ == "__main__":
+        # for example completeness only, you should use the system dispatcher
+        dispatcher: IAsyncEventDispatcher = ...
+        dispatcher.add_listener(EVENT_READY, on_ready)
+
+Dispatched as :attr:`EVENT_READY` with a :class:`OnReadyEvent` instance.
+
+The :class:`ASGI Kernel <harp.asgi.ASGIKernel>` is available here, and this event is mostly used to
+:ref:`decorate it with ASGI middlewares <on_ready>` (for example, Sentry integration).
+
+EVENT_SHUTDOWN
+--------------
+
+Dispatched by :meth:`System.dispose(...) <harp.config.builders.system.System.dispose>` when the system is being shut
+down.
+
+.. code:: python
+
+    from harp.config.events import EVENT_SHUTDOWN, OnShutdownEvent
+    from whistle import IAsyncEventDispatcher
+
+    async def on_shutdown(event: OnShutdownEvent):
+        print("System is shutting down")
+
+    if __name__ == "__main__":
+        # for example completeness only, you should use the system dispatcher
+        dispatcher: IAsyncEventDispatcher = ...
+        dispatcher.add_listener(EVENT_SHUTDOWN, on_shutdown)
+
+Dispatched as :attr:`EVENT_SHUTDOWN` with a :class:`OnShutdown` instance. This event purpose is to allow applications to
+:ref:`clean up resources on shutdown <on_shutdown>`.
+
+
+Class Diagram
+-------------
+
+.. graphviz:: events.config.dot
 
 
 ASGI Events

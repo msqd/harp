@@ -22,6 +22,8 @@ if os.environ.get("READTHEDOCS_GIT_IDENTIFIER"):
 else:
     version = release = ".".join(__import__("harp").__hardcoded_version__.split(".")[0:2])
 
+
+ALGOLIA_APIKEY = os.getenv("ALGOLIA_APIKEY")
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
@@ -39,6 +41,8 @@ extensions = [
     "sphinx_click",
     "docs._extensions.services",
 ]
+if ALGOLIA_APIKEY:
+    extensions.append("sphinx_docsearch")
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -55,7 +59,7 @@ html_theme_options = {
 html_favicon = "favicon.ico"
 html_js_files = ["js/links-target-blank.js"]
 html_css_files = ["css/harp.css"]
-html_baseurl = "https://docs.harp-proxy.net/en/latest/"
+html_baseurl = "https://docs.harp-proxy.net/"
 
 html_sidebars = {
     "**": [
@@ -89,6 +93,11 @@ intersphinx_mapping = {
     "whistle": ("https://python-whistle.readthedocs.io/latest", None),
     "redis": ("https://redis-py.readthedocs.io/en/stable", None),
 }
+
+if ALGOLIA_APIKEY:
+    docsearch_app_id = "ZPR2CBYLG3"
+    docsearch_api_key = ALGOLIA_APIKEY
+    docsearch_index_name = "harp-proxy"
 
 rst_prolog = (
     """
