@@ -1,7 +1,7 @@
 from functools import wraps
 from typing import Generic, TypeVar
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase
@@ -48,6 +48,9 @@ class Repository(Generic[TRow]):
 
     def count(self):
         return select(func.count()).select_from(self.Type)
+
+    def update(self):
+        return update(self.Type)
 
     @with_session
     async def find_one(self, values: dict, /, session, **select_kwargs) -> TRow:
