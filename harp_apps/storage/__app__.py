@@ -47,7 +47,11 @@ async def on_bind(event: OnBindEvent):
     database_url = make_url(str(settings.url))
 
     if database_url.get_dialect() == "sqlite" and database_url.database == ":memory:":
-        engine = create_async_engine(database_url, connect_args={"check_same_thread": False}, poolclass=StaticPool)
+        engine = create_async_engine(
+            database_url,
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
     else:
         engine = create_async_engine(database_url)
 

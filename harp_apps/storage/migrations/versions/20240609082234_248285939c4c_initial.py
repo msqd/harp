@@ -24,7 +24,12 @@ def upgrade() -> None:
         sa.Column("id", sa.String(length=40), nullable=False),
         sa.Column("data", sa.LargeBinary(), nullable=True),
         sa.Column("content_type", sa.String(length=64), nullable=True),
-        sa.Column("created_at", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("id"),
     )
@@ -64,7 +69,12 @@ def upgrade() -> None:
     op.create_index(op.f("ix_transactions_started_at"), "transactions", ["started_at"], unique=False)
     op.create_index(op.f("ix_transactions_type"), "transactions", ["type"], unique=False)
     op.create_index(op.f("ix_transactions_x_method"), "transactions", ["x_method"], unique=False)
-    op.create_index(op.f("ix_transactions_x_status_class"), "transactions", ["x_status_class"], unique=False)
+    op.create_index(
+        op.f("ix_transactions_x_status_class"),
+        "transactions",
+        ["x_status_class"],
+        unique=False,
+    )
     op.create_table(
         "users",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
@@ -89,7 +99,12 @@ def upgrade() -> None:
     op.create_table(
         "metric_values",
         sa.Column("metric_id", sa.Integer(), nullable=False),
-        sa.Column("created_at", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.TIMESTAMP(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.Column("value", sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(
             ["metric_id"],

@@ -83,7 +83,12 @@ class HttpResponse(BaseHttpMessage):
 
 class JsonHttpResponse(HttpResponse):
     def __init__(self, body: dict, /, *, status: int = 200, headers: dict = None):
-        super().__init__(orjson.dumps(body), status=status, headers=headers, content_type="application/json")
+        super().__init__(
+            orjson.dumps(body),
+            status=status,
+            headers=headers,
+            content_type="application/json",
+        )
 
 
 class AlreadyHandledHttpResponse(HttpResponse):

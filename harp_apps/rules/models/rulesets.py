@@ -31,7 +31,11 @@ def _rules_as_human_dict(rules: dict, *, show_scripts=True):
 
 
 def _recursive_len(rules: dict):
-    return reduce(lambda x, y: x + _recursive_len(y[1]) if hasattr(y[1], "items") else x + 1, rules.items(), 0)
+    return reduce(
+        lambda x, y: x + _recursive_len(y[1]) if hasattr(y[1], "items") else x + 1,
+        rules.items(),
+        0,
+    )
 
 
 class BaseRuleSet:

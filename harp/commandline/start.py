@@ -29,11 +29,23 @@ def assert_development_packages_are_available():
     short_help="Starts the local development environment.",
     help=f"""Starts the local development environment, using honcho to spawn a configurable set of processes that you
     can adapt to your needs. By default, it will starts the `dashboard` (frontend dev server) and `server` (python
-    server) processes. For live instances, you'll prefer {code('harp server')}.""",
+    server) processes. For live instances, you'll prefer {code("harp server")}.""",
 )
-@click.option("--with-docs/--no-docs", default=False, help="Append the sphinx doc process to the process list.")
-@click.option("--with-ui/--no-ui", default=False, help="Append the storybook process to the process list.")
-@click.option("--mock", is_flag=True, help="Enable mock data instead of real api data (dashboard only).")
+@click.option(
+    "--with-docs/--no-docs",
+    default=False,
+    help="Append the sphinx doc process to the process list.",
+)
+@click.option(
+    "--with-ui/--no-ui",
+    default=False,
+    help="Append the storybook process to the process list.",
+)
+@click.option(
+    "--mock",
+    is_flag=True,
+    help="Enable mock data instead of real api data (dashboard only).",
+)
 @click.option(
     "--server-subprocess",
     "-XS",

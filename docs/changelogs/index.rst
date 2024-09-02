@@ -4,6 +4,7 @@ Changelogs & History
 .. toctree::
     :maxdepth: 1
 
+    unreleased
     0.6.0
     0.5.1
     0.5.0

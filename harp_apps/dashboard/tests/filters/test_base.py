@@ -23,7 +23,10 @@ class TestAbstractMinMaxFacet:
         self.facet.name = "test"
         query = MultiDict({"testmin": "10", "testmax": "90"})
         result = self.facet.filter_from_query(query)
-        assert result == {"values": ["min", "max"], "current": {"min": 10.0, "max": 90.0}}
+        assert result == {
+            "values": ["min", "max"],
+            "current": {"min": 10.0, "max": 90.0},
+        }
 
     def test_get_filter(self):
         result = self.facet.get_filter(10, 90)

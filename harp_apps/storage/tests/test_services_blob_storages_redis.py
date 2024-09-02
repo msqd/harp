@@ -57,7 +57,11 @@ class TestRedisBlobStorageServiceDefaults(SystemTestMixin):
     async def test_load_redis_blob_storage_service(self, system):
         redis = system.provider.get("storage.redis")
         assert isinstance(redis, Redis)
-        assert redis.connection_pool.connection_kwargs == {"db": 0, "host": "localhost", "port": 6379}
+        assert redis.connection_pool.connection_kwargs == {
+            "db": 0,
+            "host": "localhost",
+            "port": 6379,
+        }
         assert system.provider.get("storage.blobs")
 
 
@@ -77,7 +81,11 @@ class TestRedisBlobStorageServiceCustom(SystemTestMixin):
     async def test_load_redis_blob_storage_service(self, system):
         redis = system.provider.get("storage.redis")
         assert isinstance(redis, Redis)
-        assert redis.connection_pool.connection_kwargs == {"db": 1, "host": "redis.example.com", "port": 1234}
+        assert redis.connection_pool.connection_kwargs == {
+            "db": 1,
+            "host": "redis.example.com",
+            "port": 1234,
+        }
         assert system.provider.get("storage.blobs")
 
 

@@ -57,7 +57,10 @@ class ProxyControllerResolver(DefaultControllerResolver):
 
         self._endpoints[endpoint.settings.name] = endpoint
         controller = HttpProxyController(
-            endpoint.remote, dispatcher=dispatcher, http_client=http_client, name=endpoint.settings.name
+            endpoint.remote,
+            dispatcher=dispatcher,
+            http_client=http_client,
+            name=endpoint.settings.name,
         )
         self._ports[endpoint.settings.port] = controller
         logger.info(f"🏭 Map: *:{endpoint.settings.port} -> {controller}")

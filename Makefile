@@ -116,8 +116,8 @@ qa-nofront:
 	TEST_SKIP_FRONT=1 $(MAKE) qa
 
 types:  ## Generates frontend types from the python code.
-	$(RUN) bin/generate_types
-	$(RUN) bin/generate_ts_types
+	$(RUN) bin/generate_types # old school
+	$(RUN) bin/generate_ts_types # new school
 
 format:  ## Formats the full codebase (backend and frontend).
 	$(MAKE) format-backend

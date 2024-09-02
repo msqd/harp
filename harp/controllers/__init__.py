@@ -9,6 +9,7 @@ Example usage:
 
     from harp.controllers import RoutingController, GetHandler
 
+
     class MyController(RoutingController):
         @GetHandler("/")
         async def index(self):

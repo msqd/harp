@@ -17,7 +17,12 @@ class ServiceResolver:
     service: ServiceDefinition
     lifestyle: ServiceLifeStyle
 
-    def __init__(self, container: Container, service: ServiceDefinition, lifestyle: ServiceLifeStyle):
+    def __init__(
+        self,
+        container: Container,
+        service: ServiceDefinition,
+        lifestyle: ServiceLifeStyle,
+    ):
         self.container = container
         self.service = service
         self.lifestyle = lifestyle
@@ -127,7 +132,13 @@ class ServiceResolver:
             else:
                 kwargs[_name] = _value
 
-        return ServiceProvider(concrete_type, self.constructor, args=args, kwargs=kwargs, lifestyle=self.lifestyle)
+        return ServiceProvider(
+            concrete_type,
+            self.constructor,
+            args=args,
+            kwargs=kwargs,
+            lifestyle=self.lifestyle,
+        )
 
     def __repr__(self):
         return f"<{type(self).__name__} for {self.base_type.__name__}>"

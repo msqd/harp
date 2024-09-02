@@ -67,12 +67,12 @@ class ResponseEvent(RequestEvent):
 EVENT_CORE_RESPONSE = ResponseEvent.name
 
 
-class ControllerViewEvent(RequestEvent):
+class ViewEvent(RequestEvent):
     """
     The view event allows to transform controller return values into response objects.
     """
 
-    name = "controller.view"
+    name = "core.view"
 
     value: Any
     response: Optional["HttpResponse"]
@@ -90,4 +90,4 @@ class ControllerViewEvent(RequestEvent):
 
 #: Event fired when the ASGI Kernel has called the resolved controller but got a non-HttpResponse return value, to allow
 #: transforming it into a response.
-EVENT_CONTROLLER_VIEW = ControllerViewEvent.name
+EVENT_CORE_VIEW = ViewEvent.name

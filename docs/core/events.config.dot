@@ -1,8 +1,0 @@
-digraph "classes" {
-rankdir=BT
-charset="utf-8"
-"harp.config.events.OnBindEvent" [color="black", fontcolor="black", label=<{OnBindEvent|container : Container<br ALIGN="LEFT"/>name : str<br ALIGN="LEFT"/>settings : GlobalSettings<br ALIGN="LEFT"/>|}>, shape="record", style="solid"];
-"harp.config.events.OnBoundEvent" [color="black", fontcolor="black", label=<{OnBoundEvent|name : str<br ALIGN="LEFT"/>provider : Services<br ALIGN="LEFT"/>resolver : str<br ALIGN="LEFT"/>|}>, shape="record", style="solid"];
-"harp.config.events.OnReadyEvent" [color="black", fontcolor="black", label=<{OnReadyEvent|binds : list[Bind]<br ALIGN="LEFT"/>kernel : ASGIKernel<br ALIGN="LEFT"/>name : str<br ALIGN="LEFT"/>provider : Services<br ALIGN="LEFT"/>|}>, shape="record", style="solid"];
-"harp.config.events.OnShutdownEvent" [color="black", fontcolor="black", label=<{OnShutdownEvent|kernel : ASGIKernel<br ALIGN="LEFT"/>name : str<br ALIGN="LEFT"/>provider : Services<br ALIGN="LEFT"/>|}>, shape="record", style="solid"];
-}

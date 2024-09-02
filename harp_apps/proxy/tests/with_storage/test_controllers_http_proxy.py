@@ -40,7 +40,14 @@ class HttpProxyControllerTestFixtureMixin(ControllerTestFixtureMixin):
         will be called and you may have some headaches..."""
         return respx.get(url).mock(return_value=Response(status, content=ensure_bytes(content)))
 
-    def create_controller(self, url=None, *args, dispatcher: IAsyncEventDispatcher, http_client=None, **kwargs):
+    def create_controller(
+        self,
+        url=None,
+        *args,
+        dispatcher: IAsyncEventDispatcher,
+        http_client=None,
+        **kwargs,
+    ):
         return super().create_controller(
             Remote.from_settings_dict({"endpoints": [{"url": url or "http://example.com/"}]}),
             *args,
@@ -147,7 +154,11 @@ class TestHttpProxyControllerWithStorage(
         self.mock_http_endpoint("http://example.com/", content="Hello.")
 
         # register the storage
-        await self.call_controller(engine=sql_storage.engine, sql_storage=sql_storage, blob_storage=blob_storage)
+        await self.call_controller(
+            engine=sql_storage.engine,
+            sql_storage=sql_storage,
+            blob_storage=blob_storage,
+        )
 
         transaction, request, response = await self._find_one_transaction_with_messages_from_storage(sql_storage)
         assert asdict(transaction) == {
@@ -160,7 +171,13 @@ class TestHttpProxyControllerWithStorage(
             "finished_at": ANY,
             "messages": ANY,
             "tags": {},
-            "extras": {"flags": [], "method": "GET", "status_class": "2xx", "cached": False, "no_cache": False},
+            "extras": {
+                "flags": [],
+                "method": "GET",
+                "status_class": "2xx",
+                "cached": False,
+                "no_cache": False,
+            },
         }
 
         # request
@@ -221,7 +238,13 @@ class TestHttpProxyControllerWithStorage(
             "finished_at": ANY,
             "messages": ANY,
             "tags": {"foo": "bar"},
-            "extras": {"flags": [], "method": "GET", "status_class": "2xx", "cached": False, "no_cache": False},
+            "extras": {
+                "flags": [],
+                "method": "GET",
+                "status_class": "2xx",
+                "cached": False,
+                "no_cache": False,
+            },
         }
 
         request_headers = await blob_storage.get(request.headers)

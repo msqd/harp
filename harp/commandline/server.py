@@ -20,7 +20,11 @@ def server(**kwargs):
     if USE_PROMETHEUS:
         from prometheus_client import Enum
 
-        _info = Enum("harp", "HARP status information.", states=["setup", "up", "teardown", "down"])
+        _info = Enum(
+            "harp",
+            "HARP status information.",
+            states=["setup", "up", "teardown", "down"],
+        )
         _info.state("setup")
 
     builder = ConfigurationBuilder.from_commandline_options(CommonServerOptions(**kwargs))

@@ -18,15 +18,27 @@ def lint_command(files, examples, options):
     rules_tree = Tree(":shuffle_tracks_button: Rules")
     for endpoint_pattern, endpoint_rules in ruleset.rules.items():
         endpoint_tree = rules_tree.add(
-            Syntax("endpoint LIKE " + repr(endpoint_pattern.source), "sql", background_color="default")
+            Syntax(
+                "endpoint LIKE " + repr(endpoint_pattern.source),
+                "sql",
+                background_color="default",
+            )
         )
         for request_pattern, request_rules in endpoint_rules.items():
             request_tree = endpoint_tree.add(
-                Syntax("request LIKE " + repr(request_pattern.source), "sql", background_color="default")
+                Syntax(
+                    "request LIKE " + repr(request_pattern.source),
+                    "sql",
+                    background_color="default",
+                )
             )
             for event_pattern, scripts in request_rules.items():
                 event_tree = request_tree.add(
-                    Syntax("event LIKE " + repr(event_pattern.source), "sql", background_color="default")
+                    Syntax(
+                        "event LIKE " + repr(event_pattern.source),
+                        "sql",
+                        background_color="default",
+                    )
                 )
                 event_tree.add(
                     Syntax(

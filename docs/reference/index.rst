@@ -1,5 +1,5 @@
-Reference
-=========
+Misc. Reference
+===============
 
 .. toctree::
     :maxdepth: 2

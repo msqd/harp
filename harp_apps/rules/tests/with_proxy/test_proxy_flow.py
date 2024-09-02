@@ -11,7 +11,8 @@ class TestProxyRulesFlow(BaseRulesFlowTest):
     async def test_proxy_flow(self, httpbin):
         mock = Mock()
         system = await self.create_system(
-            {"proxy": {"endpoints": [{"name": "httpbin", "port": 80, "url": httpbin}]}}, mock=mock
+            {"proxy": {"endpoints": [{"name": "httpbin", "port": 80, "url": httpbin}]}},
+            mock=mock,
         )
 
         client = ASGICommunicator(system.kernel)

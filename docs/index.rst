@@ -40,6 +40,7 @@ Table of Content
    /contribute/index
    /core/index
    /apps/index
+   /config/index
    /reference/index
    /changelogs/index
    /faq

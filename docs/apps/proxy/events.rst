@@ -1,7 +1,7 @@
 Events
 ======
 
-The ``procy`` application dispatches event arount the lifecycle of transactions and their associated messages (incoming
+The ``proxy`` application dispatches event arount the lifecycle of transactions and their associated messages (incoming
 requests, outgoing responses, etc.).
 
 Proxy Events

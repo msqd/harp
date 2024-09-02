@@ -134,7 +134,11 @@ class TestHttpRequestCookies(BaseHttpRequestTest):
 
     def test_cookies_basics(self):
         request = self.create_request(headers={"cookie": "name=value; name2=value2; name3=value3"})
-        assert request.cookies == {"name": "value", "name2": "value2", "name3": "value3"}
+        assert request.cookies == {
+            "name": "value",
+            "name2": "value2",
+            "name3": "value3",
+        }
 
     def test_cookies_more(self):
         request = self.create_request(

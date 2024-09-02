@@ -82,7 +82,7 @@ else:
         short_help="Starts the local development environment.",
         help=f"""Starts the local development environment, using honcho to spawn a configurable set of processes that you
         can adapt to your needs. By default, it will starts the `dashboard` (frontend dev server) and `server` (python
-        server) processes. For live instances, you'll prefer {code('harp server')}.""",
+        server) processes. For live instances, you'll prefer {code("harp server")}.""",
     )
     def start(*args, **kwargs):
         raise NotImplementedError(

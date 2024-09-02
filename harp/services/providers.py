@@ -52,7 +52,10 @@ class ServiceProvider:
             return arg
 
         try:
-            return sig.bind(*(_resolve(v) for v in self._args), **{k: _resolve(v) for k, v in self._kwargs.items()})
+            return sig.bind(
+                *(_resolve(v) for v in self._args),
+                **{k: _resolve(v) for k, v in self._kwargs.items()},
+            )
         except TypeError as exc:
             raise TypeError(f"Error resolving arguments for {self._type.__name__}: {exc}") from exc
 

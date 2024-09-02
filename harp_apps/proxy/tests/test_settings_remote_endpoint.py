@@ -48,7 +48,11 @@ class TestRemoteEndpointSettings(BaseConfigurableTest):
         assert errors[0]["msg"] == "Value error, Invalid pool names: invalid."
 
     def test_valid_thresholds(self):
-        valid_data = {"url": "http://example.com", "failure_threshold": 3, "success_threshold": 5}
+        valid_data = {
+            "url": "http://example.com",
+            "failure_threshold": 3,
+            "success_threshold": 5,
+        }
         settings = RemoteEndpointSettings(**valid_data)
         assert settings.failure_threshold == 3
         assert settings.success_threshold == 5
@@ -82,7 +86,12 @@ class TestRemoteEndpointStateful(BaseConfigurableTest):
     type = RemoteEndpoint
     initial = {"settings": TestRemoteEndpointSettings.initial}
     expected = {
-        "settings": {"failure_threshold": 1, "pools": ["default"], "success_threshold": 1, "url": "http://example.com/"}
+        "settings": {
+            "failure_threshold": 1,
+            "pools": ["default"],
+            "success_threshold": 1,
+            "url": "http://example.com/",
+        }
     }
     expected_verbose = {
         "settings": TestRemoteEndpointSettings.expected_verbose,

@@ -196,7 +196,10 @@ class SqlStorage(IStorage):
 
                 def _instrumented_execute(statement, *args, **kwargs):
                     sql_query = str(
-                        statement.compile(session.sync_session.bind, compile_kwargs={"literal_binds": True})
+                        statement.compile(
+                            session.sync_session.bind,
+                            compile_kwargs={"literal_binds": True},
+                        )
                     )
                     self.sql_queries.append(sql_query)
 
@@ -219,7 +222,10 @@ class SqlStorage(IStorage):
                         _console.print(
                             Syntax(
                                 "\n".join(
-                                    map(_get0, original_execute(text("EXPLAIN ANALYZE " + sql_query)).fetchall())
+                                    map(
+                                        _get0,
+                                        original_execute(text("EXPLAIN ANALYZE " + sql_query)).fetchall(),
+                                    )
                                 ),
                                 "sql",
                                 word_wrap=True,
@@ -355,7 +361,13 @@ class SqlStorage(IStorage):
             func.sum(case((SqlTransaction.x_status_class.in_(("5xx", "ERR")), 1), else_=0)),
             func.sum(
                 case(
-                    (and_(SqlTransaction.x_cached is not None, SqlTransaction.x_cached != ""), 1),
+                    (
+                        and_(
+                            SqlTransaction.x_cached is not None,
+                            SqlTransaction.x_cached != "",
+                        ),
+                        1,
+                    ),
                     else_=0,
                 )
             ),
@@ -413,7 +425,8 @@ class SqlStorage(IStorage):
             else:
                 await session.execute(
                     delete(SqlUserFlag).where(
-                        SqlUserFlag.transaction_id == transaction.id, SqlUserFlag.user_id == user.id
+                        SqlUserFlag.transaction_id == transaction.id,
+                        SqlUserFlag.user_id == user.id,
                     )
                 )
 

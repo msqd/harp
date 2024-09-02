@@ -1,5 +1,5 @@
-Built-in Applications
-=====================
+Applications Reference
+======================
 
 .. toctree::
     :maxdepth: 1

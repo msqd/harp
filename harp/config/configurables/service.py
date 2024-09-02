@@ -41,4 +41,8 @@ class Service(BaseConfigurable):
             if k in data and data[k] is None:
                 data.pop(k)
 
-        return {**data, **({"arguments": arguments} if len(arguments) else {}), **inline_arguments}
+        return {
+            **data,
+            **({"arguments": arguments} if len(arguments) else {}),
+            **inline_arguments,
+        }

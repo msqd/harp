@@ -26,7 +26,14 @@ EVENT_FILTER_PROXY_RESPONSE = "proxy.filter.response"
 
 
 class ProxyFilterEvent(Event):
-    def __init__(self, endpoint: str, /, *, request: HttpRequest, response: Optional[HttpResponse] = None):
+    def __init__(
+        self,
+        endpoint: str,
+        /,
+        *,
+        request: HttpRequest,
+        response: Optional[HttpResponse] = None,
+    ):
         self.endpoint = endpoint
         self.request = request
         self.response = response

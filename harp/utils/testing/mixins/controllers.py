@@ -57,7 +57,10 @@ class ControllerTestFixtureMixin:
 class ControllerThroughASGIFixtureMixin(ControllerTestFixtureMixin):
     @pytest.fixture
     def kernel(self, controller):
-        kernel = ASGIKernel(resolver=DefaultControllerResolver(default_controller=controller), handle_errors=False)
+        kernel = ASGIKernel(
+            resolver=DefaultControllerResolver(default_controller=controller),
+            handle_errors=False,
+        )
         register_json_views(kernel.dispatcher)
         return kernel
 

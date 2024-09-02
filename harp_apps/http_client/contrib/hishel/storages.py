@@ -28,7 +28,13 @@ class AsyncStorage(AsyncBaseStorage):
         self._impl = AsyncStorageAdapter(storage)
         self._storage = storage
 
-    async def store(self, key: str, response: Response, request: Request, metadata: Metadata | None = None) -> None:
+    async def store(
+        self,
+        key: str,
+        response: Response,
+        request: Request,
+        metadata: Metadata | None = None,
+    ) -> None:
         # XXX this looks like the wrong place to do it, but hishel depends on this behaviour. Let's mimic the other
         #  storages, for now.
         metadata = metadata or Metadata(cache_key=key, created_at=datetime.now(timezone.utc), number_of_uses=0)

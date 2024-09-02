@@ -23,7 +23,12 @@ class TestStorageApplication(BaseTestForApplications):
             [{"url": "sqlite+aiosqlite:///harp.db"}],
             [{"migrate": True}],
             [{"migrate": False}],
-            [{"blobs": {"type": "redis"}, "redis": {"url": "redis://localhost:6379/1"}}],
+            [
+                {
+                    "blobs": {"type": "redis"},
+                    "redis": {"url": "redis://localhost:6379/1"},
+                }
+            ],
         ],
     )
     def test_defaults_fills_missing_values_for_sqlalchemy_type(self, settings: dict):

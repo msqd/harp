@@ -31,7 +31,12 @@ async def run_cli_migrate_command(url: Union[str | URL | Url | MultiHostUrl], /,
         cli = CliRunner()
         return cli.invoke(
             migrations.migrate,
-            [operation, revision, "--set", "storage.url=" + url.render_as_string(hide_password=False)],
+            [
+                operation,
+                revision,
+                "--set",
+                "storage.url=" + url.render_as_string(hide_password=False),
+            ],
         )
 
     with ThreadPoolExecutor() as executor:

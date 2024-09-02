@@ -153,7 +153,10 @@ class TestHttpRequestAsgiBridgeHeaders(BaseHttpRequestAsgiBridgeTest):
 
     def test_get_headers(self):
         bridge = self.create_bridge(headers=[(b"content-type", b"application/json"), (b"content-length", b"42")])
-        assert bridge.get_headers() == {"content-type": "application/json", "content-length": "42"}
+        assert bridge.get_headers() == {
+            "content-type": "application/json",
+            "content-length": "42",
+        }
 
 
 class TestHttpRequestAsgiBridgeBody(BaseHttpRequestAsgiBridgeTest):

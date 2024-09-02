@@ -25,6 +25,7 @@ Changed
   and state-related things are moved to wrappers. The new ``harp.config.Configurable`` base class is now used for all
   settings classes, and a new ``harp.config.Stateful`` allows to define settings wrappers for stateful objects.
 * Config: Redis configuration is now separated from blob storage, as it may be used by much more than just blobs.
+* Core: ``EVENT_CONTROLLER_VIEW`` event has been renamed to ``EVENT_CORE_VIEW`` for consistency with other event names.
 * Core/Http: Removed WrappedHttpRequest, inner HttpRequests can now be accessed directly.
 * Core/Http: HttpRequest can now be instanciated without an explicit implementation. If no implementation is provided,
   then the kwargs data is passed to a stub implementation, allowing a simpler way to create requests (in tests, for

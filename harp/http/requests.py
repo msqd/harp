@@ -12,7 +12,13 @@ from .utils.cookies import parse_cookie
 class HttpRequest(BaseHttpMessage):
     kind = "request"
 
-    def __init__(self, impl: Optional[HttpRequestBridge] = None, *, extensions: Optional[dict] = None, **kwargs):
+    def __init__(
+        self,
+        impl: Optional[HttpRequestBridge] = None,
+        *,
+        extensions: Optional[dict] = None,
+        **kwargs,
+    ):
         super().__init__(extensions=extensions)
 
         if impl is None:

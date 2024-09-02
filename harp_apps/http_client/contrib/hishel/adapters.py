@@ -86,11 +86,21 @@ class AsyncStorageAdapter:
 
     async def _decode(self, cached):
         cached = yaml.safe_load(cached.data.decode())
-        request_data, response_data, raw_metadata = cached["request"], cached["response"], cached["metadata"]
+        request_data, response_data, raw_metadata = (
+            cached["request"],
+            cached["response"],
+            cached["metadata"],
+        )
         return raw_metadata, request_data, response_data
 
     async def _store_cache_meta(
-        self, key, /, *, metadata: Metadata, request: SerializedRequest, response: SerializedResponse
+        self,
+        key,
+        /,
+        *,
+        metadata: Metadata,
+        request: SerializedRequest,
+        response: SerializedResponse,
     ):
         # This is a special case where we don't want this to be content adressable. This is probably not very good, but
         # with hishel's current design, it's the only decent way to make it work that we found. Maybe we want to change

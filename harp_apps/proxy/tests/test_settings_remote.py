@@ -61,7 +61,11 @@ class TestRemoteStateful(BaseConfigurableTest):
     expected = {
         "current_pool": [],
         "endpoints": [],
-        "settings": {"break_on": ["network_error", "unhandled_exception"], "check_after": 10.0, "min_pool_size": 1},
+        "settings": {
+            "break_on": ["network_error", "unhandled_exception"],
+            "check_after": 10.0,
+            "min_pool_size": 1,
+        },
     }
 
     expected_verbose = {
@@ -69,7 +73,11 @@ class TestRemoteStateful(BaseConfigurableTest):
         "current_pool_name": "default",
         "endpoints": [],
         "probe": None,
-        "settings": {"break_on": ["network_error", "unhandled_exception"], "check_after": 10.0, "min_pool_size": 1},
+        "settings": {
+            "break_on": ["network_error", "unhandled_exception"],
+            "check_after": 10.0,
+            "min_pool_size": 1,
+        },
     }
 
     def test_remote_round_robin(self):

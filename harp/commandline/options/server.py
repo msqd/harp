@@ -104,7 +104,7 @@ def add_harp_server_click_options(f):
             "--endpoint",
             "endpoints",
             multiple=True,
-            help=f"""Add an endpoint (e.g. {code('--endpoint httpbin=4000:http://httpbin.org/')}, can be used multiple
+            help=f"""Add an endpoint (e.g. {code("--endpoint httpbin=4000:http://httpbin.org/")}, can be used multiple
             times).""",
         ),
         click.option(

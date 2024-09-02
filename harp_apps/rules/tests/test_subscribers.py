@@ -35,7 +35,11 @@ async def _dispatch_http_client_filter_event(dispatcher, endpoint, event_name) -
         dispatcher,
         event_name,
         HttpClientFilterEvent(
-            httpx.Request("GET", "http://example.com/", extensions={"harp": {"endpoint": endpoint}}),
+            httpx.Request(
+                "GET",
+                "http://example.com/",
+                extensions={"harp": {"endpoint": endpoint}},
+            ),
         ),
     )
 

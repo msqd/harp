@@ -86,7 +86,7 @@ class OverviewController(RoutingController):
                     "data": [
                         {
                             "datetime": t["datetime"],
-                            "value": int(t["meanTpdex"]) if t["meanTpdex"] is not None else 100,
+                            "value": (int(t["meanTpdex"]) if t["meanTpdex"] is not None else 100),
                         }
                         for t in transactions_by_date_list
                     ],
@@ -107,7 +107,9 @@ class OverviewController(RoutingController):
         start_datetime = get_start_datetime_from_range(range)
 
         transactions_by_date_list = await self.storage.transactions_grouped_by_time_bucket(
-            endpoint=endpoint, start_datetime=start_datetime, time_bucket=time_bucket
+            endpoint=endpoint,
+            start_datetime=start_datetime,
+            time_bucket=time_bucket,
         )
         errors_count = sum([t["errors"] for t in transactions_by_date_list])
         transactions_count = sum([t["count"] for t in transactions_by_date_list])
@@ -118,7 +120,9 @@ class OverviewController(RoutingController):
             else 0
         )
         transactions_by_date_list = generate_continuous_time_range(
-            discontinuous_transactions=transactions_by_date_list, time_bucket=time_bucket, start_datetime=start_datetime
+            discontinuous_transactions=transactions_by_date_list,
+            time_bucket=time_bucket,
+            start_datetime=start_datetime,
         )
 
         try:

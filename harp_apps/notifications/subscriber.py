@@ -19,13 +19,17 @@ class NotificationSubscriber:
             if name == "google_chat_webhook_url":
                 try:
                     webhook_url = getattr(settings, name)
-                    self.senders.append(GoogleChatNotificationSender(webhook_url, public_url)) if webhook_url else None
+                    (
+                        self.senders.append(GoogleChatNotificationSender(webhook_url, public_url))
+                        if webhook_url
+                        else None
+                    )
                 except AttributeError:
                     pass
             elif name == "slack_webhook_url":
                 try:
                     webhook_url = getattr(settings, name)
-                    self.senders.append(SlackNotificationSender(webhook_url, public_url)) if webhook_url else None
+                    (self.senders.append(SlackNotificationSender(webhook_url, public_url)) if webhook_url else None)
                 except AttributeError:
                     pass
 
@@ -47,7 +51,12 @@ class NotificationSubscriber:
             )
 
     async def send_notification(
-        self, method: Optional[str], url: Optional[str], status_code: int, message: str, transaction_id: Optional[str]
+        self,
+        method: Optional[str],
+        url: Optional[str],
+        status_code: int,
+        message: str,
+        transaction_id: Optional[str],
     ) -> None:
         async with asyncio.TaskGroup() as tg:
             for sender in self.senders:

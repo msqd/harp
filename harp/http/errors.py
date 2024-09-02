@@ -9,7 +9,15 @@ from .typing import BaseHttpMessage
 class HttpError(BaseHttpMessage):
     kind = "error"
 
-    def __init__(self, message: str, /, *, exception: Optional[Exception] = None, status=500, verbose_message=None):
+    def __init__(
+        self,
+        message: str,
+        /,
+        *,
+        exception: Optional[Exception] = None,
+        status=500,
+        verbose_message=None,
+    ):
         super().__init__()
         self.message = message
         self.exception = exception

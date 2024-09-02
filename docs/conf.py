@@ -17,11 +17,11 @@ copyright = f"{current_year}, {author}"
 if current_year > first_year:
     copyright = str(first_year) + "-" + copyright
 
+
 if os.environ.get("READTHEDOCS_GIT_IDENTIFIER"):
     version = release = os.environ["READTHEDOCS_GIT_IDENTIFIER"]
 else:
     version = release = ".".join(__import__("harp").__hardcoded_version__.split(".")[0:2])
-
 
 ALGOLIA_APIKEY = os.getenv("ALGOLIA_APIKEY")
 extensions = [
@@ -41,6 +41,7 @@ extensions = [
     "sphinx_click",
     "docs._extensions.services",
 ]
+
 if ALGOLIA_APIKEY:
     extensions.append("sphinx_docsearch")
 
@@ -85,7 +86,12 @@ add_module_names = False
 pygments_style = "sphinx"
 graphviz_output_format = "svg"
 
-inheritance_graph_attrs = {"rankdir": "TB", "size": '"8.0, 12.0"', "fontsize": 14, "ratio": "compress"}
+inheritance_graph_attrs = {
+    "rankdir": "TB",
+    "size": '"8.0, 12.0"',
+    "fontsize": 14,
+    "ratio": "compress",
+}
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
@@ -101,22 +107,22 @@ if ALGOLIA_APIKEY:
 
 rst_prolog = (
     """
-.. admonition:: HARP Proxy is currently an Early Preview
+    .. admonition:: HARP Proxy is currently an Early Preview
 
-   Please apologize for mistakes, typos, etc. We put great effort into writing good docs, but we are humans... If you
-   spot anything strange, :doc:`help will be greatly appreciated </contribute/index>`.
+       Please apologize for mistakes, typos, etc. We put great effort into writing good docs, but we are humans... If you
+       spot anything strange, :doc:`help will be greatly appreciated </contribute/index>`.
 
-""".strip()
+    """.strip()
     + "\n\n"
 )
 if version == "0.7":
     rst_prolog = (
         """
-.. attention::
+    .. attention::
 
-    **THIS IS THE DOCUMENTATION FOR THE 0.7 VERSION OF HARP PROXY. IT IS A FUTURE RELEASE AND THE DOCUMENTATION IS
-    NOT IN SYNC WITH THE CODEBASE, AS IT CONTAINS NOT-YET-MERGED FEATURES. PLEASE REFER TO THE LATEST RELEASE INSTEAD.**
+        **THIS IS THE DOCUMENTATION FOR THE 0.7 VERSION OF HARP PROXY. IT IS A FUTURE RELEASE AND THE DOCUMENTATION IS
+        NOT IN SYNC WITH THE CODEBASE, AS IT CONTAINS NOT-YET-MERGED FEATURES. PLEASE REFER TO THE LATEST RELEASE INSTEAD.**
 
-""".strip()
+    """.strip()
         + "\n\n"
     )

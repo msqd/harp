@@ -11,7 +11,8 @@ class IStorage(Protocol):
 
     async def finalize(self):
         """Coroutine function to finalize the instance. Should release resources, close files etc... The caller should
-        make sure to call finalize on all cases where the instance is not needed anymore to get a clean shutdown."""
+        make sure to call finalize on all cases where the instance is not needed anymore to get a clean shutdown.
+        """
         ...
 
     async def get_transaction_list(

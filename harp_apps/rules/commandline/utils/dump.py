@@ -105,7 +105,11 @@ async def on_remote_request_dump(event: HttpClientFilterEvent):
     console.print(
         Padding(
             Panel(
-                Syntax(dump_httpx_request(event.request), "http", background_color="default"),
+                Syntax(
+                    dump_httpx_request(event.request),
+                    "http",
+                    background_color="default",
+                ),
                 title=f"[blue]▶▶[/blue] Remote Request ({typeof(event.request)})",
                 title_align="left",
             ),
@@ -118,7 +122,11 @@ async def on_remote_response_dump(event: HttpClientFilterEvent):
     console.print(
         Padding(
             Panel(
-                Syntax(dump_httpx_response(event.response), "http", background_color="default"),
+                Syntax(
+                    dump_httpx_response(event.response),
+                    "http",
+                    background_color="default",
+                ),
                 title=f"[green]◀◀[/green] Remote Response ({typeof(event.response)})",
                 title_align="left",
             ),

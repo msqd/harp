@@ -38,8 +38,18 @@ def test__truncate_datetime_for_time_bucket():
 def test_generate_continuous_time_range():
     discontinuous_transactions: List[TransactionsGroupedByTimeBucket]
     discontinuous_transactions = [
-        {"datetime": datetime(2022, 1, 1, 0, 0, 0, tzinfo=UTC), "count": 10, "errors": 0, "meanDuration": 1.0},
-        {"datetime": datetime(2022, 1, 1, 2, 0, 0, tzinfo=UTC), "count": 20, "errors": 1, "meanDuration": 1.5},
+        {
+            "datetime": datetime(2022, 1, 1, 0, 0, 0, tzinfo=UTC),
+            "count": 10,
+            "errors": 0,
+            "meanDuration": 1.0,
+        },
+        {
+            "datetime": datetime(2022, 1, 1, 2, 0, 0, tzinfo=UTC),
+            "count": 20,
+            "errors": 1,
+            "meanDuration": 1.5,
+        },
     ]
     start_datetime = datetime(2022, 1, 1, 0, 0, 0, tzinfo=UTC)
     time_bucket = "hour"
