@@ -51,7 +51,7 @@ class HttpRequestSerializer(BaseHttpMessageSerializer):
 
     @cached_property
     def summary(self) -> str:
-        return f"{self.wrapped.method} {self.wrapped.path}{self.query_string} HTTP/1.1"
+        return f"{self.wrapped.method} {self.wrapped.path}?{self.query_string} HTTP/1.1"
 
 
 class HttpResponseSerializer(BaseHttpMessageSerializer):

@@ -37,6 +37,7 @@ from .events import (
     ProxyFilterEvent,
     TransactionEvent,
 )
+from .helpers import extract_tags_from_request
 from .settings.remote import Remote
 
 logger = get_logger(__name__)
@@ -139,7 +140,6 @@ class HttpProxyController:
         with performances_observer("harp_proxy", labels=labels):
             # create an envelope to override things, without touching the original request
             context = ProxyFilterEvent(self.name, request=request)
-            await self.adispatch(EVENT_FILTER_PROXY_REQUEST, context)
 
             remote_err = None
             try:
@@ -156,9 +156,11 @@ class HttpProxyController:
             if self.user_agent:
                 context.request.headers["user-agent"] = self.user_agent
 
+            await self.adispatch(EVENT_FILTER_PROXY_REQUEST, context)
+
             # create transaction (shouldn't that be before the filter operation ? it's debatable.)
             transaction = await self._create_transaction_from_request(
-                context.request, tags=self._extract_tags_from_request(context.request)
+                context.request, tags=extract_tags_from_request(context.request)
             )
             if not remote_url:
                 transaction.extras["status_class"] = "ERR"
@@ -334,26 +336,6 @@ class HttpProxyController:
         await self.adispatch(EVENT_TRANSACTION_MESSAGE, HttpMessageEvent(transaction, request))
 
         return transaction
-
-    def _extract_tags_from_request(self, request: HttpRequest):
-        """
-        Convert special request headers (x-harp-*) into tags (key-value pairs) that we'll attach to the
-        transaction. Headers are "consumed", meaning they are removed from the request headers.
-        """
-
-        tags = {}
-        headers_to_remove = []
-
-        for header in request.headers:
-            lower_header = header.lower()
-            if lower_header.startswith("x-harp-"):
-                tags[lower_header[7:]] = request.headers[header]
-                headers_to_remove.append(header)
-
-        for header in headers_to_remove:
-            request.headers.pop(header)
-
-        return tags
 
     def __repr__(self):
         return f"{type(self).__name__}({self.remote!r}, name={self.name!r})"
