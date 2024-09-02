@@ -1,5 +1,8 @@
-Events
-======
+Core Events
+===========
+
+.. tags:: events
+
 
 This document describes the :ref:`events <events>` dispatched by HARP Proxy's core.
 
@@ -18,7 +21,7 @@ components to register themselves with the system.
 You can add listeners to those events using the :doc:`Application Protocol </contribute/applications>`.
 
 
-EVENT_BIND
+⚡️ EVENT_BIND
 ----------
 
 Dispatched by :meth:`SystemBuilder.dispatch_bind_event(...)
@@ -37,7 +40,7 @@ Dispatched as :attr:`EVENT_BIND` with a :class:`OnBindEvent` instance.
     .. literalinclude:: ./examples/events.config.bind.py
 
 
-EVENT_BOUND
+⚡️ EVENT_BOUND
 -----------
 
 Dispatched by :meth:`SystemBuilder.dispatch_bound_event(...)
@@ -56,7 +59,7 @@ Dispatched as :attr:`EVENT_BOUND` with a :class:`OnBoundEvent` instance.
     .. literalinclude:: ./examples/events.config.bound.py
 
 
-EVENT_READY
+⚡️ EVENT_READY
 -----------
 
 Dispatched by :meth:`SystemBuilder.dispatch_ready_event(...)
@@ -76,7 +79,7 @@ with ASGI middlewares <on_ready>` (e.g. :doc:`Sentry <../apps/contrib/sentry/ind
     .. literalinclude:: ./examples/events.config.ready.py
 
 
-EVENT_SHUTDOWN
+⚡️ EVENT_SHUTDOWN
 --------------
 
 Dispatched by :meth:`System.dispose(...) <harp.config.builders.system.System.dispose>` when the system is being shut
@@ -94,13 +97,13 @@ applications define background asynchronous tasks, it's a good idea to terminate
     .. literalinclude:: ./examples/events.config.shutdown.py
 
 
-Sequence Diagram
+⇄️ Sequence Diagram
 ----------------
 
 .. todo:: Add sequence diagram
 
 
-Class Diagram
+🌲 Class Diagram
 -------------
 
 .. raw:: html
@@ -126,7 +129,7 @@ to process or filter inbound requests and outbound responses.
     Client Events <../apps/http_client/events>` for outgoing requests (and their associated responses).
 
 
-EVENT_CORE_STARTED
+⚡️ EVENT_CORE_STARTED
 ------------------
 
 Dispatched by the :class:`ASGIKernel <harp.asgi.ASGIKernel>` when the "lifespan.startup" ASGI message is received.
@@ -147,7 +150,7 @@ specific context).
     `ASGI Lifespan Protocol (from ASGI Specicication) <https://asgi.readthedocs.io/en/latest/specs/lifespan.html>`_
 
 
-EVENT_CORE_REQUEST
+⚡️ EVENT_CORE_REQUEST
 ------------------
 
 Dispatched by the :class:`ASGIKernel <harp.asgi.ASGIKernel>` when an inbound :class:`HttpRequest
@@ -165,7 +168,7 @@ Dispatched as :attr:`EVENT_CORE_REQUEST` with a :class:`RequestEvent` instance.
     .. literalinclude:: ./examples/events.asgi.request.py
 
 
-EVENT_CORE_CONTROLLER
+⚡️ EVENT_CORE_CONTROLLER
 ---------------------
 
 Dispatched by the :class:`ASGIKernel <harp.asgi.ASGIKernel>` when a controller callable has been resolved by the
@@ -182,7 +185,7 @@ Dispatched as :attr:`EVENT_CORE_CONTROLLER` with a :class:`ControllerEvent` inst
     .. literalinclude:: ./examples/events.asgi.controller.py
 
 
-EVENT_CORE_VIEW
+⚡️ EVENT_CORE_VIEW
 ---------------
 
 :attr:`EVENT_CORE_VIEW` is dispatched by the :class:`ASGIKernel <harp.asgi.ASGIKernel>` when a controller
@@ -201,7 +204,7 @@ Dispatched as :attr:`EVENT_CORE_VIEW` with a :class:`ViewEvent` instance.
     .. literalinclude:: ./examples/events.asgi.view.py
 
 
-EVENT_CORE_RESPONSE
+⚡️ EVENT_CORE_RESPONSE
 -------------------
 
 :attr:`EVENT_CORE_RESPONSE` is dispatched by the :class:`ASGIKernel <harp.asgi.ASGIKernel>` when an outbound
@@ -218,13 +221,13 @@ Dispatched as :attr:`EVENT_CORE_RESPONSE` with a :class:`ResponseEvent` instance
     .. literalinclude:: ./examples/events.asgi.response.py
 
 
-Sequence Diagram
+⇄️ Sequence Diagram
 ----------------
 
 .. todo:: Add sequence diagram
 
 
-Class Diagram
+🌲 Class Diagram
 -------------
 
 .. raw:: html

@@ -30,16 +30,17 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.graphviz",
     "sphinx.ext.ifconfig",
+    "sphinx.ext.inheritance_diagram",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
-    "sphinx.ext.inheritance_diagram",
+    "sphinx_click",
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_sitemap",
     "sphinxcontrib.jquery",
-    "sphinx_click",
     "docs._extensions.services",
+    "sphinx_tags",
 ]
 
 if ALGOLIA_APIKEY:
@@ -75,6 +76,11 @@ html_sidebars = {
 
 todo_include_todos = True
 html_show_sphinx = False
+
+tags_create_tags = True
+tags_create_badges = True
+tags_badge_colors = {"events": "primary"}
+tags_page_title = "With tags"
 
 autodoc_typehints = "description"
 autodoc_member_order = "groupwise"

@@ -1,6 +1,9 @@
 Event Dispatcher
 ================
 
+.. tags:: events
+
+
 To provide a flexible way to hook into the existing and future components, HARP uses an event-driven architecture.
 
 
@@ -112,13 +115,7 @@ event dispatcher, so it can listen to events from any component registered with 
             print(event.context)
 
 
-Events References
-:::::::::::::::::
+See Also
+::::::::
 
-In HARP Proxy (CE), there are a few applications that expose events, here is a list of the most important ones:
-
-- :doc:`Events dispatched by HARP Core <../core/events>`: configuration and low-level asgi hooks.
-- :doc:`Events dispatched by the HTTP Client Application <../apps/http_client/events>`: hooks to filter outbound
-  HTTP requests and their associated responses.
-- :doc:`Events dispatched by the Proxy Application <../apps/proxy/events>`: hooks to filter transactions and their
-  associated messages.
+:doc:`All pages tagged with «events» </_tags/events>` (includes this page and all event reference pages).

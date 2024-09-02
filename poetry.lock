@@ -3157,6 +3157,24 @@ sphinx = ">=1.2"
 dev = ["build", "flake8", "pre-commit", "pytest", "sphinx", "tox"]
 
 [[package]]
+name = "sphinx-tags"
+version = "0.4"
+description = "Sphinx extension to create tags for documentation pages."
+optional = false
+python-versions = "*"
+files = [
+    {file = "sphinx_tags-0.4-py2.py3-none-any.whl", hash = "sha256:af31203fe4e0ebd39cb95d4fef38720185def6af9fdb921b70275ff659a5dac5"},
+    {file = "sphinx_tags-0.4.tar.gz", hash = "sha256:3065219bacf47567c706f2237d5665b22f3a5167367b4c4568bcda4371a5359d"},
+]
+
+[package.dependencies]
+sphinx = ">=5.1"
+
+[package.extras]
+dev = ["bs4", "pre-commit", "pytest (>=6.0)", "pytest-cov"]
+sphinx = ["myst-parser", "nbsphinx", "pydata-sphinx-theme (>=0.13)", "sphinx-design"]
+
+[[package]]
 name = "sphinxcontrib-applehelp"
 version = "2.0.0"
 description = "sphinxcontrib-applehelp is a Sphinx extension which outputs Apple help books"
@@ -3995,4 +4013,4 @@ dev = ["honcho", "watchfiles"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "8fabc94db758bf4f8615e6586ac833e2fbad19560baf9b7f9b3eb93b9444eef0"
+content-hash = "46248132f465a2fa71fc84b77b94f9352757f87670ec83e90561d489c3b1249d"

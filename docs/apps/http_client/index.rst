@@ -1,5 +1,7 @@
-HttpClient
-==========
+HTTP Client
+===========
+
+.. tags:: applications
 
 .. versionadded:: 0.5
 
@@ -10,6 +12,7 @@ The application wioll mostly define a coherent set of :doc:`services <services>`
 services, allowing other mechanisms to hook into the request/response lifecycle (cache, rules, ...).
 
 The caching mechanism is implemented using `Hishel <https://hishel.com/>`_ a powerful caching library.
+
 
 Overview
 ::::::::
@@ -85,6 +88,6 @@ Table of Content
     :maxdepth: 1
 
     quickstart
-    events
-    services
+    Events <events>
+    Services <services>
     recipes

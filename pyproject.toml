@@ -84,6 +84,7 @@ sphinxcontrib-jquery = "^4.1"
 syrupy = "^4.6.1"
 testcontainers = { extras = ["postgres"], version = ">=4.7,<4.9" }
 sphinx-docsearch = "^0.0.7"
+sphinx-tags = "^0.4"
 
 
 [tool.poetry.group.mysql.dependencies]
@@ -110,7 +111,6 @@ line-length = 120
 
 [tool.ruff.format]
 docstring-code-format = true
-preview = true
 
 [tool.isort]
 line_length = 120
