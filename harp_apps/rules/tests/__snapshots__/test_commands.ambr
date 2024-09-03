@@ -6,8 +6,6 @@
   '''
   ╭─ ▶ Request (harp.http.requests.HttpRequest) ─────────────────────────────────╮
   │ GET /hostname HTTP/1.1                                                       │
-  │ host: localhost:55929                                                        │
-  │ user-agent: harp/0.6                                                         │
   ╰──────────────────────────────────────────────────────────────────────────────╯
   ╭─ ◀ Proxy Response (harp.http.responses.HttpResponse) ────────────────────────╮
   │ HTTP/1.1 200 OK                                                              │

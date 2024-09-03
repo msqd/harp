@@ -145,6 +145,8 @@ class HttpProxyController:
             # create an envelope to override things, without touching the original request
             context = ProxyFilterEvent(self.name, request=request)
 
+            await self.adispatch(EVENT_FILTER_PROXY_REQUEST, context)
+
             remote_err = None
             try:
                 remote_url = self.remote.get_url()
@@ -159,8 +161,6 @@ class HttpProxyController:
                 context.request.headers["host"] = parsed_remote_url.netloc
             if self.user_agent:
                 context.request.headers["user-agent"] = self.user_agent
-
-            await self.adispatch(EVENT_FILTER_PROXY_REQUEST, context)
 
             # create transaction (shouldn't that be before the filter operation ? it's debatable.)
             transaction = await self._create_transaction_from_request(
