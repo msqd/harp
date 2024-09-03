@@ -12,7 +12,9 @@ if USE_PROMETHEUS:
     from prometheus_client import Gauge
 
     AsyncWorkerQueueBacklog = Gauge(
-        "async_worker_queue_backlog", "Number of items in the async worker queue.", ["queue_id"]
+        "async_worker_queue_backlog",
+        "Number of items in the async worker queue.",
+        ["queue_id"],
     )
 
 

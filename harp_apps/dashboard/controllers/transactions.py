@@ -89,7 +89,10 @@ class TransactionsController(RoutingController):
         flag_id = FLAGS_BY_NAME.get(flag)
 
         await self.storage.set_user_flag(
-            transaction_id=id, username=username, flag=flag_id, value=False if request.method == "DELETE" else True
+            transaction_id=id,
+            username=username,
+            flag=flag_id,
+            value=False if request.method == "DELETE" else True,
         )
 
         return JsonHttpResponse({"success": True})

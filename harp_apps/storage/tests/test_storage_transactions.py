@@ -12,13 +12,28 @@ class TestStorageTransactions(StorageTestFixtureMixin):
 
         # messages
         await self.create_message(
-            sql_storage, transaction_id=t1.id, kind="misc", summary="bal", headers="foo", body="foo"
+            sql_storage,
+            transaction_id=t1.id,
+            kind="misc",
+            summary="bal",
+            headers="foo",
+            body="foo",
         )
         await self.create_message(
-            sql_storage, transaction_id=t2.id, kind="misc", summary="foo", headers="bar", body="baz"
+            sql_storage,
+            transaction_id=t2.id,
+            kind="misc",
+            summary="foo",
+            headers="bar",
+            body="baz",
         )
         await self.create_message(
-            sql_storage, transaction_id=t3.id, kind="misc", summary="baz", headers="baz", body="baz"
+            sql_storage,
+            transaction_id=t3.id,
+            kind="misc",
+            summary="baz",
+            headers="baz",
+            body="baz",
         )
 
         # assert stuff

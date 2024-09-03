@@ -43,7 +43,12 @@ class TestJanitorWorker(StorageTestFixtureMixin):
 
         t = await self.create_transaction(sql_storage)
         await self.create_message(
-            sql_storage, transaction_id=t.id, kind="misc", summary="foo", headers=b1.id, body=b2.id
+            sql_storage,
+            transaction_id=t.id,
+            kind="misc",
+            summary="foo",
+            headers=b1.id,
+            body=b2.id,
         )
 
         async with sql_storage.session_factory() as session:

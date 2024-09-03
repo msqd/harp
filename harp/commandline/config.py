@@ -16,7 +16,11 @@ from harp.utils.commandline import click
 @add_harp_server_click_options
 @click.option("--raw", is_flag=True, help="Prints the raw configuration as a dictionary.")
 @click.option("--json", is_flag=True, help="Prints the raw configuration as JSON.")
-@click.option("--unsecure", is_flag=True, help="Prints the configuration without hiding sensitive information.")
+@click.option(
+    "--unsecure",
+    is_flag=True,
+    help="Prints the configuration without hiding sensitive information.",
+)
 def config(raw=False, json=False, unsecure=False, **kwargs):
     """Compiles and dumps the current configuration, the same way that "server" commands would do it.
 

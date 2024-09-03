@@ -1,5 +1,7 @@
-Services
-========
+HTTP Client Services
+====================
+
+.. tags:: services
 
 The services defined by the ``http_client`` application are listed below, and will vary depending on settings.
 

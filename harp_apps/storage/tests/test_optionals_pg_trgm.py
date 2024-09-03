@@ -16,7 +16,10 @@ async def get_indexes(engine, table_name):
     return [
         row[0]
         for row in (
-            await run_sql(engine, f"SELECT indexname FROM pg_indexes WHERE tablename = '{table_name}';")
+            await run_sql(
+                engine,
+                f"SELECT indexname FROM pg_indexes WHERE tablename = '{table_name}';",
+            )
         ).fetchall()
     ]
 
@@ -109,7 +112,9 @@ class TestOptimizedQueries(StorageTestFixtureMixin):
 
             for _ in range(100):
                 await self.create_transaction(
-                    sql_storage, endpoint="/api/transactions/foo/bar/baz", tags={"foo": "bar"}
+                    sql_storage,
+                    endpoint="/api/transactions/foo/bar/baz",
+                    tags={"foo": "bar"},
                 )
 
             result = await sql_storage.get_transaction_list(username="anonymous", with_messages=True, text_search="bar")

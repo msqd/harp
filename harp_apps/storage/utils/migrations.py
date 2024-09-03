@@ -27,7 +27,8 @@ def create_alembic_config(url: Union[str, URL, Url, MultiHostUrl]):
     alembic_cfg = AlembicConfig()
     alembic_cfg.set_main_option("script_location", os.path.join(storage.__path__[0], "migrations"))
     alembic_cfg.set_main_option(
-        "file_template", "%%(year)d%%(month).2d%%(day).2d%%(hour).2d%%(minute).2d%%(second).2d_%%(rev)s_%%(slug)s"
+        "file_template",
+        "%%(year)d%%(month).2d%%(day).2d%%(hour).2d%%(minute).2d%%(second).2d_%%(rev)s_%%(slug)s",
     )
     alembic_cfg.set_main_option("truncate_slug_length", "40")
     alembic_cfg.set_main_option("output_encoding", "utf-8")

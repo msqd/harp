@@ -30,7 +30,20 @@ class TestHttpClientSettings(BaseHttpClientSettingsTest):
                 "allow_heuristics": False,
                 "allow_stale": False,
                 "cacheable_methods": ["GET", "HEAD"],
-                "cacheable_status_codes": [200, 203, 204, 206, 300, 301, 308, 404, 405, 410, 414, 501],
+                "cacheable_status_codes": [
+                    200,
+                    203,
+                    204,
+                    206,
+                    300,
+                    301,
+                    308,
+                    404,
+                    405,
+                    410,
+                    414,
+                    501,
+                ],
                 "type": "hishel.Controller",
             },
             "enabled": True,
@@ -62,7 +75,8 @@ class TestHttpClientSettings(BaseHttpClientSettingsTest):
 
     async def test_without_cache_with_custom_client(self):
         settings = self.create(
-            transport={"type": "httpx._client.BaseClient", "arguments": {}}, cache={"enabled": False}
+            transport={"type": "httpx._client.BaseClient", "arguments": {}},
+            cache={"enabled": False},
         )
         assert settings.cache.enabled is False
 

@@ -1,12 +1,15 @@
 Circuit Breaker
 ===============
 
-In distributed systems, interactions with remote resources can fail due to issues like slow network connections,
-timeouts, or temporary unavailability. While some faults are short-lived and can be fixed with retry strategies,
-others last longer and need different handling to avoid wasting resources.
+.. versionadded:: 0.7
 
-To handle long-term remote service failures, HARP Proxy uses the
-`Circuit Breaker pattern <https://harp-proxy.net/patterns/circuit-breaker>`_.
+Interactions with remote resources can fail due to issues like slow network connections, timeouts, or temporary
+unavailability. Some faults are short-lived and can be mitigated using :doc:`retry strategies <./retry>`, but longer
+failures need different handling.
+
+To handle long-term remote service failures, your proxies can leverage a
+`Circuit Breaker <https://harp-proxy.net/patterns/circuit-breaker>`_ to lower pressure and responsiveness of API calls
+to failing remote services.
 
 Each endpoint has a pool of remote URLs, used in a round-robin manner as long as there are no failures.
 
@@ -20,7 +23,7 @@ anymore), and a fallback pool is eventually used if there aren't enough URLs lef
     :language: yaml
 
 If no URLs are available in the active pool, the proxy returns a 503 error code to the client until the circuit breaker
-"closes" again.
+"closes" again for an URL.
 
 After a configurable delay, the circuit breaker will try to close for the failing URL by switching to the half-open
 state. This is an intermediate state where the URL is tested again, and if it fails, the circuit breaker reopens. If the

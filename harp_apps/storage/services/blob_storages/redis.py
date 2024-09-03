@@ -17,7 +17,11 @@ class RedisBlobStorage(IBlobStorage):
         data = await self.client.get(blob_id)
         if data is not None:
             content_type, body = data.split(b"\n", 1)
-            return Blob(id=blob_id, data=body, content_type=content_type.decode() if content_type else None)
+            return Blob(
+                id=blob_id,
+                data=body,
+                content_type=content_type.decode() if content_type else None,
+            )
 
     @override
     async def put(self, blob: Blob) -> Blob:

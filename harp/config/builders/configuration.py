@@ -202,7 +202,8 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         except AttributeError:
             applications = None
         builder = cls(
-            {"applications": applications} if applications else None, use_default_applications=not applications
+            {"applications": applications} if applications else None,
+            use_default_applications=not applications,
         )
 
         # todo: raise if enabling AND disabling an app at the same time? maybe not but instructions should be taken in

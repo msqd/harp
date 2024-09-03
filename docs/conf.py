@@ -17,28 +17,34 @@ copyright = f"{current_year}, {author}"
 if current_year > first_year:
     copyright = str(first_year) + "-" + copyright
 
+
 if os.environ.get("READTHEDOCS_GIT_IDENTIFIER"):
     version = release = os.environ["READTHEDOCS_GIT_IDENTIFIER"]
 else:
     version = release = ".".join(__import__("harp").__hardcoded_version__.split(".")[0:2])
 
+ALGOLIA_APIKEY = os.getenv("ALGOLIA_APIKEY")
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.coverage",
     "sphinx.ext.graphviz",
     "sphinx.ext.ifconfig",
+    "sphinx.ext.inheritance_diagram",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
-    "sphinx.ext.inheritance_diagram",
+    "sphinx_click",
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_sitemap",
     "sphinxcontrib.jquery",
-    "sphinx_click",
     "docs._extensions.services",
+    "sphinx_tags",
 ]
+
+if ALGOLIA_APIKEY:
+    extensions.append("sphinx_docsearch")
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -55,7 +61,7 @@ html_theme_options = {
 html_favicon = "favicon.ico"
 html_js_files = ["js/links-target-blank.js"]
 html_css_files = ["css/harp.css"]
-html_baseurl = "https://docs.harp-proxy.net/en/latest/"
+html_baseurl = "https://docs.harp-proxy.net/"
 
 html_sidebars = {
     "**": [
@@ -71,6 +77,11 @@ html_sidebars = {
 todo_include_todos = True
 html_show_sphinx = False
 
+tags_create_tags = True
+tags_create_badges = True
+tags_badge_colors = {"events": "primary"}
+tags_page_title = "With tags"
+
 autodoc_typehints = "description"
 autodoc_member_order = "groupwise"
 autodoc_default_flags = ["members", "undoc-members", "show-inheritance"]
@@ -81,7 +92,12 @@ add_module_names = False
 pygments_style = "sphinx"
 graphviz_output_format = "svg"
 
-inheritance_graph_attrs = {"rankdir": "TB", "size": '"8.0, 12.0"', "fontsize": 14, "ratio": "compress"}
+inheritance_graph_attrs = {
+    "rankdir": "TB",
+    "size": '"8.0, 12.0"',
+    "fontsize": 14,
+    "ratio": "compress",
+}
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
@@ -90,24 +106,29 @@ intersphinx_mapping = {
     "redis": ("https://redis-py.readthedocs.io/en/stable", None),
 }
 
+if ALGOLIA_APIKEY:
+    docsearch_app_id = "ZPR2CBYLG3"
+    docsearch_api_key = ALGOLIA_APIKEY
+    docsearch_index_name = "harp-proxy"
+
 rst_prolog = (
     """
-.. admonition:: HARP Proxy is currently an Early Preview
+    .. admonition:: HARP Proxy is currently an Early Preview
 
-   Please apologize for mistakes, typos, etc. We put great effort into writing good docs, but we are humans... If you
-   spot anything strange, :doc:`help will be greatly appreciated </contribute/index>`.
+       Please apologize for mistakes, typos, etc. We put great effort into writing good docs, but we are humans... If you
+       spot anything strange, :doc:`help will be greatly appreciated </contribute/index>`.
 
-""".strip()
+    """.strip()
     + "\n\n"
 )
 if version == "0.7":
     rst_prolog = (
         """
-.. attention::
+    .. attention::
 
-    **THIS IS THE DOCUMENTATION FOR THE 0.7 VERSION OF HARP PROXY. IT IS A FUTURE RELEASE AND THE DOCUMENTATION IS
-    NOT IN SYNC WITH THE CODEBASE, AS IT CONTAINS NOT-YET-MERGED FEATURES. PLEASE REFER TO THE LATEST RELEASE INSTEAD.**
+        **THIS IS THE DOCUMENTATION FOR THE 0.7 VERSION OF HARP PROXY. IT IS A FUTURE RELEASE AND THE DOCUMENTATION IS
+        NOT IN SYNC WITH THE CODEBASE, AS IT CONTAINS NOT-YET-MERGED FEATURES. PLEASE REFER TO THE LATEST RELEASE INSTEAD.**
 
-""".strip()
+    """.strip()
         + "\n\n"
     )

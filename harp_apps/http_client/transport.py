@@ -26,7 +26,10 @@ class AsyncFilterableTransport(AsyncBaseTransport):
         if not event.response:
             event.response = await self._transport.handle_async_request(event.request)
         await self._dispatcher.adispatch(EVENT_FILTER_HTTP_CLIENT_RESPONSE, event)
-        logger.debug(f"◀◀◀ {event.response}", cache_control=event.response.headers.get("cache-control"))
+        logger.debug(
+            f"◀◀◀ {event.response}",
+            cache_control=event.response.headers.get("cache-control"),
+        )
         return event.response
 
     async def aclose(self) -> None:

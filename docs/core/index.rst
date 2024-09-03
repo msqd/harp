@@ -1,7 +1,8 @@
-Core Packages
-=============
+Core Reference
+==============
 
 .. toctree::
     :maxdepth: 2
 
-    events
+    Events <events>
+    services

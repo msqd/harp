@@ -24,8 +24,18 @@ def upgrade() -> None:
     op.alter_column("messages", "kind", existing_type=sa.VARCHAR(length=10), nullable=False)
     op.alter_column("messages", "summary", existing_type=sa.VARCHAR(length=255), nullable=False)
     op.alter_column("messages", "headers", existing_type=sa.VARCHAR(length=40), nullable=False)
-    op.alter_column("messages", "created_at", existing_type=postgresql.TIMESTAMP(timezone=True), nullable=False)
-    op.alter_column("messages", "transaction_id", existing_type=sa.VARCHAR(length=27), nullable=False)
+    op.alter_column(
+        "messages",
+        "created_at",
+        existing_type=postgresql.TIMESTAMP(timezone=True),
+        nullable=False,
+    )
+    op.alter_column(
+        "messages",
+        "transaction_id",
+        existing_type=sa.VARCHAR(length=27),
+        nullable=False,
+    )
     op.create_index("ix_transaction_id", "messages", ["transaction_id"], unique=False)
     op.create_unique_constraint(None, "messages", ["id"])
     op.create_unique_constraint(None, "metrics", ["id"])
@@ -34,7 +44,12 @@ def upgrade() -> None:
     op.create_unique_constraint(None, "tags", ["id"])
     op.create_unique_constraint(None, "trans_user_flags", ["id"])
     op.alter_column("transactions", "type", existing_type=sa.VARCHAR(length=10), nullable=False)
-    op.alter_column("transactions", "started_at", existing_type=postgresql.TIMESTAMP(timezone=True), nullable=False)
+    op.alter_column(
+        "transactions",
+        "started_at",
+        existing_type=postgresql.TIMESTAMP(timezone=True),
+        nullable=False,
+    )
     op.create_unique_constraint(None, "transactions", ["id"])
     op.create_unique_constraint(None, "users", ["id"])
 
@@ -42,7 +57,12 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_constraint(None, "users", type_="unique")
     op.drop_constraint(None, "transactions", type_="unique")
-    op.alter_column("transactions", "started_at", existing_type=postgresql.TIMESTAMP(timezone=True), nullable=True)
+    op.alter_column(
+        "transactions",
+        "started_at",
+        existing_type=postgresql.TIMESTAMP(timezone=True),
+        nullable=True,
+    )
     op.alter_column("transactions", "type", existing_type=sa.VARCHAR(length=10), nullable=True)
     op.drop_constraint(None, "trans_user_flags", type_="unique")
     op.drop_constraint(None, "tags", type_="unique")
@@ -52,7 +72,12 @@ def downgrade() -> None:
     op.drop_constraint(None, "messages", type_="unique")
     op.drop_index("ix_transaction_id", table_name="messages")
     op.alter_column("messages", "transaction_id", existing_type=sa.VARCHAR(length=27), nullable=True)
-    op.alter_column("messages", "created_at", existing_type=postgresql.TIMESTAMP(timezone=True), nullable=True)
+    op.alter_column(
+        "messages",
+        "created_at",
+        existing_type=postgresql.TIMESTAMP(timezone=True),
+        nullable=True,
+    )
     op.alter_column("messages", "headers", existing_type=sa.VARCHAR(length=40), nullable=True)
     op.alter_column("messages", "summary", existing_type=sa.VARCHAR(length=255), nullable=True)
     op.alter_column("messages", "kind", existing_type=sa.VARCHAR(length=10), nullable=True)

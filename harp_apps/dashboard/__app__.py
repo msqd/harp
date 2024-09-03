@@ -16,7 +16,10 @@ logger = get_logger(__name__)
 
 async def on_bind(event: OnBindEvent):
     # Load service definitions, bound to our settings.
-    event.container.load(Path(dirname(__file__)) / "services.yml", bind_settings=event.settings["dashboard"])
+    event.container.load(
+        Path(dirname(__file__)) / "services.yml",
+        bind_settings=event.settings["dashboard"],
+    )
 
 
 async def on_bound(event: OnBoundEvent):
@@ -38,7 +41,8 @@ async def on_bound(event: OnBoundEvent):
     # make the server to route requests to the dashboard controller when an incoming request is received on the
     # dashboard port.
     event.resolver.add_controller(
-        event.provider.get(DashboardSettings).port, event.provider.get("dashboard.controller")
+        event.provider.get(DashboardSettings).port,
+        event.provider.get("dashboard.controller"),
     )
 
 

@@ -83,6 +83,8 @@ sphinx-sitemap = "^2.6.0"
 sphinxcontrib-jquery = "^4.1"
 syrupy = "^4.6.1"
 testcontainers = { extras = ["postgres"], version = ">=4.7,<4.9" }
+sphinx-docsearch = "^0.0.7"
+sphinx-tags = "^0.4"
 
 
 [tool.poetry.group.mysql.dependencies]
@@ -101,11 +103,14 @@ harp = 'harp.commandline:entrypoint'
 [tool.poetry.extras]
 dev = ['honcho', 'watchfiles']
 
+[tool.black]
+line-length = 120
+
 [tool.ruff]
 line-length = 120
 
-[tool.black]
-line-length = 120
+[tool.ruff.format]
+docstring-code-format = true
 
 [tool.isort]
 line_length = 120

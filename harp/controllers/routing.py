@@ -33,7 +33,11 @@ class RoutingController:
             _attr = getattr(self, _name)
             if callable(_attr) and (meta := get_meta(_attr, "route")):
                 _paths, _methods, _opts = meta
-                self.router.route(*tuple(map(lambda x: self.prefix + x, _paths)), methods=_methods, **_opts)(_attr)
+                self.router.route(
+                    *tuple(map(lambda x: self.prefix + x, _paths)),
+                    methods=_methods,
+                    **_opts,
+                )(_attr)
 
         self.configure()
 

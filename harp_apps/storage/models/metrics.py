@@ -39,4 +39,7 @@ class MetricsRepository(Repository[Metric]):
         now = datetime.now(UTC)
         for name, value in values.items():
             metric = await self.find_or_create_one({"name": name}, session=session)
-            await self.values.create({"metric_id": metric.id, "value": value, "created_at": now}, session=session)
+            await self.values.create(
+                {"metric_id": metric.id, "value": value, "created_at": now},
+                session=session,
+            )

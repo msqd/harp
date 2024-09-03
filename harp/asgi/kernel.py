@@ -13,15 +13,15 @@ from ..utils.types import typeof
 from .bridge.requests import HttpRequestAsgiBridge
 from .bridge.responses import HttpResponseAsgiBridge
 from .events import (
-    EVENT_CONTROLLER_VIEW,
     EVENT_CORE_CONTROLLER,
     EVENT_CORE_REQUEST,
     EVENT_CORE_RESPONSE,
     EVENT_CORE_STARTED,
+    EVENT_CORE_VIEW,
     ControllerEvent,
-    ControllerViewEvent,
     RequestEvent,
     ResponseEvent,
+    ViewEvent,
 )
 
 logger = get_logger(__name__)
@@ -52,6 +52,9 @@ class ASGIKernel:
 
             if asgi_type == "lifespan":
                 await receive()
+                # TODO: there are more than just the lifespan.startup event, maybe handle all messages possible or at
+                # least ignore the ones we're not interested in.
+                # See: https://asgi.readthedocs.io/en/latest/specs/lifespan.html
                 try:
                     await self.dispatcher.adispatch(EVENT_CORE_STARTED, Event())
                 except Exception as exc:
@@ -78,7 +81,7 @@ class ASGIKernel:
 
         try:
             return [
-                candidates[name] if name in candidates or param.default is param.empty else param.default
+                (candidates[name] if name in candidates or param.default is param.empty else param.default)
                 for name, param in signature(subject).parameters.items()
                 if param.kind is not param.KEYWORD_ONLY
             ], {}
@@ -117,8 +120,8 @@ class ASGIKernel:
         # if the controller returned anything that is not a response, maybe some view listener can create one from this
         # value (for example for json data, etc.).
         if not isinstance(response, HttpResponse):
-            event = ControllerViewEvent(request, response)
-            await self.dispatcher.adispatch(EVENT_CONTROLLER_VIEW, event)
+            event = ViewEvent(request, response)
+            await self.dispatcher.adispatch(EVENT_CORE_VIEW, event)
             response = event.response or response
 
         # if after the view event has been dispatched we still don't have a response, we have to raise an error.

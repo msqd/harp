@@ -27,7 +27,11 @@ class TestApplicationsRegistry:
         assert "acme" in registry
 
         assert registry.resolve_name("acme") == "harp_apps.acme"
-        assert registry.aslist() == ["harp_apps.storage", "harp_apps.rules", "harp_apps.acme"]
+        assert registry.aslist() == [
+            "harp_apps.storage",
+            "harp_apps.rules",
+            "harp_apps.acme",
+        ]
 
         registry.remove("rules")
         assert len(registry) == 2

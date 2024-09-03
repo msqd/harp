@@ -1,5 +1,7 @@
-Services
-========
+Storage Services
+================
+
+.. tags:: services
 
 The services defined by the ``storage`` application are listed below, and will vary depending on settings.
 

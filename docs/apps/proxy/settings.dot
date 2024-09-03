@@ -1,0 +1,38 @@
+digraph "classes" {
+    rankdir = TB
+    charset = "utf-8"
+
+    "harp_apps.proxy.settings.BaseProxySettings" [color = "black", fontcolor = "black", label = <{BaseProxySettings|<br ALIGN="LEFT"/>|}>, shape = "record", style = "solid"];
+    "harp_apps.proxy.settings.Proxy" [color = "black", fontcolor = "black", label = <{Proxy|endpoints<br ALIGN="LEFT"/>|}>, shape = "record", style = "solid"];
+    "harp_apps.proxy.settings.ProxySettings" [color = "black", fontcolor = "black", label = <{ProxySettings|endpoints : list[EndpointSettings]<br ALIGN="LEFT"/>|}>, shape = "record", style = "solid"];
+    "harp_apps.proxy.settings.ProxySettings" -> "harp_apps.proxy.settings.BaseProxySettings" [arrowhead = "empty", arrowtail = "none"];
+    "harp_apps.proxy.settings.endpoint.BaseEndpointSettings" [color = "black", fontcolor = "black", label = <{BaseEndpointSettings|description : Optional[str]<br ALIGN="LEFT"/>name : str<br ALIGN="LEFT"/>port : int<br ALIGN="LEFT"/>|}>, shape = "record", style = "solid"];
+    "harp_apps.proxy.settings.endpoint.Endpoint" [color = "black", fontcolor = "black", label = <{Endpoint|remote : Optional[Remote]<br ALIGN="LEFT"/>|}>, shape = "record", style = "solid"];
+    "harp_apps.proxy.settings.endpoint.EndpointSettings" [color = "black", fontcolor = "black", label = <{EndpointSettings|remote : Optional[RemoteSettings]<br ALIGN="LEFT"/>|}>, shape = "record", style = "solid"];
+    "harp_apps.proxy.settings.remote.BaseRemoteSettings" [color = "black", fontcolor = "black", label = <{BaseRemoteSettings|break_on : list[str]<br ALIGN="LEFT"/>check_after : float<br ALIGN="LEFT"/>min_pool_size : int<br ALIGN="LEFT"/>|}>, shape = "record", style = "solid"];
+    "harp_apps.proxy.settings.remote.Remote" [color = "black", fontcolor = "black", label = <{Remote|current_pool<br ALIGN="LEFT"/>current_pool_name : str<br ALIGN="LEFT"/>endpoints<br ALIGN="LEFT"/>probe : Optional[RemoteProbe]<br ALIGN="LEFT"/>|check()<br ALIGN="LEFT"/>check_forever()<br ALIGN="LEFT"/>get_url(): str<br ALIGN="LEFT"/>notify_url_status(url, status)<br ALIGN="LEFT"/>refresh()<br ALIGN="LEFT"/>set_checking(url)<br ALIGN="LEFT"/>set_down(url)<br ALIGN="LEFT"/>set_up(url)<br ALIGN="LEFT"/>}>, shape = "record", style = "solid"];
+    "harp_apps.proxy.settings.remote.endpoint.RemoteEndpoint" [color = "black", fontcolor = "black", label = <{RemoteEndpoint|failure_reasons : Optional[set]<br ALIGN="LEFT"/>failure_score : int<br ALIGN="LEFT"/>status : int<br ALIGN="LEFT"/>success_score : int<br ALIGN="LEFT"/>|failure(reason: str)<br ALIGN="LEFT"/>success()<br ALIGN="LEFT"/>}>, shape = "record", style = "solid"];
+    "harp_apps.proxy.settings.remote.endpoint.RemoteEndpointSettings" [color = "black", fontcolor = "black", label = <{RemoteEndpointSettings|failure_threshold : Annotated[int, Field(gt=0)]<br ALIGN="LEFT"/>pools : List[str]<br ALIGN="LEFT"/>success_threshold : Annotated[int, Field(gt=0)]<br ALIGN="LEFT"/>url : Annotated<br ALIGN="LEFT"/>|serialize_in_order(value: List[str])<br ALIGN="LEFT"/>validate_pools(pools: List[str]): List[str]<br ALIGN="LEFT"/>}>, shape = "record", style = "solid"];
+    "harp_apps.proxy.settings.remote.probe.RemoteProbe" [color = "black", fontcolor = "black", label = <{RemoteProbe|<br ALIGN="LEFT"/>|async_client()<br ALIGN="LEFT"/>check(client: httpx.AsyncClient, endpoint: 'RemoteEndpoint')<br ALIGN="LEFT"/>}>, shape = "record", style = "solid"];
+    "harp_apps.proxy.settings.remote.probe.RemoteProbeSettings" [color = "black", fontcolor = "black", label = <{RemoteProbeSettings|headers : dict<br ALIGN="LEFT"/>interval : float<br ALIGN="LEFT"/>method : str<br ALIGN="LEFT"/>path : str<br ALIGN="LEFT"/>timeout : float<br ALIGN="LEFT"/>verify : bool<br ALIGN="LEFT"/>|}>, shape = "record", style = "solid"];
+    "harp_apps.proxy.settings.remote.RemoteSettings" [color = "black", fontcolor = "black", label = <{RemoteSettings|endpoints : Optional[list[RemoteEndpointSettings]]<br ALIGN="LEFT"/>probe : Optional[RemoteProbeSettings]<br ALIGN="LEFT"/>|}>, shape = "record", style = "solid"];
+    "harp_apps.proxy.settings.remote.RemoteSettings" -> "harp_apps.proxy.settings.remote.BaseRemoteSettings" [arrowhead = "empty", arrowtail = "none"];
+    "harp_apps.proxy.settings.endpoint.EndpointSettings" -> "harp_apps.proxy.settings.endpoint.BaseEndpointSettings" [arrowhead = "empty", arrowtail = "none"];
+
+    // settings tree
+    "harp_apps.proxy.settings.ProxySettings" -> "harp_apps.proxy.settings.endpoint.EndpointSettings" [arrowhead = none, headlabel = "0..n"];
+    "harp_apps.proxy.settings.endpoint.EndpointSettings" -> "harp_apps.proxy.settings.remote.RemoteSettings" [arrowhead = none, headlabel = "0..1"];
+    "harp_apps.proxy.settings.remote.RemoteSettings" -> "harp_apps.proxy.settings.remote.probe.RemoteProbeSettings" [arrowhead = none, headlabel = "0..1"];
+    "harp_apps.proxy.settings.remote.RemoteSettings" -> "harp_apps.proxy.settings.remote.endpoint.RemoteEndpointSettings" [arrowhead = none, headlabel = "0..n"];
+
+    // statefuls tree
+    "harp_apps.proxy.settings.Proxy" -> "harp_apps.proxy.settings.ProxySettings" [arrowhead = none, headlabel = "1"];
+    "harp_apps.proxy.settings.Proxy" -> "harp_apps.proxy.settings.endpoint.Endpoint" [arrowhead = none, headlabel = "0..n"];
+    "harp_apps.proxy.settings.endpoint.Endpoint" -> "harp_apps.proxy.settings.endpoint.EndpointSettings" [arrowhead = none, headlabel = "1"];
+    "harp_apps.proxy.settings.endpoint.Endpoint"  -> "harp_apps.proxy.settings.remote.Remote" [arrowhead = none, headlabel = "0..1"];
+    "harp_apps.proxy.settings.remote.Remote" -> "harp_apps.proxy.settings.remote.RemoteSettings" [arrowhead = none, headlabel = "1"];
+    "harp_apps.proxy.settings.remote.Remote" -> "harp_apps.proxy.settings.remote.endpoint.RemoteEndpoint" [arrowhead = none, headlabel = "0..n"];
+    "harp_apps.proxy.settings.remote.Remote" -> "harp_apps.proxy.settings.remote.probe.RemoteProbe" [arrowhead = none, headlabel = "0..1"];
+    "harp_apps.proxy.settings.remote.endpoint.RemoteEndpoint" -> "harp_apps.proxy.settings.remote.endpoint.RemoteEndpointSettings" [arrowhead = none, headlabel = "1"];
+    "harp_apps.proxy.settings.remote.probe.RemoteProbe" -> "harp_apps.proxy.settings.remote.probe.RemoteProbeSettings" [arrowhead = none, headlabel = "1"];
+}

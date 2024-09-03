@@ -22,7 +22,20 @@ class TestCacheSettings(BaseConfigurableTest):
             "allow_heuristics": False,
             "allow_stale": False,
             "cacheable_methods": ["GET", "HEAD"],
-            "cacheable_status_codes": [200, 203, 204, 206, 300, 301, 308, 404, 405, 410, 414, 501],
+            "cacheable_status_codes": [
+                200,
+                203,
+                204,
+                206,
+                300,
+                301,
+                308,
+                404,
+                405,
+                410,
+                414,
+                501,
+            ],
             "type": "hishel.Controller",
         },
         "enabled": True,
@@ -46,7 +59,10 @@ class TestCacheSettings(BaseConfigurableTest):
 
         container = Container()
         container.add_instance(AsyncEventDispatcher(), IAsyncEventDispatcher)
-        container.load(Path(ROOT_DIR) / "harp_apps" / "http_client" / "services.yml", bind_settings=settings)
+        container.load(
+            Path(ROOT_DIR) / "harp_apps" / "http_client" / "services.yml",
+            bind_settings=settings,
+        )
 
         provider = container.build_provider()
 
@@ -58,7 +74,10 @@ class TestCacheSettings(BaseConfigurableTest):
 
         container = Container()
         container.add_instance(AsyncEventDispatcher(), IAsyncEventDispatcher)
-        container.load(Path(ROOT_DIR) / "harp_apps" / "http_client" / "services.yml", bind_settings=settings)
+        container.load(
+            Path(ROOT_DIR) / "harp_apps" / "http_client" / "services.yml",
+            bind_settings=settings,
+        )
 
         provider = container.build_provider()
 

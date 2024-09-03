@@ -72,15 +72,6 @@ remote service's health.
     :language: yaml
 
 
-.. _circuit-breaker:
-Circuit breaker
-:::::::::::::::
-
-.. versionadded:: 0.7
-
-For now, see :doc:`Circuit Breaker </features/circuit-breaker>`.
-
-
 Client
 ::::::
 

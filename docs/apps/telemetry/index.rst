@@ -1,5 +1,7 @@
 Telemetry
-========
+=========
+
+.. tags:: applications
 
 .. versionadded:: 0.5
 

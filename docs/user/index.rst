@@ -1,12 +1,7 @@
-User's Guide
-============
+User Guide
+==========
 
-.. raw:: html
-
-    <p>
-        This guide intends to help <strong>dashboard users</strong> to understand the <strong>user interface</strong>
-        elements and the <strong>metrics</strong> meaning.
-    </p>
+This guide intends to help **dashboard users** to understand the **user interface** elements and the **metrics** meaning.
 
 .. table::
     :class: guide-intro

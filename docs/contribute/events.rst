@@ -1,10 +1,13 @@
 Event Dispatcher
 ================
 
+.. tags:: events
+
+
 To provide a flexible way to hook into the existing and future components, HARP uses an event-driven architecture.
 
-.. eda:
 
+.. _eda:
 Event Driven Architecture
 :::::::::::::::::::::::::
 
@@ -19,6 +22,8 @@ HARP uses :mod:`Whistle <whistle>`, a simple Python event dispatcher, to allow b
 easily expose or hook into system events. For instance, events occur each time a transaction or an HTTP request or
 response passes through the proxy, and you can listen to these events to implement custom behaviors.
 
+
+.. _events:
 Defining and exposing Events
 ::::::::::::::::::::::::::::
 
@@ -110,13 +115,7 @@ event dispatcher, so it can listen to events from any component registered with 
             print(event.context)
 
 
-Event List
-::::::::::
+See Also
+::::::::
 
-In HARP Proxy (CE), there are a few applications that expose events, here is a list of the most important ones:
-
-- :doc:`Events dispatched by HARP Core <../core/events>`: configuration and low-level asgi hooks.
-- :doc:`Events dispatched by the HTTP Client Application <../apps/http_client/events>`: hooks to filter outbound
-  HTTP requests and their associated responses.
-- :doc:`Events dispatched by the Proxy Application <../apps/proxy/events>`: hooks to filter transactions and their
-  associated messages.
+:doc:`All pages tagged with «events» </_tags/events>` (includes this page and all event reference pages).

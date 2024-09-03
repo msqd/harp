@@ -1,7 +1,10 @@
 Proxy
 =====
 
+.. tags:: applications
+
 .. versionadded:: 0.5
+
 
 The ``harp_apps.proxy`` application provides the core proxy features for HARP and includes the configuration logic for
 endpoints.
@@ -66,4 +69,5 @@ Table of Content
     :hidden:
     :maxdepth: 1
 
-    events
+    Events <events>
+    Settings <settings>

@@ -50,8 +50,16 @@ def run_command(files, examples, options, endpoint, method, path):
     dispatcher.add_listener(EVENT_FILTER_PROXY_REQUEST, on_proxy_request_dump, priority=-100)
     dispatcher.add_listener(EVENT_FILTER_HTTP_CLIENT_REQUEST, on_remote_request_dump, priority=-100)
     dispatcher.add_listener(EVENT_FILTER_HTTP_CLIENT_RESPONSE, on_remote_response_dump, priority=-100)
-    dispatcher.add_listener(EVENT_FILTER_HTTP_CLIENT_RESPONSE, on_remote_response_show_cache_control, priority=-100)
-    dispatcher.add_listener(EVENT_FILTER_HTTP_CLIENT_RESPONSE, on_remote_response_show_cache_control, priority=100)
+    dispatcher.add_listener(
+        EVENT_FILTER_HTTP_CLIENT_RESPONSE,
+        on_remote_response_show_cache_control,
+        priority=-100,
+    )
+    dispatcher.add_listener(
+        EVENT_FILTER_HTTP_CLIENT_RESPONSE,
+        on_remote_response_show_cache_control,
+        priority=100,
+    )
     dispatcher.add_listener(EVENT_FILTER_PROXY_RESPONSE, on_proxy_response_dump, priority=-100)
 
     # Create a proxy controller to mimic the real behavious of the proxy.

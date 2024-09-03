@@ -36,7 +36,7 @@ class Message(Base):
             summary=self.summary,
             headers=self.headers,
             body=self.body,
-            created_at=self.created_at.replace(tzinfo=UTC) if self.created_at else self.created_at,
+            created_at=(self.created_at.replace(tzinfo=UTC) if self.created_at else self.created_at),
         )
 
     @classmethod

@@ -1,6 +1,8 @@
 Storage
 =======
 
+.. tags:: applications
+
 .. versionadded:: 0.5
 
 .. versionchanged:: 0.6
@@ -144,6 +146,4 @@ Table of Content
     :hidden:
     :maxdepth: 1
 
-    quickstart
-    services
-    recipes
+    Services <services>

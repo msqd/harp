@@ -106,7 +106,12 @@ class TestSystemControllerThroughASGI(
             b':memory:","migrate":true,"blobs":{"type":"redis"},"redis":null}}'
         )
 
-    @parametrize_with_settings({"applications": ["storage"], "storage": {"url": "sqlite+aiosqlite:///:memory:"}})
+    @parametrize_with_settings(
+        {
+            "applications": ["storage"],
+            "storage": {"url": "sqlite+aiosqlite:///:memory:"},
+        }
+    )
     @parametrize_with_database_urls("sqlite")
     @parametrize_with_blob_storages_urls("sql")
     async def test_get_settings_sqlalchemy(self, client: ASGICommunicator, blob_storage):
@@ -120,7 +125,13 @@ class TestSystemControllerThroughASGI(
         )
 
     @parametrize_with_settings(
-        {"applications": ["storage"], "storage": {"url": "sqlite+aiosqlite:///:memory:", "blobs": {"type": "redis"}}}
+        {
+            "applications": ["storage"],
+            "storage": {
+                "url": "sqlite+aiosqlite:///:memory:",
+                "blobs": {"type": "redis"},
+            },
+        }
     )
     @parametrize_with_database_urls("sqlite")
     @parametrize_with_blob_storages_urls("redis")

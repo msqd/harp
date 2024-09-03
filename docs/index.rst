@@ -40,6 +40,7 @@ Table of Content
    /contribute/index
    /core/index
    /apps/index
+   /config/index
    /reference/index
    /changelogs/index
    /faq
@@ -51,4 +52,5 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`modindex`
+* :ref:`tagoverview`
 * :ref:`search`

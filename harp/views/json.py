@@ -4,7 +4,7 @@ from decimal import Decimal
 import orjson
 from whistle import IAsyncEventDispatcher
 
-from harp.asgi.events import EVENT_CONTROLLER_VIEW, ControllerViewEvent
+from harp.asgi.events import EVENT_CORE_VIEW, ViewEvent
 from harp.http import HttpResponse
 
 STRINGIFIABLES = (Decimal,)
@@ -41,7 +41,7 @@ class json(dict):
     pass
 
 
-async def on_json_response(event: ControllerViewEvent):
+async def on_json_response(event: ViewEvent):
     if isinstance(event.value, json):
         content_type = "application/json"
         try:
@@ -72,4 +72,4 @@ async def on_json_response(event: ControllerViewEvent):
 
 
 def register(dispatcher: IAsyncEventDispatcher):
-    dispatcher.add_listener(EVENT_CONTROLLER_VIEW, on_json_response)
+    dispatcher.add_listener(EVENT_CORE_VIEW, on_json_response)

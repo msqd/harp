@@ -19,7 +19,17 @@ logger = get_logger(__name__)
 class RunHarpProxyInSubprocessThread(threading.Thread):
     daemon = False
 
-    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, *, daemon=None, config=None):
+    def __init__(
+        self,
+        group=None,
+        target=None,
+        name=None,
+        args=(),
+        kwargs=None,
+        *,
+        daemon=None,
+        config=None,
+    ):
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
         self.config_filename = None
         if config:

@@ -19,8 +19,20 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.alter_column("transactions", "apdex", new_column_name="tpdex", existing_type=sa.Integer(), nullable=True)
+    op.alter_column(
+        "transactions",
+        "apdex",
+        new_column_name="tpdex",
+        existing_type=sa.Integer(),
+        nullable=True,
+    )
 
 
 def downgrade() -> None:
-    op.alter_column("transactions", "tpdex", new_column_name="apdex", existing_type=sa.Integer(), nullable=True)
+    op.alter_column(
+        "transactions",
+        "tpdex",
+        new_column_name="apdex",
+        existing_type=sa.Integer(),
+        nullable=True,
+    )

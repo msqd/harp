@@ -14,15 +14,40 @@ class _NotSet:
 _notset = _NotSet()
 
 
-class LazyServiceReference(BaseModel):
+class BaseReference(BaseModel):
+    """
+    Base class for references. Mostly there to add some interface documentation.
+
+    """
+
+    def __init__(self, /, **data: Any) -> None:  # type: ignore
+        """Create a new model by parsing and validating input data from keyword arguments.
+
+        Raises :class:`pydantic_core.ValidationError` if the input data cannot be validated.
+
+        """
+        super().__init__(**data)
+
+    @classmethod
+    def build_from_yaml(cls, loader, node) -> Self:
+        """
+        Secondary constructor implementing the pyyaml constructor interface.
+
+        """
+        raise NotImplementedError("YAML constructor not implemented")
+
+
+class LazyServiceReference(BaseReference):
     """
     Reference to a service, that will be resolved the latest possible, when the instance will actually be needed.
     """
 
+    #: Reference target, a.k.a. the service symbolic name. Can be either a string, or a list of strings. The later will
+    #: resolve as the first available service in the list.
     target: str | list[str]
 
     @classmethod
-    def _yaml_construct(cls, loader, node):
+    def build_from_yaml(cls, loader, node) -> Self:
         if isinstance(node, yaml.ScalarNode):
             return cls(target=loader.construct_scalar(node))
 
@@ -36,6 +61,9 @@ class LazyServiceReference(BaseModel):
         return f"{type(self).__name__}({repr(self.target)})"
 
     def resolve(self, resolver, context):
+        """
+        Resolve reference value in using the given resolver (callable) and resolution context.
+        """
         return resolver(self.target, context)
 
 
@@ -46,9 +74,23 @@ operators = {
 }
 
 
-class LazySettingReference(BaseModel):
+class LazySettingReference(BaseReference):
     """
-    Reference to a setting value, that will be resolved later (actually, on settings bind so quite soon).
+    Reference to a setting value, that will be resolved when the settings are bound to the service definitions
+    collection, when calling :meth:`harp.services.Container.load`.
+
+    Use this in `services.yml` files using the `!cfg` constructor:
+
+    .. code:: yaml
+
+        foo: !cfg "foo"
+
+    Can be provided a two-element list for defaults:
+
+    .. code:: yaml
+
+        foo: !cfg ["foo", "default if no «foo» in bound settings"]
+
     """
 
     target: str
@@ -58,7 +100,7 @@ class LazySettingReference(BaseModel):
         super().__init__(target=target, **kwargs)
 
     @classmethod
-    def _yaml_construct(cls, loader, node) -> Self:
+    def build_from_yaml(cls, loader, node) -> Self:
         if isinstance(node, yaml.ScalarNode):
             return cls(loader.construct_scalar(node))
         elif isinstance(node, yaml.SequenceNode):
@@ -101,5 +143,5 @@ class LazySettingReference(BaseModel):
         return f"!cfg {self.target}"
 
 
-yaml.add_constructor("!ref", LazyServiceReference._yaml_construct, Loader=yaml.Loader)
-yaml.add_constructor("!cfg", LazySettingReference._yaml_construct, Loader=yaml.Loader)
+yaml.add_constructor("!ref", LazyServiceReference.build_from_yaml, Loader=yaml.Loader)
+yaml.add_constructor("!cfg", LazySettingReference.build_from_yaml, Loader=yaml.Loader)

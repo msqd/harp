@@ -76,7 +76,11 @@ def compile_trunc_sqlite(element, compiler, **kw):
 
     if precision == "hour":
         return compiler.process(
-            func.datetime(expr, func.strftime("-%M minutes", expr), func.strftime("-%f seconds", expr))
+            func.datetime(
+                expr,
+                func.strftime("-%M minutes", expr),
+                func.strftime("-%f seconds", expr),
+            )
         )
 
     if precision == "minute":
@@ -84,7 +88,11 @@ def compile_trunc_sqlite(element, compiler, **kw):
 
     if precision == "second":
         return compiler.process(
-            func.datetime(expr, func.strftime("-%f seconds", expr), func.strftime("%S seconds", expr))
+            func.datetime(
+                expr,
+                func.strftime("-%f seconds", expr),
+                func.strftime("%S seconds", expr),
+            )
         )
 
     raise NotImplementedError(f"Truncating {precision} is not supported for SQLite")

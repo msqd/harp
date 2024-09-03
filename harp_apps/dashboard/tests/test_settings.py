@@ -18,7 +18,11 @@ def test_defaults():
 
 def test_basic_auth_defaults():
     assert asdict(BasicAuthSettings()) == {"type": "basic"}
-    assert asdict(BasicAuthSettings(), verbose=True) == {"algorithm": "pbkdf2_sha256", "type": "basic", "users": {}}
+    assert asdict(BasicAuthSettings(), verbose=True) == {
+        "algorithm": "pbkdf2_sha256",
+        "type": "basic",
+        "users": {},
+    }
 
 
 def test_basic_auth_userlist():

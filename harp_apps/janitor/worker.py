@@ -106,7 +106,11 @@ class JanitorWorker:
             # The blob storage does not NEED to delete orphans (for example for a NullBlobStorage)
             pass
         else:
-            logger.debug("🧹 DeleteOrphanBlobs[%s] Removed %d blobs.", self.blob_storage.type, count)
+            logger.debug(
+                "🧹 DeleteOrphanBlobs[%s] Removed %d blobs.",
+                self.blob_storage.type,
+                count,
+            )
 
     @with_session
     async def compute_and_store_metrics(self, /, *, session):

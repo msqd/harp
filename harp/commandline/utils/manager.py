@@ -31,7 +31,12 @@ class HonchoManagerFactory:
         self.cwds = {}
 
         # copy to allow changes on this instance only
-        self.names = {HARP_DASHBOARD_SERVICE, HARP_SERVER_SERVICE, HARP_DOCS_SERVICE, HARP_UI_SERVICE}
+        self.names = {
+            HARP_DASHBOARD_SERVICE,
+            HARP_SERVER_SERVICE,
+            HARP_DOCS_SERVICE,
+            HARP_UI_SERVICE,
+        }
         self.commands = {**self.commands}
 
     def _get_dashboard_executable(self, processes):
@@ -82,7 +87,10 @@ class HonchoManagerFactory:
 
     def _get_docs_executable(self, processes):
         # todo add check available
-        return os.path.join(ROOT_DIR, "docs"), "poetry run sphinx-autobuild . _build/html"
+        return (
+            os.path.join(ROOT_DIR, "docs"),
+            "poetry run sphinx-autobuild . _build/html",
+        )
 
     commands[HARP_DOCS_SERVICE] = _get_docs_executable
 
@@ -104,7 +112,10 @@ class HonchoManagerFactory:
             if callable(self.commands[name]):
                 working_directory, command = self.commands[name](self, processes)
             else:
-                working_directory, command = self.cwds.get(name, None), self.commands[name]
+                working_directory, command = (
+                    self.cwds.get(name, None),
+                    self.commands[name],
+                )
                 if working_directory is None:
                     working_directory = os.getcwd()
                 else:

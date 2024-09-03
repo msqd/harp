@@ -13,7 +13,8 @@ _default_host = (None, None)
 
 class HttpRequestAsgiBridge(HttpRequestBridge):
     """Actually implements the getters required by HttpRequest using the asgi scope and receive callable. It is still
-    an early implementation and will need to support streaming requests in the future."""
+    an early implementation and will need to support streaming requests in the future.
+    """
 
     def __init__(self, scope: HTTPScope, receive: ASGIReceiveCallable):
         """
@@ -51,7 +52,12 @@ class HttpRequestAsgiBridge(HttpRequestBridge):
 
     def get_query(self) -> MultiDict:
         """Get the query string from asgi scope, as a multidict."""
-        return MultiDict(parse_qsl(self.asgi_scope.get("query_string", b"").decode("utf-8"), keep_blank_values=True))
+        return MultiDict(
+            parse_qsl(
+                self.asgi_scope.get("query_string", b"").decode("utf-8"),
+                keep_blank_values=True,
+            )
+        )
 
     def get_headers(self) -> CIMultiDict:
         """Get the headers from asgi scope, as a case-insensitive multidict."""

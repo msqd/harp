@@ -16,7 +16,11 @@ if TYPE_CHECKING:
 transaction_tag_values_association_table = Table(
     "trans_tag_values",
     Base.metadata,
-    Column("transaction_id", ForeignKey("transactions.id", ondelete="CASCADE"), primary_key=True),
+    Column(
+        "transaction_id",
+        ForeignKey("transactions.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
     Column("value_id", ForeignKey("tag_values.id", ondelete="CASCADE"), primary_key=True),
 )
 
@@ -63,7 +67,7 @@ class Transaction(Base):
             type=self.type,
             endpoint=self.endpoint,
             started_at=self.started_at.replace(tzinfo=UTC),
-            finished_at=self.finished_at.replace(tzinfo=UTC) if self.finished_at else self.finished_at,
+            finished_at=(self.finished_at.replace(tzinfo=UTC) if self.finished_at else self.finished_at),
             elapsed=self.elapsed,
             tpdex=self.tpdex,
             extras=dict(
@@ -72,12 +76,21 @@ class Transaction(Base):
                 cached=bool(self.x_cached),
                 no_cache=bool(self.x_no_cache),
                 **(
-                    {"flags": list(set(filter(None, (FLAGS_BY_TYPE.get(flag.type, None) for flag in self.flags))))}
+                    {
+                        "flags": list(
+                            set(
+                                filter(
+                                    None,
+                                    (FLAGS_BY_TYPE.get(flag.type, None) for flag in self.flags),
+                                )
+                            )
+                        )
+                    }
                     if with_user_flags
                     else {}
                 ),
             ),
-            messages=[message.to_model() for message in self.messages] if self.messages else [],
+            messages=([message.to_model() for message in self.messages] if self.messages else []),
             tags=self.tags,
         )
 

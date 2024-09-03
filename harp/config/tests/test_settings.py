@@ -29,7 +29,10 @@ class TestSettings:
             f.close()
             settings = create_settings({"dashboard": {"auth": {"type": "basic", "users": {"fromFile": f.name}}}})
 
-            assert settings["dashboard"]["auth"] == {"type": "basic", "users": {"romain": {"password": "s3cr3t"}}}
+            assert settings["dashboard"]["auth"] == {
+                "type": "basic",
+                "users": {"romain": {"password": "s3cr3t"}},
+            }
 
     async def test_sqlalchemy_url_merges(self):
         dburl = "postgresql+asyncpg:///user:pass@localhost:1234/name"

@@ -48,7 +48,11 @@ if USE_PROMETHEUS:
 
     _prometheus = {
         "call": Counter("proxy_calls", "Requests to the proxy.", ["name", "method"]),
-        "time.full": Histogram("proxy_time_full", "Requests to the proxy including overhead.", ["name", "method"]),
+        "time.full": Histogram(
+            "proxy_time_full",
+            "Requests to the proxy including overhead.",
+            ["name", "method"],
+        ),
         "time.forward": Histogram("proxy_time_forward", "Forward time.", ["name", "method"]),
     }
 
@@ -245,7 +249,10 @@ class HttpProxyController:
             return await self.end_transaction(remote_url, transaction, context.response)
 
     async def end_transaction(
-        self, remote_url: Optional[str], transaction: Transaction, response: BaseHttpMessage | Exception
+        self,
+        remote_url: Optional[str],
+        transaction: Transaction,
+        response: BaseHttpMessage | Exception,
     ):
         spent = int((datetime.now(UTC).timestamp() - transaction.started_at.timestamp()) * 100000) / 100
         transaction.finished_at = datetime.now(UTC)
@@ -278,7 +285,10 @@ class HttpProxyController:
 
         if isinstance(response, HttpError):
             transaction.extras["status_class"] = "ERR"
-            self.warning(f"◀ {type(response).__name__} {response.message} ({spent}ms)", transaction=transaction)
+            self.warning(
+                f"◀ {type(response).__name__} {response.message} ({spent}ms)",
+                transaction=transaction,
+            )
         elif isinstance(response, HttpResponse):
             reason = codes.get_reason_phrase(response.status)
             self.info(f"◀ {response.status} {reason} ({spent}ms)", transaction=transaction)

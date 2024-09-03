@@ -1,6 +1,8 @@
 Dashboard
 =========
 
+.. tags:: applications
+
 .. versionadded:: 0.5
 
 The `harp_apps.dashboard` application implements the administrative api and micro-frontend.
@@ -83,6 +85,4 @@ Table of Content
     :hidden:
     :maxdepth: 1
 
-    quickstart
-    services
-    recipes
+    Services `services

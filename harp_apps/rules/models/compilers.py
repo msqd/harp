@@ -73,7 +73,10 @@ class BaseRuleSetCompiler:
                     target[_pattern] = {}
 
                 target[_pattern] = self.compile(
-                    value, target=target[_pattern], level=level + 1, _levels=remaining_levels
+                    value,
+                    target=target[_pattern],
+                    level=level + 1,
+                    _levels=remaining_levels,
                 )
 
             else:

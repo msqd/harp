@@ -1,12 +1,8 @@
 Features Guide
 ==============
 
-.. raw:: html
-
-    <p>
-        This guide will let you explore <strong><a href="https://harp-proxy.net" target="_blank">HARP Proxy</a>'s
-        features</strong> in depth. It is a good starting point if you're looking for what the system can natively do.
-    </p>
+This guide will let you explore HARP Proxy's features in depth. It is a good starting point if you're looking
+for the system's native capabilities.
 
 .. table::
     :class: guide-intro
@@ -16,3 +12,8 @@ Features Guide
     | .. figure:: features-guide.jpg     | .. include:: _toc.rst                                                       |
     |    :alt: HARP Proxy Features Guide |                                                                             |
     +------------------------------------+-----------------------------------------------------------------------------+
+
+.. seealso::
+
+    * If you want help about using the dashboard, please refer to the :doc:`User Guide <../user/index>`.
+    * If you want to configure and customize the proxy, please refer to the :doc:`Built-in Applications Reference <../apps/index>`

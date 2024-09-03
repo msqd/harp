@@ -9,7 +9,12 @@ class GoogleChatNotificationSender:
         self.public_url = public_url
 
     async def send_notification(
-        self, method: Optional[str], url: Optional[str], status_code: int, message: str, transaction_id: Optional[str]
+        self,
+        method: Optional[str],
+        url: Optional[str],
+        status_code: int,
+        message: str,
+        transaction_id: Optional[str],
     ) -> None:
         error_message = self._format_error_message(method, url, status_code, message, transaction_id, self.public_url)
         async with AsyncClient() as client:
@@ -30,7 +35,12 @@ class GoogleChatNotificationSender:
             {"widgets": [{"textParagraph": {"text": f"<b>Error in {method} request to {url}</b>"}}]},
             {
                 "widgets": [
-                    {"keyValue": {"topLabel": "Error Code", "content": f"<b>{status_code}</b>"}},
+                    {
+                        "keyValue": {
+                            "topLabel": "Error Code",
+                            "content": f"<b>{status_code}</b>",
+                        }
+                    },
                     {"keyValue": {"topLabel": "Status", "content": message}},
                 ]
             },

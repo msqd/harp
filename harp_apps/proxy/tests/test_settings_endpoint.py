@@ -38,7 +38,12 @@ class TestEndpointSettingsWithRemote(BaseConfigurableTest):
             "break_on": ["network_error", "unhandled_exception"],
             "check_after": 10.0,
             "endpoints": [
-                {"failure_threshold": 1, "pools": ["default"], "success_threshold": 1, "url": "http://example.com/"}
+                {
+                    "failure_threshold": 1,
+                    "pools": ["default"],
+                    "success_threshold": 1,
+                    "url": "http://example.com/",
+                }
             ],
             "min_pool_size": 1,
             "probe": None,

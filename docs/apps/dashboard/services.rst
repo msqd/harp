@@ -1,5 +1,7 @@
-Services
-========
+Dashboard Services
+==================
+
+.. tags:: services
 
 The services defined by the ``dashboard`` application are listed below:
 

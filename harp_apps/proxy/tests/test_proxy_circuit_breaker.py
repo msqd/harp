@@ -31,7 +31,7 @@ async def test_break_on_5xx(status, is_http_server_error_a_down_signal):
     remote = Remote.from_settings_dict(
         {
             "endpoints": [{"url": BASE_URL}],
-            "break_on": ["http_5xx", "network_error"] if is_http_server_error_a_down_signal else ["network_error"],
+            "break_on": (["http_5xx", "network_error"] if is_http_server_error_a_down_signal else ["network_error"]),
         }
     )
     endpoint = remote[BASE_URL]
@@ -65,7 +65,7 @@ async def test_break_on_4xx(status, is_client_error_a_down_signal):
     remote = Remote.from_settings_dict(
         {
             "endpoints": [{"url": BASE_URL}],
-            "break_on": ["http_4xx", "network_error"] if is_client_error_a_down_signal else ["network_error"],
+            "break_on": (["http_4xx", "network_error"] if is_client_error_a_down_signal else ["network_error"]),
         }
     )
     endpoint = remote[BASE_URL]

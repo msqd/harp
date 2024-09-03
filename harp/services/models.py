@@ -75,14 +75,14 @@ class ServiceDefinition(BaseModel):
 
         return type(self)(
             name=self.name,
-            description=other.description if other.description is not None else self.description,
-            lifestyle=other.lifestyle if other.lifestyle is not None else self.lifestyle,
+            description=(other.description if other.description is not None else self.description),
+            lifestyle=(other.lifestyle if other.lifestyle is not None else self.lifestyle),
             base=other.base if other.base is not None else self.base,
             type=other.type if other.type is not None else self.type,
-            constructor=other.constructor if other.constructor is not None else self.constructor,
-            arguments=other.arguments if other.arguments is not None else self.arguments,
+            constructor=(other.constructor if other.constructor is not None else self.constructor),
+            arguments=(other.arguments if other.arguments is not None else self.arguments),
             defaults=other.defaults if other.defaults is not None else self.defaults,
-            positionals=other.positionals if other.positionals is not None else self.positionals,
+            positionals=(other.positionals if other.positionals is not None else self.positionals),
         )
 
     def bind_settings(self, settings: Any):
@@ -129,7 +129,12 @@ class ConditionalServiceDefinitionCollection(BaseServiceDefinitionCollection):
 
     """
 
-    condition: Optional[Union[str | bool | LazySettingReference, Sequence[str | bool | LazySettingReference]]] = None
+    condition: Optional[
+        Union[
+            str | bool | LazySettingReference,
+            Sequence[str | bool | LazySettingReference],
+        ]
+    ] = None
 
     def bind_settings(self, settings: Any):
         if self.condition:

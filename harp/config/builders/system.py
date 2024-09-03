@@ -4,7 +4,7 @@ from whistle import IAsyncEventDispatcher
 
 from harp import __revision__, __version__, get_logger
 from harp.asgi import ASGIKernel
-from harp.asgi.events import EVENT_CONTROLLER_VIEW, EVENT_CORE_REQUEST
+from harp.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_VIEW
 from harp.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.services import Container, Services
 from harp.typing import GlobalSettings
@@ -191,7 +191,7 @@ class SystemBuilder:
         from harp.controllers.default import on_health_request
 
         dispatcher.add_listener(EVENT_CORE_REQUEST, on_health_request, priority=-100)
-        dispatcher.add_listener(EVENT_CONTROLLER_VIEW, on_json_response)
+        dispatcher.add_listener(EVENT_CORE_VIEW, on_json_response)
 
     def build_container(self, config, dispatcher):
         container = cast(Container, self.ContainerType())

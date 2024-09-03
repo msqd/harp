@@ -16,7 +16,10 @@ class TestDefaultsWithNoStorage(BaseTestDefaultsWith):
     async def test_defaults(self):
         system = await self.create_system()
 
-        assert asdict(system.config) == {"applications": ["harp_apps.http_client"], "http_client": {}}
+        assert asdict(system.config) == {
+            "applications": ["harp_apps.http_client"],
+            "http_client": {},
+        }
         assert asdict(system.config, verbose=True) == {
             "applications": ["harp_apps.http_client"],
             "http_client": {
@@ -25,7 +28,20 @@ class TestDefaultsWithNoStorage(BaseTestDefaultsWith):
                         "allow_heuristics": False,
                         "allow_stale": False,
                         "cacheable_methods": ["GET", "HEAD"],
-                        "cacheable_status_codes": [200, 203, 204, 206, 300, 301, 308, 404, 405, 410, 414, 501],
+                        "cacheable_status_codes": [
+                            200,
+                            203,
+                            204,
+                            206,
+                            300,
+                            301,
+                            308,
+                            404,
+                            405,
+                            410,
+                            414,
+                            501,
+                        ],
                         "type": "hishel.Controller",
                     },
                     "enabled": True,
@@ -39,7 +55,11 @@ class TestDefaultsWithNoStorage(BaseTestDefaultsWith):
                 },
                 "proxy_transport": {"type": "harp_apps.http_client.transport.AsyncFilterableTransport"},
                 "timeout": 30.0,
-                "transport": {"retries": 0, "type": "httpx.AsyncHTTPTransport", "verify": True},
+                "transport": {
+                    "retries": 0,
+                    "type": "httpx.AsyncHTTPTransport",
+                    "verify": True,
+                },
                 "type": "httpx.AsyncClient",
             },
         }

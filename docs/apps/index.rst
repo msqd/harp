@@ -1,5 +1,5 @@
-Built-in Applications
-=====================
+Applications Reference
+======================
 
 .. toctree::
     :maxdepth: 1
@@ -7,8 +7,8 @@ Built-in Applications
     dashboard/index
     http_client/index
     janitor/index
+    notifications/index
     proxy/index
     rules/index
     storage/index
     telemetry/index
-    notifications/index

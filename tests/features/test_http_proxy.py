@@ -157,4 +157,7 @@ class TestAsgiProxyWithStubApi:
     @parametrize_with_http_methods(exclude={"CONNECT", "HEAD"})
     async def test_headers(self, client: ASGICommunicator, method):
         response = await client.http_request(method, "/headers")
-        assert response["headers"] == ((b"x-foo", b"Bar"), (b"content-type", b"application/octet-stream"))
+        assert response["headers"] == (
+            (b"x-foo", b"Bar"),
+            (b"content-type", b"application/octet-stream"),
+        )
