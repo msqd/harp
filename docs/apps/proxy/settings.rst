@@ -1,5 +1,7 @@
-Settings
-========
+Proxy Settings
+==============
+
+.. tags:: settings
 
 Reference
 :::::::::

@@ -1,8 +1,10 @@
 Services
 ========
 
-The ``harp.services`` package intergrate the :mod:`rodi` dependency injection container into the HARP framework, adding
-helpers and utilities to make it easier to work with.
+.. tags:: services
+
+The :mod:`harp.services` package intergrate the :mod:`rodi` dependency injection container into the HARP framework,
+adding helpers and utilities to make it easier to work with.
 
 .. py:currentmodule:: harp.services
 

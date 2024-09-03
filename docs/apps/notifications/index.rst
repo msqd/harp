@@ -1,6 +1,8 @@
 Notifications
 =============
 
+.. tags:: applications
+
 .. versionadded:: 0.7
 
 The ``notifications`` application is a simple way to send notifications to a webhook.

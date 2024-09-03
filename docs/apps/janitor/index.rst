@@ -1,6 +1,8 @@
 Janitor
 =======
 
+.. tags:: applications
+
 .. versionadded:: 0.5
 
 The ``janitor`` application runs a background worker to clean up the storage. It deletes all transactions older than 2
