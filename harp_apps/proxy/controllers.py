@@ -37,6 +37,7 @@ from .events import (
     ProxyFilterEvent,
     TransactionEvent,
 )
+from .helpers import extract_tags_from_request
 from .settings.remote import Remote
 
 logger = get_logger(__name__)
@@ -143,6 +144,7 @@ class HttpProxyController:
         with performances_observer("harp_proxy", labels=labels):
             # create an envelope to override things, without touching the original request
             context = ProxyFilterEvent(self.name, request=request)
+
             await self.adispatch(EVENT_FILTER_PROXY_REQUEST, context)
 
             remote_err = None
@@ -162,7 +164,7 @@ class HttpProxyController:
 
             # create transaction (shouldn't that be before the filter operation ? it's debatable.)
             transaction = await self._create_transaction_from_request(
-                context.request, tags=self._extract_tags_from_request(context.request)
+                context.request, tags=extract_tags_from_request(context.request)
             )
             if not remote_url:
                 transaction.extras["status_class"] = "ERR"
@@ -212,36 +214,34 @@ class HttpProxyController:
                     await remote_response.aread()
                     await remote_response.aclose()
 
-                if self.remote[remote_url].status == CHECKING and 200 <= remote_response.status_code < 400:
-                    self.remote.set_up(remote_url)
+                    if self.remote[remote_url].status == CHECKING and 200 <= remote_response.status_code < 400:
+                        self.remote.set_up(remote_url)
 
-                try:
-                    _elapsed = f"{remote_response.elapsed.total_seconds()}s"
-                except RuntimeError:
-                    _elapsed = "n/a"
-                self.debug(
-                    f"◀◀ {remote_response.status_code} {remote_response.reason_phrase} ({_elapsed}{' cached' if remote_response.extensions.get('from_cache') else ''})",
-                    transaction=transaction,
-                )
-
-                response_headers = {
-                    k: v
-                    for k, v in remote_response.headers.multi_items()
-                    if k.lower() not in ("server", "date", "content-encoding", "content-length")
-                }
-                # XXX for now, we use transaction "extras" to store searchable data for later
-                transaction.extras["status_class"] = f"{remote_response.status_code // 100}xx"
-
-                if remote_response.extensions.get("from_cache"):
-                    transaction.extras["cached"] = remote_response.extensions.get("cache_metadata", {}).get(
-                        "cache_key", True
+                    try:
+                        _elapsed = f"{remote_response.elapsed.total_seconds()}s"
+                    except RuntimeError:
+                        _elapsed = "n/a"
+                    self.debug(
+                        f"◀◀ {remote_response.status_code} {remote_response.reason_phrase} ({_elapsed}{' cached' if remote_response.extensions.get('from_cache') else ''})",
+                        transaction=transaction,
                     )
 
-                context.response = HttpResponse(
-                    remote_response.content,
-                    status=remote_response.status_code,
-                    headers=response_headers,
-                )
+                    response_headers = {
+                        k: v
+                        for k, v in remote_response.headers.multi_items()
+                        if k.lower() not in ("server", "date", "content-encoding", "content-length")
+                    }
+                    # XXX for now, we use transaction "extras" to store searchable data for later
+                    transaction.extras["status_class"] = f"{remote_response.status_code // 100}xx"
+
+                    if remote_response.extensions.get("from_cache"):
+                        transaction.extras["cached"] = remote_response.extensions.get("cache_metadata", {}).get(
+                            "cache_key", True
+                        )
+
+                    context.response = HttpResponse(
+                        remote_response.content, status=remote_response.status_code, headers=response_headers
+                    )
             await self.adispatch(EVENT_FILTER_PROXY_RESPONSE, context)
 
             await context.response.aread()
@@ -346,26 +346,6 @@ class HttpProxyController:
         await self.adispatch(EVENT_TRANSACTION_MESSAGE, HttpMessageEvent(transaction, request))
 
         return transaction
-
-    def _extract_tags_from_request(self, request: HttpRequest):
-        """
-        Convert special request headers (x-harp-*) into tags (key-value pairs) that we'll attach to the
-        transaction. Headers are "consumed", meaning they are removed from the request headers.
-        """
-
-        tags = {}
-        headers_to_remove = []
-
-        for header in request.headers:
-            lower_header = header.lower()
-            if lower_header.startswith("x-harp-"):
-                tags[lower_header[7:]] = request.headers[header]
-                headers_to_remove.append(header)
-
-        for header in headers_to_remove:
-            request.headers.pop(header)
-
-        return tags
 
     def __repr__(self):
         return f"{type(self).__name__}({self.remote!r}, name={self.name!r})"

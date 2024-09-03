@@ -28,7 +28,7 @@ class ASGICommunicator:
         )
         await com.wait()
 
-    def http_request(self, method, path, *, body=b"", host=None, port=None):
+    def http_request(self, method, path, *, body=b"", headers=None, host=None, port=None):
         from harp.utils.testing.communicators import HTTPCommunicator
 
         communicator = HTTPCommunicator(
@@ -36,29 +36,30 @@ class ASGICommunicator:
             method,
             path,
             body=body,
+            headers=headers,
             hostname=host or self.default_host,
             port=port or self.default_port,
         )
 
         return communicator.get_response()
 
-    def http_get(self, path, *, host=None, port=None):
-        return self.http_request("GET", path, host=host, port=port)
+    def http_get(self, path, *, headers=None, host=None, port=None):
+        return self.http_request("GET", path, headers=headers, host=host, port=port)
 
-    def asgi_http_post(self, path, *, host=None, port=None):
-        return self.http_request("POST", path, host=host, port=port)
+    def asgi_http_post(self, path, *, headers=None, host=None, port=None):
+        return self.http_request("POST", path, headers=headers, host=host, port=port)
 
-    def asgi_http_put(self, path, *, host=None, port=None):
-        return self.http_request("PUT", path, host=host, port=port)
+    def asgi_http_put(self, path, *, headers=None, host=None, port=None):
+        return self.http_request("PUT", path, headers=headers, host=host, port=port)
 
-    def asgi_http_patch(self, path, *, host=None, port=None):
-        return self.http_request("PATCH", path, host=host, port=port)
+    def asgi_http_patch(self, path, *, headers=None, host=None, port=None):
+        return self.http_request("PATCH", path, headers=headers, host=host, port=port)
 
-    def asgi_http_delete(self, path, *, host=None, port=None):
-        return self.http_request("DELETE", path, host=host, port=port)
+    def asgi_http_delete(self, path, *, headers=None, host=None, port=None):
+        return self.http_request("DELETE", path, headers=headers, host=host, port=port)
 
-    def asgi_http_options(self, path, *, host=None, port=None):
+    def asgi_http_options(self, path, *, headers=None, host=None, port=None):
         return self.http_request("OPTIONS", path, host=host, port=port)
 
-    def asgi_http_head(self, path, *, host=None, port=None):
-        return self.http_request("HEAD", path, host=host, port=port)
+    def asgi_http_head(self, path, *, headers=None, host=None, port=None):
+        return self.http_request("HEAD", path, headers=headers, host=host, port=port)
