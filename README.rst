@@ -6,6 +6,7 @@ of your application's external API interactions. Think of it as a reverse API ga
 external APIs.
 
 To be notified when we release new features, you can `subscribe to the release announcements <https://lists.harp-proxy.net/subscription/form>`_.
+We do not send anything unrelated to the lists you subscribed to, and we do not communicate your personnal informations with anyone.
 
 **HARP is released as an Early Access Preview.**
 
