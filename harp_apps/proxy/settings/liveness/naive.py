@@ -45,7 +45,7 @@ class NaiveLiveness(BaseLiveness[NaiveLivenessSettings]):
         return False
 
     @override
-    def failure(self, subject: LivenessSubject, reason: str = None) -> bool:
+    def failure(self, subject: LivenessSubject, reason: Optional[str] = None) -> bool:
         """Returns a boolean indicating if a state change happened."""
         state = self.get_state_of(subject)
 
