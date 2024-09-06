@@ -1,0 +1,32 @@
+Version 0.6.1 (2024-09-06)
+==========================
+
+Changed
+:::::::
+
+* Storage: Messages Summary type changed from varchar to text to allow for longer messages.
+
+Updated
+:::::::
+
+* bump aiohttp from 3.9.5 to 3.10.5
+* bump asgi-prometheus from 1.1.2 to 1.2.3
+* bump asgi-tools from 0.76.0 to 1.0.10
+* bump httpx from 0.27.0 to 0.27.2
+* bump orjson from 3.10.6 to 3.10.7
+* bump pyyaml from 6.0.1 to 6.0.2
+* bump redis from 5.0.7 to 5.0.8
+* bump rich from 13.7.1 to 13.8.0
+* bump sentry-sdk from 2.11.0 to 2.13.0
+* bump sqlalchemy from 2.0.31 to 2.0.34
+* bump watchfiles from 0.22.0 to 0.24.0
+* bump black from 24.4.2 to 24.8.0
+* bump cryptography from 43.0.0 to 43.0.1
+* bump pre-commit from 3.7.1 to 3.8.0
+* bump pytest from 8.3.1 to 8.3.2
+* bump ruff from 0.5.4 to 0.6.4
+* bump sphinx from 7.4.7 to 8.0.2
+* bump sphinx-autobuild from 2024.4.16 to 2024.9.3
+* bump sphinx-design from 0.6.0 to 0.6.1
+* bump syrupy from 4.6.1 to 4.7.1
+* bump testcontainers from 4.7.2 to 4.8.1
