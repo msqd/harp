@@ -1,0 +1,1097 @@
+# serializer version: 1
+# name: TestDefaultLivenessSettings.test_jsonschema_for_serialization
+  dict({
+    '$defs': dict({
+      'IgnoreLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'ignore',
+            'enum': list([
+              'ignore',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'IgnoreLivenessSettings',
+        'type': 'object',
+      }),
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'enum': list([
+              'inherit',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakyBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'capacity': dict({
+            'default': 60.0,
+            'title': 'Capacity',
+            'type': 'number',
+          }),
+          'rate': dict({
+            'default': 1.0,
+            'title': 'Rate',
+            'type': 'number',
+          }),
+          'threshold': dict({
+            'default': 10.0,
+            'title': 'Threshold',
+            'type': 'number',
+          }),
+          'type': dict({
+            'const': 'leaky',
+            'enum': list([
+              'leaky',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakyBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'enum': list([
+              'naive',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'liveness': dict({
+        'default': dict({
+          'type': 'inherit',
+        }),
+        'discriminator': dict({
+          'mapping': dict({
+            'ignore': '#/$defs/IgnoreLivenessSettings',
+            'inherit': '#/$defs/InheritLivenessSettings',
+            'leaky': '#/$defs/LeakyBucketLivenessSettings',
+            'naive': '#/$defs/NaiveLivenessSettings',
+          }),
+          'propertyName': 'type',
+        }),
+        'oneOf': list([
+          dict({
+            '$ref': '#/$defs/IgnoreLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/InheritLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/LeakyBucketLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/NaiveLivenessSettings',
+          }),
+        ]),
+        'title': 'Liveness',
+      }),
+    }),
+    'title': 'StubSettingsWithLiveness',
+    'type': 'object',
+  })
+# ---
+# name: TestDefaultLivenessSettings.test_jsonschema_for_validation
+  dict({
+    '$defs': dict({
+      'IgnoreLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'ignore',
+            'enum': list([
+              'ignore',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'IgnoreLivenessSettings',
+        'type': 'object',
+      }),
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'enum': list([
+              'inherit',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakyBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'capacity': dict({
+            'default': 60.0,
+            'title': 'Capacity',
+            'type': 'number',
+          }),
+          'rate': dict({
+            'default': 1.0,
+            'title': 'Rate',
+            'type': 'number',
+          }),
+          'threshold': dict({
+            'default': 10.0,
+            'title': 'Threshold',
+            'type': 'number',
+          }),
+          'type': dict({
+            'const': 'leaky',
+            'enum': list([
+              'leaky',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakyBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'enum': list([
+              'naive',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'liveness': dict({
+        'default': dict({
+          'type': 'inherit',
+        }),
+        'discriminator': dict({
+          'mapping': dict({
+            'ignore': '#/$defs/IgnoreLivenessSettings',
+            'inherit': '#/$defs/InheritLivenessSettings',
+            'leaky': '#/$defs/LeakyBucketLivenessSettings',
+            'naive': '#/$defs/NaiveLivenessSettings',
+          }),
+          'propertyName': 'type',
+        }),
+        'oneOf': list([
+          dict({
+            '$ref': '#/$defs/IgnoreLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/InheritLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/LeakyBucketLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/NaiveLivenessSettings',
+          }),
+        ]),
+        'title': 'Liveness',
+      }),
+    }),
+    'title': 'StubSettingsWithLiveness',
+    'type': 'object',
+  })
+# ---
+# name: TestIgnoreLivenessSettings.test_jsonschema_for_serialization
+  dict({
+    '$defs': dict({
+      'IgnoreLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'ignore',
+            'enum': list([
+              'ignore',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'IgnoreLivenessSettings',
+        'type': 'object',
+      }),
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'enum': list([
+              'inherit',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakyBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'capacity': dict({
+            'default': 60.0,
+            'title': 'Capacity',
+            'type': 'number',
+          }),
+          'rate': dict({
+            'default': 1.0,
+            'title': 'Rate',
+            'type': 'number',
+          }),
+          'threshold': dict({
+            'default': 10.0,
+            'title': 'Threshold',
+            'type': 'number',
+          }),
+          'type': dict({
+            'const': 'leaky',
+            'enum': list([
+              'leaky',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakyBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'enum': list([
+              'naive',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'liveness': dict({
+        'default': dict({
+          'type': 'inherit',
+        }),
+        'discriminator': dict({
+          'mapping': dict({
+            'ignore': '#/$defs/IgnoreLivenessSettings',
+            'inherit': '#/$defs/InheritLivenessSettings',
+            'leaky': '#/$defs/LeakyBucketLivenessSettings',
+            'naive': '#/$defs/NaiveLivenessSettings',
+          }),
+          'propertyName': 'type',
+        }),
+        'oneOf': list([
+          dict({
+            '$ref': '#/$defs/IgnoreLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/InheritLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/LeakyBucketLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/NaiveLivenessSettings',
+          }),
+        ]),
+        'title': 'Liveness',
+      }),
+    }),
+    'title': 'StubSettingsWithLiveness',
+    'type': 'object',
+  })
+# ---
+# name: TestIgnoreLivenessSettings.test_jsonschema_for_validation
+  dict({
+    '$defs': dict({
+      'IgnoreLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'ignore',
+            'enum': list([
+              'ignore',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'IgnoreLivenessSettings',
+        'type': 'object',
+      }),
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'enum': list([
+              'inherit',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakyBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'capacity': dict({
+            'default': 60.0,
+            'title': 'Capacity',
+            'type': 'number',
+          }),
+          'rate': dict({
+            'default': 1.0,
+            'title': 'Rate',
+            'type': 'number',
+          }),
+          'threshold': dict({
+            'default': 10.0,
+            'title': 'Threshold',
+            'type': 'number',
+          }),
+          'type': dict({
+            'const': 'leaky',
+            'enum': list([
+              'leaky',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakyBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'enum': list([
+              'naive',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'liveness': dict({
+        'default': dict({
+          'type': 'inherit',
+        }),
+        'discriminator': dict({
+          'mapping': dict({
+            'ignore': '#/$defs/IgnoreLivenessSettings',
+            'inherit': '#/$defs/InheritLivenessSettings',
+            'leaky': '#/$defs/LeakyBucketLivenessSettings',
+            'naive': '#/$defs/NaiveLivenessSettings',
+          }),
+          'propertyName': 'type',
+        }),
+        'oneOf': list([
+          dict({
+            '$ref': '#/$defs/IgnoreLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/InheritLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/LeakyBucketLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/NaiveLivenessSettings',
+          }),
+        ]),
+        'title': 'Liveness',
+      }),
+    }),
+    'title': 'StubSettingsWithLiveness',
+    'type': 'object',
+  })
+# ---
+# name: TestLeakyBucketLivenessSettings.test_jsonschema_for_serialization
+  dict({
+    '$defs': dict({
+      'IgnoreLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'ignore',
+            'enum': list([
+              'ignore',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'IgnoreLivenessSettings',
+        'type': 'object',
+      }),
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'enum': list([
+              'inherit',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakyBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'capacity': dict({
+            'default': 60.0,
+            'title': 'Capacity',
+            'type': 'number',
+          }),
+          'rate': dict({
+            'default': 1.0,
+            'title': 'Rate',
+            'type': 'number',
+          }),
+          'threshold': dict({
+            'default': 10.0,
+            'title': 'Threshold',
+            'type': 'number',
+          }),
+          'type': dict({
+            'const': 'leaky',
+            'enum': list([
+              'leaky',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakyBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'enum': list([
+              'naive',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'liveness': dict({
+        'default': dict({
+          'type': 'inherit',
+        }),
+        'discriminator': dict({
+          'mapping': dict({
+            'ignore': '#/$defs/IgnoreLivenessSettings',
+            'inherit': '#/$defs/InheritLivenessSettings',
+            'leaky': '#/$defs/LeakyBucketLivenessSettings',
+            'naive': '#/$defs/NaiveLivenessSettings',
+          }),
+          'propertyName': 'type',
+        }),
+        'oneOf': list([
+          dict({
+            '$ref': '#/$defs/IgnoreLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/InheritLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/LeakyBucketLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/NaiveLivenessSettings',
+          }),
+        ]),
+        'title': 'Liveness',
+      }),
+    }),
+    'title': 'StubSettingsWithLiveness',
+    'type': 'object',
+  })
+# ---
+# name: TestLeakyBucketLivenessSettings.test_jsonschema_for_validation
+  dict({
+    '$defs': dict({
+      'IgnoreLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'ignore',
+            'enum': list([
+              'ignore',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'IgnoreLivenessSettings',
+        'type': 'object',
+      }),
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'enum': list([
+              'inherit',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakyBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'capacity': dict({
+            'default': 60.0,
+            'title': 'Capacity',
+            'type': 'number',
+          }),
+          'rate': dict({
+            'default': 1.0,
+            'title': 'Rate',
+            'type': 'number',
+          }),
+          'threshold': dict({
+            'default': 10.0,
+            'title': 'Threshold',
+            'type': 'number',
+          }),
+          'type': dict({
+            'const': 'leaky',
+            'enum': list([
+              'leaky',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakyBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'enum': list([
+              'naive',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'liveness': dict({
+        'default': dict({
+          'type': 'inherit',
+        }),
+        'discriminator': dict({
+          'mapping': dict({
+            'ignore': '#/$defs/IgnoreLivenessSettings',
+            'inherit': '#/$defs/InheritLivenessSettings',
+            'leaky': '#/$defs/LeakyBucketLivenessSettings',
+            'naive': '#/$defs/NaiveLivenessSettings',
+          }),
+          'propertyName': 'type',
+        }),
+        'oneOf': list([
+          dict({
+            '$ref': '#/$defs/IgnoreLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/InheritLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/LeakyBucketLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/NaiveLivenessSettings',
+          }),
+        ]),
+        'title': 'Liveness',
+      }),
+    }),
+    'title': 'StubSettingsWithLiveness',
+    'type': 'object',
+  })
+# ---
+# name: TestNaiveLivenessSettings.test_jsonschema_for_serialization
+  dict({
+    '$defs': dict({
+      'IgnoreLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'ignore',
+            'enum': list([
+              'ignore',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'IgnoreLivenessSettings',
+        'type': 'object',
+      }),
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'enum': list([
+              'inherit',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakyBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'capacity': dict({
+            'default': 60.0,
+            'title': 'Capacity',
+            'type': 'number',
+          }),
+          'rate': dict({
+            'default': 1.0,
+            'title': 'Rate',
+            'type': 'number',
+          }),
+          'threshold': dict({
+            'default': 10.0,
+            'title': 'Threshold',
+            'type': 'number',
+          }),
+          'type': dict({
+            'const': 'leaky',
+            'enum': list([
+              'leaky',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakyBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'enum': list([
+              'naive',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'liveness': dict({
+        'default': dict({
+          'type': 'inherit',
+        }),
+        'discriminator': dict({
+          'mapping': dict({
+            'ignore': '#/$defs/IgnoreLivenessSettings',
+            'inherit': '#/$defs/InheritLivenessSettings',
+            'leaky': '#/$defs/LeakyBucketLivenessSettings',
+            'naive': '#/$defs/NaiveLivenessSettings',
+          }),
+          'propertyName': 'type',
+        }),
+        'oneOf': list([
+          dict({
+            '$ref': '#/$defs/IgnoreLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/InheritLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/LeakyBucketLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/NaiveLivenessSettings',
+          }),
+        ]),
+        'title': 'Liveness',
+      }),
+    }),
+    'title': 'StubSettingsWithLiveness',
+    'type': 'object',
+  })
+# ---
+# name: TestNaiveLivenessSettings.test_jsonschema_for_validation
+  dict({
+    '$defs': dict({
+      'IgnoreLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'ignore',
+            'enum': list([
+              'ignore',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'IgnoreLivenessSettings',
+        'type': 'object',
+      }),
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'enum': list([
+              'inherit',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakyBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'capacity': dict({
+            'default': 60.0,
+            'title': 'Capacity',
+            'type': 'number',
+          }),
+          'rate': dict({
+            'default': 1.0,
+            'title': 'Rate',
+            'type': 'number',
+          }),
+          'threshold': dict({
+            'default': 10.0,
+            'title': 'Threshold',
+            'type': 'number',
+          }),
+          'type': dict({
+            'const': 'leaky',
+            'enum': list([
+              'leaky',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakyBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'enum': list([
+              'naive',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'liveness': dict({
+        'default': dict({
+          'type': 'inherit',
+        }),
+        'discriminator': dict({
+          'mapping': dict({
+            'ignore': '#/$defs/IgnoreLivenessSettings',
+            'inherit': '#/$defs/InheritLivenessSettings',
+            'leaky': '#/$defs/LeakyBucketLivenessSettings',
+            'naive': '#/$defs/NaiveLivenessSettings',
+          }),
+          'propertyName': 'type',
+        }),
+        'oneOf': list([
+          dict({
+            '$ref': '#/$defs/IgnoreLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/InheritLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/LeakyBucketLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/NaiveLivenessSettings',
+          }),
+        ]),
+        'title': 'Liveness',
+      }),
+    }),
+    'title': 'StubSettingsWithLiveness',
+    'type': 'object',
+  })
+# ---

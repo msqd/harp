@@ -1,5 +1,5 @@
-Command Line
-============
+Command Line Reference
+======================
 
 .. click:: harp.commandline:entrypoint
    :prog: harp

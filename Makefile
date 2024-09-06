@@ -77,13 +77,16 @@ wheel:
 # Documentation
 ########################################################################################################################
 
-.PHONY: reference
+.PHONY: reference docs
 
 reference: harp  ## Generates API reference documentation as ReST files (docs).
 	rm -rf docs/reference/core docs/reference/apps
 	mkdir -p docs/reference/core docs/reference/apps
 	$(RUN) bin/generate_apidoc
 	git add docs/reference/
+
+docs:  ## Build html documentation
+	(cd docs; $(MAKE) html)
 
 
 ########################################################################################################################

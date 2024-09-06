@@ -15,4 +15,5 @@ Submodules
     :maxdepth: 1
 
     harp_apps.proxy.settings.endpoint
+    harp_apps.proxy.settings.liveness
     harp_apps.proxy.settings.remote

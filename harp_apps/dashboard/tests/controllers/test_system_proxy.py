@@ -37,15 +37,12 @@ class TestSystemControllerProxy(SystemControllerTestFixtureMixin):
                         "endpoints": [
                             {
                                 "failure_reasons": None,
-                                "failure_score": 0,
                                 "settings": {
-                                    "failure_threshold": 1,
+                                    "liveness": {"type": "inherit"},
                                     "pools": ["default"],
-                                    "success_threshold": 1,
                                     "url": "http://example.com/",
                                 },
                                 "status": 0,
-                                "success_score": 0,
                             }
                         ],
                         "probe": None,
@@ -112,10 +109,8 @@ class TestSystemControllerProxy(SystemControllerTestFixtureMixin):
                         "endpoints": [
                             {
                                 "failure_reasons": None,
-                                "failure_score": 0,
                                 "settings": ANY,
                                 "status": 1,
-                                "success_score": 0,
                             }
                         ],
                         "probe": None,

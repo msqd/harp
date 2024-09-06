@@ -18,12 +18,13 @@ if current_year > first_year:
     copyright = str(first_year) + "-" + copyright
 
 
+READTHEDOCS_VERSION = os.environ.get("READTHEDOCS_VERSION")
+
 if os.environ.get("READTHEDOCS_GIT_IDENTIFIER"):
     version = release = os.environ["READTHEDOCS_GIT_IDENTIFIER"]
 else:
     version = release = ".".join(__import__("harp").__hardcoded_version__.split(".")[0:2])
 
-ALGOLIA_APIKEY = os.getenv("ALGOLIA_APIKEY")
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
@@ -43,7 +44,8 @@ extensions = [
     "sphinx_tags",
 ]
 
-if ALGOLIA_APIKEY:
+ALGOLIA_APIKEY = os.getenv("ALGOLIA_APIKEY")
+if ALGOLIA_APIKEY and READTHEDOCS_VERSION == "latest":
     extensions.append("sphinx_docsearch")
 
 templates_path = ["_templates"]
@@ -106,28 +108,18 @@ intersphinx_mapping = {
     "redis": ("https://redis-py.readthedocs.io/en/stable", None),
 }
 
-if ALGOLIA_APIKEY:
+if ALGOLIA_APIKEY and READTHEDOCS_VERSION == "latest":
     docsearch_app_id = "ZPR2CBYLG3"
     docsearch_api_key = ALGOLIA_APIKEY
     docsearch_index_name = "harp-proxy"
 
-rst_prolog = (
-    """
-    .. admonition:: HARP Proxy is currently an Early Preview
-
-       Please apologize for mistakes, typos, etc. We put great effort into writing good docs, but we are humans... If you
-       spot anything strange, :doc:`help will be greatly appreciated </contribute/index>`.
-
-    """.strip()
-    + "\n\n"
-)
-if version == "0.7":
+if READTHEDOCS_VERSION and READTHEDOCS_VERSION != "latest":
     rst_prolog = (
         """
-    .. attention::
+    .. admonition::
 
-        **THIS IS THE DOCUMENTATION FOR THE 0.7 VERSION OF HARP PROXY. IT IS A FUTURE RELEASE AND THE DOCUMENTATION IS
-        NOT IN SYNC WITH THE CODEBASE, AS IT CONTAINS NOT-YET-MERGED FEATURES. PLEASE REFER TO THE LATEST RELEASE INSTEAD.**
+        This documentation is for an **unreleased** version of HARP Proxy.
+        For the latest released version, see `latest <https://docs.harp-proxy.net/en/latest>`_.
 
     """.strip()
         + "\n\n"

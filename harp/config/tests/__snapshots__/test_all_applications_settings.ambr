@@ -10,7 +10,7 @@
 # name: test_all_applications_default_settings[harp_apps.contrib.sentry]
   dict({
     'harp_apps.contrib.sentry.settings.SentrySettings': '''
-      dsn: null
+      {}
   
     ''',
   })
@@ -90,6 +90,74 @@
       port: 4000
   
     ''',
+    'harp_apps.proxy.settings.liveness.base.BaseLivenessSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.proxy.settings.liveness.base.BaseLiveness[IgnoreLivenessSettings]': '''
+      settings:
+        type: ignore
+  
+    ''',
+    'harp_apps.proxy.settings.liveness.base.BaseLiveness[InheritLivenessSettings]': '''
+      settings:
+        type: inherit
+  
+    ''',
+    'harp_apps.proxy.settings.liveness.base.BaseLiveness[LeakyBucketLivenessSettings]': '''
+      settings:
+        type: leaky
+  
+    ''',
+    'harp_apps.proxy.settings.liveness.base.BaseLiveness[NaiveLivenessSettings]': '''
+      settings:
+        type: naive
+  
+    ''',
+    'harp_apps.proxy.settings.liveness.ignore.IgnoreLiveness': '''
+      settings:
+        type: ignore
+  
+    ''',
+    'harp_apps.proxy.settings.liveness.ignore.IgnoreLivenessSettings': '''
+      type: ignore
+  
+    ''',
+    'harp_apps.proxy.settings.liveness.inherit.InheritLiveness': '''
+      settings:
+        type: inherit
+  
+    ''',
+    'harp_apps.proxy.settings.liveness.inherit.InheritLivenessSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.proxy.settings.liveness.leaky_bucket.LeakyBucketLiveness': '''
+      settings:
+        type: leaky
+  
+    ''',
+    'harp_apps.proxy.settings.liveness.leaky_bucket.LeakyBucketLivenessSettings': '''
+      type: leaky
+  
+    ''',
+    'harp_apps.proxy.settings.liveness.leaky_bucket.LeakyBucketLivenessSubjectState': '''
+      {}
+  
+    ''',
+    'harp_apps.proxy.settings.liveness.naive.NaiveLiveness': '''
+      settings:
+        type: naive
+  
+    ''',
+    'harp_apps.proxy.settings.liveness.naive.NaiveLivenessSettings': '''
+      type: naive
+  
+    ''',
+    'harp_apps.proxy.settings.liveness.naive.NaiveLivenessSubjectState': '''
+      {}
+  
+    ''',
     'harp_apps.proxy.settings.remote.BaseRemoteSettings': '''
       {}
   
@@ -111,10 +179,10 @@
     ''',
     'harp_apps.proxy.settings.remote.endpoint.RemoteEndpoint': '''
       settings:
-        failure_threshold: 1
+        liveness:
+          type: inherit
         pools:
         - default
-        success_threshold: 1
         url: https://www.example.com/
   
     ''',
@@ -140,14 +208,6 @@
 # ---
 # name: test_all_applications_default_settings[harp_apps.rules]
   dict({
-    'harp_apps.rules.models.rulesets.RuleSet': '''
-      {}
-  
-    ''',
-    'harp_apps.rules.settings.RulesSettings': '''
-      {}
-  
-    ''',
   })
 # ---
 # name: test_all_applications_default_settings[harp_apps.storage]

@@ -1,0 +1,20 @@
+from typing import Literal, override
+
+from .base import BaseLiveness, BaseLivenessSettings, LivenessSubject
+
+
+class IgnoreLivenessSettings(BaseLivenessSettings):
+    type: Literal["ignore"]
+
+    def build_impl(self):
+        return IgnoreLiveness(settings=self)
+
+
+class IgnoreLiveness(BaseLiveness[IgnoreLivenessSettings]):
+    @override
+    def success(self, subject: LivenessSubject) -> bool:
+        return False
+
+    @override
+    def failure(self, subject: LivenessSubject, reason: str = None):
+        return False

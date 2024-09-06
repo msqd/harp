@@ -5,7 +5,7 @@ from os.path import dirname
 from pkgutil import iter_modules
 
 import pytest
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from harp import ROOT_DIR
 from harp.config import Stateful
@@ -42,7 +42,7 @@ def get_all_settings_classes(modname):
         yield _name, _impl
 
 
-# Some settings classes requires some value to have a maening. They are not usually the root settings but some
+# Some settings classes requires some value to have a meaning. They are not usually the root settings but some
 # subsettings that does not really make sense unless relevant configuration is passed. In that case, we provide the
 # minimal set of settings required to instanciate it.
 REQUIRED_SETTINGS = {
@@ -61,6 +61,9 @@ REQUIRED_SETTINGS = {
 REQUIRED_SETTINGS["harp_apps.proxy.settings.endpoint.EndpointSettings"] = REQUIRED_SETTINGS[
     "harp_apps.proxy.settings.endpoint.BaseEndpointSettings"
 ]
+IGNORE_TYPES = {
+    "harp_apps.proxy.settings.liveness.base.BaseLiveness",
+}
 
 
 @pytest.mark.parametrize("app", all_apps)
@@ -76,11 +79,15 @@ def test_all_applications_default_settings(app, snapshot):
     for _fullname, (_name, _type) in _types.items():
         _kwargs: dict = REQUIRED_SETTINGS.get(_fullname, {})
 
+        if not issubclass(_type, BaseModel):
+            continue
+
+        if _get_qualname(_type) in IGNORE_TYPES:
+            continue
+
         if issubclass(_type, Stateful):
             _settings_type = _type.get_settings_type()
-            _kwargs["settings"] = REQUIRED_SETTINGS.get(
-                f"{_settings_type.__module__}.{_settings_type.__qualname__}", {}
-            )
+            _kwargs["settings"] = REQUIRED_SETTINGS.get(_get_qualname(_settings_type), {})
 
         if _fullname in REQUIRED_SETTINGS:
             with pytest.raises(ValidationError):
@@ -91,6 +98,13 @@ def test_all_applications_default_settings(app, snapshot):
         all_defaults[_fullname] = yaml.dump(asdict(instance))
 
     assert all_defaults == snapshot
+
+
+def _get_qualname(_type):
+    try:
+        return f"{_type.__module__}.{_type.__qualname__}"
+    except AttributeError:
+        return f"{_type.__module__}.{_type.__name__}"
 
 
 def _get_all_configurable_types_for_application(app):

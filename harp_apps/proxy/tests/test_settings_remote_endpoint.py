@@ -16,19 +16,8 @@ class TestRemoteEndpointSettings(BaseConfigurableTest):
     expected_verbose = {
         "url": "http://example.com/",
         "pools": ["default"],
-        "failure_threshold": 1,
-        "success_threshold": 1,
+        "liveness": {"type": "inherit"},
     }
-
-    def test_defaults2(self):
-        settings = RemoteEndpointSettings(url="http://example.com")
-
-        assert settings.model_dump(mode="json") == {
-            "url": "http://example.com/",
-            "pools": ["default"],
-            "failure_threshold": 1,
-            "success_threshold": 1,
-        }
 
     @pytest.mark.parametrize("pools", all_combinations(AVAILABLE_POOLS))
     def test_valid_pools(self, pools):
@@ -50,12 +39,15 @@ class TestRemoteEndpointSettings(BaseConfigurableTest):
     def test_valid_thresholds(self):
         valid_data = {
             "url": "http://example.com",
-            "failure_threshold": 3,
-            "success_threshold": 5,
+            "liveness": {
+                "type": "naive",
+                "failure_threshold": 3,
+                "success_threshold": 5,
+            },
         }
         settings = RemoteEndpointSettings(**valid_data)
-        assert settings.failure_threshold == 3
-        assert settings.success_threshold == 5
+        assert settings.liveness.failure_threshold == 3
+        assert settings.liveness.success_threshold == 5
 
     def test_asdict(self):
         endpoint = self.create(url="http://example.com")
@@ -69,11 +61,16 @@ class TestRemoteEndpointSettings(BaseConfigurableTest):
         assert asdict(endpoint) == expected
 
     def test_asdict_with_nondefault_thresholds(self):
-        endpoint = self.create(url="http://example.com", success_threshold=2, failure_threshold=4)
+        endpoint = self.create(
+            url="http://example.com", liveness={"type": "naive", "success_threshold": 2, "failure_threshold": 4}
+        )
         expected = {
             "url": "http://example.com/",
-            "success_threshold": 2,
-            "failure_threshold": 4,
+            "liveness": {
+                "type": "naive",
+                "failure_threshold": 4,
+                "success_threshold": 2,
+            },
         }
         assert asdict(endpoint) == expected
 
@@ -87,16 +84,13 @@ class TestRemoteEndpointStateful(BaseConfigurableTest):
     initial = {"settings": TestRemoteEndpointSettings.initial}
     expected = {
         "settings": {
-            "failure_threshold": 1,
             "pools": ["default"],
-            "success_threshold": 1,
             "url": "http://example.com/",
-        }
+            "liveness": {"type": "inherit"},
+        },
     }
     expected_verbose = {
         "settings": TestRemoteEndpointSettings.expected_verbose,
         "failure_reasons": None,
-        "failure_score": 0,
         "status": 0,
-        "success_score": 0,
     }
