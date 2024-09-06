@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, override
+from typing import Annotated, Literal, Optional, override
 
 from pydantic import BaseModel, Field
 
