@@ -54,7 +54,7 @@ class LeakyBucketLiveness(BaseLiveness[LeakyBucketLivenessSettings]):
         return False
 
     @override
-    def failure(self, subject: LivenessSubject, reason: str = None) -> bool:
+    def failure(self, subject: LivenessSubject, reason: Optional[str] = None) -> bool:
         state = self.get_state_of(subject)
         state.leak(self.settings.rate)
         state.current = min(self.settings.capacity, state.current + 1)
