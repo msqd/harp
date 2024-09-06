@@ -36,7 +36,7 @@ class BaseLiveness(Stateful[TSettings]):
     def reset_failure_reasons(self, subject: LivenessSubject):
         subject.failure_reasons = None
 
-    def add_failure_reason(self, subject: LivenessSubject, reason: str = None):
+    def add_failure_reason(self, subject: LivenessSubject, reason: Optional[str] = None):
         if subject.failure_reasons is None:
             subject.failure_reasons = set()
         if reason:
