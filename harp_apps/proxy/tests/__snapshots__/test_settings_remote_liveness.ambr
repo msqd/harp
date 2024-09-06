@@ -1,0 +1,489 @@
+# serializer version: 1
+# name: TestDefaultLivenessSettings.test_jsonschema_for_serialization
+  dict({
+    '$defs': dict({
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'enum': list([
+              'inherit',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakingBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'leaking_bucket',
+            'enum': list([
+              'leaking_bucket',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakingBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'enum': list([
+              'naive',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+      'SlidingWindowLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'sliding_window',
+            'enum': list([
+              'sliding_window',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'SlidingWindowLivenessSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'liveness': dict({
+        'default': dict({
+          'type': 'inherit',
+        }),
+        'discriminator': dict({
+          'mapping': dict({
+            'inherit': '#/$defs/InheritLivenessSettings',
+            'leaking_bucket': '#/$defs/LeakingBucketLivenessSettings',
+            'naive': '#/$defs/NaiveLivenessSettings',
+            'sliding_window': '#/$defs/SlidingWindowLivenessSettings',
+          }),
+          'propertyName': 'type',
+        }),
+        'oneOf': list([
+          dict({
+            '$ref': '#/$defs/SlidingWindowLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/LeakingBucketLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/NaiveLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/InheritLivenessSettings',
+          }),
+        ]),
+        'title': 'Liveness',
+      }),
+    }),
+    'title': 'StubParentSettings',
+    'type': 'object',
+  })
+# ---
+# name: TestDefaultLivenessSettings.test_jsonschema_for_validation
+  dict({
+    '$defs': dict({
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'enum': list([
+              'inherit',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakingBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'leaking_bucket',
+            'enum': list([
+              'leaking_bucket',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakingBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'enum': list([
+              'naive',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+      'SlidingWindowLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'sliding_window',
+            'enum': list([
+              'sliding_window',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'SlidingWindowLivenessSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'liveness': dict({
+        'default': dict({
+          'type': 'inherit',
+        }),
+        'discriminator': dict({
+          'mapping': dict({
+            'inherit': '#/$defs/InheritLivenessSettings',
+            'leaking_bucket': '#/$defs/LeakingBucketLivenessSettings',
+            'naive': '#/$defs/NaiveLivenessSettings',
+            'sliding_window': '#/$defs/SlidingWindowLivenessSettings',
+          }),
+          'propertyName': 'type',
+        }),
+        'oneOf': list([
+          dict({
+            '$ref': '#/$defs/SlidingWindowLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/LeakingBucketLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/NaiveLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/InheritLivenessSettings',
+          }),
+        ]),
+        'title': 'Liveness',
+      }),
+    }),
+    'title': 'StubParentSettings',
+    'type': 'object',
+  })
+# ---
+# name: TestNaiveLivenessSettings.test_jsonschema_for_serialization
+  dict({
+    '$defs': dict({
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'enum': list([
+              'inherit',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakingBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'leaking_bucket',
+            'enum': list([
+              'leaking_bucket',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakingBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'enum': list([
+              'naive',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+      'SlidingWindowLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'sliding_window',
+            'enum': list([
+              'sliding_window',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'SlidingWindowLivenessSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'liveness': dict({
+        'default': dict({
+          'type': 'inherit',
+        }),
+        'discriminator': dict({
+          'mapping': dict({
+            'inherit': '#/$defs/InheritLivenessSettings',
+            'leaking_bucket': '#/$defs/LeakingBucketLivenessSettings',
+            'naive': '#/$defs/NaiveLivenessSettings',
+            'sliding_window': '#/$defs/SlidingWindowLivenessSettings',
+          }),
+          'propertyName': 'type',
+        }),
+        'oneOf': list([
+          dict({
+            '$ref': '#/$defs/SlidingWindowLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/LeakingBucketLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/NaiveLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/InheritLivenessSettings',
+          }),
+        ]),
+        'title': 'Liveness',
+      }),
+    }),
+    'title': 'StubParentSettings',
+    'type': 'object',
+  })
+# ---
+# name: TestNaiveLivenessSettings.test_jsonschema_for_validation
+  dict({
+    '$defs': dict({
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'enum': list([
+              'inherit',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakingBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'leaking_bucket',
+            'enum': list([
+              'leaking_bucket',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakingBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'enum': list([
+              'naive',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+      'SlidingWindowLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'sliding_window',
+            'enum': list([
+              'sliding_window',
+            ]),
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'SlidingWindowLivenessSettings',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'liveness': dict({
+        'default': dict({
+          'type': 'inherit',
+        }),
+        'discriminator': dict({
+          'mapping': dict({
+            'inherit': '#/$defs/InheritLivenessSettings',
+            'leaking_bucket': '#/$defs/LeakingBucketLivenessSettings',
+            'naive': '#/$defs/NaiveLivenessSettings',
+            'sliding_window': '#/$defs/SlidingWindowLivenessSettings',
+          }),
+          'propertyName': 'type',
+        }),
+        'oneOf': list([
+          dict({
+            '$ref': '#/$defs/SlidingWindowLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/LeakingBucketLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/NaiveLivenessSettings',
+          }),
+          dict({
+            '$ref': '#/$defs/InheritLivenessSettings',
+          }),
+        ]),
+        'title': 'Liveness',
+      }),
+    }),
+    'title': 'StubParentSettings',
+    'type': 'object',
+  })
+# ---

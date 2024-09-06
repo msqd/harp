@@ -39,14 +39,14 @@ class TestEndpointSettingsWithRemote(BaseConfigurableTest):
             "check_after": 10.0,
             "endpoints": [
                 {
-                    "failure_threshold": 1,
+                    "liveness": {"type": "inherit"},
                     "pools": ["default"],
-                    "success_threshold": 1,
                     "url": "http://example.com/",
                 }
             ],
             "min_pool_size": 1,
             "probe": None,
+            "liveness": {"type": "inherit"},
         },
     }
 
@@ -83,11 +83,10 @@ class TestEndpointStatefulWithRemote(BaseConfigurableTest):
             "endpoints": [
                 {
                     "settings": {
+                        "liveness": {"type": "inherit"},
                         "url": "http://example.com/",
-                        "failure_threshold": 1,
                         "pools": ["default"],
-                        "success_threshold": 1,
-                    }
+                    },
                 }
             ],
             "settings": {
@@ -105,24 +104,13 @@ class TestEndpointStatefulWithRemote(BaseConfigurableTest):
             "current_pool_name": "default",
             "endpoints": [
                 {
-                    "status": 0,
                     "failure_reasons": None,
-                    "failure_score": 0,
-                    "success_score": 0,
-                    "settings": {
-                        "failure_threshold": 1,
-                        "pools": ["default"],
-                        "success_threshold": 1,
-                        "url": "http://example.com/",
-                    },
+                    "settings": {"liveness": {"type": "inherit"}, "pools": ["default"], "url": "http://example.com/"},
+                    "status": 0,
                 }
             ],
             "probe": None,
-            "settings": {
-                "break_on": ["network_error", "unhandled_exception"],
-                "check_after": 10.0,
-                "min_pool_size": 1,
-            },
+            "settings": {"break_on": ["network_error", "unhandled_exception"], "check_after": 10.0, "min_pool_size": 1},
         },
         "settings": expected["settings"],
     }

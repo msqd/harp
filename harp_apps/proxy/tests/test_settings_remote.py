@@ -16,6 +16,7 @@ class TestRemoteSettings(BaseConfigurableTest):
         "endpoints": None,
         "min_pool_size": 1,
         "probe": None,
+        "liveness": {"type": "inherit"},
     }
 
     def test_validate_break_on(self):
@@ -38,20 +39,21 @@ class TestRemoteSettings(BaseConfigurableTest):
         assert asdict(remote) == {"endpoints": [{"url": "http://example.com/"}]}
 
     def test_asdict_with_nondefault_poolsize_and_thresholds(self):
-        remote = self.create(endpoints=[{"url": "http://example.com"}], min_pool_size=2)
-        remote["http://example.com"].success_threshold = 2
-        remote["http://example.com"].failure_threshold = 4
-        assert asdict(remote) == {
+        data = {
             "endpoints": [
                 {
                     "url": "http://example.com/",
-                    "success_threshold": 2,
-                    "failure_threshold": 4,
-                },
+                    "liveness": {
+                        "type": "naive",
+                        "success_threshold": 2,
+                        "failure_threshold": 4,
+                    },
+                }
             ],
             "min_pool_size": 2,
         }
-
+        remote = self.create(**data)
+        assert asdict(remote) == data
         assert asdict(RemoteSettings(**asdict(remote))) == asdict(remote)
 
 
@@ -149,7 +151,7 @@ class TestRemoteStateful(BaseConfigurableTest):
     async def test_basic_probe(self):
         remote = self.create(
             settings={
-                "endpoints": [{"url": "https://example.com", "failure_threshold": 3}],
+                "endpoints": [{"url": "https://example.com", "liveness": {"type": "naive", "failure_threshold": 3}}],
                 "probe": {"method": "GET", "path": "/health"},
             }
         )
@@ -175,9 +177,9 @@ class TestRemoteStateful(BaseConfigurableTest):
 
         # if the health endpoint returns a 4xx or 5xx status, we start counting failures
         await remote.check()
-        assert url.status == 0
+        assert url.status > 0
         await remote.check()
-        assert url.status == 0
+        assert url.status > 0
         await remote.check()
         assert url.status < 0
 
@@ -190,7 +192,7 @@ class TestRemoteStateful(BaseConfigurableTest):
     async def test_probe_errors(self):
         remote = self.create(
             settings={
-                "endpoints": [{"url": "https://example.com", "failure_threshold": 3}],
+                "endpoints": [{"url": "https://example.com", "liveness": {"type": "naive", "failure_threshold": 3}}],
                 "probe": {"method": "GET", "path": "/health"},
             }
         )
@@ -206,11 +208,11 @@ class TestRemoteStateful(BaseConfigurableTest):
 
         await remote.check()
         await remote.check()
-        assert url.status == 0
+        assert url.status == 0  # still checking, under failure threshold
         assert url.failure_reasons == {"PROBE_TIMEOUT_ERROR"}
 
         await remote.check()
-        assert url.status < 0
+        assert url.status < 0  # threshold reached
         assert url.failure_reasons == {"PROBE_TIMEOUT_ERROR"}
 
         healthcheck.mock(return_value=httpx.Response(200))
@@ -221,11 +223,11 @@ class TestRemoteStateful(BaseConfigurableTest):
         healthcheck.mock(return_value=httpx.Response(418))
         await remote.check()
         await remote.check()
-        assert url.status == 0
+        assert url.status > 0  # still up, under threshold
         assert url.failure_reasons == {"PROBE_HTTP_418"}
 
         await remote.check()
-        assert url.status < 0
+        assert url.status < 0  # threshold reached
         assert url.failure_reasons == {"PROBE_HTTP_418"}
 
         healthcheck.mock(return_value=httpx.Response(200))
@@ -240,7 +242,7 @@ class TestRemoteStateful(BaseConfigurableTest):
 
         remote = self.create(
             settings={
-                "endpoints": [{"url": "https://example.com", "failure_threshold": 3}],
+                "endpoints": [{"url": "https://example.com", "liveness": {"type": "naive", "failure_threshold": 3}}],
                 "probe": {"method": "GET", "path": "/health", "timeout": 0.1},
             }
         )

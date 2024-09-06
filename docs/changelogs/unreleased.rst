@@ -16,6 +16,10 @@ Added
 * Proxy: Added support for default/fallback pools in remote configuration for resilience.
 * Proxy: Added a simple but functional circuit breaker implementation.
 * Proxy: Add probe implementation in background.
+* Proxy: Add liveness configuration support to proxy (in both remote endpoints and remote) to be able to select a
+  liveness check algorithm. For now, supported algorithms are "ignore" (do nothing), "naive" (old behaviour with simple
+  thresholds), "leaky" for a leaking bucket, and "inherit" (use parent algorithm). The default is "inherit", and if all
+  settings in config chain are set to "inherit", the top-level default is "naive".
 * Frontend: Generate typescript types from models, using the intermediary json schema generation provided by pydantic.
 * Storage: Added a new db:merge command to generate merge revisions from alembic.
 

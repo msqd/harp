@@ -33,15 +33,30 @@ Table of Content
    :maxdepth: 2
 
    /start/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Guides
+
    /features/index
    /user/index
    /operate/index
    /develop/index
    /contribute/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference
+
    /core/index
    /apps/index
    /config/index
-   /reference/index
+   /commandline/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Miscellaneous
+
    /changelogs/index
    /faq
    /glossary

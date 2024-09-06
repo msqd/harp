@@ -12,12 +12,8 @@ BUILDDIR      = _build
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile diagrams
-
-# Catch-all target: route all unknown targets to Sphinx using the new
-# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-%: Makefile
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+dev:
+	sphinx-autobuild . _build/html
 
 diagrams:
 	pyreverse harp.config.events -A -o dot --ignore tests
@@ -27,3 +23,10 @@ diagrams:
 	dot -Tsvg classes.dot -o core/events.asgi.svg
 
 	-@rm -f *.dot
+
+.PHONY: help Makefile diagrams dev
+
+# Catch-all target: route all unknown targets to Sphinx using the new
+# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
+%: Makefile
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

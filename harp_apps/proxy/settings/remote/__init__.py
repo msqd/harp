@@ -4,7 +4,7 @@ from collections import deque
 from typing import Iterable, List, Mapping, Optional
 
 from _operator import attrgetter
-from pydantic import computed_field, field_serializer, field_validator, model_validator
+from pydantic import Field, computed_field, field_serializer, field_validator, model_validator
 
 from harp import get_logger
 from harp.config import Configurable, Stateful
@@ -21,6 +21,7 @@ from harp_apps.proxy.constants import (
     UP,
 )
 
+from ..liveness import InheritLivenessSettings, Liveness, LivenessSettings, NaiveLiveness, NaiveLivenessSettings
 from .endpoint import RemoteEndpoint, RemoteEndpointSettings
 from .probe import RemoteProbe, RemoteProbeSettings
 
@@ -34,6 +35,9 @@ __all__ = [
     "RemoteProbeSettings",
     "RemoteSettings",
 ]
+
+
+DEFAULT_LIVENESS = NaiveLiveness(settings=NaiveLivenessSettings())
 
 
 class BaseRemoteSettings(Configurable):
@@ -78,6 +82,7 @@ class RemoteSettings(BaseRemoteSettings):
 
     endpoints: list[RemoteEndpointSettings] = None
     probe: Optional[RemoteProbeSettings] = None
+    liveness: LivenessSettings = InheritLivenessSettings()
 
     def __getitem__(self, item):
         item = normalize_url(item)
@@ -102,6 +107,9 @@ class Remote(Stateful[RemoteSettings]):
     #: Probe reference
     probe: Optional[RemoteProbe] = None
 
+    #: Liveness
+    liveness: Liveness = Field(None, exclude=True)
+
     @computed_field
     @property
     def current_pool(self) -> List[str]:
@@ -120,6 +128,26 @@ class Remote(Stateful[RemoteSettings]):
         }
         self._current_pool = deque()
         self.probe = RemoteProbe(settings=self.settings.probe) if self.settings.probe else None
+
+        # build our liveness object, or use default if it is set to inherit
+        if self.settings.liveness.type == "inherit":
+            self.liveness = DEFAULT_LIVENESS
+        else:
+            # If it quacks, it's a duck.
+            try:
+                self.liveness = self.settings.liveness.build_impl()
+            except AttributeError as exc:
+                raise NotImplementedError(
+                    f"Unsupported liveness type: {self.settings.liveness.type}. The underlying setting of type "
+                    f"{type(self.settings.liveness).__name__} must implement a build_impl method."
+                ) from exc
+
+        # replace the endpoint liveness object by ours if it is set to inherit
+        for url, endpoint in self._endpoints.items():
+            if endpoint.liveness.settings.type == "inherit":
+                endpoint.liveness = self.liveness
+
+        # set the initial pool of available remote endpoints
         self.refresh()
 
     def __getitem__(self, url: str) -> RemoteEndpoint:

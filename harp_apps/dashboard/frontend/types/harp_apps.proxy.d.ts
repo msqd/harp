@@ -71,6 +71,11 @@ declare namespace Apps.Proxy {
     check_after?: number;
     endpoints?: RemoteEndpointSettings[];
     probe?: RemoteProbeSettings | null;
+    liveness?:
+      | IgnoreLivenessSettings
+      | InheritLivenessSettings
+      | LeakyBucketLivenessSettings
+      | NaiveLivenessSettings;
   }
   /**
    * A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
@@ -86,6 +91,26 @@ declare namespace Apps.Proxy {
   export interface RemoteEndpointSettings {
     url: string;
     pools?: string[];
+    liveness?:
+      | IgnoreLivenessSettings
+      | InheritLivenessSettings
+      | LeakyBucketLivenessSettings
+      | NaiveLivenessSettings;
+  }
+  export interface IgnoreLivenessSettings {
+    type: "ignore";
+  }
+  export interface InheritLivenessSettings {
+    type?: "inherit";
+  }
+  export interface LeakyBucketLivenessSettings {
+    type: "leaky";
+    rate?: number;
+    capacity?: number;
+    threshold?: number;
+  }
+  export interface NaiveLivenessSettings {
+    type: "naive";
     failure_threshold?: number;
     success_threshold?: number;
   }
@@ -144,9 +169,68 @@ declare namespace Apps.Proxy {
   export interface RemoteEndpoint {
     settings: RemoteEndpointSettings;
     status?: number;
+    failure_reasons?: unknown[] | null;
+    [k: string]: unknown;
+  }
+  export interface LeakyBucketLiveness {
+    settings: LeakyBucketLivenessSettings;
+    [k: string]: unknown;
+  }
+  export interface LeakyBucketLivenessSubjectState {
+    last_checked?: number | null;
+    current?: number;
+    [k: string]: unknown;
+  }
+  export interface NaiveLiveness {
+    settings: NaiveLivenessSettings;
+    [k: string]: unknown;
+  }
+  /**
+   * Holds the internal state of the target subject. Will be attached as an attribute to the said subject, but only
+   * used by the liveness implementation.
+   */
+  export interface NaiveLivenessSubjectState {
     failure_score?: number;
     success_score?: number;
-    failure_reasons?: unknown[] | null;
+    [k: string]: unknown;
+  }
+  export interface IgnoreLiveness {
+    settings: IgnoreLivenessSettings;
+    [k: string]: unknown;
+  }
+  /**
+   * This is a placeholder for inheriting liveness, the parent stateful object will replace it. We do not need to
+   * implement the BaseLiveness interface, as it won't exist anymore once everything is setup.
+   */
+  export interface InheritLiveness {
+    settings: InheritLivenessSettings;
+    [k: string]: unknown;
+  }
+  export interface BaseLiveness {
+    settings: Configurable;
+    [k: string]: unknown;
+  }
+  /**
+   * A settings definition base.
+   */
+  export interface Configurable {}
+  export interface BaseLivenessSettings {
+    type?: "ignore" | "inherit" | "naive" | "leaky";
+  }
+  export interface BaseLivenessIgnoreLivenessSettings {
+    settings: IgnoreLivenessSettings;
+    [k: string]: unknown;
+  }
+  export interface BaseLivenessInheritLivenessSettings {
+    settings: InheritLivenessSettings;
+    [k: string]: unknown;
+  }
+  export interface BaseLivenessLeakyBucketLivenessSettings {
+    settings: LeakyBucketLivenessSettings;
+    [k: string]: unknown;
+  }
+  export interface BaseLivenessNaiveLivenessSettings {
+    settings: NaiveLivenessSettings;
     [k: string]: unknown;
   }
   export interface BaseRemoteSettings {

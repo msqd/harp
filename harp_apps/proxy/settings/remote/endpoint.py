@@ -1,9 +1,10 @@
-from typing import Annotated, List, Optional
+from typing import List, Optional
 
-from pydantic import Field, HttpUrl, field_serializer, field_validator
+from pydantic import Field, HttpUrl, field_serializer, field_validator, model_validator
 
 from harp.config import Configurable, Stateful
-from harp_apps.proxy.constants import AVAILABLE_POOLS, CHECKING, DOWN, UP
+from harp_apps.proxy.constants import AVAILABLE_POOLS, CHECKING
+from harp_apps.proxy.settings.liveness import InheritLiveness, InheritLivenessSettings, Liveness, LivenessSettings
 
 
 class RemoteEndpointSettings(Configurable):
@@ -21,8 +22,7 @@ class RemoteEndpointSettings(Configurable):
 
     url: HttpUrl
     pools: List[str] = ["default"]
-    failure_threshold: Annotated[int, Field(gt=0)] = 1
-    success_threshold: Annotated[int, Field(gt=0)] = 1
+    liveness: LivenessSettings = Field(default_factory=InheritLivenessSettings)
 
     @field_validator("pools")
     @classmethod
@@ -42,45 +42,28 @@ class RemoteEndpoint(Stateful[RemoteEndpointSettings]):
     """Stateful version of a remote endpoint definition."""
 
     status: int = CHECKING
-    failure_score: int = 0
-    success_score: int = 0
     failure_reasons: Optional[set] = None
+    liveness: Liveness = Field(None, exclude=True)
 
-    def success(self):
+    @model_validator(mode="after")
+    def __initialize(self):
+        if self.liveness is None and self.settings.liveness is not None:
+            if self.settings.liveness.type == "inherit":
+                self.liveness = InheritLiveness(settings=self.settings.liveness)
+            else:
+                # If it quacks, it's a duck.
+                try:
+                    self.liveness = self.settings.liveness.build_impl()
+                except AttributeError as exc:
+                    raise NotImplementedError(
+                        f"Unsupported liveness type: {self.settings.liveness.type}. The underlying setting of type "
+                        f"{type(self.settings.liveness).__name__} must implement a build_impl method."
+                    ) from exc
+
+    def success(self) -> bool:
         """Returns a boolean indicating if a state change happened."""
-        self.failure_score = 0
-        self.success_score += 1
-
-        if self.success_score >= self.settings.success_threshold:
-            if self.status != UP:
-                self.failure_reasons = None
-                self.status = UP
-                return True
-        else:
-            if self.status != CHECKING:
-                self.status = CHECKING
-                return True
-
-        return False
+        return self.liveness.success(self) if self.liveness else False
 
     def failure(self, reason: str = None):
         """Returns a boolean indicating if a state change happened."""
-        self.success_score = 0
-        self.failure_score += 1
-
-        if self.failure_reasons is None:
-            self.failure_reasons = set()
-
-        if reason:
-            self.failure_reasons.add(reason)
-
-        if self.failure_score >= self.settings.failure_threshold:
-            if self.status != DOWN:
-                self.status = DOWN
-                return True
-        else:
-            if self.status != CHECKING:
-                self.status = CHECKING
-                return True
-
-        return False
+        return self.liveness.failure(self, reason) if self.liveness else False

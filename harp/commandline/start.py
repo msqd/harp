@@ -1,8 +1,5 @@
 import importlib.util
 import sys
-from typing import cast
-
-from click import BaseCommand
 
 from harp.commandline.server import CommonServerOptions, add_harp_server_click_options
 from harp.commandline.utils.manager import HARP_DASHBOARD_SERVICE
@@ -54,8 +51,8 @@ def assert_development_packages_are_available():
     multiple=True,
     help="Add a server subprocess to the list of services to start (experimental, can be used multiple times).",
 )
-@click.argument("services", nargs=-1)
 @add_harp_server_click_options
+@click.argument("services", nargs=-1)
 def start(with_docs, with_ui, services, server_subprocesses, mock, **kwargs):
     try:
         assert_development_packages_are_available()
@@ -125,6 +122,3 @@ def start(with_docs, with_ui, services, server_subprocesses, mock, **kwargs):
         manager.kill()
 
     sys.exit(manager.returncode)
-
-
-start = cast(BaseCommand, start)
