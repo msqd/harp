@@ -46,20 +46,20 @@ class ASGICommunicator:
     def http_get(self, path, *, headers=None, host=None, port=None):
         return self.http_request("GET", path, headers=headers, host=host, port=port)
 
-    def asgi_http_post(self, path, *, headers=None, host=None, port=None):
-        return self.http_request("POST", path, headers=headers, host=host, port=port)
+    def http_post(self, path, *, body=b"", headers=None, host=None, port=None):
+        return self.http_request("POST", path, body=body, headers=headers, host=host, port=port)
 
-    def asgi_http_put(self, path, *, headers=None, host=None, port=None):
+    def http_put(self, path, *, headers=None, host=None, port=None):
         return self.http_request("PUT", path, headers=headers, host=host, port=port)
 
-    def asgi_http_patch(self, path, *, headers=None, host=None, port=None):
+    def http_patch(self, path, *, headers=None, host=None, port=None):
         return self.http_request("PATCH", path, headers=headers, host=host, port=port)
 
-    def asgi_http_delete(self, path, *, headers=None, host=None, port=None):
+    def http_delete(self, path, *, headers=None, host=None, port=None):
         return self.http_request("DELETE", path, headers=headers, host=host, port=port)
 
-    def asgi_http_options(self, path, *, headers=None, host=None, port=None):
+    def http_options(self, path, *, headers=None, host=None, port=None):
         return self.http_request("OPTIONS", path, host=host, port=port)
 
-    def asgi_http_head(self, path, *, headers=None, host=None, port=None):
+    def http_head(self, path, *, headers=None, host=None, port=None):
         return self.http_request("HEAD", path, headers=headers, host=host, port=port)

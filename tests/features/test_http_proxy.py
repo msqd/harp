@@ -119,7 +119,7 @@ class TestAsgiProxyWithStubApi:
         assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
 
     async def test_head_request(self, client: ASGICommunicator):
-        response = await client.asgi_http_head("/echo")
+        response = await client.http_head("/echo")
         assert response["status"] == 200
         assert response["body"] == b""
         assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
