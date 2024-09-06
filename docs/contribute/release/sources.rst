@@ -32,8 +32,8 @@ Releasing a new source version
 
 .. code-block:: shell
 
-    git log --oneline --no-merges --pretty=format:"* %s (%an)" $OLD_VERSION.. > docs/contribute/changelogs/$VERSION.rst
-    git add docs/contribute/changelogs/$VERSION.rst
+    git log --oneline --no-merges --pretty=format:"* %s (%an)" $OLD_VERSION.. > docs/changelogs/$VERSION.rst
+    git add docs/changelogs/$VERSION.rst
 
 5. Reboot computer (yes, we'll get better but that's the easiest way to have reproductible benchmarks for now) and run
    the benchmarks on new version
@@ -46,7 +46,7 @@ Releasing a new source version
 
 .. warning:: benchmarks are broken for now, but we'll re-add it soon.
 
-- **Edit the changelog index** (`docs/contribute/changelogs/index.rst`) to add the new version (title, date).
+- **Edit the changelog index** (`docs/changelogs/index.rst`) to add the new version (title, date).
 - **Add a title** to the new changelog file.
 - **Add the performance graphs** to the release note.
 
