@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import TIMESTAMP, ForeignKey, Index, Integer, String
+from sqlalchemy import TIMESTAMP, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from harp.http import BaseMessage, get_serializer_for
@@ -18,7 +18,7 @@ class Message(Base):
 
     id: Mapped[int] = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
     kind: Mapped[str] = mapped_column(String(10))
-    summary: Mapped[str] = mapped_column(String(255))
+    summary: Mapped[str] = mapped_column(Text)
     headers: Mapped[str] = mapped_column(String(40))
     body: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True))

@@ -56,6 +56,19 @@ def create_migration(*, message, **kwargs):
 create_migration = cast(BaseCommand, create_migration)
 
 
+@click.command("db:merge")
+@add_harp_server_click_options
+@click.argument("message", nargs=1)
+@click.argument("revisions", nargs=-1)
+def run_db_merge_command(*, message, revisions, **kwargs):
+    settings = create_harp_settings_with_storage_from_command_line_options(kwargs)
+    alembic_cfg = create_alembic_config(settings.get("storage").url)
+    command.merge(alembic_cfg, message=message or "merge migration", revisions=revisions)
+
+
+run_db_merge_command = cast(BaseCommand, run_db_merge_command)
+
+
 @click.command("db:feature")
 @click.argument("operation", nargs=1, type=click.Choice(["add", "remove"]))
 @click.argument("features", nargs=-1)

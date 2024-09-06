@@ -17,6 +17,7 @@ Added
 * Proxy: Added a simple but functional circuit breaker implementation.
 * Proxy: Add probe implementation in background.
 * Frontend: Generate typescript types from models, using the intermediary json schema generation provided by pydantic.
+* Storage: Added a new db:merge command to generate merge revisions from alembic.
 
 Changed
 :::::::

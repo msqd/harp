@@ -93,12 +93,13 @@ else:
 
 
 if check_packages("alembic"):
-    from harp.commandline.migrations import create_migration, feature, history, migrate, reset
+    from harp.commandline.migrations import create_migration, feature, history, migrate, reset, run_db_merge_command
 
     entrypoint.add_command(migrate)
     entrypoint.add_command(feature)
     entrypoint.add_command(history)
     entrypoint.add_command(reset)
+    entrypoint.add_command(run_db_merge_command)
 
     if IS_DEVELOPMENT_ENVIRONMENT:
         entrypoint.add_command(create_migration)
