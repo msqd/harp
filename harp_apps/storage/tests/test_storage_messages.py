@@ -2,7 +2,6 @@ from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 
 class TestStorageMessages(StorageTestFixtureMixin):
-
     async def test_create_message(self, sql_storage):
         transaction = await self.create_transaction(sql_storage)
         message = await self.create_message(
