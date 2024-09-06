@@ -1,4 +1,4 @@
-from typing import Literal, override
+from typing import Literal, Optional, override
 
 from .base import BaseLiveness, BaseLivenessSettings, LivenessSubject
 
