@@ -30,7 +30,7 @@ class BaseLiveness(Stateful[TSettings]):
     def success(self, subject: LivenessSubject) -> bool:
         raise NotImplementedError()
 
-    def failure(self, subject: LivenessSubject, reason: str = None) -> bool:
+    def failure(self, subject: LivenessSubject, reason: Optional[str] = None) -> bool:
         raise NotImplementedError()
 
     def reset_failure_reasons(self, subject: LivenessSubject):
