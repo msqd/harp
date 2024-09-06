@@ -16,5 +16,5 @@ class IgnoreLiveness(BaseLiveness[IgnoreLivenessSettings]):
         return False
 
     @override
-    def failure(self, subject: LivenessSubject, reason: str = None):
+    def failure(self, subject: LivenessSubject, reason: Optional[str] = None):
         return False
