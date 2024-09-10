@@ -11,6 +11,7 @@ from harp import ROOT_DIR
 from harp.config import Stateful
 from harp.config.asdict import asdict
 from harp.utils.config import yaml
+from harp.utils.packages import get_full_qualified_name
 
 
 def list_submodules(module):
@@ -82,12 +83,12 @@ def test_all_applications_default_settings(app, snapshot):
         if not issubclass(_type, BaseModel):
             continue
 
-        if _get_qualname(_type) in IGNORE_TYPES:
+        if get_full_qualified_name(_type) in IGNORE_TYPES:
             continue
 
         if issubclass(_type, Stateful):
             _settings_type = _type.get_settings_type()
-            _kwargs["settings"] = REQUIRED_SETTINGS.get(_get_qualname(_settings_type), {})
+            _kwargs["settings"] = REQUIRED_SETTINGS.get(get_full_qualified_name(_settings_type), {})
 
         if _fullname in REQUIRED_SETTINGS:
             with pytest.raises(ValidationError):
@@ -98,13 +99,6 @@ def test_all_applications_default_settings(app, snapshot):
         all_defaults[_fullname] = yaml.dump(asdict(instance))
 
     assert all_defaults == snapshot
-
-
-def _get_qualname(_type):
-    try:
-        return f"{_type.__module__}.{_type.__qualname__}"
-    except AttributeError:
-        return f"{_type.__module__}.{_type.__name__}"
 
 
 def _get_all_configurable_types_for_application(app):

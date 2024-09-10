@@ -93,6 +93,14 @@ class ServiceDefinition(BaseModel):
         self.arguments = _resolve(self.arguments, settings)
 
 
+def _discriminator(obj):
+    if "services" in obj:
+        if "condition" in obj:
+            return "conditional_collection"
+        return "collection"
+    return "service"
+
+
 class BaseServiceDefinitionCollection(BaseModel):
     """
     Base class for coherent sequences of services. The traverse() method can be used to get a flat iterator over all
@@ -104,9 +112,10 @@ class BaseServiceDefinitionCollection(BaseModel):
         Annotated[
             Union[
                 Annotated["ServiceDefinition", Tag("service")],
-                Annotated["ConditionalServiceDefinitionCollection", Tag("collection")],
+                Annotated["BaseServiceDefinitionCollection", Tag("collection")],
+                Annotated["ConditionalServiceDefinitionCollection", Tag("conditional_collection")],
             ],
-            Discriminator(lambda obj: "collection" if "services" in obj else "service"),
+            Discriminator(_discriminator),
         ]
     ]
 

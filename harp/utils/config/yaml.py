@@ -10,7 +10,7 @@ except ImportError:
     from yaml import Dumper, Loader
 
 
-def load(filename):
+def load(filename, *, Loader=Loader):
     with open(filename) as f:
         return yaml_load(f, Loader=Loader)
 

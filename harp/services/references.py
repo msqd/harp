@@ -1,4 +1,6 @@
 import operator
+import os.path
+from importlib import import_module
 from typing import Any, Self
 
 from pydantic import BaseModel
@@ -143,5 +145,21 @@ class LazySettingReference(BaseReference):
         return f"!cfg {self.target}"
 
 
+def _include(self, node):
+    filename = self.construct_scalar(node)
+
+    if " from " in filename:
+        filename, module = filename.split(" from ")
+        module = import_module(module)
+        for _path in module.__path__:
+            filename = os.path.join(_path, filename)
+            if os.path.exists(filename):
+                return yaml.load(filename, Loader=yaml.Loader)
+        raise FileNotFoundError(f"File not found: {filename} (search path: {', '.join(module.__path__)})")
+
+    return yaml.load(filename, Loader=yaml.Loader)
+
+
 yaml.add_constructor("!ref", LazyServiceReference.build_from_yaml, Loader=yaml.Loader)
 yaml.add_constructor("!cfg", LazySettingReference.build_from_yaml, Loader=yaml.Loader)
+yaml.add_constructor("!include", _include, Loader=yaml.Loader)
