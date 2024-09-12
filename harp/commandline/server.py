@@ -4,7 +4,7 @@ from click import BaseCommand
 
 from harp import run
 from harp.commandline.options.server import CommonServerOptions, add_harp_server_click_options
-from harp.config import ConfigurationBuilder
+from harp.config.utils import get_configuration_builder_type
 from harp.settings import USE_PROMETHEUS
 from harp.utils.commandline import click
 
@@ -27,7 +27,9 @@ def server(**kwargs):
         )
         _info.state("setup")
 
-    builder = ConfigurationBuilder.from_commandline_options(CommonServerOptions(**kwargs))
+    configration_builder = get_configuration_builder_type()
+
+    builder = configration_builder.from_commandline_options(CommonServerOptions(**kwargs))
 
     if _info:
         _info.state("up")

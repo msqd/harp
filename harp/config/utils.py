@@ -5,6 +5,7 @@ from .defaults import DEFAULT_NAMESPACES
 
 if TYPE_CHECKING:
     from .applications import Application
+import os
 
 
 def resolve_application_name(spec):
@@ -57,3 +58,12 @@ def get_application(name: str) -> "Application":
         raise RuntimeError(f'Unable to load application "{name}", application class definition not found.')
 
     return _applications[name]
+
+
+def get_configuration_builder_type():
+    edition = os.environ.get("HARP_EDITION", "harp_apps")
+    try:
+        ConfigurationBuilder = __import__(edition, fromlist=["ConfigurationBuilder"]).ConfigurationBuilder
+    except (ImportError, AttributeError):
+        from harp.config import ConfigurationBuilder
+    return ConfigurationBuilder

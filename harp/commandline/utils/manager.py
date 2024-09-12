@@ -1,6 +1,7 @@
 import os
 import shlex
 import sys
+from pathlib import Path
 from string import Template
 
 import rich_click as click
@@ -23,6 +24,7 @@ def quote(x):
 class HonchoManagerFactory:
     defaults = {HARP_DASHBOARD_SERVICE, HARP_SERVER_SERVICE}
     commands = {}
+    frontend_source_path: str = str(Path(ROOT_DIR).joinpath("harp_apps/dashboard/frontend").resolve())
 
     def __init__(self, *, proxy_options=(), dashboard_devserver_port=None):
         self.ports = {HARP_DASHBOARD_SERVICE: dashboard_devserver_port or get_available_network_port()}
@@ -41,7 +43,7 @@ class HonchoManagerFactory:
 
     def _get_dashboard_executable(self, processes):
         # todo make sure the frontend tools are available, in the right versions
-        if not os.path.exists(os.path.join(ROOT_DIR, "harp_apps/dashboard/frontend/node_modules")):
+        if not os.path.exists(self.frontend_source_path):
             # todo better guidance
             raise click.UsageError(
                 "Dashboard's frontend dependencies are not installed.\nYour options are: run a production version "
@@ -51,7 +53,7 @@ class HonchoManagerFactory:
         host = "localhost"
 
         return (
-            os.path.join(ROOT_DIR, "harp_apps/dashboard/frontend"),
+            self.frontend_source_path,
             " ".join(
                 [
                     "pnpm exec vite",
@@ -151,3 +153,12 @@ def parse_server_subprocesses_options(server_subprocesses):
         processes[_name] = (_port, _path, _command, _target_port)
 
     return processes
+
+
+def get_honcho_manager_factory_type():
+    edition = os.environ.get("HARP_EDITION", "harp_apps")
+    try:
+        HonchoManagerFactoryType = __import__(edition, fromlist=["HonchoManagerFactory"]).HonchoManagerFactory
+    except (ImportError, AttributeError):
+        return HonchoManagerFactory
+    return HonchoManagerFactoryType

@@ -11,7 +11,7 @@ import "./index.css"
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Layout />,
+    element: <Layout title="HARP EA" />,
     children: [
       {
         path: "",

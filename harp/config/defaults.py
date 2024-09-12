@@ -1,4 +1,5 @@
 import importlib.util
+import os
 
 DEFAULT_SYSTEM_CONFIG_FILENAMES = (
     "/etc/harp.yaml",
@@ -15,11 +16,8 @@ DEFAULT_APPLICATIONS = (
     "janitor",
 )
 
-_DEFAULT_NAMESPACE_CANDIDATES = (
-    "harp_enterprise",
-    "harp_pro",
-    "harp_apps",
-)
+_NAMESPACES = os.getenv("NAMESPACES", None)
+_DEFAULT_NAMESPACE_CANDIDATES = (*(_NAMESPACES.split(",") if _NAMESPACES else ()), "harp_apps")
 DEFAULT_NAMESPACES = []
 for _namespace in _DEFAULT_NAMESPACE_CANDIDATES:
     try:

@@ -67,7 +67,7 @@ export function Loader({ style, className }: { style?: CSSProperties; className?
   )
 }
 
-function Layout() {
+function Layout({ title }: { title: string }) {
   const location = useLocation()
   return (
     <div className="flex h-screen min-h-screen max-h-screen w-screen flex-col">
@@ -76,7 +76,7 @@ function Layout() {
           <Link to="/" className="flex">
             <img className="h-8 w-auto" src={logo} alt="Harp" />
             <span className="h-8 px-2 pt-1 text-md font-medium text-white" title="Harp Early Access">
-              Harp EA
+              {title}
             </span>
           </Link>
         }

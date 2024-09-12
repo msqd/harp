@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Optional, Type
 
 from whistle import IAsyncEventDispatcher
 
@@ -72,8 +72,11 @@ class Application:
 
 
 class ApplicationsRegistry:
-    def __init__(self):
+    namespaces = ["harp_apps"]
+
+    def __init__(self, namespaces: Optional[list[str]] = None):
         self._applications = {}
+        self.namespaces = namespaces or self.namespaces
 
     def __contains__(self, name):
         return name in self._applications
