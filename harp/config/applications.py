@@ -1,3 +1,4 @@
+import importlib.util
 from typing import Optional, Type
 
 from whistle import IAsyncEventDispatcher
@@ -15,7 +16,9 @@ from .events import (
     OnReadyHandler,
     OnShutdownHandler,
 )
-from .utils import get_application, resolve_application_name
+
+#: Cache for applications
+applications = {}
 
 
 class Application:
@@ -90,8 +93,51 @@ class ApplicationsRegistry:
     def __len__(self):
         return len(self._applications)
 
-    def resolve_name(self, name):
-        return resolve_application_name(name)
+    def resolve_name(self, spec):
+        if "." not in spec:
+            for namespace in self.namespaces:
+                _candidate = ".".join((namespace, spec))
+                if importlib.util.find_spec(_candidate):
+                    return _candidate
+
+        if importlib.util.find_spec(spec):
+            return spec
+
+        raise ModuleNotFoundError(f"No application named {spec}.")
+
+    def get_application(self, name: str) -> "Application":
+        """
+        Returns the application class for the given application name.
+
+        todo: add name/full_name attributes with raise if already set to different value ?
+
+        :param name:
+        :return:
+        """
+        name = self.resolve_name(name)
+
+        if name not in applications:
+            application_spec = importlib.util.find_spec(name)
+            if not application_spec:
+                raise ValueError(f'Unable to find application "{name}".')
+
+            try:
+                application_module = __import__(".".join((application_spec.name, "__app__")), fromlist=["*"])
+            except ModuleNotFoundError as exc:
+                raise ModuleNotFoundError(
+                    f'A python package for application "{name}" was found but it is not a valid harp application. '
+                    'Did you forget to add an "__app__.py"?'
+                ) from exc
+
+            if not hasattr(application_module, "application"):
+                raise AttributeError(f'Application module for {name} does not contain a "application" attribute.')
+
+            applications[application_spec.name] = getattr(application_module, "application")
+
+        if name not in applications:
+            raise RuntimeError(f'Unable to load application "{name}", application class definition not found.')
+
+        return applications[name]
 
     def resolve_short_name(self, full_name):
         short_name = full_name.split(".")[-1]
@@ -108,8 +154,8 @@ class ApplicationsRegistry:
             short_name = self.resolve_short_name(full_name)
 
             if short_name not in self._applications:
-                self._applications[short_name] = get_application(full_name)
-            elif self._applications[short_name] != get_application(full_name):
+                self._applications[short_name] = self.get_application(full_name)
+            elif self._applications[short_name] != self.get_application(full_name):
                 raise ValueError(
                     f"Application {short_name} already registered with a different type ({self._applications[short_name].__module__}.{self._applications[short_name].__qualname__})."
                 )
