@@ -15,6 +15,7 @@
                 'type': 'null',
               }),
             ]),
+            'description': 'Arguments for the service constructor.',
             'title': 'Arguments',
           }),
           'base': dict({
@@ -27,6 +28,7 @@
               }),
             ]),
             'default': None,
+            'description': 'Base type for service definition.',
             'title': 'Base',
           }),
           'constructor': dict({
@@ -39,6 +41,7 @@
               }),
             ]),
             'default': None,
+            'description': 'Optional custom constructor for the service.',
             'title': 'Constructor',
           }),
           'type': dict({
@@ -51,6 +54,7 @@
               }),
             ]),
             'default': None,
+            'description': 'Type for service definition.',
             'title': 'Type',
           }),
         }),
@@ -139,6 +143,7 @@
                 'type': 'null',
               }),
             ]),
+            'description': 'Arguments for the service constructor.',
             'title': 'Arguments',
           }),
           'base': dict({
@@ -151,6 +156,7 @@
               }),
             ]),
             'default': None,
+            'description': 'Base type for service definition.',
             'title': 'Base',
           }),
           'constructor': dict({
@@ -163,6 +169,7 @@
               }),
             ]),
             'default': None,
+            'description': 'Optional custom constructor for the service.',
             'title': 'Constructor',
           }),
           'type': dict({
@@ -175,6 +182,7 @@
               }),
             ]),
             'default': None,
+            'description': 'Type for service definition.',
             'title': 'Type',
           }),
         }),

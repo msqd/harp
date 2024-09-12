@@ -59,6 +59,7 @@
 .guide-intro table tr td:first-child {
     padding-top: 2em;
 }
+
 .guide-intro table tr td:nth-child(2) {
     padding-left: 2em;
 }
@@ -68,7 +69,7 @@ article[role=main] .graphviz {
     text-align: center;
 }
 
-div.graphviz >object {
+div.graphviz > object {
     margin: 0 auto;
 }
 
@@ -79,4 +80,32 @@ div.graphviz >object {
     border-radius: 0.25rem;
     padding: 0.1rem;
 
+}
+
+
+article table.docutils {
+    margin-left: 0;
+}
+
+article table.docutils td.align-top {
+    vertical-align: top;
+}
+
+article table.docutils td.title {
+    font-weight: bold;
+    vertical-align: top;
+}
+
+article table.docutils div[class*=" highlight-"],
+article table.docutils div[class^=highlight-] {
+    margin: .25rem 0;
+}
+
+article table.docutils div[class*=" highlight-"] pre,
+article table.docutils div[class^=highlight-] pre {
+    padding: .25rem .45rem;
+}
+
+.copyright a {
+    color: var(--color-foreground-secondary);
 }

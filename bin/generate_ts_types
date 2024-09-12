@@ -7,12 +7,26 @@ from shutil import copyfile
 import pyheck
 
 from harp import ROOT_DIR, get_logger
-from harp.utils.typescript import generate_schema, generate_typescript
+from harp.config import asdict
+from harp.utils.config import yaml
+from harp.utils.typescript import generate_schema, generate_typescript_and_jsonschema
 
 logger = get_logger(__name__)
 
 
-def generate_typescript_definitions_for_application(application_name, destination, *, namespace=None):
+def generate_typescript_definitions_for_application(
+    application_name, *, destination, schema_destination, namespace=None
+):
+    """
+    Generate TypeScript definitions and JSON schema for a given application.
+
+    Args:
+        application_name (str): The name of the application.
+        destination (str): The destination path for the TypeScript definitions.
+        schema_destination (str): The destination path for the JSON schema.
+        namespace (str, optional): The namespace to use in the TypeScript definitions.
+
+    """
     models = []
     for file in glob.glob(f"harp_apps/{application_name}/**/*.py", root_dir=ROOT_DIR, recursive=True):
         mod_path, _ = os.path.splitext(file)
@@ -54,14 +68,54 @@ def generate_typescript_definitions_for_application(application_name, destinatio
             models.append(obj)
 
     schema = generate_schema(models)
-    with generate_typescript(schema, namespace=namespace) as f:
-        copyfile(f.name, destination)
+    with generate_typescript_and_jsonschema(schema, namespace=namespace) as (ts_filename, schema_filename):
+        copyfile(ts_filename, destination)
+        copyfile(schema_filename, schema_destination)
 
 
 if __name__ == "__main__":
     for app in ("dashboard", "http_client", "proxy", "storage"):
         generate_typescript_definitions_for_application(
             app,
-            os.path.join(ROOT_DIR, f"harp_apps/dashboard/frontend/types/harp_apps.{app}.d.ts"),
+            destination=os.path.join(ROOT_DIR, f"harp_apps/dashboard/frontend/types/harp_apps.{app}.d.ts"),
+            schema_destination=os.path.join(ROOT_DIR, f"harp_apps/{app}/docs/schema.json"),
             namespace="Apps." + pyheck.upper_camel(app),
+        )
+
+    # Generate reference YAML configuration for HttpClientSettings
+    from harp_apps.http_client.settings import HttpClientSettings
+
+    with open(os.path.join(ROOT_DIR, "harp_apps/http_client/docs/examples/reference.yml"), "w+") as f:
+        f.write(yaml.dump({"http_client": asdict(HttpClientSettings(), verbose=True)}))
+
+    # Generate reference YAML configuration for ProxySettings
+    from harp_apps.proxy.settings import (
+        EndpointSettings,
+        ProxySettings,
+        RemoteEndpointSettings,
+        RemoteProbeSettings,
+        RemoteSettings,
+    )
+
+    with open(os.path.join(ROOT_DIR, "harp_apps/proxy/docs/examples/reference.yml"), "w+") as f:
+        f.write(
+            yaml.dump(
+                {
+                    "proxy": asdict(
+                        ProxySettings(
+                            endpoints=[
+                                EndpointSettings(
+                                    name="my-endpoint",
+                                    port=4000,
+                                    remote=RemoteSettings(
+                                        endpoints=[RemoteEndpointSettings(url="https://httpbin.org/")],
+                                        probe=RemoteProbeSettings(),
+                                    ),
+                                )
+                            ]
+                        ),
+                        verbose=True,
+                    )
+                }
+            )
         )

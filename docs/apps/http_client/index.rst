@@ -87,7 +87,6 @@ Table of Content
     :hidden:
     :maxdepth: 1
 
-    quickstart
     Events <events>
     Services <services>
-    recipes
+    Settings <settings>

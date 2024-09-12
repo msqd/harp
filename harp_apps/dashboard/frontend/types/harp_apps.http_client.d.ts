@@ -16,17 +16,38 @@ declare namespace Apps.HttpClient {
    * A settings base class for service definitions.
    */
   export interface Service {
+    /**
+     * Base type for service definition.
+     */
     base?: string | null;
+    /**
+     * Type for service definition.
+     */
     type?: string | null;
+    /**
+     * Optional custom constructor for the service.
+     */
     constructor?: string | null;
+    /**
+     * Arguments for the service constructor.
+     */
     arguments?: {
       [k: string]: unknown;
     } | null;
     [k: string]: unknown;
   }
   export interface HttpClientSettings {
+    /**
+     * Base type for service definition.
+     */
     base?: string | null;
+    /**
+     * Type for service definition.
+     */
     type?: string;
+    /**
+     * Optional custom constructor for the service.
+     */
     constructor?: string | null;
     arguments?: Arguments;
     cache?: CacheSettings;
