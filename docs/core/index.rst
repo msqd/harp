@@ -5,4 +5,5 @@ Core Reference
     :maxdepth: 2
 
     Events <events>
-    services
+    Services <services>
+    Internals </reference/core/harp>

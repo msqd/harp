@@ -13,6 +13,13 @@ The notification will include information about the error and the transaction th
 
 .. note:: The notifications application is not loaded by default. You need to add it to your configuration file.
 
+.. toctree::
+    :hidden:
+    :maxdepth: 1
+
+    Internals </reference/apps/harp_apps.notifications>
+
+
 
 Configuration
 :::::::::::::

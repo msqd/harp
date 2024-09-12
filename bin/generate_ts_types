@@ -119,3 +119,9 @@ if __name__ == "__main__":
                 }
             )
         )
+
+    # Generate reference YAML configuration for StorageSettings
+    from harp_apps.storage.settings import StorageSettings
+
+    with open(os.path.join(ROOT_DIR, "harp_apps/storage/docs/examples/reference.yml"), "w+") as f:
+        f.write(yaml.dump({"storage": asdict(StorageSettings(), verbose=True)}))

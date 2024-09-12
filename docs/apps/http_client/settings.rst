@@ -14,7 +14,7 @@ Here is an example containing all default values for the ``http_client`` applica
 Reference
 :::::::::
 
-Implementation (python): :class:`CacheSettings <harp_apps.http_client.settings.cache.CacheSettings>`
+Implementation (python): :class:`HttpClientSettings <harp_apps.http_client.settings.HttpClientSettings>`
 
 .. jsonschema:: ./schema.json
    :pointer: /$defs/HttpClientSettings

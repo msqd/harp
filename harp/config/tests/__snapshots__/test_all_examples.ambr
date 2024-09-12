@@ -28,6 +28,7 @@
     'docs/apps/storage/examples/mysql-asyncmy.yml',
     'docs/apps/storage/examples/postgres-asyncpg.yml',
     'docs/apps/storage/examples/redis.yml',
+    'docs/apps/storage/examples/reference.yml',
     'docs/apps/storage/examples/sqlite-aiosqlite.yml',
   ])
 # ---
@@ -504,6 +505,16 @@
     blobs:
       type: redis
     redis: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[docs/apps/storage/examples/reference.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry: {}
+  http_client: {}
+  proxy: {}
+  storage: {}
   
   '''
 # ---

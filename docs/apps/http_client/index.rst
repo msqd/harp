@@ -13,6 +13,15 @@ services, allowing other mechanisms to hook into the request/response lifecycle 
 
 The caching mechanism is implemented using `Hishel <https://hishel.com/>`_ a powerful caching library.
 
+.. toctree::
+    :hidden:
+    :maxdepth: 1
+
+    Events <events>
+    Services <services>
+    Settings <settings>
+    Internals </reference/apps/harp_apps.http_client>
+
 
 Overview
 ::::::::
@@ -76,17 +85,3 @@ Full example
 
 .. literalinclude:: ./examples/full.yml
     :language: yaml
-
-
-Table of Content
-::::::::::::::::
-
-.. include:: _toc.rst
-
-.. toctree::
-    :hidden:
-    :maxdepth: 1
-
-    Events <events>
-    Services <services>
-    Settings <settings>
