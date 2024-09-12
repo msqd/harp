@@ -22,7 +22,6 @@
     'defaults',
     'events',
     'examples',
-    'get_application',
     'tests',
     'utils',
   ])
