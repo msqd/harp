@@ -27,7 +27,6 @@ from .events import (
     OnReadyEvent,
     OnShutdownEvent,
 )
-from .utils import get_application
 
 __all__ = [
     "Application",
@@ -45,5 +44,4 @@ __all__ = [
     "Service",
     "Stateful",
     "asdict",
-    "get_application",
 ]

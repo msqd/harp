@@ -10,10 +10,18 @@ class Service(BaseConfigurable):
 
     model_config = ConfigDict(extra="allow")
 
-    base: Optional[str] = None
-    type: Optional[str] = None
-    constructor: Optional[str] = None
-    arguments: Optional[dict] = Field(default_factory=dict)
+    #: Base type for service definition. This is not usually the base interface that the service implements, and you
+    #: should use the `type` field to override the actually instanciated type.
+    base: Optional[str] = Field(default=None, description="Base type for service definition.")
+
+    #: Type for service definition. This is the actual type that will be instanciated.
+    type: Optional[str] = Field(default=None, description="Type for service definition.")
+
+    #: Constructor for service definition. If provided, will be used instead of the default constructor.
+    constructor: Optional[str] = Field(default=None, description="Optional custom constructor for the service.")
+
+    #: Arguments for the service constructor, by name.
+    arguments: Optional[dict] = Field(default_factory=dict, description="Arguments for the service constructor.")
 
     @model_validator(mode="before")
     @classmethod

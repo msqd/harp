@@ -39,9 +39,10 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_sitemap",
-    "sphinxcontrib.jquery",
-    "docs._extensions.services",
     "sphinx_tags",
+    "sphinxcontrib.jquery",
+    "docs._extensions.jsonschema",
+    "docs._extensions.services",
 ]
 
 ALGOLIA_APIKEY = os.getenv("ALGOLIA_APIKEY")

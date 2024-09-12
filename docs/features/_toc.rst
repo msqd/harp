@@ -6,8 +6,9 @@
    :maxdepth: 2
 
    configuration
+   dashboard
    proxy
+   auditlog
    caching
    circuit-breaker
-   auditlog
    rules

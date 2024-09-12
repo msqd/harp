@@ -1,0 +1,26 @@
+proxy:
+  endpoints:
+  - description: null
+    name: my-endpoint
+    port: 4000
+    remote:
+      break_on:
+      - network_error
+      - unhandled_exception
+      check_after: 10.0
+      endpoints:
+      - liveness:
+          type: inherit
+        pools:
+        - default
+        url: https://httpbin.org/
+      liveness:
+        type: inherit
+      min_pool_size: 1
+      probe:
+        headers: {}
+        interval: 10.0
+        method: GET
+        path: /
+        timeout: 10.0
+        verify: true

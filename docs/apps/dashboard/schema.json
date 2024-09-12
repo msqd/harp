@@ -1,0 +1,140 @@
+{
+  "$defs": {
+    "BasicAuthSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "basic",
+          "default": null,
+          "enum": ["basic"],
+          "type": "string"
+        },
+        "algorithm": {
+          "default": "pbkdf2_sha256",
+          "enum": [
+            "argon2",
+            "bcrypt",
+            "bcrypt_sha256",
+            "cisco_asa",
+            "cisco_pix",
+            "cisco_type7",
+            "django_bcrypt",
+            "django_bcrypt_sha256",
+            "django_des_crypt",
+            "django_disabled",
+            "django_pbkdf2_sha1",
+            "django_pbkdf2_sha256",
+            "django_salted_md5",
+            "django_salted_sha1",
+            "grub_pbkdf2_sha512",
+            "hex_digest",
+            "ldap_crypt",
+            "ldap_md5",
+            "ldap_plaintext",
+            "ldap_salted_md5",
+            "ldap_salted_sha1",
+            "ldap_salted_sha256",
+            "ldap_salted_sha512",
+            "ldap_sha1",
+            "lmhash",
+            "md5_crypt",
+            "msdcc",
+            "msdcc2",
+            "mssql2000",
+            "mssql2005",
+            "mysql323",
+            "mysql41",
+            "nthash",
+            "oracle10",
+            "oracle11",
+            "pbkdf2_sha1",
+            "pbkdf2_sha256",
+            "pbkdf2_sha512",
+            "phpass",
+            "plain",
+            "plaintext",
+            "postgres_md5",
+            "scram",
+            "scrypt",
+            "sha256_crypt",
+            "sha512_crypt"
+          ],
+          "type": "string"
+        },
+        "users": {
+          "additionalProperties": { "$ref": "#/$defs/User" },
+          "title": "Users",
+          "type": "object"
+        }
+      },
+      "title": "BasicAuthSettings",
+      "type": "object"
+    },
+    "DashboardSettings": {
+      "additionalProperties": false,
+      "description": "Root settings for the dashboard application.",
+      "properties": {
+        "port": { "default": 4080, "type": "integer" },
+        "auth": {
+          "default": null,
+          "discriminator": {
+            "mapping": { "basic": "#/$defs/BasicAuthSettings" },
+            "propertyName": "type"
+          },
+          "oneOf": [{ "$ref": "#/$defs/BasicAuthSettings" }]
+        },
+        "devserver": {
+          "anyOf": [
+            { "$ref": "#/$defs/DevserverSettings" },
+            { "type": "null" }
+          ],
+          "default": { "enabled": true, "port": null }
+        },
+        "enable_ui": { "default": true, "type": "boolean" },
+        "public_url": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null
+        }
+      },
+      "title": "DashboardSettings",
+      "type": "object"
+    },
+    "DevserverSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "default": true, "type": "boolean" },
+        "port": {
+          "anyOf": [{ "type": "integer" }, { "type": "null" }],
+          "default": null
+        }
+      },
+      "title": "DevserverSettings",
+      "type": "object"
+    },
+    "SystemPutProxyInput": {
+      "properties": {
+        "endpoint": { "type": "string" },
+        "action": { "enum": ["up", "down", "checking"], "type": "string" },
+        "url": { "type": "string" }
+      },
+      "required": ["endpoint", "action", "url"],
+      "title": "SystemPutProxyInput",
+      "type": "object"
+    },
+    "User": {
+      "additionalProperties": false,
+      "properties": { "password": { "type": "string" } },
+      "required": ["password"],
+      "title": "User",
+      "type": "object"
+    }
+  },
+  "title": "__ROOT__",
+  "anyOf": [
+    { "$ref": "#/$defs/DevserverSettings" },
+    { "$ref": "#/$defs/BasicAuthSettings" },
+    { "$ref": "#/$defs/User" },
+    { "$ref": "#/$defs/DashboardSettings" },
+    { "$ref": "#/$defs/SystemPutProxyInput" }
+  ]
+}

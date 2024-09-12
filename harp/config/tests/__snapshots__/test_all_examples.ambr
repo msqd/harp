@@ -7,6 +7,7 @@
     'docs/apps/dashboard/examples/main.yml',
     'docs/apps/http_client/examples/cache.yml',
     'docs/apps/http_client/examples/full.yml',
+    'docs/apps/http_client/examples/reference.yml',
     'docs/apps/http_client/examples/simple.yml',
     'docs/apps/notifications/examples/dashboard.yml',
     'docs/apps/notifications/examples/main.yml',
@@ -18,6 +19,7 @@
     'docs/apps/proxy/examples/pooled-fallback.yml',
     'docs/apps/proxy/examples/pooled-healthcheck.yml',
     'docs/apps/proxy/examples/pooled.yml',
+    'docs/apps/proxy/examples/reference.yml',
     'docs/apps/proxy/examples/swapi.yml',
     'docs/apps/rules/examples/overview.toml',
     'docs/apps/rules/examples/rules.toml',
@@ -26,6 +28,7 @@
     'docs/apps/storage/examples/mysql-asyncmy.yml',
     'docs/apps/storage/examples/postgres-asyncpg.yml',
     'docs/apps/storage/examples/redis.yml',
+    'docs/apps/storage/examples/reference.yml',
     'docs/apps/storage/examples/sqlite-aiosqlite.yml',
   ])
 # ---
@@ -135,6 +138,16 @@
     timeout: 10.0
     transport:
       '@type': httpx:AsyncHTTPTransport
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[docs/apps/http_client/examples/reference.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry: {}
+  http_client: {}
   proxy: {}
   storage: {}
   
@@ -357,6 +370,28 @@
   
   '''
 # ---
+# name: test_load_documentation_example[docs/apps/proxy/examples/reference.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry: {}
+  http_client: {}
+  proxy:
+    endpoints:
+    - name: my-endpoint
+      port: 4000
+      remote:
+        break_on:
+        - network_error
+        - unhandled_exception
+        endpoints:
+        - pools:
+          - default
+          url: https://httpbin.org/
+        probe: {}
+  storage: {}
+  
+  '''
+# ---
 # name: test_load_documentation_example[docs/apps/proxy/examples/swapi.yml]
   '''
   dashboard: {}
@@ -470,6 +505,16 @@
     blobs:
       type: redis
     redis: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[docs/apps/storage/examples/reference.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry: {}
+  http_client: {}
+  proxy: {}
+  storage: {}
   
   '''
 # ---
