@@ -64,7 +64,8 @@ html_theme_options = {
 html_favicon = "favicon.ico"
 html_js_files = ["js/links-target-blank.js"]
 html_css_files = ["css/harp.css"]
-html_baseurl = "https://docs.harp-proxy.net/"
+
+html_baseurl = os.getenv("READTHEDOCS_CANONICAL_URL", "/")
 
 html_sidebars = {
     "**": [
