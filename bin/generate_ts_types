@@ -55,10 +55,12 @@ def generate_typescript_definitions_for_application(
 
             # ignore non-type
             if not isinstance(obj, type):
+                logger.debug(f"{mod_fullpath}.{name} (skip: not a type)")
                 continue
 
             # ignore non local
             if obj.__module__ != mod_fullpath:
+                logger.debug(f"{mod_fullpath}.{name} (skip: non local)")
                 continue
 
             if not hasattr(obj, "model_json_schema"):
