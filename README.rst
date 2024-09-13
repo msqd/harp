@@ -56,6 +56,15 @@ a vizualization dashboard to observe everything.
     :alt: HARP Proxy Overview
     :align: center
 
+To instantly get insights on how your application is interacting with external services, you get a full searchable
+transactions audit trail, with detailed information on each request and response.
+
+.. figure:: https://docs.harp-proxy.net/en/latest/_images/transactions.png
+    :alt: HARP Proxy Transactions
+    :align: center
+
+No more doubts about what happened. Now, you ***know***.
+
 
 How it works?
 :::::::::::::
