@@ -8,7 +8,7 @@ import { default as Layout } from "./Layout"
 it("renders the title and data when the query is successful", async () => {
   const result = renderWithClient(
     <MemoryRouter>
-      <Layout title="HARP" />
+      <Layout title="Harp EA" />
     </MemoryRouter>,
   )
 

@@ -22,9 +22,8 @@ export default defineConfig(({ mode }) => {
       ? {
           lib: {
             entry: [
-              resolve(__dirname, "src/Components/index.tsx"),
-              resolve(__dirname, "src/Styles/styles.tsx"),
-              resolve(__dirname, "src/Pages/pages.tsx"),
+              resolve(__dirname, "src/index.ts"),
+              resolve(__dirname, "src/Domain/hooks.ts"),
               resolve(__dirname, "src/tests/mocks/browser.ts"),
             ],
             name: "harp-dashboard",
@@ -89,7 +88,6 @@ export default defineConfig(({ mode }) => {
       dts({
         insertTypesEntry: true,
         staticImport: true,
-        rollupTypes: true,
       }),
       tsconfigPaths(),
       react({

@@ -15,8 +15,13 @@ import { H1 } from "ui/Components/Typography"
 import { RefreshButton } from "./Components/Buttons.tsx"
 import { OptionalPaginator } from "./Components/OptionalPaginator.tsx"
 import { TransactionListOnQuerySuccess } from "./TransactionListOnQuerySuccess.tsx"
+import { TransactionsDataTableProps } from "./Components/List/TransactionDataTable.tsx"
 
-export default function TransactionListPage() {
+interface TransactionListPageProps {
+  TransactionDataTable: React.FC<TransactionsDataTableProps>
+}
+
+export default function TransactionListPage({ TransactionDataTable }: TransactionListPageProps) {
   const location = useLocation()
 
   const navigate = useNavigate()
@@ -148,7 +153,9 @@ export default function TransactionListPage() {
       </Helmet>
 
       <OnQuerySuccess query={query}>
-        {(query) => <TransactionListOnQuerySuccess query={query} filters={filters} />}
+        {(query) => (
+          <TransactionListOnQuerySuccess query={query} filters={filters} TransactionDataTable={TransactionDataTable} />
+        )}
       </OnQuerySuccess>
     </Page>
   )

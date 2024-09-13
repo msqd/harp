@@ -4,3 +4,5 @@ import { default as TransactionDetailPage } from "./Transactions/TransactionDeta
 import { default as TransactionsListPage } from "./Transactions/TransactionListPage.tsx"
 
 export { OverviewPage, SystemPage, TransactionDetailPage, TransactionsListPage }
+
+export { Duration, MessageSummary } from "./Transactions/Components"

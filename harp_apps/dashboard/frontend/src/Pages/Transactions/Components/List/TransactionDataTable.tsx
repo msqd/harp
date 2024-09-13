@@ -1,16 +1,16 @@
 import { StarIcon } from "@heroicons/react/24/outline"
 import { formatDistance } from "date-fns"
 import { useState } from "react"
+import { DataTable } from "ui/Components/DataTable"
 
 import { useSetUserFlagMutation } from "Domain/Transactions"
 import { getRequestFromTransactionMessages, getResponseFromTransactionMessages } from "Domain/Transactions/Utils"
 import { Message, Transaction } from "Models/Transaction"
-import { DataTable } from "ui/Components/DataTable"
 
 import { Duration } from "../Duration"
 import { MessageSummary } from "../MessageSummary.tsx"
 
-interface TransactionsDataTableProps {
+export interface TransactionsDataTableProps {
   transactions: Transaction[]
   onSelectionChange?: (selected: Transaction | null) => void
   selected?: Transaction

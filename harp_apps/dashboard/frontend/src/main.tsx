@@ -1,12 +1,15 @@
-import { lazy, StrictMode } from "react"
+import { lazy, StrictMode, Suspense } from "react"
 import { createRoot } from "react-dom/client"
 import { QueryClient, QueryClientProvider } from "react-query"
 import { ReactQueryDevtools } from "react-query/devtools"
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
 
 import { Layout } from "Components/Layout"
+import { TransactionDataTable } from "Pages/Transactions/Components/List"
 import GlobalStyles from "Styles/GlobalStyles"
 import "./index.css"
+
+const TransactionListPage = lazy(() => import("./Pages/Transactions/TransactionListPage"))
 
 const router = createBrowserRouter([
   {
@@ -23,7 +26,11 @@ const router = createBrowserRouter([
       },
       {
         path: "transactions",
-        Component: lazy(() => import("./Pages/Transactions/TransactionListPage")),
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <TransactionListPage TransactionDataTable={TransactionDataTable} />
+          </Suspense>
+        ),
       },
       {
         path: "system",

@@ -13,17 +13,11 @@
       "require": "./dist/index.cjs",
       "types": "./dist/index.d.ts"
     },
-    "./styles": {
-      "import": "./dist/styles.js",
-      "default":"./dist/styles.js",
-      "require": "./dist/styles.cjs",
-      "types": "./dist/styles.d.ts"
-    },
-    "./pages":{
-      "import": "./dist/pages.js",
-      "default":"./dist/pages.js",
-      "require": "./dist/pages.cjs",
-      "types": "./dist/pages.d.ts"
+    "./hooks": {
+      "import": "./dist/hooks.js",
+      "default":"./dist/hooks.js",
+      "require": "./dist/hooks.cjs",
+      "types": "./dist/hooks.d.ts"
     },
     "./tests/browser":{
       "import": "./dist/browser.js",
