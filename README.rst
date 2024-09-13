@@ -40,6 +40,23 @@ reach out with your thoughts, ideas, rants or issues. We can help.*
 | `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
 
 
+What is HARP Proxy?
+:::::::::::::::::::
+
+HARP Proxy is a fast open-source API proxy that you can use in development or production to improve the reliability,
+performance, security, and observability of your application's external API interactions.
+
+You list your external API endpoints in the configuration, update your consumer's base endpoints to hit the proxy and
+HARP will intercept and forward requests to these, with additional instrumentation.
+
+Out of the box, you'll get standard-compliant caching, a world class http client (with retries, timeouts, etc.), and
+a vizualization dashboard to observe everything.
+
+.. figure:: https://docs.harp-proxy.net/en/latest/_images/overview.png
+    :alt: HARP Proxy Overview
+    :align: center
+
+
 How it works?
 :::::::::::::
 
