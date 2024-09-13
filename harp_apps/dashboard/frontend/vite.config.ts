@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
           lib: {
             entry: [
               resolve(__dirname, "src/index.ts"),
+              resolve(__dirname, "src/ui/ui.ts"),
               resolve(__dirname, "src/Domain/hooks.ts"),
               resolve(__dirname, "src/tests/mocks/browser.ts"),
             ],
