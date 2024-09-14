@@ -1,10 +1,14 @@
 .jumbo-toc table {
-    border: 2px solid #334155;
+    border: 1px solid var(--color-sidebar-background-border);
 }
 
 .jumbo-toc table td {
-    border: 2px solid #334155;
+    border: 1px solid var(--color-sidebar-background-border);
     vertical-align: top;
+}
+
+.jumbo-toc table a {
+    color: var(--color-sidebar-link-text--top-level);
 }
 
 .jumbo-toc table td > p > a:first-child {

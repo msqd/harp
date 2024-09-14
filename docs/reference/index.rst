@@ -1,9 +1,10 @@
-Misc. Reference
-===============
+Reference
+=========
 
 .. toctree::
-    :maxdepth: 2
+   :maxdepth: 2
 
-    commandline/index
-    core/harp
-    apps/harp_apps
+   /core/index
+   /apps/index
+   /config/index
+   /commandline/index

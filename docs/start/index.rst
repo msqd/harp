@@ -1,29 +1,42 @@
 Getting Started
 ===============
 
-This guide contains eveything you need to get started using the software, from a technical point of view. If you just
-want to use the dashboard, you may be looking for the :doc:`/user/index`.
+This guide contains eveything you need to download install and run HARP Proxy.
+
+.. note::
+
+    If you're looking for help with using the dashboard, you may be looking for the :doc:`/user/index`.
 
 .. toctree::
     :maxdepth: 2
 
     quick
 
+
 Installation
 ::::::::::::
 
-A few different options to install harp on your development machine exist. The most reliable installation method is to
-use containers, as it ensures you have the very exact set of dependencies, including the system, that we battle tested.
-It also have the advantage of not requiring a python enviroment, nor python knowledge.
+Several options exist to install HARP Proxy on your development machine.
 
-For advanced users and fellow pythonistas, you can use pip. But maybe, you'll prefer containers too.
+The easiest and most reliable method is :doc:`using (docker) containers <docker>`, ensuring you have the exact set of
+dependencies, including the system, that we have battle-tested.
+
+For advanced users and fellow pythonistas, you can choose to :doc:`install from PyPI, using pip <python>`. This method
+is more flexible but requires a working Python environment and some knowledge of Python.
+
+If you want to :doc:`extend or contribute to HARP </contribute/index>`, consider :doc:`installing from sources
+<sources>`.
+
+-----
 
 .. toctree::
     :maxdepth: 2
+    :caption: Contents
 
     docker
     python
     sources
+
 
 What next?
 ::::::::::
