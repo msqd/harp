@@ -15,6 +15,7 @@ If enabled, a server will be available (by default, on port `4080`) to access th
     :maxdepth: 1
 
     Services <services>
+    Settings <settings>
     Internals </reference/apps/harp_apps.dashboard>
 
 

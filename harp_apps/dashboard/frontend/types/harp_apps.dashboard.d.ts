@@ -7,11 +7,23 @@
 
 declare namespace Apps.Dashboard {
   export interface DevserverSettings {
+    /**
+     * Enable or disable the development server.
+     */
     enabled?: boolean;
+    /**
+     * Port on which the development server will be served (internal). The proxy will forward dashboard requests to this port, if enabled.
+     */
     port?: number | null;
   }
   export interface BasicAuthSettings {
+    /**
+     * Authentication type. Only «basic» is supported for now.
+     */
     type?: "basic";
+    /**
+     * Hashing algorithm used for passwords.
+     */
     algorithm?:
       | "argon2"
       | "bcrypt"
@@ -61,6 +73,9 @@ declare namespace Apps.Dashboard {
       | "sha512_crypt";
     users?: Users;
   }
+  /**
+   * Users list.
+   */
   export interface Users {
     [k: string]: User;
   }
@@ -71,10 +86,25 @@ declare namespace Apps.Dashboard {
    * Root settings for the dashboard application.
    */
   export interface DashboardSettings {
+    /**
+     * Port on which the dashboard application will be served.
+     */
     port?: number;
-    auth?: BasicAuthSettings;
+    /**
+     * Authentication settings for the dashboard.
+     */
+    auth?: BasicAuthSettings | null;
+    /**
+     * Development server settings, only useful for internal frontend development.
+     */
     devserver?: DevserverSettings | null;
+    /**
+     * DEPRECATED – Whether to enable the dashboard UI.
+     */
     enable_ui?: boolean;
+    /**
+     * Public URL of the dashboard application, used to generate absolute links, for example in notifications.
+     */
     public_url?: string | null;
   }
   export interface SystemPutProxyInput {

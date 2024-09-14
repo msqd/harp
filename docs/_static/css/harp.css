@@ -89,6 +89,7 @@ div.graphviz > object {
 
 article table.docutils {
     margin-left: 0;
+    width: 100%;
 }
 
 article table.docutils td.align-top {

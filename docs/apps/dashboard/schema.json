@@ -6,11 +6,13 @@
         "type": {
           "const": "basic",
           "default": null,
+          "description": "Authentication type. Only «basic» is supported for now.",
           "enum": ["basic"],
           "type": "string"
         },
         "algorithm": {
           "default": "pbkdf2_sha256",
+          "description": "Hashing algorithm used for passwords.",
           "enum": [
             "argon2",
             "bcrypt",
@@ -63,6 +65,7 @@
         },
         "users": {
           "additionalProperties": { "$ref": "#/$defs/User" },
+          "description": "Users list.",
           "title": "Users",
           "type": "object"
         }
@@ -74,26 +77,41 @@
       "additionalProperties": false,
       "description": "Root settings for the dashboard application.",
       "properties": {
-        "port": { "default": 4080, "type": "integer" },
+        "port": {
+          "default": 4080,
+          "description": "Port on which the dashboard application will be served.",
+          "type": "integer"
+        },
         "auth": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": { "basic": "#/$defs/BasicAuthSettings" },
+                "propertyName": "type"
+              },
+              "oneOf": [{ "$ref": "#/$defs/BasicAuthSettings" }]
+            },
+            { "type": "null" }
+          ],
           "default": null,
-          "discriminator": {
-            "mapping": { "basic": "#/$defs/BasicAuthSettings" },
-            "propertyName": "type"
-          },
-          "oneOf": [{ "$ref": "#/$defs/BasicAuthSettings" }]
+          "description": "Authentication settings for the dashboard."
         },
         "devserver": {
           "anyOf": [
             { "$ref": "#/$defs/DevserverSettings" },
             { "type": "null" }
           ],
-          "default": { "enabled": true, "port": null }
+          "description": "Development server settings, only useful for internal frontend development."
         },
-        "enable_ui": { "default": true, "type": "boolean" },
+        "enable_ui": {
+          "default": true,
+          "description": "DEPRECATED – Whether to enable the dashboard UI.",
+          "type": "boolean"
+        },
         "public_url": {
           "anyOf": [{ "type": "string" }, { "type": "null" }],
-          "default": null
+          "default": null,
+          "description": "Public URL of the dashboard application, used to generate absolute links, for example in notifications."
         }
       },
       "title": "DashboardSettings",
@@ -102,10 +120,15 @@
     "DevserverSettings": {
       "additionalProperties": false,
       "properties": {
-        "enabled": { "default": true, "type": "boolean" },
+        "enabled": {
+          "default": true,
+          "description": "Enable or disable the development server.",
+          "type": "boolean"
+        },
         "port": {
           "anyOf": [{ "type": "integer" }, { "type": "null" }],
-          "default": null
+          "default": null,
+          "description": "Port on which the development server will be served (internal). The proxy will forward dashboard requests to this port, if enabled."
         }
       },
       "title": "DevserverSettings",
