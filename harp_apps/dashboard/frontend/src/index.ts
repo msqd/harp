@@ -7,6 +7,7 @@ export {
   StyledJumboBadge,
   ResponseStatusBadge,
   TpdexBadge,
+  OnQuerySuccess,
 } from "Components"
 export {
   Duration,
