@@ -25,11 +25,11 @@
       "require": "./dist/ui.cjs",
       "types": "./dist/ui.d.ts"
     },
-    "./tests/browser":{
-      "import": "./dist/browser.js",
-      "default":"./dist/browser.js",
-      "require": "./dist/browser.cjs",
-      "types": "./dist/browser.d.ts"
+    "./tests/handlers":{
+      "import": "./dist/handlers.js",
+      "default":"./dist/handlers.js",
+      "require": "./dist/handlers.cjs",
+      "types": "./dist/handlers.d.ts"
     }
     },
   "scripts": {

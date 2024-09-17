@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => {
               resolve(__dirname, "src/index.ts"),
               resolve(__dirname, "src/ui/ui.ts"),
               resolve(__dirname, "src/Domain/hooks.ts"),
-              resolve(__dirname, "src/tests/mocks/browser.ts"),
+              resolve(__dirname, "src/tests/mocks/handlers.ts"),
             ],
             name: "harp-dashboard",
             fileName: (format: string, name: string) => {
