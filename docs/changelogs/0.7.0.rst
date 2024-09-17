@@ -1,5 +1,5 @@
-Version 0.7.0a2 (2024-09-12)
-============================
+Version 0.7.0 (2024-09-17)
+==========================
 
 Added
 :::::
@@ -38,14 +38,6 @@ Changed
   example).
 * DX: adds a ``harp examples list`` command to list available examples
 * DX/Helm: adds the ability to override environment in helm chart's values
-
-Updated
-:::::::
-
-* chore(deps): bump rich from 13.7.1 to 13.8.0
-* chore(deps-dev): bump syrupy from 4.6.1 to 4.7.1
-* chore(deps-dev): bump ruff from 0.6.1 to 0.6.2
-* chore(deps-dev): bump pytest-asyncio from 0.21.2 to 0.24.0
 
 Fixed
 :::::
