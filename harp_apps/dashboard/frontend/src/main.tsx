@@ -10,11 +10,16 @@ import GlobalStyles from "Styles/GlobalStyles"
 import "./index.css"
 
 const TransactionListPage = lazy(() => import("./Pages/Transactions/TransactionListPage"))
+const navigationItems = [
+  { label: "Overview", to: "/", exact: true },
+  { label: "Transactions", to: "/transactions" },
+  { label: "System", to: "/system" },
+]
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Layout title="HARP EA" />,
+    element: <Layout title="HARP EA" navigationItems={navigationItems} />,
     children: [
       {
         path: "",

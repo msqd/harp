@@ -13,9 +13,9 @@ import { SearchBar } from "ui/Components/SearchBar/SearchBar"
 import { H1 } from "ui/Components/Typography"
 
 import { RefreshButton } from "./Components/Buttons.tsx"
+import { TransactionsDataTableProps } from "./Components/List/TransactionDataTable.tsx"
 import { OptionalPaginator } from "./Components/OptionalPaginator.tsx"
 import { TransactionListOnQuerySuccess } from "./TransactionListOnQuerySuccess.tsx"
-import { TransactionsDataTableProps } from "./Components/List/TransactionDataTable.tsx"
 
 interface TransactionListPageProps {
   TransactionDataTable: React.FC<TransactionsDataTableProps>

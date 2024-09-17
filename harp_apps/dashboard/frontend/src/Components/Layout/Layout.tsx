@@ -9,12 +9,11 @@ import { Navbar } from "ui/Components/Navbar"
 import { classNames } from "ui/Utilities"
 
 const StyledContainerWithHorizontalConstraint = styled.div(() => [tw`mx-auto px-2 sm:px-6 lg:px-8`])
-
-const navigationItems = [
-  { label: "Overview", to: "/", exact: true },
-  { label: "Transactions", to: "/transactions" },
-  { label: "System", to: "/system" },
-]
+export interface NavigationItem {
+  label: string
+  to: string
+  exact?: boolean
+}
 
 function RightNav() {
   const systemQuery = useSystemQuery()
@@ -67,7 +66,7 @@ export function Loader({ style, className }: { style?: CSSProperties; className?
   )
 }
 
-function Layout({ title }: { title: string }) {
+function Layout({ title, navigationItems }: { title: string; navigationItems: NavigationItem[] }) {
   const location = useLocation()
   return (
     <div className="flex h-screen min-h-screen max-h-screen w-screen flex-col">
