@@ -4,6 +4,29 @@ Chores before releasing
 Before a new release is sent to the world, it's usually a good idea to do some housekeeping.
 
 
+Python dependencies
+:::::::::::::::::::
+
+Python dependencies are managed by poetry.
+
+To view "outdated" dependencies (dependencies with newer versions available), use:
+
+.. code-block:: shell
+
+    poetry show --latest --outdated
+
+It is possible to explain why a dependency is installed using:
+
+.. code-block:: shell
+
+    # With development dependencies
+    poetry show --tree
+
+To upgrade
+
+
+
+
 Update and cleanup dependencies
 :::::::::::::::::::::::::::::::
 

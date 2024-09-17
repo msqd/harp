@@ -92,7 +92,7 @@
     "Endpoint": {
       "properties": {
         "settings": { "$ref": "#/$defs/EndpointSettings" },
-        "remote": { "allOf": [{ "$ref": "#/$defs/Remote" }], "default": null }
+        "remote": { "$ref": "#/$defs/Remote", "default": null }
       },
       "required": ["settings"],
       "title": "Endpoint",

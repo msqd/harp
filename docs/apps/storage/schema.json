@@ -82,7 +82,7 @@
         },
         "migrate": { "default": true, "type": "boolean" },
         "blobs": {
-          "allOf": [{ "$ref": "#/$defs/BlobStorageSettings" }],
+          "$ref": "#/$defs/BlobStorageSettings",
           "default": { "type": "sql" }
         },
         "redis": {

@@ -9,13 +9,61 @@ declare namespace Apps.HttpClient {
   export interface CacheSettings {
     enabled?: boolean;
     transport?: Service;
-    controller?: Service;
-    storage?: Service;
+    controller?: Service1;
+    storage?: Service2;
   }
   /**
    * A settings base class for service definitions.
    */
   export interface Service {
+    /**
+     * Base type for service definition.
+     */
+    base?: string | null;
+    /**
+     * Type for service definition.
+     */
+    type?: string | null;
+    /**
+     * Optional custom constructor for the service.
+     */
+    constructor?: string | null;
+    /**
+     * Arguments for the service constructor.
+     */
+    arguments?: {
+      [k: string]: unknown;
+    } | null;
+    [k: string]: unknown;
+  }
+  /**
+   * A settings base class for service definitions.
+   */
+  export interface Service1 {
+    /**
+     * Base type for service definition.
+     */
+    base?: string | null;
+    /**
+     * Type for service definition.
+     */
+    type?: string | null;
+    /**
+     * Optional custom constructor for the service.
+     */
+    constructor?: string | null;
+    /**
+     * Arguments for the service constructor.
+     */
+    arguments?: {
+      [k: string]: unknown;
+    } | null;
+    [k: string]: unknown;
+  }
+  /**
+   * A settings base class for service definitions.
+   */
+  export interface Service2 {
     /**
      * Base type for service definition.
      */
@@ -50,12 +98,66 @@ declare namespace Apps.HttpClient {
      */
     constructor?: string | null;
     arguments?: Arguments;
-    cache?: CacheSettings;
-    transport?: Service;
-    proxy_transport?: Service;
+    cache?: CacheSettings1;
+    transport?: Service3;
+    proxy_transport?: Service4;
     [k: string]: unknown;
   }
   export interface Arguments {
+    [k: string]: unknown;
+  }
+  export interface CacheSettings1 {
+    enabled?: boolean;
+    transport?: Service;
+    controller?: Service1;
+    storage?: Service2;
+  }
+  /**
+   * A settings base class for service definitions.
+   */
+  export interface Service3 {
+    /**
+     * Base type for service definition.
+     */
+    base?: string | null;
+    /**
+     * Type for service definition.
+     */
+    type?: string | null;
+    /**
+     * Optional custom constructor for the service.
+     */
+    constructor?: string | null;
+    /**
+     * Arguments for the service constructor.
+     */
+    arguments?: {
+      [k: string]: unknown;
+    } | null;
+    [k: string]: unknown;
+  }
+  /**
+   * A settings base class for service definitions.
+   */
+  export interface Service4 {
+    /**
+     * Base type for service definition.
+     */
+    base?: string | null;
+    /**
+     * Type for service definition.
+     */
+    type?: string | null;
+    /**
+     * Optional custom constructor for the service.
+     */
+    constructor?: string | null;
+    /**
+     * Arguments for the service constructor.
+     */
+    arguments?: {
+      [k: string]: unknown;
+    } | null;
     [k: string]: unknown;
   }
 }
