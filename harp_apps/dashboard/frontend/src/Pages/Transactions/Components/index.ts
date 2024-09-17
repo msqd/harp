@@ -1,2 +1,2 @@
 export { Duration } from "./Duration"
-export { MessageSummary } from "./MessageSummary"
+export { MessageSummary, RequestMessageSummary } from "./MessageSummary"

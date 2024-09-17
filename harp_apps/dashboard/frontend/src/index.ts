@@ -1,6 +1,22 @@
 // Components
-export { Layout, PageTitle, Page } from "Components"
-export { Duration, MessageSummary, OverviewPage, SystemPage, TransactionDetailPage, TransactionsListPage } from "Pages"
+export {
+  Layout,
+  PageTitle,
+  Page,
+  RequestMethodBadge,
+  StyledJumboBadge,
+  ResponseStatusBadge,
+  TpdexBadge,
+} from "Components"
+export {
+  Duration,
+  RequestMessageSummary,
+  MessageSummary,
+  OverviewPage,
+  SystemPage,
+  TransactionDetailPage,
+  TransactionsListPage,
+} from "Pages"
 export {
   type Message,
   type Transaction,

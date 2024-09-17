@@ -8,22 +8,33 @@ interface MessageSummaryProps {
   endpoint?: string
 }
 
+export const RequestMessageSummary = ({
+  method,
+  url,
+  endpoint,
+}: {
+  method: string
+  url: string
+  endpoint?: string
+}) => {
+  return (
+    <span className="font-normal">
+      <RequestMethodBadge method={method} />
+      {endpoint ? (
+        <span className="inline-flex items-center bg-gray-50 px-1 ml-2 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">
+          {endpoint}
+        </span>
+      ) : null}
+      <span className="text-gray-500 font-mono text-xs" title={url}>
+        {url}
+      </span>
+    </span>
+  )
+}
 export function MessageSummary({ kind, summary = "", endpoint }: MessageSummaryProps) {
   if (kind == "request") {
     const [method, url] = summary.split(" ")
-    return (
-      <span className="font-normal">
-        <RequestMethodBadge method={method} />
-        {endpoint ? (
-          <span className="inline-flex items-center bg-gray-50 px-1 ml-2 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">
-            {endpoint}
-          </span>
-        ) : null}
-        <span className="text-gray-500 font-mono text-xs" title={url}>
-          {url}
-        </span>
-      </span>
-    )
+    return <RequestMessageSummary method={method} url={url} endpoint={endpoint} />
   }
 
   if (kind == "response") {
