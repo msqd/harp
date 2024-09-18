@@ -9,29 +9,29 @@
   "exports": {
     ".": {
       "import": "./dist/index.js",
-      "default":"./dist/index.js",
+      "default": "./dist/index.js",
       "require": "./dist/index.cjs",
       "types": "./dist/index.d.ts"
     },
     "./hooks": {
       "import": "./dist/hooks.js",
-      "default":"./dist/hooks.js",
+      "default": "./dist/hooks.js",
       "require": "./dist/hooks.cjs",
       "types": "./dist/hooks.d.ts"
     },
     "./ui": {
       "import": "./dist/ui.js",
-      "default":"./dist/ui.js",
+      "default": "./dist/ui.js",
       "require": "./dist/ui.cjs",
       "types": "./dist/ui.d.ts"
     },
-    "./tests/handlers":{
+    "./tests/handlers": {
       "import": "./dist/handlers.js",
-      "default":"./dist/handlers.js",
+      "default": "./dist/handlers.js",
       "require": "./dist/handlers.cjs",
       "types": "./dist/handlers.d.ts"
     }
-    },
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -140,6 +140,7 @@
     "twin.macro": "^3.4.1",
     "typescript": "5.4.3",
     "vite": "^5.4.6",
+    "vite-plugin-dts": "^4.2.1",
     "vite-tsconfig-paths": "^4.3.2",
     "vitest": "^2.1.1",
     "vitest-canvas-mock": "^0.3.3"
