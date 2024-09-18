@@ -238,4 +238,12 @@ declare namespace Apps.Proxy {
     break_on?: string[];
     check_after?: number;
   }
+  export interface Remote1 {
+    settings: RemoteSettings;
+    current_pool_name?: string;
+    probe?: RemoteProbe | null;
+    current_pool: string[];
+    endpoints: RemoteEndpoint[];
+    [k: string]: unknown;
+  }
 }

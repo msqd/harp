@@ -247,7 +247,7 @@ class JSONSchemaDirective(Directive):
         tbody += row
 
         # Defaults
-        if prop.attributes.get("default"):
+        if isinstance(prop.attributes, dict) and prop.attributes.get("default"):
             row = nodes.row()
             row += self.cell("Default", classes=["align-top"])
             # cell += nodes.paragraph("", nodes.Text("\n\nDefault: "))
@@ -279,13 +279,16 @@ def get_class_for(obj):
     }
     if isinstance(obj, str):
         type = obj
-    else:
+    elif isinstance(obj, dict):
         type = obj.get("type")
+    else:
+        type = None
+
     if isinstance(type, list):
         # returns Union class for "type: [integer, number]"
         return Union(type)
-    else:
-        return mapping.get(type, Object)
+
+    return mapping.get(type, Object)
 
 
 def simplify(obj):
@@ -580,6 +583,9 @@ class Object(JSONData):
                 yield subprop
 
     def get_properties(self):
+        if not isinstance(self.attributes, dict):
+            return
+
         if self.name:
             prefix = self.name + "/"
         else:
@@ -596,8 +602,8 @@ class Object(JSONData):
         for name, attr in self.attributes.get("patternProperties", {}).items():
             yield JSONSchema.instantiate(prefix + name, attr, parent=self)
 
-        if isinstance(self.additionalProperties, dict):
-            yield JSONSchema.instantiate(prefix + "*", attr, parent=self)
+        if self.additionalProperties:
+            yield JSONSchema.instantiate(prefix + "*", self.additionalProperties, parent=self)
 
     @property
     def full_title(self):

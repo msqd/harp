@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "harp-proxy"
-version = "0.7.0a1"
+version = "0.7.1"
 description = "Harp is an API Runtime Proxy – A toolkit for Fast, Reliable and Observable external APIs"
 authors = ["Romain Dorgueil <romain@makersquad.fr>"]
 readme = "README.rst"
@@ -34,6 +34,7 @@ multidict = "^6.0.5"
 orjson = "^3.10.5"
 passlib = "^1.7.4"
 psycopg2-binary = "^2.9.9"
+pydantic = "^2.9"
 pyheck = "^0.1.5"
 pyyaml = "^6.0.1"
 redis = "^5.0.7"
@@ -46,7 +47,6 @@ sqlalchemy = { extras = ["asyncio"], version = "^2.0.30" }
 sqlalchemy-utils = "^0.41.1"
 structlog = "^24.2.0"
 svix-ksuid = "^0.6.2"
-pydantic = "^2.8.2"
 
 [tool.poetry.dependencies.honcho]
 version = "^1.1.0"
@@ -74,7 +74,7 @@ pytest-timeout = "^2.3.1"
 pytest-xdist = { version = "^3.6.1", extras = ["psutil"] }
 respx = ">=0.20.2,<0.22.0"
 ruff = ">=0.5,<0.7"
-sphinx = ">=7.3.7,<9.0.0"
+sphinx = "*"
 sphinx-autobuild = ">=2021.3.14,<2025.0.0"
 sphinx-click = "^6.0.0"
 sphinx-copybutton = "^0.5.2"
@@ -85,8 +85,10 @@ syrupy = "^4.6.1"
 testcontainers = { extras = ["postgres"], version = ">=4.7,<4.9" }
 sphinx-docsearch = "^0.0.7"
 sphinx-tags = "^0.4"
-sphinxcontrib-opendataservices-jsonschema = "^0.7.0"
-
+jsonref = "^1.1.0"
+jscc = "^0.3.0"
+jsonpointer = "^3.0.0"
+myst-parser = "^4.0.0"
 
 [tool.poetry.group.mysql.dependencies]
 asyncmy = "^0.2.9"

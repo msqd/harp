@@ -40,6 +40,45 @@ reach out with your thoughts, ideas, rants or issues. We can help.*
 | `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
 
 
+What is HARP Proxy?
+:::::::::::::::::::
+
+HARP Proxy is a fast open-source API proxy that you can use in development or production to improve the reliability,
+performance, security, and observability of your application's external API interactions.
+
+You list your external API endpoints in the configuration, update your consumer's base endpoints to hit the proxy and
+HARP will intercept and forward requests to these, with additional instrumentation.
+
+Out of the box, you'll get standard-compliant caching, a world class http client (with retries, timeouts, etc.), and
+a vizualization dashboard to observe everything.
+
+.. figure:: https://docs.harp-proxy.net/en/latest/_images/overview.png
+    :alt: HARP Proxy Overview
+    :align: center
+
+To instantly get insights on how your application is interacting with external services, you get a full searchable
+transactions audit trail, with detailed information on each request and response.
+
+.. figure:: https://docs.harp-proxy.net/en/latest/_images/transactions.png
+    :alt: HARP Proxy Transactions
+    :align: center
+
+No more doubts about what happened. Now, you ***know***.
+
+`Discover all HARP Proxy features <https://docs.harp-proxy.net/en/latest/features/index.html>`_
+
+
+Getting Started
+:::::::::::::::
+
+Refer to the `Getting Started Guide <https://docs.harp-proxy.net/en/latest/start/index.html>`_ to learn how to install
+and run your first proxy (it's easy, we promise).
+
+You can install and run HARP Proxy `using Docker <https://docs.harp-proxy.net/en/latest/start/docker.html>`_ (easier and
+more language-agnostic) or `using a Python package <https://docs.harp-proxy.net/en/latest/start/python.html>`_ (for more
+control and customization).
+
+
 How it works?
 :::::::::::::
 
@@ -126,11 +165,22 @@ environment variable.
 Proxy features
 --------------
 
-.. note:: (TODO) Add a list of features with links to the documentation.
+Here is a non-exhaustive list of HARP Proxy's main features:
+
+* `Configuration <https://docs.harp-proxy.net/en/latest/features/configuration.html>`_
+* `Dashboard <https://docs.harp-proxy.net/en/latest/features/dashboard.html>`_
+* `Proxy <https://docs.harp-proxy.net/en/latest/features/proxy.html>`_
+* `Audit Log <https://docs.harp-proxy.net/en/latest/features/auditlog.html>`_
+* `Caching <https://docs.harp-proxy.net/en/latest/features/caching.html>`_
+* `Circuit Breaker <https://docs.harp-proxy.net/en/latest/features/circuit-breaker.html>`_
+* `Rules Engine <https://docs.harp-proxy.net/en/latest/features/rules.html>`_
+
+You can `read more about all HARP Proxy features <https://docs.harp-proxy.net/en/latest/features/index.html>`_ in the
+`Features Guide <https://docs.harp-proxy.net/en/latest/features/index.html>`_.
 
 
-Credits
-:::::::
+People & Credits
+::::::::::::::::
 
 * Core contributors:
 
@@ -143,4 +193,4 @@ Credits
 
 * Sponsored by `Makersquad <https://www.makersquad.fr/>`_
 
-`There are many ways you can contribute to HARP! <https://docs.harp-proxy.net/en/latest/contribute/>`_
+`There are many ways you can contribute to HARP! <https://docs.harp-proxy.net/en/latest/contribute/index.html>`_

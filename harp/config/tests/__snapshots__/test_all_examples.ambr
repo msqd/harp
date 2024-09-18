@@ -5,6 +5,7 @@
     'docs/apps/dashboard/examples/auth.yml',
     'docs/apps/dashboard/examples/devserver.yml',
     'docs/apps/dashboard/examples/main.yml',
+    'docs/apps/dashboard/examples/reference.yml',
     'docs/apps/http_client/examples/cache.yml',
     'docs/apps/http_client/examples/full.yml',
     'docs/apps/http_client/examples/reference.yml',
@@ -89,6 +90,16 @@
   '''
 # ---
 # name: test_load_documentation_example[docs/apps/dashboard/examples/main.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry: {}
+  http_client: {}
+  proxy: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[docs/apps/dashboard/examples/reference.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry: {}

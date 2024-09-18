@@ -1845,11 +1845,7 @@
     }),
     'properties': dict({
       'remote': dict({
-        'allOf': list([
-          dict({
-            '$ref': '#/$defs/Remote',
-          }),
-        ]),
+        '$ref': '#/$defs/Remote',
         'default': None,
       }),
       'settings': dict({
@@ -2344,11 +2340,7 @@
     }),
     'properties': dict({
       'remote': dict({
-        'allOf': list([
-          dict({
-            '$ref': '#/$defs/Remote',
-          }),
-        ]),
+        '$ref': '#/$defs/Remote',
         'default': None,
       }),
       'settings': dict({
@@ -2824,11 +2816,7 @@
     }),
     'properties': dict({
       'remote': dict({
-        'allOf': list([
-          dict({
-            '$ref': '#/$defs/Remote',
-          }),
-        ]),
+        '$ref': '#/$defs/Remote',
         'default': None,
       }),
       'settings': dict({
@@ -3323,11 +3311,7 @@
     }),
     'properties': dict({
       'remote': dict({
-        'allOf': list([
-          dict({
-            '$ref': '#/$defs/Remote',
-          }),
-        ]),
+        '$ref': '#/$defs/Remote',
         'default': None,
       }),
       'settings': dict({

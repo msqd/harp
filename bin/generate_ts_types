@@ -55,10 +55,12 @@ def generate_typescript_definitions_for_application(
 
             # ignore non-type
             if not isinstance(obj, type):
+                logger.debug(f"{mod_fullpath}.{name} (skip: not a type)")
                 continue
 
             # ignore non local
             if obj.__module__ != mod_fullpath:
+                logger.debug(f"{mod_fullpath}.{name} (skip: non local)")
                 continue
 
             if not hasattr(obj, "model_json_schema"):
@@ -125,3 +127,9 @@ if __name__ == "__main__":
 
     with open(os.path.join(ROOT_DIR, "harp_apps/storage/docs/examples/reference.yml"), "w+") as f:
         f.write(yaml.dump({"storage": asdict(StorageSettings(), verbose=True)}))
+
+    # Generate reference YAML configuration for DashboardSettings
+    from harp_apps.dashboard.settings import DashboardSettings
+
+    with open(os.path.join(ROOT_DIR, "harp_apps/dashboard/docs/examples/reference.yml"), "w+") as f:
+        f.write(yaml.dump({"dashboard": asdict(DashboardSettings(), verbose=True)}))

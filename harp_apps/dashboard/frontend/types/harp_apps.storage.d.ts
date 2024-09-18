@@ -55,4 +55,22 @@ declare namespace Apps.Storage {
     url?: string;
     [k: string]: unknown;
   }
+  export interface BlobStorageSettings1 {
+    /**
+     * Base type for service definition.
+     */
+    base?: string | null;
+    type?: "sql" | "redis";
+    /**
+     * Optional custom constructor for the service.
+     */
+    constructor?: string | null;
+    /**
+     * Arguments for the service constructor.
+     */
+    arguments?: {
+      [k: string]: unknown;
+    } | null;
+    [k: string]: unknown;
+  }
 }

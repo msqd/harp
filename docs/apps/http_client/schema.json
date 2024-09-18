@@ -5,11 +5,11 @@
       "properties": {
         "enabled": { "default": true, "type": "boolean" },
         "transport": {
-          "allOf": [{ "$ref": "#/$defs/Service" }],
+          "$ref": "#/$defs/Service",
           "default": { "type": "hishel.AsyncCacheTransport" }
         },
         "controller": {
-          "allOf": [{ "$ref": "#/$defs/Service" }],
+          "$ref": "#/$defs/Service",
           "default": {
             "type": "hishel.Controller",
             "allow_heuristics": false,
@@ -21,7 +21,7 @@
           }
         },
         "storage": {
-          "allOf": [{ "$ref": "#/$defs/Service" }],
+          "$ref": "#/$defs/Service",
           "default": {
             "base": "hishel.AsyncBaseStorage",
             "type": "harp_apps.http_client.contrib.hishel.storages.AsyncStorage",
@@ -57,7 +57,7 @@
           "type": "object"
         },
         "cache": {
-          "allOf": [{ "$ref": "#/$defs/CacheSettings" }],
+          "$ref": "#/$defs/CacheSettings",
           "default": {
             "enabled": true,
             "transport": { "type": "hishel.AsyncCacheTransport" },
@@ -79,7 +79,7 @@
           }
         },
         "transport": {
-          "allOf": [{ "$ref": "#/$defs/Service" }],
+          "$ref": "#/$defs/Service",
           "default": {
             "type": "httpx.AsyncHTTPTransport",
             "verify": true,
@@ -87,7 +87,7 @@
           }
         },
         "proxy_transport": {
-          "allOf": [{ "$ref": "#/$defs/Service" }],
+          "$ref": "#/$defs/Service",
           "default": {
             "type": "harp_apps.http_client.transport.AsyncFilterableTransport"
           }
