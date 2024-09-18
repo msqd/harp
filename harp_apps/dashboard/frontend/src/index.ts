@@ -17,6 +17,9 @@ export {
   SystemPage,
   TransactionDetailPage,
   TransactionsListPage,
+  PreviousButton,
+  NextButton,
+  DetailsCloseButton,
 } from "Pages"
 export {
   type Message,

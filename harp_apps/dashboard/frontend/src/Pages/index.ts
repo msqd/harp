@@ -5,4 +5,11 @@ import { default as TransactionsListPage } from "./Transactions/TransactionListP
 
 export { OverviewPage, SystemPage, TransactionDetailPage, TransactionsListPage }
 
-export { Duration, MessageSummary, RequestMessageSummary } from "./Transactions/Components"
+export {
+  Duration,
+  MessageSummary,
+  RequestMessageSummary,
+  PreviousButton,
+  NextButton,
+  DetailsCloseButton,
+} from "./Transactions/Components"
