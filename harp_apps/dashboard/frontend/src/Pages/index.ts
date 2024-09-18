@@ -12,4 +12,7 @@ export {
   PreviousButton,
   NextButton,
   DetailsCloseButton,
+  Foldable,
+  MessageBody,
+  MessageHeaders,
 } from "./Transactions/Components"

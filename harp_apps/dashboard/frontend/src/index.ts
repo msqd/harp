@@ -20,6 +20,9 @@ export {
   PreviousButton,
   NextButton,
   DetailsCloseButton,
+  Foldable,
+  MessageBody,
+  MessageHeaders,
 } from "Pages"
 export {
   type Message,

@@ -9,3 +9,8 @@ export {
   FiltersHideButton,
   VerticalFiltersShowButton,
 } from "./Buttons"
+
+export { Foldable } from "./Foldable"
+export { MessageBody } from "./MessageBody"
+export { PrettyBody } from "./PrettyBody"
+export { MessageHeaders } from "./MessageHeaders"
