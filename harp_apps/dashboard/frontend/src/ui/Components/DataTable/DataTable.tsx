@@ -22,7 +22,7 @@ interface DataTableProps<TRow extends BaseRow, TComputed extends BaseRow> extend
   columns?: Array<keyof (TRow & TComputed) | Array<keyof (TRow & TComputed)>>
   onRowClick?: (row: TRow) => unknown
   selected?: TRow
-  rowKey?: keyof TRow
+  rowKey?: string
 }
 
 const StyledTable = styled.table<DataTableVariantsProps>(() => [tw`min-w-full divide-y divide-gray-300 text-left`])
