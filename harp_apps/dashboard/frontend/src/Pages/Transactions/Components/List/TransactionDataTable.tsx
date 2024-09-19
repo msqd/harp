@@ -103,7 +103,6 @@ export function TransactionDataTable({ transactions, onSelectionChange, selected
         rows={transactions}
         columns={["favoriteAction", "request", "response", "elapsed", "started_at"]}
         selected={selected}
-        rowKey="uid"
       />
     </>
   )
