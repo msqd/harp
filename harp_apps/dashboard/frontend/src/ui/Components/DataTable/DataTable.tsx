@@ -22,6 +22,7 @@ interface DataTableProps<TRow extends BaseRow, TComputed extends BaseRow> extend
   columns?: Array<keyof (TRow & TComputed) | Array<keyof (TRow & TComputed)>>
   onRowClick?: (row: TRow) => unknown
   selected?: TRow
+  rowKey?: keyof TRow
 }
 
 const StyledTable = styled.table<DataTableVariantsProps>(() => [tw`min-w-full divide-y divide-gray-300 text-left`])
@@ -60,6 +61,7 @@ export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = Base
   types,
   variant = "default",
   selected = undefined,
+  rowKey = "id",
 }: DataTableProps<TRow, TComputed>) {
   return (
     <StyledTable variant={variant}>
@@ -91,7 +93,8 @@ export function DataTable<TRow extends BaseRow, TComputed extends BaseRow = Base
                   : undefined
               }
               className={
-                "hover:bg-slate-50 cursor-pointer" + (selected && selected.id === row.id ? " bg-slate-100" : "")
+                "hover:bg-slate-50 cursor-pointer" +
+                (selected && selected[rowKey] === row[rowKey] ? " bg-slate-100" : "")
               }
             >
               {columns?.map((name, index) => {
