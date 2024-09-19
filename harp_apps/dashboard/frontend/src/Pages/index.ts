@@ -15,4 +15,5 @@ export {
   Foldable,
   MessageBody,
   MessageHeaders,
+  OpenInNewWindowLink,
 } from "./Transactions/Components"

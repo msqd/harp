@@ -23,6 +23,7 @@ export {
   Foldable,
   MessageBody,
   MessageHeaders,
+  OpenInNewWindowLink,
 } from "Pages"
 export {
   type Message,

@@ -8,6 +8,7 @@ export {
   FiltersResetButton,
   FiltersHideButton,
   VerticalFiltersShowButton,
+  OpenInNewWindowLink,
 } from "./Buttons"
 
 export { Foldable } from "./Foldable"
