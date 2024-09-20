@@ -17,6 +17,16 @@ export default defineConfig(({ mode }) => {
     "process.env.DISABLE_MOCKS": JSON.stringify(String(!!env.DISABLE_MOCKS)),
     "process.env.NODE_ENV": JSON.stringify(env.NODE_ENV || "production"),
   }
+
+  const postcss =
+    mode === "lib"
+      ? {
+          plugins: [tailwindcss],
+        }
+      : {
+          plugins: [tailwindcss],
+        }
+
   const build =
     mode === "lib"
       ? {
@@ -81,9 +91,7 @@ export default defineConfig(({ mode }) => {
       jsxInject: `import React from 'react'`,
     },
     css: {
-      postcss: {
-        plugins: [tailwindcss],
-      },
+      postcss: postcss,
     },
     plugins: [
       dts({
