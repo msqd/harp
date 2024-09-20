@@ -123,7 +123,7 @@ USER harp
 WORKDIR /opt/harp
 ADD --chown=harp:www-data ./harp_apps/dashboard/frontend frontend/dashboard
 
-RUN (cd frontend; pnpm install; pnpm build)
+RUN (cd frontend/dashboard; pnpm install; pnpm build)
 
 
 ################################################################################
