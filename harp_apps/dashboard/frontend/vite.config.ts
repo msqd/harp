@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
   const postcss =
     mode === "lib"
       ? {
-          plugins: [tailwindcss],
+          plugins: [],
         }
       : {
           plugins: [tailwindcss],
