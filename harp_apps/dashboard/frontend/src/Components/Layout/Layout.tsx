@@ -66,7 +66,15 @@ export function Loader({ style, className }: { style?: CSSProperties; className?
   )
 }
 
-function Layout({ title, navigationItems }: { title: string; navigationItems: NavigationItem[] }) {
+function Layout({
+  title,
+  navigationItems,
+  navBarClassName,
+}: {
+  title: string
+  navigationItems: NavigationItem[]
+  navBarClassName?: string
+}) {
   const location = useLocation()
   return (
     <div className="flex h-screen min-h-screen max-h-screen w-screen flex-col">
@@ -84,6 +92,7 @@ function Layout({ title, navigationItems }: { title: string; navigationItems: Na
         Link={Link}
         Wrapper={StyledContainerWithHorizontalConstraint}
         rightChildren={<RightNav />}
+        className={navBarClassName}
       />
       <StyledContainerWithHorizontalConstraint className="overflow-y-auto w-full">
         <Suspense fallback={<Loader className="my-20" />}>
