@@ -9,12 +9,11 @@ import { Navbar } from "ui/Components/Navbar"
 import { classNames } from "ui/Utilities"
 
 const StyledContainerWithHorizontalConstraint = styled.div(() => [tw`mx-auto px-2 sm:px-6 lg:px-8`])
-
-const navigationItems = [
-  { label: "Overview", to: "/", exact: true },
-  { label: "Transactions", to: "/transactions" },
-  { label: "System", to: "/system" },
-]
+export interface NavigationItem {
+  label: string
+  to: string
+  exact?: boolean
+}
 
 function RightNav() {
   const systemQuery = useSystemQuery()
@@ -67,7 +66,15 @@ export function Loader({ style, className }: { style?: CSSProperties; className?
   )
 }
 
-function Layout() {
+function Layout({
+  title,
+  navigationItems,
+  navBarClassName,
+}: {
+  title: string
+  navigationItems: NavigationItem[]
+  navBarClassName?: string
+}) {
   const location = useLocation()
   return (
     <div className="flex h-screen min-h-screen max-h-screen w-screen flex-col">
@@ -76,7 +83,7 @@ function Layout() {
           <Link to="/" className="flex">
             <img className="h-8 w-auto" src={logo} alt="Harp" />
             <span className="h-8 px-2 pt-1 text-md font-medium text-white" title="Harp Early Access">
-              Harp EA
+              {title}
             </span>
           </Link>
         }
@@ -85,6 +92,7 @@ function Layout() {
         Link={Link}
         Wrapper={StyledContainerWithHorizontalConstraint}
         rightChildren={<RightNav />}
+        className={navBarClassName}
       />
       <StyledContainerWithHorizontalConstraint className="overflow-y-auto w-full">
         <Suspense fallback={<Loader className="my-20" />}>

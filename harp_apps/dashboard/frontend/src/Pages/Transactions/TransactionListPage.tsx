@@ -4,19 +4,24 @@ import { Helmet } from "react-helmet"
 import { useQueryClient } from "react-query"
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 
+import { OnQuerySuccess } from "Components"
 import { Page } from "Components/Page"
 import { PageTitle } from "Components/Page/PageTitle.tsx"
-import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess"
 import { useTransactionsListQuery } from "Domain/Transactions"
 import { Filters } from "Types/filters"
 import { SearchBar } from "ui/Components/SearchBar/SearchBar"
 import { H1 } from "ui/Components/Typography"
 
 import { RefreshButton } from "./Components/Buttons.tsx"
+import { TransactionsDataTableProps } from "./Components/List/TransactionDataTable.tsx"
 import { OptionalPaginator } from "./Components/OptionalPaginator.tsx"
 import { TransactionListOnQuerySuccess } from "./TransactionListOnQuerySuccess.tsx"
 
-export default function TransactionListPage() {
+interface TransactionListPageProps {
+  TransactionDataTable: React.FC<TransactionsDataTableProps>
+}
+
+export default function TransactionListPage({ TransactionDataTable }: TransactionListPageProps) {
   const location = useLocation()
 
   const navigate = useNavigate()
@@ -148,7 +153,9 @@ export default function TransactionListPage() {
       </Helmet>
 
       <OnQuerySuccess query={query}>
-        {(query) => <TransactionListOnQuerySuccess query={query} filters={filters} />}
+        {(query) => (
+          <TransactionListOnQuerySuccess query={query} filters={filters} TransactionDataTable={TransactionDataTable} />
+        )}
       </OnQuerySuccess>
     </Page>
   )

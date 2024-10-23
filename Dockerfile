@@ -121,9 +121,9 @@ RUN --mount=type=cache,target=/root/.cache,sharing=locked \
 
 USER harp
 WORKDIR /opt/harp
-ADD --chown=harp:www-data ./harp_apps/dashboard/frontend frontend
+ADD --chown=harp:www-data ./harp_apps/dashboard/frontend frontend/dashboard
 
-RUN (cd frontend; pnpm install; pnpm build)
+RUN (cd frontend/dashboard; pnpm install; pnpm build)
 
 
 ################################################################################
@@ -165,7 +165,7 @@ USER harp
 WORKDIR ${BASE}
 
 COPY --from=backend ${VIRTUAL_ENV} ${VIRTUAL_ENV}
-COPY --from=frontend ${BASE}/frontend/dist ${BASE}/public
+COPY --from=frontend ${BASE}/frontend/web ${BASE}/public
 COPY --from=backend --chown=harp:www-data ${BASE}/src ${BASE}/src
 
 RUN ln -s /var/lib/harp/data \

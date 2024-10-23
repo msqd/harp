@@ -45,7 +45,7 @@ def test_add_application(snapshot):
     serialized = orjson.dumps(asdict(settings))
     assert serialized == snapshot
 
-    new_builder = ConfigurationBuilder.from_bytes(serialized, ApplicationsRegistryType=ApplicationsRegistryMock)
+    new_builder = ConfigurationBuilder.from_bytes(serialized)
     assert asdict(new_builder()) == asdict(settings)
 
     module = ModuleType("foo.bar")
