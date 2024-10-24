@@ -1,7 +1,7 @@
 ################################################################################
 # IMAGE: Base build image
 #
-FROM python:3.12-slim as base
+FROM python:3.12-slim AS base
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
@@ -41,7 +41,7 @@ WORKDIR /opt/harp
 ################################################################################
 # IMAGE: Backend builder image (install prod deps in a virtualenv ready to be copied to runtime)
 #
-FROM base as backend
+FROM base AS backend
 
 # Step: Add system build dependencies
 USER root
@@ -70,7 +70,7 @@ RUN rm -rf .cache
 ################################################################################
 # IMAGE: Development image (ability to use from sources, run tests, run dev servers ...)
 #
-FROM base as development
+FROM base AS development
 
 # Step: Add system build dependencies
 USER root
@@ -105,7 +105,7 @@ RUN rm -rf .cache
 ################################################################################
 # IMAGE: Frontend builder image (ability to compile frontend app into production version)
 #
-FROM base as frontend
+FROM base AS frontend
 
 # Step: Add system build dependencies
 USER root
@@ -129,7 +129,7 @@ RUN (cd frontend; pnpm install; pnpm build)
 ################################################################################
 # IMAGE: Lightest possible image, with only production related abilities
 #
-FROM python:3.12-slim as runtime
+FROM python:3.12-slim AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \

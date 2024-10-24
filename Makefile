@@ -41,11 +41,16 @@ TEST_SKIP_FRONT ?=
 FRONTEND_DIR = harp_apps/dashboard/frontend
 
 # default run options
-HARP_OPTIONS ?= --example sqlite --example httpbin
+HARP_OPTIONS ?= --example sqlite --example proxy:httpbin
+HARP_MORE_OPTIONS ?=
+HARP_SERVICES ?= server dashboard
 
-.PHONY: start-dev
-start-dev:  # Starts a development instance with reasonable defaults (tune HARP_OPTIONS to replace).
-	$(POETRY) run harp start $(HARP_OPTIONS)
+.PHONY: start-dev start-dev-frontend
+start-dev: install-dev  # Starts a development instance with reasonable defaults (tune HARP_OPTIONS to replace).
+	$(POETRY) run harp start $(HARP_SERVICES) $(HARP_OPTIONS) $(HARP_MORE_OPTIONS)
+
+start-dev-frontend: install-dev  # Starts a frontend development instance with reasonable defaults (you'll have to a backend, useful to use an external debugger for example).
+	HARP_SERVICES=dashboard HARP_MORE_OPTIONS="--set dashboard.devserver.port=12121" $(MAKE) start-dev
 
 
 ########################################################################################################################
