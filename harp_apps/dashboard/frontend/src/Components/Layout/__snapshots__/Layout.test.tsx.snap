@@ -70,7 +70,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   class="h-8 px-2 pt-1 text-md font-medium text-white"
                   title="Harp Early Access"
                 >
-                  Harp EA
+                  HARP
                 </span>
               </a>
             </div>
@@ -124,7 +124,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                 class="text-xs"
               >
                 <a
-                  href="https://docs.harp-proxy.net/en/0.6/user/?utm_source=dashboard&utm_medium=help"
+                  href="https://docs.harp-proxy.net/en/0.7/user/?utm_source=dashboard&utm_medium=help"
                   target="_blank"
                 >
                   <svg
