@@ -24,7 +24,7 @@ function RightNav() {
       {systemQuery.data.user ?? "anonymous"}
       <br />
       <span className="text-xs">
-        <a href="https://docs.harp-proxy.net/en/0.6/user/?utm_source=dashboard&utm_medium=help" target="_blank">
+        <a href="https://docs.harp-proxy.net/en/0.7/user/?utm_source=dashboard&utm_medium=help" target="_blank">
           <QuestionMarkCircleIcon className="inline-block w-4 h-4 mx-1" />
           Help
         </a>
@@ -76,7 +76,7 @@ function Layout() {
           <Link to="/" className="flex">
             <img className="h-8 w-auto" src={logo} alt="Harp" />
             <span className="h-8 px-2 pt-1 text-md font-medium text-white" title="Harp Early Access">
-              Harp EA
+              HARP
             </span>
           </Link>
         }
