@@ -57,7 +57,7 @@ You can start your first HARP server based on your local working copy, we'll use
 
 .. code-block:: bash
 
-    poetry run harp start --example
+    poetry run harp start --example sqlite
 
 Open your browser at http://localhost:4080 to have a look at the HARP dashboard.
 
@@ -82,5 +82,5 @@ Next steps
 Congratulations, you're ready to start writing HARP code! Before that, you may want to have a glance at the following
 topics:
 
-- :doc:`./architecture`
+- :doc:`./overview`
 - :doc:`./applications`
