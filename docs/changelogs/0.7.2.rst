@@ -1,0 +1,23 @@
+Version 0.7.2 (2024-10-24)
+==========================
+
+Fixed
+:::::
+
+* Dashboard: Header case and help link.
+* Dashboard: Username of logged in user was erroneous and showing "anonymous" although the user was logged in.
+
+Updated
+:::::::
+
+* bump aiohttp from 3.10.5 to 3.10.10
+* bump anyio from 4.4.0 to 4.6.2.post1
+* bump hishel from 0.0.30 to 0.0.33
+* bump orjson from 3.10.7 to 3.10.10
+* bump pydantic from 2.9.1 to 2.9.2
+* bump rich from 13.8.1 to 13.9.3
+* bump sentry-sdk from 2.14.0 to 2.17.0
+* bump slack-sdk from 3.33.0 to 3.33.1
+* bump black from 24.8.0 to 24.10.0
+* bump ruff from 0.6.5 to 0.7.0
+* bump sphinx-autobuild from 2024.9.3 to 2024.10.3
