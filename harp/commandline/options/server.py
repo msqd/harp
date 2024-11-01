@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from itertools import chain
 from shlex import quote
-from typing import Iterable
+from typing import Iterable, Union
 
 from harp.utils.commandline import click, code
 
@@ -31,7 +31,7 @@ class CommonServerOptions(dict):
     Common server options, in a dataclass.
     """
 
-    options: dict = field(default_factory=dict)
+    options: Union[dict, tuple] = field(default_factory=dict)
     endpoints: Iterable = field(default_factory=dict)
     files: tuple = ()
     examples: tuple = ()
@@ -83,7 +83,7 @@ def add_harp_config_options(f):
             "--set",
             "options",
             multiple=True,
-            help=f"Add configuration options (e.g. {code('--set foo=bar')}, can be used multiple times).",
+            help=f"Add configuration options (e.g. {code('--set foo=bar')} or {code('--set foo bar')}, can be used multiple times).",
         ),
     ]
 
