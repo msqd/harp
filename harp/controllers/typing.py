@@ -4,7 +4,7 @@ from harp.http import HttpRequest, HttpResponse
 
 
 class IControllerResolver(Protocol):
-    def resolve(self, request: HttpRequest): ...
+    async def resolve(self, request: HttpRequest): ...
 
 
 class IAsyncController(Protocol):

@@ -21,7 +21,7 @@ class DefaultControllerResolver(IControllerResolver):
     def __init__(self, *, default_controller=None):
         self.default_controller = default_controller or not_found_controller
 
-    def resolve(self, request: HttpRequest):
+    async def resolve(self, request: HttpRequest):
         return self.default_controller
 
 
@@ -80,7 +80,7 @@ class ProxyControllerResolver(DefaultControllerResolver):
             raise RuntimeError(f"Port «{port}» already in use.")
         self._ports[port] = controller
 
-    def resolve(self, request: HttpRequest):
+    async def resolve(self, request: HttpRequest):
         return self._ports.get(request.server_port, self.default_controller)
 
     def resolve_from_endpoint(self, endpoint: str):

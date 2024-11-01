@@ -100,7 +100,7 @@ class ASGIKernel:
         :param request:
         :return:
         """
-        controller = self.resolver.resolve(request)
+        controller = await self.resolver.resolve(request)
         if not controller:
             raise RuntimeError("Unable to find request controller using resolver.")
 
