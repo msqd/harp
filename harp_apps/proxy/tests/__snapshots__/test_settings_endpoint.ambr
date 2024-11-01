@@ -334,8 +334,16 @@
         'type': 'string',
       }),
       'port': dict({
+        'anyOf': list([
+          dict({
+            'type': 'integer',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
         'title': 'Port',
-        'type': 'integer',
       }),
       'remote': dict({
         'anyOf': list([
@@ -351,7 +359,6 @@
     }),
     'required': list([
       'name',
-      'port',
     ]),
     'title': 'EndpointSettings',
     'type': 'object',
@@ -692,8 +699,16 @@
         'type': 'string',
       }),
       'port': dict({
+        'anyOf': list([
+          dict({
+            'type': 'integer',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
         'title': 'Port',
-        'type': 'integer',
       }),
       'remote': dict({
         'anyOf': list([
@@ -709,7 +724,6 @@
     }),
     'required': list([
       'name',
-      'port',
     ]),
     'title': 'EndpointSettings',
     'type': 'object',
@@ -1050,8 +1064,16 @@
         'type': 'string',
       }),
       'port': dict({
+        'anyOf': list([
+          dict({
+            'type': 'integer',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
         'title': 'Port',
-        'type': 'integer',
       }),
       'remote': dict({
         'anyOf': list([
@@ -1067,7 +1089,6 @@
     }),
     'required': list([
       'name',
-      'port',
     ]),
     'title': 'EndpointSettings',
     'type': 'object',
@@ -1408,8 +1429,16 @@
         'type': 'string',
       }),
       'port': dict({
+        'anyOf': list([
+          dict({
+            'type': 'integer',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
         'title': 'Port',
-        'type': 'integer',
       }),
       'remote': dict({
         'anyOf': list([
@@ -1425,7 +1454,6 @@
     }),
     'required': list([
       'name',
-      'port',
     ]),
     'title': 'EndpointSettings',
     'type': 'object',
@@ -1488,8 +1516,16 @@
             'type': 'string',
           }),
           'port': dict({
+            'anyOf': list([
+              dict({
+                'type': 'integer',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
             'title': 'Port',
-            'type': 'integer',
           }),
           'remote': dict({
             'anyOf': list([
@@ -1505,7 +1541,6 @@
         }),
         'required': list([
           'name',
-          'port',
         ]),
         'title': 'EndpointSettings',
         'type': 'object',
@@ -1976,8 +2011,16 @@
             'type': 'string',
           }),
           'port': dict({
+            'anyOf': list([
+              dict({
+                'type': 'integer',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
             'title': 'Port',
-            'type': 'integer',
           }),
           'remote': dict({
             'anyOf': list([
@@ -1993,7 +2036,6 @@
         }),
         'required': list([
           'name',
-          'port',
         ]),
         'title': 'EndpointSettings',
         'type': 'object',
@@ -2483,8 +2525,16 @@
             'type': 'string',
           }),
           'port': dict({
+            'anyOf': list([
+              dict({
+                'type': 'integer',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
             'title': 'Port',
-            'type': 'integer',
           }),
           'remote': dict({
             'anyOf': list([
@@ -2500,7 +2550,6 @@
         }),
         'required': list([
           'name',
-          'port',
         ]),
         'title': 'EndpointSettings',
         'type': 'object',
@@ -2971,8 +3020,16 @@
             'type': 'string',
           }),
           'port': dict({
+            'anyOf': list([
+              dict({
+                'type': 'integer',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
             'title': 'Port',
-            'type': 'integer',
           }),
           'remote': dict({
             'anyOf': list([
@@ -2988,7 +3045,6 @@
         }),
         'required': list([
           'name',
-          'port',
         ]),
         'title': 'EndpointSettings',
         'type': 'object',

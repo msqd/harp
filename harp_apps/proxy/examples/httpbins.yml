@@ -8,3 +8,5 @@ proxy.endpoints:
   - port: 4002
     name: httpbin3
     url: http://httpbin.org
+  - name: httpbin4
+    url: http://httpbin.org

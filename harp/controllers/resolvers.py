@@ -21,18 +21,20 @@ class DefaultControllerResolver(IControllerResolver):
     def __init__(self, *, default_controller=None):
         self.default_controller = default_controller or not_found_controller
 
-    async def resolve(self, request: HttpRequest):
+    def resolve(self, request: HttpRequest):
         return self.default_controller
 
 
 class ProxyControllerResolver(DefaultControllerResolver):
     _endpoints: dict[str, Endpoint]
     _ports: dict[int, IAsyncController]
+    _name_to_controller: dict[str, IAsyncController]
 
     def __init__(self, *, default_controller=None):
         super().__init__(default_controller=default_controller)
         self._endpoints = {}
         self._ports = {}
+        self._name_to_controller = {}
 
     @property
     def endpoints(self) -> dict[str, Endpoint]:
@@ -67,7 +69,10 @@ class ProxyControllerResolver(DefaultControllerResolver):
             http_client=http_client,
             name=endpoint.settings.name,
         )
-        self._ports[endpoint.settings.port] = controller
+
+        self._name_to_controller[endpoint.settings.name] = controller
+        if endpoint.settings.port:
+            self._ports[endpoint.settings.port] = controller
         logger.info(f"🏭 Map: *:{endpoint.settings.port} -> {controller}")
 
     def add_controller(self, port: int, controller: IAsyncController):
@@ -75,5 +80,8 @@ class ProxyControllerResolver(DefaultControllerResolver):
             raise RuntimeError(f"Port «{port}» already in use.")
         self._ports[port] = controller
 
-    async def resolve(self, request: HttpRequest):
+    def resolve(self, request: HttpRequest):
         return self._ports.get(request.server_port, self.default_controller)
+
+    def resolve_from_endpoint(self, endpoint: str):
+        return self._name_to_controller.get(endpoint, self.default_controller)
