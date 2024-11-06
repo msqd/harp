@@ -56,7 +56,11 @@ async def on_bound(event: OnBoundEvent):
     event.provider.set(
         PROXY_HEALTHCHECKS_TASK,
         await create_background_task_group(
-            [endpoint.remote.check_forever() for endpoint in proxy.endpoints if endpoint.remote.probe is not None]
+            [
+                endpoint.remote.check_forever()
+                for endpoint in proxy.endpoints
+                if (endpoint.remote and endpoint.remote.probe)
+            ]
         ),
     )
 
