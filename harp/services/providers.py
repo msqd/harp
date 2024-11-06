@@ -16,6 +16,11 @@ from rodi import (
 )
 
 
+def filter_kwargs_based_on_signature(kwargs, signature: Signature):
+    """Filter out the kwargs that are not in the signature."""
+    return {k: v for k, v in kwargs.items() if k in signature.parameters}
+
+
 class ServiceProvider:
     def __init__(self, _type, _constructor=None, *, args, kwargs, lifestyle):
         self._type = _type
@@ -31,14 +36,14 @@ class ServiceProvider:
     def constructor(self):
         return self._type if not self._constructor else getattr(self._type, self._constructor)
 
-    def _resolve_arguments(self, scope: ActivationScope, parent_type) -> BoundArguments:
+    def _resolve_arguments(self, scope: ActivationScope, parent_type, **kwargs) -> BoundArguments:
         """Create a bound argument object after resolving all the arguments (aka transforming "provider" type values
         into their actual alive counterpart."""
         try:
             sig = signature(self.constructor)
         except ValueError:
             # for objects that cannot give their signatures, we try to forge one. Of course, this will be limited, but
-            # we need to somehow support it because of cython obejcts, for example.
+            # we need to somehow support it because of cython objects, for example.
             sig = Signature(
                 [
                     *(Parameter(str(i), Parameter.POSITIONAL_ONLY) for i in range(len(self._args))),
@@ -51,20 +56,23 @@ class ServiceProvider:
                 return arg(scope, parent_type)
             return arg
 
+        filtered_additional_kwargs = filter_kwargs_based_on_signature(kwargs, sig)
+        resolved_args = (_resolve(v) for v in self._args)
+        resolved_kwargs = {k: _resolve(v) for k, v in {**self._kwargs, **filtered_additional_kwargs}.items()}
         try:
-            return sig.bind(
-                *(_resolve(v) for v in self._args),
-                **{k: _resolve(v) for k, v in self._kwargs.items()},
-            )
+            return sig.bind(*resolved_args, **resolved_kwargs)
         except TypeError as exc:
             raise TypeError(f"Error resolving arguments for {self._type.__name__}: {exc}") from exc
 
-    def _create_instance(self, scope: ActivationScope, parent_type):
+    def _create_instance(self, scope: ActivationScope, parent_type, **kwargs):
         """Create an instance of the service each time it is called."""
-        arguments = self._resolve_arguments(scope, parent_type=parent_type)
-        return self.constructor(*arguments.args, **arguments.kwargs)
+        arguments = self._resolve_arguments(scope, parent_type=parent_type, **kwargs)
+        return self.constructor(
+            *arguments.args,
+            **arguments.kwargs,
+        )
 
-    def __call__(self, scope: ActivationScope, parent_type=None):
+    def __call__(self, scope: ActivationScope, parent_type=None, **kwargs):
         """Resolves this provider into a service instance, creating it if necessary (will depend on service's life
         style)."""
         parent_type = parent_type or self._type
@@ -73,17 +81,17 @@ class ServiceProvider:
         # would create 2 instances-.
         if self._lifestyle == ServiceLifeStyle.SINGLETON:
             if not self._instance:
-                self._instance = self._create_instance(scope, parent_type)
+                self._instance = self._create_instance(scope, parent_type, **kwargs)
             return self._instance
 
         # scoped lifestyle will get instanciated only once per scope (for example, a web request)
         if self._lifestyle == ServiceLifeStyle.SCOPED:
             if self._type not in scope.scoped_services:
-                scope.scoped_services[self._type] = self._create_instance(scope, parent_type)
+                scope.scoped_services[self._type] = self._create_instance(scope, parent_type, **kwargs)
             return scope.scoped_services[self._type]
 
         # default / transient lifestyle will get instanciated each time it is called
-        return self._create_instance(scope, parent_type)
+        return self._create_instance(scope, parent_type, **kwargs)
 
 
 PROVIDER_TYPES = (

@@ -1,6 +1,6 @@
 from functools import cached_property
 from inspect import signature
-from typing import List, Type
+from typing import List, Optional, Type
 
 from rodi import CannotResolveTypeException, ResolutionContext, ServiceLifeStyle
 
@@ -21,11 +21,13 @@ class ServiceResolver:
         self,
         container: Container,
         service: ServiceDefinition,
-        lifestyle: ServiceLifeStyle,
+        lifestyle: Optional[ServiceLifeStyle] = None,
     ):
         self.container = container
         self.service = service
-        self.lifestyle = lifestyle
+        self.lifestyle = (
+            getattr(ServiceLifeStyle, (service.lifestyle or "singleton").upper()) if lifestyle is None else lifestyle
+        )
 
     def _get_resolver(self, desired_type: str | list, context: ResolutionContext):
         # we use a list to support fallbacks

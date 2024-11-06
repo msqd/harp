@@ -8,10 +8,6 @@
         "description": {
           "anyOf": [{ "type": "string" }, { "type": "null" }],
           "default": null
-        },
-        "controller": {
-          "anyOf": [{ "type": "string" }, { "type": "null" }],
-          "default": null
         }
       },
       "required": ["name", "port"],
@@ -104,7 +100,7 @@
     },
     "EndpointSettings": {
       "additionalProperties": false,
-      "description": "Configuration parser for ``proxy.endpoints[]`` settings.\n\n.. code-block:: yaml\n\n    name: my-endpoint\n    port: 8080\n    description: My endpoint\n    remote:\n      # see HttpRemote\n      ...\n\nA shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require\nfine-tuning the endpoint settings:\n\n.. code-block:: yaml\n\n    name: my-endpoint\n    port: 8080\n    description: My endpoint\n    url: http://my-endpoint:8080",
+      "description": "Configuration parser for ``proxy.endpoints[]`` settings.\n\n.. code-block:: yaml\n\n    name: my-endpoint\n    port: 8080\n    description: My endpoint\n    remote:\n      # see HttpRemote\n      ...\n    controller : optional controller Service definition, default to HttpProxyController\n\nA shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require\nfine-tuning the endpoint settings:\n\n.. code-block:: yaml\n\n    name: my-endpoint\n    port: 8080\n    description: My endpoint\n    url: http://my-endpoint:8080",
       "properties": {
         "name": { "type": "string" },
         "port": { "type": "integer" },
@@ -112,13 +108,16 @@
           "anyOf": [{ "type": "string" }, { "type": "null" }],
           "default": null
         },
-        "controller": {
-          "anyOf": [{ "type": "string" }, { "type": "null" }],
-          "default": null
-        },
         "remote": {
           "anyOf": [{ "$ref": "#/$defs/RemoteSettings" }, { "type": "null" }],
           "default": null
+        },
+        "controller": {
+          "anyOf": [{ "$ref": "#/$defs/Service" }, { "type": "null" }],
+          "default": {
+            "type": "harp_apps.proxy.controllers.HttpProxyController",
+            "dispatcher": { "target": "IAsyncEventDispatcher" }
+          }
         }
       },
       "required": ["name", "port"],
@@ -389,6 +388,33 @@
         }
       },
       "title": "RemoteSettings",
+      "type": "object"
+    },
+    "Service": {
+      "additionalProperties": true,
+      "description": "A settings base class for service definitions.",
+      "properties": {
+        "base": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null,
+          "description": "Base type for service definition."
+        },
+        "type": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null,
+          "description": "Type for service definition."
+        },
+        "constructor": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null,
+          "description": "Optional custom constructor for the service."
+        },
+        "arguments": {
+          "anyOf": [{ "type": "object" }, { "type": "null" }],
+          "description": "Arguments for the service constructor."
+        }
+      },
+      "title": "Service",
       "type": "object"
     }
   },

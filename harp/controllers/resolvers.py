@@ -1,11 +1,7 @@
-from typing import TYPE_CHECKING, Optional, Type
-
-from httpx import AsyncClient
-from whistle import IAsyncEventDispatcher
+from typing import TYPE_CHECKING
 
 from harp import get_logger
 from harp.http import HttpRequest
-from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.settings.endpoint import Endpoint
 
 from .default import not_found_controller
@@ -46,9 +42,7 @@ class ProxyControllerResolver(DefaultControllerResolver):
         self,
         endpoint: Endpoint,
         *,
-        http_client: AsyncClient,
-        dispatcher: Optional[IAsyncEventDispatcher] = None,
-        ControllerType: Optional[Type[HttpProxyController]] = None,
+        controller: IAsyncController,
     ):
         if endpoint.settings.name in self._endpoints:
             raise RuntimeError(f"Endpoint «{endpoint.settings.name}» already exists.")
@@ -56,24 +50,14 @@ class ProxyControllerResolver(DefaultControllerResolver):
         if endpoint.settings.port in self._ports:
             raise RuntimeError(f"Port «{endpoint.settings.port}» already in use.")
 
-        ControllerType = ControllerType or HttpProxyController
-        if not issubclass(ControllerType, HttpProxyController):
-            raise RuntimeError(f"Controller «{ControllerType}» must be a subclass of HttpProxyController.")
-
         self._endpoints[endpoint.settings.name] = endpoint
-        controller = ControllerType(
-            endpoint.remote,
-            dispatcher=dispatcher,
-            http_client=http_client,
-            name=endpoint.settings.name,
-        )
-        self._ports[endpoint.settings.port] = controller
-        logger.info(f"🏭 Map: *:{endpoint.settings.port} -> {controller}")
+        self.add_controller(endpoint.settings.port, controller)
 
     def add_controller(self, port: int, controller: IAsyncController):
         if port in self._ports:
             raise RuntimeError(f"Port «{port}» already in use.")
         self._ports[port] = controller
+        logger.info(f"🏭 Map: *:{port} -> {controller}")
 
     async def resolve(self, request: HttpRequest):
         return self._ports.get(request.server_port, self.default_controller)

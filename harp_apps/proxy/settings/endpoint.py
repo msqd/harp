@@ -2,7 +2,8 @@ from typing import Optional
 
 from pydantic import Field, model_validator
 
-from harp.config import Configurable, Stateful
+from harp.config import Configurable, Service, Stateful
+from harp.services import LazyServiceReference
 from harp_apps.proxy.settings.remote import Remote, RemoteEndpointSettings, RemoteSettings
 
 
@@ -15,9 +16,6 @@ class BaseEndpointSettings(Configurable):
 
     #: description, informative only
     description: Optional[str] = None
-
-    #: custom controller
-    controller: Optional[str] = None
 
 
 class EndpointSettings(BaseEndpointSettings):
@@ -32,6 +30,7 @@ class EndpointSettings(BaseEndpointSettings):
         remote:
           # see HttpRemote
           ...
+        controller : optional controller Service definition, default to HttpProxyController
 
     A shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require
     fine-tuning the endpoint settings:
@@ -48,6 +47,12 @@ class EndpointSettings(BaseEndpointSettings):
     #: remote definition, with url pools, probes, etc.
     remote: Optional[RemoteSettings] = Field(None, repr=False)
 
+    #: custom controller
+    controller: Optional[Service] = Service(
+        type="harp_apps.proxy.controllers.HttpProxyController",
+        arguments={"dispatcher": LazyServiceReference(target="IAsyncEventDispatcher")},
+    )
+
     @model_validator(mode="before")
     @classmethod
     def __prepare(cls, values):
@@ -59,6 +64,7 @@ class EndpointSettings(BaseEndpointSettings):
                     "a historical shorthand syntax for the first one."
                 )
             values["remote"] = RemoteSettings(endpoints=[RemoteEndpointSettings(url=values.pop("url"))])
+
         return values
 
 

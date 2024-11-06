@@ -1,6 +1,8 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import ConfigDict, Field, model_serializer, model_validator
+
+from harp.services.models import ServiceDefinition
 
 from .base import BaseConfigurable
 
@@ -54,3 +56,16 @@ class Service(BaseConfigurable):
             **({"arguments": arguments} if len(arguments) else {}),
             **inline_arguments,
         }
+
+    def to_service_definition(
+        self, name: str, lifestyle: Optional[Literal["singleton", "transient", "scoped"]] = "singleton"
+    ) -> ServiceDefinition:
+        """Convert the service settings to a service definition."""
+        return ServiceDefinition(
+            name=name,
+            base=self.base,
+            type=self.type,
+            constructor=self.constructor,
+            arguments=self.arguments,
+            lifestyle=lifestyle,
+        )

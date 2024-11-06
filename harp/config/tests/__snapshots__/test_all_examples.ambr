@@ -242,7 +242,8 @@
   http_client: {}
   proxy:
     endpoints:
-    - description: A very informative description
+    - controller: null
+      description: A very informative description
       name: httpbins
       port: 4000
       remote:
@@ -388,7 +389,11 @@
   http_client: {}
   proxy:
     endpoints:
-    - name: my-endpoint
+    - controller:
+        dispatcher:
+          target: IAsyncEventDispatcher
+        type: harp_apps.proxy.controllers.HttpProxyController
+      name: my-endpoint
       port: 4000
       remote:
         break_on:

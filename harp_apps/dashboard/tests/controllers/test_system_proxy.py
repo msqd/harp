@@ -56,7 +56,6 @@ class TestSystemControllerProxy(SystemControllerTestFixtureMixin):
                         "name": "api",
                         "description": None,
                         "port": 4000,
-                        "controller": None,
                     },
                 }
             ]
