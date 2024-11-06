@@ -83,5 +83,5 @@ class ProxyControllerResolver(DefaultControllerResolver):
     async def resolve(self, request: HttpRequest):
         return self._ports.get(request.server_port, self.default_controller)
 
-    def resolve_from_endpoint(self, endpoint: str):
-        return self._name_to_controller.get(endpoint, self.default_controller)
+    def resolve_from_endpoint_name(self, endpoint_name: str):
+        return self._name_to_controller.get(endpoint_name, self.default_controller)
