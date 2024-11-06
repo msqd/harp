@@ -38,7 +38,7 @@ async def on_bind(event: OnBindEvent):
         if endpoint.controller is not None:
             controller = endpoint.controller
             ControllerServiceDefinition = controller.to_service_definition(
-                f"{endpoint.name}_controller",
+                f"proxy.controllers.{endpoint.name}_controller", lifestyle="transient"
             )
             resolver = ServiceResolver(event.container, ControllerServiceDefinition)
             event.container._map[f"{endpoint.name}_controller"] = resolver
@@ -50,7 +50,7 @@ async def on_bound(event: OnBoundEvent):
 
     for endpoint in proxy.endpoints:
         name = endpoint.settings.name
-        controller = event.provider.get(f"{name}_controller", name=name, remote=endpoint.remote)
+        controller = event.provider.get(f"proxy.controllers.{name}_controller", name=name, remote=endpoint.remote)
         event.resolver.add(endpoint, controller=controller)
 
     event.provider.set(
