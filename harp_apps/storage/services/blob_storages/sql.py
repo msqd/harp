@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from typing import override
 
-from sqlalchemy import delete, insert, select
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -94,6 +94,21 @@ class SqlBlobStorage(IBlobStorage):
                     await conn.commit()
                 except IntegrityError:
                     pass  # already there? that's fine!
+        return blob
+
+    @override
+    async def force_put(self, blob: Blob) -> Blob:
+        async with self.engine.connect() as conn:
+            try:
+                await conn.execute(
+                    insert(SqlBlob).values(id=blob.id, data=blob.data, content_type=blob.content_type),
+                )
+                await conn.commit()
+            except IntegrityError:
+                await conn.execute(
+                    update(SqlBlob).where(SqlBlob.id == blob.id).values(data=blob.data, content_type=blob.content_type),
+                )
+                await conn.commit()
         return blob
 
     @override

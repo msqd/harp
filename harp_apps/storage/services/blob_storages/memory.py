@@ -16,6 +16,8 @@ class MemoryBlobStorage(IBlobStorage):
         self._blobs[blob.id] = blob
         return blob
 
+    force_put = put
+
     async def delete(self, blob_id: str):
         del self._blobs[blob_id]
 

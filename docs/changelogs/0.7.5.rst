@@ -1,0 +1,18 @@
+Version 0.7.5 (2024-11-03)
+==========================
+
+Added
+:::::
+
+* DX: adds (very) basic integration test in project template (Mathias Laurin)
+* UX: ability to copy-paste content from user interface (Arthur Degonde)
+
+Changed
+:::::::
+
+* DX: Loosen the cookiecutter template version constraint for harp in template (#589, Lenormju)
+
+Updated
+:::::::
+
+* bump pytest-benchmark from 5.0.1 to 5.1.0

@@ -1,3 +1,5 @@
+from typing import override
+
 from harp.models import Blob
 from harp_apps.storage.types import IBlobStorage
 
@@ -8,8 +10,11 @@ class NullBlobStorage(IBlobStorage):
     async def get(self, blob_id: str):
         return None
 
+    @override
     async def put(self, blob: Blob) -> Blob:
         return blob
+
+    force_put = put
 
     async def delete(self, blob_id: str):
         pass

@@ -54,8 +54,11 @@ html_title = project + " " + version
 html_theme = "furo"
 html_static_path = ["_static"]
 html_theme_options = {
-    "light_logo": "logo.png",
-    "dark_logo": "logo.png",
+    "light_logo": "logo.svg",
+    "dark_logo": "logo-dark.svg",
+    "source_repository": "https://github.com/msqd/harp/",
+    "source_branch": version,
+    "source_directory": "docs/",
 }
 html_favicon = "favicon.ico"
 html_js_files = ["js/links-target-blank.js"]

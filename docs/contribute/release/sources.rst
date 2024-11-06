@@ -97,3 +97,19 @@ Eventually forward-port the new version
 :::::::::::::::::::::::::::::::::::::::
 
 If a newer version line is available, checkout and merge the new version into it.
+
+
+Create the GitHub release
+:::::::::::::::::::::::::
+
+.. code:: shell
+
+    open https://github.com/msqd/harp/releases/tag/$VERSION
+
+Create the release from tag (button on the right).
+
+To generate the markdown changes for github, use:
+
+.. code-block:: shell
+
+    pandoc -s -o changes.md docs/changelogs/$VERSION.rst
