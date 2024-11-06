@@ -52,6 +52,30 @@ this instead of curl):
 Open the `dashboard <http://localhost:4080>`_ again, you'll be able to see the transactions that went through.
 
 
+Adding a configuration file
+:::::::::::::::::::::::::::
+
+If you want to add a simple configuration file, you can mount it in the default system location using docker.
+
+First, create a configuration file:
+
+.. code-block:: shell
+
+    cat > harp.yaml <<EOF
+    proxy:
+      endpoints:
+        - name: httpbin
+          url: http://httpbin.org
+          port: 4000
+    EOF
+
+Then run the container again, binding it to ``/etc/harp.yaml``:
+
+.. code:: shell
+
+    docker run -it --rm -p 4000-4100:4000-4100 --volume $(pwd)/harp.yaml:/etc/harp.yaml makersquad/harp-proxy server
+
+
 Use docker compose
 ::::::::::::::::::
 
