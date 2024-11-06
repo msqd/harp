@@ -1,6 +1,6 @@
 POETRY ?= $(shell which poetry || echo poetry)
 
-.PHONY: start install
+.PHONY: start install test
 
 
 start: install
@@ -8,3 +8,6 @@ start: install
 
 install:
 	$(POETRY) install
+
+test: install
+	$(RUN) pytest

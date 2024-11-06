@@ -14,4 +14,5 @@
     storage/index
     ../apps/dashboard/development/index
     testing/index
+    templates/index
     release/index

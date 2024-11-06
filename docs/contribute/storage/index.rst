@@ -11,7 +11,7 @@ Each storages should implement the :class:`Storage <harp_apps.storage.types.stor
 Model
 :::::
 
-.. figure:: ./images/storage-model.png
+.. figure:: ./images/storage-model.excalidraw.png
 
 * a :class:`Transaction <harp.models.Transaction>` represents a transaction that went through the
   proxy. A set of request-response forms a transaction in the case of an HTTP transaction (although the response may
