@@ -1,5 +1,6 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react"
 import { ChevronDownIcon } from "@heroicons/react/20/solid"
+import { useCallback, useMemo } from "react"
 import tw, { styled } from "twin.macro"
 
 import { useSystemProxyMutation } from "Domain/System/useSystemProxyQuery.ts"
@@ -26,8 +27,13 @@ export default function RemoteEndpointStatusDropDown({
 }) {
   const mutation = useSystemProxyMutation()
   const status = remoteEndpoint.status ?? 0
-  const humanStatus = getHumanStatus(status)
-
+  const humanStatus = useMemo(() => getHumanStatus(status), [status])
+  const handleMutation = useCallback(
+    (status: string) => {
+      mutation.mutate({ endpoint: endpointName, url: remoteEndpoint.settings.url, action: status })
+    },
+    [mutation, endpointName, remoteEndpoint.settings.url],
+  )
   return (
     <Menu as="div" className="relative text-left">
       <div className="flex">
@@ -66,12 +72,7 @@ export default function RemoteEndpointStatusDropDown({
           {["up", "checking", "down"].map((status) =>
             humanStatus != status ? (
               <MenuItem key={status}>
-                <StyledButtonMenuItem
-                  type="button"
-                  onClick={() =>
-                    mutation.mutate({ endpoint: endpointName, url: remoteEndpoint.settings.url, action: status })
-                  }
-                >
+                <StyledButtonMenuItem type="button" onClick={() => handleMutation(status)}>
                   Set {status}
                 </StyledButtonMenuItem>
               </MenuItem>

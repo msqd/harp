@@ -6,10 +6,10 @@ import TopologyRemoteTable from "./TopologyRemoteTable.tsx"
 
 export function TopologyTable({ endpoints }: { endpoints: Apps.Proxy.Endpoint[] }) {
   return (
-    <>
+    <div className="my-6">
       {endpoints.map((endpoint, i) => (
-        <Pane className="flex items-start overflow-auto space-x-1" key={i}>
-          <span className="flex gap-x-2 px-2 py-0.5 text-sm font-medium text-gray-800 items-center ">
+        <Pane className="flex items-start space-x-1" key={i}>
+          <span className="flex gap-x-2 px-2 py-0.5 text-sm font-medium text-gray-800 items-center h-full">
             <PuzzlePieceIcon className="size-4" />
             <span className="flex flex-col text-center">
               {endpoint.settings.name}
@@ -25,6 +25,6 @@ export function TopologyTable({ endpoints }: { endpoints: Apps.Proxy.Endpoint[] 
           <TopologyRemoteTable endpointName={endpoint.settings.name} remote={endpoint.remote} />
         </Pane>
       ))}
-    </>
+    </div>
   )
 }
