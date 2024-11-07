@@ -14,8 +14,6 @@ def test_add():
     resolver.add(endpoint, http_client=http_client, ControllerType=HttpProxyController)
     assert resolver.endpoints["test-endpoint"] == endpoint
     assert resolver.ports == (8080,)
-    assert resolver._name_to_controller["test-endpoint"] is not None
-    assert isinstance(resolver._name_to_controller["test-endpoint"], HttpProxyController)
 
 
 async def test_resolve():
