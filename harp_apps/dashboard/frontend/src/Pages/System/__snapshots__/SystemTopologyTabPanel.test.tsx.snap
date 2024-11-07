@@ -25,10 +25,10 @@ exports[`renders the title and data when the query is successful 1`] = `
           Topology
         </h2>
         <div
-          class="flex items-start css-14upriz"
+          class="flex items-start overflow-auto space-x-1 css-14upriz"
         >
           <span
-            class="inline-flex items-center gap-x-1 px-2 py-0.5 text-sm font-medium text-gray-800"
+            class="flex gap-x-2 px-2 py-0.5 text-sm font-medium text-gray-800 items-center "
           >
             <svg
               aria-hidden="true"
@@ -46,10 +46,16 @@ exports[`renders the title and data when the query is successful 1`] = `
                 stroke-linejoin="round"
               />
             </svg>
-            endpoint1
-             (
-            8080
-            )
+            <span
+              class="flex flex-col text-center"
+            >
+              endpoint1
+              <span
+                class="inline-flex items-center gap-x-1 rounded-full px-2 py-0.5 text-xs font-medium text-gray-500 ring-1 ring-inset ring-gray-200 mx-1"
+              >
+                8080
+              </span>
+            </span>
           </span>
           <div
             class="flex flex-col divide-y divide-gray-200 css-14upriz"

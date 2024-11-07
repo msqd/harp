@@ -29,6 +29,7 @@ Typically, you'll define one port per external (or semi-external) API you want t
 .. literalinclude:: ../apps/proxy/examples/multiple.yml
     :language: yaml
 
+A port is not required to configure an endpoint for the proxy. This is for advanced use cases only such as using an endpoint from within another controller (internal subrequests).
 
 Remote pools
 ::::::::::::

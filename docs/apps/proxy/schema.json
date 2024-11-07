@@ -4,7 +4,10 @@
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string" },
-        "port": { "type": "integer" },
+        "port": {
+          "anyOf": [{ "type": "integer" }, { "type": "null" }],
+          "default": null
+        },
         "description": {
           "anyOf": [{ "type": "string" }, { "type": "null" }],
           "default": null
@@ -14,7 +17,7 @@
           "default": null
         }
       },
-      "required": ["name", "port"],
+      "required": ["name"],
       "title": "BaseEndpointSettings",
       "type": "object"
     },
@@ -107,7 +110,10 @@
       "description": "Configuration parser for ``proxy.endpoints[]`` settings.\n\n.. code-block:: yaml\n\n    name: my-endpoint\n    port: 8080\n    description: My endpoint\n    remote:\n      # see HttpRemote\n      ...\n\nA shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require\nfine-tuning the endpoint settings:\n\n.. code-block:: yaml\n\n    name: my-endpoint\n    port: 8080\n    description: My endpoint\n    url: http://my-endpoint:8080",
       "properties": {
         "name": { "type": "string" },
-        "port": { "type": "integer" },
+        "port": {
+          "anyOf": [{ "type": "integer" }, { "type": "null" }],
+          "default": null
+        },
         "description": {
           "anyOf": [{ "type": "string" }, { "type": "null" }],
           "default": null
@@ -121,7 +127,7 @@
           "default": null
         }
       },
-      "required": ["name", "port"],
+      "required": ["name"],
       "title": "EndpointSettings",
       "type": "object"
     },
