@@ -12,7 +12,7 @@ class BaseEndpointSettings(Configurable):
     name: str
 
     #: port to listen on
-    port: int
+    port: Optional[int] = None
 
     #: description, informative only
     description: Optional[str] = None

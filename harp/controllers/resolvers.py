@@ -24,11 +24,13 @@ class DefaultControllerResolver(IControllerResolver):
 class ProxyControllerResolver(DefaultControllerResolver):
     _endpoints: dict[str, Endpoint]
     _ports: dict[int, IAsyncController]
+    _name_to_controller: dict[str, IAsyncController]
 
     def __init__(self, *, default_controller=None):
         super().__init__(default_controller=default_controller)
         self._endpoints = {}
         self._ports = {}
+        self._name_to_controller = {}
 
     @property
     def endpoints(self) -> dict[str, Endpoint]:
@@ -51,7 +53,10 @@ class ProxyControllerResolver(DefaultControllerResolver):
             raise RuntimeError(f"Port «{endpoint.settings.port}» already in use.")
 
         self._endpoints[endpoint.settings.name] = endpoint
-        self.add_controller(endpoint.settings.port, controller)
+        if endpoint.settings.port:
+            self.add_controller(endpoint.settings.port, controller)
+
+        self._name_to_controller[endpoint.settings.name] = controller
 
     def add_controller(self, port: int, controller: IAsyncController):
         if port in self._ports:
@@ -61,3 +66,6 @@ class ProxyControllerResolver(DefaultControllerResolver):
 
     async def resolve(self, request: HttpRequest):
         return self._ports.get(request.server_port, self.default_controller)
+
+    def resolve_from_endpoint_name(self, endpoint_name: str):
+        return self._name_to_controller.get(endpoint_name, self.default_controller)
