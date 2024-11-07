@@ -19,4 +19,3 @@ Submodules
     harp.services.providers
     harp.services.references
     harp.services.resolvers
-    harp.services.services
