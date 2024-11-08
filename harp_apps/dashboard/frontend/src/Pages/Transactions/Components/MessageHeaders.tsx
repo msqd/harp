@@ -31,17 +31,20 @@ export function MessageHeaders({ id }: MessageHeadersProps) {
                 .split("\n")
                 .map((line, index) => {
                   const s = line.split(":", 2)
+                  const headerName = s[0]
+                  const headerValue = s[1] ? line.substring(headerName.length + 1).trim() : "" // Ensures the full value after the first colon
                   return (
                     <tr key={index}>
-                      <td className="px-2 w-1 text-blue-600 truncate">{s[0]}</td>
+                      <td className="px-2 w-1 text-blue-600 truncate">{headerName}</td>
                       <td className="px-2 whitespace-nowrap">
-                        {s[0].toLowerCase() == "cache-control" && s[1].toLowerCase().includes("no-cache") ? (
+                        {headerName.toLowerCase() === "cache-control" &&
+                        headerValue.toLowerCase().includes("no-cache") ? (
                           <span className="h-4 flex text-xs" title="Cache was bypassed.">
                             <NoCacheIcon />
-                            {s[1]}
+                            {headerValue}
                           </span>
                         ) : (
-                          s[1]
+                          headerValue
                         )}
                       </td>
                     </tr>
