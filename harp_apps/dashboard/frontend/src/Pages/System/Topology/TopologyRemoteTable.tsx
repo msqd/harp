@@ -42,7 +42,10 @@ export default function TopologyRemoteTable({
             <code className="inline-flex font-mono text-xs">{remoteEndpoint.failure_reasons.join(",")}</code>
           ) : null}
           {(remoteEndpoint.settings.pools || ["default"]).map((pool, k) => (
-            <span className="inline-flex items-center gap-x-1 rounded-full px-2 py-0.5 text-xs font-medium text-gray-500 ring-1 ring-inset ring-gray-200 mx-1">
+            <span
+              key={k}
+              className="inline-flex items-center gap-x-1 rounded-full px-2 py-0.5 text-xs font-medium text-gray-500 ring-1 ring-inset ring-gray-200 mx-1"
+            >
               <InboxIcon key={k} className="size-3" /> {pool}
             </span>
           ))}
