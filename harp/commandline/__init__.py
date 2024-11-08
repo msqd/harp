@@ -45,6 +45,7 @@ from harp.commandline.config import config
 from harp.commandline.create import create
 from harp.commandline.examples import entrypoint as examples
 from harp.commandline.server import server
+from harp.commandline.version import version
 from harp.settings import HARP_ENV
 from harp.utils.commandline import check_packages, click, code
 
@@ -114,6 +115,7 @@ entrypoint.add_command(server)
 entrypoint.add_command(config)
 entrypoint.add_command(examples)
 entrypoint.add_command(create)
+entrypoint.add_command(version)
 
 __all__ = [
     "entrypoint",

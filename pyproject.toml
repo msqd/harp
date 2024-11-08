@@ -1,6 +1,6 @@
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["maturin>=1,<2"]
+build-backend = "maturin"
 
 [tool.poetry]
 name = "harp-proxy"
@@ -10,6 +10,10 @@ authors = ["Romain Dorgueil <romain@makersquad.fr>"]
 readme = "README.rst"
 packages = [{ include = "harp" }, { include = "harp_apps" }]
 exclude = ["**/node_modules/", "harp_apps/dashboard/frontend"]
+
+[tool.maturin]
+module-name = 'harp._harp'
+bindings = 'pyo3'
 
 [tool.poetry.dependencies]
 python = "^3.12"
