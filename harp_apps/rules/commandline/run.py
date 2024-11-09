@@ -4,7 +4,7 @@ from typing import cast
 import click
 from whistle import IAsyncEventDispatcher
 
-from harp.commandline.options.server import add_harp_config_options
+from harp.commandline.options.server import config_command
 from harp.config import ConfigurationBuilder
 from harp.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.http import HttpRequest
@@ -25,8 +25,7 @@ from .utils.loaders import load_ruleset_from_files
 from .utils.subscribers import DebugRulesSubscriber
 
 
-@click.command("run")
-@add_harp_config_options
+@config_command("run")
 @click.argument("endpoint")
 @click.argument("method")
 @click.argument("path")
