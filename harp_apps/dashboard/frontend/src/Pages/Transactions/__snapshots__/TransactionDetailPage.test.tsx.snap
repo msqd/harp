@@ -184,7 +184,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                           <td
                             class="px-2 whitespace-nowrap"
                           >
-                             localhost
+                            localhost:9001
                           </td>
                         </tr>
                         <tr>
@@ -196,7 +196,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                           <td
                             class="px-2 whitespace-nowrap"
                           >
-                             identity 
+                            identity
                           </td>
                         </tr>
                         <tr>
@@ -208,7 +208,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                           <td
                             class="px-2 whitespace-nowrap"
                           >
-                             Foobar 3r51XEnyibdL3kRyAmts5BSfTyjjOrcbwgr3YOnwUMTcVVLzyhdzEKkQAje2XlXUva59GsJu1Z7IotiVYisO9vDjvHSyLt95SU7WEQNzhKhA7IlT2IQ11Onwmz7su9BT 
+                            Foobar 3r51XEnyibdL3kRyAmts5BSfTyjjOrcbwgr3YOnwUMTcVVLzyhdzEKkQAje2XlXUva59GsJu1Z7IotiVYisO9vDjvHSyLt95SU7WEQNzhKhA7IlT2IQ11Onwmz7su9BT
                           </td>
                         </tr>
                       </tbody>
@@ -314,7 +314,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                           <td
                             class="px-2 whitespace-nowrap"
                           >
-                             application/json
+                            application/json
                           </td>
                         </tr>
                       </tbody>
