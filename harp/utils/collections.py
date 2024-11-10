@@ -63,5 +63,12 @@ class MultiChainMap(ChainMap):
         raise NotImplementedError()
 
 
-def all_combinations(iterable):
-    return set(chain(*(combinations(iterable, n + 1) for n in range(len(iterable)))))
+def all_combinations(iterable, *, maxlen=None):
+    return set(
+        chain(
+            *(
+                combinations(iterable, n + 1)
+                for n in range(min(maxlen, len(iterable)) if maxlen and (maxlen > 0) else len(iterable))
+            )
+        )
+    )
