@@ -370,6 +370,9 @@
             '$ref': '#/$defs/Service',
           }),
           dict({
+            'type': 'string',
+          }),
+          dict({
             'type': 'null',
           }),
         ]),
@@ -379,6 +382,7 @@
           }),
           'type': 'harp_apps.proxy.controllers.HttpProxyController',
         }),
+        'title': 'Controller',
       }),
       'description': dict({
         'anyOf': list([
@@ -798,6 +802,9 @@
             '$ref': '#/$defs/Service',
           }),
           dict({
+            'type': 'string',
+          }),
+          dict({
             'type': 'null',
           }),
         ]),
@@ -807,6 +814,7 @@
           }),
           'type': 'harp_apps.proxy.controllers.HttpProxyController',
         }),
+        'title': 'Controller',
       }),
       'description': dict({
         'anyOf': list([
@@ -1226,6 +1234,9 @@
             '$ref': '#/$defs/Service',
           }),
           dict({
+            'type': 'string',
+          }),
+          dict({
             'type': 'null',
           }),
         ]),
@@ -1235,6 +1246,7 @@
           }),
           'type': 'harp_apps.proxy.controllers.HttpProxyController',
         }),
+        'title': 'Controller',
       }),
       'description': dict({
         'anyOf': list([
@@ -1654,6 +1666,9 @@
             '$ref': '#/$defs/Service',
           }),
           dict({
+            'type': 'string',
+          }),
+          dict({
             'type': 'null',
           }),
         ]),
@@ -1663,6 +1678,7 @@
           }),
           'type': 'harp_apps.proxy.controllers.HttpProxyController',
         }),
+        'title': 'Controller',
       }),
       'description': dict({
         'anyOf': list([
@@ -1746,6 +1762,9 @@
                 '$ref': '#/$defs/Service',
               }),
               dict({
+                'type': 'string',
+              }),
+              dict({
                 'type': 'null',
               }),
             ]),
@@ -1755,6 +1774,7 @@
               }),
               'type': 'harp_apps.proxy.controllers.HttpProxyController',
             }),
+            'title': 'Controller',
           }),
           'description': dict({
             'anyOf': list([
@@ -2305,6 +2325,9 @@
                 '$ref': '#/$defs/Service',
               }),
               dict({
+                'type': 'string',
+              }),
+              dict({
                 'type': 'null',
               }),
             ]),
@@ -2314,6 +2337,7 @@
               }),
               'type': 'harp_apps.proxy.controllers.HttpProxyController',
             }),
+            'title': 'Controller',
           }),
           'description': dict({
             'anyOf': list([
@@ -2883,6 +2907,9 @@
                 '$ref': '#/$defs/Service',
               }),
               dict({
+                'type': 'string',
+              }),
+              dict({
                 'type': 'null',
               }),
             ]),
@@ -2892,6 +2919,7 @@
               }),
               'type': 'harp_apps.proxy.controllers.HttpProxyController',
             }),
+            'title': 'Controller',
           }),
           'description': dict({
             'anyOf': list([
@@ -3442,6 +3470,9 @@
                 '$ref': '#/$defs/Service',
               }),
               dict({
+                'type': 'string',
+              }),
+              dict({
                 'type': 'null',
               }),
             ]),
@@ -3451,6 +3482,7 @@
               }),
               'type': 'harp_apps.proxy.controllers.HttpProxyController',
             }),
+            'title': 'Controller',
           }),
           'description': dict({
             'anyOf': list([

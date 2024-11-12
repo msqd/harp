@@ -48,7 +48,7 @@ class EndpointSettings(BaseEndpointSettings):
     remote: Optional[RemoteSettings] = Field(None, repr=False)
 
     #: custom controller
-    controller: Optional[Service] = Service(
+    controller: Optional[Service | str] = Service(
         type="harp_apps.proxy.controllers.HttpProxyController",
         arguments={"dispatcher": LazyServiceReference(target="IAsyncEventDispatcher")},
     )
@@ -64,7 +64,8 @@ class EndpointSettings(BaseEndpointSettings):
                     "a historical shorthand syntax for the first one."
                 )
             values["remote"] = RemoteSettings(endpoints=[RemoteEndpointSettings(url=values.pop("url"))])
-
+        if "controller" in values and isinstance(values["controller"], str):
+            values["controller"] = Service(type=values["controller"])
         return values
 
 

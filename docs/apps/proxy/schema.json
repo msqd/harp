@@ -119,7 +119,11 @@
           "default": null
         },
         "controller": {
-          "anyOf": [{ "$ref": "#/$defs/Service" }, { "type": "null" }],
+          "anyOf": [
+            { "$ref": "#/$defs/Service" },
+            { "type": "string" },
+            { "type": "null" }
+          ],
           "default": {
             "type": "harp_apps.proxy.controllers.HttpProxyController",
             "dispatcher": { "target": "IAsyncEventDispatcher" }

@@ -51,7 +51,7 @@ declare namespace Apps.Proxy {
     port?: number | null;
     description?: string | null;
     remote?: RemoteSettings | null;
-    controller?: Service | null;
+    controller?: Service | string | null;
   }
   /**
    * A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
