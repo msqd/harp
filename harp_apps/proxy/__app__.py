@@ -38,8 +38,7 @@ async def on_bind(event: OnBindEvent):
         if endpoint.controller is not None:
             controller = endpoint.controller
             name = f"proxy.controllers.{endpoint.name}_controller"
-            ControllerServiceDefinition = controller.to_service_definition(name, lifestyle="transient")
-            resolver = ServiceResolver(event.container, ControllerServiceDefinition)
+            resolver = ServiceResolver(event.container, controller.to_service_definition(name, lifestyle="transient"))
             event.container._map[name] = resolver
     event.container.add_singleton(Proxy, cast(type, ProxyFactory))
 
