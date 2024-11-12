@@ -378,7 +378,7 @@
         ]),
         'default': dict({
           'dispatcher': dict({
-            'target': 'IAsyncEventDispatcher',
+            'type': 'IAsyncEventDispatcher',
           }),
           'type': 'harp_apps.proxy.controllers.HttpProxyController',
         }),
@@ -810,7 +810,7 @@
         ]),
         'default': dict({
           'dispatcher': dict({
-            'target': 'IAsyncEventDispatcher',
+            'type': 'IAsyncEventDispatcher',
           }),
           'type': 'harp_apps.proxy.controllers.HttpProxyController',
         }),
@@ -1242,7 +1242,7 @@
         ]),
         'default': dict({
           'dispatcher': dict({
-            'target': 'IAsyncEventDispatcher',
+            'type': 'IAsyncEventDispatcher',
           }),
           'type': 'harp_apps.proxy.controllers.HttpProxyController',
         }),
@@ -1674,7 +1674,7 @@
         ]),
         'default': dict({
           'dispatcher': dict({
-            'target': 'IAsyncEventDispatcher',
+            'type': 'IAsyncEventDispatcher',
           }),
           'type': 'harp_apps.proxy.controllers.HttpProxyController',
         }),
@@ -1770,7 +1770,7 @@
             ]),
             'default': dict({
               'dispatcher': dict({
-                'target': 'IAsyncEventDispatcher',
+                'type': 'IAsyncEventDispatcher',
               }),
               'type': 'harp_apps.proxy.controllers.HttpProxyController',
             }),
@@ -2333,7 +2333,7 @@
             ]),
             'default': dict({
               'dispatcher': dict({
-                'target': 'IAsyncEventDispatcher',
+                'type': 'IAsyncEventDispatcher',
               }),
               'type': 'harp_apps.proxy.controllers.HttpProxyController',
             }),
@@ -2915,7 +2915,7 @@
             ]),
             'default': dict({
               'dispatcher': dict({
-                'target': 'IAsyncEventDispatcher',
+                'type': 'IAsyncEventDispatcher',
               }),
               'type': 'harp_apps.proxy.controllers.HttpProxyController',
             }),
@@ -3478,7 +3478,7 @@
             ]),
             'default': dict({
               'dispatcher': dict({
-                'target': 'IAsyncEventDispatcher',
+                'type': 'IAsyncEventDispatcher',
               }),
               'type': 'harp_apps.proxy.controllers.HttpProxyController',
             }),

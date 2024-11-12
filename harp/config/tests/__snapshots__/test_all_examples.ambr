@@ -391,7 +391,7 @@
     endpoints:
     - controller:
         dispatcher:
-          target: IAsyncEventDispatcher
+          type: IAsyncEventDispatcher
         type: harp_apps.proxy.controllers.HttpProxyController
       name: my-endpoint
       port: 4000

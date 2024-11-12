@@ -126,7 +126,7 @@
           ],
           "default": {
             "type": "harp_apps.proxy.controllers.HttpProxyController",
-            "dispatcher": { "target": "IAsyncEventDispatcher" }
+            "dispatcher": { "type": "IAsyncEventDispatcher" }
           }
         }
       },

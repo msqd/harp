@@ -4,6 +4,7 @@ from typing import List, Optional, Type
 
 from rodi import CannotResolveTypeException, ResolutionContext, ServiceLifeStyle
 
+from harp.config.configurables.service import LazyService
 from harp.utils.packages import import_string
 
 from .containers import Container
@@ -118,7 +119,7 @@ class ServiceResolver:
 
         kwargs = {}
         for _name, _value in self.defaults.items():
-            if isinstance(_value, LazyServiceReference):
+            if isinstance(_value, LazyServiceReference | LazyService):
                 kwargs[_name] = _value.resolve(self._get_resolver, context)
             else:
                 kwargs[_name] = _value
@@ -129,7 +130,7 @@ class ServiceResolver:
                     kwargs.setdefault(_name, self._get_resolver(_value.annotation, context))
 
         for _name, _value in self.arguments.items():
-            if isinstance(_value, LazyServiceReference):
+            if isinstance(_value, LazyServiceReference | LazyService):
                 kwargs[_name] = _value.resolve(self._get_resolver, context)
             else:
                 kwargs[_name] = _value

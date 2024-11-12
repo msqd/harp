@@ -20,7 +20,7 @@ class TestEndpointSettings(BaseConfigurableTest):
         "remote": None,
         "controller": {
             "type": "harp_apps.proxy.controllers.HttpProxyController",
-            "dispatcher": {"target": "IAsyncEventDispatcher"},
+            "dispatcher": {"type": "IAsyncEventDispatcher"},
         },
     }
 
@@ -58,7 +58,7 @@ class TestEndpointSettingsWithRemote(BaseConfigurableTest):
         },
         "controller": {
             "type": "harp_apps.proxy.controllers.HttpProxyController",
-            "dispatcher": {"target": "IAsyncEventDispatcher"},
+            "dispatcher": {"type": "IAsyncEventDispatcher"},
         },
     }
 

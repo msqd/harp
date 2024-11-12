@@ -2,8 +2,7 @@ from typing import Optional
 
 from pydantic import Field, model_validator
 
-from harp.config import Configurable, Service, Stateful
-from harp.services import LazyServiceReference
+from harp.config import Configurable, LazyService, Service, Stateful
 from harp_apps.proxy.settings.remote import Remote, RemoteEndpointSettings, RemoteSettings
 
 
@@ -50,7 +49,7 @@ class EndpointSettings(BaseEndpointSettings):
     #: custom controller
     controller: Optional[Service | str] = Service(
         type="harp_apps.proxy.controllers.HttpProxyController",
-        arguments={"dispatcher": LazyServiceReference(target="IAsyncEventDispatcher")},
+        arguments={"dispatcher": LazyService(type="IAsyncEventDispatcher")},
     )
 
     @model_validator(mode="before")
@@ -66,6 +65,7 @@ class EndpointSettings(BaseEndpointSettings):
             values["remote"] = RemoteSettings(endpoints=[RemoteEndpointSettings(url=values.pop("url"))])
         if "controller" in values and isinstance(values["controller"], str):
             values["controller"] = Service(type=values["controller"])
+
         return values
 
 
@@ -75,3 +75,4 @@ class Endpoint(Stateful[EndpointSettings]):
     @model_validator(mode="after")
     def __initialize(self):
         self.remote = Remote(settings=self.settings.remote) if self.settings.remote else None
+        return self

@@ -2,7 +2,7 @@ proxy:
   endpoints:
   - controller:
       dispatcher:
-        target: IAsyncEventDispatcher
+        type: IAsyncEventDispatcher
       type: harp_apps.proxy.controllers.HttpProxyController
     description: null
     name: my-endpoint

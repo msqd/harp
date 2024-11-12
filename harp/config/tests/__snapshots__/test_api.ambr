@@ -9,6 +9,7 @@
     'EVENT_BOUND',
     'EVENT_READY',
     'EVENT_SHUTDOWN',
+    'LazyService',
     'OnBindEvent',
     'OnBoundEvent',
     'OnReadyEvent',

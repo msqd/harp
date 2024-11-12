@@ -69,3 +69,20 @@ class Service(BaseConfigurable):
             arguments=self.arguments,
             lifestyle=lifestyle,
         )
+
+
+class LazyService(BaseConfigurable):
+    """A lazy service definition, that will be resolved at runtime."""
+
+    type: str | list[str] = Field(..., description="Reference to the service to resolve at runtime.")
+
+    def resolve(self, resolver, context):
+        """
+        Resolve reference value in using the given resolver (callable) and resolution context.
+        """
+        return resolver(self.type, context)
+
+    @model_serializer(mode="wrap")
+    def __serialize(self, wrapped, context):
+        """Enhance serialization logic to inline arguments, unless they conflict with a model field."""
+        return wrapped(self, context)

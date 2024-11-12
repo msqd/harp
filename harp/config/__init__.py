@@ -16,7 +16,7 @@ __title__ = "Config"
 from .applications import Application, ApplicationsRegistry
 from .asdict import asdict
 from .builders import ConfigurationBuilder
-from .configurables import Configurable, Service, Stateful
+from .configurables import Configurable, LazyService, Service, Stateful
 from .events import (
     EVENT_BIND,
     EVENT_BOUND,
@@ -46,4 +46,5 @@ __all__ = [
     "Stateful",
     "asdict",
     "get_application",
+    "LazyService",
 ]
