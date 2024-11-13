@@ -48,6 +48,14 @@ Full example
 
     :doc:`📃 Proxy Configuration Reference <settings>`
 
+Custom Controller
+-----------------
+You can also provide a custom controller to handle the proxy logic. This is useful if you want to add custom logic to
+the proxy.
+A custom controller must be defined as a :class:`Service <harp.config.configurables.Service>`.
+
+.. literalinclude:: ./examples/custom_controller.yml
+    :language: yaml
 
 Command line
 ::::::::::::
