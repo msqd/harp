@@ -7,7 +7,8 @@ proxy:
       # a human-readable description of the endpoint (optional)
       description: A very informative description
 
-      # the local listening port for this endpoint
+      # the local listening port for this endpoint, if not set the proxy will not listen on
+      # any port for this endpoint.
       port: 4000
 
       # the controller to use for this endpoint, "null" means default but you can specify

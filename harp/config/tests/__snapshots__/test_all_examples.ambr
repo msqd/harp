@@ -642,6 +642,10 @@
       remote:
         endpoints:
         - url: http://httpbin.org/
+    - name: httpbin4
+      remote:
+        endpoints:
+        - url: http://httpbin.org/
   storage: {}
   
   '''

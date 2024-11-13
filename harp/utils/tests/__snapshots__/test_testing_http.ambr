@@ -1,0 +1,895 @@
+# serializer version: 1
+# name: test_methods[0052544]
+  'include_having_response_body,include_maybe_having_request_body,include_non_standard => BREW,GET,OPTIONS,POST,REMIX'
+# ---
+# name: test_methods[006d37c]
+  'include_having_request_body,include_idempotent,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[02660fd]
+  'include_idempotent,include_maybe_having_request_body,include_non_standard => BREW,DELETE,GET,HEAD,OPTIONS,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[02dcdb4]
+  'include_maybe_having_request_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[036d0e9]
+  'include_having_response_body,include_maybe_having_response_body => DELETE,GET,OPTIONS,PATCH,POST,PUT'
+# ---
+# name: test_methods[04f2e48]
+  'include_maybe_having_request_body,include_unsafe => CONNECT,DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[058052b]
+  'include_non_idempotent,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[06d2900]
+  'include_maybe_having_request_body,include_not_having_request_body,include_not_having_response_body => CONNECT,DELETE,GET,HEAD,OPTIONS,TRACE'
+# ---
+# name: test_methods[089c9ae]
+  'include_idempotent,include_maybe_having_request_body,include_safe => DELETE,GET,HEAD,OPTIONS,PUT,TRACE'
+# ---
+# name: test_methods[092a30d]
+  'include_having_response_body,include_maybe_having_response_body,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[0930a7c]
+  'include_having_response_body,include_non_standard,include_safe => BREW,GET,HEAD,OPTIONS,POST,REMIX,TRACE'
+# ---
+# name: test_methods[0a84732]
+  'include_idempotent,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PUT,TRACE'
+# ---
+# name: test_methods[0af8567]
+  'include_maybe_having_response_body,include_not_having_request_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[0bdf293]
+  'include_having_request_body,include_maybe_having_response_body,include_safe => DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[0c2fd5a]
+  'include_not_having_request_body,include_safe => CONNECT,DELETE,GET,HEAD,OPTIONS,TRACE'
+# ---
+# name: test_methods[0d20cf0]
+  'include_not_having_response_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[0dcbb83]
+  'include_non_idempotent,include_non_standard => BREW,CONNECT,PATCH,POST,REMIX'
+# ---
+# name: test_methods[0e5182f]
+  'include_having_request_body,include_having_response_body,include_non_standard => BREW,GET,OPTIONS,PATCH,POST,PUT,REMIX'
+# ---
+# name: test_methods[0ed15c7]
+  'include_having_request_body,include_not_having_request_body,include_safe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[10d0948]
+  'include_having_response_body,include_idempotent,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,POST,PUT,TRACE'
+# ---
+# name: test_methods[1310857]
+  'include_not_having_request_body,include_safe,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[13751f7]
+  'include_idempotent,include_non_idempotent,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[144feb1]
+  'include_idempotent,include_non_standard,include_safe => BREW,DELETE,GET,HEAD,OPTIONS,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[1470414]
+  'include_having_request_body,include_idempotent,include_non_idempotent => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[14cdeef]
+  'include_maybe_having_response_body,include_non_standard,include_not_having_response_body => BREW,CONNECT,DELETE,HEAD,PATCH,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[1505f50]
+  'include_maybe_having_response_body,include_non_idempotent,include_unsafe => CONNECT,DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[1558702]
+  'include_having_request_body,include_having_response_body,include_safe => GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[1638eff]
+  'include_idempotent,include_maybe_having_request_body,include_not_having_response_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PUT,TRACE'
+# ---
+# name: test_methods[166495c]
+  'include_maybe_having_request_body,include_non_idempotent,include_unsafe => CONNECT,DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[1801fc2]
+  'include_having_request_body,include_not_having_request_body,include_not_having_response_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[18bec2f]
+  'include_having_response_body,include_safe,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[1a1afd7]
+  'include_idempotent,include_non_idempotent => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[1b5a07b]
+  'include_having_request_body,include_not_having_response_body,include_unsafe => CONNECT,DELETE,HEAD,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[1daacd5]
+  'include_maybe_having_request_body,include_non_idempotent => CONNECT,PATCH,POST'
+# ---
+# name: test_methods[1f2c6bd]
+  'include_maybe_having_response_body,include_non_standard,include_unsafe => BREW,CONNECT,DELETE,PATCH,POST,PUT,REMIX'
+# ---
+# name: test_methods[2094c5f]
+  'include_idempotent,include_standard,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[20a6a9f]
+  'include_maybe_having_response_body,include_unsafe => CONNECT,DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[222c7c6]
+  'include_idempotent,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[2323592]
+  'include_having_response_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[2373ecf]
+  'include_idempotent,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[246f15b]
+  'include_maybe_having_request_body,include_maybe_having_response_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[27a4ecf]
+  'include_having_request_body,include_not_having_response_body,include_safe => CONNECT,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[2895233]
+  'include_non_standard,include_not_having_response_body,include_standard => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[28d2ea5]
+  'include_not_having_request_body,include_not_having_response_body => CONNECT,DELETE,GET,HEAD,OPTIONS,TRACE'
+# ---
+# name: test_methods[28fe53a]
+  'include_non_idempotent,include_non_standard,include_safe => BREW,CONNECT,GET,HEAD,OPTIONS,PATCH,POST,REMIX,TRACE'
+# ---
+# name: test_methods[2a99a09]
+  'include_non_standard => BREW,REMIX'
+# ---
+# name: test_methods[2b4608d]
+  'include_maybe_having_response_body,include_not_having_response_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[2c9548c]
+  'include_maybe_having_request_body,include_safe,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[2da0c3e]
+  'include_maybe_having_request_body => '
+# ---
+# name: test_methods[2e467a1]
+  'include_maybe_having_request_body,include_maybe_having_response_body,include_safe => DELETE,GET,HEAD,OPTIONS,PATCH,PUT,TRACE'
+# ---
+# name: test_methods[2f2f2c2]
+  'include_having_request_body,include_having_response_body,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[2f9a4e7]
+  'include_maybe_having_request_body,include_maybe_having_response_body,include_not_having_response_body => CONNECT,DELETE,HEAD,PATCH,PUT,TRACE'
+# ---
+# name: test_methods[310d7b4]
+  'include_having_request_body,include_not_having_response_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[32210cc]
+  'include_idempotent,include_not_having_response_body,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[32621e2]
+  'include_having_response_body,include_maybe_having_request_body => GET,OPTIONS,POST'
+# ---
+# name: test_methods[32e1a1c]
+  'include_having_request_body,include_maybe_having_response_body,include_non_standard => BREW,DELETE,PATCH,POST,PUT,REMIX'
+# ---
+# name: test_methods[330bd98]
+  'include_not_having_response_body,include_safe,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[330eb50]
+  'include_non_idempotent,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,TRACE'
+# ---
+# name: test_methods[330f533]
+  'include_non_standard,include_not_having_request_body,include_standard => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[3403d1c]
+  'include_having_response_body,include_non_idempotent,include_not_having_response_body => CONNECT,GET,HEAD,OPTIONS,PATCH,POST,TRACE'
+# ---
+# name: test_methods[36b6ebc]
+  'include_having_response_body,include_not_having_response_body,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[374a50a]
+  'include_having_response_body,include_safe,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[37fdfb0]
+  'include_maybe_having_response_body,include_safe => DELETE,GET,HEAD,OPTIONS,PATCH,PUT,TRACE'
+# ---
+# name: test_methods[3934a6e]
+  'include_having_request_body,include_maybe_having_response_body,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[39bdbd2]
+  'include_non_idempotent,include_not_having_response_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[39d22d0]
+  'include_maybe_having_response_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[3a0da8c]
+  'include_having_request_body,include_non_standard,include_safe => BREW,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[3a0f45c]
+  'include_idempotent,include_non_idempotent,include_safe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[3b9aa08]
+  'include_having_request_body,include_idempotent,include_maybe_having_request_body => DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[3c53798]
+  'include_having_request_body,include_idempotent,include_maybe_having_response_body => DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[3d1bf55]
+  'include_idempotent,include_non_standard => BREW,DELETE,GET,HEAD,OPTIONS,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[3d275d9]
+  'include_maybe_having_response_body,include_non_standard,include_standard => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[3f21ee0]
+  'include_idempotent,include_maybe_having_request_body,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[412d387]
+  'include_maybe_having_request_body,include_non_standard,include_safe => BREW,GET,HEAD,OPTIONS,REMIX,TRACE'
+# ---
+# name: test_methods[41b701b]
+  'include_having_request_body,include_having_response_body,include_maybe_having_response_body => DELETE,GET,OPTIONS,PATCH,POST,PUT'
+# ---
+# name: test_methods[4212922]
+  'include_having_response_body,include_maybe_having_request_body,include_safe => GET,HEAD,OPTIONS,POST,TRACE'
+# ---
+# name: test_methods[4377c12]
+  'include_having_response_body,include_idempotent,include_non_standard => BREW,DELETE,GET,HEAD,OPTIONS,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[4494df6]
+  'include_having_request_body,include_idempotent,include_safe => DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[455a62b]
+  'include_idempotent,include_maybe_having_response_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[45dbbc6]
+  'include_idempotent,include_maybe_having_response_body => DELETE,GET,HEAD,OPTIONS,PATCH,PUT,TRACE'
+# ---
+# name: test_methods[4641057]
+  'include_not_having_response_body,include_safe => CONNECT,GET,HEAD,OPTIONS,TRACE'
+# ---
+# name: test_methods[46f15fb]
+  'include_non_standard,include_safe,include_standard => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[48c728a]
+  'include_having_response_body,include_non_idempotent,include_safe => CONNECT,GET,HEAD,OPTIONS,PATCH,POST,TRACE'
+# ---
+# name: test_methods[49b3d13]
+  'include_having_request_body,include_non_idempotent,include_not_having_response_body => CONNECT,HEAD,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[4ae4076]
+  'include_having_request_body,include_non_idempotent,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[4b54d27]
+  'include_having_request_body,include_having_response_body,include_idempotent => DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[4babe01]
+  'include_non_idempotent,include_non_standard,include_not_having_request_body => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,REMIX,TRACE'
+# ---
+# name: test_methods[4d04791]
+  'include_non_idempotent,include_unsafe => CONNECT,DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[4fa2357]
+  'include_not_having_request_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[50276fa]
+  'include_standard,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[5094ed6]
+  'include_maybe_having_response_body,include_non_standard,include_not_having_request_body => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[528781f]
+  'include_maybe_having_response_body,include_standard,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[530b220]
+  'include_non_idempotent,include_non_standard,include_not_having_response_body => BREW,CONNECT,HEAD,PATCH,POST,REMIX,TRACE'
+# ---
+# name: test_methods[542866f]
+  'include_maybe_having_response_body,include_non_idempotent,include_non_standard => BREW,CONNECT,DELETE,PATCH,POST,PUT,REMIX'
+# ---
+# name: test_methods[553df20]
+  'include_having_response_body,include_non_idempotent => CONNECT,GET,OPTIONS,PATCH,POST'
+# ---
+# name: test_methods[55bd5be]
+  'include_maybe_having_response_body,include_non_idempotent,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[56aa139]
+  'include_not_having_request_body,include_safe,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[56bc78d]
+  'include_idempotent,include_not_having_request_body,include_not_having_response_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PUT,TRACE'
+# ---
+# name: test_methods[56d9de5]
+  'include_maybe_having_request_body,include_not_having_response_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[57297b6]
+  'include_having_response_body,include_idempotent,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[5748c92]
+  'include_having_request_body,include_safe,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[5783c09]
+  'include_having_response_body,include_non_standard,include_unsafe => BREW,CONNECT,DELETE,GET,OPTIONS,PATCH,POST,PUT,REMIX'
+# ---
+# name: test_methods[583bbd7]
+  'include_having_response_body => GET,OPTIONS,POST'
+# ---
+# name: test_methods[5936141]
+  'include_having_request_body,include_maybe_having_response_body,include_non_idempotent => CONNECT,DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[5c55ccf]
+  'include_idempotent,include_maybe_having_request_body => DELETE,GET,HEAD,OPTIONS,PUT,TRACE'
+# ---
+# name: test_methods[5c8e045]
+  'include_non_idempotent,include_non_standard,include_standard => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[5cdfc3d]
+  'include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,TRACE'
+# ---
+# name: test_methods[5d9a203]
+  'include_having_response_body,include_non_idempotent,include_unsafe => CONNECT,DELETE,GET,OPTIONS,PATCH,POST,PUT'
+# ---
+# name: test_methods[5dddaf4]
+  'include_not_having_request_body,include_not_having_response_body,include_safe => CONNECT,DELETE,GET,HEAD,OPTIONS,TRACE'
+# ---
+# name: test_methods[5f19fba]
+  'include_maybe_having_request_body,include_safe,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[5f6e523]
+  'include_maybe_having_request_body,include_maybe_having_response_body,include_non_standard => BREW,DELETE,PATCH,PUT,REMIX'
+# ---
+# name: test_methods[621a3b9]
+  'include_maybe_having_response_body,include_not_having_request_body,include_safe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,PUT,TRACE'
+# ---
+# name: test_methods[62bae1f]
+  'include_having_response_body,include_maybe_having_response_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[6384110]
+  'include_having_request_body,include_idempotent,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[643b57a]
+  'include_idempotent,include_non_idempotent,include_not_having_response_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[644ccc3]
+  'include_idempotent,include_non_standard,include_unsafe => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[6518f49]
+  'include_non_idempotent,include_not_having_request_body,include_safe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,TRACE'
+# ---
+# name: test_methods[652a0c7]
+  'include_non_idempotent,include_safe => CONNECT,GET,HEAD,OPTIONS,PATCH,POST,TRACE'
+# ---
+# name: test_methods[653d1df]
+  'include_idempotent,include_not_having_request_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[6697e12]
+  'include_idempotent,include_non_standard,include_not_having_response_body => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[67c3735]
+  'include_having_response_body,include_idempotent,include_not_having_response_body => CONNECT,DELETE,GET,HEAD,OPTIONS,POST,PUT,TRACE'
+# ---
+# name: test_methods[689fa4e]
+  'include_having_request_body,include_non_standard,include_not_having_request_body => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[68fbb6d]
+  'include_maybe_having_response_body => DELETE,PATCH,PUT'
+# ---
+# name: test_methods[69552dc]
+  'include_having_response_body,include_maybe_having_request_body,include_not_having_response_body => CONNECT,GET,HEAD,OPTIONS,POST,TRACE'
+# ---
+# name: test_methods[6a0abb2]
+  'include_having_response_body,include_maybe_having_request_body,include_maybe_having_response_body => DELETE,GET,OPTIONS,PATCH,POST,PUT'
+# ---
+# name: test_methods[6a53f95]
+  'include_having_request_body,include_safe => GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[6b0ca06]
+  'include_having_response_body,include_maybe_having_request_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[6c63684]
+  'include_having_response_body,include_safe => GET,HEAD,OPTIONS,POST,TRACE'
+# ---
+# name: test_methods[6c75daf]
+  'include_maybe_having_response_body,include_non_standard,include_safe => BREW,DELETE,GET,HEAD,OPTIONS,PATCH,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[6e01e2d]
+  'include_non_idempotent => CONNECT,PATCH,POST'
+# ---
+# name: test_methods[6e6c5eb]
+  'include_having_response_body,include_idempotent,include_non_idempotent => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[6e7f4f9]
+  'include_having_response_body,include_non_standard,include_not_having_response_body => BREW,CONNECT,GET,HEAD,OPTIONS,POST,REMIX,TRACE'
+# ---
+# name: test_methods[6feab2a]
+  'include_having_response_body,include_standard,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[7040fb5]
+  'include_having_response_body,include_not_having_request_body,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[70904ff]
+  'include_having_response_body,include_not_having_response_body => CONNECT,GET,HEAD,OPTIONS,POST,TRACE'
+# ---
+# name: test_methods[70ce85e]
+  'include_having_request_body => PATCH,POST,PUT'
+# ---
+# name: test_methods[719520b]
+  'include_having_response_body,include_not_having_request_body,include_safe => CONNECT,DELETE,GET,HEAD,OPTIONS,POST,TRACE'
+# ---
+# name: test_methods[72cf282]
+  'include_having_request_body,include_not_having_request_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[72fe4d4]
+  'include_having_response_body,include_maybe_having_response_body,include_non_idempotent => CONNECT,DELETE,GET,OPTIONS,PATCH,POST,PUT'
+# ---
+# name: test_methods[76fa878]
+  'include_maybe_having_response_body,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,PUT,TRACE'
+# ---
+# name: test_methods[79ad06a]
+  'include_maybe_having_response_body,include_non_standard => BREW,DELETE,PATCH,PUT,REMIX'
+# ---
+# name: test_methods[7ad0a03]
+  'include_having_response_body,include_not_having_request_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[7ba1555]
+  'include_maybe_having_response_body,include_non_idempotent,include_safe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[7bc4b76]
+  'include_having_response_body,include_maybe_having_response_body,include_non_standard => BREW,DELETE,GET,OPTIONS,PATCH,POST,PUT,REMIX'
+# ---
+# name: test_methods[7be3f01]
+  'include_maybe_having_request_body,include_non_idempotent,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[7cce809]
+  'include_idempotent,include_maybe_having_response_body,include_non_idempotent => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[7cf4911]
+  'include_having_request_body,include_maybe_having_response_body => DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[7e09c44]
+  'include_idempotent,include_safe => DELETE,GET,HEAD,OPTIONS,PUT,TRACE'
+# ---
+# name: test_methods[7e2d064]
+  'include_having_response_body,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,POST,TRACE'
+# ---
+# name: test_methods[7f80f47]
+  'include_having_response_body,include_idempotent => DELETE,GET,HEAD,OPTIONS,POST,PUT,TRACE'
+# ---
+# name: test_methods[7f97187]
+  'include_having_request_body,include_unsafe => CONNECT,DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[804906e]
+  'include_safe,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[812a893]
+  'include_having_request_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[81e9d09]
+  'include_maybe_having_request_body,include_non_idempotent,include_not_having_response_body => CONNECT,HEAD,PATCH,POST,TRACE'
+# ---
+# name: test_methods[8212565]
+  'include_non_idempotent,include_not_having_request_body,include_not_having_response_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,TRACE'
+# ---
+# name: test_methods[8398983]
+  'include_maybe_having_request_body,include_not_having_response_body => CONNECT,HEAD,TRACE'
+# ---
+# name: test_methods[85387e0]
+  'include_having_response_body,include_idempotent,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[881bff4]
+  'include_having_response_body,include_non_standard => BREW,GET,OPTIONS,POST,REMIX'
+# ---
+# name: test_methods[8985a7f]
+  'include_idempotent,include_not_having_response_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PUT,TRACE'
+# ---
+# name: test_methods[8bd3d2b]
+  'include_having_response_body,include_maybe_having_request_body,include_unsafe => CONNECT,DELETE,GET,OPTIONS,PATCH,POST,PUT'
+# ---
+# name: test_methods[8d9527b]
+  'include_non_standard,include_not_having_request_body,include_not_having_response_body => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,REMIX,TRACE'
+# ---
+# name: test_methods[8e2c7a5]
+  'include_non_standard,include_unsafe => BREW,CONNECT,DELETE,PATCH,POST,PUT,REMIX'
+# ---
+# name: test_methods[8e9f140]
+  'include_having_request_body,include_maybe_having_request_body,include_non_standard => BREW,PATCH,POST,PUT,REMIX'
+# ---
+# name: test_methods[8ea0b21]
+  'include_non_standard,include_not_having_request_body,include_unsafe => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[8f3f109]
+  'include_having_request_body,include_maybe_having_request_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[8f4d7d3]
+  'include_having_request_body,include_non_standard => BREW,PATCH,POST,PUT,REMIX'
+# ---
+# name: test_methods[90ef577]
+  'include_having_response_body,include_maybe_having_request_body,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,POST,TRACE'
+# ---
+# name: test_methods[9154bc7]
+  'include_having_response_body,include_maybe_having_response_body,include_not_having_response_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[92ccaaa]
+  'include_idempotent,include_not_having_response_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[934e567]
+  'include_having_request_body,include_having_response_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[93b343a]
+  'include_idempotent,include_non_idempotent,include_non_standard => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[93ca027]
+  'include_idempotent,include_not_having_request_body,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[93f9757]
+  'include_idempotent,include_maybe_having_request_body,include_non_idempotent => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[940fdba]
+  'include_non_standard,include_safe,include_unsafe => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[94e878d]
+  'include_non_standard,include_standard => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[96c31c9]
+  'include_maybe_having_request_body,include_standard,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[9718568]
+  'include_maybe_having_request_body,include_maybe_having_response_body,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,PUT,TRACE'
+# ---
+# name: test_methods[9872828]
+  'include_having_response_body,include_not_having_response_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[98ea31b]
+  'include_idempotent,include_non_idempotent,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[99c5233]
+  'include_unsafe => CONNECT,DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[99ce2f8]
+  'include_having_request_body,include_maybe_having_response_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[9ab47c9]
+  'include_maybe_having_response_body,include_non_idempotent,include_not_having_response_body => CONNECT,DELETE,HEAD,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[9b3821e]
+  'include_not_having_response_body,include_unsafe => CONNECT,DELETE,HEAD,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[9c234f0]
+  'include_maybe_having_request_body,include_not_having_request_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[9caa5d8]
+  'include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[9cf867a]
+  'include_having_request_body,include_idempotent,include_not_having_response_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[9d0c60a]
+  'include_non_idempotent,include_not_having_request_body,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[9ff36df]
+  'include_having_response_body,include_maybe_having_request_body,include_non_idempotent => CONNECT,GET,OPTIONS,PATCH,POST'
+# ---
+# name: test_methods[a096cde]
+  'include_maybe_having_request_body,include_non_standard,include_not_having_response_body => BREW,CONNECT,HEAD,REMIX,TRACE'
+# ---
+# name: test_methods[a10fe4a]
+  'include_maybe_having_response_body,include_non_idempotent => CONNECT,DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[a130790]
+  'include_non_standard,include_not_having_response_body,include_unsafe => BREW,CONNECT,DELETE,HEAD,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[a1bcb86]
+  'include_maybe_having_request_body,include_non_idempotent,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,TRACE'
+# ---
+# name: test_methods[a1c8a06]
+  'include_maybe_having_request_body,include_non_idempotent,include_non_standard => BREW,CONNECT,PATCH,POST,REMIX'
+# ---
+# name: test_methods[a21b280]
+  'include_idempotent,include_maybe_having_response_body,include_safe => DELETE,GET,HEAD,OPTIONS,PATCH,PUT,TRACE'
+# ---
+# name: test_methods[a336235]
+  'include_idempotent,include_maybe_having_request_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[a61585f]
+  'include_idempotent,include_non_standard,include_standard => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[a9bbb5b]
+  'include_having_response_body,include_non_idempotent,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[ab4bc75]
+  'include_having_response_body,include_not_having_response_body,include_safe => CONNECT,GET,HEAD,OPTIONS,POST,TRACE'
+# ---
+# name: test_methods[ab5ab1e]
+  'include_having_request_body,include_non_idempotent,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[aba23cc]
+  'include_maybe_having_request_body,include_maybe_having_response_body => DELETE,PATCH,PUT'
+# ---
+# name: test_methods[acab7dc]
+  'include_safe,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[ad6155c]
+  'include_idempotent,include_non_standard,include_not_having_request_body => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[ad679b1]
+  'include_having_request_body,include_non_idempotent,include_unsafe => CONNECT,DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[ad727d0]
+  'include_maybe_having_request_body,include_non_standard,include_standard => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[ad82855]
+  'include_idempotent,include_not_having_request_body,include_safe => CONNECT,DELETE,GET,HEAD,OPTIONS,PUT,TRACE'
+# ---
+# name: test_methods[ae81a8a]
+  'include_having_request_body,include_maybe_having_request_body,include_not_having_response_body => CONNECT,HEAD,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[aeb1c3d]
+  'include_having_request_body,include_having_response_body,include_not_having_response_body => CONNECT,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[b22740b]
+  'include_maybe_having_response_body,include_non_idempotent,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[b31bdd3]
+  'include_non_idempotent,include_non_standard,include_unsafe => BREW,CONNECT,DELETE,PATCH,POST,PUT,REMIX'
+# ---
+# name: test_methods[b325722]
+  'include_idempotent,include_maybe_having_request_body,include_maybe_having_response_body => DELETE,GET,HEAD,OPTIONS,PATCH,PUT,TRACE'
+# ---
+# name: test_methods[b4900a0]
+  'include_having_request_body,include_maybe_having_request_body,include_non_idempotent => CONNECT,PATCH,POST,PUT'
+# ---
+# name: test_methods[b716df0]
+  'include_maybe_having_response_body,include_not_having_response_body,include_safe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,PUT,TRACE'
+# ---
+# name: test_methods[b791583]
+  'include_not_having_response_body => CONNECT,HEAD,TRACE'
+# ---
+# name: test_methods[b7b1639]
+  'include_idempotent,include_non_idempotent,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[b7b8d20]
+  'include_having_request_body,include_maybe_having_request_body,include_unsafe => CONNECT,DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[b7eb975]
+  'include_having_request_body,include_non_idempotent => CONNECT,PATCH,POST,PUT'
+# ---
+# name: test_methods[b891a21]
+  'include_non_idempotent,include_safe,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[b96cb50]
+  'include_having_response_body,include_non_standard,include_standard => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[b9ee284]
+  'include_having_response_body,include_idempotent,include_maybe_having_request_body => DELETE,GET,HEAD,OPTIONS,POST,PUT,TRACE'
+# ---
+# name: test_methods[b9f231c]
+  'include_having_request_body,include_maybe_having_request_body,include_safe => GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[bab2ab3]
+  'include_maybe_having_request_body,include_not_having_request_body,include_safe => CONNECT,DELETE,GET,HEAD,OPTIONS,TRACE'
+# ---
+# name: test_methods[bb0b2fe]
+  'include_having_response_body,include_unsafe => CONNECT,DELETE,GET,OPTIONS,PATCH,POST,PUT'
+# ---
+# name: test_methods[bb56a68]
+  'include_non_standard,include_not_having_response_body,include_safe => BREW,CONNECT,GET,HEAD,OPTIONS,REMIX,TRACE'
+# ---
+# name: test_methods[bba3e2e]
+  'include_idempotent,include_safe,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[bd10651]
+  'include_having_request_body,include_maybe_having_request_body,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[bd2a3e5]
+  'include_not_having_request_body,include_not_having_response_body,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[bd5670e]
+  'include_maybe_having_response_body,include_safe,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[bdefc84]
+  'include_maybe_having_request_body,include_not_having_response_body,include_safe => CONNECT,GET,HEAD,OPTIONS,TRACE'
+# ---
+# name: test_methods[be625ad]
+  'include_idempotent,include_maybe_having_response_body,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,PUT,TRACE'
+# ---
+# name: test_methods[be77ed5]
+  'include_non_idempotent,include_safe,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[bf4ac8b]
+  'include_idempotent => DELETE,GET,HEAD,OPTIONS,PUT,TRACE'
+# ---
+# name: test_methods[bfab079]
+  'include_having_response_body,include_maybe_having_response_body,include_safe => DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[c02dd9f]
+  'include_non_idempotent,include_standard,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[c12d67f]
+  'include_idempotent,include_maybe_having_request_body,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PUT,TRACE'
+# ---
+# name: test_methods[c311656]
+  'include_non_idempotent,include_not_having_response_body,include_unsafe => CONNECT,DELETE,HEAD,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[c3e5758]
+  'include_having_request_body,include_non_standard,include_standard => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[c511b67]
+  'include_having_request_body,include_maybe_having_response_body,include_unsafe => CONNECT,DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[c5655d5]
+  'include_not_having_response_body,include_standard,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[c5e4bcc]
+  'include_having_request_body,include_having_response_body,include_non_idempotent => CONNECT,GET,OPTIONS,PATCH,POST,PUT'
+# ---
+# name: test_methods[c8dc22c]
+  'include_maybe_having_response_body,include_safe,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[c9cf668]
+  'include_having_response_body,include_maybe_having_response_body,include_unsafe => CONNECT,DELETE,GET,OPTIONS,PATCH,POST,PUT'
+# ---
+# name: test_methods[cb4bd7d]
+  'include_non_standard,include_not_having_response_body => BREW,CONNECT,HEAD,REMIX,TRACE'
+# ---
+# name: test_methods[cb4c255]
+  'include_having_request_body,include_having_response_body => GET,OPTIONS,PATCH,POST,PUT'
+# ---
+# name: test_methods[cc51a51]
+  'include_having_request_body,include_maybe_having_request_body,include_maybe_having_response_body => DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[cc78d02]
+  'include_idempotent,include_maybe_having_response_body,include_non_standard => BREW,DELETE,GET,HEAD,OPTIONS,PATCH,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[cd5574e]
+  'include_maybe_having_request_body,include_not_having_request_body,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[cde96cb]
+  'include_non_idempotent,include_not_having_response_body,include_safe => CONNECT,GET,HEAD,OPTIONS,PATCH,POST,TRACE'
+# ---
+# name: test_methods[cfce5ad]
+  'include_maybe_having_request_body,include_safe => GET,HEAD,OPTIONS,TRACE'
+# ---
+# name: test_methods[d143b76]
+  'include_idempotent,include_safe,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[d4b40ff]
+  'include_not_having_request_body,include_standard,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[d511f0e]
+  'include_safe => GET,HEAD,OPTIONS,TRACE'
+# ---
+# name: test_methods[d576c96]
+  'include_idempotent,include_maybe_having_response_body,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[d5d8022]
+  'include_maybe_having_response_body,include_not_having_request_body,include_not_having_response_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,PUT,TRACE'
+# ---
+# name: test_methods[d976e41]
+  'include_having_request_body,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[da4d62d]
+  'include_having_response_body,include_not_having_request_body,include_not_having_response_body => CONNECT,DELETE,GET,HEAD,OPTIONS,POST,TRACE'
+# ---
+# name: test_methods[da57300]
+  'include_maybe_having_request_body,include_non_standard,include_unsafe => BREW,CONNECT,DELETE,PATCH,POST,PUT,REMIX'
+# ---
+# name: test_methods[db5156d]
+  'include_having_request_body,include_non_standard,include_not_having_response_body => BREW,CONNECT,HEAD,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[db5f748]
+  'include_having_request_body,include_safe,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[dc8e191]
+  'include_non_standard,include_not_having_request_body => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,REMIX,TRACE'
+# ---
+# name: test_methods[dde4f76]
+  'include_having_response_body,include_non_idempotent,include_non_standard => BREW,CONNECT,GET,OPTIONS,PATCH,POST,REMIX'
+# ---
+# name: test_methods[dea7260]
+  'include_safe,include_standard,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[df68731]
+  'include_non_idempotent,include_not_having_response_body => CONNECT,HEAD,PATCH,POST,TRACE'
+# ---
+# name: test_methods[dfa8b94]
+  'include_having_request_body,include_maybe_having_response_body,include_not_having_response_body => CONNECT,DELETE,HEAD,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[e08abd1]
+  'include_maybe_having_request_body,include_maybe_having_response_body,include_unsafe => CONNECT,DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[e217019]
+  'include_having_response_body,include_idempotent,include_safe => DELETE,GET,HEAD,OPTIONS,POST,PUT,TRACE'
+# ---
+# name: test_methods[e2ca20e]
+  'include_having_request_body,include_non_idempotent,include_safe => CONNECT,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[e4f46a0]
+  'include_having_request_body,include_idempotent,include_non_standard => BREW,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[e51fed8]
+  'include_idempotent,include_not_having_response_body,include_safe => CONNECT,DELETE,GET,HEAD,OPTIONS,PUT,TRACE'
+# ---
+# name: test_methods[e5333ec]
+  'include_having_request_body,include_having_response_body,include_maybe_having_request_body => GET,OPTIONS,PATCH,POST,PUT'
+# ---
+# name: test_methods[e58b99e]
+  'include_having_request_body,include_non_standard,include_unsafe => BREW,CONNECT,DELETE,PATCH,POST,PUT,REMIX'
+# ---
+# name: test_methods[e5a49c5]
+  'include_idempotent,include_maybe_having_response_body,include_not_having_response_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,PUT,TRACE'
+# ---
+# name: test_methods[e5e812f]
+  'include_having_request_body,include_idempotent => DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[e5f13d4]
+  'include_having_response_body,include_idempotent,include_maybe_having_response_body => DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[e5f6902]
+  'include_maybe_having_response_body,include_not_having_response_body,include_unsafe => CONNECT,DELETE,HEAD,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[e6b03b2]
+  'include_maybe_having_response_body,include_not_having_request_body,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[e7b90cb]
+  'include_non_idempotent,include_not_having_request_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[e8b46c4]
+  'include_not_having_request_body,include_not_having_response_body,include_standard => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[e927028]
+  'include_having_response_body,include_non_standard,include_not_having_request_body => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,POST,REMIX,TRACE'
+# ---
+# name: test_methods[ea35f5e]
+  'include_non_standard,include_standard,include_unsafe => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,REMIX,TRACE'
+# ---
+# name: test_methods[ea9d5bd]
+  'include_non_standard,include_safe => BREW,GET,HEAD,OPTIONS,REMIX,TRACE'
+# ---
+# name: test_methods[eccea02]
+  'include_not_having_response_body,include_safe,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[ed34c54]
+  'include_not_having_request_body,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[ee8be70]
+  'include_maybe_having_request_body,include_non_standard,include_not_having_request_body => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,REMIX,TRACE'
+# ---
+# name: test_methods[f061085]
+  'include_maybe_having_request_body,include_maybe_having_response_body,include_non_idempotent => CONNECT,DELETE,PATCH,POST,PUT'
+# ---
+# name: test_methods[f0aa2bb]
+  'include_having_request_body,include_non_idempotent,include_non_standard => BREW,CONNECT,PATCH,POST,PUT,REMIX'
+# ---
+# name: test_methods[f367704]
+  'include_having_request_body,include_not_having_request_body,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[f42e0f7]
+  'include_having_request_body,include_standard,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[f50811d]
+  'include_having_response_body,include_non_idempotent,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,TRACE'
+# ---
+# name: test_methods[f563c77]
+  'include_having_request_body,include_having_response_body,include_unsafe => CONNECT,DELETE,GET,OPTIONS,PATCH,POST,PUT'
+# ---
+# name: test_methods[f7c7fdc]
+  'include_maybe_having_request_body,include_not_having_response_body,include_unsafe => CONNECT,DELETE,HEAD,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[f7dc3b6]
+  'include_non_standard,include_not_having_request_body,include_safe => BREW,CONNECT,DELETE,GET,HEAD,OPTIONS,REMIX,TRACE'
+# ---
+# name: test_methods[f81e8f4]
+  'include_maybe_having_request_body,include_non_idempotent,include_safe => CONNECT,GET,HEAD,OPTIONS,PATCH,POST,TRACE'
+# ---
+# name: test_methods[fa54134]
+  'include_maybe_having_response_body,include_not_having_response_body => CONNECT,DELETE,HEAD,PATCH,PUT,TRACE'
+# ---
+# name: test_methods[fbfc624]
+  'include_maybe_having_request_body,include_non_standard => BREW,REMIX'
+# ---
+# name: test_methods[fc9cbc5]
+  'include_having_request_body,include_not_having_response_body => CONNECT,HEAD,PATCH,POST,PUT,TRACE'
+# ---
+# name: test_methods[fd11929]
+  'include_maybe_having_request_body,include_not_having_request_body => CONNECT,DELETE,GET,HEAD,OPTIONS,TRACE'
+# ---
+# name: test_methods[fe0b359]
+  'include_having_request_body,include_maybe_having_request_body => PATCH,POST,PUT'
+# ---
+# name: test_methods[fedb1aa]
+  'include_having_request_body,include_idempotent,include_unsafe => CONNECT,DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT,TRACE'
+# ---
