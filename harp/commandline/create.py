@@ -10,7 +10,10 @@ def create(template):
     """Creates a new project using cookiecutter."""
 
     if not check_packages("cookiecutter"):
-        raise click.UsageError("You need to install cookiecutter to use this command (or use the harp[dev] extra).")
+        raise click.UsageError(
+            "You need to install cookiecutter to use this command (or use the `dev` extra, for example using "
+            "`pip install harp-proxy[dev]` or `poetry install -E dev`)."
+        )
 
     from cookiecutter.main import cookiecutter
 
