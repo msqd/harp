@@ -24,16 +24,28 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
     label: rating.label,
     className: rating.className,
   }))
-  const markValueToThreshold = new Map([...tpdexScale].map((rating, index) => [index * 10, rating.threshold]))
-  const maxKey = Math.max(...Array.from(markValueToThreshold.keys()))
-  const minKey = Math.min(...Array.from(markValueToThreshold.keys()))
-  markValueToThreshold.set(maxKey, undefined)
-  markValueToThreshold.set(minKey, undefined)
+  const markValueToThresholdForMin = new Map([...tpdexScale].map((rating, index) => [index * 10, rating.threshold]))
+  const markValueToThresholdForMax = new Map(
+    [...tpdexScale].map((rating, index) => [(index + 1) * 10, rating.threshold ? rating.threshold - 1 : undefined]),
+  )
+  const maxKey = Math.max(...Array.from(markValueToThresholdForMin.keys()))
+  const minKey = Math.min(...Array.from(markValueToThresholdForMin.keys()))
 
-  const thresholdToMarkValue = new Map<number, number>()
-  markValueToThreshold.forEach((value, key) => {
+  // remove the last mark for min and the first mark for max
+  markValueToThresholdForMin.set(maxKey, undefined)
+  markValueToThresholdForMax.set(minKey, undefined)
+
+  const thresholdToMarkValueforMin = new Map<number, number>()
+  markValueToThresholdForMin.forEach((value, key) => {
     if (value != undefined) {
-      thresholdToMarkValue.set(value, key)
+      thresholdToMarkValueforMin.set(value, key)
+    }
+  })
+
+  const thresholdToMarkValueforMax = new Map<number, number>()
+  markValueToThresholdForMax.forEach((value, key) => {
+    if (value != undefined) {
+      thresholdToMarkValueforMax.set(value, key)
     }
   })
 
@@ -57,8 +69,8 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
   }
 
   const setTpdexValues = (value: MinMaxFilter | undefined) => {
-    const maxValue = markValueToThreshold.get(value?.min ?? -1)
-    const minValue = markValueToThreshold.get(value?.max ?? -1)
+    const maxValue = markValueToThresholdForMax.get(value?.min ?? -1)
+    const minValue = markValueToThresholdForMin.get(value?.max ?? -1)
 
     if (minValue != null) {
       searchParams.set("tpdexmin", minValue.toString())
@@ -138,8 +150,8 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
           title="Performances Index"
           name="performanceIndex"
           values={{
-            min: thresholdToMarkValue.get((filters["tpdex"] as MinMaxFilter)?.max ?? 0),
-            max: thresholdToMarkValue.get((filters["tpdex"] as MinMaxFilter)?.min ?? 100),
+            min: thresholdToMarkValueforMax.get((filters["tpdex"] as MinMaxFilter)?.max ?? 0),
+            max: thresholdToMarkValueforMin.get((filters["tpdex"] as MinMaxFilter)?.min ?? 100),
           }}
           setValues={setTpdexValues}
           marks={marks}
