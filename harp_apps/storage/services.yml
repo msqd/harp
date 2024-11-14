@@ -16,6 +16,10 @@ services:
     constructor: from_url
     arguments: { "url": [!cfg "url"] }
 
+  - name: "storage.worker"
+    description: "Storage async worker"
+    base: harp_apps.storage.worker.StorageAsyncWorkerQueue
+
   - condition: [!cfg "blobs.type == 'sql'", !!bool "true"]
     services:
       - name: "storage.blobs"

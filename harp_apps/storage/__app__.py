@@ -38,7 +38,6 @@ async def _run_migrations(engine: AsyncEngine):
 async def on_bind(event: OnBindEvent):
     # load service definitions, bound to our settings
     event.container.load(Path(dirname(__file__)) / "services.yml", bind_settings=event.settings["storage"])
-    event.container.add_singleton(StorageAsyncWorkerQueue)
 
 
 async def on_bound(event: OnBoundEvent):
@@ -51,7 +50,8 @@ async def on_bound(event: OnBoundEvent):
     await storage.initialize()
     await storage.ready()
     worker = event.provider.get(StorageAsyncWorkerQueue)
-    worker.register_events(event.dispatcher)
+    if event.dispatcher:
+        worker.register_events(event.dispatcher)
 
 
 async def on_shutdown(event: OnShutdownEvent):
