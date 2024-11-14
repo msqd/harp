@@ -13,6 +13,7 @@
     'docs/apps/notifications/examples/dashboard.yml',
     'docs/apps/notifications/examples/main.yml',
     'docs/apps/proxy/examples/basics.yml',
+    'docs/apps/proxy/examples/custom_controller.yml',
     'docs/apps/proxy/examples/full-shorthand.yml',
     'docs/apps/proxy/examples/full.yml',
     'docs/apps/proxy/examples/multiple.yml',
@@ -218,6 +219,27 @@
   
   '''
 # ---
+# name: test_load_documentation_example[docs/apps/proxy/examples/custom_controller.yml]
+  '''
+  dashboard: {}
+  harp_apps.contrib.sentry: {}
+  http_client: {}
+  proxy:
+    endpoints:
+    - controller:
+        logging: false
+        name: httpbin_controller
+        type: harp_apps.proxy.controllers.HttpProxyController
+      description: An informative description of the endpoint (optional)
+      name: httpbin
+      port: 4000
+      remote:
+        endpoints:
+        - url: https://api1.example.com/
+  storage: {}
+  
+  '''
+# ---
 # name: test_load_documentation_example[docs/apps/proxy/examples/full-shorthand.yml]
   '''
   dashboard: {}
@@ -242,7 +264,8 @@
   http_client: {}
   proxy:
     endpoints:
-    - description: A very informative description
+    - controller: null
+      description: A very informative description
       name: httpbins
       port: 4000
       remote:
@@ -388,7 +411,11 @@
   http_client: {}
   proxy:
     endpoints:
-    - name: my-endpoint
+    - controller:
+        dispatcher:
+          type: IAsyncEventDispatcher
+        type: harp_apps.proxy.controllers.HttpProxyController
+      name: my-endpoint
       port: 4000
       remote:
         break_on:

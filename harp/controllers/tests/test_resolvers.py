@@ -10,8 +10,9 @@ def test_add():
     http_client = AsyncClient()
     endpoint = Endpoint.from_kwargs(settings={"name": "test-endpoint", "port": 8080, "url": "http://example.com/"})
     resolver = ProxyControllerResolver()
+    controller = HttpProxyController(http_client=http_client, remote=endpoint.remote, name=endpoint.settings.name)
 
-    resolver.add(endpoint, http_client=http_client, ControllerType=HttpProxyController)
+    resolver.add(endpoint, controller=controller)
     assert resolver.endpoints["test-endpoint"] == endpoint
     assert resolver.ports == (8080,)
 
@@ -20,7 +21,8 @@ async def test_resolve():
     http_client = AsyncClient()
     endpoint = Endpoint.from_kwargs(settings={"name": "test-endpoint", "port": 8080, "url": "http://example.com/"})
     resolver = ProxyControllerResolver()
-    resolver.add(endpoint, http_client=http_client, ControllerType=HttpProxyController)
+    controller = HttpProxyController(http_client=http_client, remote=endpoint.remote, name=endpoint.settings.name)
+    resolver.add(endpoint, controller=controller)
 
     request = HttpRequest(server_port=8080)
     controller = await resolver.resolve(request)
@@ -36,7 +38,8 @@ def test_resolve_from_endpoint_name():
     http_client = AsyncClient()
     endpoint = Endpoint.from_kwargs(settings={"name": "test-endpoint", "port": 8080, "url": "http://example.com/"})
     resolver = ProxyControllerResolver()
-    resolver.add(endpoint, http_client=http_client, ControllerType=HttpProxyController)
+    controller = HttpProxyController(http_client=http_client, remote=endpoint.remote, name=endpoint.settings.name)
+    resolver.add(endpoint, controller=controller)
 
     controller = resolver.resolve_from_endpoint_name("test-endpoint")
     assert isinstance(controller, HttpProxyController)

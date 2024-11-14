@@ -80,7 +80,6 @@
     ''',
     'harp_apps.proxy.settings.endpoint.Endpoint': '''
       settings:
-        controller: null
         description: null
         name: api
         port: 4000

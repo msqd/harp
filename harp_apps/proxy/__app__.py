@@ -7,11 +7,9 @@ import asyncio
 from asyncio import TaskGroup
 from typing import cast
 
-from httpx import AsyncClient
-
 from harp.config import Application
 from harp.config.events import OnBindEvent, OnBoundEvent, OnShutdownEvent
-from harp.utils.packages import import_string
+from harp.services.resolvers import ServiceResolver
 from harp.utils.services import factory
 
 from .settings import Proxy, ProxySettings
@@ -34,25 +32,34 @@ async def create_background_task_group(coroutines):
 
 
 async def on_bind(event: OnBindEvent):
+    settings = event.settings.get("proxy")
+    # add a controller service instance for each endpoint
+    for endpoint in settings.endpoints:
+        if endpoint.controller is not None:
+            controller = endpoint.controller
+            name = f"proxy.controllers.{endpoint.name}_controller"
+            resolver = ServiceResolver(event.container, controller.to_service_definition(name, lifestyle="singleton"))
+            event.container._map[name] = resolver
     event.container.add_singleton(Proxy, cast(type, ProxyFactory))
 
 
 async def on_bound(event: OnBoundEvent):
     proxy: Proxy = event.provider.get(Proxy)
-    http_client: AsyncClient = event.provider.get(AsyncClient)
 
     for endpoint in proxy.endpoints:
-        ControllerType = None
-        if endpoint.settings.controller is not None:
-            ControllerType = import_string(endpoint.settings.controller)
-        event.resolver.add(
-            endpoint, dispatcher=event.dispatcher, http_client=http_client, ControllerType=ControllerType
-        )
+        name = endpoint.settings.name
+        event.provider._map[f"proxy.controllers.{name}_controller"].bind(remote=endpoint.remote, name=name)
+        controller = event.provider.get(f"proxy.controllers.{name}_controller")
+        event.resolver.add(endpoint, controller=controller)
 
     event.provider.set(
         PROXY_HEALTHCHECKS_TASK,
         await create_background_task_group(
-            [endpoint.remote.check_forever() for endpoint in proxy.endpoints if endpoint.remote.probe is not None]
+            [
+                endpoint.remote.check_forever()
+                for endpoint in proxy.endpoints
+                if (endpoint.remote and endpoint.remote.probe)
+            ]
         ),
     )
 

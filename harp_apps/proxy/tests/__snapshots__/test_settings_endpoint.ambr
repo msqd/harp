@@ -302,11 +302,73 @@
         'title': 'RemoteSettings',
         'type': 'object',
       }),
+      'Service': dict({
+        'additionalProperties': True,
+        'description': 'A settings base class for service definitions.',
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'description': 'Arguments for the service constructor.',
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Base type for service definition.',
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Optional custom constructor for the service.',
+            'title': 'Constructor',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Type for service definition.',
+            'title': 'Type',
+          }),
+        }),
+        'title': 'Service',
+        'type': 'object',
+      }),
     }),
     'additionalProperties': False,
     'properties': dict({
       'controller': dict({
         'anyOf': list([
+          dict({
+            '$ref': '#/$defs/Service',
+          }),
           dict({
             'type': 'string',
           }),
@@ -314,7 +376,12 @@
             'type': 'null',
           }),
         ]),
-        'default': None,
+        'default': dict({
+          'dispatcher': dict({
+            'type': 'IAsyncEventDispatcher',
+          }),
+          'type': 'harp_apps.proxy.controllers.HttpProxyController',
+        }),
         'title': 'Controller',
       }),
       'description': dict({
@@ -667,11 +734,73 @@
         'title': 'RemoteSettings',
         'type': 'object',
       }),
+      'Service': dict({
+        'additionalProperties': True,
+        'description': 'A settings base class for service definitions.',
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'description': 'Arguments for the service constructor.',
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Base type for service definition.',
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Optional custom constructor for the service.',
+            'title': 'Constructor',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Type for service definition.',
+            'title': 'Type',
+          }),
+        }),
+        'title': 'Service',
+        'type': 'object',
+      }),
     }),
     'additionalProperties': False,
     'properties': dict({
       'controller': dict({
         'anyOf': list([
+          dict({
+            '$ref': '#/$defs/Service',
+          }),
           dict({
             'type': 'string',
           }),
@@ -679,7 +808,12 @@
             'type': 'null',
           }),
         ]),
-        'default': None,
+        'default': dict({
+          'dispatcher': dict({
+            'type': 'IAsyncEventDispatcher',
+          }),
+          'type': 'harp_apps.proxy.controllers.HttpProxyController',
+        }),
         'title': 'Controller',
       }),
       'description': dict({
@@ -1032,11 +1166,73 @@
         'title': 'RemoteSettings',
         'type': 'object',
       }),
+      'Service': dict({
+        'additionalProperties': True,
+        'description': 'A settings base class for service definitions.',
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'description': 'Arguments for the service constructor.',
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Base type for service definition.',
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Optional custom constructor for the service.',
+            'title': 'Constructor',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Type for service definition.',
+            'title': 'Type',
+          }),
+        }),
+        'title': 'Service',
+        'type': 'object',
+      }),
     }),
     'additionalProperties': False,
     'properties': dict({
       'controller': dict({
         'anyOf': list([
+          dict({
+            '$ref': '#/$defs/Service',
+          }),
           dict({
             'type': 'string',
           }),
@@ -1044,7 +1240,12 @@
             'type': 'null',
           }),
         ]),
-        'default': None,
+        'default': dict({
+          'dispatcher': dict({
+            'type': 'IAsyncEventDispatcher',
+          }),
+          'type': 'harp_apps.proxy.controllers.HttpProxyController',
+        }),
         'title': 'Controller',
       }),
       'description': dict({
@@ -1397,11 +1598,73 @@
         'title': 'RemoteSettings',
         'type': 'object',
       }),
+      'Service': dict({
+        'additionalProperties': True,
+        'description': 'A settings base class for service definitions.',
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'description': 'Arguments for the service constructor.',
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Base type for service definition.',
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Optional custom constructor for the service.',
+            'title': 'Constructor',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Type for service definition.',
+            'title': 'Type',
+          }),
+        }),
+        'title': 'Service',
+        'type': 'object',
+      }),
     }),
     'additionalProperties': False,
     'properties': dict({
       'controller': dict({
         'anyOf': list([
+          dict({
+            '$ref': '#/$defs/Service',
+          }),
           dict({
             'type': 'string',
           }),
@@ -1409,7 +1672,12 @@
             'type': 'null',
           }),
         ]),
-        'default': None,
+        'default': dict({
+          'dispatcher': dict({
+            'type': 'IAsyncEventDispatcher',
+          }),
+          'type': 'harp_apps.proxy.controllers.HttpProxyController',
+        }),
         'title': 'Controller',
       }),
       'description': dict({
@@ -1475,6 +1743,7 @@
               remote:
                 # see HttpRemote
                 ...
+              controller : optional controller Service definition, default to HttpProxyController
           
           A shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require
           fine-tuning the endpoint settings:
@@ -1490,13 +1759,21 @@
           'controller': dict({
             'anyOf': list([
               dict({
+                '$ref': '#/$defs/Service',
+              }),
+              dict({
                 'type': 'string',
               }),
               dict({
                 'type': 'null',
               }),
             ]),
-            'default': None,
+            'default': dict({
+              'dispatcher': dict({
+                'type': 'IAsyncEventDispatcher',
+              }),
+              'type': 'harp_apps.proxy.controllers.HttpProxyController',
+            }),
             'title': 'Controller',
           }),
           'description': dict({
@@ -1935,6 +2212,65 @@
           }),
         }),
         'title': 'RemoteSettings',
+        'type': 'object',
+      }),
+      'Service': dict({
+        'additionalProperties': True,
+        'description': 'A settings base class for service definitions.',
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'description': 'Arguments for the service constructor.',
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Base type for service definition.',
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Optional custom constructor for the service.',
+            'title': 'Constructor',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Type for service definition.',
+            'title': 'Type',
+          }),
+        }),
+        'title': 'Service',
         'type': 'object',
       }),
     }),
@@ -1970,6 +2306,7 @@
               remote:
                 # see HttpRemote
                 ...
+              controller : optional controller Service definition, default to HttpProxyController
           
           A shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require
           fine-tuning the endpoint settings:
@@ -1985,13 +2322,21 @@
           'controller': dict({
             'anyOf': list([
               dict({
+                '$ref': '#/$defs/Service',
+              }),
+              dict({
                 'type': 'string',
               }),
               dict({
                 'type': 'null',
               }),
             ]),
-            'default': None,
+            'default': dict({
+              'dispatcher': dict({
+                'type': 'IAsyncEventDispatcher',
+              }),
+              'type': 'harp_apps.proxy.controllers.HttpProxyController',
+            }),
             'title': 'Controller',
           }),
           'description': dict({
@@ -2451,6 +2796,65 @@
         'title': 'RemoteSettings',
         'type': 'object',
       }),
+      'Service': dict({
+        'additionalProperties': True,
+        'description': 'A settings base class for service definitions.',
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'description': 'Arguments for the service constructor.',
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Base type for service definition.',
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Optional custom constructor for the service.',
+            'title': 'Constructor',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Type for service definition.',
+            'title': 'Type',
+          }),
+        }),
+        'title': 'Service',
+        'type': 'object',
+      }),
     }),
     'properties': dict({
       'remote': dict({
@@ -2484,6 +2888,7 @@
               remote:
                 # see HttpRemote
                 ...
+              controller : optional controller Service definition, default to HttpProxyController
           
           A shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require
           fine-tuning the endpoint settings:
@@ -2499,13 +2904,21 @@
           'controller': dict({
             'anyOf': list([
               dict({
+                '$ref': '#/$defs/Service',
+              }),
+              dict({
                 'type': 'string',
               }),
               dict({
                 'type': 'null',
               }),
             ]),
-            'default': None,
+            'default': dict({
+              'dispatcher': dict({
+                'type': 'IAsyncEventDispatcher',
+              }),
+              'type': 'harp_apps.proxy.controllers.HttpProxyController',
+            }),
             'title': 'Controller',
           }),
           'description': dict({
@@ -2946,6 +3359,65 @@
         'title': 'RemoteSettings',
         'type': 'object',
       }),
+      'Service': dict({
+        'additionalProperties': True,
+        'description': 'A settings base class for service definitions.',
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'description': 'Arguments for the service constructor.',
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Base type for service definition.',
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Optional custom constructor for the service.',
+            'title': 'Constructor',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Type for service definition.',
+            'title': 'Type',
+          }),
+        }),
+        'title': 'Service',
+        'type': 'object',
+      }),
     }),
     'properties': dict({
       'remote': dict({
@@ -2979,6 +3451,7 @@
               remote:
                 # see HttpRemote
                 ...
+              controller : optional controller Service definition, default to HttpProxyController
           
           A shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require
           fine-tuning the endpoint settings:
@@ -2994,13 +3467,21 @@
           'controller': dict({
             'anyOf': list([
               dict({
+                '$ref': '#/$defs/Service',
+              }),
+              dict({
                 'type': 'string',
               }),
               dict({
                 'type': 'null',
               }),
             ]),
-            'default': None,
+            'default': dict({
+              'dispatcher': dict({
+                'type': 'IAsyncEventDispatcher',
+              }),
+              'type': 'harp_apps.proxy.controllers.HttpProxyController',
+            }),
             'title': 'Controller',
           }),
           'description': dict({
@@ -3458,6 +3939,65 @@
           }),
         }),
         'title': 'RemoteSettings',
+        'type': 'object',
+      }),
+      'Service': dict({
+        'additionalProperties': True,
+        'description': 'A settings base class for service definitions.',
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'description': 'Arguments for the service constructor.',
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Base type for service definition.',
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Optional custom constructor for the service.',
+            'title': 'Constructor',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Type for service definition.',
+            'title': 'Type',
+          }),
+        }),
+        'title': 'Service',
         'type': 'object',
       }),
     }),
