@@ -50,7 +50,7 @@ async def on_bound(event: OnBoundEvent):
         name = endpoint.settings.name
         event.provider._map[f"proxy.controllers.{name}_controller"].bind(remote=endpoint.remote, name=name)
         controller = event.provider.get(f"proxy.controllers.{name}_controller")
-        event.resolver.add(endpoint, controller=controller)
+        event.resolver.add_endpoint(endpoint, controller=controller)
 
     event.provider.set(
         PROXY_HEALTHCHECKS_TASK,

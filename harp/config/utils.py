@@ -1,6 +1,8 @@
 import importlib.util
+import os
 from typing import TYPE_CHECKING
 
+from .. import get_relative_path
 from .defaults import DEFAULT_NAMESPACES
 
 if TYPE_CHECKING:
@@ -52,6 +54,10 @@ def get_application(name: str) -> "Application":
             raise AttributeError(f'Application module for {name} does not contain a "application" attribute.')
 
         _applications[application_spec.name] = getattr(application_module, "application")
+        try:
+            _applications[application_spec.name].path = get_relative_path(os.path.dirname(application_spec.origin))
+        except TypeError:
+            _applications[application_spec.name].path = None
 
     if name not in _applications:
         raise RuntimeError(f'Unable to load application "{name}", application class definition not found.')

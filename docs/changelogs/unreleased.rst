@@ -7,6 +7,13 @@ Added
 * Proxy: it is now possible to add not exposed endpoints in the proxy configuration.
 * Proxy: Custom controller types with custom settings can be added to the proxy configuration as services definitions.
 
+Changed
+:::::::
+
+* API: the `EVENT_READY` and `EVENT_SHUTDOWN` core events now takes (and provides) an `ASGIApplication` insteas of an
+  `ASGIKernel` to avoid having a misleading interface when multiple ASGI middlewares are applied. The same change has
+  been propagated to ``System``/``SystemBuilder``.
+
 Fixed
 :::::
 

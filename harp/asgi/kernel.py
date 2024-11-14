@@ -43,7 +43,7 @@ class ASGIKernel:
     async def __call__(self, scope: Scope, receive: ASGIReceiveCallable, send: ASGISendCallable):
         asgi_type = scope.get("type", None)
 
-        with performances_observer("kernel", labels={"type": asgi_type}):
+        with performances_observer("asgi", labels={"type": asgi_type}):
             if asgi_type == "http":
                 response = await self.handle_http(scope, receive, send)
                 if isinstance(response, AlreadyHandledHttpResponse):

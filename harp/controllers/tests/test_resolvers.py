@@ -12,7 +12,7 @@ def test_add():
     resolver = ProxyControllerResolver()
     controller = HttpProxyController(http_client=http_client, remote=endpoint.remote, name=endpoint.settings.name)
 
-    resolver.add(endpoint, controller=controller)
+    resolver.add_endpoint(endpoint, controller=controller)
     assert resolver.endpoints["test-endpoint"] == endpoint
     assert resolver.ports == (8080,)
 
@@ -22,7 +22,7 @@ async def test_resolve():
     endpoint = Endpoint.from_kwargs(settings={"name": "test-endpoint", "port": 8080, "url": "http://example.com/"})
     resolver = ProxyControllerResolver()
     controller = HttpProxyController(http_client=http_client, remote=endpoint.remote, name=endpoint.settings.name)
-    resolver.add(endpoint, controller=controller)
+    resolver.add_endpoint(endpoint, controller=controller)
 
     request = HttpRequest(server_port=8080)
     controller = await resolver.resolve(request)
@@ -39,11 +39,11 @@ def test_resolve_from_endpoint_name():
     endpoint = Endpoint.from_kwargs(settings={"name": "test-endpoint", "port": 8080, "url": "http://example.com/"})
     resolver = ProxyControllerResolver()
     controller = HttpProxyController(http_client=http_client, remote=endpoint.remote, name=endpoint.settings.name)
-    resolver.add(endpoint, controller=controller)
+    resolver.add_endpoint(endpoint, controller=controller)
 
-    controller = resolver.resolve_from_endpoint_name("test-endpoint")
+    controller = resolver.resolve_by_name("test-endpoint")
     assert isinstance(controller, HttpProxyController)
     assert controller.name == "test-endpoint"
 
-    controller = resolver.resolve_from_endpoint_name("non-existent")
+    controller = resolver.resolve_by_name("non-existent")
     assert controller is resolver.default_controller
