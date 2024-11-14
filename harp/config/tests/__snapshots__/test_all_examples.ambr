@@ -133,7 +133,6 @@
   http_client:
     cache:
       controller:
-        '@type': hishel:Controller
         allow_heuristics: true
         allow_stale: true
         cacheable_methods:
@@ -143,13 +142,12 @@
         - 200
         - 301
         - 308
+        type: hishel.Controller
       storage:
-        '@type': hishel:AsyncFileStorage
-      transport:
-        '@type': hishel:AsyncCacheTransport
+        type: hishel.AsyncFileStorage
     timeout: 10.0
     transport:
-      '@type': httpx:AsyncHTTPTransport
+      type: httpx.AsyncHTTPTransport
   proxy: {}
   storage: {}
   
@@ -172,10 +170,10 @@
   http_client:
     timeout: 10.0
     transport:
-      '@type': httpx:AsyncHTTPTransport
       http1: true
       http2: false
       retries: 0
+      type: httpx.AsyncHTTPTransport
       verify: true
   proxy: {}
   storage: {}
