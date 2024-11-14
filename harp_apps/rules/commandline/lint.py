@@ -1,15 +1,13 @@
 from rich.syntax import Syntax
 from rich.tree import Tree
 
-from harp.commandline.options.server import add_harp_config_options
-from harp.utils.commandline import click
+from harp.commandline.options.server import config_command
 from harp.utils.console import console
 
 from .utils.loaders import load_ruleset_from_files
 
 
-@click.command("lint")
-@add_harp_config_options
+@config_command("lint")
 def lint_command(files, examples, options):
     """Lint the rules."""
 

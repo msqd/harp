@@ -1,7 +1,8 @@
 import importlib.util
 import sys
 
-from harp.commandline.server import CommonServerOptions, add_harp_server_click_options
+from harp.commandline.options.server import server_command
+from harp.commandline.server import CommonServerOptions
 from harp.commandline.utils.manager import HARP_DASHBOARD_SERVICE
 from harp.utils.commandline import click, code
 
@@ -22,7 +23,7 @@ def assert_development_packages_are_available():
     assert_package_is_available("watchfiles")
 
 
-@click.command(
+@server_command(
     short_help="Starts the local development environment.",
     help=f"""Starts the local development environment, using honcho to spawn a configurable set of processes that you
     can adapt to your needs. By default, it will starts the `dashboard` (frontend dev server) and `server` (python
@@ -51,7 +52,6 @@ def assert_development_packages_are_available():
     multiple=True,
     help="Add a server subprocess to the list of services to start (experimental, can be used multiple times).",
 )
-@add_harp_server_click_options
 @click.argument("services", nargs=-1)
 def start(with_docs, with_ui, services, server_subprocesses, mock, **kwargs):
     try:

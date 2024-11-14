@@ -53,13 +53,32 @@ environment.
 Running
 :::::::
 
-You can start your first HARP server based on your local working copy, we'll use one of the built-in examples:
+You can start your first HARP development server based on your local working copy.
+
+Here, we'll run one using one of the built-in examples (but the same applies to any configuration, of course):
 
 .. code-block:: bash
 
     poetry run harp start --example sqlite
 
 Open your browser at http://localhost:4080 to have a look at the HARP dashboard.
+
+Using ``harp start`` (or ``poetry run harp start`` to let poetry manage the env, our preference) will spawn
+a bunch of processes, managed by `honcho <https://pypi.org/project/honcho/>`_, with some free cherries.
+
+The default processes are:
+
+- ``harp server``: the main server, python based, which will listen for incoming requests on different ports. By
+  default, it listens to the 4080 port for the dashboard. Wrapped using `watchfiles
+  <https://watchfiles.helpmanual.io/>`_ to restart on code changes.
+- the dashboard's devserver (`vite <https://vite.dev/>`_ based): listens to a high random unprivileged port by default,
+  and the main server will forward requests tto this port. Meaning that harp dashboard's goes through the http proxy.
+  Kinda meta, right?
+
+.. figure:: ./intro-harp-start.excalidraw.png
+    :scale: 40%
+
+You can read more about the various ``harp`` commands in the :doc:`Command Line Reference </commandline/index>`.
 
 
 Interfaces

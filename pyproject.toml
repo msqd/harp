@@ -115,6 +115,9 @@ line-length = 120
 
 [tool.ruff]
 line-length = 120
+exclude = [
+    "harp/commandline/cookiecutters",
+]
 
 [tool.ruff.format]
 docstring-code-format = true
