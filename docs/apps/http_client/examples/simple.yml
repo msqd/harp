@@ -7,7 +7,7 @@ http_client:
   transport:
     # You can customize the default transport implementation. The values shown are the
     # defaults, and you only need to set them if you want to provide different values.
-    "@type": "httpx:AsyncHTTPTransport"
+    type: httpx.AsyncHTTPTransport
     retries: 0
     verify: true
     http1: true

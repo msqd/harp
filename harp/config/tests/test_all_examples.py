@@ -49,6 +49,7 @@ def test_load_documentation_example(configfile, snapshot):
     from harp.config import ConfigurationBuilder
 
     builder = ConfigurationBuilder()
+    ## TODO : remove when rules enabled by default
     if configfile.startswith("docs/apps/rules/"):
         builder.applications.add("rules")
     builder.add_file(os.path.join(harp.ROOT_DIR, configfile))

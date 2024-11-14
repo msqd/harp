@@ -1,3 +1,4 @@
+from keyword import iskeyword
 from typing import Optional
 
 from pydantic import ConfigDict, Field, model_serializer, model_validator
@@ -30,7 +31,10 @@ class Service(BaseConfigurable):
         arguments = values.get("arguments", {})
         for k in list(values.keys()):
             if k not in cls.model_fields:
-                arguments[k] = values.pop(k)
+                if str.isidentifier(k) and not iskeyword(k):
+                    arguments[k] = values.pop(k)
+                else:
+                    raise ValueError(f"Invalid field name: {k} for {cls.__name__}")
         if len(arguments):
             return {**values, "arguments": arguments}
         return values
