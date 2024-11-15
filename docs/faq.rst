@@ -25,7 +25,7 @@ You should use the ``on_ready`` handler to decorate the HARP ASGI implementation
      from harp.config import Application, OnReadyEvent
 
      async def on_ready(event: OnReadyEvent):
-         event.kernel = some_middleware(event.kernel)
+         event.asgi_app = some_middleware(event.asgi_app)
 
      application = Application(on_ready=on_ready)
 
