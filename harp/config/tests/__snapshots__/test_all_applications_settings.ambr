@@ -51,6 +51,14 @@
   dict({
   })
 # ---
+# name: test_all_applications_default_settings[harp_apps.metrics]
+  dict({
+    'harp_apps.metrics.settings.MetricsSettings': '''
+      {}
+  
+    ''',
+  })
+# ---
 # name: test_all_applications_default_settings[harp_apps.notifications]
   dict({
     'harp_apps.notifications.settings.NotificationsSettings': '''

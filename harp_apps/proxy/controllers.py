@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
 from functools import cached_property, lru_cache
-from typing import Optional, cast
+from typing import Optional, cast, override
 from urllib.parse import urlencode, urljoin
 
 from httpx import AsyncClient, codes
@@ -12,10 +12,8 @@ from harp import get_logger
 from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
 from harp.http.utils import parse_cache_control
 from harp.models import Transaction
-from harp.settings import USE_PROMETHEUS
 from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
-from harp.utils.performances import performances_observer
 from harp.utils.tpdex import tpdex
 
 from .adapters import HttpClientProxyAdapter
@@ -46,20 +44,6 @@ logger = get_logger(__name__)
 
 # XXX: move to some type module ?
 ProxyFilterResult = Optional[ProxyFilterEvent | HttpResponse | dict]
-
-_prometheus = None
-if USE_PROMETHEUS:
-    from prometheus_client import Counter, Histogram
-
-    _prometheus = {
-        "call": Counter("proxy_calls", "Requests to the proxy.", ["name", "method"]),
-        "time.full": Histogram(
-            "proxy_time_full",
-            "Requests to the proxy including overhead.",
-            ["name", "method"],
-        ),
-        "time.forward": Histogram("proxy_time_forward", "Forward time.", ["name", "method"]),
-    }
 
 
 class AbstractHttpProxyController(ABC):
@@ -98,23 +82,17 @@ class AbstractHttpProxyController(ABC):
 
         self.initialize()
 
+    @api("0.8")
+    @abstractmethod
     async def __call__(self, request: HttpRequest) -> HttpResponse:
-        """Handle an incoming request and proxy it to the configured URL."""
-
-        labels = {"name": self.name or "-", "method": request.method}
-        with performances_observer("http_proxy_controller", labels=labels):
-            return await self.handle(request)
+        """Handle an incoming request, produce a response."""
+        raise NotImplementedError()
 
     def __repr__(self):
         return f"{type(self).__name__}({self.remote!r}, name={self.name!r})"
 
     def initialize(self):
         pass
-
-    @api("0.8")
-    @abstractmethod
-    async def handle(self, request: HttpRequest) -> HttpResponse:
-        raise NotImplementedError()
 
     async def adispatch(self, event_id, event=None):
         """
@@ -163,7 +141,8 @@ class HttpProxyController(AbstractHttpProxyController):
             await self.adispatch(EVENT_FILTER_PROXY_RESPONSE, context),
         )
 
-    async def handle(self, request: HttpRequest) -> HttpResponse:
+    @override
+    async def __call__(self, request: HttpRequest) -> HttpResponse:
         base_url = None
         transaction = await self._create_transaction_from_request(request, tags=extract_tags_from_request(request))
 
@@ -207,22 +186,6 @@ class HttpProxyController(AbstractHttpProxyController):
         return await self.end_transaction(transaction, context.response)
 
     async def forward(
-        self, transaction: Transaction, context: ProxyFilterEvent, base_url: str, full_url: str
-    ) -> HttpResponse:
-        """
-        Forward the request to the remote server, with performance profiling.
-
-        :param transaction: The current transaction object.
-        :param context: The proxy filter event context.
-        :param base_url: The base URL of the remote server.
-        :param full_url: The full URL to which the request is forwarded.
-        :return: The HTTP response received from the remote server.
-        """
-        labels = {"name": self.name, "method": context.request.method}
-        with performances_observer("http_proxy_controller_forward", labels=labels):
-            return await self.handle_forward(transaction, context, base_url, full_url)
-
-    async def handle_forward(
         self, transaction: Transaction, context: ProxyFilterEvent, base_url: str, full_url: str
     ) -> HttpResponse:
         """

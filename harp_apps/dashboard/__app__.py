@@ -41,8 +41,9 @@ async def on_bound(event: OnBoundEvent):
     # make the server to route requests to the dashboard controller when an incoming request is received on the
     # dashboard port.
     event.resolver.add_controller(
-        event.provider.get(DashboardSettings).port,
         event.provider.get("dashboard.controller"),
+        name="dashboard",
+        port=event.provider.get(DashboardSettings).port,
     )
 
 

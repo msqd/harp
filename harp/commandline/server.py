@@ -5,7 +5,6 @@ from click import BaseCommand
 from harp import run
 from harp.commandline.options.server import CommonServerOptions, server_command
 from harp.config import ConfigurationBuilder
-from harp.settings import USE_PROMETHEUS
 
 
 @server_command(
@@ -14,27 +13,23 @@ from harp.settings import USE_PROMETHEUS
     you need on a live server, it will serve both the proxy ports and the compiled frontend assets (dashboard).""",
 )
 def server(**kwargs):
-    _info = None
-    if USE_PROMETHEUS:
-        from prometheus_client import Enum
+    from prometheus_client import Enum
 
-        _info = Enum(
-            "harp",
-            "HARP status information.",
-            states=["setup", "up", "teardown", "down"],
-        )
-        _info.state("setup")
+    _info = Enum(
+        "harp",
+        "HARP status information.",
+        states=["setup", "up", "teardown", "down"],
+    )
+    _info.state("setup")
 
     builder = ConfigurationBuilder.from_commandline_options(CommonServerOptions(**kwargs))
 
-    if _info:
-        _info.state("up")
+    _info.state("up")
 
     try:
         return run(builder)
     finally:
-        if _info:
-            _info.state("down")
+        _info.state("down")
 
 
 server = cast(BaseCommand, server)

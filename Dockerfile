@@ -155,7 +155,7 @@ RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     && echo 'alias l="ls -lsah --color"' > /opt/harp/.profile \
     && echo 'export PATH="${POETRY_HOME}/bin:${VIRTUAL_ENV}/bin:$PATH"' >> /opt/harp/.profile
 
-ENV TINI_VERSION v0.19.0
+ENV TINI_VERSION="v0.19.0"
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
