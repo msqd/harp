@@ -9,6 +9,17 @@ services:
     base: harp_apps.storage.types.IBlobStorage
     arguments: [!cfg "blobs.arguments", {}]
 
+  - name: "storage.engine"
+    description: "SQLAlchemy Engine."
+    base: sqlalchemy.ext.asyncio.AsyncEngine
+    type: harp_apps.storage.engines.SQLAlchemyEngine
+    constructor: from_url
+    arguments: { "url": [!cfg "url"] }
+
+  - name: "storage.worker"
+    description: "Storage async worker"
+    base: harp_apps.storage.worker.StorageAsyncWorkerQueue
+
   - condition: [!cfg "blobs.type == 'sql'", !!bool "true"]
     services:
       - name: "storage.blobs"

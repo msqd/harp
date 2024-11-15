@@ -18,3 +18,4 @@ Changed
 :::::::
 
 * Rules: The rules application is now loaded by default when using the ``harp start`` or ``harp server`` command. (#594, @ArthurD1)
+* Storage: The Engine is now defined as a service and instantiated using dependency injection. (#72, @ArthurD1)
