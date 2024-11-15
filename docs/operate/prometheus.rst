@@ -24,28 +24,31 @@ under the path ``/.prometheus/metrics``. You can configure your prometheus insta
 Metrics
 :::::::
 
-Default metrics provided by harp's ``metrics`` application are:
+Metrics at the ASGI handler level (the outermost layer, after the webserver interface):
 
-* ``requests_count``, a requests counter (labels: method, path).
-* ``requests_time``, an histogram of requests processing time by path (labels: method, path).
-* ``requests_in_progress``, a gauge of requests by method and path currently being processed (labels: method, path).
-* ``responses_count``, a responses counter (labels: status, method, path).
-* ``exceptions_count``, an exceptions counter (labels: exception, method, path).
+* ``requests_count``, a requests counter.
+* ``requests_time``, an histogram of requests processing time.
+* ``requests_in_progress``, a gauge of requests currently being processed.
+* ``responses_count``, a responses counter.
+* ``exceptions_count``, an exceptions counter.
 
-* ``proxy_requests_count`` is a requests counter from the proxy controller point of view (labels: method, path).
-* ``proxy_requests_time`` is an histogram of requests processing time by path (labels: method, path).
-* ``proxy_requests_in_progress`` is a gauge of requests by method and path currently being processed (labels: method, path).
-* ``proxy_responses_count`` is a responses counter (labels: status, method, path).
+Metrics at the controller level (the middle layer, after the asgi kernel but before most of HARP's overhead):
 
+* ``controller_requests_count``, a requests counter from the controller point of view.
+* ``controller_requests_time``, an histogram of requests processing time.
+* ``controller_requests_in_progress``, a gauge of requests currently being processed by a controller.
+* ``controller_responses_count``, a controller responses counter.
+* ``controller_exceptions_count``, an controller exceptions counter.
 
+Metrics at the http client level (the innermost layer, when the proxy controller delegates to the http client).
+
+* ``remote_requests_count``, a requests counter from the http client point of view.
+* ``remote_requests_time``, an histogram of requests processing time.
+* ``remote_requests_in_progress``, a gauge of requests currently being processed by the http client.
+* ``remote_responses_count``, an http client responses counter.
+* ``remote_exceptions_count``, an http client exceptions counter.
 
 Additionally, a few python-related metrics and info are available, check the metrics endpoint.
-
-* ``harp_asgi_*``: asgi kernel measurements (the outermost layer, after the webserver interface).
-* ``harp_proxy_*``: proxy controller measurements (the middle layer, after the asgi kernel but before most of
-  harp's overhead).
-* ``harp_remote_*``: remote requests measurements (the innermost layer, when the proxy controller delegates to
-  the http client for a potential remote request).
 
 
 Scrape configuration
@@ -70,3 +73,28 @@ Here is an example scrape configuration for prometheus:
 .. seealso::
 
     - :doc:`Applications Reference » Metrics </apps/metrics/index>`
+
+
+
+Scratchpad
+::::::::::
+
+**How many requests per second are being processed through harp server?**
+
+.. code:: promql
+
+    # everything that goes into harp server, averaged by 1 minute periods
+    sum(rate(requests_time_count[1m]))
+
+.. code:: promql
+
+    # everything that goes into a controller, averaged by 1 minute periods
+    sum(rate(controller_requests_time_count[1m]))
+
+.. code:: promql
+
+    # everything that goes into the http client, including cached requests that does not
+    # trigger an external request, averaged over 1 minute.
+    sum(rate(remote_requests_time_count[1m]))
+
+**Kernel overhead computation**

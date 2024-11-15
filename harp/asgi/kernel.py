@@ -8,7 +8,6 @@ from whistle import AsyncEventDispatcher, Event, IAsyncEventDispatcher
 from harp import get_logger
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
 
-from ..utils.performances import performances_observer
 from ..utils.types import typeof
 from .bridge.requests import HttpRequestAsgiBridge
 from .bridge.responses import HttpResponseAsgiBridge
@@ -43,32 +42,31 @@ class ASGIKernel:
     async def __call__(self, scope: Scope, receive: ASGIReceiveCallable, send: ASGISendCallable):
         asgi_type = scope.get("type", None)
 
-        with performances_observer("asgi", labels={"type": asgi_type}):
-            if asgi_type == "http":
-                response = await self.handle_http(scope, receive, send)
-                if isinstance(response, AlreadyHandledHttpResponse):
-                    return
-                return await HttpResponseAsgiBridge(response, send).send()
-
-            if asgi_type == "lifespan":
-                await receive()
-                # TODO: there are more than just the lifespan.startup event, maybe handle all messages possible or at
-                # least ignore the ones we're not interested in.
-                # See: https://asgi.readthedocs.io/en/latest/specs/lifespan.html
-                try:
-                    await self.dispatcher.adispatch(EVENT_CORE_STARTED, Event())
-                except Exception as exc:
-                    raise LifespanFailureError(EVENT_CORE_STARTED, repr(exc)) from exc
-
-                self.started = True
+        if asgi_type == "http":
+            response = await self.handle_http(scope, receive, send)
+            if isinstance(response, AlreadyHandledHttpResponse):
                 return
+            return await HttpResponseAsgiBridge(response, send).send()
 
-            if asgi_type == "websocket":
-                # NOT IMPLEMENTED YET!
-                # This is ignored here to avoid huge errors in the console.
-                return
+        if asgi_type == "lifespan":
+            await receive()
+            # TODO: there are more than just the lifespan.startup event, maybe handle all messages possible or at
+            # least ignore the ones we're not interested in.
+            # See: https://asgi.readthedocs.io/en/latest/specs/lifespan.html
+            try:
+                await self.dispatcher.adispatch(EVENT_CORE_STARTED, Event())
+            except Exception as exc:
+                raise LifespanFailureError(EVENT_CORE_STARTED, repr(exc)) from exc
 
-            raise RuntimeError(f'Unable to handle request, invalid type "{asgi_type}".')
+            self.started = True
+            return
+
+        if asgi_type == "websocket":
+            # NOT IMPLEMENTED YET!
+            # This is ignored here to avoid huge errors in the console.
+            return
+
+        raise RuntimeError(f'Unable to handle request, invalid type "{asgi_type}".')
 
     def _resolve_arguments(self, subject, **candidates):
         """
