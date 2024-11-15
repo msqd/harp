@@ -33,9 +33,15 @@ Minimal example
 .. literalinclude:: ./examples/full-shorthand.yml
     :language: yaml
 
+.. note::
+
+    The url provided can be either a base url like ``https://api1.example.com/`` or a full url like ``https://api1.example.com/foo/bar/``.
+
+
 .. seealso::
 
     :doc:`📃 Proxy Configuration Reference <settings>`
+
 
 
 Full example

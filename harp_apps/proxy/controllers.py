@@ -269,9 +269,10 @@ class HttpProxyController(AbstractHttpProxyController):
 
         return HttpResponse(response.content, status=response.status_code, headers=headers)
 
-    async def _get_next_url_for(self, context):
+    async def _get_next_url_for(self, context) -> tuple[str, str]:
         base_url = self.remote.get_url()
-        return base_url, urljoin(base_url, context.request.path) + (
+        relative_url = context.request.path.lstrip("/")
+        return base_url, urljoin(base_url, relative_url) + (
             f"?{urlencode(context.request.query)}" if context.request.query else ""
         )
 

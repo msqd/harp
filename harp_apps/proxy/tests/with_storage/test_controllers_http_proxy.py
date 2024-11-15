@@ -1,5 +1,5 @@
-from typing import cast
-from unittest.mock import ANY, AsyncMock, patch
+from typing import Optional, cast
+from unittest.mock import ANY, AsyncMock, Mock, patch
 
 import pytest
 import respx
@@ -11,6 +11,7 @@ from harp.config.asdict import asdict
 from harp.http import HttpRequest, HttpResponse
 from harp.utils.bytes import ensure_bytes
 from harp.utils.testing.mixins import ControllerTestFixtureMixin
+from harp.utils.testing.mixins.controllers import _create_request
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.events import EVENT_TRANSACTION_STARTED
 from harp_apps.proxy.settings.remote import Remote
@@ -44,7 +45,7 @@ class HttpProxyControllerTestFixtureMixin(ControllerTestFixtureMixin):
         self,
         url=None,
         *args,
-        dispatcher: IAsyncEventDispatcher,
+        dispatcher: Optional[IAsyncEventDispatcher] = None,
         http_client=None,
         **kwargs,
     ):
@@ -114,6 +115,15 @@ class TestHttpProxyController(HttpProxyControllerTestFixtureMixin, DispatcherTes
         assert response.status == 200
         assert response.headers == {}
         assert response.body == b"Hello."
+
+    async def test_get_next_url_for(self):
+        controller = self.create_controller("http://example.com/base/")
+        request = await _create_request(path="/foo/bar/")
+        context = Mock()
+        context.request = request
+        base_url, full_url = await controller._get_next_url_for(context)
+        assert base_url == "http://example.com/base/"
+        assert full_url == "http://example.com/base/foo/bar/"
 
 
 class TestHttpProxyControllerWithStorage(
