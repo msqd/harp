@@ -14,8 +14,8 @@ Fixed
 * UI: Correctly display header values containing a semicolon character (#577, @ArthurD1)
 * UI: Fixed the topology UI where changing the state of a remote would cause the page to crash (#578, @ArthurD1).
 
-
 Changed
 :::::::
 
+* Rules: The rules application is now loaded by default when using the ``harp start`` or ``harp server`` command. (#594, @ArthurD1)
 * Storage: The Engine is now defined as a service and instantiated using dependency injection. (#72, @ArthurD1)

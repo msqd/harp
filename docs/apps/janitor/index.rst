@@ -27,7 +27,7 @@ Delete all transactions older than 60 days.
 Loading
 :::::::
 
-The proxy application is loaded by default when using the ``harp start`` command.
+The ``janitor`` application is loaded by default when using the ``harp start`` command.
 
 You can disable it (not recommended) by passing it as an argument to the ``harp start`` command:
 

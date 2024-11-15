@@ -58,6 +58,7 @@
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage: {}
   
   '''
@@ -74,6 +75,7 @@
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage: {}
   
   '''
@@ -86,6 +88,7 @@
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage: {}
   
   '''
@@ -96,6 +99,7 @@
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage: {}
   
   '''
@@ -106,6 +110,7 @@
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage: {}
   
   '''
@@ -122,6 +127,7 @@
         - HEAD
         force_cache: true
   proxy: {}
+  rules: {}
   storage: {}
   
   '''
@@ -151,6 +157,7 @@
     transport:
       '@type': httpx:AsyncHTTPTransport
   proxy: {}
+  rules: {}
   storage: {}
   
   '''
@@ -161,6 +168,7 @@
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage: {}
   
   '''
@@ -178,6 +186,7 @@
       retries: 0
       verify: true
   proxy: {}
+  rules: {}
   storage: {}
   
   '''
@@ -189,6 +198,7 @@
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage: {}
   
   '''
@@ -199,6 +209,7 @@
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage: {}
   
   '''
@@ -215,6 +226,7 @@
       remote:
         endpoints:
         - url: https://httpbin.org/
+  rules: {}
   storage: {}
   
   '''
@@ -236,6 +248,7 @@
       remote:
         endpoints:
         - url: https://api1.example.com/
+  rules: {}
   storage: {}
   
   '''
@@ -253,6 +266,7 @@
       remote:
         endpoints:
         - url: https://api1.example.com/
+  rules: {}
   storage: {}
   
   '''
@@ -284,6 +298,7 @@
         min_pool_size: 2
         probe:
           path: /healthz
+  rules: {}
   storage: {}
   
   '''
@@ -305,6 +320,7 @@
       remote:
         endpoints:
         - url: https://api-adresse.data.gouv.fr/
+  rules: {}
   storage: {}
   
   '''
@@ -332,6 +348,7 @@
         - pools:
           - fallback
           url: https://api4.example.com/
+  rules: {}
   storage: {}
   
   '''
@@ -356,6 +373,7 @@
           - fallback
           url: https://api4.example.com/
         min_pool_size: 2
+  rules: {}
   storage: {}
   
   '''
@@ -383,6 +401,7 @@
           headers:
             x-probe: 'true'
           path: /health
+  rules: {}
   storage: {}
   
   '''
@@ -400,6 +419,7 @@
         endpoints:
         - url: https://api1.example.com/
         - url: https://api2.example.com/
+  rules: {}
   storage: {}
   
   '''
@@ -426,6 +446,7 @@
           - default
           url: https://httpbin.org/
         probe: {}
+  rules: {}
   storage: {}
   
   '''
@@ -442,6 +463,7 @@
       remote:
         endpoints:
         - url: https://swapi.dev/
+  rules: {}
   storage: {}
   
   '''
@@ -506,6 +528,7 @@
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage:
     url: mysql+aiomysql://user:password@localhost:3306/harp
   
@@ -517,6 +540,7 @@
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage:
     url: mysql+asyncmy://user:password@localhost:3306/harp
   
@@ -528,6 +552,7 @@
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage:
     url: postgresql+asyncpg://user:password@localhost:5432/harp
   
@@ -539,6 +564,7 @@
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage:
     blobs:
       type: redis
@@ -552,6 +578,7 @@
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage: {}
   
   '''
@@ -562,6 +589,7 @@
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage:
     url: sqlite+aiosqlite:///harp.db
   
@@ -577,6 +605,7 @@
   - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
+  - harp_apps.rules
   dashboard:
     auth:
       type: basic
@@ -592,6 +621,7 @@
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage: {}
   
   '''
@@ -606,10 +636,12 @@
   - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
+  - harp_apps.rules
   dashboard: {}
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage:
     url: postgresql+asyncpg://harp:harp@127.0.0.1/harp
   
@@ -625,6 +657,7 @@
   - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
+  - harp_apps.rules
   dashboard: {}
   harp_apps.contrib.sentry: {}
   http_client: {}
@@ -635,6 +668,7 @@
       remote:
         endpoints:
         - url: http://httpbin.org/
+  rules: {}
   storage: {}
   
   '''
@@ -649,6 +683,7 @@
   - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
+  - harp_apps.rules
   dashboard: {}
   harp_apps.contrib.sentry: {}
   http_client: {}
@@ -673,6 +708,7 @@
       remote:
         endpoints:
         - url: http://httpbin.org/
+  rules: {}
   storage: {}
   
   '''
@@ -687,6 +723,7 @@
   - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
+  - harp_apps.rules
   dashboard: {}
   harp_apps.contrib.sentry: {}
   http_client: {}
@@ -712,6 +749,7 @@
           interval: 5.0
           path: /get
           verify: false
+  rules: {}
   storage: {}
   
   '''
@@ -726,6 +764,7 @@
   - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
+  - harp_apps.rules
   dashboard: {}
   harp_apps.contrib.sentry: {}
   http_client: {}
@@ -797,6 +836,7 @@
       remote:
         endpoints:
         - url: https://registry.yarnpkg.com/
+  rules: {}
   storage:
     url: postgresql+asyncpg://harp:harp@127.0.0.1/repositories
   
@@ -812,10 +852,17 @@
   - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
+  - harp_apps.rules
   dashboard: {}
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules:
+    acme*:
+      GET /*:
+        on_request: 'from harp.http import HttpResponse
+  
+          response = HttpResponse("I''m a teapot.", status=418)'
   storage: {}
   
   '''
@@ -830,10 +877,12 @@
   - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
+  - harp_apps.rules
   dashboard: {}
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage: {}
   
   '''
@@ -848,10 +897,12 @@
   - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
+  - harp_apps.rules
   dashboard: {}
   harp_apps.contrib.sentry: {}
   http_client: {}
   proxy: {}
+  rules: {}
   storage:
     url: sqlite+aiosqlite:///harp.db
   
