@@ -14,4 +14,6 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
+    harp_apps.metrics.constants
+    harp_apps.metrics.decorators
     harp_apps.metrics.settings

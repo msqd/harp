@@ -210,22 +210,6 @@ class HttpProxyController(AbstractHttpProxyController):
         self, transaction: Transaction, context: ProxyFilterEvent, base_url: str, full_url: str
     ) -> HttpResponse:
         """
-        Forward the request to the remote server, with performance profiling.
-
-        :param transaction: The current transaction object.
-        :param context: The proxy filter event context.
-        :param base_url: The base URL of the remote server.
-        :param full_url: The full URL to which the request is forwarded.
-        :return: The HTTP response received from the remote server.
-        """
-        labels = {"name": self.name, "method": context.request.method}
-        with performances_observer("http_proxy_controller_forward", labels=labels):
-            return await self.handle_forward(transaction, context, base_url, full_url)
-
-    async def handle_forward(
-        self, transaction: Transaction, context: ProxyFilterEvent, base_url: str, full_url: str
-    ) -> HttpResponse:
-        """
         Forward the request to the remote server.
 
         :param transaction: The current transaction object.
