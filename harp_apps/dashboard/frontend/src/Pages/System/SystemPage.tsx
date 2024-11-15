@@ -12,7 +12,7 @@ const SystemPage = () => {
   return (
     <Page title={<PageTitle title="System" description="Informations about the running instance." />}>
       <Helmet>
-        <title>System | Harp</title>
+        <title>System | HARP</title>
         <meta name="description" content="System page" />
       </Helmet>
       <Tab.Group>
