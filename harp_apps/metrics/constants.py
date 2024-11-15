@@ -48,5 +48,5 @@ REMOTE_RESPONSES = Counter(
 REMOTE_EXCEPTIONS = Counter(
     "remote_exceptions_count",
     "Count of exceptions raised in remotes by route name, method, path and exception type",
-    ["name", "method", "path", "exception"],
+    ["name", "method", "url", "exception"],
 )

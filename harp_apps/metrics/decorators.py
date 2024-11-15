@@ -48,15 +48,14 @@ def decorate_proxy_controller(wrapped: IAsyncController, *, name: Optional[str] 
     return wrapper
 
 
-def decorate_http_client_send(wrapped, *, name: Optional[str] = None):
+def decorate_http_client_send(wrapped):
     """
     Decorates the httpx async client send method to collect metrics for prometheus.
     """
-    common_labels = dict(name=(name or "-"))
 
     @wraps(wrapped)
     async def wrapper(request: httpx.Request, *args, **kwargs) -> httpx.Response:
-        labels = {**common_labels, "method": request.method}
+        labels = {"name": request.extensions.get("harp", {}).get("endpoint", "-"), "method": request.method}
         REMOTE_REQUESTS.labels(**labels).inc()
         REMOTE_REQUESTS_IN_PROGRESS.labels(**labels).inc()
 
@@ -66,7 +65,7 @@ def decorate_http_client_send(wrapped, *, name: Optional[str] = None):
             REMOTE_RESPONSES.labels(**labels, status=getattr(response, "status_code", "-")).inc()
             return response
         except Exception as exc:  # noqa: BLE001
-            REMOTE_EXCEPTIONS.labels(**labels, path=str(request.url), exception=type(exc).__name__).inc()
+            REMOTE_EXCEPTIONS.labels(**labels, url=str(request.url), exception=type(exc).__name__).inc()
             raise exc from None
         finally:
             after_time = time.perf_counter()
