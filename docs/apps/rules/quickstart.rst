@@ -5,21 +5,14 @@ To get started with the rules engine, you need to write a configuration file tha
 
 .. include:: examples/rules.rst
 
-Then make sure that you enable the ``rules`` application, and load the configuration file you just wrote:
+Loading
+:::::::
 
-.. tab-set::
-    :sync-group: code
+.. versionadded:: 0.8
 
-    .. tab-item:: TOML
-        :sync: toml
+The ``rules`` application is loaded by default when using the ``harp start`` or ``harp server`` command.
+It can be disabled by passing the ``--disable rules`` option to the command.
 
-        .. code:: shell
+.. code:: shell
 
-            harp start --enable rules -f my-rules.toml
-
-    .. tab-item:: YAML
-        :sync: yaml
-
-        .. code:: shell
-
-            harp start --enable rules -f my-rules.yml
+    harp start --disable rules ...

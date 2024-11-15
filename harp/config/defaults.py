@@ -13,6 +13,7 @@ DEFAULT_APPLICATIONS = (
     "harp_apps.contrib.sentry",
     "telemetry",
     "janitor",
+    "rules",
 )
 
 _DEFAULT_NAMESPACE_CANDIDATES = (
