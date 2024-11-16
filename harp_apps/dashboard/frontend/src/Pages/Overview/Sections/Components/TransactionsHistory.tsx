@@ -1,4 +1,4 @@
-import { Loader } from "Components/Layout/Layout.tsx"
+import { Loader } from "Components/Loader"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
 import { useOverviewDataQuery } from "Domain/Overview"
 

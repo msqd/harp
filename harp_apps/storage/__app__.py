@@ -3,10 +3,8 @@
 from functools import partial
 from os.path import dirname
 from pathlib import Path
-from typing import cast
 
-from sqlalchemy import StaticPool, make_url
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from harp import get_logger
 from harp.config import Application
@@ -38,39 +36,22 @@ async def _run_migrations(engine: AsyncEngine):
 
 
 async def on_bind(event: OnBindEvent):
-    settings: StorageSettings = cast(StorageSettings, event.settings["storage"])
-
-    # SQLAlchemy Engine
-    # Created directly because of migrations, way easier to ensure the database is up and ready for whatever needs
-    # it. Of course, it'd be better to have async factories, but that's not the case (yet).
-
-    database_url = make_url(str(settings.url))
-
-    if database_url.get_dialect() == "sqlite" and database_url.database == ":memory:":
-        engine = create_async_engine(
-            database_url,
-            connect_args={"check_same_thread": False},
-            poolclass=StaticPool,
-        )
-    else:
-        engine = create_async_engine(database_url)
-
-    if settings.migrate:
-        await _run_migrations(engine)
-    event.container.add_instance(engine, AsyncEngine)
-
     # load service definitions, bound to our settings
-    event.container.load(Path(dirname(__file__)) / "services.yml", bind_settings=settings)
-
-    event.container.add_singleton(StorageAsyncWorkerQueue)
+    event.container.load(Path(dirname(__file__)) / "services.yml", bind_settings=event.settings["storage"])
 
 
 async def on_bound(event: OnBoundEvent):
+    settings = event.provider.get(StorageSettings)
+    if settings.migrate:
+        engine = event.provider.get(AsyncEngine)
+        await _run_migrations(engine)
+
     storage = event.provider.get(IStorage)
     await storage.initialize()
     await storage.ready()
     worker = event.provider.get(StorageAsyncWorkerQueue)
-    worker.register_events(event.dispatcher)
+    if event.dispatcher:
+        worker.register_events(event.dispatcher)
 
 
 async def on_shutdown(event: OnShutdownEvent):

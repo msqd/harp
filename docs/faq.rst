@@ -1,6 +1,35 @@
 Frequently Asked Questions
 ==========================
 
+Cookbook
+::::::::
+
+How can I start a custom HARP-based proxy project?
+--------------------------------------------------
+
+The simplest way is to use the ``harp create project`` command. It will prompt for a few questions and generate a
+project based on a cookiecutter template. Once generated, you'll have ``make install``, ``make start`` and ``make
+test`` available within your newly created project.
+
+You can read more about project creation in the :doc:`developer guide </develop/quick-start>`.
+
+
+How can I add an ASGI middleware from my HARP application?
+----------------------------------------------------------
+
+You should use the ``on_ready`` handler to decorate the HARP ASGI implementation with your middleware. Here is a
+(conceptual) example of an ``__app__.py`` file that adds a middleware:
+
+.. code:: python
+
+     from harp.config import Application, OnReadyEvent
+
+     async def on_ready(event: OnReadyEvent):
+         event.asgi_app = some_middleware(event.asgi_app)
+
+     application = Application(on_ready=on_ready)
+
+
 Internal development related questions
 ::::::::::::::::::::::::::::::::::::::
 

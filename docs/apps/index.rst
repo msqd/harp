@@ -12,6 +12,7 @@ package).
     dashboard/index
     http_client/index
     janitor/index
+    metrics/index
     notifications/index
     proxy/index
     rules/index

@@ -54,7 +54,7 @@ class TestAsgiProxyWithMissingStartup:
         resolver = ProxyControllerResolver()
         http_client = AsyncClient()
         controller = HttpProxyController(http_client=http_client, remote=endpoint.remote, name=endpoint.settings.name)
-        resolver.add(endpoint, controller=controller)
+        resolver.add_endpoint(endpoint, controller=controller)
         return ASGIKernel(resolver=resolver)
 
     @pytest.fixture
@@ -101,7 +101,7 @@ class TestAsgiProxyWithStubApi:
         system = await builder.abuild_system()
 
         try:
-            yield system.kernel
+            yield system.asgi_app
         finally:
             await system.dispose()
 

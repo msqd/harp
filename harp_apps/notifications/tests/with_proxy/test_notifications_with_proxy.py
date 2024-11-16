@@ -16,7 +16,7 @@ async def test_notifications_with_proxy(httpbin):
 
     system = await ConfigurationBuilder(settings, use_default_applications=False).abuild_system()
 
-    client = ASGICommunicator(system.kernel)
+    client = ASGICommunicator(system.asgi_app)
     await client.asgi_lifespan_startup()
 
     with mock.patch("harp_apps.notifications.subscriber.NotificationSubscriber.send_notification") as send_notification:

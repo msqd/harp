@@ -40,6 +40,16 @@ if TYPE_CHECKING:
 ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+def get_relative_path(path: str) -> str:
+    """
+    Returns the relative path of the given path from the root directory.
+
+    :param path: The path to get the relative path of.
+    :return: The relative path.
+    """
+    return os.path.relpath(path, ROOT_DIR)
+
+
 def _parse_version(version: str, /, *, default=None) -> Version:
     try:
         return Version(version)

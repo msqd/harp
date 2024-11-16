@@ -90,7 +90,12 @@ class DashboardController(RoutingController):
 
     def _create_ui_devserver_proxy_controller(self, *, port):
         return HttpProxyController(
-            Remote.from_settings_dict({"endpoints": [{"url": f"http://localhost:{port}/"}]}),
+            Remote.from_settings_dict(
+                {
+                    "endpoints": [{"url": f"http://localhost:{port}/"}],
+                    "liveness": {"type": "ignore"},
+                }
+            ),
             http_client=self.http_client,
             logging=False,
             name="dashboard-devserver",

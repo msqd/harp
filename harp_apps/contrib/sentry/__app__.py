@@ -12,7 +12,7 @@ async def on_ready(event: OnReadyEvent):
     from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
     sentry_sdk.init(dsn=settings.dsn, traces_sample_rate=1.0)
-    event.kernel = SentryAsgiMiddleware(event.kernel)
+    event.asgi_app = SentryAsgiMiddleware(event.asgi_app)
 
 
 application = Application(

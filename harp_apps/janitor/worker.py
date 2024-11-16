@@ -1,8 +1,9 @@
 import asyncio
 from typing import cast
 
+from prometheus_client import Gauge
+
 from harp import get_logger
-from harp.settings import USE_PROMETHEUS
 from harp_apps.storage.services import SqlStorage
 
 from ..storage.models.base import with_session
@@ -10,6 +11,13 @@ from ..storage.types import IBlobStorage, IStorage
 from .settings import OLD_AFTER, PERIOD
 
 logger = get_logger(__name__)
+
+PROMETHEUS_GAUGES = {
+    "storage.transactions": Gauge("storage_transactions", "Transactions currently in storage."),
+    "storage.messages": Gauge("storage_messages", "Messages currently in storage."),
+    "storage.blobs": Gauge("storage_blobs", "Blob objects currently in storage."),
+    "storage.blobs.orphans": Gauge("storage_blobs_orphans", "Orphan blobs currently in storage."),
+}
 
 
 class JanitorWorker:
@@ -20,16 +28,6 @@ class JanitorWorker:
         self.running = False
         self.session_factory = self.storage.session_factory
         self._running_lock = asyncio.Lock()
-
-        if USE_PROMETHEUS:
-            from prometheus_client import Gauge
-
-            self._prometheus = {
-                "storage.transactions": Gauge("storage_transactions", "Transactions currently in storage."),
-                "storage.messages": Gauge("storage_messages", "Messages currently in storage."),
-                "storage.blobs": Gauge("storage_blobs", "Blob objects currently in storage."),
-                "storage.blobs.orphans": Gauge("storage_blobs_orphans", "Orphan blobs currently in storage."),
-            }
 
     def stop(self):
         """
@@ -130,9 +128,8 @@ class JanitorWorker:
             "storage.blobs.orphans": await self.do_count(session, "blobs", method="count_orphans"),
         }
 
-        if USE_PROMETHEUS:
-            for key, value in values.items():
-                self._prometheus[key].set(value)
+        for key, value in values.items():
+            PROMETHEUS_GAUGES[key].set(value)
 
         return values
 

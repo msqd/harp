@@ -7,6 +7,7 @@ from hishel._async._storages import StoredResponse
 from hishel._serializers import Metadata
 from httpcore import Request, Response
 
+from harp_apps.proxy.controllers import logger
 from harp_apps.storage.types import IBlobStorage
 
 from .adapters import AsyncStorageAdapter
@@ -55,7 +56,10 @@ class AsyncStorage(AsyncBaseStorage):
         )
 
     async def retrieve(self, key: str) -> tp.Optional[StoredResponse]:
-        return await self._impl.retrieve(key)
+        try:
+            return await self._impl.retrieve(key)
+        except Exception:
+            logger.exception("Failed to retrieve cache")
 
     async def aclose(self) -> None:
         return

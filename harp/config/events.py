@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING, Awaitable, Callable
 
+from asgiref.typing import ASGIApplication
 from whistle import Event
 
-from harp.asgi import ASGIKernel
 from harp.services import Container, Services
 from harp.typing import GlobalSettings
 from harp.utils.network import Bind
@@ -79,9 +79,9 @@ class OnReadyEvent(Event):
 
     name = "harp.config.ready"
 
-    def __init__(self, provider: Services, kernel: ASGIKernel, binds: list[Bind]):
+    def __init__(self, provider: Services, asgi_app: ASGIApplication, binds: list[Bind]):
         self.provider = provider
-        self.kernel = kernel
+        self.asgi_app = asgi_app
         self.binds = binds
 
 
@@ -99,8 +99,8 @@ class OnShutdownEvent(Event):
 
     name = "harp.config.shutdown"
 
-    def __init__(self, kernel: ASGIKernel, provider: Services):
-        self.kernel = kernel
+    def __init__(self, asgi_app: ASGIApplication, provider: Services):
+        self.asgi_app = asgi_app
         self.provider = provider
 
 

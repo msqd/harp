@@ -49,8 +49,6 @@ def test_load_documentation_example(configfile, snapshot):
     from harp.config import ConfigurationBuilder
 
     builder = ConfigurationBuilder()
-    if configfile.startswith("docs/apps/rules/"):
-        builder.applications.add("rules")
     builder.add_file(os.path.join(harp.ROOT_DIR, configfile))
     settings = builder()
     applications = settings.pop("applications", [])

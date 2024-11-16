@@ -12,8 +12,6 @@ __title__ = "Settings"
 import builtins
 from os import environ
 
-from harp.utils.env import get_bool_from_env
-
 #: Pagination size for api endpoints
 PAGE_SIZE = 40
 
@@ -26,8 +24,6 @@ if HARP_ENV is not None:
     HARP_ENV = HARP_ENV.strip().lower()
     if HARP_ENV not in ("dev", "prod"):
         HARP_ENV = None
-
-USE_PROMETHEUS = get_bool_from_env("USE_PROMETHEUS", False)
 
 
 def is_test_context():
