@@ -24,6 +24,19 @@
         "financial",
         "test"
       ]
+    },
+    {
+      "login": "ArthurD1",
+      "name": "Arthur Degonde",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44548105?v=4",
+      "profile": "https://github.com/ArthurD1",
+      "contributions": [
+        "ideas",
+        "code",
+        "doc",
+        "example",
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7,
