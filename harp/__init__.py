@@ -33,6 +33,8 @@ from typing import TYPE_CHECKING
 
 from packaging.version import InvalidVersion, Version
 
+from ._harp import __version__
+
 if TYPE_CHECKING:
     from harp.config import ConfigurationBuilder as _ConfigurationBuilder
 
@@ -61,7 +63,7 @@ def _parse_version(version: str, /, *, default=None) -> Version:
 
 # last release
 __title__ = "Core"
-__version__ = "0.7.6"
+__version__ = __version__
 __hardcoded_version__ = __version__
 __revision__ = __version__  # we can't commit the not yet known revision
 

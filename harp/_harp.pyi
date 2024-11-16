@@ -1,0 +1,13 @@
+from datetime import datetime
+from typing import Optional
+
+__version__: str
+
+class HttpRequest:
+    def __init__(self, created_at: Optional[datetime] = None): ...
+    @property
+    def protocol(self) -> str: ...
+    @property
+    def kind(self) -> str: ...
+    @property
+    def created_at(self) -> datetime: ...

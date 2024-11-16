@@ -3,6 +3,7 @@ import hashlib
 
 import pytest
 
+import harp._harp  # noqa
 from harp.config import defaults
 
 builtins.__pytest__ = True
