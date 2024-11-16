@@ -1,5 +1,6 @@
-import { useSystemQuery } from "../../Domain/System"
 import { QuestionMarkCircleIcon, TagIcon, UserCircleIcon } from "@heroicons/react/20/solid"
+
+import { useSystemQuery } from "../../Domain/System"
 
 export function RightNav() {
   const systemQuery = useSystemQuery()

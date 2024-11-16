@@ -1,17 +1,8 @@
-HARP – Harp, an API Runtime Proxy
-=================================
+HARP, an API Runtime Proxy
+==========================
 
-HARP is a powerful sidecar proxy service designed to elevate the reliability, performance, security, and observability
-of your application's external API interactions. Think of it as a reverse API gateway or a nearline service mesh for
-external APIs.
-
-To be notified when we release new features, you can `subscribe to the release announcements <https://lists.harp-proxy.net/subscription/form>`_.
-We do not send anything unrelated to the lists you subscribed to, and we do not communicate your personnal informations with anyone. And
-of course, you can unsubscribe anytime using the unsubscribe link sent with all mails.
-
-To discuss issues, use cases, share your ideas, etc. you can join our `discord server <https://discord.gg/97jM8Hhf>`_.
-
-**HARP is released as an Early Access Preview.**
+HARP is an open-source API Proxy toolkit designed to improve the reliability, performance, security, and observability
+of the APIs you use. It runs in your infrastructure, close to your applications.
 
 .. image:: https://img.shields.io/pypi/v/harp-proxy.svg
     :target: https://pypi.python.org/pypi/harp-proxy
@@ -21,21 +12,19 @@ To discuss issues, use cases, share your ideas, etc. you can join our `discord s
     :target: https://artifacthub.io/packages/helm/harp/harp-proxy
     :alt: Artifact Hub
 
-.. image:: https://www.gitlab.com/makersquad/oss/harp/badges/0.6/pipeline.svg
+.. image:: https://www.gitlab.com/makersquad/oss/harp/badges/0.8/pipeline.svg
     :target: https://www.gitlab.com/makersquad/oss/harp/pipelines
     :alt: GitLab CI/CD Pipeline Status
 
-.. image:: https://readthedocs.org/projects/harp-proxy/badge/?version=0.6
-    :target: https://docs.harp-proxy.net/en/0.6/
+.. image:: https://readthedocs.org/projects/harp-proxy/badge/?version=0.8
+    :target: https://docs.harp-proxy.net/en/0.8/
     :alt: Documentation
 
 .. image:: https://img.shields.io/pypi/pyversions/harp-proxy.svg
     :target: https://pypi.python.org/pypi/harp-proxy
     :alt: Versions
 
-*Although we use HARP for production workloads, it is still under heavy active development and some features
-may not be available, or it may not be suitable for your applications. We are actively looking for feedback, please
-reach out with your thoughts, ideas, rants or issues. We can help.*
+----
 
 **Quick links:** `Documentation <https://docs.harp-proxy.net/en/latest/>`_
 | `Getting Started <https://docs.harp-proxy.net/en/latest/start/index.html>`_
@@ -45,18 +34,42 @@ reach out with your thoughts, ideas, rants or issues. We can help.*
 | `Issues <https://github.com/msqd/harp/issues>`_
 | `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
 
+**Community**: |badge_list| |badge_discord|
 
-What is HARP Proxy?
-:::::::::::::::::::
+.. |badge_list| image:: https://img.shields.io/badge/Subscribe_to_release_announcements-085E9F?logo=maildotru
+    :target: https://lists.harp-proxy.net/subscription/form
+    :alt: Subscribe to release announcements
 
-HARP Proxy is a fast open-source API proxy that you can use in development or production to improve the reliability,
-performance, security, and observability of your application's external API interactions.
+.. |badge_discord| image:: https://img.shields.io/badge/Join_our_discord_server-ffffff?logo=discord
+    :target: https://discord.gg/97jM8Hhf
+    :alt: Join our discord server
 
-You list your external API endpoints in the configuration, update your consumer's base endpoints to hit the proxy and
-HARP will intercept and forward requests to these, with additional instrumentation.
 
-Out of the box, you'll get standard-compliant caching, a world class http client (with retries, timeouts, etc.), and
-a vizualization dashboard to observe everything.
+.. note::
+
+    HARP is used both in development and production, and it works well for us. However, it is still under heavy active
+    development and some features may not be as polished as you expect, and some APIs may change.
+
+    We are actively looking for feedback, please reach out with your thoughts, ideas, rants or issues. We can help.
+
+
+What is HARP?
+:::::::::::::
+
+HARP is a python-based framework to build API proxies. From no-configuration 1 minute start to try it locally with an in
+memory database to a full production ready proxy with multiple storage backends and custom filtering, it got you
+covered.
+
+The main goal is to improve the performance, reliability, security, and observability of the APIs you already use,
+without changing anything except the base URL of your API calls. Ultimately, you can use HARP to "fix the Internet," or
+at least the subset your application depends on.
+
+Out of the box, you'll get standard-compliant caching (based on `hishel <https://hishel.com/>`_), a world class http
+client (based on `httpx <https://www.python-httpx.org/>`_), a `circuit breaker
+<https://docs.harp-proxy.net/en/latest/features/circuit-breaker.html>`_, a `python-based rules engine
+<https://docs.harp-proxy.net/en/latest/features/rules.html>`_, an audit log and an `observation dashboard
+<https://docs.harp-proxy.net/en/latest/features/dashboard.html>`_. The `features guide
+<https://docs.harp-proxy.net/en/latest/features/index.html>`_ will tell you more.
 
 .. figure:: https://docs.harp-proxy.net/en/latest/_images/overview.png
     :alt: HARP Proxy Overview
@@ -91,7 +104,7 @@ How it works?
 Overview
 --------
 
-.. figure:: https://github.com/msqd/harp/raw/0.6/docs/images/HowItWorks-Overview.png
+.. figure:: https://github.com/msqd/harp/raw/0.8/docs/images/HowItWorks-Overview.png
     :alt: An overview of how HARP works in your system
     :align: center
 
@@ -136,7 +149,7 @@ Each proxy is configured to intercept and forward requests to a specific externa
 
 An additional (optional) port serves a dashboard to observe your proxies in real-time.
 
-.. figure:: https://github.com/msqd/harp/raw/0.6/docs/images/HowItWorks-Service.png
+.. figure:: https://github.com/msqd/harp/raw/0.8/docs/images/HowItWorks-Service.png
     :alt: What happens within the harp service
     :align: center
 
@@ -156,7 +169,7 @@ HTTP before, you will still speak HTTP. The only change needed in your applicati
 is the base endpoint of the external services. In a modern 12factor-like application, it usually only means changing an
 environment variable.
 
-.. figure:: https://github.com/msqd/harp/raw/0.6/docs/images/HowItWorks-Proxy.png
+.. figure:: https://github.com/msqd/harp/raw/0.8/docs/images/HowItWorks-Proxy.png
     :alt: What happens within one harp proxy
     :align: center
 
