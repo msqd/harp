@@ -76,7 +76,14 @@ install-backend-dev:  ## Installs harp dependencies (backend) with development t
 
 wheel:
 	mkdir -p dist
-	bin/sandbox "$(MAKE) install-dev build-frontend; mv harp_apps/dashboard/frontend/dist harp_apps/dashboard/web; rm -rf harp_apps/dashboard/frontend; $(POETRY) build; cp dist/* $(PWD)/dist"
+	bin/sandbox "$(MAKE) install-dev build-frontend; \
+				 mv harp_apps/dashboard/frontend/dist harp_apps/dashboard/web; \
+				 rm -rf harp_apps/dashboard/frontend; \
+				 sed '/^People & Credits/,$$ d' README.rst > README2.rst; \
+				 mv README2.rst README.rst; \
+				 $(POETRY) build; \
+				 cp dist/* $(PWD)/dist; \
+				 twine check dist/*"
 
 ########################################################################################################################
 # Documentation
