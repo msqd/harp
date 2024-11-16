@@ -13,7 +13,7 @@ from harp.utils.testing.communicators import ASGICommunicator
 from harp.views.json import register as register_json_views
 
 
-async def _create_request(body=None, /, *, method="GET", headers=None):
+async def _create_request(body=None, /, *, method="GET", headers=None, path="/"):
     receive = AsyncMock(
         return_value={"body": ensure_bytes(body) if body else b""},
     )
@@ -24,6 +24,7 @@ async def _create_request(body=None, /, *, method="GET", headers=None):
                 {
                     "type": "http",
                     "method": method,
+                    "path": path,
                     **(
                         {"headers": [(ensure_bytes(k), ensure_bytes(v)) for k, v in headers.items()]} if headers else {}
                     ),
