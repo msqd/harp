@@ -9,7 +9,23 @@
   "imageSize": 100,
   "commit": true,
   "commitConvention": "none",
-  "contributors": [],
+  "contributors": [
+    {
+      "login": "hartym",
+      "name": "Romain Dorgueil",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30586?v=4",
+      "profile": "https://www.makersquad.fr/",
+      "contributions": [
+        "business",
+        "ideas",
+        "code",
+        "doc",
+        "example",
+        "financial",
+        "test"
+      ]
+    }
+  ],
   "contributorsPerLine": 7,
   "linkToUsage": false
 }
