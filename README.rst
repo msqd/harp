@@ -45,12 +45,10 @@ of the APIs you use. It runs in your infrastructure, close to your applications.
     :alt: Join our discord server
 
 
-.. note::
+*HARP is used both in development and production, and it works well for us. However, it is still under heavy active
+development and some features may not be as polished as you expect, and some APIs may change.*
 
-    HARP is used both in development and production, and it works well for us. However, it is still under heavy active
-    development and some features may not be as polished as you expect, and some APIs may change.
-
-    We are actively looking for feedback, please reach out with your thoughts, ideas, rants or issues. We can help.
+*We are actively looking for feedback, please reach out with your thoughts, ideas, rants or issues. We can help.*
 
 
 What is HARP?
