@@ -3,7 +3,7 @@
 exports[`renders the title and data when the query is successful 1`] = `
 <div>
   <div
-    class="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm css-o0j4j7"
+    class="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm css-1gi0pr0"
   >
     <div
       class="px-4 py-3"
@@ -12,7 +12,7 @@ exports[`renders the title and data when the query is successful 1`] = `
         name="endpoint"
       >
         <legend
-          class="flex w-full cursor-pointer css-9ho516"
+          class="flex w-full cursor-pointer css-1ooqpp2"
         >
           <span
             class="grow"
@@ -127,7 +127,7 @@ exports[`renders the title and data when the query is successful 1`] = `
         name="method"
       >
         <legend
-          class="flex w-full cursor-pointer css-9ho516"
+          class="flex w-full cursor-pointer css-1ooqpp2"
         >
           <span
             class="grow"
@@ -324,7 +324,7 @@ exports[`renders the title and data when the query is successful 1`] = `
         name="status"
       >
         <legend
-          class="flex w-full cursor-pointer css-9ho516"
+          class="flex w-full cursor-pointer css-1ooqpp2"
         >
           <span
             class="grow"
@@ -489,7 +489,7 @@ exports[`renders the title and data when the query is successful 1`] = `
         name="flags"
       >
         <legend
-          class="flex w-full cursor-pointer css-9ho516"
+          class="flex w-full cursor-pointer css-1ooqpp2"
         >
           <span
             class="grow"
@@ -590,7 +590,7 @@ exports[`renders the title and data when the query is successful 1`] = `
         name="performanceIndex"
       >
         <legend
-          class="flex w-full cursor-pointer css-9ho516"
+          class="flex w-full cursor-pointer css-1ooqpp2"
         >
           <span
             class="grow"
@@ -649,21 +649,21 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="css-1yxx0tz"
             >
               <div
-                class="css-14pv6h1"
+                class="css-i2dif2"
                 style="left: 0%;"
               />
               <div
-                class="css-6u3d9g"
+                class="css-hls846"
               >
                 <div
-                  class="css-fhc53s"
+                  class="css-jc5ohw"
                   style="left: 0%; right: 0%;"
                 />
                 <div
                   style="position: absolute; left: 0%; top: 50%;"
                 >
                   <div
-                    class="bg-teal-400 css-1mbp5y2"
+                    class="bg-teal-400 css-anyqj0"
                   />
                   <div
                     class="css-rx8plc"
@@ -675,7 +675,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 12.5%; top: 50%;"
                 >
                   <div
-                    class="bg-emerald-400 css-8d6cle"
+                    class="bg-emerald-400 css-v9ikew"
                   />
                   <div
                     class="css-rx8plc"
@@ -687,7 +687,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 25%; top: 50%;"
                 >
                   <div
-                    class="bg-green-500 css-tsujdb"
+                    class="bg-green-500 css-l96s48"
                   />
                   <div
                     class="css-rx8plc"
@@ -699,7 +699,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 37.5%; top: 50%;"
                 >
                   <div
-                    class="bg-lime-500 css-1lvmgf3"
+                    class="bg-lime-500 css-1p9748h"
                   />
                   <div
                     class="css-rx8plc"
@@ -711,7 +711,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 50%; top: 50%;"
                 >
                   <div
-                    class="bg-yellow-500 css-1tqf926"
+                    class="bg-yellow-500 css-bhmyr1"
                   />
                   <div
                     class="css-rx8plc"
@@ -723,7 +723,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 62.5%; top: 50%;"
                 >
                   <div
-                    class="bg-amber-500 css-1dfhn4m"
+                    class="bg-amber-500 css-1e0o4j8"
                   />
                   <div
                     class="css-rx8plc"
@@ -735,7 +735,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 75%; top: 50%;"
                 >
                   <div
-                    class="bg-orange-500 css-12ueco"
+                    class="bg-orange-500 css-1a0z20i"
                   />
                   <div
                     class="css-rx8plc"
@@ -747,7 +747,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 87.5%; top: 50%;"
                 >
                   <div
-                    class="bg-red-500 css-1ksflql"
+                    class="bg-red-500 css-vcx0t1"
                   />
                   <div
                     class="css-rx8plc"
@@ -759,7 +759,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   style="position: absolute; left: 100%; top: 50%;"
                 >
                   <div
-                    class="bg-red-700 css-eb9nog"
+                    class="bg-red-700 css-1r3p81k"
                   />
                   <div
                     class="css-rx8plc"
@@ -769,7 +769,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                 </div>
               </div>
               <div
-                class="css-14pv6h1"
+                class="css-i2dif2"
                 style="left: 100%;"
               />
             </div>

@@ -10,11 +10,11 @@ exports[`renders well when the query is successful 1`] = `
         class="flex flex-col"
       >
         <h1
-          class="flex css-9lrcch"
+          class="flex css-wbsupr"
         >
           Transactions
           <button
-            class="css-k2gmgi"
+            class="css-6wkj93"
           >
             <svg
               aria-hidden="true"
@@ -32,7 +32,7 @@ exports[`renders well when the query is successful 1`] = `
           </button>
         </h1>
         <p
-          class="css-11bp3eh"
+          class="css-1t8megh"
         >
           Explore transactions that went through the proxy
         </p>
@@ -99,7 +99,7 @@ exports[`renders well when the query is successful 1`] = `
                 class="text-right"
               >
                 <button
-                  class="css-k2gmgi"
+                  class="css-6wkj93"
                 >
                   <svg
                     aria-hidden="true"
@@ -117,7 +117,7 @@ exports[`renders well when the query is successful 1`] = `
                    reset
                 </button>
                 <button
-                  class="css-k2gmgi"
+                  class="css-6wkj93"
                 >
                   <svg
                     aria-hidden="true"
@@ -136,41 +136,41 @@ exports[`renders well when the query is successful 1`] = `
                 </button>
               </div>
               <div
-                class="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm css-o0j4j7"
+                class="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm css-1gi0pr0"
               />
             </aside>
             <main
               class="flex-1 overflow-auto"
             >
               <table
-                class="css-1w1sink"
+                class="css-dq4fyc"
               >
                 <thead>
                   <tr>
                     <th
-                      class="w-1 css-1dlftgi"
+                      class="w-1 css-yynajo"
                       scope="col"
                     />
                     <th
-                      class=" css-1dlftgi"
+                      class=" css-yynajo"
                       scope="col"
                     >
                       Request
                     </th>
                     <th
-                      class=" css-1dlftgi"
+                      class=" css-yynajo"
                       scope="col"
                     >
                       Response
                     </th>
                     <th
-                      class=" css-1dlftgi"
+                      class=" css-yynajo"
                       scope="col"
                     >
                       Duration
                     </th>
                     <th
-                      class=" css-1dlftgi"
+                      class=" css-yynajo"
                       scope="col"
                     >
                       Date
@@ -184,7 +184,7 @@ exports[`renders well when the query is successful 1`] = `
                     class="hover:bg-slate-50 cursor-pointer"
                   >
                     <td
-                      class=" css-157hpf5"
+                      class=" css-1d6gzbj"
                     >
                       <svg
                         aria-hidden="true"
@@ -204,13 +204,13 @@ exports[`renders well when the query is successful 1`] = `
                       </svg>
                     </td>
                     <td
-                      class="truncate max-w-0 w-full css-157hpf5"
+                      class="truncate max-w-0 w-full css-1d6gzbj"
                     >
                       <span
                         class="font-normal"
                       >
                         <span
-                          class="css-pnlnkr"
+                          class="css-69lnqt"
                           color="green"
                         >
                           GET
@@ -229,13 +229,13 @@ exports[`renders well when the query is successful 1`] = `
                       </span>
                     </td>
                     <td
-                      class=" css-157hpf5"
+                      class=" css-1d6gzbj"
                     >
                       <span
                         class="font-normal"
                       >
                         <span
-                          class="css-pnlnkr"
+                          class="css-69lnqt"
                           color="green"
                         >
                           200
@@ -245,7 +245,7 @@ exports[`renders well when the query is successful 1`] = `
                       </span>
                     </td>
                     <td
-                      class=" css-157hpf5"
+                      class=" css-1d6gzbj"
                     >
                       <div
                         class="flex gap-x-0.5 items-center font-normal"
@@ -256,7 +256,7 @@ exports[`renders well when the query is successful 1`] = `
                       </div>
                     </td>
                     <td
-                      class=" css-157hpf5"
+                      class=" css-1d6gzbj"
                     >
                       <div
                         title="2021-08-20T20:00:00Z"
@@ -269,7 +269,7 @@ exports[`renders well when the query is successful 1`] = `
                     class="hover:bg-slate-50 cursor-pointer"
                   >
                     <td
-                      class=" css-157hpf5"
+                      class=" css-1d6gzbj"
                     >
                       <svg
                         aria-hidden="true"
@@ -289,13 +289,13 @@ exports[`renders well when the query is successful 1`] = `
                       </svg>
                     </td>
                     <td
-                      class="truncate max-w-0 w-full css-157hpf5"
+                      class="truncate max-w-0 w-full css-1d6gzbj"
                     >
                       <span
                         class="font-normal"
                       >
                         <span
-                          class="css-pnlnkr"
+                          class="css-69lnqt"
                           color="green"
                         >
                           GET
@@ -314,13 +314,13 @@ exports[`renders well when the query is successful 1`] = `
                       </span>
                     </td>
                     <td
-                      class=" css-157hpf5"
+                      class=" css-1d6gzbj"
                     >
                       <span
                         class="font-normal"
                       >
                         <span
-                          class="css-pnlnkr"
+                          class="css-69lnqt"
                           color="green"
                         >
                           200
@@ -330,7 +330,7 @@ exports[`renders well when the query is successful 1`] = `
                       </span>
                     </td>
                     <td
-                      class=" css-157hpf5"
+                      class=" css-1d6gzbj"
                     >
                       <div
                         class="flex gap-x-0.5 items-center font-normal"
@@ -341,7 +341,7 @@ exports[`renders well when the query is successful 1`] = `
                       </div>
                     </td>
                     <td
-                      class=" css-157hpf5"
+                      class=" css-1d6gzbj"
                     >
                       <div
                         title="2021-08-20T20:00:00Z"

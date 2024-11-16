@@ -10,12 +10,12 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
         class="flex flex-col"
       >
         <h1
-          class="css-9lrcch"
+          class="css-wbsupr"
         >
           System
         </h1>
         <p
-          class="css-11bp3eh"
+          class="css-1t8megh"
         >
           Informations about the running instance.
         </p>
@@ -34,7 +34,7 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
             <nav
               aria-label="Tabs"
               aria-orientation="horizontal"
-              class="css-tvjki7"
+              class="css-10eq7j6"
               role="tablist"
             >
               <button
@@ -49,7 +49,7 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
                 type="button"
               >
                 <span
-                  class="css-7lc9z"
+                  class="css-iznzy3"
                 >
                   Topology
                 </span>
@@ -65,7 +65,7 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
                 type="button"
               >
                 <span
-                  class="css-gebh7q"
+                  class="css-d9dgd9"
                 >
                   Settings
                 </span>
@@ -81,7 +81,7 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
                 type="button"
               >
                 <span
-                  class="css-gebh7q"
+                  class="css-d9dgd9"
                 >
                   Storage
                 </span>
@@ -96,14 +96,14 @@ exports[`SystemPage > renders the title and data when the query is successful 1`
                 type="button"
               >
                 <span
-                  class="css-gebh7q"
+                  class="css-d9dgd9"
                 >
                   Dependencies
                 </span>
               </button>
             </nav>
             <div
-              class="css-ii4d2e"
+              class="css-17g0l6f"
             >
               <div>
                 Loading...

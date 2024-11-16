@@ -3,7 +3,7 @@
 exports[`Badge > renders correctly 1`] = `
 <div>
   <span
-    class="css-pnlnkr"
+    class="css-69lnqt"
     color="green"
   >
     Test Badge

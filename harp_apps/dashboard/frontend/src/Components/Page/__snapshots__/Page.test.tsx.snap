@@ -10,12 +10,12 @@ exports[`Page > renders without error 1`] = `
         class="flex flex-col"
       >
         <h1
-          class="css-9lrcch"
+          class="css-wbsupr"
         >
           Test Title
         </h1>
         <p
-          class="css-11bp3eh"
+          class="css-1t8megh"
         >
           Test Description
         </p>
