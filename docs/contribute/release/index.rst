@@ -14,4 +14,5 @@ Releasing
     sources
     python
     helm
+    contributors
     bump

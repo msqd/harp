@@ -34,7 +34,7 @@ of the APIs you use. It runs in your infrastructure, close to your applications.
 | `Issues <https://github.com/msqd/harp/issues>`_
 | `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
 
-**Community**: |badge_list| |badge_discord|
+**Community**: |badge_list| |badge_discord| |badge_contributors|
 
 .. |badge_list| image:: https://img.shields.io/badge/Subscribe_to_release_announcements-085E9F?logo=maildotru
     :target: https://lists.harp-proxy.net/subscription/form
@@ -43,6 +43,10 @@ of the APIs you use. It runs in your infrastructure, close to your applications.
 .. |badge_discord| image:: https://img.shields.io/badge/Join_our_discord_server-ffffff?logo=discord
     :target: https://discord.gg/97jM8Hhf
     :alt: Join our discord server
+
+.. |badge_contributors| image:: https://img.shields.io/badge/contributors-5-orange
+    :target: https://github.com/msqd/harp/graphs/contributors
+    :alt: All Contributors
 
 
 *HARP is used both in development and production, and it works well for us. However, it is still under heavy active
