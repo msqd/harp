@@ -107,4 +107,4 @@ To generate the markdown changes for github, use:
 
 .. code-block:: shell
 
-    pandoc -s -o changes.md docs/changelogs/$VERSION.rst
+    pandoc --wrap=none -s -o changes.md docs/changelogs/$VERSION.rst
