@@ -30,12 +30,7 @@ Update version numbers
 
     gsed -i -e "s/^__version__ = .*/__version__ = \"$VERSION\"/" harp/__init__.py
     gsed -i -e "s/^appVersion: .*/appVersion: \"$VERSION\"/" misc/helm/charts/harp-proxy/Chart.yaml
-
-Additionally, bumb the chart version in ``misc/helm/charts/harp-proxy/Chart.yaml``:
-
-.. code-block:: shell
-
-    vi misc/helm/charts/harp-proxy/Chart.yaml
+    gsed -i -e "s/^version: .*/version: \"$VERSION\"/" misc/helm/charts/harp-proxy/Chart.yaml
 
 Generate a changelog
 ::::::::::::::::::::
