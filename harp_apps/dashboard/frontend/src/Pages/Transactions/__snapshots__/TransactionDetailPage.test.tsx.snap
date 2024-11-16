@@ -10,7 +10,7 @@ exports[`renders the title and data when the query is successful 1`] = `
         class="flex flex-col"
       >
         <h1
-          class="css-9lrcch"
+          class="css-wbsupr"
         >
           Transaction details
         </h1>
@@ -26,13 +26,13 @@ exports[`renders the title and data when the query is successful 1`] = `
           class="inline-block min-w-full max-w-full py-2 align-middle sm:px-6 lg:px-8"
         >
           <div
-            class="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm css-o0j4j7"
+            class="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm css-1gi0pr0"
           >
             <div
               class="px-4 py-3"
             >
               <h5
-                class="flex w-full whitespace-nowrap cursor-pointer css-9ho516"
+                class="flex w-full whitespace-nowrap cursor-pointer css-1ooqpp2"
               >
                 <div
                   class="grow font-normal truncate"
@@ -103,7 +103,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="relative px-4 py-3"
             >
               <h5
-                class="flex w-full whitespace-nowrap cursor-pointer css-9ho516"
+                class="flex w-full whitespace-nowrap cursor-pointer css-1ooqpp2"
               >
                 <div
                   class="grow font-normal truncate"
@@ -120,7 +120,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                       class="font-normal"
                     >
                       <span
-                        class="css-pnlnkr"
+                        class="css-69lnqt"
                         color="green"
                       >
                         GET
@@ -242,7 +242,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="relative px-4 py-3"
             >
               <h5
-                class="flex w-full whitespace-nowrap cursor-pointer css-9ho516"
+                class="flex w-full whitespace-nowrap cursor-pointer css-1ooqpp2"
               >
                 <div
                   class="grow font-normal truncate"
@@ -259,7 +259,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                       class="font-normal"
                     >
                       <span
-                        class="css-pnlnkr"
+                        class="css-69lnqt"
                         color="green"
                       >
                         200
@@ -348,7 +348,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="px-4 py-3"
             >
               <h5
-                class="flex w-full whitespace-nowrap cursor-pointer css-9ho516"
+                class="flex w-full whitespace-nowrap cursor-pointer css-1ooqpp2"
               >
                 <div
                   class="grow font-normal truncate"

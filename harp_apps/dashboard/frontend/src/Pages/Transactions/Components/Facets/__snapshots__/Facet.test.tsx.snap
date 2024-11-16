@@ -9,7 +9,7 @@ exports[`Facet > renders without crashing 1`] = `
       name="test-name"
     >
       <legend
-        class="flex w-full cursor-pointer css-9ho516"
+        class="flex w-full cursor-pointer css-1ooqpp2"
       >
         <span
           class="grow"

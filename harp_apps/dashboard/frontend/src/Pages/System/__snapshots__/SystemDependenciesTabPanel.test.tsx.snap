@@ -17,7 +17,7 @@ exports[`renders the title and data when the query is successful 1`] = `
       tabindex="0"
     >
       <div
-        class="css-o0j4j7"
+        class="css-1gi0pr0"
       >
         <table
           class="min-w-fit divide-y divide-gray-300"

@@ -17,10 +17,10 @@ exports[`renders the title and data when the query is successful 1`] = `
       tabindex="0"
     >
       <div
-        class="css-14upriz"
+        class="css-1iyv17h"
       >
         <h2
-          class="css-13yts7e"
+          class="css-u097h7"
         >
           Topology
         </h2>
@@ -28,7 +28,7 @@ exports[`renders the title and data when the query is successful 1`] = `
           class="my-6"
         >
           <div
-            class="flex items-start space-x-1 css-14upriz"
+            class="flex items-start space-x-1 css-1iyv17h"
           >
             <span
               class="flex gap-x-2 px-2 py-0.5 text-sm font-medium text-gray-800 items-center h-full"
@@ -61,7 +61,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               </span>
             </span>
             <div
-              class="flex flex-col divide-y divide-gray-200 css-14upriz"
+              class="flex flex-col divide-y divide-gray-200 css-1iyv17h"
             />
           </div>
         </div>

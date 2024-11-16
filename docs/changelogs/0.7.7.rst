@@ -1,0 +1,28 @@
+Version 0.7.7 (2024-11-16)
+==========================
+
+Fixed
+:::::
+
+* DX: Add the ability to use --set x=y or --set x y (both equivalent) to all commands (@masterivanic, #590)
+* UI: Correctly display header values containing a semicolon character (#577, @ArthurD1)
+* UI: On transactions page, tpdex filter now includes both sides of the selected range (#391, @ArthurD1)
+
+Changed
+:::::::
+
+* DX: Improve `harp create project` prompts (@Lenormju)
+
+Updated
+:::::::
+
+* bump aiohttp from 3.10.10 to 3.11.2
+* bump alembic from 1.13.3 to 1.14.0
+* bump asgi-tools from 1.0.10 to 1.1.0
+* bump hishel from 0.0.33 to 0.1.1
+* bump http-router from 4.1.2 to 5.0.8
+* bump orjson from 3.10.10 to 3.10.11
+* bump rich from 13.9.3 to 13.9.4
+* bump rich-click from 1.8.3 to 1.8.4
+* bump ruff from 0.7.1 to 0.7.4
+* bump sentry-sdk from 2.17.0 to 2.18.0

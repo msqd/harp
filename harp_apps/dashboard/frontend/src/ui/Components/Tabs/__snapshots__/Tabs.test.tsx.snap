@@ -5,7 +5,7 @@ exports[`Tab > renders correctly 1`] = `
   <div>
     <div
       aria-orientation="horizontal"
-      class="css-tvjki7"
+      class="css-10eq7j6"
       role="tablist"
     >
       <button
@@ -20,14 +20,14 @@ exports[`Tab > renders correctly 1`] = `
         type="button"
       >
         <span
-          class="css-7lc9z"
+          class="css-iznzy3"
         >
           Tab 1
         </span>
       </button>
     </div>
     <div
-      class="css-ii4d2e"
+      class="css-17g0l6f"
     >
       <div
         aria-labelledby="headlessui-tabs-tab-:r0:"

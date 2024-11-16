@@ -6,7 +6,7 @@ exports[`renders the title and data when the query is successful 1`] = `
     class="flex h-screen min-h-screen max-h-screen w-screen flex-col"
   >
     <nav
-      class="css-orfs66"
+      class="css-w5jmxa"
       data-headlessui-state=""
     >
       <div
