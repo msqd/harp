@@ -10,7 +10,7 @@ export function RightNav() {
       {systemQuery.data.user ?? "anonymous"}
       <br />
       <span className="text-xs">
-        <a href="https://docs.harp-proxy.net/en/0.7/user/?utm_source=dashboard&utm_medium=help" target="_blank">
+        <a href="https://docs.harp-proxy.net/en/0.8/user/?utm_source=dashboard&utm_medium=help" target="_blank">
           <QuestionMarkCircleIcon className="inline-block w-4 h-4 mx-1" />
           Help
         </a>
