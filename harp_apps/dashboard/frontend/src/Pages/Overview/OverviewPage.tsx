@@ -9,7 +9,7 @@ const OverviewPage = () => {
   return (
     <Page title={<PageTitle title="Overview" />}>
       <Helmet>
-        <title>Harp</title>
+        <title>Overview | HARP</title>
         <meta name="description" content="Overview page" />
       </Helmet>
       <SummarySection />
