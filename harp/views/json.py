@@ -3,12 +3,16 @@ import traceback
 from decimal import Decimal
 
 import orjson
+from pydantic import AnyUrl
 from whistle import IAsyncEventDispatcher
 
 from harp.asgi.events import EVENT_CORE_VIEW, ViewEvent
 from harp.http import HttpResponse
 
-STRINGIFIABLES = (Decimal,)
+STRINGIFIABLES = (
+    AnyUrl,
+    Decimal,
+)
 
 try:
     from freezegun.api import FakeDatetime
@@ -16,6 +20,7 @@ try:
     STRINGIFIABLES += (FakeDatetime,)
 except ImportError:
     pass
+
 
 LISTIFIABLES = (set,)
 
