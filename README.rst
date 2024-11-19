@@ -41,7 +41,7 @@ of the APIs you use. It runs in your infrastructure, close to your applications.
     :alt: Subscribe to release announcements
 
 .. |badge_discord| image:: https://img.shields.io/badge/Join_our_discord_server-ffffff?logo=discord
-    :target: https://discord.gg/97jM8Hhf
+    :target: https://discord.gg/uZeqBadpZQ
     :alt: Join our discord server
 
 .. |badge_contributors| image:: https://img.shields.io/badge/contributors-5-orange
