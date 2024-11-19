@@ -4,6 +4,7 @@ VERSION ?= $(shell git describe 2>/dev/null || git rev-parse --short HEAD)
 
 # poetry
 POETRY ?= $(shell which poetry || echo "poetry")
+POETRY_BUILD ?= $(POETRY) build
 POETRY_INSTALL_OPTIONS ?=
 RUN ?= $(if $(VIRTUAL_ENV),,$(POETRY) run)
 PLATFORM ?= linux/amd64
@@ -77,13 +78,13 @@ install-backend-dev:  ## Installs harp dependencies (backend) with development t
 wheel:
 	mkdir -p dist
 	bin/sandbox "$(MAKE) install-dev build-frontend; \
-				 mv harp_apps/dashboard/frontend/dist harp_apps/dashboard/web; \
 				 rm -rf harp_apps/dashboard/frontend; \
-				 sed '/^People & Credits/,$$ d' README.rst > README2.rst; \
-				 mv README2.rst README.rst; \
-				 $(POETRY) build; \
+				 sed '/^People & Credits/,$$ d' README.rst > README.rst.tmp; \
+				 mv README.rst.tmp README.rst; \
+				 $(POETRY_BUILD); \
 				 cp dist/* $(PWD)/dist; \
 				 twine check dist/*"
+
 
 ########################################################################################################################
 # Documentation
@@ -112,6 +113,7 @@ docs-dev:  ## Spin up a livereload documentation server
 
 build-frontend:  ## Builds the harp dashboard frontend (compiles typescript and other sources into bundled version).
 	cd $(FRONTEND_DIR); $(PNPM) build
+	mv harp_apps/dashboard/frontend/dist harp_apps/dashboard/web
 
 
 ########################################################################################################################
