@@ -30,10 +30,12 @@ from .constants import (
 from .events import (
     EVENT_FILTER_PROXY_REQUEST,
     EVENT_FILTER_PROXY_RESPONSE,
+    EVENT_PROXY_ERROR,
     EVENT_TRANSACTION_ENDED,
     EVENT_TRANSACTION_MESSAGE,
     EVENT_TRANSACTION_STARTED,
     HttpMessageEvent,
+    ProxyErrorEvent,
     ProxyFilterEvent,
     TransactionEvent,
 )
@@ -279,6 +281,8 @@ class HttpProxyController(AbstractHttpProxyController):
             if error_kind in self.remote.settings.break_on:
                 if base_url and self.remote[base_url].failure(error_name):
                     self.remote.refresh()
+
+            await self.adispatch(EVENT_PROXY_ERROR, ProxyErrorEvent(transaction, response))
 
         return await self.end_transaction(transaction, response)
 

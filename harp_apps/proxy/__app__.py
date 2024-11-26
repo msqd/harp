@@ -40,6 +40,7 @@ async def on_bind(event: OnBindEvent):
             name = f"proxy.controllers.{endpoint.name}_controller"
             resolver = ServiceResolver(event.container, controller.to_service_definition(name, lifestyle="singleton"))
             event.container._map[name] = resolver
+
     event.container.add_singleton(Proxy, cast(type, ProxyFactory))
 
 

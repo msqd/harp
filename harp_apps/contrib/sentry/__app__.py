@@ -1,6 +1,21 @@
-from harp.config import Application, OnReadyEvent
+from structlog import get_logger
+
+from harp.config import Application, OnBindEvent, OnReadyEvent
+from harp_apps.proxy.events import EVENT_PROXY_ERROR, ProxyErrorEvent
 
 from .settings import SentrySettings
+
+logger = get_logger(__name__)
+
+
+async def on_proxy_error(event: ProxyErrorEvent):
+    import sentry_sdk
+
+    sentry_sdk.capture_exception(event.error.exception)
+
+
+async def on_bind(event: OnBindEvent):
+    event.dispatcher.add_listener(EVENT_PROXY_ERROR, on_proxy_error)
 
 
 async def on_ready(event: OnReadyEvent):
@@ -16,6 +31,7 @@ async def on_ready(event: OnReadyEvent):
 
 
 application = Application(
+    on_bind=on_bind,
     on_ready=on_ready,
     settings_type=SentrySettings,
 )

@@ -877,7 +877,8 @@
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  harp_apps.contrib.sentry:
+    dsn: https://68ecc537c2d8425fb732727b07bd2e42@o514633.ingest.sentry.io/4506557181722624
   http_client: {}
   proxy: {}
   rules: {}

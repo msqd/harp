@@ -98,13 +98,14 @@ class SqlBlobStorage(IBlobStorage):
 
     @override
     async def force_put(self, blob: Blob) -> Blob:
-        async with self.engine.connect() as conn:
-            try:
+        try:
+            async with self.engine.connect() as conn:
                 await conn.execute(
                     insert(SqlBlob).values(id=blob.id, data=blob.data, content_type=blob.content_type),
                 )
                 await conn.commit()
-            except IntegrityError:
+        except IntegrityError:
+            async with self.engine.connect() as conn:
                 await conn.execute(
                     update(SqlBlob).where(SqlBlob.id == blob.id).values(data=blob.data, content_type=blob.content_type),
                 )

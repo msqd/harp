@@ -3,7 +3,7 @@ from typing import Callable, Optional, Self
 from whistle import Event
 
 from harp import get_logger
-from harp.http import BaseHttpMessage, HttpResponse
+from harp.http import BaseHttpMessage, HttpError, HttpResponse
 from harp.http.requests import HttpRequest
 from harp.models import Transaction
 from harp.views.json import serialize
@@ -24,6 +24,9 @@ EVENT_FILTER_PROXY_REQUEST = "proxy.filter.request"
 
 #: Event fired when an outgoing response is ready to be filtered, for example by the rules application.
 EVENT_FILTER_PROXY_RESPONSE = "proxy.filter.response"
+
+#: An error happened.
+EVENT_PROXY_ERROR = "proxy.error"
 
 
 class ProxyFilterEvent(Event):
@@ -103,3 +106,9 @@ class HttpMessageEvent(TransactionEvent):
     def __init__(self, transaction: Transaction, message: BaseHttpMessage):
         super().__init__(transaction)
         self.message = message
+
+
+class ProxyErrorEvent(TransactionEvent):
+    def __init__(self, transaction: Transaction, error: HttpError):
+        super().__init__(transaction)
+        self.error = error

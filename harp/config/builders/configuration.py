@@ -164,7 +164,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
             settings_type = self.applications[name].settings_type
             if not settings_type:
                 continue
-            _local_settings = settings.get(name, {})
+            _local_settings = settings.get(name.rsplit(".", 1)[-1], {})
             if not isinstance(_local_settings, settings_type):
                 _local_settings = settings_type(**_local_settings)
             all_settings.append((name, _local_settings))
