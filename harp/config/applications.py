@@ -1,10 +1,12 @@
 import importlib.util
-from typing import Optional, Type
+import os
+from typing import ItemsView, KeysView, Optional, Type, ValuesView
 
 from whistle import IAsyncEventDispatcher
 
 from harp.services import Container
 
+from .. import get_relative_path
 from .asdict import asdict
 from .events import (
     EVENT_BIND,
@@ -42,6 +44,9 @@ class Application:
     factory dispatcher automatically, in reverse order of appearance (first loaded application will be disposed last).
     """
 
+    #: A placeholder for the source path of the application.
+    path: Optional[str] = None
+
     def __init__(
         self,
         *,
@@ -77,7 +82,7 @@ class Application:
 class ApplicationsRegistry:
     namespaces = ["harp_apps"]
 
-    def __init__(self, namespaces: Optional[list[str]] = None):
+    def __init__(self, *, namespaces: Optional[list[str]] = None):
         self._applications = {}
         self.namespaces = namespaces or self.namespaces
 
@@ -134,6 +139,11 @@ class ApplicationsRegistry:
 
             applications[application_spec.name] = getattr(application_module, "application")
 
+            try:
+                applications[application_spec.name].path = get_relative_path(os.path.dirname(application_spec.origin))
+            except TypeError:
+                applications[application_spec.name].path = None
+
         if name not in applications:
             raise RuntimeError(f'Unable to load application "{name}", application class definition not found.')
 
@@ -168,13 +178,13 @@ class ApplicationsRegistry:
             if short_name in self._applications:
                 del self._applications[short_name]
 
-    def items(self):
+    def items(self) -> ItemsView[str, Application]:
         return self._applications.items()
 
-    def keys(self):
+    def keys(self) -> KeysView[str]:
         return self._applications.keys()
 
-    def values(self):
+    def values(self) -> ValuesView[Application]:
         return self._applications.values()
 
     def defaults(self):

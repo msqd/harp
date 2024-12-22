@@ -12,7 +12,6 @@ RULES_SUBSCRIBER = "rules.subscriber"
 
 async def on_bind(event: OnBindEvent):
     settings = event.settings.get("rules")
-    logger.warning("📦 Rules are currently experimental. THE API MAY CHANGE A LOT.")
     logger.warning("📦 Rules: found %d rules.", len(settings.ruleset))
 
 

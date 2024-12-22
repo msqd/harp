@@ -15,7 +15,7 @@ class TestProxyRulesFlow(BaseRulesFlowTest):
             mock=mock,
         )
 
-        client = ASGICommunicator(system.kernel)
+        client = ASGICommunicator(system.asgi_app)
         await client.asgi_lifespan_startup()
 
         await client.http_get("/")

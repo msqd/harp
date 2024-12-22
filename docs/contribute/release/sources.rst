@@ -1,14 +1,16 @@
 Releasing a new source version
 ==============================
 
-1. Pull and check dependencies are there.
+Pull and check dependencies
+:::::::::::::::::::::::::::
 
 .. code-block:: shell
 
     git pull --tags
     make install-dev
 
-2. Generate next version number
+Generate next version number
+::::::::::::::::::::::::::::
 
 .. code-block:: shell
 
@@ -21,36 +23,30 @@ Releasing a new source version
     export OLD_VERSION=`git describe --tags --abbrev=0`
     echo New version: $VERSION - Old version: $OLD_VERSION
 
-3. Update version numbers in other project files...
+Update version numbers
+::::::::::::::::::::::
 
 .. code-block:: shell
 
     gsed -i -e "s/^__version__ = .*/__version__ = \"$VERSION\"/" harp/__init__.py
     gsed -i -e "s/^appVersion: .*/appVersion: \"$VERSION\"/" misc/helm/charts/harp-proxy/Chart.yaml
+    gsed -i -e "s/^version: .*/version: \"$VERSION\"/" misc/helm/charts/harp-proxy/Chart.yaml
 
-4. Generate a changelog...
+Generate a changelog
+::::::::::::::::::::
 
 .. code-block:: shell
 
     git log --oneline --no-merges --pretty=format:"* %s (%an)" $OLD_VERSION.. > docs/changelogs/$VERSION.rst
     git add docs/changelogs/$VERSION.rst
 
-5. Reboot computer (yes, we'll get better but that's the easiest way to have reproductible benchmarks for now) and run
-   the benchmarks on new version
-
-.. code-block:: shell
-
-    poetry run make benchmark-save
-
-.. todo:: use poetry version for benchmark save ?
-
-.. warning:: benchmarks are broken for now, but we'll re-add it soon.
-
+- **Move the unreleased changes** (:code:`vi docs/changelogs/unreleased.rst`)
 - **Edit the changelog index** (`docs/changelogs/index.rst`) to add the new version (title, date).
 - **Add a title** to the new changelog file.
 - **Add the performance graphs** to the release note.
 
-6. Add to git
+Add to git
+::::::::::
 
 .. code-block:: shell
 
@@ -58,7 +54,8 @@ Releasing a new source version
     git add docs/reference
     git add -p
 
-7. Run a full test suite again (todo: from a clean virtualenv)
+Run the full test suite
+:::::::::::::::::::::::
 
 .. todo::
 
@@ -72,13 +69,15 @@ Git add is there to check nothing was modified by QA suite.
    poetry run make qa
    git add -p
 
-8. Create the git release
+Create the git release
+::::::::::::::::::::::
 
 .. code-block:: shell
 
     git commit -m "release: $VERSION"
 
-9. Tag and push
+Tag and push
+::::::::::::
 
 .. code-block:: shell
 
@@ -87,3 +86,25 @@ Git add is there to check nothing was modified by QA suite.
 .. code-block:: shell
 
     git push origin `git rev-parse --abbrev-ref HEAD` --tags
+
+
+Eventually forward-port the new version
+:::::::::::::::::::::::::::::::::::::::
+
+If a newer version line is available, checkout and merge the new version into it.
+
+
+Create the GitHub release
+:::::::::::::::::::::::::
+
+.. code:: shell
+
+    open https://github.com/msqd/harp/releases/tag/$VERSION
+
+Create the release from tag (button on the right).
+
+To generate the markdown changes for github, use:
+
+.. code-block:: shell
+
+    pandoc --wrap=none -s -o changes.md docs/changelogs/$VERSION.rst

@@ -4,6 +4,7 @@ metadata:
   name: {{ include "harp-proxy.fullname" . }}
   labels:
     {{- include "harp-proxy.labels" . | nindent 4 }}
+
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -13,10 +14,11 @@ spec:
       {{- include "harp-proxy.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       labels:
         {{- include "harp-proxy.selectorLabels" . | nindent 8 }}
     spec:

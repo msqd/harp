@@ -34,4 +34,7 @@ class RulesSubscriber:
 
     async def on_filter_event(self, event: ProxyFilterEvent | HttpClientFilterEvent):
         for script in self.match(*event.criteria):
-            event.execute_script(script)
+            try:
+                event.execute_script(script)
+            except Exception as e:
+                logger.error(f"Error executing script {script}: {e}", exc_info=True)

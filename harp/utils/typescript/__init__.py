@@ -29,10 +29,11 @@ def generate_schema(models, type="serialization"):
 
 
 @contextmanager
-def generate_typescript(schema, *, namespace):
+def generate_typescript_and_jsonschema(schema, *, namespace):
     with (
         NamedTemporaryFile("wb+", delete_on_close=False) as infile,
         NamedTemporaryFile(delete_on_close=False) as outfile,
+        NamedTemporaryFile(delete_on_close=False) as schema_outfile,
     ):
         infile.write(orjson.dumps(schema))
         infile.close()
@@ -45,5 +46,5 @@ def generate_typescript(schema, *, namespace):
             f" | {PRETTIER} --parser typescript"
             f" > {outfile.name}"
         )
-        with open(outfile.name) as f:
-            yield f
+        os.system(f"cd {ROOT_DIR}; cat {infile.name} | {PRETTIER} --parser json > {schema_outfile.name}")
+        yield outfile.name, schema_outfile.name

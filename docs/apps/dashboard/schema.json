@@ -1,0 +1,163 @@
+{
+  "$defs": {
+    "BasicAuthSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "basic",
+          "default": null,
+          "description": "Authentication type. Only «basic» is supported for now.",
+          "enum": ["basic"],
+          "type": "string"
+        },
+        "algorithm": {
+          "default": "pbkdf2_sha256",
+          "description": "Hashing algorithm used for passwords.",
+          "enum": [
+            "argon2",
+            "bcrypt",
+            "bcrypt_sha256",
+            "cisco_asa",
+            "cisco_pix",
+            "cisco_type7",
+            "django_bcrypt",
+            "django_bcrypt_sha256",
+            "django_des_crypt",
+            "django_disabled",
+            "django_pbkdf2_sha1",
+            "django_pbkdf2_sha256",
+            "django_salted_md5",
+            "django_salted_sha1",
+            "grub_pbkdf2_sha512",
+            "hex_digest",
+            "ldap_crypt",
+            "ldap_md5",
+            "ldap_plaintext",
+            "ldap_salted_md5",
+            "ldap_salted_sha1",
+            "ldap_salted_sha256",
+            "ldap_salted_sha512",
+            "ldap_sha1",
+            "lmhash",
+            "md5_crypt",
+            "msdcc",
+            "msdcc2",
+            "mssql2000",
+            "mssql2005",
+            "mysql323",
+            "mysql41",
+            "nthash",
+            "oracle10",
+            "oracle11",
+            "pbkdf2_sha1",
+            "pbkdf2_sha256",
+            "pbkdf2_sha512",
+            "phpass",
+            "plain",
+            "plaintext",
+            "postgres_md5",
+            "scram",
+            "scrypt",
+            "sha256_crypt",
+            "sha512_crypt"
+          ],
+          "type": "string"
+        },
+        "users": {
+          "additionalProperties": { "$ref": "#/$defs/User" },
+          "description": "Users list.",
+          "title": "Users",
+          "type": "object"
+        }
+      },
+      "title": "BasicAuthSettings",
+      "type": "object"
+    },
+    "DashboardSettings": {
+      "additionalProperties": false,
+      "description": "Root settings for the dashboard application.",
+      "properties": {
+        "port": {
+          "default": 4080,
+          "description": "Port on which the dashboard application will be served.",
+          "type": "integer"
+        },
+        "auth": {
+          "anyOf": [
+            {
+              "discriminator": {
+                "mapping": { "basic": "#/$defs/BasicAuthSettings" },
+                "propertyName": "type"
+              },
+              "oneOf": [{ "$ref": "#/$defs/BasicAuthSettings" }]
+            },
+            { "type": "null" }
+          ],
+          "default": null,
+          "description": "Authentication settings for the dashboard."
+        },
+        "devserver": {
+          "anyOf": [
+            { "$ref": "#/$defs/DevserverSettings" },
+            { "type": "null" }
+          ],
+          "description": "Development server settings, only useful for internal frontend development."
+        },
+        "enable_ui": {
+          "default": true,
+          "description": "DEPRECATED – Whether to enable the dashboard UI.",
+          "type": "boolean"
+        },
+        "public_url": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null,
+          "description": "Public URL of the dashboard application, used to generate absolute links, for example in notifications."
+        }
+      },
+      "title": "DashboardSettings",
+      "type": "object"
+    },
+    "DevserverSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Enable or disable the development server.",
+          "type": "boolean"
+        },
+        "port": {
+          "anyOf": [{ "type": "integer" }, { "type": "null" }],
+          "default": null,
+          "description": "Port on which the development server will be served (internal). The proxy will forward dashboard requests to this port, if enabled."
+        }
+      },
+      "title": "DevserverSettings",
+      "type": "object"
+    },
+    "SystemPutProxyInput": {
+      "properties": {
+        "endpoint": { "type": "string" },
+        "action": { "enum": ["up", "down", "checking"], "type": "string" },
+        "url": { "type": "string" }
+      },
+      "required": ["endpoint", "action", "url"],
+      "title": "SystemPutProxyInput",
+      "type": "object"
+    },
+    "User": {
+      "additionalProperties": false,
+      "properties": { "password": { "type": "string" } },
+      "required": ["password"],
+      "title": "User",
+      "type": "object"
+    }
+  },
+  "title": "__ROOT__",
+  "anyOf": [
+    { "$ref": "#/$defs/DevserverSettings" },
+    { "$ref": "#/$defs/BasicAuthSettings" },
+    { "$ref": "#/$defs/User" },
+    { "$ref": "#/$defs/DashboardSettings" },
+    { "$ref": "#/$defs/SystemPutProxyInput" }
+  ]
+}

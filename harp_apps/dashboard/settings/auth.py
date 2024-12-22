@@ -33,9 +33,28 @@ class User(Configurable):
 
 
 class BasicAuthSettings(Configurable):
-    type: Literal["basic"] = None
-    algorithm: Annotated[TAlgorithm, BeforeValidator(_replace_plain_algorithm_for_bc)] = "pbkdf2_sha256"
-    users: Annotated[dict[str, User], BeforeValidator(_load), Field(default_factory=dict)]
+    type: Literal["basic"] = Field(
+        None,
+        description="Authentication type. Only «basic» is supported for now.",
+    )
+
+    algorithm: Annotated[
+        TAlgorithm,
+        BeforeValidator(_replace_plain_algorithm_for_bc),
+        Field(
+            "pbkdf2_sha256",
+            description="Hashing algorithm used for passwords.",
+        ),
+    ]
+
+    users: Annotated[
+        dict[str, User],
+        BeforeValidator(_load),
+        Field(
+            default_factory=dict,
+            description="Users list.",
+        ),
+    ]
 
     @cached_property
     def algorithm_impl(self):

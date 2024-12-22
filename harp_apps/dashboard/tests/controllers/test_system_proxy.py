@@ -52,7 +52,11 @@ class TestSystemControllerProxy(SystemControllerTestFixtureMixin):
                             "min_pool_size": 1,
                         },
                     },
-                    "settings": {"description": None, "name": "api", "port": 4000},
+                    "settings": {
+                        "name": "api",
+                        "description": None,
+                        "port": 4000,
+                    },
                 }
             ]
         }

@@ -143,7 +143,7 @@ export default function TransactionListPage() {
       }
     >
       <Helmet>
-        <title>Transactions | Harp</title>
+        <title>Transactions | HARP</title>
         <meta name="description" content="Transactions list page" />
       </Helmet>
 

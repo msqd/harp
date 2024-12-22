@@ -28,6 +28,8 @@ class RedisBlobStorage(IBlobStorage):
         await self.client.set(blob.id, ((blob.content_type or "") + "\n").encode() + blob.data)
         return blob
 
+    force_put = put
+
     @override
     async def delete(self, blob_id):
         await self.client.delete(blob_id)

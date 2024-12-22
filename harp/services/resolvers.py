@@ -1,9 +1,10 @@
 from functools import cached_property
 from inspect import signature
-from typing import List, Type
+from typing import List, Optional, Type
 
 from rodi import CannotResolveTypeException, ResolutionContext, ServiceLifeStyle
 
+from harp.config.configurables.service import LazyService
 from harp.utils.packages import import_string
 
 from .containers import Container
@@ -21,11 +22,13 @@ class ServiceResolver:
         self,
         container: Container,
         service: ServiceDefinition,
-        lifestyle: ServiceLifeStyle,
+        lifestyle: Optional[ServiceLifeStyle] = None,
     ):
         self.container = container
         self.service = service
-        self.lifestyle = lifestyle
+        self.lifestyle = (
+            getattr(ServiceLifeStyle, (service.lifestyle or "singleton").upper()) if lifestyle is None else lifestyle
+        )
 
     def _get_resolver(self, desired_type: str | list, context: ResolutionContext):
         # we use a list to support fallbacks
@@ -116,7 +119,7 @@ class ServiceResolver:
 
         kwargs = {}
         for _name, _value in self.defaults.items():
-            if isinstance(_value, LazyServiceReference):
+            if isinstance(_value, LazyServiceReference | LazyService):
                 kwargs[_name] = _value.resolve(self._get_resolver, context)
             else:
                 kwargs[_name] = _value
@@ -127,7 +130,7 @@ class ServiceResolver:
                     kwargs.setdefault(_name, self._get_resolver(_value.annotation, context))
 
         for _name, _value in self.arguments.items():
-            if isinstance(_value, LazyServiceReference):
+            if isinstance(_value, LazyServiceReference | LazyService):
                 kwargs[_name] = _value.resolve(self._get_resolver, context)
             else:
                 kwargs[_name] = _value

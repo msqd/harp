@@ -1,0 +1,7 @@
+Version 0.7.1 (2024-09-17)
+==========================
+
+Fixed
+:::::
+
+* Erroneous frontend compiled assets path change reverted so that docker builds are not broken.

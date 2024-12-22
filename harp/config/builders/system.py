@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Callable, Type, cast
 
+from asgiref.typing import ASGIApplication
 from whistle import IAsyncEventDispatcher
 
 from harp import __revision__, __version__, get_logger
@@ -55,13 +56,13 @@ class System:
         provider: Services,
         /,
         *,
-        kernel: ASGIKernel,
+        asgi_app: ASGIApplication,
         binds: list[Bind],
     ):
         self._config = config
         self._dispatcher = dispatcher
         self._provider = provider
-        self._kernel = kernel
+        self._asgi_app = asgi_app
         self._binds = binds
 
     @property
@@ -77,8 +78,8 @@ class System:
         return self._provider
 
     @property
-    def kernel(self) -> ASGIKernel:
-        return self._kernel
+    def asgi_app(self) -> ASGIApplication:
+        return self._asgi_app
 
     @property
     def binds(self) -> list[Bind]:
@@ -88,15 +89,15 @@ class System:
         """
         Asynchronously disposes of the system resources, primarily the ASGI kernel.
         """
-        if self.kernel:
+        if self.asgi_app:
             try:
-                event = OnShutdownEvent(self.kernel, self.provider)
+                event = OnShutdownEvent(self.asgi_app, self.provider)
                 await self.dispatcher.adispatch(EVENT_SHUTDOWN, event)
             except Exception as exc:
                 logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_SHUTDOWN, exc)
                 raise
             finally:
-                self._kernel = None
+                self._asgi_app = None
 
 
 class SystemBuilder:
@@ -156,6 +157,9 @@ class SystemBuilder:
 
         # Get lazy configuration.
         config = self.configuration
+        logger.info(f"📦 {", ".join(self.applications.keys())}")
+        for name, app in self.applications.items():
+            logger.debug(f'... "{name}" application loaded from "{app.path}"')
 
         # Prepare and dispatch «bind» event.
         dispatcher = self.build_dispatcher()
@@ -176,7 +180,7 @@ class SystemBuilder:
         event = await self.dispatch_ready_event(dispatcher, provider, controller_resolver)
 
         # Send back a coherent view of the system.
-        return System(config, dispatcher, provider, kernel=event.kernel, binds=event.binds)
+        return System(config, dispatcher, provider, asgi_app=event.asgi_app, binds=event.binds)
 
     def build_dispatcher(self):
         dispatcher = cast(IAsyncEventDispatcher, self.AsyncEventDispatcherType())
@@ -240,12 +244,12 @@ class SystemBuilder:
     ):
         # todo: this should be instanciated by the service container, probably using a factory to dispatch the event,
         #  etc. Binds should not sit here, but where?
-        kernel = self.KernelType(dispatcher=dispatcher, resolver=controller_resolver)
+        asgi_app = self.KernelType(dispatcher=dispatcher, resolver=controller_resolver)
         binds = [Bind(host=self.hostname, port=port) for port in controller_resolver.ports]
         try:
             return cast(
                 OnReadyEvent,
-                await dispatcher.adispatch(EVENT_READY, OnReadyEvent(provider, kernel, binds)),
+                await dispatcher.adispatch(EVENT_READY, OnReadyEvent(provider, asgi_app, binds)),
             )
         except Exception as exc:
             logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_READY, exc)

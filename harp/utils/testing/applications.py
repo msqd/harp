@@ -2,9 +2,8 @@ from functools import cached_property
 
 import pytest
 
-from harp.config import Application, ConfigurationBuilder
+from harp.config import Application, ApplicationsRegistry, ConfigurationBuilder
 from harp.config.asdict import asdict
-from harp.config.utils import get_application
 
 
 class BaseTestForApplications:
@@ -13,8 +12,12 @@ class BaseTestForApplications:
     expected_defaults = {}
 
     @cached_property
+    def registry(self) -> ApplicationsRegistry:
+        return ApplicationsRegistry()
+
+    @cached_property
     def application(self) -> Application:
-        return get_application(self.name)
+        return self.registry.get_application(self.name)
 
     @pytest.fixture
     def configuration(self):

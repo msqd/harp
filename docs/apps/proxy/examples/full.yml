@@ -1,10 +1,30 @@
 proxy:
   endpoints:
-    - name: httpbins # a unique name for the endpoint, used to reference it in code, rules and dashboard
-      description: An informative description of the endpoint (optional)
-      port: 4000 # the local listening port for this endpoint
+    - # An identifier for this local endpoint, used to reference it in code, rules and
+      # dashboard. Must be unique for a given harp instance.
+      name: httpbins
+
+      # a human-readable description of the endpoint (optional)
+      description: A very informative description
+
+      # the local listening port for this endpoint, if not set the proxy will not listen on
+      # any port for this endpoint.
+      port: 4000
+
+      # the controller to use for this endpoint, "null" means default but you can specify
+      # a custom controller. Most of the time you will want to use the default controller
+      # and thus do not include this line.
+      controller: null
+
+      # the remote to proxy to, which can be anything from a single url to a complex
+      # multipool configuration with # defaults and fallbacks, healthcheck probes, etc.
       remote:
-        min_pool_size: 2 # the minimum number of endpoints to try to keep in the active pool
+        # the minimum number of endpoints to try to keep in the active pool. If the number
+        # of active endpoints falls below this number, the proxy will attempt to bring them
+        # back up to this number by including endpoints from the fallback pool.
+        min_pool_size: 2
+
+        # Endpoints
         endpoints:
           - url: "https://api1.example.com/"
           - url: "https://api2.example.com/"
@@ -12,10 +32,16 @@ proxy:
             pools: [fallback]
             liveness:
               type: ignore
+
+        # Liveness settings for all endpoints, if not overriden by a specific endpoint's
+        # liveness.
         liveness:
           type: naive
           failure_threshold: 2
           success_threshold: 2
+
+        # A periodic probe to try to close the circuit breaker even if it's not actively
+        # queried by the end user.
         probe:
           method: GET
           path: /healthz

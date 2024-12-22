@@ -2,11 +2,11 @@ apiVersion: v2
 name: harp-proxy
 description: HTTP API Runtime Proxy
 type: application
-version: "0.7.0-alpha"
-appVersion: "0.7.0a1"
+version: "0.8.0-a2"
+appVersion: "0.8.0a2"
 
 dependencies:
   - name: postgresql
-    version: 13.2.24
+    version: 16.0.6
     repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled

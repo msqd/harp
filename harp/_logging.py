@@ -1,6 +1,6 @@
 import logging.config
 import os
-from typing import Any
+from typing import Any, Optional
 
 import structlog
 
@@ -62,8 +62,9 @@ if LOGGING_FORMAT not in LOGGING_FORMATTERS:
     LOGGING_FORMAT = DEFAULT_LOGGING_FORMAT
 
 
-def _get_logging_level(name, *, default="warning"):
-    return os.environ.get("LOGGING_" + name.upper(), default).upper()
+def _get_logging_level(name: Optional[str], *, default="warning"):
+    varname = "_".join(filter(None, ("LOGGING", name.upper() if name is not None else None)))
+    return os.environ.get(varname, default).upper()
 
 
 logging_config = {
@@ -78,7 +79,7 @@ logging_config = {
     },
     "root": {
         "handlers": ["console"],
-        "level": logging.INFO,
+        "level": _get_logging_level(None, default="info"),
     },
     "loggers": {
         "harp": {"level": _get_logging_level("harp", default="info")},

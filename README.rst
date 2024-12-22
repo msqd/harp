@@ -1,35 +1,30 @@
-HARP – Harp, an API Runtime Proxy
-=================================
+HARP, an API Runtime Proxy
+==========================
 
-HARP is a powerful sidecar proxy service designed to elevate the reliability, performance, security, and observability
-of your application's external API interactions. Think of it as a reverse API gateway or a nearline service mesh for
-external APIs.
-
-To be notified when we release new features, you can `subscribe to the release announcements <https://lists.harp-proxy.net/subscription/form>`_.
-We do not send anything unrelated to the lists you subscribed to, and we do not communicate your personnal informations with anyone. And
-of course, you can unsubscribe anytime using the unsubscribe link sent with all mails.
-
-**HARP is released as an Early Access Preview.**
+HARP is an open-source API Proxy toolkit designed to improve the reliability, performance, security, and observability
+of the APIs you use. It runs in your infrastructure, close to your applications.
 
 .. image:: https://img.shields.io/pypi/v/harp-proxy.svg
     :target: https://pypi.python.org/pypi/harp-proxy
     :alt: PyPI
 
-.. image:: https://www.gitlab.com/makersquad/oss/harp/badges/0.6/pipeline.svg
+.. image:: https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/harp
+    :target: https://artifacthub.io/packages/helm/harp/harp-proxy
+    :alt: Artifact Hub
+
+.. image:: https://www.gitlab.com/makersquad/oss/harp/badges/0.8/pipeline.svg
     :target: https://www.gitlab.com/makersquad/oss/harp/pipelines
     :alt: GitLab CI/CD Pipeline Status
 
-.. image:: https://readthedocs.org/projects/harp-proxy/badge/?version=0.6
-    :target: https://docs.harp-proxy.net/en/0.6/
+.. image:: https://readthedocs.org/projects/harp-proxy/badge/?version=0.8
+    :target: https://docs.harp-proxy.net/en/0.8/
     :alt: Documentation
 
 .. image:: https://img.shields.io/pypi/pyversions/harp-proxy.svg
     :target: https://pypi.python.org/pypi/harp-proxy
     :alt: Versions
 
-*Although we use HARP for production workloads, it is still under heavy active development and some features
-may not be available, or it may not be suitable for your applications. We are actively looking for feedback, please
-reach out with your thoughts, ideas, rants or issues. We can help.*
+----
 
 **Quick links:** `Documentation <https://docs.harp-proxy.net/en/latest/>`_
 | `Getting Started <https://docs.harp-proxy.net/en/latest/start/index.html>`_
@@ -39,6 +34,71 @@ reach out with your thoughts, ideas, rants or issues. We can help.*
 | `Issues <https://github.com/msqd/harp/issues>`_
 | `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
 
+**Community**: |badge_list| |badge_discord| |badge_contributors|
+
+.. |badge_list| image:: https://img.shields.io/badge/Subscribe_to_release_announcements-085E9F?logo=maildotru
+    :target: https://lists.harp-proxy.net/subscription/form
+    :alt: Subscribe to release announcements
+
+.. |badge_discord| image:: https://img.shields.io/badge/Join_our_discord_server-ffffff?logo=discord
+    :target: https://discord.gg/uZeqBadpZQ
+    :alt: Join our discord server
+
+.. |badge_contributors| image:: https://img.shields.io/badge/contributors-5-orange
+    :target: https://github.com/msqd/harp/graphs/contributors
+    :alt: All Contributors
+
+
+*HARP is used both in development and production, and it works well for us. However, it is still under heavy active
+development and some features may not be as polished as you expect, and some APIs may change.*
+
+*We are actively looking for feedback, please reach out with your thoughts, ideas, rants or issues. We can help.*
+
+
+What is HARP?
+:::::::::::::
+
+HARP is a python-based framework to build API proxies. From no-configuration 1 minute start to try it locally with an in
+memory database to a full production ready proxy with multiple storage backends and custom filtering, it got you
+covered.
+
+The main goal is to improve the performance, reliability, security, and observability of the APIs you already use,
+without changing anything except the base URL of your API calls. Ultimately, you can use HARP to "fix the Internet," or
+at least the subset your application depends on.
+
+Out of the box, you'll get standard-compliant caching (based on `hishel <https://hishel.com/>`_), a world class http
+client (based on `httpx <https://www.python-httpx.org/>`_), a `circuit breaker
+<https://docs.harp-proxy.net/en/latest/features/circuit-breaker.html>`_, a `python-based rules engine
+<https://docs.harp-proxy.net/en/latest/features/rules.html>`_, an audit log and an `observation dashboard
+<https://docs.harp-proxy.net/en/latest/features/dashboard.html>`_. The `features guide
+<https://docs.harp-proxy.net/en/latest/features/index.html>`_ will tell you more.
+
+.. figure:: https://docs.harp-proxy.net/en/latest/_images/overview.png
+    :alt: HARP Proxy Overview
+    :align: center
+
+To instantly get insights on how your application is interacting with external services, you get a full searchable
+transactions audit trail, with detailed information on each request and response.
+
+.. figure:: https://docs.harp-proxy.net/en/latest/_images/transactions.png
+    :alt: HARP Proxy Transactions
+    :align: center
+
+No more doubts about what happened. Now, you ***know***.
+
+`Discover all HARP Proxy features <https://docs.harp-proxy.net/en/latest/features/index.html>`_
+
+
+Getting Started
+:::::::::::::::
+
+Refer to the `Getting Started Guide <https://docs.harp-proxy.net/en/latest/start/index.html>`_ to learn how to install
+and run your first proxy (it's easy, we promise).
+
+You can install and run HARP Proxy `using Docker <https://docs.harp-proxy.net/en/latest/start/docker.html>`_ (easier and
+more language-agnostic) or `using a Python package <https://docs.harp-proxy.net/en/latest/start/python.html>`_ (for more
+control and customization).
+
 
 How it works?
 :::::::::::::
@@ -46,7 +106,7 @@ How it works?
 Overview
 --------
 
-.. figure:: https://github.com/msqd/harp/raw/0.6/docs/images/HowItWorks-Overview.png
+.. figure:: https://github.com/msqd/harp/raw/0.8/docs/images/HowItWorks-Overview.png
     :alt: An overview of how HARP works in your system
     :align: center
 
@@ -91,7 +151,7 @@ Each proxy is configured to intercept and forward requests to a specific externa
 
 An additional (optional) port serves a dashboard to observe your proxies in real-time.
 
-.. figure:: https://github.com/msqd/harp/raw/0.6/docs/images/HowItWorks-Service.png
+.. figure:: https://github.com/msqd/harp/raw/0.8/docs/images/HowItWorks-Service.png
     :alt: What happens within the harp service
     :align: center
 
@@ -111,7 +171,7 @@ HTTP before, you will still speak HTTP. The only change needed in your applicati
 is the base endpoint of the external services. In a modern 12factor-like application, it usually only means changing an
 environment variable.
 
-.. figure:: https://github.com/msqd/harp/raw/0.6/docs/images/HowItWorks-Proxy.png
+.. figure:: https://github.com/msqd/harp/raw/0.8/docs/images/HowItWorks-Proxy.png
     :alt: What happens within one harp proxy
     :align: center
 
@@ -126,21 +186,37 @@ environment variable.
 Proxy features
 --------------
 
-.. note:: (TODO) Add a list of features with links to the documentation.
+Here is a non-exhaustive list of HARP Proxy's main features:
+
+* `Configuration <https://docs.harp-proxy.net/en/latest/features/configuration.html>`_
+* `Dashboard <https://docs.harp-proxy.net/en/latest/features/dashboard.html>`_
+* `Proxy <https://docs.harp-proxy.net/en/latest/features/proxy.html>`_
+* `Audit Log <https://docs.harp-proxy.net/en/latest/features/auditlog.html>`_
+* `Caching <https://docs.harp-proxy.net/en/latest/features/caching.html>`_
+* `Circuit Breaker <https://docs.harp-proxy.net/en/latest/features/circuit-breaker.html>`_
+* `Rules Engine <https://docs.harp-proxy.net/en/latest/features/rules.html>`_
+
+You can `read more about all HARP Proxy features <https://docs.harp-proxy.net/en/latest/features/index.html>`_ in the
+`Features Guide <https://docs.harp-proxy.net/en/latest/features/index.html>`_.
 
 
-Credits
-:::::::
+People & Credits
+::::::::::::::::
 
-* Core contributors:
+.. raw:: html
 
-  - `Arthur Degonde <https://github.com/ArthurD1>`_
-  - `Romain Dorgueil <https://github.com/hartym>`_
-
-* Original idea, design, and development:
-
-  - `Romain Dorgueil <https://github.com/hartym>`_
+    <table>
+      <tbody>
+        <tr>
+          <td align="center" valign="top" width="14.28%"><a href="https://www.makersquad.fr/"><img src="https://avatars.githubusercontent.com/u/30586?v=4?s=100" width="100px;" alt="Romain Dorgueil"/><br /><sub><b>Romain Dorgueil</b></sub></a><br /><a href="#business-hartym" title="Business development">💼</a> <a href="#ideas-hartym" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/msqd/harp/commits?author=hartym" title="Code">💻</a> <a href="https://github.com/msqd/harp/commits?author=hartym" title="Documentation">📖</a> <a href="#example-hartym" title="Examples">💡</a> <a href="#financial-hartym" title="Financial">💵</a> <a href="https://github.com/msqd/harp/commits?author=hartym" title="Tests">⚠️</a></td>
+          <td align="center" valign="top" width="14.28%"><a href="https://github.com/ArthurD1"><img src="https://avatars.githubusercontent.com/u/44548105?v=4?s=100" width="100px;" alt="Arthur Degonde"/><br /><sub><b>Arthur Degonde</b></sub></a><br /><a href="#ideas-ArthurD1" title="Ideas, Planning, & Feedback">🤔</a> <a href="https://github.com/msqd/harp/commits?author=ArthurD1" title="Code">💻</a> <a href="https://github.com/msqd/harp/commits?author=ArthurD1" title="Documentation">📖</a> <a href="#example-ArthurD1" title="Examples">💡</a> <a href="https://github.com/msqd/harp/commits?author=ArthurD1" title="Tests">⚠️</a></td>
+          <td align="center" valign="top" width="14.28%"><a href="http://lenormand-julien.fr/"><img src="https://avatars.githubusercontent.com/u/13200639?v=4?s=100" width="100px;" alt="Lenormand Julien"/><br /><sub><b>Lenormand Julien</b></sub></a><br /><a href="https://github.com/msqd/harp/commits?author=Lenormju" title="Code">💻</a> <a href="https://github.com/msqd/harp/commits?author=Lenormju" title="Documentation">📖</a></td>
+          <td align="center" valign="top" width="14.28%"><a href="https://github.com/Synss"><img src="https://avatars.githubusercontent.com/u/540976?v=4?s=100" width="100px;" alt="Mathias Laurin"/><br /><sub><b>Mathias Laurin</b></sub></a><br /><a href="https://github.com/msqd/harp/commits?author=Synss" title="Code">💻</a></td>
+          <td align="center" valign="top" width="14.28%"><a href="https://github.com/masterivanic"><img src="https://avatars.githubusercontent.com/u/62161915?v=4?s=100" width="100px;" alt="Ivanic"/><br /><sub><b>Ivanic</b></sub></a><br /><a href="https://github.com/msqd/harp/commits?author=masterivanic" title="Code">💻</a></td>
+        </tr>
+      </tbody>
+    </table>
 
 * Sponsored by `Makersquad <https://www.makersquad.fr/>`_
 
-`There are many ways you can contribute to HARP! <https://docs.harp-proxy.net/en/latest/contribute/>`_
+`There are many ways you can contribute to HARP! <https://docs.harp-proxy.net/en/latest/contribute/index.html>`_

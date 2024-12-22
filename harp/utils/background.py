@@ -1,21 +1,18 @@
 import asyncio
 from inspect import iscoroutinefunction
 
+from prometheus_client import Gauge
+
 from harp import get_logger
-from harp.settings import USE_PROMETHEUS
 
 logger = get_logger(__name__)
 
 
-AsyncWorkerQueueBacklog = None
-if USE_PROMETHEUS:
-    from prometheus_client import Gauge
-
-    AsyncWorkerQueueBacklog = Gauge(
-        "async_worker_queue_backlog",
-        "Number of items in the async worker queue.",
-        ["queue_id"],
-    )
+ASYNC_WORKER_QUEUE_BACKLOG_GAUGE = Gauge(
+    "async_worker_queue_backlog",
+    "Number of items in the async worker queue.",
+    ["queue_id"],
+)
 
 
 class AsyncWorkerQueue:
@@ -46,9 +43,9 @@ class AsyncWorkerQueue:
     def cleanup(self):
         self._last_cleanup_at = asyncio.get_event_loop().time()
         self._pressure = self._queue.qsize()
-        if AsyncWorkerQueueBacklog:
+        if ASYNC_WORKER_QUEUE_BACKLOG_GAUGE:
             # prom ignore 0 values so we set the minimum as 1
-            AsyncWorkerQueueBacklog.labels(id(self)).set(max(self._pressure, 1))
+            ASYNC_WORKER_QUEUE_BACKLOG_GAUGE.labels(id(self)).set(max(self._pressure, 1))
 
     async def push(self, item, /, *, ignore_errors=False):
         if not self._running:

@@ -6,7 +6,7 @@ exports[`renders the title and data when the query is successful 1`] = `
     class="flex h-screen min-h-screen max-h-screen w-screen flex-col"
   >
     <nav
-      class="css-orfs66"
+      class="css-w5jmxa"
       data-headlessui-state=""
     >
       <div
@@ -62,16 +62,10 @@ exports[`renders the title and data when the query is successful 1`] = `
                 href="/"
               >
                 <img
-                  alt="Harp"
+                  alt="HARP Community Edition"
                   class="h-8 w-auto"
                   src="/src/Assets/logo.svg"
                 />
-                <span
-                  class="h-8 px-2 pt-1 text-md font-medium text-white"
-                  title="Harp Early Access"
-                >
-                  Harp EA
-                </span>
               </a>
             </div>
             <div
@@ -124,7 +118,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                 class="text-xs"
               >
                 <a
-                  href="https://docs.harp-proxy.net/en/0.6/user/?utm_source=dashboard&utm_medium=help"
+                  href="https://docs.harp-proxy.net/en/0.8/user/?utm_source=dashboard&utm_medium=help"
                   target="_blank"
                 >
                   <svg

@@ -18,4 +18,6 @@ data:
           {{- end }}
         {{- end }}
 
+    {{- if .Values.settings }}
     {{ toYaml .Values.settings | nindent 4 }}
+    {{- end }}

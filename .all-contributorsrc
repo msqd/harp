@@ -1,0 +1,72 @@
+{
+  "projectName": "harp",
+  "projectOwner": "msqd",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "CONTRIBUTORS.md"
+  ],
+  "imageSize": 100,
+  "commit": true,
+  "commitConvention": "none",
+  "contributors": [
+    {
+      "login": "hartym",
+      "name": "Romain Dorgueil",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30586?v=4",
+      "profile": "https://www.makersquad.fr/",
+      "contributions": [
+        "business",
+        "ideas",
+        "code",
+        "doc",
+        "example",
+        "financial",
+        "test"
+      ]
+    },
+    {
+      "login": "ArthurD1",
+      "name": "Arthur Degonde",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44548105?v=4",
+      "profile": "https://github.com/ArthurD1",
+      "contributions": [
+        "ideas",
+        "code",
+        "doc",
+        "example",
+        "test"
+      ]
+    },
+    {
+      "login": "Lenormju",
+      "name": "Lenormand Julien",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13200639?v=4",
+      "profile": "http://lenormand-julien.fr/",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "Synss",
+      "name": "Mathias Laurin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/540976?v=4",
+      "profile": "https://github.com/Synss",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "masterivanic",
+      "name": "Ivanic",
+      "avatar_url": "https://avatars.githubusercontent.com/u/62161915?v=4",
+      "profile": "https://github.com/masterivanic",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "linkToUsage": false
+}

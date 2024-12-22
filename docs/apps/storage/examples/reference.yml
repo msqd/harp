@@ -1,0 +1,6 @@
+storage:
+  blobs:
+    type: sql
+  migrate: true
+  redis: null
+  url: sqlite+aiosqlite:///:memory:?cache=shared

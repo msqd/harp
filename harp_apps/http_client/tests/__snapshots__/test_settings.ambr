@@ -6,11 +6,7 @@
         'additionalProperties': False,
         'properties': dict({
           'controller': dict({
-            'allOf': list([
-              dict({
-                '$ref': '#/$defs/Service',
-              }),
-            ]),
+            '$ref': '#/$defs/Service',
             'default': dict({
               'allow_heuristics': False,
               'allow_stale': False,
@@ -41,11 +37,7 @@
             'type': 'boolean',
           }),
           'storage': dict({
-            'allOf': list([
-              dict({
-                '$ref': '#/$defs/Service',
-              }),
-            ]),
+            '$ref': '#/$defs/Service',
             'default': dict({
               'base': 'hishel.AsyncBaseStorage',
               'check_ttl_every': 60.0,
@@ -54,11 +46,7 @@
             }),
           }),
           'transport': dict({
-            'allOf': list([
-              dict({
-                '$ref': '#/$defs/Service',
-              }),
-            ]),
+            '$ref': '#/$defs/Service',
             'default': dict({
               'type': 'hishel.AsyncCacheTransport',
             }),
@@ -80,6 +68,7 @@
                 'type': 'null',
               }),
             ]),
+            'description': 'Arguments for the service constructor.',
             'title': 'Arguments',
           }),
           'base': dict({
@@ -92,6 +81,7 @@
               }),
             ]),
             'default': None,
+            'description': 'Base type for service definition.',
             'title': 'Base',
           }),
           'constructor': dict({
@@ -104,6 +94,7 @@
               }),
             ]),
             'default': None,
+            'description': 'Optional custom constructor for the service.',
             'title': 'Constructor',
           }),
           'type': dict({
@@ -116,6 +107,7 @@
               }),
             ]),
             'default': None,
+            'description': 'Type for service definition.',
             'title': 'Type',
           }),
         }),
@@ -142,14 +134,11 @@
           }),
         ]),
         'default': None,
+        'description': 'Base type for service definition.',
         'title': 'Base',
       }),
       'cache': dict({
-        'allOf': list([
-          dict({
-            '$ref': '#/$defs/CacheSettings',
-          }),
-        ]),
+        '$ref': '#/$defs/CacheSettings',
         'default': dict({
           'controller': dict({
             'allow_heuristics': False,
@@ -196,24 +185,17 @@
           }),
         ]),
         'default': None,
+        'description': 'Optional custom constructor for the service.',
         'title': 'Constructor',
       }),
       'proxy_transport': dict({
-        'allOf': list([
-          dict({
-            '$ref': '#/$defs/Service',
-          }),
-        ]),
+        '$ref': '#/$defs/Service',
         'default': dict({
           'type': 'harp_apps.http_client.transport.AsyncFilterableTransport',
         }),
       }),
       'transport': dict({
-        'allOf': list([
-          dict({
-            '$ref': '#/$defs/Service',
-          }),
-        ]),
+        '$ref': '#/$defs/Service',
         'default': dict({
           'retries': 0,
           'type': 'httpx.AsyncHTTPTransport',
@@ -222,6 +204,7 @@
       }),
       'type': dict({
         'default': 'httpx.AsyncClient',
+        'description': 'Type for service definition.',
         'title': 'Type',
         'type': 'string',
       }),
@@ -237,11 +220,7 @@
         'additionalProperties': False,
         'properties': dict({
           'controller': dict({
-            'allOf': list([
-              dict({
-                '$ref': '#/$defs/Service',
-              }),
-            ]),
+            '$ref': '#/$defs/Service',
             'default': dict({
               'allow_heuristics': False,
               'allow_stale': False,
@@ -272,11 +251,7 @@
             'type': 'boolean',
           }),
           'storage': dict({
-            'allOf': list([
-              dict({
-                '$ref': '#/$defs/Service',
-              }),
-            ]),
+            '$ref': '#/$defs/Service',
             'default': dict({
               'base': 'hishel.AsyncBaseStorage',
               'check_ttl_every': 60.0,
@@ -285,11 +260,7 @@
             }),
           }),
           'transport': dict({
-            'allOf': list([
-              dict({
-                '$ref': '#/$defs/Service',
-              }),
-            ]),
+            '$ref': '#/$defs/Service',
             'default': dict({
               'type': 'hishel.AsyncCacheTransport',
             }),
@@ -311,6 +282,7 @@
                 'type': 'null',
               }),
             ]),
+            'description': 'Arguments for the service constructor.',
             'title': 'Arguments',
           }),
           'base': dict({
@@ -323,6 +295,7 @@
               }),
             ]),
             'default': None,
+            'description': 'Base type for service definition.',
             'title': 'Base',
           }),
           'constructor': dict({
@@ -335,6 +308,7 @@
               }),
             ]),
             'default': None,
+            'description': 'Optional custom constructor for the service.',
             'title': 'Constructor',
           }),
           'type': dict({
@@ -347,6 +321,7 @@
               }),
             ]),
             'default': None,
+            'description': 'Type for service definition.',
             'title': 'Type',
           }),
         }),
@@ -373,14 +348,11 @@
           }),
         ]),
         'default': None,
+        'description': 'Base type for service definition.',
         'title': 'Base',
       }),
       'cache': dict({
-        'allOf': list([
-          dict({
-            '$ref': '#/$defs/CacheSettings',
-          }),
-        ]),
+        '$ref': '#/$defs/CacheSettings',
         'default': dict({
           'controller': dict({
             'allow_heuristics': False,
@@ -427,24 +399,17 @@
           }),
         ]),
         'default': None,
+        'description': 'Optional custom constructor for the service.',
         'title': 'Constructor',
       }),
       'proxy_transport': dict({
-        'allOf': list([
-          dict({
-            '$ref': '#/$defs/Service',
-          }),
-        ]),
+        '$ref': '#/$defs/Service',
         'default': dict({
           'type': 'harp_apps.http_client.transport.AsyncFilterableTransport',
         }),
       }),
       'transport': dict({
-        'allOf': list([
-          dict({
-            '$ref': '#/$defs/Service',
-          }),
-        ]),
+        '$ref': '#/$defs/Service',
         'default': dict({
           'retries': 0,
           'type': 'httpx.AsyncHTTPTransport',
@@ -453,6 +418,7 @@
       }),
       'type': dict({
         'default': 'httpx.AsyncClient',
+        'description': 'Type for service definition.',
         'title': 'Type',
         'type': 'string',
       }),

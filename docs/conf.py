@@ -39,14 +39,11 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_sitemap",
-    "sphinxcontrib.jquery",
-    "docs._extensions.services",
     "sphinx_tags",
+    "sphinxcontrib.jquery",
+    "docs._extensions.jsonschema",
+    "docs._extensions.services",
 ]
-
-ALGOLIA_APIKEY = os.getenv("ALGOLIA_APIKEY")
-if ALGOLIA_APIKEY and READTHEDOCS_VERSION == "latest":
-    extensions.append("sphinx_docsearch")
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -57,13 +54,17 @@ html_title = project + " " + version
 html_theme = "furo"
 html_static_path = ["_static"]
 html_theme_options = {
-    "light_logo": "logo.png",
-    "dark_logo": "logo.png",
+    "light_logo": "logo.svg",
+    "dark_logo": "logo-dark.svg",
+    "source_repository": "https://github.com/msqd/harp/",
+    "source_branch": version,
+    "source_directory": "docs/",
 }
 html_favicon = "favicon.ico"
 html_js_files = ["js/links-target-blank.js"]
 html_css_files = ["css/harp.css"]
-html_baseurl = "https://docs.harp-proxy.net/"
+
+html_baseurl = os.getenv("READTHEDOCS_CANONICAL_URL", "/")
 
 html_sidebars = {
     "**": [
@@ -108,10 +109,13 @@ intersphinx_mapping = {
     "redis": ("https://redis-py.readthedocs.io/en/stable", None),
 }
 
+ALGOLIA_APIKEY = os.getenv("ALGOLIA_APIKEY")
 if ALGOLIA_APIKEY and READTHEDOCS_VERSION == "latest":
+    extensions.append("sphinx_docsearch")
     docsearch_app_id = "ZPR2CBYLG3"
     docsearch_api_key = ALGOLIA_APIKEY
     docsearch_index_name = "harp-proxy"
+
 
 if READTHEDOCS_VERSION and READTHEDOCS_VERSION != "latest":
     rst_prolog = (

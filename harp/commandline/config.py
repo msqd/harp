@@ -6,14 +6,13 @@ from rich.pretty import Pretty
 from rich.syntax import Syntax
 from rich.tree import Tree
 
-from harp.commandline.options.server import CommonServerOptions, add_harp_server_click_options
+from harp.commandline.options.server import CommonServerOptions, server_command
 from harp.config import ConfigurationBuilder
 from harp.config.asdict import asdict
 from harp.utils.commandline import click
 
 
-@click.command("config", short_help="Prints the current configuration.")
-@add_harp_server_click_options
+@server_command("config", short_help="Prints the current configuration.")
 @click.option("--raw", is_flag=True, help="Prints the raw configuration as a dictionary.")
 @click.option("--json", is_flag=True, help="Prints the raw configuration as JSON.")
 @click.option(

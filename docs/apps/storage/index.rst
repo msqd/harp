@@ -13,6 +13,14 @@ Storage
 
 The ``harp_apps.storage`` application implements various storage systems for your proxies to use.
 
+.. toctree::
+    :hidden:
+    :maxdepth: 1
+
+    Services <services>
+    Settings <settings>
+    Internals </reference/apps/harp_apps.storage>
+
 There are two different storage kinds:
 
 - **Transaction/Core storage**: Currently SQL-only, the core storage will handle persisting the transactions and
@@ -136,14 +144,3 @@ To instruct SQLAlchemy to log all queries, set ``LOGGING_SQLALCHEMY=INFO`` in yo
     LOGGING_SQLALCHEMY=INFO harp start ...
 
 It works with all HARP commands, not just ``start``.
-
-Table of Content
-::::::::::::::::
-
-.. include:: /apps/storage/_toc.rst
-
-.. toctree::
-    :hidden:
-    :maxdepth: 1
-
-    Services <services>

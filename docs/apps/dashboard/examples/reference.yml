@@ -1,0 +1,8 @@
+dashboard:
+  auth: null
+  devserver:
+    enabled: true
+    port: null
+  enable_ui: true
+  port: 4080
+  public_url: null

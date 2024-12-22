@@ -28,7 +28,9 @@ def list_submodules(module):
 
 
 all_apps = [
-    ".".join(dirname(x).split(os.path.sep)) for x in glob.glob("**/__app__.py", root_dir=ROOT_DIR, recursive=True)
+    ".".join(dirname(x).split(os.path.sep))
+    for x in glob.glob("**/__app__.py", root_dir=ROOT_DIR, recursive=True)
+    if "/cookiecutters/" not in x
 ]
 
 

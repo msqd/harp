@@ -71,7 +71,8 @@ class DashboardController(RoutingController):
         if not self._ui_static_middleware and not self._ui_devserver_proxy_controller:
             raise ConfigurationError(
                 "Dashboard controller could not initiate because it got neither compiled assets nor a devserver "
-                "configuration."
+                "configuration. If you're using an editable install, make sure to run `make build-frontend` in the "
+                "target working copy, or start a frontend development server."
             )
 
     def __repr__(self):
@@ -84,7 +85,12 @@ class DashboardController(RoutingController):
 
     def _create_ui_devserver_proxy_controller(self, *, port):
         return HttpProxyController(
-            Remote.from_settings_dict({"endpoints": [{"url": f"http://localhost:{port}/"}]}),
+            Remote.from_settings_dict(
+                {
+                    "endpoints": [{"url": f"http://localhost:{port}/"}],
+                    "liveness": {"type": "ignore"},
+                }
+            ),
             http_client=self.http_client,
             logging=False,
             name="dashboard-devserver",

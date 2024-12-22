@@ -3,18 +3,18 @@ HARP — HTTP API Runtime Proxy
 
 .. table::
     :class: intro
-    :widths: 10 90
+    :widths: 15 85
 
-    +-----------------------------+------------------------------------------------------------------------------------+
-    | .. figure:: images/logo.png | `HARP Proxy <https://harp-proxy.net/>`_ operates as a sidecar sitting between your |
-    |    :alt: HARP logo          | application and remote APIs, elevating their reliability, performance, and         |
-    |                             | security. It adds builtin observability features via its dashboard and monitoring, |
-    |                             | and reduces the amount of userland code required for common HTTP-related,          |
-    |                             | non-business features.                                                             |
-    |                             |                                                                                    |
-    |                             | Whether you are in the development phase or ready for production, HARP serves as a |
-    |                             | handy companion for API consumers.                                                 |
-    +-----------------------------+------------------------------------------------------------------------------------+
+    +------------------------------+------------------------------------------------------------------------------------+
+    | .. figure:: /images/logo.png | `HARP Proxy <https://harp-proxy.net/>`_ operates as a sidecar sitting between your |
+    |    :alt: HARP logo           | application and remote APIs, elevating their reliability, performance, and         |
+    |                              | security. It adds builtin observability features via its dashboard and monitoring, |
+    |                              | and reduces the amount of userland code required for common HTTP-related,          |
+    |                              | non-business features.                                                             |
+    |                              |                                                                                    |
+    |                              | Whether you are in the development phase or ready for production, HARP serves as a |
+    |                              | handy companion for API consumers.                                                 |
+    +------------------------------+------------------------------------------------------------------------------------+
 
 .. include:: /_quicktoc.rst
 

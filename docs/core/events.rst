@@ -68,7 +68,7 @@ Dispatched by :meth:`SystemBuilder.dispatch_ready_event(...)
 
 Dispatched as :attr:`EVENT_READY` with a :class:`OnReadyEvent` instance.
 
-The :class:`ASGI Kernel <harp.asgi.ASGIKernel>` is available here, and this event is mostly used to :ref:`decorate it
+The soon-to-be-served ``ASGI Application`` is available here, and this event is mostly used to :ref:`decorate it
 with ASGI middlewares <on_ready>` (e.g. :doc:`Sentry <../apps/contrib/sentry/index>` or :doc:`Prometheus
 <../apps/contrib/prometheus/index>` integrations).
 

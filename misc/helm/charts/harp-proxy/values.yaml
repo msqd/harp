@@ -19,9 +19,15 @@ endpoints:
   - name: httpbin
     port: "8080"
     remote:
+      min_pool_size: 2
       endpoints:
-        url: https://httpbin.org/
-        break_on: [network_error]
+        - url: https://httpbin.org/
+      liveness:
+        type: leaky
+      probe:
+        method: GET
+        path: /
+        timeout: 10.0
 
 postgresql:
   enabled: false

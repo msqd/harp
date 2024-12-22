@@ -4,23 +4,34 @@ Chores before releasing
 Before a new release is sent to the world, it's usually a good idea to do some housekeeping.
 
 
-Update and cleanup dependencies
-:::::::::::::::::::::::::::::::
+Python dependencies
+:::::::::::::::::::
 
-Read dependencies list, ensure nothing is outdated
---------------------------------------------------
+Python dependencies are managed by poetry.
+
+To view "outdated" dependencies (dependencies with newer versions available), use:
 
 .. code-block:: shell
 
-    poetry show --tree --without dev
+    poetry show --latest --outdated
+
+It is possible to explain why a dependency is installed using:
+
+.. code-block:: shell
+
+    # With development dependencies
+    poetry show --tree
+
+
+Frontend Dependencies
+:::::::::::::::::::::
 
 .. code-block:: shell-session
 
     ( cd harp_apps/dashboard/frontend; pnpm list )
 
 
-Update dashboard's frontend dependencies
-----------------------------------------
+To upgrade interactively:
 
 .. code-block:: shell
 
@@ -30,20 +41,8 @@ Update dashboard's frontend dependencies
     )
 
 
-Update python dependencies
---------------------------
-
-To update all dependencies to their latest compatible version, use the following (requires the poetry-up plugin).
-Beware that everything will be updated non interactively, you must review pyproject.toml diff after that.
-
-.. code-block:: shell
-
-    poetry up
-    git diff pyproject.toml
-
-
-Check that all tests are passing (they need background services, for now)
--------------------------------------------------------------------------
+Run the tests, luke
+:::::::::::::::::::
 
 .. code-block:: shell
 
@@ -51,7 +50,7 @@ Check that all tests are passing (they need background services, for now)
 
 
 Eventually commit the updated dependencies
-------------------------------------------
+::::::::::::::::::::::::::::::::::::::::::
 
 .. code-block:: shell
 

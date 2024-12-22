@@ -22,8 +22,11 @@ base_content = f'services: [ {{ name: "foo", type: "{get_full_qualified_name(Stu
 
 
 @contextmanager
-def _create_temporary_configuration_files(template):
-    with NamedTemporaryFile(delete_on_close=False) as base, NamedTemporaryFile(delete_on_close=False) as child:
+def _create_temporary_configuration_files(template: Template):
+    with (
+        NamedTemporaryFile(delete_on_close=False, suffix=".yaml") as base,
+        NamedTemporaryFile(delete_on_close=False, suffix=".yaml") as child,
+    ):
         base.write(base_content.encode())
         base.close()
         child.write(template.substitute(filename=base.name, basename=basename(base.name)).encode())

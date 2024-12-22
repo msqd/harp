@@ -41,13 +41,13 @@ class SystemController(RoutingController):
 
     @GetHandler("/")
     async def get(self, request: HttpRequest):
-        context = getattr(request, "context", {})
+        user = request.extensions.get("user")
 
         return json(
             {
                 "version": __version__,
                 "revision": __revision__,
-                "user": context.get("user"),
+                "user": user,
             }
         )
 

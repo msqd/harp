@@ -1,0 +1,463 @@
+{
+  "$defs": {
+    "BaseEndpointSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "port": {
+          "anyOf": [{ "type": "integer" }, { "type": "null" }],
+          "default": null
+        },
+        "description": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null
+        }
+      },
+      "required": ["name"],
+      "title": "BaseEndpointSettings",
+      "type": "object"
+    },
+    "BaseLiveness": {
+      "properties": { "settings": { "$ref": "#/$defs/Configurable" } },
+      "required": ["settings"],
+      "title": "BaseLiveness",
+      "type": "object"
+    },
+    "BaseLivenessSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "default": "inherit",
+          "enum": ["ignore", "inherit", "naive", "leaky"],
+          "type": "string"
+        }
+      },
+      "title": "BaseLivenessSettings",
+      "type": "object"
+    },
+    "BaseLiveness_IgnoreLivenessSettings_": {
+      "properties": {
+        "settings": { "$ref": "#/$defs/IgnoreLivenessSettings" }
+      },
+      "required": ["settings"],
+      "title": "BaseLiveness[IgnoreLivenessSettings]",
+      "type": "object"
+    },
+    "BaseLiveness_InheritLivenessSettings_": {
+      "properties": {
+        "settings": { "$ref": "#/$defs/InheritLivenessSettings" }
+      },
+      "required": ["settings"],
+      "title": "BaseLiveness[InheritLivenessSettings]",
+      "type": "object"
+    },
+    "BaseLiveness_LeakyBucketLivenessSettings_": {
+      "properties": {
+        "settings": { "$ref": "#/$defs/LeakyBucketLivenessSettings" }
+      },
+      "required": ["settings"],
+      "title": "BaseLiveness[LeakyBucketLivenessSettings]",
+      "type": "object"
+    },
+    "BaseLiveness_NaiveLivenessSettings_": {
+      "properties": { "settings": { "$ref": "#/$defs/NaiveLivenessSettings" } },
+      "required": ["settings"],
+      "title": "BaseLiveness[NaiveLivenessSettings]",
+      "type": "object"
+    },
+    "BaseProxySettings": {
+      "additionalProperties": false,
+      "properties": {},
+      "title": "BaseProxySettings",
+      "type": "object"
+    },
+    "BaseRemoteSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "min_pool_size": { "default": 1, "type": "integer" },
+        "break_on": {
+          "default": ["network_error", "unhandled_exception"],
+          "items": { "type": "string" },
+          "type": "array"
+        },
+        "check_after": { "default": 10.0, "type": "number" }
+      },
+      "title": "BaseRemoteSettings",
+      "type": "object"
+    },
+    "Configurable": {
+      "additionalProperties": false,
+      "description": "A settings definition base.",
+      "properties": {},
+      "title": "Configurable",
+      "type": "object"
+    },
+    "Endpoint": {
+      "properties": {
+        "settings": { "$ref": "#/$defs/EndpointSettings" },
+        "remote": { "$ref": "#/$defs/Remote", "default": null }
+      },
+      "required": ["settings"],
+      "title": "Endpoint",
+      "type": "object"
+    },
+    "EndpointSettings": {
+      "additionalProperties": false,
+      "description": "Configuration parser for ``proxy.endpoints[]`` settings.\n\n.. code-block:: yaml\n\n    name: my-endpoint\n    port: 8080\n    description: My endpoint\n    remote:\n      # see HttpRemote\n      ...\n    controller : optional controller Service definition, default to HttpProxyController\n\nA shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require\nfine-tuning the endpoint settings:\n\n.. code-block:: yaml\n\n    name: my-endpoint\n    port: 8080\n    description: My endpoint\n    url: http://my-endpoint:8080",
+      "properties": {
+        "name": { "type": "string" },
+        "port": {
+          "anyOf": [{ "type": "integer" }, { "type": "null" }],
+          "default": null
+        },
+        "description": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null
+        },
+        "remote": {
+          "anyOf": [{ "$ref": "#/$defs/RemoteSettings" }, { "type": "null" }],
+          "default": null
+        },
+        "controller": {
+          "anyOf": [
+            { "$ref": "#/$defs/Service" },
+            { "type": "string" },
+            { "type": "null" }
+          ],
+          "default": {
+            "type": "harp_apps.proxy.controllers.HttpProxyController",
+            "dispatcher": { "type": "IAsyncEventDispatcher" }
+          }
+        }
+      },
+      "required": ["name"],
+      "title": "EndpointSettings",
+      "type": "object"
+    },
+    "IgnoreLiveness": {
+      "properties": {
+        "settings": { "$ref": "#/$defs/IgnoreLivenessSettings" }
+      },
+      "required": ["settings"],
+      "title": "IgnoreLiveness",
+      "type": "object"
+    },
+    "IgnoreLivenessSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "ignore", "enum": ["ignore"], "type": "string" }
+      },
+      "required": ["type"],
+      "title": "IgnoreLivenessSettings",
+      "type": "object"
+    },
+    "InheritLiveness": {
+      "description": "This is a placeholder for inheriting liveness, the parent stateful object will replace it. We do not need to\nimplement the BaseLiveness interface, as it won't exist anymore once everything is setup.",
+      "properties": {
+        "settings": { "$ref": "#/$defs/InheritLivenessSettings" }
+      },
+      "required": ["settings"],
+      "title": "InheritLiveness",
+      "type": "object"
+    },
+    "InheritLivenessSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "inherit",
+          "default": "inherit",
+          "enum": ["inherit"],
+          "type": "string"
+        }
+      },
+      "title": "InheritLivenessSettings",
+      "type": "object"
+    },
+    "LeakyBucketLiveness": {
+      "properties": {
+        "settings": { "$ref": "#/$defs/LeakyBucketLivenessSettings" }
+      },
+      "required": ["settings"],
+      "title": "LeakyBucketLiveness",
+      "type": "object"
+    },
+    "LeakyBucketLivenessSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "leaky", "enum": ["leaky"], "type": "string" },
+        "rate": { "default": 1.0, "type": "number" },
+        "capacity": { "default": 60.0, "type": "number" },
+        "threshold": { "default": 10.0, "type": "number" }
+      },
+      "required": ["type"],
+      "title": "LeakyBucketLivenessSettings",
+      "type": "object"
+    },
+    "LeakyBucketLivenessSubjectState": {
+      "properties": {
+        "last_checked": {
+          "anyOf": [{ "type": "number" }, { "type": "null" }],
+          "default": null
+        },
+        "current": { "default": 0.0, "type": "number" }
+      },
+      "title": "LeakyBucketLivenessSubjectState",
+      "type": "object"
+    },
+    "NaiveLiveness": {
+      "properties": { "settings": { "$ref": "#/$defs/NaiveLivenessSettings" } },
+      "required": ["settings"],
+      "title": "NaiveLiveness",
+      "type": "object"
+    },
+    "NaiveLivenessSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "naive", "enum": ["naive"], "type": "string" },
+        "failure_threshold": {
+          "default": 1,
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
+        "success_threshold": {
+          "default": 1,
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": ["type"],
+      "title": "NaiveLivenessSettings",
+      "type": "object"
+    },
+    "NaiveLivenessSubjectState": {
+      "description": "Holds the internal state of the target subject. Will be attached as an attribute to the said subject, but only\nused by the liveness implementation.",
+      "properties": {
+        "failure_score": { "default": 0, "type": "integer" },
+        "success_score": { "default": 0, "type": "integer" }
+      },
+      "title": "NaiveLivenessSubjectState",
+      "type": "object"
+    },
+    "Proxy": {
+      "properties": { "settings": { "$ref": "#/$defs/ProxySettings" } },
+      "required": ["settings"],
+      "title": "Proxy",
+      "type": "object"
+    },
+    "ProxySettings": {
+      "additionalProperties": false,
+      "description": "Configuration parser for ``proxy`` settings.\n\n.. code-block:: yaml\n\n    endpoints:\n      # see ProxyEndpoint\n      - ...",
+      "properties": {
+        "endpoints": {
+          "default": [],
+          "items": { "$ref": "#/$defs/EndpointSettings" },
+          "type": "array"
+        }
+      },
+      "title": "ProxySettings",
+      "type": "object"
+    },
+    "Remote": {
+      "properties": {
+        "settings": { "$ref": "#/$defs/RemoteSettings" },
+        "current_pool_name": { "default": "default", "type": "string" },
+        "probe": {
+          "anyOf": [{ "$ref": "#/$defs/RemoteProbe" }, { "type": "null" }],
+          "default": null
+        },
+        "current_pool": {
+          "items": { "type": "string" },
+          "readOnly": true,
+          "type": "array"
+        },
+        "endpoints": {
+          "items": { "$ref": "#/$defs/RemoteEndpoint" },
+          "readOnly": true,
+          "type": "array"
+        }
+      },
+      "required": ["settings", "current_pool", "endpoints"],
+      "title": "Remote",
+      "type": "object"
+    },
+    "RemoteEndpoint": {
+      "description": "Stateful version of a remote endpoint definition.",
+      "properties": {
+        "settings": { "$ref": "#/$defs/RemoteEndpointSettings" },
+        "status": { "default": 0, "type": "integer" },
+        "failure_reasons": {
+          "anyOf": [
+            { "items": {}, "type": "array", "uniqueItems": true },
+            { "type": "null" }
+          ],
+          "default": null
+        }
+      },
+      "required": ["settings"],
+      "title": "RemoteEndpoint",
+      "type": "object"
+    },
+    "RemoteEndpointSettings": {
+      "additionalProperties": false,
+      "description": "A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the\nconfiguration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.\n\n.. code-block:: yaml\n\n    url: \"http://my-endpoint:8080\"\n    pools: [fallback]  # omit for default pool\n    failure_threshold: 3\n    success_threshold: 1",
+      "properties": {
+        "url": {
+          "format": "uri",
+          "maxLength": 2083,
+          "minLength": 1,
+          "type": "string"
+        },
+        "pools": {
+          "default": ["default"],
+          "items": { "type": "string" },
+          "type": "array"
+        },
+        "liveness": {
+          "discriminator": {
+            "mapping": {
+              "ignore": "#/$defs/IgnoreLivenessSettings",
+              "inherit": "#/$defs/InheritLivenessSettings",
+              "leaky": "#/$defs/LeakyBucketLivenessSettings",
+              "naive": "#/$defs/NaiveLivenessSettings"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            { "$ref": "#/$defs/IgnoreLivenessSettings" },
+            { "$ref": "#/$defs/InheritLivenessSettings" },
+            { "$ref": "#/$defs/LeakyBucketLivenessSettings" },
+            { "$ref": "#/$defs/NaiveLivenessSettings" }
+          ]
+        }
+      },
+      "required": ["url"],
+      "title": "RemoteEndpointSettings",
+      "type": "object"
+    },
+    "RemoteProbe": {
+      "description": "Stateful version of a probe definition.",
+      "properties": { "settings": { "$ref": "#/$defs/RemoteProbeSettings" } },
+      "required": ["settings"],
+      "title": "RemoteProbe",
+      "type": "object"
+    },
+    "RemoteProbeSettings": {
+      "additionalProperties": false,
+      "description": "A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the\nconfiguration parser for ``proxy.endpoints[].remote.probe`` settings.\n\n.. code-block:: yaml\n\n    type: http\n    method: GET\n    path: /health\n    headers:\n      x-purpose: \"health probe\"\n    timeout: 5.0",
+      "properties": {
+        "method": { "default": "GET", "type": "string" },
+        "path": { "default": "/", "type": "string" },
+        "headers": { "title": "Headers", "type": "object" },
+        "interval": { "default": 10.0, "type": "number" },
+        "timeout": { "default": 10.0, "type": "number" },
+        "verify": { "default": true, "type": "boolean" }
+      },
+      "title": "RemoteProbeSettings",
+      "type": "object"
+    },
+    "RemoteSettings": {
+      "additionalProperties": false,
+      "description": "A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the\nconfiguration parser for ``proxy.endpoints[].remote`` settings.\n\n.. code-block:: yaml\n\n    min_pool_size: 1\n    endpoints:\n      # see HttpEndpoint\n      - ...\n    probe:\n      # see HttpProbe\n      ...",
+      "properties": {
+        "min_pool_size": { "default": 1, "type": "integer" },
+        "break_on": {
+          "default": ["network_error", "unhandled_exception"],
+          "items": { "type": "string" },
+          "type": "array"
+        },
+        "check_after": { "default": 10.0, "type": "number" },
+        "endpoints": {
+          "default": null,
+          "items": { "$ref": "#/$defs/RemoteEndpointSettings" },
+          "type": "array"
+        },
+        "probe": {
+          "anyOf": [
+            { "$ref": "#/$defs/RemoteProbeSettings" },
+            { "type": "null" }
+          ],
+          "default": null
+        },
+        "liveness": {
+          "default": { "type": "inherit" },
+          "discriminator": {
+            "mapping": {
+              "ignore": "#/$defs/IgnoreLivenessSettings",
+              "inherit": "#/$defs/InheritLivenessSettings",
+              "leaky": "#/$defs/LeakyBucketLivenessSettings",
+              "naive": "#/$defs/NaiveLivenessSettings"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            { "$ref": "#/$defs/IgnoreLivenessSettings" },
+            { "$ref": "#/$defs/InheritLivenessSettings" },
+            { "$ref": "#/$defs/LeakyBucketLivenessSettings" },
+            { "$ref": "#/$defs/NaiveLivenessSettings" }
+          ]
+        }
+      },
+      "title": "RemoteSettings",
+      "type": "object"
+    },
+    "Service": {
+      "additionalProperties": true,
+      "description": "A settings base class for service definitions.",
+      "properties": {
+        "base": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null,
+          "description": "Base type for service definition."
+        },
+        "type": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null,
+          "description": "Type for service definition."
+        },
+        "constructor": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null,
+          "description": "Optional custom constructor for the service."
+        },
+        "arguments": {
+          "anyOf": [{ "type": "object" }, { "type": "null" }],
+          "description": "Arguments for the service constructor."
+        }
+      },
+      "title": "Service",
+      "type": "object"
+    }
+  },
+  "title": "__ROOT__",
+  "anyOf": [
+    { "$ref": "#/$defs/BaseProxySettings" },
+    { "$ref": "#/$defs/Proxy" },
+    { "$ref": "#/$defs/ProxySettings" },
+    { "$ref": "#/$defs/BaseEndpointSettings" },
+    { "$ref": "#/$defs/Endpoint" },
+    { "$ref": "#/$defs/EndpointSettings" },
+    { "$ref": "#/$defs/LeakyBucketLiveness" },
+    { "$ref": "#/$defs/LeakyBucketLivenessSettings" },
+    { "$ref": "#/$defs/LeakyBucketLivenessSubjectState" },
+    { "$ref": "#/$defs/NaiveLiveness" },
+    { "$ref": "#/$defs/NaiveLivenessSettings" },
+    { "$ref": "#/$defs/NaiveLivenessSubjectState" },
+    { "$ref": "#/$defs/IgnoreLiveness" },
+    { "$ref": "#/$defs/IgnoreLivenessSettings" },
+    { "$ref": "#/$defs/InheritLiveness" },
+    { "$ref": "#/$defs/InheritLivenessSettings" },
+    { "$ref": "#/$defs/BaseLiveness" },
+    { "$ref": "#/$defs/BaseLivenessSettings" },
+    { "$ref": "#/$defs/BaseLiveness_IgnoreLivenessSettings_" },
+    { "$ref": "#/$defs/BaseLiveness_InheritLivenessSettings_" },
+    { "$ref": "#/$defs/BaseLiveness_LeakyBucketLivenessSettings_" },
+    { "$ref": "#/$defs/BaseLiveness_NaiveLivenessSettings_" },
+    { "$ref": "#/$defs/BaseRemoteSettings" },
+    { "$ref": "#/$defs/Remote" },
+    { "$ref": "#/$defs/RemoteSettings" },
+    { "$ref": "#/$defs/RemoteEndpoint" },
+    { "$ref": "#/$defs/RemoteEndpointSettings" },
+    { "$ref": "#/$defs/RemoteProbe" },
+    { "$ref": "#/$defs/RemoteProbeSettings" }
+  ]
+}

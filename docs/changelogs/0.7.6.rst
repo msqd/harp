@@ -1,0 +1,7 @@
+Version 0.7.6 (2024-11-03)
+==========================
+
+Fixed
+:::::
+
+* Misc: ignore test found in cookiecutter template, as it is a template.

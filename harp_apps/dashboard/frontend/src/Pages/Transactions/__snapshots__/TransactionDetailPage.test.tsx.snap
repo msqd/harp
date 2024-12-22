@@ -10,7 +10,7 @@ exports[`renders the title and data when the query is successful 1`] = `
         class="flex flex-col"
       >
         <h1
-          class="css-9lrcch"
+          class="css-wbsupr"
         >
           Transaction details
         </h1>
@@ -26,13 +26,13 @@ exports[`renders the title and data when the query is successful 1`] = `
           class="inline-block min-w-full max-w-full py-2 align-middle sm:px-6 lg:px-8"
         >
           <div
-            class="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm css-o0j4j7"
+            class="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm css-1gi0pr0"
           >
             <div
               class="px-4 py-3"
             >
               <h5
-                class="flex w-full whitespace-nowrap cursor-pointer css-9ho516"
+                class="flex w-full whitespace-nowrap cursor-pointer css-1ooqpp2"
               >
                 <div
                   class="grow font-normal truncate"
@@ -100,10 +100,10 @@ exports[`renders the title and data when the query is successful 1`] = `
               </div>
             </div>
             <div
-              class="px-4 py-3"
+              class="relative px-4 py-3"
             >
               <h5
-                class="flex w-full whitespace-nowrap cursor-pointer css-9ho516"
+                class="flex w-full whitespace-nowrap cursor-pointer css-1ooqpp2"
               >
                 <div
                   class="grow font-normal truncate"
@@ -120,7 +120,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                       class="font-normal"
                     >
                       <span
-                        class="css-pnlnkr"
+                        class="css-69lnqt"
                         color="green"
                       >
                         GET
@@ -165,72 +165,84 @@ exports[`renders the title and data when the query is successful 1`] = `
                 class="mt-2 space-y-2 overflow-x-auto "
               >
                  
-                <table
-                  class="mb-2 w-full text-xs font-mono"
-                >
-                  <tbody>
-                    <tr>
-                      <td
-                        class="px-2 w-1 text-blue-600 truncate"
-                      >
-                        host
-                      </td>
-                      <td
-                        class="px-2 whitespace-nowrap"
-                      >
-                         localhost
-                      </td>
-                    </tr>
-                    <tr>
-                      <td
-                        class="px-2 w-1 text-blue-600 truncate"
-                      >
-                         accept-encoding
-                      </td>
-                      <td
-                        class="px-2 whitespace-nowrap"
-                      >
-                         identity 
-                      </td>
-                    </tr>
-                    <tr>
-                      <td
-                        class="px-2 w-1 text-blue-600 truncate"
-                      >
-                         x-long-header
-                      </td>
-                      <td
-                        class="px-2 whitespace-nowrap"
-                      >
-                         Foobar 3r51XEnyibdL3kRyAmts5BSfTyjjOrcbwgr3YOnwUMTcVVLzyhdzEKkQAje2XlXUva59GsJu1Z7IotiVYisO9vDjvHSyLt95SU7WEQNzhKhA7IlT2IQ11Onwmz7su9BT 
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
                 <div
-                  class="px-2"
+                  class="flex space-y-2"
                 >
-                  <pre
-                    class="w-fit overflow-x-auto text-black language-javascript max-w-full text-xs"
-                    style="color: rgb(57, 58, 52); font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; font-size: .9em; line-height: 1.2em; tab-size: 4; hyphens: none; padding: 0px; margin: .5em 0px; overflow: auto; border: 0px; background-color: white;"
+                  <div
+                    class="pt-4"
                   >
-                    <code
-                      class="language-javascript"
-                      style="color: rgb(57, 58, 52); font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; font-size: .9em; line-height: 1.2em; tab-size: 4; hyphens: none;"
+                    <table
+                      class="mb-2 w-full text-xs font-mono"
                     >
-                      <span>
-                        body1
-                      </span>
-                    </code>
-                  </pre>
+                      <tbody>
+                        <tr>
+                          <td
+                            class="px-2 w-1 text-blue-600 truncate"
+                          >
+                            host
+                          </td>
+                          <td
+                            class="px-2 whitespace-nowrap"
+                          >
+                            localhost:9001
+                          </td>
+                        </tr>
+                        <tr>
+                          <td
+                            class="px-2 w-1 text-blue-600 truncate"
+                          >
+                             accept-encoding
+                          </td>
+                          <td
+                            class="px-2 whitespace-nowrap"
+                          >
+                            identity
+                          </td>
+                        </tr>
+                        <tr>
+                          <td
+                            class="px-2 w-1 text-blue-600 truncate"
+                          >
+                             x-long-header
+                          </td>
+                          <td
+                            class="px-2 whitespace-nowrap"
+                          >
+                            Foobar 3r51XEnyibdL3kRyAmts5BSfTyjjOrcbwgr3YOnwUMTcVVLzyhdzEKkQAje2XlXUva59GsJu1Z7IotiVYisO9vDjvHSyLt95SU7WEQNzhKhA7IlT2IQ11Onwmz7su9BT
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div
+                  class="flex space-y-2"
+                >
+                  <div
+                    class="px-2 pt-4 mt-4"
+                  >
+                    <pre
+                      class="w-fit overflow-x-auto text-black language-javascript max-w-full text-xs"
+                      style="color: rgb(57, 58, 52); font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; font-size: .9em; line-height: 1.2em; tab-size: 4; hyphens: none; padding: 0px; margin: .5em 0px; overflow: auto; border: 0px; background-color: white;"
+                    >
+                      <code
+                        class="language-javascript"
+                        style="color: rgb(57, 58, 52); font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; font-size: .9em; line-height: 1.2em; tab-size: 4; hyphens: none;"
+                      >
+                        <span>
+                          body1
+                        </span>
+                      </code>
+                    </pre>
+                  </div>
                 </div>
               </div>
             </div>
             <div
-              class="px-4 py-3"
+              class="relative px-4 py-3"
             >
               <h5
-                class="flex w-full whitespace-nowrap cursor-pointer css-9ho516"
+                class="flex w-full whitespace-nowrap cursor-pointer css-1ooqpp2"
               >
                 <div
                   class="grow font-normal truncate"
@@ -247,7 +259,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                       class="font-normal"
                     >
                       <span
-                        class="css-pnlnkr"
+                        class="css-69lnqt"
                         color="green"
                       >
                         200
@@ -283,40 +295,52 @@ exports[`renders the title and data when the query is successful 1`] = `
                 class="mt-2 space-y-2 overflow-x-auto "
               >
                  
-                <table
-                  class="mb-2 w-full text-xs font-mono"
-                >
-                  <tbody>
-                    <tr>
-                      <td
-                        class="px-2 w-1 text-blue-600 truncate"
-                      >
-                        content-type
-                      </td>
-                      <td
-                        class="px-2 whitespace-nowrap"
-                      >
-                         application/json
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
                 <div
-                  class="px-2"
+                  class="flex space-y-2"
                 >
-                  <pre
-                    class="w-fit overflow-x-auto text-black language-javascript max-w-full text-xs"
-                    style="color: rgb(57, 58, 52); font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; font-size: .9em; line-height: 1.2em; tab-size: 4; hyphens: none; padding: 0px; margin: .5em 0px; overflow: auto; border: 0px; background-color: white;"
+                  <div
+                    class="pt-4"
                   >
-                    <code
-                      class="language-javascript"
-                      style="color: rgb(57, 58, 52); font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; font-size: .9em; line-height: 1.2em; tab-size: 4; hyphens: none;"
+                    <table
+                      class="mb-2 w-full text-xs font-mono"
                     >
-                      <span>
-                        body2
-                      </span>
-                    </code>
-                  </pre>
+                      <tbody>
+                        <tr>
+                          <td
+                            class="px-2 w-1 text-blue-600 truncate"
+                          >
+                            content-type
+                          </td>
+                          <td
+                            class="px-2 whitespace-nowrap"
+                          >
+                            application/json
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div
+                  class="flex space-y-2"
+                >
+                  <div
+                    class="px-2 pt-4 mt-4"
+                  >
+                    <pre
+                      class="w-fit overflow-x-auto text-black language-javascript max-w-full text-xs"
+                      style="color: rgb(57, 58, 52); font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; font-size: .9em; line-height: 1.2em; tab-size: 4; hyphens: none; padding: 0px; margin: .5em 0px; overflow: auto; border: 0px; background-color: white;"
+                    >
+                      <code
+                        class="language-javascript"
+                        style="color: rgb(57, 58, 52); font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; font-size: .9em; line-height: 1.2em; tab-size: 4; hyphens: none;"
+                      >
+                        <span>
+                          body2
+                        </span>
+                      </code>
+                    </pre>
+                  </div>
                 </div>
               </div>
             </div>
@@ -324,7 +348,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="px-4 py-3"
             >
               <h5
-                class="flex w-full whitespace-nowrap cursor-pointer css-9ho516"
+                class="flex w-full whitespace-nowrap cursor-pointer css-1ooqpp2"
               >
                 <div
                   class="grow font-normal truncate"

@@ -11,4 +11,5 @@ DEFAULT_APPLICATIONS = (
     "harp_apps.contrib.sentry",
     "telemetry",
     "janitor",
+    "rules",
 )

@@ -3,6 +3,7 @@ from typing import Optional
 from whistle import AsyncEventDispatcher, IDispatchedEvent, IEvent, IListener
 
 from harp import get_logger
+from harp.utils.packages import get_qualified_name
 
 __title__ = "Event Dispatcher"
 
@@ -28,7 +29,9 @@ class LoggingAsyncEventDispatcher(AsyncEventDispatcher):
         try:
             return await super().adispatch(event_id, event)
         except Exception as e:
-            self.logger.error(f"⚡️ [Error] {event_id} ({type(event).__name__}) failed: {e}")
+            self.logger.error(
+                f"⚡️ [Error] {event_id} ({type(event).__name__}) failed: {get_qualified_name(e.__class__)}: {e}"
+            )
             raise
 
     async def _adispatch(self, listeners, event):

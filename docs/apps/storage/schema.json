@@ -1,0 +1,104 @@
+{
+  "$defs": {
+    "BlobStorageSettings": {
+      "additionalProperties": true,
+      "properties": {
+        "base": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null,
+          "description": "Base type for service definition."
+        },
+        "type": {
+          "default": "sql",
+          "enum": ["sql", "redis"],
+          "type": "string"
+        },
+        "constructor": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null,
+          "description": "Optional custom constructor for the service."
+        },
+        "arguments": {
+          "anyOf": [{ "type": "object" }, { "type": "null" }],
+          "description": "Arguments for the service constructor."
+        }
+      },
+      "title": "BlobStorageSettings",
+      "type": "object"
+    },
+    "DatabaseSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "default": "sqlite+aiosqlite:///:memory:?cache=shared",
+          "format": "multi-host-uri",
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "title": "DatabaseSettings",
+      "type": "object"
+    },
+    "RedisSettings": {
+      "additionalProperties": true,
+      "properties": {
+        "base": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null,
+          "description": "Base type for service definition."
+        },
+        "type": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null,
+          "description": "Type for service definition."
+        },
+        "constructor": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null,
+          "description": "Optional custom constructor for the service."
+        },
+        "arguments": {
+          "anyOf": [{ "type": "object" }, { "type": "null" }],
+          "description": "Arguments for the service constructor."
+        },
+        "url": {
+          "default": "redis://localhost:6379/0",
+          "format": "uri",
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "title": "RedisSettings",
+      "type": "object"
+    },
+    "StorageSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "default": "sqlite+aiosqlite:///:memory:?cache=shared",
+          "format": "multi-host-uri",
+          "minLength": 1,
+          "type": "string"
+        },
+        "migrate": { "default": true, "type": "boolean" },
+        "blobs": {
+          "$ref": "#/$defs/BlobStorageSettings",
+          "default": { "type": "sql" }
+        },
+        "redis": {
+          "anyOf": [{ "$ref": "#/$defs/RedisSettings" }, { "type": "null" }],
+          "default": null
+        }
+      },
+      "title": "StorageSettings",
+      "type": "object"
+    }
+  },
+  "title": "__ROOT__",
+  "anyOf": [
+    { "$ref": "#/$defs/DatabaseSettings" },
+    { "$ref": "#/$defs/StorageSettings" },
+    { "$ref": "#/$defs/RedisSettings" },
+    { "$ref": "#/$defs/BlobStorageSettings" }
+  ]
+}

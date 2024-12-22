@@ -4,6 +4,7 @@ VERSION ?= $(shell git describe 2>/dev/null || git rev-parse --short HEAD)
 
 # poetry
 POETRY ?= $(shell which poetry || echo "poetry")
+POETRY_BUILD ?= $(POETRY) build
 POETRY_INSTALL_OPTIONS ?=
 RUN ?= $(if $(VIRTUAL_ENV),,$(POETRY) run)
 PLATFORM ?= linux/amd64
@@ -41,11 +42,16 @@ TEST_SKIP_FRONT ?=
 FRONTEND_DIR = harp_apps/dashboard/frontend
 
 # default run options
-HARP_OPTIONS ?= --example sqlite --example httpbin
+HARP_OPTIONS ?= --example sqlite --example proxy:httpbin
+HARP_MORE_OPTIONS ?=
+HARP_SERVICES ?= server dashboard
 
-.PHONY: start-dev
-start-dev:  # Starts a development instance with reasonable defaults (tune HARP_OPTIONS to replace).
-	$(POETRY) run harp start $(HARP_OPTIONS)
+.PHONY: start-dev start-dev-frontend
+start-dev: install-dev  # Starts a development instance with reasonable defaults (tune HARP_OPTIONS to replace).
+	$(POETRY) run harp start $(HARP_SERVICES) $(HARP_OPTIONS) $(HARP_MORE_OPTIONS)
+
+start-dev-frontend: install-dev  # Starts a frontend development instance with reasonable defaults (you'll have to a backend, useful to use an external debugger for example).
+	HARP_SERVICES=dashboard HARP_MORE_OPTIONS="--set dashboard.devserver.port=12121" $(MAKE) start-dev
 
 
 ########################################################################################################################
@@ -71,13 +77,20 @@ install-backend-dev:  ## Installs harp dependencies (backend) with development t
 
 wheel:
 	mkdir -p dist
-	bin/sandbox "$(MAKE) install-dev build-frontend; mv harp_apps/dashboard/frontend/dist harp_apps/dashboard/web; rm -rf harp_apps/dashboard/frontend; $(POETRY) build; cp dist/* $(PWD)/dist"
+	bin/sandbox "$(MAKE) install-dev build-frontend; \
+				 rm -rf harp_apps/dashboard/frontend; \
+				 sed '/^People & Credits/,$$ d' README.rst > README.rst.tmp; \
+				 mv README.rst.tmp README.rst; \
+				 $(POETRY_BUILD); \
+				 cp dist/* $(PWD)/dist; \
+				 twine check dist/*"
+
 
 ########################################################################################################################
 # Documentation
 ########################################################################################################################
 
-.PHONY: reference docs
+.PHONY: reference docs docs-dev
 
 reference: harp  ## Generates API reference documentation as ReST files (docs).
 	rm -rf docs/reference/core docs/reference/apps
@@ -86,7 +99,10 @@ reference: harp  ## Generates API reference documentation as ReST files (docs).
 	git add docs/reference/
 
 docs:  ## Build html documentation
-	(cd docs; $(MAKE) html)
+	$(RUN) $(MAKE) -C docs html
+
+docs-dev:  ## Spin up a livereload documentation server
+	$(RUN) $(MAKE) -C docs dev
 
 
 ########################################################################################################################
@@ -97,6 +113,7 @@ docs:  ## Build html documentation
 
 build-frontend:  ## Builds the harp dashboard frontend (compiles typescript and other sources into bundled version).
 	cd $(FRONTEND_DIR); $(PNPM) build
+	mv harp_apps/dashboard/frontend/dist harp_apps/dashboard/web
 
 
 ########################################################################################################################

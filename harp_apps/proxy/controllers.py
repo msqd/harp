@@ -1,22 +1,22 @@
-from datetime import UTC, datetime
+from abc import ABC, abstractmethod
+from datetime import UTC, datetime, timedelta
 from functools import cached_property, lru_cache
-from typing import Optional, cast
-from urllib.parse import urlencode, urljoin, urlparse
+from typing import Optional, cast, override
+from urllib.parse import urlencode, urljoin
 
-import httpx
 from httpx import AsyncClient, codes
 from pyheck import shouty_snake
 from whistle import IAsyncEventDispatcher
 
-from harp import __parsed_version__, get_logger
+from harp import get_logger
 from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
 from harp.http.utils import parse_cache_control
 from harp.models import Transaction
-from harp.settings import USE_PROMETHEUS
+from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
-from harp.utils.performances import performances_observer
 from harp.utils.tpdex import tpdex
 
+from .adapters import HttpClientProxyAdapter
 from .constants import (
     BREAK_ON_NETWORK_ERROR,
     BREAK_ON_UNHANDLED_EXCEPTION,
@@ -30,10 +30,12 @@ from .constants import (
 from .events import (
     EVENT_FILTER_PROXY_REQUEST,
     EVENT_FILTER_PROXY_RESPONSE,
+    EVENT_PROXY_ERROR,
     EVENT_TRANSACTION_ENDED,
     EVENT_TRANSACTION_MESSAGE,
     EVENT_TRANSACTION_STARTED,
     HttpMessageEvent,
+    ProxyErrorEvent,
     ProxyFilterEvent,
     TransactionEvent,
 )
@@ -42,34 +44,20 @@ from .settings.remote import Remote
 
 logger = get_logger(__name__)
 
-_prometheus = None
-if USE_PROMETHEUS:
-    from prometheus_client import Counter, Histogram
-
-    _prometheus = {
-        "call": Counter("proxy_calls", "Requests to the proxy.", ["name", "method"]),
-        "time.full": Histogram(
-            "proxy_time_full",
-            "Requests to the proxy including overhead.",
-            ["name", "method"],
-        ),
-        "time.forward": Histogram("proxy_time_forward", "Forward time.", ["name", "method"]),
-    }
+# XXX: move to some type module ?
+ProxyFilterResult = Optional[ProxyFilterEvent | HttpResponse | dict]
 
 
-class HttpProxyController:
+class AbstractHttpProxyController(ABC):
     name: Optional[str] = None
     """Controller name, also refered as endpoint name (for example in
     :class:`Transaction <harp.models.Transaction>`)."""
 
-    user_agent: Optional[str] = None
-    """User agent to use when proxying requests (will default to harp/<version>)."""
+    remote: Remote
+    """Base URL to proxy requests to."""
 
     _dispatcher: Optional[IAsyncEventDispatcher] = None
     """Event dispatcher for this controller."""
-
-    remote: Remote
-    """Base URL to proxy requests to."""
 
     @cached_property
     def dispatcher(self):
@@ -85,7 +73,6 @@ class HttpProxyController:
         name=None,
         logging=True,
     ):
-        self.http_client = http_client
         self.remote = remote
         if not isinstance(remote, Remote):
             raise TypeError(f"Expected Remote, got {type(remote).__name__}.")
@@ -93,12 +80,21 @@ class HttpProxyController:
         self._logging = logging
         self._dispatcher = dispatcher or self._dispatcher
 
-        # we only expose minimal information about the exact version
-        if not self.user_agent:
-            try:
-                self.user_agent = f"harp/{__parsed_version__.major}.{__parsed_version__.minor}"
-            except AttributeError:
-                self.user_agent = "harp"
+        self.proxy = HttpClientProxyAdapter(http_client, extensions={"endpoint": self.name})
+
+        self.initialize()
+
+    @api("0.8")
+    @abstractmethod
+    async def __call__(self, request: HttpRequest) -> HttpResponse:
+        """Handle an incoming request, produce a response."""
+        raise NotImplementedError()
+
+    def __repr__(self):
+        return f"{type(self).__name__}({self.remote!r}, name={self.name!r})"
+
+    def initialize(self):
+        pass
 
     async def adispatch(self, event_id, event=None):
         """
@@ -110,153 +106,156 @@ class HttpProxyController:
             return await self._dispatcher.adispatch(event_id, event)
 
     def debug(self, message, *args, **kwargs):
-        if not self._logging:
-            return
-        transaction: Transaction | None = kwargs.pop("transaction", None)
-        if transaction:
-            kwargs["transaction"] = transaction.id
-            kwargs.update(transaction.extras)
-        logger.debug(message, *args, **kwargs)
+        self._log("debug", message, *args, **kwargs)
 
     def info(self, message, *args, **kwargs):
-        if not self._logging:
-            return
-        transaction: Transaction | None = kwargs.pop("transaction", None)
-        if transaction:
-            kwargs["transaction"] = transaction.id
-            kwargs.update(transaction.extras)
-        logger.info(message, *args, **kwargs)
+        self._log("info", message, *args, **kwargs)
 
     def warning(self, message, *args, **kwargs):
+        self._log("warning", message, *args, **kwargs)
+
+    def _log(self, level, message, *args, **kwargs):
         if not self._logging:
             return
         transaction: Transaction | None = kwargs.pop("transaction", None)
         if transaction:
             kwargs["transaction"] = transaction.id
             kwargs.update(transaction.extras)
-        logger.warning(message, *args, **kwargs)
+        getattr(logger, level)(message, *args, **kwargs)
 
+
+class HttpProxyController(AbstractHttpProxyController):
+    """
+    Adds the transaction logic and actual implementation to the abstract controller.
+    """
+
+    @api("0.8")
+    async def filter_request(self, context: ProxyFilterEvent) -> ProxyFilterResult:
+        return cast(
+            ProxyFilterEvent,
+            await self.adispatch(EVENT_FILTER_PROXY_REQUEST, context),
+        )
+
+    @api("0.8")
+    async def filter_response(self, context: ProxyFilterEvent) -> ProxyFilterResult:
+        return cast(
+            ProxyFilterEvent,
+            await self.adispatch(EVENT_FILTER_PROXY_RESPONSE, context),
+        )
+
+    @override
     async def __call__(self, request: HttpRequest) -> HttpResponse:
-        """Handle an incoming request and proxy it to the configured URL."""
+        base_url = None
+        transaction = await self._create_transaction_from_request(request, tags=extract_tags_from_request(request))
 
-        labels = {"name": self.name or "-", "method": request.method}
+        # create the context, an event that will be passed through the transaction lifecycle.
+        # todo: embed in transaction ?
+        context = ProxyFilterEvent(self.name, request=request)
+        context.update(await self.filter_request(context))
 
-        with performances_observer("harp_proxy", labels=labels):
-            # create an envelope to override things, without touching the original request
-            context = ProxyFilterEvent(self.name, request=request)
-
-            await self.adispatch(EVENT_FILTER_PROXY_REQUEST, context)
-
-            remote_err = None
+        # If nothing prepared a ready to send response, it's time to forward the request.
+        if not context.response:
+            # do we have an available remote url? if not, we can stop there.
             try:
-                remote_url = self.remote.get_url()
+                base_url, full_url = await self._get_next_url_for(context)
             except IndexError as exc:
-                remote_url = None
-                remote_err = exc
-            parsed_remote_url = urlparse(remote_url) if remote_url else None
-
-            # override a few required headers. That may be done in the httpx request instead of here.
-            # And that would remove the need for WrappedHttpRequest? Maybe not because of our custom filters.
-            if parsed_remote_url:
-                context.request.headers["host"] = parsed_remote_url.netloc
-            if self.user_agent:
-                context.request.headers["user-agent"] = self.user_agent
-
-            # create transaction (shouldn't that be before the filter operation ? it's debatable.)
-            transaction = await self._create_transaction_from_request(
-                context.request, tags=extract_tags_from_request(context.request)
-            )
-            if not remote_url:
-                transaction.extras["status_class"] = "ERR"
-                return await self.end_transaction(
-                    remote_url,
-                    transaction,
-                    HttpError(
-                        "Unavailable",
-                        exception=remote_err,
-                        verbose_message="Service Unavailable (no remote endpoint available)",
-                        status=ERR_UNAVAILABLE_STATUS_CODE,
-                    ),
+                response = HttpError(
+                    "Unavailable",
+                    exception=exc,
+                    verbose_message="Service Unavailable (no remote endpoint available)",
+                    status=ERR_UNAVAILABLE_STATUS_CODE,
                 )
+                return await self.failure(transaction, base_url, response)
 
+            # todo: streaming should pass through to avoid reading all the content in memory
             await context.request.aread()
-            url = urljoin(remote_url, context.request.path) + (
-                f"?{urlencode(context.request.query)}" if context.request.query else ""
-            )
 
-            with performances_observer("harp_http", labels=labels):
-                if not context.response:
-                    # PROXY REQUEST
-                    remote_request: httpx.Request = self.http_client.build_request(
-                        context.request.method,
-                        url,
-                        headers=list(context.request.headers.items()),
-                        content=context.request.body,
-                        extensions={"harp": {"endpoint": self.name}},
-                    )
-                    context.request.extensions["remote_method"] = remote_request.method
-                    context.request.extensions["remote_url"] = remote_request.url
+            # Attempt to forward the request to the remote server.
+            try:
+                self.debug(
+                    f"▶▶ {context.request.method} {full_url}", transaction=transaction, extensions=request.extensions
+                )
+                response = await self.forward(transaction, context, base_url, full_url)
+            except Exception as exc:
+                return await self.failure(transaction, base_url, exc)
+            context.set_response(response)
 
-                    self.debug(
-                        f"▶▶ {context.request.method} {url}",
-                        transaction=transaction,
-                        extensions=remote_request.extensions,
-                    )
+        context = await self.filter_response(context) or context
 
-                    # PROXY RESPONSE
-                    try:
-                        remote_response: httpx.Response = await self.http_client.send(remote_request)
-                    except Exception as exc:
-                        return await self.end_transaction(remote_url, transaction, exc)
+        # todo: streaming should pass through to avoid reading all the content in memory
+        await context.response.aread()
 
-                    self.remote.notify_url_status(remote_url, remote_response.status_code)
+        return await self.end_transaction(transaction, context.response)
 
-                    await remote_response.aread()
-                    await remote_response.aclose()
+    async def forward(
+        self, transaction: Transaction, context: ProxyFilterEvent, base_url: str, full_url: str
+    ) -> HttpResponse:
+        """
+        Forward the request to the remote server.
 
-                    if self.remote[remote_url].status == CHECKING and 200 <= remote_response.status_code < 400:
-                        self.remote.set_up(remote_url)
+        :param transaction: The current transaction object.
+        :param context: The proxy filter event context.
+        :param base_url: The base URL of the remote server.
+        :param full_url: The full URL to which the request is forwarded.
+        :return: The HTTP response received from the remote server.
+        """
+        response = await self.proxy.send(context.request, full_url)
 
-                    try:
-                        _elapsed = f"{remote_response.elapsed.total_seconds()}s"
-                    except RuntimeError:
-                        _elapsed = "n/a"
-                    self.debug(
-                        f"◀◀ {remote_response.status_code} {remote_response.reason_phrase} ({_elapsed}{' cached' if remote_response.extensions.get('from_cache') else ''})",
-                        transaction=transaction,
-                    )
+        # Update the status of the remote URL based on the response status code
+        self.remote.notify_url_status(base_url, response.status_code)
 
-                    response_headers = {
-                        k: v
-                        for k, v in remote_response.headers.multi_items()
-                        if k.lower() not in ("server", "date", "content-encoding", "content-length")
-                    }
-                    # XXX for now, we use transaction "extras" to store searchable data for later
-                    transaction.extras["status_class"] = f"{remote_response.status_code // 100}xx"
+        await response.aread()
+        await response.aclose()
 
-                    if remote_response.extensions.get("from_cache"):
-                        transaction.extras["cached"] = remote_response.extensions.get("cache_metadata", {}).get(
-                            "cache_key", True
-                        )
+        is_response_from_cache = response.extensions.get("from_cache")
 
-                    context.response = HttpResponse(
-                        remote_response.content, status=remote_response.status_code, headers=response_headers
-                    )
-            await self.adispatch(EVENT_FILTER_PROXY_RESPONSE, context)
+        # If the remote URL is in CHECKING status and the response is successful, set it up
+        if self.remote[base_url].status == CHECKING and 200 <= response.status_code < 400:
+            self.remote.set_up(base_url)
 
-            await context.response.aread()
+        self.debug(
+            f"◀◀ {response.status_code} {response.reason_phrase} "
+            f"({_format_elapsed(response.elapsed)}{' cached' if is_response_from_cache else ''})",
+            transaction=transaction,
+        )
 
-            return await self.end_transaction(remote_url, transaction, context.response)
+        # Filter out certain headers from the response
+        headers = {
+            k: v
+            for k, v in response.headers.multi_items()
+            if k.lower() not in ("server", "date", "content-encoding", "content-length")
+        }
 
-    async def end_transaction(
+        # Store the status class in the transaction extras for later use
+        transaction.extras["status_class"] = f"{response.status_code // 100}xx"
+
+        if is_response_from_cache:
+            transaction.extras["cached"] = response.extensions.get("cache_metadata", {}).get("cache_key", True)
+
+        return HttpResponse(response.content, status=response.status_code, headers=headers)
+
+    async def _get_next_url_for(self, context) -> tuple[str, str]:
+        base_url = self.remote.get_url()
+        relative_url = context.request.path.lstrip("/")
+        return base_url, urljoin(base_url, relative_url) + (
+            f"?{urlencode(context.request.query)}" if context.request.query else ""
+        )
+
+    async def failure(
         self,
-        remote_url: Optional[str],
         transaction: Transaction,
-        response: BaseHttpMessage | Exception,
+        base_url: Optional[str],
+        response: Optional[Exception | BaseHttpMessage] = None,
     ):
-        spent = int((datetime.now(UTC).timestamp() - transaction.started_at.timestamp()) * 100000) / 100
-        transaction.finished_at = datetime.now(UTC)
-        transaction.elapsed = spent
+        """
+        Handle a failure scenario by updating the transaction status and creating an appropriate HttpError response.
+
+        :param transaction: The current transaction object.
+        :param base_url: The base URL of the remote server.
+        :param response: The response or exception that caused the failure.
+        :return: The final HttpResponse object.
+        """
+        transaction.extras["status_class"] = "ERR"
 
         if isinstance(response, Exception):
             error_kind = BREAK_ON_UNHANDLED_EXCEPTION
@@ -280,31 +279,45 @@ class HttpProxyController:
                 )
 
             if error_kind in self.remote.settings.break_on:
-                if self.remote[remote_url].failure(error_name):
+                if base_url and self.remote[base_url].failure(error_name):
                     self.remote.refresh()
+
+            await self.adispatch(EVENT_PROXY_ERROR, ProxyErrorEvent(transaction, response))
+
+        return await self.end_transaction(transaction, response)
+
+    async def end_transaction(
+        self,
+        transaction: Transaction,
+        response: BaseHttpMessage | Exception,
+    ) -> HttpResponse:
+        """
+        Finalize the transaction and dispatch relevant events.
+
+        :param transaction: The current transaction object.
+        :param response: The response or exception that concluded the transaction.
+        :return: The final HttpResponse object.
+        """
+        transaction.finished_at = datetime.now(UTC)
+        transaction.elapsed = round((datetime.now(UTC).timestamp() - transaction.started_at.timestamp()) * 1000, 2)
 
         if isinstance(response, HttpError):
             transaction.extras["status_class"] = "ERR"
             self.warning(
-                f"◀ {type(response).__name__} {response.message} ({spent}ms)",
+                f"◀ {type(response).__name__} {response.message} ({transaction.elapsed}ms)",
                 transaction=transaction,
             )
         elif isinstance(response, HttpResponse):
             reason = codes.get_reason_phrase(response.status)
-            self.info(f"◀ {response.status} {reason} ({spent}ms)", transaction=transaction)
+            self.info(f"◀ {response.status} {reason} ({transaction.elapsed}ms)", transaction=transaction)
         else:
             raise ValueError(f"Invalid final message type: {type(response)}")
 
-        if transaction.extras.get("status_class") == "ERR":
-            transaction.tpdex = 0
-        else:
-            transaction.tpdex = tpdex(transaction.elapsed)
+        transaction.tpdex = 0 if transaction.extras.get("status_class") == "ERR" else tpdex(transaction.elapsed)
 
-        # dispatch message event for response
-        # TODO delay after response is sent ?
+        # Dispatch message event for response
         await self.adispatch(EVENT_TRANSACTION_MESSAGE, HttpMessageEvent(transaction, response))
-        # dispatch transaction ended event
-        # TODO delay after response is sent ?
+        # Dispatch transaction ended event
         await self.adispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(transaction))
 
         if isinstance(response, HttpError):
@@ -317,7 +330,17 @@ class HttpProxyController:
 
         return cast(HttpResponse, response)
 
-    async def _create_transaction_from_request(self, request: HttpRequest, *, tags=None):
+    async def _create_transaction_from_request(self, request: HttpRequest, *, tags=None) -> Transaction:
+        """
+        Create a new transaction from the incoming request, generating a new (random, but orderable according to the
+        instant it happens) transaction ID.
+
+        Once created, it dispatches the EVENT_TRANSACTION_STARTED event to allow storage applications (or anything
+        else) to react to this creation, then it dispatches the EVENT_TRANSACTION_MESSAGE event to allow to react to
+        the fact this transaction contained a request.
+
+        :return: Transaction
+        """
         transaction = Transaction(
             id=generate_transaction_id_ksuid(),
             type="http",
@@ -327,6 +350,7 @@ class HttpProxyController:
         )
         request.extensions["transaction"] = transaction
 
+        # If the request cache control asked for cache to be disabled, mark it in transaction.
         request_cache_control = request.headers.get("cache-control")
         if request_cache_control:
             request_cache_control = parse_cache_control([request_cache_control])
@@ -347,12 +371,16 @@ class HttpProxyController:
 
         return transaction
 
-    def __repr__(self):
-        return f"{type(self).__name__}({self.remote!r}, name={self.name!r})"
-
 
 @lru_cache
 def _get_base_network_error_type(exc_type):
     for _type in NETWORK_ERRORS:
         if issubclass(exc_type, _type):
             return _type
+
+
+def _format_elapsed(elapsed: timedelta):
+    try:
+        return f"{elapsed.total_seconds()}s"
+    except RuntimeError:
+        return "n/a"

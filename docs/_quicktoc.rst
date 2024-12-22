@@ -37,17 +37,18 @@
     |                                                        |                                                        |
     | Enhance and extend.                                    | Dive in the internals.                                 |
     |                                                        |                                                        |
-    | - :doc:`/develop/run`                                  | - :doc:`/contribute/introduction`                      |
-    | - :doc:`/develop/customize`                            | - :doc:`/contribute/overview`                          |
-    | - :doc:`/develop/extend`                               | - :doc:`/contribute/dependency-injection`              |
-    |                                                        | - :doc:`/contribute/events`                            |
+    | - :doc:`/develop/quick-start`                          | - :doc:`/contribute/introduction`                      |
+    | - :doc:`/develop/run`                                  | - :doc:`/contribute/overview`                          |
+    | - :doc:`/develop/customize`                            | - :doc:`/contribute/dependency-injection`              |
+    | - :doc:`/develop/extend`                               | - :doc:`/contribute/events`                            |
     |                                                        | - :doc:`/contribute/applications`                      |
     +--------------------------------------------------------+--------------------------------------------------------+
-    | :doc:`Reference <reference/index>`                                                                              |
+    | :doc:`Reference </reference/index>`                                                                             |
     |                                                                                                                 |
-    | Implementation details.                                                                                         |
+    | Exhaustive reference list and description of commands, functions, classes, settings, etc.                       |
     |                                                                                                                 |
-    | - :doc:`Command Line Reference </reference/commandline/index>`                                                  |
-    | - :doc:`Core API Reference </reference/core/harp>`                                                              |
+    | - :doc:`Core Reference </reference/core/harp>`                                                                  |
     | - :doc:`Applications Reference </reference/apps/harp_apps>`                                                     |
+    | - :doc:`Configuration Reference </config/index>`                                                                |
+    | - :doc:`Command Line Reference </commandline/index>`                                                            |
     +-----------------------------------------------------------------------------------------------------------------+

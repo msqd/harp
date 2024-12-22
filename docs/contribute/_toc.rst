@@ -13,5 +13,7 @@
     extending
     storage/index
     ../apps/dashboard/development/index
+    containers
     testing/index
+    templates/index
     release/index

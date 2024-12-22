@@ -34,6 +34,7 @@ declare namespace Apps.Proxy {
    *     remote:
    *       # see HttpRemote
    *       ...
+   *     controller : optional controller Service definition, default to HttpProxyController
    *
    * A shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require
    * fine-tuning the endpoint settings:
@@ -47,9 +48,10 @@ declare namespace Apps.Proxy {
    */
   export interface EndpointSettings {
     name: string;
-    port: number;
+    port?: number | null;
     description?: string | null;
     remote?: RemoteSettings | null;
+    controller?: Service | string | null;
   }
   /**
    * A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
@@ -138,9 +140,33 @@ declare namespace Apps.Proxy {
   export interface Headers {
     [k: string]: unknown;
   }
+  /**
+   * A settings base class for service definitions.
+   */
+  export interface Service {
+    /**
+     * Base type for service definition.
+     */
+    base?: string | null;
+    /**
+     * Type for service definition.
+     */
+    type?: string | null;
+    /**
+     * Optional custom constructor for the service.
+     */
+    constructor?: string | null;
+    /**
+     * Arguments for the service constructor.
+     */
+    arguments?: {
+      [k: string]: unknown;
+    } | null;
+    [k: string]: unknown;
+  }
   export interface BaseEndpointSettings {
     name: string;
-    port: number;
+    port?: number | null;
     description?: string | null;
   }
   export interface Endpoint {
@@ -237,5 +263,13 @@ declare namespace Apps.Proxy {
     min_pool_size?: number;
     break_on?: string[];
     check_after?: number;
+  }
+  export interface Remote1 {
+    settings: RemoteSettings;
+    current_pool_name?: string;
+    probe?: RemoteProbe | null;
+    current_pool: string[];
+    endpoints: RemoteEndpoint[];
+    [k: string]: unknown;
   }
 }

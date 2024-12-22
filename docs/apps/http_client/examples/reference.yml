@@ -1,0 +1,38 @@
+http_client:
+  cache:
+    controller:
+      allow_heuristics: false
+      allow_stale: false
+      cacheable_methods:
+      - GET
+      - HEAD
+      cacheable_status_codes:
+      - 200
+      - 203
+      - 204
+      - 206
+      - 300
+      - 301
+      - 308
+      - 404
+      - 405
+      - 410
+      - 414
+      - 501
+      type: hishel.Controller
+    enabled: true
+    storage:
+      base: hishel.AsyncBaseStorage
+      check_ttl_every: 60.0
+      ttl: null
+      type: harp_apps.http_client.contrib.hishel.storages.AsyncStorage
+    transport:
+      type: hishel.AsyncCacheTransport
+  proxy_transport:
+    type: harp_apps.http_client.transport.AsyncFilterableTransport
+  timeout: 30.0
+  transport:
+    retries: 0
+    type: httpx.AsyncHTTPTransport
+    verify: true
+  type: httpx.AsyncClient

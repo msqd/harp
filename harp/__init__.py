@@ -40,6 +40,16 @@ if TYPE_CHECKING:
 ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+def get_relative_path(path: str) -> str:
+    """
+    Returns the relative path of the given path from the root directory.
+
+    :param path: The path to get the relative path of.
+    :return: The relative path.
+    """
+    return os.path.relpath(path, ROOT_DIR)
+
+
 def _parse_version(version: str, /, *, default=None) -> Version:
     try:
         return Version(version)
@@ -51,7 +61,7 @@ def _parse_version(version: str, /, *, default=None) -> Version:
 
 # last release
 __title__ = "Core"
-__version__ = "0.7.0a1"
+__version__ = "0.8.0a2"
 __hardcoded_version__ = __version__
 __revision__ = __version__  # we can't commit the not yet known revision
 

@@ -14,6 +14,7 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
+    harp.utils.api
     harp.utils.arguments
     harp.utils.background
     harp.utils.bytes
@@ -28,7 +29,6 @@ Submodules
     harp.utils.json
     harp.utils.network
     harp.utils.packages
-    harp.utils.performances
     harp.utils.processes
     harp.utils.services
     harp.utils.strings

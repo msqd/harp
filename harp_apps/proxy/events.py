@@ -1,11 +1,12 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, Self
 
 from whistle import Event
 
 from harp import get_logger
-from harp.http import BaseHttpMessage, HttpResponse
+from harp.http import BaseHttpMessage, HttpError, HttpResponse
 from harp.http.requests import HttpRequest
 from harp.models import Transaction
+from harp.views.json import serialize
 
 logger = get_logger(__name__)
 
@@ -23,6 +24,9 @@ EVENT_FILTER_PROXY_REQUEST = "proxy.filter.request"
 
 #: Event fired when an outgoing response is ready to be filtered, for example by the rules application.
 EVENT_FILTER_PROXY_RESPONSE = "proxy.filter.response"
+
+#: An error happened.
+EVENT_PROXY_ERROR = "proxy.error"
 
 
 class ProxyFilterEvent(Event):
@@ -68,13 +72,29 @@ class ProxyFilterEvent(Event):
         context = self.create_execution_context()
         script(context)
         if context["response"] != self.response:
-            if context["response"] is not None:
-                if not isinstance(context["response"], HttpResponse):
-                    raise ValueError(
-                        f"Response must be an instance of HttpResponse, got {context['response']!r} ({type(context['response']).__module__}.{type(context['response']).__qualname__})."
-                    )
-            self.set_response(context["response"])
+            if context["response"] is None:
+                self.set_response(None)
+            else:
+                self.update(context["response"])
         return context
+
+    def update(self, mixed: Optional[dict | HttpResponse | Self]) -> Self:
+        if mixed is None:
+            return self
+
+        if isinstance(mixed, ProxyFilterEvent):
+            return mixed
+
+        if isinstance(mixed, dict):
+            mixed = HttpResponse(serialize(mixed), content_type="application/json")
+
+        if not isinstance(mixed, HttpResponse):
+            raise ValueError(
+                f"Response must be an instance of HttpResponse or a dict, got {mixed!r} ({type(mixed).__module__}.{type(mixed).__qualname__})."
+            )
+
+        self.set_response(mixed)
+        return self
 
 
 class TransactionEvent(Event):
@@ -86,3 +106,9 @@ class HttpMessageEvent(TransactionEvent):
     def __init__(self, transaction: Transaction, message: BaseHttpMessage):
         super().__init__(transaction)
         self.message = message
+
+
+class ProxyErrorEvent(TransactionEvent):
+    def __init__(self, transaction: Transaction, error: HttpError):
+        super().__init__(transaction)
+        self.error = error

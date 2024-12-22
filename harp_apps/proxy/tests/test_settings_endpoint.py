@@ -14,7 +14,15 @@ class TestEndpointSettings(BaseConfigurableTest):
     type = EndpointSettings
     initial = {**base_settings}
     expected = {**initial}
-    expected_verbose = {**expected, "description": None, "remote": None}
+    expected_verbose = {
+        **expected,
+        "description": None,
+        "remote": None,
+        "controller": {
+            "type": "harp_apps.proxy.controllers.HttpProxyController",
+            "dispatcher": {"type": "IAsyncEventDispatcher"},
+        },
+    }
 
     def test_old_url_syntax(self):
         obj = self.create(url="http://my-endpoint:8080")
@@ -47,6 +55,10 @@ class TestEndpointSettingsWithRemote(BaseConfigurableTest):
             "min_pool_size": 1,
             "probe": None,
             "liveness": {"type": "inherit"},
+        },
+        "controller": {
+            "type": "harp_apps.proxy.controllers.HttpProxyController",
+            "dispatcher": {"type": "IAsyncEventDispatcher"},
         },
     }
 
@@ -95,7 +107,10 @@ class TestEndpointStatefulWithRemote(BaseConfigurableTest):
                 "min_pool_size": 1,
             },
         },
-        "settings": {**TestEndpointSettings.expected, "description": None},
+        "settings": {
+            **TestEndpointSettings.expected,
+            "description": None,
+        },
     }
 
     expected_verbose = {

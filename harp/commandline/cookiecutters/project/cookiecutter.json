@@ -1,0 +1,16 @@
+{
+  "name": "HARP Project",
+  "__dir_name": "{{cookiecutter.name | slugify}}",
+  "__pkg_name": "{{cookiecutter.name | slugify(separator='_')}}",
+  "author_name": "Smart Anonymous Harpist",
+  "author_email": "anonymous@harp-proxy.net",
+  "create_application": false,
+  "create_config": true,
+  "__prompts__": {
+    "name": "Project name",
+    "author_name": "Author name",
+    "author_email": "Author email",
+    "create_application": "Create application folder ?",
+    "create_config": "Create config file ?"
+  }
+}

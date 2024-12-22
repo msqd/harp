@@ -106,7 +106,7 @@ class AsyncStorageAdapter:
         # with hishel's current design, it's the only decent way to make it work that we found. Maybe we want to change
         # the key-value store in the future to be able to contain content addressable and unadressable data, even maybe
         # namespaced/typed data (although we hack "content-type to do it, for now).
-        return await self.storage.put(
+        return await self.storage.force_put(
             Blob(
                 id=key,
                 data=yaml.safe_dump(
@@ -122,7 +122,7 @@ class AsyncStorageAdapter:
                     sort_keys=False,
                 ).encode(),
                 content_type="cache/meta",
-            )
+            ),
         )
 
     async def _serialize_request(self, request: Request) -> SerializedRequest:

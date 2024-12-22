@@ -1,0 +1,29 @@
+Version 0.7.3 (2024-10-28)
+==========================
+
+Added
+:::::
+
+* CLI: adds a cookiecutter based «harp create project» command to bootstrap an empty proxy project.
+* Config: «!include» constructor can now be used in all configuration files, not only service definitions.
+* Proxy: It is now possible to override the default HttpProxyController with your own on a per-endpoint basis.
+* Rules/DX: Rules can now return a dict response as a shortcut to a json response.
+
+Changed
+:::::::
+
+* Rules/DX: Better errors on rules failure.
+
+Updated
+:::::::
+
+* bump alembic from 1.13.2 to 1.13.3
+* bump asyncpg from 0.29.0 to 0.30.0
+* bump cryptography from 43.0.1 to 43.0.3
+* bump honcho from 1.1.0 to 2.0.0
+* bump psycopg2-binary from 2.9.9 to 2.9.10
+* bump redis from 5.0.8 to 5.2.0
+* bump slack-sdk from 3.33.1 to 3.33.2
+* bump sphinx-docsearch from 0.0.7 to 0.1.0
+* bump sqlalchemy from 2.0.35 to 2.0.36
+* bump testcontainers from 4.8.1 to 4.8.2
