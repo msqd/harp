@@ -17,15 +17,25 @@ export default defineConfig(({ mode }) => {
     "process.env.DISABLE_MOCKS": JSON.stringify(String(!!env.DISABLE_MOCKS)),
     "process.env.NODE_ENV": JSON.stringify(env.NODE_ENV || "production"),
   }
+
+  const postcss =
+    mode === "lib"
+      ? {
+          plugins: [],
+        }
+      : {
+          plugins: [tailwindcss],
+        }
+
   const build =
     mode === "lib"
       ? {
           lib: {
             entry: [
-              resolve(__dirname, "src/Components/index.tsx"),
-              resolve(__dirname, "src/Styles/styles.tsx"),
-              resolve(__dirname, "src/Pages/pages.tsx"),
-              resolve(__dirname, "src/tests/mocks/browser.ts"),
+              resolve(__dirname, "src/index.ts"),
+              resolve(__dirname, "src/ui/ui.ts"),
+              resolve(__dirname, "src/Domain/hooks.ts"),
+              resolve(__dirname, "src/tests/mocks/handlers.ts"),
             ],
             name: "harp-dashboard",
             fileName: (format: string, name: string) => {
@@ -81,15 +91,12 @@ export default defineConfig(({ mode }) => {
       jsxInject: `import React from 'react'`,
     },
     css: {
-      postcss: {
-        plugins: [tailwindcss],
-      },
+      postcss: postcss,
     },
     plugins: [
       dts({
         insertTypesEntry: true,
         staticImport: true,
-        rollupTypes: true,
       }),
       tsconfigPaths(),
       react({

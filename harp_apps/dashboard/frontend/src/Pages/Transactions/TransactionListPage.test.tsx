@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { renderWithClient } from "tests/utils"
 
 import TransactionListPage from "./TransactionListPage.tsx"
+import { TransactionDataTable } from "./Components/List/TransactionDataTable.tsx"
 
 describe("TransactionListPage", () => {
   beforeEach(() => {
@@ -17,7 +18,7 @@ describe("TransactionListPage", () => {
   it("renders well when the query is successful", async () => {
     const result = renderWithClient(
       <MemoryRouter>
-        <TransactionListPage />
+        <TransactionListPage TransactionDataTable={TransactionDataTable} />
       </MemoryRouter>,
     )
 

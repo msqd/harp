@@ -17,16 +17,18 @@ import {
   PreviousButton,
   VerticalFiltersShowButton,
 } from "./Components/Buttons.tsx"
-import { TransactionDataTable } from "./Components/List"
+import { TransactionsDataTableProps } from "./Components/List/TransactionDataTable.tsx"
 import { FiltersSidebar } from "./Containers"
 import { TransactionDetailOnQuerySuccess } from "./TransactionDetailOnQuerySuccess.tsx"
 
 export function TransactionListOnQuerySuccess({
   query,
   filters,
+  TransactionDataTable,
 }: {
   query: QueryObserverSuccessResult<ItemList<Transaction> & { total: number; pages: number; perPage: number }>
   filters: Filters
+  TransactionDataTable: React.FC<TransactionsDataTableProps>
 }) {
   const location = useLocation()
   const navigate = useNavigate()

@@ -10,14 +10,21 @@ import { RightNav } from "./RightNav.tsx"
 import { Loader } from "../Loader"
 
 const StyledContainerWithHorizontalConstraint = styled.div(() => [tw`mx-auto px-2 sm:px-6 lg:px-8`])
+export interface NavigationItem {
+  label: string
+  to: string
+  exact?: boolean
+}
 
-const navigationItems = [
-  { label: "Overview", to: "/", exact: true },
-  { label: "Transactions", to: "/transactions" },
-  { label: "System", to: "/system" },
-]
-
-function Layout({ title }: { title: string }) {
+function Layout({
+  title,
+  navigationItems,
+  navBarClassName,
+}: {
+  title: string
+  navigationItems: NavigationItem[]
+  navBarClassName?: string
+}) {
   const location = useLocation()
   return (
     <div className="flex h-screen min-h-screen max-h-screen w-screen flex-col">
@@ -35,6 +42,7 @@ function Layout({ title }: { title: string }) {
         Link={Link}
         Wrapper={StyledContainerWithHorizontalConstraint}
         rightChildren={<RightNav />}
+        className={navBarClassName}
       />
       <StyledContainerWithHorizontalConstraint className="overflow-y-auto w-full">
         <Suspense fallback={<Loader className="my-20" />}>
