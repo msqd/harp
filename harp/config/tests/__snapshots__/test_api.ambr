@@ -16,15 +16,6 @@
     'OnShutdownEvent',
     'Service',
     'Stateful',
-    'applications',
     'asdict',
-    'builders',
-    'configurables',
-    'defaults',
-    'events',
-    'examples',
-    'get_application',
-    'tests',
-    'utils',
   ])
 # ---

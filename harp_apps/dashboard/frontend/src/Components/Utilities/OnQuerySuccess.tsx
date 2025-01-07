@@ -28,7 +28,9 @@ function anyQueryIsNotSuccess<T>(queries: UseQueryResult<T>[]): boolean {
   return queries.some((query) => !query.isSuccess)
 }
 
-function OnQuerySuccess<T>(props: (OnQuerySuccessProps<T> | OnQueriesSuccessProps<T>) & { fallback?: ReactNode }) {
+export function OnQuerySuccess<T>(
+  props: (OnQuerySuccessProps<T> | OnQueriesSuccessProps<T>) & { fallback?: ReactNode },
+) {
   const queries = "query" in props ? [props.query] : props.queries
 
   const { showBoundary } = useErrorBoundary()
@@ -50,5 +52,3 @@ function OnQuerySuccess<T>(props: (OnQuerySuccessProps<T> | OnQueriesSuccessProp
 
   return props.children(...(queries as QueryObserverSuccessResult<T>[]))
 }
-
-export { OnQuerySuccess }

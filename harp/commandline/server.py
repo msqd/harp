@@ -4,7 +4,7 @@ from click import BaseCommand
 
 from harp import run
 from harp.commandline.options.server import CommonServerOptions, server_command
-from harp.config import ConfigurationBuilder
+from harp.config.utils import get_configuration_builder_type
 
 
 @server_command(
@@ -22,7 +22,9 @@ def server(**kwargs):
     )
     _info.state("setup")
 
-    builder = ConfigurationBuilder.from_commandline_options(CommonServerOptions(**kwargs))
+    configration_builder = get_configuration_builder_type()
+
+    builder = configration_builder.from_commandline_options(CommonServerOptions(**kwargs))
 
     _info.state("up")
 

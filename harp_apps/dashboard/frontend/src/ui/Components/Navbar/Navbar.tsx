@@ -21,6 +21,7 @@ interface NavbarProps {
   currentPath?: string
   leftChildren?: ReactElement
   rightChildren?: ReactElement
+  className?: string
 }
 
 const NavbarContainer = styled(Disclosure)(() => [tw`bg-primary-900 shadow`])
@@ -44,9 +45,10 @@ function Navbar({
   currentPath = "/",
   leftChildren = undefined,
   rightChildren = undefined,
+  className,
 }: NavbarProps) {
   return (
-    <NavbarContainer as="nav">
+    <NavbarContainer as="nav" className={className}>
       {({ open }: { open: boolean }) => (
         <>
           <Wrapper>

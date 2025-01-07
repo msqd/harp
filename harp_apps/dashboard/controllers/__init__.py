@@ -6,10 +6,11 @@ from asgiref.typing import ASGISendCallable
 from http_router import NotFoundError, Router
 from httpx import AsyncClient
 
-from harp import ROOT_DIR, get_logger
+from harp import get_logger
 from harp.controllers import RoutingController
 from harp.errors import ConfigurationError
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
+from harp_apps import dashboard
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.settings.remote import Remote
 from harp_apps.storage.types import IStorage
@@ -18,13 +19,6 @@ from ..settings import DashboardSettings
 from ..settings.auth import BasicAuthSettings
 
 logger = get_logger(__name__)
-
-# Static directories to look for pre-built assets, in order of priority.
-STATIC_BUILD_PATHS = [
-    os.path.realpath(os.path.join(ROOT_DIR, "harp_apps/dashboard/frontend/dist")),
-    os.path.realpath(os.path.join(ROOT_DIR, "harp_apps/dashboard/web")),
-    "/opt/harp/public",
-]
 
 
 class DashboardController(RoutingController):
@@ -36,6 +30,9 @@ class DashboardController(RoutingController):
 
     _ui_static_middleware = None
     _ui_devserver_proxy_controller = None
+
+    #: Static directory to look for pre-built assets.
+    static_build_path = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(dashboard.__file__)), "web"))
 
     def __init__(
         self,
@@ -67,10 +64,8 @@ class DashboardController(RoutingController):
 
         # if no devserver is configured, we may need to serve static files
         if not self._ui_devserver_proxy_controller:
-            for _path in STATIC_BUILD_PATHS:
-                if os.path.exists(_path):
-                    self._ui_static_middleware = ASGIMiddlewareStaticFile(None, "", [_path])
-                    break
+            if os.path.exists(self.static_build_path):
+                self._ui_static_middleware = ASGIMiddlewareStaticFile(None, "", [self.static_build_path])
 
         # if no devserver is configured and no static files are found, we can't serve the dashboard
         if not self._ui_static_middleware and not self._ui_devserver_proxy_controller:

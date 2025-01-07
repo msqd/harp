@@ -10,7 +10,7 @@ import { DataTable } from "ui/Components/DataTable"
 import { Duration } from "../Duration"
 import { MessageSummary } from "../MessageSummary.tsx"
 
-interface TransactionsDataTableProps {
+export interface TransactionsDataTableProps {
   transactions: Transaction[]
   onSelectionChange?: (selected: Transaction | null) => void
   selected?: Transaction

@@ -27,7 +27,6 @@ from .events import (
     OnReadyEvent,
     OnShutdownEvent,
 )
-from .utils import get_application
 
 __all__ = [
     "Application",
@@ -38,6 +37,7 @@ __all__ = [
     "EVENT_BOUND",
     "EVENT_READY",
     "EVENT_SHUTDOWN",
+    "LazyService",
     "OnBindEvent",
     "OnBoundEvent",
     "OnReadyEvent",
@@ -45,6 +45,4 @@ __all__ = [
     "Service",
     "Stateful",
     "asdict",
-    "get_application",
-    "LazyService",
 ]

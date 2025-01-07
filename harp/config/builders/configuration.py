@@ -35,6 +35,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
     Attributes:
         _defaults (dict): Default values for the configuration, typically loaded from internal defaults or specified by the user.
         applications (ApplicationsRegistryType): An instance of ApplicationsRegistry or a subclass, managing the registration and configuration of HARP applications.
+        applications_registry_type (type): The type of ApplicationsRegistry to use for managing applications.
 
     Methods:
         add_file(filename: str): Adds a single configuration file by its filename.
@@ -56,7 +57,6 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         /,
         *,
         use_default_applications=True,
-        ApplicationsRegistryType=ApplicationsRegistry,
     ) -> None:
         """
         Initializes a new instance of the ConfigurationBuilder.
@@ -64,10 +64,10 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         Parameters:
             default_values (dict, optional): A dictionary of default configuration values. Defaults to None.
             use_default_applications (bool, optional): Whether to automatically include default HARP applications in the configuration. Defaults to True.
-            ApplicationsRegistryType (type, optional): The class to use for the applications registry. Defaults to ApplicationsRegistry.
         """
         self._defaults = default_values or {}
-        self.applications = ApplicationsRegistryType()
+        self.applications = self.create_application_registry()
+        self.applications_registry_type = type(self.applications)
 
         for app_name in self._defaults.pop("applications", []):
             self.applications.add(app_name)
@@ -76,6 +76,9 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
             self.applications.add(*DEFAULT_APPLICATIONS)
 
         super().__init__()
+
+    def create_application_registry(self):
+        return ApplicationsRegistry()
 
     def add_file(self, filename: str):
         """
