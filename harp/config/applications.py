@@ -130,7 +130,7 @@ class ApplicationsRegistry:
                 application_module = __import__(".".join((application_spec.name, "__app__")), fromlist=["*"])
             except ModuleNotFoundError as exc:
                 raise ModuleNotFoundError(
-                    f'A python package for application "{name}" was found but it is not a valid harp application. '
+                    f'A python package for application "{name}" was found but it is not a valid HARP Application. '
                     'Did you forget to add an "__app__.py"?'
                 ) from exc
 

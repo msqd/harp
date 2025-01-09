@@ -10,21 +10,20 @@ import { RightNav } from "./RightNav.tsx"
 import { Loader } from "../Loader"
 
 const StyledContainerWithHorizontalConstraint = styled.div(() => [tw`mx-auto px-2 sm:px-6 lg:px-8`])
+
 export interface NavigationItem {
   label: string
   to: string
   exact?: boolean
 }
 
-function Layout({
-  title,
-  navigationItems,
-  navBarClassName,
-}: {
-  title: string
+interface LayoutProps {
+  title?: string
   navigationItems: NavigationItem[]
   navBarClassName?: string
-}) {
+}
+
+function Layout({ title, navigationItems, navBarClassName }: LayoutProps) {
   const location = useLocation()
   return (
     <div className="flex h-screen min-h-screen max-h-screen w-screen flex-col">
@@ -32,9 +31,11 @@ function Layout({
         leftChildren={
           <Link to="/" className="flex">
             <img className="h-8 w-auto" src={logo} alt="HARP" />
-            <span className="h-8 px-2 pt-1 text-md font-medium text-white" title={title}>
-              {title}
-            </span>
+            {title ? (
+              <span className="h-8 px-2 pt-1 text-md font-medium text-white" title={title}>
+                {title}
+              </span>
+            ) : null}
           </Link>
         }
         items={navigationItems}

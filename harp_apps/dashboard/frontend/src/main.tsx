@@ -19,7 +19,7 @@ const navigationItems = [
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Layout title="HARP EA" navigationItems={navigationItems} />,
+    element: <Layout navigationItems={navigationItems} />,
     children: [
       {
         path: "",
