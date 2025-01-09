@@ -160,13 +160,15 @@ ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
 RUN chown harp:www-data -R /opt/harp /var/lib/harp/data
+RUN echo "{}" > /etc/harp.yaml
 
 USER harp
 WORKDIR ${BASE}
 
 COPY --from=backend ${VIRTUAL_ENV} ${VIRTUAL_ENV}
-COPY --from=frontend ${BASE}/frontend/web ${BASE}/public
+COPY --from=frontend ${BASE}/frontend/web ${BASE}/src/harp_apps/dashboard/web
 COPY --from=backend --chown=harp:www-data ${BASE}/src ${BASE}/src
+RUN ln -s ${BASE}/src/harp_apps/dashboard/web public
 
 RUN ln -s /var/lib/harp/data \
     && ln -s /etc/harp.yaml \
