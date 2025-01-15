@@ -21,3 +21,7 @@ data:
     {{- if .Values.settings }}
     {{ toYaml .Values.settings | nindent 4 }}
     {{- end }}
+
+    {{- if .Values.harp.settings }}
+    {{ toYaml .Values.settings | nindent 4 }}
+    {{- end }}

@@ -64,7 +64,7 @@ class RemoteProbe(Stateful[RemoteProbeSettings]):
                 return endpoint.failure(failure)
         except Exception as exc:
             failure = "PROBE_" + shouty_snake(type(exc).__name__)
-            logger.exception(f"Probe failure: {probe_url} -> {failure}")
+            logger.error(f"Probe failure: {probe_url} -> {failure}")
             return endpoint.failure(failure)
         finally:
             if response:

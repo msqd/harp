@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from statistics import StatisticsError, mean
 
+from harp import get_logger
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest
 from harp.views import json
@@ -9,6 +10,8 @@ from harp_apps.storage.constants import TimeBucket
 from harp_apps.storage.types import IStorage
 
 from ..utils.dates import generate_continuous_time_range, get_start_datetime_from_range
+
+logger = get_logger(__name__)
 
 time_bucket_for_range = {
     "1h": TimeBucket.HOUR.value,
@@ -106,11 +109,25 @@ class OverviewController(RoutingController):
         time_bucket = time_bucket_for_range.get(range, "day")
         start_datetime = get_start_datetime_from_range(range)
 
+        logger.info(
+            f"🛑 {type(self).__name__}::get_overview_data 1️⃣ ",
+            endpoint=endpoint,
+            range=range,
+            time_bucket=time_bucket,
+            start_datetime=start_datetime,
+        )
+
         transactions_by_date_list = await self.storage.transactions_grouped_by_time_bucket(
             endpoint=endpoint,
             start_datetime=start_datetime,
             time_bucket=time_bucket,
         )
+
+        logger.info(
+            f"🛑 {type(self).__name__}::get_overview_data 2️⃣ ",
+            transactions_by_date_list=transactions_by_date_list,
+        )
+
         errors_count = sum([t["errors"] for t in transactions_by_date_list])
         transactions_count = sum([t["count"] for t in transactions_by_date_list])
         errors_rate = errors_count / transactions_count if transactions_count else 0
@@ -125,18 +142,28 @@ class OverviewController(RoutingController):
             start_datetime=start_datetime,
         )
 
+        logger.info(
+            f"🛑 {type(self).__name__}::get_overview_data 3️⃣ ",
+            transactions_by_date_list=transactions_by_date_list,
+        )
+
         try:
             mean_tpdex = mean(filter(None, [t["meanTpdex"] for t in transactions_by_date_list]))
         except StatisticsError:
             mean_tpdex = 100
 
-        return json(
-            {
-                "transactions": transactions_by_date_list,
-                "errors": {"count": errors_count, "rate": errors_rate},
-                "count": transactions_count,
-                "meanDuration": mean_duration,
-                "meanTpdex": mean_tpdex,
-                "timeRange": range,
-            }
+        result = {
+            "transactions": transactions_by_date_list,
+            "errors": {"count": errors_count, "rate": errors_rate},
+            "count": transactions_count,
+            "meanDuration": mean_duration,
+            "meanTpdex": mean_tpdex,
+            "timeRange": range,
+        }
+
+        logger.info(
+            f"🛑 {type(self).__name__}::get_overview_data 4️⃣ ",
+            result=result,
         )
+
+        return json(result)

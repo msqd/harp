@@ -11,8 +11,7 @@ harp:
     command: ["/tini", "--", "/opt/venv/bin/python3", "-m", "harp"]
     subcommand: ["server"]
     arguments: []
-    env:
-      USE_PROMETHEUS: "true"
+    env: {}
   settings: {}
 
 endpoints:

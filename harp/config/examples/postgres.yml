@@ -1,2 +1,2 @@
 storage:
-  url: postgresql+asyncpg://harp:harp@127.0.0.1/harp
+  url: postgresql://harp:harp@127.0.0.1/harp
