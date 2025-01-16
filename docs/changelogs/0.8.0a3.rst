@@ -1,9 +1,10 @@
-Version 0.8.0a2 (2024-11-16)
+Version 0.8.0a3 (2025-01-16)
 ============================
 
 Added
 :::::
 
+* CLI: new "harp version" command to dump the version number
 * Proxy: it is now possible to add not exposed endpoints in the proxy configuration.
 * Proxy: Custom controller types with custom settings can be added to the proxy configuration as services definitions.
 * Monitoring: Prometheus integration.
@@ -11,7 +12,7 @@ Added
 Changed
 :::::::
 
-* API: the `EVENT_READY` and `EVENT_SHUTDOWN` core events now takes (and provides) an `ASGIApplication` insteas of an
+* API: the `EVENT_READY` and `EVENT_SHUTDOWN` core events now takes (and provides) an `ASGIApplication` instead of an
   `ASGIKernel` to avoid having a misleading interface when multiple ASGI middlewares are applied. The same change has
   been propagated to ``System``/``SystemBuilder``.
 * Proxy: Endpoints can now include full paths beyond just base paths. For example, URLs like
@@ -20,6 +21,7 @@ Changed
 * Rules: The rules application is now loaded by default when using the ``harp start`` or ``harp server`` command. (#594,
   @ArthurD1)
 * Storage: The Engine is now defined as a service and instantiated using dependency injection. (#72, @ArthurD1)
+* Frontend: the build is now using a library to allow easier extension from other projects. (@ArthurD1)
 
 Fixed
 :::::
@@ -29,8 +31,22 @@ Fixed
 * UI: Correctly display header values containing a semicolon character (#577, @ArthurD1)
 * UI: Fixed the topology UI where changing the state of a remote would cause the page to crash (#578, @ArthurD1).
 * UI: On transactions page, tpdex filter now includes both sides of the selected range (#391, @ArthurD1)
+* Sentry config was not loaded anymore, fixed.
+* Cache: Fixed metadata update bug.
+* Set timezone to UTC on postgres connect
+
 
 Updated
 :::::::
 
-* chore(deps): bump http-router from 4.1.2 to 5.0.8
+* bump aiohttp from 3.11.2 to 3.11.11
+* bump asyncmy from 0.2.9 to 0.2.10
+* bump http-router from 4.1.2 to 5.0.8
+* bump orjson from 3.10.11 to 3.10.14
+* bump pytest from 8.3.3 to 8.3.4
+* bump pytest-asyncio from 0.24.0 to 0.25.2
+* bump ruff from 0.7.4 to 0.9.1
+* bump sentry-sdk from 2.18.0 to 2.19.2
+* bump slack-sdk from 3.33.4 to 3.34.0
+* bump sqlalchemy from 2.0.36 to 2.0.37
+* bump syrupy from 4.7.2 to 4.8.0
