@@ -157,7 +157,7 @@ class SystemBuilder:
 
         # Get lazy configuration.
         config = self.configuration
-        logger.info(f"📦 {", ".join(self.applications.keys())}")
+        logger.info(f"📦 {', '.join(self.applications.keys())}")
         for name, app in self.applications.items():
             logger.debug(f'... "{name}" application loaded from "{app.path}"')
 
