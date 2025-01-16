@@ -2,12 +2,13 @@ from functools import partial
 
 import pytest
 from alembic import command
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from conftest import DEFAULT_STORAGE_SETTINGS
 from harp.utils.testing.databases import TEST_DATABASES
 from harp_apps.storage.services import SqlStorage
 
+from .engines.sql_engine import create_async_engine
 from .services.blob_storages.redis import RedisBlobStorage
 from .settings import StorageSettings
 from .utils.migrations import create_alembic_config, do_migrate

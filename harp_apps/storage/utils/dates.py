@@ -3,6 +3,10 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import ColumnElement
 from sqlalchemy.types import DateTime
 
+from harp import get_logger
+
+logger = get_logger(__name__)
+
 
 # Code from https://stackoverflow.com/questions/51662547/truncate-hour-day-week-month-year-in-sqlalchemy
 class TruncDatetime(ColumnElement):

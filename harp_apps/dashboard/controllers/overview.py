@@ -109,7 +109,7 @@ class OverviewController(RoutingController):
         time_bucket = time_bucket_for_range.get(range, "day")
         start_datetime = get_start_datetime_from_range(range)
 
-        logger.info(
+        logger.debug(
             f"🛑 {type(self).__name__}::get_overview_data 1️⃣ ",
             endpoint=endpoint,
             range=range,
@@ -123,7 +123,7 @@ class OverviewController(RoutingController):
             time_bucket=time_bucket,
         )
 
-        logger.info(
+        logger.debug(
             f"🛑 {type(self).__name__}::get_overview_data 2️⃣ ",
             transactions_by_date_list=transactions_by_date_list,
         )
@@ -142,7 +142,7 @@ class OverviewController(RoutingController):
             start_datetime=start_datetime,
         )
 
-        logger.info(
+        logger.debug(
             f"🛑 {type(self).__name__}::get_overview_data 3️⃣ ",
             transactions_by_date_list=transactions_by_date_list,
         )
@@ -161,7 +161,7 @@ class OverviewController(RoutingController):
             "timeRange": range,
         }
 
-        logger.info(
+        logger.debug(
             f"🛑 {type(self).__name__}::get_overview_data 4️⃣ ",
             result=result,
         )

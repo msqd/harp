@@ -169,7 +169,8 @@ class SqlStorage(IStorage):
 
         self._debug = False
 
-        logger.info(f"🛢 {type(self).__name__} url={self.engine.url}")
+    def __repr__(self):
+        return f'<{type(self).__name__} dialect="{self.engine.dialect.name}" object at {hex(id(self))}>'
 
     @asynccontextmanager
     async def begin(self):
@@ -354,7 +355,8 @@ class SqlStorage(IStorage):
                 f"Invalid time bucket: {time_bucket}. Must be one of {', '.join([e.value for e in TimeBucket])}."
             )
 
-        s_date = TruncDatetime(literal(time_bucket), SqlTransaction.started_at).label("tb")
+        c_started_at = SqlTransaction.started_at
+        s_date = TruncDatetime(literal(time_bucket), c_started_at).label("tb")
         query = select(
             s_date,
             func.count(),
@@ -379,7 +381,7 @@ class SqlStorage(IStorage):
             query = query.where(SqlTransaction.endpoint == endpoint)
 
         if start_datetime:
-            query = query.where(SqlTransaction.started_at >= start_datetime.astimezone(UTC))
+            query = query.where(c_started_at >= start_datetime.astimezone(UTC))
 
         query = query.group_by(s_date).order_by(s_date.asc())
         async with self.begin() as session:
