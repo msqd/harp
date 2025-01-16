@@ -77,10 +77,7 @@ class OverviewController(RoutingController):
             time_bucket=time_bucket,
             start_datetime=start_datetime,
         )
-        try:
-            mean_tpdex = mean(filter(None, [t["meanTpdex"] for t in transactions_by_date_list]))
-        except StatisticsError:
-            mean_tpdex = 100
+        mean_tpdex = _calculate_mean_tpdex(transactions_by_date_list)
 
         return json(
             {
@@ -147,10 +144,7 @@ class OverviewController(RoutingController):
             transactions_by_date_list=transactions_by_date_list,
         )
 
-        try:
-            mean_tpdex = mean(filter(None, [t["meanTpdex"] for t in transactions_by_date_list]))
-        except StatisticsError:
-            mean_tpdex = 100
+        mean_tpdex = _calculate_mean_tpdex(transactions_by_date_list)
 
         result = {
             "transactions": transactions_by_date_list,
@@ -167,3 +161,10 @@ class OverviewController(RoutingController):
         )
 
         return json(result)
+
+
+def _calculate_mean_tpdex(transactions_by_date_list):
+    try:
+        return mean(filter(None, [t["meanTpdex"] for t in transactions_by_date_list]))
+    except StatisticsError:
+        return 100

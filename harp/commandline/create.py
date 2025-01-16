@@ -1,4 +1,7 @@
 import os
+from typing import cast
+
+from click import BaseCommand
 
 from harp.commandline import cookiecutters as templates
 from harp.utils.commandline import check_packages, click
@@ -18,3 +21,6 @@ def create(template):
     from cookiecutter.main import cookiecutter
 
     cookiecutter(os.path.join(templates.__path__[0], template))
+
+
+create = cast(BaseCommand, create)
