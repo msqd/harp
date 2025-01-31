@@ -45,4 +45,5 @@ In this case, the circuit breaker wiill consider as failed all URLs that either 
 a 4xx or 5xx status code. It's generally not a good idea to include 4xx codes here, as it denotes a client error, but if
 you do need it and know what you're doing, you can.
 
-The circuit breaker is enabled with reasonable settings and no probe in the default configuration.
+The circuit breaker is **disabled** in the default configuration, and should be enabled using a liveness algorithm
+selection (good candidates are ``leaky`` or ``naive``).

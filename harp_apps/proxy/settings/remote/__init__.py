@@ -1,7 +1,7 @@
 import asyncio
 import warnings
 from collections import deque
-from typing import Iterable, List, Mapping, Optional
+from typing import ClassVar, Iterable, List, Mapping, Optional
 
 from _operator import attrgetter
 from pydantic import Field, computed_field, field_serializer, field_validator, model_validator
@@ -21,7 +21,8 @@ from harp_apps.proxy.constants import (
     UP,
 )
 
-from ..liveness import InheritLivenessSettings, Liveness, LivenessSettings, NaiveLiveness, NaiveLivenessSettings
+from ..liveness import IgnoreLiveness, IgnoreLivenessSettings, InheritLivenessSettings, Liveness, LivenessSettings
+from ..liveness.base import BaseLiveness
 from .endpoint import RemoteEndpoint, RemoteEndpointSettings
 from .probe import RemoteProbe, RemoteProbeSettings
 
@@ -35,9 +36,6 @@ __all__ = [
     "RemoteProbeSettings",
     "RemoteSettings",
 ]
-
-
-DEFAULT_LIVENESS = NaiveLiveness(settings=NaiveLivenessSettings())
 
 
 class BaseRemoteSettings(Configurable):
@@ -93,22 +91,25 @@ class RemoteSettings(BaseRemoteSettings):
 
 
 class Remote(Stateful[RemoteSettings]):
-    #: Current pool deque contains the list of available URLs, from least recently used to most recently used. It will
-    #: be rotated on each request to implement a naive round-robin strategy.
-    _current_pool: deque[RemoteEndpoint] = None
+    #: Default liveness object to use when the remote is set to inherit the liveness object.
+    DEFAULT_LIVENESS: ClassVar[BaseLiveness] = IgnoreLiveness(settings=IgnoreLivenessSettings())
 
     #: Name of the currently used pool. This does not mean that all urls come from this pool, as the fallback pool may
     #: be active although some urls from default pool are still available.
     current_pool_name: str = DEFAULT_POOL
-
-    #: Remote endpoints with current status.
-    _endpoints: Mapping[str, RemoteEndpoint] = None
 
     #: Probe reference
     probe: Optional[RemoteProbe] = None
 
     #: Liveness
     liveness: Liveness = Field(None, exclude=True)
+
+    #: Current pool deque contains the list of available URLs, from least recently used to most recently used. It will
+    #: be rotated on each request to implement a naive round-robin strategy.
+    _current_pool: deque[RemoteEndpoint] = None
+
+    #: Remote endpoints with current status.
+    _endpoints: Mapping[str, RemoteEndpoint] = None
 
     @computed_field
     @property
@@ -131,7 +132,7 @@ class Remote(Stateful[RemoteSettings]):
 
         # build our liveness object, or use default if it is set to inherit
         if self.settings.liveness.type == "inherit":
-            self.liveness = DEFAULT_LIVENESS
+            self.liveness = self.DEFAULT_LIVENESS
         else:
             # If it quacks, it's a duck.
             try:

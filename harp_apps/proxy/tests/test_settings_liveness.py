@@ -120,7 +120,6 @@ class TestNaiveLiveness:
             ("naive", "naive"),
             ("naive", "inherit"),
             ("inherit", "naive"),
-            ("inherit", "inherit"),  # global default is "naive" too.
         ],
     )
     def test_with_remote(self, remote_liveness_type, endpoint_liveness_type):
@@ -196,6 +195,7 @@ class TestIgnoreLiveness:
             ("ignore", "ignore"),
             ("ignore", "inherit"),
             ("inherit", "ignore"),
+            ("inherit", "inherit"),  # global default is "ignore" too.
         ],
     )
     def test_with_remote(self, remote_liveness_type, endpoint_liveness_type):
