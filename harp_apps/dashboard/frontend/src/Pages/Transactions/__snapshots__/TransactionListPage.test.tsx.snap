@@ -925,25 +925,25 @@ exports[`TransactionListPage > renders well when the query is successful 1`] = `
                       scope="col"
                     />
                     <th
-                      class=" css-yynajo"
+                      class="css-yynajo"
                       scope="col"
                     >
                       Request
                     </th>
                     <th
-                      class=" css-yynajo"
+                      class="css-yynajo"
                       scope="col"
                     >
                       Response
                     </th>
                     <th
-                      class=" css-yynajo"
+                      class="css-yynajo"
                       scope="col"
                     >
                       Duration
                     </th>
                     <th
-                      class=" css-yynajo"
+                      class="css-yynajo"
                       scope="col"
                     >
                       Date
@@ -957,7 +957,7 @@ exports[`TransactionListPage > renders well when the query is successful 1`] = `
                     class="hover:bg-slate-50 cursor-pointer"
                   >
                     <td
-                      class=" css-1d6gzbj"
+                      class="css-1d6gzbj"
                     >
                       <svg
                         aria-hidden="true"
@@ -1002,7 +1002,7 @@ exports[`TransactionListPage > renders well when the query is successful 1`] = `
                       </span>
                     </td>
                     <td
-                      class=" css-1d6gzbj"
+                      class="css-1d6gzbj"
                     >
                       <span
                         class="font-normal"
@@ -1018,7 +1018,7 @@ exports[`TransactionListPage > renders well when the query is successful 1`] = `
                       </span>
                     </td>
                     <td
-                      class=" css-1d6gzbj"
+                      class="css-1d6gzbj"
                     >
                       <div
                         class="flex gap-x-0.5 items-center font-normal"
@@ -1029,7 +1029,7 @@ exports[`TransactionListPage > renders well when the query is successful 1`] = `
                       </div>
                     </td>
                     <td
-                      class=" css-1d6gzbj"
+                      class="css-1d6gzbj"
                     >
                       <div
                         title="2021-08-20T20:00:00Z"
@@ -1042,7 +1042,7 @@ exports[`TransactionListPage > renders well when the query is successful 1`] = `
                     class="hover:bg-slate-50 cursor-pointer"
                   >
                     <td
-                      class=" css-1d6gzbj"
+                      class="css-1d6gzbj"
                     >
                       <svg
                         aria-hidden="true"
@@ -1087,7 +1087,7 @@ exports[`TransactionListPage > renders well when the query is successful 1`] = `
                       </span>
                     </td>
                     <td
-                      class=" css-1d6gzbj"
+                      class="css-1d6gzbj"
                     >
                       <span
                         class="font-normal"
@@ -1103,7 +1103,7 @@ exports[`TransactionListPage > renders well when the query is successful 1`] = `
                       </span>
                     </td>
                     <td
-                      class=" css-1d6gzbj"
+                      class="css-1d6gzbj"
                     >
                       <div
                         class="flex gap-x-0.5 items-center font-normal"
@@ -1114,7 +1114,7 @@ exports[`TransactionListPage > renders well when the query is successful 1`] = `
                       </div>
                     </td>
                     <td
-                      class=" css-1d6gzbj"
+                      class="css-1d6gzbj"
                     >
                       <div
                         title="2021-08-20T20:00:00Z"

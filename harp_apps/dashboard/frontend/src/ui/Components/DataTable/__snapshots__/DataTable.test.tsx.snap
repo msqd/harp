@@ -8,25 +8,25 @@ exports[`DataTable > renders correctly 1`] = `
     <thead>
       <tr>
         <th
-          class=" css-yynajo"
+          class="css-yynajo"
           scope="col"
         >
           First name
         </th>
         <th
-          class=" css-yynajo"
+          class="css-yynajo"
           scope="col"
         >
           Last name
         </th>
         <th
-          class=" css-yynajo"
+          class="css-yynajo"
           scope="col"
         >
           Instrument
         </th>
         <th
-          class=" css-yynajo"
+          class="css-yynajo"
           scope="col"
         >
           Country
@@ -40,22 +40,22 @@ exports[`DataTable > renders correctly 1`] = `
         class="hover:bg-slate-50 cursor-pointer"
       >
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           John
         </td>
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           Coltrane
         </td>
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           Saxophone
         </td>
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           USA
         </td>
@@ -64,22 +64,22 @@ exports[`DataTable > renders correctly 1`] = `
         class="hover:bg-slate-50 cursor-pointer"
       >
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           Miles
         </td>
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           Davis
         </td>
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           Trumpet
         </td>
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           USA
         </td>
@@ -88,22 +88,22 @@ exports[`DataTable > renders correctly 1`] = `
         class="hover:bg-slate-50 cursor-pointer"
       >
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           Thelonious
         </td>
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           Monk
         </td>
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           Piano
         </td>
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           USA
         </td>
@@ -112,22 +112,22 @@ exports[`DataTable > renders correctly 1`] = `
         class="hover:bg-slate-50 cursor-pointer"
       >
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           Charles
         </td>
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           Mingus
         </td>
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           Double Bass
         </td>
         <td
-          class=" css-1d6gzbj"
+          class="css-1d6gzbj"
         >
           USA
         </td>
