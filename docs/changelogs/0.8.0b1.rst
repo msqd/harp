@@ -1,4 +1,4 @@
-Version 0.8.0a3 (2025-01-16)
+Version 0.8.0b1 (2025-01-31)
 ============================
 
 Added
@@ -22,6 +22,7 @@ Changed
   @ArthurD1)
 * Storage: The Engine is now defined as a service and instantiated using dependency injection. (#72, @ArthurD1)
 * Frontend: the build is now using a library to allow easier extension from other projects. (@ArthurD1)
+* Circuit breaker: circuit breaker is now disabled by default, so there cannot be an unexpected behaviour.
 
 Fixed
 :::::
@@ -35,7 +36,6 @@ Fixed
 * Cache: Fixed metadata update bug.
 * Set timezone to UTC on postgres connect
 
-
 Updated
 :::::::
 
@@ -45,8 +45,11 @@ Updated
 * bump orjson from 3.10.11 to 3.10.14
 * bump pytest from 8.3.3 to 8.3.4
 * bump pytest-asyncio from 0.24.0 to 0.25.2
+* bump redis from 5.2.0 to 5.2.1
+* bump respx from 0.21.1 to 0.22.0
 * bump ruff from 0.7.4 to 0.9.1
 * bump sentry-sdk from 2.18.0 to 2.19.2
 * bump slack-sdk from 3.33.4 to 3.34.0
 * bump sqlalchemy from 2.0.36 to 2.0.37
-* bump syrupy from 4.7.2 to 4.8.0
+* bump syrupy from 4.7.2 to 4.8.1
+* bump watchfiles from 0.24.0 to 1.0.4
