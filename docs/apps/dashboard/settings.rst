@@ -27,6 +27,7 @@ Implementation (python): :class:`BasicAuthSettings <harp_apps.dashboard.settings
 .. jsonschema:: ./schema.json
    :pointer: /$defs/BasicAuthSettings
 
+.. include:: ./_howto_auth_hash.rst
 
 .devserver
 ----------

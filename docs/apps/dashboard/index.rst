@@ -65,6 +65,9 @@ Configuration for dashboard user authentication.
 Internal implementation: :class:`DashboardAuthSetting <harp_apps.dashboard.settings.DashboardAuthSetting>`,
 :class:`DashboardAuthBasicSetting <harp_apps.dashboard.settings.DashboardAuthBasicSetting>`
 
+.. include:: ./_howto_auth_hash.rst
+
+
 Dev Server
 ----------
 
