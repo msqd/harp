@@ -43,7 +43,7 @@ rich = ">=13.9,<14.0"
 rich-click = "~1.8"
 rodi = "~2.0"
 sentry-sdk = ">=2.18,<3.0"
-slack-sdk = ">=3.33,<3.35"
+slack-sdk = ">=3.33,<3.36"
 sqlalchemy = { extras = ["asyncio"], version = "~2.0" }
 sqlalchemy-utils = "~0.41"
 structlog = "~24.4,<25.0"
