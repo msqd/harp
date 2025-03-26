@@ -150,7 +150,7 @@ class HttpProxyController(AbstractHttpProxyController):
 
         # create the context, an event that will be passed through the transaction lifecycle.
         # todo: embed in transaction ?
-        context = ProxyFilterEvent(self.name, request=request)
+        context = ProxyFilterEvent(self.name, request=request, transaction_id=transaction.id)
         context.update(await self.filter_request(context))
 
         # If nothing prepared a ready to send response, it's time to forward the request.

@@ -24,6 +24,8 @@ class TestProxyRulesFlow(BaseRulesFlowTest):
 
         assert mock.call_args_list[0].args[0]["rule"] == "on_request"
         assert mock.call_args_list[0].args[0]["response"] is None
+        transaction_id = mock.call_args_list[0].args[0]["transaction_id"]
+        assert transaction_id
 
         assert mock.call_args_list[1].args[0]["rule"] == "on_remote_request"
         assert mock.call_args_list[1].args[0]["response"] is None
@@ -33,3 +35,4 @@ class TestProxyRulesFlow(BaseRulesFlowTest):
 
         assert mock.call_args_list[3].args[0]["rule"] == "on_response"
         assert mock.call_args_list[3].args[0]["response"].status == 200
+        assert transaction_id == mock.call_args_list[3].args[0]["transaction_id"]
