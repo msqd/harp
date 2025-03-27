@@ -15,7 +15,7 @@ include = ["harp_apps/dashboard/web"]
 [tool.poetry.dependencies]
 python = "~3.12"
 aiohttp = ">=3.11,<3.12"
-aiosqlite = "~0.20"
+aiosqlite = ">=0.20,<0.22"
 alembic = "~1.14"
 anyio = "~4.6"
 asgi-prometheus = "~1.2"
