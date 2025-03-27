@@ -21,7 +21,7 @@ class TestSystemController(
     @parametrize_with_blob_storages_urls("sql")
     async def test_get_settings_empty(self, controller: SystemController):
         response = await controller.get_settings()
-        assert response == {
+        assert response.asdict() == {
             "applications": ["harp_apps.storage"],
             "storage": {
                 "blobs": {"type": "sql"},
@@ -36,7 +36,7 @@ class TestSystemController(
     @parametrize_with_blob_storages_urls("redis")
     async def test_get_settings_redis(self, controller: SystemController):
         response = await controller.get_settings()
-        assert response == {
+        assert response.asdict() == {
             "applications": ["harp_apps.storage"],
             "storage": {
                 "blobs": {"type": "redis"},
@@ -50,7 +50,7 @@ class TestSystemController(
     @parametrize_with_database_urls("sqlite")
     async def test_get_settings_sqlalchemy(self, controller: SystemController):
         response = await controller.get_settings()
-        assert response == {
+        assert response.asdict() == {
             "applications": ["harp_apps.storage"],
             "storage": {
                 "blobs": ANY,
@@ -64,7 +64,7 @@ class TestSystemController(
     @parametrize_with_database_urls("postgresql")
     async def test_get_settings_sqlalchemy_secure(self, controller: SystemController):
         response = await controller.get_settings()
-        assert response == {
+        assert response.asdict() == {
             "applications": ["harp_apps.storage"],
             "storage": {
                 "migrate": True,

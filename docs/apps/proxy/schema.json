@@ -144,9 +144,7 @@
     },
     "IgnoreLivenessSettings": {
       "additionalProperties": false,
-      "properties": {
-        "type": { "const": "ignore", "enum": ["ignore"], "type": "string" }
-      },
+      "properties": { "type": { "const": "ignore", "type": "string" } },
       "required": ["type"],
       "title": "IgnoreLivenessSettings",
       "type": "object"
@@ -163,12 +161,7 @@
     "InheritLivenessSettings": {
       "additionalProperties": false,
       "properties": {
-        "type": {
-          "const": "inherit",
-          "default": "inherit",
-          "enum": ["inherit"],
-          "type": "string"
-        }
+        "type": { "const": "inherit", "default": "inherit", "type": "string" }
       },
       "title": "InheritLivenessSettings",
       "type": "object"
@@ -184,7 +177,7 @@
     "LeakyBucketLivenessSettings": {
       "additionalProperties": false,
       "properties": {
-        "type": { "const": "leaky", "enum": ["leaky"], "type": "string" },
+        "type": { "const": "leaky", "type": "string" },
         "rate": { "default": 1.0, "type": "number" },
         "capacity": { "default": 60.0, "type": "number" },
         "threshold": { "default": 10.0, "type": "number" }
@@ -213,7 +206,7 @@
     "NaiveLivenessSettings": {
       "additionalProperties": false,
       "properties": {
-        "type": { "const": "naive", "enum": ["naive"], "type": "string" },
+        "type": { "const": "naive", "type": "string" },
         "failure_threshold": {
           "default": 1,
           "exclusiveMinimum": 0,

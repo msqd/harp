@@ -83,12 +83,17 @@ class HttpResponse(BaseHttpMessage):
 
 class JsonHttpResponse(HttpResponse):
     def __init__(self, body: dict, /, *, status: int = 200, headers: dict = None):
+        from harp.views.json import serialize
+
         super().__init__(
-            orjson.dumps(body),
+            serialize(body),
             status=status,
             headers=headers,
             content_type="application/json",
         )
+
+    def asdict(self):
+        return orjson.loads(self.body)
 
 
 class AlreadyHandledHttpResponse(HttpResponse):

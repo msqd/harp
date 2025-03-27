@@ -35,12 +35,12 @@ class TestSettings:
             }
 
     async def test_sqlalchemy_url_merges(self):
-        dburl = "postgresql+asyncpg:///user:pass@localhost:1234/name"
+        dburl = "postgresql+asyncpg://user:pass@localhost:1234/name"
 
         builder = ConfigurationBuilder()
         builder.applications.add("storage")
         builder.add_values({"storage": {"url": dburl}})
         builder.add_values({"storage": {"url": dburl}})
         config = builder.build()
-        assert str(config["storage"].url) == str(make_url(dburl))
+        assert str(config["storage"].url) == make_url(dburl).render_as_string(hide_password=False)
         assert asdict(config, secure=False)["storage"]["url"] == dburl

@@ -7,9 +7,6 @@
         'properties': dict({
           'type': dict({
             'const': 'ignore',
-            'enum': list([
-              'ignore',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -26,9 +23,6 @@
           'type': dict({
             'const': 'inherit',
             'default': 'inherit',
-            'enum': list([
-              'inherit',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -56,9 +50,6 @@
           }),
           'type': dict({
             'const': 'leaky',
-            'enum': list([
-              'leaky',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -86,9 +77,6 @@
           }),
           'type': dict({
             'const': 'naive',
-            'enum': list([
-              'naive',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -439,9 +427,6 @@
         'properties': dict({
           'type': dict({
             'const': 'ignore',
-            'enum': list([
-              'ignore',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -458,9 +443,6 @@
           'type': dict({
             'const': 'inherit',
             'default': 'inherit',
-            'enum': list([
-              'inherit',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -488,9 +470,6 @@
           }),
           'type': dict({
             'const': 'leaky',
-            'enum': list([
-              'leaky',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -518,9 +497,6 @@
           }),
           'type': dict({
             'const': 'naive',
-            'enum': list([
-              'naive',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -871,9 +847,6 @@
         'properties': dict({
           'type': dict({
             'const': 'ignore',
-            'enum': list([
-              'ignore',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -890,9 +863,6 @@
           'type': dict({
             'const': 'inherit',
             'default': 'inherit',
-            'enum': list([
-              'inherit',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -920,9 +890,6 @@
           }),
           'type': dict({
             'const': 'leaky',
-            'enum': list([
-              'leaky',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -950,9 +917,6 @@
           }),
           'type': dict({
             'const': 'naive',
-            'enum': list([
-              'naive',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -1303,9 +1267,6 @@
         'properties': dict({
           'type': dict({
             'const': 'ignore',
-            'enum': list([
-              'ignore',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -1322,9 +1283,6 @@
           'type': dict({
             'const': 'inherit',
             'default': 'inherit',
-            'enum': list([
-              'inherit',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -1352,9 +1310,6 @@
           }),
           'type': dict({
             'const': 'leaky',
-            'enum': list([
-              'leaky',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -1382,9 +1337,6 @@
           }),
           'type': dict({
             'const': 'naive',
-            'enum': list([
-              'naive',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -1827,9 +1779,6 @@
         'properties': dict({
           'type': dict({
             'const': 'ignore',
-            'enum': list([
-              'ignore',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -1846,9 +1795,6 @@
           'type': dict({
             'const': 'inherit',
             'default': 'inherit',
-            'enum': list([
-              'inherit',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -1876,9 +1822,6 @@
           }),
           'type': dict({
             'const': 'leaky',
-            'enum': list([
-              'leaky',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -1906,9 +1849,6 @@
           }),
           'type': dict({
             'const': 'naive',
-            'enum': list([
-              'naive',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -2402,9 +2342,6 @@
         'properties': dict({
           'type': dict({
             'const': 'ignore',
-            'enum': list([
-              'ignore',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -2437,9 +2374,6 @@
           'type': dict({
             'const': 'inherit',
             'default': 'inherit',
-            'enum': list([
-              'inherit',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -2479,9 +2413,6 @@
           }),
           'type': dict({
             'const': 'leaky',
-            'enum': list([
-              'leaky',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -2521,9 +2452,6 @@
           }),
           'type': dict({
             'const': 'naive',
-            'enum': list([
-              'naive',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -2972,9 +2900,6 @@
         'properties': dict({
           'type': dict({
             'const': 'ignore',
-            'enum': list([
-              'ignore',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -2991,9 +2916,6 @@
           'type': dict({
             'const': 'inherit',
             'default': 'inherit',
-            'enum': list([
-              'inherit',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -3021,9 +2943,6 @@
           }),
           'type': dict({
             'const': 'leaky',
-            'enum': list([
-              'leaky',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -3051,9 +2970,6 @@
           }),
           'type': dict({
             'const': 'naive',
-            'enum': list([
-              'naive',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -3547,9 +3463,6 @@
         'properties': dict({
           'type': dict({
             'const': 'ignore',
-            'enum': list([
-              'ignore',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -3582,9 +3495,6 @@
           'type': dict({
             'const': 'inherit',
             'default': 'inherit',
-            'enum': list([
-              'inherit',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -3624,9 +3534,6 @@
           }),
           'type': dict({
             'const': 'leaky',
-            'enum': list([
-              'leaky',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),
@@ -3666,9 +3573,6 @@
           }),
           'type': dict({
             'const': 'naive',
-            'enum': list([
-              'naive',
-            ]),
             'title': 'Type',
             'type': 'string',
           }),

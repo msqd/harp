@@ -4,6 +4,7 @@ import re
 from functools import partial
 from typing import Literal
 
+from pydantic import RedisDsn
 from pydantic_core import MultiHostUrl, Url
 
 mask_password_re = re.compile(r"(://[^:]+:)([^@]+)(@)")
@@ -17,6 +18,7 @@ def url_serializer(dsn, secure=True, **kwargs):
 
 ADDITIONAL_SERIALIZERS = {
     Url: url_serializer,
+    RedisDsn: url_serializer,
     MultiHostUrl: url_serializer,
 }
 

@@ -7,7 +7,6 @@
           "const": "basic",
           "default": null,
           "description": "Authentication type. Only «basic» is supported for now.",
-          "enum": ["basic"],
           "type": "string"
         },
         "algorithm": {

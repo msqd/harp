@@ -7,7 +7,7 @@ from sqlalchemy.orm import aliased, joinedload
 from harp import __revision__, __version__, get_logger
 from harp.config.asdict import asdict
 from harp.controllers import GetHandler, ProxyControllerResolver, PutHandler, RouterPrefix, RoutingController
-from harp.http import HttpRequest, HttpResponse
+from harp.http import HttpRequest, HttpResponse, JsonHttpResponse
 from harp.typing.global_settings import GlobalSettings
 from harp.views.json import json
 from harp_apps.storage.models import MetricValue
@@ -93,8 +93,9 @@ class SystemController(RoutingController):
 
     @GetHandler("/settings")
     async def get_settings(self):
-        settings_dict = asdict(self.settings, verbose=True, secure=True, mode="python")
-        return json(settings_dict)
+        return JsonHttpResponse(
+            asdict(self.settings, verbose=True, secure=True, mode="python"),
+        )
 
     @GetHandler("/dependencies")
     async def get_dependencies(self):

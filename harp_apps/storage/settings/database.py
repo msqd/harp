@@ -37,7 +37,7 @@ def _fix_unasync_dsns(url: str | MultiHostUrl) -> MultiHostUrl:
 
 DatabaseUrl = Annotated[
     MultiHostUrl,
-    UrlConstraints(host_required=True, allowed_schemes=ALLOWED_SCHEMES),
+    UrlConstraints(allowed_schemes=ALLOWED_SCHEMES),
     BeforeValidator(_unwrap_sqlalchemy_urls),
     AfterValidator(_fix_unasync_dsns),
 ]
