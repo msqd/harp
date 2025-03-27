@@ -37,12 +37,12 @@ class ProxyFilterEvent(Event):
         *,
         request: HttpRequest,
         response: Optional[HttpResponse] = None,
-        transaction_id: Optional[str] = None,
+        transaction: Optional[Transaction] = None,
     ):
         self.endpoint = endpoint
         self.request = request
         self.response = response
-        self.transaction_id = transaction_id
+        self.transaction = transaction
 
     def set_response(self, response: HttpResponse):
         if response is not None and not isinstance(response, HttpResponse):
@@ -68,7 +68,7 @@ class ProxyFilterEvent(Event):
             "request": self.request,
             "response": self.response,
             "stop_propagation": self.stop_propagation,
-            "transaction_id": self.transaction_id,
+            "transaction": self.transaction,
         }
 
     def execute_script(self, script: Callable):
