@@ -64,7 +64,8 @@ Context reference
 The following variables are available in the context of the ``on_request`` lifecycle event:
 
 - ``logger``: the logger instance.
-- ``event``: the :class:`ProxyFilterEvent <harp_apps.proxy.events.ProxyFilterEvent>` instance.
+- ``rule``: the rule name for this transaction, as defined in your configuration.
+- ``transaction``: the :class:`Transaction <harp.models.transactions.Transaction>` instance.
 - ``endpoint``: the endpoint name for this transaction, as defined in your configuration.
 - ``request``: the :class:`HttpRequest <harp.http.HttpRequest>` instance.
 - ``response``: an eventual :class:`HttpResponse <harp.http.HttpResponse>` instance, but most probably None. Set this to

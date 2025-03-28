@@ -67,7 +67,7 @@ Context reference
 The following variables are available in the context of the ``on_remote_request`` lifecycle event:
 
 - ``logger``: the logger instance.
-- ``event``: the :class:`HttpClientFilterEvent <harp_apps.http_client.events.HttpClientFilterEvent>` instance.
+- ``rule``: the rule name for this transaction, as defined in your configuration.
 - ``endpoint``: the endpoint name for this transaction, as defined in your configuration.
 - ``request``: the prepared :class:`httpx.Request` instance, ready to be sent.
 - ``response``: an eventual :class:`httpx.Response` instance, but most probably None. Set this to a
