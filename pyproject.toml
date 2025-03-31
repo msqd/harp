@@ -87,7 +87,7 @@ sphinx-design = "^0.6.0"
 sphinx-sitemap = "^2.6.0"
 sphinxcontrib-jquery = "^4.1"
 syrupy = "^4.6.1"
-testcontainers = { extras = ["postgres"], version = ">=4.7,<4.9" }
+testcontainers = { extras = ["postgres"], version = ">=4.7,<4.10" }
 sphinx-docsearch = ">=0.0.7,<0.1.1"
 sphinx-tags = "^0.4"
 jsonref = "^1.1.0"
