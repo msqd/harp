@@ -32,7 +32,8 @@ of the APIs you use. It runs in your infrastructure, close to your applications.
 | `Install (PIP) <https://docs.harp-proxy.net/en/latest/start/python.html>`_
 | `Repository (Git) <https://github.com/msqd/harp>`_
 | `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
-| `Enterprise <https://www.getharp.eu/>`_
+
+**Editions:** `HARP Community <https://harp-proxy.net/>`_ | `HARP Pro <https://www.getharp.eu/>`_ | `HARP Enterprise <https://www.getharp.eu/>`_
 
 **Community**: |badge_list| |badge_discord| |badge_contributors|
 
