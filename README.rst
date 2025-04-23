@@ -31,8 +31,9 @@ of the APIs you use. It runs in your infrastructure, close to your applications.
 | `Install (Docker) <https://docs.harp-proxy.net/en/latest/start/docker.html>`_
 | `Install (PIP) <https://docs.harp-proxy.net/en/latest/start/python.html>`_
 | `Repository (Git) <https://github.com/msqd/harp>`_
-| `Issues <https://github.com/msqd/harp/issues>`_
 | `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
+
+**Editions:** `HARP Community <https://harp-proxy.net/>`_ | `HARP Pro <https://www.getharp.eu/>`_ | `HARP Enterprise <https://www.getharp.eu/>`_
 
 **Community**: |badge_list| |badge_discord| |badge_contributors|
 
