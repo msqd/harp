@@ -125,6 +125,7 @@ doc:html:
   script:
     - (cd /opt/harp/src/docs; make html)
     - mv /opt/harp/src/docs/_build/html harp-doc
+  allow_failure: true
   artifacts:
     name: harp-doc
     expire_in: 1 month
@@ -140,6 +141,7 @@ storybook:
   script:
     - (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm ui:build)
     - mv /opt/harp/src//harp_apps/dashboard/frontend/build harp-ui
+  allow_failure: true
   artifacts:
     name: harp-ui
     expire_in: 1 month
