@@ -16,7 +16,7 @@ include = ["harp_apps/dashboard/web"]
 python = "~3.12"
 aiohttp = ">=3.11,<3.12"
 aiosqlite = ">=0.20,<0.22"
-alembic = "~1.14"
+alembic = ">=1.14,<1.16"
 anyio = ">=4.6,<4.10"
 asgi-prometheus = "~1.2"
 asgi-tools = "~1.1"
