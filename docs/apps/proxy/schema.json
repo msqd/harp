@@ -340,7 +340,11 @@
       "properties": {
         "method": { "default": "GET", "type": "string" },
         "path": { "default": "/", "type": "string" },
-        "headers": { "title": "Headers", "type": "object" },
+        "headers": {
+          "additionalProperties": true,
+          "title": "Headers",
+          "type": "object"
+        },
         "interval": { "default": 10.0, "type": "number" },
         "timeout": { "default": 10.0, "type": "number" },
         "verify": { "default": true, "type": "boolean" }
@@ -413,7 +417,10 @@
           "description": "Optional custom constructor for the service."
         },
         "arguments": {
-          "anyOf": [{ "type": "object" }, { "type": "null" }],
+          "anyOf": [
+            { "additionalProperties": true, "type": "object" },
+            { "type": "null" }
+          ],
           "description": "Arguments for the service constructor."
         }
       },

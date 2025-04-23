@@ -62,6 +62,7 @@
           'arguments': dict({
             'anyOf': list([
               dict({
+                'additionalProperties': True,
                 'type': 'object',
               }),
               dict({
@@ -118,6 +119,7 @@
     'additionalProperties': True,
     'properties': dict({
       'arguments': dict({
+        'additionalProperties': True,
         'default': dict({
           'timeout': 30.0,
         }),
@@ -276,6 +278,7 @@
           'arguments': dict({
             'anyOf': list([
               dict({
+                'additionalProperties': True,
                 'type': 'object',
               }),
               dict({
@@ -332,6 +335,7 @@
     'additionalProperties': True,
     'properties': dict({
       'arguments': dict({
+        'additionalProperties': True,
         'default': dict({
           'timeout': 30.0,
         }),

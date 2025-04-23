@@ -8,7 +8,7 @@ import { defineConfig, loadEnv } from "vite"
 import dts from "vite-plugin-dts"
 import tsconfigPaths from "vite-tsconfig-paths" // https://vitejs.dev/config/
 
-import pkg from "./package.json" assert { type: "json" }
+import pkg from "./package.json"
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {

@@ -4,6 +4,7 @@
     'additionalProperties': False,
     'properties': dict({
       'headers': dict({
+        'additionalProperties': True,
         'title': 'Headers',
         'type': 'object',
       }),
@@ -42,6 +43,7 @@
     'additionalProperties': False,
     'properties': dict({
       'headers': dict({
+        'additionalProperties': True,
         'title': 'Headers',
         'type': 'object',
       }),
@@ -95,6 +97,7 @@
         ''',
         'properties': dict({
           'headers': dict({
+            'additionalProperties': True,
             'title': 'Headers',
             'type': 'object',
           }),
@@ -160,6 +163,7 @@
         ''',
         'properties': dict({
           'headers': dict({
+            'additionalProperties': True,
             'title': 'Headers',
             'type': 'object',
           }),

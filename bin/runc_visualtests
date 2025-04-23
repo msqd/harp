@@ -10,10 +10,12 @@ entrypoint_script=$(mktemp)
 cat > $entrypoint_script <<EOF
 #! /bin/bash
 
+npm install -g npm@11.3.0 corepack@0.32.0
+
 cd /app
 cp /app/package.json /tmp/package.json
 corepack enable pnpm
-corepack use pnpm@latest
+corepack use pnpm
 
 
 echo

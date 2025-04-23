@@ -48,7 +48,7 @@ class Service(BaseConfigurable):
         arguments = data.pop("arguments", {})
         inline_arguments = {}
         for k in list(arguments.keys()):
-            if k not in self.model_fields:
+            if k not in type(self).model_fields:
                 inline_arguments[k] = arguments.pop(k)
 
         for k in ("base", "type", "constructor"):

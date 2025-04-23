@@ -52,6 +52,7 @@
           "description": "Optional custom constructor for the service."
         },
         "arguments": {
+          "additionalProperties": true,
           "default": { "timeout": 30.0 },
           "title": "Arguments",
           "type": "object"
@@ -116,7 +117,10 @@
           "description": "Optional custom constructor for the service."
         },
         "arguments": {
-          "anyOf": [{ "type": "object" }, { "type": "null" }],
+          "anyOf": [
+            { "additionalProperties": true, "type": "object" },
+            { "type": "null" }
+          ],
           "description": "Arguments for the service constructor."
         }
       },

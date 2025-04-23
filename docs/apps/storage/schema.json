@@ -19,7 +19,10 @@
           "description": "Optional custom constructor for the service."
         },
         "arguments": {
-          "anyOf": [{ "type": "object" }, { "type": "null" }],
+          "anyOf": [
+            { "additionalProperties": true, "type": "object" },
+            { "type": "null" }
+          ],
           "description": "Arguments for the service constructor."
         }
       },
@@ -58,7 +61,10 @@
           "description": "Optional custom constructor for the service."
         },
         "arguments": {
-          "anyOf": [{ "type": "object" }, { "type": "null" }],
+          "anyOf": [
+            { "additionalProperties": true, "type": "object" },
+            { "type": "null" }
+          ],
           "description": "Arguments for the service constructor."
         },
         "url": {

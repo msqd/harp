@@ -168,6 +168,7 @@
         ''',
         'properties': dict({
           'headers': dict({
+            'additionalProperties': True,
             'title': 'Headers',
             'type': 'object',
           }),
@@ -297,6 +298,7 @@
           'arguments': dict({
             'anyOf': list([
               dict({
+                'additionalProperties': True,
                 'type': 'object',
               }),
               dict({
@@ -588,6 +590,7 @@
         ''',
         'properties': dict({
           'headers': dict({
+            'additionalProperties': True,
             'title': 'Headers',
             'type': 'object',
           }),
@@ -717,6 +720,7 @@
           'arguments': dict({
             'anyOf': list([
               dict({
+                'additionalProperties': True,
                 'type': 'object',
               }),
               dict({
@@ -1008,6 +1012,7 @@
         ''',
         'properties': dict({
           'headers': dict({
+            'additionalProperties': True,
             'title': 'Headers',
             'type': 'object',
           }),
@@ -1137,6 +1142,7 @@
           'arguments': dict({
             'anyOf': list([
               dict({
+                'additionalProperties': True,
                 'type': 'object',
               }),
               dict({
@@ -1428,6 +1434,7 @@
         ''',
         'properties': dict({
           'headers': dict({
+            'additionalProperties': True,
             'title': 'Headers',
             'type': 'object',
           }),
@@ -1557,6 +1564,7 @@
           'arguments': dict({
             'anyOf': list([
               dict({
+                'additionalProperties': True,
                 'type': 'object',
               }),
               dict({
@@ -2032,6 +2040,7 @@
         ''',
         'properties': dict({
           'headers': dict({
+            'additionalProperties': True,
             'title': 'Headers',
             'type': 'object',
           }),
@@ -2161,6 +2170,7 @@
           'arguments': dict({
             'anyOf': list([
               dict({
+                'additionalProperties': True,
                 'type': 'object',
               }),
               dict({
@@ -2602,6 +2612,7 @@
         ''',
         'properties': dict({
           'headers': dict({
+            'additionalProperties': True,
             'title': 'Headers',
             'type': 'object',
           }),
@@ -2731,6 +2742,7 @@
           'arguments': dict({
             'anyOf': list([
               dict({
+                'additionalProperties': True,
                 'type': 'object',
               }),
               dict({
@@ -3153,6 +3165,7 @@
         ''',
         'properties': dict({
           'headers': dict({
+            'additionalProperties': True,
             'title': 'Headers',
             'type': 'object',
           }),
@@ -3282,6 +3295,7 @@
           'arguments': dict({
             'anyOf': list([
               dict({
+                'additionalProperties': True,
                 'type': 'object',
               }),
               dict({
@@ -3723,6 +3737,7 @@
         ''',
         'properties': dict({
           'headers': dict({
+            'additionalProperties': True,
             'title': 'Headers',
             'type': 'object',
           }),
@@ -3852,6 +3867,7 @@
           'arguments': dict({
             'anyOf': list([
               dict({
+                'additionalProperties': True,
                 'type': 'object',
               }),
               dict({

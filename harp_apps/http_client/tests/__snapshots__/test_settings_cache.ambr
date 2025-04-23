@@ -9,6 +9,7 @@
           'arguments': dict({
             'anyOf': list([
               dict({
+                'additionalProperties': True,
                 'type': 'object',
               }),
               dict({
@@ -125,6 +126,7 @@
           'arguments': dict({
             'anyOf': list([
               dict({
+                'additionalProperties': True,
                 'type': 'object',
               }),
               dict({
