@@ -50,7 +50,7 @@ TEST_DATABASES_SOURCES = {
             if TEST_ALL_DATABASES
             else ["mariadb:lts"]
         ),
-        "drivers": ["aiomysql", "asyncmy"] if TEST_ALL_DATABASES else ["aiomysql"],
+        "drivers": ["aiomysql", "asyncmy"] if TEST_ALL_DATABASES else [],
     },
     # disabled, does not install cleanly on osx+arm
     # see https://github.com/pymssql/pymssql/issues/769

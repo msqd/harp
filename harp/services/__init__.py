@@ -7,7 +7,6 @@ from rodi import (
     MissingTypeException,
     OverridingServiceException,
     Services,
-    UnsupportedUnionTypeException,
 )
 
 from .containers import Container
@@ -24,5 +23,4 @@ __all__ = [
     "OverridingServiceException",
     "LazyServiceReference",
     "Services",
-    "UnsupportedUnionTypeException",
 ]
