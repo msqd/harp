@@ -1,0 +1,7 @@
+Version 0.8.1 (2025-04-24)
+==========================
+
+Misc
+::::
+
+* Dump whistle to stable (Romain Dorgueil)
