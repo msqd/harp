@@ -48,6 +48,7 @@ sqlalchemy = { extras = ["asyncio"], version = "~2.0" }
 sqlalchemy-utils = "~0.41"
 structlog = ">=24.4,<25.3"
 svix-ksuid = "~0.6"
+whistle = "^2.0.1"
 
 [tool.poetry.dependencies.cookiecutter]
 version = "~2.6"
@@ -60,10 +61,6 @@ optional = true
 [tool.poetry.dependencies.watchfiles]
 version = ">=0.24,<1.1"
 optional = true
-
-[tool.poetry.dependencies.whistle]
-version = "2.0.0b1"
-allow-prereleases = true
 
 [tool.poetry.group.dev.dependencies]
 black = ">=25.1.0,<26.0"

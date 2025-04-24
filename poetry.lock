@@ -3309,13 +3309,13 @@ unleash = ["UnleashClient (>=6.0.1)"]
 
 [[package]]
 name = "setuptools"
-version = "79.0.0"
+version = "79.0.1"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "setuptools-79.0.0-py3-none-any.whl", hash = "sha256:b9ab3a104bedb292323f53797b00864e10e434a3ab3906813a7169e4745b912a"},
-    {file = "setuptools-79.0.0.tar.gz", hash = "sha256:9828422e7541213b0aacb6e10bbf9dd8febeaa45a48570e09b6d100e063fc9f9"},
+    {file = "setuptools-79.0.1-py3-none-any.whl", hash = "sha256:e147c0549f27767ba362f9da434eab9c5dc0045d5304feb602a0af001089fc51"},
+    {file = "setuptools-79.0.1.tar.gz", hash = "sha256:128ce7b8f33c3079fd1b067ecbb4051a66e8526e7b65f6cec075dfc650ddfa88"},
 ]
 
 [package.extras]
@@ -4192,13 +4192,13 @@ files = [
 
 [[package]]
 name = "whistle"
-version = "2.0.0b1"
+version = "2.0.1"
 description = "Event dispatcher (see python-whistle.github.io)."
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "whistle-2.0.0b1-py3-none-any.whl", hash = "sha256:26f20e18727f3ed85810f798821f4f5b906753c9a8380dc5d7b9c6fd49a39527"},
-    {file = "whistle-2.0.0b1.tar.gz", hash = "sha256:c0743563da52fefd0498a1d2430fe244dde5064be7cde6ef8cb5fcd12f1d6abd"},
+    {file = "whistle-2.0.1-py3-none-any.whl", hash = "sha256:7b187f3e6443a1ee354fce02bdc46e540420deb08c33f90fda8772873677e0b9"},
+    {file = "whistle-2.0.1.tar.gz", hash = "sha256:88ebbbe8328fe91d7c2908f656f7378b7ae4b1db4c1dd27b8f04abee7d787780"},
 ]
 
 [[package]]
@@ -4446,4 +4446,4 @@ dev = ["cookiecutter", "honcho", "watchfiles"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.12"
-content-hash = "fb859ac02652377892a1f14927cea7da4ba3a5e30bc05e642b282a2b09c872f5"
+content-hash = "dd4b55d3a9b813ca604645ca9f72b62ac062eb33471404e667e8e65d1701b83d"
