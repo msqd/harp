@@ -46,7 +46,7 @@ sentry-sdk = ">=2.18,<3.0"
 slack-sdk = ">=3.33,<3.36"
 sqlalchemy = { extras = ["asyncio"], version = "~2.0" }
 sqlalchemy-utils = "~0.41"
-structlog = ">=24.4,<25.3"
+structlog = ">=25,<26"
 svix-ksuid = "~0.6"
 whistle = "^2.0.1"
 
