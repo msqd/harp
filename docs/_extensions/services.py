@@ -127,9 +127,6 @@ class ServiceDocumenter(Documenter):
     def resolve_name(self, modname: str | None, parents: Any, path: str, base: str) -> tuple[str | None, list[str]]:
         return (path or "") + base, []
 
-    def parse_name(self) -> bool:
-        return True
-
     @classmethod
     def can_document_member(cls: type[Documenter], member: Any, membername: str, isattr: bool, parent: Any) -> bool:
         try:

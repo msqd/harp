@@ -9,18 +9,22 @@ Python dependencies
 
 Python dependencies are managed by poetry.
 
-To view "outdated" dependencies (dependencies with newer versions available), use:
+To bump a library:
 
-.. code-block:: shell
+* identify the library to bump
+* (eventually) change the requirement in pyproject.toml
+* run `poetry update <library>`
+* copy the upgrade for commit message later
+* run `make qa`
+* all good? Commit the changes with `git commit -m "chore: bump <lib with version>"`
 
-    poetry show --latest --outdated
+.. code:: shell-session
 
-It is possible to explain why a dependency is installed using:
-
-.. code-block:: shell
-
-    # With development dependencies
-    poetry show --tree
+    vi pyproject.toml
+    poetry update ...
+    git add -p pyproject.toml poetry.lock
+    git commit -m "chore: bump ..."
+    make qa
 
 
 Frontend Dependencies
