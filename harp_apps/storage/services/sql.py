@@ -15,7 +15,12 @@ from harp.settings import PAGE_SIZE
 from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_datetime
 from harp_apps.storage.constants import TimeBucket
-from harp_apps.storage.models import FLAGS_BY_NAME, Base, BlobsRepository, FlagsRepository
+from harp_apps.storage.models import (
+    FLAGS_BY_NAME,
+    Base,
+    BlobsRepository,
+    FlagsRepository,
+)
 from harp_apps.storage.models import Message as SqlMessage
 from harp_apps.storage.models import (
     MessagesRepository,
@@ -25,10 +30,14 @@ from harp_apps.storage.models import (
     TagValuesRepository,
 )
 from harp_apps.storage.models import Transaction as SqlTransaction
-from harp_apps.storage.models import TransactionsRepository
+from harp_apps.storage.models import (
+    TransactionsRepository,
+)
 from harp_apps.storage.models import User as SqlUser
 from harp_apps.storage.models import UserFlag as SqlUserFlag
-from harp_apps.storage.models import UsersRepository
+from harp_apps.storage.models import (
+    UsersRepository,
+)
 from harp_apps.storage.settings import StorageSettings
 from harp_apps.storage.types import IBlobStorage, IStorage, TransactionsGroupedByTimeBucket
 from harp_apps.storage.utils.dates import TruncDatetime
