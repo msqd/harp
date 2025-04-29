@@ -1,4 +1,4 @@
 if __name__ == "__main__":
-    from .commandline import entrypoint
+    from harp.commandline import entrypoint
 
     entrypoint()
