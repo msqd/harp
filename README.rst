@@ -12,12 +12,12 @@ of the APIs you use. It runs in your infrastructure, close to your applications.
     :target: https://artifacthub.io/packages/helm/harp/harp-proxy
     :alt: Artifact Hub
 
-.. image:: https://www.gitlab.com/makersquad/oss/harp/badges/0.8/pipeline.svg
+.. image:: https://www.gitlab.com/makersquad/oss/harp/badges/0.9/pipeline.svg
     :target: https://www.gitlab.com/makersquad/oss/harp/pipelines
     :alt: GitLab CI/CD Pipeline Status
 
-.. image:: https://readthedocs.org/projects/harp-proxy/badge/?version=0.8
-    :target: https://docs.harp-proxy.net/en/0.8/
+.. image:: https://readthedocs.org/projects/harp-proxy/badge/?version=0.9
+    :target: https://docs.harp-proxy.net/en/0.9/
     :alt: Documentation
 
 .. image:: https://img.shields.io/pypi/pyversions/harp-proxy.svg
@@ -107,7 +107,7 @@ How it works?
 Overview
 --------
 
-.. figure:: https://github.com/msqd/harp/raw/0.8/docs/images/HowItWorks-Overview.png
+.. figure:: https://github.com/msqd/harp/raw/0.9/docs/images/HowItWorks-Overview.png
     :alt: An overview of how HARP works in your system
     :align: center
 
@@ -152,7 +152,7 @@ Each proxy is configured to intercept and forward requests to a specific externa
 
 An additional (optional) port serves a dashboard to observe your proxies in real-time.
 
-.. figure:: https://github.com/msqd/harp/raw/0.8/docs/images/HowItWorks-Service.png
+.. figure:: https://github.com/msqd/harp/raw/0.9/docs/images/HowItWorks-Service.png
     :alt: What happens within the harp service
     :align: center
 
@@ -172,7 +172,7 @@ HTTP before, you will still speak HTTP. The only change needed in your applicati
 is the base endpoint of the external services. In a modern 12factor-like application, it usually only means changing an
 environment variable.
 
-.. figure:: https://github.com/msqd/harp/raw/0.8/docs/images/HowItWorks-Proxy.png
+.. figure:: https://github.com/msqd/harp/raw/0.9/docs/images/HowItWorks-Proxy.png
     :alt: What happens within one harp proxy
     :align: center
 

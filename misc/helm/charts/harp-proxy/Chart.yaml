@@ -2,8 +2,8 @@ apiVersion: v2
 name: harp-proxy
 description: HTTP API Runtime Proxy
 type: application
-version: "0.8.1"
-appVersion: "0.8.1"
+version: "0.9.0-dev"
+appVersion: "0.9-dev"
 
 dependencies:
   - name: postgresql
