@@ -2,15 +2,14 @@
 NAME ?= harp-proxy
 VERSION ?= $(shell git describe 2>/dev/null || git rev-parse --short HEAD)
 
-# poetry
-POETRY ?= $(shell which poetry || echo "poetry")
-POETRY_BUILD ?= $(POETRY) build
-POETRY_INSTALL_OPTIONS ?=
-RUN ?= $(if $(VIRTUAL_ENV),,$(POETRY) run)
+# uv
+UV ?= $(shell which uv || echo "uv")
+UVX ?= $(shell which uvx || echo "uvx")
+UV_SYNC_OPTIONS ?=
 PLATFORM ?= linux/amd64
 
 # pytest
-PYTEST ?= $(RUN) pytest
+PYTEST ?= $(UV_RUN) pytest
 PYTEST_TARGETS ?= harp harp_apps tests
 PYTEST_CPUS ?= auto
 PYTEST_COMMON_OPTIONS ?= -n $(PYTEST_CPUS)
@@ -48,7 +47,7 @@ HARP_SERVICES ?= server dashboard
 
 .PHONY: start-dev start-dev-frontend
 start-dev: install-dev  # Starts a development instance with reasonable defaults (tune HARP_OPTIONS to replace).
-	$(POETRY) run harp start $(HARP_SERVICES) $(HARP_OPTIONS) $(HARP_MORE_OPTIONS)
+	$(UV_RUN) $(NAME) start $(HARP_SERVICES) $(HARP_OPTIONS) $(HARP_MORE_OPTIONS)
 
 start-dev-frontend: install-dev  # Starts a frontend development instance with reasonable defaults (you'll have to a backend, useful to use an external debugger for example).
 	HARP_SERVICES=dashboard HARP_MORE_OPTIONS="--set dashboard.devserver.port=12121" $(MAKE) start-dev
@@ -62,18 +61,17 @@ start-dev-frontend: install-dev  # Starts a frontend development instance with r
 
 install: install-frontend install-backend  ## Installs harp dependencies (backend, dashboard) without development tools.
 
-install-dev:  ## Installs harp dependencies (backend, dashboard) with development tools.
-	POETRY_INSTALL_OPTIONS="-E dev" $(MAKE) install
+install-dev: install-backend-dev  ## Installs harp dependencies (backend, dashboard) with development tools.
 	cd $(FRONTEND_DIR); $(PNPM) exec playwright install
 
 install-frontend:  ## Installs harp dashboard dependencies (frontend).
 	cd $(FRONTEND_DIR); $(PNPM) install
 
 install-backend:  ## Installs harp dependencides (backend).
-	$(POETRY) install $(POETRY_INSTALL_OPTIONS)
+	$(UV) sync $(UV_SYNC_OPTIONS)
 
 install-backend-dev:  ## Installs harp dependencies (backend) with development tools.
-	POETRY_INSTALL_OPTIONS="-E dev" $(MAKE) install
+	UV_SYNC_OPTIONS="--extra dev" $(MAKE) install
 
 wheel:
 	mkdir -p dist
@@ -81,9 +79,9 @@ wheel:
 				 rm -rf harp_apps/dashboard/frontend; \
 				 sed '/^People & Credits/,$$ d' README.rst > README.rst.tmp; \
 				 mv README.rst.tmp README.rst; \
-				 $(POETRY_BUILD); \
+				 $(UV) build; \
 				 cp dist/* $(PWD)/dist; \
-				 twine check dist/*"
+				 $(UVX) twine check dist/*"
 
 
 ########################################################################################################################
@@ -95,14 +93,14 @@ wheel:
 reference: harp  ## Generates API reference documentation as ReST files (docs).
 	rm -rf docs/reference/core docs/reference/apps
 	mkdir -p docs/reference/core docs/reference/apps
-	$(RUN) bin/generate_apidoc
+	$(UV) run bin/generate_apidoc
 	git add docs/reference/
 
 docs:  ## Build html documentation
-	$(RUN) $(MAKE) -C docs html
+	$(UV) run $(MAKE) -C docs html
 
 docs-dev:  ## Spin up a livereload documentation server
-	$(RUN) $(MAKE) -C docs dev
+	$(UV) run $(MAKE) -C docs dev
 
 
 ########################################################################################################################
@@ -111,9 +109,8 @@ docs-dev:  ## Spin up a livereload documentation server
 
 .PHONY: build-frontend
 
-build-frontend:  ## Builds the harp dashboard frontend (compiles typescript and other sources into bundled version).
+build-frontend: install-frontend  ## Builds the harp dashboard frontend (compiles typescript and other sources into bundled version).
 	cd $(FRONTEND_DIR); $(PNPM) build
-	mv harp_apps/dashboard/frontend/dist harp_apps/dashboard/web
 
 
 ########################################################################################################################
@@ -125,7 +122,7 @@ build-frontend:  ## Builds the harp dashboard frontend (compiles typescript and 
 .PHONY: lint-frontend coverage cloc
 
 preqa: types format reference  ## Runs pre-qa checks (types generation, formatting, api reference).
-	-$(RUN) pre-commit
+	-$(UV) run pre-commit
 
 qa: preqa test  ## Runs all QA checks, with most common databases.
 
@@ -136,18 +133,18 @@ qa-nofront:
 	TEST_SKIP_FRONT=1 $(MAKE) qa
 
 types:  ## Generates frontend types from the python code.
-	$(RUN) bin/generate_types # old school
-	$(RUN) bin/generate_ts_types # new school
+	$(UV) run bin/generate_types # old school
+	$(UV) run bin/generate_ts_types # new school
 
 format:  ## Formats the full codebase (backend and frontend).
 	$(MAKE) format-backend
 	test -z "$(TEST_SKIP_FRONT)" && $(MAKE) format-frontend || (cd $(FRONTEND_DIR); $(PNPM) prettier -w src/Models)
 
 format-backend:  ## Formats the backend codebase.
-	$(RUN) isort harp harp_apps tests
-	$(RUN) black harp harp_apps tests
-	$(RUN) ruff check --fix harp harp_apps tests
-	$(RUN) ruff format
+	$(UV) run isort harp harp_apps tests
+	$(UV) run black harp harp_apps tests
+	$(UV) run ruff check --fix harp harp_apps tests
+	$(UV) run ruff format
 
 format-frontend: install-frontend  ## Formats the frontend codebase.
 	(cd $(FRONTEND_DIR); $(PNPM) lint:fix)
@@ -237,13 +234,12 @@ pushc:  ## Pushes the docker image to the registry.
 	done
 
 runc:  ## Runs the docker image.
+	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
 	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
 runc-shell:  ## Runs a shell within the docker image.
+	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
 	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
-
-runc-example-repositories:  ## Runs harp with the "repositories" example within the docker image.
-	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 -p 9001-9012:9001-9012 --rm $(DOCKER_IMAGE) --example repositories --set storage.url postgresql+asyncpg://harp:harp@harp-postgres-1/repositories
 
 
 .PHONY: buildc-dev pushc-dev runc-dev runc-dev-shell

@@ -26,7 +26,6 @@ variables:
   stage: build
   before_script:
     - apk add git make py3-pip py3-jinja2 bash
-    - pip install 'poetry==1.7.1'
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   retry:
     max: 2
@@ -64,7 +63,7 @@ build:dev:
     PYTEST: /opt/venv/bin/pytest
     PYTEST_OPTIONS: "-m 'not subprocess'"
   script:
-    - (cd /opt/harp/src; poetry run make test-backend)
+    - (cd /opt/harp/src; make test-backend)
 
 .TestFrontend: &TestFrontend
   <<: *TestBase
