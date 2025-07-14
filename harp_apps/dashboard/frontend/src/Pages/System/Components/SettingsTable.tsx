@@ -1,4 +1,4 @@
-import { CheckIcon } from "@heroicons/react/20/solid"
+import { CheckIcon } from "@heroicons/react/21/solid"
 import { CodeBracketSquareIcon, XMarkIcon } from "@heroicons/react/24/outline"
 
 import { KeyValueSettings, Setting } from "Domain/System/useSystemSettingsQuery"

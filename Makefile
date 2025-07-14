@@ -3,8 +3,9 @@ NAME ?= harp-proxy
 VERSION ?= $(shell git describe 2>/dev/null || git rev-parse --short HEAD)
 
 # uv
-UV ?= $(shell which uv || echo "uv")
+UV ?= $(shell which uv || echo "")
 UVX ?= $(shell which uvx || echo "uvx")
+UV_RUN ?= $(if $(UV),$(UV) run,)
 UV_SYNC_OPTIONS ?=
 PLATFORM ?= linux/amd64
 
@@ -68,7 +69,7 @@ install-frontend:  ## Installs harp dashboard dependencies (frontend).
 	cd $(FRONTEND_DIR); $(PNPM) install
 
 install-backend:  ## Installs harp dependencides (backend).
-	$(UV) sync $(UV_SYNC_OPTIONS)
+	$(if $(UV),$(UV) sync $(UV_SYNC_OPTIONS),pip install -e .)
 
 install-backend-dev:  ## Installs harp dependencies (backend) with development tools.
 	UV_SYNC_OPTIONS="--extra dev" $(MAKE) install
@@ -79,9 +80,9 @@ wheel:
 				 rm -rf harp_apps/dashboard/frontend; \
 				 sed '/^People & Credits/,$$ d' README.rst > README.rst.tmp; \
 				 mv README.rst.tmp README.rst; \
-				 $(UV) build; \
+				 $(if $(UV),$(UV) build,python -m build); \
 				 cp dist/* $(PWD)/dist; \
-				 $(UVX) twine check dist/*"
+				 $(if $(UVX),$(UVX) twine check dist/*,twine check dist/*)"
 
 
 ########################################################################################################################
@@ -93,14 +94,14 @@ wheel:
 reference: harp  ## Generates API reference documentation as ReST files (docs).
 	rm -rf docs/reference/core docs/reference/apps
 	mkdir -p docs/reference/core docs/reference/apps
-	$(UV) run bin/generate_apidoc
+	$(UV_RUN) bin/generate_apidoc
 	git add docs/reference/
 
 docs:  ## Build html documentation
-	$(UV) run $(MAKE) -C docs html
+	$(UV_RUN) $(MAKE) -C docs html
 
 docs-dev:  ## Spin up a livereload documentation server
-	$(UV) run $(MAKE) -C docs dev
+	$(UV_RUN) $(MAKE) -C docs dev
 
 
 ########################################################################################################################
@@ -122,7 +123,7 @@ build-frontend: install-frontend  ## Builds the harp dashboard frontend (compile
 .PHONY: lint-frontend coverage cloc
 
 preqa: types format reference  ## Runs pre-qa checks (types generation, formatting, api reference).
-	-$(UV) run pre-commit
+	-$(UV_RUN) pre-commit
 
 qa: preqa test  ## Runs all QA checks, with most common databases.
 
@@ -133,18 +134,18 @@ qa-nofront:
 	TEST_SKIP_FRONT=1 $(MAKE) qa
 
 types:  ## Generates frontend types from the python code.
-	$(UV) run bin/generate_types # old school
-	$(UV) run bin/generate_ts_types # new school
+	$(UV_RUN) bin/generate_types # old school
+	$(UV_RUN) bin/generate_ts_types # new school
 
 format:  ## Formats the full codebase (backend and frontend).
 	$(MAKE) format-backend
 	test -z "$(TEST_SKIP_FRONT)" && $(MAKE) format-frontend || (cd $(FRONTEND_DIR); $(PNPM) prettier -w src/Models)
 
 format-backend:  ## Formats the backend codebase.
-	$(UV) run isort harp harp_apps tests
-	$(UV) run black harp harp_apps tests
-	$(UV) run ruff check --fix harp harp_apps tests
-	$(UV) run ruff format
+	$(UV_RUN) isort harp harp_apps tests
+	$(UV_RUN) black harp harp_apps tests
+	$(UV_RUN) ruff check --fix harp harp_apps tests
+	$(UV_RUN) ruff format
 
 format-frontend: install-frontend  ## Formats the frontend codebase.
 	(cd $(FRONTEND_DIR); $(PNPM) lint:fix)

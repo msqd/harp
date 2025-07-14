@@ -16,7 +16,6 @@ interface ButtonProps {
 
 const StyledButton = styled.button`
   ${tw`text-gray-400 mx-1 font-medium text-xs`}
-
   > svg {
     ${tw`h-3 w-3 inline-block`}
   }

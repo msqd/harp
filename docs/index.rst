@@ -19,12 +19,16 @@ HARP — HTTP API Runtime Proxy
 .. include:: /_quicktoc.rst
 
 
-Architecture Overview
-:::::::::::::::::::::
+HARP at a glance
+::::::::::::::::
 
-.. figure:: images/HowItWorks-Proxy.png
-   :alt: Basic proxy setup from the quickstart tl;dr
+.. image:: at-a-glance.png
+   :alt: HARP at a glance
+   :align: center
 
+* Open-source and self-hosted, in your infrastructure
+* Written in Python using asyncio, httpx and hishel (amongst other)
+* Provides caching, circuit breaking and full observability without a single line of code
 
 Table of Content
 ::::::::::::::::

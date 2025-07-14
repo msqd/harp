@@ -64,22 +64,35 @@ const ControlWrapper = styled.div(
 
 const Input = styled.input(
   ({ thumbSize }: { thumbSize: string }) => css`
-    position: absolute;
-    width: 100%;
-    pointer-events: none;
-    appearance: none;
-    height: 100%;
-    opacity: 0;
-    z-index: 3;
-    padding: 0;
+      position: absolute;
+      width: 100%;
+      pointer-events: none;
+      appearance: none;
+      height: 100%;
+      opacity: 0;
+      z-index: 3;
+      padding: 0;
 
-    &:focus::-webkit-slider-runnable-track {
-      ${trackStyles()};
-    }
+      &:focus::-webkit-slider-runnable-track {
+          appearance: none;
+          background: transparent;
+          border: transparent;
+      }
 
-    &::-webkit-slider-thumb {
-      ${thumbStyles({ thumbSize })};
-    }
+      &::-webkit-slider-thumb {
+          appearance: none;
+          pointer-events: all;
+          width: ${thumbSize};
+          height: ${thumbSize};
+          border-radius: 0;
+          border: 0 none;
+          background-color: blue;
+          cursor: grab;
+
+          &:active {
+              cursor: grabbing;
+
+          }
   `,
 )
 

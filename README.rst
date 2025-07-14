@@ -93,12 +93,24 @@ No more doubts about what happened. Now, you ***know***.
 Getting Started
 :::::::::::::::
 
-Refer to the `Getting Started Guide <https://docs.harp-proxy.net/en/latest/start/index.html>`_ to learn how to install
-and run your first proxy (it's easy, we promise).
+The quickest way to try HARP is using `uvx <https://docs.astral.sh/uv/>`_:
 
-You can install and run HARP Proxy `using Docker <https://docs.harp-proxy.net/en/latest/start/docker.html>`_ (easier and
-more language-agnostic) or `using a Python package <https://docs.harp-proxy.net/en/latest/start/python.html>`_ (for more
-control and customization).
+.. code-block:: bash
+
+    # Run HARP directly with uvx
+    uvx harp-proxy --help
+
+    # Start a proxy with example configuration
+    uvx harp-proxy server --example sqlite --example proxy:httpbin
+
+For more installation options:
+
+* **Quick & Easy:** Use ``uvx`` (shown above) - runs without installing HARP globally
+* **Traditional Python:** ``pip install harp-proxy`` - for standard Python environments
+* **Containerized:** `Docker <https://docs.harp-proxy.net/en/latest/start/docker.html>`_ - for production deployments
+* **From Source:** `Development setup <https://docs.harp-proxy.net/en/latest/start/python.html>`_ - for contributing
+
+Refer to the `Getting Started Guide <https://docs.harp-proxy.net/en/latest/start/index.html>`_ for detailed instructions.
 
 
 How it works?
