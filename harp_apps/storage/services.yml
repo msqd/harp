@@ -19,6 +19,9 @@ services:
   - name: "storage.worker"
     description: "Storage async worker"
     base: harp_apps.storage.worker.StorageAsyncWorkerQueue
+    arguments:
+      - "skip_storage_requests_payload" : !cfg "skip_storage_requests_payload"
+        "skip_storage_responses_payload" : !cfg "skip_storage_responses_payload"
 
   - condition: [!cfg "blobs.type == 'sql'", !!bool "true"]
     services:

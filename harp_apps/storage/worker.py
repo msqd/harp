@@ -1,3 +1,4 @@
+import re
 from datetime import UTC
 from functools import partial
 from math import log10
@@ -6,6 +7,7 @@ from sqlalchemy import insert, update
 from sqlalchemy.ext.asyncio import AsyncEngine
 from whistle import IAsyncEventDispatcher
 
+from harp import get_logger
 from harp.http import get_serializer_for
 from harp.models import Blob
 from harp.utils.background import AsyncWorkerQueue
@@ -21,15 +23,40 @@ from harp_apps.storage.models import Transaction as SqlTransaction
 from harp_apps.storage.types import IBlobStorage, IStorage
 
 SKIP_STORAGE = "skip-storage"
+SKIP_REQUEST_PAYLOAD_STORAGE = "skip-request-payload-storage"
+SKIP_RESPONSE_PAYLOAD_STORAGE = "skip-response-payload-storage"
+
+
+logger = get_logger("harp_apps.storage.worker")
+
+
+def matches_any(text, compiled_patterns):
+    """Check if any compiled pattern matches the text"""
+    return any(pattern.search(text) for pattern in compiled_patterns)
 
 
 class StorageAsyncWorkerQueue(AsyncWorkerQueue):
-    def __init__(self, engine: AsyncEngine, storage: IStorage, blob_storage: IBlobStorage):
+    def __init__(
+            self,
+            engine: AsyncEngine,
+            storage: IStorage,
+            blob_storage: IBlobStorage,
+            skip_storage_requests_payload: list[str] | None = None,
+            skip_storage_responses_payload: list[str] | None = None,
+    ):
         self.engine = engine
         self.storage = storage
         self.blob_storage = blob_storage
         super().__init__()
         self.seen = set()
+        skip_storage_requests_payload = skip_storage_requests_payload or []
+        skip_storage_responses_payload = skip_storage_responses_payload or []
+        self.skip_storage_requests_payload = [
+            re.compile(pattern) for pattern in skip_storage_requests_payload
+        ]
+        self.skip_storage_responses_payload = [
+            re.compile(pattern) for pattern in skip_storage_responses_payload
+        ]
 
     def register_events(self, dispatcher: IAsyncEventDispatcher):
         dispatcher.add_listener(EVENT_TRANSACTION_STARTED, self.on_transaction_started)
@@ -81,11 +108,24 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             await self.push(partial(self.blob_storage.put, headers_blob), ignore_errors=True)
             message_data["headers"] = headers_blob.id
 
-        # Eventually store the content blob (later)
-        if self.pressure <= 1:
-            content_blob = Blob.from_data(serializer.body, content_type=event.message.headers.get("content-type"))
-            await self.push(partial(self.blob_storage.put, content_blob), ignore_errors=True)
-            message_data["body"] = content_blob.id
+        if event.message.kind == 'request':
+            if matches_any(event.message.path, self.skip_storage_requests_payload):
+                logger.info(f"Not storing request payload data for {serializer.summary}")
+                event.transaction.markers.add(SKIP_REQUEST_PAYLOAD_STORAGE)
+            if matches_any(event.message.path, self.skip_storage_responses_payload):
+                logger.info(f"Not storing response payload data for {serializer.summary}")
+                event.transaction.markers.add(SKIP_RESPONSE_PAYLOAD_STORAGE)
+
+        if event.message.kind == 'request' and SKIP_REQUEST_PAYLOAD_STORAGE in event.transaction.markers:
+            logger.debug("Instructed not to store payload data for request")
+        elif event.message.kind == 'response' and SKIP_RESPONSE_PAYLOAD_STORAGE in event.transaction.markers:
+            logger.debug("Instructed not to store payload data for response")
+        else:
+            # Eventually store the content blob (later)
+            if self.pressure <= 1:
+                content_blob = Blob.from_data(serializer.body, content_type=event.message.headers.get("content-type"))
+                await self.push(partial(self.blob_storage.put, content_blob), ignore_errors=True)
+                message_data["body"] = content_blob.id
 
         async def create_message():
             async with self.engine.connect() as conn:

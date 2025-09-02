@@ -87,6 +87,7 @@ logging_config = {
         "harp_apps": {"level": _get_logging_level("harp")},
         "harp_apps.http_client": {"level": _get_logging_level("http_client")},
         "harp_apps.proxy": {"level": _get_logging_level("proxy")},
+        "harp_apps.storage.worker": {"level": _get_logging_level("proxy")},
         "httpcore": {"level": _get_logging_level("http_core")},
         "httpx": {"level": _get_logging_level("http_core")},
         "hypercorn.access": {"level": _get_logging_level("http", default="info")},
