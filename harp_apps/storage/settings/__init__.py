@@ -12,4 +12,4 @@ class StorageSettings(DatabaseSettings):
     blobs: BlobStorageSettings = BlobStorageSettings()
     redis: Optional[RedisSettings] = None
     skip_storage_requests_payload: list[str] = Field(default_factory=list)
-    skip_storage_responses_payload:  list[str] = Field(default_factory=list)
+    skip_storage_responses_payload: list[str] = Field(default_factory=list)

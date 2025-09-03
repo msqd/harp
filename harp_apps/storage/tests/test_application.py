@@ -15,8 +15,8 @@ class TestStorageApplication(BaseTestForApplications):
         "migrate": True,
         "redis": None,
         "url": "sqlite+aiosqlite:///:memory:?cache=shared",
-        'skip_storage_requests_payload': [],
-        'skip_storage_responses_payload': [],
+        "skip_storage_requests_payload": [],
+        "skip_storage_responses_payload": [],
     }
 
     @pytest.mark.parametrize(

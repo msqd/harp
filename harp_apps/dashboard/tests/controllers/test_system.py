@@ -28,8 +28,8 @@ class TestSystemController(
                 "migrate": True,
                 "url": "sqlite+aiosqlite:///:memory:",
                 "redis": None,
-                'skip_storage_requests_payload': [],
-                'skip_storage_responses_payload': [],
+                "skip_storage_requests_payload": [],
+                "skip_storage_responses_payload": [],
             },
         }
 
@@ -45,8 +45,8 @@ class TestSystemController(
                 "migrate": True,
                 "url": "sqlite+aiosqlite:///:memory:",
                 "redis": {"url": "redis://redis.example.com:1234/42"},
-                'skip_storage_requests_payload': [],
-                'skip_storage_responses_payload': [],
+                "skip_storage_requests_payload": [],
+                "skip_storage_responses_payload": [],
             },
         }
 
@@ -61,8 +61,8 @@ class TestSystemController(
                 "migrate": True,
                 "url": "sqlite+aiosqlite:///:memory:",
                 "redis": None,
-                'skip_storage_requests_payload': [],
-                'skip_storage_responses_payload': [],
+                "skip_storage_requests_payload": [],
+                "skip_storage_responses_payload": [],
             },
         }
 
@@ -77,8 +77,8 @@ class TestSystemController(
                 "url": RE(r".*://test:\*\*\*@.*"),
                 "blobs": ANY,
                 "redis": None,
-                'skip_storage_requests_payload': [],
-                'skip_storage_responses_payload': [],
+                "skip_storage_requests_payload": [],
+                "skip_storage_responses_payload": [],
             },
         }
 
