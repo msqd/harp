@@ -95,7 +95,7 @@ myst-parser = "^4.0.0"
 [tool.poetry.group.mysql.dependencies]
 asyncmy = "~0.2"
 aiomysql = "~0.2"
-cryptography = ">=43.0,<44.1"
+cryptography = ">=43.0,<46.1"
 
 
 [tool.poetry.group.postgresql.dependencies]
