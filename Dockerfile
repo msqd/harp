@@ -8,8 +8,10 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DEFAULT_TIMEOUT=100 \
     BASE="/opt/harp" \
     VIRTUAL_ENV="/opt/venv" \
-    NODE_MAJOR=20 \
-    UV_LINK_MODE=copy \
+    NODE_MAJOR=20
+
+# uv related environment
+ENV UV_LINK_MODE=copy \
     UV_COMPILE_BYTECODE=1 \
     UV_PROJECT_ENVIRONMENT="${VIRTUAL_ENV}"
 
