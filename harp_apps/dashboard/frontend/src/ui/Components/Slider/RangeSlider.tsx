@@ -15,27 +15,6 @@ interface RangeSliderProps {
   marks?: Mark[]
 }
 
-const trackStyles = () => css`
-  appearance: none;
-  background: transparent;
-  border: transparent;
-`
-
-const thumbStyles = ({ thumbSize }: { thumbSize: string }) => css`
-  appearance: none;
-  pointer-events: all;
-  width: ${thumbSize};
-  height: ${thumbSize};
-  border-radius: 0;
-  border: 0 none;
-  background-color: blue;
-  cursor: grab;
-
-  &:active {
-    cursor: grabbing;
-  }
-`
-
 const Wrapper = styled.div(
   ({ thumbSize }: { thumbSize: string }) => css`
     position: relative;

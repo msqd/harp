@@ -16,8 +16,13 @@ toolkit for fixing those.
 Installation
 ::::::::::::
 
-The easiest way to run it is to use our docker image. It is available on docker hub as `makersquad/harp-proxy
-<https://hub.docker.com/repository/docker/makersquad/harp-proxy>`_.
+The **fastest** way to run HARP is using UV:
+
+.. code-block:: shell
+
+    uvx harp-proxy server --example sqlite --example proxy:httpbin
+
+Alternatively, use our Docker image:
 
 .. code-block:: shell
 
@@ -26,8 +31,9 @@ The easiest way to run it is to use our docker image. It is available on docker 
                makersquad/harp-proxy:latest \
                server --endpoint httpbin=4000:http://httpbin.org/
 
-For more informations about installation options, please refer the section of your taste:
+For more installation options:
 
+- :doc:`installing with UV (recommended) <uv>`
 - :doc:`installing with docker and docker compose <docker>`
 - :doc:`installing from a python package <python>`
 - :doc:`installing from sources <sources>`

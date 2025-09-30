@@ -8,7 +8,10 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DEFAULT_TIMEOUT=100 \
     BASE="/opt/harp" \
     VIRTUAL_ENV="/opt/venv" \
-    NODE_MAJOR=20
+    NODE_MAJOR=20 \
+    UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    UV_PROJECT_ENVIRONMENT="${VIRTUAL_ENV}"
 
 # system dependencies layer
 USER root
@@ -22,7 +25,8 @@ RUN --mount=type=cache,target=/root/.cache,sharing=locked \
  && python3 -m venv ${VIRTUAL_ENV} \
  && chown harp:www-data -R /opt/harp /opt/venv
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# Install specific UV version for reproducibility
+COPY --from=ghcr.io/astral-sh/uv:0.7.20 /uv /uvx /bin/
 
 USER harp
 ENV PATH="${VIRTUAL_ENV}/bin:$PATH"
@@ -49,13 +53,18 @@ RUN --mount=type=cache,target=/root/.cache,sharing=locked \
 # Step: Add sources and install dependencies (prod)
 USER harp
 WORKDIR /opt/harp
-ENV UV_PROJECT_ENVIRONMENT="${VIRTUAL_ENV}"
 
+# Copy dependency files first for better layer caching
+COPY --chown=harp:www-data pyproject.toml uv.lock ./
+
+# Install dependencies in separate layer for better caching
+RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
+    uv sync --frozen --no-install-project
+
+# Copy source code and install project
 ADD --chown=harp:www-data . src
-
-# ... install
-RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
-    (cd src; uv sync --locked;)
+RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
+    (cd src; uv sync --frozen)
 
 # Step: Fix cache directory permissions: this wont delete the content (volume), just the directory that may have strange
 # permissions caused by the cache mounts.
@@ -83,12 +92,18 @@ RUN --mount=type=cache,target=/root/.cache,sharing=locked \
 # Step: Add sources, install dependencies (dev) and build assets
 USER harp
 WORKDIR /opt/harp
-ENV UV_PROJECT_ENVIRONMENT="${VIRTUAL_ENV}"
-ADD --chown=harp:www-data . src
 
-# ... install and build
-RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
-    (cd src; uv sync --locked) \
+# Copy dependency files first for better layer caching
+COPY --chown=harp:www-data pyproject.toml uv.lock ./
+
+# Install dependencies in separate layer for better caching
+RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
+    uv sync --frozen --no-install-project
+
+# Copy source code and install project with dev dependencies
+ADD --chown=harp:www-data . src
+RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
+    (cd src; uv sync --frozen) \
     && (cd src/harp_apps/dashboard/frontend; pnpm install);
 
 # Development image scripts are on the shelf
