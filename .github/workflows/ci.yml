@@ -45,13 +45,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git make python3-pip python3-jinja2 bash
+      - name: Set version
+        id: version
+        run: echo "VERSION=$(git describe 2>/dev/null || git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Build and push runtime image
-        run: bash bin/sandbox make buildc pushc
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: production
+          push: true
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:${{ steps.version.outputs.VERSION }}
+            ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAGS }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ steps.version.outputs.VERSION }}
 
   build-dev:
     runs-on: ubuntu-latest
@@ -75,15 +85,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git make python3-pip python3-jinja2 bash
+      - name: Set version
+        id: version
+        run: echo "VERSION=$(git describe 2>/dev/null || git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Build and push dev image
-        env:
-          DOCKER_TAGS_SUFFIX: -dev
-        run: bash bin/sandbox make buildc-dev pushc-dev
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: development
+          push: true
+          tags: |
+            ${{ env.DOCKER_IMAGE_DEV }}:${{ steps.version.outputs.VERSION }}-dev
+            ${{ env.DOCKER_IMAGE_DEV }}:${{ env.DOCKER_TAGS }}-dev
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ steps.version.outputs.VERSION }}
 
   test-backend-core:
     runs-on: ubuntu-latest
@@ -98,14 +116,14 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
       options: --privileged
     services:
-      docker:
+      dind:
         image: docker:24.0.6-dind
         options: --privileged
     env:
       PYTEST: /opt/venv/bin/pytest
       PYTEST_OPTIONS: "-m 'not subprocess'"
       PYTEST_TARGETS: "harp"
-      DOCKER_HOST: tcp://docker:2375
+      DOCKER_HOST: tcp://dind:2375
     steps:
       - name: Run core tests
         run: (cd /opt/harp/src; make test-backend)
@@ -123,14 +141,14 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
       options: --privileged
     services:
-      docker:
+      dind:
         image: docker:24.0.6-dind
         options: --privileged
     env:
       PYTEST: /opt/venv/bin/pytest
       PYTEST_OPTIONS: "-m 'not subprocess'"
       PYTEST_TARGETS: "harp_apps"
-      DOCKER_HOST: tcp://docker:2375
+      DOCKER_HOST: tcp://dind:2375
     steps:
       - name: Run apps tests
         run: (cd /opt/harp/src; make test-backend)
@@ -148,7 +166,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
       options: --privileged
     services:
-      docker:
+      dind:
         image: docker:24.0.6-dind
         options: --privileged
     env:
@@ -156,7 +174,7 @@ jobs:
       PYTEST_OPTIONS: "-m 'not subprocess'"
       PYTEST_TARGETS: "tests"
       PYTEST_CPUS: "1"
-      DOCKER_HOST: tcp://docker:2375
+      DOCKER_HOST: tcp://dind:2375
     steps:
       - name: Run e2e tests
         run: (cd /opt/harp/src; make test-backend)
