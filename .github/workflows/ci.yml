@@ -119,8 +119,10 @@ jobs:
 
       - name: Run core tests in container
         run: |
+          DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
           docker run --rm \
             --privileged \
+            --group-add $DOCKER_GID \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -e PYTEST=/opt/venv/bin/pytest \
             -e PYTEST_OPTIONS="-m 'not subprocess'" \
@@ -146,8 +148,10 @@ jobs:
 
       - name: Run apps tests in container
         run: |
+          DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
           docker run --rm \
             --privileged \
+            --group-add $DOCKER_GID \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -e PYTEST=/opt/venv/bin/pytest \
             -e PYTEST_OPTIONS="-m 'not subprocess'" \
@@ -173,8 +177,10 @@ jobs:
 
       - name: Run e2e tests in container
         run: |
+          DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
           docker run --rm \
             --privileged \
+            --group-add $DOCKER_GID \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -e PYTEST=/opt/venv/bin/pytest \
             -e PYTEST_OPTIONS="-m 'not subprocess'" \
