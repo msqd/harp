@@ -122,6 +122,7 @@ jobs:
       PYTEST_OPTIONS: "-m 'not subprocess'"
       PYTEST_TARGETS: "harp"
       DOCKER_HOST: unix:///var/run/docker.sock
+      UV_CACHE_DIR: /tmp/.uv-cache
     steps:
       - name: Run core tests
         run: (cd /opt/harp/src; make test-backend)
@@ -145,6 +146,7 @@ jobs:
       PYTEST_OPTIONS: "-m 'not subprocess'"
       PYTEST_TARGETS: "harp_apps"
       DOCKER_HOST: unix:///var/run/docker.sock
+      UV_CACHE_DIR: /tmp/.uv-cache
     steps:
       - name: Run apps tests
         run: (cd /opt/harp/src; make test-backend)
@@ -169,6 +171,7 @@ jobs:
       PYTEST_TARGETS: "tests"
       PYTEST_CPUS: "1"
       DOCKER_HOST: unix:///var/run/docker.sock
+      UV_CACHE_DIR: /tmp/.uv-cache
     steps:
       - name: Run e2e tests
         run: (cd /opt/harp/src; make test-backend)
