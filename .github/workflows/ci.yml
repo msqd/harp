@@ -202,6 +202,8 @@ jobs:
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    env:
+      TZ: Cuba
     steps:
       - name: Run frontend unit tests
         run: (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm test:unit)
