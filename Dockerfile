@@ -89,7 +89,8 @@ RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     && apt-get install -y nodejs \
     && apt-get install -y vim net-tools iputils-ping netcat-openbsd bind9-host jq \
     && rm -rf /var/lib/apt/lists/* \
-    && npm install -g pnpm
+    && npm install -g pnpm \
+    && usermod -aG docker harp
 
 # Step: Add sources, install dependencies (dev) and build assets
 USER harp
