@@ -115,15 +115,13 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
       options: --privileged
-    services:
-      dind:
-        image: docker:24.0.6-dind
-        options: --privileged
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
     env:
       PYTEST: /opt/venv/bin/pytest
       PYTEST_OPTIONS: "-m 'not subprocess'"
       PYTEST_TARGETS: "harp"
-      DOCKER_HOST: tcp://dind:2375
+      DOCKER_HOST: unix:///var/run/docker.sock
     steps:
       - name: Run core tests
         run: (cd /opt/harp/src; make test-backend)
@@ -140,15 +138,13 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
       options: --privileged
-    services:
-      dind:
-        image: docker:24.0.6-dind
-        options: --privileged
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
     env:
       PYTEST: /opt/venv/bin/pytest
       PYTEST_OPTIONS: "-m 'not subprocess'"
       PYTEST_TARGETS: "harp_apps"
-      DOCKER_HOST: tcp://dind:2375
+      DOCKER_HOST: unix:///var/run/docker.sock
     steps:
       - name: Run apps tests
         run: (cd /opt/harp/src; make test-backend)
@@ -165,16 +161,14 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
       options: --privileged
-    services:
-      dind:
-        image: docker:24.0.6-dind
-        options: --privileged
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
     env:
       PYTEST: /opt/venv/bin/pytest
       PYTEST_OPTIONS: "-m 'not subprocess'"
       PYTEST_TARGETS: "tests"
       PYTEST_CPUS: "1"
-      DOCKER_HOST: tcp://dind:2375
+      DOCKER_HOST: unix:///var/run/docker.sock
     steps:
       - name: Run e2e tests
         run: (cd /opt/harp/src; make test-backend)
