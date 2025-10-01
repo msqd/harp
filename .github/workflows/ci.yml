@@ -90,8 +90,12 @@ jobs:
     needs: build-dev
     permissions:
       contents: read
+      packages: read
     container:
       image: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
       options: --privileged
     services:
       docker:
@@ -111,8 +115,12 @@ jobs:
     needs: build-dev
     permissions:
       contents: read
+      packages: read
     container:
       image: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
       options: --privileged
     services:
       docker:
@@ -132,8 +140,12 @@ jobs:
     needs: build-dev
     permissions:
       contents: read
+      packages: read
     container:
       image: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
       options: --privileged
     services:
       docker:
@@ -154,8 +166,12 @@ jobs:
     needs: build-dev
     permissions:
       contents: read
+      packages: read
     container:
       image: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Run frontend unit tests
         run: (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm test:unit)
@@ -185,8 +201,12 @@ jobs:
     continue-on-error: true
     permissions:
       contents: read
+      packages: read
     container:
       image: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     env:
       SPHINXBUILD: /opt/venv/bin/sphinx-build
     steps:
@@ -208,8 +228,12 @@ jobs:
     continue-on-error: true
     permissions:
       contents: read
+      packages: read
     container:
       image: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Build storybook
         run: |
