@@ -21,7 +21,7 @@ WORKDIR /root
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update \
- && apt-get install -y make curl ca-certificates \
+ && apt-get install -y make curl ca-certificates tzdata \
  && rm -rf /var/lib/apt/lists/* \
  && useradd -m harp -g www-data -d ${BASE} -u 500 \
  && python3 -m venv ${VIRTUAL_ENV} \

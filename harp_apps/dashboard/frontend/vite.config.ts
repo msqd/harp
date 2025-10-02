@@ -123,6 +123,15 @@ export default defineConfig(({ mode }) => {
       host: "127.0.0.1",
     },
     test: {
+      env: {
+        TZ: "America/Havana",
+      },
+      pool: "forks",
+      poolOptions: {
+        forks: {
+          singleFork: true,
+        },
+      },
       coverage: {
         provider: "v8",
         reporter: ["html", "json", "text"],

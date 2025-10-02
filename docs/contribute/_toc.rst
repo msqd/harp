@@ -7,6 +7,7 @@
 
     introduction
     overview
+    makefile
     dependency-injection
     events
     applications

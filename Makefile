@@ -236,11 +236,11 @@ pushc:  ## Pushes the docker image to the registry.
 
 runc:  ## Runs the docker image.
 	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
-	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
+	$(DOCKER) run $(shell [ -t 0 ] && echo "-it" || echo "-t") --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
 runc-shell:  ## Runs a shell within the docker image.
 	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
-	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
+	$(DOCKER) run $(shell [ -t 0 ] && echo "-it" || echo "-t") --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
 
 .PHONY: buildc-dev pushc-dev runc-dev runc-dev-shell
@@ -258,7 +258,7 @@ runc-dev-shell:  ## Runs a shell within the development docker image.
 	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) runc-shell
 
 
-.PHONY: testc-shell testc-backend
+.PHONY: testc-shell testc-backend testc-frontend
 
 testc-shell:  ## Runs a shell in the development test suite environment.
 	$(DOCKER) rm -f docker || true
@@ -269,6 +269,67 @@ testc-shell:  ## Runs a shell in the development test suite environment.
 
 testc-backend:  ## Runs the backend test suite within the development docker image, with a docker in docker sidecar service.
 	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" TESTC_COMMAND="PYTEST_OPTIONS=-vv poetry run make test-backend" $(MAKE) testc-shell
+
+testc-frontend:  ## Runs the frontend test suite within the development docker image.
+	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
+	$(DOCKER) run $(shell [ -t 0 ] && echo "-it" || echo "-t") --rm \
+		--network $(DOCKER_NETWORK) \
+		-e TZ=America/Havana \
+		$(DOCKER_IMAGE_DEV) \
+		bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && pnpm test:unit"
+
+
+.PHONY: ci-test-backend-core ci-test-backend-apps ci-test-backend-e2e ci-test-frontend-unit
+
+# CI test tasks - these run tests in the dev container with CI-specific configuration
+ci-test-backend-core:  ## Runs backend core tests in CI environment (requires dev image to be built)
+	$(eval DOCKER_GID := $(shell stat -c '%g' /var/run/docker.sock 2>/dev/null || echo ""))
+	$(DOCKER) run --rm \
+		--privileged \
+		$(if $(DOCKER_GID),--group-add $(DOCKER_GID),) \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-e PYTEST=/opt/venv/bin/pytest \
+		-e PYTEST_OPTIONS="-m 'not subprocess'" \
+		-e PYTEST_TARGETS=harp \
+		-e DOCKER_HOST=unix:///var/run/docker.sock \
+		-e UV_CACHE_DIR=/tmp/.uv-cache \
+		$(DOCKER_IMAGE_DEV):$(VERSION) \
+		bash -c "cd /opt/harp/src && make test-backend"
+
+ci-test-backend-apps:  ## Runs backend apps tests in CI environment (requires dev image to be built)
+	$(eval DOCKER_GID := $(shell stat -c '%g' /var/run/docker.sock 2>/dev/null || echo ""))
+	$(DOCKER) run --rm \
+		--privileged \
+		$(if $(DOCKER_GID),--group-add $(DOCKER_GID),) \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-e PYTEST=/opt/venv/bin/pytest \
+		-e PYTEST_OPTIONS="-m 'not subprocess'" \
+		-e PYTEST_TARGETS=harp_apps \
+		-e DOCKER_HOST=unix:///var/run/docker.sock \
+		-e UV_CACHE_DIR=/tmp/.uv-cache \
+		$(DOCKER_IMAGE_DEV):$(VERSION) \
+		bash -c "cd /opt/harp/src && make test-backend"
+
+ci-test-backend-e2e:  ## Runs backend e2e tests in CI environment (requires dev image to be built)
+	$(eval DOCKER_GID := $(shell stat -c '%g' /var/run/docker.sock 2>/dev/null || echo ""))
+	$(DOCKER) run --rm \
+		--privileged \
+		$(if $(DOCKER_GID),--group-add $(DOCKER_GID),) \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-e PYTEST=/opt/venv/bin/pytest \
+		-e PYTEST_OPTIONS="-m 'not subprocess'" \
+		-e PYTEST_TARGETS=tests \
+		-e PYTEST_CPUS=1 \
+		-e DOCKER_HOST=unix:///var/run/docker.sock \
+		-e UV_CACHE_DIR=/tmp/.uv-cache \
+		$(DOCKER_IMAGE_DEV):$(VERSION) \
+		bash -c "cd /opt/harp/src && make test-backend"
+
+ci-test-frontend-unit:  ## Runs frontend unit tests in CI environment (requires dev image to be built)
+	$(DOCKER) run --rm \
+		-e TZ=America/Havana \
+		$(DOCKER_IMAGE_DEV):$(VERSION) \
+		bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && pnpm test:unit"
 
 
 ########################################################################################################################

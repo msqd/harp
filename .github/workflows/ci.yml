@@ -110,6 +110,9 @@ jobs:
       contents: read
       packages: read
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -117,20 +120,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run core tests in container
-        run: |
-          DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
-          docker run --rm \
-            --privileged \
-            --group-add $DOCKER_GID \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -e PYTEST=/opt/venv/bin/pytest \
-            -e PYTEST_OPTIONS="-m 'not subprocess'" \
-            -e PYTEST_TARGETS=harp \
-            -e DOCKER_HOST=unix:///var/run/docker.sock \
-            -e UV_CACHE_DIR=/tmp/.uv-cache \
-            ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev \
-            bash -c "cd /opt/harp/src && make test-backend"
+      - name: Run core tests
+        run: make ci-test-backend-core
+        env:
+          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}
+          VERSION: ${{ github.sha }}-${{ github.run_number }}-dev
 
   test-backend-apps:
     runs-on: ubuntu-latest
@@ -139,6 +133,9 @@ jobs:
       contents: read
       packages: read
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -146,20 +143,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run apps tests in container
-        run: |
-          DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
-          docker run --rm \
-            --privileged \
-            --group-add $DOCKER_GID \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -e PYTEST=/opt/venv/bin/pytest \
-            -e PYTEST_OPTIONS="-m 'not subprocess'" \
-            -e PYTEST_TARGETS=harp_apps \
-            -e DOCKER_HOST=unix:///var/run/docker.sock \
-            -e UV_CACHE_DIR=/tmp/.uv-cache \
-            ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev \
-            bash -c "cd /opt/harp/src && make test-backend"
+      - name: Run apps tests
+        run: make ci-test-backend-apps
+        env:
+          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}
+          VERSION: ${{ github.sha }}-${{ github.run_number }}-dev
 
   test-backend-e2e:
     runs-on: ubuntu-latest
@@ -168,6 +156,9 @@ jobs:
       contents: read
       packages: read
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -175,21 +166,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run e2e tests in container
-        run: |
-          DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
-          docker run --rm \
-            --privileged \
-            --group-add $DOCKER_GID \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -e PYTEST=/opt/venv/bin/pytest \
-            -e PYTEST_OPTIONS="-m 'not subprocess'" \
-            -e PYTEST_TARGETS=tests \
-            -e PYTEST_CPUS=1 \
-            -e DOCKER_HOST=unix:///var/run/docker.sock \
-            -e UV_CACHE_DIR=/tmp/.uv-cache \
-            ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev \
-            bash -c "cd /opt/harp/src && make test-backend"
+      - name: Run e2e tests
+        run: make ci-test-backend-e2e
+        env:
+          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}
+          VERSION: ${{ github.sha }}-${{ github.run_number }}-dev
 
   test-frontend-unit:
     runs-on: ubuntu-latest
@@ -197,16 +178,22 @@ jobs:
     permissions:
       contents: read
       packages: read
-    container:
-      image: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-      env:
-        TZ: Cuba
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run frontend unit tests
-        run: (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm test:unit)
+        run: make ci-test-frontend-unit
+        env:
+          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}
+          VERSION: ${{ github.sha }}-${{ github.run_number }}-dev
 
   # Commented out - same as in .gitlab-ci.yml
   # test-frontend-browser:
