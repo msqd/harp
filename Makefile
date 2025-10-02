@@ -1,3 +1,17 @@
+########################################################################################################################
+# Makefile - This is the main entry point for all development related tasks.
+#
+# It contains wrappers for everything one may need to work with the codebase (install, test, format, lint, build,
+# container related stuff, releasing, etc...).
+#
+# To have an overview, just run `make help`.
+#
+# Documentation is available in the `docs/contribute/makefile.rst` and should be kept in sync with this file.
+#
+# The continuous integration process (and basically all automated processes) uses this file as well, so be careful when
+# changing things.
+########################################################################################################################
+
 # package
 NAME ?= harp-proxy
 VERSION ?= $(shell git describe 2>/dev/null || git rev-parse --short HEAD)
@@ -7,7 +21,6 @@ UV ?= $(shell which uv || echo "")
 UVX ?= $(shell which uvx || echo "uvx")
 UV_RUN ?= $(if $(UV),$(UV) run,)
 UV_SYNC_OPTIONS ?=
-PLATFORM ?= linux/amd64
 
 # pytest
 PYTEST ?= $(UV_RUN) pytest
@@ -18,13 +31,14 @@ PYTEST_COVERAGE_OPTIONS ?= --cov=harp --cov=harp_apps --cov-report html:docs/_bu
 PYTEST_OPTIONS ?=
 
 # docker
+DOCKER_PLATFORM ?= linux/amd64
 DOCKER ?= $(shell which docker || echo "docker")
 DOCKER_OPTIONS ?=
 DOCKER_IMAGE ?= $(NAME)
 DOCKER_IMAGE_DEV ?= $(NAME)-dev
 DOCKER_TAGS ?=
 DOCKER_TAGS_SUFFIX ?=
-DOCKER_BUILD_OPTIONS ?= --platform=$(PLATFORM)
+DOCKER_BUILD_OPTIONS ?= --platform=$(DOCKER_PLATFORM)
 DOCKER_BUILD_TARGET ?= runtime
 DOCKER_NETWORK ?= harp
 DOCKER_RUN_COMMAND ?=
@@ -41,7 +55,9 @@ TEST_SKIP_FRONT ?=
 # constants
 FRONTEND_DIR = harp_apps/dashboard/frontend
 
-# default run options
+# harp
+#
+# todo: options vs more options should be clarified
 HARP_OPTIONS ?= --example sqlite --example proxy:httpbin
 HARP_MORE_OPTIONS ?=
 HARP_SERVICES ?= server dashboard
@@ -58,7 +74,7 @@ start-dev-frontend: install-dev  # Starts a frontend development instance with r
 # Dependencies
 ########################################################################################################################
 
-.PHONY: install install-dev install-frontend install-backend install-backend-dev wheel
+.PHONY: install install-dev install-frontend install-backend install-backend-dev
 
 install: install-frontend install-backend  ## Installs harp dependencies (backend, dashboard) without development tools.
 
@@ -73,16 +89,6 @@ install-backend:  ## Installs harp dependencides (backend).
 
 install-backend-dev:  ## Installs harp dependencies (backend) with development tools.
 	UV_SYNC_OPTIONS="--extra dev" $(MAKE) install
-
-wheel:
-	mkdir -p dist
-	bin/sandbox "$(MAKE) install-dev build-frontend; \
-				 rm -rf harp_apps/dashboard/frontend; \
-				 sed '/^People & Credits/,$$ d' README.rst > README.rst.tmp; \
-				 mv README.rst.tmp README.rst; \
-				 $(if $(UV),$(UV) build,python -m build); \
-				 cp dist/* $(PWD)/dist; \
-				 $(if $(UVX),$(UVX) twine check dist/*,twine check dist/*)"
 
 
 ########################################################################################################################
@@ -336,13 +342,23 @@ ci-test-frontend-unit:  ## Runs frontend unit tests in CI environment (requires 
 # Misc. utilities
 ########################################################################################################################
 
-.PHONY: help clean clean-dist clean-docs clean-frontend-modules
+.PHONY: help clean clean-dist clean-docs clean-frontend-modules wheel
 
 help:   ## Shows available commands.
 	@echo "Available commands:"
 	@echo
 	@grep -E '^[a-zA-Z_-]+:.*?##[\s]?.*$$' --no-filename $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo
+
+wheel:
+	mkdir -p dist
+	bin/sandbox "$(MAKE) install-dev build-frontend; \
+				 rm -rf harp_apps/dashboard/frontend; \
+				 sed '/^People & Credits/,$$ d' README.rst > README.rst.tmp; \
+				 mv README.rst.tmp README.rst; \
+				 $(if $(UV),$(UV) build,python -m build); \
+				 cp dist/* $(PWD)/dist; \
+				 $(if $(UVX),$(UVX) twine check dist/*,twine check dist/*)"
 
 clean-frontend-modules:  ## Cleans up the frontend node modules directory.
 	-rm -rf $(FRONTEND_DIR)/node_modules

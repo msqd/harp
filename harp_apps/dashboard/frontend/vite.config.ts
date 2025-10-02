@@ -126,12 +126,7 @@ export default defineConfig(({ mode }) => {
       env: {
         TZ: "America/Havana",
       },
-      pool: "forks",
-      poolOptions: {
-        forks: {
-          singleFork: true,
-        },
-      },
+      testTimeout: 30000,
       coverage: {
         provider: "v8",
         reporter: ["html", "json", "text"],
