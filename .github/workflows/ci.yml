@@ -235,15 +235,13 @@ jobs:
       SPHINXBUILD: /opt/venv/bin/sphinx-build
     steps:
       - name: Build documentation
-        run: |
-          (cd /opt/harp/src/docs; make html)
-          mv /opt/harp/src/docs/_build/html harp-doc
+        run: (cd /opt/harp/src/docs; make html)
 
       - name: Upload documentation artifacts
         uses: actions/upload-artifact@v4
         with:
           name: harp-doc
-          path: harp-doc/
+          path: /opt/harp/src/docs/_build/html/
           retention-days: 30
 
   storybook:
@@ -260,15 +258,13 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Build storybook
-        run: |
-          (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm ui:build)
-          mv /opt/harp/src/harp_apps/dashboard/frontend/build harp-ui
+        run: (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm ui:build)
 
       - name: Upload storybook artifacts
         uses: actions/upload-artifact@v4
         with:
           name: harp-ui
-          path: harp-ui/
+          path: /opt/harp/src/harp_apps/dashboard/frontend/build/
           retention-days: 30
 
   release:
