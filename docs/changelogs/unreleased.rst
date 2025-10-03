@@ -14,7 +14,7 @@ Important Changes
 Added
 :::::
 
-* Added a `harp.utils.testing.cli.CliRunner`to force consistent terminal width in testing
+* Added a `harp.utils.testing.cli.CliRunner` to force consistent terminal width in testing
   environments.
 * Makefile documentation in contributor guide.
 * Ability to build for arm cpu arch targets.
