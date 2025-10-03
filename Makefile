@@ -148,8 +148,6 @@ format:  ## Formats the full codebase (backend and frontend).
 	test -z "$(TEST_SKIP_FRONT)" && $(MAKE) format-frontend || (cd $(FRONTEND_DIR); $(PNPM) prettier -w src/Models)
 
 format-backend:  ## Formats the backend codebase.
-	$(UV_RUN) isort harp harp_apps tests
-	$(UV_RUN) black harp harp_apps tests
 	$(UV_RUN) ruff check --fix harp harp_apps tests
 	$(UV_RUN) ruff format
 

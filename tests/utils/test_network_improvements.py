@@ -1,11 +1,14 @@
-import socket
-import threading
 import time
-from unittest.mock import Mock, patch
 
 import pytest
-
-from harp.utils.network import PortReservationManager, get_reserved_port, wait_for_service_ready
+import socket
+import threading
+from harp.utils.network import (
+    PortReservationManager,
+    get_reserved_port,
+    wait_for_service_ready,
+)
+from unittest.mock import Mock, patch
 
 
 class TestPortReservation:
@@ -121,12 +124,18 @@ class TestSubprocessRetry:
 
         mock_popen = Mock()
         mock_process = Mock()
-        mock_process.poll.side_effect = [1, None]  # Fail once, then succeed (None means running)
+        mock_process.poll.side_effect = [
+            1,
+            None,
+        ]  # Fail once, then succeed (None means running)
         mock_popen.return_value = mock_process
 
-        with patch("harp.utils.testing.benchmarking.subprocess.Popen", mock_popen):
+        with patch("subprocess.Popen", mock_popen):
             process = start_subprocess_with_retry(
-                ["harp-proxy", "server"], max_retries=3, retry_delay=0.01, startup_check_delay=0.01
+                ["harp-proxy", "server"],
+                max_retries=3,
+                retry_delay=0.01,
+                startup_check_delay=0.01,
             )
 
             assert mock_popen.call_count == 2  # First attempt fails, second succeeds
@@ -141,7 +150,7 @@ class TestSubprocessRetry:
         mock_process.poll.return_value = 1  # Always fail
         mock_popen.return_value = mock_process
 
-        with patch("harp.utils.testing.benchmarking.subprocess.Popen", mock_popen):
+        with patch("subprocess.Popen", mock_popen):
             with pytest.raises(RuntimeError, match="Failed to start subprocess"):
                 start_subprocess_with_retry(["harp-proxy", "server"], max_retries=2, retry_delay=0.1)
 

@@ -56,7 +56,7 @@ def generate_doc(desc, /, *, root, level=0):
                 f.write("    :maxdepth: 1\n")
                 f.write("\n")
                 for child in sorted(desc.get("children", []), key=lambda x: x["name"]):
-                    f.write(f'    {child["name"]}\n')
+                    f.write(f"    {child['name']}\n")
 
     for child in desc.get("children", []):
         generate_doc(child, root=root, level=level + 1)

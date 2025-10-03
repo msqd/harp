@@ -263,7 +263,7 @@ Formatting
     # Format everything (backend + frontend)
     make format
 
-    # Format backend only (isort, black, ruff)
+    # Format backend only (ruff)
     make format-backend
 
     # Format frontend only (eslint, prettier)

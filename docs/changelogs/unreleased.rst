@@ -19,10 +19,15 @@ Added
 * Makefile documentation in contributor guide.
 * Ability to build for arm cpu arch targets.
 
-Changes
+Changed
 :::::::
 
 * Various tests strenghtening changes (behaviour unchanged).
+
+Updated
+:::::::
+
+* Bump aiohttp, freezegun.
 
 Removed
 :::::::
