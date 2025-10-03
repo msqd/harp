@@ -121,10 +121,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run core tests
-        run: make ci-test-backend-core
+        run: make testc-backend
         env:
-          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}
-          VERSION: ${{ github.sha }}-${{ github.run_number }}-dev
+          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
+          PYTEST_TARGETS: harp
+          PYTEST_OPTIONS: -m 'not subprocess'
 
   test-backend-apps:
     runs-on: ubuntu-latest
@@ -144,10 +145,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run apps tests
-        run: make ci-test-backend-apps
+        run: make testc-backend
         env:
-          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}
-          VERSION: ${{ github.sha }}-${{ github.run_number }}-dev
+          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
+          PYTEST_TARGETS: harp_apps
+          PYTEST_OPTIONS: -m 'not subprocess'
+          PYTEST_CPUS: "1"
 
   test-backend-e2e:
     runs-on: ubuntu-latest
@@ -167,10 +170,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run e2e tests
-        run: make ci-test-backend-e2e
+        run: make testc-backend
         env:
-          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}
-          VERSION: ${{ github.sha }}-${{ github.run_number }}-dev
+          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
+          PYTEST_TARGETS: tests
+          PYTEST_OPTIONS: -m 'not subprocess'
+          PYTEST_CPUS: "1"
 
   test-frontend-unit:
     runs-on: ubuntu-latest

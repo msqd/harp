@@ -264,7 +264,25 @@ testc-shell:  ## Runs a shell in the development test suite environment.
 	$(MAKE) runc-dev-shell
 
 testc-backend:  ## Runs the backend test suite within the development docker image, with a docker in docker sidecar service.
+ifdef CI
+	$(eval DOCKER_GID := $(shell stat -c '%g' /var/run/docker.sock 2>/dev/null || stat -f '%g' /var/run/docker.sock 2>/dev/null || stat -f '%g' ~/.docker/run/docker.sock 2>/dev/null || echo ""))
+	$(DOCKER) run --rm \
+		--privileged \
+		$(if $(DOCKER_GID),--group-add $(DOCKER_GID),) \
+		--group-add 0 \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-e PYTEST=$(or $(PYTEST),/opt/venv/bin/pytest) \
+		-e PYTEST_OPTIONS="$(PYTEST_OPTIONS)" \
+		-e PYTEST_TARGETS=$(PYTEST_TARGETS) \
+		$(if $(PYTEST_CPUS),-e PYTEST_CPUS=$(PYTEST_CPUS),) \
+		-e DOCKER_HOST=unix:///var/run/docker.sock \
+		-e UV_CACHE_DIR=/tmp/.uv-cache \
+		-e TESTCONTAINERS_RYUK_DISABLED=true \
+		$(DOCKER_IMAGE_DEV) \
+		bash -c "cd /opt/harp/src && make test-backend"
+else
 	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" TESTC_COMMAND="PYTEST_OPTIONS=-vv make test-backend" $(MAKE) testc-shell
+endif
 
 testc-frontend:  ## Runs the frontend test suite within the development docker image.
 	@_DOCKER_NETWORK="harp-$$(date +%s)-$$$$" && \
@@ -277,44 +295,6 @@ testc-frontend:  ## Runs the frontend test suite within the development docker i
 		bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && \
 		         pnpm test:unit"
 
-
-# CI test configuration variables
-CI_PYTEST_TARGETS ?=
-CI_PYTEST_OPTIONS ?= -m 'not subprocess'
-CI_PYTEST_CPUS ?=
-CI_PYTEST_FAILFAST ?=
-
-# Internal target for running backend tests in CI environment
-# Parameters: CI_PYTEST_TARGETS (required), CI_PYTEST_OPTIONS, CI_PYTEST_CPUS, CI_PYTEST_FAILFAST
-_ci-run-backend-test:
-	$(eval DOCKER_GID := $(shell stat -c '%g' /var/run/docker.sock 2>/dev/null || stat -f '%g' /var/run/docker.sock 2>/dev/null || stat -f '%g' ~/.docker/run/docker.sock 2>/dev/null || echo ""))
-	$(eval CI_PYTEST_OPTIONS_WITH_FAILFAST := $(CI_PYTEST_OPTIONS)$(if $(CI_PYTEST_FAILFAST), --maxfail=1,))
-	$(DOCKER) run --rm \
-		--privileged \
-		$(if $(DOCKER_GID),--group-add $(DOCKER_GID),) \
-		--group-add 0 \
-		-v /var/run/docker.sock:/var/run/docker.sock \
-		-e PYTEST=/opt/venv/bin/pytest \
-		-e PYTEST_OPTIONS="$(CI_PYTEST_OPTIONS_WITH_FAILFAST)" \
-		-e PYTEST_TARGETS=$(CI_PYTEST_TARGETS) \
-		$(if $(CI_PYTEST_CPUS),-e PYTEST_CPUS=$(CI_PYTEST_CPUS),) \
-		-e DOCKER_HOST=unix:///var/run/docker.sock \
-		-e UV_CACHE_DIR=/tmp/.uv-cache \
-		-e TESTCONTAINERS_RYUK_DISABLED=true \
-		$(DOCKER_IMAGE_DEV):$(VERSION) \
-		bash -c "cd /opt/harp/src && make test-backend"
-
-.PHONY: ci-test-backend-core ci-test-backend-apps ci-test-backend-e2e ci-test-frontend-unit
-
-# CI test tasks - these run tests in the dev container with CI-specific configuration
-ci-test-backend-core:  ## Runs backend core tests in CI environment (requires dev image to be built)
-	CI_PYTEST_TARGETS=harp $(MAKE) _ci-run-backend-test
-
-ci-test-backend-apps:  ## Runs backend apps tests in CI environment (requires dev image to be built)
-	CI_PYTEST_TARGETS=harp_apps CI_PYTEST_CPUS=1 $(MAKE) _ci-run-backend-test
-
-ci-test-backend-e2e:  ## Runs backend e2e tests in CI environment (requires dev image to be built)
-	CI_PYTEST_TARGETS=tests CI_PYTEST_CPUS=1 $(MAKE) _ci-run-backend-test
 
 ci-test-frontend-unit:  ## Runs frontend unit tests in CI environment (requires dev image to be built)
 	DOCKER_IMAGE_DEV=$(DOCKER_IMAGE_DEV):$(VERSION) DOCKER_INTERACTIVE="" $(MAKE) testc-frontend
