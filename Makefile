@@ -89,7 +89,7 @@ install-backend:  ## Installs harp dependencides (backend).
 	$(if $(UV),$(UV) sync $(UV_SYNC_OPTIONS),pip install -e .)
 
 install-backend-dev:  ## Installs harp dependencies (backend) with development tools.
-	UV_SYNC_OPTIONS="--extra dev" $(MAKE) install
+	UV_SYNC_OPTIONS="--extra dev" $(MAKE) install-backend
 
 
 ########################################################################################################################
