@@ -629,7 +629,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="css-1bggt6d"
             >
               <input
-                class="input css-2mf51v"
+                class="input css-nvfkcv"
                 max="80"
                 min="0"
                 step="10"
@@ -637,7 +637,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                 value="0"
               />
               <input
-                class="input css-2mf51v"
+                class="input css-nvfkcv"
                 max="80"
                 min="0"
                 step="10"

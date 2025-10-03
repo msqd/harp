@@ -4,7 +4,7 @@ import socket
 import threading
 import time
 from contextlib import contextmanager
-from typing import Callable, Optional
+from typing import Awaitable, Callable, Optional
 
 import httpx
 
@@ -88,7 +88,7 @@ async def wait_for_service_ready(
     port: int,
     host: str = "localhost",
     health_path: Optional[str] = None,
-    custom_check: Optional[Callable[[int], bool]] = None,
+    custom_check: Optional[Callable[[int], Awaitable[bool]]] = None,
     timeout: float = 10.0,
     retry_interval: float = 0.1,
 ):
