@@ -22,7 +22,7 @@ Added
 Changed
 :::::::
 
-* Various tests strenghtening changes (behaviour unchanged).
+* Various tests strengthening changes (behaviour unchanged).
 
 Updated
 :::::::
