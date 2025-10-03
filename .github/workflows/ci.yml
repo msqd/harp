@@ -238,11 +238,12 @@ jobs:
 
       - name: Build documentation
         run: |
+          mkdir -p harp-doc
           docker run --rm \
-            -v $PWD/harp-doc:/output \
+            -v $PWD/harp-doc:/opt/harp/src/docs/_build/html \
             -e SPHINXBUILD=/opt/venv/bin/sphinx-build \
             ${{ env.DOCKER_IMAGE_DEV }} \
-            bash -c "cd /opt/harp/src/docs && make html && cp -r _build/html/* /output/"
+            bash -c "cd /opt/harp/src/docs && make html"
 
       - name: Upload documentation artifacts
         uses: actions/upload-artifact@v4
@@ -270,10 +271,11 @@ jobs:
 
       - name: Build storybook
         run: |
+          mkdir -p harp-ui
           docker run --rm \
-            -v $PWD/harp-ui:/output \
+            -v $PWD/harp-ui:/opt/harp/src/harp_apps/dashboard/frontend/build \
             ${{ env.DOCKER_IMAGE_DEV }} \
-            bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && pnpm ui:build && cp -r build/* /output/"
+            bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && pnpm ui:build"
 
       - name: Upload storybook artifacts
         uses: actions/upload-artifact@v4
