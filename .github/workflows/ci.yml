@@ -226,22 +226,29 @@ jobs:
     permissions:
       contents: read
       packages: read
-    container:
-      image: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
     env:
-      SPHINXBUILD: /opt/venv/bin/sphinx-build
+      DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
     steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build documentation
-        run: (cd /opt/harp/src/docs; make html)
+        run: |
+          docker run --rm \
+            -v $PWD/harp-doc:/output \
+            -e SPHINXBUILD=/opt/venv/bin/sphinx-build \
+            ${{ env.DOCKER_IMAGE_DEV }} \
+            bash -c "cd /opt/harp/src/docs && make html && cp -r _build/html/* /output/"
 
       - name: Upload documentation artifacts
         uses: actions/upload-artifact@v4
         with:
           name: harp-doc
-          path: /opt/harp/src/docs/_build/html/
+          path: harp-doc/
           retention-days: 30
 
   storybook:
@@ -251,20 +258,28 @@ jobs:
     permissions:
       contents: read
       packages: read
-    container:
-      image: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+    env:
+      DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
     steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build storybook
-        run: (cd /opt/harp/src/harp_apps/dashboard/frontend; pnpm ui:build)
+        run: |
+          docker run --rm \
+            -v $PWD/harp-ui:/output \
+            ${{ env.DOCKER_IMAGE_DEV }} \
+            bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && pnpm ui:build && cp -r build/* /output/"
 
       - name: Upload storybook artifacts
         uses: actions/upload-artifact@v4
         with:
           name: harp-ui
-          path: /opt/harp/src/harp_apps/dashboard/frontend/build/
+          path: harp-ui/
           retention-days: 30
 
   release:

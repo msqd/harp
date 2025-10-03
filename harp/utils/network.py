@@ -13,7 +13,7 @@ def get_available_network_port():
     import socket
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(("", 0))
+    sock.bind(("127.0.0.1", 0))
     port = sock.getsockname()[1]
     sock.close()
     return port
@@ -53,7 +53,7 @@ class PortReservationManager:
         with self._lock:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.bind(("", 0))
+            sock.bind(("127.0.0.1", 0))
             port = sock.getsockname()[1]
             self._reserved_ports[port] = sock
             return port
