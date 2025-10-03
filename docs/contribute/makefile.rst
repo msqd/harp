@@ -159,28 +159,98 @@ The ``testc-*`` tasks are useful for:
 CI-Specific Test Tasks
 ^^^^^^^^^^^^^^^^^^^^^^
 
-These tasks are designed for CI environments and match the GitHub Actions workflow:
+These tasks are designed for CI environments and match the GitHub Actions workflow. They run tests
+in the development Docker image using the host's Docker socket for testcontainers support.
+
+**Testing CI Tasks Locally**
+
+**Prerequisites**
+
+First, build the development image with the appropriate platform:
 
 .. code-block:: shell
 
-    # Run core tests (requires dev image built)
-    make ci-test-backend-core DOCKER_IMAGE_DEV=harp-proxy-dev VERSION=latest
+    # On Linux or Intel Macs (AMD64):
+    make buildc-dev VERSION=ci-test
 
-    # Run apps tests
-    make ci-test-backend-apps DOCKER_IMAGE_DEV=harp-proxy-dev VERSION=latest
+    # On Apple Silicon Macs (ARM64) - for better performance:
+    make buildc-dev VERSION=ci-test DOCKER_PLATFORM=linux/arm64
 
-    # Run e2e tests
-    make ci-test-backend-e2e DOCKER_IMAGE_DEV=harp-proxy-dev VERSION=latest
+**Running CI Test Tasks**
+
+The ``ci-test-*`` tasks mount the host Docker socket to allow testcontainers to work:
+
+.. code-block:: shell
+
+    # Run backend core tests (tests in harp/ directory)
+    make ci-test-backend-core VERSION=ci-test
+
+    # Run backend apps tests (tests in harp_apps/ directory)
+    make ci-test-backend-apps VERSION=ci-test
+
+    # Run backend e2e tests (tests in tests/ directory)
+    make ci-test-backend-e2e VERSION=ci-test
 
     # Run frontend unit tests
-    make ci-test-frontend-unit DOCKER_IMAGE_DEV=harp-proxy-dev VERSION=latest
+    make ci-test-frontend-unit VERSION=ci-test
 
-Required environment variables for CI tasks:
+.. note::
 
-* ``DOCKER_IMAGE_DEV``: Name of the development Docker image
-* ``VERSION``: Image tag to use
+   The CI tasks automatically detect and configure Docker socket permissions for both
+   Linux (GNU stat) and macOS (BSD stat). If you encounter permission issues, ensure
+   Docker Desktop is running and your user has access to ``/var/run/docker.sock``.
 
-These tasks handle Docker socket permissions, environment setup, and test execution automatically.
+**Alternative: Using Docker-in-Docker**
+
+If Docker socket mounting doesn't work, use the ``testc-*`` tasks which use Docker-in-Docker:
+
+.. code-block:: shell
+
+    # Run backend tests (all backend tests)
+    make testc-backend
+
+    # Run frontend tests
+    make testc-frontend
+
+    # Open interactive shell for debugging
+    make testc-shell
+
+**CI Task Behavior**
+
+All ``ci-test-backend-*`` tasks:
+
+* Use the development image (``DOCKER_IMAGE_DEV:VERSION``)
+* Mount the host Docker socket for testcontainers
+* Handle Docker socket permissions automatically (GID detection)
+* Skip subprocess-marked tests (``-m 'not subprocess'``)
+* Set ``UV_CACHE_DIR`` for reproducible builds
+* Disable testcontainers Ryuk for faster cleanup (``TESTCONTAINERS_RYUK_DISABLED=true``)
+
+Task-specific differences:
+
+* ``ci-test-backend-core``: Tests ``harp/`` directory with parallel execution (no testcontainers)
+* ``ci-test-backend-apps``: Tests ``harp_apps/`` directory with serial execution (``PYTEST_CPUS=1``, uses testcontainers)
+* ``ci-test-backend-e2e``: Tests ``tests/`` directory with serial execution (``PYTEST_CPUS=1``, uses testcontainers)
+* ``ci-test-frontend-unit``: Runs frontend unit tests with timezone set to ``America/Havana``
+
+.. warning::
+
+   The ``ci-test-backend-apps`` and ``ci-test-backend-e2e`` tasks use testcontainers which
+   creates containers that need network connectivity. These tasks work in GitHub Actions
+   Linux runners but may have networking issues on macOS/Windows Docker Desktop. For local
+   testing with full testcontainers support, use ``make testc-backend`` instead.
+
+**Required Variables**
+
+When testing locally, you must specify:
+
+* ``VERSION``: The image tag to use (e.g., ``ci-test``, ``latest``, or git commit)
+
+**Optional Variables**
+
+* ``DOCKER_IMAGE_DEV``: Dev image name (default: ``harp-proxy-dev``)
+* ``CI_PYTEST_OPTIONS``: Override pytest options (default: ``-m 'not subprocess'``)
+* ``CI_PYTEST_CPUS``: Override CPU count for specific tests
 
 Code Quality
 ------------
@@ -275,6 +345,29 @@ Documentation
 
 The documentation is built with Sphinx and placed in ``docs/_build/html/``.
 
+Benchmarks
+----------
+
+.. code-block:: shell
+
+    # Run benchmarks
+    make benchmark
+
+    # Run and save benchmark results
+    make benchmark-save
+
+    # Customize benchmark runs
+    make benchmark BENCHMARK_MIN_ROUNDS=500 BENCHMARK_OPTIONS="--verbose"
+
+Benchmarks use pytest-benchmark to measure performance. Results are saved in ``.benchmarks/``
+and can be compared across runs. The ``benchmark-save`` target runs more iterations for
+stable results.
+
+Available benchmark variables:
+
+* ``BENCHMARK_OPTIONS``: Additional benchmark options
+* ``BENCHMARK_MIN_ROUNDS``: Minimum benchmark iterations (default: 100, 500 for save)
+
 Docker Image Tasks
 ------------------
 
@@ -336,20 +429,6 @@ Available Docker environment variables:
 * ``DOCKER_RUN_OPTIONS``: Additional run options
 * ``DOCKER_RUN_COMMAND``: Command to run in container
 * ``PLATFORM``: Target platform (default: ``linux/amd64``)
-
-Benchmarks
-----------
-
-.. code-block:: shell
-
-    # Run benchmarks
-    make benchmark
-
-    # Run and save benchmark results
-    make benchmark-save
-
-    # Customize benchmark runs
-    make benchmark BENCHMARK_MIN_ROUNDS=500 BENCHMARK_OPTIONS="--verbose"
 
 Cleanup
 -------
@@ -419,17 +498,32 @@ Debugging CI Failures Locally
 .. code-block:: shell
 
     # 1. Build the dev image locally
-    make buildc-dev VERSION=test
+    make buildc-dev VERSION=debug
 
     # 2. Run the specific failing test suite
-    make ci-test-backend-core DOCKER_IMAGE_DEV=harp-proxy-dev VERSION=test
+    # If core tests are failing:
+    make ci-test-backend-core VERSION=debug
 
-    # 3. Or open a shell to investigate
-    make runc-dev-shell VERSION=test
+    # If apps tests are failing:
+    make ci-test-backend-apps VERSION=debug
 
-    # 4. Inside the container, run tests manually
+    # If e2e tests are failing:
+    make ci-test-backend-e2e VERSION=debug
+
+    # If frontend tests are failing:
+    make ci-test-frontend-unit VERSION=debug
+
+    # 3. Or open a shell to investigate interactively
+    make runc-dev-shell VERSION=debug
+
+    # 4. Inside the container, run tests manually with full control
     cd /opt/harp/src
+
+    # Run specific test file
     uv run pytest tests/specific_test.py -v
+
+    # Run with testcontainers (requires Docker socket access)
+    DOCKER_HOST=unix:///var/run/docker.sock uv run pytest tests/storage/ -v
 
 Working with Frontend
 ^^^^^^^^^^^^^^^^^^^^^
@@ -484,8 +578,11 @@ Global
 Backend Testing
 ^^^^^^^^^^^^^^^
 
+* ``PYTEST``: Path to pytest executable (default: ``uv run pytest``)
 * ``PYTEST_TARGETS``: Test paths (default: ``harp harp_apps tests``)
 * ``PYTEST_CPUS``: Parallel workers (default: ``auto``)
+* ``PYTEST_COMMON_OPTIONS``: Common pytest options (default: ``-n $(PYTEST_CPUS)``)
+* ``PYTEST_COVERAGE_OPTIONS``: Coverage reporting options
 * ``PYTEST_OPTIONS``: Additional pytest arguments
 * ``TEST_SKIP_FRONT``: Skip frontend tests if set
 * ``TEST_ALL_DATABASES``: Test all database backends if set
@@ -493,24 +590,53 @@ Backend Testing
 Docker
 ^^^^^^
 
-* ``DOCKER_IMAGE``: Runtime image name
-* ``DOCKER_IMAGE_DEV``: Development image name
+* ``DOCKER``: Path to docker executable
+* ``DOCKER_IMAGE``: Runtime image name (default: ``harp-proxy``)
+* ``DOCKER_IMAGE_DEV``: Development image name (default: ``harp-proxy-dev``)
+* ``DOCKER_PLATFORM``: Target platform (default: ``linux/amd64``)
 * ``DOCKER_TAGS``: Additional image tags
-* ``DOCKER_BUILD_TARGET``: Dockerfile stage target
+* ``DOCKER_TAGS_SUFFIX``: Suffix for image tags
+* ``DOCKER_BUILD_TARGET``: Dockerfile stage target (default: ``runtime``)
+* ``DOCKER_BUILD_OPTIONS``: Docker build options
 * ``DOCKER_OPTIONS``: Additional Docker CLI options
 * ``DOCKER_RUN_OPTIONS``: Additional docker run options
 * ``DOCKER_RUN_COMMAND``: Container command
 * ``DOCKER_NETWORK``: Docker network name (default: ``harp``)
-* ``PLATFORM``: Target platform (default: ``linux/amd64``)
+
+CI Testing
+^^^^^^^^^^
+
+* ``CI_PYTEST_TARGETS``: Test paths for CI backend tests (used by ``ci-test-*`` targets)
+* ``CI_PYTEST_OPTIONS``: Pytest options for CI (default: ``-m 'not subprocess'``)
+* ``CI_PYTEST_CPUS``: CPU count for CI tests (set to ``1`` for apps/e2e tests)
+* ``CI_PYTEST_FAILFAST``: Enable fail-fast mode (``--maxfail=1``) if set
+
+Test Containers
+^^^^^^^^^^^^^^^
+
+* ``TESTC_COMMAND``: Command to run in test container shell (default: ``bash``)
+* ``TESTC_TZ``: Timezone for frontend test containers (default: ``America/Havana``)
+* ``TESTC_FRONTEND_IMAGE``: Frontend test container image
+* ``TESTC_FRONTEND_INTERACTIVE``: Interactive mode for frontend tests
 
 Frontend
 ^^^^^^^^
 
+* ``PNPM``: Path to pnpm executable
 * ``TEST_SKIP_FRONT``: Skip frontend tests if set
 
 Development
 ^^^^^^^^^^^
 
-* ``HARP_OPTIONS``: Runtime options for start-dev
+* ``HARP_OPTIONS``: Runtime options for start-dev (default: ``--example sqlite --example proxy:httpbin``)
 * ``HARP_MORE_OPTIONS``: Additional runtime options
 * ``HARP_SERVICES``: Services to start (default: ``server dashboard``)
+
+UV/Build Tools
+^^^^^^^^^^^^^^
+
+* ``UV``: Path to uv executable
+* ``UVX``: Path to uvx executable
+* ``UV_RUN``: UV run command prefix
+* ``UV_SYNC_OPTIONS``: Options for uv sync
+* ``SED``: Path to sed executable (gsed or sed)

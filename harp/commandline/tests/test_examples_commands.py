@@ -1,6 +1,5 @@
-from click.testing import CliRunner
-
 from harp.commandline.examples import list_command
+from harp.utils.testing.cli import CliRunner
 
 
 def test_list_examples_command(snapshot):

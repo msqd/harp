@@ -142,16 +142,3 @@ Changes
 * feat: fix entrypoint (Romain Dorgueil)
 * feat: refactoring config and extensions system to have a better separation of concerns, while allowing serialization of config for later use (Romain Dorgueil)
 * feat: backports factory/serveradapter refactoring from granian poc to mainline (without experimental stuff) (Romain Dorgueil)
-
-Benchmarks
-::::::::::
-
-PostgreSQL
-----------
-
-.. figure:: benchmarks/0.4.0-postgresql.svg
-
-SQLite
-----------
-
-.. figure:: benchmarks/0.4.0-sqlite.svg

@@ -3,12 +3,12 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from typing import Union
 
-from click.testing import CliRunner
 from pydantic_core import MultiHostUrl, Url
 from sqlalchemy import URL, make_url, text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from harp.commandline import migrations
+from harp.utils.testing.cli import CliRunner
 
 
 async def run_cli_migrate_command(url: Union[str | URL | Url | MultiHostUrl], /, *, operation="up", revision="head"):

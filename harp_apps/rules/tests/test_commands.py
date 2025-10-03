@@ -1,6 +1,5 @@
-from click.testing import CliRunner
-
 from harp.commandline import entrypoint
+from harp.utils.testing.cli import CliRunner
 
 
 def test_run_command(httpbin, snapshot):

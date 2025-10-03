@@ -117,7 +117,7 @@ class TestSubprocessRetry:
 
     def test_subprocess_start_with_retry(self):
         """Test that subprocess startup retries on failure."""
-        from harp.utils.testing.benchmarking import start_subprocess_with_retry
+        from harp.utils.testing.subprocess import start_subprocess_with_retry
 
         mock_popen = Mock()
         mock_process = Mock()
@@ -134,7 +134,7 @@ class TestSubprocessRetry:
 
     def test_subprocess_start_exceeds_retries(self):
         """Test that subprocess raises after max retries."""
-        from harp.utils.testing.benchmarking import start_subprocess_with_retry
+        from harp.utils.testing.subprocess import start_subprocess_with_retry
 
         mock_popen = Mock()
         mock_process = Mock()
@@ -153,7 +153,7 @@ class TestDynamicTimeout:
 
     def test_get_adjusted_timeout_normal_load(self):
         """Test timeout adjustment under normal load."""
-        from harp.utils.testing.benchmarking import get_adjusted_timeout
+        from harp.utils.testing.time import get_adjusted_timeout
 
         with patch("os.getloadavg", return_value=(1.0, 1.0, 1.0)):
             timeout = get_adjusted_timeout(base_timeout=10.0)
@@ -161,7 +161,7 @@ class TestDynamicTimeout:
 
     def test_get_adjusted_timeout_high_load(self):
         """Test timeout adjustment under high load."""
-        from harp.utils.testing.benchmarking import get_adjusted_timeout
+        from harp.utils.testing.time import get_adjusted_timeout
 
         with patch("os.getloadavg", return_value=(8.0, 7.0, 6.0)):
             with patch("os.cpu_count", return_value=4):
@@ -171,7 +171,7 @@ class TestDynamicTimeout:
 
     def test_get_adjusted_timeout_windows(self):
         """Test timeout adjustment on Windows (no getloadavg)."""
-        from harp.utils.testing.benchmarking import get_adjusted_timeout
+        from harp.utils.testing.time import get_adjusted_timeout
 
         with patch("os.getloadavg", side_effect=AttributeError):
             timeout = get_adjusted_timeout(base_timeout=10.0)

@@ -49,7 +49,7 @@ PNPM ?= $(shell which pnpm || echo "pnpm")
 
 # misc.
 SED ?= $(shell which gsed || which sed || echo "sed")
-TESTC_COMMAND ?= poetry shell
+TESTC_COMMAND ?= bash
 TEST_SKIP_FRONT ?=
 
 # constants
@@ -166,7 +166,6 @@ test:  ## Runs all tests.
 
 test-backend: install-backend-dev  ## Runs backend tests.
 	$(PYTEST) $(PYTEST_TARGETS) \
-	          --benchmark-disable \
 	          $(PYTEST_COMMON_OPTIONS) \
 	          $(PYTEST_OPTIONS)
 
@@ -196,44 +195,17 @@ cloc:
 
 
 ########################################################################################################################
-# Benchmarks
-########################################################################################################################
-
-.PHONY: benchmark benchmark-save
-
-BENCHMARK_OPTIONS ?=
-BENCHMARK_MIN_ROUNDS ?= 100
-
-benchmark:  ## Runs benchmarks.
-	$(PYTEST) tests/benchmarks \
-	          $(BENCHMARK_OPTIONS) \
-	          --benchmark-enable \
-	          --benchmark-only \
-	          --benchmark-disable-gc \
-	          --benchmark-min-rounds=$(BENCHMARK_MIN_ROUNDS) \
-	          --benchmark-group-by=group \
-	          --benchmark-compare="0006" \
-	          --benchmark-histogram \
-	          $(PYTEST_OPTIONS)
-
-benchmark-save:  ## Runs benchmarks and saves the results.
-	BENCHMARK_OPTIONS='--benchmark-warmup=on --benchmark-warmup-iterations=50 --benchmark-save="$(shell git describe --tags --always --dirty)"' \
-	BENCHMARK_MIN_ROUNDS=500 \
-	$(MAKE) benchmark
-
-
-########################################################################################################################
 # Docker builds
 ########################################################################################################################
 
 .PHONY: buildc pushc runc runc-shell runc-example-repositories
 
 buildc:  ## Builds the docker image.
-	# TODO: rm in trap ?
-	# TODO: document --progress=plain ?
-	echo $(VERSION) > version.txt
+	# Set up cleanup trap to ensure version.txt is removed even on error
+	# Use --progress=plain for more detailed build output (useful for CI/debugging)
+	trap 'rm -f version.txt' EXIT; \
+	echo $(VERSION) > version.txt && \
 	$(DOCKER) build --target=$(DOCKER_BUILD_TARGET) $(DOCKER_OPTIONS) $(DOCKER_BUILD_OPTIONS) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .
-	-rm -f version.txt
 
 pushc:  ## Pushes the docker image to the registry.
 	for tag in $(VERSION) $(DOCKER_TAGS); do \
@@ -267,75 +239,76 @@ runc-dev-shell:  ## Runs a shell within the development docker image.
 .PHONY: testc-shell testc-backend testc-frontend
 
 testc-shell:  ## Runs a shell in the development test suite environment.
-	$(DOCKER) rm -f docker || true
-	$(DOCKER) run --privileged -d --name docker --network $(DOCKER_NETWORK) --network-alias docker -e DOCKER_TLS_CERTDIR= $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) docker:24.0.6-dind
-	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" DOCKER_RUN_COMMAND="-c \"bin/wait-until-docker-available && (cd src; docker compose up -d; $(TESTC_COMMAND))\"" $(MAKE) runc-dev-shell
-	$(DOCKER) stop docker
-	$(DOCKER) rm docker
+	@_DIND_CONTAINER="dind-$$(date +%s)-$$$$" && \
+	_DOCKER_NETWORK="harp-$$(date +%s)-$$$$" && \
+	trap "$(DOCKER) stop $$_DIND_CONTAINER 2>/dev/null || true; \
+	      $(DOCKER) rm $$_DIND_CONTAINER 2>/dev/null || true; \
+	      $(DOCKER) network rm $$DOCKER_NETWORK 2>/dev/null || true" EXIT && \
+	$(DOCKER) network create $$_DOCKER_NETWORK && \
+	$(DOCKER) run --privileged -d --name $$_DIND_CONTAINER --network $$_DOCKER_NETWORK --network-alias docker -e DOCKER_TLS_CERTDIR= $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) docker:24.0.6-dind && \
+	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" DOCKER_RUN_COMMAND="-c \"bin/wait-until-docker-available && (cd src; docker compose up -d; $(TESTC_COMMAND))\"" DOCKER_NETWORK=$$_DOCKER_NETWORK $(MAKE) runc-dev-shell
 
 testc-backend:  ## Runs the backend test suite within the development docker image, with a docker in docker sidecar service.
-	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" TESTC_COMMAND="PYTEST_OPTIONS=-vv poetry run make test-backend" $(MAKE) testc-shell
+	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" TESTC_COMMAND="PYTEST_OPTIONS=-vv make test-backend" $(MAKE) testc-shell
 
 testc-frontend:  ## Runs the frontend test suite within the development docker image.
-	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
-	$(DOCKER) run $(shell [ -t 0 ] && echo "-it" || echo "-t") --rm \
-		--network $(DOCKER_NETWORK) \
-		-e TZ=America/Havana \
-		$(DOCKER_IMAGE_DEV) \
-		bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && pnpm test:unit"
+	$(MAKE) _run-frontend-test
 
+
+# CI test configuration variables
+CI_PYTEST_TARGETS ?=
+CI_PYTEST_OPTIONS ?= -m 'not subprocess'
+CI_PYTEST_CPUS ?=
+CI_PYTEST_FAILFAST ?=
+
+# Internal target for running backend tests in CI environment
+# Parameters: CI_PYTEST_TARGETS (required), CI_PYTEST_OPTIONS, CI_PYTEST_CPUS, CI_PYTEST_FAILFAST
+_ci-run-backend-test:
+	$(eval DOCKER_GID := $(shell stat -c '%g' /var/run/docker.sock 2>/dev/null || stat -f '%g' /var/run/docker.sock 2>/dev/null || stat -f '%g' ~/.docker/run/docker.sock 2>/dev/null || echo ""))
+	$(eval CI_PYTEST_OPTIONS_WITH_FAILFAST := $(CI_PYTEST_OPTIONS)$(if $(CI_PYTEST_FAILFAST), --maxfail=1,))
+	$(DOCKER) run --rm \
+		--privileged \
+		$(if $(DOCKER_GID),--group-add $(DOCKER_GID),) \
+		--group-add 0 \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-e PYTEST=/opt/venv/bin/pytest \
+		-e PYTEST_OPTIONS="$(CI_PYTEST_OPTIONS_WITH_FAILFAST)" \
+		-e PYTEST_TARGETS=$(CI_PYTEST_TARGETS) \
+		$(if $(CI_PYTEST_CPUS),-e PYTEST_CPUS=$(CI_PYTEST_CPUS),) \
+		-e DOCKER_HOST=unix:///var/run/docker.sock \
+		-e UV_CACHE_DIR=/tmp/.uv-cache \
+		-e TESTCONTAINERS_RYUK_DISABLED=true \
+		$(DOCKER_IMAGE_DEV):$(VERSION) \
+		bash -c "cd /opt/harp/src && make test-backend"
+
+# Internal target for running frontend tests in container
+# Parameters: TESTC_FRONTEND_IMAGE, TESTC_FRONTEND_INTERACTIVE, TESTC_TZ
+TESTC_TZ ?= America/Havana
+TESTC_FRONTEND_IMAGE ?= $(DOCKER_IMAGE_DEV)
+TESTC_FRONTEND_INTERACTIVE ?= $(shell [ -t 0 ] && echo "-it" || echo "-t")
+
+_run-frontend-test:
+	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
+	$(DOCKER) run $(TESTC_FRONTEND_INTERACTIVE) --rm \
+		--network $(DOCKER_NETWORK) \
+		-e TZ=$(TESTC_TZ) \
+		$(TESTC_FRONTEND_IMAGE) \
+		bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && pnpm test:unit"
 
 .PHONY: ci-test-backend-core ci-test-backend-apps ci-test-backend-e2e ci-test-frontend-unit
 
 # CI test tasks - these run tests in the dev container with CI-specific configuration
 ci-test-backend-core:  ## Runs backend core tests in CI environment (requires dev image to be built)
-	$(eval DOCKER_GID := $(shell stat -c '%g' /var/run/docker.sock 2>/dev/null || echo ""))
-	$(DOCKER) run --rm \
-		--privileged \
-		$(if $(DOCKER_GID),--group-add $(DOCKER_GID),) \
-		-v /var/run/docker.sock:/var/run/docker.sock \
-		-e PYTEST=/opt/venv/bin/pytest \
-		-e PYTEST_OPTIONS="-m 'not subprocess'" \
-		-e PYTEST_TARGETS=harp \
-		-e DOCKER_HOST=unix:///var/run/docker.sock \
-		-e UV_CACHE_DIR=/tmp/.uv-cache \
-		$(DOCKER_IMAGE_DEV):$(VERSION) \
-		bash -c "cd /opt/harp/src && make test-backend"
+	CI_PYTEST_TARGETS=harp $(MAKE) _ci-run-backend-test
 
 ci-test-backend-apps:  ## Runs backend apps tests in CI environment (requires dev image to be built)
-	$(eval DOCKER_GID := $(shell stat -c '%g' /var/run/docker.sock 2>/dev/null || echo ""))
-	$(DOCKER) run --rm \
-		--privileged \
-		$(if $(DOCKER_GID),--group-add $(DOCKER_GID),) \
-		-v /var/run/docker.sock:/var/run/docker.sock \
-		-e PYTEST=/opt/venv/bin/pytest \
-		-e PYTEST_OPTIONS="-m 'not subprocess'" \
-		-e PYTEST_TARGETS=harp_apps \
-		-e DOCKER_HOST=unix:///var/run/docker.sock \
-		-e UV_CACHE_DIR=/tmp/.uv-cache \
-		$(DOCKER_IMAGE_DEV):$(VERSION) \
-		bash -c "cd /opt/harp/src && make test-backend"
+	CI_PYTEST_TARGETS=harp_apps CI_PYTEST_CPUS=1 $(MAKE) _ci-run-backend-test
 
 ci-test-backend-e2e:  ## Runs backend e2e tests in CI environment (requires dev image to be built)
-	$(eval DOCKER_GID := $(shell stat -c '%g' /var/run/docker.sock 2>/dev/null || echo ""))
-	$(DOCKER) run --rm \
-		--privileged \
-		$(if $(DOCKER_GID),--group-add $(DOCKER_GID),) \
-		-v /var/run/docker.sock:/var/run/docker.sock \
-		-e PYTEST=/opt/venv/bin/pytest \
-		-e PYTEST_OPTIONS="-m 'not subprocess'" \
-		-e PYTEST_TARGETS=tests \
-		-e PYTEST_CPUS=1 \
-		-e DOCKER_HOST=unix:///var/run/docker.sock \
-		-e UV_CACHE_DIR=/tmp/.uv-cache \
-		$(DOCKER_IMAGE_DEV):$(VERSION) \
-		bash -c "cd /opt/harp/src && make test-backend"
+	CI_PYTEST_TARGETS=tests CI_PYTEST_CPUS=1 $(MAKE) _ci-run-backend-test
 
 ci-test-frontend-unit:  ## Runs frontend unit tests in CI environment (requires dev image to be built)
-	$(DOCKER) run --rm \
-		-e TZ=America/Havana \
-		$(DOCKER_IMAGE_DEV):$(VERSION) \
-		bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && pnpm test:unit"
+	TESTC_FRONTEND_IMAGE=$(DOCKER_IMAGE_DEV):$(VERSION) TESTC_FRONTEND_INTERACTIVE="" $(MAKE) _run-frontend-test
 
 
 ########################################################################################################################
@@ -347,7 +320,7 @@ ci-test-frontend-unit:  ## Runs frontend unit tests in CI environment (requires 
 help:   ## Shows available commands.
 	@echo "Available commands:"
 	@echo
-	@grep -E '^[a-zA-Z_-]+:.*?##[\s]?.*$$' --no-filename $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z0-9_-]+:.*?##[\s]?.*$$' --no-filename $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo
 
 wheel:
@@ -371,4 +344,3 @@ clean-docs:  ## Cleanup the documentation builds.
 	-rm -rf docs/_build
 
 clean: clean-frontend-modules clean-dist clean-docs  ## Cleans up the project.
-	-rm -f benchmark_*.svg

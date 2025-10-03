@@ -40,7 +40,6 @@
 .venv
 .webassets-cache
 /.vscode/
-/benchmark_*.svg
 /examples/
 /frontend/stats.html
 /harp.db
