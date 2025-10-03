@@ -195,10 +195,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run frontend unit tests
-        run: make ci-test-frontend-unit
+        run: make testc-frontend
         env:
-          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}
-          VERSION: ${{ github.sha }}-${{ github.run_number }}-dev
+          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
+          DOCKER_INTERACTIVE: ""
 
   # Commented out - same as in .gitlab-ci.yml
   # test-frontend-browser:

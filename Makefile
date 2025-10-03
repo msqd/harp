@@ -271,7 +271,6 @@ ifdef CI
 		$(if $(DOCKER_GID),--group-add $(DOCKER_GID),) \
 		--group-add 0 \
 		-v /var/run/docker.sock:/var/run/docker.sock \
-		-e PYTEST=$(or $(PYTEST),/opt/venv/bin/pytest) \
 		-e PYTEST_OPTIONS="$(PYTEST_OPTIONS)" \
 		-e PYTEST_TARGETS=$(PYTEST_TARGETS) \
 		$(if $(PYTEST_CPUS),-e PYTEST_CPUS=$(PYTEST_CPUS),) \
@@ -296,8 +295,6 @@ testc-frontend:  ## Runs the frontend test suite within the development docker i
 		         pnpm test:unit"
 
 
-ci-test-frontend-unit:  ## Runs frontend unit tests in CI environment (requires dev image to be built)
-	DOCKER_IMAGE_DEV=$(DOCKER_IMAGE_DEV):$(VERSION) DOCKER_INTERACTIVE="" $(MAKE) testc-frontend
 
 
 ########################################################################################################################
