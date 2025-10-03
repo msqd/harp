@@ -70,7 +70,6 @@ const Input = styled.input(
 
           &:active {
               cursor: grabbing;
-
           }
   `,
 )
