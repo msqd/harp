@@ -27,9 +27,8 @@ class TestPortReservation:
 
         # Try to bind to the reserved port - should fail
         with pytest.raises(OSError):
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.bind(("localhost", port))
-            sock.close()
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.bind(("localhost", port))
 
     def test_port_released_after_context_exit(self):
         """Test that port is released when context manager exits."""
