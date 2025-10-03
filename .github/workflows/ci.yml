@@ -240,6 +240,7 @@ jobs:
         run: |
           mkdir -p harp-doc
           docker run --rm \
+            --user "$(id -u):$(id -g)" \
             -v $PWD/harp-doc:/opt/harp/src/docs/_build/html \
             -e SPHINXBUILD=/opt/venv/bin/sphinx-build \
             ${{ env.DOCKER_IMAGE_DEV }} \
@@ -273,6 +274,7 @@ jobs:
         run: |
           mkdir -p harp-ui
           docker run --rm \
+            --user "$(id -u):$(id -g)" \
             -v $PWD/harp-ui:/opt/harp/src/harp_apps/dashboard/frontend/build \
             ${{ env.DOCKER_IMAGE_DEV }} \
             bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && pnpm ui:build"
