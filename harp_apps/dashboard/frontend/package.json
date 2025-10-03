@@ -147,5 +147,13 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "^4.32.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@swc/core",
+      "es5-ext",
+      "esbuild",
+      "msw"
+    ]
   }
 }
