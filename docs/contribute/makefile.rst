@@ -74,6 +74,9 @@ Running Tests Locally
     # Run backend tests only
     make test-backend
 
+    # Run backend tests and update snapshots
+    make test-backend-update
+
     # Run frontend tests only (unit + browser + visual)
     make test-frontend
 
@@ -591,9 +594,10 @@ Docker
 ^^^^^^
 
 * ``DOCKER``: Path to docker executable
+* ``DOCKER_INTERACTIVE``: Interactive mode flags (default: auto-detected based on TTY)
 * ``DOCKER_IMAGE``: Runtime image name (default: ``harp-proxy``)
 * ``DOCKER_IMAGE_DEV``: Development image name (default: ``harp-proxy-dev``)
-* ``DOCKER_PLATFORM``: Target platform (default: ``linux/amd64``)
+* ``DOCKER_PLATFORM``: Target platform (default: auto-detected from host architecture)
 * ``DOCKER_TAGS``: Additional image tags
 * ``DOCKER_TAGS_SUFFIX``: Suffix for image tags
 * ``DOCKER_BUILD_TARGET``: Dockerfile stage target (default: ``runtime``)
@@ -616,8 +620,6 @@ Test Containers
 
 * ``TESTC_COMMAND``: Command to run in test container shell (default: ``bash``)
 * ``TESTC_TZ``: Timezone for frontend test containers (default: ``America/Havana``)
-* ``TESTC_FRONTEND_IMAGE``: Frontend test container image
-* ``TESTC_FRONTEND_INTERACTIVE``: Interactive mode for frontend tests
 
 Frontend
 ^^^^^^^^

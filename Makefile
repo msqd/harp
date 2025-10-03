@@ -31,8 +31,9 @@ PYTEST_COVERAGE_OPTIONS ?= --cov=harp --cov=harp_apps --cov-report html:docs/_bu
 PYTEST_OPTIONS ?=
 
 # docker
-DOCKER_PLATFORM ?= linux/amd64
+DOCKER_PLATFORM ?= $(shell uname -m | sed -E 's/^x86_64$$/linux\/amd64/;s/^(aarch64|arm64)$$/linux\/arm64/')
 DOCKER ?= $(shell which docker || echo "docker")
+DOCKER_INTERACTIVE ?= $(shell [ -t 0 ] && echo "-it" || echo "-t")
 DOCKER_OPTIONS ?=
 DOCKER_IMAGE ?= $(NAME)
 DOCKER_IMAGE_DEV ?= $(NAME)-dev
@@ -167,6 +168,9 @@ test-backend: install-backend-dev  ## Runs backend tests.
 	          $(PYTEST_COMMON_OPTIONS) \
 	          $(PYTEST_OPTIONS)
 
+test-backend-update:  ## Runs backend tests while updating snapshots.
+	PYTEST_OPTIONS="$(PYTEST_OPTIONS) --snapshot-update" $(MAKE) test-backend
+
 test-frontend: install-frontend lint-frontend  ## Runs frontend tests.
 	cd $(FRONTEND_DIR); $(PNPM) test:unit
 	cd $(FRONTEND_DIR); $(PNPM) test:browser
@@ -212,11 +216,11 @@ pushc:  ## Pushes the docker image to the registry.
 
 runc:  ## Runs the docker image.
 	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
-	$(DOCKER) run $(shell [ -t 0 ] && echo "-it" || echo "-t") --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
+	$(DOCKER) run $(DOCKER_INTERACTIVE) --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
 runc-shell:  ## Runs a shell within the docker image.
 	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
-	$(DOCKER) run $(shell [ -t 0 ] && echo "-it" || echo "-t") --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
+	$(DOCKER) run $(DOCKER_INTERACTIVE) --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
 
 .PHONY: buildc-dev pushc-dev runc-dev runc-dev-shell
@@ -236,21 +240,42 @@ runc-dev-shell:  ## Runs a shell within the development docker image.
 
 .PHONY: testc-shell testc-backend testc-frontend
 
+# Test container configuration variables
+TESTC_TZ ?= America/Havana
+
 testc-shell:  ## Runs a shell in the development test suite environment.
 	@_DIND_CONTAINER="dind-$$(date +%s)-$$$$" && \
 	_DOCKER_NETWORK="harp-$$(date +%s)-$$$$" && \
 	trap "$(DOCKER) stop $$_DIND_CONTAINER 2>/dev/null || true; \
 	      $(DOCKER) rm $$_DIND_CONTAINER 2>/dev/null || true; \
-	      $(DOCKER) network rm $$DOCKER_NETWORK 2>/dev/null || true" EXIT && \
+	      $(DOCKER) network rm $$_DOCKER_NETWORK 2>/dev/null || true" EXIT && \
 	$(DOCKER) network create $$_DOCKER_NETWORK && \
-	$(DOCKER) run --privileged -d --name $$_DIND_CONTAINER --network $$_DOCKER_NETWORK --network-alias docker -e DOCKER_TLS_CERTDIR= $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) docker:24.0.6-dind && \
-	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" DOCKER_RUN_COMMAND="-c \"bin/wait-until-docker-available && (cd src; docker compose up -d; $(TESTC_COMMAND))\"" DOCKER_NETWORK=$$_DOCKER_NETWORK $(MAKE) runc-dev-shell
+	$(DOCKER) run --privileged -d \
+		--name $$_DIND_CONTAINER \
+		--network $$_DOCKER_NETWORK \
+		--network-alias docker \
+		-e DOCKER_TLS_CERTDIR= \
+		$(DOCKER_OPTIONS) \
+		$(DOCKER_RUN_OPTIONS) \
+		docker:24.0.6-dind && \
+	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" \
+	DOCKER_RUN_COMMAND="-c \"bin/wait-until-docker-available && (cd src; $(TESTC_COMMAND))\"" \
+	DOCKER_NETWORK=$$_DOCKER_NETWORK \
+	$(MAKE) runc-dev-shell
 
 testc-backend:  ## Runs the backend test suite within the development docker image, with a docker in docker sidecar service.
 	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" TESTC_COMMAND="PYTEST_OPTIONS=-vv make test-backend" $(MAKE) testc-shell
 
 testc-frontend:  ## Runs the frontend test suite within the development docker image.
-	$(MAKE) _run-frontend-test
+	@_DOCKER_NETWORK="harp-$$(date +%s)-$$$$" && \
+	trap "$(DOCKER) network rm $$_DOCKER_NETWORK 2>/dev/null || true" EXIT && \
+	$(DOCKER) network create $$_DOCKER_NETWORK && \
+	$(DOCKER) run $(DOCKER_INTERACTIVE) --rm \
+		--network $$_DOCKER_NETWORK \
+		-e TZ=$(TESTC_TZ) \
+		$(DOCKER_IMAGE_DEV) \
+		bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && \
+		         pnpm test:unit"
 
 
 # CI test configuration variables
@@ -279,20 +304,6 @@ _ci-run-backend-test:
 		$(DOCKER_IMAGE_DEV):$(VERSION) \
 		bash -c "cd /opt/harp/src && make test-backend"
 
-# Internal target for running frontend tests in container
-# Parameters: TESTC_FRONTEND_IMAGE, TESTC_FRONTEND_INTERACTIVE, TESTC_TZ
-TESTC_TZ ?= America/Havana
-TESTC_FRONTEND_IMAGE ?= $(DOCKER_IMAGE_DEV)
-TESTC_FRONTEND_INTERACTIVE ?= $(shell [ -t 0 ] && echo "-it" || echo "-t")
-
-_run-frontend-test:
-	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
-	$(DOCKER) run $(TESTC_FRONTEND_INTERACTIVE) --rm \
-		--network $(DOCKER_NETWORK) \
-		-e TZ=$(TESTC_TZ) \
-		$(TESTC_FRONTEND_IMAGE) \
-		bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && pnpm test:unit"
-
 .PHONY: ci-test-backend-core ci-test-backend-apps ci-test-backend-e2e ci-test-frontend-unit
 
 # CI test tasks - these run tests in the dev container with CI-specific configuration
@@ -306,7 +317,7 @@ ci-test-backend-e2e:  ## Runs backend e2e tests in CI environment (requires dev 
 	CI_PYTEST_TARGETS=tests CI_PYTEST_CPUS=1 $(MAKE) _ci-run-backend-test
 
 ci-test-frontend-unit:  ## Runs frontend unit tests in CI environment (requires dev image to be built)
-	TESTC_FRONTEND_IMAGE=$(DOCKER_IMAGE_DEV):$(VERSION) TESTC_FRONTEND_INTERACTIVE="" $(MAKE) _run-frontend-test
+	DOCKER_IMAGE_DEV=$(DOCKER_IMAGE_DEV):$(VERSION) DOCKER_INTERACTIVE="" $(MAKE) testc-frontend
 
 
 ########################################################################################################################
