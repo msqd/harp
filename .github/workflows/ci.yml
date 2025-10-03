@@ -239,6 +239,7 @@ jobs:
       - name: Build documentation
         run: |
           mkdir -p harp-doc
+          chmod 777 harp-doc
           docker run --rm \
             -v $PWD/harp-doc:/opt/harp/src/docs/_build/html \
             -e SPHINXBUILD=/opt/venv/bin/sphinx-build \
@@ -272,6 +273,7 @@ jobs:
       - name: Build storybook
         run: |
           mkdir -p harp-ui
+          chmod 777 harp-ui
           docker run --rm \
             -v $PWD/harp-ui:/opt/harp/src/harp_apps/dashboard/frontend/build \
             ${{ env.DOCKER_IMAGE_DEV }} \
