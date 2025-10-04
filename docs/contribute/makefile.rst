@@ -1,5 +1,5 @@
-Makefile Tasks Reference
-=========================
+Makefile Tasks
+==============
 
 This guide documents all available Makefile tasks for development, testing, building, and CI operations.
 
@@ -159,101 +159,57 @@ The ``testc-*`` tasks are useful for:
 * Debugging CI-specific issues
 * Verifying Docker-related functionality (like testcontainers)
 
-CI-Specific Test Tasks
-^^^^^^^^^^^^^^^^^^^^^^
+Testing in Docker Containers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-These tasks are designed for CI environments and match the GitHub Actions workflow. They run tests
-in the development Docker image using the host's Docker socket for testcontainers support.
-
-**Testing CI Tasks Locally**
-
-**Prerequisites**
-
-First, build the development image with the appropriate platform:
+For CI simulation and debugging CI-specific issues, you can run tests inside Docker containers.
 
 .. code-block:: shell
 
-    # On Linux or Intel Macs (AMD64):
-    make buildc-dev VERSION=ci-test
-
-    # On Apple Silicon Macs (ARM64) - for better performance:
-    make buildc-dev VERSION=ci-test DOCKER_PLATFORM=linux/arm64
-
-**Running CI Test Tasks**
-
-The ``ci-test-*`` tasks mount the host Docker socket to allow testcontainers to work:
-
-.. code-block:: shell
-
-    # Run backend core tests (tests in harp/ directory)
-    make ci-test-backend-core VERSION=ci-test
-
-    # Run backend apps tests (tests in harp_apps/ directory)
-    make ci-test-backend-apps VERSION=ci-test
-
-    # Run backend e2e tests (tests in tests/ directory)
-    make ci-test-backend-e2e VERSION=ci-test
-
-    # Run frontend unit tests
-    make ci-test-frontend-unit VERSION=ci-test
-
-.. note::
-
-   The CI tasks automatically detect and configure Docker socket permissions for both
-   Linux (GNU stat) and macOS (BSD stat). If you encounter permission issues, ensure
-   Docker Desktop is running and your user has access to ``/var/run/docker.sock``.
-
-**Alternative: Using Docker-in-Docker**
-
-If Docker socket mounting doesn't work, use the ``testc-*`` tasks which use Docker-in-Docker:
-
-.. code-block:: shell
-
-    # Run backend tests (all backend tests)
+    # Run backend tests in container with Docker-in-Docker
     make testc-backend
 
-    # Run frontend tests
+    # Run frontend tests in container
     make testc-frontend
 
-    # Open interactive shell for debugging
+    # Open interactive shell in test container
     make testc-shell
 
-**CI Task Behavior**
+The ``testc-*`` targets are useful for:
 
-All ``ci-test-backend-*`` tasks:
+* Simulating the exact CI environment locally
+* Debugging CI-specific issues
+* Testing Docker-related functionality (like testcontainers)
 
-* Use the development image (``DOCKER_IMAGE_DEV:VERSION``)
-* Mount the host Docker socket for testcontainers
-* Handle Docker socket permissions automatically (GID detection)
-* Skip subprocess-marked tests (``-m 'not subprocess'``)
-* Set ``UV_CACHE_DIR`` for reproducible builds
-* Disable testcontainers Ryuk for faster cleanup (``TESTCONTAINERS_RYUK_DISABLED=true``)
+**How testc-backend works:**
 
-Task-specific differences:
+In CI environments (when ``CI`` environment variable is set), it mounts the host Docker socket:
 
-* ``ci-test-backend-core``: Tests ``harp/`` directory with parallel execution (no testcontainers)
-* ``ci-test-backend-apps``: Tests ``harp_apps/`` directory with serial execution (``PYTEST_CPUS=1``, uses testcontainers)
-* ``ci-test-backend-e2e``: Tests ``tests/`` directory with serial execution (``PYTEST_CPUS=1``, uses testcontainers)
-* ``ci-test-frontend-unit``: Runs frontend unit tests with timezone set to ``America/Havana``
+.. code-block:: shell
 
-.. warning::
+    docker run --rm \
+      --privileged \
+      --group-add <docker-gid> \
+      -v /var/run/docker.sock:/var/run/docker.sock \
+      -e DOCKER_HOST=unix:///var/run/docker.sock \
+      <dev-image> \
+      bash -c "cd /opt/harp/src && make test-backend"
 
-   The ``ci-test-backend-apps`` and ``ci-test-backend-e2e`` tasks use testcontainers which
-   creates containers that need network connectivity. These tasks work in GitHub Actions
-   Linux runners but may have networking issues on macOS/Windows Docker Desktop. For local
-   testing with full testcontainers support, use ``make testc-backend`` instead.
+Locally, it uses Docker-in-Docker for isolation:
 
-**Required Variables**
+.. code-block:: shell
 
-When testing locally, you must specify:
+    # Starts a Docker-in-Docker sidecar container
+    # Then runs tests with DOCKER_HOST=tcp://docker:2375/
 
-* ``VERSION``: The image tag to use (e.g., ``ci-test``, ``latest``, or git commit)
+**Environment Variables:**
 
-**Optional Variables**
+* ``PYTEST_OPTIONS``: Additional pytest options (e.g., ``-k test_name``)
+* ``PYTEST_TARGETS``: Which directories to test (default: ``harp harp_apps tests``)
+* ``PYTEST_CPUS``: Number of parallel workers (default: ``auto``)
+* ``DOCKER_IMAGE_DEV``: Development image to use
 
-* ``DOCKER_IMAGE_DEV``: Dev image name (default: ``harp-proxy-dev``)
-* ``CI_PYTEST_OPTIONS``: Override pytest options (default: ``-m 'not subprocess'``)
-* ``CI_PYTEST_CPUS``: Override CPU count for specific tests
+For more details on the CI process, see :doc:`ci`.
 
 Code Quality
 ------------
@@ -500,33 +456,23 @@ Debugging CI Failures Locally
 
 .. code-block:: shell
 
-    # 1. Build the dev image locally
-    make buildc-dev VERSION=debug
+    # 1. Build the dev image locally (if needed)
+    make buildc-dev
 
-    # 2. Run the specific failing test suite
-    # If core tests are failing:
-    make ci-test-backend-core VERSION=debug
+    # 2. Run backend tests in container (simulates CI)
+    make testc-backend
 
-    # If apps tests are failing:
-    make ci-test-backend-apps VERSION=debug
-
-    # If e2e tests are failing:
-    make ci-test-backend-e2e VERSION=debug
-
-    # If frontend tests are failing:
-    make ci-test-frontend-unit VERSION=debug
+    # With specific options
+    PYTEST_OPTIONS="-v -k test_name" make testc-backend
 
     # 3. Or open a shell to investigate interactively
-    make runc-dev-shell VERSION=debug
+    make testc-shell
 
-    # 4. Inside the container, run tests manually with full control
+    # 4. Inside the container, run tests manually
     cd /opt/harp/src
-
-    # Run specific test file
     uv run pytest tests/specific_test.py -v
 
-    # Run with testcontainers (requires Docker socket access)
-    DOCKER_HOST=unix:///var/run/docker.sock uv run pytest tests/storage/ -v
+For more details on the CI process and troubleshooting, see :doc:`ci`.
 
 Working with Frontend
 ^^^^^^^^^^^^^^^^^^^^^
@@ -606,14 +552,6 @@ Docker
 * ``DOCKER_RUN_OPTIONS``: Additional docker run options
 * ``DOCKER_RUN_COMMAND``: Container command
 * ``DOCKER_NETWORK``: Docker network name (default: ``harp``)
-
-CI Testing
-^^^^^^^^^^
-
-* ``CI_PYTEST_TARGETS``: Test paths for CI backend tests (used by ``ci-test-*`` targets)
-* ``CI_PYTEST_OPTIONS``: Pytest options for CI (default: ``-m 'not subprocess'``)
-* ``CI_PYTEST_CPUS``: CPU count for CI tests (set to ``1`` for apps/e2e tests)
-* ``CI_PYTEST_FAILFAST``: Enable fail-fast mode (``--maxfail=1``) if set
 
 Test Containers
 ^^^^^^^^^^^^^^^
