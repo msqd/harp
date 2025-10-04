@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test"
-import { SetupWorkerApi } from "msw/browser"
+import type { SetupWorker } from "msw/browser"
 import { http, HttpResponse } from "msw"
 
 declare namespace window {
   export const msw: {
-    worker: SetupWorkerApi
+    worker: SetupWorker
     http: typeof http
     HttpResponse: typeof HttpResponse
   }

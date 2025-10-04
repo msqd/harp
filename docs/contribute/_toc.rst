@@ -7,6 +7,8 @@
 
     introduction
     overview
+    makefile
+    ci
     dependency-injection
     events
     applications

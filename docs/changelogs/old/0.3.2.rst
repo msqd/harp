@@ -29,16 +29,3 @@ Changes
 * chore: update submodule (Romain Dorgueil)
 * feat: debugging tools and better typing (Romain Dorgueil)
 * feat: separate fron/back format (Romain Dorgueil)
-
-Benchmarks
-::::::::::
-
-PostgreSQL
-----------
-
-.. figure:: benchmarks/0.3.2-postgresql.svg
-
-SQLite
-----------
-
-.. figure:: benchmarks/0.3.2-sqlite.svg

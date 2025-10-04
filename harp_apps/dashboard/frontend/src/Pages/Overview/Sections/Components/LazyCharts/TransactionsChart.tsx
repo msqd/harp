@@ -10,7 +10,7 @@ import { defaultEchartOptions } from "Settings"
 
 echarts.use([LineChart, BarChart, CanvasRenderer, GridComponent, TooltipComponent, TitleComponent, DatasetComponent])
 
-interface TransactionsChartProps {
+export interface TransactionsChartProps {
   data: Array<OverviewTransaction>
   timeRange?: string
 }

@@ -5,7 +5,6 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     colors: {
-      ...colors,
       inherit: colors.inherit,
       current: colors.current,
       transparent: colors.transparent,
@@ -31,6 +30,21 @@ export default {
       blue: colors.blue,
       orange: colors.orange,
       purple: colors.purple,
+      // Use the new color names
+      sky: colors.sky,
+      stone: colors.stone,
+      neutral: colors.neutral,
+      slate: colors.slate,
+      amber: colors.amber,
+      emerald: colors.emerald,
+      teal: colors.teal,
+      cyan: colors.cyan,
+      indigo: colors.indigo,
+      violet: colors.violet,
+      fuchsia: colors.fuchsia,
+      pink: colors.pink,
+      rose: colors.rose,
+      lime: colors.lime,
     },
     extend: {
       fontFamily: {

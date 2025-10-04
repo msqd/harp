@@ -25,6 +25,7 @@ const getStatusColorFromStatusCode = (statusCode: number): BadgeColor => {
 
   return "default"
 }
+
 export const ResponseStatusBadge = ({ statusCode }: { statusCode: number }) => {
   const color = getStatusColorFromStatusCode(statusCode)
   let reason: string

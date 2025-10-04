@@ -10,7 +10,7 @@ authors = [{ name = "Romain Dorgueil", email = "romain@makersquad.fr" }]
 requires-python = ">=3.13,<3.14"
 readme = "README.rst"
 dependencies = [
-    "aiohttp>=3.11,<3.12",
+    "aiohttp>=3.12,<3.13",
     "aiosqlite>=0.20,<0.22",
     "alembic>=1.14,<1.16",
     "anyio>=4.6,<4.10",
@@ -59,14 +59,11 @@ harp-proxy = "harp.commandline:entrypoint"
 
 [dependency-groups]
 dev = [
-    "black>=25.1.0,<26.0",
-    "freezegun>=1.5.1,<2",
+    "freezegun>=1.5.5,<2",
     "furo>=2023.9.10,<2025.0.0",
-    "isort>=5.13.2,<7.0.0",
     "pre-commit>=3.7.1,<5.0.0",
     "pytest>=7.4.3,<9.0.0",
     "pytest-asyncio>=0.26.0,<0.27",
-    "pytest-benchmark[histogram]>=4,<6",
     "pytest-cov>=4.1,<7.0",
     "pytest-timeout>=2.3.1,<3",
     "pytest-xdist[psutil]>=3.6.1,<4",
@@ -123,9 +120,6 @@ exclude = [
     "harp_apps/dashboard/frontend",
 ]
 
-[tool.black]
-line-length = 120
-
 [tool.ruff]
 line-length = 120
 exclude = [
@@ -135,12 +129,9 @@ exclude = [
 [tool.ruff.format]
 docstring-code-format = true
 
-[tool.isort]
-line_length = 120
-py_version = 311
-profile = "black"
-known_first_party = "harp"
-known_third_party = "asgiref,httpx,rich,structlog,sqlalchemy,whistle,config,rodi"
+[tool.ruff.lint.isort]
+known-first-party = ["harp"]
+known-third-party = ["asgiref", "httpx", "rich", "structlog", "sqlalchemy", "whistle", "config", "rodi"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

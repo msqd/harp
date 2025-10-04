@@ -40,16 +40,3 @@ Changes
 * feat: remove start command as it may differ on some systems (Romain Dorgueil)
 * feat: fix cookies parsing using django method (Romain Dorgueil)
 * debug: cookies (Romain Dorgueil)
-
-Benchmarks
-::::::::::
-
-PostgreSQL
-----------
-
-.. figure:: benchmarks/0.3.0-postgresql.svg
-
-SQLite
-----------
-
-.. figure:: benchmarks/0.3.0-sqlite.svg

@@ -1,5 +1,6 @@
-import { render } from "@testing-library/react"
+import { render, RenderResult } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "react-query"
+import React from "react"
 
 const createTestQueryClient = () =>
   new QueryClient({
@@ -10,12 +11,16 @@ const createTestQueryClient = () =>
     },
   })
 
-export function renderWithClient(ui: React.ReactElement) {
+interface RenderWithClientResult extends Omit<RenderResult, "rerender"> {
+  rerender: (rerenderUi: React.ReactNode) => void
+}
+
+export function renderWithClient(ui: React.ReactElement): RenderWithClientResult {
   const testQueryClient = createTestQueryClient()
   const { rerender, ...result } = render(<QueryClientProvider client={testQueryClient}>{ui}</QueryClientProvider>)
   return {
     ...result,
-    rerender: (rerenderUi: React.ReactElement) =>
+    rerender: (rerenderUi: React.ReactNode) =>
       rerender(<QueryClientProvider client={testQueryClient}>{rerenderUi}</QueryClientProvider>),
   }
 }

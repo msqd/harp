@@ -1,12 +1,26 @@
+########################################################################################################################
+# Makefile - This is the main entry point for all development related tasks.
+#
+# It contains wrappers for everything one may need to work with the codebase (install, test, format, lint, build,
+# container related stuff, releasing, etc...).
+#
+# To have an overview, just run `make help`.
+#
+# Documentation is available in the `docs/contribute/makefile.rst` and should be kept in sync with this file.
+#
+# The continuous integration process (and basically all automated processes) uses this file as well, so be careful when
+# changing things.
+########################################################################################################################
+
 # package
 NAME ?= harp-proxy
 VERSION ?= $(shell git describe 2>/dev/null || git rev-parse --short HEAD)
 
 # uv
-UV ?= $(shell which uv || echo "uv")
+UV ?= $(shell which uv || echo "")
 UVX ?= $(shell which uvx || echo "uvx")
+UV_RUN ?= $(if $(UV),$(UV) run,)
 UV_SYNC_OPTIONS ?=
-PLATFORM ?= linux/amd64
 
 # pytest
 PYTEST ?= $(UV_RUN) pytest
@@ -17,13 +31,15 @@ PYTEST_COVERAGE_OPTIONS ?= --cov=harp --cov=harp_apps --cov-report html:docs/_bu
 PYTEST_OPTIONS ?=
 
 # docker
+DOCKER_PLATFORM ?= $(shell uname -m | sed -E 's/^x86_64$$/linux\/amd64/;s/^(aarch64|arm64)$$/linux\/arm64/')
 DOCKER ?= $(shell which docker || echo "docker")
+DOCKER_INTERACTIVE ?= $(shell [ -t 0 ] && echo "-it" || echo "-t")
 DOCKER_OPTIONS ?=
 DOCKER_IMAGE ?= $(NAME)
 DOCKER_IMAGE_DEV ?= $(NAME)-dev
 DOCKER_TAGS ?=
 DOCKER_TAGS_SUFFIX ?=
-DOCKER_BUILD_OPTIONS ?= --platform=$(PLATFORM)
+DOCKER_BUILD_OPTIONS ?= --platform=$(DOCKER_PLATFORM)
 DOCKER_BUILD_TARGET ?= runtime
 DOCKER_NETWORK ?= harp
 DOCKER_RUN_COMMAND ?=
@@ -34,13 +50,15 @@ PNPM ?= $(shell which pnpm || echo "pnpm")
 
 # misc.
 SED ?= $(shell which gsed || which sed || echo "sed")
-TESTC_COMMAND ?= poetry shell
+TESTC_COMMAND ?= bash
 TEST_SKIP_FRONT ?=
 
 # constants
 FRONTEND_DIR = harp_apps/dashboard/frontend
 
-# default run options
+# harp
+#
+# todo: options vs more options should be clarified
 HARP_OPTIONS ?= --example sqlite --example proxy:httpbin
 HARP_MORE_OPTIONS ?=
 HARP_SERVICES ?= server dashboard
@@ -57,7 +75,7 @@ start-dev-frontend: install-dev  # Starts a frontend development instance with r
 # Dependencies
 ########################################################################################################################
 
-.PHONY: install install-dev install-frontend install-backend install-backend-dev wheel
+.PHONY: install install-dev install-frontend install-backend install-backend-dev
 
 install: install-frontend install-backend  ## Installs harp dependencies (backend, dashboard) without development tools.
 
@@ -68,20 +86,10 @@ install-frontend:  ## Installs harp dashboard dependencies (frontend).
 	cd $(FRONTEND_DIR); $(PNPM) install
 
 install-backend:  ## Installs harp dependencides (backend).
-	$(UV) sync $(UV_SYNC_OPTIONS)
+	$(if $(UV),$(UV) sync $(UV_SYNC_OPTIONS),pip install -e .)
 
 install-backend-dev:  ## Installs harp dependencies (backend) with development tools.
-	UV_SYNC_OPTIONS="--extra dev" $(MAKE) install
-
-wheel:
-	mkdir -p dist
-	bin/sandbox "$(MAKE) install-dev build-frontend; \
-				 rm -rf harp_apps/dashboard/frontend; \
-				 sed '/^People & Credits/,$$ d' README.rst > README.rst.tmp; \
-				 mv README.rst.tmp README.rst; \
-				 $(UV) build; \
-				 cp dist/* $(PWD)/dist; \
-				 $(UVX) twine check dist/*"
+	UV_SYNC_OPTIONS="--extra dev" $(MAKE) install-backend
 
 
 ########################################################################################################################
@@ -93,14 +101,14 @@ wheel:
 reference: harp  ## Generates API reference documentation as ReST files (docs).
 	rm -rf docs/reference/core docs/reference/apps
 	mkdir -p docs/reference/core docs/reference/apps
-	$(UV) run bin/generate_apidoc
+	$(UV_RUN) bin/generate_apidoc
 	git add docs/reference/
 
 docs:  ## Build html documentation
-	$(UV) run $(MAKE) -C docs html
+	$(UV_RUN) $(MAKE) -C docs html
 
 docs-dev:  ## Spin up a livereload documentation server
-	$(UV) run $(MAKE) -C docs dev
+	$(UV_RUN) $(MAKE) -C docs dev
 
 
 ########################################################################################################################
@@ -122,7 +130,7 @@ build-frontend: install-frontend  ## Builds the harp dashboard frontend (compile
 .PHONY: lint-frontend coverage cloc
 
 preqa: types format reference  ## Runs pre-qa checks (types generation, formatting, api reference).
-	-$(UV) run pre-commit
+	-$(UV_RUN) pre-commit
 
 qa: preqa test  ## Runs all QA checks, with most common databases.
 
@@ -133,18 +141,16 @@ qa-nofront:
 	TEST_SKIP_FRONT=1 $(MAKE) qa
 
 types:  ## Generates frontend types from the python code.
-	$(UV) run bin/generate_types # old school
-	$(UV) run bin/generate_ts_types # new school
+	$(UV_RUN) bin/generate_types # old school
+	$(UV_RUN) bin/generate_ts_types # new school
 
 format:  ## Formats the full codebase (backend and frontend).
 	$(MAKE) format-backend
 	test -z "$(TEST_SKIP_FRONT)" && $(MAKE) format-frontend || (cd $(FRONTEND_DIR); $(PNPM) prettier -w src/Models)
 
 format-backend:  ## Formats the backend codebase.
-	$(UV) run isort harp harp_apps tests
-	$(UV) run black harp harp_apps tests
-	$(UV) run ruff check --fix harp harp_apps tests
-	$(UV) run ruff format
+	$(UV_RUN) ruff check --fix harp harp_apps tests
+	$(UV_RUN) ruff format
 
 format-frontend: install-frontend  ## Formats the frontend codebase.
 	(cd $(FRONTEND_DIR); $(PNPM) lint:fix)
@@ -159,9 +165,11 @@ test:  ## Runs all tests.
 
 test-backend: install-backend-dev  ## Runs backend tests.
 	$(PYTEST) $(PYTEST_TARGETS) \
-	          --benchmark-disable \
 	          $(PYTEST_COMMON_OPTIONS) \
 	          $(PYTEST_OPTIONS)
+
+test-backend-update:  ## Runs backend tests while updating snapshots.
+	PYTEST_OPTIONS="$(PYTEST_OPTIONS) --snapshot-update" $(MAKE) test-backend
 
 test-frontend: install-frontend lint-frontend  ## Runs frontend tests.
 	cd $(FRONTEND_DIR); $(PNPM) test:unit
@@ -189,44 +197,17 @@ cloc:
 
 
 ########################################################################################################################
-# Benchmarks
-########################################################################################################################
-
-.PHONY: benchmark benchmark-save
-
-BENCHMARK_OPTIONS ?=
-BENCHMARK_MIN_ROUNDS ?= 100
-
-benchmark:  ## Runs benchmarks.
-	$(PYTEST) tests/benchmarks \
-	          $(BENCHMARK_OPTIONS) \
-	          --benchmark-enable \
-	          --benchmark-only \
-	          --benchmark-disable-gc \
-	          --benchmark-min-rounds=$(BENCHMARK_MIN_ROUNDS) \
-	          --benchmark-group-by=group \
-	          --benchmark-compare="0006" \
-	          --benchmark-histogram \
-	          $(PYTEST_OPTIONS)
-
-benchmark-save:  ## Runs benchmarks and saves the results.
-	BENCHMARK_OPTIONS='--benchmark-warmup=on --benchmark-warmup-iterations=50 --benchmark-save="$(shell git describe --tags --always --dirty)"' \
-	BENCHMARK_MIN_ROUNDS=500 \
-	$(MAKE) benchmark
-
-
-########################################################################################################################
 # Docker builds
 ########################################################################################################################
 
 .PHONY: buildc pushc runc runc-shell runc-example-repositories
 
 buildc:  ## Builds the docker image.
-	# TODO: rm in trap ?
-	# TODO: document --progress=plain ?
-	echo $(VERSION) > version.txt
+	# Set up cleanup trap to ensure version.txt is removed even on error
+	# Use --progress=plain for more detailed build output (useful for CI/debugging)
+	trap 'rm -f version.txt' EXIT; \
+	echo $(VERSION) > version.txt && \
 	$(DOCKER) build --target=$(DOCKER_BUILD_TARGET) $(DOCKER_OPTIONS) $(DOCKER_BUILD_OPTIONS) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .
-	-rm -f version.txt
 
 pushc:  ## Pushes the docker image to the registry.
 	for tag in $(VERSION) $(DOCKER_TAGS); do \
@@ -235,11 +216,11 @@ pushc:  ## Pushes the docker image to the registry.
 
 runc:  ## Runs the docker image.
 	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
-	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
+	$(DOCKER) run $(DOCKER_INTERACTIVE) --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
 runc-shell:  ## Runs a shell within the docker image.
 	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
-	$(DOCKER) run -it --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
+	$(DOCKER) run $(DOCKER_INTERACTIVE) --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
 
 .PHONY: buildc-dev pushc-dev runc-dev runc-dev-shell
@@ -257,30 +238,86 @@ runc-dev-shell:  ## Runs a shell within the development docker image.
 	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) runc-shell
 
 
-.PHONY: testc-shell testc-backend
+.PHONY: testc-shell testc-backend testc-frontend
+
+# Test container configuration variables
+TESTC_TZ ?= America/Havana
 
 testc-shell:  ## Runs a shell in the development test suite environment.
-	$(DOCKER) rm -f docker || true
-	$(DOCKER) run --privileged -d --name docker --network $(DOCKER_NETWORK) --network-alias docker -e DOCKER_TLS_CERTDIR= $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) docker:24.0.6-dind
-	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" DOCKER_RUN_COMMAND="-c \"bin/wait-until-docker-available && (cd src; docker compose up -d; $(TESTC_COMMAND))\"" $(MAKE) runc-dev-shell
-	$(DOCKER) stop docker
-	$(DOCKER) rm docker
+	@_DIND_CONTAINER="dind-$$(date +%s)-$$$$" && \
+	_DOCKER_NETWORK="harp-$$(date +%s)-$$$$" && \
+	trap "$(DOCKER) stop $$_DIND_CONTAINER 2>/dev/null || true; \
+	      $(DOCKER) rm $$_DIND_CONTAINER 2>/dev/null || true; \
+	      $(DOCKER) network rm $$_DOCKER_NETWORK 2>/dev/null || true" EXIT && \
+	$(DOCKER) network create $$_DOCKER_NETWORK && \
+	$(DOCKER) run --privileged -d \
+		--name $$_DIND_CONTAINER \
+		--network $$_DOCKER_NETWORK \
+		--network-alias docker \
+		-e DOCKER_TLS_CERTDIR= \
+		$(DOCKER_OPTIONS) \
+		$(DOCKER_RUN_OPTIONS) \
+		docker:24.0.6-dind && \
+	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" \
+	DOCKER_RUN_COMMAND="-c \"bin/wait-until-docker-available && (cd src; $(TESTC_COMMAND))\"" \
+	DOCKER_NETWORK=$$_DOCKER_NETWORK \
+	$(MAKE) runc-dev-shell
 
 testc-backend:  ## Runs the backend test suite within the development docker image, with a docker in docker sidecar service.
-	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" TESTC_COMMAND="PYTEST_OPTIONS=-vv poetry run make test-backend" $(MAKE) testc-shell
+ifdef CI
+	$(eval DOCKER_GID := $(shell stat -c '%g' /var/run/docker.sock 2>/dev/null || stat -f '%g' /var/run/docker.sock 2>/dev/null || stat -f '%g' ~/.docker/run/docker.sock 2>/dev/null || echo ""))
+	$(DOCKER) run --rm \
+		--privileged \
+		$(if $(DOCKER_GID),--group-add $(DOCKER_GID),) \
+		--group-add 0 \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-e PYTEST_OPTIONS="$(PYTEST_OPTIONS)" \
+		-e PYTEST_TARGETS=$(PYTEST_TARGETS) \
+		$(if $(PYTEST_CPUS),-e PYTEST_CPUS=$(PYTEST_CPUS),) \
+		-e DOCKER_HOST=unix:///var/run/docker.sock \
+		-e UV_CACHE_DIR=/tmp/.uv-cache \
+		-e TESTCONTAINERS_RYUK_DISABLED=true \
+		$(DOCKER_IMAGE_DEV) \
+		bash -c "cd /opt/harp/src && make test-backend"
+else
+	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" TESTC_COMMAND="PYTEST_OPTIONS=-vv make test-backend" $(MAKE) testc-shell
+endif
+
+testc-frontend:  ## Runs the frontend test suite within the development docker image.
+	@_DOCKER_NETWORK="harp-$$(date +%s)-$$$$" && \
+	trap "$(DOCKER) network rm $$_DOCKER_NETWORK 2>/dev/null || true" EXIT && \
+	$(DOCKER) network create $$_DOCKER_NETWORK && \
+	$(DOCKER) run $(DOCKER_INTERACTIVE) --rm \
+		--network $$_DOCKER_NETWORK \
+		-e TZ=$(TESTC_TZ) \
+		$(DOCKER_IMAGE_DEV) \
+		bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && \
+		         pnpm test:unit"
+
+
 
 
 ########################################################################################################################
 # Misc. utilities
 ########################################################################################################################
 
-.PHONY: help clean clean-dist clean-docs clean-frontend-modules
+.PHONY: help clean clean-dist clean-docs clean-frontend-modules wheel
 
 help:   ## Shows available commands.
 	@echo "Available commands:"
 	@echo
-	@grep -E '^[a-zA-Z_-]+:.*?##[\s]?.*$$' --no-filename $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z0-9_-]+:.*?##[\s]?.*$$' --no-filename $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo
+
+wheel:
+	mkdir -p dist
+	bin/sandbox "$(MAKE) install-dev build-frontend; \
+				 rm -rf harp_apps/dashboard/frontend; \
+				 sed '/^People & Credits/,$$ d' README.rst > README.rst.tmp; \
+				 mv README.rst.tmp README.rst; \
+				 $(if $(UV),$(UV) build,python -m build); \
+				 cp dist/* $(PWD)/dist; \
+				 $(if $(UVX),$(UVX) twine check dist/*,twine check dist/*)"
 
 clean-frontend-modules:  ## Cleans up the frontend node modules directory.
 	-rm -rf $(FRONTEND_DIR)/node_modules
@@ -293,4 +330,3 @@ clean-docs:  ## Cleanup the documentation builds.
 	-rm -rf docs/_build
 
 clean: clean-frontend-modules clean-dist clean-docs  ## Cleans up the project.
-	-rm -f benchmark_*.svg
