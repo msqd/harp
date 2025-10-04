@@ -241,16 +241,16 @@ jobs:
           mkdir -p harp-doc
           chmod 777 harp-doc
           docker run --rm \
-            -v $PWD/harp-doc:/opt/harp/src/docs/_build/html \
+            -v $PWD/harp-doc:/opt/harp/src/docs/_build \
             -e SPHINXBUILD=/opt/venv/bin/sphinx-build \
             ${{ env.DOCKER_IMAGE_DEV }} \
-            bash -c "cd /opt/harp/src/docs && make html && chown -R $(id -u):$(id -g) _build/html"
+            bash -c "cd /opt/harp/src/docs && make html"
 
       - name: Upload documentation artifacts
         uses: actions/upload-artifact@v4
         with:
           name: harp-doc
-          path: harp-doc/
+          path: harp-doc/html/
           retention-days: 30
 
   storybook:
@@ -277,7 +277,7 @@ jobs:
           docker run --rm \
             -v $PWD/harp-ui:/opt/harp/src/harp_apps/dashboard/frontend/build \
             ${{ env.DOCKER_IMAGE_DEV }} \
-            bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && pnpm ui:build && chown -R $(id -u):$(id -g) build"
+            bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && pnpm ui:build"
 
       - name: Upload storybook artifacts
         uses: actions/upload-artifact@v4
