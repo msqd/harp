@@ -38,7 +38,7 @@ Updated
 * Bump click: 20.30.0 → 20.34.0
 * Bump colorama: 6.1.1 → 6.3.0
 * Bump coverage: 2.3.1 → 2.4.0
-* Bump cryptography: 44.0.2 → 44.0.3
+* Bump cryptography: 44.0.2 → 46.0.2
 * Bump distlib: 1.17.2 → 1.17.3
 * Bump execnet: 310 → 311
 * Bump filelock: 3.18.0 → 3.19.1
