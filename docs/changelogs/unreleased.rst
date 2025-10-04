@@ -9,6 +9,7 @@ Important Changes
   the wheel name and better integration with `uv`/`uvx`.
 * ⚠️ Package management migrated to `uv` instead of poetry. It should not change a lot from
   the user perspective (but read below).
+* ⚠️ CI/CD migrated from GitLab CI to GitHub Actions.
 
 
 Added
