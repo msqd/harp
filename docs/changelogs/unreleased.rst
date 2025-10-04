@@ -30,6 +30,7 @@ Updated
 * Bump aiohttp, freezegun.
 * Bump annotated-types: 2.33.1 → 2.33.2
 * Bump anyio: 25.3.0 → 25.4.0
+* Bump asgi-tools: <1.2 → <1.4
 * Bump attrs: 2025.4.1 → 2025.9.1
 * Bump beautifulsoup4: 4.13.4 → 4.14.2
 * Bump certifi: 2.2.0 → 3.0.1
@@ -58,7 +59,7 @@ Updated
 * Bump propcache: 0.3.1 → 0.3.2
 * Bump psutil: 7.0.0 → 7.1.0
 * Bump pycparser: 2.22 → 2.23
-* Bump pydantic: 2.11.3 → 2.11.9
+* Bump pydantic: 2.11.3 → 2.11.10
 * Bump pymysql: 1.1.1 → 1.1.2
 * Bump pytest: 3.6.1 → 3.8.0
 * Bump pyyaml: 6.0.2 → 6.0.3
