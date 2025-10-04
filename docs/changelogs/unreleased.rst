@@ -11,7 +11,6 @@ Important Changes
   the user perspective (but read below).
 * ⚠️ CI/CD migrated from GitLab CI to GitHub Actions.
 
-
 Added
 :::::
 
@@ -71,6 +70,7 @@ Updated
 * Bump soupsieve: 2.7 → 2.8
 * Bump sphinx: 2.0.40 → 2.0.43
 * Bump sphinx-click: 6.0.0 → 6.1.0
+* Bump testcontainers requirements: <4.11,>=4.7 to >=4.7,<4.14.
 * Bump types-python-dateutil: 2.9.0.20241206 → 2.9.0.20250822
 * Bump typing-extensions: 2.4.0 → 2.5.0
 * Bump typing-inspection: 0.4.0 → 0.4.2

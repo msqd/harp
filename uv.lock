@@ -830,7 +830,7 @@ dev = [
     { name = "sphinx-tags", specifier = ">=0.4,<0.5" },
     { name = "sphinxcontrib-jquery", specifier = "~=4.1" },
     { name = "syrupy", specifier = ">=4.6.1,<5" },
-    { name = "testcontainers", extras = ["postgres"], specifier = ">=4.7,<4.11" },
+    { name = "testcontainers", extras = ["postgres"], specifier = ">=4.7,<4.14" },
 ]
 mysql = [
     { name = "aiomysql", specifier = ">=0.2,<0.3" },
