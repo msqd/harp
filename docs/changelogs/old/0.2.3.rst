@@ -5,16 +5,3 @@ Changes
 :::::::
 
 * feat: fix auth (broken in previous release) (Romain Dorgueil)
-
-Benchmarks
-::::::::::
-
-PostgreSQL
-----------
-
-.. figure:: benchmarks/0.2.3-postgresql.svg
-
-SQLite
-----------
-
-.. figure:: benchmarks/0.2.3-sqlite.svg

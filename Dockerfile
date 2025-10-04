@@ -1,18 +1,19 @@
 ################################################################################
 # IMAGE: Base build image
 #
-FROM python:3.12-slim AS base
+FROM python:3.13-slim AS base
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_DEFAULT_TIMEOUT=100 \
     BASE="/opt/harp" \
-    POETRY_VERSION=1.7.1 \
-    POETRY_HOME="/opt/poetry" \
-    POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_CREATE=false \
     VIRTUAL_ENV="/opt/venv" \
     NODE_MAJOR=20
+
+# uv related environment
+ENV UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    UV_PROJECT_ENVIRONMENT="${VIRTUAL_ENV}"
 
 # system dependencies layer
 USER root
@@ -20,21 +21,20 @@ WORKDIR /root
 RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update \
-    && apt-get install -y make curl ca-certificates \
-    && rm -rf /var/lib/apt/lists/* \
-    && useradd -m harp -g www-data -d ${BASE} -u 500  \
-    && echo 'alias l="ls -lsah --color"' > /opt/harp/.profile \
-    && echo 'export PATH="${POETRY_HOME}/bin:${VIRTUAL_ENV}/bin:$PATH"' >> /opt/harp/.profile
+ && apt-get install -y make curl ca-certificates tzdata \
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd -m harp -g www-data -d ${BASE} -u 500 \
+ && python3 -m venv ${VIRTUAL_ENV} \
+ && chown harp:www-data -R /opt/harp /opt/venv
 
-# global python dependencies layer
-RUN --mount=type=cache,target=/root/.cache,sharing=locked \
-    pip install 'poetry==1.7.1' \
-    && python3 -m venv ${VIRTUAL_ENV}
-
-# fix permissions
-RUN chown harp:www-data -R /opt/harp /opt/venv
+# Install specific UV version for reproducibility
+COPY --from=ghcr.io/astral-sh/uv:0.7.20 /uv /uvx /bin/
 
 USER harp
+ENV PATH="${VIRTUAL_ENV}/bin:$PATH"
+RUN echo 'alias l="ls -lsah"' >> ~/.profile \
+ && echo 'alias l="ls -lsah"' >> ~/.bashrc
+
 WORKDIR /opt/harp
 
 
@@ -56,13 +56,19 @@ RUN --mount=type=cache,target=/root/.cache,sharing=locked \
 USER harp
 WORKDIR /opt/harp
 
+# Copy dependency files first for better layer caching
+COPY --chown=harp:www-data pyproject.toml uv.lock ./
+
+# Install dependencies in separate layer for better caching
+RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
+    uv sync --frozen --no-install-project
+
+# Copy source code and install project
 ADD --chown=harp:www-data . src
+RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
+    (cd src; uv sync --frozen)
 
-# ... install
-RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
-    (cd src; poetry config --list; poetry debug info; poetry install --only main)
-
-# Step: Fix cache directory permissions: this wont delete the content, just the directory that may have strange \
+# Step: Fix cache directory permissions: this wont delete the content (volume), just the directory that may have strange
 # permissions caused by the cache mounts.
 RUN rm -rf .cache
 
@@ -83,16 +89,24 @@ RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     && apt-get install -y nodejs \
     && apt-get install -y vim net-tools iputils-ping netcat-openbsd bind9-host jq \
     && rm -rf /var/lib/apt/lists/* \
-    && npm install -g pnpm
+    && npm install -g pnpm \
+    && usermod -aG docker harp
 
 # Step: Add sources, install dependencies (dev) and build assets
 USER harp
 WORKDIR /opt/harp
-ADD --chown=harp:www-data . src
 
-# ... install and build
-RUN --mount=type=cache,target=/opt/harp/.cache,uid=500,sharing=locked \
-    (cd src; poetry config --list; poetry debug info; poetry install) \
+# Copy dependency files first for better layer caching
+COPY --chown=harp:www-data pyproject.toml uv.lock ./
+
+# Install dependencies in separate layer for better caching
+RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
+    uv sync --frozen --no-install-project
+
+# Copy source code and install project with dev dependencies
+ADD --chown=harp:www-data . src
+RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
+    (cd src; uv sync --frozen) \
     && (cd src/harp_apps/dashboard/frontend; pnpm install);
 
 # Development image scripts are on the shelf
@@ -129,16 +143,12 @@ RUN (cd frontend/dashboard; pnpm install; pnpm build)
 ################################################################################
 # IMAGE: Lightest possible image, with only production related abilities
 #
-FROM python:3.12-slim AS runtime
+FROM python:3.13-slim AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_DEFAULT_TIMEOUT=100 \
     BASE="/opt/harp" \
-    POETRY_VERSION=1.7.1 \
-    POETRY_HOME="/opt/poetry" \
-    POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_CREATE=false \
     VIRTUAL_ENV="/opt/venv" \
     NODE_MAJOR=20
 
@@ -151,9 +161,7 @@ RUN --mount=type=cache,target=/root/.cache,sharing=locked \
     && apt-get install -y make curl ca-certificates httpie \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -m harp -g www-data -d ${BASE} -u 500  \
-    && mkdir -p /var/lib/harp/data \
-    && echo 'alias l="ls -lsah --color"' > /opt/harp/.profile \
-    && echo 'export PATH="${POETRY_HOME}/bin:${VIRTUAL_ENV}/bin:$PATH"' >> /opt/harp/.profile
+    && mkdir -p /var/lib/harp/data
 
 ENV TINI_VERSION="v0.19.0"
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
@@ -164,6 +172,9 @@ RUN echo "{}" > /etc/harp.yaml
 
 USER harp
 WORKDIR ${BASE}
+ENV PATH="${VIRTUAL_ENV}/bin:$PATH"
+RUN echo 'alias l="ls -lsah"' >> ~/.profile \
+ && echo 'alias l="ls -lsah"' >> ~/.bashrc
 
 COPY --from=backend ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 COPY --from=frontend ${BASE}/frontend/web ${BASE}/src/harp_apps/dashboard/web
@@ -179,5 +190,5 @@ ENV DEFAULT__HARP__STORAGE__URL="sqlite+aiosqlite:///data/harp.db"
 
 EXPOSE 4080
 
-ENTRYPOINT  [ "/tini", "--", "/opt/venv/bin/python3", "-m", "harp" ]
+ENTRYPOINT  [ "/tini", "--", "/opt/venv/bin/harp-proxy" ]
 CMD [ "server" ]

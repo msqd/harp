@@ -3,10 +3,6 @@ Getting Started
 
 This guide contains eveything you need to download install and run HARP Proxy.
 
-.. note::
-
-    If you're looking for help with using the dashboard, you may be looking for the :doc:`/user/index`.
-
 .. toctree::
     :maxdepth: 2
 
@@ -18,11 +14,13 @@ Installation
 
 Several options exist to install HARP Proxy on your development machine.
 
-The easiest and most reliable method is :doc:`using (docker) containers <docker>`, ensuring you have the exact set of
-dependencies, including the system, that we have battle-tested. The is also an `helm chart <helm>` available for
+The **recommended** method is :doc:`using UV <uv>`, a fast Python package manager that makes installation and execution simple.
+
+For containerized environments, you can use :doc:`Docker containers <docker>`, ensuring you have the exact set of
+dependencies, including the system, that we have battle-tested. There is also an :doc:`helm chart <helm>` available for
 kubernetes users.
 
-For advanced users and fellow pythonistas, you can choose to :doc:`install from PyPI, using pip <python>`. This method
+For traditional Python environments, you can choose to :doc:`install from PyPI, using pip <python>`. This method
 is more flexible but requires a working Python environment and some knowledge of Python.
 
 If you want to :doc:`extend or contribute to HARP </contribute/index>`, consider :doc:`installing from sources
@@ -34,6 +32,7 @@ If you want to :doc:`extend or contribute to HARP </contribute/index>`, consider
     :maxdepth: 2
     :caption: Contents
 
+    uv
     docker
     helm
     python

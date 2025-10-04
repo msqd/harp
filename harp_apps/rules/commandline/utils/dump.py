@@ -2,8 +2,6 @@ import httpx
 from hishel import ParseError
 from httpx import RequestNotRead, ResponseNotRead
 from rich.console import Console
-from rich.padding import Padding
-from rich.panel import Panel
 from rich.syntax import Syntax
 
 from harp.http import HttpRequestSerializer
@@ -22,21 +20,18 @@ console = Console()
 async def on_proxy_request_dump(event: ProxyFilterEvent):
     serializer = HttpRequestSerializer(event.request)
     await event.request.aread()
+    console.print(f"[blue]▶[/blue] Request ({typeof(event.request)})")
     console.print(
-        Panel(
-            Syntax(
-                "\n".join(
-                    (
-                        serializer.summary,
-                        serializer.headers,
-                        truncate_string(serializer.body.decode(), BODY_MAX_LENGTH_TO_DISPLAY),
-                    )
-                ).strip(),
-                "http",
-                background_color="default",
-            ),
-            title=f"[blue]▶[/blue] Request ({typeof(event.request)})",
-            title_align="left",
+        Syntax(
+            "\n".join(
+                (
+                    serializer.summary,
+                    serializer.headers,
+                    truncate_string(serializer.body.decode(), BODY_MAX_LENGTH_TO_DISPLAY),
+                )
+            ).strip(),
+            "http",
+            background_color="default",
         )
     )
 
@@ -44,21 +39,18 @@ async def on_proxy_request_dump(event: ProxyFilterEvent):
 async def on_proxy_response_dump(event: ProxyFilterEvent):
     serializer = HttpResponseSerializer(event.response)
     await event.response.aread()
+    console.print(f"[green]◀[/green] Proxy Response ({typeof(event.response)})")
     console.print(
-        Panel(
-            Syntax(
-                "\n".join(
-                    (
-                        serializer.summary,
-                        serializer.headers,
-                        truncate_string(serializer.body.decode(), BODY_MAX_LENGTH_TO_DISPLAY),
-                    )
-                ).strip(),
-                "http",
-                background_color="default",
-            ),
-            title=f"[green]◀[/green] Proxy Response ({typeof(event.response)})",
-            title_align="left",
+        Syntax(
+            "\n".join(
+                (
+                    serializer.summary,
+                    serializer.headers,
+                    truncate_string(serializer.body.decode(), BODY_MAX_LENGTH_TO_DISPLAY),
+                )
+            ).strip(),
+            "http",
+            background_color="default",
         )
     )
 
@@ -102,35 +94,23 @@ def dump_httpx_response(response: httpx.Response) -> str:
 
 
 async def on_remote_request_dump(event: HttpClientFilterEvent):
+    console.print(f"[blue]▶▶[/blue] Remote Request ({typeof(event.request)})")
     console.print(
-        Padding(
-            Panel(
-                Syntax(
-                    dump_httpx_request(event.request),
-                    "http",
-                    background_color="default",
-                ),
-                title=f"[blue]▶▶[/blue] Remote Request ({typeof(event.request)})",
-                title_align="left",
-            ),
-            (0, 0, 0, 4),
+        Syntax(
+            dump_httpx_request(event.request),
+            "http",
+            background_color="default",
         )
     )
 
 
 async def on_remote_response_dump(event: HttpClientFilterEvent):
+    console.print(f"[green]◀◀[/green] Remote Response ({typeof(event.response)})")
     console.print(
-        Padding(
-            Panel(
-                Syntax(
-                    dump_httpx_response(event.response),
-                    "http",
-                    background_color="default",
-                ),
-                title=f"[green]◀◀[/green] Remote Response ({typeof(event.response)})",
-                title_align="left",
-            ),
-            (0, 0, 0, 4),
+        Syntax(
+            dump_httpx_response(event.response),
+            "http",
+            background_color="default",
         )
     )
 
@@ -144,17 +124,11 @@ async def on_remote_response_show_cache_control(event: HttpClientFilterEvent):
         except ParseError as exc:
             parsed_cached_control = exc
 
+        console.print("[green]◀◀[/green] Cache Control")
         console.print(
-            Padding(
-                Panel(
-                    Syntax(
-                        f"{typeof(parsed_cached_control, short=True)}: {parsed_cached_control}",
-                        "http",
-                        background_color="default",
-                    ),
-                    title="[green]◀◀[/green] Cache Control",
-                    title_align="left",
-                ),
-                (0, 0, 0, 8),
+            Syntax(
+                f"{typeof(parsed_cached_control, short=True)}: {parsed_cached_control}",
+                "http",
+                background_color="default",
             )
         )

@@ -10,16 +10,3 @@ Changes
 * feat: response now uses cimultidict for headers (Romain Dorgueil)
 * feat: requests now uses CIMultiDict for headers. (Romain Dorgueil)
 * feat: typography (Romain Dorgueil)
-
-Benchmarks
-::::::::::
-
-PostgreSQL
-----------
-
-.. figure:: benchmarks/0.2.2-postgresql.svg
-
-SQLite
-----------
-
-.. figure:: benchmarks/0.2.2-sqlite.svg

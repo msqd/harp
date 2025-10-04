@@ -61,7 +61,7 @@ def _parse_version(version: str, /, *, default=None) -> Version:
 
 # last release
 __title__ = "Core"
-__version__ = "0.8.1"
+__version__ = "0.9-dev"
 __hardcoded_version__ = __version__
 __revision__ = __version__  # we can't commit the not yet known revision
 
@@ -83,7 +83,7 @@ if not os.environ.get("CI", False) and os.path.exists(os.path.join(ROOT_DIR, ".g
     except Exception:
         __version__ = __revision__[:7]
 
-from ._logging import get_logger  # noqa: E402, isort: skip
+from ._logging import get_logger  # noqa: E402
 
 
 async def arun(builder: "_ConfigurationBuilder"):
