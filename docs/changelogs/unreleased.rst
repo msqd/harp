@@ -11,7 +11,6 @@ Important Changes
   the user perspective (but read below).
 * ⚠️ CI/CD migrated from GitLab CI to GitHub Actions.
 
-
 Added
 :::::
 
@@ -29,6 +28,7 @@ Updated
 :::::::
 
 * Bump aiohttp, freezegun.
+* Update testcontainers[postgres] requirement from <4.11,>=4.7 to >=4.7,<4.14.
 
 Removed
 :::::::
