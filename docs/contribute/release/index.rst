@@ -13,6 +13,7 @@ Releasing
     chores
     sources
     python
+    pypi-trusted-publishing
     helm
     contributors
     bump

@@ -4,6 +4,14 @@ Releasing as a Python Package
 Releasing a python package for a version consists of building a wheel, testing it and pushing it to the Python Package
 Index (PyPI).
 
+.. note::
+
+    The release process is now automated via GitHub Actions! When you push a version tag (e.g., ``0.9.0``), the
+    workflow automatically builds, tests, and publishes the package. See :doc:`pypi-trusted-publishing` for setup
+    instructions.
+
+    The manual process below is still documented for reference or emergency situations.
+
 
 Building a wheel
 ::::::::::::::::
