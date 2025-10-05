@@ -21,6 +21,19 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Update version in pyproject.toml
+        run: |
+          sed -i 's/^version = .*/version = "${{ steps.version.outputs.version }}"/' pyproject.toml
+          echo "Updated pyproject.toml version to ${{ steps.version.outputs.version }}"
+          grep "^version" pyproject.toml
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
