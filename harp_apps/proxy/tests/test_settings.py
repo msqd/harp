@@ -1,6 +1,6 @@
 from harp.config.asdict import asdict
 
-from ..settings import ProxySettings
+from harp_apps.proxy.settings import ProxySettings
 
 short_syntax_simple_config = {
     "endpoints": [

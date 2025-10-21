@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
 from functools import cached_property, lru_cache
-from typing import Optional, cast, override
-from urllib.parse import urlencode, urljoin
-
 from httpx import AsyncClient, codes
 from pyheck import shouty_snake
+from typing import Optional, cast, override
+from urllib.parse import urlencode, urljoin
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
@@ -15,7 +14,6 @@ from harp.models import Transaction
 from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.tpdex import tpdex
-
 from .adapters import HttpClientProxyAdapter
 from .constants import (
     BREAK_ON_NETWORK_ERROR,
@@ -146,12 +144,7 @@ class HttpProxyController(AbstractHttpProxyController):
     @override
     async def __call__(self, request: HttpRequest) -> HttpResponse:
         base_url = None
-        transaction = await self._create_transaction_from_request(request, tags=extract_tags_from_request(request))
-
-        # create the context, an event that will be passed through the transaction lifecycle.
-        # todo: embed in transaction ?
-        context = ProxyFilterEvent(self.name, request=request, transaction=transaction)
-        context.update(await self.filter_request(context))
+        context = await self.start_transaction(request, tags=extract_tags_from_request(request))
 
         # If nothing prepared a ready to send response, it's time to forward the request.
         if not context.response:
@@ -165,7 +158,7 @@ class HttpProxyController(AbstractHttpProxyController):
                     verbose_message="Service Unavailable (no remote endpoint available)",
                     status=ERR_UNAVAILABLE_STATUS_CODE,
                 )
-                return await self.failure(transaction, base_url, response)
+                return await self.failure(context.transaction, base_url, response)
 
             # todo: streaming should pass through to avoid reading all the content in memory
             await context.request.aread()
@@ -173,11 +166,13 @@ class HttpProxyController(AbstractHttpProxyController):
             # Attempt to forward the request to the remote server.
             try:
                 self.debug(
-                    f"▶▶ {context.request.method} {full_url}", transaction=transaction, extensions=request.extensions
+                    f"▶▶ {context.request.method} {full_url}",
+                    transaction=context.transaction,
+                    extensions=request.extensions,
                 )
-                response = await self.forward(transaction, context, base_url, full_url)
+                response = await self.forward(context.transaction, context, base_url, full_url)
             except Exception as exc:
-                return await self.failure(transaction, base_url, exc)
+                return await self.failure(context.transaction, base_url, exc)
             context.set_response(response)
 
         context = await self.filter_response(context) or context
@@ -185,10 +180,14 @@ class HttpProxyController(AbstractHttpProxyController):
         # todo: streaming should pass through to avoid reading all the content in memory
         await context.response.aread()
 
-        return await self.end_transaction(transaction, context.response)
+        return await self.end_transaction(context.transaction, context.response)
 
     async def forward(
-        self, transaction: Transaction, context: ProxyFilterEvent, base_url: str, full_url: str
+        self,
+        transaction: Transaction,
+        context: ProxyFilterEvent,
+        base_url: str,
+        full_url: str,
     ) -> HttpResponse:
         """
         Forward the request to the remote server.
@@ -299,7 +298,10 @@ class HttpProxyController(AbstractHttpProxyController):
         :return: The final HttpResponse object.
         """
         transaction.finished_at = datetime.now(UTC)
-        transaction.elapsed = round((datetime.now(UTC).timestamp() - transaction.started_at.timestamp()) * 1000, 2)
+        transaction.elapsed = round(
+            (datetime.now(UTC).timestamp() - transaction.started_at.timestamp()) * 1000,
+            2,
+        )
 
         if isinstance(response, HttpError):
             transaction.extras["status_class"] = "ERR"
@@ -309,7 +311,10 @@ class HttpProxyController(AbstractHttpProxyController):
             )
         elif isinstance(response, HttpResponse):
             reason = codes.get_reason_phrase(response.status)
-            self.info(f"◀ {response.status} {reason} ({transaction.elapsed}ms)", transaction=transaction)
+            self.info(
+                f"◀ {response.status} {reason} ({transaction.elapsed}ms)",
+                transaction=transaction,
+            )
         else:
             raise ValueError(f"Invalid final message type: {type(response)}")
 
@@ -330,7 +335,7 @@ class HttpProxyController(AbstractHttpProxyController):
 
         return cast(HttpResponse, response)
 
-    async def _create_transaction_from_request(self, request: HttpRequest, *, tags=None) -> Transaction:
+    async def start_transaction(self, request: HttpRequest, *, tags=None) -> ProxyFilterEvent:
         """
         Create a new transaction from the incoming request, generating a new (random, but orderable according to the
         instant it happens) transaction ID.
@@ -341,35 +346,44 @@ class HttpProxyController(AbstractHttpProxyController):
 
         :return: Transaction
         """
-        transaction = Transaction(
-            id=generate_transaction_id_ksuid(),
-            type="http",
-            started_at=datetime.now(UTC),
-            endpoint=self.name,
-            tags=tags,
+        # create the context, an event that will be passed through the transaction lifecycle.
+        context = ProxyFilterEvent(
+            self.name,
+            request=request,
+            transaction=Transaction(
+                id=generate_transaction_id_ksuid(),
+                type="http",
+                started_at=datetime.now(UTC),
+                endpoint=self.name,
+                tags=tags,
+            ),
         )
-        request.extensions["transaction"] = transaction
+
+        request.extensions["transaction"] = context.transaction
 
         # If the request cache control asked for cache to be disabled, mark it in transaction.
         request_cache_control = request.headers.get("cache-control")
         if request_cache_control:
             request_cache_control = parse_cache_control([request_cache_control])
             if request_cache_control.no_cache:
-                transaction.extras["no_cache"] = True
+                context.transaction.extras["no_cache"] = True
 
         # XXX for now, we use transaction "extras" to store searchable data for later
-        transaction.extras["method"] = request.method
+        context.transaction.extras["method"] = request.method
 
-        self.info(f"▶ {request.method} {request.path}", transaction=transaction)
+        self.info(f"▶ {request.method} {request.path}", transaction=context.transaction)
 
         # dispatch transaction started event
         # we don't really want to await this, should run in background ? or use an async queue ?
-        await self.adispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(transaction))
+        await self.adispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(context.transaction))
+
+        # allow filtering the incoming messsage/transaction before the transaction is stored
+        context.update(await self.filter_request(context))
 
         # dispatch message event for request
-        await self.adispatch(EVENT_TRANSACTION_MESSAGE, HttpMessageEvent(transaction, request))
+        await self.adispatch(EVENT_TRANSACTION_MESSAGE, HttpMessageEvent(context.transaction, request))
 
-        return transaction
+        return context
 
 
 @lru_cache

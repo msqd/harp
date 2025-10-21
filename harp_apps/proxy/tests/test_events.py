@@ -1,10 +1,8 @@
+import pytest
 from decimal import Decimal
 
-import pytest
-
 from harp.http import HttpRequest, HttpResponse
-
-from ..events import ProxyFilterEvent
+from harp_apps.proxy.events import ProxyFilterEvent
 
 
 def valid_response_script(context):
