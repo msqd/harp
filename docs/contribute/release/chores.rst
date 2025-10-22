@@ -1,30 +1,22 @@
 Chores before releasing
 =======================
 
-Before a new release is sent to the world, it's usually a good idea to do some housekeeping.
+Before a new version is released, it's usually a good idea to do some housekeeping.
 
+Python dependencies (uv)
+::::::::::::::::::::::::
 
-Python dependencies
-:::::::::::::::::::
+Listing outdated dependencies::
 
-Python dependencies are managed by poetry.
+    uv tree --outdated --depth 1
 
-To bump a library:
+Upgrade all locked versions of packages::
 
-* identify the library to bump
-* (eventually) change the requirement in pyproject.toml
-* run `poetry update <library>`
-* copy the upgrade for commit message later
-* run `make qa`
-* all good? Commit the changes with `git commit -m "chore: bump <lib with version>"`
+    uv lock --upgrade
 
-.. code:: shell-session
+Or a specific package::
 
-    vi pyproject.toml
-    poetry update ...
-    git add -p pyproject.toml poetry.lock
-    git commit -m "chore: bump ..."
-    make qa
+    uv lock --upgrade-package <package>
 
 
 Frontend Dependencies

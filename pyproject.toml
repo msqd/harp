@@ -5,19 +5,18 @@ build-backend = "hatchling.build"
 [project]
 name = "harp-proxy"
 version = "0.9-dev"
-description = "Harp is an API Runtime Proxy – A toolkit for Fast, Reliable and Observable external APIs"
+description = "HARP is an API Runtime Proxy, a toolkit to enhance the speed, reliability and observability of external APIs."
 authors = [{ name = "Romain Dorgueil", email = "romain@makersquad.fr" }]
 requires-python = ">=3.13,<3.14"
 readme = "README.rst"
 dependencies = [
-    "aiohttp>=3.12,<3.13",
+    "aiohttp>=3.13,<3.14",
     "aiosqlite>=0.20,<0.22",
-    "alembic>=1.14,<1.16",
-    "anyio>=4.6,<4.10",
+    "alembic>=1.17,<1.18",
     "asgi-prometheus>=1.2,<1.3",
-    "asgi-tools>=1.1,<1.4",
+    "asgi-tools>=1.3,<1.4",
     "asgimiddlewarestaticfile>=0.6,<0.7",
-    "asgiref>=3.8,<3.9",
+    "asgiref>=3.10,<3.11",
     "asyncpg>=0.30,<0.31",
     "colorama>=0.4,<0.5",
     "dataclasses-json>=0.6,<0.7",
@@ -27,31 +26,24 @@ dependencies = [
     "http-router>=5.0,<5.1",
     "httpx>=0.27,<0.29",
     "hypercorn>=0.17,<0.18",
-    "multidict>=6.4,<6.5",
-    "orjson>=3.10,<3.11",
+    "multidict>=6.7,<6.8",
+    "orjson>=3.11,<3.12",
     "passlib>=1.7,<1.8",
     "psycopg2-binary>=2.9,<2.10",
-    "pydantic>=2.9,<2.12",
+    "pydantic>=2.12,<2.13",
     "pyheck>=0.1,<0.2",
     "pyyaml>=6.0,<6.1",
     "redis>=5.2,<6.5",
     "rich>=14.0,<15",
-    "rich-click>=1.8,<1.9",
+    "rich-click>=1.9,<1.10",
     "rodi>=2.0,<2.1",
     "sentry-sdk>=2.18,<3.0",
-    "slack-sdk>=3.33,<3.36",
+    "slack-sdk>=3.37,<3.38",
     "sqlalchemy[asyncio]>=2.0,<2.1",
-    "sqlalchemy-utils>=0.41,<0.42",
+    "sqlalchemy-utils>=0.42,<0.43",
     "structlog>=25,<26",
     "svix-ksuid>=0.6,<0.7",
     "whistle>=2.0.1,<3",
-]
-
-[project.optional-dependencies]
-dev = [
-    "cookiecutter>=2.6,<2.7",
-    "honcho>=2.0,<2.1",
-    "watchfiles>=0.24,<1.1",
 ]
 
 [project.scripts]
@@ -59,31 +51,35 @@ harp-proxy = "harp.commandline:entrypoint"
 
 [dependency-groups]
 dev = [
+    "cookiecutter>=2.6,<2.7",
     "freezegun>=1.5.5,<2",
     "furo>=2023.9.10,<2025.0.0",
+    "hatchling==1.27.0",
+    "honcho>=2.0,<2.1",
+    "jscc>=0.3.0,<0.4",
+    "jsonpointer>=3.0.0,<4",
+    "jsonref>=1.1.0,<2",
+    "myst-parser>=4.0.0,<5",
     "pre-commit>=3.7.1,<5.0.0",
-    "pytest>=7.4.3,<9.0.0",
-    "pytest-asyncio>=0.26.0,<0.27",
-    "pytest-cov>=4.1,<7.0",
+    "pytest-asyncio>=1.2,<1.3",
+    "pytest-cov>=7.0,<7.1",
     "pytest-timeout>=2.3.1,<3",
     "pytest-xdist[psutil]>=3.6.1,<4",
+    "pytest>=7.4.3,<9.0.0",
     "respx>=0.20.2,<0.23.0",
-    "ruff>=0.11,<0.14",
+    "ruff>=0.14,<0.15",
     "sphinx",
-    "sphinx-autobuild>=2021.3.14,<2025.0.0",
+    "sphinx-autobuild>=2025.8.25,<2026.0.0",
     "sphinx-click>=6.0.0,<7",
     "sphinx-copybutton>=0.5.2,<0.6",
     "sphinx-design>=0.6.0,<0.7",
-    "sphinx-sitemap>=2.6.0,<3",
-    "sphinxcontrib-jquery~=4.1",
-    "syrupy>=4.6.1,<5",
-    "testcontainers[postgres]>=4.7,<4.14",
     "sphinx-docsearch>=0.0.7,<0.1.1",
+    "sphinx-sitemap>=2.6.0,<3",
     "sphinx-tags>=0.4,<0.5",
-    "jsonref>=1.1.0,<2",
-    "jscc>=0.3.0,<0.4",
-    "jsonpointer>=3.0.0,<4",
-    "myst-parser>=4.0.0,<5",
+    "sphinxcontrib-jquery~=4.1",
+    "syrupy>=5.0,<5.1",
+    "testcontainers[postgres]>=4.7,<4.14",
+    "watchfiles>=1.1,<1.2",
 ]
 mysql = [
     "asyncmy>=0.2,<0.3",

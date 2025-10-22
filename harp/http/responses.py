@@ -1,11 +1,9 @@
-from typing import Optional
-
 import orjson
 from httpx import AsyncByteStream, ByteStream, codes
 from multidict import CIMultiDict
+from typing import Optional
 
 from harp.utils.bytes import ensure_bytes
-
 from .typing import BaseHttpMessage
 
 
@@ -58,8 +56,8 @@ class HttpResponse(BaseHttpMessage):
             reason_phrase: bytes = self.extensions["reason_phrase"]
         except KeyError:
             return codes.get_reason_phrase(self.status)
-        else:
-            return reason_phrase.decode("ascii", errors="ignore")
+
+        return reason_phrase.decode("ascii", errors="ignore")
 
     @property
     def headers(self) -> CIMultiDict:
