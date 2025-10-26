@@ -29,6 +29,7 @@ Fixed
 
 - Made playwright installation non-fatal in ``install-dev`` target to prevent build failures
 - Fixed test isolation issues in version detection tests that caused subprocess test failures
+- Updated Python version requirement to ``>=3.13,<3.15`` to support Python 3.14
 
 Removed
 -------
