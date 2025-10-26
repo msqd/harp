@@ -139,12 +139,12 @@ jobs:
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 10
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'pnpm'
           cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
 
@@ -198,12 +198,12 @@ jobs:
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 10
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'pnpm'
           cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
 
@@ -262,12 +262,12 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - name: Build wheel
         # Note: We use 'make wheel' instead of 'uv build' because:

@@ -14,6 +14,7 @@ Changed
 - CI/CD tests now run directly in GitHub Actions runners instead of Docker containers for faster execution
 - Backend tests now run against Python 3.13, 3.14, and 3.14t (free-threaded) using matrix strategy
 - Removed initial Docker image builds from CI/CD workflow (build-runtime-image, build-development-image)
+- Updated CI/CD to use Node.js 24 and pnpm 10 for consistent environment between local and CI
 
 Added
 -----
