@@ -332,12 +332,10 @@ jobs:
             fi
           fi
 
-  # Python package release jobs - only run on tags
+  # Python package build - always run after tests pass
   build-python-package:
     name: Build Python package
     runs-on: ubuntu-latest
-    # Only run on version tags
-    if: github.ref_type == 'tag' && startsWith(github.ref_name, '0.') || startsWith(github.ref_name, '1.') || startsWith(github.ref_name, '2.')
     needs:
       - test-backend-core
       - test-backend-apps
@@ -350,14 +348,20 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - name: Extract version from tag
+      - name: Extract version
         id: version
         run: |
-          VERSION=${GITHUB_REF#refs/tags/}
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            echo "Building release version: $VERSION"
+          else
+            VERSION=$(git describe --tags --always --dirty)
+            echo "Building development version: $VERSION"
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Building version: $VERSION"
 
       - name: Validate version matches tag
+        if: github.ref_type == 'tag'
         run: |
           chmod +x bin/validate_version
           bin/validate_version "${{ steps.version.outputs.version }}"
@@ -443,10 +447,141 @@ jobs:
           python -c "import sys; print(f'Python: {sys.version}')"
           ${{ matrix.python-gil && 'python -c "import sys; print(f\"GIL enabled: {sys._is_gil_enabled()}\")"' || 'echo "GIL enabled (standard Python)"' }}
 
+  # Docker image with wheel from local build (non-release branches)
+  build-wheel-docker-image-dev:
+    name: Build Docker image from wheel (development)
+    needs: test-python-package
+    if: github.ref_type != 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download wheel artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Determine version and tags
+        id: meta
+        run: |
+          # Branch build - use local wheel
+          VERSION=$(git describe --tags --always --dirty)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "INSTALL_FROM=local" >> $GITHUB_OUTPUT
+
+          # For version branches (e.g., 0.9), tag as 0.9-git
+          if echo "${{ github.ref_name }}" | grep -qE '^[0-9]+\.[0-9]+$'; then
+            TAGS="ghcr.io/${{ github.repository }}:${{ github.ref_name }}-git"
+            echo "Docker tags (version branch): $TAGS"
+          else
+            TAGS="ghcr.io/${{ github.repository }}:${{ github.sha }}"
+            echo "Docker tags (other branch): $TAGS"
+          fi
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Dockerfile for wheel installation
+        run: |
+          cat > Dockerfile.wheel <<'EOF'
+          ARG PYTHON_VERSION=3.14
+          FROM python:${PYTHON_VERSION}-slim
+
+          WORKDIR /app
+
+          # Install system dependencies
+          RUN apt-get update && \
+              apt-get install -y --no-install-recommends \
+                build-essential \
+                libpq-dev \
+                && rm -rf /var/lib/apt/lists/*
+
+          # Copy and install wheel
+          ARG INSTALL_FROM=local
+          ARG VERSION
+
+          COPY dist/*.whl /tmp/
+
+          RUN if [ "$INSTALL_FROM" = "pypi" ]; then \
+                echo "Installing from PyPI: harp-proxy==$VERSION"; \
+                pip install --no-cache-dir "harp-proxy==$VERSION"; \
+              else \
+                echo "Installing from local wheel"; \
+                pip install --no-cache-dir /tmp/*.whl; \
+              fi && \
+              rm -rf /tmp/*.whl
+
+          # Create non-root user
+          RUN useradd -m -u 1000 harp && \
+              chown -R harp:harp /app
+
+          USER harp
+
+          EXPOSE 4000-4999
+
+          ENTRYPOINT ["harp-proxy"]
+          CMD ["--help"]
+          EOF
+
+      - name: Build and push Docker image (GIL enabled)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.wheel
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            PYTHON_VERSION=3.14
+            INSTALL_FROM=${{ steps.meta.outputs.INSTALL_FROM }}
+            VERSION=${{ steps.meta.outputs.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate -nogil tags
+        id: nogil_tags
+        run: |
+          ORIGINAL_TAGS="${{ steps.meta.outputs.tags }}"
+          NOGIL_TAGS=$(echo "$ORIGINAL_TAGS" | sed 's/\(:[^,]*\)/\1-nogil/g')
+          echo "tags=$NOGIL_TAGS" >> $GITHUB_OUTPUT
+          echo "NoGIL tags: $NOGIL_TAGS"
+
+      - name: Build and push Docker image (GIL disabled - nogil)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.wheel
+          push: true
+          tags: ${{ steps.nogil_tags.outputs.tags }}
+          build-args: |
+            PYTHON_VERSION=3.14t
+            INSTALL_FROM=${{ steps.meta.outputs.INSTALL_FROM }}
+            VERSION=${{ steps.meta.outputs.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   publish-testpypi:
     name: Publish to TestPyPI
     needs: test-python-package
     runs-on: ubuntu-latest
+    # Only publish to PyPI for release tags (including pre-releases like rc1, beta1)
+    if: github.ref_type == 'tag'
     environment:
       name: testpypi
       url: https://test.pypi.org/p/harp-proxy
@@ -482,6 +617,119 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+
+  # Docker image with wheel from PyPI (release tags only)
+  build-wheel-docker-image-release:
+    name: Build Docker image from PyPI wheel (release)
+    needs: publish-pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version and tags
+        id: meta
+        run: |
+          VERSION="${{ github.ref_name }}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "INSTALL_FROM=pypi" >> $GITHUB_OUTPUT
+
+          # Determine Docker tags based on version format
+          if echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            # Mainline release (e.g., 0.9.0) - tag with full, minor, and major versions
+            MAJOR=$(echo "$VERSION" | cut -d. -f1)
+            MINOR=$(echo "$VERSION" | cut -d. -f1-2)
+            TAGS="ghcr.io/${{ github.repository }}:$VERSION"
+            TAGS="$TAGS,ghcr.io/${{ github.repository }}:$MINOR"
+            TAGS="$TAGS,ghcr.io/${{ github.repository }}:$MAJOR"
+            echo "Docker tags (mainline): $TAGS"
+          else
+            # Pre-release (e.g., 0.9.0-rc1) - only exact tag
+            TAGS="ghcr.io/${{ github.repository }}:$VERSION"
+            echo "Docker tags (pre-release): $TAGS"
+          fi
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Dockerfile for PyPI installation
+        run: |
+          cat > Dockerfile.wheel <<'EOF'
+          ARG PYTHON_VERSION=3.14
+          FROM python:${PYTHON_VERSION}-slim
+
+          WORKDIR /app
+
+          # Install system dependencies
+          RUN apt-get update && \
+              apt-get install -y --no-install-recommends \
+                build-essential \
+                libpq-dev \
+                && rm -rf /var/lib/apt/lists/*
+
+          # Install from PyPI
+          ARG VERSION
+          RUN echo "Installing from PyPI: harp-proxy==$VERSION" && \
+              pip install --no-cache-dir "harp-proxy==$VERSION"
+
+          # Create non-root user
+          RUN useradd -m -u 1000 harp && \
+              chown -R harp:harp /app
+
+          USER harp
+
+          EXPOSE 4000-4999
+
+          ENTRYPOINT ["harp-proxy"]
+          CMD ["--help"]
+          EOF
+
+      - name: Build and push Docker image (GIL enabled)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.wheel
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            PYTHON_VERSION=3.14
+            VERSION=${{ steps.meta.outputs.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate -nogil tags
+        id: nogil_tags
+        run: |
+          ORIGINAL_TAGS="${{ steps.meta.outputs.tags }}"
+          NOGIL_TAGS=$(echo "$ORIGINAL_TAGS" | sed 's/\(:[^,]*\)/\1-nogil/g')
+          echo "tags=$NOGIL_TAGS" >> $GITHUB_OUTPUT
+          echo "NoGIL tags: $NOGIL_TAGS"
+
+      - name: Build and push Docker image (GIL disabled - nogil)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.wheel
+          push: true
+          tags: ${{ steps.nogil_tags.outputs.tags }}
+          build-args: |
+            PYTHON_VERSION=3.14t
+            VERSION=${{ steps.meta.outputs.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   github-release:
     name: Create GitHub Release
