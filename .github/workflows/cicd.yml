@@ -52,7 +52,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
 
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: uv sync
 
       - name: Run core tests
         run: uv run pytest harp -n auto -m 'not subprocess'
@@ -86,7 +86,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
 
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: uv sync
 
       - name: Run apps tests
         run: uv run pytest harp_apps -n 1 -m 'not subprocess'
@@ -120,7 +120,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
 
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: uv sync
 
       - name: Run e2e tests
         run: uv run pytest tests -n 1 -m 'not subprocess'
@@ -149,7 +149,7 @@ jobs:
           cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: cd harp_apps/dashboard/frontend && pnpm install
+        run: cd harp_apps/dashboard/frontend && pnpm install --ignore-workspace
 
       - name: Run frontend unit tests
         run: cd harp_apps/dashboard/frontend && pnpm test:unit
@@ -173,7 +173,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
 
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: uv sync
 
       - name: Build documentation
         run: uv run make -C docs html
@@ -208,7 +208,7 @@ jobs:
           cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: cd harp_apps/dashboard/frontend && pnpm install
+        run: cd harp_apps/dashboard/frontend && pnpm install --ignore-workspace
 
       - name: Build storybook
         run: cd harp_apps/dashboard/frontend && pnpm ui:build
