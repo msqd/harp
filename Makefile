@@ -80,7 +80,7 @@ start-dev-frontend: install-dev  # Starts a frontend development instance with r
 install: install-frontend install-backend  ## Installs harp dependencies (backend, dashboard) without development tools.
 
 install-dev: install-backend-dev  ## Installs harp dependencies (backend, dashboard) with development tools.
-	cd $(FRONTEND_DIR); $(PNPM) exec playwright install
+	-cd $(FRONTEND_DIR); $(PNPM) exec playwright install
 
 install-frontend:  ## Installs harp dashboard dependencies (frontend).
 	cd $(FRONTEND_DIR); $(PNPM) install
