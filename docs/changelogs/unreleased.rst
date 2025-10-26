@@ -9,6 +9,8 @@ Changed
 - Unified CI and Release workflows into single CI/CD workflow for simpler dependency management
 - Python wheels now built for all commits, not just release tags
 - Docker images now built from Python wheels instead of full source builds
+- All CI/CD job names now use human-readable format for better visibility
+- Python package build now runs in parallel with tests for faster builds
 
 Added
 -----

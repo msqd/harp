@@ -25,7 +25,8 @@ env:
   DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}
 
 jobs:
-  build-runtime:
+  build-runtime-image:
+    name: Build Runtime Docker Image
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -65,7 +66,8 @@ jobs:
           build-args: |
             VERSION=${{ steps.version.outputs.VERSION }}
 
-  build-dev:
+  build-development-image:
+    name: Build Development Docker Image
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -106,8 +108,9 @@ jobs:
             VERSION=${{ steps.version.outputs.VERSION }}
 
   test-backend-core:
+    name: Test Backend Core
     runs-on: ubuntu-latest
-    needs: build-dev
+    needs: build-development-image
     permissions:
       contents: read
       packages: read
@@ -130,8 +133,9 @@ jobs:
           PYTEST_OPTIONS: -m 'not subprocess'
 
   test-backend-apps:
+    name: Test Backend Apps
     runs-on: ubuntu-latest
-    needs: build-dev
+    needs: build-development-image
     permissions:
       contents: read
       packages: read
@@ -155,8 +159,9 @@ jobs:
           PYTEST_CPUS: "1"
 
   test-backend-e2e:
+    name: Test Backend E2E
     runs-on: ubuntu-latest
-    needs: build-dev
+    needs: build-development-image
     permissions:
       contents: read
       packages: read
@@ -180,8 +185,9 @@ jobs:
           PYTEST_CPUS: "1"
 
   test-frontend-unit:
+    name: Test Frontend Unit
     runs-on: ubuntu-latest
-    needs: build-dev
+    needs: build-development-image
     permissions:
       contents: read
       packages: read
@@ -202,9 +208,10 @@ jobs:
           DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
           DOCKER_INTERACTIVE: ""
 
-  doc-html:
+  build-documentation:
+    name: Build Documentation
     runs-on: ubuntu-latest
-    needs: build-dev
+    needs: build-development-image
     continue-on-error: true
     permissions:
       contents: read
@@ -236,9 +243,10 @@ jobs:
           path: harp-doc/html/
           retention-days: 30
 
-  storybook:
+  build-storybook:
+    name: Build Storybook
     runs-on: ubuntu-latest
-    needs: build-dev
+    needs: build-development-image
     continue-on-error: true
     permissions:
       contents: read
@@ -269,78 +277,11 @@ jobs:
           path: harp-ui/
           retention-days: 30
 
-  docker-release:
-    runs-on: ubuntu-latest
-    needs:
-      - build-runtime
-      - test-backend-core
-      - test-backend-apps
-      - test-backend-e2e
-      - test-frontend-unit
-    # Only run on version branches (e.g., 1.0) or tags
-    if: |
-      (github.ref_type == 'branch' && contains(github.ref_name, '.') && !contains(github.ref_name, '/')) ||
-      github.ref_type == 'tag'
-    permissions:
-      contents: read
-      packages: read
-    env:
-      SOURCE_IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}
-    steps:
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Pull source image
-        run: docker pull ${SOURCE_IMAGE}
-
-      - name: Log in to Docker Hub
-        continue-on-error: true
-        id: dockerhub_login
-        uses: docker/login-action@v3
-        with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Tag and push images to Docker Hub
-        if: steps.dockerhub_login.outcome == 'success'
-        run: |
-          echo "GITHUB_REF_TYPE = ${{ github.ref_type }}"
-          echo "GITHUB_REF_NAME = ${{ github.ref_name }}"
-
-          # For branches (e.g., 1.0, 2.1)
-          if [ "${{ github.ref_type }}" = "branch" ]; then
-            docker tag ${SOURCE_IMAGE} makersquad/harp-proxy:${{ github.ref_name }}-git
-            docker push makersquad/harp-proxy:${{ github.ref_name }}-git
-          fi
-
-          # For tags
-          if [ "${{ github.ref_type }}" = "tag" ]; then
-            docker tag ${SOURCE_IMAGE} makersquad/harp-proxy:${{ github.ref_name }}
-            docker push makersquad/harp-proxy:${{ github.ref_name }}
-
-            # If it's a semver tag (x.y.z), also tag as latest
-            if echo "${{ github.ref_name }}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-              docker tag ${SOURCE_IMAGE} makersquad/harp-proxy:latest
-              docker push makersquad/harp-proxy:latest
-            fi
-          fi
-
-  # Python package build - always run after tests pass
+  # Python package build - runs in parallel with tests
   build-python-package:
-    name: Build Python package
+    name: Build Python Package
     runs-on: ubuntu-latest
-    needs:
-      - test-backend-core
-      - test-backend-apps
-      - test-backend-e2e
-      - test-frontend-unit
+    needs: build-development-image
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -405,7 +346,7 @@ jobs:
           retention-days: 7
 
   test-python-package:
-    name: Test built wheel (Python ${{ matrix.python-version }}${{ matrix.python-gil && '-nogil' || '' }})
+    name: Test Python Package (Py${{ matrix.python-version }}${{ matrix.python-gil && 't' || '' }})
     needs: build-python-package
     runs-on: ubuntu-latest
     permissions:
@@ -447,10 +388,24 @@ jobs:
           python -c "import sys; print(f'Python: {sys.version}')"
           ${{ matrix.python-gil && 'python -c "import sys; print(f\"GIL enabled: {sys._is_gil_enabled()}\")"' || 'echo "GIL enabled (standard Python)"' }}
 
+  # Consolidation job - waits for all tests and package build to complete
+  all-checks-passed:
+    name: All Checks Passed
+    runs-on: ubuntu-latest
+    needs:
+      - test-backend-core
+      - test-backend-apps
+      - test-backend-e2e
+      - test-frontend-unit
+      - test-python-package
+    steps:
+      - name: All checks passed
+        run: echo "✅ All tests and package builds completed successfully"
+
   # Docker image with wheel from local build (non-release branches)
-  build-wheel-docker-image-dev:
-    name: Build Docker image from wheel (development)
-    needs: test-python-package
+  build-docker-image-development:
+    name: Build Docker Image (Development)
+    needs: all-checks-passed
     if: github.ref_type != 'tag'
     runs-on: ubuntu-latest
     permissions:
@@ -576,9 +531,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  publish-testpypi:
+  publish-to-testpypi:
     name: Publish to TestPyPI
-    needs: test-python-package
+    needs: all-checks-passed
     runs-on: ubuntu-latest
     # Only publish to PyPI for release tags (including pre-releases like rc1, beta1)
     if: github.ref_type == 'tag'
@@ -599,9 +554,9 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
 
-  publish-pypi:
+  publish-to-pypi:
     name: Publish to PyPI
-    needs: publish-testpypi
+    needs: publish-to-testpypi
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -619,9 +574,9 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
 
   # Docker image with wheel from PyPI (release tags only)
-  build-wheel-docker-image-release:
-    name: Build Docker image from PyPI wheel (release)
-    needs: publish-pypi
+  build-docker-image-release:
+    name: Build Docker Image (Release)
+    needs: publish-to-pypi
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -731,9 +686,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  github-release:
+  create-github-release:
     name: Create GitHub Release
-    needs: publish-pypi
+    needs: publish-to-pypi
     runs-on: ubuntu-latest
     permissions:
       contents: write
