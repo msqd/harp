@@ -16,13 +16,17 @@ jobs:
     name: Wait for CI to complete
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for CI workflow
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for CI workflow to complete
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
           ref: ${{ github.ref }}
-          check-name: 'release'  # Wait for the 'release' job in CI workflow
+          check-regexp: '^(test-backend-core|test-backend-apps|test-backend-e2e|test-frontend-unit)$'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
+          allowed-conclusions: success
 
   build:
     name: Build Python package

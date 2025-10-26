@@ -80,19 +80,13 @@ For pre-releases, use appropriate suffixes:
 3. Update pyproject.toml
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Update the version in ``pyproject.toml``:
+Update the version in ``pyproject.toml`` and verify:
 
 .. code-block:: bash
 
     sed -i.bak "s/^version = .*/version = \"$VERSION\"/" pyproject.toml && rm pyproject.toml.bak
     uv lock
-
-Verify the change:
-
-.. code-block:: bash
-
     grep "^version" pyproject.toml
-    # Should show: version = "0.9.0"
 
 4. Commit the Version Change
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -119,7 +113,7 @@ Verify the change:
 
 .. code-block:: bash
 
-    git push origin main  # or: git push origin 0.9
+    git push origin
     git push origin $VERSION
 
 .. note::
