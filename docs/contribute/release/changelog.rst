@@ -1,5 +1,5 @@
-Changelog Management
-====================
+Changelog
+=========
 
 HARP maintains a changelog following the `Keep a Changelog <https://keepachangelog.com/>`_ format. All changes are tracked in version-specific files in ``docs/changelogs/``.
 
