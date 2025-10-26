@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "harp-proxy"
-version = "0.9.0-rc1"
+version = "0.9.0-rc2"
 description = "HARP is an API Runtime Proxy, a toolkit to enhance the speed, reliability and observability of external APIs."
 authors = [{ name = "Romain Dorgueil", email = "romain@makersquad.fr" }]
 requires-python = ">=3.13,<3.14"

@@ -16,7 +16,7 @@ Before creating a release, ensure:
 * You have push access to the GitHub repository
 * All changes are merged to the ``main`` or version branch (e.g., ``0.9``)
 * All CI tests are passing
-* PyPI trusted publishing is configured (see :doc:`pypi-trusted-publishing`)
+* PyPI trusted publishing is configured (see `PyPI Trusted Publishing Guide <https://docs.pypi.org/trusted-publishers/>`_)
 
 Quick Overview
 --------------
@@ -290,7 +290,7 @@ If publishing fails:
      * Workflow: ``release.yml``
      * Environment: ``pypi`` and ``testpypi``
 
-2. See :doc:`pypi-trusted-publishing` for setup instructions
+2. See the `PyPI Trusted Publishing Guide <https://docs.pypi.org/trusted-publishers/>`_ for setup instructions
 
 Emergency Rollback
 ~~~~~~~~~~~~~~~~~~
@@ -386,5 +386,5 @@ See Also
 
 * :doc:`changelog` - Changelog management workflow
 * :doc:`chores` - Pre-release housekeeping tasks
-* :doc:`pypi-trusted-publishing` - PyPI trusted publishing setup
 * :doc:`../ci` - CI/CD pipeline documentation
+* `PyPI Trusted Publishing Guide <https://docs.pypi.org/trusted-publishers/>`_ - PyPI setup reference

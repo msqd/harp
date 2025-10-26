@@ -13,6 +13,5 @@ Releasing
     chores
     python
     changelog
-    pypi-trusted-publishing
     helm
     contributors

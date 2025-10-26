@@ -106,7 +106,7 @@ Removed
 * Benchmarking logic was removed, as it makes test hard and unreliable, adds version
   specific data in the source tree and overall, should belong to an external benchmarking
   suite.
-* Removed duplicate/outdated release documentation (sources.rst, bump.rst)
+* Removed duplicate/outdated release documentation (sources.rst, bump.rst, pypi-trusted-publishing.rst)
 * Removed anyio dependency
 * Removed black (replaced by ruff)
 * Removed isort (replaced by ruff)
