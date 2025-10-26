@@ -11,8 +11,22 @@ permissions:
   id-token: write  # Required for trusted publishing to PyPI
 
 jobs:
+  # Wait for CI to complete successfully before building release
+  wait-for-ci:
+    name: Wait for CI to complete
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for CI workflow
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.ref }}
+          check-name: 'release'  # Wait for the 'release' job in CI workflow
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+
   build:
     name: Build Python package
+    needs: wait-for-ci
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -108,9 +122,6 @@ jobs:
     name: Publish to TestPyPI
     needs: test-wheel
     runs-on: ubuntu-latest
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/p/harp-proxy
     permissions:
       id-token: write
     steps:
