@@ -276,6 +276,15 @@ pnpm ui:serve
 - When implementing new features, check existing patterns in similar components first
 - Avoid code duplication - factor out common logic after writing tests
 
+## Release Process
+
+For release managers: see the complete release documentation in `docs/contribute/release/python.rst`.
+
+**Quick reference:**
+- Update changelog: `docs/contribute/release/changelog.rst`
+- Python package releases: `docs/contribute/release/python.rst`
+- Pre-release tasks: `docs/contribute/release/chores.rst`
+
 ## Summary
 
 The key is to write clean, testable, functional code that evolves through

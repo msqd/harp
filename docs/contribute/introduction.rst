@@ -12,7 +12,7 @@ System requirements
 You will need the following tools installed on your machine:
 
 - Git and GNU Make
-- A working Python 3.12 environment with the ``poetry`` package manager installed. We usually tend to use the latest
+- A working Python 3.13+ environment with the ``uv`` package manager installed. We usually tend to use the latest
   stable version of Python.
 - A working NodeJS (lts/iron) environment with the ``pnpm`` package manager installed.
 - A working Docker + Docker Compose environment.
@@ -37,7 +37,7 @@ Install the project's dependencies (isolated):
     cd harp
     make install-dev
 
-This will install the dependencies in a separate virtual environment (managed by poetry) and set up the development
+This will install the dependencies in a separate virtual environment (managed by uv) and set up the development
 environment.
 
 .. note::
@@ -59,11 +59,11 @@ Here, we'll run one using one of the built-in examples (but the same applies to 
 
 .. code-block:: bash
 
-    poetry run harp start --example sqlite
+    uv run harp start --example sqlite
 
 Open your browser at http://localhost:4080 to have a look at the HARP dashboard.
 
-Using ``harp start`` (or ``poetry run harp start`` to let poetry manage the env, our preference) will spawn
+Using ``harp start`` (or ``uv run harp start`` to let uv manage the env, our preference) will spawn
 a bunch of processes, managed by `honcho <https://pypi.org/project/honcho/>`_, with some free cherries.
 
 The default processes are:
@@ -91,8 +91,8 @@ running:
 
     make help
 
-For anything requiring a valid environment to run, you can use the ``poetry run harp`` command, which will run the HARP
-CLI within the poetry-managed virtualenvironment.
+For anything requiring a valid environment to run, you can use the ``uv run harp`` command, which will run the HARP
+CLI within the uv-managed virtual environment.
 
 
 Next steps

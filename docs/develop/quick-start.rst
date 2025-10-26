@@ -34,7 +34,7 @@ Answer a few questions, and you're ready to go!
     cd <your-project>
     make
 
-This will install the dependencies (in a poetry-managed virtualenv) and start your proxy.
+This will install the dependencies (in a uv-managed virtual environment) and start your proxy.
 
 Next Steps
 ::::::::::

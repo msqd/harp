@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+#
+# Validates that the version in pyproject.toml matches the expected version.
+# Used in the release workflow to ensure manual version bumps before tagging.
+#
+# Usage:
+#   bin/validate_version <expected-version>
+#
+# Example:
+#   bin/validate_version 0.9.0
+#
+# Exit codes:
+#   0 - Version matches
+#   1 - Version mismatch or validation error
+
+set -euo pipefail
+
+# Check arguments
+if [ $# -ne 1 ]; then
+    echo "Error: Expected version argument" >&2
+    echo "Usage: $0 <expected-version>" >&2
+    exit 1
+fi
+
+EXPECTED_VERSION="$1"
+
+# Extract version from pyproject.toml
+if [ ! -f "pyproject.toml" ]; then
+    echo "Error: pyproject.toml not found" >&2
+    exit 1
+fi
+
+# Extract version using grep and sed (portable approach)
+PYPROJECT_VERSION=$(grep '^version = ' pyproject.toml | sed 's/^version = "\(.*\)"/\1/')
+
+if [ -z "$PYPROJECT_VERSION" ]; then
+    echo "Error: Could not extract version from pyproject.toml" >&2
+    exit 1
+fi
+
+# Compare versions
+if [ "$PYPROJECT_VERSION" != "$EXPECTED_VERSION" ]; then
+    echo "❌ Version mismatch!" >&2
+    echo "" >&2
+    echo "  Expected (from git tag): $EXPECTED_VERSION" >&2
+    echo "  Actual (from pyproject.toml): $PYPROJECT_VERSION" >&2
+    echo "" >&2
+    echo "Before creating a release tag, you must:" >&2
+    echo "  1. Update version in pyproject.toml to $EXPECTED_VERSION" >&2
+    echo "  2. Run: uv lock" >&2
+    echo "  3. Commit: git add pyproject.toml uv.lock && git commit -m 'chore: bump version to $EXPECTED_VERSION'" >&2
+    echo "  4. Tag: git tag -a $EXPECTED_VERSION -m 'Release $EXPECTED_VERSION'" >&2
+    echo "  5. Push: git push origin main && git push origin $EXPECTED_VERSION" >&2
+    echo "" >&2
+    exit 1
+fi
+
+# Success
+echo "✓ Version validation passed"
+echo "  pyproject.toml version: $PYPROJECT_VERSION"
+echo "  git tag version: $EXPECTED_VERSION"
+exit 0

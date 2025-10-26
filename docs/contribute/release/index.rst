@@ -10,10 +10,9 @@ Releasing
 .. toctree::
     :maxdepth: 1
 
-    chores
-    sources
     python
+    changelog
+    chores
     pypi-trusted-publishing
     helm
     contributors
-    bump

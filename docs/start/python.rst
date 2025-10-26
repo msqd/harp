@@ -6,7 +6,7 @@ Harp is also installable using a Python package manager (most likely, `pip``).
 Install with PIP
 ::::::::::::::::::
 
-You need a working Python 3.12 environment with the `pip` package manager (or another package manager of your choice).
+You need a working Python 3.13+ environment with the `pip` package manager (or another package manager of your choice).
 To insall it, run:
 
 .. code-block:: shell

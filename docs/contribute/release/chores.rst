@@ -42,7 +42,7 @@ Run the tests, luke
 
 .. code-block:: shell
 
-    poetry run make qa
+    uv run make qa
 
 
 Eventually commit the updated dependencies
@@ -50,7 +50,7 @@ Eventually commit the updated dependencies
 
 .. code-block:: shell
 
-    git add -p pyproject.toml poetry.lock harp_apps/dashboard/frontend/package.json harp_apps/dashboard/frontend/pnpm-lock.yaml
+    git add -p pyproject.toml uv.lock harp_apps/dashboard/frontend/package.json harp_apps/dashboard/frontend/pnpm-lock.yaml
 
 All good ? Let's push that.
 

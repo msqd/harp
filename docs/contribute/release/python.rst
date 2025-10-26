@@ -1,52 +1,390 @@
 Releasing as a Python Package
-=============================
+==============================
 
-Releasing a python package for a version consists of building a wheel, testing it and pushing it to the Python Package
-Index (PyPI).
+This guide describes the complete process for releasing a new HARP version to PyPI.
 
 .. note::
 
-    The release process is now automated via GitHub Actions! When you push a version tag (e.g., ``0.9.0``), the
-    workflow automatically builds, tests, and publishes the package. See :doc:`pypi-trusted-publishing` for setup
-    instructions.
+    The release process is fully automated via GitHub Actions. When you push a version tag,
+    the workflow automatically builds, tests, and publishes the package.
 
-    The manual process below is still documented for reference or emergency situations.
+Prerequisites
+-------------
 
+Before creating a release, ensure:
 
-Building a wheel
-::::::::::::::::
+* You have push access to the GitHub repository
+* All changes are merged to the ``main`` or version branch (e.g., ``0.9``)
+* All CI tests are passing
+* PyPI trusted publishing is configured (see :doc:`pypi-trusted-publishing`)
 
-To build a wheel in an isolated directory:
+Quick Overview
+--------------
 
-.. code-block:: shell
+The automated release workflow handles:
+
+1. **Version validation** - Ensures ``pyproject.toml`` version matches the git tag
+2. **Package building** - Builds wheel in isolated sandbox environment with frontend bundled
+3. **Testing** - Tests installation on Python 3.13, 3.14, and 3.14t (free-threaded)
+4. **Publishing** - Publishes to TestPyPI, then production PyPI
+5. **GitHub Release** - Creates release with changelog and wheel artifacts
+
+Step-by-Step Release Process
+-----------------------------
+
+1. Prepare the Changelog
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Move unreleased changes to a version-specific changelog file:
+
+.. code-block:: bash
+
+    # For version 0.9.0
+    mv docs/changelogs/unreleased.rst docs/changelogs/0.9.0.rst
+
+Edit the file to add version header and release date:
+
+.. code-block:: rst
+
+    0.9.0 (2025-01-15)
+    ==================
+
+Create a new empty ``unreleased.rst`` file for future changes.
+
+See :doc:`changelog` for complete changelog management workflow.
+
+Commit the changelog updates:
+
+.. code-block:: bash
+
+    git add docs/changelogs/
+    git commit -m "docs: prepare changelog for 0.9.0"
+
+2. Set the Version Number
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Define the version as an environment variable to avoid typos:
+
+.. code-block:: bash
+
+    export VERSION=0.9.0
+
+For pre-releases, use appropriate suffixes:
+
+.. code-block:: bash
+
+    export VERSION=0.9.1-rc1    # Release candidate
+    export VERSION=1.0.0-beta1  # Beta release
+    export VERSION=1.0.0-alpha1 # Alpha release
+
+3. Update pyproject.toml
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Update the version in ``pyproject.toml``:
+
+.. code-block:: bash
+
+    sed -i.bak "s/^version = .*/version = \"$VERSION\"/" pyproject.toml && rm pyproject.toml.bak
+    uv lock
+
+Verify the change:
+
+.. code-block:: bash
+
+    grep "^version" pyproject.toml
+    # Should show: version = "0.9.0"
+
+4. Commit the Version Change
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    git add pyproject.toml uv.lock
+    git commit -m "chore: bump version to $VERSION"
+
+5. Create an Annotated Git Tag
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    git tag -a $VERSION -m "Release $VERSION"
+
+.. important::
+
+    Always use the ``-a`` flag to create an **annotated tag**, not a lightweight tag.
+    The release workflow requires annotated tags.
+
+6. Push Changes and Tag
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    git push origin main  # or: git push origin 0.9
+    git push origin $VERSION
+
+.. note::
+
+    Push the tag **after** pushing the commit to ensure the tag points to the correct commit.
+
+7. Monitor the Release Workflow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Once the tag is pushed, GitHub Actions automatically runs the release workflow:
+
+.. code-block:: text
+
+    1. Validates that pyproject.toml version matches tag
+       └─ Fails if versions don't match (see Troubleshooting)
+
+    2. Builds wheel in sandbox environment
+       ├─ Installs dependencies
+       ├─ Builds React frontend
+       ├─ Bundles static assets
+       └─ Creates wheel with twine validation
+
+    3. Tests the built wheel
+       ├─ Python 3.13 (standard)
+       ├─ Python 3.14 (standard)
+       └─ Python 3.14t (free-threaded/no-GIL)
+
+    4. Publishes to TestPyPI
+       └─ For validation before production
+
+    5. Publishes to PyPI
+       └─ Production release
+
+    6. Creates GitHub Release
+       ├─ Converts changelog (RST → Markdown)
+       ├─ Attaches wheel artifacts
+       └─ Marks as pre-release if applicable
+
+Watch the workflow progress:
+
+.. code-block:: bash
+
+    # Using GitHub CLI
+    gh run list --limit 5
+    gh run watch  # Watch the latest run
+
+Or visit: ``https://github.com/msqd/harp/actions``
+
+The workflow typically takes 10-15 minutes to complete.
+
+8. Verify the Release
+~~~~~~~~~~~~~~~~~~~~~~
+
+Once the workflow completes successfully:
+
+**Check PyPI:**
+
+.. code-block:: bash
+
+    # View on PyPI
+    open https://pypi.org/project/harp-proxy/
+
+**Check GitHub Release:**
+
+.. code-block:: bash
+
+    # View releases
+    open https://github.com/msqd/harp/releases
+
+**Test Installation:**
+
+.. code-block:: bash
+
+    # In a fresh environment
+    pip install harp-proxy==$VERSION
+
+    # Or using uv
+    uv pip install harp-proxy==$VERSION
+
+    # Verify version
+    harp --version
+
+Version Naming Conventions
+---------------------------
+
+Follow semantic versioning:
+
+**Stable Releases**
+  ``X.Y.Z`` (e.g., ``0.9.0``, ``1.0.0``, ``2.1.3``)
+
+  Use for production-ready releases.
+
+**Release Candidates**
+  ``X.Y.Z-rcN`` (e.g., ``0.9.1-rc1``, ``0.9.1-rc2``)
+
+  Use for testing before final release. The workflow automatically marks these as pre-releases.
+
+**Beta Releases**
+  ``X.Y.Z-betaN`` (e.g., ``1.0.0-beta1``)
+
+  Use for feature-complete but not fully tested releases.
+
+**Alpha Releases**
+  ``X.Y.Z-alphaN`` (e.g., ``1.0.0-alpha1``)
+
+  Use for early testing releases with incomplete features.
+
+Troubleshooting
+---------------
+
+Version Mismatch Error
+~~~~~~~~~~~~~~~~~~~~~~
+
+If the workflow fails with:
+
+.. code-block:: text
+
+    ❌ Version mismatch!
+    Expected (from git tag): 0.9.0
+    Actual (from pyproject.toml): 0.9-dev
+
+**Solution:**
+
+1. Delete the tag locally and remotely:
+
+   .. code-block:: bash
+
+      git tag -d $VERSION
+      git push origin :refs/tags/$VERSION
+
+2. Fix the version in ``pyproject.toml``
+
+3. Repeat from step 3 (Update pyproject.toml)
+
+Workflow Build Failures
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the build fails:
+
+1. **Check the workflow logs** for specific errors
+2. **Fix the issue** in your code
+3. **Delete the failed tag** (see above)
+4. **Re-run** the release process
+
+Test Failures
+~~~~~~~~~~~~~
+
+If tests fail on specific Python versions:
+
+1. **Review test logs** to identify the issue
+2. **Fix the code** to support all Python versions
+3. **Re-release** with a new tag
+
+PyPI Publishing Failures
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The workflow uses PyPI's trusted publishing (OIDC), which requires no manual credentials.
+
+If publishing fails:
+
+1. **Verify trusted publisher configuration** on PyPI:
+
+   * Go to https://pypi.org/manage/account/publishing/
+   * Ensure ``harp-proxy`` has a trusted publisher for:
+
+     * Owner: ``msqd``
+     * Repository: ``harp``
+     * Workflow: ``release.yml``
+     * Environment: ``pypi`` and ``testpypi``
+
+2. See :doc:`pypi-trusted-publishing` for setup instructions
+
+Emergency Rollback
+~~~~~~~~~~~~~~~~~~
+
+If a release has critical issues:
+
+.. warning::
+
+    **Never delete a PyPI release.** PyPI does not allow re-uploading the same version number.
+
+Instead:
+
+1. **Release a new patch version** with the fix:
+
+   .. code-block:: bash
+
+      export VERSION=0.9.1  # Increment version
+      # Follow normal release process
+
+2. **Optionally yank the problematic version** on PyPI:
+
+   * Go to https://pypi.org/project/harp-proxy/
+   * Select the problematic version
+   * Click "Options" → "Yank release"
+   * Provide reason: *"Critical bug, use version X.Y.Z instead"*
+
+   Yanking prevents new installations but doesn't break existing ones.
+
+3. **Update documentation** to warn users about the problematic version
+
+Manual Testing (Before Release)
+--------------------------------
+
+To test the build process locally before creating a release:
+
+Build the Wheel
+~~~~~~~~~~~~~~~
+
+.. code-block:: bash
 
     make clean-dist wheel
 
-The resulting build artifacts (wheel, tgz ...) will be available under the dist/ directory of your working copy.
+This command:
 
+* Builds in an isolated sandbox environment
+* Compiles and bundles the React frontend
+* Creates the wheel package
+* Validates with ``twine check``
 
-Testing a wheel
-:::::::::::::::
+The wheel is created in ``dist/``.
 
-To test a wheel you just built, a script is available to run a brand new container and pip install it (from filesystem):
+Test the Wheel
+~~~~~~~~~~~~~~
 
-.. code-block:: shell
+Test the built wheel in a fresh container:
+
+.. code-block:: bash
 
     bin/runc_wheel dist/*.whl
 
-Once your container is up and running, you can run a server using, for example:
+This starts a container with the wheel installed. Test it:
 
-.. code-block::
+.. code-block:: bash
 
     harp server --endpoint httpbin=4000:http://httpbin.org/
 
+Manual Upload (Emergency Only)
+-------------------------------
 
-Releasing a wheel to PyPI
-:::::::::::::::::::::::::
+If the automated workflow is completely broken and you need to release urgently:
 
-Once you're confident with the just built wheel, it's time to make it available to the outside world. You will need
-`twine` to be installed on your system (for example, using homebrew).
-
-.. code-block::
+.. code-block:: bash
 
     twine upload dist/*
+
+.. warning::
+
+    This requires PyPI credentials configured locally and should be avoided.
+    Always prefer fixing the automated workflow instead.
+
+Best Practices
+--------------
+
+* **Test thoroughly before releasing** - Run the full test suite locally
+* **Use release candidates for major versions** - Create ``X.Y.Z-rc1`` before ``X.Y.Z``
+* **Keep the changelog updated** - Add entries per PR/feature (see :doc:`changelog`)
+* **Document breaking changes clearly** - Use "Important Changes" section
+* **Release often** - Small, frequent releases are better than large, infrequent ones
+* **Monitor after release** - Watch for issues reported after release
+
+See Also
+--------
+
+* :doc:`changelog` - Changelog management workflow
+* :doc:`chores` - Pre-release housekeeping tasks
+* :doc:`pypi-trusted-publishing` - PyPI trusted publishing setup
+* :doc:`../ci` - CI/CD pipeline documentation

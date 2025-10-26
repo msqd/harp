@@ -10,11 +10,23 @@ Important Changes
 Added
 -----
 
-* Automated version management from git tags in CI/CD pipeline
+* Version validation in release workflow to ensure pyproject.toml matches git tag
+* Test matrix for Python 3.13, 3.14, and 3.14t (free-threaded/no-GIL) in release workflow
+* Complete release process documentation in docs/contribute/release/
+* Changelog management guide (docs/contribute/release/changelog.rst)
+* bin/validate_version script for version consistency checks
 
 Changed
 -------
 
+* **Release workflow**: Version must now be manually updated in pyproject.toml before tagging (no longer automated during CI)
+* **Release workflow**: Replaced single-version wheel testing with matrix testing across Python 3.13, 3.14, and 3.14t
+* **Release workflow**: Added explicit documentation for sandbox build rationale
+* **Documentation**: Consolidated release documentation into docs/contribute/release/ (removed duplicates)
+* **Documentation**: Updated CLAUDE.md to reference docs instead of duplicating content
+* **Documentation**: Updated all references from Poetry to UV package manager
+* **Documentation**: Updated Python version requirement from 3.12 to 3.13+
+* **Documentation**: Fixed command examples throughout (poetry run → uv run)
 * Bump alembic: 1.15.2 → 1.17.0
 * Bump aiohttp: 3.12.15 → 3.13.1
 * Bump asgi-tools: 1.1.0 → 1.3.3
@@ -32,6 +44,7 @@ Changed
 Removed
 -------
 
+* Removed duplicate/outdated release documentation (sources.rst, bump.rst)
 * Removed anyio dependency
 * Removed black (replaced by ruff)
 * Removed isort (replaced by ruff)

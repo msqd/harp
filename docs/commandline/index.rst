@@ -12,7 +12,7 @@ For PIP and source installs, it will be available as
 `harp` in your python environment.
 
 For source installations, you may need to use
-`poetry run harp ...`.
+`uv run harp ...`.
 
 Docker
 ------
@@ -41,15 +41,15 @@ Sources
 -------
 
 For sources installations, the behaviour is similar to installing it from a packaged wheel (python package), but you
-may need to force using the right environment using poetry.
+may need to force using the right environment using uv.
 
 .. code-block:: shell
 
-    poetry run harp server --endpoint httpbin=4000:https://httpbin.org
+    uv run harp server --endpoint httpbin=4000:https://httpbin.org
 
-Another way would be to activate the poetry environment and run the command directly:
+Another way would be to activate the uv environment and run the command directly:
 
 .. code-block:: shell
 
-    poetry shell
+    source .venv/bin/activate  # or .venv\Scripts\activate on Windows
     harp server --endpoint httpbin=4000:https://httpbin.org

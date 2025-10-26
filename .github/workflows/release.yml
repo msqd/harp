@@ -28,14 +28,10 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
-      - name: Update version in pyproject.toml
+      - name: Validate version matches tag
         run: |
-          sed -i 's/^version = .*/version = "${{ steps.version.outputs.version }}"/' pyproject.toml
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pyproject.toml
-          git commit -m "chore: set version to ${{ steps.version.outputs.version }} for release build"
-          echo "Updated and committed version ${{ steps.version.outputs.version }}"
+          chmod +x bin/validate_version
+          bin/validate_version "${{ steps.version.outputs.version }}"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -48,6 +44,11 @@ jobs:
           enable-cache: true
 
       - name: Build wheel
+        # Note: We use 'make wheel' instead of 'uv build' because:
+        # 1. Builds in an isolated sandbox environment for reproducibility
+        # 2. Builds and bundles the React frontend
+        # 3. Strips unnecessary content from README.rst
+        # 4. Validates the wheel with twine
         run: make clean-dist wheel
         env:
           UV: uv
@@ -61,15 +62,29 @@ jobs:
           retention-days: 7
 
   test-wheel:
-    name: Test built wheel
+    name: Test built wheel (Python ${{ matrix.python-version }}${{ matrix.python-gil && '-nogil' || '' }})
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: '3.13'
+          - python-version: '3.14'
+          - python-version: '3.14'
+            python-gil: 'free-threaded'  # Python 3.14t (no-GIL)
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
 
       - name: Download wheel artifact
         uses: actions/download-artifact@v4
@@ -77,17 +92,17 @@ jobs:
           name: python-package-distributions
           path: dist/
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
 
-      - name: Test wheel in container
+      - name: Test wheel installation
         run: |
-          echo "Testing wheel: $(ls dist/*.whl)"
-          bin/runc_wheel dist/*.whl
+          WHEEL=$(ls dist/*.whl)
+          echo "Testing wheel: $WHEEL on Python ${{ matrix.python-version }}${{ matrix.python-gil && ' (free-threaded)' || '' }}"
+          uv pip install --system "$WHEEL"
+          python -c "import harp; print(f'HARP version: {harp.__version__}')"
+          python -c "import sys; print(f'Python: {sys.version}')"
+          ${{ matrix.python-gil && 'python -c "import sys; print(f\"GIL disabled: {sys._is_gil_disabled()}\")"' || 'echo "GIL enabled (standard Python)"' }}
 
   publish-testpypi:
     name: Publish to TestPyPI
