@@ -1,5 +1,5 @@
-Chores before releasing
-=======================
+Chores
+======
 
 Before a new version is released, it's usually a good idea to do some housekeeping.
 

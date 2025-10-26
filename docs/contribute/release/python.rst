@@ -1,5 +1,5 @@
-Releasing as a Python Package
-==============================
+Python Package
+==============
 
 This guide describes the complete process for releasing a new HARP version to PyPI.
 
