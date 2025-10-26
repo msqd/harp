@@ -53,11 +53,13 @@ class HttpResponse(BaseHttpMessage):
     @property
     def reason_phrase(self) -> str:
         try:
-            reason_phrase: bytes = self.extensions["reason_phrase"]
+            reason_phrase = self.extensions["reason_phrase"]
         except KeyError:
             return codes.get_reason_phrase(self.status)
 
-        return reason_phrase.decode("ascii", errors="ignore")
+        if isinstance(reason_phrase, bytes):
+            return reason_phrase.decode("ascii", errors="ignore")
+        return reason_phrase
 
     @property
     def headers(self) -> CIMultiDict:

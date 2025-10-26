@@ -84,3 +84,32 @@ class TestHttpResponseBody(BaseHttpResponseTest):
         assert response.body == b"foobarbaz"
         assert isinstance(response.body, bytes)
         assert isinstance(response.stream, ByteStream)
+
+
+class TestHttpResponseReasonPhrase(BaseHttpResponseTest):
+    """
+    Test reason_phrase property on HTTP responses.
+    """
+
+    def test_reason_phrase_default_from_status(self):
+        """When no reason_phrase extension is set, it should use httpx's default for the status code."""
+        response = self.create_response(body=b"", status=200)
+        assert response.reason_phrase == "OK"
+
+    def test_reason_phrase_custom_status(self):
+        """Different status codes should have different default reason phrases."""
+        response = self.create_response(body=b"", status=404)
+        assert response.reason_phrase == "Not Found"
+
+        response = self.create_response(body=b"", status=502)
+        assert response.reason_phrase == "Bad Gateway"
+
+    def test_reason_phrase_from_bytes_extension(self):
+        """When reason_phrase extension is set as bytes, it should decode it."""
+        response = self.create_response(body=b"", status=502, extensions={"reason_phrase": b"Custom Gateway Error"})
+        assert response.reason_phrase == "Custom Gateway Error"
+
+    def test_reason_phrase_from_str_extension(self):
+        """When reason_phrase extension is set as str, it should return it as-is."""
+        response = self.create_response(body=b"", status=502, extensions={"reason_phrase": "Custom Gateway Error"})
+        assert response.reason_phrase == "Custom Gateway Error"
