@@ -345,9 +345,14 @@ jobs:
           path: dist/
           retention-days: 7
 
-  test-python-package:
-    name: Test Python Package (Py${{ matrix.python-version }}${{ matrix.python-gil && 't' || '' }})
-    needs: build-python-package
+  all-checks-passed:
+    name: ${{ (matrix.python-version && format('Test Python Package (Py{0}{1})', matrix.python-version, matrix.python-gil && 't' || '')) || 'All Checks Passed' }}
+    needs:
+      - build-python-package
+      - test-backend-core
+      - test-backend-apps
+      - test-backend-e2e
+      - test-frontend-unit
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -360,26 +365,36 @@ jobs:
           - python-version: '3.14'
           - python-version: '3.14'
             python-gil: 'free-threaded'  # Python 3.14t (no-GIL)
+          - check-only: true  # Consolidation job with no Python testing
     steps:
+      - name: All checks passed
+        if: matrix.check-only
+        run: echo "✅ All tests and package builds completed successfully"
+
       - name: Checkout code
+        if: matrix.python-version
         uses: actions/checkout@v4
 
       - name: Set up Python
+        if: matrix.python-version
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
 
       - name: Download wheel artifact
+        if: matrix.python-version
         uses: actions/download-artifact@v4
         with:
           name: python-package-distributions
           path: dist/
 
       - name: Install uv
+        if: matrix.python-version
         uses: astral-sh/setup-uv@v4
 
       - name: Test wheel installation
+        if: matrix.python-version
         run: |
           WHEEL=$(ls dist/*.whl)
           echo "Testing wheel: $WHEEL on Python ${{ matrix.python-version }}${{ matrix.python-gil && ' (free-threaded)' || '' }}"
@@ -387,20 +402,6 @@ jobs:
           python -c "import harp; print(f'HARP version: {harp.__version__}')"
           python -c "import sys; print(f'Python: {sys.version}')"
           ${{ matrix.python-gil && 'python -c "import sys; print(f\"GIL enabled: {sys._is_gil_enabled()}\")"' || 'echo "GIL enabled (standard Python)"' }}
-
-  # Consolidation job - waits for all tests and package build to complete
-  all-checks-passed:
-    name: All Checks Passed
-    runs-on: ubuntu-latest
-    needs:
-      - test-backend-core
-      - test-backend-apps
-      - test-backend-e2e
-      - test-frontend-unit
-      - test-python-package
-    steps:
-      - name: All checks passed
-        run: echo "✅ All tests and package builds completed successfully"
 
   # Docker image with wheel from local build (non-release branches)
   build-docker-image-development:
