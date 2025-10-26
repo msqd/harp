@@ -25,263 +25,205 @@ env:
   DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}
 
 jobs:
-  build-runtime-image:
-    name: Build Runtime Docker Image
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: recursive
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set version
-        id: version
-        run: echo "VERSION=$(git describe 2>/dev/null || git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-      - name: Build and push runtime image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: runtime
-          push: true
-          tags: |
-            ${{ env.DOCKER_IMAGE }}:${{ steps.version.outputs.VERSION }}
-            ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAGS }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            VERSION=${{ steps.version.outputs.VERSION }}
-
-  build-development-image:
-    name: Build Development Docker Image
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: recursive
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set version
-        id: version
-        run: echo "VERSION=$(git describe 2>/dev/null || git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-      - name: Build and push dev image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: development
-          push: true
-          tags: |
-            ${{ env.DOCKER_IMAGE_DEV }}:${{ steps.version.outputs.VERSION }}-dev
-            ${{ env.DOCKER_IMAGE_DEV }}:${{ env.DOCKER_TAGS }}-dev
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            VERSION=${{ steps.version.outputs.VERSION }}
-
   test-backend-core:
-    name: Test Backend Core
+    name: Test Backend Core (Py${{ matrix.python-version }}${{ matrix.python-gil && 't' || '' }})
     runs-on: ubuntu-latest
-    needs: build-development-image
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: '3.13'
+          - python-version: '3.14'
+          - python-version: '3.14'
+            python-gil: 'free-threaded'  # Python 3.14t (no-GIL)
     permissions:
       contents: read
-      packages: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync --extra dev
 
       - name: Run core tests
-        run: make testc-backend
+        run: uv run pytest harp -n auto -m 'not subprocess'
         env:
-          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
-          PYTEST_TARGETS: harp
-          PYTEST_OPTIONS: -m 'not subprocess'
+          TESTCONTAINERS_RYUK_DISABLED: 'true'
 
   test-backend-apps:
-    name: Test Backend Apps
+    name: Test Backend Apps (Py${{ matrix.python-version }}${{ matrix.python-gil && 't' || '' }})
     runs-on: ubuntu-latest
-    needs: build-development-image
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: '3.13'
+          - python-version: '3.14'
+          - python-version: '3.14'
+            python-gil: 'free-threaded'  # Python 3.14t (no-GIL)
     permissions:
       contents: read
-      packages: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync --extra dev
 
       - name: Run apps tests
-        run: make testc-backend
+        run: uv run pytest harp_apps -n 1 -m 'not subprocess'
         env:
-          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
-          PYTEST_TARGETS: harp_apps
-          PYTEST_OPTIONS: -m 'not subprocess'
-          PYTEST_CPUS: "1"
+          TESTCONTAINERS_RYUK_DISABLED: 'true'
 
   test-backend-e2e:
-    name: Test Backend E2E
+    name: Test Backend E2E (Py${{ matrix.python-version }}${{ matrix.python-gil && 't' || '' }})
     runs-on: ubuntu-latest
-    needs: build-development-image
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: '3.13'
+          - python-version: '3.14'
+          - python-version: '3.14'
+            python-gil: 'free-threaded'  # Python 3.14t (no-GIL)
     permissions:
       contents: read
-      packages: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync --extra dev
 
       - name: Run e2e tests
-        run: make testc-backend
+        run: uv run pytest tests -n 1 -m 'not subprocess'
         env:
-          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
-          PYTEST_TARGETS: tests
-          PYTEST_OPTIONS: -m 'not subprocess'
-          PYTEST_CPUS: "1"
+          TESTCONTAINERS_RYUK_DISABLED: 'true'
 
   test-frontend-unit:
     name: Test Frontend Unit
     runs-on: ubuntu-latest
-    needs: build-development-image
     permissions:
       contents: read
-      packages: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          version: 8
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: cd harp_apps/dashboard/frontend && pnpm install
 
       - name: Run frontend unit tests
-        run: make testc-frontend
-        env:
-          DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
-          DOCKER_INTERACTIVE: ""
+        run: cd harp_apps/dashboard/frontend && pnpm test:unit
 
   build-documentation:
     name: Build Documentation
     runs-on: ubuntu-latest
-    needs: build-development-image
     continue-on-error: true
     permissions:
       contents: read
-      packages: read
-    env:
-      DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
     steps:
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          python-version: '3.13'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync --extra dev
 
       - name: Build documentation
-        run: |
-          mkdir -p harp-doc
-          chmod 777 harp-doc
-          docker run --rm \
-            -v $PWD/harp-doc:/opt/harp/src/docs/_build \
-            -e SPHINXBUILD=/opt/venv/bin/sphinx-build \
-            ${{ env.DOCKER_IMAGE_DEV }} \
-            bash -c "cd /opt/harp/src/docs && make html"
+        run: uv run make -C docs html
 
       - name: Upload documentation artifacts
         uses: actions/upload-artifact@v4
         with:
           name: harp-doc
-          path: harp-doc/html/
+          path: docs/_build/html/
           retention-days: 30
 
   build-storybook:
     name: Build Storybook
     runs-on: ubuntu-latest
-    needs: build-development-image
     continue-on-error: true
     permissions:
       contents: read
-      packages: read
-    env:
-      DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}:${{ github.sha }}-${{ github.run_number }}-dev
     steps:
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          version: 8
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: cd harp_apps/dashboard/frontend && pnpm install
 
       - name: Build storybook
-        run: |
-          mkdir -p harp-ui
-          chmod 777 harp-ui
-          docker run --rm \
-            -v $PWD/harp-ui:/opt/harp/src/harp_apps/dashboard/frontend/build \
-            ${{ env.DOCKER_IMAGE_DEV }} \
-            bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && pnpm ui:build"
+        run: cd harp_apps/dashboard/frontend && pnpm ui:build
 
       - name: Upload storybook artifacts
         uses: actions/upload-artifact@v4
         with:
           name: harp-ui
-          path: harp-ui/
+          path: harp_apps/dashboard/frontend/build/
           retention-days: 30
 
   # Python package build - runs in parallel with tests
   build-python-package:
     name: Build Python Package
     runs-on: ubuntu-latest
-    needs: build-development-image
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
