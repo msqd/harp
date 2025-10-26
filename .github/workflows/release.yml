@@ -102,7 +102,7 @@ jobs:
           uv pip install --system "$WHEEL"
           python -c "import harp; print(f'HARP version: {harp.__version__}')"
           python -c "import sys; print(f'Python: {sys.version}')"
-          ${{ matrix.python-gil && 'python -c "import sys; print(f\"GIL disabled: {sys._is_gil_disabled()}\")"' || 'echo "GIL enabled (standard Python)"' }}
+          ${{ matrix.python-gil && 'python -c "import sys; print(f\"GIL enabled: {sys._is_gil_enabled()}\")"' || 'echo "GIL enabled (standard Python)"' }}
 
   publish-testpypi:
     name: Publish to TestPyPI
