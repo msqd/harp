@@ -26,7 +26,7 @@ env:
 
 jobs:
   test-backend-core:
-    name: Test Backend Core (Py${{ matrix.python-version }}${{ matrix.python-gil && 't' || '' }})
+    name: Test Backend Core (Py${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -34,8 +34,6 @@ jobs:
         include:
           - python-version: '3.13'
           - python-version: '3.14'
-          - python-version: '3.14'
-            python-gil: 'free-threaded'  # Python 3.14t (no-GIL)
     permissions:
       contents: read
     steps:
@@ -60,7 +58,7 @@ jobs:
           TESTCONTAINERS_RYUK_DISABLED: 'true'
 
   test-backend-apps:
-    name: Test Backend Apps (Py${{ matrix.python-version }}${{ matrix.python-gil && 't' || '' }})
+    name: Test Backend Apps (Py${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -68,8 +66,6 @@ jobs:
         include:
           - python-version: '3.13'
           - python-version: '3.14'
-          - python-version: '3.14'
-            python-gil: 'free-threaded'  # Python 3.14t (no-GIL)
     permissions:
       contents: read
     steps:
@@ -94,7 +90,7 @@ jobs:
           TESTCONTAINERS_RYUK_DISABLED: 'true'
 
   test-backend-e2e:
-    name: Test Backend E2E (Py${{ matrix.python-version }}${{ matrix.python-gil && 't' || '' }})
+    name: Test Backend E2E (Py${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -102,8 +98,6 @@ jobs:
         include:
           - python-version: '3.13'
           - python-version: '3.14'
-          - python-version: '3.14'
-            python-gil: 'free-threaded'  # Python 3.14t (no-GIL)
     permissions:
       contents: read
     steps:
@@ -305,8 +299,6 @@ jobs:
         include:
           - python-version: '3.13'
           - python-version: '3.14'
-          - python-version: '3.14'
-            python-gil: 'free-threaded'  # Python 3.14t (no-GIL)
           - check-only: true  # Consolidation job with no Python testing
     steps:
       - name: All checks passed
@@ -452,28 +444,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Generate -nogil tags
-        id: nogil_tags
-        run: |
-          ORIGINAL_TAGS="${{ steps.meta.outputs.tags }}"
-          NOGIL_TAGS=$(echo "$ORIGINAL_TAGS" | sed 's/\(:[^,]*\)/\1-nogil/g')
-          echo "tags=$NOGIL_TAGS" >> $GITHUB_OUTPUT
-          echo "NoGIL tags: $NOGIL_TAGS"
-
-      - name: Build and push Docker image (GIL disabled - nogil)
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: Dockerfile.wheel
-          push: true
-          tags: ${{ steps.nogil_tags.outputs.tags }}
-          build-args: |
-            PYTHON_VERSION=3.14t
-            INSTALL_FROM=${{ steps.meta.outputs.INSTALL_FROM }}
-            VERSION=${{ steps.meta.outputs.VERSION }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
   publish-to-testpypi:
     name: Publish to TestPyPI
     needs: all-checks-passed
@@ -604,27 +574,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           build-args: |
             PYTHON_VERSION=3.14
-            VERSION=${{ steps.meta.outputs.VERSION }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Generate -nogil tags
-        id: nogil_tags
-        run: |
-          ORIGINAL_TAGS="${{ steps.meta.outputs.tags }}"
-          NOGIL_TAGS=$(echo "$ORIGINAL_TAGS" | sed 's/\(:[^,]*\)/\1-nogil/g')
-          echo "tags=$NOGIL_TAGS" >> $GITHUB_OUTPUT
-          echo "NoGIL tags: $NOGIL_TAGS"
-
-      - name: Build and push Docker image (GIL disabled - nogil)
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: Dockerfile.wheel
-          push: true
-          tags: ${{ steps.nogil_tags.outputs.tags }}
-          build-args: |
-            PYTHON_VERSION=3.14t
             VERSION=${{ steps.meta.outputs.VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
