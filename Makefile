@@ -36,21 +36,19 @@ DOCKER ?= $(shell which docker || echo "docker")
 DOCKER_INTERACTIVE ?= $(shell [ -t 0 ] && echo "-it" || echo "-t")
 DOCKER_OPTIONS ?=
 DOCKER_IMAGE ?= $(NAME)
-DOCKER_IMAGE_DEV ?= $(NAME)-dev
 DOCKER_TAGS ?=
 DOCKER_TAGS_SUFFIX ?=
 DOCKER_BUILD_OPTIONS ?= --platform=$(DOCKER_PLATFORM)
-DOCKER_BUILD_TARGET ?= runtime
 DOCKER_NETWORK ?= harp
 DOCKER_RUN_COMMAND ?=
 DOCKER_RUN_OPTIONS ?=
+PYTHON_VERSION ?= 3.14
 
 # frontend
 PNPM ?= $(shell which pnpm || echo "pnpm")
 
 # misc.
 SED ?= $(shell which gsed || which sed || echo "sed")
-TESTC_COMMAND ?= bash
 TEST_SKIP_FRONT ?=
 
 # constants
@@ -202,12 +200,16 @@ cloc:
 
 .PHONY: buildc pushc runc runc-shell runc-example-repositories
 
-buildc:  ## Builds the docker image.
-	# Set up cleanup trap to ensure version.txt is removed even on error
-	# Use --progress=plain for more detailed build output (useful for CI/debugging)
-	trap 'rm -f version.txt' EXIT; \
-	echo $(VERSION) > version.txt && \
-	$(DOCKER) build --target=$(DOCKER_BUILD_TARGET) $(DOCKER_OPTIONS) $(DOCKER_BUILD_OPTIONS) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .
+buildc: wheel  ## Builds the docker image from wheel (supports PYTHON_VERSION=3.13 or 3.14).
+	$(DOCKER) build \
+		$(DOCKER_OPTIONS) \
+		$(DOCKER_BUILD_OPTIONS) \
+		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
+		--build-arg INSTALL_FROM=local \
+		--build-arg VERSION=$(VERSION) \
+		-t $(DOCKER_IMAGE) \
+		$(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) \
+		.
 
 pushc:  ## Pushes the docker image to the registry.
 	for tag in $(VERSION) $(DOCKER_TAGS); do \
@@ -216,83 +218,11 @@ pushc:  ## Pushes the docker image to the registry.
 
 runc:  ## Runs the docker image.
 	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
-	$(DOCKER) run $(DOCKER_INTERACTIVE) --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
+	$(DOCKER) run $(DOCKER_INTERACTIVE) --init --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
 runc-shell:  ## Runs a shell within the docker image.
 	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
-	$(DOCKER) run $(DOCKER_INTERACTIVE) --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
-
-
-.PHONY: buildc-dev pushc-dev runc-dev runc-dev-shell
-
-buildc-dev:  ## Builds the development docker image.
-	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) DOCKER_BUILD_TARGET=development $(MAKE) buildc
-
-pushc-dev:  ## Pushes the development docker image to the registry.
-	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) pushc
-
-runc-dev:  ## Runs the development docker image.
-	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) runc
-
-runc-dev-shell:  ## Runs a shell within the development docker image.
-	DOCKER_IMAGE=$(DOCKER_IMAGE_DEV) $(MAKE) runc-shell
-
-
-.PHONY: testc-shell testc-backend testc-frontend
-
-# Test container configuration variables
-TESTC_TZ ?= America/Havana
-
-testc-shell:  ## Runs a shell in the development test suite environment.
-	@_DIND_CONTAINER="dind-$$(date +%s)-$$$$" && \
-	_DOCKER_NETWORK="harp-$$(date +%s)-$$$$" && \
-	trap "$(DOCKER) stop $$_DIND_CONTAINER 2>/dev/null || true; \
-	      $(DOCKER) rm $$_DIND_CONTAINER 2>/dev/null || true; \
-	      $(DOCKER) network rm $$_DOCKER_NETWORK 2>/dev/null || true" EXIT && \
-	$(DOCKER) network create $$_DOCKER_NETWORK && \
-	$(DOCKER) run --privileged -d \
-		--name $$_DIND_CONTAINER \
-		--network $$_DOCKER_NETWORK \
-		--network-alias docker \
-		-e DOCKER_TLS_CERTDIR= \
-		$(DOCKER_OPTIONS) \
-		$(DOCKER_RUN_OPTIONS) \
-		docker:24.0.6-dind && \
-	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" \
-	DOCKER_RUN_COMMAND="-c \"bin/wait-until-docker-available && (cd src; $(TESTC_COMMAND))\"" \
-	DOCKER_NETWORK=$$_DOCKER_NETWORK \
-	$(MAKE) runc-dev-shell
-
-testc-backend:  ## Runs the backend test suite within the development docker image, with a docker in docker sidecar service.
-ifdef CI
-	$(eval DOCKER_GID := $(shell stat -c '%g' /var/run/docker.sock 2>/dev/null || stat -f '%g' /var/run/docker.sock 2>/dev/null || stat -f '%g' ~/.docker/run/docker.sock 2>/dev/null || echo ""))
-	$(DOCKER) run --rm \
-		--privileged \
-		$(if $(DOCKER_GID),--group-add $(DOCKER_GID),) \
-		--group-add 0 \
-		-v /var/run/docker.sock:/var/run/docker.sock \
-		-e PYTEST_OPTIONS="$(PYTEST_OPTIONS)" \
-		-e PYTEST_TARGETS=$(PYTEST_TARGETS) \
-		$(if $(PYTEST_CPUS),-e PYTEST_CPUS=$(PYTEST_CPUS),) \
-		-e DOCKER_HOST=unix:///var/run/docker.sock \
-		-e UV_CACHE_DIR=/tmp/.uv-cache \
-		-e TESTCONTAINERS_RYUK_DISABLED=true \
-		$(DOCKER_IMAGE_DEV) \
-		bash -c "cd /opt/harp/src && make test-backend"
-else
-	DOCKER_OPTIONS="-e DOCKER_HOST=tcp://docker:2375/" TESTC_COMMAND="PYTEST_OPTIONS=-vv make test-backend" $(MAKE) testc-shell
-endif
-
-testc-frontend:  ## Runs the frontend test suite within the development docker image.
-	@_DOCKER_NETWORK="harp-$$(date +%s)-$$$$" && \
-	trap "$(DOCKER) network rm $$_DOCKER_NETWORK 2>/dev/null || true" EXIT && \
-	$(DOCKER) network create $$_DOCKER_NETWORK && \
-	$(DOCKER) run $(DOCKER_INTERACTIVE) --rm \
-		--network $$_DOCKER_NETWORK \
-		-e TZ=$(TESTC_TZ) \
-		$(DOCKER_IMAGE_DEV) \
-		bash -c "cd /opt/harp/src/harp_apps/dashboard/frontend && \
-		         pnpm test:unit"
+	$(DOCKER) run $(DOCKER_INTERACTIVE) --init --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
 
 

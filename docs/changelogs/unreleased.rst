@@ -15,6 +15,9 @@ Changed
 - Backend tests now run against Python 3.13 and 3.14 using matrix strategy
 - Removed initial Docker image builds from CI/CD workflow (build-runtime-image, build-development-image)
 - Updated CI/CD to use Node.js 24 and pnpm 10 for consistent environment between local and CI
+- Simplified Dockerfile to single-stage wheel-based build matching CI/CD process
+- Local Docker builds (``make buildc``) now build wheel first then install in container, consistent with CI
+- Removed development Docker image targets (``buildc-dev``, ``runc-dev-shell``, ``testc-*``) - tests run natively
 
 Added
 -----
