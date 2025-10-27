@@ -78,7 +78,6 @@ start-dev-frontend: install-dev  # Starts a frontend development instance with r
 install: install-frontend install-backend  ## Installs harp dependencies (backend, dashboard) without development tools.
 
 install-dev: install-backend-dev  ## Installs harp dependencies (backend, dashboard) with development tools.
-	-cd $(FRONTEND_DIR); $(PNPM) exec playwright install
 
 install-frontend:  ## Installs harp dashboard dependencies (frontend).
 	cd $(FRONTEND_DIR); $(PNPM) install
@@ -239,7 +238,7 @@ help:   ## Shows available commands.
 	@grep -E '^[a-zA-Z0-9_-]+:.*?##[\s]?.*$$' --no-filename $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo
 
-wheel:
+wheel:  ## Builds a python wheel (sandboxed)
 	mkdir -p dist
 	bin/sandbox "$(MAKE) install-dev build-frontend; \
 				 rm -rf harp_apps/dashboard/frontend; \
