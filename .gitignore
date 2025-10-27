@@ -83,6 +83,7 @@ profile_default/
 sdist/
 share/python-wheels/
 target/
+test-wheel/
 var/
 venv.bak/
 venv/

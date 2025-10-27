@@ -137,80 +137,6 @@ Coverage Reports
 
 This generates an HTML coverage report in ``docs/_build/html/coverage/``.
 
-Running Tests in Docker
-^^^^^^^^^^^^^^^^^^^^^^^
-
-These tasks run tests inside Docker containers, simulating the CI environment:
-
-.. code-block:: shell
-
-    # Run backend tests in dev container with Docker-in-Docker
-    make testc-backend
-
-    # Run frontend tests in dev container
-    make testc-frontend
-
-    # Open a shell in test environment
-    make testc-shell
-
-The ``testc-*`` tasks are useful for:
-
-* Testing the exact CI environment locally
-* Debugging CI-specific issues
-* Verifying Docker-related functionality (like testcontainers)
-
-Testing in Docker Containers
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-For CI simulation and debugging CI-specific issues, you can run tests inside Docker containers.
-
-.. code-block:: shell
-
-    # Run backend tests in container with Docker-in-Docker
-    make testc-backend
-
-    # Run frontend tests in container
-    make testc-frontend
-
-    # Open interactive shell in test container
-    make testc-shell
-
-The ``testc-*`` targets are useful for:
-
-* Simulating the exact CI environment locally
-* Debugging CI-specific issues
-* Testing Docker-related functionality (like testcontainers)
-
-**How testc-backend works:**
-
-In CI environments (when ``CI`` environment variable is set), it mounts the host Docker socket:
-
-.. code-block:: shell
-
-    docker run --rm \
-      --privileged \
-      --group-add <docker-gid> \
-      -v /var/run/docker.sock:/var/run/docker.sock \
-      -e DOCKER_HOST=unix:///var/run/docker.sock \
-      <dev-image> \
-      bash -c "cd /opt/harp/src && make test-backend"
-
-Locally, it uses Docker-in-Docker for isolation:
-
-.. code-block:: shell
-
-    # Starts a Docker-in-Docker sidecar container
-    # Then runs tests with DOCKER_HOST=tcp://docker:2375/
-
-**Environment Variables:**
-
-* ``PYTEST_OPTIONS``: Additional pytest options (e.g., ``-k test_name``)
-* ``PYTEST_TARGETS``: Which directories to test (default: ``harp harp_apps tests``)
-* ``PYTEST_CPUS``: Number of parallel workers (default: ``auto``)
-* ``DOCKER_IMAGE_DEV``: Development image to use
-
-For more details on the CI process, see :doc:`ci`.
-
 Code Quality
 ------------
 
@@ -330,64 +256,68 @@ Available benchmark variables:
 Docker Image Tasks
 ------------------
 
+Docker images are built from pre-built Python wheels, ensuring consistency with the release process.
+
 Building Images
 ^^^^^^^^^^^^^^^
 
 .. code-block:: shell
 
-    # Build runtime image (production)
+    # Build production image (builds wheel first, then Docker image)
     make buildc
 
-    # Build development image
-    make buildc-dev
+    # Build with Python 3.13
+    make buildc PYTHON_VERSION=3.13
 
-    # Specify platform (useful for ARM64 Macs)
-    make buildc PLATFORM=linux/arm64
+    # Build with Python 3.14 (default)
+    make buildc PYTHON_VERSION=3.14
 
-    # Build with custom tag
+    # Build for specific platform
+    make buildc DOCKER_PLATFORM=linux/amd64
+
+    # Build with custom tags
     make buildc DOCKER_TAGS="1.0.0 latest"
+
+The ``buildc`` target automatically:
+
+1. Builds a Python wheel (``make wheel``)
+2. Creates a Docker image installing the wheel
+3. Tags the image appropriately
 
 Image Management
 ^^^^^^^^^^^^^^^^
 
 .. code-block:: shell
 
-    # Push runtime image
+    # Push image to registry
     make pushc
-
-    # Push development image
-    make pushc-dev
 
 Running Containers
 ^^^^^^^^^^^^^^^^^^
 
 .. code-block:: shell
 
-    # Run runtime container interactively
+    # Run container interactively
     make runc
 
     # Run with custom command
     make runc DOCKER_RUN_COMMAND="server --help"
 
-    # Open shell in runtime container
+    # Open shell in container
     make runc-shell
 
-    # Run development container
-    make runc-dev
-
-    # Open shell in development container
-    make runc-dev-shell
+The ``--init`` flag is automatically added for proper signal handling.
 
 Available Docker environment variables:
 
 * ``DOCKER_IMAGE``: Image name (default: ``harp-proxy``)
-* ``DOCKER_IMAGE_DEV``: Dev image name (default: ``harp-proxy-dev``)
 * ``DOCKER_TAGS``: Additional tags to apply
-* ``DOCKER_BUILD_TARGET``: Build stage target (default: ``runtime``)
+* ``DOCKER_TAGS_SUFFIX``: Suffix for image tags
 * ``DOCKER_OPTIONS``: Additional Docker options
 * ``DOCKER_RUN_OPTIONS``: Additional run options
 * ``DOCKER_RUN_COMMAND``: Command to run in container
-* ``PLATFORM``: Target platform (default: ``linux/amd64``)
+* ``DOCKER_PLATFORM``: Target platform (default: auto-detected from host architecture)
+* ``PYTHON_VERSION``: Python version for Docker image (default: ``3.14``)
 
 Cleanup
 -------
@@ -454,23 +384,24 @@ Starting a New Feature
 Debugging CI Failures Locally
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+CI tests run natively in GitHub Actions runners, so you can reproduce CI issues locally:
+
 .. code-block:: shell
 
-    # 1. Build the dev image locally (if needed)
-    make buildc-dev
+    # 1. Install dependencies (same as CI)
+    make install-dev
 
-    # 2. Run backend tests in container (simulates CI)
-    make testc-backend
+    # 2. Run the same tests as CI
+    make test-backend
 
     # With specific options
-    PYTEST_OPTIONS="-v -k test_name" make testc-backend
+    PYTEST_OPTIONS="-v -k test_name" make test-backend
 
-    # 3. Or open a shell to investigate interactively
-    make testc-shell
-
-    # 4. Inside the container, run tests manually
-    cd /opt/harp/src
+    # 3. Run specific test file
     uv run pytest tests/specific_test.py -v
+
+    # 4. Use testcontainers for database tests (like CI)
+    TESTCONTAINERS_RYUK_DISABLED=true uv run pytest tests/...
 
 For more details on the CI process and troubleshooting, see :doc:`ci`.
 
@@ -501,15 +432,15 @@ Best Practices
 2. **Use Makefile tasks instead of direct commands** to ensure consistency with
    CI and avoid configuration drift.
 
-3. **Test in Docker locally** before pushing if you're working on CI-related
-   changes or Docker configuration.
+3. **Run ``make format``** before committing to avoid formatting issues in CI.
 
-4. **Run ``make format``** before committing to avoid formatting issues in CI.
-
-5. **Use ``TEST_SKIP_FRONT=1``** when working on backend-only changes to speed
+4. **Use ``TEST_SKIP_FRONT=1``** when working on backend-only changes to speed
    up test runs.
 
-6. **Set ``PYTEST_CPUS=1``** when debugging to avoid parallel execution issues.
+5. **Set ``PYTEST_CPUS=1``** when debugging to avoid parallel execution issues.
+
+6. **Build Docker images from wheels** using ``make buildc`` to ensure the same
+   process as CI/CD and releases.
 
 Environment Variables Reference
 -------------------------------
@@ -541,23 +472,16 @@ Docker
 
 * ``DOCKER``: Path to docker executable
 * ``DOCKER_INTERACTIVE``: Interactive mode flags (default: auto-detected based on TTY)
-* ``DOCKER_IMAGE``: Runtime image name (default: ``harp-proxy``)
-* ``DOCKER_IMAGE_DEV``: Development image name (default: ``harp-proxy-dev``)
+* ``DOCKER_IMAGE``: Image name (default: ``harp-proxy``)
 * ``DOCKER_PLATFORM``: Target platform (default: auto-detected from host architecture)
 * ``DOCKER_TAGS``: Additional image tags
 * ``DOCKER_TAGS_SUFFIX``: Suffix for image tags
-* ``DOCKER_BUILD_TARGET``: Dockerfile stage target (default: ``runtime``)
 * ``DOCKER_BUILD_OPTIONS``: Docker build options
 * ``DOCKER_OPTIONS``: Additional Docker CLI options
 * ``DOCKER_RUN_OPTIONS``: Additional docker run options
 * ``DOCKER_RUN_COMMAND``: Container command
 * ``DOCKER_NETWORK``: Docker network name (default: ``harp``)
-
-Test Containers
-^^^^^^^^^^^^^^^
-
-* ``TESTC_COMMAND``: Command to run in test container shell (default: ``bash``)
-* ``TESTC_TZ``: Timezone for frontend test containers (default: ``America/Havana``)
+* ``PYTHON_VERSION``: Python version for Docker image builds (default: ``3.14``)
 
 Frontend
 ^^^^^^^^

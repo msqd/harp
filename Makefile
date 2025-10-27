@@ -62,10 +62,10 @@ HARP_MORE_OPTIONS ?=
 HARP_SERVICES ?= server dashboard
 
 .PHONY: start-dev start-dev-frontend
-start-dev: install-dev  # Starts a development instance with reasonable defaults (tune HARP_OPTIONS to replace).
+start-dev: install-dev  ## Starts a development instance with reasonable defaults.
 	$(UV_RUN) $(NAME) start $(HARP_SERVICES) $(HARP_OPTIONS) $(HARP_MORE_OPTIONS)
 
-start-dev-frontend: install-dev  # Starts a frontend development instance with reasonable defaults (you'll have to a backend, useful to use an external debugger for example).
+start-dev-frontend: install-dev  ## Starts a frontend development instance (dashboard only on port 12121).
 	HARP_SERVICES=dashboard HARP_MORE_OPTIONS="--set dashboard.devserver.port=12121" $(MAKE) start-dev
 
 
@@ -134,7 +134,7 @@ qa: preqa test  ## Runs all QA checks, with most common databases.
 qa-full:  ## Runs all QA checks, including all supported databases.
 	TEST_ALL_DATABASES=true $(MAKE) qa
 
-qa-nofront:
+qa-nofront:  ## Runs all QA checks without frontend tests.
 	TEST_SKIP_FRONT=1 $(MAKE) qa
 
 types:  ## Generates frontend types from the python code.
@@ -153,7 +153,7 @@ format-frontend: install-frontend  ## Formats the frontend codebase.
 	(cd $(FRONTEND_DIR); $(PNPM) lint:fix)
 	(cd $(FRONTEND_DIR); $(PNPM) prettier -w src)
 
-optimize-images:
+optimize-images:  ## Optimizes PNG images in documentation.
 	find docs -name \*.png | xargs optimizt
 
 test:  ## Runs all tests.
@@ -189,7 +189,7 @@ coverage:  ## Generates coverage report.
 	          $(PYTEST_COMMON_OPTIONS) \
 	          $(PYTEST_OPTIONS)
 
-cloc:
+cloc:  ## Counts lines of code in the project.
 	cloc harp harp_apps tests  --exclude-dir=node_modules,build,dist
 
 
@@ -235,7 +235,20 @@ runc-shell:  ## Runs a shell within the docker image.
 help:   ## Shows available commands.
 	@echo "Available commands:"
 	@echo
-	@grep -E '^[a-zA-Z0-9_-]+:.*?##[\s]?.*$$' --no-filename $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@echo "\033[1mInstall & Build\033[0m"
+	@grep -E '^(install|install-dev|install-frontend|install-backend|install-backend-dev|start-dev|start-dev-frontend|build-frontend|wheel):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@echo
+	@echo "\033[1mQuality\033[0m"
+	@grep -E '^(preqa|qa|qa-full|qa-nofront|test|test-backend|test-frontend|test-backend-update|test-frontend-update|test-frontend-ui-update|lint-frontend|format|format-backend|format-frontend|types|coverage|cloc|optimize-images):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@echo
+	@echo "\033[1mDocumentation\033[0m"
+	@grep -E '^(reference|docs|docs-dev):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@echo
+	@echo "\033[1mContainers\033[0m"
+	@grep -E '^(buildc|pushc|runc|runc-shell):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@echo
+	@echo "\033[1mMiscellaneous\033[0m"
+	@grep -E '^(help|clean|clean-dist|clean-docs|clean-frontend-modules):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo
 
 wheel:  ## Builds a python wheel (sandboxed)
