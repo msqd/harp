@@ -10,20 +10,13 @@ RUN apt-get update && \
       libpq-dev \
       && rm -rf /var/lib/apt/lists/*
 
-# Copy and install wheel
-ARG INSTALL_FROM=local
+# Install from PyPI
 ARG VERSION
-
-COPY dist/*.whl /tmp/
-
-RUN if [ "$INSTALL_FROM" = "pypi" ]; then \
-      echo "Installing from PyPI: harp-proxy==$VERSION"; \
-      pip install --no-cache-dir "harp-proxy==$VERSION"; \
-    else \
-      echo "Installing from local wheel"; \
-      pip install --no-cache-dir /tmp/*.whl; \
+RUN if [ -z "$VERSION" ]; then \
+      echo "ERROR: VERSION build argument is required" && exit 1; \
     fi && \
-    rm -rf /tmp/*.whl
+    echo "Installing from PyPI: harp-proxy==$VERSION" && \
+    pip install --no-cache-dir "harp-proxy==$VERSION"
 
 # Create non-root user and set up shell aliases
 RUN useradd -m -u 1000 harp && \

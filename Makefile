@@ -33,6 +33,7 @@ PYTEST_OPTIONS ?=
 # docker
 DOCKER_PLATFORM ?= $(shell uname -m | sed -E 's/^x86_64$$/linux\/amd64/;s/^(aarch64|arm64)$$/linux\/arm64/')
 DOCKER ?= $(shell which docker || echo "docker")
+DOCKER_TTY ?= $(shell [ -t 0 ] && echo "-t" || echo "")
 DOCKER_INTERACTIVE ?= $(shell [ -t 0 ] && echo "-it" || echo "-t")
 DOCKER_OPTIONS ?=
 DOCKER_IMAGE ?= $(NAME)
@@ -197,7 +198,7 @@ cloc:  ## Counts lines of code in the project.
 # Docker builds
 ########################################################################################################################
 
-.PHONY: buildc pushc runc runc-shell runc-example-repositories
+.PHONY: buildc buildc-pypi pushc runc runc-shell runc-example-repositories
 
 buildc: wheel  ## Builds the docker image from wheel (supports PYTHON_VERSION=3.13 or 3.14).
 	$(DOCKER) build \
@@ -210,6 +211,21 @@ buildc: wheel  ## Builds the docker image from wheel (supports PYTHON_VERSION=3.
 		$(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) \
 		.
 
+buildc-pypi:  ## Builds the docker image from PyPI (requires VERSION, supports PYTHON_VERSION=3.13 or 3.14).
+	@if [ -z "$(VERSION)" ]; then \
+		echo "ERROR: VERSION is required. Usage: make buildc-pypi VERSION=0.9.0"; \
+		exit 1; \
+	fi
+	$(DOCKER) build \
+		$(DOCKER_OPTIONS) \
+		$(DOCKER_BUILD_OPTIONS) \
+		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
+		--build-arg VERSION=$(VERSION) \
+		-f Dockerfile.pypi \
+		-t $(DOCKER_IMAGE) \
+		$(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) \
+		.
+
 pushc:  ## Pushes the docker image to the registry.
 	for tag in $(VERSION) $(DOCKER_TAGS); do \
 		$(DOCKER) image push $(DOCKER_IMAGE):$$tag$(DOCKER_TAGS_SUFFIX); \
@@ -217,7 +233,7 @@ pushc:  ## Pushes the docker image to the registry.
 
 runc:  ## Runs the docker image.
 	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
-	$(DOCKER) run $(DOCKER_INTERACTIVE) --init --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
+	$(DOCKER) run $(DOCKER_TTY) --init --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
 
 runc-shell:  ## Runs a shell within the docker image.
 	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
@@ -245,7 +261,7 @@ help:   ## Shows available commands.
 	@grep -E '^(reference|docs|docs-dev):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo
 	@echo "\033[1mContainers\033[0m"
-	@grep -E '^(buildc|pushc|runc|runc-shell):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^(buildc|buildc-pypi|pushc|runc|runc-shell):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo
 	@echo "\033[1mMiscellaneous\033[0m"
 	@grep -E '^(help|clean|clean-dist|clean-docs|clean-frontend-modules):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -254,7 +270,7 @@ help:   ## Shows available commands.
 wheel:  ## Builds a python wheel (sandboxed)
 	mkdir -p dist
 	bin/sandbox "$(MAKE) install-dev build-frontend; \
-				 rm -rf harp_apps/dashboard/frontend; \
+				 rm -rf harp_apps/dashboard/frontend harp_apps/dashboard/web/src; \
 				 sed '/^People & Credits/,$$ d' README.rst > README.rst.tmp; \
 				 mv README.rst.tmp README.rst; \
 				 $(if $(UV),$(UV) build,python -m build); \
