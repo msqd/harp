@@ -6,6 +6,7 @@ from sqlalchemy import insert, update
 from sqlalchemy.ext.asyncio import AsyncEngine
 from whistle import IAsyncEventDispatcher
 
+from harp import get_logger
 from harp.http import get_serializer_for
 from harp.models import Blob
 from harp.utils.background import AsyncWorkerQueue
@@ -21,6 +22,11 @@ from harp_apps.storage.models import Transaction as SqlTransaction
 from harp_apps.storage.types import IBlobStorage, IStorage
 
 SKIP_STORAGE = "skip-storage"
+SKIP_REQUEST_PAYLOAD_STORAGE = "skip-request-payload-storage"
+SKIP_RESPONSE_PAYLOAD_STORAGE = "skip-response-payload-storage"
+
+
+logger = get_logger("harp_apps.storage.worker")
 
 
 class StorageAsyncWorkerQueue(AsyncWorkerQueue):
@@ -81,11 +87,20 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             await self.push(partial(self.blob_storage.put, headers_blob), ignore_errors=True)
             message_data["headers"] = headers_blob.id
 
-        # Eventually store the content blob (later)
-        if self.pressure <= 1:
-            content_blob = Blob.from_data(serializer.body, content_type=event.message.headers.get("content-type"))
-            await self.push(partial(self.blob_storage.put, content_blob), ignore_errors=True)
-            message_data["body"] = content_blob.id
+        if event.message.kind == "request" and SKIP_REQUEST_PAYLOAD_STORAGE in event.transaction.markers:
+            logger.debug(
+                "Skipping storing Request payload", transaction_id=event.transaction.id, summary=serializer.summary
+            )
+        elif event.message.kind == "response" and SKIP_RESPONSE_PAYLOAD_STORAGE in event.transaction.markers:
+            logger.debug(
+                "Skipping storing Response payload", transaction_id=event.transaction.id, summary=serializer.summary
+            )
+        else:
+            # Eventually store the content blob (later)
+            if self.pressure <= 1:
+                content_blob = Blob.from_data(serializer.body, content_type=event.message.headers.get("content-type"))
+                await self.push(partial(self.blob_storage.put, content_blob), ignore_errors=True)
+                message_data["body"] = content_blob.id
 
         async def create_message():
             async with self.engine.connect() as conn:
