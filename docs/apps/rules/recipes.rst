@@ -89,3 +89,21 @@ Markers can be combined for fine-grained control:
             transaction.markers.add("skip-response-body-storage")
 
 See the :doc:`storage markers documentation </apps/storage/markers>` for a complete reference.
+
+Complete working example
+------------------------
+
+A comprehensive example demonstrating all storage markers is available as ``rules:storage-markers``.
+This example includes basic usage of all marker types, conditional marker application based on
+request/response properties, and combining multiple markers for fine-grained control.
+
+You can run it with:
+
+.. code-block:: bash
+
+    harp-proxy start --example rules:storage-markers
+
+.. collapse:: View complete example source
+
+    .. literalinclude:: ../../../harp_apps/rules/examples/storage-markers.toml
+       :language: toml
