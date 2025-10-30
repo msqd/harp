@@ -18,7 +18,7 @@ Changed
 - Simplified Dockerfile to single-stage wheel-based build matching CI/CD process
 - Local Docker builds (``make buildc``) now build wheel first then install in container, consistent with CI
 - Removed development Docker image targets (``buildc-dev``, ``runc-dev-shell``, ``testc-*``) - tests run natively
-- Add markers to disable storing for requests/response payload (`skip-request-payload-storage` and `skip-response-payload-storage`)
+- Add markers to disable storing for request/response bodies (`skip-request-body-storage` and `skip-response-body-storage`)
 
 Added
 -----

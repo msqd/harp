@@ -22,8 +22,8 @@ from harp_apps.storage.models import Transaction as SqlTransaction
 from harp_apps.storage.types import IBlobStorage, IStorage
 
 SKIP_STORAGE = "skip-storage"
-SKIP_REQUEST_PAYLOAD_STORAGE = "skip-request-payload-storage"
-SKIP_RESPONSE_PAYLOAD_STORAGE = "skip-response-payload-storage"
+SKIP_REQUEST_BODY_STORAGE = "skip-request-body-storage"
+SKIP_RESPONSE_BODY_STORAGE = "skip-response-body-storage"
 
 
 logger = get_logger("harp_apps.storage.worker")
@@ -87,13 +87,13 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             await self.push(partial(self.blob_storage.put, headers_blob), ignore_errors=True)
             message_data["headers"] = headers_blob.id
 
-        if event.message.kind == "request" and SKIP_REQUEST_PAYLOAD_STORAGE in event.transaction.markers:
+        if event.message.kind == "request" and SKIP_REQUEST_BODY_STORAGE in event.transaction.markers:
             logger.debug(
-                "Skipping storing Request payload", transaction_id=event.transaction.id, summary=serializer.summary
+                "Skipping storing Request body", transaction_id=event.transaction.id, summary=serializer.summary
             )
-        elif event.message.kind == "response" and SKIP_RESPONSE_PAYLOAD_STORAGE in event.transaction.markers:
+        elif event.message.kind == "response" and SKIP_RESPONSE_BODY_STORAGE in event.transaction.markers:
             logger.debug(
-                "Skipping storing Response payload", transaction_id=event.transaction.id, summary=serializer.summary
+                "Skipping storing Response body", transaction_id=event.transaction.id, summary=serializer.summary
             )
         else:
             # Eventually store the content blob (later)
