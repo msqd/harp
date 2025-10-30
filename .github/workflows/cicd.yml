@@ -368,15 +368,18 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "INSTALL_FROM=local" >> $GITHUB_OUTPUT
 
-          # For version branches (e.g., 0.9), tag as 0.9-git
+          # For version branches (e.g., 0.9), tag as 0.9-git and enable push
           if echo "${{ github.ref_name }}" | grep -qE '^[0-9]+\.[0-9]+$'; then
             TAGS="ghcr.io/${{ github.repository }}:${{ github.ref_name }}-git"
+            PUSH="true"
             echo "Docker tags (version branch): $TAGS"
           else
             TAGS="ghcr.io/${{ github.repository }}:${{ github.sha }}"
-            echo "Docker tags (other branch): $TAGS"
+            PUSH="false"
+            echo "Docker tags (other branch): $TAGS (push disabled for non-mainline branches)"
           fi
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
+          echo "push=$PUSH" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -393,7 +396,7 @@ jobs:
         with:
           context: .
           file: Dockerfile
-          push: true
+          push: ${{ steps.meta.outputs.push }}
           tags: ${{ steps.meta.outputs.tags }}
           build-args: |
             PYTHON_VERSION=3.14
