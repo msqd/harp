@@ -10,8 +10,11 @@ through the transaction API.
 Available Markers
 :::::::::::::::::
 
+Body Storage Markers
+--------------------
+
 ``skip-request-body-storage``
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When this marker is present on a transaction, the storage worker will **not** persist the request body to blob storage.
 The request headers and message metadata (summary, timestamps, etc.) will still be stored normally.
@@ -23,7 +26,7 @@ This is useful for:
 - Compliance requirements that prohibit storing certain request payloads
 
 ``skip-response-body-storage``
--------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When this marker is present on a transaction, the storage worker will **not** persist the response body to blob storage.
 The response headers and message metadata (summary, timestamps, etc.) will still be stored normally.
@@ -34,8 +37,61 @@ This is useful for:
 - Responses containing sensitive data that should not be persisted
 - Compliance requirements that prohibit storing certain response payloads
 
+Header Storage Markers
+----------------------
+
+``skip-request-headers-storage``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When this marker is present on a transaction, the storage worker will **not** persist the request headers to blob storage.
+The request body and message metadata (summary, timestamps, etc.) will still be stored normally.
+
+This is useful for:
+
+- Requests with sensitive authentication headers that should not be persisted
+- Compliance requirements that prohibit storing certain request headers
+
+``skip-response-headers-storage``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When this marker is present on a transaction, the storage worker will **not** persist the response headers to blob storage.
+The response body and message metadata (summary, timestamps, etc.) will still be stored normally.
+
+This is useful for:
+
+- Responses with sensitive headers that should not be persisted
+- Compliance requirements that prohibit storing certain response headers
+
+Message Storage Markers
+-----------------------
+
+``skip-request-storage``
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When this marker is present on a transaction, the storage worker will **not** persist the entire request message
+(including headers, body, and message metadata).
+
+This is useful for:
+
+- Completely omitting request storage for specific endpoints
+- Privacy requirements that prohibit storing any request data
+
+``skip-response-storage``
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When this marker is present on a transaction, the storage worker will **not** persist the entire response message
+(including headers, body, and message metadata).
+
+This is useful for:
+
+- Completely omitting response storage for specific endpoints
+- Privacy requirements that prohibit storing any response data
+
+Transaction Storage Marker
+---------------------------
+
 ``skip-storage``
-----------------
+~~~~~~~~~~~~~~~~
 
 When this marker is present, the entire transaction (including all messages, headers, and bodies) will **not** be
 persisted to storage.
@@ -47,9 +103,11 @@ automatically set by the storage worker when it detects high system pressure
 Notes
 :::::
 
-- Markers are stored as part of the transaction metadata even when bodies are skipped
+- Markers are stored as part of the transaction metadata even when data is skipped
 - Multiple markers can be combined on a single transaction
-- Headers are always stored unless the entire transaction is skipped (``skip-storage`` marker)
+- Message-level markers (``skip-request-storage``, ``skip-response-storage``) take precedence over component markers
+  (``skip-request-body-storage``, ``skip-request-headers-storage``, etc.)
+- The ``skip-storage`` marker takes precedence over all other markers
 
 See Also
 ::::::::

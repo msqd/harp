@@ -18,7 +18,12 @@ Changed
 - Simplified Dockerfile to single-stage wheel-based build matching CI/CD process
 - Local Docker builds (``make buildc``) now build wheel first then install in container, consistent with CI
 - Removed development Docker image targets (``buildc-dev``, ``runc-dev-shell``, ``testc-*``) - tests run natively
-- Add markers to disable storing for request/response bodies (`skip-request-body-storage` and `skip-response-body-storage`)
+- Message headers column in storage database is now nullable to support selective header storage
+- Add storage markers for granular control over what gets stored:
+
+  - ``skip-request-body-storage`` and ``skip-response-body-storage`` - skip storing message bodies
+  - ``skip-request-headers-storage`` and ``skip-response-headers-storage`` - skip storing message headers
+  - ``skip-request-storage`` and ``skip-response-storage`` - skip storing entire messages
 
 Added
 -----

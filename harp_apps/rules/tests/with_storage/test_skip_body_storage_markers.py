@@ -222,3 +222,154 @@ class TestSkipBodyStorageMarkers(BaseRulesFlowTest):
         assert process_request_msg.body is not None
         process_blob = await blob_storage.get(process_request_msg.body)
         assert process_blob.data == b"process data"
+
+    @respx.mock
+    async def test_skip_request_headers_storage_via_rules(self, httpbin):
+        """Test that skip-request-headers-storage marker set in rules prevents request headers storage."""
+        respx.post(httpbin).mock(return_value=Response(200, content=b"upstream response"))
+
+        # Configure rules to add the skip-request-headers-storage marker
+        system = await self.create_system(
+            {
+                "proxy": {"endpoints": [{"name": "httpbin", "port": 80, "url": httpbin}]},
+                "rules": {
+                    "*": {
+                        "*": {
+                            "on_request": 'transaction.markers.add("skip-request-headers-storage")',
+                        }
+                    }
+                },
+            },
+            mock=lambda ctx: None,
+        )
+
+        client = ASGICommunicator(system.asgi_app)
+        await client.asgi_lifespan_startup()
+
+        # Make a POST request
+        await client.http_post("/", body=b"request data")
+
+        # Wait for storage worker to process events
+        worker = system.provider.get(StorageAsyncWorkerQueue)
+        await worker.wait_until_empty()
+
+        # Get storage instances from system
+        sql_storage = system.provider.get(IStorage)
+        blob_storage = system.provider.get(IBlobStorage)
+
+        # Verify transaction was stored
+        transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert len(transactions) == 1
+
+        # Find request message
+        request_msg = next(msg for msg in transactions[0].messages if msg.kind == "request")
+        response_msg = next(msg for msg in transactions[0].messages if msg.kind == "response")
+
+        # Verify request headers were NOT stored
+        assert request_msg.headers is None
+
+        # Verify request body WAS stored
+        assert request_msg.body is not None
+        request_blob = await blob_storage.get(request_msg.body)
+        assert request_blob.data == b"request data"
+
+        # Verify response headers WAS stored (marker only affects request)
+        assert response_msg.headers is not None
+
+    @respx.mock
+    async def test_skip_request_storage_via_rules(self, httpbin):
+        """Test that skip-request-storage marker set in rules prevents entire request message storage."""
+        respx.post(httpbin).mock(return_value=Response(200, content=b"upstream response"))
+
+        # Configure rules to add the skip-request-storage marker
+        system = await self.create_system(
+            {
+                "proxy": {"endpoints": [{"name": "httpbin", "port": 80, "url": httpbin}]},
+                "rules": {
+                    "*": {
+                        "*": {
+                            "on_request": 'transaction.markers.add("skip-request-storage")',
+                        }
+                    }
+                },
+            },
+            mock=lambda ctx: None,
+        )
+
+        client = ASGICommunicator(system.asgi_app)
+        await client.asgi_lifespan_startup()
+
+        # Make a POST request with a body
+        await client.http_post("/", body=b"request data")
+
+        # Wait for storage worker to process events
+        worker = system.provider.get(StorageAsyncWorkerQueue)
+        await worker.wait_until_empty()
+
+        # Get storage instances from system
+        sql_storage = system.provider.get(IStorage)
+        blob_storage = system.provider.get(IBlobStorage)
+
+        # Verify transaction was stored
+        transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert len(transactions) == 1
+
+        # Verify only response message was stored (request was skipped)
+        assert len(transactions[0].messages) == 1
+        response_msg = transactions[0].messages[0]
+
+        # Verify it's the response message
+        assert response_msg.kind == "response"
+        assert response_msg.headers is not None
+        assert response_msg.body is not None
+        response_blob = await blob_storage.get(response_msg.body)
+        assert response_blob.data == b"upstream response"
+
+    @respx.mock
+    async def test_skip_response_storage_via_rules(self, httpbin):
+        """Test that skip-response-storage marker set in rules prevents entire response message storage."""
+        respx.post(httpbin).mock(return_value=Response(200, content=b"upstream response"))
+
+        # Configure rules to add the skip-response-storage marker
+        system = await self.create_system(
+            {
+                "proxy": {"endpoints": [{"name": "httpbin", "port": 80, "url": httpbin}]},
+                "rules": {
+                    "*": {
+                        "*": {
+                            "on_response": 'transaction.markers.add("skip-response-storage")',
+                        }
+                    }
+                },
+            },
+            mock=lambda ctx: None,
+        )
+
+        client = ASGICommunicator(system.asgi_app)
+        await client.asgi_lifespan_startup()
+
+        # Make a POST request with a body
+        await client.http_post("/", body=b"request data")
+
+        # Wait for storage worker to process events
+        worker = system.provider.get(StorageAsyncWorkerQueue)
+        await worker.wait_until_empty()
+
+        # Get storage instances from system
+        sql_storage = system.provider.get(IStorage)
+        blob_storage = system.provider.get(IBlobStorage)
+
+        # Verify transaction was stored
+        transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert len(transactions) == 1
+
+        # Verify only request message was stored (response was skipped)
+        assert len(transactions[0].messages) == 1
+        request_msg = transactions[0].messages[0]
+
+        # Verify it's the request message
+        assert request_msg.kind == "request"
+        assert request_msg.headers is not None
+        assert request_msg.body is not None
+        request_blob = await blob_storage.get(request_msg.body)
+        assert request_blob.data == b"request data"

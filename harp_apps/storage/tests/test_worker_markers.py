@@ -12,6 +12,14 @@ from harp_apps.proxy.events import (
     HttpMessageEvent,
     TransactionEvent,
 )
+from harp_apps.storage.constants import (
+    SKIP_REQUEST_BODY_STORAGE,
+    SKIP_REQUEST_HEADERS_STORAGE,
+    SKIP_REQUEST_STORAGE,
+    SKIP_RESPONSE_BODY_STORAGE,
+    SKIP_RESPONSE_HEADERS_STORAGE,
+    SKIP_RESPONSE_STORAGE,
+)
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.types import IBlobStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
@@ -119,7 +127,7 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
             dispatcher,
             sql_storage,
             blob_storage,
-            markers={"skip-request-body-storage"},
+            markers={SKIP_REQUEST_BODY_STORAGE},
             request_body=b"sensitive request data",
             response_body=b"response data",
         )
@@ -155,7 +163,7 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
             dispatcher,
             sql_storage,
             blob_storage,
-            markers={"skip-response-body-storage"},
+            markers={SKIP_RESPONSE_BODY_STORAGE},
             request_body=b"request data",
             response_body=b"sensitive response data",
         )
@@ -193,7 +201,7 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
             dispatcher,
             sql_storage,
             blob_storage,
-            markers={"skip-request-body-storage", "skip-response-body-storage"},
+            markers={SKIP_REQUEST_BODY_STORAGE, SKIP_RESPONSE_BODY_STORAGE},
             request_body=b"sensitive request",
             response_body=b"sensitive response",
         )
@@ -226,7 +234,7 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
             dispatcher,
             sql_storage,
             blob_storage,
-            markers={"skip-request-body-storage"},
+            markers={SKIP_REQUEST_BODY_STORAGE},
         )
 
         # Verify transaction was stored
@@ -244,3 +252,154 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         # Verify message metadata is complete
         assert request_msg.summary is not None
         assert request_msg.created_at is not None
+
+    async def test_skip_request_headers_storage(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        """Test that request headers are not stored when skip-request-headers-storage marker is set."""
+        dispatcher = AsyncEventDispatcher()
+
+        await self.create_transaction_and_messages(
+            dispatcher,
+            sql_storage,
+            blob_storage,
+            markers={SKIP_REQUEST_HEADERS_STORAGE},
+            request_body=b"request data",
+            response_body=b"response data",
+        )
+
+        # Verify transaction was stored
+        transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert len(transactions) == 1
+        stored_transaction = transactions[0]
+
+        # Verify messages were stored
+        assert len(stored_transaction.messages) == 2
+        request_msg = stored_transaction.messages[0]
+        response_msg = stored_transaction.messages[1]
+
+        # Verify request headers were NOT stored
+        assert request_msg.kind == "request"
+        assert request_msg.headers is None
+
+        # Verify request body WAS stored
+        assert request_msg.body is not None
+        request_blob = await blob_storage.get(request_msg.body)
+        assert request_blob.data == b"request data"
+
+        # Verify response headers WAS stored (marker only affects request)
+        assert response_msg.kind == "response"
+        assert response_msg.headers is not None
+
+    async def test_skip_response_headers_storage(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        """Test that response headers are not stored when skip-response-headers-storage marker is set."""
+        dispatcher = AsyncEventDispatcher()
+
+        await self.create_transaction_and_messages(
+            dispatcher,
+            sql_storage,
+            blob_storage,
+            markers={SKIP_RESPONSE_HEADERS_STORAGE},
+            request_body=b"request data",
+            response_body=b"response data",
+        )
+
+        # Verify transaction was stored
+        transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert len(transactions) == 1
+        stored_transaction = transactions[0]
+
+        # Verify messages were stored
+        assert len(stored_transaction.messages) == 2
+        request_msg = stored_transaction.messages[0]
+        response_msg = stored_transaction.messages[1]
+
+        # Verify request headers WAS stored (marker only affects response)
+        assert request_msg.kind == "request"
+        assert request_msg.headers is not None
+
+        # Verify response headers were NOT stored
+        assert response_msg.kind == "response"
+        assert response_msg.headers is None
+
+        # Verify response body WAS stored
+        assert response_msg.body is not None
+        response_blob = await blob_storage.get(response_msg.body)
+        assert response_blob.data == b"response data"
+
+    async def test_skip_request_storage(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        """Test that entire request message is not stored when skip-request-storage marker is set."""
+        dispatcher = AsyncEventDispatcher()
+
+        await self.create_transaction_and_messages(
+            dispatcher,
+            sql_storage,
+            blob_storage,
+            markers={SKIP_REQUEST_STORAGE},
+            request_body=b"request data",
+            response_body=b"response data",
+        )
+
+        # Verify transaction was stored
+        transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert len(transactions) == 1
+        stored_transaction = transactions[0]
+
+        # Verify only response message was stored
+        assert len(stored_transaction.messages) == 1
+        response_msg = stored_transaction.messages[0]
+
+        # Verify it's the response message
+        assert response_msg.kind == "response"
+        assert response_msg.headers is not None
+        assert response_msg.body is not None
+        response_blob = await blob_storage.get(response_msg.body)
+        assert response_blob.data == b"response data"
+
+    async def test_skip_response_storage(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        """Test that entire response message is not stored when skip-response-storage marker is set."""
+        dispatcher = AsyncEventDispatcher()
+
+        await self.create_transaction_and_messages(
+            dispatcher,
+            sql_storage,
+            blob_storage,
+            markers={SKIP_RESPONSE_STORAGE},
+            request_body=b"request data",
+            response_body=b"response data",
+        )
+
+        # Verify transaction was stored
+        transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert len(transactions) == 1
+        stored_transaction = transactions[0]
+
+        # Verify only request message was stored
+        assert len(stored_transaction.messages) == 1
+        request_msg = stored_transaction.messages[0]
+
+        # Verify it's the request message
+        assert request_msg.kind == "request"
+        assert request_msg.headers is not None
+        assert request_msg.body is not None
+        request_blob = await blob_storage.get(request_msg.body)
+        assert request_blob.data == b"request data"
+
+    async def test_skip_both_request_and_response_storage(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        """Test that no messages are stored when both skip-request-storage and skip-response-storage markers are set."""
+        dispatcher = AsyncEventDispatcher()
+
+        await self.create_transaction_and_messages(
+            dispatcher,
+            sql_storage,
+            blob_storage,
+            markers={SKIP_REQUEST_STORAGE, SKIP_RESPONSE_STORAGE},
+            request_body=b"request data",
+            response_body=b"response data",
+        )
+
+        # Verify transaction was stored
+        transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert len(transactions) == 1
+        stored_transaction = transactions[0]
+
+        # Verify no messages were stored
+        assert len(stored_transaction.messages) == 0
