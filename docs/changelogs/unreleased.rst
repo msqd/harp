@@ -26,9 +26,10 @@ Added
 - Node.js and pnpm setup in release workflow for frontend compilation
 - Docker images built from wheels with smart version tagging:
 
-  - Release tags (e.g., ``0.9.0``): tagged as ``0.9.0``, ``0.9``, and ``0`` (installed from PyPI)
-  - Pre-release tags (e.g., ``0.9.0-rc1``): tagged as exact version only (installed from PyPI)
-  - Version branches (e.g., ``0.9``): tagged as ``0.9-git`` (installed from local wheel)
+  - Release tags (e.g., ``0.9.0``): tagged as ``0.9.0``, ``0.9``, and ``0`` (installed from PyPI, pushed to registry)
+  - Pre-release tags (e.g., ``0.9.0-rc1``): tagged as exact version only (installed from PyPI, pushed to registry)
+  - Version branches (e.g., ``0.9``): tagged as ``0.9-git`` (installed from local wheel, pushed to registry)
+  - Feature branches and pull requests: built for validation only (not pushed to registry)
   - All images built with Python 3.14 (GIL enabled) and Python 3.14t (GIL disabled, ``-nogil`` suffix)
 
 Fixed
