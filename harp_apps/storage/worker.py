@@ -30,7 +30,7 @@ from harp_apps.storage.models import Message as SqlMessage
 from harp_apps.storage.models import Transaction as SqlTransaction
 from harp_apps.storage.types import IBlobStorage, IStorage
 
-logger = get_logger("harp_apps.storage.worker")
+logger = get_logger(__name__)
 
 
 class StorageAsyncWorkerQueue(AsyncWorkerQueue):
