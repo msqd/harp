@@ -26,7 +26,7 @@ start-docker:  ## Start services with harp-proxy as docker container (defaults t
 
 _start:
 	@echo "Stopping any existing Docker Compose services..."
-	@docker compose down 2>/dev/null || true
+	@docker compose down --remove-orphans 2>/dev/null || true
 	@echo "Starting Docker Compose services with httpbin-1=$(HTTPBIN_1_REPLICAS) httpbin-2=$(HTTPBIN_2_REPLICAS) replicas..."
 	@docker compose up -d --scale httpbin-1=$(HTTPBIN_1_REPLICAS) --scale httpbin-2=$(HTTPBIN_2_REPLICAS)
 	@CONFIG_FILES=$$(ls etc/*.yml | grep -v '\.docker\.yml$$' | sed 's/^/-f /' | tr '\n' ' '); \
@@ -56,7 +56,7 @@ _start:
 		uvx $(UVX_OPTIONS) harp-proxy@$(VERSION) server $$CONFIG_FILES; \
 	elif [ "$(MODE)" = "docker" ]; then \
 		echo "🚀 Starting harp-proxy in DOCKER mode (tag: $(DOCKER_TAG), platform: $(DOCKER_PLATFORM))..."; \
-		TAG=$(DOCKER_TAG) PLATFORM=$(DOCKER_PLATFORM) COMMAND="$(DOCKER_COMMAND)" docker compose -f compose.yml -f compose.harp-docker.yml up; \
+		TAG=$(DOCKER_TAG) PLATFORM=$(DOCKER_PLATFORM) COMMAND="$(DOCKER_COMMAND)" docker compose -f compose.yml -f compose.harp-docker.yml up --remove-orphans; \
 	else \
 		echo "❌ ERROR: Invalid MODE=$(MODE). Must be: local, uvx, or docker"; \
 		exit 1; \

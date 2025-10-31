@@ -47,5 +47,4 @@ services:
 
 networks:
   kitchen-sink:
-    name: kitchen-sink
     driver: bridge
