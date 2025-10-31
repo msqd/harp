@@ -187,14 +187,24 @@ Once the workflow completes successfully:
 
 .. code-block:: bash
 
-    # In a fresh environment
-    pip install harp-proxy==$VERSION
+    # Test directly from PyPI without installing (recommended)
+    uvx harp-proxy@$VERSION --version
 
-    # Or using uv
+    # Run commands to verify functionality
+    uvx harp-proxy@$VERSION --help
+
+    # Download the wheel file without installing
+    # Direct download from PyPI using JSON API (no pip required)
+    curl -L $(curl -s https://pypi.org/pypi/harp-proxy/$VERSION/json | \
+      python3 -c "import sys, json; print([u['url'] for u in json.load(sys.stdin)['urls'] if u['packagetype']=='bdist_wheel'][0])") \
+      -o harp_proxy-$VERSION-py3-none-any.whl
+    # Or with jq (if installed)
+    curl -L $(curl -s https://pypi.org/pypi/harp-proxy/$VERSION/json | \
+      jq -r '.urls[] | select(.packagetype=="bdist_wheel") | .url') \
+      -o harp_proxy-$VERSION-py3-none-any.whl
+
+    # For persistent installation in a project
     uv pip install harp-proxy==$VERSION
-
-    # Verify version
-    harp --version
 
 Version Naming Conventions
 ---------------------------

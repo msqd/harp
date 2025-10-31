@@ -109,12 +109,14 @@ exclude = [
 include = [
     "harp",
     "harp_apps",
-    "harp_apps/dashboard/web",
 ]
 exclude = [
     "**/node_modules/",
     "harp_apps/dashboard/frontend",
 ]
+
+[tool.hatch.build.targets.wheel.force-include]
+"harp_apps/dashboard/web" = "harp_apps/dashboard/web"
 
 [tool.ruff]
 line-length = 120
