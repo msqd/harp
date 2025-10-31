@@ -1,0 +1,35 @@
+#!/bin/bash
+#
+# Build a wheel package in a sandboxed environment
+#
+# This script is meant to be run inside bin/sandbox
+#
+
+set -e
+
+# Install dependencies and build frontend
+make install-dev build-frontend
+
+# Remove unnecessary files from the wheel
+rm -rf harp_apps/dashboard/frontend harp_apps/dashboard/web/src
+
+# Clean up README (remove People & Credits section)
+sed '/^People & Credits/,$ d' README.rst > README.rst.tmp
+mv README.rst.tmp README.rst
+
+# Build the wheel
+if [ -n "$UV" ]; then
+    $UV build
+else
+    python -m build
+fi
+
+# Copy to the original dist directory
+cp dist/* "$PWD_ORIG/dist/"
+
+# Check the wheel with twine
+if [ -n "$UVX" ]; then
+    $UVX twine check dist/*
+else
+    twine check dist/*
+fi

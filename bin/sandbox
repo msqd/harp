@@ -32,6 +32,9 @@ set -e
 # Set version
 export VERSION=`git describe 2>/dev/null || git rev-parse --short HEAD`
 
+# Show what we're about to do
+echo -e "${BLUE}📦 Sandboxing ${GREEN}$*${NC}"
+
 # If there are local changes, force the user to clean things up (he may not expect his changes to be ignored, so
 # it's better that he choses to stash, revert or commit the things).
 if [ -z "$SANDBOX_ALLOW_DIRTY" ]; then

@@ -252,8 +252,8 @@ help:   ## Shows available commands.
 	@echo
 
 wheel:  ## Builds a python wheel (sandboxed)
-	$(call execute,mkdir -p dist)
-	$(call execute,bin/sandbox "$(MAKE) install-dev build-frontend && rm -rf harp_apps/dashboard/frontend harp_apps/dashboard/web/src && sed '/^People & Credits/,$$ d' README.rst > README.rst.tmp && mv README.rst.tmp README.rst && $(if $(UV),$(UV) build,python -m build) && cp dist/* $(PWD)/dist && $(if $(UVX),$(UVX) twine check dist/*,twine check dist/*)")
+	@mkdir -p dist
+	$(call execute,PWD_ORIG=$(PWD) UV=$(UV) UVX=$(UVX) bin/sandbox bin/build_wheel)
 
 clean-frontend-modules:  ## Cleans up the frontend node modules directory.
 	-rm -rf $(FRONTEND_DIR)/node_modules
