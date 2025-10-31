@@ -10,8 +10,7 @@ services:
       - ./etc:/etc/harp:ro
     command: >
       server
-      -f /etc/harp/harp.yml
-      -f /etc/harp/endpoints.yml
+      -f /etc/harp/proxy.yml
       -f /etc/harp/rules.yml
     depends_on:
       - lb-httpbin-1
