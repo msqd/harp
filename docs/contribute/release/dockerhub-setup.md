@@ -6,12 +6,12 @@ HARP Docker images are published to both:
 - **GitHub Container Registry**: `ghcr.io/msqd/harp`
 - **Docker Hub**: `makersquad/harp-proxy`
 
-## Required GitHub Secrets
+## Required GitHub Configuration
 
-To enable Docker Hub publishing, configure these secrets in your GitHub repository (Settings → Secrets and variables → Actions):
+To enable Docker Hub publishing, configure these in your GitHub repository (Settings → Secrets and variables → Actions):
 
-- `DOCKERHUB_USERNAME`: Your Docker Hub username
-- `DOCKERHUB_TOKEN`: Docker Hub access token with push permissions
+- **Variable**: `DOCKERHUB_USERNAME` - Your Docker Hub username
+- **Secret**: `DOCKERHUB_TOKEN` - Docker Hub access token with push permissions
 
 For details on creating Docker Hub access tokens, see the [official Docker Hub documentation](https://docs.docker.com/security/for-developers/access-tokens/)
 
