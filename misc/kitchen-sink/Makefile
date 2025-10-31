@@ -29,17 +29,18 @@ _start:
 	@docker compose down 2>/dev/null || true
 	@echo "Starting Docker Compose services with httpbin-1=$(HTTPBIN_1_REPLICAS) httpbin-2=$(HTTPBIN_2_REPLICAS) replicas..."
 	@docker compose up -d --scale httpbin-1=$(HTTPBIN_1_REPLICAS) --scale httpbin-2=$(HTTPBIN_2_REPLICAS)
-	@CONFIG_FILES=$$(ls etc/*.yml | sed 's/^/-f /' | tr '\n' ' '); \
+	@CONFIG_FILES=$$(ls etc/*.yml | grep -v '\.docker\.yml$$' | sed 's/^/-f /' | tr '\n' ' '); \
 	if [ "$(MODE)" = "local" ]; then \
 		echo "🚀 Starting harp-proxy in LOCAL mode (uv run) with auto-reload..."; \
 		trap 'docker compose stop' EXIT; \
 		if command -v fswatch >/dev/null 2>&1; then \
 			echo "Watching etc/*.yml for changes (will restart after 1s of inactivity)..."; \
 			trap 'kill $$PID 2>/dev/null; exit 0' INT TERM; \
+			WATCH_FILES=$$(ls etc/*.yml | grep -v '\.docker\.yml$$' | tr '\n' ' '); \
 			while true; do \
 				uv run harp-proxy server $$CONFIG_FILES & \
 				PID=$$!; \
-				fswatch -1 -l 1 etc/*.yml >/dev/null 2>&1 || break; \
+				fswatch -1 -l 1 $$WATCH_FILES >/dev/null 2>&1 || break; \
 				sleep 1; \
 				echo "Config changed, restarting harp-proxy..."; \
 				kill $$PID 2>/dev/null || true; \
