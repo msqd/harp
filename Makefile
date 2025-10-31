@@ -52,6 +52,7 @@ PNPM ?= $(shell which pnpm || echo "pnpm")
 # misc.
 SED ?= $(shell which gsed || which sed || echo "sed")
 TEST_SKIP_FRONT ?=
+COMMA := ,
 
 # constants
 FRONTEND_DIR = harp_apps/dashboard/frontend
@@ -110,10 +111,10 @@ reference: harp  ## Generates API reference documentation as ReST files (docs).
 	git add docs/reference/
 
 docs:  ## Build html documentation
-	$(UV_RUN) $(MAKE) -C docs html
+	$(call execute,$(UV_RUN) $(MAKE) -C docs html)
 
 docs-dev:  ## Spin up a livereload documentation server
-	$(UV_RUN) $(MAKE) -C docs dev
+	$(call execute,$(UV_RUN) $(MAKE) -C docs dev)
 
 
 ########################################################################################################################
@@ -123,7 +124,7 @@ docs-dev:  ## Spin up a livereload documentation server
 .PHONY: build-frontend
 
 build-frontend: install-frontend  ## Builds the harp dashboard frontend (compiles typescript and other sources into bundled version).
-	cd $(FRONTEND_DIR); $(PNPM) build
+	$(call execute,cd $(FRONTEND_DIR); $(PNPM) build)
 
 
 ########################################################################################################################
@@ -135,70 +136,64 @@ build-frontend: install-frontend  ## Builds the harp dashboard frontend (compile
 .PHONY: lint-frontend coverage cloc
 
 preqa: types format reference  ## Runs pre-qa checks (types generation, formatting, api reference).
-	-$(UV_RUN) pre-commit
+	$(call execute,-$(UV_RUN) pre-commit)
 
 qa: preqa test  ## Runs all QA checks, with most common databases.
 
 qa-full:  ## Runs all QA checks, including all supported databases.
-	TEST_ALL_DATABASES=true $(MAKE) qa
+	$(call execute,TEST_ALL_DATABASES=true $(MAKE) qa)
 
 qa-nofront:  ## Runs all QA checks without frontend tests.
-	TEST_SKIP_FRONT=1 $(MAKE) qa
+	$(call execute,TEST_SKIP_FRONT=1 $(MAKE) qa)
 
 types:  ## Generates frontend types from the python code.
-	$(UV_RUN) bin/generate_types # old school
-	$(UV_RUN) bin/generate_ts_types # new school
+	$(call execute,$(UV_RUN) bin/generate_types)
+	$(call execute,$(UV_RUN) bin/generate_ts_types)
 
 format:  ## Formats the full codebase (backend and frontend).
-	$(MAKE) format-backend
-	test -z "$(TEST_SKIP_FRONT)" && $(MAKE) format-frontend || (cd $(FRONTEND_DIR); $(PNPM) prettier -w src/Models)
+	$(call execute,$(MAKE) format-backend)
+	$(call execute,test -z "$(TEST_SKIP_FRONT)" && $(MAKE) format-frontend || (cd $(FRONTEND_DIR); $(PNPM) prettier -w src/Models))
 
 format-backend:  ## Formats the backend codebase.
-	$(UV_RUN) ruff check --fix harp harp_apps tests
-	$(UV_RUN) ruff format
+	$(call execute,$(UV_RUN) ruff check --fix harp harp_apps tests)
+	$(call execute,$(UV_RUN) ruff format)
 
 format-frontend: install-frontend  ## Formats the frontend codebase.
-	(cd $(FRONTEND_DIR); $(PNPM) lint:fix)
-	(cd $(FRONTEND_DIR); $(PNPM) prettier -w src)
+	$(call execute,(cd $(FRONTEND_DIR); $(PNPM) lint:fix))
+	$(call execute,(cd $(FRONTEND_DIR); $(PNPM) prettier -w src))
 
 optimize-images:  ## Optimizes PNG images in documentation.
 	find docs -name \*.png | xargs optimizt
 
 test:  ## Runs all tests.
-	$(MAKE) test-backend
-	test -z "$(TEST_SKIP_FRONT)" && $(MAKE) test-frontend || echo "Skipped."
+	$(call execute,$(MAKE) test-backend)
+	$(call execute,test -z "$(TEST_SKIP_FRONT)" && $(MAKE) test-frontend || echo "Skipped.")
 
 test-backend: install-backend-dev  ## Runs backend tests.
-	$(PYTEST) $(PYTEST_TARGETS) \
-	          $(PYTEST_COMMON_OPTIONS) \
-	          $(PYTEST_OPTIONS)
+	$(call execute,$(PYTEST) $(PYTEST_TARGETS) $(PYTEST_COMMON_OPTIONS) $(PYTEST_OPTIONS))
 
 test-backend-update:  ## Runs backend tests while updating snapshots.
-	PYTEST_OPTIONS="$(PYTEST_OPTIONS) --snapshot-update" $(MAKE) test-backend
+	$(call execute,PYTEST_OPTIONS="$(PYTEST_OPTIONS) --snapshot-update" $(MAKE) test-backend)
 
 test-frontend: install-frontend lint-frontend  ## Runs frontend tests.
-	cd $(FRONTEND_DIR); $(PNPM) test:unit
-	cd $(FRONTEND_DIR); $(PNPM) test:browser
-	bin/runc_visualtests pnpm test:ui:dev
+	$(call execute,cd $(FRONTEND_DIR); $(PNPM) test:unit)
+	$(call execute,cd $(FRONTEND_DIR); $(PNPM) test:browser)
+	$(call execute,bin/runc_visualtests pnpm test:ui:dev)
 
 test-frontend-update: install-frontend lint-frontend  ## Runs frontend tests while updating snapshots.
-	cd $(FRONTEND_DIR); $(PNPM) test:unit:update
+	$(call execute,cd $(FRONTEND_DIR); $(PNPM) test:unit:update)
 
 test-frontend-ui-update: install-frontend lint-frontend  ## Update user interface visual snapshots.
-	bin/runc_visualtests pnpm test:ui:update
+	$(call execute,bin/runc_visualtests pnpm test:ui:update)
 
 lint-frontend: install-frontend  ## Lints the frontend codebase.
-	cd $(FRONTEND_DIR); $(PNPM) build
+	$(call execute,cd $(FRONTEND_DIR); $(PNPM) build)
 
 coverage:  ## Generates coverage report.
-	$(PYTEST) $(PYTEST_TARGETS) tests \
-	          -m 'not subprocess' \
-	          $(PYTEST_COVERAGE_OPTIONS) \
-	          $(PYTEST_COMMON_OPTIONS) \
-	          $(PYTEST_OPTIONS)
+	$(call execute,$(PYTEST) $(PYTEST_TARGETS) tests -m 'not subprocess' $(PYTEST_COVERAGE_OPTIONS) $(PYTEST_COMMON_OPTIONS) $(PYTEST_OPTIONS))
 
 cloc:  ## Counts lines of code in the project.
-	cloc harp harp_apps tests  --exclude-dir=node_modules,build,dist
+	$(call execute,cloc harp harp_apps tests --exclude-dir=node_modules$(COMMA)build$(COMMA)dist)
 
 
 ########################################################################################################################
@@ -208,43 +203,25 @@ cloc:  ## Counts lines of code in the project.
 .PHONY: buildc buildc-pypi pushc runc runc-shell runc-example-repositories
 
 buildc: wheel  ## Builds the docker image from wheel (supports PYTHON_VERSION=3.13 or 3.14).
-	$(DOCKER) build \
-		$(DOCKER_OPTIONS) \
-		$(DOCKER_BUILD_OPTIONS) \
-		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
-		--build-arg INSTALL_FROM=local \
-		--build-arg VERSION=$(VERSION) \
-		-t $(DOCKER_IMAGE) \
-		$(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) \
-		.
+	$(call execute,$(DOCKER) build $(DOCKER_OPTIONS) $(DOCKER_BUILD_OPTIONS) --build-arg PYTHON_VERSION=$(PYTHON_VERSION) --build-arg INSTALL_FROM=local --build-arg VERSION=$(VERSION) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .)
 
 buildc-pypi:  ## Builds the docker image from PyPI (requires VERSION, supports PYTHON_VERSION=3.13 or 3.14).
 	@if [ -z "$(VERSION)" ]; then \
 		echo "ERROR: VERSION is required. Usage: make buildc-pypi VERSION=0.9.0"; \
 		exit 1; \
 	fi
-	$(DOCKER) build \
-		$(DOCKER_OPTIONS) \
-		$(DOCKER_BUILD_OPTIONS) \
-		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
-		--build-arg VERSION=$(VERSION) \
-		-f Dockerfile.pypi \
-		-t $(DOCKER_IMAGE) \
-		$(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) \
-		.
+	$(call execute,$(DOCKER) build $(DOCKER_OPTIONS) $(DOCKER_BUILD_OPTIONS) --build-arg PYTHON_VERSION=$(PYTHON_VERSION) --build-arg VERSION=$(VERSION) -f Dockerfile.pypi -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .)
 
 pushc:  ## Pushes the docker image to the registry.
-	for tag in $(VERSION) $(DOCKER_TAGS); do \
-		$(DOCKER) image push $(DOCKER_IMAGE):$$tag$(DOCKER_TAGS_SUFFIX); \
-	done
+	$(call execute,for tag in $(VERSION) $(DOCKER_TAGS); do $(DOCKER) image push $(DOCKER_IMAGE):$$tag$(DOCKER_TAGS_SUFFIX); done)
 
 runc:  ## Runs the docker image.
-	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
-	$(DOCKER) run $(DOCKER_TTY) --init --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
+	$(call execute,$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true)
+	$(call execute,$(DOCKER) run $(DOCKER_TTY) --init --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4000-4999:4000-4999 --rm $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND))
 
 runc-shell:  ## Runs a shell within the docker image.
-	$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true
-	$(DOCKER) run $(DOCKER_INTERACTIVE) --init --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND)
+	$(call execute,$(DOCKER) network create $(DOCKER_NETWORK) 2>/dev/null || true)
+	$(call execute,$(DOCKER) run $(DOCKER_INTERACTIVE) --init --network $(DOCKER_NETWORK) $(DOCKER_OPTIONS) $(DOCKER_RUN_OPTIONS) -p 4080:4080 --rm --entrypoint=/bin/bash $(DOCKER_IMAGE) $(DOCKER_RUN_COMMAND))
 
 
 
@@ -275,14 +252,8 @@ help:   ## Shows available commands.
 	@echo
 
 wheel:  ## Builds a python wheel (sandboxed)
-	mkdir -p dist
-	bin/sandbox "$(MAKE) install-dev build-frontend && \
-				 rm -rf harp_apps/dashboard/frontend harp_apps/dashboard/web/src && \
-				 sed '/^People & Credits/,$$ d' README.rst > README.rst.tmp && \
-				 mv README.rst.tmp README.rst && \
-				 $(if $(UV),$(UV) build,python -m build) && \
-				 cp dist/* $(PWD)/dist && \
-				 $(if $(UVX),$(UVX) twine check dist/*,twine check dist/*)"
+	$(call execute,mkdir -p dist)
+	$(call execute,bin/sandbox "$(MAKE) install-dev build-frontend && rm -rf harp_apps/dashboard/frontend harp_apps/dashboard/web/src && sed '/^People & Credits/,$$ d' README.rst > README.rst.tmp && mv README.rst.tmp README.rst && $(if $(UV),$(UV) build,python -m build) && cp dist/* $(PWD)/dist && $(if $(UVX),$(UVX) twine check dist/*,twine check dist/*)")
 
 clean-frontend-modules:  ## Cleans up the frontend node modules directory.
 	-rm -rf $(FRONTEND_DIR)/node_modules
