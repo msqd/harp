@@ -4,6 +4,7 @@ Unreleased
 Changed
 -------
 
+- Pinned hishel to 0.1.x (hishel 1.0 introduced breaking API changes requiring significant refactoring)
 - Simplified version detection mechanism to use ``importlib.metadata`` for installed packages instead of ``version.txt``
 - Version now falls back to ``"unknown"`` instead of ``"0.9-dev"`` when neither git nor package metadata are available
 - Unified CI and Release workflows into single CI/CD workflow for simpler dependency management
@@ -12,7 +13,7 @@ Changed
 - All CI/CD job names now use human-readable format for better visibility
 - Python package build now runs in parallel with tests for faster builds
 - CI/CD tests now run directly in GitHub Actions runners instead of Docker containers for faster execution
-- Backend tests now run against Python 3.13 and 3.14 using matrix strategy
+- Backend tests now run against Python 3.13 only (Python 3.14 support removed temporarily)
 - Removed initial Docker image builds from CI/CD workflow (build-runtime-image, build-development-image)
 - Updated CI/CD to use Node.js 24 and pnpm 10 for consistent environment between local and CI
 - Simplified Dockerfile to single-stage wheel-based build matching CI/CD process
@@ -28,6 +29,7 @@ Changed
 Added
 -----
 
+- Kitchen-sink demo environment with Docker Compose setup for testing and development (``make kitchen-sink``)
 - Frontend assets are now built and included in release wheels automatically
 - Node.js and pnpm setup in release workflow for frontend compilation
 - Docker images built from wheels with smart version tagging:
@@ -36,14 +38,13 @@ Added
   - Pre-release tags (e.g., ``0.9.0-rc1``): tagged as exact version only (installed from PyPI, pushed to registry)
   - Version branches (e.g., ``0.9``): tagged as ``0.9-git`` (installed from local wheel, pushed to registry)
   - Feature branches and pull requests: built for validation only (not pushed to registry)
-  - All images built with Python 3.14 (GIL enabled) and Python 3.14t (GIL disabled, ``-nogil`` suffix)
+  - All images built with Python 3.13
 
 Fixed
 -----
 
 - Made playwright installation non-fatal in ``install-dev`` target to prevent build failures
 - Fixed test isolation issues in version detection tests that caused subprocess test failures
-- Updated Python version requirement to ``>=3.13,<3.15`` to support Python 3.14
 
 Removed
 -------

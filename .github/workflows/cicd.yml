@@ -33,7 +33,6 @@ jobs:
       matrix:
         include:
           - python-version: '3.13'
-          - python-version: '3.14'
     permissions:
       contents: read
     steps:
@@ -65,7 +64,6 @@ jobs:
       matrix:
         include:
           - python-version: '3.13'
-          - python-version: '3.14'
     permissions:
       contents: read
     steps:
@@ -97,7 +95,6 @@ jobs:
       matrix:
         include:
           - python-version: '3.13'
-          - python-version: '3.14'
     permissions:
       contents: read
     steps:
@@ -298,7 +295,6 @@ jobs:
       matrix:
         include:
           - python-version: '3.13'
-          - python-version: '3.14'
           - check-only: true  # Consolidation job with no Python testing
     steps:
       - name: All checks passed
@@ -399,7 +395,7 @@ jobs:
           push: ${{ steps.meta.outputs.push }}
           tags: ${{ steps.meta.outputs.tags }}
           build-args: |
-            PYTHON_VERSION=3.14
+            PYTHON_VERSION=3.13
             INSTALL_FROM=${{ steps.meta.outputs.INSTALL_FROM }}
             VERSION=${{ steps.meta.outputs.VERSION }}
           cache-from: type=gha
@@ -502,7 +498,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           build-args: |
-            PYTHON_VERSION=3.14
+            PYTHON_VERSION=3.13
             VERSION=${{ steps.meta.outputs.VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

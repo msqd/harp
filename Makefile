@@ -149,7 +149,7 @@ qa-full:  ## Runs all QA checks, including all supported databases.
 qa-nofront:  ## Runs all QA checks without frontend tests.
 	$(call execute,TEST_SKIP_FRONT=1 $(MAKE) qa)
 
-types:  ## Generates frontend types from the python code.
+types: install-frontend  ## Generates frontend types from the python code.
 	$(call execute,$(UV_RUN) bin/generate_types)
 	$(call execute,$(UV_RUN) bin/generate_ts_types)
 
@@ -162,8 +162,8 @@ format-backend:  ## Formats the backend codebase.
 	$(call execute,$(UV_RUN) ruff format)
 
 format-frontend: install-frontend  ## Formats the frontend codebase.
-	$(call execute,(cd $(FRONTEND_DIR); $(PNPM) lint:fix))
-	$(call execute,(cd $(FRONTEND_DIR); $(PNPM) prettier -w src))
+	$(call execute,(cd $(FRONTEND_DIR); $(PNPM) lint:fix $(if $(DEBUG),,--quiet)))
+	$(call execute,(cd $(FRONTEND_DIR); $(PNPM) prettier -w src $(if $(DEBUG),,--log-level=warn)))
 
 optimize-images:  ## Optimizes PNG images in documentation.
 	find docs -name \*.png | xargs optimizt
