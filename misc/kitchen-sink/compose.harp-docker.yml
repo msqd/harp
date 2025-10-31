@@ -1,0 +1,19 @@
+# Docker compose override for running harp-proxy as a container
+# Usage: docker compose -f compose.yml -f compose.harp-docker.yml up
+services:
+  harp-proxy:
+    image: makersquad/harp-proxy:${HARP_DOCKER_TAG:-latest}
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./etc:/etc/harp:ro
+    command: >
+      server
+      -f /etc/harp/harp.yml
+      -f /etc/harp/endpoints.yml
+      -f /etc/harp/rules.yml
+    depends_on:
+      - lb-httpbin-1
+      - lb-httpbin-2
+    environment:
+      - HARP_LOG_LEVEL=DEBUG

@@ -366,7 +366,7 @@ jobs:
 
           # For version branches (e.g., 0.9), tag as 0.9-git and enable push
           if echo "${{ github.ref_name }}" | grep -qE '^[0-9]+\.[0-9]+$'; then
-            TAGS="ghcr.io/${{ github.repository }}:${{ github.ref_name }}-git"
+            TAGS="ghcr.io/${{ github.repository }}:${{ github.ref_name }}-git,makersquad/harp-proxy:${{ github.ref_name }}-git"
             PUSH="true"
             echo "Docker tags (version branch): $TAGS"
           else
@@ -386,6 +386,13 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        if: steps.meta.outputs.push == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image (GIL enabled)
         uses: docker/build-push-action@v6
@@ -469,13 +476,17 @@ jobs:
             # Mainline release (e.g., 0.9.0) - tag with full, minor, and major versions
             MAJOR=$(echo "$VERSION" | cut -d. -f1)
             MINOR=$(echo "$VERSION" | cut -d. -f1-2)
-            TAGS="ghcr.io/${{ github.repository }}:$VERSION"
-            TAGS="$TAGS,ghcr.io/${{ github.repository }}:$MINOR"
-            TAGS="$TAGS,ghcr.io/${{ github.repository }}:$MAJOR"
+            TAGS="ghcr.io/${{ github.repository }}:$VERSION,makersquad/harp-proxy:$VERSION"
+            TAGS="$TAGS,ghcr.io/${{ github.repository }}:$MINOR,makersquad/harp-proxy:$MINOR"
+            TAGS="$TAGS,ghcr.io/${{ github.repository }}:$MAJOR,makersquad/harp-proxy:$MAJOR"
+            # Only add latest tag for version 0.9.x releases
+            if echo "$VERSION" | grep -qE '^0\.9\.[0-9]+$'; then
+              TAGS="$TAGS,makersquad/harp-proxy:latest"
+            fi
             echo "Docker tags (mainline): $TAGS"
           else
             # Pre-release (e.g., 0.9.0-rc1) - only exact tag
-            TAGS="ghcr.io/${{ github.repository }}:$VERSION"
+            TAGS="ghcr.io/${{ github.repository }}:$VERSION,makersquad/harp-proxy:$VERSION"
             echo "Docker tags (pre-release): $TAGS"
           fi
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
@@ -489,6 +500,12 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image (GIL enabled)
         uses: docker/build-push-action@v6

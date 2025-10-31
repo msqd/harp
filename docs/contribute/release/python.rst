@@ -188,7 +188,7 @@ Once the workflow completes successfully:
 .. code-block:: bash
 
     # Test directly from PyPI without installing (recommended)
-    uvx harp-proxy@$VERSION --version
+    uvx harp-proxy@$VERSION version
 
     # Run commands to verify functionality
     uvx harp-proxy@$VERSION --help
