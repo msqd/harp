@@ -1,5 +1,5 @@
-0.9 (unreleased)
-================
+0.9.0 (2025-10-31)
+==================
 
 Important Changes
 :::::::::::::::::
@@ -27,6 +27,7 @@ Added
 * Changelog management guide (docs/contribute/release/changelog.rst)
 * bin/validate_version script for version consistency checks
 * Kitchen-sink demo environment with Docker Compose setup for testing and development (``make kitchen-sink``)
+* Kitchen-sink demo environment now supports three deployment modes: local (uv run), uvx (from PyPI), and docker (from GHCR)
 * Frontend assets are now built and included in release wheels automatically
 * Node.js and pnpm setup in release workflow for frontend compilation
 * Docker images built from wheels with smart version tagging:
@@ -42,12 +43,15 @@ Fixed
 
 * Made playwright installation non-fatal in ``install-dev`` target to prevent build failures
 * Fixed test isolation issues in version detection tests that caused subprocess test failures
+* Wheel build now includes frontend assets using hatch's force-include configuration
 
 Changed
 :::::::
 
 * Various tests strengthening changes (behaviour unchanged).
 * **Release workflow**: Version must now be manually updated in pyproject.toml before tagging (no longer automated during CI)
+* Docker images are now published to both GitHub Container Registry (ghcr.io/msqd/harp) and Docker Hub (makersquad/harp-proxy)
+* Version 0.9.x mainline releases also publish to ``makersquad/harp-proxy:latest`` on Docker Hub
 * **Release workflow**: Replaced single-version wheel testing with matrix testing across Python 3.13, 3.14, and 3.14t
 * **Release workflow**: Added explicit documentation for sandbox build rationale
 * **Documentation**: Consolidated release documentation into docs/contribute/release/ (removed duplicates)
