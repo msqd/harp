@@ -1,0 +1,11 @@
+rules:
+  "httpbin-*":
+    "GET /image":
+      on_request: |
+        transaction.markers.add("skip-request-headers-storage")
+        transaction.markers.add("skip-request-body-storage")
+      on_response: |
+        transaction.markers.add("skip-response-headers-storage")
+        transaction.markers.add("skip-response-body-storage")
+      on_remote_response: |
+        response.headers['Cache-Control'] = 'max-age=1664'
