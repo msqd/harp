@@ -1,0 +1,8 @@
+proxy:
+  endpoints:
+    - port: 4000
+      name: httpbin-1
+      url: http://lb-httpbin-1:80
+    - port: 4001
+      name: httpbin-2
+      url: http://lb-httpbin-2:80

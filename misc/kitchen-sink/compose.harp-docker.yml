@@ -6,11 +6,13 @@ services:
     platform: ${HARP_DOCKER_PLATFORM:-linux/amd64}
     ports:
       - "4000:4000"
+      - "4001:4001"
+      - "4080:4080"
     volumes:
       - ./etc:/etc/harp:ro
     command: >
       server
-      -f /etc/harp/proxy.yml
+      -f /etc/harp/proxy.docker.yml
       -f /etc/harp/rules.yml
     depends_on:
       - lb-httpbin-1

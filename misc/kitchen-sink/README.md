@@ -94,24 +94,27 @@ make stop
 ## Configuration Files
 
 Configuration files are in the `etc/` directory:
-- `harp.yml` - Main HARP configuration
-- `endpoints.yml` - Endpoint definitions
+- `proxy.yml` - Proxy endpoints for local/uvx modes (uses localhost)
+- `proxy.docker.yml` - Proxy endpoints for Docker mode (uses Docker DNS)
 - `rules.yml` - Proxy rules
 
 ## Testing the Setup
 
-Once started, HARP is available at http://localhost:4000
+Once started, HARP is available at:
+- http://localhost:4000 - httpbin-1 endpoint
+- http://localhost:4001 - httpbin-2 endpoint
+- http://localhost:4080 - Dashboard (if enabled)
 
 Example requests:
 ```bash
 # Via httpbin-1 endpoint
-curl http://localhost:4000/httpbin-1/get
+curl http://localhost:4000/get
 
 # Via httpbin-2 endpoint
-curl http://localhost:4000/httpbin-2/get
+curl http://localhost:4001/get
 
 # Check which backend replica handled the request
-curl http://localhost:4000/httpbin-1/hostname
+curl http://localhost:4000/hostname
 ```
 
 ## Requirements
