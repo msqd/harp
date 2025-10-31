@@ -56,6 +56,12 @@ TEST_SKIP_FRONT ?=
 # constants
 FRONTEND_DIR = harp_apps/dashboard/frontend
 
+# helpers
+define execute
+@echo "⚙️ \033[36m$@\033[0m: \033[2m$(1)\033[0m"
+@$(1)
+endef
+
 # harp
 #
 # todo: options vs more options should be clarified
@@ -82,13 +88,13 @@ install: install-frontend install-backend  ## Installs harp dependencies (backen
 install-dev: install-backend-dev  ## Installs harp dependencies (backend, dashboard) with development tools.
 
 install-frontend:  ## Installs harp dashboard dependencies (frontend).
-	cd $(FRONTEND_DIR); $(PNPM) install $(if $(DEBUG),,--silent)
+	$(call execute,cd $(FRONTEND_DIR); $(PNPM) install $(if $(DEBUG),,--silent))
 
 install-backend:  ## Installs harp dependencides (backend).
-	$(if $(UV),$(UV) sync $(if $(DEBUG),,--quiet) $(UV_SYNC_OPTIONS),pip install -e .)
+	$(call execute,$(if $(UV),$(UV) sync $(if $(DEBUG),,--quiet) $(UV_SYNC_OPTIONS),pip install -e .))
 
 install-backend-dev:  ## Installs harp dependencies (backend) with development tools.
-	UV_SYNC_OPTIONS="--extra dev" $(MAKE) install-backend
+	$(call execute,UV_SYNC_OPTIONS="--extra dev" $(MAKE) install-backend)
 
 
 ########################################################################################################################
