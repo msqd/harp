@@ -26,6 +26,22 @@ Added
 * Complete release process documentation in docs/contribute/release/
 * Changelog management guide (docs/contribute/release/changelog.rst)
 * bin/validate_version script for version consistency checks
+* Kitchen-sink demo environment with Docker Compose setup for testing and development (``make kitchen-sink``)
+* Frontend assets are now built and included in release wheels automatically
+* Node.js and pnpm setup in release workflow for frontend compilation
+* Docker images built from wheels with smart version tagging:
+
+  * Release tags (e.g., ``0.9.0``): tagged as ``0.9.0``, ``0.9``, and ``0`` (installed from PyPI, pushed to registry)
+  * Pre-release tags (e.g., ``0.9.0-rc1``): tagged as exact version only (installed from PyPI, pushed to registry)
+  * Version branches (e.g., ``0.9``): tagged as ``0.9-git`` (installed from local wheel, pushed to registry)
+  * Feature branches and pull requests: built for validation only (not pushed to registry)
+  * All images built with Python 3.13
+
+Fixed
+:::::
+
+* Made playwright installation non-fatal in ``install-dev`` target to prevent build failures
+* Fixed test isolation issues in version detection tests that caused subprocess test failures
 
 Changed
 :::::::
@@ -39,6 +55,28 @@ Changed
 * **Documentation**: Updated all references from Poetry to UV package manager
 * **Documentation**: Updated Python version requirement from 3.12 to 3.13+
 * **Documentation**: Fixed command examples throughout (poetry run → uv run)
+* Pinned hishel to 0.1.x (hishel 1.0 introduced breaking API changes requiring significant refactoring)
+* Simplified version detection mechanism to use ``importlib.metadata`` for installed packages instead of ``version.txt``
+* Version now falls back to ``"unknown"`` instead of ``"0.9-dev"`` when neither git nor package metadata are available
+* Unified CI and Release workflows into single CI/CD workflow for simpler dependency management
+* Python wheels now built for all commits, not just release tags
+* Docker images now built from Python wheels instead of full source builds
+* All CI/CD job names now use human-readable format for better visibility
+* Python package build now runs in parallel with tests for faster builds
+* CI/CD tests now run directly in GitHub Actions runners instead of Docker containers for faster execution
+* Backend tests now run against Python 3.13 only (Python 3.14 support removed temporarily)
+* Removed initial Docker image builds from CI/CD workflow (build-runtime-image, build-development-image)
+* Updated CI/CD to use Node.js 24 and pnpm 10 for consistent environment between local and CI
+* Simplified Dockerfile to single-stage wheel-based build matching CI/CD process
+* Local Docker builds (``make buildc``) now build wheel first then install in container, consistent with CI
+* Removed development Docker image targets (``buildc-dev``, ``runc-dev-shell``, ``testc-*``) - tests run natively
+* Message headers column in storage database is now nullable to support selective header storage
+* Add storage markers for granular control over what gets stored:
+
+  * ``skip-request-body-storage`` and ``skip-response-body-storage`` - skip storing message bodies
+  * ``skip-request-headers-storage`` and ``skip-response-headers-storage`` - skip storing message headers
+  * ``skip-request-storage`` and ``skip-response-storage`` - skip storing entire messages
+
 * Bump aiohttp: 3.12.15 → 3.13.1, freezegun
 * Bump alembic: 1.15.2 → 1.17.0
 * Bump annotated-types: 2.33.1 → 2.33.2
@@ -112,3 +150,4 @@ Removed
 * Removed isort (replaced by ruff)
 * Removed pytest-benchmark
 * Removed mysql from default dependency groups
+* Removed ``version.txt`` creation from build process (``bin/sandbox``)
