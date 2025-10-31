@@ -32,6 +32,16 @@ fi
 # Copy to the original dist directory
 cp dist/* "$PWD_ORIG/dist/"
 
+# Verify frontend assets are included in the wheel
+WHEEL_FILE=$(ls dist/*.whl)
+WEB_ASSET_COUNT=$(unzip -l "$WHEEL_FILE" 2>/dev/null | grep -c "harp_apps/dashboard/web/")
+printf "\n📊 Wheel contains %d files in harp_apps/dashboard/web/\n\n" "$WEB_ASSET_COUNT" >&2
+if [ "$WEB_ASSET_COUNT" -lt 10 ]; then
+    printf "❌ ERROR: Expected at least 10 web assets, but found only %d\n" "$WEB_ASSET_COUNT" >&2
+    printf "This likely means frontend assets were not included in the wheel!\n" >&2
+    exit 1
+fi
+
 # Check the wheel with twine
 if [ -n "$UVX" ]; then
     $UVX twine check dist/*
