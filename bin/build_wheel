@@ -6,12 +6,20 @@
 #
 
 set -e
+set -x
 
 # Install dependencies and build frontend
 make install-dev build-frontend
 
-# Remove unnecessary files from the wheel
-rm -rf harp_apps/dashboard/frontend harp_apps/dashboard/web/src
+# Verify web directory exists
+ls -la harp_apps/dashboard/web/ || echo "WARNING: web directory missing!"
+
+# Remove unnecessary files from the wheel (frontend source, keep only built assets in web/)
+rm -rf harp_apps/dashboard/frontend
+rm -rf harp_apps/dashboard/web/src
+
+# Verify web directory still exists after removal
+ls -la harp_apps/dashboard/web/ || echo "ERROR: web directory was removed!"
 
 # Clean up README (remove People & Credits section)
 sed '/^People & Credits/,$ d' README.rst > README.rst.tmp
