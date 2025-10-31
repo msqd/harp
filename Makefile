@@ -70,12 +70,15 @@ HARP_OPTIONS ?= --example sqlite --example proxy:httpbin
 HARP_MORE_OPTIONS ?=
 HARP_SERVICES ?= server dashboard
 
-.PHONY: start-dev start-dev-frontend
+.PHONY: start-dev start-dev-frontend kitchen-sink
 start-dev: install-dev  ## Starts a development instance with reasonable defaults.
 	$(UV_RUN) $(NAME) start $(HARP_SERVICES) $(HARP_OPTIONS) $(HARP_MORE_OPTIONS)
 
 start-dev-frontend: install-dev  ## Starts a frontend development instance (dashboard only on port 12121).
 	HARP_SERVICES=dashboard HARP_MORE_OPTIONS="--set dashboard.devserver.port=12121" $(MAKE) start-dev
+
+kitchen-sink:  ## Starts the kitchen-sink demo environment (docker compose + harp-proxy with auto-reload).
+	$(MAKE) -C misc/kitchen-sink start
 
 
 ########################################################################################################################
@@ -248,7 +251,7 @@ help:   ## Shows available commands.
 	@grep -E '^(buildc|buildc-pypi|pushc|runc|runc-shell):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo
 	@echo "\033[1mMiscellaneous\033[0m"
-	@grep -E '^(help|clean|clean-dist|clean-docs|clean-frontend-modules):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^(help|kitchen-sink|clean|clean-dist|clean-docs|clean-frontend-modules):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo
 
 wheel:  ## Builds a python wheel (sandboxed)
