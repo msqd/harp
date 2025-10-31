@@ -15,6 +15,7 @@
 # package
 NAME ?= harp-proxy
 VERSION ?= $(shell git describe 2>/dev/null || git rev-parse --short HEAD)
+DEBUG ?=
 
 # uv
 UV ?= $(shell which uv || echo "")
@@ -81,10 +82,10 @@ install: install-frontend install-backend  ## Installs harp dependencies (backen
 install-dev: install-backend-dev  ## Installs harp dependencies (backend, dashboard) with development tools.
 
 install-frontend:  ## Installs harp dashboard dependencies (frontend).
-	cd $(FRONTEND_DIR); $(PNPM) install
+	cd $(FRONTEND_DIR); $(PNPM) install $(if $(DEBUG),,--silent)
 
 install-backend:  ## Installs harp dependencides (backend).
-	$(if $(UV),$(UV) sync --quiet $(UV_SYNC_OPTIONS),pip install -e .)
+	$(if $(UV),$(UV) sync $(if $(DEBUG),,--quiet) $(UV_SYNC_OPTIONS),pip install -e .)
 
 install-backend-dev:  ## Installs harp dependencies (backend) with development tools.
 	UV_SYNC_OPTIONS="--extra dev" $(MAKE) install-backend
