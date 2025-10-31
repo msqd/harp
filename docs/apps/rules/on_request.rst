@@ -58,6 +58,23 @@ It's defined and dispatched by the ``proxy`` application, within the
 :class:`HttpProxyController <harp_apps.proxy.controllers.HttpProxyController>` request handler.
 
 
+Using transaction markers
+::::::::::::::::::::::::::
+
+Transactions have a ``markers`` attribute that allows you to add metadata flags that can influence how the transaction
+is processed by various applications. For example, you can add markers to control storage behavior:
+
+.. code-block:: yaml
+
+    rules:
+      "api":
+        "POST /upload":
+          on_request: |
+            transaction.markers.add("skip-request-body-storage")
+
+See the :doc:`storage markers documentation </apps/storage/markers>` for a complete list of available markers.
+
+
 Context reference
 :::::::::::::::::
 

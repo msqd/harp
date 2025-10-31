@@ -6,6 +6,7 @@ from sqlalchemy import insert, update
 from sqlalchemy.ext.asyncio import AsyncEngine
 from whistle import IAsyncEventDispatcher
 
+from harp import get_logger
 from harp.http import get_serializer_for
 from harp.models import Blob
 from harp.utils.background import AsyncWorkerQueue
@@ -16,11 +17,20 @@ from harp_apps.proxy.events import (
     HttpMessageEvent,
     TransactionEvent,
 )
+from harp_apps.storage.constants import (
+    SKIP_REQUEST_BODY_STORAGE,
+    SKIP_REQUEST_HEADERS_STORAGE,
+    SKIP_REQUEST_STORAGE,
+    SKIP_RESPONSE_BODY_STORAGE,
+    SKIP_RESPONSE_HEADERS_STORAGE,
+    SKIP_RESPONSE_STORAGE,
+    SKIP_STORAGE,
+)
 from harp_apps.storage.models import Message as SqlMessage
 from harp_apps.storage.models import Transaction as SqlTransaction
 from harp_apps.storage.types import IBlobStorage, IStorage
 
-SKIP_STORAGE = "skip-storage"
+logger = get_logger(__name__)
 
 
 class StorageAsyncWorkerQueue(AsyncWorkerQueue):
@@ -65,6 +75,20 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         if SKIP_STORAGE in event.transaction.markers or self.pressure >= 3:
             return
 
+        # Check if we should skip this entire message
+        skip_message = (
+            event.message.kind == "request"
+            and SKIP_REQUEST_STORAGE in event.transaction.markers
+            or event.message.kind == "response"
+            and SKIP_RESPONSE_STORAGE in event.transaction.markers
+        )
+        if skip_message:
+            logger.debug(
+                f"Skipping storing {event.message.kind.capitalize()} message",
+                transaction_id=event.transaction.id,
+            )
+            return
+
         await event.message.aread()
         serializer = get_serializer_for(event.message)
 
@@ -75,17 +99,45 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             "created_at": event.message.created_at,
         }
 
+        # Check if we should skip headers
+        skip_headers = (
+            event.message.kind == "request"
+            and SKIP_REQUEST_HEADERS_STORAGE in event.transaction.markers
+            or event.message.kind == "response"
+            and SKIP_RESPONSE_HEADERS_STORAGE in event.transaction.markers
+        )
+
         # Eventually store the headers blob (later)
-        if self.pressure <= 2:
+        if not skip_headers and self.pressure <= 2:
             headers_blob = Blob.from_data(serializer.headers, content_type="http/headers")
             await self.push(partial(self.blob_storage.put, headers_blob), ignore_errors=True)
             message_data["headers"] = headers_blob.id
+        elif skip_headers:
+            logger.debug(
+                f"Skipping storing {event.message.kind.capitalize()} headers",
+                transaction_id=event.transaction.id,
+                summary=serializer.summary,
+            )
+
+        # Check if we should skip body
+        skip_body = (
+            event.message.kind == "request"
+            and SKIP_REQUEST_BODY_STORAGE in event.transaction.markers
+            or event.message.kind == "response"
+            and SKIP_RESPONSE_BODY_STORAGE in event.transaction.markers
+        )
 
         # Eventually store the content blob (later)
-        if self.pressure <= 1:
+        if not skip_body and self.pressure <= 1:
             content_blob = Blob.from_data(serializer.body, content_type=event.message.headers.get("content-type"))
             await self.push(partial(self.blob_storage.put, content_blob), ignore_errors=True)
             message_data["body"] = content_blob.id
+        elif skip_body:
+            logger.debug(
+                f"Skipping storing {event.message.kind.capitalize()} body",
+                transaction_id=event.transaction.id,
+                summary=serializer.summary,
+            )
 
         async def create_message():
             async with self.engine.connect() as conn:
