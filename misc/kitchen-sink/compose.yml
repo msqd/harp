@@ -4,6 +4,8 @@ services:
   # This allows identifying which backend replica handled the request
   httpbin-1:
     image: mccutchen/go-httpbin:latest
+    networks:
+      - kitchen-sink
     environment:
       - MAX_DURATION=10s
       - MAX_BODY_SIZE=1048576
@@ -12,6 +14,8 @@ services:
   # Second httpbin service (scaled via --scale flag)
   httpbin-2:
     image: mccutchen/go-httpbin:latest
+    networks:
+      - kitchen-sink
     environment:
       - MAX_DURATION=10s
       - MAX_BODY_SIZE=1048576
@@ -20,6 +24,8 @@ services:
   # Load balancer for httpbin-1 (round-robin to all httpbin-1 replicas)
   lb-httpbin-1:
     image: nginx:alpine
+    networks:
+      - kitchen-sink
     ports:
       - "8991:80"
     volumes:
@@ -30,9 +36,16 @@ services:
   # Load balancer for httpbin-2 (round-robin to all httpbin-2 replicas)
   lb-httpbin-2:
     image: nginx:alpine
+    networks:
+      - kitchen-sink
     ports:
       - "8992:80"
     volumes:
       - ./etc/nginx/httpbin-2.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - httpbin-2
+
+networks:
+  kitchen-sink:
+    name: kitchen-sink
+    driver: bridge

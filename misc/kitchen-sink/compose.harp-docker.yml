@@ -4,6 +4,8 @@ services:
   harp-proxy:
     image: makersquad/harp-proxy:${TAG:-latest}
     platform: ${PLATFORM:-linux/amd64}
+    networks:
+      - kitchen-sink
     ports:
       - "4000-4999:4000-4999"
     volumes:
