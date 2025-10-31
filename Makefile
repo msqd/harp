@@ -269,12 +269,12 @@ help:   ## Shows available commands.
 
 wheel:  ## Builds a python wheel (sandboxed)
 	mkdir -p dist
-	bin/sandbox "$(MAKE) install-dev build-frontend; \
-				 rm -rf harp_apps/dashboard/frontend harp_apps/dashboard/web/src; \
-				 sed '/^People & Credits/,$$ d' README.rst > README.rst.tmp; \
-				 mv README.rst.tmp README.rst; \
-				 $(if $(UV),$(UV) build,python -m build); \
-				 cp dist/* $(PWD)/dist; \
+	bin/sandbox "$(MAKE) install-dev build-frontend && \
+				 rm -rf harp_apps/dashboard/frontend harp_apps/dashboard/web/src && \
+				 sed '/^People & Credits/,$$ d' README.rst > README.rst.tmp && \
+				 mv README.rst.tmp README.rst && \
+				 $(if $(UV),$(UV) build,python -m build) && \
+				 cp dist/* $(PWD)/dist && \
 				 $(if $(UVX),$(UVX) twine check dist/*,twine check dist/*)"
 
 clean-frontend-modules:  ## Cleans up the frontend node modules directory.

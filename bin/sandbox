@@ -63,7 +63,7 @@ trap cleanup EXIT
 # Clean clone
 echo -e "${BLUE}📦 Cloning repository at version ${GREEN}$VERSION${NC}"
 (cd $SANDBOX; git clone $__PATH__ working-copy --no-checkout)
-(cd $SANDBOX_WC; git checkout $VERSION)
+(cd $SANDBOX_WC; git -c advice.detachedHead=false checkout $VERSION)
 (cd $SANDBOX_WC; git submodule update --init --recursive)
 (cd $SANDBOX_WC; rm -rf .git)
 (cd $SANDBOX_WC; touch .env)
