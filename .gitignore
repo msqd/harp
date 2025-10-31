@@ -44,7 +44,7 @@
 /frontend/stats.html
 /harp.db
 /harp_apps/dashboard/frontend/stats.html
-/harp_apps/dashboard/web
+/harp_apps/dashboard/web/
 /misc/secrets
 /requirements*.txt
 /site
