@@ -2,18 +2,13 @@
 # Usage: docker compose -f compose.yml -f compose.harp-docker.yml up
 services:
   harp-proxy:
-    image: makersquad/harp-proxy:${HARP_DOCKER_TAG:-latest}
-    platform: ${HARP_DOCKER_PLATFORM:-linux/amd64}
+    image: makersquad/harp-proxy:${DOCKER_TAG:-latest}
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     ports:
-      - "4000:4000"
-      - "4001:4001"
-      - "4080:4080"
+      - "4000-4999:4000-4999"
     volumes:
       - ./etc:/etc/harp:ro
-    command: >
-      server
-      -f /etc/harp/proxy.docker.yml
-      -f /etc/harp/rules.yml
+    command: ${HARP_OPTIONS:-server -f /etc/harp/proxy.docker.yml -f /etc/harp/rules.yml}
     depends_on:
       - lb-httpbin-1
       - lb-httpbin-2
