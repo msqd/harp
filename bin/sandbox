@@ -6,46 +6,70 @@
 #
 # Usage: bin/sandbox some-command with some args
 #
+# Environment variables:
+#   SANDBOX_ALLOW_DIRTY - if non-empty, allows running with uncommitted changes
+#   SANDBOX_KEEP        - if non-empty, keeps the sandbox directory after execution
+#
 # Brought to you by Makersquad and licensed under the DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE, version 2.
 #
 
 __PATH__=$(cd $(dirname "$0")/..; pwd)
 
+# Configuration from environment
+SANDBOX_ALLOW_DIRTY=${SANDBOX_ALLOW_DIRTY:-}
+SANDBOX_KEEP=${SANDBOX_KEEP:-}
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
 # Exit if something fails
 set -e
-
-# Verbose
-set -x
 
 # Set version
 export VERSION=`git describe 2>/dev/null || git rev-parse --short HEAD`
 
 # If there are local changes, force the user to clean things up (he may not expect his changes to be ignored, so
 # it's better that he choses to stash, revert or commit the things).
-git diff-index --quiet --cached HEAD -- || {
-  echo "Repository not clean, please explicitely act so I am certain you're not ignoring something you expected to have in your sandbox."
-  exit 1
-}
+if [ -z "$SANDBOX_ALLOW_DIRTY" ]; then
+  git diff-index --quiet --cached HEAD -- || {
+    echo -e "${RED}❌ Repository not clean, please explicitely act so I am certain you're not ignoring something you expected to have in your sandbox.${NC}"
+    echo -e "${YELLOW}💡 Tip: Set SANDBOX_ALLOW_DIRTY=1 to bypass this check${NC}"
+    exit 1
+  }
+else
+  echo -e "${YELLOW}⚠️ Running with SANDBOX_ALLOW_DIRTY - uncommitted changes will be ignored${NC}"
+fi
 
 # Create temporary sandbox and trap removal at exit
 SANDBOX=`mktemp -d`
-echo "Created sandbox directory: $SANDBOX"
+SANDBOX_WC=$SANDBOX/working-copy
+
+echo -e "${BLUE}📦 Created sandbox directory: ${GREEN}$SANDBOX${NC}"
+
 function cleanup {
-  rm -rf $SANDBOX
-  echo "Removed sandbox directory: $SANDBOX."
+  if [ -n "$SANDBOX_KEEP" ]; then
+    echo -e "${BLUE}📦 Kept sandbox directory: $SANDBOX_WC${NC}"
+  else
+    rm -rf $SANDBOX
+    echo -e "${BLUE}📦 Removed sandbox directory: $SANDBOX${NC}"
+  fi
 }
 trap cleanup EXIT
 
-# Release path
-RELEASE=$SANDBOX/release
-
 # Clean clone
-(cd $SANDBOX; git clone $__PATH__ release --no-checkout)
-(cd $RELEASE; git checkout $VERSION)
-(cd $RELEASE; git submodule update --init --recursive)
-(cd $RELEASE; rm -rf .git)
-(cd $RELEASE; touch .env)
+echo -e "${BLUE}📦 Cloning repository at version ${GREEN}$VERSION${NC}"
+(cd $SANDBOX; git clone $__PATH__ working-copy --no-checkout)
+(cd $SANDBOX_WC; git checkout $VERSION)
+(cd $SANDBOX_WC; git submodule update --init --recursive)
+(cd $SANDBOX_WC; rm -rf .git)
+(cd $SANDBOX_WC; touch .env)
 
 # Execute
+echo -e "${BLUE}📦 Executing command in sandbox${NC}"
 ARGS="$*"
-(cd $RELEASE; bash -c "$ARGS" )
+(cd $SANDBOX_WC; bash -c "$ARGS" )
+exit $?
