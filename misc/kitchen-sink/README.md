@@ -65,8 +65,8 @@ make start-docker VERSION=0.9.0-rc11 DOCKER_TAG=0.9-git
 # With custom platform (defaults to linux/amd64)
 make start-docker DOCKER_PLATFORM=linux/arm64
 
-# With custom HARP options (defaults to -f /etc/harp/proxy.docker.yml -f /etc/harp/rules.yml)
-make start-docker HARP_OPTIONS="server -f /etc/harp/custom.yml"
+# With custom command (defaults to: server -f /etc/harp/proxy.docker.yml -f /etc/harp/rules.yml)
+make start-docker DOCKER_COMMAND="server -f /etc/harp/custom.yml"
 
 # With scaling
 make start-docker VERSION=0.9.0-rc11 HTTPBIN_1_REPLICAS=3
@@ -79,7 +79,7 @@ make start-docker VERSION=0.9.0-rc11 HTTPBIN_1_REPLICAS=3
 - ✅ VERSION defaults to `git describe` output
 - ✅ DOCKER_TAG defaults to VERSION if not specified
 - ✅ DOCKER_PLATFORM defaults to `linux/amd64` for better compatibility
-- ✅ HARP_OPTIONS allows customizing command-line arguments
+- ✅ DOCKER_COMMAND allows customizing the harp-proxy command
 - ✅ Exposes port range 4000-4999 for flexibility
 
 ## Other Commands
