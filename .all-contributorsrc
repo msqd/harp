@@ -65,6 +65,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "manu-paylead",
+      "name": "Manu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/106162036?v=4",
+      "profile": "https://github.com/manu-paylead",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,

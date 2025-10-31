@@ -19,7 +19,7 @@ class Message(Base):
     id: Mapped[int] = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
     kind: Mapped[str] = mapped_column(String(10))
     summary: Mapped[str] = mapped_column(Text)
-    headers: Mapped[str] = mapped_column(String(40))
+    headers: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
     body: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True))
 

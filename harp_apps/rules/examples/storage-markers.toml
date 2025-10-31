@@ -1,0 +1,95 @@
+# Storage Markers Example
+# ========================
+#
+# This example demonstrates all available storage markers that control
+# what data gets persisted by the storage application.
+#
+# Storage Marker Hierarchy:
+# - Transaction level: skip-storage (skips everything)
+# - Message level: skip-request-storage, skip-response-storage (skips entire message)
+# - Component level: skip-*-body-storage, skip-*-headers-storage (skips specific parts)
+#
+# Run with: harp start --rules harp_apps/rules/examples/storage-markers.toml
+
+# Skip request body storage for large file uploads
+[rules."api"."POST /upload"]
+on_request = """
+# Don't store large file uploads, but keep headers for debugging
+transaction.markers.add("skip-request-body-storage")
+"""
+
+# Skip response body storage for large downloads
+[rules."api"."GET /download/*"]
+on_response = """
+# Don't store large download responses, but keep headers for metrics
+transaction.markers.add("skip-response-body-storage")
+"""
+
+# Skip request headers storage when they contain sensitive auth tokens
+[rules."api"."POST /api/sensitive"]
+on_request = """
+# Don't store request headers that may contain API keys or tokens
+transaction.markers.add("skip-request-headers-storage")
+"""
+
+# Skip response headers storage when they contain sensitive session data
+[rules."api"."GET /api/session"]
+on_response = """
+# Don't store response headers that may contain session tokens
+transaction.markers.add("skip-response-headers-storage")
+"""
+
+# Skip entire request message for internal endpoints
+[rules."api"."POST /internal/*"]
+on_request = """
+# Don't store anything about internal API requests
+transaction.markers.add("skip-request-storage")
+"""
+
+# Skip entire response message for health checks
+[rules."api"."GET /health"]
+on_response = """
+# Don't store health check responses to reduce noise
+transaction.markers.add("skip-response-storage")
+"""
+
+# Combine markers for fine-grained control
+[rules."api"."POST /api/upload-secure"]
+on_request = """
+# Skip both body and headers for maximum privacy
+transaction.markers.add("skip-request-body-storage")
+transaction.markers.add("skip-request-headers-storage")
+"""
+on_response = """
+# Only store response status, skip body
+transaction.markers.add("skip-response-body-storage")
+"""
+
+# Skip both request and response messages entirely
+[rules."api"."GET /metrics"]
+on_request = """
+# Don't store metrics endpoint requests
+transaction.markers.add("skip-request-storage")
+"""
+on_response = """
+# Don't store metrics endpoint responses
+transaction.markers.add("skip-response-storage")
+"""
+
+# Conditional marker based on request content
+[rules."api"."POST /data"]
+on_request = """
+# Skip body storage for large requests
+content_length = request.headers.get("Content-Length", "0")
+if int(content_length) > 1_000_000:  # > 1MB
+    transaction.markers.add("skip-request-body-storage")
+"""
+
+# Conditional marker based on response content
+[rules."api"."GET /files/*"]
+on_response = """
+# Skip body storage for binary responses
+content_type = response.headers.get("Content-Type", "")
+if content_type.startswith(("image/", "video/", "application/octet-stream")):
+    transaction.markers.add("skip-response-body-storage")
+"""
