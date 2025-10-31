@@ -62,6 +62,9 @@ make start-docker VERSION=0.9.0-rc11
 # With custom docker tag (defaults to VERSION if not specified)
 make start-docker VERSION=0.9.0-rc11 DOCKER_TAG=0.9-git
 
+# With custom platform (defaults to linux/amd64)
+make start-docker DOCKER_PLATFORM=linux/arm64
+
 # With scaling
 make start-docker VERSION=0.9.0-rc11 HTTPBIN_1_REPLICAS=3
 ```
@@ -72,6 +75,7 @@ make start-docker VERSION=0.9.0-rc11 HTTPBIN_1_REPLICAS=3
 - ✅ Good for production-like testing
 - ✅ VERSION defaults to `git describe` output
 - ✅ DOCKER_TAG defaults to VERSION if not specified
+- ✅ DOCKER_PLATFORM defaults to `linux/amd64` for better compatibility
 
 ## Other Commands
 

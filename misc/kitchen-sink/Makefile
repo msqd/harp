@@ -9,6 +9,7 @@ VERSION ?= $(shell git describe 2>/dev/null || git rev-parse --short HEAD)
 # Run mode: local (default), uvx, or docker
 MODE ?= local
 DOCKER_TAG ?= $(VERSION)
+DOCKER_PLATFORM ?= linux/amd64
 UVX_OPTIONS ?= --refresh-package harp-proxy
 
 start:  ## Start services with harp-proxy in local mode (default, with auto-reload)
@@ -52,8 +53,8 @@ _start:
 		trap 'docker compose stop' EXIT; \
 		uvx $(UVX_OPTIONS) harp-proxy@$(VERSION) server $$CONFIG_FILES; \
 	elif [ "$(MODE)" = "docker" ]; then \
-		echo "🚀 Starting harp-proxy in DOCKER mode (tag: $(DOCKER_TAG))..."; \
-		HARP_DOCKER_TAG=$(DOCKER_TAG) docker compose -f compose.yml -f compose.harp-docker.yml up; \
+		echo "🚀 Starting harp-proxy in DOCKER mode (tag: $(DOCKER_TAG), platform: $(DOCKER_PLATFORM))..."; \
+		HARP_DOCKER_TAG=$(DOCKER_TAG) HARP_DOCKER_PLATFORM=$(DOCKER_PLATFORM) docker compose -f compose.yml -f compose.harp-docker.yml up; \
 	else \
 		echo "❌ ERROR: Invalid MODE=$(MODE). Must be: local, uvx, or docker"; \
 		exit 1; \

@@ -3,6 +3,7 @@
 services:
   harp-proxy:
     image: makersquad/harp-proxy:${HARP_DOCKER_TAG:-latest}
+    platform: ${HARP_DOCKER_PLATFORM:-linux/amd64}
     ports:
       - "4000:4000"
     volumes:
