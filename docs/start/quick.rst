@@ -22,6 +22,15 @@ The **fastest** way to run HARP is using UV:
 
     uvx harp-proxy server --example sqlite --example proxy:httpbin
 
+.. note::
+   HARP 0.9+ requires Python 3.13. If your system's default Python version is older, use:
+
+   .. code-block:: shell
+
+       uvx -p 3.13 harp-proxy server --example sqlite --example proxy:httpbin
+
+   UV will automatically download and manage the correct Python version for you.
+
 Alternatively, use our Docker image:
 
 .. code-block:: shell

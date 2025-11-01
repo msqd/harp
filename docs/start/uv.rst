@@ -22,13 +22,26 @@ The fastest way to try HARP:
 
 .. code-block:: shell
 
-    # Run HARP directly
+    # Run HARP directly (UV will automatically install Python 3.13 if needed)
     uvx harp-proxy --help
 
     # Start a server with example configuration
     uvx harp-proxy server --example sqlite --example proxy:httpbin
 
 This will start the proxy with SQLite storage and a httpbin endpoint. The dashboard will be available at http://localhost:4080.
+
+.. note::
+   **Python 3.13 Required**
+
+   HARP 0.9+ requires Python 3.13. If your system's default Python version is older, you can explicitly specify the Python version:
+
+   .. code-block:: shell
+
+       # Explicitly use Python 3.13 (UV will manage the installation)
+       uvx -p 3.13 harp-proxy --help
+       uvx -p 3.13 harp-proxy server --example sqlite --example proxy:httpbin
+
+   UV will automatically download and manage the correct Python version for you.
 
 Test Your Proxy
 :::::::::::::::
