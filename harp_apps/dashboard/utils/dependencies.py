@@ -1,6 +1,4 @@
-import sys
-
-from harp.utils.processes import check_output
+from importlib import metadata
 
 
 def parse_dependencies(dependencies: list[str]) -> dict[str, str]:
@@ -32,10 +30,11 @@ def parse_dependencies(dependencies: list[str]) -> dict[str, str]:
     return parsed
 
 
-async def get_python_dependencies():
-    return list(
-        filter(
-            lambda x: x and not x.startswith("#"),
-            (await check_output(sys.executable, "-m", "pip", "freeze")).decode("utf-8").split("\n"),
-        ),
-    )
+async def get_python_dependencies() -> list[str]:
+    """Get installed Python packages using importlib.metadata.
+
+    Returns a list of strings in the format "package==version", compatible with
+    pip freeze output format. This works in all Python environments including
+    pip-less environments like uv.
+    """
+    return [f"{dist.name}=={dist.version}" for dist in metadata.distributions()]

@@ -1,8 +1,33 @@
 proxy:
   endpoints:
-    - port: 4000
-      name: httpbin-1
-      url: http://localhost:8991
-    - port: 4001
-      name: httpbin-2
-      url: http://localhost:8992
+    # proxy1: Primary pool (api1, api2) with fallback to api3, api4
+    - name: proxy1
+      port: 4000
+      remote:
+        min_pool_size: 2
+        endpoints:
+          - { url: "http://localhost:8001/" }
+          - { url: "http://localhost:8002/" }
+          - { url: "http://localhost:8003/", pools: [ fallback ] }
+          - { url: "http://localhost:8004/", pools: [ fallback ] }
+        probe:
+          method: GET
+          path: "/get"
+          interval: 5
+        break_on: [ network_error, http_5xx, unhandled_exception ]
+
+    # proxy2: Primary pool (api3, api4) with fallback to api1, api2
+    - name: proxy2
+      port: 4001
+      remote:
+        min_pool_size: 2
+        endpoints:
+          - { url: "http://localhost:8003/" }
+          - { url: "http://localhost:8004/" }
+          - { url: "http://localhost:8001/", pools: [ fallback ] }
+          - { url: "http://localhost:8002/", pools: [ fallback ] }
+        probe:
+          method: GET
+          path: "/get"
+          interval: 5
+        break_on: [ network_error, http_5xx, unhandled_exception ]

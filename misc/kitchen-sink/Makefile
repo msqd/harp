@@ -1,34 +1,42 @@
 .PHONY: start start-uvx start-docker stop scale _start
 
-HTTPBIN_1_REPLICAS ?= 2
-HTTPBIN_2_REPLICAS ?= 2
-
-# Version defaults to git describe (same as main Makefile)
-VERSION ?= $(shell git describe 2>/dev/null || git rev-parse --short HEAD)
+API1_REPLICAS ?= 2
+API2_REPLICAS ?= 2
+API3_REPLICAS ?= 2
+API4_REPLICAS ?= 2
 
 # Run mode: local (default), uvx, or docker
 MODE ?= local
-DOCKER_TAG ?= $(VERSION)
+
+# Version handling:
+# - For local mode: use git describe (current development version)
+# - For uvx/docker modes: use version from pyproject.toml (last published version)
+GIT_VERSION := $(shell git describe 2>/dev/null || git rev-parse --short HEAD)
+PYPROJECT_VERSION := $(shell grep '^version = ' ../../pyproject.toml | cut -d'"' -f2)
+
 DOCKER_PLATFORM ?= linux/amd64
 DOCKER_COMMAND ?= server -f /etc/harp/proxy.docker.yml -f /etc/harp/rules.yml
 UVX_OPTIONS ?= --refresh-package harp-proxy
 
 start:  ## Start services with harp-proxy in local mode (default, with auto-reload)
-	@$(MAKE) _start MODE=local
+	@$(MAKE) _start MODE=local VERSION=$(GIT_VERSION)
 
-start-uvx:  ## Start services with harp-proxy via uvx (defaults to VERSION=$(VERSION) or specify: make start-uvx VERSION=0.9.0-rc11)
+start-uvx:  ## Start services with harp-proxy via uvx (defaults to VERSION from pyproject.toml)
+	@$(eval VERSION ?= $(PYPROJECT_VERSION))
 	@echo "Using VERSION=$(VERSION) for uvx mode"
 	@$(MAKE) _start MODE=uvx VERSION=$(VERSION)
 
-start-docker:  ## Start services with harp-proxy as docker container (defaults to VERSION=$(VERSION) [DOCKER_TAG=$(DOCKER_TAG)])
+start-docker:  ## Start services with harp-proxy as docker container (defaults to VERSION from pyproject.toml)
+	@$(eval VERSION ?= $(PYPROJECT_VERSION))
+	@$(eval DOCKER_TAG ?= $(VERSION))
 	@echo "Using VERSION=$(VERSION) and DOCKER_TAG=$(DOCKER_TAG) for docker mode"
 	@$(MAKE) _start MODE=docker VERSION=$(VERSION) DOCKER_TAG=$(DOCKER_TAG)
 
 _start:
 	@echo "Stopping any existing Docker Compose services..."
 	@docker compose down --remove-orphans 2>/dev/null || true
-	@echo "Starting Docker Compose services with httpbin-1=$(HTTPBIN_1_REPLICAS) httpbin-2=$(HTTPBIN_2_REPLICAS) replicas..."
-	@docker compose up -d --scale httpbin-1=$(HTTPBIN_1_REPLICAS) --scale httpbin-2=$(HTTPBIN_2_REPLICAS)
+	@echo "Starting Docker Compose services with api1=$(API1_REPLICAS) api2=$(API2_REPLICAS) api3=$(API3_REPLICAS) api4=$(API4_REPLICAS) replicas..."
+	@docker compose up -d --scale api1=$(API1_REPLICAS) --scale api2=$(API2_REPLICAS) --scale api3=$(API3_REPLICAS) --scale api4=$(API4_REPLICAS)
 	@CONFIG_FILES=$$(ls etc/*.yml | grep -v '\.docker\.yml$$' | sed 's/^/-f /' | tr '\n' ' '); \
 	if [ "$(MODE)" = "local" ]; then \
 		echo "🚀 Starting harp-proxy in LOCAL mode (uv run) with auto-reload..."; \
@@ -62,8 +70,8 @@ _start:
 		exit 1; \
 	fi
 
-scale:  ## Scale httpbin services (usage: make scale HTTPBIN_1_REPLICAS=3 HTTPBIN_2_REPLICAS=4)
-	@docker compose up -d --scale httpbin-1=$(HTTPBIN_1_REPLICAS) --scale httpbin-2=$(HTTPBIN_2_REPLICAS) --no-recreate
+scale:  ## Scale API services (usage: make scale API1_REPLICAS=3 API2_REPLICAS=4)
+	@docker compose up -d --scale api1=$(API1_REPLICAS) --scale api2=$(API2_REPLICAS) --scale api3=$(API3_REPLICAS) --scale api4=$(API4_REPLICAS) --no-recreate
 
 stop:  ## Stop docker compose services
 	@docker compose down

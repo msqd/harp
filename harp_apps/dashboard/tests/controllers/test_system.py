@@ -1,5 +1,5 @@
 from re import escape
-from unittest.mock import ANY
+from unittest.mock import ANY, patch
 
 import orjson
 
@@ -73,6 +73,36 @@ class TestSystemController(
                 "redis": None,
             },
         }
+
+    @parametrize_with_settings({})
+    @parametrize_with_database_urls("sqlite")
+    @parametrize_with_blob_storages_urls("sql")
+    async def test_get_dependencies_success(self, controller: SystemController):
+        """Test that get_dependencies returns a dict of installed packages."""
+        response = await controller.get_dependencies()
+
+        assert "python" in response
+        assert isinstance(response["python"], dict)
+        assert len(response["python"]) > 0
+        # Verify some package exists with a version
+        assert any(version != "unknown" for version in response["python"].values())
+
+    @parametrize_with_settings({})
+    @parametrize_with_database_urls("sqlite")
+    @parametrize_with_blob_storages_urls("sql")
+    async def test_get_dependencies_handles_errors_gracefully(self, controller: SystemController):
+        """Test that get_dependencies returns empty dict when dependency detection fails."""
+        # Reset cache to ensure test isolation
+        controller._dependencies = None
+
+        with patch("harp_apps.dashboard.controllers.system.get_python_dependencies") as mock_get_deps:
+            # Simulate a complete failure in dependency detection
+            mock_get_deps.side_effect = Exception("Simulated dependency detection failure")
+
+            response = await controller.get_dependencies()
+
+            # Should return empty dict instead of crashing
+            assert response == {"python": {}}
 
 
 class TestSystemControllerThroughASGI(

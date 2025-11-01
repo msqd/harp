@@ -1,6 +1,7 @@
-from unittest.mock import patch
-
-from ..utils.dependencies import get_python_dependencies, parse_dependencies
+from ..utils.dependencies import (
+    get_python_dependencies,
+    parse_dependencies,
+)
 
 
 def test_parse_dependencies():
@@ -129,83 +130,46 @@ def test_parse_dependencies():
     }
 
 
-async def test_buggish_after_release_0_6():
-    with patch("harp_apps.dashboard.utils.dependencies.check_output") as check_output:
-        check_output.return_value = b"aiofiles==24.1.0\naiohttp==3.9.5\naiosignal==1.3.1\naiosqlite==0.20.0\nalembic==1.13.2\nanyio==4.4.0\nasgi-prometheus==1.1.2\nasgi-tools==0.76.0\nASGIMiddlewareStaticFile==0.6.1\nasgiref==3.8.1\nasyncpg==0.29.0\nattrs==23.2.0\ncertifi==2024.7.4\nclick==8.1.7\ncolorama==0.4.6\ndataclasses-json==0.6.7\ndataclasses-jsonschema==2.16.0\ndeepmerge==1.1.1\nessentials-configuration==2.0.4\nfrozenlist==1.4.1\ngreenlet==3.0.3\nh11==0.14.0\nh2==4.1.0\nharp-proxy @ file:///harp_proxy-0.6.0a4-py3-none-any.whl#sha256=f28d1d01c38d7647eccf1a58d550f58c5db97509f95369993a684603ebb30e9e\nhishel==0.0.30\nhpack==4.0.0\nhttp-router==4.1.2\nhttpcore==1.0.5\nhttpx==0.27.0\nHypercorn==0.17.3\nhyperframe==6.0.1\nidna==3.7\njsonschema==4.23.0\njsonschema-specifications==2023.12.1\nMako==1.3.5\nmarkdown-it-py==3.0.0\nMarkupSafe==2.1.5\nmarshmallow==3.21.3\nmdurl==0.1.2\nmultidict==6.0.5\nmypy-extensions==1.0.0\norjson==3.10.6\npackaging==24.1\npasslib==1.7.4\npriority==2.0.0\nprometheus_client==0.20.0\npsycopg2-binary==2.9.9\nPygments==2.18.0\npyheck==0.1.5\npython-baseconv==1.2.2\npython-dateutil==2.9.0.post0\npython-dotenv==1.0.1\nPyYAML==6.0.1\nredis==5.0.7\nreferencing==0.35.1\nrich==13.7.1\nrich-click==1.8.3\nrodi==2.0.6\nrpds-py==0.19.0\nsentry-sdk==2.10.0\nsetuptools==70.0.0\nsix==1.16.0\nsniffio==1.3.1\nSQLAlchemy==2.0.31\nSQLAlchemy-Utils==0.41.2\nstructlog==24.4.0\nsvix-ksuid==0.6.2\ntyping-inspect==0.9.0\ntyping_extensions==4.12.2\nurllib3==2.2.2\nwheel==0.43.0\nwhistle==2.0.0b1\nwsproto==1.2.0\nyarl==1.9.4\n"
-        deps = await get_python_dependencies()
-        assert parse_dependencies(deps) == {
-            "ASGIMiddlewareStaticFile": "0.6.1",
-            "Hypercorn": "0.17.3",
-            "Mako": "1.3.5",
-            "MarkupSafe": "2.1.5",
-            "PyYAML": "6.0.1",
-            "Pygments": "2.18.0",
-            "SQLAlchemy": "2.0.31",
-            "SQLAlchemy-Utils": "0.41.2",
-            "aiofiles": "24.1.0",
-            "aiohttp": "3.9.5",
-            "aiosignal": "1.3.1",
-            "aiosqlite": "0.20.0",
-            "alembic": "1.13.2",
-            "anyio": "4.4.0",
-            "asgi-prometheus": "1.1.2",
-            "asgi-tools": "0.76.0",
-            "asgiref": "3.8.1",
-            "asyncpg": "0.29.0",
-            "attrs": "23.2.0",
-            "certifi": "2024.7.4",
-            "click": "8.1.7",
-            "colorama": "0.4.6",
-            "dataclasses-json": "0.6.7",
-            "dataclasses-jsonschema": "2.16.0",
-            "deepmerge": "1.1.1",
-            "essentials-configuration": "2.0.4",
-            "frozenlist": "1.4.1",
-            "greenlet": "3.0.3",
-            "h11": "0.14.0",
-            "h2": "4.1.0",
-            "harp-proxy @ file:///harp_proxy-0.6.0a4-py3-none-any.whl#sha256=f28d1d01c38d7647eccf1a58d550f58c5db97509f95369993a684603ebb30e9e": "unknown",
-            "hishel": "0.0.30",
-            "hpack": "4.0.0",
-            "http-router": "4.1.2",
-            "httpcore": "1.0.5",
-            "httpx": "0.27.0",
-            "hyperframe": "6.0.1",
-            "idna": "3.7",
-            "jsonschema": "4.23.0",
-            "jsonschema-specifications": "2023.12.1",
-            "markdown-it-py": "3.0.0",
-            "marshmallow": "3.21.3",
-            "mdurl": "0.1.2",
-            "multidict": "6.0.5",
-            "mypy-extensions": "1.0.0",
-            "orjson": "3.10.6",
-            "packaging": "24.1",
-            "passlib": "1.7.4",
-            "priority": "2.0.0",
-            "prometheus_client": "0.20.0",
-            "psycopg2-binary": "2.9.9",
-            "pyheck": "0.1.5",
-            "python-baseconv": "1.2.2",
-            "python-dateutil": "2.9.0.post0",
-            "python-dotenv": "1.0.1",
-            "redis": "5.0.7",
-            "referencing": "0.35.1",
-            "rich": "13.7.1",
-            "rich-click": "1.8.3",
-            "rodi": "2.0.6",
-            "rpds-py": "0.19.0",
-            "sentry-sdk": "2.10.0",
-            "setuptools": "70.0.0",
-            "six": "1.16.0",
-            "sniffio": "1.3.1",
-            "structlog": "24.4.0",
-            "svix-ksuid": "0.6.2",
-            "typing-inspect": "0.9.0",
-            "typing_extensions": "4.12.2",
-            "urllib3": "2.2.2",
-            "wheel": "0.43.0",
-            "whistle": "2.0.0b1",
-            "wsproto": "1.2.0",
-            "yarl": "1.9.4",
-        }
+def test_parse_dependencies_handles_unusual_formats():
+    """Test that parse_dependencies handles unusual package formats like direct file references.
+
+    This was a bug found after release 0.6 where pip freeze output included packages
+    installed from direct file references (e.g., 'package @ file:///path').
+    While importlib.metadata doesn't generate this format, parse_dependencies should
+    remain robust to handle it for backward compatibility.
+    """
+    deps_with_unusual_formats = [
+        "aiofiles==24.1.0",
+        "aiohttp==3.9.5",
+        "harp-proxy @ file:///harp_proxy-0.6.0a4-py3-none-any.whl#sha256=f28d1d01c38d7647eccf1a58d550f58c5db97509f95369993a684603ebb30e9e",
+        "Hypercorn==0.17.3",
+        "redis==5.0.7",
+        "whistle==2.0.0b1",
+    ]
+
+    result = parse_dependencies(deps_with_unusual_formats)
+
+    # The unusual format should be parsed with "unknown" version
+    assert (
+        result[
+            "harp-proxy @ file:///harp_proxy-0.6.0a4-py3-none-any.whl#sha256=f28d1d01c38d7647eccf1a58d550f58c5db97509f95369993a684603ebb30e9e"
+        ]
+        == "unknown"
+    )
+
+    # Normal packages should parse correctly
+    assert result["aiofiles"] == "24.1.0"
+    assert result["aiohttp"] == "3.9.5"
+    assert result["Hypercorn"] == "0.17.3"
+    assert result["redis"] == "5.0.7"
+    assert result["whistle"] == "2.0.0b1"
+
+
+async def test_get_python_dependencies():
+    """Test that get_python_dependencies returns installed packages using importlib.metadata."""
+    deps = await get_python_dependencies()
+    # Should return list of strings in format "package==version"
+    assert isinstance(deps, list)
+    assert len(deps) > 0
+    # Check format of at least one package
+    assert any("==" in dep for dep in deps)

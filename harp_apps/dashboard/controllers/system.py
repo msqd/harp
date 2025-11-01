@@ -127,5 +127,9 @@ class SystemController(RoutingController):
 
     async def __get_cached_python_dependencies(self):
         if self._dependencies is None:
-            self._dependencies = parse_dependencies(await get_python_dependencies())
+            try:
+                self._dependencies = parse_dependencies(await get_python_dependencies())
+            except Exception as exc:
+                logger.warning("Failed to get python dependencies", exc_info=exc)
+                self._dependencies = {}
         return self._dependencies
