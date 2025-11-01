@@ -1,12 +1,25 @@
 Getting Started
 ===============
 
-This guide contains eveything you need to download install and run HARP Proxy.
+This guide contains everything you need to download, install, and run HARP Proxy.
 
 .. toctree::
     :maxdepth: 2
 
     quick
+
+
+System Requirements
+:::::::::::::::::::
+
+HARP Proxy has minimal system requirements:
+
+- **Python**: 3.13+ (automatically managed by UV)
+- **Ports**: Default ports are 4000-4100 (proxy endpoints) and 4080 (dashboard)
+- **Memory**: Minimal (~50MB base, scales with traffic and cache size)
+- **Storage**: Depends on database backend (SQLite in-memory by default)
+
+For production deployments, consider using PostgreSQL or MySQL for persistent storage.
 
 
 Installation

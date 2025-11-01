@@ -28,9 +28,9 @@ For a test run, you can:
     docker run -it --rm -p 4000-4100:4000-4100 makersquad/harp-proxy
 
 This will start the proxy using the default settings (in memory sqlite storage) and by default, the dashboard will be
-available `locally on the 4080 port <http://localhost:4080>`_.
+available at http://localhost:4080.
 
-This first run is not very interesting, because there are no proxy ports configured. Nothing can get through, yet.
+Without configured endpoints, no traffic can be proxied yet.
 
 Stop this container and run another with a remote endpoint setup:
 
@@ -40,16 +40,7 @@ Stop this container and run another with a remote endpoint setup:
 
 This will start a container with an additional port that will proxy requests to `httpbin.org <http://httpbin.org>`_.
 
-In another terminal, send a few requests through the configured proxy port (you can use your favorite http client for
-this instead of curl):
-
-.. code-block:: shell
-
-    curl -X GET "http://localhost:4000/get" -H "accept: application/json"
-    curl -X POST "http://localhost:4000/post" -H "accept: application/json"
-    curl -X PUT "http://localhost:4000/put" -H "accept: application/json"
-
-Open the `dashboard <http://localhost:4080>`_ again, you'll be able to see the transactions that went through.
+.. include:: _test_your_proxy.rst
 
 
 Adding a configuration file
@@ -57,7 +48,7 @@ Adding a configuration file
 
 If you want to add a simple configuration file, you can mount it in the default system location using docker.
 
-First, create a configuration file:
+First, create a configuration file (see :doc:`/operate/configure/index` for all configuration options):
 
 .. code-block:: shell
 
@@ -79,7 +70,7 @@ Then run the container again, binding it to ``/etc/harp.yaml``:
 Use docker compose
 ::::::::::::::::::
 
-To add a harp proxy to your `docker-compose.yml` file, first create a configuration file:
+To add a harp proxy to your `docker-compose.yml` file, first create a configuration file (see :doc:`/operate/configure/index` for all options):
 
 .. code-block:: shell
 
@@ -94,8 +85,6 @@ To add a harp proxy to your `docker-compose.yml` file, first create a configurat
 Then add the following to your `docker-compose.yml` file:
 
 .. code-block:: yaml
-
-    version: '3'
 
     services:
       harp:
@@ -117,5 +106,6 @@ Once you're ready, just start your service set:
     docker-compose up
 
 You'll be able to find the same setup as we previously described using docker by itself, but with the added benefit of
-having a configuration file (instead of passing all settings on command line (this is also possible using docker by
-itself, but is out of this document scope for now).
+having a configuration file instead of passing all settings on the command line.
+
+.. include:: _next_steps.rst

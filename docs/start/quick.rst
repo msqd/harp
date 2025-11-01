@@ -4,13 +4,7 @@ Quick start
 The main goal of HARP is to be a nearline proxy to remote HTTP APIs, to enhance observability and reliability while
 lowering development, operations and maintenance costs.
 
-.. todo::
-
-    You can read more about the core HTTP proxy features in the ... section of the documentation.
-
-By default, HARP proxies respects HTTP headers (cache ...) and will speed up your API calls without further
-configuration. Of course, a lot of APIs are non-standard or behave strangely, and one goal of HARP is to give you a
-toolkit for fixing those.
+By default, HARP respects HTTP caching headers and will speed up your API calls without further configuration. Of course, a lot of APIs are non-standard or behave strangely, and HARP provides a toolkit for handling those edge cases. Read more about :doc:`/features/index` and :doc:`/features/http-proxy`.
 
 
 Installation
@@ -47,7 +41,7 @@ For more installation options:
 - :doc:`installing from a python package <python>`
 - :doc:`installing from sources <sources>`
 
-.. todo:: add link to configuration section
+See :doc:`/operate/configure/index` for configuration options.
 
 
 First glance
@@ -72,16 +66,6 @@ Now make a few requests through the proxy:
 
 If you go back to the dashboard, you'll now see the transactions.
 
-Congratulations, you just ran your first harp proxy.
+Congratulations, you just ran your first harp proxy!
 
-
-Next steps
-::::::::::
-
-.. todo::
-
-    And now what?
-
-    * configure your endpoints
-    * configure your dashboard: auth, ...
-    * write an extension application
+.. include:: _next_steps.rst

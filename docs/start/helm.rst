@@ -3,9 +3,8 @@ Helm & Kubernetes
 
 .. note::
 
-    We use the chart internally to deploy the proxy in our clusters, so it's safe to say that a given version works.
-    However, as we go towards general availability, we will most probably make breaking changes to the configuration
-    format and to the chart content. Please review the chart content before upgrading.
+    We use this chart internally in production. However, as we approach general availability, the configuration
+    format and chart structure may change. Please review release notes and chart content before upgrading.
 
 Install or upgrade
 ::::::::::::::::::
@@ -25,7 +24,7 @@ The «my-proxy» string is the name of the release. You can choose any name you 
 Services
 ::::::::
 
-Services are defined for each of the enpoints configured in your values. If you define a ``foobar`` endpoint, you will
+Services are defined for each of the endpoints configured in your values. If you define a ``foobar`` endpoint, you will
 get an internal ``foobar-proxy`` service in your cluster, that your applications can use as the proxied endpoint.
 
 
