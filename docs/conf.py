@@ -106,7 +106,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "structlog": ("https://www.structlog.org/en/stable", None),
     "whistle": ("https://python-whistle.readthedocs.io/latest", None),
-    "redis": ("https://redis-py.readthedocs.io/en/stable", None),
+    "redis": ("https://redis.readthedocs.io/en/stable", None),
 }
 
 ALGOLIA_APIKEY = os.getenv("ALGOLIA_APIKEY")
