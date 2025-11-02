@@ -44,7 +44,8 @@
 /frontend/stats.html
 /harp.db
 /harp_apps/dashboard/frontend/stats.html
-/harp_apps/dashboard/web/
+/harp_apps/dashboard/web/*
+!/harp_apps/dashboard/web/.gitkeep
 /misc/kitchen-sink/harp.db
 /misc/secrets
 /requirements*.txt
