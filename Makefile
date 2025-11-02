@@ -44,7 +44,7 @@ DOCKER_BUILD_OPTIONS ?= --platform=$(DOCKER_PLATFORM)
 DOCKER_NETWORK ?= harp
 DOCKER_RUN_COMMAND ?=
 DOCKER_RUN_OPTIONS ?=
-PYTHON_VERSION ?= 3.14
+PYTHON_VERSION ?= 3.13
 
 # frontend
 PNPM ?= $(shell which pnpm || echo "pnpm")
@@ -98,7 +98,7 @@ install-backend:  ## Installs harp dependencides (backend).
 	$(call execute,$(if $(UV),$(UV) sync $(if $(DEBUG),,--quiet) $(UV_SYNC_OPTIONS),pip install -e .))
 
 install-backend-dev:  ## Installs harp dependencies (backend) with development tools.
-	$(call execute,UV_SYNC_OPTIONS="--extra dev" $(MAKE) install-backend)
+	$(call execute,UV_SYNC_OPTIONS="--group dev" $(MAKE) install-backend)
 
 
 ########################################################################################################################
