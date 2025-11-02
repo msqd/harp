@@ -7,11 +7,5 @@ Added
 Changed
 -------
 
-- Replaced pip freeze with importlib.metadata for dependency detection, improving reliability and performance across all Python environments
-
 Fixed
 -----
-
-- Fixed dashboard dependency detection to work in pip-less environments (e.g., uv) by replacing pip freeze with importlib.metadata
-- Fixed check_output to properly raise CalledProcessError instead of returning None on subprocess failures
-- Fixed dashboard controller to handle dependency detection failures gracefully, returning empty dict instead of crashing
