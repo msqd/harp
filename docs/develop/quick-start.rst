@@ -24,6 +24,18 @@ things:
 
     harp create project
 
+This command will:
+
+- Prompt you for project details (name, author, etc.)
+- Ask whether to create an application folder (for custom code)
+- Ask whether to create a configuration file
+- Generate a project structure with:
+
+  - Modern ``pyproject.toml`` using PEP 621 standard
+  - UV-based dependency management (no Poetry)
+  - Ready-to-use ``Makefile`` with common targets
+  - Python 3.13 compatibility
+
 Answer a few questions, and you're ready to go!
 
 
@@ -34,7 +46,15 @@ Answer a few questions, and you're ready to go!
     cd <your-project>
     make
 
-This will install the dependencies (in a uv-managed virtual environment) and start your proxy.
+This will install the dependencies using ``uv sync`` (creating a virtual environment) and start your proxy.
+
+The generated project uses UV for package management, providing fast dependency resolution and installation. Common commands in your new project:
+
+.. code:: shell
+
+    make install  # Install dependencies with uv sync
+    make start    # Start the HARP server
+    make test     # Run tests with pytest
 
 Next Steps
 ::::::::::
