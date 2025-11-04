@@ -19,3 +19,6 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 only-include = ["README.rst"]
 {%- endif %}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -246,6 +246,18 @@ class TestPyprojectTomlDependencyFormat:
             "harp-proxy should be in dependencies array"
         )
 
+    def test_has_pytest_configuration(self, pyproject_content):
+        """Verify pyproject.toml has pytest configuration to prevent parent directory search."""
+        # Generated projects need pytest configured to not search parent directories
+        # This prevents pytest from finding the template's conftest.py
+        assert "[tool.pytest.ini_options]" in pyproject_content, (
+            "pyproject.toml should have [tool.pytest.ini_options] section"
+        )
+        # The testpaths should be set to restrict pytest to the tests directory
+        assert re.search(r'testpaths\s*=\s*\[.*"tests".*\]', pyproject_content), (
+            "pytest testpaths should include 'tests' directory to prevent searching parent directories"
+        )
+
 
 class TestMakefileVariableUsage:
     """Test that Makefile uses UV variable consistently."""

@@ -1193,3 +1193,135 @@ class TestEnhancedMakefile:
         assert "install" in output and "test" in output and "start" in output, (
             "Default 'make' command should show help with available targets"
         )
+
+
+class TestGitInitialization:
+    """Test that generated projects are initialized as git repositories with initial commit."""
+
+    def test_git_repository_is_initialized(self, tmp_path):
+        """Verify generated project has .git directory if git is available."""
+        from cookiecutter.main import cookiecutter
+
+        # Check if git is available
+        git_available = subprocess.run(["which", "git"], capture_output=True).returncode == 0
+
+        project_dir = cookiecutter(
+            str(TEMPLATE_DIR),
+            output_dir=str(tmp_path),
+            no_input=True,
+            extra_context={
+                "name": "Git Test Project",
+                "author_name": "Test Author",
+                "author_email": "test@example.com",
+            },
+        )
+
+        if git_available:
+            git_dir = Path(project_dir) / ".git"
+            assert git_dir.exists(), "Generated project should have .git directory when git is available"
+            assert git_dir.is_dir(), ".git should be a directory"
+
+    def test_initial_commit_exists_with_correct_message(self, tmp_path):
+        """Verify generated project has initial commit with 'chore: initial project generation' message."""
+        from cookiecutter.main import cookiecutter
+
+        # Check if git is available
+        git_available = subprocess.run(["which", "git"], capture_output=True).returncode == 0
+        if not git_available:
+            pytest.skip("Git not available")
+
+        project_dir = cookiecutter(
+            str(TEMPLATE_DIR),
+            output_dir=str(tmp_path),
+            no_input=True,
+            extra_context={"name": "Git Commit Test", "author_name": "Test Author", "author_email": "test@example.com"},
+        )
+
+        # Check that there is at least one commit
+        result = subprocess.run(["git", "log", "--oneline"], cwd=project_dir, capture_output=True, text=True)
+        assert result.returncode == 0, "git log should succeed"
+        assert len(result.stdout.strip()) > 0, "Should have at least one commit"
+
+        # Check commit message
+        result = subprocess.run(["git", "log", "-1", "--format=%s"], cwd=project_dir, capture_output=True, text=True)
+        commit_message = result.stdout.strip()
+        assert commit_message == "chore: initial project generation", (
+            f"Initial commit message should be 'chore: initial project generation', got '{commit_message}'"
+        )
+
+    def test_initial_commit_uses_author_info(self, tmp_path):
+        """Verify initial commit uses author name and email from cookiecutter variables."""
+        from cookiecutter.main import cookiecutter
+
+        # Check if git is available
+        git_available = subprocess.run(["which", "git"], capture_output=True).returncode == 0
+        if not git_available:
+            pytest.skip("Git not available")
+
+        author_name = "John Smith"
+        author_email = "john.smith@example.com"
+
+        project_dir = cookiecutter(
+            str(TEMPLATE_DIR),
+            output_dir=str(tmp_path),
+            no_input=True,
+            extra_context={"name": "Git Author Test", "author_name": author_name, "author_email": author_email},
+        )
+
+        # Check author name
+        result = subprocess.run(["git", "log", "-1", "--format=%an"], cwd=project_dir, capture_output=True, text=True)
+        assert result.stdout.strip() == author_name, f"Author name should be '{author_name}'"
+
+        # Check author email
+        result = subprocess.run(["git", "log", "-1", "--format=%ae"], cwd=project_dir, capture_output=True, text=True)
+        assert result.stdout.strip() == author_email, f"Author email should be '{author_email}'"
+
+    def test_all_generated_files_are_committed(self, tmp_path):
+        """Verify all generated files are included in the initial commit."""
+        from cookiecutter.main import cookiecutter
+
+        # Check if git is available
+        git_available = subprocess.run(["which", "git"], capture_output=True).returncode == 0
+        if not git_available:
+            pytest.skip("Git not available")
+
+        project_dir = cookiecutter(
+            str(TEMPLATE_DIR),
+            output_dir=str(tmp_path),
+            no_input=True,
+            extra_context={"name": "Git Status Test", "author_name": "Test Author", "author_email": "test@example.com"},
+        )
+
+        # Check that working tree is clean (no uncommitted changes)
+        result = subprocess.run(["git", "status", "--porcelain"], cwd=project_dir, capture_output=True, text=True)
+        assert result.stdout.strip() == "", "Working tree should be clean after project generation"
+
+
+class TestPostGenHookMessages:
+    """Test that post_gen_project.sh hook shows correct instructions."""
+
+    def test_hook_shows_make_start_not_make(self, tmp_path, capsys):
+        """Verify post generation hook message says 'make start' not just 'make'."""
+        from cookiecutter.main import cookiecutter
+
+        # Generate project and capture output
+        cookiecutter(
+            str(TEMPLATE_DIR),
+            output_dir=str(tmp_path),
+            no_input=True,
+            extra_context={"name": "Make Start Test"},
+        )
+
+        # The hook output is printed to stdout during generation
+        # We need to check the hook file content directly
+        hook_path = TEMPLATE_DIR / "hooks" / "post_gen_project.sh"
+        hook_content = hook_path.read_text()
+
+        assert "make start" in hook_content or "make start)" in hook_content, (
+            "Hook should mention 'make start' to start the project"
+        )
+        # The instruction should not say just 'make)' without 'start'
+        # Look for the pattern that would indicate wrong instruction
+        assert not re.search(r"cd.*&&\s*make\)", hook_content), (
+            "Hook should not say '&& make)' without specifying 'start' target"
+        )
