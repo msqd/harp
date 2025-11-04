@@ -3,14 +3,12 @@ import typing as tp
 from datetime import datetime, timezone
 
 from hishel import AsyncBaseStorage
-from hishel._async._storages import StoredResponse
-from hishel._serializers import Metadata
 from httpcore import Request, Response
 
 from harp_apps.proxy.controllers import logger
 from harp_apps.storage.types import IBlobStorage
 
-from .adapters import AsyncStorageAdapter
+from .adapters import AsyncStorageAdapter, Metadata, StoredResponse
 
 HEADERS_ENCODING = "iso-8859-1"
 

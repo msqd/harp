@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from hishel import AsyncCacheTransport
+from hishel._async_httpx import AsyncCacheTransport
 from rodi import CannotResolveTypeException
 from whistle import AsyncEventDispatcher, IAsyncEventDispatcher
 

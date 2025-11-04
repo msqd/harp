@@ -149,18 +149,6 @@ wheels = [
 ]
 
 [[package]]
-name = "anysqlite"
-version = "0.0.5"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "anyio" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/0f/4b/cd5d66b9f87e773bc71344a368b9472987e33514e6627e28342b9c3e7c43/anysqlite-0.0.5.tar.gz", hash = "sha256:9dfcf87baf6b93426ad1d9118088c41dbf24ef01b445eea4a5d486bac2755cce", size = 3432, upload-time = "2023-10-02T13:49:25.135Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/0b/31/349eae2bc9d9331dd8951684cf94528d91efaa71129dc30822ac111dfc66/anysqlite-0.0.5-py3-none-any.whl", hash = "sha256:cb345dc4f76f6b37f768d7a0b3e9cf5c700dfcb7a6356af8ab46a11f666edbe7", size = 3907, upload-time = "2023-10-02T13:49:26.943Z" },
-]
-
-[[package]]
 name = "arrow"
 version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -794,7 +782,7 @@ requires-dist = [
     { name = "dataclasses-json", specifier = ">=0.6,<0.7" },
     { name = "dataclasses-jsonschema", specifier = ">=2.16,<2.17" },
     { name = "essentials-configuration", specifier = ">=2.0,<2.1" },
-    { name = "hishel", specifier = "~=0.1.1" },
+    { name = "hishel", specifier = "~=1.0.0" },
     { name = "http-router", specifier = ">=5.0,<5.1" },
     { name = "httpx", specifier = ">=0.27,<0.29" },
     { name = "hypercorn", specifier = ">=0.17,<0.18" },
@@ -874,18 +862,15 @@ wheels = [
 
 [[package]]
 name = "hishel"
-version = "0.1.5"
+version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "anyio" },
-    { name = "anysqlite" },
-    { name = "httpx" },
     { name = "msgpack" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e5/64/a104ccac48f123f853254483617b16e0efc1649bd7e35bcdc5a5a5ef0ae2/hishel-0.1.5.tar.gz", hash = "sha256:9d40c682cd94fd6e1394fb05713ae20a75ed8aeba6f5272380444039ce6257f2", size = 75468, upload-time = "2025-10-18T13:32:41.854Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0b/10/5c5c8032fa1303067115590acb3279a574ddd701ebc7b469da573645bf4d/hishel-1.0.0.tar.gz", hash = "sha256:6097ab72d7acc23bd0c5a04a446fb87e3b1f176171c01d036d6054d7b4fee68c", size = 58708, upload-time = "2025-10-28T19:06:10.104Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/70/83/4f8b77839e62114bb034375ee8e08cfb6af1164754b925b271d3f1ec06ee/hishel-0.1.5-py3-none-any.whl", hash = "sha256:0bfbe9a2b9342090eba82ba6de88258092e1c4c7b730cd4cb4b570e4b40e44a7", size = 92486, upload-time = "2025-10-18T13:32:40.333Z" },
+    { url = "https://files.pythonhosted.org/packages/42/a1/058fccd6a2eb79f1ddbf206716003cffb90e351ad806fd861409049660f7/hishel-1.0.0-py3-none-any.whl", hash = "sha256:20916b78bddbf5031f627644d3bd661ef8bd8e86bec53faa6ef173304e66c418", size = 68471, upload-time = "2025-10-28T19:06:08.79Z" },
 ]
 
 [[package]]

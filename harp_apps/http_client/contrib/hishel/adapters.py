@@ -2,17 +2,25 @@ import typing as tp
 from datetime import datetime
 
 import yaml
-from hishel._async._storages import StoredResponse
-from hishel._serializers import KNOWN_REQUEST_EXTENSIONS, KNOWN_RESPONSE_EXTENSIONS, Metadata
-from hishel._utils import normalized_url
 from httpcore import Request, Response
 
 from harp.models import Blob
+from harp.utils.urls import _convert_url_to_string
 from harp_apps.http_client.contrib.hishel.utils import (
     prepare_headers_for_deserialization,
     prepare_headers_for_serialization,
 )
 from harp_apps.storage.types import IBlobStorage
+
+# httpcore extension keys to preserve during serialization
+# Migrated from hishel._serializers to avoid dependency on removed internal module
+KNOWN_REQUEST_EXTENSIONS = ("timeout", "sni_hostname")
+KNOWN_RESPONSE_EXTENSIONS = ("http_version", "reason_phrase")
+
+# Type aliases for old hishel 0.1.x API compatibility
+# These will be migrated to Entry/EntryMeta in phase 2
+Metadata = tp.TypedDict("Metadata", {"cache_key": str, "created_at": datetime, "number_of_uses": int})
+StoredResponse = tuple[Response, Request, Metadata]
 
 
 class SerializedRequest(tp.TypedDict):
@@ -130,7 +138,7 @@ class AsyncStorageAdapter:
         headers = await self.storage.put(Blob.from_data(headers, content_type="http/headers"))
         return {
             "method": request.method.decode("ascii"),
-            "url": normalized_url(request.url),
+            "url": _convert_url_to_string(request.url),
             "headers": headers.id,
             "varying": varying_headers,
             "extensions": {key: value for key, value in request.extensions.items() if key in KNOWN_REQUEST_EXTENSIONS},
