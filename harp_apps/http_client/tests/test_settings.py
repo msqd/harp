@@ -27,24 +27,8 @@ class TestHttpClientSettings(BaseHttpClientSettingsTest):
     expected_verbose = {
         "cache": {
             "controller": {
-                "allow_heuristics": False,
-                "allow_stale": False,
-                "cacheable_methods": ["GET", "HEAD"],
-                "cacheable_status_codes": [
-                    200,
-                    203,
-                    204,
-                    206,
-                    300,
-                    301,
-                    308,
-                    404,
-                    405,
-                    410,
-                    414,
-                    501,
-                ],
-                "type": "hishel.Controller",
+                # hishel 1.0 uses SpecificationPolicy instead of Controller
+                "type": "hishel.SpecificationPolicy",
             },
             "enabled": True,
             "storage": {
@@ -53,7 +37,8 @@ class TestHttpClientSettings(BaseHttpClientSettingsTest):
                 "ttl": None,
                 "type": "harp_apps.http_client.contrib.hishel.storages.AsyncStorage",
             },
-            "transport": {"type": "hishel.AsyncCacheTransport"},
+            # hishel 1.0: AsyncCacheTransport moved to _async_httpx
+            "transport": {"type": "hishel._async_httpx.AsyncCacheTransport"},
         },
         "proxy_transport": {"type": "harp_apps.http_client.transport.AsyncFilterableTransport"},
         "timeout": 30.0,

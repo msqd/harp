@@ -1,7 +1,9 @@
 import typing as tp
+import uuid
 from datetime import datetime
 
 import yaml
+from hishel import Entry, EntryMeta
 from httpcore import Request, Response
 
 from harp.models import Blob
@@ -16,11 +18,6 @@ from harp_apps.storage.types import IBlobStorage
 # Migrated from hishel._serializers to avoid dependency on removed internal module
 KNOWN_REQUEST_EXTENSIONS = ("timeout", "sni_hostname")
 KNOWN_RESPONSE_EXTENSIONS = ("http_version", "reason_phrase")
-
-# Type aliases for old hishel 0.1.x API compatibility
-# These will be migrated to Entry/EntryMeta in phase 2
-Metadata = tp.TypedDict("Metadata", {"cache_key": str, "created_at": datetime, "number_of_uses": int})
-StoredResponse = tuple[Response, Request, Metadata]
 
 
 class SerializedRequest(tp.TypedDict):
@@ -46,86 +43,123 @@ def _ensure_datestring(date: datetime | str):
 
 
 class AsyncStorageAdapter:
+    """Adapter that serializes/deserializes Entry objects to/from HARP blob storage.
+
+    This maintains backward compatibility with the YAML serialization format
+    while adapting to hishel 1.0's Entry-based model.
+    """
+
     def __init__(self, storage: IBlobStorage):
         self.storage = storage
 
-    async def store(self, key, /, *, response: Response, request: Request, metadata: Metadata) -> Blob:
-        serialized_request = await self._serialize_request(request)
-        serialized_response = await self._serialize_response(response)
+    async def store_entry(self, key: str, entry: Entry) -> Blob:
+        """Store an Entry object in blob storage.
 
-        return await self._store_cache_meta(
+        Args:
+            key: The cache key
+            entry: The Entry to store
+
+        Returns:
+            The stored Blob
+        """
+        serialized_request = await self._serialize_request(entry.request)
+        serialized_response = await self._serialize_response(entry.response)
+
+        return await self._store_entry_blob(
             key,
-            metadata=metadata,
+            entry_id=entry.id,
             request=serialized_request,
             response=serialized_response,
+            meta=entry.meta,
+            extra=entry.extra,
         )
 
-    async def retrieve(self, key: str) -> tp.Optional[StoredResponse]:
-        # todo remove expired cache ?
+    async def retrieve_entry(self, key: str) -> tp.Optional[Entry]:
+        """Retrieve an Entry object from blob storage.
 
+        Args:
+            key: The cache key
+
+        Returns:
+            The Entry if found, None otherwise
+        """
         cached = await self.storage.get(key)
         if not cached:
             return None
 
-        _metadata, _request, _response = await self._decode(cached)
+        entry_data = await self._decode(cached)
 
-        response = await self._unserialize_response(_response)
-        request = await self._unserialize_request(_request)
+        response = await self._unserialize_response(entry_data["response"])
+        request = await self._unserialize_request(entry_data["request"])
 
-        return (
-            response,
-            request,
-            Metadata(
-                cache_key=_metadata["cache_key"],
-                created_at=datetime.strptime(_metadata["created_at"], "%a, %d %b %Y %H:%M:%S GMT"),
-                number_of_uses=_metadata["number_of_uses"],
+        # Parse metadata
+        meta_data = entry_data["metadata"]
+        meta = EntryMeta(
+            created_at=meta_data.get(
+                "created_at_ts",
+                datetime.strptime(meta_data["created_at"], "%a, %d %b %Y %H:%M:%S GMT").timestamp()
+                if "created_at" in meta_data
+                else 0.0,
             ),
+            deleted_at=meta_data.get("deleted_at"),
         )
 
-    async def update_metadata_or_save(
-        self, key: str, /, *, response: Response, request: Request, metadata: Metadata
-    ) -> Blob:
-        cached = await self.storage.get(key)
-        if not cached:
-            return await self.store(key, response=response, request=request, metadata=metadata)
+        # Parse entry ID (use stored UUID or generate from key for backward compat)
+        entry_id_str = entry_data.get("id")
+        if entry_id_str:
+            entry_id = uuid.UUID(entry_id_str)
+        else:
+            # Backward compatibility: generate deterministic UUID from cache key
+            entry_id = uuid.uuid5(uuid.NAMESPACE_URL, key)
 
-        old_metadata, request_data, response_data = await self._decode(cached)
-        await self._store_cache_meta(key, request=request_data, response=response_data, metadata=metadata)
+        return Entry(
+            id=entry_id,
+            request=request,
+            response=response,
+            meta=meta,
+            cache_key=key.encode("utf-8"),
+            extra=entry_data.get("extra", {"number_of_uses": meta_data.get("number_of_uses", 0)}),
+        )
 
     async def _decode(self, cached):
-        cached = yaml.safe_load(cached.data.decode())
-        request_data, response_data, raw_metadata = (
-            cached["request"],
-            cached["response"],
-            cached["metadata"],
-        )
-        return raw_metadata, request_data, response_data
+        """Decode cached blob data into structured format."""
+        data = yaml.safe_load(cached.data.decode())
+        return data
 
-    async def _store_cache_meta(
+    async def _store_entry_blob(
         self,
-        key,
+        key: str,
         /,
         *,
-        metadata: Metadata,
+        entry_id: uuid.UUID,
         request: SerializedRequest,
         response: SerializedResponse,
+        meta: EntryMeta,
+        extra: tp.Mapping[str, tp.Any],
     ):
-        # This is a special case where we don't want this to be content adressable. This is probably not very good, but
-        # with hishel's current design, it's the only decent way to make it work that we found. Maybe we want to change
-        # the key-value store in the future to be able to contain content addressable and unadressable data, even maybe
-        # namespaced/typed data (although we hack "content-type to do it, for now).
+        """Store entry data as a blob.
+
+        This maintains the existing YAML format with added fields for hishel 1.0.
+        """
+        # Store both timestamp (new format) and formatted string (backward compat)
+        created_at_dt = datetime.fromtimestamp(meta.created_at)
+
         return await self.storage.force_put(
             Blob(
                 id=key,
                 data=yaml.safe_dump(
                     {
+                        "id": str(entry_id),  # Store UUID for hishel 1.0
                         "request": request,
                         "response": response,
                         "metadata": {
-                            "cache_key": metadata["cache_key"],
-                            "number_of_uses": metadata["number_of_uses"],
-                            "created_at": _ensure_datestring(metadata["created_at"]),
+                            "cache_key": key,
+                            "created_at": created_at_dt.strftime("%a, %d %b %Y %H:%M:%S GMT"),  # Backward compat
+                            "created_at_ts": meta.created_at,  # New format
+                            "deleted_at": meta.deleted_at,
+                            "number_of_uses": extra.get("number_of_uses", 0),  # Backward compat
                         },
+                        "extra": extra,  # Store full extra dict
                     },
                     sort_keys=False,
                 ).encode(),

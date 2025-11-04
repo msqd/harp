@@ -8,27 +8,7 @@
           'controller': dict({
             '$ref': '#/$defs/Service',
             'default': dict({
-              'allow_heuristics': False,
-              'allow_stale': False,
-              'cacheable_methods': list([
-                'GET',
-                'HEAD',
-              ]),
-              'cacheable_status_codes': list([
-                200,
-                203,
-                204,
-                206,
-                300,
-                301,
-                308,
-                404,
-                405,
-                410,
-                414,
-                501,
-              ]),
-              'type': 'hishel.Controller',
+              'type': 'hishel.SpecificationPolicy',
             }),
           }),
           'enabled': dict({
@@ -48,7 +28,7 @@
           'transport': dict({
             '$ref': '#/$defs/Service',
             'default': dict({
-              'type': 'hishel.AsyncCacheTransport',
+              'type': 'hishel._async_httpx.AsyncCacheTransport',
             }),
           }),
         }),
@@ -143,27 +123,7 @@
         '$ref': '#/$defs/CacheSettings',
         'default': dict({
           'controller': dict({
-            'allow_heuristics': False,
-            'allow_stale': False,
-            'cacheable_methods': list([
-              'GET',
-              'HEAD',
-            ]),
-            'cacheable_status_codes': list([
-              200,
-              203,
-              204,
-              206,
-              300,
-              301,
-              308,
-              404,
-              405,
-              410,
-              414,
-              501,
-            ]),
-            'type': 'hishel.Controller',
+            'type': 'hishel.SpecificationPolicy',
           }),
           'enabled': True,
           'storage': dict({
@@ -173,7 +133,7 @@
             'type': 'harp_apps.http_client.contrib.hishel.storages.AsyncStorage',
           }),
           'transport': dict({
-            'type': 'hishel.AsyncCacheTransport',
+            'type': 'hishel._async_httpx.AsyncCacheTransport',
           }),
         }),
       }),
@@ -224,27 +184,7 @@
           'controller': dict({
             '$ref': '#/$defs/Service',
             'default': dict({
-              'allow_heuristics': False,
-              'allow_stale': False,
-              'cacheable_methods': list([
-                'GET',
-                'HEAD',
-              ]),
-              'cacheable_status_codes': list([
-                200,
-                203,
-                204,
-                206,
-                300,
-                301,
-                308,
-                404,
-                405,
-                410,
-                414,
-                501,
-              ]),
-              'type': 'hishel.Controller',
+              'type': 'hishel.SpecificationPolicy',
             }),
           }),
           'enabled': dict({
@@ -264,7 +204,7 @@
           'transport': dict({
             '$ref': '#/$defs/Service',
             'default': dict({
-              'type': 'hishel.AsyncCacheTransport',
+              'type': 'hishel._async_httpx.AsyncCacheTransport',
             }),
           }),
         }),
@@ -359,27 +299,7 @@
         '$ref': '#/$defs/CacheSettings',
         'default': dict({
           'controller': dict({
-            'allow_heuristics': False,
-            'allow_stale': False,
-            'cacheable_methods': list([
-              'GET',
-              'HEAD',
-            ]),
-            'cacheable_status_codes': list([
-              200,
-              203,
-              204,
-              206,
-              300,
-              301,
-              308,
-              404,
-              405,
-              410,
-              414,
-              501,
-            ]),
-            'type': 'hishel.Controller',
+            'type': 'hishel.SpecificationPolicy',
           }),
           'enabled': True,
           'storage': dict({
@@ -389,7 +309,7 @@
             'type': 'harp_apps.http_client.contrib.hishel.storages.AsyncStorage',
           }),
           'transport': dict({
-            'type': 'hishel.AsyncCacheTransport',
+            'type': 'hishel._async_httpx.AsyncCacheTransport',
           }),
         }),
       }),
