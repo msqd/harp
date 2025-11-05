@@ -1,64 +1,44 @@
-Quick Start
+Quick start
 ===========
 
-Install & Bootstrap
-:::::::::::::::::::
+Get started with HARP in under 2 minutes using ``uvx`` - no installation required.
 
-To start developing with HARP (create your own proxies with custom code), you need a few
-things:
 
-**Install HARP to be used as a CLI/dev tool**
+Your first proxy
+:::::::::::::::::
 
 .. code:: shell
 
-    pipx install 'harp-proxy[dev]'
+    # Create a simple configuration file
+    cat > config.yml << EOF
+    proxy:
+      endpoints:
+        - name: httpbin
+          port: 4000
+          url: "https://httpbin.org/"
+    EOF
 
-.. note::
+    # Run HARP
+    uvx --python 3.13 harp-proxy server --file config.yml
 
-    This will install an isolated instance of HARP that we'll mostly use to create new
-    projects. It is possible to do it without, but this is the easiest.
-
-**Bootstrap a new project**
-
-.. code:: shell
-
-    harp create project
-
-This command will:
-
-- Prompt you for project details (name, author, etc.)
-- Ask whether to create an application folder (for custom code)
-- Ask whether to create a configuration file
-- Generate a project structure with:
-
-  - Modern ``pyproject.toml`` using PEP 621 standard
-  - UV-based dependency management (no Poetry)
-  - Ready-to-use ``Makefile`` with common targets
-  - Python 3.13 compatibility
-
-Answer a few questions, and you're ready to go!
+Visit http://localhost:4000/get to see your proxy in action.
 
 
-**Start your project**
+What's next?
+::::::::::::
 
-.. code:: shell
+**Configuration-based customization** (most common)
+  Start here if you want to add features without writing code.
+  See :doc:`customize` for configuration options, or explore the :doc:`configuration guide </operate/configure/index>`.
 
-    cd <your-project>
-    make
+**Custom code and applications**
+  Need to write Python code for custom logic? Generate a project:
 
-This will install the dependencies using ``uv sync`` (creating a virtual environment) and start your proxy.
+  .. code:: shell
 
-The generated project uses UV for package management, providing fast dependency resolution and installation. Common commands in your new project:
+      uvx --python 3.13 harp-proxy create project
 
-.. code:: shell
+  See :doc:`run` for project structure and development workflows.
 
-    make install  # Install dependencies with uv sync
-    make start    # Start the HARP server
-    make test     # Run tests with pytest
-
-Next Steps
-::::::::::
-
-Congratulations, you created your first HARP project! Now you can start tuning it.
-
-.. todo:: pointers
+**Production deployment**
+  Ready to deploy? See the :doc:`operator's guide </operate/index>`.
