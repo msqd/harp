@@ -171,11 +171,17 @@ class AsyncStorageAdapter:
         headers, varying_headers, metadata = prepare_headers_for_serialization(request.headers)
         headers = await self.storage.put(Blob.from_data(headers, content_type="http/headers"))
         return {
-            "method": request.method.decode("ascii"),
-            "url": _convert_url_to_string(request.url),
+            # hishel 1.0: method and url are already strings
+            "method": request.method if isinstance(request.method, str) else request.method.decode("ascii"),
+            "url": request.url if isinstance(request.url, str) else _convert_url_to_string(request.url),
             "headers": headers.id,
             "varying": varying_headers,
-            "extensions": {key: value for key, value in request.extensions.items() if key in KNOWN_REQUEST_EXTENSIONS},
+            # hishel 1.0: metadata is dict, not extensions
+            "extensions": {
+                key: value
+                for key, value in (request.metadata if hasattr(request, "metadata") else request.extensions).items()
+                if key in KNOWN_REQUEST_EXTENSIONS
+            },
         }
 
     async def _unserialize_request(self, data: SerializedRequest) -> Request:
@@ -197,20 +203,34 @@ class AsyncStorageAdapter:
             ),
         )
         headers = await self.storage.put(Blob.from_data(headers, content_type="http/headers"))
+
+        # hishel 1.0: Entry.response is hishel Response with stream, not httpcore Response
+        # Check if it has content (httpcore) or needs to be read (hishel)
+        if hasattr(response, "content"):
+            # httpcore Response
+            content = response.content
+            status = response.status
+            extensions = response.extensions
+        else:
+            # hishel Response
+            content = await response.aread()
+            status = response.status_code
+            extensions = response.metadata
+
         body = await self.storage.put(
             Blob.from_data(
-                response.content,
+                content,
                 content_type=metadata.get("content-type") or "application/octet-stream",
             )
         )
         return {
-            "status": response.status,
+            "status": status,
             "headers": headers.id,
             "varying": varying_headers,
             "body": body.id,
             "extensions": {
-                key: value.decode("ascii")
-                for key, value in response.extensions.items()
+                key: value.decode("ascii") if isinstance(value, bytes) else value
+                for key, value in extensions.items()
                 if key in KNOWN_RESPONSE_EXTENSIONS
             },
         }
@@ -223,5 +243,8 @@ class AsyncStorageAdapter:
             status=data["status"],
             headers=prepare_headers_for_deserialization(headers.data, varying=data.get("varying") or {}),
             content=body.data,
-            extensions={key: value.encode() for key, value in (data.get("extensions") or {}).items()},
+            extensions={
+                key: value.encode() if isinstance(value, str) else value
+                for key, value in (data.get("extensions") or {}).items()
+            },
         )

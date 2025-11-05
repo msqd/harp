@@ -18,34 +18,19 @@ class MyCustomTransport(AsyncCacheTransport):
 class TestCacheSettings(BaseConfigurableTest):
     type = CacheSettings
     expected_verbose = {
-        "controller": {
-            "allow_heuristics": False,
-            "allow_stale": False,
-            "cacheable_methods": ["GET", "HEAD"],
-            "cacheable_status_codes": [
-                200,
-                203,
-                204,
-                206,
-                300,
-                301,
-                308,
-                404,
-                405,
-                410,
-                414,
-                501,
-            ],
-            "type": "hishel.Controller",
-        },
         "enabled": True,
+        # hishel 1.0: Controller → SpecificationPolicy (CacheOptions configured in services.yml)
+        "policy": {
+            "type": "hishel.SpecificationPolicy",
+        },
         "storage": {
             "base": "hishel.AsyncBaseStorage",
             "check_ttl_every": 60.0,
             "ttl": None,
             "type": "harp_apps.http_client.contrib.hishel.storages.AsyncStorage",
         },
-        "transport": {"type": "hishel.AsyncCacheTransport"},
+        # hishel 1.0: AsyncCacheTransport moved to _async_httpx module
+        "transport": {"type": "hishel._async_httpx.AsyncCacheTransport"},
     }
 
     def test_service_override(self):

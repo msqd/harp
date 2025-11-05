@@ -29,17 +29,30 @@ services:
 
       # Caching transport decorator, wrapping the proxy transport
       - name: "http_client.cache.transport"
-        type: [!cfg "cache.transport.type", "hishel.AsyncCacheTransport"]
+        type: [!cfg "cache.transport.type", "hishel._async_httpx.AsyncCacheTransport"]
         defaults:
-          transport: !ref "http_client.proxy_transport"
+          # hishel 1.0: parameter renamed from 'transport' to 'next_transport'
+          next_transport: !ref "http_client.proxy_transport"
           storage: !ref "http_client.cache.storage"
-          controller: !ref "http_client.cache.controller"
+          # hishel 1.0: parameter renamed from 'controller' to 'policy'
+          policy: !ref "http_client.cache.policy"
         arguments: [!cfg "cache.transport.arguments", {}]
 
-      # Caching controller, responsible for determining what is cacheable
-      - name: "http_client.cache.controller"
-        type: [!cfg "cache.controller.type", "hishel.Controller"]
-        arguments: [!cfg "cache.controller.arguments", {}]
+      # Caching policy, responsible for determining what is cacheable
+      # hishel 1.0: renamed from 'controller' to 'policy', uses SpecificationPolicy
+      - name: "http_client.cache.policy"
+        type: [!cfg "cache.policy.type", "hishel.SpecificationPolicy"]
+        defaults:
+          cache_options: !ref "http_client.cache.policy.options"
+        arguments: [!cfg "cache.policy.arguments", {}]
+
+      # Default cache options for the policy
+      - name: "http_client.cache.policy.options"
+        type: "hishel.CacheOptions"
+        arguments:
+          shared: true
+          supported_methods: ["GET", "HEAD"]
+          allow_stale: false
 
       # Cache storage implementation, a.k.a how to store and retrieve cache data
       - name: "http_client.cache.storage"

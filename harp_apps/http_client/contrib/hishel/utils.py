@@ -1,14 +1,33 @@
 from harp.utils.bytes import ensure_bytes
 
 
-def prepare_headers_for_serialization(
-    headers: list[tuple[bytes, bytes]], /, *, varying=()
-) -> tuple[bytes, dict[str, str], dict[str, str]]:
+def prepare_headers_for_serialization(headers, /, *, varying=()) -> tuple[bytes, dict[str, str], dict[str, str]]:
+    """Prepare headers for serialization.
+
+    Args:
+        headers: Either a list of (bytes, bytes) tuples (hishel 0.1.x / httpcore)
+                 or a Headers mapping (hishel 1.0)
+        varying: Tuple of header names that should be stored separately
+
+    Returns:
+        Tuple of (static_headers_bytes, varying_headers_dict, metadata_dict)
+    """
     static_headers = []
     varying_headers = {}
     metadata = {}
 
-    for k, v in headers:
+    # Handle both old list format and new Headers mapping
+    if hasattr(headers, "items"):
+        # hishel 1.0: Headers is a MutableMapping
+        header_items = [
+            (k.encode() if isinstance(k, str) else k, str(v).encode() if not isinstance(v, bytes) else v)
+            for k, v in headers.items()
+        ]
+    else:
+        # hishel 0.1.x / httpcore: list of (bytes, bytes) tuples
+        header_items = headers
+
+    for k, v in header_items:
         k = k.lower().strip()
         if k in varying:
             varying_headers[k.decode()] = v.decode()

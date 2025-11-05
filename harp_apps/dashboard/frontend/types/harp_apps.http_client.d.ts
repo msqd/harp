@@ -9,7 +9,7 @@ declare namespace Apps.HttpClient {
   export interface CacheSettings {
     enabled?: boolean;
     transport?: Service;
-    controller?: Service1;
+    policy?: Service1;
     storage?: Service2;
   }
   /**
@@ -109,7 +109,7 @@ declare namespace Apps.HttpClient {
   export interface CacheSettings1 {
     enabled?: boolean;
     transport?: Service;
-    controller?: Service1;
+    policy?: Service1;
     storage?: Service2;
   }
   /**

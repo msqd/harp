@@ -5,16 +5,16 @@
       'CacheSettings': dict({
         'additionalProperties': False,
         'properties': dict({
-          'controller': dict({
-            '$ref': '#/$defs/Service',
-            'default': dict({
-              'type': 'hishel.SpecificationPolicy',
-            }),
-          }),
           'enabled': dict({
             'default': True,
             'title': 'Enabled',
             'type': 'boolean',
+          }),
+          'policy': dict({
+            '$ref': '#/$defs/Service',
+            'default': dict({
+              'type': 'hishel.SpecificationPolicy',
+            }),
           }),
           'storage': dict({
             '$ref': '#/$defs/Service',
@@ -122,10 +122,10 @@
       'cache': dict({
         '$ref': '#/$defs/CacheSettings',
         'default': dict({
-          'controller': dict({
+          'enabled': True,
+          'policy': dict({
             'type': 'hishel.SpecificationPolicy',
           }),
-          'enabled': True,
           'storage': dict({
             'base': 'hishel.AsyncBaseStorage',
             'check_ttl_every': 60.0,
@@ -181,16 +181,16 @@
       'CacheSettings': dict({
         'additionalProperties': False,
         'properties': dict({
-          'controller': dict({
-            '$ref': '#/$defs/Service',
-            'default': dict({
-              'type': 'hishel.SpecificationPolicy',
-            }),
-          }),
           'enabled': dict({
             'default': True,
             'title': 'Enabled',
             'type': 'boolean',
+          }),
+          'policy': dict({
+            '$ref': '#/$defs/Service',
+            'default': dict({
+              'type': 'hishel.SpecificationPolicy',
+            }),
           }),
           'storage': dict({
             '$ref': '#/$defs/Service',
@@ -298,10 +298,10 @@
       'cache': dict({
         '$ref': '#/$defs/CacheSettings',
         'default': dict({
-          'controller': dict({
+          'enabled': True,
+          'policy': dict({
             'type': 'hishel.SpecificationPolicy',
           }),
-          'enabled': True,
           'storage': dict({
             'base': 'hishel.AsyncBaseStorage',
             'check_ttl_every': 60.0,

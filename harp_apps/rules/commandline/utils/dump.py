@@ -1,5 +1,4 @@
 import httpx
-from hishel import ParseError
 from httpx import RequestNotRead, ResponseNotRead
 from rich.console import Console
 from rich.syntax import Syntax
@@ -11,6 +10,14 @@ from harp.utils.strings import truncate_string
 from harp.utils.types import typeof
 from harp_apps.http_client.events import HttpClientFilterEvent
 from harp_apps.proxy.events import ProxyFilterEvent
+
+
+# hishel 1.0: ParseError no longer exported, define locally for backward compatibility
+class ParseError(Exception):
+    """Cache-Control header parsing error."""
+
+    pass
+
 
 BODY_MAX_LENGTH_TO_DISPLAY = 4096
 

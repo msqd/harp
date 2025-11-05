@@ -121,11 +121,14 @@
   harp_apps.contrib.sentry: {}
   http_client:
     cache:
-      controller:
-        cacheable_methods:
-        - GET
-        - HEAD
-        force_cache: true
+      policy:
+        cache_options:
+          allow_stale: false
+          shared: true
+          supported_methods:
+          - GET
+          - HEAD
+        type: hishel.SpecificationPolicy
   proxy: {}
   rules: {}
   storage: {}
@@ -138,17 +141,14 @@
   harp_apps.contrib.sentry: {}
   http_client:
     cache:
-      controller:
-        allow_heuristics: true
-        allow_stale: true
-        cacheable_methods:
-        - GET
-        - HEAD
-        cacheable_status_codes:
-        - 200
-        - 301
-        - 308
-        type: hishel.Controller
+      policy:
+        cache_options:
+          allow_stale: false
+          shared: true
+          supported_methods:
+          - GET
+          - HEAD
+        type: hishel.SpecificationPolicy
       storage:
         type: hishel.AsyncFileStorage
     timeout: 10.0

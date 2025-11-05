@@ -65,36 +65,16 @@
     }),
     'additionalProperties': False,
     'properties': dict({
-      'controller': dict({
-        '$ref': '#/$defs/Service',
-        'default': dict({
-          'allow_heuristics': False,
-          'allow_stale': False,
-          'cacheable_methods': list([
-            'GET',
-            'HEAD',
-          ]),
-          'cacheable_status_codes': list([
-            200,
-            203,
-            204,
-            206,
-            300,
-            301,
-            308,
-            404,
-            405,
-            410,
-            414,
-            501,
-          ]),
-          'type': 'hishel.Controller',
-        }),
-      }),
       'enabled': dict({
         'default': True,
         'title': 'Enabled',
         'type': 'boolean',
+      }),
+      'policy': dict({
+        '$ref': '#/$defs/Service',
+        'default': dict({
+          'type': 'hishel.SpecificationPolicy',
+        }),
       }),
       'storage': dict({
         '$ref': '#/$defs/Service',
@@ -108,7 +88,7 @@
       'transport': dict({
         '$ref': '#/$defs/Service',
         'default': dict({
-          'type': 'hishel.AsyncCacheTransport',
+          'type': 'hishel._async_httpx.AsyncCacheTransport',
         }),
       }),
     }),
@@ -182,36 +162,16 @@
     }),
     'additionalProperties': False,
     'properties': dict({
-      'controller': dict({
-        '$ref': '#/$defs/Service',
-        'default': dict({
-          'allow_heuristics': False,
-          'allow_stale': False,
-          'cacheable_methods': list([
-            'GET',
-            'HEAD',
-          ]),
-          'cacheable_status_codes': list([
-            200,
-            203,
-            204,
-            206,
-            300,
-            301,
-            308,
-            404,
-            405,
-            410,
-            414,
-            501,
-          ]),
-          'type': 'hishel.Controller',
-        }),
-      }),
       'enabled': dict({
         'default': True,
         'title': 'Enabled',
         'type': 'boolean',
+      }),
+      'policy': dict({
+        '$ref': '#/$defs/Service',
+        'default': dict({
+          'type': 'hishel.SpecificationPolicy',
+        }),
       }),
       'storage': dict({
         '$ref': '#/$defs/Service',
@@ -225,7 +185,7 @@
       'transport': dict({
         '$ref': '#/$defs/Service',
         'default': dict({
-          'type': 'hishel.AsyncCacheTransport',
+          'type': 'hishel._async_httpx.AsyncCacheTransport',
         }),
       }),
     }),

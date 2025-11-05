@@ -1,3 +1,7 @@
+from typing import Any
+
+from pydantic import model_validator
+
 from harp.config import Configurable, Service
 
 # HTTP status codes that are heuristically cacheable according to RFC 9111
@@ -12,17 +16,19 @@ class CacheSettings(Configurable):
     #: Cache transport to use for the client. This is usually a hishel._async_httpx.AsyncCacheTransport (or subclass) instance.
     transport: Service = Service(type="hishel._async_httpx.AsyncCacheTransport")
 
-    # Note: hishel 1.0 uses SpecificationPolicy with CacheOptions instead of Controller
-    # The policy system is more flexible but has a different API
-    # For now, we'll use the default SpecificationPolicy until we implement CacheOptions wrapper
-    controller: Service = Service(
-        type="hishel.SpecificationPolicy",
-        arguments={
-            # TODO: Map old Controller args to new CacheOptions format
-            # Old: allow_heuristics, allow_stale, cacheable_methods, cacheable_status_codes
-            # New: CacheOptions(shared, supported_methods, allow_stale)
-        },
-    )
+    #: Cache policy to use for determining what is cacheable.
+    #: hishel 1.0 uses SpecificationPolicy with CacheOptions.
+    #: Default configuration (defined in services.yml):
+    #:   - shared: True (shared cache mode)
+    #:   - supported_methods: ["GET", "HEAD"] (only cache GET and HEAD requests)
+    #:   - allow_stale: False (do not serve stale responses)
+    #:
+    #: To customize cache behavior, override the entire policy service:
+    #:   http_client:
+    #:     cache:
+    #:       policy:
+    #:         type: my_custom_policy.CustomPolicy
+    policy: Service = Service(type="hishel.SpecificationPolicy")
 
     storage: Service = Service(
         base="hishel.AsyncBaseStorage",
@@ -32,3 +38,38 @@ class CacheSettings(Configurable):
             "check_ttl_every": 60.0,
         },
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _check_for_old_controller_config(cls, data: Any) -> Any:
+        """Validate that users are not using the old 'controller' configuration.
+
+        hishel 1.0 migration: 'controller' was renamed to 'policy'.
+        """
+        if isinstance(data, dict) and "controller" in data:
+            raise ValueError(
+                "The 'controller' configuration key has been removed in hishel 1.0.\n"
+                "Please use 'policy' instead.\n\n"
+                "Migration guide:\n"
+                "  Old (hishel 0.1.x):\n"
+                "    http_client:\n"
+                "      cache:\n"
+                "        controller:\n"
+                "          type: hishel.Controller\n"
+                "          arguments:\n"
+                "            allow_stale: false\n"
+                "            cacheable_methods: [GET, HEAD]\n\n"
+                "  New (hishel 1.0):\n"
+                "    http_client:\n"
+                "      cache:\n"
+                "        policy:\n"
+                "          type: hishel.SpecificationPolicy\n"
+                "          arguments:\n"
+                "            cache_options:\n"
+                "              shared: true\n"
+                "              supported_methods: [GET, HEAD]\n"
+                "              allow_stale: false\n\n"
+                "Note: 'allow_heuristics' and 'cacheable_status_codes' are no longer configurable.\n"
+                "      Caching behavior is now strictly RFC 9111 compliant."
+            )
+        return data
