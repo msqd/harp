@@ -4,6 +4,11 @@ Unreleased
 Added
 -----
 
+- ApplicationSettingsMixin for standardized enable/disable functionality in application settings
+- ``--strict`` CLI flag for enforcing strict configuration validation
+- Warning system for misconfigured applications (config exists for unloaded apps)
+- Two-pass configuration parsing to filter applications with ``enabled: false``
+
 Changed
 -------
 

@@ -28,6 +28,7 @@ http_client:
       type: harp_apps.http_client.contrib.hishel.storages.AsyncStorage
     transport:
       type: hishel.AsyncCacheTransport
+  enabled: true
   proxy_transport:
     type: harp_apps.http_client.transport.AsyncFilterableTransport
   timeout: 30.0

@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from harp.config import Configurable, Stateful
+from harp.config import ApplicationSettingsMixin, Configurable, Stateful
 
 from .endpoint import Endpoint, EndpointSettings
 from .remote import Remote, RemoteEndpoint, RemoteEndpointSettings, RemoteProbe, RemoteProbeSettings, RemoteSettings
@@ -23,7 +23,7 @@ class BaseProxySettings(Configurable):
     pass
 
 
-class ProxySettings(BaseProxySettings):
+class ProxySettings(ApplicationSettingsMixin, BaseProxySettings):
     """
     Configuration parser for ``proxy`` settings.
 

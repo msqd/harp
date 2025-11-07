@@ -11,6 +11,10 @@ declare namespace Apps.Storage {
   }
   export interface StorageSettings {
     url?: string;
+    /**
+     * Whether the application is enabled
+     */
+    enabled?: boolean;
     migrate?: boolean;
     blobs?: BlobStorageSettings;
     redis?: RedisSettings | null;

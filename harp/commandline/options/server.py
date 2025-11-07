@@ -42,9 +42,10 @@ class CommonServerOptions(dict):
     applications: tuple = ()
     enable: tuple = ()
     disable: tuple = ()
+    strict: bool = False
 
     def as_list(self):
-        return list(
+        items = list(
             chain(
                 (f"--set {quote(key)}={quote(value)}" for key, value in self.options.items()),
                 (f"--endpoint {quote(key)}={quote(value)}" for key, value in self.endpoints.items()),
@@ -54,6 +55,9 @@ class CommonServerOptions(dict):
                 ("--example " + example for example in self.examples),
             )
         )
+        if self.strict:
+            items.append("--strict")
+        return items
 
     def __post_init__(self):
         self.options = dict(map(_parse_option, self.options))
@@ -120,6 +124,12 @@ def _server_click_options(f):
         ),
         click.option("--enable", default=(), multiple=True, help="Enable some applications."),
         click.option("--disable", default=(), multiple=True, help="Disable some applications."),
+        click.option(
+            "--strict",
+            is_flag=True,
+            default=False,
+            help="Enforce strict configuration validation (convert warnings to errors)",
+        ),
     ]
 
     # apply options in reversed order so that click will apply them in the right order (it's intended to be used as a

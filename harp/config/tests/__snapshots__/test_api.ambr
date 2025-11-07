@@ -2,6 +2,7 @@
 # name: test_exposed_api
   list([
     'Application',
+    'ApplicationSettingsMixin',
     'ApplicationsRegistry',
     'Configurable',
     'ConfigurationBuilder',

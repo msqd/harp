@@ -98,6 +98,10 @@ declare namespace Apps.HttpClient {
      */
     constructor?: string | null;
     arguments?: Arguments;
+    /**
+     * Whether the application is enabled
+     */
+    enabled?: boolean;
     cache?: CacheSettings1;
     transport?: Service3;
     proxy_transport?: Service4;

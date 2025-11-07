@@ -78,6 +78,14 @@ class Application:
             return asdict(settings, secure=False)
         return settings
 
+    def has_application_settings_mixin(self):
+        """Check if settings_type has ApplicationSettingsMixin in its inheritance chain."""
+        if self.settings_type is None or self.settings_type is dict:
+            return False
+        from .mixins import ApplicationSettingsMixin
+
+        return issubclass(self.settings_type, ApplicationSettingsMixin)
+
 
 class ApplicationsRegistry:
     namespaces = ["harp_apps"]

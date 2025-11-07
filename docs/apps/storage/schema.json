@@ -86,6 +86,11 @@
           "minLength": 1,
           "type": "string"
         },
+        "enabled": {
+          "default": true,
+          "description": "Whether the application is enabled",
+          "type": "boolean"
+        },
         "migrate": { "default": true, "type": "boolean" },
         "blobs": {
           "$ref": "#/$defs/BlobStorageSettings",

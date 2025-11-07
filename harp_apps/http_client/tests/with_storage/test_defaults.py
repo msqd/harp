@@ -53,6 +53,7 @@ class TestDefaultsWithStorage(BaseTestDefaultsWith):
                 },
                 "transport": {"type": "hishel.AsyncCacheTransport"},
             },
+            "enabled": True,
             "proxy_transport": {"type": "harp_apps.http_client.transport.AsyncFilterableTransport"},
             "timeout": 30.0,
             "transport": {
@@ -64,6 +65,7 @@ class TestDefaultsWithStorage(BaseTestDefaultsWith):
         }
         assert asdict(system.config["storage"], verbose=True) == {
             "blobs": {"type": "sql"},
+            "enabled": True,
             "migrate": ANY,
             "url": ANY,
             "redis": None,

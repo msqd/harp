@@ -190,6 +190,12 @@
         'description': 'Optional custom constructor for the service.',
         'title': 'Constructor',
       }),
+      'enabled': dict({
+        'default': True,
+        'description': 'Whether the application is enabled',
+        'title': 'Enabled',
+        'type': 'boolean',
+      }),
       'proxy_transport': dict({
         '$ref': '#/$defs/Service',
         'default': dict({
@@ -405,6 +411,12 @@
         'default': None,
         'description': 'Optional custom constructor for the service.',
         'title': 'Constructor',
+      }),
+      'enabled': dict({
+        'default': True,
+        'description': 'Whether the application is enabled',
+        'title': 'Enabled',
+        'type': 'boolean',
       }),
       'proxy_transport': dict({
         '$ref': '#/$defs/Service',

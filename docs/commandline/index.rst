@@ -12,7 +12,7 @@ For PIP and source installs, it will be available as
 `harp` in your python environment.
 
 For source installations, you may need to use
-`uv run harp ...`.
+`uv run harp-proxy ...`.
 
 Docker
 ------
@@ -30,12 +30,12 @@ command directly.
 Python package
 --------------
 
-For regular python installations (for example, using pip to install it from PyPI), you'll find the `harp` command in
+For regular python installations (for example, using pip to install it from PyPI), you'll find the `harp-proxy` command in
 your python environment's path, thus you'll be able to run:
 
 .. code-block:: shell
 
-    harp server --endpoint httpbin=4000:https://httpbin.org
+    harp-proxy server --endpoint httpbin=4000:https://httpbin.org
 
 Sources
 -------
@@ -45,11 +45,11 @@ may need to force using the right environment using uv.
 
 .. code-block:: shell
 
-    uv run harp server --endpoint httpbin=4000:https://httpbin.org
+    uv run harp-proxy server --endpoint httpbin=4000:https://httpbin.org
 
 Another way would be to activate the uv environment and run the command directly:
 
 .. code-block:: shell
 
     source .venv/bin/activate  # or .venv\Scripts\activate on Windows
-    harp server --endpoint httpbin=4000:https://httpbin.org
+    harp-proxy server --endpoint httpbin=4000:https://httpbin.org

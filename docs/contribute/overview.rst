@@ -1,79 +1,91 @@
 Overview
 ========
 
-Codebase
-::::::::
+HARP's architecture is designed around modularity, loose coupling, and extensibility. This page provides a high-level
+overview of the architecture and core concepts.
 
-The codebase is divided into two main parts: Core and Applications. The Core (found under the ``harp`` python package)
-provides the base functionality and tools for building proxy services, while Applications (either built-in or
-user-provided) are independent modules that provide the real features.
+Codebase structure
+::::::::::::::::::
 
-The built-in applications are found under the ``harp_apps`` python package.
+The codebase is divided into two main parts:
+
+**Core** (``harp`` package)
+    Provides the base functionality and tools for building proxy services. The core is framework code that applications
+    build upon.
+
+**Applications** (``harp_apps`` package)
+    Independent modules that provide features. Both built-in and user-provided applications use the same integration
+    mechanism.
 
 .. image:: ./overview.svg
     :alt: HARP Architecture Overview
     :align: center
 
 
-Core Packages
+Core packages
 :::::::::::::
 
-* **ASGI** (:mod:`harp.asgi`): Building blocks for ASGI (Asynchronous Server Gateway Interface)
-* **Command Line** (:mod:`harp.commandline`): Core commands and building blocks for application-specific commands.
-* **Config** (:mod:`harp.config`): Configuration management system, supporting various formats and sources.
-* **Controllers** (:mod:`harp.controllers`): Building blocks for web controllers, turning requests into responses.
-* **Errors** (:mod:`harp.errors`): Exception classes and error handling tools.
-* **Event Dispatcher** (:mod:`harp.event_dispatcher`): Event handling system, based on :mod:`whistle`.
-* **HTTP** (:mod:`harp.http`): Building blocks for HTTP.
-* **Meta** (:mod:`harp.meta`): Metadata management tools.
-* **Models** (:mod:`harp.models`): Data modeling for core objects (not tied to storage logic, «plain old python objects»).
-* **Typing** (:mod:`harp.typing`): Type and interface definitions.
-* **Utils** (:mod:`harp.utils`): A collection of utility functions and helper classes that provide common functionality needed across the application.
-* **Views** (:mod:`harp.views`): Presentation layer for controllers (may be merged with controllers in the future).
+* **ASGI** (:mod:`harp.asgi`) - Building blocks for ASGI (Asynchronous Server Gateway Interface)
+* **Command line** (:mod:`harp.commandline`) - Core commands and building blocks for application-specific commands
+* **Config** (:mod:`harp.config`) - Configuration management system supporting various formats and sources
+* **Controllers** (:mod:`harp.controllers`) - Building blocks for web controllers, turning requests into responses
+* **Errors** (:mod:`harp.errors`) - Exception classes and error handling tools
+* **Event dispatcher** (:mod:`harp.event_dispatcher`) - Event handling system based on :mod:`whistle`
+* **HTTP** (:mod:`harp.http`) - Building blocks for HTTP
+* **Meta** (:mod:`harp.meta`) - Metadata management tools
+* **Models** (:mod:`harp.models`) - Data modeling for core objects (plain old Python objects, not tied to storage)
+* **Typing** (:mod:`harp.typing`) - Type and interface definitions
+* **Utils** (:mod:`harp.utils`) - Collection of utility functions and helper classes
+* **Views** (:mod:`harp.views`) - Presentation layer for controllers
 
 
-Concepts
-::::::::
+Core concepts
+:::::::::::::
 
-HARP employs several common software engineering concepts and patterns to organize the codebase and ensure various
-components work together while remaining loosely coupled.
+HARP employs several software engineering patterns to organize the codebase and ensure components work together while
+remaining loosely coupled.
 
-Inversion of Control (IoC) & Dependency Injection (DI)
-------------------------------------------------------
+Dependency injection and inversion of control
+----------------------------------------------
 
 :ref:`Dependency Injection (DI) <di>` is a design pattern where an object's dependencies are provided by an external
 source rather than the object creating them itself.
 
 :ref:`Inversion of Control (IoC) <ioc>` is a design principle where the control of object creation and management is
-transferred from the application code to a container or framework. This allows for more flexible and modular code, as
-dependencies are injected into objects rather than being created by them.
+transferred from the application code to a container or framework.
 
-Both principles are implemented to make the code more modular and easier to test.
+Both principles make the code more modular and easier to test. HARP uses :mod:`rodi` for dependency injection.
 
-:doc:`👀 Read more about the concepts and HARP implementation of the Dependency Injection Container
-<dependency-injection>`.
+:doc:`👀 Read more about Dependency Injection <dependency-injection>`
 
 
-Event Driven Architecture
--------------------------
+Event-driven architecture
+--------------------------
 
-An :ref:`Event Driven Architecture (EDA) <eda>` emits or receives events occurring in different parts of a system.
-Events can be network-based, like in microservice architectures with an event bus (e.g., CQRS or event-sourcing
-systems), or internal to a process, like in HARP, allowing components to communicate and extend each other without tight
-coupling. This makes the software easier to maintain, as listeners do not need to know about the emitters and vice
-versa.
+An :ref:`Event-Driven Architecture (EDA) <eda>` allows components to communicate and extend each other without tight
+coupling. Events can be network-based (like in microservice architectures) or internal to a process (like in HARP).
 
-HARP implements it using :mod:`Whistle <whistle>`, a dead simple Python event dispatcher, allowing applications easily
-expose or hook into what happens in the system.
+HARP uses :mod:`Whistle <whistle>`, a simple Python event dispatcher, allowing applications to easily expose or hook
+into system events.
 
-Pluggable Applications
+:doc:`👀 Read more about Events <events>`
+
+
+Pluggable applications
 ----------------------
 
-.. todo:: XXX Write this section
+Applications are independent modules that integrate with HARP through a standard protocol. Both core features and
+third-party extensions use the same mechanism.
+
+Applications hook into the system through lifecycle events (:ref:`on_bind <on_bind>`, :ref:`on_bound <on_bound>`,
+:ref:`on_ready <on_ready>`, :ref:`on_shutdown <on_shutdown>`) and can register services, listen to events, and extend
+functionality.
+
+:doc:`👀 Read more about Applications <applications>`
 
 
-Sequence Diagram
-::::::::::::::::
+Request flow
+::::::::::::
 
 When an HTTP request comes into HARP, the following sequence of operations happens:
 
@@ -81,23 +93,4 @@ When an HTTP request comes into HARP, the following sequence of operations happe
     :alt: HARP Sequence of Operations
     :align: center
 
-Once the Services Provider is up, most services will be instanciated lazily, on a (user) request basis, just in time.
-
-
-Logging
-:::::::
-
-The logging system is based on the standard Python logging module, with a few customizations to fit our needs.
-
-To use the logging system in your own modules, do the following:
-
-.. code-block:: python
-
-    from harp import get_logger
-
-    logger = get_logger(__name__)
-
-    logger.debug("This is a debug message")
-    logger.info("This is an info message")
-    logger.warning("This is a warning message")
-    logger.error("This is an error message")
+Once the Services Provider is initialized, most services are instantiated lazily, on demand, just in time.

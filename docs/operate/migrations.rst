@@ -12,22 +12,22 @@ database engines.
 Running Migrations
 ::::::::::::::::::
 
-To run migrations, you can either start your harp server with the `storage` application enabled and the
+To run migrations, you can either start your harp-proxy server with the `storage` application enabled and the
 ``storage.migrate = true`` setting (which are the default), or use the dedicated command line tool:
 
 .. code-block:: shell
 
     # migrate to the latest revision, or «head»
-    harp db:migrate up head
+    harp-proxy db:migrate up head
 
     # migrate down to a specific revision
-    harp db:migrate down <revision>
+    harp-proxy db:migrate down <revision>
 
     # migrate up to a specific revision
-    harp db:migrate up <revision>
+    harp-proxy db:migrate up <revision>
 
     # migrate down to the initial empty state
-    harp db:migrate down base
+    harp-proxy db:migrate down base
 
 Note that to run migrations, you'll need a valid storage configured.
 
@@ -35,7 +35,7 @@ To list available database versions, you can run:
 
 .. code-block:: shell
 
-    harp db:history
+    harp-proxy db:history
 
 .. note:: Migrations have no effect for sqlite setups.
 
@@ -76,7 +76,7 @@ you can install it with the associated GIN indexes using:
 
 .. code-block:: shell
 
-    harp db:feature add pg_trgm ...settings...
+    harp-proxy db:feature add pg_trgm ...settings...
 
 
 Writing migrations
@@ -86,7 +86,7 @@ To write migrations, the easiest way is to update models then run the autogenera
 
 .. code-block:: shell
 
-    harp db:create-migration 'some short description'
+    harp-proxy db:create-migration 'some short description'
 
 You'll be able to edit the newly added migration file and then, you can migrate your database to apply changes. It is
 recommended to squash migrations before submitting a merge request.

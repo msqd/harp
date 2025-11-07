@@ -1,5 +1,5 @@
-Makefile Tasks
-==============
+Makefile
+========
 
 This guide documents all available Makefile tasks for development, testing, building, and CI operations.
 

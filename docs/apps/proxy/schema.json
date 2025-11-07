@@ -241,6 +241,11 @@
       "additionalProperties": false,
       "description": "Configuration parser for ``proxy`` settings.\n\n.. code-block:: yaml\n\n    endpoints:\n      # see ProxyEndpoint\n      - ...",
       "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Whether the application is enabled",
+          "type": "boolean"
+        },
         "endpoints": {
           "default": [],
           "items": { "$ref": "#/$defs/EndpointSettings" },

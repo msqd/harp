@@ -118,21 +118,21 @@ Migrations are implemented using `Alembic <https://alembic.sqlalchemy.org/>`_.
 Resetting
 :::::::::
 
-If you want to reset the storage content, you can run the ``harp db:reset`` command. It will drop all tables,
+If you want to reset the storage content, you can run the ``harp-proxy db:reset`` command. It will drop all tables,
 then run the migrations again (if enabled), so that you get an empty and up-to-date database schema.
 
 You must provide your configuration files and configuration arguments to this command, like you'd do with the
-``harp start`` command, so that it points to the right storage.
+``harp-proxy start`` command, so that it points to the right storage.
 
 .. code-block:: shell
 
-    harp db:reset -f /path/to/config.yml
+    harp-proxy db:reset -f /path/to/config.yml
 
 or...
 
 .. code-block:: shell
 
-    harp db:reset --set storage.url=...
+    harp-proxy db:reset --set storage.url=...
 
 
 Logging
@@ -142,6 +142,6 @@ To instruct SQLAlchemy to log all queries, set ``LOGGING_SQLALCHEMY=INFO`` in yo
 
 .. code-block:: shell
 
-    LOGGING_SQLALCHEMY=INFO harp start ...
+    LOGGING_SQLALCHEMY=INFO harp-proxy start ...
 
 It works with all HARP commands, not just ``start``.

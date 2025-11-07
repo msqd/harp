@@ -27,10 +27,10 @@ Delete all transactions older than 60 days.
 Loading
 :::::::
 
-The ``janitor`` application is loaded by default when using the ``harp start`` command.
+The ``janitor`` application is loaded by default when using the ``harp-proxy start`` command.
 
-You can disable it (not recommended) by passing it as an argument to the ``harp start`` command:
+You can disable it (not recommended) by passing it as an argument to the ``harp-proxy start`` command:
 
 .. code-block:: bash
 
-    harp start --disable janitor ...
+    harp-proxy start --disable janitor ...
