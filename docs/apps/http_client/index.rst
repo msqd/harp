@@ -39,7 +39,7 @@ Features
 Loading
 :::::::
 
-The HTTP client application is loaded by default when using the `harp start` command.
+The HTTP client application is loaded by default when using the `harp-proxy start` command.
 
 Configuration
 :::::::::::::

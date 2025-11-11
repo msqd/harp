@@ -5,3 +5,4 @@ Testing
     :maxdepth: 1
 
     database
+    ci

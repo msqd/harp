@@ -1,5 +1,5 @@
-Makefile Tasks
-==============
+Makefile
+========
 
 This guide documents all available Makefile tasks for development, testing, building, and CI operations.
 
@@ -420,7 +420,7 @@ CI tests run natively in GitHub Actions runners, so you can reproduce CI issues 
     # 4. Use testcontainers for database tests (like CI)
     TESTCONTAINERS_RYUK_DISABLED=true uv run pytest tests/...
 
-For more details on the CI process and troubleshooting, see :doc:`ci`.
+For more details on the CI process and troubleshooting, see :doc:`testing/ci`.
 
 Working with Frontend
 ^^^^^^^^^^^^^^^^^^^^^

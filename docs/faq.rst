@@ -7,7 +7,7 @@ Cookbook
 How can I start a custom HARP-based proxy project?
 --------------------------------------------------
 
-The simplest way is to use the ``harp create project`` command. It will prompt for a few questions and generate a
+The simplest way is to use the ``harp-proxy create project`` command. It will prompt for a few questions and generate a
 project based on a cookiecutter template. Once generated, you'll have ``make install``, ``make start`` and ``make
 test`` available within your newly created project.
 

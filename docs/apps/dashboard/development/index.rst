@@ -19,6 +19,6 @@ To do this, you can run the following command:
 
 .. code-block:: bash
 
-    harp start --mock
+    harp-proxy start --mock
 
 Caveat: you must use localhost:4080 instead of the ipv6 url.

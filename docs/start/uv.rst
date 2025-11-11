@@ -84,7 +84,7 @@ Common Commands
 
     # Run from local project
     uv run harp-proxy server
-    uv run python -m harp server
+    uv run harp-proxy server
 
     # Install dependencies
     uv sync

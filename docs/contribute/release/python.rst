@@ -359,7 +359,7 @@ This starts a container with the wheel installed. Test it:
 
 .. code-block:: bash
 
-    harp server --endpoint httpbin=4000:http://httpbin.org/
+    harp-proxy server --endpoint httpbin=4000:http://httpbin.org/
 
 Manual Upload (Emergency Only)
 -------------------------------

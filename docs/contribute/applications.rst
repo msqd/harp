@@ -1,17 +1,15 @@
-Application Protocol
-====================
+Applications
+============
 
-The HARP Application Protocol enables writing plug-and-play Python packages to enhance core functionalities.
+HARP applications are Python packages that integrate with the system through a standard protocol. Both core features
+and third-party extensions use the same protocol.
 
-An application is essentially a Python package with additional files that integrate it with the HARP framework.
+An application is a Python package with an ``__app__.py`` file that defines how it hooks into the system.
 
 Basic Structure
 :::::::::::::::
 
-A standard Python package has a directory containing an ``__init__.py`` file. To transform this package into a HARP
-application, you need to add an ``__app__.py`` file at the root. This file contains the application's definition.
-
-Example ``__app__.py``:
+To create a HARP application, add an ``__app__.py`` file to your Python package:
 
 .. code-block:: python
 
@@ -19,23 +17,17 @@ Example ``__app__.py``:
 
     application = Application()
 
-This setup is the bare minimum. However, applications usually require more features, such as settings.
+Applications usually also need settings.
 
 
 Configuring Settings
 ::::::::::::::::::::
 
-Applications often need custom settings. You can define these settings in a class, typically stored in a ``settings.py``
-file at the application's package root.
-
-1. Define your settings class in settings.py.
-2. Include this class in your application definition in ``__app__.py``.
-
-Example ``settings.py``:
+Define your settings in a ``settings.py`` file:
 
 .. literalinclude:: ../../harp_apps/acme/settings.py
 
-Example ``__app__.py`` update:
+Then reference them in ``__app__.py``:
 
 .. code-block:: python
 
@@ -47,37 +39,22 @@ Example ``__app__.py`` update:
         settings_type=AcmeSettings,
     )
 
-The settings class should:
+Test your settings:
 
-- Be instantiable without arguments for default settings.
-- Accept keyword arguments for custom settings.
-- Convert to a dictionary via :func:`harp.config.asdict`.
-
-Let's write a simple test to check that.
-
-.. literalinclude:: ../../../harp_apps/acme/tests/test_settings.py
-
-For convenience, we provide a :class:`harp.config.Configurable` class that you can inherit from to implement your
-settings. It is a subclass of pydantic's :class:`BaseModel <pydantic.BaseModel>` and provides a few additional methods.
-
-Please refer to the pydantic's documentation for more information on how to use it.
+.. literalinclude:: ../../harp_apps/acme/tests/test_settings.py
 
 
 Application Lifecycle
 :::::::::::::::::::::
 
-To have a real purpose, an application should interact with the core system through lifecycle hooks.
-
-All hooks are python coroutines, taking a specific :class:`whistle.Event` instance as argument.
-
-Hooks must be registered in the application definition.
+Applications interact with the system through lifecycle hooks. All hooks are async functions that receive an event object.
 
 
 .. _on_bind:
 On Bind
 -------
 
-Triggered during system setup but before service instances are created. Ideal for defining services and dependencies.
+Called during system setup. Register services and dependencies here.
 
 .. code-block:: python
 
@@ -98,7 +75,7 @@ Reference: :class:`harp.config.OnBindEvent`
 On Bound
 --------
 
-Occurs when the system can instantiate services. Use this to access and manipulate service instances.
+Called after services are registered. Access and configure service instances here.
 
 .. code-block:: python
 
@@ -119,7 +96,7 @@ Reference: :class:`harp.config.OnBoundEvent`
 On Ready
 --------
 
-Called when the system starts, after all services are ready. A good place to add ASGI middlewares.
+Called when the system starts. All services are ready.
 
 .. code-block:: python
 
@@ -140,10 +117,9 @@ Reference: :class:`harp.config.OnReadyEvent`
 On Shutdown
 -----------
 
-Invoked during system shutdown, allowing for cleanup and resource release.
+Called during system shutdown. Clean up resources here.
 
-Unlike other events, the shutdown events will be dispatched in applications **reverse** order, so that the first
-initialized application is the last to be shutdown.
+Shutdown events are dispatched in **reverse** order - the first application initialized is the last to shut down.
 
 .. code-block:: python
 
@@ -158,25 +134,3 @@ initialized application is the last to be shutdown.
     )
 
 Reference: :class:`harp.config.OnShutdownEvent`
-
-
-Full Example
-::::::::::::
-
-You can find this example in the `ACME application <https://github.com/msqd/harp/tree/0.7/harp_apps/acme>`_, which sole
-purpose is to demonstrate the application protocol.
-
-``__app__.py``
---------------
-
-.. literalinclude:: ../../harp_apps/acme/__app__.py
-
-``settings.py``
----------------
-
-.. literalinclude:: ../../harp_apps/acme/settings.py
-
-``tests/test_settings.py``
---------------------------
-
-.. literalinclude:: ../../harp_apps/acme/tests/test_settings.py
