@@ -48,6 +48,9 @@
 !/harp_apps/dashboard/web/.gitkeep
 /misc/kitchen-sink/harp.db
 /misc/secrets
+/misc/cache-tests/cache-tests/node_modules/
+/misc/cache-tests/cache-tests/results/harp.json
+!/misc/cache-tests/cache-tests/results/index.mjs
 /requirements*.txt
 /site
 ENV/

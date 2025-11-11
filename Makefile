@@ -136,7 +136,7 @@ build-frontend: install-frontend  ## Builds the harp dashboard frontend (compile
 ########################################################################################################################
 
 .PHONY: preqa qa qa-full types format format-backend format-frontend optimize-images
-.PHONY: test test-backend test-frontend test-frontend-update test-frontend-ui-update
+.PHONY: test test-backend test-frontend test-frontend-update test-frontend-ui-update test-e2e-cache
 .PHONY: lint-frontend coverage cloc
 
 preqa: types format reference  ## Runs pre-qa checks (types generation, formatting, api reference).
@@ -189,6 +189,11 @@ test-frontend-update: install-frontend lint-frontend  ## Runs frontend tests whi
 
 test-frontend-ui-update: install-frontend lint-frontend  ## Update user interface visual snapshots.
 	$(call execute,bin/runc_visualtests pnpm test:ui:update)
+
+test-e2e-cache: install-backend-dev  ## Runs E2E cache tests using cache-tests suite.
+	@echo "Initializing cache-tests submodule..."
+	@git submodule update --init --recursive misc/cache-tests/cache-tests 2>/dev/null || true
+	$(call execute,cd misc/cache-tests && ./run-tests.sh)
 
 lint-frontend: install-frontend  ## Lints the frontend codebase.
 	$(call execute,cd $(FRONTEND_DIR); $(PNPM) build)
@@ -243,7 +248,7 @@ help:   ## Shows available commands.
 	@grep -E '^(install|install-dev|install-frontend|install-backend|install-backend-dev|start-dev|start-dev-frontend|build-frontend|wheel):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo
 	@echo "\033[1mQuality\033[0m"
-	@grep -E '^(preqa|qa|qa-full|qa-nofront|test|test-backend|test-frontend|test-backend-update|test-frontend-update|test-frontend-ui-update|lint-frontend|format|format-backend|format-frontend|types|coverage|cloc|optimize-images):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^(preqa|qa|qa-full|qa-nofront|test|test-backend|test-frontend|test-backend-update|test-frontend-update|test-frontend-ui-update|test-e2e-cache|lint-frontend|format|format-backend|format-frontend|types|coverage|cloc|optimize-images):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo
 	@echo "\033[1mDocumentation\033[0m"
 	@grep -E '^(reference|docs|docs-dev):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'

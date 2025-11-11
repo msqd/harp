@@ -1,0 +1,3 @@
+[submodule "misc/cache-tests/cache-tests"]
+	path = misc/cache-tests/cache-tests
+	url = https://github.com/http-tests/cache-tests.git
