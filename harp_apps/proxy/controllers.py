@@ -364,7 +364,7 @@ class HttpProxyController(AbstractHttpProxyController):
         # If the request cache control asked for cache to be disabled, mark it in transaction.
         request_cache_control = request.headers.get("cache-control")
         if request_cache_control:
-            request_cache_control = parse_cache_control([request_cache_control])
+            request_cache_control = parse_cache_control(request_cache_control)
             if request_cache_control.no_cache:
                 context.transaction.extras["no_cache"] = True
 

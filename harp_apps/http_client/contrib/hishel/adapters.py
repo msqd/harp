@@ -239,6 +239,10 @@ class AsyncStorageAdapter:
         headers = await self.storage.get(data["headers"])
         body = await self.storage.get(data["body"])
 
+        # Handle case where blobs are missing (storage failure)
+        if headers is None or body is None:
+            raise ValueError(f"Cache entry incomplete: headers={headers is not None}, body={body is not None}")
+
         return Response(
             status=data["status"],
             headers=prepare_headers_for_deserialization(headers.data, varying=data.get("varying") or {}),

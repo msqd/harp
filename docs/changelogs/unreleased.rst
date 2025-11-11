@@ -4,6 +4,12 @@ Unreleased
 Added
 -----
 
+- Added cache debugging headers to HTTP responses:
+
+  - ``X-Cache: MISS`` header on non-cached responses
+  - ``X-Cache: HIT`` header on cached responses
+  - ``Age`` header showing cache age in seconds for cached responses
+
 Changed
 -------
 

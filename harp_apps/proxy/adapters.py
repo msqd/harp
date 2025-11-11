@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Any, Dict, Optional
 from urllib.parse import urlparse
 
@@ -28,7 +29,21 @@ class HttpClientProxyAdapter:
         :return: The HTTP response received.
         """
         request = self._build_request(request, url)
-        return await self.http_client.send(request)
+        response = await self.http_client.send(request)
+
+        # Add cache debugging headers if caching is being used
+        if response.extensions.get("hishel_from_cache"):
+            response.headers["X-Cache"] = "HIT"
+            # Add Age header for cached responses
+            created_at = response.extensions.get("hishel_created_at")
+            if created_at is not None:
+                age = int(time.time() - created_at)
+                response.headers["Age"] = str(age)
+        elif "hishel_from_cache" in response.extensions:
+            # hishel is present but response is not from cache
+            response.headers["X-Cache"] = "MISS"
+
+        return response
 
     def _get_default_user_agent(self) -> str:
         """
