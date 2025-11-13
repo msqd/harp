@@ -27,3 +27,15 @@ class ConfigurationRuntimeError(ConfigurationError, RuntimeError):
 
 class ConfigurationRemovedSettingError(ConfigurationError):
     pass
+
+
+class MissingDependencyError(ConfigurationError):
+    """Raised when an application declares a dependency that is not enabled."""
+
+    pass
+
+
+class CircularDependencyError(ConfigurationError):
+    """Raised when circular dependencies are detected between applications."""
+
+    pass

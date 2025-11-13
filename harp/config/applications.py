@@ -222,3 +222,93 @@ class ApplicationsRegistry:
 
     def aslist(self):
         return [self.resolve_name(name) for name in self]
+
+    def validate_dependencies(self):
+        """Validate that all declared dependencies exist in the registry."""
+        from harp.errors import MissingDependencyError
+
+        for app_name, app in self._applications.items():
+            dependencies = getattr(app, "dependencies", [])
+            if not dependencies:
+                continue
+
+            missing_deps = [dep for dep in dependencies if dep not in self._applications]
+            if missing_deps:
+                if len(missing_deps) == 1:
+                    raise MissingDependencyError(
+                        f"Application '{app_name}' requires '{missing_deps[0]}' but it is not enabled"
+                    )
+                else:
+                    raise MissingDependencyError(
+                        f"Application '{app_name}' requires {missing_deps} but they are not enabled"
+                    )
+
+    def resolve_dependencies(self):
+        """Reorder applications based on dependency order using topological sort."""
+        from harp.errors import CircularDependencyError, MissingDependencyError
+
+        # Build dependency graph
+        graph = {}
+        in_degree = {}
+        original_order = list(self._applications.keys())
+
+        for app_name in self._applications:
+            graph[app_name] = getattr(self._applications[app_name], "dependencies", [])
+            in_degree[app_name] = 0
+
+        # Check for missing dependencies
+        for app_name in self._applications:
+            for dep in graph[app_name]:
+                if dep not in graph:
+                    raise MissingDependencyError(f"Application '{app_name}' requires '{dep}' but it is not enabled")
+
+        # Calculate in-degree
+        for app_name in self._applications:
+            for dep in graph[app_name]:
+                in_degree[app_name] += 1
+
+        # Detect cycles using DFS
+        visited = set()
+        rec_stack = set()
+
+        def has_cycle(node, path):
+            visited.add(node)
+            rec_stack.add(node)
+            path.append(node)
+
+            for neighbor in graph.get(node, []):
+                if neighbor not in visited:
+                    if has_cycle(neighbor, path):
+                        return True
+                elif neighbor in rec_stack:
+                    # Found cycle
+                    cycle_start_idx = path.index(neighbor)
+                    cycle = path[cycle_start_idx:] + [neighbor]
+                    cycle_str = " → ".join(cycle)
+                    raise CircularDependencyError(f"Circular dependency detected: {cycle_str}")
+
+            path.pop()
+            rec_stack.remove(node)
+            return False
+
+        for app_name in self._applications:
+            if app_name not in visited:
+                has_cycle(app_name, [])
+
+        # Topological sort using Kahn's algorithm with stable ordering
+        queue = [app_name for app_name in original_order if in_degree[app_name] == 0]
+        sorted_apps = []
+
+        while queue:
+            node = queue.pop(0)
+            sorted_apps.append(node)
+
+            # Find apps that depend on this node
+            for app_name in original_order:
+                if node in graph[app_name]:
+                    in_degree[app_name] -= 1
+                    if in_degree[app_name] == 0:
+                        queue.append(app_name)
+
+        # Reconstruct _applications dict in sorted order
+        self._applications = {name: self._applications[name] for name in sorted_apps}
