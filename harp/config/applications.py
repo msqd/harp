@@ -243,9 +243,47 @@ class ApplicationsRegistry:
                         f"Application '{app_name}' requires {missing_deps} but they are not enabled"
                     )
 
+    def _detect_dependency_cycles(self, graph: dict[str, list[str]]) -> None:
+        """Detect circular dependencies using depth-first search.
+
+        Args:
+            graph: Dependency graph mapping app names to their dependencies
+
+        Raises:
+            CircularDependencyError: If a circular dependency is detected
+        """
+        from harp.errors import CircularDependencyError
+
+        visited = set()
+        recursion_stack = set()
+
+        def has_cycle(node, path):
+            visited.add(node)
+            recursion_stack.add(node)
+            path.append(node)
+
+            for neighbor in graph.get(node, []):
+                if neighbor not in visited:
+                    if has_cycle(neighbor, path):
+                        return True
+                elif neighbor in recursion_stack:
+                    # Found cycle
+                    cycle_start_idx = path.index(neighbor)
+                    cycle = path[cycle_start_idx:] + [neighbor]
+                    cycle_str = " → ".join(cycle)
+                    raise CircularDependencyError(f"Circular dependency detected: {cycle_str}")
+
+            path.pop()
+            recursion_stack.remove(node)
+            return False
+
+        for app_name in graph:
+            if app_name not in visited:
+                has_cycle(app_name, [])
+
     def resolve_dependencies(self):
         """Reorder applications based on dependency order using topological sort."""
-        from harp.errors import CircularDependencyError, MissingDependencyError
+        from harp.errors import MissingDependencyError
 
         # Build dependency graph
         graph = {}
@@ -266,33 +304,8 @@ class ApplicationsRegistry:
         for app_name in self._applications:
             in_degree[app_name] = len(graph[app_name])
 
-        # Detect cycles using DFS
-        visited = set()
-        rec_stack = set()
-
-        def has_cycle(node, path):
-            visited.add(node)
-            rec_stack.add(node)
-            path.append(node)
-
-            for neighbor in graph.get(node, []):
-                if neighbor not in visited:
-                    if has_cycle(neighbor, path):
-                        return True
-                elif neighbor in rec_stack:
-                    # Found cycle
-                    cycle_start_idx = path.index(neighbor)
-                    cycle = path[cycle_start_idx:] + [neighbor]
-                    cycle_str = " → ".join(cycle)
-                    raise CircularDependencyError(f"Circular dependency detected: {cycle_str}")
-
-            path.pop()
-            rec_stack.remove(node)
-            return False
-
-        for app_name in self._applications:
-            if app_name not in visited:
-                has_cycle(app_name, [])
+        # Detect cycles
+        self._detect_dependency_cycles(graph)
 
         # Topological sort using Kahn's algorithm with stable ordering
         queue = [app_name for app_name in original_order if in_degree[app_name] == 0]
