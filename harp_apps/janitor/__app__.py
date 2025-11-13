@@ -29,8 +29,8 @@ async def on_shutdown(event: OnShutdownEvent):
 
 
 application = Application(
+    dependencies=["storage"],
     on_bind=on_bind,
     on_bound=on_bound,
     on_shutdown=on_shutdown,
-    dependencies=["storage"],
 )
