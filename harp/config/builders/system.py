@@ -146,9 +146,13 @@ class SystemBuilder:
             self._configuration = self._configuration()
         return self._configuration
 
-    async def abuild(self) -> System:
+    async def abuild(self, *, validate_dependencies: bool = True) -> System:
         """
         Asynchronously builds and returns an instance of the System class, ready for use.
+
+        Args:
+            validate_dependencies: If True, validate and resolve application dependencies.
+                                  Set to False in tests when building partial systems. Default: True.
 
         Returns:
             System: An instance of the System class, assembled based on the provided configuration and components.
@@ -159,8 +163,9 @@ class SystemBuilder:
         config = self.configuration
 
         # Resolve application dependencies to ensure correct load order
-        self.applications.validate_dependencies()
-        self.applications.resolve_dependencies()
+        if validate_dependencies:
+            self.applications.validate_dependencies()
+            self.applications.resolve_dependencies()
 
         logger.info(f"📦 {', '.join(self.applications.keys())}")
         for name, app in self.applications.items():

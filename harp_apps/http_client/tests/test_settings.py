@@ -20,7 +20,7 @@ class BaseHttpClientSettingsTest(BaseConfigurableTest):
             use_default_applications=False,
         )
 
-        return await builder.abuild_system()
+        return await builder.abuild_system(validate_dependencies=False)
 
 
 class TestHttpClientSettings(BaseHttpClientSettingsTest):

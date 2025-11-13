@@ -298,10 +298,19 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         """
         return self.applications
 
-    async def abuild_system(self) -> System:
+    async def abuild_system(self, *, validate_dependencies: bool = True) -> System:
+        """Build the system with optional dependency validation.
+
+        Args:
+            validate_dependencies: If True, validate and resolve application dependencies.
+                                  Set to False in tests when building partial systems. Default: True.
+
+        Returns:
+            System: The built system instance.
+        """
         from .system import SystemBuilder
 
-        return await SystemBuilder(self.applications, self.build).abuild()
+        return await SystemBuilder(self.applications, self.build).abuild(validate_dependencies=validate_dependencies)
 
     @classmethod
     def from_commandline_options(cls, options) -> Self:

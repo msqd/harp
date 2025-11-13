@@ -19,7 +19,7 @@ class BaseSystemTest:
                 **deepcopy(self.settings),
             },
             use_default_applications=False,
-        ).abuild_system()
+        ).abuild_system(validate_dependencies=False)
 
 
 class TestBlobsControllerService(BaseSystemTest):

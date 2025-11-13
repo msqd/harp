@@ -98,7 +98,7 @@ class TestAsgiProxyWithStubApi:
             }
         )
 
-        system = await builder.abuild_system()
+        system = await builder.abuild_system(validate_dependencies=False)
 
         try:
             yield system.asgi_app
