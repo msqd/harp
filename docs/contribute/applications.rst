@@ -50,6 +50,87 @@ Test your settings:
    ``ApplicationSettingsMixin`` must be the first base class in the inheritance chain.
 
 
+Declaring Dependencies
+::::::::::::::::::::::
+
+.. versionadded:: 0.10
+   Applications can now declare dependencies to ensure correct initialization order.
+
+Applications can declare dependencies on other applications. The system validates these dependencies at startup and initializes applications in the correct order using topological sorting.
+
+Basic Usage
+-----------
+
+Declare dependencies by passing a list of application names:
+
+.. code-block:: python
+
+    from harp.config import Application
+    from .settings import ProxySettings
+
+    application = Application(
+        settings_type=ProxySettings,
+        dependencies=["storage", "http_client"],
+    )
+
+The system ensures:
+
+- All declared dependencies are enabled
+- Applications initialize in dependency order (dependencies before dependents)
+- Circular dependencies are detected and rejected
+- Clear error messages for configuration problems
+
+Dependency Resolution
+---------------------
+
+When the system starts, it:
+
+1. **Validates** all dependencies exist in the enabled applications
+2. **Detects** circular dependencies using depth-first search
+3. **Sorts** applications topologically using Kahn's algorithm
+4. **Initializes** applications in dependency order
+
+Error Handling
+--------------
+
+The system fails fast at startup if dependencies are invalid:
+
+**Missing dependency:**
+
+.. code-block:: text
+
+    MissingDependencyError: Application 'proxy' requires 'storage' but it is not enabled
+
+**Circular dependency:**
+
+.. code-block:: text
+
+    CircularDependencyError: Circular dependency detected: proxy → storage → proxy
+
+Best Practices
+--------------
+
+- Declare only direct dependencies (the system resolves transitive dependencies automatically)
+- Use simple application names (e.g., ``storage``, not ``harp_apps.storage``)
+- Keep dependency chains shallow when possible
+- Applications without dependencies work unchanged (backward compatible)
+
+Example Dependency Structure
+-----------------------------
+
+A typical HARP setup might look like:
+
+.. code-block:: text
+
+    storage (no dependencies)
+    ├── http_client (depends on storage)
+    │   └── proxy (depends on http_client, storage)
+    │       ├── dashboard (depends on proxy, storage)
+    │       └── rules (depends on storage)
+
+The system automatically determines the initialization order: ``storage``, ``http_client``, ``proxy``, then ``dashboard`` and ``rules`` in any order.
+
+
 Application Lifecycle
 :::::::::::::::::::::
 

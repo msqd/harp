@@ -4,6 +4,7 @@ Unreleased
 Added
 -----
 
+- Application dependency resolution with topological sorting to ensure correct initialization order
 - ApplicationSettingsMixin for standardized enable/disable functionality in application settings
 - ``--strict`` CLI flag for enforcing strict configuration validation
 - Warning system for misconfigured applications (config exists for unloaded apps)
