@@ -34,7 +34,7 @@ async def on_ready(event: OnReadyEvent):
 
 
 application = Application(
-    dependencies=["proxy"],  # TODO is that really a dependency ? (no related import)
+    dependencies=[],
     on_ready=on_ready,
     settings_type=MetricsSettings,
 )

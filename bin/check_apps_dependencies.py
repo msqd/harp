@@ -98,12 +98,24 @@ def extract_harp_imports(file_path: Path) -> set[str]:
 
 
 def scan_app_imports(app_dir: Path) -> set[str]:
-    """Scan all Python files in an app directory for harp_apps imports."""
+    """Scan all Python files in an app directory for harp_apps imports.
+
+    Excludes:
+    - All test directories (test, tests, or starting with test_)
+    - All files in test directories and subdirectories
+    - Test files (starting with test_)
+    - __pycache__ directories
+    """
     all_imports = set()
 
     for py_file in app_dir.rglob("*.py"):
+        # Skip any file in a test directory (including subdirectories)
+        is_in_test_dir = any(part in ("test", "tests") or part.startswith("test_") for part in py_file.parts)
+        if is_in_test_dir:
+            continue
+
         # Skip test files
-        if "test" in py_file.parts or py_file.name.startswith("test_"):
+        if py_file.name.startswith("test_"):
             continue
 
         # Skip __pycache__
