@@ -72,6 +72,48 @@ Adding default values
 .. todo:: cleanup and document that.
 
 
+ApplicationSettingsMixin
+------------------------
+
+.. versionadded:: 0.10
+
+All application settings classes should use the ``ApplicationSettingsMixin`` to provide standardized
+enable/disable functionality. This mixin adds an ``enabled`` field (default: ``True``) that allows
+applications to be toggled on/off via configuration.
+
+.. code-block:: python
+
+    from harp.config import ApplicationSettingsMixin, Configurable, Service
+
+    # With Configurable base class
+    class MyAppSettings(ApplicationSettingsMixin, Configurable):
+        name: str = "MyApp"
+        port: int = 8080
+
+    # With Service base class
+    class MyServiceSettings(ApplicationSettingsMixin, Service):
+        endpoint: str = "http://api.example.com"
+        timeout: int = 30
+
+.. important::
+   When using multiple inheritance, the ``ApplicationSettingsMixin`` **must** be listed first in the
+   inheritance chain. This ensures the ``enabled`` field is properly initialized.
+
+The ``enabled`` field allows users to disable applications without removing their configuration:
+
+.. code-block:: yaml
+
+    # config.yaml
+    myapp:
+        enabled: false  # Application will not be loaded
+        name: "MyApp"
+        port: 8080
+
+.. note::
+   Existing HARP applications are being migrated to use ``ApplicationSettingsMixin``. Until then,
+   some applications may use ``extra="allow"`` to accept the ``enabled`` field.
+
+
 Testing your Settings class
 :::::::::::::::::::::::::::
 
@@ -83,10 +125,12 @@ It's quite easy to test your settings class, and you should do it once you know 
         def test_default_values(self):
             settings = AcmeSettings()
             assert settings.name == "Fonzie"
+            assert settings.enabled is True  # Default from mixin
 
         def test_overriden_values(self):
-            settings = AcmeSettings(name="Joe")
+            settings = AcmeSettings(name="Joe", enabled=False)
             assert settings.name == "Joe"
+            assert settings.enabled is False
 
 Of course this example is dumb, but you'll know what to do.
 

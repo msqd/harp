@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import Field
 
-from harp.config import Service
+from harp.config import ApplicationSettingsMixin, Service
 from harp_apps.http_client.settings.cache import CacheSettings
 
 if TYPE_CHECKING:
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 from harp.settings import DEFAULT_TIMEOUT
 
 
-class HttpClientSettings(Service):
+class HttpClientSettings(ApplicationSettingsMixin, Service):
     type: str = Field("httpx.AsyncClient", description=Service.model_fields["type"].description)
     arguments: dict = {"timeout": DEFAULT_TIMEOUT}
 

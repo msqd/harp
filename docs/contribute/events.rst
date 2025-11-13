@@ -1,5 +1,5 @@
-Event Dispatcher
-================
+Events
+======
 
 .. tags:: events
 
@@ -28,7 +28,7 @@ Defining and exposing Events
 ::::::::::::::::::::::::::::
 
 An event is usually just a symbolic name (a string) that represents something happening in the system. If your
-an event is also associated with some context that the listeners might be interested in, you can associate it with a
+event is also associated with some context that the listeners might be interested in, you can associate it with a
 custom :class:`whistle.Event` class that will serve as an envelope for this context.
 
 .. code-block:: python
@@ -41,8 +41,8 @@ custom :class:`whistle.Event` class that will serve as an envelope for this cont
             super().__init__()
             self.context = context
 
-    async def main(dispatcher: IAsyncEventDispatcher):
-        event = dispatcher.adispatch('my.event', MyEvent({'foo': 'bar'}))
+    async def main(dispatcher):
+        event = await dispatcher.adispatch('my.event', MyEvent({'foo': 'bar'}))
 
         # the context can be accessed and changed by the listeners
         print(event.context)
@@ -93,13 +93,14 @@ will be called with the event instance when the event is dispatched.
     async def my_listener(event: MyEvent):
         print(event.context)
 
-    if __name__ == '__main__':
+    async def main():
         dispatcher = AsyncEventDispatcher()
         dispatcher.add_listener(MY_EVENT, my_listener)
 
-        event = dispatcher.adispatch(MY_EVENT, MyEvent({'foo': 'bar'}))
+        await dispatcher.adispatch(MY_EVENT, MyEvent({'foo': 'bar'}))
 
-        asyncio.run(event)
+    if __name__ == '__main__':
+        asyncio.run(main())
 
 Once again, this is an isolated class. A real-world application would register the listener with the system-wide
 event dispatcher, so it can listen to events from any component registered with the same dispatcher:

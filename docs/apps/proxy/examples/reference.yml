@@ -1,4 +1,5 @@
 proxy:
+  enabled: true
   endpoints:
   - controller:
       dispatcher:

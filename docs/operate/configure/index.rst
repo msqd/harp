@@ -40,3 +40,101 @@ documentation section:
 * :doc:`Storage </apps/storage/index>`: Settings for managing relational and non-relational storage solutions.
 * :doc:`Telemetry </apps/telemetry/index>`: Configuration for usage reporting and telemetry data collection.
 * :doc:`Rules Engine </apps/rules/index>`: Fine-tuning and configuration of the request lifecycle through rules.
+
+Application Filtering
+---------------------
+
+.. versionadded:: 0.10
+
+Applications can be selectively enabled or disabled through configuration, allowing you to customize
+which components are loaded at runtime. This is useful for environment-specific configurations or
+when certain applications are not needed.
+
+Disabling Applications
+^^^^^^^^^^^^^^^^^^^^^^^
+
+To disable an application, set ``enabled: false`` at the application's root level in your configuration:
+
+.. code-block:: yaml
+
+    # config.yaml
+    storage:
+        enabled: false  # Storage application will not be loaded
+        database_url: "postgresql://..."  # Configuration preserved but unused
+
+    http_client:
+        enabled: false  # HTTP client will not be loaded
+
+When an application is disabled:
+
+- The application is not loaded into the system
+- Its event handlers are not registered
+- Its services are not available for dependency injection
+- A warning is logged: ``Application '{name}' is disabled as per configuration directive``
+
+.. note::
+   Disabled applications can still have their configuration preserved in the file. This allows
+   you to toggle applications on/off without losing their settings.
+
+Unknown Applications
+^^^^^^^^^^^^^^^^^^^^
+
+If your configuration file contains settings for an application that is not loaded or does not exist,
+HARP will issue a warning:
+
+.. code-block:: text
+
+    Configuration found for application 'unknown_app' which is not loaded.
+    This may be strictly enforced in future versions.
+
+This helps detect typos or outdated configuration entries.
+
+Strict Mode
+^^^^^^^^^^^
+
+The ``--strict`` flag makes configuration validation more rigorous. When enabled, configuration
+for unknown applications will raise an error instead of a warning:
+
+.. code-block:: bash
+
+    # Normal mode - warnings only
+    $ harp-proxy server
+
+    # Strict mode - errors for unknown apps
+    $ harp-proxy server --strict
+
+Use strict mode in:
+
+- **CI/CD pipelines**: Catch configuration issues early
+- **Production deployments**: Ensure configuration matches expected applications
+- **Configuration validation**: Verify config files are correct
+
+Example: Environment-Specific Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: yaml
+
+    # production.yaml
+    dashboard:
+        enabled: false  # No dashboard in production
+
+    storage:
+        enabled: true
+        database_url: "postgresql://prod-db:5432/harp"
+
+    telemetry:
+        enabled: true
+        endpoint: "https://telemetry.example.com"
+
+.. code-block:: yaml
+
+    # development.yaml
+    dashboard:
+        enabled: true  # Dashboard available for developers
+
+    storage:
+        enabled: true
+        database_url: "sqlite:///dev.db"
+
+    telemetry:
+        enabled: false  # No telemetry in development

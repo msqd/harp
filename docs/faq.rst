@@ -11,6 +11,9 @@ The simplest way is to use the ``harp create project`` command. It will prompt f
 project based on a cookiecutter template. Once generated, you'll have ``make install``, ``make start`` and ``make
 test`` available within your newly created project.
 
+The generated project uses **UV** for fast dependency management (not Poetry), with a modern PEP 621 compliant
+``pyproject.toml`` and Python 3.13 compatibility.
+
 You can read more about project creation in the :doc:`developer guide </develop/quick-start>`.
 
 

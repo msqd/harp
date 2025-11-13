@@ -1,19 +1,24 @@
-[tool.poetry]
+[project]
 name = "{{cookiecutter.__pkg_name}}"
 version = "0.1.0"
 description = ""
 authors = [
-    "{{cookiecutter.author_name}} <{{cookiecutter.author_email}}>",
+    {name = "{{cookiecutter.author_name}}", email = "{{cookiecutter.author_email}}"},
 ]
 readme = "README.rst"
-{% if not cookiecutter.create_application -%}
-package-mode = false
-{%- endif %}
-
-[tool.poetry.dependencies]
-python = "^3.12"
-harp-proxy = "*"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "harp-proxy",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+{%- if not cookiecutter.create_application %}
+
+[tool.hatch.build.targets.wheel]
+only-include = ["README.rst"]
+{%- endif %}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

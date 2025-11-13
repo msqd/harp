@@ -53,6 +53,7 @@ class TestDefaultsWithNoStorage(BaseTestDefaultsWith):
                     },
                     "transport": {"type": "hishel.AsyncCacheTransport"},
                 },
+                "enabled": True,
                 "proxy_transport": {"type": "harp_apps.http_client.transport.AsyncFilterableTransport"},
                 "timeout": 30.0,
                 "transport": {

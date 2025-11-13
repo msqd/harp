@@ -10,9 +10,9 @@ Loading
 
 .. versionadded:: 0.8
 
-The ``rules`` application is loaded by default when using the ``harp start`` or ``harp server`` command.
+The ``rules`` application is loaded by default when using the ``harp-proxy start`` or ``harp-proxy server`` command.
 It can be disabled by passing the ``--disable rules`` option to the command.
 
 .. code:: shell
 
-    harp start --disable rules ...
+    harp-proxy start --disable rules ...
