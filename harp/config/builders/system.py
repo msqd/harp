@@ -157,6 +157,11 @@ class SystemBuilder:
 
         # Get lazy configuration.
         config = self.configuration
+
+        # Resolve application dependencies to ensure correct load order
+        self.applications.validate_dependencies()
+        self.applications.resolve_dependencies()
+
         logger.info(f"📦 {', '.join(self.applications.keys())}")
         for name, app in self.applications.items():
             logger.debug(f'... "{name}" application loaded from "{app.path}"')
