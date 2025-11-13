@@ -130,6 +130,35 @@ A typical HARP setup might look like:
 
 The system automatically determines the initialization order: ``storage``, ``http_client``, ``proxy``, then ``dashboard`` and ``rules`` in any order.
 
+Testing with Partial Systems
+-----------------------------
+
+When writing tests, you may need to build partial systems with only specific applications enabled. Since dependency validation is enabled by default, tests that build incomplete systems will fail if required dependencies are missing.
+
+Use the ``validate_dependencies=False`` parameter to bypass validation in tests:
+
+.. code-block:: python
+
+    from harp.config import ConfigurationBuilder
+
+    async def test_my_feature():
+        # Build partial system for isolated testing
+        system = await ConfigurationBuilder(
+            {"applications": ["http_client", "storage"]},
+            use_default_applications=False,
+        ).abuild_system(validate_dependencies=False)
+
+        # Test specific behavior without loading all dependencies
+        http_client = system.provider.get("http_client")
+        assert http_client is not None
+
+**Important Notes:**
+
+- Only use ``validate_dependencies=False`` in tests for partial systems
+- Production code should always validate dependencies (the default behavior)
+- Tests for the full system should keep validation enabled to catch real dependency issues
+- Command-line tools that build partial systems may also need this parameter
+
 
 Application Lifecycle
 :::::::::::::::::::::
