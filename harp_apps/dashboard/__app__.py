@@ -48,7 +48,7 @@ async def on_bound(event: OnBoundEvent):
 
 
 application = Application(
-    dependencies=["proxy", "storage"],
+    dependencies=["storage"],
     settings_type=DashboardSettings,
     on_bind=on_bind,
     on_bound=on_bound,

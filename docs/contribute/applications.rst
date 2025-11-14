@@ -65,7 +65,7 @@ Applications declare dependencies as a list. At startup, the system validates al
 
     application = Application(
         settings_type=ProxySettings,
-        dependencies=["storage", "http_client"],  # Simple list of app names
+        dependencies=["http_client"],  # Simple list of app names
     )
 
 **Best practices:**
@@ -79,10 +79,10 @@ Applications declare dependencies as a list. At startup, the system validates al
 .. code-block:: text
 
     # Missing dependency
-    MissingDependencyError: Application 'proxy' requires 'storage' but it is not enabled
+    MissingDependencyError: Application 'dashboard' requires 'storage' but it is not enabled
 
     # Circular dependency
-    CircularDependencyError: Circular dependency detected: proxy → storage → proxy
+    CircularDependencyError: Circular dependency detected: a → b → c → a
 
 **Testing with partial systems:**
 
