@@ -54,15 +54,9 @@ Declaring Dependencies
 ::::::::::::::::::::::
 
 .. versionadded:: 0.10
-   Applications should now declare dependencies to ensure correct initialization order.
+   Applications can declare dependencies to ensure correct initialization order.
 
-Applications can declare dependencies on other applications. The system validates these dependencies at startup and
-initializes applications in the correct order using topological sorting.
-
-Basic Usage
------------
-
-Declare dependencies by passing a list of application names:
+Applications declare dependencies as a list. At startup, the system validates all dependencies exist, detects cycles, and initializes applications in topological order.
 
 .. code-block:: python
 
@@ -71,89 +65,38 @@ Declare dependencies by passing a list of application names:
 
     application = Application(
         settings_type=ProxySettings,
-        dependencies=["storage", "http_client"],
+        dependencies=["storage", "http_client"],  # Simple list of app names
     )
 
-The system ensures:
+**Best practices:**
 
-- All declared dependencies are enabled
-- Applications initialize in dependency order (dependencies before dependents)
-- Circular dependencies are detected and rejected
+- Declare only direct dependencies (transitive dependencies are resolved automatically)
+- Use simple names (``storage``, not ``harp_apps.storage``)
+- Applications without dependencies work unchanged
 
-Dependency Resolution
----------------------
-
-At startup, the system validates dependencies, detects cycles, and initializes applications in topological order.
-
-Error Handling
---------------
-
-The system fails fast at startup if dependencies are invalid:
-
-**Missing dependency:**
+**Error examples:**
 
 .. code-block:: text
 
+    # Missing dependency
     MissingDependencyError: Application 'proxy' requires 'storage' but it is not enabled
 
-**Circular dependency:**
-
-.. code-block:: text
-
+    # Circular dependency
     CircularDependencyError: Circular dependency detected: proxy → storage → proxy
 
-Best Practices
---------------
+**Testing with partial systems:**
 
-- Declare only direct dependencies (the system resolves transitive dependencies automatically)
-- Use simple application names (e.g., ``storage``, not ``harp_apps.storage``)
-- Keep dependency chains shallow when possible
-- Applications without dependencies work unchanged (backward compatible)
-
-Example Dependency Structure
------------------------------
-
-A typical HARP setup might look like:
-
-.. code-block:: text
-
-    storage (no dependencies)
-    ├── http_client (depends on storage)
-    │   └── proxy (depends on http_client, storage)
-    │       ├── dashboard (depends on proxy, storage)
-    │       └── rules (depends on storage)
-
-The system automatically determines the initialization order: ``storage``, ``http_client``, ``proxy``, then ``dashboard`` and ``rules`` in any order.
-
-Testing with Partial Systems
------------------------------
-
-When writing tests, you may need to build partial systems with only specific applications enabled. Since dependency validation is enabled by default, tests that build incomplete systems will fail if required dependencies are missing.
-
-Use the ``validate_dependencies=False`` parameter to bypass validation in tests:
+Tests building incomplete systems can bypass validation with ``validate_dependencies=False``:
 
 .. code-block:: python
 
-    from harp.config import ConfigurationBuilder
+    system = await ConfigurationBuilder(
+        {"applications": ["http_client", "storage"]},
+        use_default_applications=False,
+    ).abuild_system(validate_dependencies=False)  # Skip validation for tests
 
-    async def test_my_feature():
-        # Build partial system for isolated testing
-        system = await ConfigurationBuilder(
-            {"applications": ["http_client", "storage"]},
-            use_default_applications=False,
-        ).abuild_system(validate_dependencies=False)
-
-        # Test specific behavior without loading all dependencies
-        http_client = system.provider.get("http_client")
-        assert http_client is not None
-
-**Important Notes:**
-
-- Only use ``validate_dependencies=False`` in tests for partial systems
-- Production code should always validate dependencies (the default behavior)
-- Tests for the full system should keep validation enabled to catch real dependency issues
-- Command-line tools that build partial systems may also need this parameter
-
+.. warning::
+   Only use ``validate_dependencies=False`` in tests. Production code should always validate (default behavior).
 
 Application Lifecycle
 :::::::::::::::::::::
