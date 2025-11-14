@@ -300,7 +300,7 @@ class ApplicationsRegistry:
                 if dep not in graph:
                     raise MissingDependencyError(f"Application '{app_name}' requires '{dep}' but it is not enabled")
 
-        # Calculate in-degree (number of unprocessed dependencies per app)
+        # Calculate in-degree (number of declared dependencies per app)
         for app_name in self._applications:
             in_degree[app_name] = len(graph[app_name])
 

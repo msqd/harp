@@ -6,21 +6,12 @@ Applications can declare dependencies on other applications, and the registry mu
 1. Validate that all dependencies exist
 2. Detect circular dependencies
 3. Order applications topologically based on their dependencies
-
-All tests in this file should FAIL initially until the feature is implemented.
 """
 
 import pytest
 
 from harp.config import Application, ApplicationsRegistry
-
-
-# These exception classes should be added to harp.errors module
-# They don't exist yet - tests will fail with ImportError
-from harp.errors import (
-    CircularDependencyError,  # Will be added: raised when circular dependencies detected
-    MissingDependencyError,  # Will be added: raised when required dependency not enabled
-)
+from harp.errors import CircularDependencyError, MissingDependencyError
 
 
 class ApplicationsRegistryMock(ApplicationsRegistry):
@@ -54,7 +45,6 @@ class TestDependencyValidation:
         proxy_app = Application(dependencies=["storage"])
         registry.add_mock("proxy", proxy_app)
 
-        # This method doesn't exist yet - test will fail with AttributeError
         with pytest.raises(
             MissingDependencyError, match="Application 'proxy' requires 'storage' but it is not enabled"
         ):
@@ -185,7 +175,6 @@ class TestTopologicalSorting:
         registry.add_mock("b", app_b)
         registry.add_mock("c", app_c)
 
-        # This method doesn't exist yet - test will fail with AttributeError
         registry.resolve_dependencies()
 
         # After resolution, registry should be ordered by dependencies
@@ -373,7 +362,6 @@ class TestCircularDependencies:
         registry.add_mock("a", app_a)
         registry.add_mock("b", app_b)
 
-        # CircularDependencyError doesn't exist yet - will fail with ImportError
         with pytest.raises(CircularDependencyError, match="Circular dependency detected.*a.*b.*a"):
             registry.resolve_dependencies()
 
