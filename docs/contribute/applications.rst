@@ -54,9 +54,10 @@ Declaring Dependencies
 ::::::::::::::::::::::
 
 .. versionadded:: 0.10
-   Applications can now declare dependencies to ensure correct initialization order.
+   Applications should now declare dependencies to ensure correct initialization order.
 
-Applications can declare dependencies on other applications. The system validates these dependencies at startup and initializes applications in the correct order using topological sorting.
+Applications can declare dependencies on other applications. The system validates these dependencies at startup and
+initializes applications in the correct order using topological sorting.
 
 Basic Usage
 -----------
@@ -78,17 +79,11 @@ The system ensures:
 - All declared dependencies are enabled
 - Applications initialize in dependency order (dependencies before dependents)
 - Circular dependencies are detected and rejected
-- Clear error messages for configuration problems
 
 Dependency Resolution
 ---------------------
 
-When the system starts, it:
-
-1. **Validates** all dependencies exist in the enabled applications
-2. **Detects** circular dependencies using depth-first search
-3. **Sorts** applications topologically using Kahn's algorithm
-4. **Initializes** applications in dependency order
+At startup, the system validates dependencies, detects cycles, and initializes applications in topological order.
 
 Error Handling
 --------------
