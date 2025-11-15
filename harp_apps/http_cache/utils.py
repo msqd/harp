@@ -1,4 +1,7 @@
-from harp.utils.bytes import ensure_bytes
+from hishel import Headers
+from multidict import CIMultiDict
+
+from harp.utils.bytes import ensure_str
 
 
 def prepare_headers_for_serialization(headers, /, *, varying=()) -> tuple[bytes, dict[str, str], dict[str, str]]:
@@ -20,7 +23,10 @@ def prepare_headers_for_serialization(headers, /, *, varying=()) -> tuple[bytes,
     if hasattr(headers, "items"):
         # hishel 1.0: Headers is a MutableMapping
         header_items = [
-            (k.encode() if isinstance(k, str) else k, str(v).encode() if not isinstance(v, bytes) else v)
+            (
+                k.encode() if isinstance(k, str) else k,
+                str(v).encode() if not isinstance(v, bytes) else v,
+            )
             for k, v in headers.items()
         ]
     else:
@@ -40,13 +46,24 @@ def prepare_headers_for_serialization(headers, /, *, varying=()) -> tuple[bytes,
     return b"\n".join(static_headers), varying_headers, metadata
 
 
-def _parse_header(header: bytes) -> tuple[bytes, bytes]:
+def _parse_header(header: bytes) -> tuple[str, str]:
     splitted = header.split(b": ", 1)
-    return (splitted[0], splitted[1])
+    return (ensure_str(splitted[0]), ensure_str(splitted[1]))
 
 
-def prepare_headers_for_deserialization(headers: bytes, /, *, varying: dict) -> list[tuple[bytes, bytes]]:
-    return [
-        *(_parse_header(header) for header in headers.split(b"\n")),
-        *((ensure_bytes(k), ensure_bytes(v)) for k, v in varying.items()),
-    ]
+def deserialize_headers(headers: bytes, /, *, varying: dict) -> Headers:
+    """
+    Deserialize headers for hishel.
+
+    :param headers: blob content to be deserialized
+    :param varying: additional headers to be included
+    :return: hishel Headers
+    """
+    return Headers(
+        CIMultiDict(
+            (
+                *(_parse_header(header) for header in headers.split(b"\n") if header),
+                *((ensure_str(k), ensure_str(v)) for k, v in varying.items()),
+            )
+        )
+    )

@@ -11,7 +11,6 @@
   access-control-allow-credentials: true
   access-control-allow-origin: *
   content-type: application/json; charset=utf-8
-  x-cache: MISS
   {
     "hostname": "go-httpbin"
   }

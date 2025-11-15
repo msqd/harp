@@ -116,20 +116,20 @@ class TestAsgiProxyWithStubApi:
         response = await client.http_request(method, "/echo")
         assert response["status"] == 200
         assert response["body"] == method.encode("utf-8") + b" /echo"
-        assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"), (b"x-cache", b"MISS"))
+        assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
 
     async def test_head_request(self, client: ASGICommunicator):
         response = await client.http_head("/echo")
         assert response["status"] == 200
         assert response["body"] == b""
-        assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"), (b"x-cache", b"MISS"))
+        assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
 
     @parametrize_with_http_methods(include_having_request_body=True)
     async def test_requests_with_body(self, client: ASGICommunicator, method):
         response = await client.http_request(method, "/echo/body", body=b"Hello, world.")
         assert response["status"] == 200
         assert response["body"] == method.encode("utf-8") + b" /echo/body\nb'Hello, world.'"
-        assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"), (b"x-cache", b"MISS"))
+        assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
 
     @parametrize_with_http_methods(include_having_request_body=True)
     async def test_requests_with_binary_body(self, client: ASGICommunicator, method):
@@ -137,14 +137,14 @@ class TestAsgiProxyWithStubApi:
         response = await client.http_request(method, "/echo/body", body=body)
         assert response["status"] == 200
         assert response["body"] == method.encode("utf-8") + b" /echo/body\n" + repr(body).encode("ascii")
-        assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"), (b"x-cache", b"MISS"))
+        assert response["headers"] == ((b"content-type", b"text/html; charset=utf-8"),)
 
     @parametrize_with_http_methods(include_having_response_body=True, include_maybe_having_response_body=True)
     async def test_requests_with_response_body(self, client: ASGICommunicator, method):
         response = await client.http_request(method, "/binary")
         assert response["status"] == 200
         assert len(response["body"]) == 32
-        assert response["headers"] == ((b"content-type", b"application/octet-stream"), (b"x-cache", b"MISS"))
+        assert response["headers"] == ((b"content-type", b"application/octet-stream"),)
 
     @parametrize_with_http_methods(exclude={"CONNECT", "HEAD"})
     async def test_response_status(self, client: ASGICommunicator, method):
@@ -160,5 +160,4 @@ class TestAsgiProxyWithStubApi:
         assert response["headers"] == (
             (b"x-foo", b"Bar"),
             (b"content-type", b"application/octet-stream"),
-            (b"x-cache", b"MISS"),
         )

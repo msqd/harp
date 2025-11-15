@@ -17,6 +17,7 @@ Submodules
     harp_apps.acme
     harp_apps.contrib
     harp_apps.dashboard
+    harp_apps.http_cache
     harp_apps.http_client
     harp_apps.janitor
     harp_apps.metrics

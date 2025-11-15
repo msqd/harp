@@ -8,7 +8,7 @@ services:
 
   # Proxy filter, decorating the regular http transport
   - name: "http_client.proxy_transport"
-    type: [!cfg "proxy_transport.type", "harp_apps.http_client.transport.AsyncFilterableTransport"]
+    type: [!cfg "proxy_transport.type", "harp_apps.http_client.transports.AsyncFilterableTransport"]
     defaults:
       - transport: !ref "http_client.transport"
     arguments: [!cfg "proxy_transport.arguments", {}]
@@ -17,51 +17,3 @@ services:
   - name: "http_client.transport"
     type: [!cfg "transport.type", "httpx.AsyncHTTPTransport"]
     arguments: [!cfg "transport.arguments", {}]
-
-  # Cache implementation, using hishel, if enabled in config (default)
-  - condition: [!cfg "cache.enabled", !!bool "true"]
-    services:
-      # Override http_client with cache transport
-      - name: "http_client"
-        override: "merge"
-        defaults:
-          transport: !ref "http_client.cache.transport"
-
-      # Caching transport decorator, wrapping the proxy transport
-      - name: "http_client.cache.transport"
-        type: [!cfg "cache.transport.type", "hishel._async_httpx.AsyncCacheTransport"]
-        defaults:
-          # hishel 1.0: parameter renamed from 'transport' to 'next_transport'
-          next_transport: !ref "http_client.proxy_transport"
-          storage: !ref "http_client.cache.storage"
-          # hishel 1.0: parameter renamed from 'controller' to 'policy'
-          policy: !ref "http_client.cache.policy"
-        arguments: [!cfg "cache.transport.arguments", {}]
-
-      # Caching policy, responsible for determining what is cacheable
-      # hishel 1.0: renamed from 'controller' to 'policy', uses SpecificationPolicy
-      - name: "http_client.cache.policy"
-        type: [!cfg "cache.policy.type", "hishel.SpecificationPolicy"]
-        defaults:
-          cache_options: !ref "http_client.cache.policy.options"
-        arguments: [!cfg "cache.policy.arguments", {}]
-
-      # Default cache options for the policy
-      - name: "http_client.cache.policy.options"
-        type: "hishel.CacheOptions"
-        arguments:
-          shared: true
-          supported_methods: ["GET", "HEAD"]
-          allow_stale: false
-
-      # Cache storage implementation, a.k.a how to store and retrieve cache data
-      - name: "http_client.cache.storage"
-        base: [!cfg "cache.storage.base", "hishel.AsyncBaseStorage"]
-        type: [!cfg "cache.storage.type", "harp_apps.http_client.contrib.hishel.storages.AsyncStorage"]
-        defaults:
-          storage: !ref ["storage.blobs", "http_client.fallback_blob_storage"]
-        arguments: [!cfg "cache.storage.arguments", {}]
-
-      # Fallback blob storage, used by the cache storage if no other storage is available
-      - name: "http_client.fallback_blob_storage"
-        type: harp_apps.storage.services.blob_storages.memory.MemoryBlobStorage

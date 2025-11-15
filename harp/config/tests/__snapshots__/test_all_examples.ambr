@@ -6,7 +6,7 @@
     'docs/apps/dashboard/examples/devserver.yml',
     'docs/apps/dashboard/examples/main.yml',
     'docs/apps/dashboard/examples/reference.yml',
-    'docs/apps/http_client/examples/cache.yml',
+    'docs/apps/http_cache/examples/cache.yml',
     'docs/apps/http_client/examples/full.yml',
     'docs/apps/http_client/examples/reference.yml',
     'docs/apps/http_client/examples/simple.yml',
@@ -115,20 +115,11 @@
   
   '''
 # ---
-# name: test_load_documentation_example[docs/apps/http_client/examples/cache.yml]
+# name: test_load_documentation_example[docs/apps/http_cache/examples/cache.yml]
   '''
   dashboard: {}
   harp_apps.contrib.sentry: {}
-  http_client:
-    cache:
-      policy:
-        cache_options:
-          allow_stale: false
-          shared: true
-          supported_methods:
-          - GET
-          - HEAD
-        type: hishel.SpecificationPolicy
+  http_client: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -141,16 +132,20 @@
   harp_apps.contrib.sentry: {}
   http_client:
     cache:
+      enabled: true
       policy:
-        cache_options:
-          allow_stale: false
-          shared: true
-          supported_methods:
-          - GET
-          - HEAD
+        arguments:
+          cache_options:
+            allow_stale: false
+            shared: true
+            supported_methods:
+            - GET
+            - HEAD
         type: hishel.SpecificationPolicy
       storage:
         type: hishel.AsyncFileStorage
+      transport:
+        type: hishel._async_httpx.AsyncCacheTransport
     timeout: 10.0
     transport:
       type: httpx.AsyncHTTPTransport

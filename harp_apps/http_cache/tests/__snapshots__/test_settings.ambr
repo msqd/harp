@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: TestHttpClientSettings.test_jsonschema_for_serialization
+# name: TestHttpCacheSettings.test_jsonschema_for_serialization
   dict({
     '$defs': dict({
       'Service': dict({
@@ -63,74 +63,40 @@
         'type': 'object',
       }),
     }),
-    'additionalProperties': True,
+    'additionalProperties': False,
     'properties': dict({
-      'arguments': dict({
-        'additionalProperties': True,
-        'default': dict({
-          'timeout': 30.0,
-        }),
-        'title': 'Arguments',
-        'type': 'object',
-      }),
-      'base': dict({
-        'anyOf': list([
-          dict({
-            'type': 'string',
-          }),
-          dict({
-            'type': 'null',
-          }),
-        ]),
-        'default': None,
-        'description': 'Base type for service definition.',
-        'title': 'Base',
-      }),
-      'constructor': dict({
-        'anyOf': list([
-          dict({
-            'type': 'string',
-          }),
-          dict({
-            'type': 'null',
-          }),
-        ]),
-        'default': None,
-        'description': 'Optional custom constructor for the service.',
-        'title': 'Constructor',
-      }),
       'enabled': dict({
         'default': True,
-        'description': 'Whether the application is enabled',
         'title': 'Enabled',
         'type': 'boolean',
       }),
-      'proxy_transport': dict({
+      'policy': dict({
         '$ref': '#/$defs/Service',
         'default': dict({
-          'type': 'harp_apps.http_client.transports.AsyncFilterableTransport',
+          'type': 'hishel.SpecificationPolicy',
+        }),
+      }),
+      'storage': dict({
+        '$ref': '#/$defs/Service',
+        'default': dict({
+          'base': 'hishel.AsyncBaseStorage',
+          'check_ttl_every': 60.0,
+          'ttl': None,
+          'type': 'harp_apps.http_cache.storages.AsyncStorage',
         }),
       }),
       'transport': dict({
         '$ref': '#/$defs/Service',
         'default': dict({
-          'retries': 0,
-          'type': 'httpx.AsyncHTTPTransport',
-          'verify': True,
+          'type': 'hishel._async_httpx.AsyncCacheTransport',
         }),
       }),
-      'type': dict({
-        'default': 'httpx.AsyncClient',
-        'description': 'Type for service definition.',
-        'title': 'Type',
-        'type': 'string',
-      }),
     }),
-    'title': 'HttpClientSettings',
+    'title': 'HttpCacheSettings',
     'type': 'object',
   })
 # ---
-# name: TestHttpClientSettings.test_jsonschema_for_validation
+# name: TestHttpCacheSettings.test_jsonschema_for_validation
   dict({
     '$defs': dict({
       'Service': dict({
@@ -194,70 +160,36 @@
         'type': 'object',
       }),
     }),
-    'additionalProperties': True,
+    'additionalProperties': False,
     'properties': dict({
-      'arguments': dict({
-        'additionalProperties': True,
-        'default': dict({
-          'timeout': 30.0,
-        }),
-        'title': 'Arguments',
-        'type': 'object',
-      }),
-      'base': dict({
-        'anyOf': list([
-          dict({
-            'type': 'string',
-          }),
-          dict({
-            'type': 'null',
-          }),
-        ]),
-        'default': None,
-        'description': 'Base type for service definition.',
-        'title': 'Base',
-      }),
-      'constructor': dict({
-        'anyOf': list([
-          dict({
-            'type': 'string',
-          }),
-          dict({
-            'type': 'null',
-          }),
-        ]),
-        'default': None,
-        'description': 'Optional custom constructor for the service.',
-        'title': 'Constructor',
-      }),
       'enabled': dict({
         'default': True,
-        'description': 'Whether the application is enabled',
         'title': 'Enabled',
         'type': 'boolean',
       }),
-      'proxy_transport': dict({
+      'policy': dict({
         '$ref': '#/$defs/Service',
         'default': dict({
-          'type': 'harp_apps.http_client.transports.AsyncFilterableTransport',
+          'type': 'hishel.SpecificationPolicy',
+        }),
+      }),
+      'storage': dict({
+        '$ref': '#/$defs/Service',
+        'default': dict({
+          'base': 'hishel.AsyncBaseStorage',
+          'check_ttl_every': 60.0,
+          'ttl': None,
+          'type': 'harp_apps.http_cache.storages.AsyncStorage',
         }),
       }),
       'transport': dict({
         '$ref': '#/$defs/Service',
         'default': dict({
-          'retries': 0,
-          'type': 'httpx.AsyncHTTPTransport',
-          'verify': True,
+          'type': 'hishel._async_httpx.AsyncCacheTransport',
         }),
       }),
-      'type': dict({
-        'default': 'httpx.AsyncClient',
-        'description': 'Type for service definition.',
-        'title': 'Type',
-        'type': 'string',
-      }),
     }),
-    'title': 'HttpClientSettings',
+    'title': 'HttpCacheSettings',
     'type': 'object',
   })
 # ---

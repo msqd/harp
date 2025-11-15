@@ -1,15 +1,14 @@
 import typing as tp
 import uuid
-from datetime import datetime
-
 import yaml
-from hishel import Entry, EntryMeta
-from httpcore import Request, Response
+from datetime import datetime
+from hishel import Entry, EntryMeta, Request, Response
+from hishel._core.models import AnyIterable
 
 from harp.models import Blob
 from harp.utils.urls import _convert_url_to_string
-from harp_apps.http_client.contrib.hishel.utils import (
-    prepare_headers_for_deserialization,
+from harp_apps.http_cache.utils import (
+    deserialize_headers,
     prepare_headers_for_serialization,
 )
 from harp_apps.storage.types import IBlobStorage
@@ -97,9 +96,11 @@ class AsyncStorageAdapter:
         meta = EntryMeta(
             created_at=meta_data.get(
                 "created_at_ts",
-                datetime.strptime(meta_data["created_at"], "%a, %d %b %Y %H:%M:%S GMT").timestamp()
-                if "created_at" in meta_data
-                else 0.0,
+                (
+                    datetime.strptime(meta_data["created_at"], "%a, %d %b %Y %H:%M:%S GMT").timestamp()
+                    if "created_at" in meta_data
+                    else 0.0
+                ),
             ),
             deleted_at=meta_data.get("deleted_at"),
         )
@@ -172,8 +173,8 @@ class AsyncStorageAdapter:
         headers = await self.storage.put(Blob.from_data(headers, content_type="http/headers"))
         return {
             # hishel 1.0: method and url are already strings
-            "method": request.method if isinstance(request.method, str) else request.method.decode("ascii"),
-            "url": request.url if isinstance(request.url, str) else _convert_url_to_string(request.url),
+            "method": (request.method if isinstance(request.method, str) else request.method.decode("ascii")),
+            "url": (request.url if isinstance(request.url, str) else _convert_url_to_string(request.url)),
             "headers": headers.id,
             "varying": varying_headers,
             # hishel 1.0: metadata is dict, not extensions
@@ -187,11 +188,18 @@ class AsyncStorageAdapter:
     async def _unserialize_request(self, data: SerializedRequest) -> Request:
         headers = await self.storage.get(data["headers"])
 
+        # Handle case where headers blob is missing
+        if headers is None:
+            # Fallback to empty headers if the blob is missing
+            headers_data = b""
+        else:
+            headers_data = headers.data
+
         return Request(
             method=data["method"],
             url=data["url"],
-            headers=prepare_headers_for_deserialization(headers.data, varying=data.get("varying") or {}),
-            extensions=data.get("extensions") or {},
+            headers=deserialize_headers(headers_data, varying=data.get("varying") or {}),
+            # extensions=data.get("extensions") or {},
         )
 
     async def _serialize_response(self, response: Response) -> SerializedResponse:
@@ -244,10 +252,10 @@ class AsyncStorageAdapter:
             raise ValueError(f"Cache entry incomplete: headers={headers is not None}, body={body is not None}")
 
         return Response(
-            status=data["status"],
-            headers=prepare_headers_for_deserialization(headers.data, varying=data.get("varying") or {}),
-            content=body.data,
-            extensions={
+            status_code=data["status"],
+            headers=deserialize_headers(headers.data, varying=data.get("varying") or {}),
+            stream=AnyIterable(body.data),
+            metadata={
                 key: value.encode() if isinstance(value, str) else value
                 for key, value in (data.get("extensions") or {}).items()
             },

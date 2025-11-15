@@ -35,13 +35,17 @@
     ''',
   })
 # ---
-# name: test_all_applications_default_settings[harp_apps.http_client]
+# name: test_all_applications_default_settings[harp_apps.http_cache]
   dict({
-    'harp_apps.http_client.settings.HttpClientSettings': '''
+    'harp_apps.http_cache.settings.HttpCacheSettings': '''
       {}
   
     ''',
-    'harp_apps.http_client.settings.cache.CacheSettings': '''
+  })
+# ---
+# name: test_all_applications_default_settings[harp_apps.http_client]
+  dict({
+    'harp_apps.http_client.settings.HttpClientSettings': '''
       {}
   
     ''',

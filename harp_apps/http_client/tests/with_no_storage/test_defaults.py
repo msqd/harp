@@ -4,16 +4,15 @@ import respx
 from httpx import AsyncClient, Response
 
 from harp.config.asdict import asdict
-from harp_apps.http_client.contrib.hishel.storages import AsyncStorage
 from harp_apps.http_client.events import EVENT_FILTER_HTTP_CLIENT_REQUEST, EVENT_FILTER_HTTP_CLIENT_RESPONSE
 from harp_apps.http_client.tests._base import BaseTestDefaultsWith
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
 
 URL = "http://www.example.com/"
 
 
 class TestDefaultsWithNoStorage(BaseTestDefaultsWith):
     async def test_defaults(self):
+        """Test http_client defaults without storage app."""
         system = await self.create_system()
 
         assert asdict(system.config) == {
@@ -23,23 +22,8 @@ class TestDefaultsWithNoStorage(BaseTestDefaultsWith):
         assert asdict(system.config, verbose=True) == {
             "applications": ["harp_apps.http_client"],
             "http_client": {
-                "cache": {
-                    "enabled": True,
-                    # hishel 1.0: Controller → SpecificationPolicy (CacheOptions configured in services.yml)
-                    "policy": {
-                        "type": "hishel.SpecificationPolicy",
-                    },
-                    "storage": {
-                        "base": "hishel.AsyncBaseStorage",
-                        "check_ttl_every": 60.0,
-                        "ttl": None,
-                        "type": "harp_apps.http_client.contrib.hishel.storages.AsyncStorage",
-                    },
-                    # hishel 1.0: AsyncCacheTransport moved to _async_httpx module
-                    "transport": {"type": "hishel._async_httpx.AsyncCacheTransport"},
-                },
                 "enabled": True,
-                "proxy_transport": {"type": "harp_apps.http_client.transport.AsyncFilterableTransport"},
+                "proxy_transport": {"type": "harp_apps.http_client.transports.AsyncFilterableTransport"},
                 "timeout": 30.0,
                 "transport": {
                     "retries": 0,
@@ -50,12 +34,9 @@ class TestDefaultsWithNoStorage(BaseTestDefaultsWith):
             },
         }
 
-        storage = system.provider.get("http_client.cache.storage")
-        assert isinstance(storage, AsyncStorage)
-        assert isinstance(storage._storage, MemoryBlobStorage)
-
     @respx.mock
     async def test_events(self):
+        """Test that http_client events are fired correctly."""
         system = await self.create_system()
         endpoint = respx.get(URL).mock(return_value=Response(200, content=b"Hello, world."))
         http_client = system.provider.get(AsyncClient)

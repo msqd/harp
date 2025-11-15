@@ -6,11 +6,30 @@
  */
 
 declare namespace Apps.HttpClient {
-  export interface CacheSettings {
+  export interface HttpClientSettings {
+    /**
+     * Base type for service definition.
+     */
+    base?: string | null;
+    /**
+     * Type for service definition.
+     */
+    type?: string;
+    /**
+     * Optional custom constructor for the service.
+     */
+    constructor?: string | null;
+    arguments?: Arguments;
+    /**
+     * Whether the application is enabled
+     */
     enabled?: boolean;
     transport?: Service;
-    policy?: Service1;
-    storage?: Service2;
+    proxy_transport?: Service1;
+    [k: string]: unknown;
+  }
+  export interface Arguments {
+    [k: string]: unknown;
   }
   /**
    * A settings base class for service definitions.
@@ -40,110 +59,6 @@ declare namespace Apps.HttpClient {
    * A settings base class for service definitions.
    */
   export interface Service1 {
-    /**
-     * Base type for service definition.
-     */
-    base?: string | null;
-    /**
-     * Type for service definition.
-     */
-    type?: string | null;
-    /**
-     * Optional custom constructor for the service.
-     */
-    constructor?: string | null;
-    /**
-     * Arguments for the service constructor.
-     */
-    arguments?: {
-      [k: string]: unknown;
-    } | null;
-    [k: string]: unknown;
-  }
-  /**
-   * A settings base class for service definitions.
-   */
-  export interface Service2 {
-    /**
-     * Base type for service definition.
-     */
-    base?: string | null;
-    /**
-     * Type for service definition.
-     */
-    type?: string | null;
-    /**
-     * Optional custom constructor for the service.
-     */
-    constructor?: string | null;
-    /**
-     * Arguments for the service constructor.
-     */
-    arguments?: {
-      [k: string]: unknown;
-    } | null;
-    [k: string]: unknown;
-  }
-  export interface HttpClientSettings {
-    /**
-     * Base type for service definition.
-     */
-    base?: string | null;
-    /**
-     * Type for service definition.
-     */
-    type?: string;
-    /**
-     * Optional custom constructor for the service.
-     */
-    constructor?: string | null;
-    arguments?: Arguments;
-    /**
-     * Whether the application is enabled
-     */
-    enabled?: boolean;
-    cache?: CacheSettings1;
-    transport?: Service3;
-    proxy_transport?: Service4;
-    [k: string]: unknown;
-  }
-  export interface Arguments {
-    [k: string]: unknown;
-  }
-  export interface CacheSettings1 {
-    enabled?: boolean;
-    transport?: Service;
-    policy?: Service1;
-    storage?: Service2;
-  }
-  /**
-   * A settings base class for service definitions.
-   */
-  export interface Service3 {
-    /**
-     * Base type for service definition.
-     */
-    base?: string | null;
-    /**
-     * Type for service definition.
-     */
-    type?: string | null;
-    /**
-     * Optional custom constructor for the service.
-     */
-    constructor?: string | null;
-    /**
-     * Arguments for the service constructor.
-     */
-    arguments?: {
-      [k: string]: unknown;
-    } | null;
-    [k: string]: unknown;
-  }
-  /**
-   * A settings base class for service definitions.
-   */
-  export interface Service4 {
     /**
      * Base type for service definition.
      */

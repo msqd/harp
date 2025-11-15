@@ -1,3 +1,5 @@
+!/harp_apps/dashboard/web/.gitkeep
+!/misc/cache-tests/cache-tests/results/index.mjs
 *$py.class
 *.cover
 *.egg
@@ -45,12 +47,11 @@
 /harp.db
 /harp_apps/dashboard/frontend/stats.html
 /harp_apps/dashboard/web/*
-!/harp_apps/dashboard/web/.gitkeep
-/misc/kitchen-sink/harp.db
-/misc/secrets
 /misc/cache-tests/cache-tests/node_modules/
 /misc/cache-tests/cache-tests/results/harp.json
-!/misc/cache-tests/cache-tests/results/index.mjs
+/misc/kitchen-sink/harp.db
+/misc/secrets/
+/misc/worktrees/
 /requirements*.txt
 /site
 ENV/

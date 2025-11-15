@@ -16,7 +16,7 @@ class TestCacheHeaders:
     @pytest.fixture
     async def kernel(self, test_api):
         builder = ConfigurationBuilder(use_default_applications=False)
-        builder.applications.add("http_client")
+        builder.applications.add("http_cache", autoload_dependencies=True)  # Auto-loads http_client dependency
         builder.applications.add("proxy")
         builder.applications.add("storage")
         builder.add_values(

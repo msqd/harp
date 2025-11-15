@@ -1,15 +1,14 @@
 import time
+
 import typing as tp
 import uuid
+from hishel import AsyncBaseStorage, Entry, EntryMeta, Request, Response
 
-from hishel import AsyncBaseStorage, Entry, EntryMeta
-from httpcore import Request, Response
-
-from harp_apps.proxy.controllers import logger
+from harp import get_logger
 from harp_apps.storage.types import IBlobStorage
-
 from .adapters import AsyncStorageAdapter
 
+logger = get_logger(__name__)
 HEADERS_ENCODING = "iso-8859-1"
 
 
@@ -55,6 +54,12 @@ class AsyncStorage(AsyncBaseStorage):
             The created Entry
         """
         entry_id = id_ or uuid.uuid4()
+
+        logger.debug(
+            f"Creating cache entry: key={key}, url={request.url}, "
+            f"method={request.method}, status={response.status_code}, entry_id={entry_id}"
+        )
+
         entry = Entry(
             id=entry_id,
             request=request,
@@ -65,6 +70,7 @@ class AsyncStorage(AsyncBaseStorage):
         )
 
         await self._impl.store_entry(key, entry)
+        logger.debug(f"Cache entry stored: key={key}")
         return entry
 
     async def get_entries(self, key: str) -> tp.List[Entry]:
@@ -79,11 +85,19 @@ class AsyncStorage(AsyncBaseStorage):
         Returns:
             List of Entry objects (empty if not found, single element if found)
         """
+        logger.debug(f"Retrieving cache entries: key={key}")
         try:
             entry = await self._impl.retrieve_entry(key)
-            return [entry] if entry else []
+            if entry:
+                logger.debug(
+                    f"Cache hit: key={key}, url={entry.request.url}, method={entry.request.method}, entry_id={entry.id}"
+                )
+                return [entry]
+            else:
+                logger.debug(f"Cache miss: key={key}")
+                return []
         except Exception:
-            logger.exception("Failed to retrieve cache")
+            logger.exception(f"Failed to retrieve cache for key={key}")
             return []
 
     async def update_entry(
@@ -100,6 +114,7 @@ class AsyncStorage(AsyncBaseStorage):
         Returns:
             The updated Entry, or None if not found
         """
+        logger.debug(f"Attempting to update entry: entry_id={id}")
         # Since we store by cache_key not by UUID, we need to find the entry first
         # This is a limitation of our blob storage approach
         # For now, we'll implement this by searching through entries
@@ -113,10 +128,12 @@ class AsyncStorage(AsyncBaseStorage):
         Args:
             id: The entry UUID
         """
+        logger.debug(f"Attempting to remove entry: entry_id={id}")
         # Similar limitation as update_entry - we store by cache_key not UUID
         logger.warning(f"remove_entry called for UUID {id}, which requires searching - not fully optimized")
         pass
 
     async def close(self) -> None:
         """Close the storage (required by AsyncBaseStorage interface)."""
+        logger.debug("Closing AsyncStorage")
         return

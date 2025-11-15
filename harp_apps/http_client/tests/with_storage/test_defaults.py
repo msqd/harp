@@ -16,6 +16,7 @@ class TestDefaultsWithStorage(BaseTestDefaultsWith):
         ],
     )
     async def test_defaults_with_storage(self, applications):
+        """Test http_client defaults when storage app is loaded."""
         system = await self.create_system(applications=applications)
         assert set(system.config["applications"]) == {
             "harp_apps.http_client",
@@ -23,23 +24,8 @@ class TestDefaultsWithStorage(BaseTestDefaultsWith):
         }
         assert asdict(system.config["http_client"]) == {}
         assert asdict(system.config["http_client"], verbose=True) == {
-            "cache": {
-                "enabled": True,
-                # hishel 1.0: Controller → SpecificationPolicy (CacheOptions configured in services.yml)
-                "policy": {
-                    "type": "hishel.SpecificationPolicy",
-                },
-                "storage": {
-                    "base": "hishel.AsyncBaseStorage",
-                    "check_ttl_every": 60.0,
-                    "ttl": None,
-                    "type": "harp_apps.http_client.contrib.hishel.storages.AsyncStorage",
-                },
-                # hishel 1.0: AsyncCacheTransport moved to _async_httpx module
-                "transport": {"type": "hishel._async_httpx.AsyncCacheTransport"},
-            },
             "enabled": True,
-            "proxy_transport": {"type": "harp_apps.http_client.transport.AsyncFilterableTransport"},
+            "proxy_transport": {"type": "harp_apps.http_client.transports.AsyncFilterableTransport"},
             "timeout": 30.0,
             "transport": {
                 "retries": 0,
