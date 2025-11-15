@@ -21,6 +21,10 @@ declare namespace Apps.Proxy {
    *       - ...
    */
   export interface ProxySettings {
+    /**
+     * Whether the application is enabled
+     */
+    enabled?: boolean;
     endpoints?: EndpointSettings[];
   }
   /**

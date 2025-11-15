@@ -9,6 +9,11 @@ Added
   - ``X-Cache: MISS`` header on non-cached responses
   - ``X-Cache: HIT`` header on cached responses
   - ``Age`` header showing cache age in seconds for cached responses
+- Application dependency resolution with topological sorting to ensure correct initialization order
+- ApplicationSettingsMixin for standardized enable/disable functionality in application settings
+- ``--strict`` CLI flag for enforcing strict configuration validation
+- Warning system for misconfigured applications (config exists for unloaded apps)
+- Two-pass configuration parsing to filter applications with ``enabled: false``
 
 Changed
 -------
@@ -47,8 +52,10 @@ Changed
           type: hishel.SpecificationPolicy
           # Default CacheOptions are provided by services.yml
           # To customize, override the entire policy service
+- Cookiecutter template migrated from Poetry to UV (PEP 621, Python 3.13, hatchling), with enhanced Makefile, improved prompts, and automatic git initialization.
 
 Fixed
 -----
 
 - Fixed test discovery incorrectly including ``misc/`` directory worktree applications in ``test_all_applications_settings.py``
+- Generated projects now properly isolate pytest tests and include correct startup instructions.

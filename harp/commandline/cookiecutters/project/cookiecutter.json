@@ -7,10 +7,10 @@
   "create_application": false,
   "create_config": true,
   "__prompts__": {
-    "name": "Project name",
-    "author_name": "Author name",
-    "author_email": "Author email",
-    "create_application": "Create application folder ?",
-    "create_config": "Create config file ?"
+    "name": "Project name (used to generate directory and package names)",
+    "author_name": "Author name (for package metadata)",
+    "author_email": "Author email (for package metadata)",
+    "create_application": "Create application folder for custom code? (choose 'n' for config-only projects)",
+    "create_config": "Create config.yml file? (choose 'y' to have an empty configuration file ready to customize)"
   }
 }

@@ -70,7 +70,7 @@ async def on_shutdown(event: OnShutdownEvent):
 
 
 application = Application(
-    dependencies=["services"],
+    dependencies=["http_client"],
     on_bind=on_bind,
     on_bound=on_bound,
     settings_type=ProxySettings,

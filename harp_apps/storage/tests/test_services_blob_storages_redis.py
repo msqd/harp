@@ -39,7 +39,7 @@ class SystemTestMixin:
                 **self.settings,
             },
             use_default_applications=False,
-        ).abuild_system()
+        ).abuild_system(validate_dependencies=False)
         try:
             yield system
         finally:

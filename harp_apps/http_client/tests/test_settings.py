@@ -19,7 +19,7 @@ class BaseHttpClientSettingsTest(BaseConfigurableTest):
             use_default_applications=False,
         )
 
-        return await builder.abuild_system()
+        return await builder.abuild_system(validate_dependencies=False)
 
 
 class TestHttpClientSettings(BaseHttpClientSettingsTest):
@@ -39,6 +39,7 @@ class TestHttpClientSettings(BaseHttpClientSettingsTest):
             # hishel 1.0: AsyncCacheTransport moved to _async_httpx
             "transport": {"type": "hishel._async_httpx.AsyncCacheTransport"},
         },
+        "enabled": True,
         "proxy_transport": {"type": "harp_apps.http_client.transport.AsyncFilterableTransport"},
         "timeout": 30.0,
         "transport": {"retries": 0, "type": "httpx.AsyncHTTPTransport", "verify": True},

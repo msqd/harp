@@ -15,7 +15,7 @@ To enable it, use ``--enable metrics`` in the command line:
 
 .. code:: bash
 
-    harp server --enable metrics ...
+    harp-proxy server --enable metrics ...
 
 The ``metrics`` application will decorate the HARP ASGI implementation with a middleware that will expose the metrics
 under the path ``/.prometheus/metrics``. You can configure your prometheus instance to scrape this path (see below).

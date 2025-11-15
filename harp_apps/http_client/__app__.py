@@ -18,6 +18,7 @@ async def on_bind(event: OnBindEvent):
 
 
 application = Application(
+    dependencies=[],
     on_bind=on_bind,
     settings_type=HttpClientSettings,
 )

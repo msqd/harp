@@ -27,10 +27,12 @@ from .events import (
     OnReadyEvent,
     OnShutdownEvent,
 )
+from .mixins import ApplicationSettingsMixin
 
 __all__ = [
     "Application",
     "ApplicationsRegistry",
+    "ApplicationSettingsMixin",
     "Configurable",
     "ConfigurationBuilder",
     "EVENT_BIND",

@@ -12,4 +12,4 @@ class BaseTestDefaultsWith:
         config = ConfigurationBuilder({"applications": applications}, use_default_applications=False)
         if values is not None:
             config.add_values(values)
-        return await config.abuild_system()
+        return await config.abuild_system(validate_dependencies=False)

@@ -20,7 +20,7 @@ endpoints (the mapping between local ports and remote urls, including how to han
 Setup
 :::::
 
-The proxy application is enabled by default when using the harp start ... or harp server ... commands. You can disable
+The proxy application is enabled by default when using the harp-proxy start ... or harp-proxy server ... commands. You can disable
 it with the --disable proxy option, although this will most probably result in an useless system.
 
 
@@ -71,14 +71,14 @@ a permanent solution.
 
 .. code-block:: bash
 
-    harp start --endpoint starwars=1234:https://swapi.dev/
+    harp-proxy start --endpoint starwars=1234:https://swapi.dev/
 
 .. warning::
 
     The current CLI syntax is hackish and limited, the syntax will most probably change in the future.
 
 You can use multiple ``--endpoint ...`` arguments and the option is available for all server-like commands
-(``harp start ...``, ``harp server ...``, ...).
+(``harp-proxy start ...``, ``harp-proxy server ...``, ...).
 
 .. warning::
 

@@ -25,6 +25,7 @@ class TestSystemController(
             "applications": ["harp_apps.storage"],
             "storage": {
                 "blobs": {"type": "sql"},
+                "enabled": True,
                 "migrate": True,
                 "url": "sqlite+aiosqlite:///:memory:",
                 "redis": None,
@@ -40,6 +41,7 @@ class TestSystemController(
             "applications": ["harp_apps.storage"],
             "storage": {
                 "blobs": {"type": "redis"},
+                "enabled": True,
                 "migrate": True,
                 "url": "sqlite+aiosqlite:///:memory:",
                 "redis": {"url": "redis://redis.example.com:1234/42"},
@@ -54,6 +56,7 @@ class TestSystemController(
             "applications": ["harp_apps.storage"],
             "storage": {
                 "blobs": ANY,
+                "enabled": True,
                 "migrate": True,
                 "url": "sqlite+aiosqlite:///:memory:",
                 "redis": None,
@@ -67,6 +70,7 @@ class TestSystemController(
         assert response.asdict() == {
             "applications": ["harp_apps.storage"],
             "storage": {
+                "enabled": True,
                 "migrate": True,
                 "url": RE(r".*://test:\*\*\*@.*"),
                 "blobs": ANY,
@@ -120,7 +124,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","migrate":true,"blobs":{"type":"sql"},"redis":null}}'
+            b':memory:","enabled":true,"migrate":true,"blobs":{"type":"sql"},"redis":null}}'
         )
 
     @parametrize_with_settings({})
@@ -133,7 +137,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","migrate":true,"blobs":{"type":"redis"},"redis":null}}'
+            b':memory:","enabled":true,"migrate":true,"blobs":{"type":"redis"},"redis":null}}'
         )
 
     @parametrize_with_settings(
@@ -151,7 +155,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","migrate":true,"blobs":{"type":"sql"},"redis":null}}'
+            b':memory:","enabled":true,"migrate":true,"blobs":{"type":"sql"},"redis":null}}'
         )
 
     @parametrize_with_settings(
@@ -172,7 +176,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","migrate":true,"blobs":{"type":"redis"},"redis":null}}'
+            b':memory:","enabled":true,"migrate":true,"blobs":{"type":"redis"},"redis":null}}'
         )
 
     @parametrize_with_database_urls("postgresql")
@@ -186,6 +190,7 @@ class TestSystemControllerThroughASGI(
             "applications": ["harp_apps.storage"],
             "storage": {
                 "blobs": {"type": "sql"},
+                "enabled": True,
                 "migrate": True,
                 "redis": None,
                 "url": RE(escape("postgresql+asyncpg://test:***@") + r".*"),
@@ -210,6 +215,6 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","migrate":true,"blobs":{"type":"redis"},"redis":{"url":"redis://us'
+            b':memory:","enabled":true,"migrate":true,"blobs":{"type":"redis"},"redis":{"url":"redis://us'
             b'er:***@localhost:6379/0"}}}'
         )

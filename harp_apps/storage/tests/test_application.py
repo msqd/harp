@@ -12,6 +12,7 @@ class TestStorageApplication(BaseTestForApplications):
 
     expected_defaults = {
         "blobs": {"type": "sql"},
+        "enabled": True,
         "migrate": True,
         "redis": None,
         "url": "sqlite+aiosqlite:///:memory:?cache=shared",

@@ -33,7 +33,7 @@ Features
 Loading
 -------
 
-The Telemetry application is loaded by default when using the harp start command.
+The Telemetry application is loaded by default when using the harp-proxy start command.
 
 Configuration
 -------------
@@ -41,7 +41,7 @@ The Telemetry application can be disabled using the following command:
 
 .. code-block:: bash
 
-    harp start ... --disable telemetry
+    harp-proxy start ... --disable telemetry
 
 
 The internal implementation leverages the following class:

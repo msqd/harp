@@ -9,10 +9,14 @@ from config.env import EnvVars
 from harp.typing import GlobalSettings
 from harp.utils.config.yaml import include_constructor  # noqa
 
+from harp import get_logger
+
 from ..applications import ApplicationsRegistry
 from ..defaults import DEFAULT_APPLICATIONS, DEFAULT_SYSTEM_CONFIG_FILENAMES
 from ..examples import get_example_filename
 from .system import System
+
+logger = get_logger(__name__)
 
 
 def _get_system_configuration_sources():
@@ -57,6 +61,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         /,
         *,
         use_default_applications=True,
+        strict=False,
     ) -> None:
         """
         Initializes a new instance of the ConfigurationBuilder.
@@ -64,8 +69,10 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         Parameters:
             default_values (dict, optional): A dictionary of default configuration values. Defaults to None.
             use_default_applications (bool, optional): Whether to automatically include default HARP applications in the configuration. Defaults to True.
+            strict (bool, optional): Whether to use strict validation mode. Defaults to False.
         """
         self._defaults = default_values or {}
+        self.strict = strict
         self.applications = self.create_application_registry()
         self.applications_registry_type = type(self.applications)
 
@@ -145,21 +152,122 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         #  a: {b: ...}, meanwhile, let's be carfeul with those keys.
         return {k: (self.applications[k].normalize(v) if k in self.applications else v) for k, v in x.items()}
 
-    def build(self) -> GlobalSettings:
+    # System keys that are not application-specific
+    SYSTEM_KEYS = frozenset({"applications", "harp_apps"})
+
+    def _get_config_sources(self):
         """
-        Constructs the final, aggregated configuration settings as a GlobalSettings instance.
+        Get the list of configuration sources in priority order.
 
         Returns:
-            GlobalSettings: The aggregated global settings derived from all added sources.
+            tuple: Configuration sources to be processed.
         """
-        settings = {}
-        for source in (
+        return (
             EnvVars(prefix="DEFAULT__HARP_"),
             MapSource(self.applications.defaults()),
             MapSource(self._defaults or {}),
             *_get_system_configuration_sources(),
             *self._sources,
-        ):
+        )
+
+    def _get_first_pass_config(self):
+        """
+        Performs a lightweight first pass of configuration parsing to detect application settings.
+
+        Returns:
+            dict: Raw configuration values from all sources.
+        """
+        settings = {}
+        for source in self._get_config_sources():
+            merge_values(settings, source.get_values())
+        return settings
+
+    def _filter_disabled_applications(self, settings: dict) -> list[str]:
+        """
+        Filter applications with enabled:false and log warnings.
+
+        Args:
+            settings: Configuration dictionary from first pass.
+
+        Returns:
+            list[str]: List of application names to remove from registry.
+        """
+        apps_to_remove = []
+        for app_name in list(self.applications._applications.keys()):
+            app_config = settings.get(app_name, {})
+            if isinstance(app_config, dict) and app_config.get("enabled", True) is False:
+                apps_to_remove.append(app_name)
+                logger.warning(
+                    f"Application '{app_name}' is disabled as per configuration directive.",
+                    app=app_name,
+                )
+        return apps_to_remove
+
+    def _validate_unknown_applications(self, settings: dict, strict: bool, disabled_apps: list[str] = None):
+        """
+        Validate that all configured applications are loaded.
+
+        Args:
+            settings: Configuration dictionary from first pass.
+            strict: If True, raise ValueError for unknown apps. If False, log warning.
+            disabled_apps: List of apps that were explicitly disabled (skip validation for these).
+
+        Raises:
+            ValueError: If strict mode is enabled and unknown apps are configured.
+        """
+        disabled_apps = disabled_apps or []
+        for key in settings:
+            if (
+                key not in self.applications
+                and key not in self.SYSTEM_KEYS
+                and key not in disabled_apps
+                and isinstance(settings[key], dict)
+            ):
+                if strict:
+                    raise ValueError(
+                        f"Configuration found for application '{key}' which is not loaded. Running in strict mode, aborting."
+                    )
+                else:
+                    logger.warning(
+                        f"Configuration found for application '{key}' which is not loaded.",
+                        app=key,
+                        hint="Use --strict to enforce this as an error",
+                    )
+
+    def build(self, strict: bool = None) -> GlobalSettings:
+        """
+        Constructs the final, aggregated configuration settings as a GlobalSettings instance.
+
+        This method performs a two-pass configuration build:
+        1. First pass: Detect and filter applications with enabled:false
+        2. Second pass: Build final configuration with filtered applications
+
+        Parameters:
+            strict (bool, optional): Override strict mode for this build. Uses instance strict if None.
+
+        Returns:
+            GlobalSettings: The aggregated global settings derived from all added sources.
+
+        Raises:
+            ValueError: If strict mode is enabled and configuration exists for unloaded applications.
+        """
+        if strict is None:
+            strict = self.strict
+
+        # First pass - detect disabled apps and validate unknown apps
+        first_pass_settings = self._get_first_pass_config()
+
+        # Filter disabled applications
+        apps_to_remove = self._filter_disabled_applications(first_pass_settings)
+        for app_name in apps_to_remove:
+            self.applications.remove(app_name)
+
+        # Validate unknown applications (skip disabled apps)
+        self._validate_unknown_applications(first_pass_settings, strict, disabled_apps=apps_to_remove)
+
+        # Second pass - build final configuration with normalized settings
+        settings = {}
+        for source in self._get_config_sources():
             merge_values(settings, self.normalize(source.get_values()))
 
         all_settings = []
@@ -183,10 +291,26 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
     def __call__(self) -> GlobalSettings:
         return self.build()
 
-    async def abuild_system(self) -> System:
+    def get_filtered_applications_registry(self):
+        """
+        Returns the applications registry after filtering disabled apps.
+        This requires calling build() first to apply filtering.
+        """
+        return self.applications
+
+    async def abuild_system(self, *, validate_dependencies: bool = True) -> System:
+        """Build the system with optional dependency validation.
+
+        Args:
+            validate_dependencies: If True, validate and resolve application dependencies.
+                                  Set to False in tests when building partial systems. Default: True.
+
+        Returns:
+            System: The built system instance.
+        """
         from .system import SystemBuilder
 
-        return await SystemBuilder(self.applications, self.build).abuild()
+        return await SystemBuilder(self.applications, self.build).abuild(validate_dependencies=validate_dependencies)
 
     @classmethod
     def from_commandline_options(cls, options) -> Self:
@@ -205,9 +329,17 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
             applications = options.applications
         except AttributeError:
             applications = None
+
+        # Get strict flag if available
+        try:
+            strict = options.strict
+        except AttributeError:
+            strict = False
+
         builder = cls(
             {"applications": applications} if applications else None,
             use_default_applications=not applications,
+            strict=strict,
         )
 
         # todo: raise if enabling AND disabling an app at the same time? maybe not but instructions should be taken in

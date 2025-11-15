@@ -61,6 +61,7 @@ async def on_shutdown(event: OnShutdownEvent):
 
 
 application = Application(
+    dependencies=["proxy"],
     settings_type=StorageSettings,
     on_bind=on_bind,
     on_bound=on_bound,

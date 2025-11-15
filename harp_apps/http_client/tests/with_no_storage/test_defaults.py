@@ -38,6 +38,7 @@ class TestDefaultsWithNoStorage(BaseTestDefaultsWith):
                     # hishel 1.0: AsyncCacheTransport moved to _async_httpx module
                     "transport": {"type": "hishel._async_httpx.AsyncCacheTransport"},
                 },
+                "enabled": True,
                 "proxy_transport": {"type": "harp_apps.http_client.transport.AsyncFilterableTransport"},
                 "timeout": 30.0,
                 "transport": {

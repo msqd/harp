@@ -142,5 +142,8 @@ filterwarnings = [
     "ignore:Deprecated call to:DeprecationWarning",
     "ignore:pkg_resources is deprecated as an API:DeprecationWarning",
 ]
-markers = ["subprocess"]
+markers = [
+    "subprocess",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
 addopts = "--ignore harp/commandline/cookiecutters"

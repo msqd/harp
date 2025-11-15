@@ -1,105 +1,49 @@
 Introduction
 ============
 
-We'll guide you through the process of :doc:`setting up a development environment <introduction>`, opening and
-understanding the :doc:`architecture <architecture>` and concepts used (like :doc:`dependency injection
-<dependency-injection>` and :doc:`event-driven hooks <events>`), navigating through the codebase, and finally writing
-code, including tests.
+HARP is designed to be extended and customized to fit your needs. You can contribute to the core, build custom
+applications, or extend existing functionality through various extension points.
 
-System requirements
+Extension possibilities
+:::::::::::::::::::::::
+
+**Custom applications**
+    Build standalone applications that integrate with HARP's plugin system. Applications can provide new features,
+    endpoints, or services. See :doc:`applications` for details.
+
+**Event listeners**
+    Hook into HARP's event-driven architecture to react to system events, HTTP transactions, or application lifecycle
+    events. See :doc:`events` for details.
+
+**Dependency injection**
+    Register custom services and dependencies through the IoC container to make them available system-wide. See
+    :doc:`dependency-injection` for details.
+
+**Storage backends**
+    Implement custom storage backends for transactions, configuration, or application-specific data. See
+    :doc:`storage/index` for details.
+
+**Dashboard extensions**
+    Extend the web dashboard with custom views, components, or pages. See :doc:`../apps/dashboard/development/index`
+    for details.
+
+
+Getting started
+:::::::::::::::
+
+To start contributing or extending HARP:
+
+1. **Set up your development environment** - Follow the :doc:`setup` guide to install dependencies and run HARP locally.
+2. **Understand the architecture** - Read the :doc:`overview` to grasp high-level concepts and patterns.
+3. **Explore specific topics** - Dive into :doc:`applications`, :doc:`events`, :doc:`dependency-injection`, or other
+   areas relevant to your work.
+4. **Write tests** - Follow the :doc:`testing/index` guidelines to ensure your code is well-tested.
+
+
+Developer resources
 :::::::::::::::::::
 
-You will need the following tools installed on your machine:
-
-- Git and GNU Make
-- A working Python 3.13+ environment with the ``uv`` package manager installed. We usually tend to use the latest
-  stable version of Python.
-- A working NodeJS (lts/iron) environment with the ``pnpm`` package manager installed.
-- A working Docker + Docker Compose environment.
-
-.. note::
-
-    * :doc:`./misc/ubuntu`
-
-Source code
-:::::::::::
-
-Once the system requirements are met, you can download the source code, using ``git clone``:
-
-.. code-block:: bash
-
-    git clone git@github.com:msqd/harp.git
-
-Install the project's dependencies (isolated):
-
-.. code-block:: bash
-
-    cd harp
-    make install-dev
-
-This will install the dependencies in a separate virtual environment (managed by uv) and set up the development
-environment.
-
-.. note::
-
-    Depending on your system, you may get a warning about playwright not finding the system dependencies it needs. This
-    is only required if you want to run the browser based tests, and can be safely ignored. On a linux system, you can
-    install the missing dependencies with:
-
-    .. code-block:: bash
-
-        (cd harp_apps/dashboard/frontend; pnpm exec playwright install-deps)
-
-Running
-:::::::
-
-You can start your first HARP development server based on your local working copy.
-
-Here, we'll run one using one of the built-in examples (but the same applies to any configuration, of course):
-
-.. code-block:: bash
-
-    uv run harp start --example sqlite
-
-Open your browser at http://localhost:4080 to have a look at the HARP dashboard.
-
-Using ``harp start`` (or ``uv run harp start`` to let uv manage the env, our preference) will spawn
-a bunch of processes, managed by `honcho <https://pypi.org/project/honcho/>`_, with some free cherries.
-
-The default processes are:
-
-- ``harp server``: the main server, python based, which will listen for incoming requests on different ports. By
-  default, it listens to the 4080 port for the dashboard. Wrapped using `watchfiles
-  <https://watchfiles.helpmanual.io/>`_ to restart on code changes.
-- the dashboard's devserver (`vite <https://vite.dev/>`_ based): listens to a high random unprivileged port by default,
-  and the main server will forward requests tto this port. Meaning that harp dashboard's goes through the http proxy.
-  Kinda meta, right?
-
-.. figure:: ./intro-harp-start.excalidraw.png
-    :scale: 40%
-
-You can read more about the various ``harp`` commands in the :doc:`Command Line Reference </commandline/index>`.
-
-
-Interfaces
-::::::::::
-
-The main developer interface is a ``Makefile``, containing the most common tasks you'll need to run. Get a list by
-running:
-
-.. code-block:: bash
-
-    make help
-
-For anything requiring a valid environment to run, you can use the ``uv run harp`` command, which will run the HARP
-CLI within the uv-managed virtual environment.
-
-
-Next steps
-::::::::::
-
-Congratulations, you're ready to start writing HARP code! Before that, you may want to have a glance at the following
-topics:
-
-- :doc:`./overview`
-- :doc:`./applications`
+- **Makefile** - Common development tasks are available through ``make``. Run ``make help`` to see available commands.
+- **Command line** - The ``uv run harp`` command provides access to all HARP CLI tools within the development
+  environment. See :doc:`/commandline/index` for reference.
+- **Release process** - If you're preparing releases, see :doc:`release/index` for guidelines.

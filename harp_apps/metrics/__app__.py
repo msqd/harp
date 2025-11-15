@@ -34,7 +34,7 @@ async def on_ready(event: OnReadyEvent):
 
 
 application = Application(
-    dependencies=["proxy"],
+    dependencies=["http_client"],
     on_ready=on_ready,
     settings_type=MetricsSettings,
 )

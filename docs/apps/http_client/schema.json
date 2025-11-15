@@ -49,6 +49,11 @@
           "title": "Arguments",
           "type": "object"
         },
+        "enabled": {
+          "default": true,
+          "description": "Whether the application is enabled",
+          "type": "boolean"
+        },
         "cache": {
           "$ref": "#/$defs/CacheSettings",
           "default": {

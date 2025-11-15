@@ -26,7 +26,7 @@ The dashboard application is loaded by default. You can :code:`--disable` it if 
 
 .. code-block:: shell
 
-    $ harp start ... --disable dashboard
+    $ harp-proxy start ... --disable dashboard
 
 .. todo::
 
@@ -87,4 +87,4 @@ To disable the dashboard globally, do not load the ``dashboard`` application.
 
 .. code-block:: shell
 
-    $ harp start ... --disable dashboard
+    $ harp-proxy start ... --disable dashboard
