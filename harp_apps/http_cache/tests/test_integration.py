@@ -1,116 +1,20 @@
 """Integration tests for normalized cache transport with load balancing."""
 
-import time
-import uuid
-from typing import Optional, List
-
 import pytest
 import respx
-from hishel import AsyncBaseStorage, CacheOptions, Entry, EntryMeta, SpecificationPolicy
-from httpcore import Request as HttpcoreRequest
-from httpcore import Response as HttpcoreResponse
+from hishel import CacheOptions, SpecificationPolicy
 from httpx import AsyncClient, Response, AsyncHTTPTransport
 
 from harp_apps.http_cache.transports import AsyncCacheTransport
-
-
-class MockAsyncStorage(AsyncBaseStorage):
-    """Mock storage implementation for testing."""
-
-    def __init__(self):
-        super().__init__()
-        self.entries: dict[str, list[Entry]] = {}
-        self.contents: dict[str, bytes] = {}  # Store response bodies separately
-        self.created_keys: list[str] = []
-
-    async def create_entry(
-        self,
-        request: HttpcoreRequest,
-        response: HttpcoreResponse,
-        key: str,
-        id_: Optional[object] = None,
-    ) -> Entry:
-        """Store an entry and track the cache key used."""
-        from collections.abc import AsyncIterable, AsyncIterator
-        from hishel._utils import make_async_iterator
-        from dataclasses import replace
-
-        entry_id = id_ or uuid.uuid4()
-
-        # Read and store the response stream content
-        # This mimics what real storage does (serialize/deserialize)
-        if isinstance(response.stream, (AsyncIterator, AsyncIterable)):
-            content = b"".join([chunk async for chunk in response.stream])
-            # Store the content separately by entry ID
-            self.contents[str(entry_id)] = content
-            # Create a new response with a fresh stream containing the same content
-            response = replace(response, stream=make_async_iterator([content]))
-
-        entry = Entry(
-            id=entry_id,
-            request=request,
-            response=response,
-            meta=EntryMeta(created_at=time.time(), deleted_at=None),
-            cache_key=key.encode("utf-8"),
-            extra={"number_of_uses": 0},
-        )
-        self.entries.setdefault(key, []).append(entry)
-        self.created_keys.append(key)
-        return entry
-
-    async def get_entries(
-        self,
-        key: str,
-    ) -> List[Entry]:
-        """Retrieve entries by key."""
-        from hishel._utils import make_async_iterator
-        from dataclasses import replace
-
-        entries = self.entries.get(key, [])
-
-        # Recreate streams for each retrieved entry
-        # This mimics what real storage does when deserializing
-        result = []
-        for entry in entries:
-            # Get the stored content
-            content = self.contents.get(str(entry.id), b"")
-            # Create a fresh response with a new stream
-            fresh_response = replace(entry.response, stream=make_async_iterator([content]))
-            fresh_entry = replace(entry, response=fresh_response)
-            result.append(fresh_entry)
-
-        return result
-
-    async def update_entry(
-        self,
-        entry: Entry,
-        request: HttpcoreRequest,
-        response: HttpcoreResponse,
-    ) -> Entry:
-        """Update an existing entry."""
-        entry.request = request
-        entry.response = response
-        return entry
-
-    async def remove_entry(
-        self,
-        entry: Entry,
-    ) -> None:
-        """Remove an entry from storage."""
-        for key, entries in self.entries.items():
-            if entry in entries:
-                entries.remove(entry)
-                break
 
 
 @pytest.mark.asyncio
 class TestLoadBalancingCacheIntegration:
     """Test cache behavior with load-balanced backends."""
 
-    async def test_cache_hit_across_backends(self):
+    async def test_cache_hit_across_backends(self, mock_storage):
         """Verify cache hit when switching between load-balanced backends."""
-        # Mock storage to track cache operations
-        storage = MockAsyncStorage()
+        storage = mock_storage
         policy = SpecificationPolicy(
             cache_options=CacheOptions(shared=True, supported_methods=["GET"], allow_stale=False)
         )
@@ -150,9 +54,9 @@ class TestLoadBalancingCacheIntegration:
                 assert response2.json() == {"data": "response"}
                 assert not route2.called
 
-    async def test_cache_miss_different_paths(self):
+    async def test_cache_miss_different_paths(self, mock_storage):
         """Verify cache miss when paths differ between backends."""
-        storage = MockAsyncStorage()
+        storage = mock_storage
         policy = SpecificationPolicy(
             cache_options=CacheOptions(shared=True, supported_methods=["GET"], allow_stale=False)
         )
@@ -180,9 +84,9 @@ class TestLoadBalancingCacheIntegration:
                 assert response2.json() == {"posts": []}
                 assert route2.called  # Should hit backend because path is different
 
-    async def test_cache_hit_with_query_params(self):
+    async def test_cache_hit_with_query_params(self, mock_storage):
         """Verify cache hit with query parameters across backends."""
-        storage = MockAsyncStorage()
+        storage = mock_storage
         policy = SpecificationPolicy(
             cache_options=CacheOptions(shared=True, supported_methods=["GET"], allow_stale=False)
         )
@@ -219,9 +123,9 @@ class TestLoadBalancingCacheIntegration:
                 assert response2.json() == {"results": ["item1"]}  # From cache
                 assert not route2.called
 
-    async def test_cache_headers_preserved(self):
+    async def test_cache_headers_preserved(self, mock_storage):
         """Verify cache-related headers are properly set."""
-        storage = MockAsyncStorage()
+        storage = mock_storage
         policy = SpecificationPolicy(
             cache_options=CacheOptions(shared=True, supported_methods=["GET"], allow_stale=False)
         )

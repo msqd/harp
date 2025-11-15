@@ -60,131 +60,12 @@ share the same cache key.
 - Async lifecycle methods (aclose)
 """
 
-from typing import Optional
-
 import pytest
-from hishel import AsyncBaseStorage, Entry, SpecificationPolicy
-from hishel._async_httpx import AsyncCacheTransport
-from httpcore import Request as HttpcoreRequest
-from httpcore import Response as HttpcoreResponse
+from hishel import SpecificationPolicy
+from hishel.httpx import AsyncCacheTransport
 from httpx import AsyncBaseTransport, Request, Response
 
 from harp_apps.http_cache.transports import AsyncCacheTransport as NormalizedCacheTransport
-
-
-class MockAsyncStorage(AsyncBaseStorage):
-    """Mock storage implementation for testing."""
-
-    def __init__(self):
-        super().__init__()
-        self.entries: dict[str, list[Entry]] = {}
-        self.contents: dict[str, bytes] = {}  # Store response bodies separately
-        self.created_keys: list[str] = []
-
-    async def create_entry(
-        self,
-        request: HttpcoreRequest,
-        response: HttpcoreResponse,
-        key: str,
-        id_: Optional[object] = None,
-    ) -> Entry:
-        """Store an entry and track the cache key used."""
-        import time
-        import uuid
-        from collections.abc import AsyncIterable, AsyncIterator
-        from dataclasses import replace
-
-        from hishel import EntryMeta
-        from hishel._utils import make_async_iterator
-
-        entry_id = id_ or uuid.uuid4()
-
-        # Read and store the response stream content
-        # This mimics what real storage does (serialize/deserialize)
-        if isinstance(response.stream, (AsyncIterator, AsyncIterable)):
-            content = b"".join([chunk async for chunk in response.stream])
-            # Store the content separately by entry ID
-            self.contents[str(entry_id)] = content
-            # Create a new response with a fresh stream containing the same content
-            response = replace(response, stream=make_async_iterator([content]))
-
-        entry = Entry(
-            id=entry_id,
-            request=request,
-            response=response,
-            meta=EntryMeta(created_at=time.time(), deleted_at=None),
-            cache_key=key.encode("utf-8"),
-            extra={"number_of_uses": 0},
-        )
-        self.entries.setdefault(key, []).append(entry)
-        self.created_keys.append(key)
-        return entry
-
-    async def get_entries(self, key: str) -> list[Entry]:
-        """Retrieve entries by cache key."""
-        from dataclasses import replace
-
-        from hishel._utils import make_async_iterator
-
-        entries = self.entries.get(key, [])
-
-        # Recreate streams for each retrieved entry
-        # This mimics what real storage does when deserializing
-        result = []
-        for entry in entries:
-            # Get the stored content
-            content = self.contents.get(str(entry.id), b"")
-            # Create a fresh response with a new stream
-            fresh_response = replace(entry.response, stream=make_async_iterator([content]))
-            fresh_entry = replace(entry, response=fresh_response)
-            result.append(fresh_entry)
-
-        return result
-
-    async def update_entry(self, id: object, new_entry: object) -> Optional[Entry]:
-        """Update entry (not used in these tests)."""
-        return None
-
-    async def remove_entry(self, id: object) -> None:
-        """Remove entry (not used in these tests)."""
-        pass
-
-    async def close(self) -> None:
-        """Close storage (not used in these tests)."""
-        pass
-
-
-class MockTransport(AsyncBaseTransport):
-    """Mock underlying transport that returns canned responses."""
-
-    def __init__(self):
-        self.request_count = 0
-        self.last_request: Optional[Request] = None
-
-    async def handle_async_request(self, request: Request) -> Response:
-        """Return a mock response."""
-        self.request_count += 1
-        self.last_request = request
-        return Response(
-            status_code=200,
-            headers={
-                "content-type": "application/json",
-                "cache-control": "max-age=3600",
-            },
-            content=b'{"message": "test response"}',
-        )
-
-
-@pytest.fixture
-def mock_storage():
-    """Provide a mock storage instance."""
-    return MockAsyncStorage()
-
-
-@pytest.fixture
-def mock_transport():
-    """Provide a mock underlying transport."""
-    return MockTransport()
 
 
 @pytest.fixture
@@ -770,14 +651,11 @@ class TestBackwardCompatibility:
     """Test that the normalized transport is compatible with existing Hishel features."""
 
     @pytest.mark.asyncio
-    async def test_inherits_from_async_cache_transport(self):
+    async def test_inherits_from_async_cache_transport(self, mock_storage, mock_transport):
         """Test that NormalizedCacheTransport properly extends AsyncCacheTransport."""
-        # Create an instance
-        storage = MockAsyncStorage()
-        transport = MockTransport()
         normalized = NormalizedCacheTransport(
-            next_transport=transport,
-            storage=storage,
+            next_transport=mock_transport,
+            storage=mock_storage,
             policy=SpecificationPolicy(),
         )
 
