@@ -24,7 +24,9 @@ async def test_notifications_with_proxy(httpbin):
         },
     }
 
-    system = await ConfigurationBuilder(settings, use_default_applications=False).abuild_system()
+    system = await ConfigurationBuilder(settings, use_default_applications=False).abuild_system(
+        validate_dependencies=False
+    )
 
     client = ASGICommunicator(system.asgi_app)
     await client.asgi_lifespan_startup()

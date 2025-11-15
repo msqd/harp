@@ -30,7 +30,9 @@ class SystemControllerTestFixtureMixin:
         raw_settings["storage"].setdefault("blobs", {})
         raw_settings["storage"]["blobs"].setdefault("type", blob_storage.type)
 
-        system = await ConfigurationBuilder(raw_settings, use_default_applications=False).abuild_system()
+        system = await ConfigurationBuilder(raw_settings, use_default_applications=False).abuild_system(
+            validate_dependencies=False
+        )
 
         try:
             yield SystemController(

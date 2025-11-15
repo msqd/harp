@@ -50,6 +50,54 @@ Test your settings:
    ``ApplicationSettingsMixin`` must be the first base class in the inheritance chain.
 
 
+Declaring Dependencies
+::::::::::::::::::::::
+
+.. versionadded:: 0.10
+   Applications can declare dependencies to ensure correct initialization order.
+
+Applications declare dependencies as a list. At startup, the system validates all dependencies exist, detects cycles, and initializes applications in topological order.
+
+.. code-block:: python
+
+    from harp.config import Application
+    from .settings import ProxySettings
+
+    application = Application(
+        settings_type=ProxySettings,
+        dependencies=["http_client"],  # Simple list of app names
+    )
+
+**Best practices:**
+
+- Declare only direct dependencies (transitive dependencies are resolved automatically)
+- Use simple names (``storage``, not ``harp_apps.storage``)
+- Applications without dependencies work unchanged
+
+**Error examples:**
+
+.. code-block:: text
+
+    # Missing dependency
+    MissingDependencyError: Application 'dashboard' requires 'storage' but it is not enabled
+
+    # Circular dependency
+    CircularDependencyError: Circular dependency detected: a → b → c → a
+
+**Testing with partial systems:**
+
+Tests building incomplete systems can bypass validation with ``validate_dependencies=False``:
+
+.. code-block:: python
+
+    system = await ConfigurationBuilder(
+        {"applications": ["http_client", "storage"]},
+        use_default_applications=False,
+    ).abuild_system(validate_dependencies=False)  # Skip validation for tests
+
+.. warning::
+   Only use ``validate_dependencies=False`` in tests. Production code should always validate (default behavior).
+
 Application Lifecycle
 :::::::::::::::::::::
 

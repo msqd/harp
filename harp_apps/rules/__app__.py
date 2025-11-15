@@ -28,6 +28,7 @@ async def on_shutdown(event: OnShutdownEvent):
 
 
 application = Application(
+    dependencies=["http_client", "proxy"],
     settings_type=RulesSettings,
     on_bind=on_bind,
     on_bound=on_bound,

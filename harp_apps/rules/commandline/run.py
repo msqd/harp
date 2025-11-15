@@ -41,7 +41,9 @@ def run_command(files, examples, options, endpoint, method, path):
     dispatcher: IAsyncEventDispatcher = cast(IAsyncEventDispatcher, LoggingAsyncEventDispatcher())
 
     system = asyncio.run(
-        ConfigurationBuilder({"applications": ["http_client", "rules"]}, use_default_applications=False).abuild_system()
+        ConfigurationBuilder({"applications": ["http_client", "rules"]}, use_default_applications=False).abuild_system(
+            validate_dependencies=False
+        )
     )
 
     http_client = system.provider.get("http_client")
