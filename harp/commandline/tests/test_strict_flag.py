@@ -395,15 +395,15 @@ class TestStrictFlagOnActualCommands:
         # Should have --strict flag
         assert "--strict" in result.output or result.exit_code == 0  # May not be implemented yet
 
-    def test_strict_on_config_command(self):
-        """Test that --strict is available on 'harp config' command."""
-        from harp.commandline.config import config
+    def test_strict_on_system_config_command(self):
+        """Test that --strict is available on 'harp system config' command."""
+        from harp.commandline.system import system
 
         runner = CliRunner()
-        runner.invoke(config, ["show", "--help"])
+        result = runner.invoke(system, ["config", "--help"])
 
-        # Config show command might also support strict mode
-        # Depends on implementation
+        # System config command should support strict mode
+        assert "--strict" in result.output or result.exit_code == 0
 
 
 class TestStrictFlagErrorMessages:

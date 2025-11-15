@@ -3,7 +3,7 @@ http_cache:
   enabled: true # Set to false to disable cache entirely (optional)
 
   policy: # Override the cache policy definition (optional)
-    # hishel 1.0 uses SpecificationPolicy with CacheOptions
+    # Hishel uses SpecificationPolicy with CacheOptions
     type: hishel.SpecificationPolicy
     arguments:
       cache_options:

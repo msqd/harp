@@ -23,7 +23,10 @@ class HttpCacheSettings(Configurable):
     enabled: bool = True
 
     #: Cache transport to use for the client. This is usually a hishel._async_httpx.AsyncCacheTransport (or subclass) instance.
-    transport: Service = Service(type="hishel._async_httpx.AsyncCacheTransport")
+    transport: Service = Service(
+        base="hishel._async_httpx.AsyncCacheTransport",
+        type="harp_apps.http_cache.transports.AsyncCacheTransport",
+    )
 
     #: Cache policy to use for determining what is cacheable.
     #: hishel 1.0 uses SpecificationPolicy with CacheOptions.

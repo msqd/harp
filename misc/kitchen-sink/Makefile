@@ -75,3 +75,6 @@ scale:  ## Scale API services (usage: make scale API1_REPLICAS=3 API2_REPLICAS=4
 
 stop:  ## Stop docker compose services
 	@docker compose down
+
+etc/http_client.yml: ../../harp_apps/http_client/docs/examples/reference.yml
+	cp $< $@

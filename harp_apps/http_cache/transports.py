@@ -6,8 +6,11 @@ from hishel._async_httpx import (
 )
 from hishel.httpx import AsyncCacheTransport as HishelAsyncCacheTransport
 
+from harp import get_logger
 from harp.utils.bytes import ensure_bytes
 from harp_apps.http_cache.models import WrappedRequest
+
+logger = get_logger(__name__)
 
 
 def _rewrite_request_url(request: httpx.Request) -> str:
@@ -20,13 +23,13 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Wraps the request to use a rewritten url (for cache key handling)."""
         internal_request = _httpx_to_internal(request)
+        url = _rewrite_request_url(request)
 
-        internal_response = await self._cache_proxy.handle_request(
-            WrappedRequest(
-                internal_request,
-                url=_rewrite_request_url(request),
-            )
+        logger.debug(
+            f"Handling async request with rewritten URL for caching: original_url={request.url}, rewritten_url={url}"
         )
+
+        internal_response = await self._cache_proxy.handle_request(WrappedRequest(internal_request, url=url))
         return _internal_to_httpx(internal_response)
 
     async def request_sender(self, request: WrappedRequest) -> Response:

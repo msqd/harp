@@ -8,7 +8,7 @@ HTTP Cache
 The ``harp_apps.http_cache`` application provides RFC 9111-compliant HTTP caching for the HTTP client. It was
 extracted from ``harp_apps.http_client`` as a separate application to enable better modularity and reuse.
 
-The caching mechanism is implemented using `Hishel 1.0 <https://hishel.com/>`_, a powerful HTTP caching library
+The caching mechanism is implemented using `Hishel <https://hishel.com/>`_, a powerful HTTP caching library
 that follows the HTTP caching standards defined in RFC 9111.
 
 .. toctree::
@@ -94,17 +94,13 @@ Request flow
 Cache key normalization
 -----------------------
 
-The cache includes special handling for load-balanced backends. URLs are normalized before generating
-cache keys to ensure that requests to different backend instances can share cached responses:
+The cache includes special handling for load-balanced backends. When the proxy forwards requests to
+different backend instances of the same logical endpoint, the cache normalizes URLs by using the
+endpoint name instead of the actual backend host.
 
-.. code-block:: python
-
-    # Original requests
-    GET http://backend-1.example.com/api/resource
-    GET http://backend-2.example.com/api/resource
-
-    # Both use the same normalized cache key
-    # Configurable via WrappedRequest normalization
+This ensures that requests to different backend instances (e.g., ``backend-1``, ``backend-2``) that
+represent the same logical endpoint share the same cache key. The endpoint name is extracted from the
+request extensions set by the proxy application.
 
 
 RFC 9111 Compliance
@@ -122,17 +118,10 @@ The cache implementation is tested against RFC 9111 requirements. The test suite
 See the test suite in ``harp_apps/http_cache/tests/rfc9111/`` for detailed compliance verification.
 
 
-Debugging
-:::::::::
+Configuration reference
+:::::::::::::::::::::::
 
-The cache adds debugging headers to responses:
-
-- **X-Cache:** Indicates cache status (``HIT`` or ``MISS``)
-- **Age:** Shows how long the response has been in the cache (in seconds)
-
-These headers help verify caching behavior during development and troubleshooting.
-
-For configuration options including how to disable caching, see :doc:`settings`.
+For complete configuration options and examples, see :doc:`settings`.
 
 
 Internal implementation

@@ -151,12 +151,16 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             return
 
         transaction_id = event.transaction.id
+        # Extract cache status - it's now set based on X-Cache: HIT/MISS header
+        cached = event.transaction.extras.get("cached")
+
         transaction_data = {
             "finished_at": event.transaction.finished_at.astimezone(UTC),
             "elapsed": event.transaction.elapsed,
             "tpdex": event.transaction.tpdex,
             "x_status_class": event.transaction.extras.get("status_class"),
-            "x_cached": event.transaction.extras.get("cached"),
+            # Store as "true" string for cached responses, consistent with database expectations
+            "x_cached": "true" if cached else None,
         }
 
         async def update_transaction():

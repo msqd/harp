@@ -284,3 +284,99 @@ class TestHttpProxyControllerWithStorage(
             "body": "6ffdd89703735cc316470566467b816446f008ce",
             "created_at": ANY,
         }
+
+    @respx.mock
+    async def test_cache_status_tracking_hit(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        """Test that cache HIT status is correctly tracked from X-Cache header.
+
+        This test verifies that when a response contains X-Cache: HIT header,
+        the transaction extras correctly record cached=True and cache_age.
+        """
+        # Mock a cached response with X-Cache: HIT and Age headers
+        respx.get("http://example.com/").mock(
+            return_value=Response(
+                200,
+                content=b"Cached response",
+                headers={
+                    "X-Cache": "HIT",
+                    "Age": "42",
+                },
+            )
+        )
+
+        # Call controller
+        await self.call_controller(
+            engine=sql_storage.engine,
+            sql_storage=sql_storage,
+            blob_storage=blob_storage,
+        )
+
+        # Verify transaction was stored with correct cache information
+        transaction, request, response = await self._find_one_transaction_with_messages_from_storage(sql_storage)
+
+        # Check that cached status is recorded
+        # Note: cache_age is available in runtime extras but not persisted to DB (would need migration)
+        assert transaction.extras["cached"] is True, "Cache status should be True for X-Cache: HIT"
+        assert transaction.extras["status_class"] == "2xx"
+        assert transaction.extras["method"] == "GET"
+
+    @respx.mock
+    async def test_cache_status_tracking_miss(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        """Test that cache MISS responses are correctly tracked.
+
+        This test verifies that responses with X-Cache: MISS header
+        are correctly recorded as not cached.
+        """
+        # Mock a cache miss response
+        respx.get("http://example.com/").mock(
+            return_value=Response(
+                200,
+                content=b"Cache miss response",
+                headers={
+                    "X-Cache": "MISS",
+                },
+            )
+        )
+
+        # Call controller
+        await self.call_controller(
+            engine=sql_storage.engine,
+            sql_storage=sql_storage,
+            blob_storage=blob_storage,
+        )
+
+        # Verify transaction shows not cached
+        transaction, request, response = await self._find_one_transaction_with_messages_from_storage(sql_storage)
+
+        # Check that cached is False for MISS
+        assert transaction.extras["cached"] is False, "Cache status should be False for X-Cache: MISS"
+        assert "cache_age" not in transaction.extras, "Cache age should not be present for cache miss"
+
+    @respx.mock
+    async def test_cache_status_no_header(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        """Test that responses without X-Cache header are tracked as not cached.
+
+        This test verifies that responses without any X-Cache header
+        are correctly recorded as not cached.
+        """
+        # Mock a non-cached response (no X-Cache header)
+        respx.get("http://example.com/").mock(
+            return_value=Response(
+                200,
+                content=b"Fresh response",
+            )
+        )
+
+        # Call controller
+        await self.call_controller(
+            engine=sql_storage.engine,
+            sql_storage=sql_storage,
+            blob_storage=blob_storage,
+        )
+
+        # Verify transaction shows not cached
+        transaction, request, response = await self._find_one_transaction_with_messages_from_storage(sql_storage)
+
+        # Check that cached is False for non-cached responses
+        assert transaction.extras["cached"] is False, "Cache status should be False without X-Cache header"
+        assert "cache_age" not in transaction.extras, "Cache age should not be present for non-cached responses"

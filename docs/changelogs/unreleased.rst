@@ -15,6 +15,10 @@ Added
 - ``--strict`` CLI flag for enforcing strict configuration validation
 - Warning system for misconfigured applications (config exists for unloaded apps)
 - Two-pass configuration parsing to filter applications with ``enabled: false``
+- ``harp-proxy system`` command group with ``config`` and ``services`` subcommands for system inspection:
+
+  - ``harp-proxy system config`` displays the compiled configuration (replaces ``harp-proxy config``)
+  - ``harp-proxy system services`` shows all configured services with their dependencies, aliases, and configuration
 
 - Added normalized cache key generation for load balancing support:
 
@@ -25,6 +29,12 @@ Added
 
 Changed
 -------
+
+- **BREAKING CHANGE**: Renamed ``harp-proxy config`` command to ``harp-proxy system config``
+
+  - The config command is now a subcommand under the ``system`` command group
+  - Use ``harp-proxy system config`` instead of ``harp-proxy config``
+  - All existing options (``--raw``, ``--json``, ``--unsecure``) continue to work
 
 **BREAKING CHANGE**: Migrated HTTP client caching from hishel 0.1.x to hishel 1.0.x with new architecture.
 
@@ -69,5 +79,6 @@ Changed
 Fixed
 -----
 
+- Fixed cache status tracking after hishel 1.0 migration: proxy controller now reads ``X-Cache`` header to determine if response was cached, and stores cache age from ``Age`` header when available. Previously, cache status was never recorded because the old ``from_cache`` extension no longer exists in hishel 1.0.
 - Fixed test discovery incorrectly including ``misc/`` directory worktree applications in ``test_all_applications_settings.py``
 - Generated projects now properly isolate pytest tests and include correct startup instructions.

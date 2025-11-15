@@ -88,7 +88,8 @@
       'transport': dict({
         '$ref': '#/$defs/Service',
         'default': dict({
-          'type': 'hishel._async_httpx.AsyncCacheTransport',
+          'base': 'hishel._async_httpx.AsyncCacheTransport',
+          'type': 'harp_apps.http_cache.transports.AsyncCacheTransport',
         }),
       }),
     }),
@@ -185,7 +186,8 @@
       'transport': dict({
         '$ref': '#/$defs/Service',
         'default': dict({
-          'type': 'hishel._async_httpx.AsyncCacheTransport',
+          'base': 'hishel._async_httpx.AsyncCacheTransport',
+          'type': 'harp_apps.http_cache.transports.AsyncCacheTransport',
         }),
       }),
     }),

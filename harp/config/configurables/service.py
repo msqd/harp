@@ -1,10 +1,8 @@
 from keyword import iskeyword
+from pydantic import ConfigDict, Field, model_serializer, model_validator
 from typing import Literal, Optional
 
-from pydantic import ConfigDict, Field, model_serializer, model_validator
-
 from harp.services.models import ServiceDefinition
-
 from .base import BaseConfigurable
 
 
@@ -13,7 +11,7 @@ class Service(BaseConfigurable):
 
     model_config = ConfigDict(extra="allow")
 
-    #: Base type for service definition. This is not usually the base interface that the service implements, and you
+    #: Base type for service definition. This is usually the base interface that the service implements, and you
     #: should use the `type` field to override the actually instanciated type.
     base: Optional[str] = Field(default=None, description="Base type for service definition.")
 

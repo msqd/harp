@@ -25,7 +25,11 @@ class TestHttpCacheSettings(BaseConfigurableTest):
             "type": "harp_apps.http_cache.storages.AsyncStorage",
         },
         # hishel 1.0: AsyncCacheTransport moved to _async_httpx module
-        "transport": {"type": "hishel._async_httpx.AsyncCacheTransport"},
+        # We now wrap it with our custom AsyncCacheTransport for URL normalization
+        "transport": {
+            "base": "hishel._async_httpx.AsyncCacheTransport",
+            "type": "harp_apps.http_cache.transports.AsyncCacheTransport",
+        },
     }
 
     async def test_service_override(self):

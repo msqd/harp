@@ -55,7 +55,6 @@ This is typically a ``hishel._async_httpx.AsyncCacheTransport`` instance or subc
 The default implementation (``AsyncCacheTransport``) extends Hishel's transport with:
 
 - Normalized cache keys for load-balanced backends
-- Debug headers (X-Cache, Age)
 - Integration with HARP's storage system
 
 .. code-block:: yaml
@@ -76,12 +75,11 @@ policy
 
 The cache policy determines what responses are cacheable and how to handle cache revalidation.
 
-Hishel 1.0 uses ``SpecificationPolicy`` with ``CacheOptions`` to configure caching behavior:
+Hishel uses ``SpecificationPolicy`` with ``CacheOptions`` to configure caching behavior:
 
 - **shared:** Whether this is a shared cache (default: ``true``)
 - **supported_methods:** HTTP methods to cache (default: ``["GET", "HEAD"]``)
 - **allow_stale:** Whether to serve stale responses (default: ``false``)
-- **allow_heuristics:** Whether to use heuristic freshness calculation (default: ``false``)
 
 .. code-block:: yaml
 
@@ -93,7 +91,6 @@ Hishel 1.0 uses ``SpecificationPolicy`` with ``CacheOptions`` to configure cachi
             shared: true
             supported_methods: [GET, HEAD]
             allow_stale: false
-            allow_heuristics: false
 
 
 storage
@@ -161,8 +158,7 @@ For production deployments:
 
 1. **Use Redis or database blob storage** instead of in-memory fallback
 2. **Set appropriate TTL** to prevent unbounded cache growth
-3. **Monitor cache hit rates** using X-Cache headers
-4. **Configure shared cache mode** (``shared: true``) for proxy scenarios
+3. **Configure shared cache mode** (``shared: true``) for proxy scenarios
 
 .. code-block:: yaml
 
@@ -188,9 +184,8 @@ Development configuration
 
 For development and testing:
 
-1. **Enable debug headers** to verify caching behavior (enabled by default)
-2. **Use in-memory storage** for faster iteration
-3. **Disable caching** when debugging specific issues
+1. **Use in-memory storage** for faster iteration
+2. **Disable caching** when debugging specific issues
 
 .. code-block:: yaml
 

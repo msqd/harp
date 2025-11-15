@@ -30,7 +30,6 @@ The caching transport wraps the HTTP client's proxy transport to intercept reque
 It extends Hishel's ``AsyncCacheTransport`` with:
 
 - **Cache key normalization:** Ensures consistent cache keys for load-balanced backends
-- **Debug headers:** Adds ``X-Cache`` (HIT/MISS) and ``Age`` headers to responses
 - **Storage integration:** Uses HARP's blob storage system
 
 This service overrides the ``http_client`` transport to enable caching.
@@ -71,7 +70,6 @@ Cache options that control policy behavior:
 - **shared:** ``true`` - Operate as a shared cache (not private browser cache)
 - **supported_methods:** ``["GET", "HEAD"]`` - Cacheable HTTP methods
 - **allow_stale:** ``false`` - Don't serve stale responses without revalidation
-- **allow_heuristics:** ``false`` - Don't use heuristic freshness calculation
 
 These options follow RFC 9111 best practices for HTTP proxy caching.
 
