@@ -7,48 +7,21 @@ http_client:
     # This is the default, only set if you want to use a custom transport. Most users don't need to set this.
     type: httpx.AsyncHTTPTransport
 
-  # Cache configuration (optional, enabled by default)
-  cache:
-    # Set to false to disable cache entirely
-    enabled: true
+  # Proxy transport layer (optional) - wraps the transport for filtering and middleware
+  proxy_transport:
+    # This is the default, only set if you want to use a custom proxy transport.
+    type: harp_apps.http_client.transports.AsyncFilterableTransport
 
-    # Override the cache policy definition (optional)
-    policy:
-      # hishel 1.0 uses SpecificationPolicy with CacheOptions instead of Controller
-      # This is the default, only set if you want to use a custom policy.
-      type: hishel.SpecificationPolicy
-
-      # You can configure CacheOptions for the policy.
-      # See https://hishel.com/ for more information.
-      arguments:
-        cache_options:
-          # Should stale cache entries be returned if the cache is being refreshed? (default: false)
-          allow_stale: false
-
-          # Which HTTP methods should be cacheable? (default: [GET, HEAD])
-          supported_methods: [GET, HEAD]
-
-          # Is this a shared cache? (default: true)
-          shared: true
-
-      # Note: hishel 1.0 strictly follows RFC 9111 for caching behavior.
-      # 'allow_heuristics' and 'cacheable_status_codes' are no longer configurable.
-
-    # Customize the cache transport layer (optional). The cache transport layer is a decorator around httpx transport
-    # layer extending the base http client features with caching.
-    transport:
-      # hishel 1.0: AsyncCacheTransport moved to _async_httpx module
-      # This is the default, only set if you want to use a custom cache transport.
-      type: hishel._async_httpx.AsyncCacheTransport
-
-      # If your hishel compatible transport class take more kwargs, you can pass more stuff here.
-      # See https://hishel.com/
-
-    # Customize the hishel cache storage (optional)
-    # Please note that we plan to allow to share other harp storages here in the future.
-    storage:
-      # This is the default, only set if you want to use a custom cache storage.
-      type: hishel.AsyncFileStorage
-
-      # If your hishel compatible storage class take more kwargs, you can pass more stuff here.
-      # See https://hishel.com/advanced/storages/
+# Cache configuration has been moved to the http_cache application.
+# See the http_cache application documentation for cache configuration options.
+# Example:
+#
+# http_cache:
+#   enabled: true
+#   policy:
+#     type: hishel.SpecificationPolicy
+#     arguments:
+#       cache_options:
+#         shared: true
+#         supported_methods: [GET, HEAD]
+#         allow_stale: false

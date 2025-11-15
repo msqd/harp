@@ -19,11 +19,6 @@ Implementation (python): :class:`HttpClientSettings <harp_apps.http_client.setti
 .. jsonschema:: ./schema.json
    :pointer: /$defs/HttpClientSettings
 
+.. note::
 
-.cache
-------
-
-Implementation (python): :class:`CacheSettings <harp_apps.http_client.settings.cache.CacheSettings>`
-
-.. jsonschema:: ./schema.json
-   :pointer: /$defs/CacheSettings
+   For cache settings, see the :doc:`http_cache settings </apps/http_cache/settings>` documentation.

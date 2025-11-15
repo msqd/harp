@@ -10,6 +10,7 @@ package).
     :maxdepth: 1
 
     dashboard/index
+    http_cache/index
     http_client/index
     janitor/index
     metrics/index

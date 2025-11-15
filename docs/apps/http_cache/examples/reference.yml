@@ -1,0 +1,24 @@
+http_cache:
+  # Global cache flag (default: true)
+  enabled: true
+
+  # Cache transport (default: harp_apps.http_cache.transports.AsyncCacheTransport)
+  transport:
+    type: harp_apps.http_cache.transports.AsyncCacheTransport
+
+  # Cache policy (default: hishel.SpecificationPolicy with RFC 9111-compliant options)
+  policy:
+    type: hishel.SpecificationPolicy
+    arguments:
+      cache_options:
+        shared: true  # Shared cache mode
+        supported_methods: [GET, HEAD]  # Cacheable methods
+        allow_stale: false  # Don't serve stale responses
+
+  # Cache storage (default: harp_apps.http_cache.storages.AsyncStorage)
+  storage:
+    base: hishel.AsyncBaseStorage
+    type: harp_apps.http_cache.storages.AsyncStorage
+    arguments:
+      ttl: null  # No automatic expiration
+      check_ttl_every: 60.0  # Check for expired entries every 60 seconds
