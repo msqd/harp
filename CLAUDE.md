@@ -295,3 +295,4 @@ makes that test pass. When in doubt, favor simplicity and readability over
 cleverness.
 
 - no commit unless explicitely asked
+- Always run "uv run ruff check --fix harp harp_apps tests" before considering anything done.

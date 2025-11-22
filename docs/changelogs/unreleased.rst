@@ -27,6 +27,12 @@ Added
   - Implemented via custom ``AsyncCacheTransport`` that normalizes URLs
   - Maintains full HTTP RFC compliance including Vary header support
 
+- Added integration test suites for http_cache application:
+
+  - ``harp_apps/http_client/tests/with_http_cache/`` - Integration tests verifying http_client with http_cache enabled
+  - ``harp_apps/proxy/tests/with_http_cache/`` - Integration tests verifying proxy with http_cache enabled
+  - Tests verify proper cache behavior, backward compatibility, and isolation between endpoints
+
 Changed
 -------
 
