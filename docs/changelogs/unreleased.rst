@@ -79,6 +79,7 @@ Changed
 Fixed
 -----
 
+- Fixed application filtering when ``enabled: false`` is specified using Pydantic model instances. Previously, the configuration builder only recognized disabled applications when configuration was provided as a dict, not when passed as instantiated settings objects. This caused disabled applications to still be loaded and their services to be registered.
 - Fixed cache status tracking after hishel 1.0 migration: proxy controller now reads ``X-Cache`` header to determine if response was cached, and stores cache age from ``Age`` header when available. Previously, cache status was never recorded because the old ``from_cache`` extension no longer exists in hishel 1.0.
 - Fixed test discovery incorrectly including ``misc/`` directory worktree applications in ``test_all_applications_settings.py``
 - Generated projects now properly isolate pytest tests and include correct startup instructions.
