@@ -113,7 +113,7 @@ reference: harp  ## Generates API reference documentation as ReST files (docs).
 	rm -rf docs/reference/core docs/reference/apps
 	mkdir -p docs/reference/core docs/reference/apps
 	$(UV_RUN) bin/generate_apidoc
-	git add docs/reference/
+	-git add docs/reference/
 
 docs:  ## Build html documentation
 	$(call execute,$(UV_RUN) $(MAKE) -C docs html)
