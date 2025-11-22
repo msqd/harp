@@ -92,6 +92,7 @@ install: install-frontend install-backend  ## Installs harp dependencies (backen
 install-dev: install-backend-dev  ## Installs harp dependencies (backend, dashboard) with development tools.
 
 install-frontend:  ## Installs harp dashboard dependencies (frontend).
+	@mkdir -p harp_apps/dashboard/web
 	$(call execute,cd $(FRONTEND_DIR); $(PNPM) install $(if $(DEBUG),,--silent))
 
 install-backend:  ## Installs harp dependencides (backend).
