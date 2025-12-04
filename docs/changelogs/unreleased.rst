@@ -33,6 +33,10 @@ Added
   - ``harp_apps/proxy/tests/with_http_cache/`` - Integration tests verifying proxy with http_cache enabled
   - Tests verify proper cache behavior, backward compatibility, and isolation between endpoints
 
+- Added ``harp.DEBUG`` flag for enabling debug information output. Set via ``HARP_DEBUG`` or ``DEBUG`` environment
+  variables. When enabled, error responses include full exception tracebacks. This should not be enabled in
+  production environments as it may expose sensitive information.
+
 Changed
 -------
 

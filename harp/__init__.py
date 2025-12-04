@@ -39,6 +39,11 @@ if TYPE_CHECKING:
 
 ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+#: Debug mode flag. When enabled, HARP will output additional debugging information that may not be safe for
+#: production environments (e.g., exception tracebacks in error responses). Set via HARP_DEBUG or DEBUG environment
+#: variables.
+DEBUG: bool = bool(os.environ.get("HARP_DEBUG") or os.environ.get("DEBUG"))
+
 
 def get_relative_path(path: str) -> str:
     """
@@ -133,6 +138,7 @@ def run(builder: "_ConfigurationBuilder"):
 
 
 __all__ = [
+    "DEBUG",
     "ROOT_DIR",
     "__revision__",
     "__version__",
