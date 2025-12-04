@@ -12,12 +12,12 @@ cat > $entrypoint_script <<EOF
 
 set -e
 
-npm install -g npm@11.6.2  corepack@0.34.4
+npm install -g npm@11.6.2 corepack@0.34.4
 
 cd /app
 cp /app/package.json /tmp/package.json
 corepack enable pnpm
-corepack use pnpm@10.22.0
+corepack use pnpm@10.24.0
 
 
 echo
@@ -38,6 +38,6 @@ docker run -it --rm \
            --volume "${FRONTEND_DIR}:/app" \
            --volume "${__PATH__}/.cache/visualtests-modules:/app/node_modules" \
            --volume "${__PATH__}/.cache/visualtests-pnpm-store:/app/.pnpm-store" \
-           mcr.microsoft.com/playwright:v1.56.1-jammy
+           mcr.microsoft.com/playwright:v1.57.0-jammy
 
 rm "$entrypoint_script"
