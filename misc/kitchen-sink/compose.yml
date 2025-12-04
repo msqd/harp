@@ -1,13 +1,16 @@
 services:
-  # API services (scaled via --scale flag)
+  # API services - one container each with direct port exposure
   # USE_REAL_HOSTNAME=1 enables the /hostname endpoint to return the actual container hostname
-  # This allows identifying which backend replica handled the request
+  # PORT=80 simplifies internal docker network URLs (api1:80 instead of api1:8080)
 
   api1:
     image: mccutchen/go-httpbin:latest
     networks:
       - kitchen-sink
+    ports:
+      - "8001:80"
     environment:
+      - PORT=80
       - MAX_DURATION=10s
       - MAX_BODY_SIZE=1048576
       - USE_REAL_HOSTNAME=1
@@ -16,7 +19,10 @@ services:
     image: mccutchen/go-httpbin:latest
     networks:
       - kitchen-sink
+    ports:
+      - "8002:80"
     environment:
+      - PORT=80
       - MAX_DURATION=10s
       - MAX_BODY_SIZE=1048576
       - USE_REAL_HOSTNAME=1
@@ -25,7 +31,10 @@ services:
     image: mccutchen/go-httpbin:latest
     networks:
       - kitchen-sink
+    ports:
+      - "8003:80"
     environment:
+      - PORT=80
       - MAX_DURATION=10s
       - MAX_BODY_SIZE=1048576
       - USE_REAL_HOSTNAME=1
@@ -34,56 +43,13 @@ services:
     image: mccutchen/go-httpbin:latest
     networks:
       - kitchen-sink
+    ports:
+      - "8004:80"
     environment:
+      - PORT=80
       - MAX_DURATION=10s
       - MAX_BODY_SIZE=1048576
       - USE_REAL_HOSTNAME=1
-
-  # Nginx load balancers (round-robin to all service replicas)
-
-  api1-lb:
-    image: nginx:alpine
-    networks:
-      - kitchen-sink
-    ports:
-      - "8001:80"
-    volumes:
-      - ./etc/nginx/api1-lb.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - api1
-
-  api2-lb:
-    image: nginx:alpine
-    networks:
-      - kitchen-sink
-    ports:
-      - "8002:80"
-    volumes:
-      - ./etc/nginx/api2-lb.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - api2
-
-  api3-lb:
-    image: nginx:alpine
-    networks:
-      - kitchen-sink
-    ports:
-      - "8003:80"
-    volumes:
-      - ./etc/nginx/api3-lb.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - api3
-
-  api4-lb:
-    image: nginx:alpine
-    networks:
-      - kitchen-sink
-    ports:
-      - "8004:80"
-    volumes:
-      - ./etc/nginx/api4-lb.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - api4
 
 networks:
   kitchen-sink:

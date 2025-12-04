@@ -6,10 +6,10 @@ proxy:
       remote:
         min_pool_size: 2
         endpoints:
-          - { url: "http://api1-lb:80/" }
-          - { url: "http://api2-lb:80/" }
-          - { url: "http://api3-lb:80/", pools: [fallback] }
-          - { url: "http://api4-lb:80/", pools: [fallback] }
+          - { url: "http://api1/" }
+          - { url: "http://api2/" }
+          - { url: "http://api3/", pools: [fallback] }
+          - { url: "http://api4/", pools: [fallback] }
         probe:
           method: GET
           path: "/get"
@@ -22,10 +22,10 @@ proxy:
       remote:
         min_pool_size: 2
         endpoints:
-          - { url: "http://api3-lb:80/" }
-          - { url: "http://api4-lb:80/" }
-          - { url: "http://api1-lb:80/", pools: [fallback] }
-          - { url: "http://api2-lb:80/", pools: [fallback] }
+          - { url: "http://api3/" }
+          - { url: "http://api4/" }
+          - { url: "http://api1/", pools: [fallback] }
+          - { url: "http://api2/", pools: [fallback] }
         probe:
           method: GET
           path: "/get"

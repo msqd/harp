@@ -12,7 +12,9 @@ services:
       - ./etc:/etc/harp:ro
     command: ${COMMAND:-server -f /etc/harp/proxy.docker.yml -f /etc/harp/rules.yml}
     depends_on:
-      - lb-httpbin-1
-      - lb-httpbin-2
+      - api1
+      - api2
+      - api3
+      - api4
     environment:
       - HARP_LOG_LEVEL=DEBUG

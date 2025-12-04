@@ -1,18 +1,55 @@
 # Kitchen Sink - HARP Demo Environment
 
-This is a demonstration environment for testing HARP with multiple backends, load balancing, and failover configurations.
+A simplified demonstration environment for HARP's failover, health checks, and multi-endpoint routing capabilities.
 
 ## Architecture
 
+```
+                    ┌─────────────────────────────────────────────┐
+                    │              Load Testing                   │
+                    │           Locust (:8089)                    │
+                    └─────────────┬───────────────────────────────┘
+                                  │
+          ┌───────────────────────┴───────────────────────┐
+          ▼                                               ▼
+┌──────────────────────┐                    ┌──────────────────────┐
+│  proxy1 (:4000)      │                    │  proxy2 (:4001)      │
+│  Primary: api1, api2 │                    │  Primary: api3, api4 │
+│  Fallback: api3, api4│                    │  Fallback: api1, api2│
+└─────────┬────────────┘                    └────────────┬─────────┘
+          │                                              │
+          └──────────────────┬───────────────────────────┘
+                             │
+     ┌───────────┬───────────┼───────────┬───────────┐
+     ▼           ▼           ▼           ▼           │
+┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐      │
+│  api1   │ │  api2   │ │  api3   │ │  api4   │      │
+│ :8001   │ │ :8002   │ │ :8003   │ │ :8004   │      │
+│ httpbin │ │ httpbin │ │ httpbin │ │ httpbin │      │
+└─────────┘ └─────────┘ └─────────┘ └─────────┘      │
+```
+
 ### Backend Services
-- **api1, api2, api3, api4**: Four scalable httpbin services (default: 2 replicas each)
-- **api1-lb, api2-lb, api3-lb, api4-lb**: Nginx load balancers (ports 8001-8004)
+- **api1, api2, api3, api4**: Four httpbin services (ports 8001-8004)
 
 ### HARP Proxy Endpoints
 - **proxy1** (port 4000): Primary pool → api1, api2 | Fallback pool → api3, api4
 - **proxy2** (port 4001): Primary pool → api3, api4 | Fallback pool → api1, api2
 
 HARP continuously probes all backends and automatically fails over to fallback pools when primary endpoints are unavailable.
+
+## Quick Start
+
+```bash
+# Start the demo environment (local development mode)
+make start
+
+# Test it works
+curl http://localhost:4000/get
+
+# Check which services are running
+./status.sh
+```
 
 ## Running Modes
 
@@ -22,172 +59,138 @@ Runs harp-proxy using `uv run` from the local codebase with auto-reload on confi
 
 ```bash
 make start
-
-# With custom replica counts
-make start API1_REPLICAS=3 API2_REPLICAS=4
 ```
 
 **Features:**
-- ✅ Auto-reload on config file changes (requires `fswatch`)
-- ✅ Uses local codebase
-- ✅ Best for development
+- Auto-reload on config file changes (requires `fswatch`)
+- Uses local codebase
+- Best for development
 
 ### 2. UVX Mode
 
 Runs harp-proxy using `uvx` with a specific version from PyPI.
 
 ```bash
-# Uses version from pyproject.toml by default (last published version)
+# Uses version from pyproject.toml by default
 make start-uvx
 
 # Or specify a version explicitly
-make start-uvx VERSION=0.9.0-rc11
-
-# With custom replica counts
-make start-uvx VERSION=0.9.0-rc11 API1_REPLICAS=3 API2_REPLICAS=4
+make start-uvx VERSION=0.9.0
 ```
 
 **Features:**
-- ✅ Tests specific PyPI releases
-- ✅ No local installation needed
-- ✅ Good for testing published versions
-- ✅ VERSION defaults to version from `../../pyproject.toml`
+- Tests specific PyPI releases
+- No local installation needed
+- Good for testing published versions
 
 ### 3. Docker Mode
 
 Runs harp-proxy as a Docker container from GHCR.
 
 ```bash
-# Uses version from pyproject.toml by default (last published version)
+# Uses version from pyproject.toml by default
 make start-docker
 
 # Or specify a version explicitly
-make start-docker VERSION=0.9.0-rc11
+make start-docker VERSION=0.9.0
 
-# With custom docker tag (defaults to VERSION if not specified)
-make start-docker VERSION=0.9.0-rc11 DOCKER_TAG=0.9-git
+# With custom docker tag
+make start-docker DOCKER_TAG=latest
 
-# With custom platform (defaults to linux/amd64)
+# With custom platform
 make start-docker DOCKER_PLATFORM=linux/arm64
-
-# With custom command (defaults to: server -f /etc/harp/proxy.docker.yml -f /etc/harp/rules.yml)
-make start-docker DOCKER_COMMAND="server -f /etc/harp/custom.yml"
-
-# With custom replica counts
-make start-docker VERSION=0.9.0-rc11 API1_REPLICAS=3 API2_REPLICAS=4
 ```
 
 **Features:**
-- ✅ Tests Docker images
-- ✅ Fully containerized
-- ✅ Good for production-like testing
-- ✅ VERSION defaults to version from `../../pyproject.toml`
-- ✅ DOCKER_TAG defaults to VERSION if not specified
-- ✅ DOCKER_PLATFORM defaults to `linux/amd64` for better compatibility
-- ✅ DOCKER_COMMAND allows customizing the harp-proxy command
-- ✅ Exposes port range 4000-4999 for flexibility
+- Fully containerized
+- Good for production-like testing
 
-## Management Commands
+## Control Scripts
 
-### Scale Individual Services
-
-Use the `scale.sh` script to scale a specific API service:
+### Start Services
 
 ```bash
-./scale.sh api1 5    # Scale api1 to 5 replicas
-./scale.sh api2 3    # Scale api2 to 3 replicas
-./scale.sh api3 1    # Scale api3 to 1 replica
-./scale.sh api4 0    # Scale api4 to 0 replicas (stop)
+./up.sh api1 api2      # Start specific services
+./up.sh api1           # Start just api1
 ```
 
-### Scale All Services (via Makefile)
+### Stop Services
 
 ```bash
-make scale API1_REPLICAS=5 API2_REPLICAS=3 API3_REPLICAS=2 API4_REPLICAS=4
+./down.sh api1 api2    # Stop specific services
+./down.sh api1         # Stop just api1
 ```
 
-### Watch Service Status
-
-Use the `watch.sh` script to monitor replica counts in real-time (refreshes every 2 seconds):
+### Check Status
 
 ```bash
-./watch.sh
+./status.sh            # Show all service status
 ```
 
-Press `Ctrl+C` to exit.
-
-### Stop All Services
+### Stop Everything
 
 ```bash
-make stop
+make stop              # Stop all docker compose services
 ```
+
+## Testing Failover
+
+```bash
+# 1. Start the environment
+make start
+
+# 2. Verify requests go to primary pool (api1 or api2)
+curl http://localhost:4000/get
+
+# 3. Stop primary pool
+./down.sh api1 api2
+
+# 4. Requests now failover to api3/api4
+curl http://localhost:4000/get
+
+# 5. Restart primary pool
+./up.sh api1 api2
+
+# 6. HARP automatically routes back to primary
+curl http://localhost:4000/get
+```
+
+## Load Testing
+
+Run Locust load tests against the proxy:
+
+```bash
+# Start locust with default settings (50 users)
+./start_locust.sh
+
+# Custom settings
+USERS=100 SPAWN_RATE=20 ./start_locust.sh
+```
+
+Access the Locust UI at http://localhost:8089
 
 ## Configuration Files
 
-Configuration files are in the `etc/` directory:
+- `etc/proxy.yml` - HARP configuration for local/uvx modes (uses localhost:8001-8004)
+- `etc/proxy.docker.yml` - HARP configuration for Docker mode (uses Docker DNS: api1, api2, etc.)
+- `etc/rules.yml` - Proxy rules engine configuration
+- `etc/http_client.yml` - HTTP client settings
 
-### HARP Proxy Configuration
-- `proxy.yml` - Proxy endpoints for local/uvx modes (uses localhost:8001-8004)
-- `proxy.docker.yml` - Proxy endpoints for Docker mode (uses Docker DNS: api1-lb, api2-lb, api3-lb, api4-lb)
-- `rules.yml` - Proxy rules engine configuration
+## Access Points
 
-### Nginx Load Balancer Configuration
-- `nginx/api1-lb.conf` - Load balancer for api1 service
-- `nginx/api2-lb.conf` - Load balancer for api2 service
-- `nginx/api3-lb.conf` - Load balancer for api3 service
-- `nginx/api4-lb.conf` - Load balancer for api4 service
-
-## Testing the Setup
-
-### Access Points
-
-Once started, HARP proxies are available at:
-- **http://localhost:4000** - proxy1 (primary: api1, api2 | fallback: api3, api4)
-- **http://localhost:4001** - proxy2 (primary: api3, api4 | fallback: api1, api2)
-- **http://localhost:4080** - Dashboard (if enabled)
-
-Backend load balancers (direct access):
-- http://localhost:8001 - api1-lb
-- http://localhost:8002 - api2-lb
-- http://localhost:8003 - api3-lb
-- http://localhost:8004 - api4-lb
-
-### Example Requests
-
-```bash
-# Via proxy1 (routes to api1 or api2)
-curl http://localhost:4000/get
-
-# Via proxy2 (routes to api3 or api4)
-curl http://localhost:4001/get
-
-# Check which backend replica handled the request
-curl http://localhost:4000/hostname
-
-# Test JSON response
-curl http://localhost:4000/json
-
-# Test with delay
-curl http://localhost:4000/delay/2
-```
-
-### Testing Failover
-
-```bash
-# Stop api1 and api2 to test fallback to api3/api4
-./scale.sh api1 0
-./scale.sh api2 0
-
-# proxy1 should now route to api3 or api4
-curl http://localhost:4000/get
-
-# Watch the service status in another terminal
-./watch.sh
-```
+| Service | URL | Description |
+|---------|-----|-------------|
+| proxy1 | http://localhost:4000 | Primary: api1, api2 / Fallback: api3, api4 |
+| proxy2 | http://localhost:4001 | Primary: api3, api4 / Fallback: api1, api2 |
+| Dashboard | http://localhost:4080 | HARP Dashboard (if enabled) |
+| api1 | http://localhost:8001 | Backend httpbin service |
+| api2 | http://localhost:8002 | Backend httpbin service |
+| api3 | http://localhost:8003 | Backend httpbin service |
+| api4 | http://localhost:8004 | Backend httpbin service |
+| Locust | http://localhost:8089 | Load testing UI |
 
 ## Requirements
 
 - **Docker & Docker Compose** (required)
 - **UV** (for local and uvx modes)
 - **fswatch** (optional, for auto-reload in local mode)
-- **watch** (optional, for `watch.sh` script)
