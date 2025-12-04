@@ -138,3 +138,44 @@ Example: Environment-Specific Configuration
 
     telemetry:
         enabled: false  # No telemetry in development
+
+Debug Mode
+----------
+
+.. versionadded:: 0.10
+
+HARP provides a debug mode that enables additional diagnostic information. This is controlled via
+environment variables:
+
+- ``HARP_DEBUG``: The primary environment variable for enabling debug mode
+- ``DEBUG``: Alternative environment variable (for compatibility)
+
+When debug mode is enabled (``harp.DEBUG`` is truthy):
+
+- Error responses include full exception tracebacks
+- Additional diagnostic information may be included in outputs
+
+.. warning::
+
+   **Do not enable debug mode in production environments.** Exception tracebacks may contain
+   sensitive information such as file paths, internal variable values, database queries, or
+   other implementation details that could aid attackers.
+
+Example usage:
+
+.. code-block:: bash
+
+    # Enable debug mode
+    $ HARP_DEBUG=1 harp-proxy server
+
+    # Or using the DEBUG variable
+    $ DEBUG=1 harp-proxy server
+
+You can also check the debug status programmatically:
+
+.. code-block:: python
+
+    import harp
+
+    if harp.DEBUG:
+        print("Debug mode is enabled")

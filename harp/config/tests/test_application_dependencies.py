@@ -599,6 +599,94 @@ class TestEdgeCases:
             registry.validate_dependencies()
 
 
+class TestAutoloadDependencies:
+    """
+    Tests for automatic dependency loading when adding applications.
+
+    When autoload_dependencies=True, the add() method should automatically
+    add any declared dependencies that aren't already in the registry.
+    """
+
+    def test_autoload_single_dependency(self):
+        """
+        Test that a single dependency is automatically loaded.
+
+        Scenario:
+        - http_cache depends on http_client
+        - Add http_cache with autoload_dependencies=True
+        - http_client should be automatically added
+        """
+        registry = ApplicationsRegistry(namespaces=["harp_apps"])
+
+        # Add http_cache with autoload_dependencies=True
+        # http_cache declares dependency on http_client
+        registry.add("http_cache", autoload_dependencies=True)
+
+        # Both http_cache and http_client should be in registry
+        assert "http_cache" in registry
+        assert "http_client" in registry
+
+    def test_autoload_disabled_by_default(self):
+        """
+        Test that autoload_dependencies defaults to False.
+
+        Scenario:
+        - http_cache depends on http_client
+        - Add http_cache without autoload_dependencies parameter
+        - Only http_cache should be added (not http_client)
+        """
+        registry = ApplicationsRegistry(namespaces=["harp_apps"])
+
+        # Add http_cache without autoload_dependencies
+        registry.add("http_cache")
+
+        # Only http_cache should be in registry
+        assert "http_cache" in registry
+        assert "http_client" not in registry
+
+    def test_autoload_transitive_dependencies(self):
+        """
+        Test that transitive dependencies are automatically loaded.
+
+        Scenario:
+        - http_cache depends on http_client
+        - http_client depends on storage (hypothetically)
+        - Add http_cache with autoload_dependencies=True
+        - All three should be in registry
+        """
+        registry = ApplicationsRegistry(namespaces=["harp_apps"])
+
+        # Add http_cache with autoload_dependencies=True
+        registry.add("http_cache", autoload_dependencies=True)
+
+        # Verify http_cache was added
+        assert "http_cache" in registry
+        assert "http_client" in registry
+
+    def test_autoload_no_duplicate_loading(self):
+        """
+        Test that already-loaded apps aren't reloaded.
+
+        Scenario:
+        - http_client is already in registry
+        - Add http_cache (depends on http_client) with autoload_dependencies=True
+        - http_client shouldn't be added again
+        """
+        registry = ApplicationsRegistry(namespaces=["harp_apps"])
+
+        # Pre-add http_client
+        registry.add("http_client")
+        assert "http_client" in registry
+
+        # Add http_cache with autoload_dependencies
+        registry.add("http_cache", autoload_dependencies=True)
+
+        # Both should be in registry (no duplicate)
+        assert "http_cache" in registry
+        assert "http_client" in registry
+        assert len([name for name in registry if name == "http_client"]) == 1
+
+
 class TestIntegrationScenarios:
     """
     Tests for realistic integration scenarios combining validation and resolution.

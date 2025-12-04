@@ -87,6 +87,10 @@ declare namespace Apps.Dashboard {
    */
   export interface DashboardSettings {
     /**
+     * Whether the application is enabled
+     */
+    enabled?: boolean;
+    /**
      * Port on which the dashboard application will be served.
      */
     port?: number;
@@ -98,10 +102,6 @@ declare namespace Apps.Dashboard {
      * Development server settings, only useful for internal frontend development.
      */
     devserver?: DevserverSettings | null;
-    /**
-     * DEPRECATED – Whether to enable the dashboard UI.
-     */
-    enable_ui?: boolean;
     /**
      * Public URL of the dashboard application, used to generate absolute links, for example in notifications.
      */

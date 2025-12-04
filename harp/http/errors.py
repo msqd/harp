@@ -1,6 +1,8 @@
+import traceback
 from functools import cached_property
 from typing import Optional
 
+import harp
 from multidict import MultiDict, MultiDictProxy
 
 from .typing import BaseHttpMessage
@@ -35,5 +37,7 @@ class HttpError(BaseHttpMessage):
             out = type(self.exception).__name__
             if msg:
                 out += f": {msg}"
+            if harp.DEBUG:
+                out += "\n\n" + "".join(traceback.format_exception(self.exception))
             return out.encode()
         return self.message.encode()

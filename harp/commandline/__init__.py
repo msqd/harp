@@ -41,7 +41,7 @@ from typing import cast
 
 from click import Command
 
-from harp.commandline.config import config
+from harp.commandline.system import system
 from harp.commandline.create import create
 from harp.commandline.examples import entrypoint as examples
 from harp.commandline.server import server
@@ -112,7 +112,7 @@ if check_packages("harp_apps.rules.commandline"):
     entrypoint.add_command(cast(Command, rules_entrypoint))
 
 entrypoint.add_command(server)
-entrypoint.add_command(config)
+entrypoint.add_command(system)
 entrypoint.add_command(examples)
 entrypoint.add_command(create)
 entrypoint.add_command(version)

@@ -3,6 +3,6 @@ dashboard:
   devserver:
     enabled: true
     port: null
-  enable_ui: true
+  enabled: true
   port: 4080
   public_url: null

@@ -195,7 +195,15 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         apps_to_remove = []
         for app_name in list(self.applications._applications.keys()):
             app_config = settings.get(app_name, {})
-            if isinstance(app_config, dict) and app_config.get("enabled", True) is False:
+
+            # Check enabled flag from both dict and Pydantic model instances
+            enabled = True
+            if isinstance(app_config, dict):
+                enabled = app_config.get("enabled", True)
+            elif hasattr(app_config, "enabled"):
+                enabled = app_config.enabled
+
+            if enabled is False:
                 apps_to_remove.append(app_name)
                 logger.warning(
                     f"Application '{app_name}' is disabled as per configuration directive.",

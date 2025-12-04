@@ -5,10 +5,10 @@ DEFAULT_SYSTEM_CONFIG_FILENAMES = (
 
 DEFAULT_APPLICATIONS = (
     "http_client",
+    "http_cache",
     "proxy",
     "storage",
     "dashboard",
-    "harp_apps.contrib.sentry",
     "telemetry",
     "janitor",
     "rules",

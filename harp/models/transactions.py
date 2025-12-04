@@ -54,7 +54,9 @@ class Transaction(Entity):
 
         extras = data.pop("extras", {})
 
-        data["x_cached"] = extras.get("cached")
+        # Cache status is now a boolean (True) or None, based on X-Cache: HIT header
+        cached = extras.get("cached")
+        data["x_cached"] = "true" if cached else None
         data["x_method"] = extras.get("method")
         data["x_no_cache"] = bool(extras.get("no_cache"))
         data["x_status_class"] = extras.get("status_class")

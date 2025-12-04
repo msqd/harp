@@ -6,7 +6,8 @@
     'docs/apps/dashboard/examples/devserver.yml',
     'docs/apps/dashboard/examples/main.yml',
     'docs/apps/dashboard/examples/reference.yml',
-    'docs/apps/http_client/examples/cache.yml',
+    'docs/apps/http_cache/examples/cache.yml',
+    'docs/apps/http_cache/examples/reference.yml',
     'docs/apps/http_client/examples/full.yml',
     'docs/apps/http_client/examples/reference.yml',
     'docs/apps/http_client/examples/simple.yml',
@@ -55,7 +56,7 @@
       users:
         admin:
           password: $pbkdf2-sha256$29000$f4.RkvLeG2OstfZ.D8F4zw$4ONvNXnHCX.8Q.40SU9KjvBsAEAhqdrGJ80tsfLPA/s
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -72,7 +73,7 @@
       users:
         admin:
           password: not-so-secret
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -85,7 +86,7 @@
   dashboard:
     devserver:
       port: 11111
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -96,7 +97,7 @@
 # name: test_load_documentation_example[docs/apps/dashboard/examples/main.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -107,7 +108,7 @@
 # name: test_load_documentation_example[docs/apps/dashboard/examples/reference.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -115,17 +116,40 @@
   
   '''
 # ---
-# name: test_load_documentation_example[docs/apps/http_client/examples/cache.yml]
+# name: test_load_documentation_example[docs/apps/http_cache/examples/cache.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
-  http_client:
-    cache:
-      controller:
-        cacheable_methods:
+  http_cache:
+    policy:
+      cache_options:
+        allow_stale: false
+        shared: true
+        supported_methods:
         - GET
         - HEAD
-        force_cache: true
+      type: hishel.SpecificationPolicy
+  http_client: {}
+  proxy: {}
+  rules: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[docs/apps/http_cache/examples/reference.yml]
+  '''
+  dashboard: {}
+  http_cache:
+    policy:
+      cache_options:
+        allow_stale: false
+        shared: true
+        supported_methods:
+        - GET
+        - HEAD
+      type: hishel.SpecificationPolicy
+    transport:
+      type: harp_apps.http_cache.transports.AsyncCacheTransport
+  http_client: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -135,22 +159,8 @@
 # name: test_load_documentation_example[docs/apps/http_client/examples/full.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client:
-    cache:
-      controller:
-        allow_heuristics: true
-        allow_stale: true
-        cacheable_methods:
-        - GET
-        - HEAD
-        cacheable_status_codes:
-        - 200
-        - 301
-        - 308
-        type: hishel.Controller
-      storage:
-        type: hishel.AsyncFileStorage
     timeout: 10.0
     transport:
       type: httpx.AsyncHTTPTransport
@@ -163,7 +173,7 @@
 # name: test_load_documentation_example[docs/apps/http_client/examples/reference.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -174,7 +184,7 @@
 # name: test_load_documentation_example[docs/apps/http_client/examples/simple.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client:
     timeout: 10.0
     transport:
@@ -193,7 +203,7 @@
   '''
   dashboard:
     public_url: http://localhost:4080
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -204,7 +214,7 @@
 # name: test_load_documentation_example[docs/apps/notifications/examples/main.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -215,7 +225,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/basics.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy:
     endpoints:
@@ -232,7 +242,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/custom_controller.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy:
     endpoints:
@@ -254,7 +264,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/full-shorthand.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy:
     endpoints:
@@ -272,7 +282,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/full.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy:
     endpoints:
@@ -304,7 +314,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/multiple.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy:
     endpoints:
@@ -326,7 +336,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/pooled-aggressive.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy:
     endpoints:
@@ -354,7 +364,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/pooled-fallback.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy:
     endpoints:
@@ -379,7 +389,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/pooled-healthcheck.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy:
     endpoints:
@@ -407,7 +417,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/pooled.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy:
     endpoints:
@@ -425,7 +435,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/reference.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy:
     endpoints:
@@ -452,7 +462,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/swapi.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy:
     endpoints:
@@ -469,7 +479,7 @@
 # name: test_load_documentation_example[docs/apps/rules/examples/overview.toml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules:
@@ -489,7 +499,7 @@
 # name: test_load_documentation_example[docs/apps/rules/examples/rules.toml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules:
@@ -506,7 +516,7 @@
 # name: test_load_documentation_example[docs/apps/rules/examples/rules.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules:
@@ -523,7 +533,7 @@
 # name: test_load_documentation_example[docs/apps/storage/examples/mysql-aiomysql.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -535,7 +545,7 @@
 # name: test_load_documentation_example[docs/apps/storage/examples/mysql-asyncmy.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -547,7 +557,7 @@
 # name: test_load_documentation_example[docs/apps/storage/examples/postgres-asyncpg.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -559,7 +569,7 @@
 # name: test_load_documentation_example[docs/apps/storage/examples/redis.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -573,7 +583,7 @@
 # name: test_load_documentation_example[docs/apps/storage/examples/reference.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -584,7 +594,7 @@
 # name: test_load_documentation_example[docs/apps/storage/examples/sqlite-aiosqlite.yml]
   '''
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -597,10 +607,10 @@
   '''
   applications:
   - harp_apps.http_client
+  - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
@@ -616,7 +626,7 @@
           password: $pbkdf2-sha256$29000$DqE0hnCuVYoRIiREaM35Pw$vSB9/zMmcHwQQKdtcOtkZQNR43MA9fyvB8Gd114EZ.U
         miles:
           password: $pbkdf2-sha256$29000$kTKmtPbeO2ds7R2DcA5BiA$UlJJGi.dHPxrTS2Jv8RXEXcpUNR7r1OYQmHmmheVjLE
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -628,15 +638,15 @@
   '''
   applications:
   - harp_apps.http_client
+  - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -649,15 +659,15 @@
   '''
   applications:
   - harp_apps.http_client
+  - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy:
     endpoints:
@@ -675,15 +685,15 @@
   '''
   applications:
   - harp_apps.http_client
+  - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy:
     endpoints:
@@ -715,15 +725,15 @@
   '''
   applications:
   - harp_apps.http_client
+  - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy:
     endpoints:
@@ -756,15 +766,15 @@
   '''
   applications:
   - harp_apps.http_client
+  - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy:
     endpoints:
@@ -844,15 +854,15 @@
   '''
   applications:
   - harp_apps.http_client
+  - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules:
@@ -869,16 +879,15 @@
   '''
   applications:
   - harp_apps.http_client
+  - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
-  harp_apps.contrib.sentry:
-    dsn: https://68ecc537c2d8425fb732727b07bd2e42@o514633.ingest.sentry.io/4506557181722624
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}
@@ -890,15 +899,15 @@
   '''
   applications:
   - harp_apps.http_client
+  - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.contrib.sentry
   - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
-  harp_apps.contrib.sentry: {}
+  http_cache: {}
   http_client: {}
   proxy: {}
   rules: {}

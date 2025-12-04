@@ -31,3 +31,13 @@ async def echo_body(request):
 @stub_api.route("/binary", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"])
 async def binary(request):
     return Response(os.urandom(32), content_type="application/octet-stream")
+
+
+@stub_api.route("/cacheable")
+async def cacheable(request):
+    """Endpoint that returns cacheable content with Cache-Control headers."""
+    return Response(
+        b"cacheable content",
+        headers={"Cache-Control": "public, max-age=3600"},
+        content_type="text/plain",
+    )

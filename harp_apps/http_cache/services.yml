@@ -1,0 +1,48 @@
+# Cache implementation for http_client, using hishel 1.0
+# This app provides cache services that integrate with http_client app
+#
+# NOTE: http_client service override moved to on_bind event as workaround
+# until cross-app service overrides are supported (see issue #806)
+
+services:
+
+  # Caching transport decorator with normalized cache keys for load balancing
+  - name: "http_cache.transport"
+    type: [ !cfg "transport.type", "harp_apps.http_cache.transports.AsyncCacheTransport" ]
+    defaults:
+      # hishel 1.0: parameter renamed from 'transport' to 'next_transport'
+      # Next transport is http_client.proxy_transport (proxy filtering layer)
+      # because we insert cache between http_client and proxy_transport
+      next_transport: !ref "http_client.proxy_transport"
+      storage: !ref "http_cache.storage"
+      # hishel 1.0: parameter renamed from 'controller' to 'policy'
+      policy: !ref "http_cache.policy"
+    arguments: [ !cfg "transport.arguments", { } ]
+
+  # Caching policy, responsible for determining what is cacheable
+  # hishel 1.0: renamed from 'controller' to 'policy', uses SpecificationPolicy
+  - name: "http_cache.policy"
+    type: [ !cfg "policy.type", "hishel.SpecificationPolicy" ]
+    defaults:
+      cache_options: !ref "http_cache.policy.options"
+    arguments: [ !cfg "policy.arguments", { } ]
+
+  # Default cache options for the policy
+  - name: "http_cache.policy.options"
+    type: "hishel.CacheOptions"
+    arguments:
+      shared: true
+      supported_methods: [ "GET", "HEAD" ]
+      allow_stale: false
+
+  # Cache storage implementation, a.k.a how to store and retrieve cache data
+  - name: "http_cache.storage"
+    base: [ !cfg "storage.base", "hishel.AsyncBaseStorage" ]
+    type: [ !cfg "storage.type", "harp_apps.http_cache.storages.AsyncStorage" ]
+    defaults:
+      storage: !ref [ "storage.blobs", "http_cache.fallback_blob_storage" ]
+    arguments: [ !cfg "storage.arguments", { } ]
+
+  # Fallback blob storage, used by the cache storage if no other storage is available
+  - name: "http_cache.fallback_blob_storage"
+    type: harp_apps.storage.services.blob_storages.memory.MemoryBlobStorage

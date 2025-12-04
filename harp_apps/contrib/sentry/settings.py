@@ -1,7 +1,7 @@
 from typing import Optional
 
-from harp.config import Configurable
+from harp.config import Configurable, ApplicationSettingsMixin
 
 
-class SentrySettings(Configurable):
+class SentrySettings(ApplicationSettingsMixin, Configurable):
     dsn: Optional[str] = None

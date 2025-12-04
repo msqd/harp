@@ -166,10 +166,25 @@ class ApplicationsRegistry:
         except ModuleNotFoundError:
             return full_name
 
-    def add(self, *names):
+    def add(self, *names, autoload_dependencies: bool = False):
+        """Add applications to the registry.
+
+        Args:
+            *names: Application names to add
+            autoload_dependencies: If True, automatically add declared dependencies.
+                                   Defaults to False for backward compatibility.
+        """
         for name in names:
             full_name = self.resolve_name(name)
             short_name = self.resolve_short_name(full_name)
+
+            # If autoload is enabled, load dependencies FIRST
+            if autoload_dependencies and short_name not in self._applications:
+                app = self.get_application(full_name)
+                dependencies = getattr(app, "dependencies", [])
+                if dependencies:
+                    # Recursively add dependencies before the current app
+                    self.add(*dependencies, autoload_dependencies=True)
 
             if short_name not in self._applications:
                 self._applications[short_name] = self.get_application(full_name)

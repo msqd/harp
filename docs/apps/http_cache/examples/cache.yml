@@ -1,0 +1,12 @@
+http_cache:
+  # Cache configuration (optional)
+  enabled: true # Set to false to disable cache entirely (optional)
+
+  policy: # Override the cache policy definition (optional)
+    # Hishel uses SpecificationPolicy with CacheOptions
+    type: hishel.SpecificationPolicy
+    arguments:
+      cache_options:
+        supported_methods: [GET, HEAD] # Which HTTP methods should be cacheable? (default: [GET, HEAD])
+        allow_stale: false # Should stale cache entries be returned? (default: false)
+        shared: true # Is this a shared cache? (default: true)

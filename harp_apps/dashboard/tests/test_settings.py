@@ -1,5 +1,7 @@
 from tempfile import NamedTemporaryFile
 
+import pytest
+
 from harp.config.asdict import asdict
 from harp_apps.dashboard.settings import BasicAuthSettings, DashboardSettings
 
@@ -10,7 +12,7 @@ def test_defaults():
     assert asdict(DashboardSettings(), verbose=True) == {
         "auth": None,
         "devserver": {"enabled": True, "port": None},
-        "enable_ui": True,
+        "enabled": True,
         "port": 4080,
         "public_url": None,
     }
@@ -59,3 +61,18 @@ def test_no_devserver():
 def test_devserver_disable():
     settings = DashboardSettings.from_dict({"devserver": {"enabled": False}})
     assert settings.devserver.enabled is False
+
+
+def test_enable_ui_deprecated():
+    """Test that using the deprecated enable_ui field raises an exception."""
+    with pytest.raises(ValueError) as exc_info:
+        DashboardSettings.from_dict({"enable_ui": True})
+
+    assert "enable_ui" in str(exc_info.value)
+    assert "enabled" in str(exc_info.value)
+
+    # Also test with enable_ui=False
+    with pytest.raises(ValueError) as exc_info:
+        DashboardSettings.from_dict({"enable_ui": False})
+
+    assert "enable_ui" in str(exc_info.value)

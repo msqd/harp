@@ -1,0 +1,13 @@
+http_client: { }
+
+http_cache: { }
+
+proxy:
+  endpoints:
+    - name: cache-tests
+      description: "Reverse proxy to cache-tests origin server"
+      port: 4000
+      url: "http://localhost:8000/"
+
+storage:
+  url: postgresql://hct_user:uct_passwd@localhost:5432/hct_db

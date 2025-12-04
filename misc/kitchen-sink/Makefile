@@ -1,9 +1,4 @@
-.PHONY: start start-uvx start-docker stop scale _start
-
-API1_REPLICAS ?= 2
-API2_REPLICAS ?= 2
-API3_REPLICAS ?= 2
-API4_REPLICAS ?= 2
+.PHONY: help start start-uvx start-docker stop _start
 
 # Run mode: local (default), uvx, or docker
 MODE ?= local
@@ -35,8 +30,8 @@ start-docker:  ## Start services with harp-proxy as docker container (defaults t
 _start:
 	@echo "Stopping any existing Docker Compose services..."
 	@docker compose down --remove-orphans 2>/dev/null || true
-	@echo "Starting Docker Compose services with api1=$(API1_REPLICAS) api2=$(API2_REPLICAS) api3=$(API3_REPLICAS) api4=$(API4_REPLICAS) replicas..."
-	@docker compose up -d --scale api1=$(API1_REPLICAS) --scale api2=$(API2_REPLICAS) --scale api3=$(API3_REPLICAS) --scale api4=$(API4_REPLICAS)
+	@echo "Starting Docker Compose services..."
+	@docker compose up -d
 	@CONFIG_FILES=$$(ls etc/*.yml | grep -v '\.docker\.yml$$' | sed 's/^/-f /' | tr '\n' ' '); \
 	if [ "$(MODE)" = "local" ]; then \
 		echo "🚀 Starting harp-proxy in LOCAL mode (uv run) with auto-reload..."; \
@@ -70,8 +65,24 @@ _start:
 		exit 1; \
 	fi
 
-scale:  ## Scale API services (usage: make scale API1_REPLICAS=3 API2_REPLICAS=4)
-	@docker compose up -d --scale api1=$(API1_REPLICAS) --scale api2=$(API2_REPLICAS) --scale api3=$(API3_REPLICAS) --scale api4=$(API4_REPLICAS) --no-recreate
-
-stop:  ## Stop docker compose services
+stop:  ## Stop all docker compose services
 	@docker compose down
+
+etc/http_client.yml: ../../harp_apps/http_client/docs/examples/reference.yml
+	cp $< $@
+
+help:  ## Show available commands
+	@echo "Kitchen Sink - HARP Demo Environment"
+	@echo
+	@echo "\033[1mRunning Modes\033[0m"
+	@grep -E '^(start|start-uvx|start-docker):.*?##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo
+	@echo "\033[1mManagement\033[0m"
+	@grep -E '^(stop):.*?##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo
+	@echo "\033[1mControl Scripts\033[0m"
+	@echo "    \033[36m./up.sh api1 api2     \033[0m Start specific services"
+	@echo "    \033[36m./down.sh api1        \033[0m Stop specific services"
+	@echo "    \033[36m./status.sh           \033[0m Show service status"
+	@echo "    \033[36m./start_locust.sh     \033[0m Run load tests"
+	@echo

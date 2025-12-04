@@ -1,8 +1,7 @@
 import logging.config
 import os
-from typing import Any, Optional
-
 import structlog
+from typing import Any, Optional
 
 shared_processors = [
     structlog.stdlib.add_logger_name,
@@ -85,6 +84,7 @@ logging_config = {
         "harp": {"level": _get_logging_level("harp", default="info")},
         "harp.event_dispatcher": {"level": _get_logging_level("events")},
         "harp_apps": {"level": _get_logging_level("harp")},
+        "harp_apps.http_cache": {"level": _get_logging_level("http_cache")},
         "harp_apps.http_client": {"level": _get_logging_level("http_client")},
         "harp_apps.proxy": {"level": _get_logging_level("proxy")},
         "harp_apps.storage": {"level": _get_logging_level("storage")},

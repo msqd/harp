@@ -27,7 +27,7 @@ async def test_controller_auth_plaintext():
                 algorithm="plaintext",
                 users={"admin": User(password="admin")},
             ),
-            enable_ui=False,
+            devserver={"enabled": True, "port": 5173},
         )
     )
     assert asdict(controller.settings.auth) == {
@@ -50,11 +50,14 @@ async def test_controller_auth_plaintext():
 
 
 async def _create_mock_controller(settings: DashboardSettings = None):
-    return DashboardController(
+    controller = DashboardController(
         storage=cast(IStorage, Mock(spec=IStorage)),
-        settings=settings or DashboardSettings(enable_ui=False),
+        settings=settings or DashboardSettings(devserver={"enabled": True, "port": 5173}),
         http_client=Mock(spec=AsyncClient),
     )
+    # Disable the devserver proxy to avoid actual HTTP calls in tests
+    controller._ui_devserver_proxy_controller = None
+    return controller
 
 
 def _get_auth_headers(username, password):

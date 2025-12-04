@@ -1,0 +1,97 @@
+{
+  "$defs": {
+    "Service": {
+      "additionalProperties": true,
+      "description": "A settings base class for service definitions.",
+      "properties": {
+        "base": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Base type for service definition.",
+          "title": "Base"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Type for service definition.",
+          "title": "Type"
+        },
+        "constructor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional custom constructor for the service.",
+          "title": "Constructor"
+        },
+        "arguments": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Arguments for the service constructor.",
+          "title": "Arguments"
+        }
+      },
+      "title": "Service",
+      "type": "object"
+    },
+    "HttpCacheSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "transport": {
+          "$ref": "#/$defs/Service",
+          "default": {
+            "type": "hishel._async_httpx.AsyncCacheTransport"
+          }
+        },
+        "policy": {
+          "$ref": "#/$defs/Service",
+          "default": {
+            "type": "hishel.SpecificationPolicy"
+          }
+        },
+        "storage": {
+          "$ref": "#/$defs/Service",
+          "default": {
+            "base": "hishel.AsyncBaseStorage",
+            "type": "harp_apps.http_cache.storages.AsyncStorage",
+            "ttl": null,
+            "check_ttl_every": 60.0
+          }
+        }
+      },
+      "title": "HttpCacheSettings",
+      "type": "object"
+    }
+  }
+}

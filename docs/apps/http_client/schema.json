@@ -1,38 +1,5 @@
 {
   "$defs": {
-    "CacheSettings": {
-      "additionalProperties": false,
-      "properties": {
-        "enabled": { "default": true, "type": "boolean" },
-        "transport": {
-          "$ref": "#/$defs/Service",
-          "default": { "type": "hishel.AsyncCacheTransport" }
-        },
-        "controller": {
-          "$ref": "#/$defs/Service",
-          "default": {
-            "type": "hishel.Controller",
-            "allow_heuristics": false,
-            "allow_stale": false,
-            "cacheable_methods": ["GET", "HEAD"],
-            "cacheable_status_codes": [
-              200, 203, 204, 206, 300, 301, 308, 404, 405, 410, 414, 501
-            ]
-          }
-        },
-        "storage": {
-          "$ref": "#/$defs/Service",
-          "default": {
-            "base": "hishel.AsyncBaseStorage",
-            "type": "harp_apps.http_client.contrib.hishel.storages.AsyncStorage",
-            "ttl": null,
-            "check_ttl_every": 60.0
-          }
-        }
-      },
-      "title": "CacheSettings",
-      "type": "object"
-    },
     "HttpClientSettings": {
       "additionalProperties": true,
       "properties": {
@@ -62,28 +29,6 @@
           "description": "Whether the application is enabled",
           "type": "boolean"
         },
-        "cache": {
-          "$ref": "#/$defs/CacheSettings",
-          "default": {
-            "enabled": true,
-            "transport": { "type": "hishel.AsyncCacheTransport" },
-            "controller": {
-              "allow_heuristics": false,
-              "allow_stale": false,
-              "cacheable_methods": ["GET", "HEAD"],
-              "cacheable_status_codes": [
-                200, 203, 204, 206, 300, 301, 308, 404, 405, 410, 414, 501
-              ],
-              "type": "hishel.Controller"
-            },
-            "storage": {
-              "base": "hishel.AsyncBaseStorage",
-              "check_ttl_every": 60.0,
-              "ttl": null,
-              "type": "harp_apps.http_client.contrib.hishel.storages.AsyncStorage"
-            }
-          }
-        },
         "transport": {
           "$ref": "#/$defs/Service",
           "default": {
@@ -95,7 +40,7 @@
         "proxy_transport": {
           "$ref": "#/$defs/Service",
           "default": {
-            "type": "harp_apps.http_client.transport.AsyncFilterableTransport"
+            "type": "harp_apps.http_client.transports.AsyncFilterableTransport"
           }
         }
       },
@@ -134,8 +79,5 @@
     }
   },
   "title": "__ROOT__",
-  "anyOf": [
-    { "$ref": "#/$defs/CacheSettings" },
-    { "$ref": "#/$defs/HttpClientSettings" }
-  ]
+  "anyOf": [{ "$ref": "#/$defs/HttpClientSettings" }]
 }

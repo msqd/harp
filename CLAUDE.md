@@ -108,10 +108,10 @@ the code - don't change things just for the sake of change.
 
 #### Refactoring Guidelines
 
-##### 1. Commit Before Refactoring
+##### 1. Stop Before Refactoring
 
-Always commit your working code before starting any refactoring. This gives a
-safe point to return to.
+Always stop ask the user before any refactoring. Suggest he may want to commit the work.
+This gives a safe point to return to.
 
 ##### 2. Look for Useful Abstractions Based on Semantic Meaning
 
@@ -281,6 +281,7 @@ pnpm ui:serve
 For release managers: see the complete release documentation in `docs/contribute/release/python.rst`.
 
 **Quick reference:**
+
 - Update changelog: `docs/contribute/release/changelog.rst`
 - Python package releases: `docs/contribute/release/python.rst`
 - Pre-release tasks: `docs/contribute/release/chores.rst`
@@ -292,4 +293,6 @@ small, safe increments. Every change should be driven by a test that describes
 the desired behavior, and the implementation should be the simplest thing that
 makes that test pass. When in doubt, favor simplicity and readability over
 cleverness.
+
 - no commit unless explicitely asked
+- Always run "uv run ruff check --fix harp harp_apps tests" before considering anything done.
