@@ -784,7 +784,7 @@ requires-dist = [
     { name = "dataclasses-json", specifier = ">=0.6,<0.7" },
     { name = "dataclasses-jsonschema", specifier = ">=2.16,<2.17" },
     { name = "essentials-configuration", specifier = ">=2.0,<2.1" },
-    { name = "hishel", specifier = "~=1.1.5" },
+    { name = "hishel", specifier = "~=1.1.7" },
     { name = "http-router", specifier = ">=5.0,<5.1" },
     { name = "httpx", specifier = ">=0.27,<0.29" },
     { name = "hypercorn", specifier = ">=0.17,<0.18" },
@@ -864,15 +864,15 @@ wheels = [
 
 [[package]]
 name = "hishel"
-version = "1.1.5"
+version = "1.1.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "msgpack" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/86/60/31f06bf53b828beaf40f9c7a43088b324324c5a7eb7b9afea64bd6271e57/hishel-1.1.5.tar.gz", hash = "sha256:80e7d0b51cfd2393b27788ecef80a5e82635b8ce387dffae10c8f75a64299de5", size = 60465, upload-time = "2025-11-08T11:42:18.906Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/45/cf/4e1d09cc81c48ff7498398fd82c87fb21800c85e631d03831703d8594506/hishel-1.1.7.tar.gz", hash = "sha256:32c625be581e94dc50b773a8cfb9a65cba487660561950fe976ae49945455179", size = 61473, upload-time = "2025-12-03T09:32:28.524Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/de/2e/30e0047edf7b8b186bd3e8fbc626ccbd1b345b22025229243805024c2ecd/hishel-1.1.5-py3-none-any.whl", hash = "sha256:bfd42f803fc092531aafeaa37767cc09b231648685aed1356ad3d1211e700bfa", size = 69806, upload-time = "2025-11-08T11:42:17.377Z" },
+    { url = "https://files.pythonhosted.org/packages/0c/2a/8134de761e4fd9d0a3b301b897b8c5ce9ccb17af7f846d66c676d8c03fd8/hishel-1.1.7-py3-none-any.whl", hash = "sha256:436c2a5a62d705528e581cbeba85b10d130c47c861906b21262a07ac02463a9f", size = 70569, upload-time = "2025-12-03T09:32:27.144Z" },
 ]
 
 [[package]]
