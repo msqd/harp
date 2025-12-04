@@ -46,17 +46,17 @@ Changed
   - Use ``harp-proxy system config`` instead of ``harp-proxy config``
   - All existing options (``--raw``, ``--json``, ``--unsecure``) continue to work
 
-**BREAKING CHANGE**: Migrated HTTP client caching from hishel 0.1.x to hishel 1.0.x with new architecture.
+**BREAKING CHANGE**: Migrated HTTP client caching from hishel 0.1.x to hishel 1.x with new architecture.
 
 - **New ``http_cache`` application**: Cache functionality has been moved to a dedicated ``http_cache`` application that depends on ``http_client``. This provides better separation of concerns.
 - **Package restructuring**: All cache-related code moved from ``harp_apps.http_client.contrib.hishel.*`` to ``harp_apps.http_cache.*`` (flattened structure)
 - **Configuration changes**: Cache configuration moved from ``http_client.cache.*`` to ``http_cache.*``
-- Updated documentation examples to use new hishel 1.0 configuration (``policy`` instead of ``controller``)
+- Updated documentation examples to use new hishel 1.x configuration (``policy`` instead of ``controller``)
 
 - Cache policy now uses ``hishel.SpecificationPolicy`` with ``CacheOptions`` instead of ``hishel.Controller``
 - The following cache configuration parameters are no longer available:
 
-  - ``allow_heuristics`` - Hishel 1.0 strictly follows RFC 9111
+  - ``allow_heuristics`` - Hishel 1.x strictly follows RFC 9111
   - ``cacheable_status_codes`` - Determined by RFC 9111 compliance
   - ``cacheable_methods`` → Use ``http_cache.policy`` service override with custom ``CacheOptions.supported_methods``
   - ``allow_stale`` → Use ``http_cache.policy`` service override with custom ``CacheOptions.allow_stale``
@@ -76,7 +76,7 @@ Changed
             allow_stale: false
             cacheable_methods: [GET, HEAD]
 
-  **New (hishel 1.0 with http_cache app)**::
+  **New (hishel 1.x with http_cache app)**::
 
     http_cache:
       enabled: true
@@ -90,6 +90,6 @@ Fixed
 -----
 
 - Fixed application filtering when ``enabled: false`` is specified using Pydantic model instances. Previously, the configuration builder only recognized disabled applications when configuration was provided as a dict, not when passed as instantiated settings objects. This caused disabled applications to still be loaded and their services to be registered.
-- Fixed cache status tracking after hishel 1.0 migration: proxy controller now reads ``X-Cache`` header to determine if response was cached, and stores cache age from ``Age`` header when available. Previously, cache status was never recorded because the old ``from_cache`` extension no longer exists in hishel 1.0.
+- Fixed cache status tracking after hishel 1.x migration: proxy controller now reads ``X-Cache`` header to determine if response was cached, and stores cache age from ``Age`` header when available. Previously, cache status was never recorded because the old ``from_cache`` extension no longer exists in hishel 1.x.
 - Fixed test discovery incorrectly including ``misc/`` directory worktree applications in ``test_all_applications_settings.py``
 - Generated projects now properly isolate pytest tests and include correct startup instructions.
