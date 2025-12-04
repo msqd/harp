@@ -12,4 +12,3 @@ The **Configuration Reference** contains the exhaustive reference of all setting
     Proxy <../apps/proxy/settings>
     Rules <../apps/rules/settings>
     Storage <../apps/storage/settings>
-    Telemetry <../apps/telemetry/settings>

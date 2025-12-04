@@ -18,4 +18,3 @@ package).
     proxy/index
     rules/index
     storage/index
-    telemetry/index

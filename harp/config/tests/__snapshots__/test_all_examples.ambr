@@ -611,7 +611,6 @@
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard:
@@ -642,7 +641,6 @@
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
@@ -663,7 +661,6 @@
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
@@ -689,7 +686,6 @@
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
@@ -729,7 +725,6 @@
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
@@ -770,7 +765,6 @@
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
@@ -858,7 +852,6 @@
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
@@ -883,7 +876,6 @@
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}
@@ -903,7 +895,6 @@
   - harp_apps.proxy
   - harp_apps.storage
   - harp_apps.dashboard
-  - harp_apps.telemetry
   - harp_apps.janitor
   - harp_apps.rules
   dashboard: {}

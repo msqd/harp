@@ -8,7 +8,7 @@ from harp.config import defaults
 builtins.__pytest__ = True
 
 
-DISABLED_APPLICATIONS_FOR_TESTS = ("telemetry", "harp_apps.telemetry")
+DISABLED_APPLICATIONS_FOR_TESTS = ()
 
 DEFAULT_STORAGE_SETTINGS = {
     "url": "sqlite:///:memory:",

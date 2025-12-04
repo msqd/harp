@@ -38,7 +38,6 @@ documentation section:
 * :doc:`Janitor </apps/janitor/index>`: Settings for housekeeping tasks and maintenance operations.
 * :doc:`Proxy & Endpoints </apps/proxy/index>`: Configuration for endpoints, names, ports, and routing.
 * :doc:`Storage </apps/storage/index>`: Settings for managing relational and non-relational storage solutions.
-* :doc:`Telemetry </apps/telemetry/index>`: Configuration for usage reporting and telemetry data collection.
 * :doc:`Rules Engine </apps/rules/index>`: Fine-tuning and configuration of the request lifecycle through rules.
 
 Application Filtering
@@ -122,10 +121,6 @@ Example: Environment-Specific Configuration
         enabled: true
         database_url: "postgresql://prod-db:5432/harp"
 
-    telemetry:
-        enabled: true
-        endpoint: "https://telemetry.example.com"
-
 .. code-block:: yaml
 
     # development.yaml
@@ -135,9 +130,6 @@ Example: Environment-Specific Configuration
     storage:
         enabled: true
         database_url: "sqlite:///dev.db"
-
-    telemetry:
-        enabled: false  # No telemetry in development
 
 Debug Mode
 ----------
