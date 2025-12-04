@@ -90,6 +90,11 @@ Changed
         # To customize, override the entire policy service
 - Cookiecutter template migrated from Poetry to UV (PEP 621, Python 3.13, hatchling), with enhanced Makefile, improved prompts, and automatic git initialization.
 
+Removed
+-------
+
+- Removed the ``telemetry`` application that was sending anonymous usage statistics every 24 hours. This reduces network overhead and eliminates potential privacy concerns for users in regulated environments.
+
 Fixed
 -----
 
