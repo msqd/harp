@@ -19,6 +19,11 @@ class TransactionsControllerTestFixtureMixin:
 
 
 class TestTransactionsController(TransactionsControllerTestFixtureMixin, StorageTestFixtureMixin):
+    async def test_get_returns_404_when_transaction_not_found(self, controller: TransactionsController):
+        request = Mock(spec=HttpRequest, query=MultiDict(), extensions={"user": "anonymous"})
+        response = await controller.get(request, "non-existent-id")
+        assert response.status == 404
+
     async def test_filters_using_handler(self, controller: TransactionsController):
         request = Mock(spec=HttpRequest, query=MultiDict())
         response = await controller.filters(request)

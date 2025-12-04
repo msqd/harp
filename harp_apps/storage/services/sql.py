@@ -6,6 +6,7 @@ from operator import itemgetter
 from typing import Iterable, Optional, override
 
 from sqlalchemy import and_, bindparam, case, delete, func, literal, literal_column, null, or_, select, text
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from sqlalchemy.sql.functions import count
 
@@ -342,14 +343,17 @@ class SqlStorage(IStorage):
     async def get_transaction(self, id: str, /, *, username: str) -> Optional[Transaction]:
         user = await self.users.find_one_by_username(username)
 
-        return (
-            await self.transactions.find_one_by_id(
+        try:
+            transaction = await self.transactions.find_one_by_id(
                 id,
                 with_messages=True,
                 with_user_flags=user.id if user else False,
                 with_tags=True,
             )
-        ).to_model(with_user_flags=True)
+        except NoResultFound:
+            return None
+
+        return transaction.to_model(with_user_flags=True)
 
     @override
     async def transactions_grouped_by_time_bucket(
