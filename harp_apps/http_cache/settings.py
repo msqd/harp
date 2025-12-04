@@ -1,4 +1,4 @@
-from harp.config import Configurable, Service
+from harp.config import Configurable, Service, ApplicationSettingsMixin
 
 # HTTP status codes that are heuristically cacheable according to RFC 9111
 # Migrated from hishel 0.1.x to avoid dependency on internal APIs
@@ -18,10 +18,7 @@ HEURISTICALLY_CACHEABLE_STATUS_CODES = (
 )
 
 
-class HttpCacheSettings(Configurable):
-    #: Global cache flag, set to false to disable caching.
-    enabled: bool = True
-
+class HttpCacheSettings(ApplicationSettingsMixin, Configurable):
     #: Cache transport to use for the client. This is usually a hishel._async_httpx.AsyncCacheTransport (or subclass) instance.
     transport: Service = Service(
         base="hishel._async_httpx.AsyncCacheTransport",

@@ -1,5 +1,5 @@
-from harp.config import Configurable
+from harp.config import Configurable, ApplicationSettingsMixin
 
 
-class MetricsSettings(Configurable):
+class MetricsSettings(ApplicationSettingsMixin, Configurable):
     pass

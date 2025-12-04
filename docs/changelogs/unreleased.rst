@@ -36,6 +36,10 @@ Added
 Changed
 -------
 
+- **BREAKING CHANGE**: Removed ``enable_ui`` setting from DashboardSettings.
+  Use ``enabled: false`` instead to disable the dashboard application entirely.
+  The ``enabled`` field from ``ApplicationSettingsMixin`` now controls whether the dashboard app is loaded.
+
 - **BREAKING CHANGE**: Renamed ``harp-proxy config`` command to ``harp-proxy system config``
 
   - The config command is now a subcommand under the ``system`` command group

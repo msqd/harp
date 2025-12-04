@@ -52,8 +52,9 @@ class DashboardController(RoutingController):
         if isinstance(self.settings.auth, BasicAuthSettings):
             asyncio.create_task(self.storage.create_users_once_ready(self.settings.auth.users))
 
-        if self.settings.enable_ui:
-            self._initialize_ui()
+        # UI is always initialized when the dashboard app is enabled
+        # (the `enabled` setting controls whether the entire app loads)
+        self._initialize_ui()
 
     def _initialize_ui(self):
         # controllers for delegating requests

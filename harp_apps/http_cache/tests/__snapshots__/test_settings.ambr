@@ -67,6 +67,7 @@
     'properties': dict({
       'enabled': dict({
         'default': True,
+        'description': 'Whether the application is enabled',
         'title': 'Enabled',
         'type': 'boolean',
       }),
@@ -165,6 +166,7 @@
     'properties': dict({
       'enabled': dict({
         'default': True,
+        'description': 'Whether the application is enabled',
         'title': 'Enabled',
         'type': 'boolean',
       }),

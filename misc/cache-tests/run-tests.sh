@@ -3,6 +3,7 @@
 # Tests HARP proxy against RFC 9111 HTTP caching compliance
 
 set -e
+set -x
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -33,6 +34,7 @@ cleanup() {
     # Kill any remaining node/harp processes on our ports (safety net)
     lsof -ti:8000 2>/dev/null | xargs kill -9 2>/dev/null || true
     lsof -ti:4000 2>/dev/null | xargs kill -9 2>/dev/null || true
+    lsof -ti:4080 2>/dev/null | xargs kill -9 2>/dev/null || true
 
     echo "Cleanup complete."
 }
@@ -78,7 +80,7 @@ wait_for_port 8000 "Origin server" || exit 1
 echo ""
 echo "Starting HARP proxy..."
 cd "$SCRIPT_DIR"
-uv run harp-proxy server --file config.yml > /dev/null 2>&1 &
+uv run harp-proxy server --file config.yml > /dev/null &
 HARP_PID=$!
 echo "HARP proxy started (PID: $HARP_PID)"
 

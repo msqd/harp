@@ -1,19 +1,6 @@
-# HARP configuration for cache-tests E2E testing
-# This configures HARP as a reverse proxy to the cache-tests origin server
+http_client: { }
 
-applications:
-  - proxy
-  - http_client
-  - storage
-
-# Uses default in-memory SQLite storage
-# storage: {}
-
-http_client:
-  cache:
-    enabled: true
-    # Uses default policy: hishel.SpecificationPolicy (RFC 9111 compliant)
-    # Uses default options: shared=true, supported_methods=[GET, HEAD], allow_stale=false
+http_cache: { }
 
 proxy:
   endpoints:
@@ -21,3 +8,6 @@ proxy:
       description: "Reverse proxy to cache-tests origin server"
       port: 4000
       url: "http://localhost:8000/"
+
+storage:
+  url: postgresql://hct_user:uct_passwd@localhost:5432/hct_db

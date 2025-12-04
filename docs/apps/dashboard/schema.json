@@ -76,6 +76,11 @@
       "additionalProperties": false,
       "description": "Root settings for the dashboard application.",
       "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Whether the application is enabled",
+          "type": "boolean"
+        },
         "port": {
           "default": 4080,
           "description": "Port on which the dashboard application will be served.",
@@ -101,11 +106,6 @@
             { "type": "null" }
           ],
           "description": "Development server settings, only useful for internal frontend development."
-        },
-        "enable_ui": {
-          "default": true,
-          "description": "DEPRECATED – Whether to enable the dashboard UI.",
-          "type": "boolean"
         },
         "public_url": {
           "anyOf": [{ "type": "string" }, { "type": "null" }],
