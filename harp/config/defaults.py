@@ -9,7 +9,6 @@ DEFAULT_APPLICATIONS = (
     "proxy",
     "storage",
     "dashboard",
-    "telemetry",
     "janitor",
     "rules",
 )
