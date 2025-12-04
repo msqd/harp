@@ -12,6 +12,8 @@ build:
       - pip install uv
     post_install:
       - UV_PROJECT_ENVIRONMENT=$READTHEDOCS_VIRTUALENV_PATH uv sync --group dev
+    pre_build:
+      - mkdir -p harp_apps/dashboard/web
 
 sphinx:
   configuration: docs/conf.py
