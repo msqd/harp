@@ -5,6 +5,8 @@ WrappedRequest is a simple wrapper that allows overriding Request attributes
 request for actual transmission.
 """
 
+from dataclasses import replace
+
 from hishel import Headers, Request
 
 from harp_apps.http_cache.models import WrappedRequest
@@ -92,3 +94,49 @@ class TestWrappedRequest:
         # But original requests are different (for actual transmission)
         assert wrapped1.unwrap().url == "http://backend1.local:8001/api/users"
         assert wrapped2.unwrap().url == "http://backend2.local:8002/api/users"
+
+    def test_dataclasses_replace_preserves_wrapped_request(self):
+        """dataclasses.replace() works correctly and preserves the wrapped request.
+
+        This is critical for hishel's cache revalidation which uses replace()
+        to add conditional headers (If-None-Match, If-Modified-Since).
+        """
+        original = Request(
+            method="GET",
+            url="http://backend1.local/api/users",
+            headers=Headers({"accept": "application/json"}),
+        )
+
+        wrapped = WrappedRequest(original, url="http://normalized-endpoint/api/users")
+
+        # Simulate what hishel does during revalidation
+        new_headers = Headers({"accept": "application/json", "if-none-match": '"etag123"'})
+        replaced = replace(wrapped, headers=new_headers)
+
+        # Replaced instance should have new headers
+        assert replaced.headers == new_headers
+        # But preserve the normalized URL
+        assert replaced.url == "http://normalized-endpoint/api/users"
+        # And still be a WrappedRequest that can unwrap to original
+        assert isinstance(replaced, WrappedRequest)
+        assert replaced.unwrap() is original
+        assert replaced.unwrap().url == "http://backend1.local/api/users"
+
+    def test_dataclasses_replace_with_url_change(self):
+        """dataclasses.replace() with URL change updates the wrapped URL."""
+        original = Request(
+            method="GET",
+            url="http://backend1.local/api/users",
+            headers=Headers({"accept": "application/json"}),
+        )
+
+        wrapped = WrappedRequest(original, url="http://normalized-endpoint/api/users")
+
+        # Replace with new URL
+        replaced = replace(wrapped, url="http://different-endpoint/api/users")
+
+        # URL should be updated
+        assert replaced.url == "http://different-endpoint/api/users"
+        # But original is still preserved
+        assert replaced.unwrap() is original
+        assert replaced.unwrap().url == "http://backend1.local/api/users"

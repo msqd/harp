@@ -96,7 +96,12 @@ class AsyncStorage(AsyncBaseStorage):
             else:
                 logger.debug(f"Cache miss: key={key}")
                 return []
+        except ValueError as e:
+            # Incomplete cache entry - log warning and treat as cache miss
+            logger.warning(f"Cache entry incomplete for key={key}: {e}")
+            return []
         except Exception:
+            # Unexpected error - log full traceback
             logger.exception(f"Failed to retrieve cache for key={key}")
             return []
 

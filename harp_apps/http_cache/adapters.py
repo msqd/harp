@@ -243,13 +243,22 @@ class AsyncStorageAdapter:
             },
         }
 
-    async def _unserialize_response(self, data: SerializedResponse) -> Response:
+    async def _unserialize_response(self, data: SerializedResponse) -> tp.Optional[Response]:
         headers = await self.storage.get(data["headers"])
         body = await self.storage.get(data["body"])
 
-        # Handle case where blobs are missing (storage failure)
+        # Handle case where blobs are missing (storage failure or cache corruption)
         if headers is None or body is None:
-            raise ValueError(f"Cache entry incomplete: headers={headers is not None}, body={body is not None}")
+            # Log which blobs are missing for debugging
+            missing = []
+            if headers is None:
+                missing.append(f"headers (id={data['headers']})")
+            if body is None:
+                missing.append(f"body (id={data['body']})")
+            raise ValueError(
+                f"Cache entry incomplete, missing blob(s): {', '.join(missing)}. "
+                "This may indicate storage corruption or a previous partial write."
+            )
 
         return Response(
             status_code=data["status"],
