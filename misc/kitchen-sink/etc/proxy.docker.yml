@@ -6,15 +6,17 @@ proxy:
       remote:
         min_pool_size: 2
         endpoints:
-          - { url: "http://api1/" }
-          - { url: "http://api2/" }
-          - { url: "http://api3/", pools: [fallback] }
-          - { url: "http://api4/", pools: [fallback] }
+          url: "http://api1/" }
+          - url: "http://api2/" }
+          - url: "http://api3/"
+            pools: [ fallback ]
+          - url: "http://api4/"
+            pools: [ fallback ]
         probe:
           method: GET
           path: "/get"
           interval: 5
-        break_on: [network_error]
+        break_on: [ network_error ]
 
     # proxy2: Primary pool (api3, api4) with fallback to api1, api2
     - name: proxy2
@@ -24,10 +26,10 @@ proxy:
         endpoints:
           - { url: "http://api3/" }
           - { url: "http://api4/" }
-          - { url: "http://api1/", pools: [fallback] }
-          - { url: "http://api2/", pools: [fallback] }
+          - { url: "http://api1/", pools: [ fallback ] }
+          - { url: "http://api2/", pools: [ fallback ] }
         probe:
           method: GET
           path: "/get"
           interval: 5
-        break_on: [network_error]
+        break_on: [ network_error ]

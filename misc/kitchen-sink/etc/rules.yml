@@ -1,11 +1,23 @@
 rules:
-  "httpbin-*":
-    "GET /image":
+  "proxy1":
+    "GET /image/*":
+      # language=python
       on_request: |
         transaction.markers.add("skip-request-headers-storage")
         transaction.markers.add("skip-request-body-storage")
+
+      # language=python
       on_response: |
         transaction.markers.add("skip-response-headers-storage")
         transaction.markers.add("skip-response-body-storage")
+
+  "proxy2":
+    "GET /cache/*":
+      # language=python
+      on_request: |
+        request.headers["cache-control"] = "no-cache"
+
+    "GET /hostname":
+      # language=python
       on_remote_response: |
-        response.headers['Cache-Control'] = 'max-age=1664'
+        response.headers["cache-control"] = "max-age=60"
