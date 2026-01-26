@@ -1,5 +1,5 @@
-HARP, an API Runtime Proxy
-==========================
+HARP, the HTTP API Runtime Platform
+===================================
 
 HARP is an open-source API Proxy toolkit designed to improve the reliability, performance, security, and observability
 of the APIs you use. It runs in your infrastructure, close to your applications.
@@ -17,7 +17,7 @@ of the APIs you use. It runs in your infrastructure, close to your applications.
     :alt: GitLab CI/CD Pipeline Status
 
 .. image:: https://readthedocs.org/projects/harp-proxy/badge/?version=0.9
-    :target: https://docs.harp-proxy.net/en/0.9/
+    :target: https://docs.harp-project.net/en/0.9/
     :alt: Documentation
 
 .. image:: https://img.shields.io/pypi/pyversions/harp-proxy.svg
@@ -26,19 +26,17 @@ of the APIs you use. It runs in your infrastructure, close to your applications.
 
 ----
 
-**Quick links:** `Documentation <https://docs.harp-proxy.net/en/latest/>`_
-| `Getting Started <https://docs.harp-proxy.net/en/latest/start/index.html>`_
-| `Install (Docker) <https://docs.harp-proxy.net/en/latest/start/docker.html>`_
-| `Install (PIP) <https://docs.harp-proxy.net/en/latest/start/python.html>`_
+**Quick links:** `Documentation <https://docs.harp-project.net/en/latest/>`_
+| `Getting Started <https://docs.harp-project.net/en/latest/start/index.html>`_
+| `Install (Docker) <https://docs.harp-project.net/en/latest/start/docker.html>`_
+| `Install (PIP) <https://docs.harp-project.net/en/latest/start/python.html>`_
 | `Repository (Git) <https://github.com/msqd/harp>`_
 | `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
-
-**Editions:** `HARP Community <https://harp-proxy.net/>`_ | `HARP Pro <https://www.getharp.eu/>`_ | `HARP Enterprise <https://www.getharp.eu/>`_
 
 **Community**: |badge_list| |badge_discord| |badge_contributors|
 
 .. |badge_list| image:: https://img.shields.io/badge/Subscribe_to_release_announcements-085E9F?logo=maildotru
-    :target: https://lists.harp-proxy.net/subscription/form
+    :target: https://lists.harp-project.net/subscription/form
     :alt: Subscribe to release announcements
 
 .. |badge_discord| image:: https://img.shields.io/badge/Join_our_discord_server-ffffff?logo=discord
@@ -69,25 +67,25 @@ at least the subset your application depends on.
 
 Out of the box, you'll get standard-compliant caching (based on `hishel <https://hishel.com/>`_), a world class http
 client (based on `httpx <https://www.python-httpx.org/>`_), a `circuit breaker
-<https://docs.harp-proxy.net/en/latest/features/circuit-breaker.html>`_, a `python-based rules engine
-<https://docs.harp-proxy.net/en/latest/features/rules.html>`_, an audit log and an `observation dashboard
-<https://docs.harp-proxy.net/en/latest/features/dashboard.html>`_. The `features guide
-<https://docs.harp-proxy.net/en/latest/features/index.html>`_ will tell you more.
+<https://docs.harp-project.net/en/latest/features/circuit-breaker.html>`_, a `python-based rules engine
+<https://docs.harp-project.net/en/latest/features/rules.html>`_, an audit log and an `observation dashboard
+<https://docs.harp-project.net/en/latest/features/dashboard.html>`_. The `features guide
+<https://docs.harp-project.net/en/latest/features/index.html>`_ will tell you more.
 
-.. figure:: https://docs.harp-proxy.net/en/latest/_images/overview.png
-    :alt: HARP Proxy Overview
+.. figure:: https://docs.harp-project.net/en/latest/_images/overview.png
+    :alt: HARP Overview
     :align: center
 
 To instantly get insights on how your application is interacting with external services, you get a full searchable
 transactions audit trail, with detailed information on each request and response.
 
-.. figure:: https://docs.harp-proxy.net/en/latest/_images/transactions.png
-    :alt: HARP Proxy Transactions
+.. figure:: https://docs.harp-project.net/en/latest/_images/transactions.png
+    :alt: HARP Transactions
     :align: center
 
 No more doubts about what happened. Now, you ***know***.
 
-`Discover all HARP Proxy features <https://docs.harp-proxy.net/en/latest/features/index.html>`_
+`Discover all HARP features <https://docs.harp-project.net/en/latest/features/index.html>`_
 
 
 Getting Started
@@ -107,10 +105,10 @@ For more installation options:
 
 * **Quick & Easy:** Use ``uvx`` (shown above) - runs without installing HARP globally
 * **Traditional Python:** ``pip install harp-proxy`` - for standard Python environments
-* **Containerized:** `Docker <https://docs.harp-proxy.net/en/latest/start/docker.html>`_ - for production deployments
-* **From Source:** `Development setup <https://docs.harp-proxy.net/en/latest/start/python.html>`_ - for contributing
+* **Containerized:** `Docker <https://docs.harp-project.net/en/latest/start/docker.html>`_ - for production deployments
+* **From Source:** `Development setup <https://docs.harp-project.net/en/latest/start/python.html>`_ - for contributing
 
-Refer to the `Getting Started Guide <https://docs.harp-proxy.net/en/latest/start/index.html>`_ for detailed instructions.
+Refer to the `Getting Started Guide <https://docs.harp-project.net/en/latest/start/index.html>`_ for detailed instructions.
 
 
 How it works?
@@ -137,7 +135,7 @@ Overview
   that the integration or removal cost is virtually zero, or even negative when considering the reduction in code you
   won't need to write.
 
-`Read the full documentation <https://docs.harp-proxy.net/en/latest/>`_
+`Read the full documentation <https://docs.harp-project.net/en/latest/>`_
 
 
 Hub to external services
@@ -185,7 +183,7 @@ is the base endpoint of the external services. In a modern 12factor-like applica
 environment variable.
 
 .. figure:: https://github.com/msqd/harp/raw/0.9/docs/images/HowItWorks-Proxy.png
-    :alt: What happens within one harp proxy
+    :alt: What happens within one proxy
     :align: center
 
 * **Reversibility**: By requiring 0 code change on your application side (except endpoint url configuration, that
@@ -199,18 +197,18 @@ environment variable.
 Proxy features
 --------------
 
-Here is a non-exhaustive list of HARP Proxy's main features:
+Here is a non-exhaustive list of HARP features:
 
-* `Configuration <https://docs.harp-proxy.net/en/latest/features/configuration.html>`_
-* `Dashboard <https://docs.harp-proxy.net/en/latest/features/dashboard.html>`_
-* `Proxy <https://docs.harp-proxy.net/en/latest/features/proxy.html>`_
-* `Audit Log <https://docs.harp-proxy.net/en/latest/features/auditlog.html>`_
-* `Caching <https://docs.harp-proxy.net/en/latest/features/caching.html>`_
-* `Circuit Breaker <https://docs.harp-proxy.net/en/latest/features/circuit-breaker.html>`_
-* `Rules Engine <https://docs.harp-proxy.net/en/latest/features/rules.html>`_
+* `Configuration <https://docs.harp-project.net/en/latest/features/configuration.html>`_
+* `Dashboard <https://docs.harp-project.net/en/latest/features/dashboard.html>`_
+* `Proxy <https://docs.harp-project.net/en/latest/features/proxy.html>`_
+* `Audit Log <https://docs.harp-project.net/en/latest/features/auditlog.html>`_
+* `Caching <https://docs.harp-project.net/en/latest/features/caching.html>`_
+* `Circuit Breaker <https://docs.harp-project.net/en/latest/features/circuit-breaker.html>`_
+* `Rules Engine <https://docs.harp-project.net/en/latest/features/rules.html>`_
 
-You can `read more about all HARP Proxy features <https://docs.harp-proxy.net/en/latest/features/index.html>`_ in the
-`Features Guide <https://docs.harp-proxy.net/en/latest/features/index.html>`_.
+You can `read more about all HARP features <https://docs.harp-project.net/en/latest/features/index.html>`_ in the
+`Features Guide <https://docs.harp-project.net/en/latest/features/index.html>`_.
 
 
 People & Credits
@@ -233,4 +231,4 @@ People & Credits
 
 * Sponsored by `Makersquad <https://www.makersquad.fr/>`_
 
-`There are many ways you can contribute to HARP! <https://docs.harp-proxy.net/en/latest/contribute/index.html>`_
+`There are many ways you can contribute to HARP! <https://docs.harp-project.net/en/latest/contribute/index.html>`_
