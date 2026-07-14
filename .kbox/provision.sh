@@ -16,7 +16,15 @@ if [ -n "$KONGO_URL" ]; then
   claude mcp add --scope user kongo -e KONGO_API_URL="$KONGO_URL" -- npx tsx "$HOME/kongo/src/mcp/bin.ts"
 fi
 
-# --- project deps (Python via uv) --------------------------------------------
+# --- project deps (harp: uv backend + pnpm dashboard frontend) ---------------
+# harp's package build references harp_apps/dashboard/web; it is `make install-backend`
+# that does `mkdir -p` on it before `uv sync`, so a bare `uv sync` fails with
+# "harp_apps/dashboard/web not found". Drive the deps through the Makefile instead.
 command -v uv >/dev/null 2>&1 || curl -LsSf https://astral.sh/uv/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
-uv sync
+# pnpm for the dashboard frontend, honoring the version pinned in package.json.
+if command -v corepack >/dev/null 2>&1; then sudo corepack enable
+else command -v pnpm >/dev/null 2>&1 || sudo npm install -g pnpm@10.22.0; fi
+
+make install-dev                                                             # uv sync (+ creates the web dir)
+[ -n "$(ls -A harp_apps/dashboard/web 2>/dev/null)" ] || make build-frontend # build the dashboard UI once
