@@ -23,6 +23,9 @@ fi
 command -v uv >/dev/null 2>&1 || curl -LsSf https://astral.sh/uv/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 # pnpm for the dashboard frontend, honoring the version pinned in package.json.
+# COREPACK_ENABLE_DOWNLOAD_PROMPT=0 lets corepack fetch that pinned pnpm without the
+# interactive "Do you want to continue? [Y/n]" prompt (which hangs a non-interactive hook).
+export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 if command -v corepack >/dev/null 2>&1; then sudo corepack enable
 else command -v pnpm >/dev/null 2>&1 || sudo npm install -g pnpm@10.22.0; fi
 
