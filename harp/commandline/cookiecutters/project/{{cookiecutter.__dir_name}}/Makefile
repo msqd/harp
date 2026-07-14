@@ -16,7 +16,7 @@ endef
 # Default target
 .DEFAULT_GOAL := help
 
-.PHONY: help install start test clean
+.PHONY: help install start dev test clean
 
 help:  ## Shows this help message
 	@echo "📦 \033[1m{{cookiecutter.name}}\033[0m"
@@ -31,6 +31,9 @@ install:  ## Install dependencies using UV
 
 start: install  ## Start the HARP proxy server
 	$(call execute,$(UV) run harp-proxy server{% if cookiecutter.create_application %} --enable {{cookiecutter.__pkg_name}}{% endif %}{% if cookiecutter.create_config %} --file config.yml{% endif %} $(HARP_OPTIONS))
+
+dev: install  ## Start the HARP proxy server with auto-reload on file changes
+	$(call execute,$(UV) run watchfiles "$(UV) run harp-proxy server{% if cookiecutter.create_application %} --enable {{cookiecutter.__pkg_name}}{% endif %}{% if cookiecutter.create_config %} --file config.yml{% endif %} $(HARP_OPTIONS)"{% if cookiecutter.create_application %} {{cookiecutter.__pkg_name}}/{% endif %}{% if cookiecutter.create_config %} config.yml{% endif %})
 
 test: install  ## Run tests with pytest
 	$(call execute,$(UV) run pytest)

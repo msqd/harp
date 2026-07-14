@@ -11,6 +11,11 @@ dependencies = [
     "harp-proxy",
 ]
 
+[dependency-groups]
+dev = [
+    "watchfiles",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
