@@ -12,9 +12,9 @@ of the APIs you use. It runs in your infrastructure, close to your applications.
     :target: https://artifacthub.io/packages/helm/harp/harp-proxy
     :alt: Artifact Hub
 
-.. image:: https://www.gitlab.com/makersquad/oss/harp/badges/0.9/pipeline.svg
-    :target: https://www.gitlab.com/makersquad/oss/harp/pipelines
-    :alt: GitLab CI/CD Pipeline Status
+.. image:: https://github.com/msqd/harp/actions/workflows/cicd.yml/badge.svg
+    :target: https://github.com/msqd/harp/actions/workflows/cicd.yml
+    :alt: CI/CD Pipeline Status
 
 .. image:: https://readthedocs.org/projects/harp-proxy/badge/?version=0.9
     :target: https://docs.harp-project.net/en/0.9/
@@ -31,7 +31,7 @@ of the APIs you use. It runs in your infrastructure, close to your applications.
 | `Install (Docker) <https://docs.harp-project.net/en/latest/start/docker.html>`_
 | `Install (PIP) <https://docs.harp-project.net/en/latest/start/python.html>`_
 | `Repository (Git) <https://github.com/msqd/harp>`_
-| `CI/CD <https://gitlab.com/makersquad/oss/harp/-/pipelines>`_
+| `CI/CD <https://github.com/msqd/harp/actions/workflows/cicd.yml>`_
 
 **Community**: |badge_list| |badge_discord| |badge_contributors|
 
