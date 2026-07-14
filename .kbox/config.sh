@@ -2,9 +2,11 @@
 # optional; PROJECT auto-derives from the repo directory name. See the kbox repo
 # (examples/config.sh) for the full list of variables.
 
-# harp is a light Python service: 2G is plenty (idle ~0.5G). Applied on the next
-# `kbox up` (host-side `multipass set`); resize a RUNNING VM with stop+set+start.
-VM_MEMORY="2G"
+# harp is light at runtime (idle ~0.5G) BUT the dashboard frontend build (vite/tsc)
+# needs real headroom — it OOMs the V8 heap at 2G. 4G covers the one-off build; the
+# ceiling is on-demand so idle cost stays low. Applied on the next `kbox up`
+# (host-side `multipass set`); resize a RUNNING VM with stop+set+start.
+VM_MEMORY="4G"
 
 # Kongo (company mail) wiring, forwarded to the provision hook so it can register
 # the kongo MCP against the canonical LAN Kongo. Empty on the host = MCP skipped.

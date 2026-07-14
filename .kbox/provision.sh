@@ -29,5 +29,8 @@ export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 if command -v corepack >/dev/null 2>&1; then sudo corepack enable
 else command -v pnpm >/dev/null 2>&1 || sudo npm install -g pnpm@10.22.0; fi
 
-make install-dev                                                             # uv sync (+ creates the web dir)
-[ -n "$(ls -A harp_apps/dashboard/web 2>/dev/null)" ] || make build-frontend # build the dashboard UI once
+make install-dev   # uv sync (+ creates the web dir)
+# Build the dashboard UI once. Vite/tsc is heap-hungry; give V8 room (needs a 4G VM,
+# see .kbox/config.sh) so it doesn't die with "JavaScript heap out of memory".
+[ -n "$(ls -A harp_apps/dashboard/web 2>/dev/null)" ] \
+  || NODE_OPTIONS=--max-old-space-size=3072 make build-frontend
