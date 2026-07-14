@@ -1,6 +1,11 @@
 Unreleased
 ==========
 
+Changed
+:::::::
+
+- The published wheel no longer ships test code, snapshots or dev-only testing utilities, reducing the distribution size (the ``harp create project`` scaffolding, which legitimately contains tests, is preserved).
+
 Fixed
 :::::
 
