@@ -839,8 +839,7 @@
         endpoints:
         - url: https://registry.yarnpkg.com/
   rules: {}
-  storage:
-    url: postgresql+asyncpg://harp:harp@127.0.0.1/repositories
+  storage: {}
   
   '''
 # ---
