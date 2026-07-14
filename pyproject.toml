@@ -48,6 +48,7 @@ dependencies = [
 
 [project.scripts]
 harp-proxy = "harp.commandline:entrypoint"
+harp = "harp.commandline:entrypoint"
 
 [dependency-groups]
 dev = [
