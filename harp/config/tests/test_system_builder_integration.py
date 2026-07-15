@@ -15,7 +15,7 @@ import pytest
 from harp.config import Application, ApplicationsRegistry
 from harp.config.builders.system import SystemBuilder
 from harp.errors import CircularDependencyError, MissingDependencyError
-from harp.typing import GlobalSettings
+from harp.typedefs import GlobalSettings
 
 
 class TestSystemBuilderDependencyIntegration:

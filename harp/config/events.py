@@ -4,7 +4,7 @@ from asgiref.typing import ASGIApplication
 from whistle import Event
 
 from harp.services import Container, Services
-from harp.typing import GlobalSettings
+from harp.typedefs import GlobalSettings
 from harp.utils.network import Bind
 
 if TYPE_CHECKING:

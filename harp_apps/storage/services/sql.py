@@ -293,7 +293,7 @@ class SqlStorage(IStorage):
         text_search="",
     ):
         """
-        Implements :meth:`Storage.find_transactions <harp.typing.storage.Storage.find_transactions>`.
+        Implements :meth:`Storage.find_transactions <harp.typedefs.storage.Storage.find_transactions>`.
 
         """
 

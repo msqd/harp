@@ -8,7 +8,7 @@ from harp import __revision__, __version__, get_logger
 from harp.config.asdict import asdict
 from harp.controllers import GetHandler, ProxyControllerResolver, PutHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest, HttpResponse, JsonHttpResponse
-from harp.typing.global_settings import GlobalSettings
+from harp.typedefs.global_settings import GlobalSettings
 from harp.views.json import json
 from harp_apps.storage.models import MetricValue
 from harp_apps.storage.services.sql import SqlStorage

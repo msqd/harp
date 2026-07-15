@@ -4,6 +4,7 @@ Unreleased
 Changed
 :::::::
 
+- **BC break:** renamed the ``harp.typing`` package to ``harp.typedefs`` so a first-party module no longer shadows the standard-library ``typing`` module (which crashed the CLI when the ``harp/`` directory ended up on ``sys.path``). Update imports from ``harp.typing`` to ``harp.typedefs``.
 - The published wheel no longer ships test code, snapshots or dev-only testing utilities, reducing the distribution size (the ``harp create project`` scaffolding, which legitimately contains tests, is preserved).
 
 Fixed
