@@ -1,5 +1,5 @@
 """
-The Typing (:mod:`harp.typing`) package provides contains everything related to types and typing.
+The Typing (:mod:`harp.typedefs`) package provides contains everything related to types and typing.
 
 Contents
 --------

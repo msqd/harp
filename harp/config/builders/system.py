@@ -8,7 +8,7 @@ from harp.asgi import ASGIKernel
 from harp.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_VIEW
 from harp.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.services import Container, Services
-from harp.typing import GlobalSettings
+from harp.typedefs import GlobalSettings
 from harp.utils.network import Bind
 from harp.views.json import on_json_response
 

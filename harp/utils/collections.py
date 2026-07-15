@@ -3,7 +3,7 @@ from itertools import chain, combinations
 
 from multidict import CIMultiDict
 
-from harp.typing import NotSet
+from harp.typedefs import NotSet
 
 
 class MultiChainMap(ChainMap):

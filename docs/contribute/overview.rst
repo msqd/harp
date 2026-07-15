@@ -34,7 +34,7 @@ Core packages
 * **HTTP** (:mod:`harp.http`) - Building blocks for HTTP
 * **Meta** (:mod:`harp.meta`) - Metadata management tools
 * **Models** (:mod:`harp.models`) - Data modeling for core objects (plain old Python objects, not tied to storage)
-* **Typing** (:mod:`harp.typing`) - Type and interface definitions
+* **Typing** (:mod:`harp.typedefs`) - Type and interface definitions
 * **Utils** (:mod:`harp.utils`) - Collection of utility functions and helper classes
 * **Views** (:mod:`harp.views`) - Presentation layer for controllers
 

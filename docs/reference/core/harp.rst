@@ -25,6 +25,6 @@ Submodules
     harp.models
     harp.services
     harp.settings
-    harp.typing
+    harp.typedefs
     harp.utils
     harp.views

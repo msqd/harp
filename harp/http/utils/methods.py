@@ -1,7 +1,7 @@
 import dataclasses
 from typing import Union
 
-from harp.typing import Maybe
+from harp.typedefs import Maybe
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)

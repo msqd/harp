@@ -6,7 +6,7 @@ from config.common import ConfigurationBuilder as BaseConfigurationBuilder
 from config.common import MapSource, merge_values
 from config.env import EnvVars
 
-from harp.typing import GlobalSettings
+from harp.typedefs import GlobalSettings
 from harp.utils.config.yaml import include_constructor  # noqa
 
 from harp import get_logger
