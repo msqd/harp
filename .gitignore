@@ -1,4 +1,3 @@
-!/harp_apps/dashboard/web/.gitkeep
 !/misc/cache-tests/cache-tests/results/index.mjs
 *$py.class
 *.cover
@@ -95,3 +94,12 @@ venv.bak/
 venv/
 web/
 wheels/
+
+# The dashboard web build output is git-ignored (it is produced by the frontend
+# build), but its directory is a hatchling force-include target: it must exist on
+# a fresh checkout or `uv sync` / the wheel build fails with FileNotFoundError.
+# Keep an empty .gitkeep so the directory always ships. These rules must stay
+# below the generic `web/` ignore above to take precedence over it.
+!/harp_apps/dashboard/web/
+/harp_apps/dashboard/web/*
+!/harp_apps/dashboard/web/.gitkeep
