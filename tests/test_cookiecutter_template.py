@@ -351,6 +351,11 @@ class TestCookiecutterPrompts:
             "Create config prompt should explain it creates an empty configuration file"
         )
 
+    def test_application_and_config_are_created_by_default(self, cookiecutter_json):
+        """Verify the template defaults create both the application folder and the config file."""
+        assert cookiecutter_json["create_application"] is True, "create_application should default to true"
+        assert cookiecutter_json["create_config"] is True, "create_config should default to true"
+
     def test_all_user_facing_variables_have_prompts(self, cookiecutter_json):
         """Verify all non-internal variables have custom prompts."""
         prompts = cookiecutter_json["__prompts__"]

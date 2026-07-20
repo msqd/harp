@@ -1,6 +1,11 @@
 Unreleased
 ==========
 
+Added
+:::::
+
+- ``harp create project`` now accepts the project name as an argument and ``--no-app`` / ``--no-config`` flags to skip the application folder or the config file, running without interactive prompts when the name and git author (from ``git config``) are available. New projects are created with an application folder by default.
+
 Changed
 :::::::
 

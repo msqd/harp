@@ -4,7 +4,7 @@
   "__pkg_name": "{{cookiecutter.name | slugify(separator='_')}}",
   "author_name": "Smart Anonymous Harpist",
   "author_email": "anonymous@harp-proxy.net",
-  "create_application": false,
+  "create_application": true,
   "create_config": true,
   "__prompts__": {
     "name": "Project name (used to generate directory and package names)",
