@@ -91,7 +91,7 @@ class HonchoManagerFactory:
         # todo add check available
         return (
             os.path.join(ROOT_DIR, "docs"),
-            "poetry run sphinx-autobuild . _build/html",
+            "uv run sphinx-autobuild . _build/html",
         )
 
     commands[HARP_DOCS_SERVICE] = _get_docs_executable
