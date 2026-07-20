@@ -418,6 +418,21 @@ class TestMakefileDevTarget:
             "dev target should watch config.yml when it is created"
         )
 
+    def test_dev_target_runs_server_directly_without_nested_uv_run(self, makefile_content):
+        """watchfiles must supervise the server process itself so the port is freed before reload.
+
+        A nested ``uv run`` wrapper absorbs watchfiles' restart signal and leaves the old server
+        bound, so the reload fails with "address already in use" (observed on macOS). The outer
+        ``uv run watchfiles`` already provides the environment.
+        """
+        recipe = _dev_recipe(makefile_content)
+        assert 'watchfiles "harp-proxy server' in recipe, (
+            "watchfiles should run 'harp-proxy server' directly as its child process"
+        )
+        assert "run harp-proxy" not in recipe, (
+            "the watched command must not nest another 'uv run' (it would absorb the reload signal)"
+        )
+
 
 class TestPyprojectWatchfilesDependency:
     """Test watchfiles is declared so 'make dev' resolves it after 'uv sync'."""

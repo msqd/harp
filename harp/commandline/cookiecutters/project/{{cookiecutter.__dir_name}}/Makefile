@@ -32,8 +32,12 @@ install:  ## Install dependencies using UV
 start: install  ## Start the HARP proxy server
 	$(call execute,$(UV) run harp-proxy server{% if cookiecutter.create_application %} --enable {{cookiecutter.__pkg_name}}{% endif %}{% if cookiecutter.create_config %} --file config.yml{% endif %} $(HARP_OPTIONS))
 
+# watchfiles runs 'harp-proxy server' directly (not through a nested 'uv run'): it must supervise
+# the server process itself so its restart signal reaches it and the port is released before the
+# reload. A wrapper process would absorb the signal, leaving the old server bound and the reload
+# failing with "address already in use". The outer 'uv run watchfiles' already provides the venv.
 dev: install  ## Start the HARP proxy server with auto-reload on file changes
-	$(call execute,$(UV) run watchfiles "$(UV) run harp-proxy server{% if cookiecutter.create_application %} --enable {{cookiecutter.__pkg_name}}{% endif %}{% if cookiecutter.create_config %} --file config.yml{% endif %} $(HARP_OPTIONS)"{% if cookiecutter.create_application %} {{cookiecutter.__pkg_name}}/{% endif %}{% if cookiecutter.create_config %} config.yml{% endif %})
+	$(call execute,$(UV) run watchfiles "harp-proxy server{% if cookiecutter.create_application %} --enable {{cookiecutter.__pkg_name}}{% endif %}{% if cookiecutter.create_config %} --file config.yml{% endif %} $(HARP_OPTIONS)"{% if cookiecutter.create_application %} {{cookiecutter.__pkg_name}}/{% endif %}{% if cookiecutter.create_config %} config.yml{% endif %})
 
 test: install  ## Run tests with pytest
 	$(call execute,$(UV) run pytest)
