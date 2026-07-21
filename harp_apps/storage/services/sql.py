@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from operator import itemgetter
 from typing import Iterable, Optional, override
 
-from sqlalchemy import and_, bindparam, case, delete, func, literal, literal_column, null, or_, select, text
+from sqlalchemy import and_, bindparam, case, delete, func, literal, null, or_, select, text
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from sqlalchemy.sql.functions import count
@@ -121,7 +121,7 @@ def _filter_transactions_based_on_text(query, search_text: str, dialect_name: st
                 f"AGAINST (:search_text IN BOOLEAN MODE) OR "
                 f"MATCH ({SqlMessage.__tablename__}.summary) "
                 f"AGAINST (:search_text IN BOOLEAN MODE)",
-            ).bindparams(bindparam("search_text", literal_column(f"'{search_text}*'")))
+            ).bindparams(bindparam("search_text", f"{search_text}*"))
         )
 
     return query.filter(
