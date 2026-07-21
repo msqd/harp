@@ -44,12 +44,11 @@ class TestRenderExampleConfig:
         for name, _ in iter_app_settings():
             assert f"https://docs.harp-project.net/en/latest/apps/{name}/" in text
 
-    def test_uses_the_current_documentation_domain(self):
+    def test_does_not_use_the_retired_documentation_domain(self):
         # The documentation moved to docs.harp-project.net; the generated reference must not
-        # point users at the retired docs.harp-proxy.net domain.
-        text = render_example_config()
-        assert "docs.harp-proxy.net" not in text
-        assert "https://docs.harp-project.net/" in text
+        # point users at the retired docs.harp-proxy.net domain. Presence of the new domain is
+        # already covered by test_has_a_documentation_url_per_app.
+        assert "docs.harp-proxy.net" not in render_example_config()
 
 
 class TestGeneratedConfigIsLoadable:
