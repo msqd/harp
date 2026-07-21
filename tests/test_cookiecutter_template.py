@@ -365,3 +365,88 @@ class TestCookiecutterPrompts:
 
         for var in user_variables:
             assert var in prompts, f"User-facing variable '{var}' should have a custom prompt"
+
+
+def _dev_recipe(makefile_content):
+    """Return the recipe lines of the Makefile 'dev' target (empty string if absent)."""
+    lines = makefile_content.splitlines()
+    for i, line in enumerate(lines):
+        if line.startswith("dev:"):
+            recipe = []
+            for following in lines[i + 1 :]:
+                if following.startswith("\t"):
+                    recipe.append(following)
+                elif following.strip() == "":
+                    continue
+                else:
+                    break
+            return "\n".join(recipe)
+    return ""
+
+
+class TestMakefileDevTarget:
+    """Test the 'dev' target provides auto-reload via watchfiles."""
+
+    @pytest.fixture
+    def makefile_content(self):
+        return (TEMPLATE_PROJECT_DIR / "Makefile").read_text()
+
+    def test_dev_target_exists_and_installs_first(self, makefile_content):
+        """A 'dev' target exists and depends on install (deps available before running)."""
+        assert re.search(r"(?m)^dev:\s.*install", makefile_content), (
+            "Makefile should define a 'dev' target depending on install"
+        )
+
+    def test_dev_target_is_phony(self, makefile_content):
+        """'dev' is declared as a phony target."""
+        phony_lines = [line for line in makefile_content.splitlines() if line.startswith(".PHONY")]
+        assert any("dev" in line.split() for line in phony_lines), "'dev' should be listed in .PHONY"
+
+    def test_dev_target_runs_server_with_watchfiles(self, makefile_content):
+        """The dev recipe runs the harp-proxy server through watchfiles for auto-reload."""
+        recipe = _dev_recipe(makefile_content)
+        assert "watchfiles" in recipe, "dev target should use watchfiles"
+        assert "harp-proxy server" in recipe, "dev target should run the harp-proxy server"
+
+    def test_dev_target_watches_app_and_config_conditionally(self, makefile_content):
+        """The dev recipe watches the app package and/or config.yml, guarded by the create flags."""
+        recipe = _dev_recipe(makefile_content)
+        assert "{% if cookiecutter.create_application %}" in recipe and "{{cookiecutter.__pkg_name}}/" in recipe, (
+            "dev target should watch the application package when it is created"
+        )
+        assert "{% if cookiecutter.create_config %}" in recipe and "config.yml" in recipe, (
+            "dev target should watch config.yml when it is created"
+        )
+
+    def test_dev_target_runs_server_directly_without_nested_uv_run(self, makefile_content):
+        """watchfiles must supervise the server process itself so the port is freed before reload.
+
+        A nested ``uv run`` wrapper absorbs watchfiles' restart signal and leaves the old server
+        bound, so the reload fails with "address already in use" (observed on macOS). The outer
+        ``uv run watchfiles`` already provides the environment.
+        """
+        recipe = _dev_recipe(makefile_content)
+        assert 'watchfiles "harp-proxy server' in recipe, (
+            "watchfiles should run 'harp-proxy server' directly as its child process"
+        )
+        assert "run harp-proxy" not in recipe, (
+            "the watched command must not nest another 'uv run' (it would absorb the reload signal)"
+        )
+
+
+class TestPyprojectWatchfilesDependency:
+    """Test watchfiles is declared so 'make dev' resolves it after 'uv sync'."""
+
+    @pytest.fixture
+    def pyproject_content(self):
+        return (TEMPLATE_PROJECT_DIR / "pyproject.toml").read_text()
+
+    def test_watchfiles_declared_as_dev_dependency(self, pyproject_content):
+        """watchfiles is declared in the dev dependency group uv installs by default (not a plain extra).
+
+        Parsed as text: the template embeds Jinja conditionals that are not valid TOML.
+        """
+        assert "[dependency-groups]" in pyproject_content, "should declare a [dependency-groups] table"
+        assert re.search(r"(?s)\[dependency-groups\].*?dev\s*=\s*\[[^\]]*watchfiles", pyproject_content), (
+            "watchfiles should be listed in the [dependency-groups] dev group so 'uv sync' installs it"
+        )

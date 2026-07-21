@@ -5,6 +5,7 @@ Added
 :::::
 
 - ``harp create project`` now accepts the project name as an argument and ``--no-app`` / ``--no-config`` flags to skip the application folder or the config file, running without interactive prompts when the name and git author (from ``git config``) are available. New projects are created with an application folder by default.
+- New ``make dev`` task in generated projects: starts the HARP proxy with auto-reload on file changes (watches the application package and/or ``config.yml``), powered by ``watchfiles``.
 
 Changed
 :::::::
