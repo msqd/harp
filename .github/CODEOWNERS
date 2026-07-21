@@ -1,0 +1,9 @@
+# Code owners for HARP.
+#
+# A pull request needs an approving review from a code owner before it can merge
+# (see DEFINITIONS.md, Definition of Done). Enforce it with branch protection:
+# require review from Code Owners on the default branch.
+#
+# Expand this list as the maintainer team grows (most specific match wins).
+
+*       @hartym
