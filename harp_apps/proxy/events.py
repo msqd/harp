@@ -3,6 +3,7 @@ from typing import Callable, Optional, Self
 from whistle import Event
 
 from harp import get_logger
+from harp.utils.types import typeof
 from harp.http import BaseHttpMessage, HttpError, HttpResponse
 from harp.http.requests import HttpRequest
 from harp.models import Transaction
@@ -46,9 +47,7 @@ class ProxyFilterEvent(Event):
 
     def set_response(self, response: HttpResponse):
         if response is not None and not isinstance(response, HttpResponse):
-            raise ValueError(
-                f"Response must be an instance of HttpResponse, got {response!r} ({type(response).__module__}.{type(response).__qualname__})."
-            )
+            raise ValueError(f"Response must be an instance of HttpResponse, got {response!r} ({typeof(response)}).")
         self.response = response
 
     def _get_rule_name(self) -> str | None:
@@ -93,7 +92,7 @@ class ProxyFilterEvent(Event):
 
         if not isinstance(mixed, HttpResponse):
             raise ValueError(
-                f"Response must be an instance of HttpResponse or a dict, got {mixed!r} ({type(mixed).__module__}.{type(mixed).__qualname__})."
+                f"Response must be an instance of HttpResponse or a dict, got {mixed!r} ({typeof(mixed)})."
             )
 
         self.set_response(mixed)

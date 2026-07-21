@@ -1,4 +1,3 @@
-import logging
 import time
 from typing import Any, Dict, Optional
 from urllib.parse import urlparse
@@ -7,8 +6,6 @@ from httpx import AsyncClient, Request, Response
 
 from harp import __parsed_version__
 from harp.http import HttpRequest
-
-logger = logging.getLogger(__name__)
 
 
 class HttpClientProxyAdapter:

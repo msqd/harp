@@ -363,10 +363,9 @@ class SqlStorage(IStorage):
         time_bucket: str = TimeBucket.DAY.value,
         start_datetime: Optional[datetime] = None,
     ) -> list[TransactionsGroupedByTimeBucket]:
-        if time_bucket not in [e.value for e in TimeBucket]:
-            raise ValueError(
-                f"Invalid time bucket: {time_bucket}. Must be one of {', '.join([e.value for e in TimeBucket])}."
-            )
+        time_bucket_values = [tb.value for tb in TimeBucket]
+        if time_bucket not in time_bucket_values:
+            raise ValueError(f"Invalid time bucket: {time_bucket}. Must be one of {', '.join(time_bucket_values)}.")
 
         c_started_at = SqlTransaction.started_at
         s_date = TruncDatetime(literal(time_bucket), c_started_at).label("tb")

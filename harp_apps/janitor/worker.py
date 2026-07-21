@@ -100,9 +100,6 @@ class JanitorWorker:
         if count is None:
             # The blob storage may need to clean orphans but no implementation is available
             logger.debug("🧹 DeleteOrphanBlobs[%s] Not implemented.", self.blob_storage.type)
-        elif count is False:
-            # The blob storage does not NEED to delete orphans (for example for a NullBlobStorage)
-            pass
         else:
             logger.debug(
                 "🧹 DeleteOrphanBlobs[%s] Removed %d blobs.",

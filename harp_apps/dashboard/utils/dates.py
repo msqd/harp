@@ -62,19 +62,18 @@ def generate_continuous_time_range(
     datetime_range = [start_datetime + i * delta for i in range(int((end_datetime - start_datetime) / delta) + 1)]
 
     # Fill missing data points
-    continuous_transactions = []
-    for t in datetime_range:
-        if t in [d["datetime"] for d in discontinuous_transactions]:
-            continuous_transactions.append([d for d in discontinuous_transactions if d["datetime"] == t][0])
-        else:
-            continuous_transactions.append(
-                {
-                    "datetime": t,
-                    "count": None,
-                    "errors": None,
-                    "cached": 0,
-                    "meanDuration": None,
-                    "meanTpdex": None,
-                }
-            )
-    return continuous_transactions
+    transactions_by_datetime = {d["datetime"]: d for d in discontinuous_transactions}
+    return [
+        transactions_by_datetime.get(
+            t,
+            {
+                "datetime": t,
+                "count": None,
+                "errors": None,
+                "cached": 0,
+                "meanDuration": None,
+                "meanTpdex": None,
+            },
+        )
+        for t in datetime_range
+    ]

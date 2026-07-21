@@ -4,6 +4,7 @@ from httpx import Request, Response
 from whistle import Event
 
 from harp import get_logger
+from harp.utils.types import typeof
 
 logger = get_logger(__name__)
 
@@ -29,9 +30,7 @@ class HttpClientFilterEvent(Event):
 
     def set_response(self, response: Response):
         if response is not None and not isinstance(response, Response):
-            raise ValueError(
-                f"Response must be an instance of httpx.Response, got {response!r} ({type(response).__module__}.{type(response).__qualname__})."
-            )
+            raise ValueError(f"Response must be an instance of httpx.Response, got {response!r} ({typeof(response)}).")
         self.response = response
 
     @property
@@ -68,7 +67,7 @@ class HttpClientFilterEvent(Event):
             if context["response"] is not None:
                 if not isinstance(context["response"], Response):
                     raise ValueError(
-                        f"Response must be an instance of httpx.Response, got {context['response']!r} ({type(context['response']).__module__}.{type(context['response']).__qualname__})."
+                        f"Response must be an instance of httpx.Response, got {context['response']!r} ({typeof(context['response'])})."
                     )
             self.set_response(context["response"])
         return context
