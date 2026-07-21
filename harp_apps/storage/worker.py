@@ -9,6 +9,7 @@ from whistle import IAsyncEventDispatcher
 from harp import get_logger
 from harp.http import get_serializer_for
 from harp.models import Blob
+from harp.models.transactions import encode_cache_flag
 from harp.utils.background import AsyncWorkerQueue
 from harp_apps.proxy.events import (
     EVENT_TRANSACTION_ENDED,
@@ -151,16 +152,13 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             return
 
         transaction_id = event.transaction.id
-        # Extract cache status - it's now set based on X-Cache: HIT/MISS header
-        cached = event.transaction.extras.get("cached")
 
         transaction_data = {
             "finished_at": event.transaction.finished_at.astimezone(UTC),
             "elapsed": event.transaction.elapsed,
             "tpdex": event.transaction.tpdex,
             "x_status_class": event.transaction.extras.get("status_class"),
-            # Store as "true" string for cached responses, consistent with database expectations
-            "x_cached": "true" if cached else None,
+            "x_cached": encode_cache_flag(event.transaction.extras.get("cached")),
         }
 
         async def update_transaction():

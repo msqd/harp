@@ -300,24 +300,21 @@ class ApplicationsRegistry:
         """Reorder applications based on dependency order using topological sort."""
         from harp.errors import MissingDependencyError
 
-        # Build dependency graph
+        # Build dependency graph and per-app in-degree (number of declared dependencies)
         graph = {}
         in_degree = {}
         original_order = list(self._applications.keys())
 
         for app_name in self._applications:
-            graph[app_name] = getattr(self._applications[app_name], "dependencies", [])
-            in_degree[app_name] = 0
+            dependencies = getattr(self._applications[app_name], "dependencies", [])
+            graph[app_name] = dependencies
+            in_degree[app_name] = len(dependencies)
 
         # Check for missing dependencies
         for app_name in self._applications:
             for dep in graph[app_name]:
                 if dep not in graph:
                     raise MissingDependencyError(f"Application '{app_name}' requires '{dep}' but it is not enabled")
-
-        # Calculate in-degree (number of declared dependencies per app)
-        for app_name in self._applications:
-            in_degree[app_name] = len(graph[app_name])
 
         # Detect cycles
         self._detect_dependency_cycles(graph)

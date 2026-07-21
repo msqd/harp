@@ -208,8 +208,7 @@ class HttpProxyController(AbstractHttpProxyController):
 
         # Check if response came from cache by reading the X-Cache header
         # This header is set by the proxy adapter based on hishel extensions
-        x_cache_header = response.headers.get("X-Cache", "").upper()
-        is_response_from_cache = x_cache_header == "HIT"
+        is_response_from_cache = response.headers.get("X-Cache", "").upper() == "HIT"
 
         # If the remote URL is in CHECKING status and the response is successful, set it up
         if self.remote[base_url].status == CHECKING and 200 <= response.status_code < 400:

@@ -1,11 +1,6 @@
 from pydantic import Field
-from typing import TYPE_CHECKING
 
 from harp.config import ApplicationSettingsMixin, Service
-
-if TYPE_CHECKING:
-    pass
-
 from harp.settings import DEFAULT_TIMEOUT
 
 

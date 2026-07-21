@@ -8,6 +8,7 @@ import rich_click as click
 
 from harp import ROOT_DIR, get_logger
 from harp.utils.network import get_available_network_port
+from harp.utils.packages import import_string
 
 HARP_DASHBOARD_SERVICE = "harp:dashboard"
 HARP_DOCS_SERVICE = "harp:docs"
@@ -158,7 +159,7 @@ def parse_server_subprocesses_options(server_subprocesses):
 def get_honcho_manager_factory_type():
     edition = os.environ.get("HARP_EDITION", "harp_apps")
     try:
-        HonchoManagerFactoryType = __import__(edition, fromlist=["HonchoManagerFactory"]).HonchoManagerFactory
+        HonchoManagerFactoryType = import_string(f"{edition}.HonchoManagerFactory")
     except (ImportError, AttributeError):
         return HonchoManagerFactory
     return HonchoManagerFactoryType

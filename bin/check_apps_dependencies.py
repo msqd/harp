@@ -150,7 +150,7 @@ def analyze_app(app_dir: Path) -> DependencyAnalysis:
     )
 
 
-def print_report(analyses: list[DependencyAnalysis]) -> None:
+def print_report(analyses: list[DependencyAnalysis]) -> int:
     """Print a formatted report of dependency analysis."""
     print("=" * 80)
     print("HARP Application Dependency Analysis")

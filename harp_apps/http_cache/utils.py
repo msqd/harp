@@ -1,7 +1,7 @@
 from hishel import Headers
 from multidict import CIMultiDict
 
-from harp.utils.bytes import ensure_str
+from harp.utils.bytes import ensure_bytes, ensure_str
 
 
 def prepare_headers_for_serialization(headers, /, *, varying=()) -> tuple[bytes, dict[str, str], dict[str, str]]:
@@ -24,7 +24,7 @@ def prepare_headers_for_serialization(headers, /, *, varying=()) -> tuple[bytes,
         # hishel 1.0: Headers is a MutableMapping
         header_items = [
             (
-                k.encode() if isinstance(k, str) else k,
+                ensure_bytes(k),
                 str(v).encode() if not isinstance(v, bytes) else v,
             )
             for k, v in headers.items()

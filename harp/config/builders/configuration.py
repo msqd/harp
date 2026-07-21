@@ -333,16 +333,8 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         """
         # todo: config instead of sources in constructor ? for example no_default_apps, etc.
 
-        try:
-            applications = options.applications
-        except AttributeError:
-            applications = None
-
-        # Get strict flag if available
-        try:
-            strict = options.strict
-        except AttributeError:
-            strict = False
+        applications = getattr(options, "applications", None)
+        strict = getattr(options, "strict", False)
 
         builder = cls(
             {"applications": applications} if applications else None,
