@@ -1,3 +1,4 @@
+import ast
 import operator
 from typing import Any, Self
 
@@ -131,7 +132,7 @@ class LazySettingReference(BaseReference):
                 break
 
         if operator and other_operand:
-            other_operand = eval(other_operand.strip())
+            other_operand = ast.literal_eval(other_operand.strip())
             if operator in operators:
                 return operators[operator](x, other_operand) or None
             else:
