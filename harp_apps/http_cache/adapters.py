@@ -1,7 +1,7 @@
 import typing as tp
 import uuid
 import yaml
-from datetime import datetime
+from datetime import UTC, datetime
 from hishel import Entry, EntryMeta, Request, Response
 from hishel._core.models import AnyIterable
 
@@ -17,6 +17,21 @@ from harp_apps.storage.types import IBlobStorage
 # Migrated from hishel._serializers to avoid dependency on removed internal module
 KNOWN_REQUEST_EXTENSIONS = ("timeout", "sni_hostname")
 KNOWN_RESPONSE_EXTENSIONS = ("http_version", "reason_phrase")
+
+# RFC 1123 wire format used for the backward-compatible `created_at` cache field. It is always UTC
+# (the trailing "GMT" is literal), so it must be written and read as UTC regardless of the host
+# timezone, otherwise the stored value is mislabeled and round-trips break across timezones.
+_CREATED_AT_GMT_FORMAT = "%a, %d %b %Y %H:%M:%S GMT"
+
+
+def _format_created_at(timestamp: float) -> str:
+    """Render a POSIX timestamp as an RFC 1123 GMT string."""
+    return datetime.fromtimestamp(timestamp, UTC).strftime(_CREATED_AT_GMT_FORMAT)
+
+
+def _parse_created_at(value: str) -> float:
+    """Parse an RFC 1123 GMT string back to a POSIX timestamp."""
+    return datetime.strptime(value, _CREATED_AT_GMT_FORMAT).replace(tzinfo=UTC).timestamp()
 
 
 class SerializedRequest(tp.TypedDict):
@@ -90,11 +105,7 @@ class AsyncStorageAdapter:
         meta = EntryMeta(
             created_at=meta_data.get(
                 "created_at_ts",
-                (
-                    datetime.strptime(meta_data["created_at"], "%a, %d %b %Y %H:%M:%S GMT").timestamp()
-                    if "created_at" in meta_data
-                    else 0.0
-                ),
+                (_parse_created_at(meta_data["created_at"]) if "created_at" in meta_data else 0.0),
             ),
             deleted_at=meta_data.get("deleted_at"),
         )
@@ -136,7 +147,7 @@ class AsyncStorageAdapter:
         This maintains the existing YAML format with added fields for hishel 1.0.
         """
         # Store both timestamp (new format) and formatted string (backward compat)
-        created_at_dt = datetime.fromtimestamp(meta.created_at)
+        created_at_gmt = _format_created_at(meta.created_at)
 
         return await self.storage.force_put(
             Blob(
@@ -148,7 +159,7 @@ class AsyncStorageAdapter:
                         "response": response,
                         "metadata": {
                             "cache_key": key,
-                            "created_at": created_at_dt.strftime("%a, %d %b %Y %H:%M:%S GMT"),  # Backward compat
+                            "created_at": created_at_gmt,  # Backward compat
                             "created_at_ts": meta.created_at,  # New format
                             "deleted_at": meta.deleted_at,
                             "number_of_uses": extra.get("number_of_uses", 0),  # Backward compat
