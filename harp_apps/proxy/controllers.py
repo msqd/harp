@@ -4,7 +4,7 @@ from functools import cached_property, lru_cache
 from httpx import AsyncClient, codes
 from pyheck import shouty_snake
 from typing import Optional, cast, override
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlencode, urljoin, urlsplit
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
@@ -245,7 +245,10 @@ class HttpProxyController(AbstractHttpProxyController):
 
     async def _get_next_url_for(self, context) -> tuple[str, str]:
         base_url = self.remote.get_url()
-        relative_url = context.request.path.lstrip("/")
+        # Only the path component of the incoming request may influence the upstream URL: a request
+        # path carrying a scheme or host (e.g. "http://evil/", "//evil/") must not redirect the proxy
+        # to another origin (SSRF / open-proxy). urlsplit(...).path drops any scheme/netloc.
+        relative_url = urlsplit(context.request.path).path.lstrip("/")
         return base_url, urljoin(base_url, relative_url) + (
             f"?{urlencode(context.request.query)}" if context.request.query else ""
         )
