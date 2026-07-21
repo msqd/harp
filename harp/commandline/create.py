@@ -8,6 +8,7 @@ from typing import cast
 from click import BaseCommand
 
 from harp.commandline import cookiecutters as templates
+from harp.config.example import render_example_config
 from harp.utils.commandline import click
 
 DEFAULT_AUTHOR_NAME = "Smart Anonymous Harpist"
@@ -62,6 +63,8 @@ def create(template, name, no_app, no_config):
         "author_email": author_email,
         "create_application": not no_app,
         "create_config": not no_config,
+        # A commented, source-introspected reference config.yml; empty when config is skipped.
+        "__example_config": "" if no_config else render_example_config(),
     }
 
     # cookiecutter runs as a subprocess (possibly in its own environment via `uv tool run`), so we

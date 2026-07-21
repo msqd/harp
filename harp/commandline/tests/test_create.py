@@ -33,9 +33,11 @@ def _run(args, *, which=None, git=None, cli_input=None):
     with (
         patch("harp.commandline.create.shutil.which", side_effect=lambda name: which.get(name)),
         patch("harp.commandline.create.get_git_config", side_effect=lambda key: git.get(key)),
+        patch("harp.commandline.create.render_example_config", return_value="EXAMPLE-CONFIG") as render,
         patch("harp.commandline.create.subprocess.run", side_effect=_capture) as run,
     ):
         result = CliRunner().invoke(create, ["project", *args], input=cli_input)
+    captured["render"] = render
     return result, run, captured
 
 
@@ -102,6 +104,17 @@ class TestCreateProjectContext:
         context = captured["config"]["default_context"]
         assert context["author_name"] == "Jane Doe"
         assert context["author_email"] == "jane@doe.net"
+
+
+class TestCreateExampleConfig:
+    def test_example_config_is_passed_in_context(self):
+        _, _, captured = _run(["my-proj"], git=GIT_AUTHOR)
+        assert captured["config"]["default_context"]["__example_config"] == "EXAMPLE-CONFIG"
+
+    def test_no_config_flag_yields_empty_example_config_without_introspection(self):
+        _, _, captured = _run(["my-proj", "--no-config"], git=GIT_AUTHOR)
+        assert captured["config"]["default_context"]["__example_config"] == ""
+        captured["render"].assert_not_called()
 
 
 class TestDocsProcessCommand:

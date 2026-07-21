@@ -179,7 +179,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         """
         settings = {}
         for source in self._get_config_sources():
-            merge_values(settings, source.get_values())
+            merge_values(settings, source.get_values() or {})
         return settings
 
     def _filter_disabled_applications(self, settings: dict) -> list[str]:
@@ -276,7 +276,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         # Second pass - build final configuration with normalized settings
         settings = {}
         for source in self._get_config_sources():
-            merge_values(settings, self.normalize(source.get_values()))
+            merge_values(settings, self.normalize(source.get_values() or {}))
 
         all_settings = []
         for name, application in self.applications.items():
