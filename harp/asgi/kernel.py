@@ -1,4 +1,5 @@
 import traceback
+from functools import lru_cache
 from inspect import signature
 
 from asgiref.typing import ASGIReceiveCallable, ASGISendCallable, Scope
@@ -24,6 +25,13 @@ from .events import (
 )
 
 logger = get_logger(__name__)
+
+
+@lru_cache(maxsize=1024)
+def _cached_signature(subject):
+    """Memoize signature introspection: controllers are long-lived, so their prototype never
+    changes, and this runs on every request."""
+    return signature(subject)
 
 
 class ASGIKernel:
@@ -80,7 +88,7 @@ class ASGIKernel:
         try:
             return [
                 (candidates[name] if name in candidates or param.default is param.empty else param.default)
-                for name, param in signature(subject).parameters.items()
+                for name, param in _cached_signature(subject).parameters.items()
                 if param.kind is not param.KEYWORD_ONLY
             ], {}
         except KeyError as exc:
