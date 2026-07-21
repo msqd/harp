@@ -73,7 +73,7 @@
     "@types/react-helmet": "^6.1.11",
     "date-fns": "^3.6.0",
     "echarts": "^5.5.1",
-    "echarts-for-react": "^3.0.2",
+    "echarts-for-react": "^3.0.6",
     "http-status-codes": "^2.3.0",
     "localforage": "^1.10.0",
     "lodash": "^4.17.21",
