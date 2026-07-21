@@ -4,9 +4,13 @@ version: 2
 updates:
   - package-ecosystem: "pip"
     directory: "/"
+    # The generated project template ships a Jinja-templated pyproject.toml, which is not valid
+    # Python packaging metadata; exclude it so Dependabot does not fail to parse it.
+    exclude-paths:
+      - "harp/commandline/cookiecutters/**"
     schedule:
       interval: "daily"
   - package-ecosystem: "npm"
-    directory: "/frontend"
+    directory: "/harp_apps/dashboard/frontend"
     schedule:
       interval: "daily"
