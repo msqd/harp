@@ -1,3 +1,4 @@
+import asyncio
 from base64 import b64encode
 from typing import cast
 from unittest.mock import AsyncMock, Mock
@@ -47,6 +48,22 @@ async def test_controller_auth_plaintext():
     # wrong password
     response = await controller(HttpRequest(headers=_get_auth_headers("admin", "wrong")), AsyncMock())
     assert response.status == 401
+
+
+async def test_create_users_task_is_retained():
+    # asyncio.create_task keeps only a weak reference to the task, so the controller must hold a
+    # strong reference itself, otherwise the user-creation task can be garbage-collected mid-flight.
+    controller = await _create_mock_controller(
+        settings=DashboardSettings(
+            auth=BasicAuthSettings(
+                type="basic",
+                algorithm="plaintext",
+                users={"admin": User(password="admin")},
+            ),
+            devserver={"enabled": True, "port": 5173},
+        )
+    )
+    assert isinstance(controller._create_users_task, asyncio.Task)
 
 
 async def _create_mock_controller(settings: DashboardSettings = None):

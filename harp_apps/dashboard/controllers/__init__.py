@@ -30,6 +30,7 @@ class DashboardController(RoutingController):
 
     _ui_static_middleware = None
     _ui_devserver_proxy_controller = None
+    _create_users_task = None
 
     #: Static directory to look for pre-built assets.
     static_build_path = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(dashboard.__file__)), "web"))
@@ -48,9 +49,12 @@ class DashboardController(RoutingController):
         self.storage = storage
         self.settings = settings
 
-        # create users if they don't exist
+        # create users if they don't exist; keep a strong reference to the task, as the event loop
+        # only holds a weak one and would let it be garbage-collected before completion.
         if isinstance(self.settings.auth, BasicAuthSettings):
-            asyncio.create_task(self.storage.create_users_once_ready(self.settings.auth.users))
+            self._create_users_task = asyncio.create_task(
+                self.storage.create_users_once_ready(self.settings.auth.users)
+            )
 
         # UI is always initialized when the dashboard app is enabled
         # (the `enabled` setting controls whether the entire app loads)
