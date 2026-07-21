@@ -10,7 +10,7 @@ import yaml
 from harp.config.asdict import asdict
 from harp.config.builders.configuration import ConfigurationBuilder
 
-DOCS_BASE_URL = "https://docs.harp-proxy.net/en/latest"
+DOCS_BASE_URL = "https://docs.harp-project.net/en/latest"
 
 _HEADER = (
     "# =============================================================================\n"
@@ -18,7 +18,7 @@ _HEADER = (
     "# =============================================================================\n"
     "# Every available setting is listed below with its default value, commented out.\n"
     "# Uncomment a section and edit the values you want to override.\n"
-    "# Documentation: https://docs.harp-proxy.net/\n"
+    "# Documentation: https://docs.harp-project.net/\n"
     "# ============================================================================="
 )
 

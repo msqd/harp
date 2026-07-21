@@ -50,6 +50,15 @@ class TestPyprojectToml:
         assert "dependencies" in pyproject_content, "should have dependencies key"
         assert "harp-proxy" in pyproject_content, "should depend on harp-proxy"
 
+    def test_harp_proxy_is_pinned_to_at_least_0_10(self, pyproject_content):
+        """Verify harp-proxy is pinned to >=0.10.0.
+
+        The generated config.yml is a fully-commented reference that only loads without crashing
+        from harp-proxy 0.10.0 onwards (the empty/comments-only config loader fix). An unpinned
+        dependency would let a scaffold install an older release and crash on ``make start``.
+        """
+        assert "harp-proxy>=0.10.0" in pyproject_content, "harp-proxy should be pinned to >=0.10.0"
+
     def test_package_mode_conditional_preserved(self, pyproject_content):
         """Verify hatchling build configuration conditional logic is preserved for Jinja2."""
         # The conditional logic should use hatchling build config for non-package projects
