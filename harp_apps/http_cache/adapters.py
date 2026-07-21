@@ -35,12 +35,6 @@ class SerializedResponse(tp.TypedDict):
     extensions: dict[str, str]
 
 
-def _ensure_datestring(date: datetime | str):
-    if isinstance(date, datetime):
-        date = date.strftime("%a, %d %b %Y %H:%M:%S GMT")
-    return date
-
-
 class AsyncStorageAdapter:
     """Adapter that serializes/deserializes Entry objects to/from HARP blob storage.
 
@@ -124,8 +118,7 @@ class AsyncStorageAdapter:
 
     async def _decode(self, cached):
         """Decode cached blob data into structured format."""
-        data = yaml.safe_load(cached.data.decode())
-        return data
+        return yaml.safe_load(cached.data.decode())
 
     async def _store_entry_blob(
         self,

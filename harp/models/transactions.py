@@ -6,6 +6,14 @@ from .base import Entity
 from .messages import Message
 
 
+def encode_cache_flag(cached) -> str | None:
+    """Encode a transaction cache-hit flag for the ``x_cached`` storage column.
+
+    A truthy flag (an ``X-Cache: HIT``) is stored as the string ``"true"``; anything else as ``None``.
+    """
+    return "true" if cached else None
+
+
 @dataclasses.dataclass(kw_only=True)
 class Transaction(Entity):
     id: str = None
@@ -54,9 +62,7 @@ class Transaction(Entity):
 
         extras = data.pop("extras", {})
 
-        # Cache status is now a boolean (True) or None, based on X-Cache: HIT header
-        cached = extras.get("cached")
-        data["x_cached"] = "true" if cached else None
+        data["x_cached"] = encode_cache_flag(extras.get("cached"))
         data["x_method"] = extras.get("method")
         data["x_no_cache"] = bool(extras.get("no_cache"))
         data["x_status_class"] = extras.get("status_class")
