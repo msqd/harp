@@ -89,6 +89,10 @@ Changed
         # Default CacheOptions are provided by services.yml
         # To customize, override the entire policy service
 - Cookiecutter template migrated from Poetry to UV (PEP 621, Python 3.13, hatchling), with enhanced Makefile, improved prompts, and automatic git initialization.
+- Controller signature resolution in the ASGI kernel is memoized instead of being recomputed on every request.
+- The SQL blob storage seen-cache is populated on write, removing a redundant existence query when the same blob is stored again.
+- ``get_transaction_list`` reads its total count and its page in a single session, so both share a consistent snapshot.
+- The Docker ``latest`` tag now follows every mainline stable release. It was pinned to ``0.9.x``, so cutting 0.10 would have left it on 0.9.
 
 Removed
 -------
@@ -102,3 +106,13 @@ Fixed
 - Fixed cache status tracking after hishel 1.x migration: proxy controller now reads ``X-Cache`` header to determine if response was cached, and stores cache age from ``Age`` header when available. Previously, cache status was never recorded because the old ``from_cache`` extension no longer exists in hishel 1.x.
 - Fixed test discovery incorrectly including ``misc/`` directory worktree applications in ``test_all_applications_settings.py``
 - Generated projects now properly isolate pytest tests and include correct startup instructions.
+- Proxy health-check tasks are now cancelled on shutdown. The ``on_shutdown`` handler was never registered, so the task group leaked on every teardown.
+- MySQL full-text search binds the search term as a value instead of a column expression, which broke the ``MATCH ... AGAINST`` path at runtime.
+- The HTTP cache ``created_at`` field is written and read as UTC. On a non-UTC host, the stored value was a local wall-clock time labelled ``GMT``.
+- The dashboard keeps a reference to its initial user-creation task, which could otherwise be garbage collected before completion.
+
+Security
+--------
+
+- The upstream URL is now built from the path component of the incoming request only, and the request is refused with ``400 Bad Request`` if it would resolve to another origin. A request path carrying a scheme (``GET /http://example.org/``) could previously make the proxy forward to an arbitrary host (CWE-918, server-side request forgery / open proxy).
+- ``!cfg`` comparison operands are parsed as Python literals instead of being evaluated as code. Configuration is author-time and trusted, so this is defense in depth.
