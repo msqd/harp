@@ -94,6 +94,8 @@ class SqlBlobStorage(IBlobStorage):
                     await conn.commit()
                 except IntegrityError:
                     pass  # already there? that's fine!
+        # the blob is now known to be stored: remember it so later puts skip the existence query.
+        self.seen.add(blob.id)
         return blob
 
     @override
@@ -138,7 +140,7 @@ class SqlBlobStorage(IBlobStorage):
             return True
 
         async with self.engine.connect() as conn:
-            return bool(
+            found = bool(
                 (
                     await conn.execute(
                         select(
@@ -147,3 +149,7 @@ class SqlBlobStorage(IBlobStorage):
                     )
                 ).scalar_one()
             )
+        if found:
+            # remember it so later exists()/put() calls skip the existence query.
+            self.seen.add(blob_id)
+        return found
