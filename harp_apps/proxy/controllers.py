@@ -4,7 +4,7 @@ from functools import cached_property, lru_cache
 from httpx import AsyncClient, codes
 from pyheck import shouty_snake
 from typing import Optional, cast, override
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlencode, urljoin, urlsplit
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
@@ -19,6 +19,9 @@ from .constants import (
     BREAK_ON_NETWORK_ERROR,
     BREAK_ON_UNHANDLED_EXCEPTION,
     CHECKING,
+    ERR_BAD_REQUEST_MESSAGE,
+    ERR_BAD_REQUEST_STATUS_CODE,
+    ERR_BAD_REQUEST_VERBOSE_MESSAGE,
     ERR_UNAVAILABLE_STATUS_CODE,
     ERR_UNHANDLED_MESSAGE,
     ERR_UNHANDLED_STATUS_CODE,
@@ -44,6 +47,10 @@ logger = get_logger(__name__)
 
 # XXX: move to some type module ?
 ProxyFilterResult = Optional[ProxyFilterEvent | HttpResponse | dict]
+
+
+class ProxyRoutingError(Exception):
+    """Raised when an incoming request path would route the proxy off its configured upstream origin."""
 
 
 class AbstractHttpProxyController(ABC):
@@ -159,6 +166,14 @@ class HttpProxyController(AbstractHttpProxyController):
                     status=ERR_UNAVAILABLE_STATUS_CODE,
                 )
                 return await self.failure(context.transaction, base_url, response)
+            except ProxyRoutingError as exc:
+                response = HttpError(
+                    ERR_BAD_REQUEST_MESSAGE,
+                    exception=exc,
+                    verbose_message=ERR_BAD_REQUEST_VERBOSE_MESSAGE,
+                    status=ERR_BAD_REQUEST_STATUS_CODE,
+                )
+                return await self.failure(context.transaction, base_url, response)
 
             # todo: streaming should pass through to avoid reading all the content in memory
             await context.request.aread()
@@ -245,10 +260,19 @@ class HttpProxyController(AbstractHttpProxyController):
 
     async def _get_next_url_for(self, context) -> tuple[str, str]:
         base_url = self.remote.get_url()
-        relative_url = context.request.path.lstrip("/")
-        return base_url, urljoin(base_url, relative_url) + (
+        # Only the path component of the incoming request may influence the upstream URL. urlsplit
+        # drops a leading scheme/host ("http://evil/", "//evil/"), but a scheme hidden behind a
+        # leading slash ("/http://evil/") survives it and urljoin would re-absolutize it to another
+        # origin, so we re-check the result below.
+        relative_url = urlsplit(context.request.path).path.lstrip("/")
+        full_url = urljoin(base_url, relative_url) + (
             f"?{urlencode(context.request.query)}" if context.request.query else ""
         )
+        # Defense in depth (SSRF / open-proxy): never let the forwarded request leave the configured
+        # upstream origin. If urljoin produced a different authority, refuse the request.
+        if urlsplit(full_url).netloc != urlsplit(base_url).netloc:
+            raise ProxyRoutingError(context.request.path)
+        return base_url, full_url
 
     async def failure(
         self,

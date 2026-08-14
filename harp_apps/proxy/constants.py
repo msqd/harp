@@ -23,6 +23,10 @@ ALL_BREAK_ON_VALUES = {
     BREAK_ON_UNHANDLED_EXCEPTION,
 }
 
+ERR_BAD_REQUEST_STATUS_CODE = 400
+ERR_BAD_REQUEST_MESSAGE = "Bad Request"
+ERR_BAD_REQUEST_VERBOSE_MESSAGE = "Bad Request (the request path cannot be forwarded to the configured upstream)"
+
 ERR_UNHANDLED_STATUS_CODE = 500
 ERR_UNHANDLED_MESSAGE = "Unhandled error"
 ERR_UNHANDLED_VERBOSE_MESSAGE = "Internal Server Error (unhandled error)"
