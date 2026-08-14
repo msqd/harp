@@ -5,6 +5,7 @@ Proxy Application
 
 import asyncio
 from asyncio import TaskGroup
+from contextlib import suppress
 from typing import cast
 
 from harp.config import Application
@@ -71,12 +72,16 @@ async def on_bound(event: OnBoundEvent):
 
 
 async def on_shutdown(event: OnShutdownEvent):
-    await event.provider.get(PROXY_HEALTHCHECKS_TASK)._abort()
+    task = event.provider.get(PROXY_HEALTHCHECKS_TASK)
+    task.cancel()
+    with suppress(asyncio.CancelledError):
+        await task
 
 
 application = Application(
     dependencies=["http_client"],
     on_bind=on_bind,
     on_bound=on_bound,
+    on_shutdown=on_shutdown,
     settings_type=ProxySettings,
 )
