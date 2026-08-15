@@ -538,7 +538,7 @@
   proxy: {}
   rules: {}
   storage:
-    url: mysql+aiomysql://user:password@localhost:3306/harp
+    url: mysql+aiomysql://user:***@localhost:3306/harp
   
   '''
 # ---
@@ -550,7 +550,7 @@
   proxy: {}
   rules: {}
   storage:
-    url: mysql+asyncmy://user:password@localhost:3306/harp
+    url: mysql+asyncmy://user:***@localhost:3306/harp
   
   '''
 # ---
@@ -562,7 +562,7 @@
   proxy: {}
   rules: {}
   storage:
-    url: postgresql+asyncpg://user:password@localhost:5432/harp
+    url: postgresql+asyncpg://user:***@localhost:5432/harp
   
   '''
 # ---
@@ -649,7 +649,7 @@
   proxy: {}
   rules: {}
   storage:
-    url: postgresql+asyncpg://harp:harp@127.0.0.1/harp
+    url: postgresql+asyncpg://harp:***@127.0.0.1/harp
   
   '''
 # ---

@@ -200,6 +200,14 @@ Security
   ``http://upstream/api/v1/`` reached ``http://upstream/admin``. The origin was already checked and
   stayed correct, which is why nothing else in the chain noticed. Such a request is now refused with
   ``400 Bad Request``.
+- **config**: credential masking did not work in the mode most callers use. ``asdict(secure=True)``
+  recognised a password by the type of the value holding it, and pydantic renders a URL to a plain
+  string before that check is reached, so the masking silently did nothing. Passwords are now masked
+  wherever they appear, including in settings that are plain strings rather than typed URLs. This
+  affected ``harp-proxy system config``, which printed database and Redis passwords in full under
+  ``--raw`` and ``--json``, and never masked anything without a flag; and the dashboard's
+  ``GET /api/system/proxy``, which exposed credentials embedded in an upstream endpoint url on an
+  API that is unauthenticated unless ``dashboard.auth`` is configured.
 - ``!cfg`` comparison operands are parsed as Python literals instead of being evaluated as code.
   Configuration is author-time and trusted, so this is defense in depth.
 
