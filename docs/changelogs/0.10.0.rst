@@ -140,6 +140,8 @@ Changed
   consistent snapshot.
 - The Docker ``latest`` tag now follows every mainline stable release. It was pinned to ``0.9.x``, so
   cutting 0.10 would have left it on 0.9.
+- ``http-router`` is constrained to ``>=5.0,<6.0``, so installing HARP resolves the major version the
+  test suite runs against. The bound briefly allowed 6.0, which no HARP release has been tested with.
 
 Fixed
 :::::
