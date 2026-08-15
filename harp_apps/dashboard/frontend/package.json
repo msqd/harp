@@ -93,7 +93,7 @@
   },
   "devDependencies": {
     "@babel/plugin-transform-react-jsx": "^7.25.9",
-    "@emotion/babel-plugin-jsx-pragmatic": "^0.2.1",
+    "@emotion/babel-plugin-jsx-pragmatic": "^0.3.0",
     "@eslint/compat": "^1.4.1",
     "@eslint/eslintrc": "^3.3.3",
     "@eslint/js": "^9.39.1",
