@@ -146,6 +146,12 @@ Changed
 Fixed
 :::::
 
+- The published wheel now lists ``packaging`` in its ``Requires-Dist`` metadata. HARP imports it in
+  ``harp/__init__.py``, so any ``import harp`` needs it, but it was only ever installed as a
+  transitive dependency of ``dataclasses-json``. Nothing was broken and no version changed; what
+  changed is that the requirement is now declared rather than inherited. Packagers and offline
+  mirrors resolving from metadata should note the added entry. (This is a metadata correction, not a
+  dependency bump, which is why it is recorded here.)
 - Empty or comments-only configuration files no longer crash configuration loading; they now load as
   an empty configuration.
 - Applications configured with ``enabled: false`` are now filtered out when the configuration is

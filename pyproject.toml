@@ -28,6 +28,10 @@ dependencies = [
     "hypercorn>=0.17,<0.18",
     "multidict>=6.7,<6.8",
     "orjson>=3.11,<3.12",
+    # Deliberately unbounded above: packaging is a PyPA core utility much of the
+    # environment also depends on, and a cap on it propagates to co-installed
+    # packages. We use two frozen names from it (Version, InvalidVersion).
+    "packaging>=23.2",
     "passlib>=1.7,<1.8",
     "psycopg2-binary>=2.9,<2.10",
     "pydantic>=2.12,<2.13",
