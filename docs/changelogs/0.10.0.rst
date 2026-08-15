@@ -1,6 +1,5 @@
 Version 0.10.0 (unreleased)
-===========================
-
+====================
 Important Changes
 :::::::::::::::::
 
@@ -158,6 +157,11 @@ Fixed
 - The dashboard "Help" link opens the documentation for the version you are running. It was pinned to
   the 0.9 documentation, so every 0.10 user landed on the previous release's docs. The URL is now
   derived from the reported version, so it follows future releases on its own.
+- The dashboard is navigable on a phone. Below the 640px breakpoint the menu button had no menu
+  behind it, so Overview, Transactions and System could not be reached at all and the dashboard was
+  a single dead-end page. The button also reported itself as expanded to assistive technology while
+  controlling nothing. The header no longer draws the logo on top of the user and version text at
+  those widths, and the active item is now marked with ``aria-current`` rather than by colour alone.
 - Cache status tracking after the hishel 1.x migration: the proxy controller reads the ``X-Cache``
   header to determine whether a response was cached, and stores the cache age from the ``Age`` header
   when available. Cache status was previously never recorded, because the old ``from_cache``
