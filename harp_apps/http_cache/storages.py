@@ -5,11 +5,22 @@ import uuid
 from hishel import AsyncBaseStorage, Entry, EntryMeta, Request, Response
 
 from harp import get_logger
+from harp.http.utils import parse_cache_control
 from harp_apps.storage.types import IBlobStorage
 from .adapters import AsyncStorageAdapter
 
 logger = get_logger(__name__)
 HEADERS_ENCODING = "iso-8859-1"
+
+
+def has_explicit_freshness(response: Response) -> bool:
+    """Whether the origin stated how long its response stays fresh.
+
+    Mirrors the first three rules of RFC 9111 §4.2.1 (``s-maxage``, ``max-age``, ``Expires``)
+    and deliberately stops before the fourth, which is the ``Last-Modified`` heuristic.
+    """
+    cache_control = parse_cache_control(response.headers.get("cache-control"))
+    return cache_control.s_maxage is not None or cache_control.max_age is not None or "expires" in response.headers
 
 
 class AsyncStorage(AsyncBaseStorage):
@@ -25,6 +36,7 @@ class AsyncStorage(AsyncBaseStorage):
         storage: IBlobStorage,
         ttl: tp.Optional[tp.Union[int, float]] = None,
         check_ttl_every: tp.Union[int, float] = 60,
+        allow_heuristics: bool = False,
     ):
         # Note: hishel 1.0 AsyncBaseStorage.__init__ no longer takes serializer parameter
         super().__init__()
@@ -34,6 +46,7 @@ class AsyncStorage(AsyncBaseStorage):
         self._impl = AsyncStorageAdapter(storage)
         self._storage = storage
         self._ttl = ttl
+        self._allow_heuristics = allow_heuristics
 
     async def create_entry(
         self,
@@ -68,6 +81,15 @@ class AsyncStorage(AsyncBaseStorage):
             cache_key=key.encode("utf-8"),
             extra={"number_of_uses": 0},
         )
+
+        # The cache key is derived from the request URL alone, so an origin that authenticates
+        # its callers by anything other than the `Authorization` header (a cookie, an API key
+        # header) is invisible to it. Inventing a freshness lifetime for a response the origin
+        # never declared cacheable would then hand one caller's body to the next one, so we
+        # keep RFC 9111 §4.2.2 opt-in and simply do not retain such a response.
+        if not self._allow_heuristics and not has_explicit_freshness(response):
+            logger.debug(f"Cache entry not retained (no explicit freshness, heuristics off): key={key}")
+            return entry
 
         await self._impl.store_entry(key, entry)
         logger.debug(f"Cache entry stored: key={key}")

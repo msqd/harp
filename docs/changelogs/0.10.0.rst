@@ -78,15 +78,18 @@ Changed
     ``hishel.Controller``, and the documentation examples use ``policy`` instead of ``controller``.
   - The following cache configuration parameters are no longer available:
 
-    - ``allow_heuristics``. hishel 1.x has no equivalent option. Heuristic freshness follows
-      RFC 9111 section 4.2.2 and is computed from ``Last-Modified`` whenever a response carries
-      no explicit expiration, so responses that 0.9.x refused to reuse may now be reused.
     - ``cacheable_status_codes``, determined by RFC 9111 compliance
     - ``cacheable_methods``, replaced by an ``http_cache.policy`` service override with a custom
       ``CacheOptions.supported_methods``
     - ``allow_stale``, replaced by an ``http_cache.policy`` service override with a custom
       ``CacheOptions.allow_stale``
 
+  - ``allow_heuristics`` moved from the cache policy to the cache storage, since hishel 1.x has no
+    equivalent option on the policy. Set ``http_cache.storage.arguments.allow_heuristics``. It stays
+    ``false``, as it was before, and see *Security* below for why.
+  - A response whose only freshness information is a validator (``ETag``, ``Last-Modified``) is no
+    longer kept for conditional revalidation, so it is refetched in full rather than revalidated
+    with a ``304``.
   - Cached data written by hishel 0.1.x remains fully compatible and readable.
   - If you use a custom cache configuration, update it:
 
@@ -183,6 +186,18 @@ Security
   is refused with ``400 Bad Request`` if it would resolve to another origin. A request path carrying
   a scheme (``GET /http://example.org/``) could previously make the proxy forward to an arbitrary
   host (CWE-918, server-side request forgery / open proxy).
+- **http_cache**: a shared cache could serve one caller's response to another. Heuristic freshness,
+  which lets a cache invent an expiry from ``Last-Modified`` for a response the origin never declared
+  cacheable, was disabled in HARP up to 0.9.1 and became active when the HTTP client migrated to
+  hishel 1.x, which removed the option. Since the cache key is derived from the request URL alone, an
+  upstream that authenticates callers by anything other than the ``Authorization`` header could have
+  responses reused across them. It is off again by default, and opt-in via
+  ``http_cache.storage.arguments.allow_heuristics``.
+- **proxy**: an endpoint whose url carries a path exposes one subtree of an upstream. Dot segments in
+  the request path could walk above that subtree, so ``GET /../../admin`` against an endpoint on
+  ``http://upstream/api/v1/`` reached ``http://upstream/admin``. The origin was already checked and
+  stayed correct, which is why nothing else in the chain noticed. Such a request is now refused with
+  ``400 Bad Request``.
 - ``!cfg`` comparison operands are parsed as Python literals instead of being evaluated as code.
   Configuration is author-time and trusted, so this is defense in depth.
 
