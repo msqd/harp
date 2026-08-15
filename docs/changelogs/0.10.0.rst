@@ -155,6 +155,9 @@ Fixed
 - Requesting a transaction that does not exist now returns a 404 from the dashboard instead of an
   unhandled error. The storage layer raised ``NoResultFound``, so the controller's 404 handling was
   never reached.
+- The dashboard "Help" link opens the documentation for the version you are running. It was pinned to
+  the 0.9 documentation, so every 0.10 user landed on the previous release's docs. The URL is now
+  derived from the reported version, so it follows future releases on its own.
 - Cache status tracking after the hishel 1.x migration: the proxy controller reads the ``X-Cache``
   header to determine whether a response was cached, and stores the cache age from the ``Age`` header
   when available. Cache status was previously never recorded, because the old ``from_cache``
