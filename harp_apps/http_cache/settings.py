@@ -39,11 +39,18 @@ class HttpCacheSettings(ApplicationSettingsMixin, Configurable):
     #:         type: my_custom_policy.CustomPolicy
     policy: Service = Service(type="hishel.SpecificationPolicy")
 
+    #: Cache storage implementation, a.k.a how to store and retrieve cache data.
+    #:
+    #: ``allow_heuristics`` opts into RFC 9111 §4.2.2, which lets a cache invent a freshness
+    #: lifetime from ``Last-Modified`` for responses the origin never declared cacheable. HARP
+    #: keeps it off, as it did before hishel 1.x: the cache key is built from the request URL
+    #: alone, so guessing would let responses to differently authenticated callers collide.
     storage: Service = Service(
         base="hishel.AsyncBaseStorage",
         type="harp_apps.http_cache.storages.AsyncStorage",
         arguments={
             "ttl": None,
             "check_ttl_every": 60.0,
+            "allow_heuristics": False,
         },
     )

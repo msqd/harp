@@ -265,13 +265,16 @@ class HttpProxyController(AbstractHttpProxyController):
         # leading slash ("/http://evil/") survives it and urljoin would re-absolutize it to another
         # origin, so we re-check the result below.
         relative_url = urlsplit(context.request.path).path.lstrip("/")
-        full_url = urljoin(base_url, relative_url) + (
-            f"?{urlencode(context.request.query)}" if context.request.query else ""
-        )
+        resolved_url = urljoin(base_url, relative_url)
         # Defense in depth (SSRF / open-proxy): never let the forwarded request leave the configured
-        # upstream origin. If urljoin produced a different authority, refuse the request.
-        if urlsplit(full_url).netloc != urlsplit(base_url).netloc:
+        # upstream origin, nor the subtree of it the endpoint url points at. urljoin resolves dot
+        # segments, so "/../../admin" against an endpoint on "http://upstream/api/v1/" would reach
+        # "http://upstream/admin" on the right origin, past the authority check.
+        if urlsplit(resolved_url).netloc != urlsplit(base_url).netloc:
             raise ProxyRoutingError(context.request.path)
+        if not (urlsplit(resolved_url).path or "/").startswith(_base_path_of(base_url)):
+            raise ProxyRoutingError(context.request.path)
+        full_url = resolved_url + (f"?{urlencode(context.request.query)}" if context.request.query else "")
         return base_url, full_url
 
     async def failure(
@@ -418,6 +421,17 @@ class HttpProxyController(AbstractHttpProxyController):
         await self.adispatch(EVENT_TRANSACTION_MESSAGE, HttpMessageEvent(context.transaction, request))
 
         return context
+
+
+@lru_cache
+def _base_path_of(base_url: str) -> str:
+    """The upstream subtree an endpoint exposes, as a path prefix ending in a slash.
+
+    This is the part of the endpoint url that a relative reference resolves against, so an ordinary
+    request always lands inside it and only dot segments walking above it can fall outside. An
+    endpoint url with no path of its own exposes the whole origin, which gives "/".
+    """
+    return urlsplit(base_url).path.rsplit("/", 1)[0] + "/"
 
 
 @lru_cache

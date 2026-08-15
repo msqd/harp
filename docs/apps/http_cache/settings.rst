@@ -107,6 +107,7 @@ The default storage includes:
 
 - **ttl:** Time-to-live for cache entries (default: ``None`` - no TTL)
 - **check_ttl_every:** How often to check for expired entries in seconds (default: ``60.0``)
+- **allow_heuristics:** Whether to retain responses with no explicit expiry (default: ``false``)
 
 .. code-block:: yaml
 
@@ -116,6 +117,46 @@ The default storage includes:
         arguments:
           ttl: 3600  # Expire all cache entries after 1 hour
           check_ttl_every: 120  # Check every 2 minutes
+
+
+.. _http-cache-allow-heuristics:
+
+allow_heuristics
+----------------
+
+**Type:** ``bool``
+
+**Default:** ``false``
+
+RFC 9111 section 4.2.2 lets a cache invent a freshness lifetime for a response the origin never
+declared cacheable, deriving it from the ``Last-Modified`` date. HARP does not do this by default.
+
+The reason is a trust boundary rather than compliance. HARP's cache key is derived from the request
+URL alone, so no request header takes part in it. RFC 9111 makes a shared cache refuse to reuse a
+response to a request carrying ``Authorization``, but it says nothing about the many other ways an
+API authenticates its callers: a session cookie, ``X-Api-Key``, a bearer token in a vendor header.
+An upstream that answers with a ``Last-Modified`` and no ``Cache-Control`` at all, which is common,
+would then have one caller's response handed to the next one.
+
+A response is therefore only retained when the origin stated how long it stays fresh, through
+``Cache-Control: s-maxage``, ``Cache-Control: max-age`` or ``Expires``.
+
+Turn it on if you know your upstreams do not serve per-caller responses, or mark them correctly with
+``Cache-Control: private`` and ``Vary``:
+
+.. code-block:: yaml
+
+    http_cache:
+      storage:
+        arguments:
+          allow_heuristics: true
+
+.. note::
+
+    Whether heuristics are on or off, this is a **shared** cache. An upstream serving responses that
+    differ per caller must say so, with ``Cache-Control: private`` or with a ``Vary`` naming the
+    header that distinguishes them. HARP honours both, and will not guess which of your headers
+    carries an identity.
 
 
 Custom implementations
