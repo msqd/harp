@@ -71,6 +71,14 @@ Run the tests, luke
 
 .. important::
 
+    **Read the suites' summary lines, not the exit code.** ``make qa`` currently exits ``0`` even
+    when the frontend tests fail: the target runs ``... && $(MAKE) test-frontend || echo "Skipped."``,
+    and a failing ``test-frontend`` falls into the ``||`` branch, which succeeds. A frontend failure
+    is reported as the word ``Skipped.`` and a green gate. Scroll back and read the pass and fail
+    counts of each suite, backend and frontend, before concluding anything.
+
+    `#901 <https://github.com/msqd/harp/issues/901>`_ fixes the exit code and removes this caveat.
+
     **Expect failures in** ``tests/test_cookiecutter_integration.py`` **before the version is
     published, and do not stop the cut for them** (24 of them at the 0.10 cut).
 
