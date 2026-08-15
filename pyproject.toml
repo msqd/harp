@@ -54,7 +54,7 @@ harp = "harp.commandline:entrypoint"
 dev = [
     "cookiecutter>=2.6,<2.7",
     "freezegun>=1.5.5,<2",
-    "furo>=2023.9.10,<2025.0.0",
+    "furo>=2023.9.10,<2026.0.0",
     "hatchling==1.27.0",
     "honcho>=2.0,<2.1",
     "jscc>=0.3.0,<0.4",
