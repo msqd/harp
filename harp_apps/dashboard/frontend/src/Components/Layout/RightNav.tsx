@@ -1,5 +1,7 @@
 import { QuestionMarkCircleIcon, TagIcon, UserCircleIcon } from "@heroicons/react/20/solid"
 
+import { getDocumentationUrl } from "Utils/Documentation"
+
 import { useSystemQuery } from "../../Domain/System"
 
 export function RightNav() {
@@ -10,7 +12,7 @@ export function RightNav() {
       {systemQuery.data.user ?? "anonymous"}
       <br />
       <span className="text-xs">
-        <a href="https://docs.harp-proxy.net/en/0.9/user/?utm_source=dashboard&utm_medium=help" target="_blank">
+        <a href={getDocumentationUrl(systemQuery.data.version)} target="_blank" rel="noreferrer">
           <QuestionMarkCircleIcon className="inline-block w-4 h-4 mx-1" />
           Help
         </a>
