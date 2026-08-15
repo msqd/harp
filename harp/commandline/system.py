@@ -170,11 +170,15 @@ def system():
 @click.option(
     "--unsecure",
     is_flag=True,
-    help="Prints the configuration without hiding sensitive information.",
+    help="Shows the passwords, which are masked by default.",
 )
 @_server_click_options
 def config_subcommand(raw=False, json=False, unsecure=False, **kwargs):
     """Compiles and dumps the current configuration.
+
+    Passwords embedded in configured URLs (a database DSN, a Redis URL, an upstream carrying
+    credentials) are masked in every output shape, so the output is safe to paste into a bug
+    report. Pass --unsecure to see them.
 
     Example:
 
@@ -192,26 +196,23 @@ def config_subcommand(raw=False, json=False, unsecure=False, **kwargs):
 
     console = Console()
 
+    # Whatever the shape, the configuration is dumped through asdict, which is what hides
+    # credentials. `--unsecure` is the only way to see them, in every shape alike.
+    config = asdict(system_obj.config, secure=not unsecure)
+
     if raw:
-        console.print(Pretty(asdict(system_obj.config)))
+        console.print(Pretty(config))
     elif json:
         console.print(
             Syntax(
-                orjson.dumps(
-                    asdict(
-                        system_obj.config,
-                        secure=not unsecure,
-                    ),
-                    option=orjson.OPT_INDENT_2,
-                ).decode(),
+                orjson.dumps(config, option=orjson.OPT_INDENT_2).decode(),
                 "json",
                 background_color="default",
             )
         )
     else:
-        for k, v in system_obj.config.items():
+        for k, v in config.items():
             tree = Tree(f"📦 [bright_white][bold]{k}[/bright_white][/bold]")
-            # todo secure/unsecure with pretty print ?
             tree.add(Pretty(v))
             console.print(tree)
 

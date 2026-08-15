@@ -10,9 +10,14 @@ from pydantic_core import MultiHostUrl, Url
 mask_password_re = re.compile(r"(://[^:]+:)([^@]+)(@)")
 
 
+def mask_credentials(value: str) -> str:
+    """Replace the password of any ``scheme://user:password@host`` found in ``value``."""
+    return mask_password_re.sub(r"\1***\3", value)
+
+
 def url_serializer(dsn, secure=True, **kwargs):
     if secure:
-        return mask_password_re.sub(r"\1***\3", str(dsn))
+        return mask_credentials(str(dsn))
     return str(dsn)
 
 
@@ -41,6 +46,13 @@ def asdict(
 
     if hasattr(obj, "model_dump"):
         return _asdict(obj.model_dump(mode=mode, exclude_unset=not verbose, exclude_defaults=not verbose))
+
+    # A DSN only keeps its own type as far as the nearest `model_dump`: in "json" mode pydantic
+    # renders it to a plain string on the way out, and the serializers above never see it. Masking
+    # the string itself is what makes `secure` mean the same thing in either mode, and it also
+    # reaches credentials embedded in settings that were never typed as URLs in the first place.
+    if secure and isinstance(obj, str):
+        return mask_credentials(obj)
 
     if type(obj) in dataclasses._ATOMIC_TYPES:
         return obj
