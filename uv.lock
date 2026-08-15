@@ -791,7 +791,7 @@ requires-dist = [
     { name = "hypercorn", specifier = ">=0.17,<0.18" },
     { name = "multidict", specifier = ">=6.7,<6.8" },
     { name = "orjson", specifier = ">=3.11,<3.12" },
-    { name = "packaging", specifier = ">=23.2,<26" },
+    { name = "packaging", specifier = ">=23.2" },
     { name = "passlib", specifier = ">=1.7,<1.8" },
     { name = "psycopg2-binary", specifier = ">=2.9,<2.10" },
     { name = "pydantic", specifier = ">=2.12,<2.13" },
