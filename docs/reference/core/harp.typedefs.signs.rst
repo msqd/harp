@@ -1,5 +1,5 @@
 harp.typedefs.signs
-=================
+===================
 
 .. automodule:: harp.typedefs.signs
     :members:
