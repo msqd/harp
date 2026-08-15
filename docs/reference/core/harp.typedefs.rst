@@ -1,5 +1,5 @@
 Typing (harp.typedefs)
-====================
+======================
 
 .. automodule:: harp.typedefs
     :members:

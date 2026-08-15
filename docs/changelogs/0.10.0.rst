@@ -78,7 +78,9 @@ Changed
     ``hishel.Controller``, and the documentation examples use ``policy`` instead of ``controller``.
   - The following cache configuration parameters are no longer available:
 
-    - ``allow_heuristics``, as hishel 1.x strictly follows RFC 9111
+    - ``allow_heuristics``. hishel 1.x has no equivalent option. Heuristic freshness follows
+      RFC 9111 section 4.2.2 and is computed from ``Last-Modified`` whenever a response carries
+      no explicit expiration, so responses that 0.9.x refused to reuse may now be reused.
     - ``cacheable_status_codes``, determined by RFC 9111 compliance
     - ``cacheable_methods``, replaced by an ``http_cache.policy`` service override with a custom
       ``CacheOptions.supported_methods``

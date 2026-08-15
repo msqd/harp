@@ -1,5 +1,5 @@
 harp.typedefs.global_settings
-===========================
+=============================
 
 .. automodule:: harp.typedefs.global_settings
     :members:
