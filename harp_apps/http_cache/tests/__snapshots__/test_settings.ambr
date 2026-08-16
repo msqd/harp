@@ -80,6 +80,7 @@
       'storage': dict({
         '$ref': '#/$defs/Service',
         'default': dict({
+          'allow_heuristics': False,
           'base': 'hishel.AsyncBaseStorage',
           'check_ttl_every': 60.0,
           'ttl': None,
@@ -179,6 +180,7 @@
       'storage': dict({
         '$ref': '#/$defs/Service',
         'default': dict({
+          'allow_heuristics': False,
           'base': 'hishel.AsyncBaseStorage',
           'check_ttl_every': 60.0,
           'ttl': None,

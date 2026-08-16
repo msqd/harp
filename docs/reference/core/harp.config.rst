@@ -20,6 +20,7 @@ Submodules
     harp.config.configurables
     harp.config.defaults
     harp.config.events
+    harp.config.example
     harp.config.examples
     harp.config.mixins
     harp.config.utils

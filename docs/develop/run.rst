@@ -40,6 +40,14 @@ If you've created a project using ``harp-proxy create project``, use the generat
     cd your-project
     make start
 
+While developing, use ``make dev`` instead: it runs the same server with auto-reload, restarting it
+whenever you change a file.
+
+.. code:: shell
+
+    cd your-project
+    make dev
+
 Or run directly with UV:
 
 .. code:: shell

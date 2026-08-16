@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from operator import itemgetter
 from typing import Iterable, Optional, override
 
-from sqlalchemy import and_, bindparam, case, delete, func, literal, literal_column, null, or_, select, text
+from sqlalchemy import and_, bindparam, case, delete, func, literal, null, or_, select, text
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from sqlalchemy.sql.functions import count
@@ -121,7 +121,7 @@ def _filter_transactions_based_on_text(query, search_text: str, dialect_name: st
                 f"AGAINST (:search_text IN BOOLEAN MODE) OR "
                 f"MATCH ({SqlMessage.__tablename__}.summary) "
                 f"AGAINST (:search_text IN BOOLEAN MODE)",
-            ).bindparams(bindparam("search_text", literal_column(f"'{search_text}*'")))
+            ).bindparams(bindparam("search_text", f"{search_text}*"))
         )
 
     return query.filter(
@@ -328,12 +328,12 @@ class SqlStorage(IStorage):
                 query.with_only_columns(func.count(SqlTransaction.id)).order_by(None)
             )
 
-        # apply limit/offset (after count)
-        query = query.limit(PAGE_SIZE)
-        if page:
-            query = query.offset(max(0, (page - 1) * PAGE_SIZE))
+            # apply limit/offset (after count), then read the page in the same session so count and
+            # list share one transaction (one round-trip setup, consistent snapshot).
+            query = query.limit(PAGE_SIZE)
+            if page:
+                query = query.offset(max(0, (page - 1) * PAGE_SIZE))
 
-        async with self.begin() as session:
             for transaction in (await session.scalars(query)).unique().all():
                 result.append(transaction.to_model(with_user_flags=True))
 

@@ -711,6 +711,7 @@ dependencies = [
     { name = "hypercorn" },
     { name = "multidict" },
     { name = "orjson" },
+    { name = "packaging" },
     { name = "passlib" },
     { name = "psycopg2-binary" },
     { name = "pydantic" },
@@ -785,11 +786,12 @@ requires-dist = [
     { name = "dataclasses-jsonschema", specifier = ">=2.16,<2.17" },
     { name = "essentials-configuration", specifier = ">=2.0,<2.1" },
     { name = "hishel", specifier = "~=1.1.7" },
-    { name = "http-router", specifier = ">=5.0,<5.1" },
+    { name = "http-router", specifier = ">=5.0,<6.0" },
     { name = "httpx", specifier = ">=0.27,<0.29" },
     { name = "hypercorn", specifier = ">=0.17,<0.18" },
     { name = "multidict", specifier = ">=6.7,<6.8" },
     { name = "orjson", specifier = ">=3.11,<3.12" },
+    { name = "packaging", specifier = ">=23.2" },
     { name = "passlib", specifier = ">=1.7,<1.8" },
     { name = "psycopg2-binary", specifier = ">=2.9,<2.10" },
     { name = "pydantic", specifier = ">=2.12,<2.13" },
@@ -812,7 +814,7 @@ requires-dist = [
 dev = [
     { name = "cookiecutter", specifier = ">=2.6,<2.7" },
     { name = "freezegun", specifier = ">=1.5.5,<2" },
-    { name = "furo", specifier = ">=2023.9.10,<2025.0.0" },
+    { name = "furo", specifier = ">=2023.9.10,<2026.0.0" },
     { name = "hatchling", specifier = "==1.27.0" },
     { name = "honcho", specifier = ">=2.0,<2.1" },
     { name = "jscc", specifier = ">=0.3.0,<0.4" },
@@ -841,7 +843,7 @@ dev = [
     { name = "watchfiles", specifier = ">=1.1,<1.2" },
 ]
 mysql = [
-    { name = "aiomysql", specifier = ">=0.2,<0.3" },
+    { name = "aiomysql", specifier = ">=0.2,<0.4" },
     { name = "asyncmy", specifier = ">=0.2,<0.3" },
     { name = "cryptography", specifier = ">=43.0,<46.1" },
 ]

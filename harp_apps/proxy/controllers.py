@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
 from functools import cached_property, lru_cache
+from time import time
 from httpx import AsyncClient, codes
 from pyheck import shouty_snake
 from typing import Optional, cast, override
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlencode, urljoin, urlsplit
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
@@ -19,6 +20,9 @@ from .constants import (
     BREAK_ON_NETWORK_ERROR,
     BREAK_ON_UNHANDLED_EXCEPTION,
     CHECKING,
+    ERR_BAD_REQUEST_MESSAGE,
+    ERR_BAD_REQUEST_STATUS_CODE,
+    ERR_BAD_REQUEST_VERBOSE_MESSAGE,
     ERR_UNAVAILABLE_STATUS_CODE,
     ERR_UNHANDLED_MESSAGE,
     ERR_UNHANDLED_STATUS_CODE,
@@ -44,6 +48,10 @@ logger = get_logger(__name__)
 
 # XXX: move to some type module ?
 ProxyFilterResult = Optional[ProxyFilterEvent | HttpResponse | dict]
+
+
+class ProxyRoutingError(Exception):
+    """Raised when an incoming request path would route the proxy off its configured upstream origin."""
 
 
 class AbstractHttpProxyController(ABC):
@@ -159,6 +167,14 @@ class HttpProxyController(AbstractHttpProxyController):
                     status=ERR_UNAVAILABLE_STATUS_CODE,
                 )
                 return await self.failure(context.transaction, base_url, response)
+            except ProxyRoutingError as exc:
+                response = HttpError(
+                    ERR_BAD_REQUEST_MESSAGE,
+                    exception=exc,
+                    verbose_message=ERR_BAD_REQUEST_VERBOSE_MESSAGE,
+                    status=ERR_BAD_REQUEST_STATUS_CODE,
+                )
+                return await self.failure(context.transaction, base_url, response)
 
             # todo: streaming should pass through to avoid reading all the content in memory
             await context.request.aread()
@@ -206,9 +222,11 @@ class HttpProxyController(AbstractHttpProxyController):
         await response.aread()
         await response.aclose()
 
-        # Check if response came from cache by reading the X-Cache header
-        # This header is set by the proxy adapter based on hishel extensions
-        is_response_from_cache = response.headers.get("X-Cache", "").upper() == "HIT"
+        # Our cache answers this in the response extensions, and the adapter copies that answer into
+        # `X-Cache` for the client's benefit. Reading the header back here instead would take the
+        # answer from a public channel: an upstream behind a CDN sets `X-Cache` for its own cache
+        # (CloudFront, Fastly and Varnish all do), and its hit would be recorded as ours.
+        is_response_from_cache = bool(response.extensions.get("hishel_from_cache"))
 
         # If the remote URL is in CHECKING status and the response is successful, set it up
         if self.remote[base_url].status == CHECKING and 200 <= response.status_code < 400:
@@ -233,22 +251,32 @@ class HttpProxyController(AbstractHttpProxyController):
         # Store cache status and age if response was cached
         if is_response_from_cache:
             transaction.extras["cached"] = True
-            # Store cache age if available (Age header shows cache freshness in seconds)
-            age_header = response.headers.get("Age")
-            if age_header:
-                try:
-                    transaction.extras["cache_age"] = int(age_header)
-                except (ValueError, TypeError):
-                    pass  # Ignore invalid Age header values
+            # Age is how long ago we stored it, measured by our own clock. The `Age` header cannot
+            # stand in for that either: the origin sets it to describe its own cache, not ours.
+            created_at = response.extensions.get("hishel_created_at")
+            if created_at is not None:
+                transaction.extras["cache_age"] = int(time() - created_at)
 
         return HttpResponse(response.content, status=response.status_code, headers=headers)
 
     async def _get_next_url_for(self, context) -> tuple[str, str]:
         base_url = self.remote.get_url()
-        relative_url = context.request.path.lstrip("/")
-        return base_url, urljoin(base_url, relative_url) + (
-            f"?{urlencode(context.request.query)}" if context.request.query else ""
-        )
+        # Only the path component of the incoming request may influence the upstream URL. urlsplit
+        # drops a leading scheme/host ("http://evil/", "//evil/"), but a scheme hidden behind a
+        # leading slash ("/http://evil/") survives it and urljoin would re-absolutize it to another
+        # origin, so we re-check the result below.
+        relative_url = urlsplit(context.request.path).path.lstrip("/")
+        resolved_url = urljoin(base_url, relative_url)
+        # Defense in depth (SSRF / open-proxy): never let the forwarded request leave the configured
+        # upstream origin, nor the subtree of it the endpoint url points at. urljoin resolves dot
+        # segments, so "/../../admin" against an endpoint on "http://upstream/api/v1/" would reach
+        # "http://upstream/admin" on the right origin, past the authority check.
+        if urlsplit(resolved_url).netloc != urlsplit(base_url).netloc:
+            raise ProxyRoutingError(context.request.path)
+        if not (urlsplit(resolved_url).path or "/").startswith(_base_path_of(base_url)):
+            raise ProxyRoutingError(context.request.path)
+        full_url = resolved_url + (f"?{urlencode(context.request.query)}" if context.request.query else "")
+        return base_url, full_url
 
     async def failure(
         self,
@@ -394,6 +422,17 @@ class HttpProxyController(AbstractHttpProxyController):
         await self.adispatch(EVENT_TRANSACTION_MESSAGE, HttpMessageEvent(context.transaction, request))
 
         return context
+
+
+@lru_cache
+def _base_path_of(base_url: str) -> str:
+    """The upstream subtree an endpoint exposes, as a path prefix ending in a slash.
+
+    This is the part of the endpoint url that a relative reference resolves against, so an ordinary
+    request always lands inside it and only dot segments walking above it can fall outside. An
+    endpoint url with no path of its own exposes the whole origin, which gives "/".
+    """
+    return urlsplit(base_url).path.rsplit("/", 1)[0] + "/"
 
 
 @lru_cache

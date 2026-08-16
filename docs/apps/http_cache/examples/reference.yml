@@ -22,3 +22,7 @@ http_cache:
     arguments:
       ttl: null  # No automatic expiration
       check_ttl_every: 60.0  # Check for expired entries every 60 seconds
+      # Retain responses whose only freshness hint is Last-Modified (RFC 9111 §4.2.2). Off, because
+      # the cache key is built from the request URL alone: an upstream that authenticates callers by
+      # anything other than the Authorization header would have responses reused across them.
+      allow_heuristics: false

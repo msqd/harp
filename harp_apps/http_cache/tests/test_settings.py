@@ -19,6 +19,7 @@ class TestHttpCacheSettings(BaseConfigurableTest):
             "type": "hishel.SpecificationPolicy",
         },
         "storage": {
+            "allow_heuristics": False,
             "base": "hishel.AsyncBaseStorage",
             "check_ttl_every": 60.0,
             "ttl": None,

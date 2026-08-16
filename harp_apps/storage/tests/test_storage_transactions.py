@@ -3,6 +3,27 @@ from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 
 class TestStorageTransactions(StorageTestFixtureMixin):
+    async def test_get_transaction_list_uses_a_single_session(self, sql_storage: SqlStorage):
+        t1 = await self.create_transaction(sql_storage, endpoint="foo")
+        t2 = await self.create_transaction(sql_storage, endpoint="bar")
+        for t in (t1, t2):
+            await self.create_message(sql_storage, transaction_id=t.id, kind="misc", summary="s", headers="h", body="b")
+
+        calls = {"n": 0}
+        original_begin = sql_storage.begin
+
+        def counting_begin(*args, **kwargs):
+            calls["n"] += 1
+            return original_begin(*args, **kwargs)
+
+        sql_storage.begin = counting_begin
+        result = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+
+        # the count and the page are read in a single session/transaction
+        assert calls["n"] == 1
+        assert result.meta["total"] == 2
+        assert len(result) == 2
+
     async def test_get_transaction_list_with_tags(self, sql_storage: SqlStorage):
         t1 = await self.create_transaction(sql_storage, endpoint="foo")
 

@@ -16,7 +16,7 @@ exports[`renders the title and data when the query is successful 1`] = `
           class="relative flex h-14 justify-between"
         >
           <div
-            class="absolute inset-y-0 left-0 flex items-center sm:hidden"
+            class="flex items-center sm:hidden"
           >
             <button
               aria-expanded="false"
@@ -52,7 +52,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             </button>
           </div>
           <div
-            class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start"
+            class="flex min-w-0 flex-1 items-center justify-start sm:items-stretch"
           >
             <div
               class="flex flex-shrink-0 items-center p-2"
@@ -78,6 +78,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               class="hidden sm:ml-6 sm:flex sm:space-x-8"
             >
               <a
+                aria-current="page"
                 class="inline-flex items-center border-b-4 px-2 pt-1 text-sm font-medium text-white border-primary"
                 href="/"
               >
@@ -98,7 +99,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             </div>
           </div>
           <div
-            class="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0"
+            class="hidden sm:ml-6 sm:flex sm:items-center"
           >
             <div
               class="text-sm text-white text-right"
@@ -124,7 +125,8 @@ exports[`renders the title and data when the query is successful 1`] = `
                 class="text-xs"
               >
                 <a
-                  href="https://docs.harp-proxy.net/en/0.9/user/?utm_source=dashboard&utm_medium=help"
+                  href="https://docs.harp-proxy.net/en/latest/user/?utm_source=dashboard&utm_medium=help"
+                  rel="noreferrer"
                   target="_blank"
                 >
                   <svg
