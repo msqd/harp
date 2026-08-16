@@ -235,6 +235,38 @@ from an empty archive. The build died with "frontend assets were not included in
 the wheel held all 32. A check whose failure mode impersonates the condition it guards is worse than
 no check, and this one fired at the exact moment someone was cutting a release.
 
+Incapable of reporting
+----------------------
+
+Every other entry here is a gate that failed to report something it did observe. This one is an
+instrument that cannot report at all, and it went unnoticed for an unknown number of releases.
+
+``make docs`` emits **zero warnings whatever it is fed**. Importing ``harp`` runs
+``logging.config.dictConfig`` at module import time with ``disable_existing_loggers: True``
+(``harp/_logging.py``, lines 71 and 100). The documentation build imports ``harp`` through the two
+extensions in ``docs/_extensions/``, which disables the ``sphinx`` logger that Sphinx created moments
+earlier. Its handlers stay correctly attached; the logger itself is dead.
+
+**A build that reports no warnings and a build that cannot report warnings look identical from the
+exit code.**
+
+It was not found by reading the output, which had looked clean for as long as anyone remembered. It
+was found by **feeding the gate a known failure**: a title underline shorter than its title, an
+undefined ``:ref:`` label, and a ``:doc:`` reference to a document that does not exist, appended to a
+page that was definitely being built. The build rendered all three onto the page and reported
+nothing, with an empty ``sphinx-build -w`` file to match. Re-enabling the logger produced **160**
+warnings on the same tree, including 13 dead documentation links.
+
+That technique is the generalisable part, and it is cheaper than any of the investigations recorded
+above. A gate you have never seen fail is a gate you have never tested. See
+`issue #944 <https://github.com/msqd/harp/issues/944>`_.
+
+Note also what made this one hard to see: a **child** logger obtained through
+``sphinx.util.logging.getLogger`` still works, because propagation reaches the ancestor's handlers
+without consulting the ancestor's ``disabled`` flag. So some Sphinx output survived and some did not,
+and three people reported three different things about the same warning without any of them being
+wrong.
+
 Unknown
 -------
 
@@ -296,10 +328,14 @@ Until a gate prints that by itself, do it by hand. Before the tag:
 #. **Ask what an error count means** when it dwarfs the failure count. It is usually one fixture.
 #. **Check that each suite you believe in actually executed.** A suite that cannot start reports
    nothing, and nothing looks like success.
+#. **Feed each gate a known failure and confirm it says so.** Break something the gate is supposed
+   to catch, watch it complain, put it back. This one line would have caught the documentation
+   build, the ``unzip`` guard and the frontend skip, and it costs a minute per gate.
 #. **Re-measure this document.** If a number here has changed, that change is itself the finding.
 
 Read the categories in this order, because it is the order in which they hide things:
 
+#. **Incapable of reporting**, where the instrument is silent no matter what you feed it.
 #. **Unknown**, where a real defect sits looking like an accepted one.
 #. **Absent**, where nothing was collected and the count says nothing.
 #. **Dead at fixture setup**, where one problem wears many hats.
