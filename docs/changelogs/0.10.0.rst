@@ -14,6 +14,12 @@ Important Changes
 - ⚠️ The ``telemetry`` application was removed. HARP no longer sends anonymous usage statistics. A
   leftover ``telemetry:`` block in your configuration is now reported as configuration for an
   unloaded application, and is rejected under ``--strict``.
+- ⚠️ **This release contains a database migration.** ``blobs.id`` widens from 40 to 64 characters,
+  because hishel 1.x keys cache entries with a sha256 hexdigest while message blobs use sha1, and
+  both share that column. **Run** ``harp-proxy db:migrate up head`` **before starting 0.10 on
+  PostgreSQL or MySQL**, or every cacheable response fails with a 500 rather than degrading to a
+  cache miss. Existing rows are untouched and the migration is backward compatible. SQLite needs
+  nothing: it does not enforce column widths and its schema is recreated rather than migrated.
 
 Added
 :::::
@@ -145,6 +151,11 @@ Changed
 Fixed
 :::::
 
+- The HTTP cache can store entries on PostgreSQL and MySQL again. ``blobs.id`` was declared 40
+  characters wide, the length of the sha1 hexdigest that message blobs use, while hishel 1.x keys
+  cache entries with a sha256 hexdigest of 64. Both share the column, so every cache write was
+  rejected by the database and the proxy returned a 500 instead of degrading to a cache miss. SQLite
+  did not show it, because it does not enforce ``VARCHAR`` widths.
 - The published wheel now lists ``packaging`` in its ``Requires-Dist`` metadata. HARP imports it in
   ``harp/__init__.py``, so any ``import harp`` needs it, but it was only ever installed as a
   transitive dependency of ``dataclasses-json``. Nothing was broken and no version changed; what

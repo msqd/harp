@@ -57,7 +57,7 @@ class SqlBlobStorage(IBlobStorage):
         Retrieve a blob from the database, using its hash.
         Returns None if not found.
 
-        :param blob_id: sha1 hash of the blob
+        :param blob_id: content hash identifying the blob (sha1 for message blobs, sha256 for cache entries)
         :return: Blob or None
         """
         async with self.engine.connect() as conn:
@@ -73,7 +73,7 @@ class SqlBlobStorage(IBlobStorage):
         """
         Store a blob in the database.
 
-        :param blob_id: sha1 hash of the blob
+        :param blob_id: content hash identifying the blob (sha1 for message blobs, sha256 for cache entries)
         :param data: blob data
         """
         if self.seen.exists(blob.id):
@@ -119,7 +119,7 @@ class SqlBlobStorage(IBlobStorage):
         """
         Delete a blob from the database.
 
-        :param blob_id: sha1 hash of the blob
+        :param blob_id: content hash identifying the blob (sha1 for message blobs, sha256 for cache entries)
         """
         self.seen.remove(blob_id)
         async with self.engine.connect() as conn:
@@ -133,7 +133,7 @@ class SqlBlobStorage(IBlobStorage):
         """
         Check if a blob exists in the database.
 
-        :param blob_id: sha1 hash of the blob
+        :param blob_id: content hash identifying the blob (sha1 for message blobs, sha256 for cache entries)
         :return: True if the blob exists, False otherwise
         """
         if self.seen.exists(blob_id):
