@@ -458,6 +458,60 @@ class TestValidationWithRealApplications:
         assert not any("applications" in msg and "not loaded" in msg.lower() for msg in warning_messages)
 
 
+class TestUnknownKeysOfAnyShape:
+    """
+    The unknown-application check only looked at keys whose value was a mapping, so a typo or a
+    leftover block with any other value passed unreported, including under --strict.
+    """
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            pytest.param(["a", "b"], id="list"),
+            pytest.param("a string", id="str"),
+            pytest.param(42, id="int"),
+            pytest.param(True, id="bool"),
+            pytest.param(None, id="none"),
+        ],
+    )
+    def test_unknown_key_is_reported_whatever_its_value(self, value, caplog):
+        builder = ConfigurationBuilder(use_default_applications=False)
+        builder.add_values({"made_up_key": value})
+
+        with caplog.at_level("WARNING"):
+            builder.build()
+
+        assert any("made_up_key" in record.message for record in caplog.records)
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            pytest.param(["a", "b"], id="list"),
+            pytest.param("a string", id="str"),
+            pytest.param(42, id="int"),
+            pytest.param(True, id="bool"),
+            pytest.param(None, id="none"),
+        ],
+    )
+    def test_unknown_key_of_any_shape_is_rejected_in_strict_mode(self, value):
+        builder = ConfigurationBuilder(use_default_applications=False)
+        builder.add_values({"made_up_key": value})
+
+        with pytest.raises(ValueError, match="made_up_key"):
+            builder.build(strict=True)
+
+    def test_system_keys_are_still_allowed_to_be_lists(self):
+        """``applications`` and ``harp_apps`` are lists by design and must not be reported."""
+        builder = ConfigurationBuilder(use_default_applications=False)
+        builder.add_values({"applications": [], "harp_apps": []})
+
+        builder.build(strict=True)
+
+    def test_default_applications_build_cleanly_in_strict_mode(self):
+        """The real default configuration must not trip the widened check."""
+        ConfigurationBuilder().build(strict=True)
+
+
 class TestRelocatedSettings:
     """
     A 0.9.x configuration puts cache settings under ``http_client.cache``. In 0.10 that key belongs
