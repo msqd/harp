@@ -153,10 +153,10 @@
   },
   "title": "__ROOT__",
   "anyOf": [
-    { "$ref": "#/$defs/DevserverSettings" },
+    { "$ref": "#/$defs/SystemPutProxyInput" },
     { "$ref": "#/$defs/BasicAuthSettings" },
     { "$ref": "#/$defs/User" },
-    { "$ref": "#/$defs/DashboardSettings" },
-    { "$ref": "#/$defs/SystemPutProxyInput" }
+    { "$ref": "#/$defs/DevserverSettings" },
+    { "$ref": "#/$defs/DashboardSettings" }
   ]
 }
