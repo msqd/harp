@@ -246,6 +246,35 @@ styled output in a pipe for any command a user would pipe is **not known**. The 
 be exercised were clean once ``FORCE_COLOR`` was unset, so there is no evidence of a user-visible
 problem, and no evidence there is not one.
 
+Audit a migration's diff for what it turned off
+-----------------------------------------------
+
+**A large migration is where suppressions get introduced under pressure, so its diff is worth
+reading separately for what it silenced rather than for what it changed.**
+
+Two of the entries above turned out to come from the same commit, the migration from Poetry to UV.
+That was enough of a coincidence to go and read the whole diff. It had silenced five things, none of
+them with a recorded reason, and all five were still in place two releases later:
+
+#. ``@pytest.mark.skip`` on the ``TestUVIntegration`` class, eight tests, no reason string.
+#. ``-$(UV_RUN) pre-commit`` in ``preqa``, whose ``-`` makes ``make`` ignore the exit status.
+#. ``continue-on-error: true`` on the **Build Documentation** CI job.
+#. ``continue-on-error: true`` on the **Build Storybook** CI job.
+#. The entire ``test-frontend-visual`` CI job commented out, including the visual suite.
+
+The pattern is ordinary and forgivable: someone migrating a build system meets a wall of unrelated
+failures, silences them to get the migration through, intends to come back, and does not. It cost
+two releases and a full day of investigation to rediscover two of them from their symptoms. Reading
+one diff found the other three in minutes.
+
+Both ``continue-on-error`` jobs currently pass, so those two are dormant rather than actively hiding
+a failure. That is worth stating precisely: dormant is not the same as harmless, because the whole
+point of the flag is that the day one of them does fail, nothing will say so.
+
+The search is cheap and bounded. In the diff of any large migration, look for ``skip``, ``xfail``,
+``continue-on-error``, ``|| true``, ``|| echo``, ``--no-verify``, ``noqa``, leading ``-`` on make
+recipes, new ``exclude`` entries in tool configuration, and commented-out jobs or steps.
+
 
 What to do with this at your cut
 ::::::::::::::::::::::::::::::::
