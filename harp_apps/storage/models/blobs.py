@@ -10,7 +10,11 @@ from .messages import Message
 class Blob(Base):
     __tablename__ = "blobs"
 
-    id = mapped_column(String(40), primary_key=True, unique=True)
+    # Wide enough for every identifier this table holds, which is not one scheme: message blobs are
+    # keyed by a sha1 hexdigest (40 characters) and HTTP cache entries by hishel, which uses sha256
+    # (64). PostgreSQL and MySQL enforce the declared width, so sizing this to one of the two makes
+    # the other fail its insert.
+    id = mapped_column(String(64), primary_key=True, unique=True)
     data = mapped_column(LargeBinary())
     content_type = mapped_column(String(64))
     created_at = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
