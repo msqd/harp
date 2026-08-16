@@ -215,6 +215,11 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         """
         Validate that all configured applications are loaded.
 
+        Every unknown key is reported, whatever its value. Checking only mappings would let a typo
+        or a leftover block through unnoticed whenever it happened to hold a list, a string or a
+        scalar, including under ``--strict``. The keys that legitimately hold a non-mapping,
+        ``applications`` and ``harp_apps``, are excluded by name through SYSTEM_KEYS.
+
         Args:
             settings: Configuration dictionary from first pass.
             strict: If True, raise ValueError for unknown apps. If False, log warning.
@@ -225,12 +230,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         """
         disabled_apps = disabled_apps or []
         for key in settings:
-            if (
-                key not in self.applications
-                and key not in self.SYSTEM_KEYS
-                and key not in disabled_apps
-                and isinstance(settings[key], dict)
-            ):
+            if key not in self.applications and key not in self.SYSTEM_KEYS and key not in disabled_apps:
                 if strict:
                     raise ValueError(
                         f"Configuration found for application '{key}' which is not loaded. Running in strict mode, aborting."
