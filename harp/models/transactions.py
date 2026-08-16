@@ -9,7 +9,11 @@ from .messages import Message
 def encode_cache_flag(cached) -> str | None:
     """Encode a transaction cache-hit flag for the ``x_cached`` storage column.
 
-    A truthy flag (an ``X-Cache: HIT``) is stored as the string ``"true"``; anything else as ``None``.
+    A truthy flag is stored as the string ``"true"``; anything else as ``None``.
+
+    The flag comes from the cache itself, through the ``hishel_from_cache`` response extension, not
+    from the ``X-Cache`` header. HARP emits that header for clients, but an upstream may emit one of
+    its own, so it cannot be read back as evidence of a HARP cache hit.
     """
     return "true" if cached else None
 

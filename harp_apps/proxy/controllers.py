@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
 from functools import cached_property, lru_cache
+from time import time
 from httpx import AsyncClient, codes
 from pyheck import shouty_snake
 from typing import Optional, cast, override
@@ -221,9 +222,11 @@ class HttpProxyController(AbstractHttpProxyController):
         await response.aread()
         await response.aclose()
 
-        # Check if response came from cache by reading the X-Cache header
-        # This header is set by the proxy adapter based on hishel extensions
-        is_response_from_cache = response.headers.get("X-Cache", "").upper() == "HIT"
+        # Our cache answers this in the response extensions, and the adapter copies that answer into
+        # `X-Cache` for the client's benefit. Reading the header back here instead would take the
+        # answer from a public channel: an upstream behind a CDN sets `X-Cache` for its own cache
+        # (CloudFront, Fastly and Varnish all do), and its hit would be recorded as ours.
+        is_response_from_cache = bool(response.extensions.get("hishel_from_cache"))
 
         # If the remote URL is in CHECKING status and the response is successful, set it up
         if self.remote[base_url].status == CHECKING and 200 <= response.status_code < 400:
@@ -248,13 +251,11 @@ class HttpProxyController(AbstractHttpProxyController):
         # Store cache status and age if response was cached
         if is_response_from_cache:
             transaction.extras["cached"] = True
-            # Store cache age if available (Age header shows cache freshness in seconds)
-            age_header = response.headers.get("Age")
-            if age_header:
-                try:
-                    transaction.extras["cache_age"] = int(age_header)
-                except (ValueError, TypeError):
-                    pass  # Ignore invalid Age header values
+            # Age is how long ago we stored it, measured by our own clock. The `Age` header cannot
+            # stand in for that either: the origin sets it to describe its own cache, not ours.
+            created_at = response.extensions.get("hishel_created_at")
+            if created_at is not None:
+                transaction.extras["cache_age"] = int(time() - created_at)
 
         return HttpResponse(response.content, status=response.status_code, headers=headers)
 
