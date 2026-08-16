@@ -89,8 +89,14 @@ class JanitorWorker:
         count = None
 
         if self.blob_storage.type == "sql":
+            # Read the ids before deleting them. The deletion is a bulk statement, so the blob
+            # storage never sees it and would go on believing those rows exist, refusing to write
+            # the same content again. Anything that stores blobs, the HTTP cache first among them,
+            # would then silently write nothing after every sweep.
+            orphans = (await session.execute(self.storage.blobs.select_orphans())).scalars().all()
             result = await session.execute(self.storage.blobs.delete_orphans())
             await session.commit()
+            self.blob_storage.forget(orphans)
             count = result.rowcount if result.rowcount else 0
         elif self.blob_storage.type == "redis":
             pass

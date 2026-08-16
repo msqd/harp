@@ -185,6 +185,14 @@ Fixed
   header to determine whether a response was cached, and stores the cache age from the ``Age`` header
   when available. Cache status was previously never recorded, because the old ``from_cache``
   extension no longer exists in hishel 1.x.
+- **janitor**: a sweep no longer leaves the SQL blob storage believing the blobs it just deleted
+  still exist. Populating the seen-cache on write, new in this release, made that belief outlive the
+  row, so every later write of the same content became a silent no-op, the HTTP cache could never
+  repopulate after the first sweep, and ``Cache entry incomplete`` appeared in the logs. A cacheable
+  response now costs one origin fetch per janitor sweep, as it did in 0.9.1, instead of one per
+  request. The sweep still discards live cache entries every 600 seconds, which is inherited
+  behaviour tracked in `#923 <https://github.com/msqd/harp/issues/923>`_ and not something this
+  release changes.
 - The HTTP cache ``created_at`` field is written and read as UTC. On a non-UTC host, the stored value
   was a local wall-clock time labelled ``GMT``.
 - Proxy health-check tasks are now cancelled on shutdown. The ``on_shutdown`` handler was never
