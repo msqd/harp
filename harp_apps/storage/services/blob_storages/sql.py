@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from collections.abc import Iterable
 from typing import override
 
 from sqlalchemy import delete, insert, select, update
@@ -57,7 +58,7 @@ class SqlBlobStorage(IBlobStorage):
         Retrieve a blob from the database, using its hash.
         Returns None if not found.
 
-        :param blob_id: sha1 hash of the blob
+        :param blob_id: content hash identifying the blob (sha1 for message blobs, sha256 for cache entries)
         :return: Blob or None
         """
         async with self.engine.connect() as conn:
@@ -73,7 +74,7 @@ class SqlBlobStorage(IBlobStorage):
         """
         Store a blob in the database.
 
-        :param blob_id: sha1 hash of the blob
+        :param blob_id: content hash identifying the blob (sha1 for message blobs, sha256 for cache entries)
         :param data: blob data
         """
         if self.seen.exists(blob.id):
@@ -95,6 +96,10 @@ class SqlBlobStorage(IBlobStorage):
                 except IntegrityError:
                     pass  # already there? that's fine!
         # the blob is now known to be stored: remember it so later puts skip the existence query.
+        # A cache populated from what you did, rather than from what the database confirmed, is only
+        # valid while you are the only writer. Anything else deleting rows (the janitor sweep does,
+        # in bulk) has to call `forget()`, or this entry outlives the row it stands for and both
+        # `put()` and `exists()` go on answering from it.
         self.seen.add(blob.id)
         return blob
 
@@ -119,7 +124,7 @@ class SqlBlobStorage(IBlobStorage):
         """
         Delete a blob from the database.
 
-        :param blob_id: sha1 hash of the blob
+        :param blob_id: content hash identifying the blob (sha1 for message blobs, sha256 for cache entries)
         """
         self.seen.remove(blob_id)
         async with self.engine.connect() as conn:
@@ -129,11 +134,21 @@ class SqlBlobStorage(IBlobStorage):
             await conn.commit()
 
     @override
+    def forget(self, blob_ids: Iterable[str]) -> None:
+        """Drop the `seen` entries for blobs deleted without going through `delete`.
+
+        Both `put()` and `exists()` answer from `seen`, so both are wrong about a swept blob until
+        this is called.
+        """
+        for blob_id in blob_ids:
+            self.seen.remove(blob_id)
+
+    @override
     async def exists(self, blob_id: str) -> bool:
         """
         Check if a blob exists in the database.
 
-        :param blob_id: sha1 hash of the blob
+        :param blob_id: content hash identifying the blob (sha1 for message blobs, sha256 for cache entries)
         :return: True if the blob exists, False otherwise
         """
         if self.seen.exists(blob_id):

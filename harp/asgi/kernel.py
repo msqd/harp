@@ -30,7 +30,18 @@ logger = get_logger(__name__)
 @lru_cache(maxsize=1024)
 def _cached_signature(subject):
     """Memoize signature introspection: controllers are long-lived, so their prototype never
-    changes, and this runs on every request."""
+    changes, and this runs on every request.
+
+    Two constraints come from caching on the subject itself, which a plain ``signature()`` call did
+    not impose. Both are satisfied by today's controllers, which are long-lived and hashed by
+    identity, so this is a note for whoever writes the next one:
+
+    - The controller must be **hashable**. An unhashable one raises ``TypeError`` here rather than
+      resolving, because it cannot be used as a cache key.
+    - The cache holds a **strong reference** to every controller it has seen. Controllers created
+      per request or per connection would therefore be pinned, up to ``maxsize``, and would never
+      hit the cache anyway.
+    """
     return signature(subject)
 
 

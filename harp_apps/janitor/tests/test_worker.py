@@ -63,6 +63,33 @@ class TestJanitorWorker(StorageTestFixtureMixin):
             assert metrics["storage.blobs"] == 2
             assert metrics["storage.blobs.orphans"] == 0
 
+    async def test_a_swept_blob_can_be_written_again(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        """A sweep must leave the blob storage able to store the same content again.
+
+        The janitor deletes rows with its own SQL, so nothing tells `SqlBlobStorage` that they are
+        gone. Its `seen` set is a claim that a row exists, and both `put()` and `exists()` trust it,
+        so after a sweep every producer of content the janitor has already collected silently writes
+        nothing at all, and the storage keeps reporting the blob as present.
+
+        The pre-existing sweep test stops at the deletion. This one carries on to the write, which
+        is where a cache, or anything else that stores blobs, meets the consequence.
+        """
+        if blob_storage.type == "redis":
+            return pytest.skip("Redis implementation does not support cleaning up orphan blobs yet.")
+
+        worker = JanitorWorker(sql_storage, blob_storage)
+
+        blob = await self.create_blob(blob_storage, "swept")
+        assert await blob_storage.get(blob.id) is not None
+        assert await blob_storage.exists(blob.id) is True
+
+        await worker.delete_orphan_blobs()
+        assert await blob_storage.get(blob.id) is None, "the sweep should have removed it"
+        assert await blob_storage.exists(blob.id) is False, "and it must not still be reported as present"
+
+        await self.create_blob(blob_storage, "swept")
+        assert await blob_storage.get(blob.id) is not None, "storing it again must actually store it"
+
     async def test_delete_old_transactions_but_keep_flagged_ones(
         self, sql_storage: SqlStorage, blob_storage: IBlobStorage
     ):

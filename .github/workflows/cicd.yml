@@ -25,9 +25,29 @@ env:
   DOCKER_IMAGE_DEV: ghcr.io/${{ github.repository }}
 
 jobs:
+  # Runs before every job that calls `uv sync`, because `uv sync` reconciles a stale uv.lock in
+  # place and says nothing: without this gate, CI is green on a lockfile that disagrees with
+  # pyproject.toml, and everyone who syncs gets a dirty working tree they did not create.
+  # See https://github.com/msqd/harp/issues/935.
+  check-lockfile:
+    name: Check Lockfile
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: uv.lock is up to date with pyproject.toml (if this fails, run `uv lock` and commit)
+        run: uv lock --check
+
   test-backend-core:
     name: Test Backend Core (Py${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    needs: check-lockfile
     strategy:
       fail-fast: false
       matrix:
@@ -62,6 +82,7 @@ jobs:
   test-backend-apps:
     name: Test Backend Apps (Py${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    needs: check-lockfile
     strategy:
       fail-fast: false
       matrix:
@@ -96,6 +117,7 @@ jobs:
   test-backend-e2e:
     name: Test Backend E2E (Py${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    needs: check-lockfile
     strategy:
       fail-fast: false
       matrix:
@@ -157,6 +179,7 @@ jobs:
   build-documentation:
     name: Build Documentation
     runs-on: ubuntu-latest
+    needs: check-lockfile
     continue-on-error: true
     permissions:
       contents: read
