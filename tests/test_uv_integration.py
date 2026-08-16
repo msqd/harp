@@ -12,10 +12,10 @@ def strip_ansi(text):
     """
     Remove ANSI style sequences from captured output.
 
-    HARP builds its consoles with ``force_terminal=True`` (``harp/utils/console.py``), so styling is
-    emitted even when stdout is a pipe. These tests are about the commands running, not about how
-    they are styled, so they assert against the plain text. See #876 for the forced-terminal
-    behaviour itself.
+    A contributor whose environment sets ``FORCE_COLOR`` gets styled output even though these
+    subprocesses write to a pipe, because rich honours that variable regardless of the stream. These
+    tests are about the commands running, not about how they are styled, so they assert against the
+    plain text and stay independent of the environment they run in. See #876.
     """
     return ANSI_ESCAPE.sub("", text)
 
