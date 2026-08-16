@@ -797,7 +797,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.12,<2.13" },
     { name = "pyheck", specifier = ">=0.1,<0.2" },
     { name = "pyyaml", specifier = ">=6.0,<6.1" },
-    { name = "redis", specifier = ">=5.2,<6.5" },
+    { name = "redis", specifier = ">=5.2,<8.1" },
     { name = "rich", specifier = ">=14.0,<15" },
     { name = "rich-click", specifier = ">=1.9,<1.10" },
     { name = "rodi", specifier = ">=2.0,<2.1" },
