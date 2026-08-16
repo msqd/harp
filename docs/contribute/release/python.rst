@@ -29,6 +29,29 @@ The automated release workflow handles:
 4. **Publishing** - Publishes to TestPyPI, then production PyPI
 5. **GitHub Release** - Creates release with changelog and wheel artifacts
 
+Who does what, and when
+-----------------------
+
+.. important::
+
+    **The version number and the release date are set by the release engineer, at cut time, and by
+    nobody else.**
+
+    Steps 1 to 4 below (the changelog date, the ``pyproject.toml`` version and the ``uv.lock``
+    refresh) belong to the person cutting the release, at the moment they cut it. They are not
+    preparatory work, and they do not belong in a feature branch or in a pull request that is
+    waiting to merge.
+
+    The reason is that both values are claims about when the release happened. A version bumped
+    before the last pull request lands, or a date stamped a week before the tag, is wrong by the
+    time anyone reads it, and the version validation step of the automated workflow will reject a
+    ``pyproject.toml`` that has drifted from the tag.
+
+    While a release is being prepared, the version stays at its pre-release value
+    (``X.Y.Z-alphaN``, ``X.Y.Z-rcN``) and the changelog header stays ``Version X.Y.Z
+    (unreleased)``. Contributors preparing changes for the release add changelog *entries*, never
+    the version or the date.
+
 Step-by-Step Release Process
 -----------------------------
 

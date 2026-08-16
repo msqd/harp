@@ -92,6 +92,12 @@ Run the tests, luke
 Eventually commit the updated dependencies
 ::::::::::::::::::::::::::::::::::::::::::
 
+.. note::
+
+    These chores touch ``pyproject.toml``, but **not its version field**. The version number and the
+    changelog release date are set by the release engineer at cut time, and are the only two things
+    in this file that are. See :doc:`python` for why.
+
 .. code-block:: shell
 
     git add -p pyproject.toml uv.lock harp_apps/dashboard/frontend/package.json harp_apps/dashboard/frontend/pnpm-lock.yaml
