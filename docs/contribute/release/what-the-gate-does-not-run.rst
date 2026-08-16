@@ -97,6 +97,26 @@ the freezegun case. It was not enough here, because the harness was the shell. W
 change machines, at least change the environment: ``env -i``, an unset of the variables you did not
 choose, a different user.
 
+The same rule has a second form. Asked what the `#929 <https://github.com/msqd/harp/pull/929>`_
+migration's ``downgrade()`` destroys, two people read the source carefully and both concluded the
+wrong thing, in the same direction. One query against a real 0.9.1 database settled it:
+
+.. code-block:: text
+
+     len |   content_type   | count
+      40 | application/json |    11
+      40 | http/headers     |     9
+      32 | cache/meta       |     4
+
+**Two of us reasoned from the source and got the direction wrong; one distribution from a real
+database settled it in a line.**
+
+Reading the code tells you what it does. Only the data tells you what is there. And **two careful
+readers agreeing is not evidence when both are reading the same source**: that is the same failure as
+a second reproduction in the same shell, and as three measurement setups that were all pointed away
+from the production path. Agreement between observers only counts when something differs between
+them.
+
 
 The evidence
 ::::::::::::
