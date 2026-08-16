@@ -242,6 +242,35 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
                         hint="Use --strict to enforce this as an error",
                     )
 
+    #: Settings that moved between applications, as {(application, key): (new location, why)}. Left
+    #: in place, these reach the target application's constructor as an unexpected argument and fail
+    #: with a message naming neither the setting nor where it went.
+    RELOCATED_SETTINGS = {
+        ("http_client", "cache"): (
+            "http_cache",
+            "HTTP caching moved to the http_cache application in 0.10",
+        ),
+    }
+
+    def _validate_relocated_settings(self, settings: dict):
+        """
+        Reject settings that moved to another application, naming where they went.
+
+        This is always an error, never a warning: dropping the key instead would silently change
+        behaviour for anyone who had used it to turn a feature off.
+
+        Raises:
+            ValueError: If a relocated setting is present.
+        """
+        for (app_name, key), (new_location, reason) in self.RELOCATED_SETTINGS.items():
+            app_settings = settings.get(app_name)
+            if isinstance(app_settings, dict) and key in app_settings:
+                raise ValueError(
+                    f"Configuration found for '{app_name}.{key}', which moved to '{new_location}'. "
+                    f"{reason}. Move it, and see the 0.10 changelog for the settings that changed "
+                    f"names or no longer exist."
+                )
+
     def build(self, strict: bool = None) -> GlobalSettings:
         """
         Constructs the final, aggregated configuration settings as a GlobalSettings instance.
@@ -271,6 +300,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
             self.applications.remove(app_name)
 
         # Validate unknown applications (skip disabled apps)
+        self._validate_relocated_settings(first_pass_settings)
         self._validate_unknown_applications(first_pass_settings, strict, disabled_apps=apps_to_remove)
 
         # Second pass - build final configuration with normalized settings
