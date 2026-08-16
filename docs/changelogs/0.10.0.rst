@@ -230,10 +230,11 @@ Security
   ``http://upstream/api/v1/`` reached ``http://upstream/admin``. The origin was already checked and
   stayed correct, which is why nothing else in the chain noticed. Such a request is now refused with
   ``400 Bad Request``.
-- **proxy**: HARP forwarded a malformed request that a proxy must not forward. A client sending both
-  ``Content-Length`` and ``Transfer-Encoding`` had both passed on to the upstream, and behind a
-  non-conformant upstream this could have desynchronised a pooled connection. HARP now states the
-  framing of the body it actually sends.
+- **proxy**: HARP forwarded a malformed request that a proxy must not forward. When a client sent
+  both ``Content-Length`` and ``Transfer-Encoding``, HARP passed the client's ``Content-Length`` to
+  the upstream while sending a body of a different length, so the upstream was told to read bytes
+  that were never sent and a pooled connection could desynchronise. HARP now states the framing of
+  the body it actually sends.
 - **proxy**: connection-specific headers (``Connection`` and the fields it names, ``Keep-Alive``,
   ``TE``, ``Trailer``, ``Upgrade``, ``Proxy-Authenticate``, ``Proxy-Authorization``) were forwarded
   to the upstream instead of being dropped at the hop, as RFC 9110 §7.6.1 requires of an
