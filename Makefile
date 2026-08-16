@@ -141,7 +141,7 @@ build-frontend: install-frontend  ## Builds the harp dashboard frontend (compile
 .PHONY: lint-frontend coverage cloc
 
 preqa: types format reference  ## Runs pre-qa checks (types generation, formatting, api reference).
-	$(call execute,-$(UV_RUN) pre-commit)
+	$(call execute,$(UV_RUN) pre-commit)
 
 qa: preqa test  ## Runs all QA checks, with most common databases.
 
