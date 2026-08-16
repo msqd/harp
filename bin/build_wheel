@@ -32,9 +32,15 @@ fi
 # Copy to the original dist directory
 cp dist/* "$PWD_ORIG/dist/"
 
-# Verify frontend assets are included in the wheel
+# Verify frontend assets are included in the wheel.
+#
+# Counted with python's zipfile rather than `unzip`, which is not installed
+# everywhere. When the tool is missing the count comes back 0 and the check
+# reports missing assets, which is a plausible and completely wrong diagnosis
+# arriving at the exact moment someone is cutting a release. python is already
+# a hard requirement here, since it just built the wheel.
 WHEEL_FILE=$(ls dist/*.whl)
-WEB_ASSET_COUNT=$(unzip -l "$WHEEL_FILE" 2>/dev/null | grep -c "harp_apps/dashboard/web/")
+WEB_ASSET_COUNT=$(python -c 'import sys, zipfile; print(sum(1 for n in zipfile.ZipFile(sys.argv[1]).namelist() if n.startswith("harp_apps/dashboard/web/")))' "$WHEEL_FILE")
 printf "\n📊 Wheel contains %d files in harp_apps/dashboard/web/\n\n" "$WEB_ASSET_COUNT" >&2
 if [ "$WEB_ASSET_COUNT" -lt 10 ]; then
     printf "❌ ERROR: Expected at least 10 web assets, but found only %d\n" "$WEB_ASSET_COUNT" >&2
