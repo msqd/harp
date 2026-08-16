@@ -69,6 +69,9 @@ Run the tests, luke
 
     uv run make qa
 
+Before you read the result, read :doc:`what-the-gate-does-not-run`. It lists everything this command
+does not execute, and why a green run is a weaker statement than it looks.
+
 .. important::
 
     **Expect failures in** ``tests/test_cookiecutter_integration.py`` **before the version is
