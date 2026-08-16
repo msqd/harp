@@ -128,11 +128,11 @@ class TestPrivatePublic:
         > intended for a single user and MUST NOT be stored by a shared
         > cache.
 
-        Note: Our cache is configured as shared (shared=True in policy),
-        so private responses should not be cached.
+        Our cache is configured as shared (shared=True in the policy), so a private response
+        must not be retained: the second request has to reach the origin.
         """
         # Arrange: Response with private directive
-        respx.get("http://example.com/resource").mock(
+        route = respx.get("http://example.com/resource").mock(
             return_value=make_cacheable_response(
                 content=b"user-specific data",
                 max_age=3600,
@@ -142,12 +142,15 @@ class TestPrivatePublic:
 
         # Act: Make two requests
         response1 = await cached_client.get("http://example.com/resource")
-        await cached_client.get("http://example.com/resource")
+        response2 = await cached_client.get("http://example.com/resource")
 
-        # Assert: Shared cache should not store private responses
-        # Behavior depends on cache implementation (may or may not cache)
+        # Assert: Both callers get their own answer from the origin
         assert response1.status_code == 200
-        assert "private" in response1.headers.get("cache-control", "")
+        assert response2.status_code == 200
+
+        # Assert: nothing was retained, so the origin was asked twice
+        assert route.call_count == 2
+        assert_not_cached(mock_storage)
 
     @respx.mock
     async def test_public_allows_shared_caching_rfc9111_5_2_2_6(self, cached_client, mock_storage):
