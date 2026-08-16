@@ -141,7 +141,7 @@ build-frontend: install-frontend  ## Builds the harp dashboard frontend (compile
 .PHONY: lint-frontend coverage cloc
 
 preqa: types format reference  ## Runs pre-qa checks (types generation, formatting, api reference).
-	$(call execute,-$(UV_RUN) pre-commit)
+	$(call execute,$(UV_RUN) pre-commit)
 
 qa: preqa test  ## Runs all QA checks, with most common databases.
 
@@ -171,8 +171,21 @@ optimize-images:  ## Optimizes PNG images in documentation.
 	find docs -name \*.png | xargs optimizt
 
 test:  ## Runs all tests.
-	$(call execute,$(MAKE) test-backend)
-	$(call execute,test -z "$(TEST_SKIP_FRONT)" && $(MAKE) test-frontend || echo "Skipped.")
+	@# Both suites run even if the first one fails, and the target's exit status reflects what
+	@# actually happened. A suite skipped on request is not a suite that failed, so the two are
+	@# reported differently and only the second one is an error.
+	@echo "⚙️ \033[36m$@\033[0m: \033[2m$(MAKE) test-backend, then test-frontend unless TEST_SKIP_FRONT\033[0m"
+	@rc=0; \
+	$(MAKE) test-backend || rc=1; \
+	if [ -z "$(TEST_SKIP_FRONT)" ]; then \
+		$(MAKE) test-frontend || rc=1; \
+	else \
+		echo "⚙️ \033[36m$@\033[0m: \033[2mfrontend tests skipped on request (TEST_SKIP_FRONT is set).\033[0m"; \
+	fi; \
+	if [ $$rc -ne 0 ]; then \
+		echo "❌ \033[31m$@\033[0m: \033[2mat least one suite failed, see above.\033[0m"; \
+	fi; \
+	exit $$rc
 
 test-backend: install-backend-dev  ## Runs backend tests.
 	$(call execute,$(PYTEST) $(PYTEST_TARGETS) $(PYTEST_COMMON_OPTIONS) $(PYTEST_OPTIONS))
