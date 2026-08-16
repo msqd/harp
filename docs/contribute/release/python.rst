@@ -29,27 +29,64 @@ The automated release workflow handles:
 4. **Publishing** - Publishes to TestPyPI, then production PyPI
 5. **GitHub Release** - Creates release with changelog and wheel artifacts
 
+Who does what, and when
+-----------------------
+
+.. important::
+
+    **The version number and the release date are set by the release engineer, at cut time, and by
+    nobody else.**
+
+    Steps 1 to 4 below (the changelog date, the ``pyproject.toml`` version and the ``uv.lock``
+    refresh) belong to the person cutting the release, at the moment they cut it. They are not
+    preparatory work, and they do not belong in a feature branch or in a pull request that is
+    waiting to merge.
+
+    The reason is that both values are claims about when the release happened. A version bumped
+    before the last pull request lands, or a date stamped a week before the tag, is wrong by the
+    time anyone reads it, and the version validation step of the automated workflow will reject a
+    ``pyproject.toml`` that has drifted from the tag.
+
+    While a release is being prepared, the version stays at its pre-release value
+    (``X.Y.Z-alphaN``, ``X.Y.Z-rcN``) and the changelog header stays ``Version X.Y.Z
+    (unreleased)``. Contributors preparing changes for the release add changelog *entries*, never
+    the version or the date.
+
 Step-by-Step Release Process
 -----------------------------
+
+Steps 1 to 4 are the release engineer's, performed at cut time and in one sitting. If you are not
+cutting the release right now, stop here: see `Who does what, and when`_ above.
 
 1. Prepare the Changelog
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Move unreleased changes to a version-specific changelog file:
+The version's changelog file usually exists already, carrying an ``(unreleased)`` header, because
+contributors have been adding entries to it while the release was prepared. In that case do not
+move anything: edit the header in place and replace ``(unreleased)`` with today's date.
+
+.. code-block:: rst
+
+    Version 0.9.0 (2025-01-15)
+    ==========================
+
+The ``Version `` prefix is part of the convention, and the ``=`` underline must be at least as long
+as the title. Match the two exactly, as the existing changelogs do.
+
+.. warning::
+
+    Nothing in the build will tell you if you get this wrong. A malformed title or a short underline
+    is not reported by ``make docs``, so check the rendered page yourself.
+
+If the version has no changelog file yet, create one by moving the accumulated entries into it, then
+add the header above:
 
 .. code-block:: bash
 
     # For version 0.9.0
     mv docs/changelogs/unreleased.rst docs/changelogs/0.9.0.rst
 
-Edit the file to add version header and release date:
-
-.. code-block:: rst
-
-    0.9.0 (2025-01-15)
-    ==================
-
-Create a new empty ``unreleased.rst`` file for future changes.
+Either way, make sure an empty ``unreleased.rst`` is left in place for the next cycle.
 
 See :doc:`changelog` for complete changelog management workflow.
 
