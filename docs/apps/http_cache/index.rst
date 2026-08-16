@@ -103,6 +103,27 @@ represent the same logical endpoint share the same cache key. The endpoint name 
 request extensions set by the proxy application.
 
 
+Cache debugging headers
+-----------------------
+
+When the cache application is loaded, the proxy annotates every response it forwards:
+
+- ``X-Cache: HIT`` when the response was served from HARP's cache, ``X-Cache: MISS`` otherwise.
+- ``Age``, the number of seconds since HARP stored the response, on cache hits.
+
+These headers are written for the benefit of whoever is looking at the response. They are not how
+HARP knows a response came from its own cache: that comes from the cache itself, so an upstream
+cannot influence what the dashboard reports.
+
+.. note::
+
+    If the upstream sets its own ``X-Cache`` or ``Age`` header, which is common when the origin sits
+    behind a CDN, HARP replaces it with its own value. The header then describes HARP's cache, not
+    the upstream's, and the upstream's own value does not reach the client. With the cache
+    application disabled, HARP writes neither header and the upstream's values pass through
+    untouched.
+
+
 RFC 9111 Compliance
 :::::::::::::::::::
 

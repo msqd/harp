@@ -152,6 +152,13 @@ Fixed
   changed is that the requirement is now declared rather than inherited. Packagers and offline
   mirrors resolving from metadata should note the added entry. (This is a metadata correction, not a
   dependency bump, which is why it is recorded here.)
+- **proxy**: a cache hit recorded against a transaction now comes from the cache itself rather than
+  from the response's ``X-Cache`` header. The header is a public one that upstreams set for their own
+  caches, so an origin behind a CDN (CloudFront, Fastly and Varnish all emit ``X-Cache``) was
+  recorded as a HARP cache hit whenever the ``http_cache`` application was not loaded, and the
+  dashboard reported hits for a cache that was not running. ``Age`` is likewise measured by HARP's
+  own clock instead of being read back from the response. The ``X-Cache`` and ``Age`` response
+  headers themselves are unchanged.
 - Empty or comments-only configuration files no longer crash configuration loading; they now load as
   an empty configuration.
 - Applications configured with ``enabled: false`` are now filtered out when the configuration is
