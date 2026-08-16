@@ -258,6 +258,11 @@ Security
   upstream that authenticates callers by anything other than the ``Authorization`` header could have
   responses reused across them. It is off again by default, and opt-in via
   ``http_cache.storage.arguments.allow_heuristics``.
+- **http_cache**: a shared cache no longer retains responses it must not share. Up to 0.9.1 a
+  response marked ``private`` was stored in the shared cache, and a response to a request carrying
+  ``Authorization`` was served to the next caller regardless of their credentials. Measured against
+  0.9.1, one caller's authenticated response body was returned verbatim to a second caller
+  presenting a different token. Both are now declined, and the behaviour is covered by tests.
 - **config**: credential masking did not work in the mode most callers use. ``asdict(secure=True)``
   recognised a password by the type of the value holding it, and pydantic renders a URL to a plain
   string before that check is reached, so the masking silently did nothing. Passwords are now masked
