@@ -81,13 +81,16 @@ Changed
   - **Configuration**: cache configuration moved from ``http_client.cache.*`` to ``http_cache.*``.
   - Cache policy now uses ``hishel.SpecificationPolicy`` with ``CacheOptions`` instead of
     ``hishel.Controller``, and the documentation examples use ``policy`` instead of ``controller``.
-  - The following cache configuration parameters are no longer available:
+  - The following cache configuration parameters are no longer available, and **this release
+    provides no way to set them from configuration**:
 
-    - ``cacheable_status_codes``, determined by RFC 9111 compliance
-    - ``cacheable_methods``, replaced by an ``http_cache.policy`` service override with a custom
-      ``CacheOptions.supported_methods``
-    - ``allow_stale``, replaced by an ``http_cache.policy`` service override with a custom
-      ``CacheOptions.allow_stale``
+    - ``cacheable_status_codes``, now determined by RFC 9111 compliance
+    - ``cacheable_methods``, whose behaviour is now ``CacheOptions.supported_methods``
+    - ``allow_stale``, whose behaviour is now ``CacheOptions.allow_stale``
+
+    The ``CacheOptions`` instance is built by an internal service that no setting points at, so
+    there is no supported replacement for these three in 0.10. If you relied on any of them, see
+    `#933 <https://github.com/msqd/harp/issues/933>`_, which tracks making them configurable again.
 
   - ``allow_heuristics`` moved from the cache policy to the cache storage, since hishel 1.x has no
     equivalent option on the policy. Set ``http_cache.storage.arguments.allow_heuristics``. It stays
@@ -95,7 +98,10 @@ Changed
   - A response whose only freshness information is a validator (``ETag``, ``Last-Modified``) is no
     longer kept for conditional revalidation, so it is refetched in full rather than revalidated
     with a ``304``.
-  - Cached data written by hishel 0.1.x remains fully compatible and readable.
+  - Cache entries written by hishel 0.1.x are not reused. hishel 1.x derives a different cache key,
+    so existing entries are never matched and the first request for each resource after the upgrade
+    goes to the origin. Old rows are left in place and are not served; nothing is lost beyond a cold
+    cache.
   - If you use a custom cache configuration, update it:
 
     **Old (hishel 0.1.x, under http_client.cache)**::
@@ -115,8 +121,10 @@ Changed
         enabled: true
         policy:
           type: hishel.SpecificationPolicy
-          # Default CacheOptions are provided by services.yml
-          # To customize, override the entire policy service
+
+    The policy's ``CacheOptions`` are fixed in this release: shared cache, ``GET`` and ``HEAD``,
+    and ``allow_stale: false``. Any of the three removed options you were setting has no
+    equivalent here, see `#933 <https://github.com/msqd/harp/issues/933>`_.
 
   - **Note**: ``http_cache`` uses a temporary workaround in its ``on_bind`` event to configure
     ``http_client``'s transport. This will be replaced with proper cross-app service overrides once
