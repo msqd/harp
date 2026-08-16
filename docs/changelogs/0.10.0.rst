@@ -245,8 +245,12 @@ Security
   the body it actually sends.
 - **proxy**: connection-specific headers (``Connection`` and the fields it names, ``Keep-Alive``,
   ``TE``, ``Trailer``, ``Upgrade``, ``Proxy-Authenticate``, ``Proxy-Authorization``) were forwarded
-  to the upstream instead of being dropped at the hop, as RFC 9110 §7.6.1 requires of an
-  intermediary.
+  instead of being dropped at the hop, as RFC 9110 §7.6.1 requires of an intermediary. This applies
+  in both directions: to the request sent upstream, and to the response returned to the client,
+  including a response replayed from the cache. On the response side the fields named by
+  ``Connection`` are dropped by ``http_cache`` at the point the upstream answer arrives, which is
+  the last moment ``Connection`` is still readable, so they are never stored either
+  (RFC 9111 §3.1).
 - **http_cache**: a shared cache could serve one caller's response to another. Heuristic freshness,
   which lets a cache invent an expiry from ``Last-Modified`` for a response the origin never declared
   cacheable, was disabled in HARP up to 0.9.1 and became active when the HTTP client migrated to

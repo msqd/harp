@@ -10,7 +10,7 @@ from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
-from harp.http.utils import parse_cache_control
+from harp.http.utils import hop_by_hop_names, parse_cache_control
 from harp.models import Transaction
 from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
@@ -238,12 +238,12 @@ class HttpProxyController(AbstractHttpProxyController):
             transaction=transaction,
         )
 
-        # Filter out certain headers from the response
-        headers = {
-            k: v
-            for k, v in response.headers.multi_items()
-            if k.lower() not in ("server", "date", "content-encoding", "content-length")
-        }
+        # Filter out certain headers from the response. RFC 9110 §7.6.1 binds an intermediary in
+        # both directions, so the upstream's connection-specific fields stop here just as the
+        # client's do on the way out. `content-encoding` and the identifying `server`/`date` are
+        # dropped for their own reasons, unrelated to the hop.
+        dropped = hop_by_hop_names(response.headers) | {"server", "date", "content-encoding"}
+        headers = {k: v for k, v in response.headers.multi_items() if k.lower() not in dropped}
 
         # Store the status class in the transaction extras for later use
         transaction.extras["status_class"] = f"{response.status_code // 100}xx"
