@@ -1,5 +1,6 @@
 Version 0.10.0 (unreleased)
-====================
+===========================
+
 Important Changes
 :::::::::::::::::
 
@@ -151,6 +152,13 @@ Fixed
   changed is that the requirement is now declared rather than inherited. Packagers and offline
   mirrors resolving from metadata should note the added entry. (This is a metadata correction, not a
   dependency bump, which is why it is recorded here.)
+- **proxy**: a cache hit recorded against a transaction now comes from the cache itself rather than
+  from the response's ``X-Cache`` header. The header is a public one that upstreams set for their own
+  caches, so an origin behind a CDN (CloudFront, Fastly and Varnish all emit ``X-Cache``) was
+  recorded as a HARP cache hit whenever the ``http_cache`` application was not loaded, and the
+  dashboard reported hits for a cache that was not running. ``Age`` is likewise measured by HARP's
+  own clock instead of being read back from the response. The ``X-Cache`` and ``Age`` response
+  headers themselves are unchanged.
 - Empty or comments-only configuration files no longer crash configuration loading; they now load as
   an empty configuration.
 - Applications configured with ``enabled: false`` are now filtered out when the configuration is
@@ -194,10 +202,23 @@ Fixed
 Security
 ::::::::
 
-- The upstream URL is now built from the path component of the incoming request only, and the request
-  is refused with ``400 Bad Request`` if it would resolve to another origin. A request path carrying
-  a scheme (``GET /http://example.org/``) could previously make the proxy forward to an arbitrary
-  host (CWE-918, server-side request forgery / open proxy).
+- **proxy**: the upstream URL is now built from the path component of the incoming request only, and
+  the request is refused with ``400 Bad Request`` if it would resolve to another origin. A request
+  path carrying a scheme (``GET /http://example.org/``) could previously make the proxy forward to an
+  arbitrary host (CWE-918, server-side request forgery / open proxy).
+- **proxy**: an endpoint whose url carries a path exposes one subtree of an upstream. Dot segments in
+  the request path could walk above that subtree, so ``GET /../../admin`` against an endpoint on
+  ``http://upstream/api/v1/`` reached ``http://upstream/admin``. The origin was already checked and
+  stayed correct, which is why nothing else in the chain noticed. Such a request is now refused with
+  ``400 Bad Request``.
+- **proxy**: HARP forwarded a malformed request that a proxy must not forward. A client sending both
+  ``Content-Length`` and ``Transfer-Encoding`` had both passed on to the upstream, and behind a
+  non-conformant upstream this could have desynchronised a pooled connection. HARP now states the
+  framing of the body it actually sends.
+- **proxy**: connection-specific headers (``Connection`` and the fields it names, ``Keep-Alive``,
+  ``TE``, ``Trailer``, ``Upgrade``, ``Proxy-Authenticate``, ``Proxy-Authorization``) were forwarded
+  to the upstream instead of being dropped at the hop, as RFC 9110 §7.6.1 requires of an
+  intermediary.
 - **http_cache**: a shared cache could serve one caller's response to another. Heuristic freshness,
   which lets a cache invent an expiry from ``Last-Modified`` for a response the origin never declared
   cacheable, was disabled in HARP up to 0.9.1 and became active when the HTTP client migrated to
@@ -210,11 +231,6 @@ Security
   ``Authorization`` was served to the next caller regardless of their credentials. Measured against
   0.9.1, one caller's authenticated response body was returned verbatim to a second caller
   presenting a different token. Both are now declined, and the behaviour is covered by tests.
-- **proxy**: an endpoint whose url carries a path exposes one subtree of an upstream. Dot segments in
-  the request path could walk above that subtree, so ``GET /../../admin`` against an endpoint on
-  ``http://upstream/api/v1/`` reached ``http://upstream/admin``. The origin was already checked and
-  stayed correct, which is why nothing else in the chain noticed. Such a request is now refused with
-  ``400 Bad Request``.
 - **config**: credential masking did not work in the mode most callers use. ``asdict(secure=True)``
   recognised a password by the type of the value holding it, and pydantic renders a URL to a plain
   string before that check is reached, so the masking silently did nothing. Passwords are now masked
@@ -223,16 +239,8 @@ Security
   ``--raw`` and ``--json``, and never masked anything without a flag; and the dashboard's
   ``GET /api/system/proxy``, which exposed credentials embedded in an upstream endpoint url on an
   API that is unauthenticated unless ``dashboard.auth`` is configured.
-- **proxy**: HARP forwarded a malformed request that a proxy must not forward. A client sending both
-  ``Content-Length`` and ``Transfer-Encoding`` had both passed on to the upstream, and behind a
-  non-conformant upstream this could have desynchronised a pooled connection. HARP now states the
-  framing of the body it actually sends.
-- **proxy**: connection-specific headers (``Connection`` and the fields it names, ``Keep-Alive``,
-  ``TE``, ``Trailer``, ``Upgrade``, ``Proxy-Authenticate``, ``Proxy-Authorization``) were forwarded
-  to the upstream instead of being dropped at the hop, as RFC 9110 §7.6.1 requires of an
-  intermediary.
-- ``!cfg`` comparison operands are parsed as Python literals instead of being evaluated as code.
-  Configuration is author-time and trusted, so this is defense in depth.
+- **config**: ``!cfg`` comparison operands are parsed as Python literals instead of being evaluated
+  as code. Configuration is author-time and trusted, so this is defense in depth.
 
 Removed
 :::::::

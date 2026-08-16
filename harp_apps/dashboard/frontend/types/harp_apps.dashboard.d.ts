@@ -6,15 +6,11 @@
  */
 
 declare namespace Apps.Dashboard {
-  export interface DevserverSettings {
-    /**
-     * Enable or disable the development server.
-     */
-    enabled?: boolean;
-    /**
-     * Port on which the development server will be served (internal). The proxy will forward dashboard requests to this port, if enabled.
-     */
-    port?: number | null;
+  export interface SystemPutProxyInput {
+    endpoint: string;
+    action: "up" | "down" | "checking";
+    url: string;
+    [k: string]: unknown;
   }
   export interface BasicAuthSettings {
     /**
@@ -82,6 +78,16 @@ declare namespace Apps.Dashboard {
   export interface User {
     password: string;
   }
+  export interface DevserverSettings {
+    /**
+     * Enable or disable the development server.
+     */
+    enabled?: boolean;
+    /**
+     * Port on which the development server will be served (internal). The proxy will forward dashboard requests to this port, if enabled.
+     */
+    port?: number | null;
+  }
   /**
    * Root settings for the dashboard application.
    */
@@ -106,11 +112,5 @@ declare namespace Apps.Dashboard {
      * Public URL of the dashboard application, used to generate absolute links, for example in notifications.
      */
     public_url?: string | null;
-  }
-  export interface SystemPutProxyInput {
-    endpoint: string;
-    action: "up" | "down" | "checking";
-    url: string;
-    [k: string]: unknown;
   }
 }

@@ -107,9 +107,9 @@
   },
   "title": "__ROOT__",
   "anyOf": [
-    { "$ref": "#/$defs/DatabaseSettings" },
-    { "$ref": "#/$defs/StorageSettings" },
+    { "$ref": "#/$defs/BlobStorageSettings" },
     { "$ref": "#/$defs/RedisSettings" },
-    { "$ref": "#/$defs/BlobStorageSettings" }
+    { "$ref": "#/$defs/StorageSettings" },
+    { "$ref": "#/$defs/DatabaseSettings" }
   ]
 }
