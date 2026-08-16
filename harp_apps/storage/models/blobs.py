@@ -10,7 +10,11 @@ from .messages import Message
 class Blob(Base):
     __tablename__ = "blobs"
 
-    id = mapped_column(String(40), primary_key=True, unique=True)
+    # Wide enough for every identifier this table holds, which is not one scheme: message blobs are
+    # keyed by a sha1 hexdigest (40 characters) and HTTP cache entries by hishel, which uses sha256
+    # (64). PostgreSQL and MySQL enforce the declared width, so sizing this to one of the two makes
+    # the other fail its insert.
+    id = mapped_column(String(64), primary_key=True, unique=True)
     data = mapped_column(LargeBinary())
     content_type = mapped_column(String(64))
     created_at = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
@@ -19,10 +23,11 @@ class Blob(Base):
 class BlobsRepository(Repository[Blob]):
     Type = Blob
 
-    def count_orphans(self):
+    def _orphans_subquery(self):
+        """Blobs paired with the number of messages referencing them, so zero means unreferenced."""
         MH = aliased(Message, name="mh")
         MB = aliased(Message, name="mb")
-        subquery = (
+        return (
             select(Blob.id, func.count(MH.id) + func.count(MB.id))
             .select_from(Blob)
             .outerjoin(MH, MH.headers == Blob.id)
@@ -30,22 +35,24 @@ class BlobsRepository(Repository[Blob]):
             .group_by(Blob.id)
             .subquery()
         )
-        query = select(func.count(subquery.c.id)).where(subquery.c[1] == 0)
-        return query
+
+    def count_orphans(self):
+        subquery = self._orphans_subquery()
+        return select(func.count(subquery.c.id)).where(subquery.c[1] == 0)
+
+    def select_orphans(self):
+        """The ids `delete_orphans` would remove.
+
+        Deleting blobs with a bulk statement leaves anything caching their existence, such as
+        `SqlBlobStorage.seen`, believing rows are there that are not. The caller needs to know
+        which ids went, so the count, the selection and the deletion all read from one definition
+        of "orphan" and cannot drift apart.
+        """
+        subquery = self._orphans_subquery()
+        return select(subquery.c.id).where(subquery.c[1] == 0)
 
     def delete_orphans(self):
-        MH = aliased(Message, name="mh")
-        MB = aliased(Message, name="mb")
-        subquery = (
-            select(Blob.id, func.count(MH.id) + func.count(MB.id))
-            .select_from(Blob)
-            .outerjoin(MH, MH.headers == Blob.id)
-            .outerjoin(MB, MB.body == Blob.id)
-            .group_by(Blob.id)
-            .subquery()
-        )
-        query = select(subquery.c.id).where(subquery.c[1] == 0)
-        return delete(Blob).where(Blob.id.in_(query))
+        return delete(Blob).where(Blob.id.in_(self.select_orphans()))
 
     @with_session
     async def create(self, values: dict | BlobModel, /, *, session):

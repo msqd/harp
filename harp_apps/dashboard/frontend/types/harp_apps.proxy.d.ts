@@ -6,26 +6,15 @@
  */
 
 declare namespace Apps.Proxy {
-  export interface BaseProxySettings {}
-  export interface Proxy {
-    settings: ProxySettings;
-    [k: string]: unknown;
+  export interface BaseEndpointSettings {
+    name: string;
+    port?: number | null;
+    description?: string | null;
   }
-  /**
-   * Configuration parser for ``proxy`` settings.
-   *
-   * .. code-block:: yaml
-   *
-   *     endpoints:
-   *       # see ProxyEndpoint
-   *       - ...
-   */
-  export interface ProxySettings {
-    /**
-     * Whether the application is enabled
-     */
-    enabled?: boolean;
-    endpoints?: EndpointSettings[];
+  export interface Endpoint {
+    settings: EndpointSettings;
+    remote?: Remote;
+    [k: string]: unknown;
   }
   /**
    * Configuration parser for ``proxy.endpoints[]`` settings.
@@ -168,16 +157,6 @@ declare namespace Apps.Proxy {
     } | null;
     [k: string]: unknown;
   }
-  export interface BaseEndpointSettings {
-    name: string;
-    port?: number | null;
-    description?: string | null;
-  }
-  export interface Endpoint {
-    settings: EndpointSettings;
-    remote?: Remote;
-    [k: string]: unknown;
-  }
   export interface Remote {
     settings: RemoteSettings;
     current_pool_name?: string;
@@ -202,38 +181,38 @@ declare namespace Apps.Proxy {
     failure_reasons?: unknown[] | null;
     [k: string]: unknown;
   }
-  export interface LeakyBucketLiveness {
-    settings: LeakyBucketLivenessSettings;
-    [k: string]: unknown;
-  }
-  export interface LeakyBucketLivenessSubjectState {
-    last_checked?: number | null;
-    current?: number;
-    [k: string]: unknown;
-  }
-  export interface NaiveLiveness {
-    settings: NaiveLivenessSettings;
+  export interface BaseProxySettings {}
+  export interface Proxy {
+    settings: ProxySettings;
     [k: string]: unknown;
   }
   /**
-   * Holds the internal state of the target subject. Will be attached as an attribute to the said subject, but only
-   * used by the liveness implementation.
+   * Configuration parser for ``proxy`` settings.
+   *
+   * .. code-block:: yaml
+   *
+   *     endpoints:
+   *       # see ProxyEndpoint
+   *       - ...
    */
-  export interface NaiveLivenessSubjectState {
-    failure_score?: number;
-    success_score?: number;
-    [k: string]: unknown;
+  export interface ProxySettings {
+    /**
+     * Whether the application is enabled
+     */
+    enabled?: boolean;
+    endpoints?: EndpointSettings[];
   }
-  export interface IgnoreLiveness {
-    settings: IgnoreLivenessSettings;
-    [k: string]: unknown;
+  export interface BaseRemoteSettings {
+    min_pool_size?: number;
+    break_on?: string[];
+    check_after?: number;
   }
-  /**
-   * This is a placeholder for inheriting liveness, the parent stateful object will replace it. We do not need to
-   * implement the BaseLiveness interface, as it won't exist anymore once everything is setup.
-   */
-  export interface InheritLiveness {
-    settings: InheritLivenessSettings;
+  export interface Remote1 {
+    settings: RemoteSettings;
+    current_pool_name?: string;
+    probe?: RemoteProbe | null;
+    current_pool: string[];
+    endpoints: RemoteEndpoint[];
     [k: string]: unknown;
   }
   export interface BaseLiveness {
@@ -263,17 +242,38 @@ declare namespace Apps.Proxy {
     settings: NaiveLivenessSettings;
     [k: string]: unknown;
   }
-  export interface BaseRemoteSettings {
-    min_pool_size?: number;
-    break_on?: string[];
-    check_after?: number;
+  /**
+   * This is a placeholder for inheriting liveness, the parent stateful object will replace it. We do not need to
+   * implement the BaseLiveness interface, as it won't exist anymore once everything is setup.
+   */
+  export interface InheritLiveness {
+    settings: InheritLivenessSettings;
+    [k: string]: unknown;
   }
-  export interface Remote1 {
-    settings: RemoteSettings;
-    current_pool_name?: string;
-    probe?: RemoteProbe | null;
-    current_pool: string[];
-    endpoints: RemoteEndpoint[];
+  export interface LeakyBucketLiveness {
+    settings: LeakyBucketLivenessSettings;
+    [k: string]: unknown;
+  }
+  export interface LeakyBucketLivenessSubjectState {
+    last_checked?: number | null;
+    current?: number;
+    [k: string]: unknown;
+  }
+  export interface IgnoreLiveness {
+    settings: IgnoreLivenessSettings;
+    [k: string]: unknown;
+  }
+  export interface NaiveLiveness {
+    settings: NaiveLivenessSettings;
+    [k: string]: unknown;
+  }
+  /**
+   * Holds the internal state of the target subject. Will be attached as an attribute to the said subject, but only
+   * used by the liveness implementation.
+   */
+  export interface NaiveLivenessSubjectState {
+    failure_score?: number;
+    success_score?: number;
     [k: string]: unknown;
   }
 }

@@ -6,27 +6,7 @@ from httpx import AsyncClient, Request, Response
 
 from harp import __parsed_version__
 from harp.http import HttpRequest
-
-#: Header fields that describe the connection a message arrived on rather than the message itself,
-#: and so must not be passed on to the next one (RFC 9110 §7.6.1). ``transfer-encoding`` and
-#: ``content-length`` are here for a second reason: they describe the framing of a body HARP has
-#: already read and is re-sending itself, so the client's claim about them is not ours to forward.
-#: Doing so lets a client hand the upstream a message carrying both, which RFC 9112 §6.1 forbids an
-#: intermediary from relaying because recipients disagree about which one wins.
-HOP_BY_HOP_HEADERS = frozenset(
-    {
-        "connection",
-        "content-length",
-        "keep-alive",
-        "proxy-authenticate",
-        "proxy-authorization",
-        "te",
-        "trailer",
-        "transfer-encoding",
-        "upgrade",
-    }
-)
-
+from harp.http.utils import hop_by_hop_names
 
 class HttpClientProxyAdapter:
     user_agent: Optional[str] = None
@@ -85,11 +65,7 @@ class HttpClientProxyAdapter:
         request.headers["host"] = parsed_url.netloc
         if self.user_agent:
             request.headers["user-agent"] = self.user_agent
-        # `Connection` names further fields that are also specific to the incoming connection.
-        named_by_connection = {
-            name.strip().lower() for name in request.headers.get("connection", "").split(",") if name.strip()
-        }
-        dropped = HOP_BY_HOP_HEADERS | named_by_connection
+        dropped = hop_by_hop_names(request.headers)
         return [(name, value) for name, value in request.headers.items() if name.lower() not in dropped]
 
     def _build_request(self, request: HttpRequest, url: str) -> Request:

@@ -69,6 +69,9 @@ Run the tests, luke
 
     uv run make qa
 
+Before you read the result, read :doc:`what-the-gate-does-not-run`. It lists everything this command
+does not execute, and why a green run is a weaker statement than it looks.
+
 .. important::
 
     **Expect failures in** ``tests/test_cookiecutter_integration.py`` **before the version is
@@ -91,6 +94,12 @@ Run the tests, luke
 
 Eventually commit the updated dependencies
 ::::::::::::::::::::::::::::::::::::::::::
+
+.. note::
+
+    These chores touch ``pyproject.toml``, but **not its version field**. The version number and the
+    changelog release date are set by the release engineer at cut time, and are the only two things
+    in this file that are. See :doc:`python` for why.
 
 .. code-block:: shell
 

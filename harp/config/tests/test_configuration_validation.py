@@ -510,3 +510,50 @@ class TestUnknownKeysOfAnyShape:
     def test_default_applications_build_cleanly_in_strict_mode(self):
         """The real default configuration must not trip the widened check."""
         ConfigurationBuilder().build(strict=True)
+
+
+class TestRelocatedSettings:
+    """
+    A 0.9.x configuration puts cache settings under ``http_client.cache``. In 0.10 that key belongs
+    to the ``http_cache`` application, and leaving it in place used to surface as a TypeError about
+    an unexpected ``cache`` keyword argument to httpx.AsyncClient, which names neither the setting
+    nor where it went.
+    """
+
+    def test_legacy_http_client_cache_is_rejected_with_a_useful_message(self):
+        builder = ConfigurationBuilder(use_default_applications=False)
+        builder.add_values({"http_client": {"cache": {"enabled": True}}})
+
+        with pytest.raises(ValueError) as raised:
+            builder.build()
+
+        message = str(raised.value)
+        assert "http_client.cache" in message
+        assert "http_cache" in message
+
+    def test_it_is_rejected_even_when_the_cache_was_disabled(self):
+        """
+        A user who had turned caching off is still broken by the move, and gets the same traceback
+        about a feature they deliberately disabled. They need the message too, and dropping the key
+        for them would silently switch caching back on.
+        """
+        builder = ConfigurationBuilder(use_default_applications=False)
+        builder.add_values({"http_client": {"cache": {"enabled": False}}})
+
+        with pytest.raises(ValueError) as raised:
+            builder.build()
+
+        assert "http_client.cache" in str(raised.value)
+
+    def test_an_empty_legacy_cache_block_is_rejected(self):
+        builder = ConfigurationBuilder(use_default_applications=False)
+        builder.add_values({"http_client": {"cache": {}}})
+
+        with pytest.raises(ValueError):
+            builder.build()
+
+    def test_http_client_without_a_cache_key_is_left_alone(self):
+        builder = ConfigurationBuilder(use_default_applications=False)
+        builder.add_values({"http_client": {"timeout": 10.0}})
+
+        builder.build()

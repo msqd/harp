@@ -11,6 +11,7 @@ Releasing
     :maxdepth: 1
 
     chores
+    what-the-gate-does-not-run
     python
     changelog
     helm

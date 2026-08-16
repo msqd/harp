@@ -1,5 +1,6 @@
 Version 0.10.0 (unreleased)
-====================
+===========================
+
 Important Changes
 :::::::::::::::::
 
@@ -14,6 +15,12 @@ Important Changes
 - ⚠️ The ``telemetry`` application was removed. HARP no longer sends anonymous usage statistics. A
   leftover ``telemetry:`` block in your configuration is now reported as configuration for an
   unloaded application, and is rejected under ``--strict``.
+- ⚠️ **This release contains a database migration.** ``blobs.id`` widens from 40 to 64 characters,
+  because hishel 1.x keys cache entries with a sha256 hexdigest while message blobs use sha1, and
+  both share that column. **Run** ``harp-proxy db:migrate up head`` **before starting 0.10 on
+  PostgreSQL or MySQL**, or every cacheable response fails with a 500 rather than degrading to a
+  cache miss. Existing rows are untouched and the migration is backward compatible. SQLite needs
+  nothing: it does not enforce column widths and its schema is recreated rather than migrated.
 
 Added
 :::::
@@ -75,13 +82,16 @@ Changed
   - **Configuration**: cache configuration moved from ``http_client.cache.*`` to ``http_cache.*``.
   - Cache policy now uses ``hishel.SpecificationPolicy`` with ``CacheOptions`` instead of
     ``hishel.Controller``, and the documentation examples use ``policy`` instead of ``controller``.
-  - The following cache configuration parameters are no longer available:
+  - The following cache configuration parameters are no longer available, and **this release
+    provides no way to set them from configuration**:
 
-    - ``cacheable_status_codes``, determined by RFC 9111 compliance
-    - ``cacheable_methods``, replaced by an ``http_cache.policy`` service override with a custom
-      ``CacheOptions.supported_methods``
-    - ``allow_stale``, replaced by an ``http_cache.policy`` service override with a custom
-      ``CacheOptions.allow_stale``
+    - ``cacheable_status_codes``, now determined by RFC 9111 compliance
+    - ``cacheable_methods``, whose behaviour is now ``CacheOptions.supported_methods``
+    - ``allow_stale``, whose behaviour is now ``CacheOptions.allow_stale``
+
+    The ``CacheOptions`` instance is built by an internal service that no setting points at, so
+    there is no supported replacement for these three in 0.10. If you relied on any of them, see
+    `#933 <https://github.com/msqd/harp/issues/933>`_, which tracks making them configurable again.
 
   - ``allow_heuristics`` moved from the cache policy to the cache storage, since hishel 1.x has no
     equivalent option on the policy. Set ``http_cache.storage.arguments.allow_heuristics``. It stays
@@ -89,7 +99,10 @@ Changed
   - A response whose only freshness information is a validator (``ETag``, ``Last-Modified``) is no
     longer kept for conditional revalidation, so it is refetched in full rather than revalidated
     with a ``304``.
-  - Cached data written by hishel 0.1.x remains fully compatible and readable.
+  - Cache entries written by hishel 0.1.x are not reused. hishel 1.x derives a different cache key,
+    so existing entries are never matched and the first request for each resource after the upgrade
+    goes to the origin. Old rows are left in place and are not served; nothing is lost beyond a cold
+    cache.
   - If you use a custom cache configuration, update it:
 
     **Old (hishel 0.1.x, under http_client.cache)**::
@@ -109,8 +122,10 @@ Changed
         enabled: true
         policy:
           type: hishel.SpecificationPolicy
-          # Default CacheOptions are provided by services.yml
-          # To customize, override the entire policy service
+
+    The policy's ``CacheOptions`` are fixed in this release: shared cache, ``GET`` and ``HEAD``,
+    and ``allow_stale: false``. Any of the three removed options you were setting has no
+    equivalent here, see `#933 <https://github.com/msqd/harp/issues/933>`_.
 
   - **Note**: ``http_cache`` uses a temporary workaround in its ``on_bind`` event to configure
     ``http_client``'s transport. This will be replaced with proper cross-app service overrides once
@@ -145,12 +160,24 @@ Changed
 Fixed
 :::::
 
+- The HTTP cache can store entries on PostgreSQL and MySQL again. ``blobs.id`` was declared 40
+  characters wide, the length of the sha1 hexdigest that message blobs use, while hishel 1.x keys
+  cache entries with a sha256 hexdigest of 64. Both share the column, so every cache write was
+  rejected by the database and the proxy returned a 500 instead of degrading to a cache miss. SQLite
+  did not show it, because it does not enforce ``VARCHAR`` widths.
 - The published wheel now lists ``packaging`` in its ``Requires-Dist`` metadata. HARP imports it in
   ``harp/__init__.py``, so any ``import harp`` needs it, but it was only ever installed as a
   transitive dependency of ``dataclasses-json``. Nothing was broken and no version changed; what
   changed is that the requirement is now declared rather than inherited. Packagers and offline
   mirrors resolving from metadata should note the added entry. (This is a metadata correction, not a
   dependency bump, which is why it is recorded here.)
+- **proxy**: a cache hit recorded against a transaction now comes from the cache itself rather than
+  from the response's ``X-Cache`` header. The header is a public one that upstreams set for their own
+  caches, so an origin behind a CDN (CloudFront, Fastly and Varnish all emit ``X-Cache``) was
+  recorded as a HARP cache hit whenever the ``http_cache`` application was not loaded, and the
+  dashboard reported hits for a cache that was not running. ``Age`` is likewise measured by HARP's
+  own clock instead of being read back from the response. The ``X-Cache`` and ``Age`` response
+  headers themselves are unchanged.
 - Empty or comments-only configuration files no longer crash configuration loading; they now load as
   an empty configuration.
 - Applications configured with ``enabled: false`` are now filtered out when the configuration is
@@ -177,6 +204,14 @@ Fixed
   header to determine whether a response was cached, and stores the cache age from the ``Age`` header
   when available. Cache status was previously never recorded, because the old ``from_cache``
   extension no longer exists in hishel 1.x.
+- **janitor**: a sweep no longer leaves the SQL blob storage believing the blobs it just deleted
+  still exist. Populating the seen-cache on write, new in this release, made that belief outlive the
+  row, so every later write of the same content became a silent no-op, the HTTP cache could never
+  repopulate after the first sweep, and ``Cache entry incomplete`` appeared in the logs. A cacheable
+  response now costs one origin fetch per janitor sweep, as it did in 0.9.1, instead of one per
+  request. The sweep still discards live cache entries every 600 seconds, which is inherited
+  behaviour tracked in `#923 <https://github.com/msqd/harp/issues/923>`_ and not something this
+  release changes.
 - The HTTP cache ``created_at`` field is written and read as UTC. On a non-UTC host, the stored value
   was a local wall-clock time labelled ``GMT``.
 - Proxy health-check tasks are now cancelled on shutdown. The ``on_shutdown`` handler was never
@@ -194,10 +229,28 @@ Fixed
 Security
 ::::::::
 
-- The upstream URL is now built from the path component of the incoming request only, and the request
-  is refused with ``400 Bad Request`` if it would resolve to another origin. A request path carrying
-  a scheme (``GET /http://example.org/``) could previously make the proxy forward to an arbitrary
-  host (CWE-918, server-side request forgery / open proxy).
+- **proxy**: the upstream URL is now built from the path component of the incoming request only, and
+  the request is refused with ``400 Bad Request`` if it would resolve to another origin. A request
+  path carrying a scheme (``GET /http://example.org/``) could previously make the proxy forward to an
+  arbitrary host (CWE-918, server-side request forgery / open proxy).
+- **proxy**: an endpoint whose url carries a path exposes one subtree of an upstream. Dot segments in
+  the request path could walk above that subtree, so ``GET /../../admin`` against an endpoint on
+  ``http://upstream/api/v1/`` reached ``http://upstream/admin``. The origin was already checked and
+  stayed correct, which is why nothing else in the chain noticed. Such a request is now refused with
+  ``400 Bad Request``.
+- **proxy**: HARP forwarded a malformed request that a proxy must not forward. When a client sent
+  both ``Content-Length`` and ``Transfer-Encoding``, HARP passed the client's ``Content-Length`` to
+  the upstream while sending a body of a different length, so the upstream was told to read bytes
+  that were never sent and a pooled connection could desynchronise. HARP now states the framing of
+  the body it actually sends.
+- **proxy**: connection-specific headers (``Connection`` and the fields it names, ``Keep-Alive``,
+  ``TE``, ``Trailer``, ``Upgrade``, ``Proxy-Authenticate``, ``Proxy-Authorization``) were forwarded
+  instead of being dropped at the hop, as RFC 9110 §7.6.1 requires of an intermediary. This applies
+  in both directions: to the request sent upstream, and to the response returned to the client,
+  including a response replayed from the cache. On the response side the fields named by
+  ``Connection`` are dropped by ``http_cache`` at the point the upstream answer arrives, which is
+  the last moment ``Connection`` is still readable, so they are never stored either
+  (RFC 9111 §3.1).
 - **http_cache**: a shared cache could serve one caller's response to another. Heuristic freshness,
   which lets a cache invent an expiry from ``Last-Modified`` for a response the origin never declared
   cacheable, was disabled in HARP up to 0.9.1 and became active when the HTTP client migrated to
@@ -205,11 +258,11 @@ Security
   upstream that authenticates callers by anything other than the ``Authorization`` header could have
   responses reused across them. It is off again by default, and opt-in via
   ``http_cache.storage.arguments.allow_heuristics``.
-- **proxy**: an endpoint whose url carries a path exposes one subtree of an upstream. Dot segments in
-  the request path could walk above that subtree, so ``GET /../../admin`` against an endpoint on
-  ``http://upstream/api/v1/`` reached ``http://upstream/admin``. The origin was already checked and
-  stayed correct, which is why nothing else in the chain noticed. Such a request is now refused with
-  ``400 Bad Request``.
+- **http_cache**: a shared cache no longer retains responses it must not share. Up to 0.9.1 a
+  response marked ``private`` was stored in the shared cache, and a response to a request carrying
+  ``Authorization`` was served to the next caller regardless of their credentials. Measured against
+  0.9.1, one caller's authenticated response body was returned verbatim to a second caller
+  presenting a different token. Both are now declined, and the behaviour is covered by tests.
 - **config**: credential masking did not work in the mode most callers use. ``asdict(secure=True)``
   recognised a password by the type of the value holding it, and pydantic renders a URL to a plain
   string before that check is reached, so the masking silently did nothing. Passwords are now masked
@@ -218,16 +271,8 @@ Security
   ``--raw`` and ``--json``, and never masked anything without a flag; and the dashboard's
   ``GET /api/system/proxy``, which exposed credentials embedded in an upstream endpoint url on an
   API that is unauthenticated unless ``dashboard.auth`` is configured.
-- **proxy**: HARP forwarded a malformed request that a proxy must not forward. A client sending both
-  ``Content-Length`` and ``Transfer-Encoding`` had both passed on to the upstream, and behind a
-  non-conformant upstream this could have desynchronised a pooled connection. HARP now states the
-  framing of the body it actually sends.
-- **proxy**: connection-specific headers (``Connection`` and the fields it names, ``Keep-Alive``,
-  ``TE``, ``Trailer``, ``Upgrade``, ``Proxy-Authenticate``, ``Proxy-Authorization``) were forwarded
-  to the upstream instead of being dropped at the hop, as RFC 9110 §7.6.1 requires of an
-  intermediary.
-- ``!cfg`` comparison operands are parsed as Python literals instead of being evaluated as code.
-  Configuration is author-time and trusted, so this is defense in depth.
+- **config**: ``!cfg`` comparison operands are parsed as Python literals instead of being evaluated
+  as code. Configuration is author-time and trusted, so this is defense in depth.
 
 Removed
 :::::::

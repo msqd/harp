@@ -3,7 +3,8 @@ from unittest.mock import ANY, AsyncMock, Mock, patch
 
 import pytest
 import respx
-from httpx import AsyncClient, Response
+from hishel import CacheOptions, SpecificationPolicy
+from httpx import AsyncClient, AsyncHTTPTransport, Response
 from sqlalchemy.ext.asyncio import AsyncEngine
 from whistle import AsyncEventDispatcher, IAsyncEventDispatcher
 
@@ -12,10 +13,13 @@ from harp.http import HttpRequest, HttpResponse
 from harp.utils.bytes import ensure_bytes
 from harp.utils.testing.mixins import ControllerTestFixtureMixin
 from harp.utils.testing.mixins.controllers import _create_request
+from harp_apps.http_cache.storages import AsyncStorage
+from harp_apps.http_cache.transports import AsyncCacheTransport
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.events import EVENT_TRANSACTION_STARTED
 from harp_apps.proxy.settings.remote import Remote
 from harp_apps.storage.services.sql import SqlStorage
+from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
 from harp_apps.storage.types import IBlobStorage, IStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 from harp_apps.storage.worker import StorageAsyncWorkerQueue
@@ -285,98 +289,122 @@ class TestHttpProxyControllerWithStorage(
             "created_at": ANY,
         }
 
-    @respx.mock
-    async def test_cache_status_tracking_hit(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
-        """Test that cache HIT status is correctly tracked from X-Cache header.
+    def create_cache_backed_client(self) -> AsyncClient:
+        """A client wired through HARP's cache, the way the proxy is given one in production.
 
-        This test verifies that when a response contains X-Cache: HIT header,
-        the transaction extras correctly record cached=True and cache_age.
+        These tests need the real cache rather than an origin claiming to be one: whether a response
+        came from HARP's cache is exactly what is under test, so it must not be an input.
+
+        The cache keeps its blobs in memory rather than in the storage under test. What is asserted
+        here is how a cache hit is reported, not how blobs are persisted, and sharing the blob store
+        with the transaction recorder would put an unrelated backend in the path of every assertion.
         """
-        # Mock a cached response with X-Cache: HIT and Age headers
-        respx.get("http://example.com/").mock(
-            return_value=Response(
-                200,
-                content=b"Cached response",
-                headers={
-                    "X-Cache": "HIT",
-                    "Age": "42",
-                },
+        return AsyncClient(
+            transport=AsyncCacheTransport(
+                next_transport=AsyncHTTPTransport(),
+                storage=AsyncStorage(MemoryBlobStorage()),
+                policy=SpecificationPolicy(
+                    cache_options=CacheOptions(shared=True, supported_methods=["GET", "HEAD"], allow_stale=False)
+                ),
             )
         )
 
-        # Call controller
-        await self.call_controller(
-            engine=sql_storage.engine,
-            sql_storage=sql_storage,
-            blob_storage=blob_storage,
-        )
+    async def _proxy_repeatedly(self, controller, dispatcher, sql_storage, blob_storage, *, times):
+        """Send `times` requests through one controller, so a cache has the chance to be used."""
+        worker = self.create_worker(dispatcher, sql_storage.engine, sql_storage, blob_storage)
+        responses = []
+        try:
+            for _ in range(times):
+                responses.append(await controller(await _create_request()))
+        finally:
+            await worker.wait_until_empty()
+        return responses
 
-        # Verify transaction was stored with correct cache information
-        transaction, request, response = await self._find_one_transaction_with_messages_from_storage(sql_storage)
-
-        # Check that cached status is recorded
-        # Note: cache_age is available in runtime extras but not persisted to DB (would need migration)
-        assert transaction.extras["cached"] is True, "Cache status should be True for X-Cache: HIT"
-        assert transaction.extras["status_class"] == "2xx"
-        assert transaction.extras["method"] == "GET"
-
-    @respx.mock
-    async def test_cache_status_tracking_miss(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
-        """Test that cache MISS responses are correctly tracked.
-
-        This test verifies that responses with X-Cache: MISS header
-        are correctly recorded as not cached.
-        """
-        # Mock a cache miss response
-        respx.get("http://example.com/").mock(
-            return_value=Response(
-                200,
-                content=b"Cache miss response",
-                headers={
-                    "X-Cache": "MISS",
-                },
-            )
-        )
-
-        # Call controller
-        await self.call_controller(
-            engine=sql_storage.engine,
-            sql_storage=sql_storage,
-            blob_storage=blob_storage,
-        )
-
-        # Verify transaction shows not cached
-        transaction, request, response = await self._find_one_transaction_with_messages_from_storage(sql_storage)
-
-        # Check that cached is False for MISS
-        assert transaction.extras["cached"] is False, "Cache status should be False for X-Cache: MISS"
-        assert "cache_age" not in transaction.extras, "Cache age should not be present for cache miss"
+    async def _find_transactions_from_storage(self, storage):
+        transactions = await storage.get_transaction_list(username="anonymous", with_messages=True)
+        return sorted(transactions, key=lambda transaction: transaction.started_at)
 
     @respx.mock
-    async def test_cache_status_no_header(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
-        """Test that responses without X-Cache header are tracked as not cached.
+    async def test_cache_status_comes_from_the_cache_not_from_a_response_header(
+        self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        # The origin says nothing about cache status, so only HARP's own cache can answer. The
+        # second request is the hit, and the origin is contacted once.
+        endpoint = respx.get("http://example.com/").mock(
+            return_value=Response(200, content=b"Hello.", headers={"Cache-Control": "max-age=3600"})
+        )
+        controller = self.create_controller(
+            "http://example.com/",
+            dispatcher=dispatcher,
+            name="api",
+            http_client=self.create_cache_backed_client(),
+        )
 
-        This test verifies that responses without any X-Cache header
-        are correctly recorded as not cached.
-        """
-        # Mock a non-cached response (no X-Cache header)
+        await self._proxy_repeatedly(controller, dispatcher, sql_storage, blob_storage, times=2)
+
+        assert endpoint.call_count == 1
+        first, second = await self._find_transactions_from_storage(sql_storage)
+        assert first.extras["cached"] is False
+        assert second.extras["cached"] is True
+
+    @respx.mock
+    async def test_an_upstream_x_cache_header_is_not_mistaken_for_our_own(
+        self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        # An origin behind a CDN announces its own cache status under this name: CloudFront, Fastly
+        # and Varnish all do. It is the upstream's hit, not ours, and here HARP has no cache at all.
         respx.get("http://example.com/").mock(
-            return_value=Response(
-                200,
-                content=b"Fresh response",
-            )
+            return_value=Response(200, content=b"Hello.", headers={"X-Cache": "HIT", "Age": "42"})
+        )
+        controller = self.create_controller("http://example.com/", dispatcher=dispatcher, name="api")
+
+        await self._proxy_repeatedly(controller, dispatcher, sql_storage, blob_storage, times=1)
+
+        (transaction,) = await self._find_transactions_from_storage(sql_storage)
+        assert transaction.extras["cached"] is False
+        assert "cache_age" not in transaction.extras
+
+    @respx.mock
+    async def test_cache_age_is_measured_by_our_own_cache(
+        self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        # The origin claims a large age. Ours is the time since we stored it, which is moments.
+        respx.get("http://example.com/").mock(
+            return_value=Response(200, content=b"Hello.", headers={"Cache-Control": "max-age=3600", "Age": "9999"})
+        )
+        controller = self.create_controller(
+            "http://example.com/",
+            dispatcher=dispatcher,
+            name="api",
+            http_client=self.create_cache_backed_client(),
         )
 
-        # Call controller
-        await self.call_controller(
-            engine=sql_storage.engine,
-            sql_storage=sql_storage,
-            blob_storage=blob_storage,
+        _miss, hit = await self._proxy_repeatedly(controller, dispatcher, sql_storage, blob_storage, times=2)
+
+        # `cache_age` lives in the runtime extras only and is never persisted, so the age has to be
+        # read where a client would read it.
+        _first, second = await self._find_transactions_from_storage(sql_storage)
+        assert second.extras["cached"] is True
+        assert int(hit.headers["Age"]) < 60
+
+    @respx.mock
+    async def test_cache_debugging_headers_are_sent_to_the_client(
+        self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        # `X-Cache` and `Age` on the outgoing response are a documented feature in their own right,
+        # and they are the only remaining reason the adapter writes those headers at all.
+        respx.get("http://example.com/").mock(
+            return_value=Response(200, content=b"Hello.", headers={"Cache-Control": "max-age=3600"})
+        )
+        controller = self.create_controller(
+            "http://example.com/",
+            dispatcher=dispatcher,
+            name="api",
+            http_client=self.create_cache_backed_client(),
         )
 
-        # Verify transaction shows not cached
-        transaction, request, response = await self._find_one_transaction_with_messages_from_storage(sql_storage)
+        miss, hit = await self._proxy_repeatedly(controller, dispatcher, sql_storage, blob_storage, times=2)
 
-        # Check that cached is False for non-cached responses
-        assert transaction.extras["cached"] is False, "Cache status should be False without X-Cache header"
-        assert "cache_age" not in transaction.extras, "Cache age should not be present for non-cached responses"
+        assert miss.headers["X-Cache"] == "MISS"
+        assert hit.headers["X-Cache"] == "HIT"
+        assert "Age" in hit.headers
