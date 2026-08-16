@@ -1,8 +1,23 @@
 """Integration tests for UV and UVX execution of harp-proxy."""
 
 import pytest
+import re
 import subprocess
 from pathlib import Path
+
+ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def strip_ansi(text):
+    """
+    Remove ANSI style sequences from captured output.
+
+    HARP builds its consoles with ``force_terminal=True`` (``harp/utils/console.py``), so styling is
+    emitted even when stdout is a pipe. These tests are about the commands running, not about how
+    they are styled, so they assert against the plain text. See #876 for the forced-terminal
+    behaviour itself.
+    """
+    return ANSI_ESCAPE.sub("", text)
 
 
 def is_uv_available():
@@ -24,7 +39,6 @@ def is_uvx_available():
 
 
 @pytest.mark.subprocess
-@pytest.mark.skip
 class TestUVIntegration:
     """Test UV integration for harp-proxy."""
 
@@ -40,7 +54,7 @@ class TestUVIntegration:
         assert result.returncode == 0
         assert "HTTP Application Runtime Proxy (HARP)" in result.stdout
         assert "server" in result.stdout
-        assert "config" in result.stdout
+        assert "system" in result.stdout
 
     @pytest.mark.skipif(not is_uv_available(), reason="UV not available")
     def test_uv_run_harp_proxy_version(self):
@@ -106,17 +120,18 @@ class TestUVIntegration:
 
     @pytest.mark.skipif(not is_uv_available(), reason="UV not available")
     def test_uv_run_harp_proxy_config(self):
-        """Test running harp-proxy config with uv run."""
+        """Test running harp-proxy system config with uv run."""
         result = subprocess.run(
-            ["uv", "run", "harp-proxy", "config", "--example", "sqlite"],
+            ["uv", "run", "harp-proxy", "system", "config", "--example", "sqlite"],
             capture_output=True,
             text=True,
             cwd=Path(__file__).parent.parent,
         )
         assert result.returncode == 0
-        assert "📦 applications" in result.stdout
-        assert "📦 storage" in result.stdout
-        assert "harp_apps.proxy" in result.stdout
+        stdout = strip_ansi(result.stdout)
+        assert "📦 applications" in stdout
+        assert "📦 storage" in stdout
+        assert "harp_apps.proxy" in stdout
 
     @pytest.mark.skipif(not is_uv_available(), reason="UV not available")
     def test_uv_run_harp_proxy_examples_list(self):
