@@ -3,6 +3,17 @@ Python Package
 
 This guide describes the complete process for releasing a new HARP version to PyPI.
 
+.. danger::
+
+    **This page tells you how to cut a release. It does not tell you whether you may.**
+
+    A release is not tagged until the user has signed off on the product owner's recette. If nobody
+    has told you that happened, stop here and ask, however green the tests are and however empty the
+    pull-request queue is. Read :doc:`validation` first.
+
+    This matters most if you picked the release up mid-flight, from a handover or a lost session,
+    because nothing on this page would otherwise stop you. Publishing to PyPI cannot be undone.
+
 .. note::
 
     The release process is fully automated via GitHub Actions. When you push a version tag,
@@ -37,7 +48,7 @@ Who does what, and when
     **The version number and the release date are set by the release engineer, at cut time, and by
     nobody else.**
 
-    Steps 1 to 4 below (the changelog date, the ``pyproject.toml`` version and the ``uv.lock``
+    Steps 2 to 5 below (the changelog date, the ``pyproject.toml`` version and the ``uv.lock``
     refresh) belong to the person cutting the release, at the moment they cut it. They are not
     preparatory work, and they do not belong in a feature branch or in a pull request that is
     waiting to merge.
@@ -55,10 +66,44 @@ Who does what, and when
 Step-by-Step Release Process
 -----------------------------
 
-Steps 1 to 4 are the release engineer's, performed at cut time and in one sitting. If you are not
+Steps 1 to 5 are the release engineer's, performed at cut time and in one sitting. If you are not
 cutting the release right now, stop here: see `Who does what, and when`_ above.
 
-1. Prepare the Changelog
+1. Does this release carry a database migration?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Answer this before touching the changelog, because the answer changes what the changelog has to say.
+
+List the migration revisions added since the previous release:
+
+.. code-block:: bash
+
+    # Replace 0.9.1 with the tag of the previous release
+    git diff --name-only 0.9.1..HEAD -- harp_apps/storage/migrations/versions/
+
+**No output means no migration**, and there is nothing more to do in this step. Any output names the
+revisions this release introduces.
+
+If the release does carry one:
+
+* **Read the revision** and work out what it does to existing data. A column that widens is not the
+  same risk as a column that narrows, a type that changes, or a constraint that is added.
+* **Check that the changelog says so**, in *Important Changes*, and that it says which backends are
+  affected. HARP applies migrations itself on startup when ``storage.migrate`` is enabled, which is
+  the default, so an operator on the default path has nothing to run. The manual
+  ``harp-proxy db:migrate up head`` step is for operators who set ``storage.migrate: false``, and
+  that is the case any warning about breakage should be attached to. See
+  :doc:`/apps/storage/index` for the behaviour.
+* **Say whether the previous version still runs against the new schema.** If it does not, a rollback
+  is not just a matter of reinstalling the old wheel, and the changelog is where somebody finds that
+  out before they need it rather than after.
+
+.. note::
+
+    Do not write this step's findings as a description of the current migration. The next release's
+    migration will be a different one. Answer the question again each time.
+
+2. Prepare the Changelog
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The version's changelog file usually exists already, carrying an ``(unreleased)`` header, because
@@ -97,7 +142,7 @@ Commit the changelog updates:
     git add docs/changelogs/
     git commit -m "docs: prepare changelog for 0.9.0"
 
-2. Set the Version Number
+3. Set the Version Number
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Define the version as an environment variable to avoid typos:
@@ -114,7 +159,7 @@ For pre-releases, use appropriate suffixes:
     export VERSION=1.0.0-beta1  # Beta release
     export VERSION=1.0.0-alpha1 # Alpha release
 
-3. Update pyproject.toml
+4. Update pyproject.toml
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Update the version in ``pyproject.toml`` and verify:
@@ -125,7 +170,7 @@ Update the version in ``pyproject.toml`` and verify:
     uv lock
     grep "^version" pyproject.toml
 
-4. Commit the Version Change
+5. Commit the Version Change
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
@@ -133,8 +178,17 @@ Update the version in ``pyproject.toml`` and verify:
     git add pyproject.toml uv.lock
     git commit -m "chore: bump version to $VERSION"
 
-5. Create an Annotated Git Tag
+6. Create an Annotated Git Tag
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. danger::
+
+    **Last stop. Has the user signed off?**
+
+    Pushing this tag publishes to PyPI, and PyPI does not allow a version number to be reused. The
+    sign-off is the user's, on the product owner's recette, and it is not something you can infer
+    from green CI or an empty queue. If you cannot point to it having happened, do not tag. See
+    :doc:`validation`.
 
 .. code-block:: bash
 
@@ -145,7 +199,7 @@ Update the version in ``pyproject.toml`` and verify:
     Always use the ``-a`` flag to create an **annotated tag**, not a lightweight tag.
     The release workflow requires annotated tags.
 
-6. Push Changes and Tag
+7. Push Changes and Tag
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
@@ -157,7 +211,7 @@ Update the version in ``pyproject.toml`` and verify:
 
     Push the tag **after** pushing the commit to ensure the tag points to the correct commit.
 
-7. Monitor the Release Workflow
+8. Monitor the Release Workflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once the tag is pushed, GitHub Actions automatically runs the release workflow:
@@ -201,7 +255,7 @@ Or visit: ``https://github.com/msqd/harp/actions``
 
 The workflow typically takes 10-15 minutes to complete.
 
-8. Verify the Release
+9. Verify the Release
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Once the workflow completes successfully:
@@ -293,7 +347,7 @@ If the workflow fails with:
 
 2. Fix the version in ``pyproject.toml``
 
-3. Repeat from step 3 (Update pyproject.toml)
+3. Repeat from step 4 (Update pyproject.toml)
 
 Workflow Build Failures
 ~~~~~~~~~~~~~~~~~~~~~~~~
