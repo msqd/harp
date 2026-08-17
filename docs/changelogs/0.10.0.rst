@@ -210,6 +210,12 @@ Fixed
 - Committed a ``.gitkeep`` in ``harp_apps/dashboard/web/`` so a fresh clone can ``uv sync`` and build
   the wheel. The directory is a hatchling force-include target and previously vanished on checkout,
   making the build fail with ``FileNotFoundError``.
+- ``make wheel`` completes on machines that ship ``python3`` but no ``python``, which is most Linux
+  distributions. It built the wheel and then exited 127 counting the bundled dashboard assets, so
+  neither that check nor the ``twine check`` below it ever ran and the wheel was never validated.
+  The interpreter is now taken from whichever branch built the wheel, since ``uv`` builds with its
+  own managed interpreter and puts no ``python`` on ``PATH``. CI did not catch this because
+  ``actions/setup-python`` provides the ``python`` the developer machine lacks.
 - Requesting a transaction that does not exist now returns a 404 from the dashboard instead of an
   unhandled error. The storage layer raised ``NoResultFound``, so the controller's 404 handling was
   never reached.
