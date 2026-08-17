@@ -159,6 +159,20 @@ Changed
 Fixed
 :::::
 
+- **http_cache**: a stale cache entry is revalidated properly instead of being downloaded again in
+  full. Two defects, fixed together because either alone leaves the cache worse than it is now:
+
+  - The conditional headers hishel adds for revalidation (``If-None-Match``, ``If-Modified-Since``)
+    never reached the origin, because the request actually sent was the one captured before they
+    were added. The origin had no validator to compare against, so it answered ``200`` with the
+    whole body at every staleness boundary rather than a small ``304``.
+  - A ``304`` freshened nothing, because ``AsyncStorage.update_entry`` did not resolve the entry
+    hishel asked it to update. The entry stayed exactly as stale as it was and was revalidated on
+    every subsequent request, without end.
+
+  Measured through a running proxy on PostgreSQL, three client requests across one staleness
+  boundary: the origin is now asked twice and transfers the body once, where it previously
+  transferred the body twice. Resources with no validator are unaffected.
 - The HTTP cache can store entries on PostgreSQL and MySQL again. ``blobs.id`` was declared 40
   characters wide, the length of the sha1 hexdigest that message blobs use, while hishel 1.x keys
   cache entries with a sha256 hexdigest of 64. Both share the column, so every cache write was
