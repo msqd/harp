@@ -204,9 +204,10 @@ What HARP retains, and what a caller can do about it
 **Recording is best-effort.** HARP records the transactions passing through it, including requests
 carrying ``Cache-Control: no-store``, and a recorded transaction holds the request headers, the
 response headers and both bodies, persisted to the storage application and shown in the dashboard.
-Under load it holds less than that: storage sheds whole transactions, and then message detail within
-the transactions it does keep, rather than slowing traffic down to finish writing. An empty payload
-panel in the dashboard can therefore mean the payload was shed, not that nothing was sent. See
+Under load it holds less than that: as the storage worker falls behind it drops message detail
+first, and whole transactions once it falls further behind, rather than slowing traffic down to
+finish writing. An empty payload panel in the dashboard can therefore mean the payload was shed,
+not that nothing was sent, and a transaction can be missing altogether. See
 `#945 <https://github.com/msqd/harp/issues/945>`_ for what was measured and how far it goes.
 
 Treat the transaction record as an operational view of your traffic rather than a complete one.
