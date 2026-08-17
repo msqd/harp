@@ -277,6 +277,18 @@ Security
   ``--raw`` and ``--json``, and never masked anything without a flag; and the dashboard's
   ``GET /api/system/proxy``, which exposed credentials embedded in an upstream endpoint url on an
   API that is unauthenticated unless ``dashboard.auth`` is configured.
+- **http_cache**: a client's ``Cache-Control: no-store`` no longer prevented the response being
+  cached. RFC 9111 §5.2.1.5 makes this a ``MUST``: a cache must store no part of such a request or
+  of any response to it. hishel 0.1.x checked the request directive, hishel 1.x decides cacheability
+  from the response alone, and the check was lost when HARP migrated, so a caller asking not to be
+  retained was retained and the next caller was served that entry. Measured on PostgreSQL, two
+  identical ``no-store`` requests reached the origin once instead of twice. Such a request now
+  bypasses the cache entirely: nothing is stored, and an existing entry is not used to answer it.
+  The response directive (§5.2.2.5) was already honoured and is unchanged. Request ``no-cache``
+  keeps forcing revalidation.
+
+  This binds HARP's cache only. **The transaction store keeps recording every request, including
+  those carrying** ``no-store``, which is deliberate: see :ref:`what-harp-retains`.
 - **config**: ``!cfg`` comparison operands are parsed as Python literals instead of being evaluated
   as code. Configuration is author-time and trusted, so this is defense in depth.
 

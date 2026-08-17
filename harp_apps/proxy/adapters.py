@@ -8,6 +8,7 @@ from harp import __parsed_version__
 from harp.http import HttpRequest
 from harp.http.utils import hop_by_hop_names
 
+
 class HttpClientProxyAdapter:
     user_agent: Optional[str] = None
     """User agent to use when proxying requests (will default to harp/<version>)."""
