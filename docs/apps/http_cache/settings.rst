@@ -6,6 +6,11 @@ HTTP Cache Settings
 The ``http_cache`` application provides configuration options for controlling HTTP caching behavior according
 to RFC 9111 standards.
 
+.. note::
+
+    Nothing here changes what a **caller** can ask for. For the ``Cache-Control`` request directives
+    HARP honours, and for what HARP retains regardless of them, see :ref:`what-harp-retains`.
+
 Examples
 ::::::::
 
