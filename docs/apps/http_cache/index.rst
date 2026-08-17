@@ -91,6 +91,31 @@ Request flow
 6. **Store response** from origin server for future requests
 
 
+Revalidation
+------------
+
+.. versionchanged:: 0.10
+
+    Revalidation requests carry their validator again, and a ``304`` freshens the stored entry.
+
+When a stored response goes stale, HARP does not simply fetch it again. If the origin provided a
+validator, HARP asks whether anything changed and re-sends the body only if it did:
+
+- an ``ETag`` is sent back as ``If-None-Match``, a ``Last-Modified`` as ``If-Modified-Since``
+- a ``304 Not Modified`` costs no body transfer. HARP updates the stored entry's headers from the
+  ``304``, which restarts its freshness lifetime, and serves the client from the stored body
+- a ``200`` replaces the stored entry with the new representation
+
+So a resource that changes rarely is fetched in full once and then confirmed with small
+round trips, rather than being downloaded again at every freshness boundary. A resource the origin
+offers no validator for is simply fetched again, since there is nothing to revalidate with.
+
+.. note::
+
+    HARP computes a stored response's age from its ``Date`` header (RFC 9111 §4.2.3). An origin
+    that sends no ``Date`` gives the cache nothing to age its response against.
+
+
 Cache key normalization
 -----------------------
 
