@@ -124,6 +124,77 @@ cannot influence what the dashboard reports.
     untouched.
 
 
+Cache-Control directives a client can send
+------------------------------------------
+
+.. versionchanged:: 0.10
+
+    Request ``no-store`` is honoured again. It was honoured up to 0.9.1, and stopped being honoured
+    when the cache migrated to hishel 1.x.
+
+A caller can influence HARP's cache with the request directives of RFC 9111 §5.2.1:
+
+.. list-table::
+    :header-rows: 1
+    :widths: 20 20 60
+
+    * - Directive
+      - Honoured
+      - What HARP does
+    * - ``no-store`` (§5.2.1.5)
+      - yes
+      - The request bypasses the cache entirely. Nothing about the exchange is stored, and an
+        entry that already exists for that resource is not used to answer it. The request is
+        proxied normally otherwise, and reported as ``X-Cache: MISS``.
+    * - ``no-cache`` (§5.2.1.4)
+      - yes
+      - A stored response is revalidated against the origin before being reused.
+    * - ``max-age``, ``max-stale``, ``min-fresh``, ``only-if-cached`` (§5.2.1.1–3, §5.2.1.7)
+      - yes
+      - Handled by hishel's RFC 9111 implementation.
+
+The response directives of §5.2.2 (``no-store``, ``no-cache``, ``private``, ``public``,
+``must-revalidate``, ``max-age``, ``s-maxage``) are honoured as the specification defines them.
+
+.. warning::
+
+    These directives bind HARP's **cache**. They do not bind HARP's **transaction record**, which is
+    a separate store with a separate purpose. See :ref:`what-harp-retains` below before treating
+    ``no-store`` as a retention control.
+
+
+.. _what-harp-retains:
+
+What HARP retains, and what a caller can do about it
+::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+**HARP records every transaction passing through it, including requests carrying**
+``Cache-Control: no-store``. The request headers, the response headers and both bodies are
+persisted to the storage application and shown in the dashboard. This is deliberate and it is not
+affected by the cache honouring the directive.
+
+The cache and the transaction record retain for different reasons. A cache retains in order to
+answer the *next* caller, which is why ``no-store`` binds it: the directive is about reuse. The
+transaction record retains in order to show operators what passed through their own proxy, and
+nothing in it is ever read back into a response.
+
+Two reasons this is the deliberate answer rather than an omission:
+
+- **A client must not be able to switch off an operator's audit trail by setting a request header.**
+  If ``no-store`` suppressed recording, any caller, including one behaving badly, could remove its
+  own traffic from the record of the proxy it is passing through. That inverts who the record is
+  for.
+- RFC 9111 §5.2.1.5 states outright that the directive "is not a reliable or sufficient mechanism
+  for ensuring privacy. In particular, malicious or compromised caches might not recognize or obey
+  this directive." A caller can therefore infer nothing about retention from it, and an operator can
+  promise nothing by honouring it.
+
+**Suppressing what gets recorded is the operator's decision, not the caller's.** It is made with the
+:doc:`rules application </apps/rules/index>`, which can set the transaction markers documented in
+:doc:`/apps/storage/markers` to skip storing request or response headers and bodies for the traffic
+you choose.
+
+
 RFC 9111 Compliance
 :::::::::::::::::::
 
@@ -131,7 +202,8 @@ The cache implementation is tested against RFC 9111 requirements. The test suite
 
 - **Freshness lifetime** (§4.2): max-age, s-maxage, Expires headers
 - **Validation** (§4.3): ETag, Last-Modified, conditional requests
-- **Cache-Control directives** (§5.2.2): no-store, no-cache, private, public
+- **Cache-Control request directives** (§5.2.1): no-store, no-cache
+- **Cache-Control response directives** (§5.2.2): no-store, no-cache, private, public
 - **Vary header** (§4.1): content negotiation and cache key selection
 - **HTTP methods** (§3): GET, HEAD, POST, PUT, DELETE, PATCH cacheability
 - **Status codes** (§3): cacheable responses (200, 301, 404, etc.)

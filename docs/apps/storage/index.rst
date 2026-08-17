@@ -37,6 +37,14 @@ By default, blob storage will use the same SQL database as the core storage, but
 underlying system (for now, the only alternative is Redis, but the simple interface allows for easy addition of new
 backends for blobs).
 
+.. warning::
+
+    **Every transaction passing through HARP is recorded here, including requests carrying**
+    ``Cache-Control: no-store``. A caller cannot opt out of the record, by that directive or by any
+    other header. Choosing what is not recorded is the operator's decision, made with the
+    :doc:`rules application </apps/rules/index>` and the :doc:`markers` below. The reasoning is with
+    the cache, which is the store ``no-store`` does bind: see :ref:`what-harp-retains`.
+
 
 Core storage
 ::::::::::::
