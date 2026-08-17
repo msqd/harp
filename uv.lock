@@ -820,7 +820,7 @@ dev = [
     { name = "jscc", specifier = ">=0.3.0,<0.4" },
     { name = "jsonpointer", specifier = ">=3.0.0,<4" },
     { name = "jsonref", specifier = ">=1.1.0,<2" },
-    { name = "myst-parser", specifier = ">=4.0.0,<5" },
+    { name = "myst-parser", specifier = ">=4.0.0,<6" },
     { name = "pre-commit", specifier = ">=3.7.1,<5.0.0" },
     { name = "pytest", specifier = ">=7.4.3,<9.0.0" },
     { name = "pytest-asyncio", specifier = ">=1.2,<1.3" },
