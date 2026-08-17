@@ -201,28 +201,33 @@ The response directives of §5.2.2 (``no-store``, ``no-cache``, ``private``, ``p
 What HARP retains, and what a caller can do about it
 ::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-**HARP records every transaction passing through it, including requests carrying**
-``Cache-Control: no-store``. The request headers, the response headers and both bodies are
-persisted to the storage application and shown in the dashboard. This is deliberate and it is not
-affected by the cache honouring the directive.
+**Recording is best-effort.** HARP records the transactions passing through it, including requests
+carrying ``Cache-Control: no-store``, and a recorded transaction holds the request headers, the
+response headers and both bodies, persisted to the storage application and shown in the dashboard.
+Under load it holds less than that: storage sheds whole transactions, and then message detail within
+the transactions it does keep, rather than slowing traffic down to finish writing. An empty payload
+panel in the dashboard can therefore mean the payload was shed, not that nothing was sent. See
+`#945 <https://github.com/msqd/harp/issues/945>`_ for what was measured and how far it goes.
+
+Treat the transaction record as an operational view of your traffic rather than a complete one.
 
 The cache and the transaction record retain for different reasons. A cache retains in order to
 answer the *next* caller, which is why ``no-store`` binds it: the directive is about reuse. The
 transaction record retains in order to show operators what passed through their own proxy, and
 nothing in it is ever read back into a response.
 
-Two reasons this is the deliberate answer rather than an omission:
+**In 0.10, a caller's** ``no-store`` **binds the cache and does not affect the transaction record.**
+Such a request is not served from a stored entry and nothing about it is cached, and it is recorded
+like any other request. Whether a caller may suppress payload recording is decided in
+`#927 <https://github.com/msqd/harp/issues/927>`_ and lands in 0.11, so do not build on the current
+behaviour in either direction.
 
-- **A client must not be able to switch off an operator's audit trail by setting a request header.**
-  If ``no-store`` suppressed recording, any caller, including one behaving badly, could remove its
-  own traffic from the record of the proxy it is passing through. That inverts who the record is
-  for.
-- RFC 9111 §5.2.1.5 states outright that the directive "is not a reliable or sufficient mechanism
-  for ensuring privacy. In particular, malicious or compromised caches might not recognize or obey
-  this directive." A caller can therefore infer nothing about retention from it, and an operator can
-  promise nothing by honouring it.
+Note also what RFC 9111 §5.2.1.5 says of the directive: it "is not a reliable or sufficient
+mechanism for ensuring privacy. In particular, malicious or compromised caches might not recognize
+or obey this directive." Whatever an intermediary does with it, a caller can infer nothing about
+retention from having sent it.
 
-**Suppressing what gets recorded is the operator's decision, not the caller's.** It is made with the
+**Suppressing what gets recorded is currently the operator's decision.** It is made with the
 :doc:`rules application </apps/rules/index>`, which can set the transaction markers documented in
 :doc:`/apps/storage/markers` to skip storing request or response headers and bodies for the traffic
 you choose.

@@ -304,8 +304,9 @@ Security
   The response directive (§5.2.2.5) was already honoured and is unchanged. Request ``no-cache``
   keeps forcing revalidation.
 
-  This binds HARP's cache only. **The transaction store keeps recording every request, including
-  those carrying** ``no-store``, which is deliberate: see :ref:`what-harp-retains`.
+  This binds HARP's cache only. The transaction record is a separate store and the directive does
+  not reach it, so a request carrying ``no-store`` is recorded like any other, as far as recording
+  gets under the load you are running. See :ref:`what-harp-retains`, and *Known Limitations* below.
 - **config**: ``!cfg`` comparison operands are parsed as Python literals instead of being evaluated
   as code. Configuration is author-time and trusted, so this is defense in depth.
 
@@ -326,3 +327,13 @@ Not changes in this release. Carried into it, and worth knowing before you deplo
   holds one entry per cache key, so two variants of the same resource overwrite each other, and a
   caller alternating between them gets no cache hits at all. This is not new in 0.10: the behaviour
   is the same on 0.9.1. Tracked in `#910 <https://github.com/msqd/harp/issues/910>`_.
+- Transaction recording is best-effort, and under load it records a fraction of your traffic. When
+  the storage worker falls behind it sheds message detail first and then whole transactions, rather
+  than applying backpressure and slowing traffic down. Nothing warns you that it happened: no
+  counter, no log line, and a shed payload looks in the dashboard exactly like a request that
+  carried none. In a measured sweep on PostgreSQL at concurrencies from 5 to 60, roughly 80% of
+  transactions were never stored and two thirds of the rows that were stored held no messages at
+  all. Proxying stayed healthy throughout, so the traffic was served correctly and only the record
+  of it was lost. Do not treat the transaction record as a complete account of what passed through
+  the proxy. This is not new in 0.10, and the measurements and their exact conditions are in
+  `#945 <https://github.com/msqd/harp/issues/945>`_.
