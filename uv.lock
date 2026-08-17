@@ -805,7 +805,7 @@ requires-dist = [
     { name = "slack-sdk", specifier = ">=3.37,<3.38" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0,<2.1" },
     { name = "sqlalchemy-utils", specifier = ">=0.42,<0.43" },
-    { name = "structlog", specifier = ">=25,<26" },
+    { name = "structlog", specifier = ">=25,<27" },
     { name = "svix-ksuid", specifier = ">=0.6,<0.7" },
     { name = "whistle", specifier = ">=2.0.1,<3" },
 ]
