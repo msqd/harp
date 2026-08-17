@@ -33,10 +33,9 @@ class HttpCacheSettings(ApplicationSettingsMixin, Configurable):
     #:   - allow_stale: False (do not serve stale responses)
     #:
     #: To customize cache behavior, override the entire policy service:
-    #:   http_client:
-    #:     cache:
-    #:       policy:
-    #:         type: my_custom_policy.CustomPolicy
+    #:   http_cache:
+    #:     policy:
+    #:       type: my_custom_policy.CustomPolicy
     policy: Service = Service(type="hishel.SpecificationPolicy")
 
     #: Cache storage implementation, a.k.a how to store and retrieve cache data.

@@ -5,9 +5,9 @@ import dataclasses
 import time
 import uuid
 from asyncio import get_running_loop
-from collections.abc import AsyncIterable, AsyncIterator
+from collections.abc import AsyncIterable, AsyncIterator, Callable
 from dataclasses import replace
-from typing import Optional
+from typing import Optional, Union
 
 import pytest
 from hishel import AsyncBaseStorage, Entry, EntryMeta
@@ -40,6 +40,8 @@ class MockAsyncStorage(AsyncBaseStorage):
         self.entries: dict[str, list[Entry]] = {}
         self.contents: dict[str, bytes] = {}  # Store response bodies separately
         self.created_keys: list[str] = []
+        self.updated_ids: list[uuid.UUID] = []
+        self.removed_ids: list[uuid.UUID] = []
 
     async def create_entry(
         self,
@@ -91,21 +93,33 @@ class MockAsyncStorage(AsyncBaseStorage):
 
     async def update_entry(
         self,
-        entry: Entry,
-        request: HttpcoreRequest,
-        response: HttpcoreResponse,
-    ) -> Entry:
-        """Update an existing entry."""
-        entry.request = request
-        entry.response = response
-        return entry
+        id: uuid.UUID,
+        new_entry: Union[Entry, Callable[[Entry], Entry]],
+    ) -> Optional[Entry]:
+        """Update an existing entry, addressed by id, the way hishel addresses it.
 
-    async def remove_entry(self, entry: Entry) -> None:
-        """Remove an entry from storage."""
+        The previous signature took ``(entry, request, response)``, which hishel never calls,
+        so every test that appeared to cover the update path raised ``TypeError`` instead of
+        asserting anything. See https://github.com/msqd/harp/issues/908.
+        """
         for key, entries in self.entries.items():
-            if entry in entries:
-                entries.remove(entry)
-                break
+            for index, entry in enumerate(entries):
+                if entry.id != id:
+                    continue
+                updated = new_entry if isinstance(new_entry, Entry) else new_entry(entry)
+                entries[index] = updated
+                self.updated_ids.append(id)
+                return updated
+        return None
+
+    async def remove_entry(self, id: uuid.UUID) -> None:
+        """Remove an entry, addressed by id, the way hishel addresses it."""
+        for entries in self.entries.values():
+            for entry in list(entries):
+                if entry.id == id:
+                    entries.remove(entry)
+                    self.removed_ids.append(id)
+                    return
 
     async def close(self) -> None:
         """Close storage."""
