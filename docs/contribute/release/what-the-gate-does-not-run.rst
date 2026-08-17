@@ -13,7 +13,7 @@ What the gate does not run
 
 
 The thesis, in one example
-:::::::::::::::::::::::::
+::::::::::::::::::::::::::
 
 Under the default test matrix, HARP's MySQL tests are not red. They are **absent**.
 
@@ -46,7 +46,7 @@ does not distinguish between what it measured and what it assumed.**
 
 
 Theme two: a measurement can mean something other than what it appears to say
-::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 Five times during one release, on five different tools, output was taken at face value and meant
 something else.
