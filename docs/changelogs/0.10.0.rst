@@ -155,6 +155,11 @@ Changed
   cutting 0.10 would have left it on 0.9.
 - ``http-router`` is constrained to ``>=5.0,<6.0``, so installing HARP resolves the major version the
   test suite runs against. The bound briefly allowed 6.0, which no HARP release has been tested with.
+- Dashboard form controls render in the colours their components ask for. ``@tailwindcss/forms``
+  0.5.11 stopped overriding the ``text-indigo-600`` and ``border-gray-300`` utilities that ``Radio``
+  and ``Checkbox`` have always declared, so a selected checkbox or radio is now indigo rather than
+  blue and control borders are lighter. Visible on the transaction list filters. Nothing was
+  restyled: the components were asking for this all along and the plugin was overriding them.
 
 Fixed
 :::::
