@@ -834,7 +834,7 @@ dev = [
     { name = "sphinx-click", specifier = ">=6.0.0,<7" },
     { name = "sphinx-copybutton", specifier = ">=0.5.2,<0.6" },
     { name = "sphinx-design", specifier = ">=0.6.0,<0.7" },
-    { name = "sphinx-docsearch", specifier = ">=0.0.7,<0.1.1" },
+    { name = "sphinx-docsearch", specifier = ">=0.0.7,<0.3.2" },
     { name = "sphinx-sitemap", specifier = ">=2.6.0,<3" },
     { name = "sphinx-tags", specifier = ">=0.4,<0.5" },
     { name = "sphinxcontrib-jquery", specifier = "~=4.1" },
