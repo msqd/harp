@@ -31,8 +31,16 @@ The cache automatically handles:
 
 - **Freshness lifetime calculation** using max-age, s-maxage, and Expires headers
 - **Cache revalidation** with ETags and Last-Modified headers
-- **Content negotiation** via Vary header support
+- **Vary matching**, so a stored response is never reused for a request whose selecting headers differ
 - **Cache directives** including no-store, no-cache, private, public, and must-revalidate
+
+.. note::
+
+    ``Vary`` is matched correctly but currently buys you no reuse. The storage holds one entry per
+    cache key, so two variants of the same resource overwrite each other, and a caller alternating
+    between them gets no cache hits at all. Nobody is served the wrong variant; they are served no
+    cache. This is not new in 0.10, the behaviour is the same on 0.9.1, and it is tracked in
+    `#910 <https://github.com/msqd/harp/issues/910>`_.
 
 
 Features
@@ -220,20 +228,33 @@ Two reasons this is the deliberate answer rather than an omission:
 you choose.
 
 
-RFC 9111 Compliance
-:::::::::::::::::::
+RFC 9111 test coverage
+::::::::::::::::::::::
 
-The cache implementation is tested against RFC 9111 requirements. The test suite includes:
+The cache is tested against RFC 9111 requirements at the **policy** level, meaning what the cache
+decides to store, reuse or revalidate. The suite covers:
 
 - **Freshness lifetime** (§4.2): max-age, s-maxage, Expires headers
 - **Validation** (§4.3): ETag, Last-Modified, conditional requests
 - **Cache-Control request directives** (§5.2.1): no-store, no-cache
 - **Cache-Control response directives** (§5.2.2): no-store, no-cache, private, public
-- **Vary header** (§4.1): content negotiation and cache key selection
 - **HTTP methods** (§3): GET, HEAD, POST, PUT, DELETE, PATCH cacheability
 - **Status codes** (§3): cacheable responses (200, 301, 404, etc.)
 
-See the test suite in ``harp_apps/http_cache/tests/rfc9111/`` for detailed compliance verification.
+The suite lives in ``harp_apps/http_cache/tests/rfc9111/``.
+
+.. warning::
+
+    **Read this before citing the suite as evidence of compliance.** It runs against a storage
+    double, not against the storage that ships. The double holds several entries per cache key;
+    ``AsyncStorage`` holds one, as its own docstring says. So the suite is evidence about what the
+    policy *decides to store*, and no evidence at all about what the storage *retains*.
+
+    ``Vary`` (§4.1) is where that difference bites, and it is why ``Vary`` is not in the list above.
+    The double can hold two variants side by side and the shipped storage cannot, so those tests
+    pass on a behaviour that does not work in production. See
+    `#910 <https://github.com/msqd/harp/issues/910>`_ for the behaviour and
+    `#965 <https://github.com/msqd/harp/issues/965>`_ for why the tests do not catch it.
 
 
 Configuration reference
