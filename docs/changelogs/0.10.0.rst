@@ -173,6 +173,10 @@ Fixed
   Measured through a running proxy on PostgreSQL, three client requests across one staleness
   boundary: the origin is now asked twice and transfers the body once, where it previously
   transferred the body twice. Resources with no validator are unaffected.
+
+  This concerns responses the cache does retain, which means those the origin declared fresh. A
+  response whose *only* freshness information is a validator is still not retained at all, for the
+  reason given under *Changed* above, so there is nothing to revalidate for it.
 - The HTTP cache can store entries on PostgreSQL and MySQL again. ``blobs.id`` was declared 40
   characters wide, the length of the sha1 hexdigest that message blobs use, while hishel 1.x keys
   cache entries with a sha256 hexdigest of 64. Both share the column, so every cache write was
