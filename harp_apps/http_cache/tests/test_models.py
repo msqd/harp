@@ -28,7 +28,11 @@ class TestWrappedRequest:
         assert wrapped.method == original.method
         assert wrapped.url == original.url
         assert wrapped.headers == original.headers
-        assert wrapped.unwrap() is original
+
+        unwrapped = wrapped.unwrap()
+        assert unwrapped.method == original.method
+        assert unwrapped.url == original.url
+        assert unwrapped.headers == original.headers
 
     def test_url_override_for_cache_key_normalization(self):
         """URL override allows cache key normalization while preserving original URL."""
@@ -49,8 +53,12 @@ class TestWrappedRequest:
         # Original request unchanged - will be used for actual transmission
         assert original.url == "http://backend1.local/api/users"
 
-    def test_unwrap_returns_original_request_intact(self):
-        """unwrap() returns the exact original request with all attributes intact."""
+    def test_unwrap_undoes_the_cache_key_overrides(self):
+        """unwrap() addresses the real origin, whatever was overridden for the cache key.
+
+        ``method`` and ``url`` are the attributes this class overrides for cache-key
+        normalization, so both come back from the wrapped request.
+        """
         original = Request(
             method="POST",
             url="http://backend1.local/api/users",
@@ -69,9 +77,8 @@ class TestWrappedRequest:
         assert wrapped.url == "http://normalized-endpoint/api/users"
         assert wrapped.method == "GET"
 
-        # Unwrapped request is original, completely unchanged
+        # Unwrapped request addresses the backend as it really is
         unwrapped = wrapped.unwrap()
-        assert unwrapped is original
         assert unwrapped.method == "POST"
         assert unwrapped.url == "http://backend1.local/api/users"
         assert unwrapped.headers == Headers({"content-type": "application/json"})
@@ -95,11 +102,20 @@ class TestWrappedRequest:
         assert wrapped1.unwrap().url == "http://backend1.local:8001/api/users"
         assert wrapped2.unwrap().url == "http://backend2.local:8002/api/users"
 
-    def test_dataclasses_replace_preserves_wrapped_request(self):
-        """dataclasses.replace() works correctly and preserves the wrapped request.
+    def test_conditional_headers_added_by_replace_survive_unwrap(self):
+        """The conditional headers hishel adds during revalidation reach the origin.
 
-        This is critical for hishel's cache revalidation which uses replace()
-        to add conditional headers (If-None-Match, If-Modified-Since).
+        This is the unit-level statement of the defect in
+        https://github.com/msqd/harp/issues/906. hishel revalidates by calling
+        ``replace(request, headers={..., "if-none-match": ...})``, and ``replace()`` carries
+        this object's metadata through untouched. The wrapped request held in that metadata is
+        therefore the request as it was *before* the conditional headers existed, so returning
+        it from ``unwrap()`` sends a revalidation with no validator at all and the origin has
+        no choice but to answer 200 with the whole body.
+
+        The previous version of this test asserted ``replaced.unwrap() is original``, which is
+        precisely the behaviour that breaks revalidation, under a docstring saying the test
+        existed to protect revalidation.
         """
         original = Request(
             method="GET",
@@ -113,14 +129,16 @@ class TestWrappedRequest:
         new_headers = Headers({"accept": "application/json", "if-none-match": '"etag123"'})
         replaced = replace(wrapped, headers=new_headers)
 
-        # Replaced instance should have new headers
-        assert replaced.headers == new_headers
-        # But preserve the normalized URL
-        assert replaced.url == "http://normalized-endpoint/api/users"
-        # And still be a WrappedRequest that can unwrap to original
+        # The cache still sees the normalized URL, so the cache key is unaffected.
         assert isinstance(replaced, WrappedRequest)
-        assert replaced.unwrap() is original
-        assert replaced.unwrap().url == "http://backend1.local/api/users"
+        assert replaced.headers == new_headers
+        assert replaced.url == "http://normalized-endpoint/api/users"
+
+        # And the request actually sent carries the validator, addressed at the real backend.
+        unwrapped = replaced.unwrap()
+        assert unwrapped.url == "http://backend1.local/api/users"
+        assert unwrapped.headers["if-none-match"] == '"etag123"'
+        assert unwrapped.headers["accept"] == "application/json"
 
     def test_dataclasses_replace_with_url_change(self):
         """dataclasses.replace() with URL change updates the wrapped URL."""
@@ -137,6 +155,5 @@ class TestWrappedRequest:
 
         # URL should be updated
         assert replaced.url == "http://different-endpoint/api/users"
-        # But original is still preserved
-        assert replaced.unwrap() is original
+        # But the request sent upstream still addresses the real backend
         assert replaced.unwrap().url == "http://backend1.local/api/users"

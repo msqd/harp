@@ -2,6 +2,7 @@ import time
 
 import typing as tp
 import uuid
+from collections import OrderedDict
 from hishel import AsyncBaseStorage, Entry, EntryMeta, Request, Response
 
 from harp import get_logger
@@ -23,12 +24,30 @@ def has_explicit_freshness(response: Response) -> bool:
     return cache_control.s_maxage is not None or cache_control.max_age is not None or "expires" in response.headers
 
 
+# How many recently seen entry ids keep a route back to their cache key.
+#
+# The window an id has to survive is a single request cycle, not the lifetime of the entry:
+# hishel only ever calls `update_entry` or `remove_entry` with an id the state machine got from
+# `get_entries` (or `create_entry`) earlier in that same cycle, in this same process, and
+# `http_cache.storage` is a singleton service. So this only has to exceed the number of cache
+# lookups a process has in flight at one moment, never the number of entries it has stored.
+#
+# 8192 is several orders of magnitude above the in-flight concurrency one HARP process reaches,
+# and costs a few hundred kilobytes. Lowering it trades that memory for the risk that a 304
+# freshens nothing under load, which is the defect this index exists to fix.
+KEY_INDEX_SIZE = 8192
+
+
 class AsyncStorage(AsyncBaseStorage):
     """HARP's AsyncBaseStorage implementation using blob storage backend.
 
     This implementation adapts hishel 1.0's Entry-based API to work with HARP's
     blob storage system. We store a single entry per cache key, maintaining
     backward compatibility with existing cached data.
+
+    hishel addresses entries by UUID while this store addresses blobs by cache key, so a
+    bounded index of recently seen ids bridges the two. See :data:`KEY_INDEX_SIZE` for why a
+    small bound is sufficient, and :meth:`_key_for` for what happens when it is not.
     """
 
     def __init__(
@@ -47,6 +66,33 @@ class AsyncStorage(AsyncBaseStorage):
         self._storage = storage
         self._ttl = ttl
         self._allow_heuristics = allow_heuristics
+        self._keys_by_id: OrderedDict[uuid.UUID, str] = OrderedDict()
+
+    def _remember_key(self, entry_id: uuid.UUID, key: str) -> None:
+        """Record how to get back from an entry id to the key its blob is stored under."""
+        self._keys_by_id[entry_id] = key
+        self._keys_by_id.move_to_end(entry_id)
+        while len(self._keys_by_id) > KEY_INDEX_SIZE:
+            self._keys_by_id.popitem(last=False)
+
+    def _key_for(self, entry_id: uuid.UUID, operation: str) -> tp.Optional[str]:
+        """Resolve an entry id back to its cache key, loudly if it cannot.
+
+        A miss is not a graceful degradation. It means a 304 freshens nothing and the entry
+        revalidates on every subsequent request, without end, which is exactly the defect this
+        index exists to fix. The symptom is a cache that looks slow rather than broken, so the
+        cause has to announce itself here or nobody will connect the two.
+        """
+        key = self._keys_by_id.get(entry_id)
+        if key is None:
+            logger.warning(
+                f"Cannot {operation} cache entry {entry_id}: no cache key known for it. The entry will not be "
+                f"refreshed and will be revalidated on every request. If this recurs, {KEY_INDEX_SIZE} "
+                f"(harp_apps.http_cache.storages.KEY_INDEX_SIZE) is too small for this proxy's concurrency."
+            )
+            return None
+        self._keys_by_id.move_to_end(entry_id)
+        return key
 
     async def create_entry(
         self,
@@ -92,6 +138,7 @@ class AsyncStorage(AsyncBaseStorage):
             return entry
 
         await self._impl.store_entry(key, entry)
+        self._remember_key(entry.id, key)
         logger.debug(f"Cache entry stored: key={key}")
         return entry
 
@@ -111,6 +158,8 @@ class AsyncStorage(AsyncBaseStorage):
         try:
             entry = await self._impl.retrieve_entry(key)
             if entry:
+                # hishel will address this entry by id if it later needs to freshen or drop it.
+                self._remember_key(entry.id, key)
                 logger.debug(
                     f"Cache hit: key={key}, url={entry.request.url}, method={entry.request.method}, entry_id={entry.id}"
                 )
@@ -134,31 +183,48 @@ class AsyncStorage(AsyncBaseStorage):
     ) -> tp.Optional[Entry]:
         """Update an existing entry by its ID.
 
+        hishel calls this to write a 304's refreshed headers back onto the stored entry. If it
+        does nothing, the entry stays exactly as stale as it was and every subsequent request
+        revalidates again, without end.
+
         Args:
             id: The entry UUID
             new_entry: Either a new Entry object or a callable that transforms the existing entry
 
         Returns:
-            The updated Entry, or None if not found
+            The updated Entry, or None if it could not be resolved
         """
-        logger.debug(f"Attempting to update entry: entry_id={id}")
-        # Since we store by cache_key not by UUID, we need to find the entry first
-        # This is a limitation of our blob storage approach
-        # For now, we'll implement this by searching through entries
-        # In practice, hishel rarely uses this method for our use case
-        logger.warning(f"update_entry called for UUID {id}, which requires searching - not fully optimized")
-        return None
+        key = self._key_for(id, "update")
+        if key is None:
+            return None
+
+        entry = await self._impl.retrieve_entry(key)
+        if entry is None or entry.id != id:
+            # The blob was evicted or replaced between the lookup and here.
+            logger.debug(f"Cache entry vanished before update: entry_id={id}, key={key}")
+            return None
+
+        updated = new_entry if isinstance(new_entry, Entry) else new_entry(entry)
+        await self._impl.store_entry(key, updated)
+        logger.debug(f"Cache entry updated: key={key}, entry_id={id}")
+        return updated
 
     async def remove_entry(self, id: uuid.UUID) -> None:
         """Remove an entry by its ID.
 
+        hishel calls this to invalidate entries, for instance when an unsafe method succeeds
+        against the same resource (RFC 9111 §4.4).
+
         Args:
             id: The entry UUID
         """
-        logger.debug(f"Attempting to remove entry: entry_id={id}")
-        # Similar limitation as update_entry - we store by cache_key not UUID
-        logger.warning(f"remove_entry called for UUID {id}, which requires searching - not fully optimized")
-        pass
+        key = self._key_for(id, "remove")
+        if key is None:
+            return
+
+        await self._storage.delete(key)
+        self._keys_by_id.pop(id, None)
+        logger.debug(f"Cache entry removed: key={key}, entry_id={id}")
 
     async def close(self) -> None:
         """Close the storage (required by AsyncBaseStorage interface)."""
