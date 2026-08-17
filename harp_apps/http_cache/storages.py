@@ -212,8 +212,13 @@ class AsyncStorage(AsyncBaseStorage):
     async def remove_entry(self, id: uuid.UUID) -> None:
         """Remove an entry by its ID.
 
-        hishel calls this to invalidate entries, for instance when an unsafe method succeeds
-        against the same resource (RFC 9111 §4.4).
+        hishel invalidates the stored entries a revalidation did *not* match, which only arises
+        where several entries share a cache key. This store holds one entry per key, so hishel
+        does not currently reach this method: the lists it builds for invalidation
+        (``revalidating_entries[:-1]``, and the non-matching entries after a 304) are always
+        empty here. It is implemented rather than left inert because that is a property of the
+        storage shape today and not of the contract, and it changes the moment one key can hold
+        several variants. See https://github.com/msqd/harp/issues/910.
 
         Args:
             id: The entry UUID
