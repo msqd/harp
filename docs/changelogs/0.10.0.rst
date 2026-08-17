@@ -61,11 +61,6 @@ Added
 
   - Cache keys exclude protocol, hostname and port from URLs
   - Implemented by a custom ``AsyncCacheTransport`` that normalizes URLs
-  - ``Vary`` is honoured before an entry is reused, so no caller is served a variant that does not
-    match their request. It does not yet buy you anything, though: the storage holds one entry per
-    cache key, so two variants of the same resource overwrite each other and a caller alternating
-    between them gets no cache hits at all. Correct, but not useful yet. Tracked in
-    `#910 <https://github.com/msqd/harp/issues/910>`_.
 
 - ``harp.DEBUG`` flag for enabling debug information output, set via the ``HARP_DEBUG`` or ``DEBUG``
   environment variables. When enabled, error responses include full exception tracebacks. Do not
@@ -298,3 +293,14 @@ Removed
 - Removed the ``telemetry`` application, which was sending anonymous usage statistics every 24 hours.
   This reduces network overhead and eliminates potential privacy concerns for users in regulated
   environments.
+
+Known Limitations
+:::::::::::::::::
+
+Not changes in this release. Carried into it, and worth knowing before you deploy.
+
+- A resource that varies gets little or no cache reuse. ``Vary`` is honoured before an entry is
+  reused, so no caller is ever served a variant that does not match their request. But the storage
+  holds one entry per cache key, so two variants of the same resource overwrite each other, and a
+  caller alternating between them gets no cache hits at all. This is not new in 0.10: the behaviour
+  is the same on 0.9.1. Tracked in `#910 <https://github.com/msqd/harp/issues/910>`_.
