@@ -9,8 +9,11 @@ Added
 
 - RFC 9111 compliance is now measured and guarded: ``make test-e2e-cache`` runs the cache-tests suite,
   prints the score with the storage backend it was measured on, and fails when a test that passed in
-  the recorded baseline fails twice in a row. ``make test-e2e-cache-baseline REASON='...'`` moves the
-  baseline deliberately. See ``docs/adr/0003-cache-compliance-compared-per-test-against-a-pinned-baseline.md``.
+  the recorded baseline fails twice in a row. Baselines are recorded from three runs, so a test that
+  flaps while being recorded cannot later raise a false alarm, and a test HARP failed to proxy is
+  reported as unobserved rather than counted as a compliance failure.
+  ``make test-e2e-cache-baseline REASON='...'`` moves the baseline deliberately. See
+  ``docs/adr/0003-cache-compliance-compared-per-test-against-a-pinned-baseline.md``.
 
 Changed
 :::::::

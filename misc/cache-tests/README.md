@@ -29,23 +29,31 @@ percentages, because a percentage cannot tell a regression from upstream changin
 |---|---|---|
 | passed | fails, in two consecutive runs | **fails**, naming the tests |
 | passed | fails in one run, passes in the other | reports it as flaky, does not fail |
+| passed | HARP returned a proxy error | reports it as **unobserved**, does not fail |
 | passed | upstream deleted the test | reports it, does not fail |
 | not in the baseline | fails | reports it as new upstream, does not fail |
 | failed | passes | reports the improvement, does not fail |
 
-**Regressions have to survive two runs.** About one test in 365 fails on a transient 502 from HARP,
-often enough to fire a naive gate roughly one run in four. The second run only happens when the first
-one found something, so a clean run still costs about a minute.
+**A test HARP failed to serve was never measured.** HARP emits roughly fourteen proxy errors per run,
+on both backends and on 0.9.1 as well, and when one lands on a test's setup request that test never
+reached the cache. Its verdict says nothing about compliance, so it is reported under `unobserved` and
+takes no part in the comparison. Watch that count: if it grows, HARP's reliability changed.
 
-**The baseline never moves on its own.** Not even when a run improves on it: a gate that absorbs an
-improvement absorbs a flapping test on the run where it passes, and then fires on it forever after.
-Moving it is a separate command, and it records why:
+**Regressions have to survive two runs.** Over sixteen measured runs no test failed twice in a row,
+while five of every seven consecutive pairs disagreed about *something*. The second run only happens
+when the first one found something, so a clean run still costs about a minute.
+
+**The baseline never moves on its own**, and it is recorded from **three runs**, not one. A test that
+moved while it was being recorded is written down as failing: it can then produce a spurious
+improvement, which is an invitation to look, but never a spurious regression, which is a false alarm
+that gets the gate switched off. Moving the baseline is a separate command, and it records why:
 
 ```bash
 make test-e2e-cache-baseline REASON='cache rewrite, see #1234'
 ```
 
-Baselines live in `baselines/<backend>.json` and carry the conditions they were measured under.
+Baselines live in `baselines/<backend>.json`, carry the conditions they were measured under, and say
+how many runs back them. `CACHE_TESTS_BASELINE_RUNS` changes that count.
 
 ## Storage backends are not interchangeable
 
@@ -54,7 +62,9 @@ suite, and the gate refuses to compare a run against a baseline from the other b
 reporting a difference that means nothing.
 
 **The default is a file-backed SQLite database** under `results/`, deleted before each run so every
-run starts with a cold cache. It needs nothing installed and reproduces the PostgreSQL score.
+run starts with a cold cache. It needs nothing installed and reproduces the PostgreSQL score: measured
+over eight runs each, both land on 206 to 208 of 365 and move about one test per run. Neither is
+meaningfully flakier than the other.
 
 **Release validation runs against PostgreSQL**, because that is the production path, and because a
 storage-layer defect can hide from SQLite entirely: SQLite does not enforce column widths, which is
@@ -110,6 +120,11 @@ uv run harp-proxy server --file config.yml \
 # the suite, in a third
 (cd misc/cache-tests/cache-tests && npm run --silent cli --base=http://localhost:4000)
 ```
+
+> **Comparing against another HARP version?** Install it in its own virtualenv and check
+> `harp.__file__`, not `harp.__version__`. Run from this checkout and the working directory wins on
+> `sys.path`, so `import harp` reports the version you are standing next to rather than the one you
+> installed, and every number in the comparison is silently the wrong version's.
 
 `--applications` is a command line flag and not a `config.yml` key on purpose: in a configuration file
 `applications:` only *adds* to the default set, it never restricts it. The endpoint is passed on the

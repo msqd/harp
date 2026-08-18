@@ -1,10 +1,11 @@
 {
   "conditions": {
     "backend": "postgresql",
-    "harp_commit": "ac5811fb331ecc47eeb095e92d232d1c615f357d",
+    "harp_commit": "6e37f313c7c0b2961910463eb845bbb43e4cc391",
+    "runs": 3,
     "suite_commit": "be694001950cdb4bff937aee7d706feaf7d9c5ab"
   },
-  "reason": "first recorded run, see #990",
+  "reason": "first recorded run, see #990; 3 runs, because about one test per run changes verdict and it is a different test each time",
   "recorded_on": "2026-08-18",
   "results": {
     "304-etag-update-response-Cache-Control": true,

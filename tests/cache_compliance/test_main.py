@@ -104,6 +104,69 @@ class TestCheck:
 
 
 class TestRecord:
+    def record(self, tmp_path, path, *runs, backend="postgresql", reason="cache rewrite landed"):
+        return main(
+            [
+                "record",
+                "--baseline",
+                str(path),
+                "--backend",
+                backend,
+                "--suite-commit",
+                "be694001",
+                "--harp-commit",
+                "ac5811fb",
+                "--recorded-on",
+                "2026-08-18",
+                "--reason",
+                reason,
+                *[str(r) for r in runs],
+            ]
+        )
+
+    def test_a_test_that_moved_while_recording_is_recorded_as_failing(self, tmp_path):
+        """
+        The safe side. A baseline is a claim about what reliably passes, so a test nobody could
+        observe passing twice must not be able to produce a regression later.
+        """
+        first = write(tmp_path, "first.json", {"steady": True, "moved": True})
+        second = write(tmp_path, "second.json", {"steady": True, "moved": ["Setup", "502"]})
+        path = tmp_path / "new-baseline.json"
+
+        assert self.record(tmp_path, path, first, second) == OK
+
+        written = json.loads(path.read_text())
+        assert written["results"] == {"steady": True, "moved": False}
+
+    def test_records_how_many_runs_back_the_baseline(self, tmp_path):
+        """A baseline from one observation cannot represent a population that moves, so it says so."""
+        first = write(tmp_path, "first.json", {"a": True})
+        second = write(tmp_path, "second.json", {"a": True})
+        path = tmp_path / "new-baseline.json"
+
+        self.record(tmp_path, path, first, second)
+
+        assert json.loads(path.read_text())["conditions"]["runs"] == 2
+
+    def test_reports_what_moved_while_recording(self, tmp_path, capsys):
+        first = write(tmp_path, "first.json", {"steady": True, "moved": True})
+        second = write(tmp_path, "second.json", {"steady": True, "moved": ["Setup", "502"]})
+
+        self.record(tmp_path, tmp_path / "b.json", first, second)
+
+        output = capsys.readouterr().out
+        assert "moved" in output
+        assert "1" in output
+
+    def test_only_records_tests_every_run_observed(self, tmp_path):
+        """A test missing from one run was not measured that time, so it is not in the baseline."""
+        first = write(tmp_path, "first.json", {"a": True, "only-in-first": True})
+        second = write(tmp_path, "second.json", {"a": True})
+
+        self.record(tmp_path, tmp_path / "b.json", first, second)
+
+        assert json.loads((tmp_path / "b.json").read_text())["results"] == {"a": True}
+
     def test_writes_a_baseline_carrying_its_conditions_and_its_reason(self, tmp_path):
         run = write(tmp_path, "run.json", {"a": True, "b": ["Assertion", "nope"]})
         path = tmp_path / "new-baseline.json"
@@ -133,6 +196,7 @@ class TestRecord:
             "backend": "postgresql",
             "suite_commit": "be694001",
             "harp_commit": "ac5811fb",
+            "runs": 1,
         }
         assert written["reason"] == "cache rewrite landed"
         assert written["recorded_on"] == "2026-08-18"

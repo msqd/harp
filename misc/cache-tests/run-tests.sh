@@ -157,9 +157,20 @@ echo "Running the suite (about a minute)..."
 run_suite "$RESULTS_DIR/$BACKEND.json"
 
 # Recording a baseline runs the suite exactly the way the gate runs it, so a baseline can never
-# describe conditions the gate does not reproduce.
+# describe conditions the gate does not reproduce. It runs it several times, because about one test
+# per run changes verdict and it is a different test each time: a baseline taken from a single
+# observation records whichever tests happened to flap that day as their unlucky value, and then
+# reports them for ever.
 if [ -n "${CACHE_TESTS_RECORD_REASON:-}" ]; then
+    recorded="$RESULTS_DIR/$BACKEND.json"
+    for run in $(seq 2 "${CACHE_TESTS_BASELINE_RUNS:-3}"); do
+        echo "Running the suite again, $run of ${CACHE_TESTS_BASELINE_RUNS:-3}..."
+        run_suite "$RESULTS_DIR/$BACKEND.record-$run.json"
+        recorded="$recorded $RESULTS_DIR/$BACKEND.record-$run.json"
+    done
+
     echo ""
+    # shellcheck disable=SC2086  # $recorded is a list of paths this script built
     (cd "$REPO_DIR" && uv run --project "$REPO_DIR" python -m tests.cache_compliance record \
         --baseline "$BASELINE" \
         --backend "$BACKEND" \
@@ -167,7 +178,7 @@ if [ -n "${CACHE_TESTS_RECORD_REASON:-}" ]; then
         --harp-commit "$HARP_COMMIT" \
         --recorded-on "$(date +%Y-%m-%d)" \
         --reason "$CACHE_TESTS_RECORD_REASON" \
-        "$RESULTS_DIR/$BACKEND.json")
+        $recorded)
     exit $?
 fi
 
@@ -176,7 +187,16 @@ fi
 
 check() {
     (cd "$REPO_DIR" && uv run --project "$REPO_DIR" python -m tests.cache_compliance check \
-        --baseline "$BASELINE" --backend "$BACKEND" "$@")
+        --baseline "$BASELINE" --backend "$BACKEND" --harp-errors "$(harp_error_count)" "$@")
+}
+
+# HARP's own count of requests it failed to proxy. The comparison recognises those failures by
+# reading upstream's prose, which is the one thing here that can silently stop matching if the suite
+# is updated. This is a second, independent instrument pointed at the same fact: if HARP logged proxy
+# errors and the comparison recognised none, the report says the pattern may have gone stale rather
+# than quietly reporting a clean run.
+harp_error_count() {
+    grep -c "◀ HttpError" "$RESULTS_DIR/harp.log" 2>/dev/null || echo 0
 }
 
 echo ""

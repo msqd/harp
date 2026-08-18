@@ -14,6 +14,7 @@ import pytest
 from tests.cache_compliance.results import (
     Baseline,
     UnusableResults,
+    Verdict,
     compare,
     load_baseline,
     load_run,
@@ -29,10 +30,23 @@ def write(tmp_path, name, payload):
 
 
 class TestLoadRun:
-    def test_reads_the_suite_verdicts_as_booleans(self, tmp_path):
+    def test_reads_the_suite_verdicts(self, tmp_path):
         path = write(tmp_path, "run.json", {"a": True, "b": ["Assertion", "nope"], "c": ["Setup", "retry"]})
 
-        assert load_run(path) == {"a": True, "b": False, "c": False}
+        assert load_run(path) == {"a": Verdict.PASSED, "b": Verdict.FAILED, "c": Verdict.FAILED}
+
+    def test_separates_a_test_harp_never_served_from_one_that_failed(self, tmp_path):
+        """The whole point of the distinction: one says the cache is wrong, the other says nothing."""
+        path = write(
+            tmp_path,
+            "run.json",
+            {
+                "missed": ["Assertion", "Response 2 does not come from cache"],
+                "never-ran": ["Setup", "Response 1 status is 502, not 200"],
+            },
+        )
+
+        assert load_run(path) == {"missed": Verdict.FAILED, "never-ran": Verdict.UNOBSERVED}
 
     def test_refuses_an_empty_result_set(self, tmp_path):
         """A run that produced no verdicts is a run that did not happen."""
@@ -180,7 +194,7 @@ class TestLoadBaseline:
         assert baseline.backend == "postgresql"
         assert baseline.suite_commit == "be694001"
         assert baseline.recorded_on == "2026-08-18"
-        assert baseline.results == {"a": True, "b": False}
+        assert baseline.results == {"a": Verdict.PASSED, "b": Verdict.FAILED}
 
     def test_refuses_a_baseline_without_a_backend(self, tmp_path):
         """A baseline that does not say what it was measured on cannot be compared against anything."""
@@ -213,6 +227,12 @@ class TestRender:
 
         assert "storage backend    postgresql" in report
         assert "1/2" in report
+
+    def test_says_how_many_runs_the_baseline_was_recorded_from(self):
+        """One run is a much weaker claim than three, and a reader cannot tell them apart otherwise."""
+        report = render(replace(self.baseline(), runs=3), [{"a": True, "b": False}], backend="postgresql")
+
+        assert "from 3 runs" in report
 
     def test_labels_the_baseline_with_the_backend_the_baseline_was_recorded_on(self):
         """Not with the run's, which would quietly relabel a baseline as something it is not."""
