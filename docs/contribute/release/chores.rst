@@ -3,6 +3,11 @@ Chores
 
 Before a new version is released, it's usually a good idea to do some housekeeping.
 
+.. note::
+
+    These are chores, not the gate. Doing all of them does not make a release ready to tag: that
+    takes the product owner's recette and the user's sign-off. See :doc:`validation`.
+
 Code review passes
 ::::::::::::::::::
 
