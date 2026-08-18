@@ -127,6 +127,28 @@ Frontend Test Options
     # Update visual UI snapshots
     make test-frontend-ui-update
 
+RFC 9111 Compliance
+^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: shell
+
+    # Run the cache-tests compliance suite against HARP and compare it to the recorded baseline
+    make test-e2e-cache
+
+    # Move the baseline, deliberately, with the reason recorded next to it
+    make test-e2e-cache-baseline REASON='cache rewrite, see #1234'
+
+It provisions its own file-backed SQLite database and needs nothing running beforehand. Release
+validation runs it against PostgreSQL instead, because that is the production path:
+
+.. code-block:: shell
+
+    CACHE_TESTS_DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/cachetests make test-e2e-cache
+
+A run on SQLite and a run on PostgreSQL are two different measurements, so each keeps its own
+baseline and the target refuses to compare one against the other. See ``misc/cache-tests/README.md``
+for what the comparison does and does not fail on.
+
 Coverage Reports
 ^^^^^^^^^^^^^^^^
 

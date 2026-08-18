@@ -208,6 +208,12 @@ boot because ``misc/cache-tests/config.yml`` hardcodes a PostgreSQL URL that not
 suite ends having executed nothing. The credentials in that file are transposed between username and
 password, which dates the last successful run: a typo like that cannot survive one.
 
+.. note::
+
+    Repaired in `#990 <https://github.com/msqd/harp/issues/990>`_. The target now provisions its own
+    file-backed SQLite database, fails when any step of the run fails, and compares the result
+    against a recorded baseline. HARP scores 207 of 365, which nobody had measured before.
+
 In no gate at all
 -----------------
 
@@ -248,6 +254,12 @@ word ``Skipped.`` and a green exit, because ``... && $(MAKE) test-frontend || ec
 cannot tell a deliberate skip from a failure. ``make test-e2e-cache`` writes its RFC 9111 results to
 a JSON file that nothing reads. The second is worse than the first: a swallowed failure at least
 leaves a number on screen to scroll back to, while a file nobody opens leaves nothing at all.
+
+.. note::
+
+    The cache half was repaired in `#990 <https://github.com/msqd/harp/issues/990>`_: the results
+    file is now read, compared per test id against a recorded baseline, and printed as a score next
+    to the storage backend it was measured on.
 
 **Failure reported without observing the result**, the mirror. ``bin/build_wheel`` counted wheel
 assets by shelling to ``unzip`` and discarding its stderr, so a missing tool was indistinguishable
