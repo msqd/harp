@@ -17,10 +17,20 @@ Important Changes
   unloaded application, and is rejected under ``--strict``.
 - ⚠️ **This release contains a database migration.** ``blobs.id`` widens from 40 to 64 characters,
   because hishel 1.x keys cache entries with a sha256 hexdigest while message blobs use sha1, and
-  both share that column. **Run** ``harp-proxy db:migrate up head`` **before starting 0.10 on
-  PostgreSQL or MySQL**, or every cacheable response fails with a 500 rather than degrading to a
-  cache miss. Existing rows are untouched and the migration is backward compatible. SQLite needs
-  nothing: it does not enforce column widths and its schema is recreated rather than migrated.
+  both share that column. Existing rows are untouched and the migration is backward compatible.
+
+  **HARP applies it for you.** ``storage.migrate`` defaults to true, and on that default the proxy
+  migrates to head while starting. Upgrading and starting 0.10 is enough, and running
+  ``harp-proxy db:migrate up head`` beforehand is optional.
+
+  **If you run** ``storage.migrate: false``, applying it is yours to do, and this one is not
+  optional: until ``blobs.id`` is widened, any response the cache would store fails with a 500
+  instead of degrading to a cache miss. Traffic the cache does not store is unaffected. Run
+  ``harp-proxy db:migrate up head`` before starting 0.10 on PostgreSQL or MySQL. The same applies if
+  you want the schema changed before the process begins serving.
+
+  SQLite needs nothing, because SQLite does not enforce ``VARCHAR`` widths. A file-backed SQLite
+  database is still migrated through alembic like any other backend.
 
 Added
 :::::

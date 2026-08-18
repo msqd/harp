@@ -116,9 +116,15 @@ To setup a redis-based blob storage, you can add the following to your configura
 Migrations
 ::::::::::
 
-By default, migrations are run averytime you start HARP, to ensure the database schema is always up-to-date.
+By default, migrations are run every time you start HARP, to ensure the database schema is always
+up-to-date. On that default, upgrading HARP and starting it is enough, and there is nothing to run by
+hand.
 
-You can disable this behaviour by adding ``storage.migrate = false`` to your configuration.
+You can disable this behaviour by setting ``storage.migrate`` to ``false`` in your configuration.
+Applying migrations then becomes yours to do, with ``harp-proxy db:migrate up head``, **before**
+starting the new version. A schema older than the running code is not a degraded mode: 0.10 widened
+``blobs.id`` for cache keys, and against a database still holding the narrow column, any response the
+cache would store fails with a 500 rather than falling back to a cache miss.
 
 Migrations are implemented using `Alembic <https://alembic.sqlalchemy.org/>`_.
 
