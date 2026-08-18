@@ -82,7 +82,7 @@ dev = [
     "sphinx-sitemap>=2.6.0,<3",
     "sphinx-tags>=0.4,<0.5",
     "sphinxcontrib-jquery~=4.1",
-    "syrupy>=5.0,<5.1",
+    "syrupy>=5.0,<5.6",
     "testcontainers[postgres]>=4.7,<4.14",
     "watchfiles>=1.1,<1.3",
 ]
