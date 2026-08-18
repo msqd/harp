@@ -47,7 +47,7 @@
 /harp_apps/dashboard/frontend/stats.html
 /harp_apps/dashboard/web/*
 /misc/cache-tests/cache-tests/node_modules/
-/misc/cache-tests/cache-tests/results/harp.json
+/misc/cache-tests/results/
 /misc/kitchen-sink/harp.db
 /misc/secrets/
 /misc/worktrees/
