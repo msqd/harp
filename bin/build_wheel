@@ -15,8 +15,16 @@ make install-dev build-frontend
 rm -rf harp_apps/dashboard/frontend
 rm -rf harp_apps/dashboard/web/src
 
-# Verify web directory still exists after removal
-ls -la harp_apps/dashboard/web/index.html > /dev/null || echo "ERROR: web directory index is missing!"
+# Verify web directory still exists after removal.
+#
+# This aborts rather than printing. It used to `|| echo`, which cannot fail the
+# build: the message scrolled past and the wheel was packaged anyway. A guard
+# that only prints is not a guard.
+if [ ! -f harp_apps/dashboard/web/index.html ]; then
+    printf "\n❌ ERROR: harp_apps/dashboard/web/index.html is missing after cleanup.\n" >&2
+    printf "The frontend build did not produce a dashboard, or the cleanup above removed too much.\n" >&2
+    exit 1
+fi
 
 # Clean up README (remove People & Credits section)
 sed '/^People & Credits/,$ d' README.rst > README.rst.tmp
@@ -34,13 +42,30 @@ cp dist/* "$PWD_ORIG/dist/"
 
 # Verify frontend assets are included in the wheel.
 #
-# Counted with python's zipfile rather than `unzip`, which is not installed
-# everywhere. When the tool is missing the count comes back 0 and the check
+# Counted with Python's zipfile rather than `unzip`, which is not installed
+# everywhere. When that tool is missing the count comes back 0 and the check
 # reports missing assets, which is a plausible and completely wrong diagnosis
-# arriving at the exact moment someone is cutting a release. python is already
-# a hard requirement here, since it just built the wheel.
+# arriving at the exact moment someone is cutting a release.
+#
+# The interpreter is taken from whichever branch built the wheel above, because
+# that is the only one this script has established exists. An earlier version
+# called bare `python` on the grounds that it "just built the wheel", which is
+# false in the `$UV` branch: uv builds with its own managed interpreter and puts
+# no `python` on PATH. On the many Linux distributions shipping only `python3`
+# that exited 127 here, taking the asset guard below and the `twine check` at
+# the end of this script down with it, and the wheel would have gone out
+# unvalidated.
+if [ -n "$UV" ]; then
+    # uv resolves an interpreter itself; --no-project because counting zip
+    # entries needs the standard library and nothing from this project.
+    PYTHON=("$UV" run --no-project python)
+else
+    # This branch ran `python -m build` above, so `python` is on PATH.
+    PYTHON=(python)
+fi
+
 WHEEL_FILE=$(ls dist/*.whl)
-WEB_ASSET_COUNT=$(python -c 'import sys, zipfile; print(sum(1 for n in zipfile.ZipFile(sys.argv[1]).namelist() if n.startswith("harp_apps/dashboard/web/")))' "$WHEEL_FILE")
+WEB_ASSET_COUNT=$("${PYTHON[@]}" -c 'import sys, zipfile; print(sum(1 for n in zipfile.ZipFile(sys.argv[1]).namelist() if n.startswith("harp_apps/dashboard/web/")))' "$WHEEL_FILE")
 printf "\n📊 Wheel contains %d files in harp_apps/dashboard/web/\n\n" "$WEB_ASSET_COUNT" >&2
 if [ "$WEB_ASSET_COUNT" -lt 10 ]; then
     printf "❌ ERROR: Expected at least 10 web assets, but found only %d\n" "$WEB_ASSET_COUNT" >&2
