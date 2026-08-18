@@ -141,6 +141,16 @@ run_suite() {
     local output=$1
     (cd "$SUITE_DIR" && npm run --silent cli --base="http://localhost:$PROXY_PORT") > "$output" \
         || fail "the cache-tests cli exited non-zero, see $output"
+
+    # A server that dies mid-run leaves a full set of verdicts that are all failures, which reads as a
+    # compliance collapse and is nothing of the sort. Whatever is in $output describes a broken run,
+    # so no score is claimed from it.
+    nc -z localhost "$ORIGIN_PORT" 2>/dev/null \
+        || fail "the origin server stopped listening on :$ORIGIN_PORT during the run, so $output
+    describes a broken run and not HARP's compliance. See $RESULTS_DIR/origin.log"
+    nc -z localhost "$PROXY_PORT" 2>/dev/null \
+        || fail "HARP stopped listening on :$PROXY_PORT during the run, so $output describes a
+    broken run and not HARP's compliance. See $RESULTS_DIR/harp.log"
 }
 
 echo "Running the suite (about a minute)..."

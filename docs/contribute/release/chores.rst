@@ -115,8 +115,8 @@ it is not what validates a release.
 
 The target prints the score with its backend and fails on any test that passed in the recorded
 baseline and fails twice in a row. It does **not** fail on a lower percentage: see
-`ADR-0003 <https://github.com/msqd/harp/blob/main/docs/adr/0003-cache-compliance-compared-per-test-against-a-pinned-baseline.md>`_
-for why, and ``misc/cache-tests/README.md`` for how to read the report.
+``docs/adr/0003-cache-compliance-compared-per-test-against-a-pinned-baseline.md`` for why, and
+``misc/cache-tests/README.md`` for how to read the report.
 
 
 Eventually commit the updated dependencies
