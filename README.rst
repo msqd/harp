@@ -76,8 +76,10 @@ client (based on `httpx <https://www.python-httpx.org/>`_), a `circuit breaker
     :alt: HARP Overview
     :align: center
 
-To instantly get insights on how your application is interacting with external services, you get a full searchable
-transactions audit trail, with detailed information on each request and response.
+To instantly get insights on how your application is interacting with external services, you get a searchable
+transaction record, with detailed information on each recorded request and response. Recording is best-effort: under
+load HARP sheds detail rather than slowing your traffic down, so treat it as an operational view rather than a
+complete one.
 
 .. figure:: https://docs.harp-project.net/en/latest/_images/transactions.png
     :alt: HARP Transactions
