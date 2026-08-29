@@ -27,7 +27,7 @@ dependencies = [
     "httpx>=0.27,<0.29",
     "hypercorn>=0.17,<0.18",
     "multidict>=6.7,<6.8",
-    "orjson>=3.11,<3.12",
+    "orjson>=3.11,<3.13",
     # Deliberately unbounded above: packaging is a PyPA core utility much of the
     # environment also depends on, and a cap on it propagates to co-installed
     # packages. We use two frozen names from it (Version, InvalidVersion).
