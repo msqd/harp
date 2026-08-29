@@ -10,7 +10,7 @@ authors = [{ name = "Romain Dorgueil", email = "romain@makersquad.fr" }]
 requires-python = ">=3.13,<3.14"
 readme = "README.rst"
 dependencies = [
-    "aiohttp>=3.13,<3.14",
+    "aiohttp>=3.13,<3.15",
     "aiosqlite>=0.20,<0.22",
     "alembic>=1.17,<1.18",
     "asgi-prometheus>=1.2,<1.3",
