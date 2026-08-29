@@ -71,7 +71,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "@types/lodash": "^4.17.21",
     "@types/react-helmet": "^6.1.11",
-    "date-fns": "^3.6.0",
+    "date-fns": "^4.4.0",
     "echarts": "^5.5.1",
     "echarts-for-react": "^3.0.6",
     "http-status-codes": "^2.3.0",
