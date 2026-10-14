@@ -257,7 +257,9 @@ Fixed
   row, so every later write of the same content became a silent no-op, the HTTP cache could never
   repopulate after the first sweep, and ``Cache entry incomplete`` appeared in the logs. A cacheable
   response now costs one origin fetch per janitor sweep, as it did in 0.9.1, instead of one per
-  request. The sweep still discards live cache entries every 600 seconds, which is inherited
+  request. The seen-cache is cleared only in the process that runs the janitor, so other HARP
+  instances sharing the same database keep stale entries until they age out
+  (`#1002 <https://github.com/msqd/harp/issues/1002>`_). The sweep still discards live cache entries every 600 seconds, which is inherited
   behaviour tracked in `#923 <https://github.com/msqd/harp/issues/923>`_ and not something this
   release changes.
 - The HTTP cache ``created_at`` field is written and read as UTC. On a non-UTC host, the stored value
@@ -287,12 +289,15 @@ Security
   base path. A request path carrying a scheme (``GET /http://example.org/``) could previously make the
   proxy forward to an arbitrary host (CWE-918, server-side request forgery / open proxy), and dot
   segments could walk above the base path, so ``GET /../../admin`` against an endpoint on
-  ``http://upstream/api/v1/`` reached ``http://upstream/admin``. Such requests now answer
-  ``400 Bad Request`` and nothing is sent upstream. This covers any ``.`` or ``..`` segment, whatever
-  the separator (``/``, ``\``, ``%2f``, ``%5c``) and whether the dots are literal or ``%2e``, in any
-  case; any byte at or below ``0x20`` or ``0x7f`` in the path (reachable over HTTP/2); and a path the
-  proxy cannot parse (``//[x/``). Otherwise the raw path is forwarded byte for byte, so ``%3f``, ``%23``,
-  ``%3A``, ``a%2eb`` and ``/.well-known/x`` are not refused. See the *Path guard* section of the proxy
+  ``http://upstream/api/v1/`` reached ``http://upstream/admin``. The upstream URL is now the
+  endpoint's origin and base path followed by the request path, so the host can no longer change: the
+  scheme case is forwarded as a plain path on the configured upstream
+  (``http://upstream/api/v1/http://example.org/``), not refused. These answer ``400 Bad Request`` and
+  nothing is sent upstream: any ``.`` or ``..`` segment, whatever the separator (``/``, ``\``,
+  ``%2f``, ``%5c``) and whether the dots are literal or ``%2e``, in any case; any byte at or below
+  ``0x20`` or ``0x7f`` in the path (reachable over HTTP/2); and a path the proxy cannot parse
+  (``//[x/``). Otherwise the raw path is forwarded byte for byte, so ``%3f``, ``%23``, ``%3A``,
+  ``a%2eb`` and ``/.well-known/x`` are not refused. See the *Path guard* section of the proxy
   documentation, and *Known Limitations* below for what the guard does not cover.
 - **proxy**: HARP forwarded a malformed request that a proxy must not forward. When a client sent
   both ``Content-Length`` and ``Transfer-Encoding``, HARP passed the client's ``Content-Length`` to
@@ -322,7 +327,9 @@ Security
 - **config**: credential masking did not work in the mode most callers use. ``asdict(secure=True)``
   recognised a password by the type of the value holding it, and pydantic renders a URL to a plain
   string before that check is reached, so the masking silently did nothing. Passwords are now masked
-  wherever they appear, including in settings that are plain strings rather than typed URLs. This
+  in typed URLs and in settings that are plain strings, with one exception: a URL holding a password
+  and an empty username (``redis://:s3cret@cache.internal:6379/0``) is still returned in clear,
+  tracked in `#999 <https://github.com/msqd/harp/issues/999>`_. This
   affected ``harp-proxy system config``, which printed database and Redis passwords in full under
   ``--raw`` and ``--json``, and never masked anything without a flag; and the dashboard's
   ``GET /api/system/proxy``, which exposed credentials embedded in an upstream endpoint url on an
@@ -388,3 +395,8 @@ Not changes in this release. Carried into it, and worth knowing before you deplo
     at NUL;
   - Unicode look-alike dots (fullwidth ``．`` U+FF0E, sent as ``%EF%BC%8E``), on upstreams that apply
     Unicode normalisation before resolving dot segments.
+- Credential masking misses a URL that holds a password and an empty username
+  (``redis://:s3cret@cache.internal:6379/0``): ``asdict(secure=True)`` returns it in clear, so
+  ``harp-proxy system config`` can print it even though the help text of
+  the command says its output is safe to paste. Review that output before sharing it. Tracked in
+  `#999 <https://github.com/msqd/harp/issues/999>`_.
