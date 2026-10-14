@@ -270,17 +270,18 @@ class HttpProxyController(AbstractHttpProxyController):
         resolved_url = urljoin(base_url, relative_url)
         # The upstream may decode "%2e", "%2f" and "\\" before it resolves dot segments, which urljoin
         # does not. So containment is also decided on the decoded view of the path, while what we
-        # forward stays the raw path, byte for byte.
-        decoded_url = urljoin(base_url, unquote(raw_path).replace("\\", "/").lstrip("/"))
+        # forward stays the raw path, byte for byte. That view is never parsed as a URL again, only
+        # split into path segments, so a decoded "?", "#" or ":" is just a character.
+        if _escapes_base_path(unquote(raw_path), _base_path_of(base_url)):
+            raise ProxyRoutingError(context.request.path)
         # Defense in depth (SSRF / open-proxy): never let the forwarded request leave the configured
         # upstream origin, nor the subtree of it the endpoint url points at. urljoin resolves dot
         # segments, so "/../../admin" against an endpoint on "http://upstream/api/v1/" would reach
         # "http://upstream/admin" on the right origin, past the authority check.
-        for checked_url in (resolved_url, decoded_url):
-            if urlsplit(checked_url).netloc != urlsplit(base_url).netloc:
-                raise ProxyRoutingError(context.request.path)
-            if not (urlsplit(checked_url).path or "/").startswith(_base_path_of(base_url)):
-                raise ProxyRoutingError(context.request.path)
+        if urlsplit(resolved_url).netloc != urlsplit(base_url).netloc:
+            raise ProxyRoutingError(context.request.path)
+        if not (urlsplit(resolved_url).path or "/").startswith(_base_path_of(base_url)):
+            raise ProxyRoutingError(context.request.path)
         full_url = resolved_url + (f"?{urlencode(context.request.query)}" if context.request.query else "")
         return base_url, full_url
 
@@ -439,6 +440,27 @@ def _base_path_of(base_url: str) -> str:
     endpoint url with no path of its own exposes the whole origin, which gives "/".
     """
     return urlsplit(base_url).path.rsplit("/", 1)[0] + "/"
+
+
+def _escapes_base_path(decoded_path: str, base_path: str) -> bool:
+    """Whether dot segments of an already decoded path walk above the base path.
+
+    Works on segments only ("\\" read as "/"): the text is never parsed as a URL, so a decoded "?", "#"
+    or ":" cannot truncate the path or turn a segment into a scheme or authority.
+    """
+    if base_path == "/":
+        return False  # the whole origin is exposed, there is nothing to escape from
+    depth = 0  # segments below the base path
+    for segment in decoded_path.replace("\\", "/").lstrip("/").split("/"):
+        if segment == ".":
+            continue
+        if segment != "..":
+            depth += 1
+        elif depth == 0:
+            return True
+        else:
+            depth -= 1
+    return False
 
 
 @lru_cache
