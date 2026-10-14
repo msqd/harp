@@ -24,6 +24,7 @@ Fixed
 - ``make test-e2e-cache`` no longer reports success whatever happens. It could not run at all against a
   working copy, because the committed configuration pointed at a database nothing creates, and every
   guard around that failure was unable to report it.
+- ``make test-e2e-cache`` no longer exits 2 on a run where HARP logged no proxy error.
 
 Security
 ::::::::

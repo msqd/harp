@@ -88,6 +88,39 @@ class TestCheck:
         assert "2/3" in output
         assert "storage backend    sqlite" in output
 
+    def test_a_harp_log_without_proxy_errors_reaches_the_verdict(self, tmp_path, capsys):
+        run = write(tmp_path, "run.json", {"a": True, "b": True, "c": False})
+        log = tmp_path / "harp.log"
+        log.write_text("◀ 200 OK\n◀ 200 OK\n")
+
+        code = main(
+            ["check", "--baseline", str(baseline_file(tmp_path)), "--backend", "sqlite", "--harp-log", str(log)]
+            + [str(run)]
+        )
+
+        assert code == OK
+        assert "NOTE: HARP logged" not in capsys.readouterr().out
+
+    def test_proxy_errors_in_the_harp_log_are_counted(self, tmp_path, capsys):
+        run = write(tmp_path, "run.json", {"a": True, "b": True, "c": False})
+        log = tmp_path / "harp.log"
+        log.write_text("◀ HttpError 502\n◀ 200 OK\n◀ HttpError 500\n")
+
+        main(
+            [
+                "check",
+                "--baseline",
+                str(baseline_file(tmp_path)),
+                "--backend",
+                "sqlite",
+                "--harp-log",
+                str(log),
+                str(run),
+            ]
+        )
+
+        assert "HARP logged 2 failed request(s)" in capsys.readouterr().out
+
     def test_never_writes_the_baseline_even_when_the_run_improves_on_it(self, tmp_path, capsys):
         """Re-baselining is a deliberate act. A gate that absorbs an improvement absorbs a flap with it."""
         path = baseline_file(tmp_path)
