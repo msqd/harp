@@ -1,21 +1,24 @@
 """Security tests: the incoming request path must not redirect the proxy to another origin."""
 
+import re
+from itertools import product
+from random import Random
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 import pytest
-from httpx import AsyncClient
+from httpx import URL, AsyncClient, InvalidURL
 
 from harp.http import HttpRequest
 from harp_apps.proxy.controllers import HttpProxyController, ProxyRoutingError
 from harp_apps.proxy.settings import Endpoint
 
-# Scheme/host hidden behind a leading slash: urlsplit keeps it in the path, then urljoin
-# re-absolutizes it to another origin. These must be refused outright.
+# Scheme/host hidden behind a leading slash: urlsplit keeps it in the path. Appended to the base path,
+# it stays a path on the configured origin; it must never be read as another origin.
 SCHEME_BEARING_PATHS = ["/http://evil.com/x", "/https://evil.com/x", "/HTTP://evil.com/x"]
 
-# Paths that urljoin already normalizes back onto the configured upstream (must never escape either).
+# Paths whose scheme/host urlsplit drops, leaving a path on the configured upstream (must never escape either).
 NORMALIZED_PATHS = ["http://evil.com/x", "https://evil.com/x", "//evil.com/x", "///evil.com/x"]
 
 
@@ -48,12 +51,11 @@ async def test_forwarded_url_never_leaves_configured_origin(hostile_path):
 
 
 @pytest.mark.parametrize("hostile_path", SCHEME_BEARING_PATHS)
-async def test_scheme_bearing_request_path_is_rejected(hostile_path):
-    # A path like "/http://evil/" would be re-absolutized to another origin by urljoin; reject it.
+async def test_scheme_bearing_request_path_stays_a_path_on_the_configured_origin(hostile_path):
     controller = _controller()
     context = SimpleNamespace(request=HttpRequest(method="GET", path=hostile_path))
-    with pytest.raises(ProxyRoutingError):
-        await controller._get_next_url_for(context)
+    _base_url, full_url = await controller._get_next_url_for(context)
+    assert full_url == f"http://example.com{hostile_path}"
 
 
 async def test_normal_request_path_is_forwarded_unchanged():
@@ -100,15 +102,6 @@ async def test_path_escaping_the_base_path_returns_400_and_is_never_forwarded():
     controller = _controller("http://example.com/api/v1/")
     controller.forward = AsyncMock(side_effect=AssertionError("must not forward a hostile request"))
     response = await controller(HttpRequest(method="GET", path="/../../admin"))
-    assert response.status == 400
-    controller.forward.assert_not_called()
-
-
-async def test_scheme_bearing_path_returns_400_and_is_never_forwarded():
-    # End-to-end: a hostile path must yield a 400 and the proxy must never issue any upstream request.
-    controller = _controller()
-    controller.forward = AsyncMock(side_effect=AssertionError("must not forward a hostile request"))
-    response = await controller(HttpRequest(method="GET", path="/http://evil.com/x"))
     assert response.status == 400
     controller.forward.assert_not_called()
 
@@ -208,3 +201,136 @@ async def test_empty_segments_inside_ordinary_paths_are_forwarded(path):
     context = SimpleNamespace(request=HttpRequest(method="GET", path=path))
     _base_url, full_url = await controller._get_next_url_for(context)
     assert full_url.startswith("http://example.com/api/v1/"), full_url
+
+
+# Control and space bytes in a raw path: URL parsers strip or drop them (urljoin made " /api/..." an
+# absolute path), so what is checked and what is forwarded would differ. h2 lets them through in
+# ":path"; refuse them.
+CONTROL_BYTE_PATHS = [
+    "/ /api/v1/%2e%2e/%2e%2e/admin",
+    "/\x01/api/v1/%2e%2e/%2e%2e/admin",
+    "/\x1f/api/v1/%2e%2e/%2e%2e/admin",
+    "/ /api/v1/..%2f..%2fadmin",
+    "/ /api/%2e%2e/admin",
+    "/a\tb",
+    "/a\nb",
+    "/a\x7fb",
+    "/a b",
+]
+
+
+@pytest.mark.parametrize("base_url", ["http://example.com/api/v1/", "http://example.com/api/v1", "http://example.com"])
+@pytest.mark.parametrize("hostile_path", CONTROL_BYTE_PATHS)
+async def test_control_or_space_bytes_in_the_raw_path_return_400_and_are_never_forwarded(base_url, hostile_path):
+    controller = _controller(base_url)
+    controller.forward = AsyncMock(side_effect=AssertionError("must not forward a hostile request"))
+    response = await controller(HttpRequest(method="GET", path=hostile_path))
+    assert response.status == 400
+    controller.forward.assert_not_called()
+
+
+# Escapes that only exist on the way: the path ends up back inside the base path, but an upstream
+# resolving segment by segment would leave it in between. Literal and encoded dots get the same answer.
+TRANSIENT_ESCAPE_PATHS = ["/../v1/b", "/%2e%2e/v1/b", "/..%2fv1/b", "/a/../../v1/b"]
+
+
+@pytest.mark.parametrize("hostile_path", TRANSIENT_ESCAPE_PATHS)
+async def test_transient_escapes_of_the_base_path_are_rejected(hostile_path):
+    controller = _controller("http://example.com/api/v1/")
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=hostile_path))
+    with pytest.raises(ProxyRoutingError):
+        await controller._get_next_url_for(context)
+
+
+# The forwarded URL is the endpoint's base path followed by the raw path, never a re-parse of it: a
+# colon in the first segment is not a scheme, and what the guard checks is what goes out.
+@pytest.mark.parametrize("base_url", ["http://example.com/api/v1/", "http://example.com"])
+@pytest.mark.parametrize("path", ["/user:42", "/urn:isbn:0451450523/a", "/http://evil.com/x", "/a/b:c"])
+async def test_raw_path_is_appended_to_the_base_path_byte_for_byte(base_url, path):
+    controller = _controller(base_url)
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=path))
+    _base_url, full_url = await controller._get_next_url_for(context)
+    assert full_url == base_url.rstrip("/") + path
+
+
+# Property: whatever path comes in, an upstream that decodes once, reads "\\" as "/", merges slashes
+# and resolves dot segments (RFC 3986 5.2.4) on what was forwarded never lands outside the base path.
+PROPERTY_BASE_URLS = [
+    "http://upstream",
+    "http://upstream/",
+    "http://upstream/api",
+    "http://upstream/api/v1",
+    "http://upstream/api/v1/",
+]
+PROPERTY_ALPHABET = [
+    "",
+    ".",
+    "..",
+    "%2e",
+    "%2e%2e",
+    "%2f",
+    "%5c",
+    "\\",
+    " ",
+    "\x01",
+    "a",
+    "%3f",
+    "%23",
+    "%3A",
+    "api",
+    "v1",
+]
+
+
+def _generated_paths():
+    """Every path of up to 3 segments, then seeded random ones of 4 to 7 segments."""
+    for length in range(1, 4):
+        for segments in product(PROPERTY_ALPHABET, repeat=length):
+            yield "/" + "/".join(segments)
+    rng = Random(1017)
+    for _ in range(3000):
+        yield "/" + "/".join(rng.choices(PROPERTY_ALPHABET, k=rng.randint(4, 7)))
+
+
+def _remove_dot_segments(path):
+    """RFC 3986 5.2.4 on an absolute path whose slashes are already merged."""
+    segments = path.split("/")[1:]
+    output = []
+    for index, segment in enumerate(segments):
+        is_last = index == len(segments) - 1
+        if segment == "..":
+            if output:
+                output.pop()
+        elif segment != ".":
+            output.append(segment)
+            continue
+        if is_last:
+            output.append("")
+    return "/" + "/".join(output)
+
+
+def _as_resolved_by_upstream(full_url):
+    """The path an upstream decoding once and resolving dot segments serves for the URL we send."""
+    path = unquote(URL(full_url).raw_path.decode().split("?", 1)[0]).replace("\\", "/")
+    return _remove_dot_segments(re.sub("/+", "/", path))
+
+
+async def test_no_generated_path_resolves_outside_the_base_path_upstream():
+    for base_url in PROPERTY_BASE_URLS:
+        controller = _controller(base_url)
+        base_path = urlsplit(base_url).path.rsplit("/", 1)[0] + "/"
+        for path in _generated_paths():
+            context = SimpleNamespace(request=HttpRequest(method="GET", path=path))
+            try:
+                _base_url, full_url = await controller._get_next_url_for(context)
+            except ProxyRoutingError:
+                continue
+            assert urlsplit(full_url).netloc == "upstream", (base_url, path, full_url)
+            try:
+                URL(full_url)
+            except InvalidURL:
+                continue  # the http client refuses to send it
+            # httpx drops the trailing slash of a path ending in a literal dot segment ("/api/v1/a/.."
+            # goes out as "/api/v1"): that is the base resource itself, not a way out of it.
+            resolved = _as_resolved_by_upstream(full_url)
+            assert resolved.startswith(base_path) or resolved == base_path.rstrip("/"), (base_url, path, full_url)

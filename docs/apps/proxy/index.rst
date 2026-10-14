@@ -106,6 +106,22 @@ against, in the ordinary URL sense, so **end it with a slash if you mean it as a
 The last row is why the trailing slash matters: without it, the final segment is treated as a
 resource rather than a directory and is replaced, exactly as a relative link on a web page would be.
 
-A request may not leave the subtree the endpoint url points at. A path resolving above it, through
-``..`` segments, is refused with ``400 Bad Request`` and nothing is sent upstream. Dot segments that
-resolve back inside it are forwarded normally, so ``/a/b/../c`` reaches ``/a/c`` as expected.
+Path guard
+----------
+
+A request may not leave the subtree the endpoint url points at. The proxy appends the request path to
+that base path as received, and checks the result the way an upstream that decodes once would read
+it: ``%2e`` as ``.``, ``%2f`` and ``\`` as ``/``, empty and ``.`` segments ignored, ``..`` going one
+level up. These requests get ``400 Bad Request`` and nothing is sent upstream:
+
+- a path that goes above the base path, even if it comes back: on ``http://example.com/api/v1/``,
+  ``/../../admin``, ``/%2e%2e/admin``, ``/..%2fadmin`` and ``/../v1/b`` are all refused;
+- a path holding a space or control byte (``0x00`` to ``0x20``, ``0x7f``). HTTP/1.1 servers refuse them
+  already, HTTP/2 lets them through. ``%20`` is fine.
+
+Dot segments that stay inside it are forwarded normally, so ``/a/b/../c`` reaches ``/a/c`` as expected,
+and encoded characters inside a segment (``/user%3A42``, ``/a%2fb``) are forwarded unchanged.
+
+Not covered yet (`#1009 <https://github.com/msqd/harp/issues/1009>`_):``..;`` segments, double encoding (``%252e``) and overlong UTF-8. If
+your upstream reads any of those as a dot segment, do not rely on the base path alone to restrict
+access.
