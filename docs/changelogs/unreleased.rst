@@ -34,6 +34,7 @@ Security
 - ``multidict`` range widened to ``>=6.9.1,<7`` (GHSA-54p9-h82j-f925); shipped images no longer stay on 6.7.x.
 - Proxy path guard: percent-encoded dot segments (``%2e``), encoded slashes (``%2f``) and backslashes can no longer escape the endpoint base path (400); the raw path is still forwarded unchanged.
 - Proxy path guard: encoded ``%3f`` and ``%23`` can no longer hide a base path escape (400), and encoded ``%3A``/``%2F`` in a segment no longer get a legitimate request refused.
+- Proxy path guard: a space or control byte in a request path (reachable over HTTP/2) answers 400 instead of escaping the endpoint base path; containment is now decided on the forwarded URL, which is the base path followed by the raw request path (a ``:`` in the first segment is no longer read as a scheme).
 
 Removed
 :::::::

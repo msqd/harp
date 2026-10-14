@@ -5,7 +5,7 @@ from time import time
 from httpx import AsyncClient, codes
 from pyheck import shouty_snake
 from typing import Optional, cast, override
-from urllib.parse import unquote, urlencode, urljoin, urlsplit
+from urllib.parse import unquote, urlencode, urlsplit
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
@@ -261,28 +261,22 @@ class HttpProxyController(AbstractHttpProxyController):
 
     async def _get_next_url_for(self, context) -> tuple[str, str]:
         base_url = self.remote.get_url()
-        # Only the path component of the incoming request may influence the upstream URL. urlsplit
-        # drops a leading scheme/host ("http://evil/", "//evil/"), but a scheme hidden behind a
-        # leading slash ("/http://evil/") survives it and urljoin would re-absolutize it to another
-        # origin, so we re-check the result below.
+        if _has_control_or_space(context.request.path):
+            raise ProxyRoutingError(context.request.path)
+        # Only the path component of the incoming request may influence the upstream URL: urlsplit
+        # drops a leading scheme/host ("http://evil/", "//evil/"). The forwarded URL is the endpoint's
+        # origin and base path followed by that raw path, byte for byte. It is never re-parsed as a
+        # reference against the base (urljoin would read "/http://evil/" or "/user:42" as a scheme),
+        # so the origin is fixed by construction.
+        base = urlsplit(base_url)
+        base_path = _base_path_of(base_url)
         raw_path = urlsplit(context.request.path).path
-        relative_url = raw_path.lstrip("/")
-        resolved_url = urljoin(base_url, relative_url)
-        # The upstream may decode "%2e", "%2f" and "\\" before it resolves dot segments, which urljoin
-        # does not. So containment is also decided on the decoded view of the path, while what we
-        # forward stays the raw path, byte for byte. That view is never parsed as a URL again, only
-        # split into path segments, so a decoded "?", "#" or ":" is just a character.
-        if _escapes_base_path(unquote(raw_path), _base_path_of(base_url)):
+        forwarded_url = f"{base.scheme}://{base.netloc}{base_path}{raw_path.lstrip('/')}"
+        # Containment is decided on the path of the URL actually forwarded, as an upstream that decodes
+        # "%2e", "%2f" and "\\" before resolving dot segments would read it.
+        if _escapes_base_path(urlsplit(forwarded_url).path, base_path):
             raise ProxyRoutingError(context.request.path)
-        # Defense in depth (SSRF / open-proxy): never let the forwarded request leave the configured
-        # upstream origin, nor the subtree of it the endpoint url points at. urljoin resolves dot
-        # segments, so "/../../admin" against an endpoint on "http://upstream/api/v1/" would reach
-        # "http://upstream/admin" on the right origin, past the authority check.
-        if urlsplit(resolved_url).netloc != urlsplit(base_url).netloc:
-            raise ProxyRoutingError(context.request.path)
-        if not (urlsplit(resolved_url).path or "/").startswith(_base_path_of(base_url)):
-            raise ProxyRoutingError(context.request.path)
-        full_url = resolved_url + (f"?{urlencode(context.request.query)}" if context.request.query else "")
+        full_url = forwarded_url + (f"?{urlencode(context.request.query)}" if context.request.query else "")
         return base_url, full_url
 
     async def failure(
@@ -442,16 +436,27 @@ def _base_path_of(base_url: str) -> str:
     return urlsplit(base_url).path.rsplit("/", 1)[0] + "/"
 
 
-def _escapes_base_path(decoded_path: str, base_path: str) -> bool:
-    """Whether dot segments of an already decoded path walk above the base path.
+def _has_control_or_space(raw_path: str) -> bool:
+    """Whether a raw request path holds a byte no valid request target carries (<= 0x20 or 0x7f).
 
-    Works on segments only ("\\" read as "/"): the text is never parsed as a URL, so a decoded "?", "#"
-    or ":" cannot truncate the path or turn a segment into a scheme or authority.
+    URL parsers strip or drop such bytes (leading C0 and space, tabs and newlines anywhere), so a path
+    holding one does not read the same before and after parsing. HTTP/1.1 refuses them, h2 lets them
+    through in ":path".
+    """
+    return any(char <= " " or char == "\x7f" for char in raw_path)
+
+
+def _escapes_base_path(path: str, base_path: str) -> bool:
+    """Whether a forwarded path, which starts with the base path, leaves it at any point once decoded.
+
+    The part below the base path is percent-decoded once and walked segment by segment ("\\" read as
+    "/"), so an escape that comes back ("/../v1/b" on "/api/v1/") counts too. The decoded text is never
+    parsed as a URL, so a decoded "?", "#" or ":" cannot truncate the path or turn into a scheme.
     """
     if base_path == "/":
         return False  # the whole origin is exposed, there is nothing to escape from
     depth = 0  # segments below the base path
-    for segment in decoded_path.replace("\\", "/").lstrip("/").split("/"):
+    for segment in unquote(path[len(base_path) :]).replace("\\", "/").split("/"):
         if segment in ("", "."):
             continue  # upstreams may merge slashes, so an empty segment is no depth either
         if segment != "..":
