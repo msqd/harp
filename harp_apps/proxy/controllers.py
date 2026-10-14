@@ -1,3 +1,4 @@
+import re
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
 from functools import cached_property, lru_cache
@@ -5,7 +6,7 @@ from time import time
 from httpx import AsyncClient, codes
 from pyheck import shouty_snake
 from typing import Optional, cast, override
-from urllib.parse import unquote, urlencode, urlsplit
+from urllib.parse import urlencode, urlsplit
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
@@ -268,14 +269,16 @@ class HttpProxyController(AbstractHttpProxyController):
         # origin and base path followed by that raw path, byte for byte. It is never re-parsed as a
         # reference against the base (urljoin would read "/http://evil/" or "/user:42" as a scheme),
         # so the origin is fixed by construction.
-        base = urlsplit(base_url)
-        base_path = _base_path_of(base_url)
-        raw_path = urlsplit(context.request.path).path
-        forwarded_url = f"{base.scheme}://{base.netloc}{base_path}{raw_path.lstrip('/')}"
-        # Containment is decided on the path of the URL actually forwarded, as an upstream that decodes
-        # "%2e", "%2f" and "\\" before resolving dot segments would read it.
-        if _escapes_base_path(urlsplit(forwarded_url).path, base_path):
+        try:
+            raw_path = urlsplit(context.request.path).path
+        except ValueError as exc:  # "//[x/": an authority urlsplit cannot parse
+            raise ProxyRoutingError(context.request.path) from exc
+        # With no dot segment, nothing between here and the upstream (httpx, an upstream decoding once)
+        # has anything left to resolve, so the path forwarded stays below the base path as sent.
+        if _has_dot_segment(raw_path):
             raise ProxyRoutingError(context.request.path)
+        base = urlsplit(base_url)
+        forwarded_url = f"{base.scheme}://{base.netloc}{_base_path_of(base_url)}{raw_path.lstrip('/')}"
         full_url = forwarded_url + (f"?{urlencode(context.request.query)}" if context.request.query else "")
         return base_url, full_url
 
@@ -429,9 +432,9 @@ class HttpProxyController(AbstractHttpProxyController):
 def _base_path_of(base_url: str) -> str:
     """The upstream subtree an endpoint exposes, as a path prefix ending in a slash.
 
-    This is the part of the endpoint url that a relative reference resolves against, so an ordinary
-    request always lands inside it and only dot segments walking above it can fall outside. An
-    endpoint url with no path of its own exposes the whole origin, which gives "/".
+    This is the part of the endpoint url that a relative reference resolves against, so a request with
+    no dot segment always lands inside it. An endpoint url with no path of its own exposes the whole
+    origin, which gives "/".
     """
     return urlsplit(base_url).path.rsplit("/", 1)[0] + "/"
 
@@ -446,26 +449,17 @@ def _has_control_or_space(raw_path: str) -> bool:
     return any(char <= " " or char == "\x7f" for char in raw_path)
 
 
-def _escapes_base_path(path: str, base_path: str) -> bool:
-    """Whether a forwarded path, which starts with the base path, leaves it at any point once decoded.
+_PATH_SEPARATOR = re.compile(r"/|\\|%2f|%5c", re.IGNORECASE)
+_DOT_SEGMENT = re.compile(r"(?:\.|%2e){1,2}", re.IGNORECASE)
 
-    The part below the base path is percent-decoded once and walked segment by segment ("\\" read as
-    "/"), so an escape that comes back ("/../v1/b" on "/api/v1/") counts too. The decoded text is never
-    parsed as a URL, so a decoded "?", "#" or ":" cannot truncate the path or turn into a scheme.
+
+def _has_dot_segment(raw_path: str) -> bool:
+    """Whether a raw path holds a "." or ".." segment, as any normaliser on the way could read one.
+
+    Separators are "/", "\\" and their encodings "%2f" and "%5c"; dots may be literal or "%2e", in any
+    case and any mix. A dot inside a segment (".well-known", "v1.2", "a%2eb") is not a dot segment.
     """
-    if base_path == "/":
-        return False  # the whole origin is exposed, there is nothing to escape from
-    depth = 0  # segments below the base path
-    for segment in unquote(path[len(base_path) :]).replace("\\", "/").split("/"):
-        if segment in ("", "."):
-            continue  # upstreams may merge slashes, so an empty segment is no depth either
-        if segment != "..":
-            depth += 1
-        elif depth == 0:
-            return True
-        else:
-            depth -= 1
-    return False
+    return any(_DOT_SEGMENT.fullmatch(segment) for segment in _PATH_SEPARATOR.split(raw_path))
 
 
 @lru_cache

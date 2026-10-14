@@ -5,10 +5,10 @@ from itertools import product
 from random import Random
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
-from urllib.parse import unquote, urlsplit
+from urllib.parse import urlsplit
 
 import pytest
-from httpx import URL, AsyncClient, InvalidURL
+from httpx import URL, AsyncByteStream, AsyncClient, MockTransport, Response
 
 from harp.http import HttpRequest
 from harp_apps.proxy.controllers import HttpProxyController, ProxyRoutingError
@@ -27,9 +27,13 @@ NORMALIZED_PATHS = ["http://evil.com/x", "https://evil.com/x", "//evil.com/x", "
 # chose to expose, not the host.
 ESCAPING_PATHS = ["/../../admin", "/./../secret", "/a/../../../etc/passwd", "/.."]
 
-# Dot segments that resolve back inside the configured base path. These are ordinary requests and
-# must keep working.
-INNOCENT_PATHS = ["/api/echo", "/", "/a/b/c", "/a/../b", "/a/b/../c"]
+# Dot segments that would resolve back inside the configured base path. Clients normalise them before
+# sending, so a request still carrying one is refused like any other: nothing is left to normalise
+# between the guard and the wire.
+INSIDE_DOT_SEGMENT_PATHS = ["/a/../b", "/a/b/../c", "/a/./b", "/a/."]
+
+# Ordinary paths, forwarded on any endpoint.
+INNOCENT_PATHS = ["/api/echo", "/", "/a/b/c"]
 
 
 def _controller(url="http://example.com"):
@@ -78,23 +82,23 @@ async def test_forwarded_url_never_leaves_configured_base_path(base_url, hostile
 
 
 @pytest.mark.parametrize("base_url", ["http://example.com", "http://example.com/"])
-@pytest.mark.parametrize("path", ESCAPING_PATHS + INNOCENT_PATHS)
-async def test_endpoint_exposing_a_whole_origin_forwards_everything(base_url, path):
-    # Without a path of its own, the endpoint exposes the whole origin and there is no subtree to
-    # escape from. Nothing here should be refused.
+@pytest.mark.parametrize("path", INNOCENT_PATHS)
+async def test_endpoint_exposing_a_whole_origin_forwards_ordinary_paths(base_url, path):
     controller = _controller(base_url)
     context = SimpleNamespace(request=HttpRequest(method="GET", path=path))
     _base_url, full_url = await controller._get_next_url_for(context)
-    assert urlsplit(full_url).netloc == "example.com", full_url
+    assert full_url == f"http://example.com{path}"
 
 
-@pytest.mark.parametrize("path", INNOCENT_PATHS)
-async def test_paths_resolving_inside_the_base_path_are_forwarded(path):
-    # Dot segments are legitimate as long as they resolve back inside the exposed subtree.
-    controller = _controller("http://example.com/api/v1/")
+@pytest.mark.parametrize("base_url", ["http://example.com", "http://example.com/", "http://example.com/api/v1/"])
+@pytest.mark.parametrize("path", ESCAPING_PATHS + INSIDE_DOT_SEGMENT_PATHS)
+async def test_dot_segments_are_refused_wherever_they_would_resolve(base_url, path):
+    # Changed with #1020: dot segments resolving inside the base path, and any dot segment on an
+    # endpoint exposing a whole origin, used to be forwarded. The proxy now refuses them all.
+    controller = _controller(base_url)
     context = SimpleNamespace(request=HttpRequest(method="GET", path=path))
-    _base_url, full_url = await controller._get_next_url_for(context)
-    assert urlsplit(full_url).path.startswith("/api/v1/"), full_url
+    with pytest.raises(ProxyRoutingError):
+        await controller._get_next_url_for(context)
 
 
 async def test_path_escaping_the_base_path_returns_400_and_is_never_forwarded():
@@ -106,8 +110,8 @@ async def test_path_escaping_the_base_path_returns_400_and_is_never_forwarded():
     controller.forward.assert_not_called()
 
 
-# The upstream may decode before it resolves dot segments, so containment is decided on the decoded
-# path (with "\" read as "/"), whatever form the escape is hidden in.
+# The upstream may decode before it resolves dot segments, so an encoded dot or separator makes a dot
+# segment as much as a literal one does, whatever form the escape is hidden in.
 ENCODED_DOT_PATHS = ["/%2e%2e/%2e%2e/admin", "/%2E%2E/admin", "/.%2e/admin", "/%2e./admin", "/a/%2e%2E/%2e%2e/admin"]
 ENCODED_SLASH_PATHS = ["/..%2f..%2fadmin", "/..%2F..%2Fadmin", "/a%2f..%2f..%2fadmin"]
 BACKSLASH_PATHS = ["/x\\..\\..\\admin", "/..\\admin", "/%2e%2e\\admin"]
@@ -157,8 +161,7 @@ async def test_encoded_escape_returns_400_without_forwarding_or_tripping_the_bre
     assert controller.remote[base_url].status == status_before
 
 
-# Decoded "%3f" and "%23" must not be read as the start of a query or fragment: the decoded view is
-# only ever split into path segments.
+# Encoded "%3f" and "%23" must not be read as the start of a query or fragment and hide what follows.
 QUERY_FRAGMENT_ESCAPE_PATHS = [
     "/x%3f/%2e%2e/%2e%2e/admin",
     "/x%23/%2e%2e/%2e%2e/admin",
@@ -183,7 +186,7 @@ async def test_encoded_scheme_or_authority_lookalikes_are_ordinary_segments(path
     assert full_url == f"http://example.com/api/v1{path}"
 
 
-# Upstreams that merge slashes after decoding see no segment between "//": empty segments add no depth.
+# Upstreams that merge slashes after decoding see no segment between "//": empty segments hide nothing.
 EMPTY_SEGMENT_ESCAPE_PATHS = ["/a%2f%2f..%2f..%2fadmin", "/a%2f/..%2f..%2fadmin", "/a//../../admin"]
 
 
@@ -230,7 +233,7 @@ async def test_control_or_space_bytes_in_the_raw_path_return_400_and_are_never_f
 
 
 # Escapes that only exist on the way: the path ends up back inside the base path, but an upstream
-# resolving segment by segment would leave it in between. Literal and encoded dots get the same answer.
+# resolving segment by segment would leave it in between.
 TRANSIENT_ESCAPE_PATHS = ["/../v1/b", "/%2e%2e/v1/b", "/..%2fv1/b", "/a/../../v1/b"]
 
 
@@ -253,84 +256,170 @@ async def test_raw_path_is_appended_to_the_base_path_byte_for_byte(base_url, pat
     assert full_url == base_url.rstrip("/") + path
 
 
-# Property: whatever path comes in, an upstream that decodes once, reads "\\" as "/", merges slashes
-# and resolves dot segments (RFC 3986 5.2.4) on what was forwarded never lands outside the base path.
-PROPERTY_BASE_URLS = [
+# Rows of #1020: an encoded separator before literal dot segments. httpx splits on "/" only and
+# resolves the literal ".." before sending, so these went out above the base path.
+ENCODED_SEPARATOR_BEFORE_DOTS = [
+    ("http://example.com/api/v1", "/a%2fb/../.."),
+    ("http://example.com/api/v1", "/a\\b/../.."),
+    ("http://example.com/api/v1/", "/a%2fb%2fc/../../.."),
+    ("http://example.com/api/v1/", "/a%2fb/../.."),
+]
+
+
+@pytest.mark.parametrize("base_url, hostile_path", ENCODED_SEPARATOR_BEFORE_DOTS)
+async def test_encoded_separator_before_literal_dot_segments_returns_400_and_is_never_forwarded(base_url, hostile_path):
+    controller = _controller(base_url)
+    controller.forward = AsyncMock(side_effect=AssertionError("must not forward a hostile request"))
+    response = await controller(HttpRequest(method="GET", path=hostile_path))
+    assert response.status == 400
+    controller.forward.assert_not_called()
+
+
+# A dot segment is "." or ".." between any two separators the proxy, the http client or an upstream may
+# read as one ("/", "%2f", "%5c", "\\", any case), dots literal or "%2e" in any case and any mix.
+DOT_SEGMENT_PATHS = [
+    "/.",
+    "/..",
+    "/./a",
+    "/%2e",
+    "/%2E",
+    "/%2e%2E",
+    "/.%2e",
+    "/%2E.",
+    "/a%2f.",
+    "/a%2F..",
+    "/a%5c.",
+    "/a%5C%2e%2e",
+    "/a\\.",
+    "/a\\..\\b",
+    "/a%2f%2e%2fb",
+    "/a%2F.%2e%5Cb",
+    "/a/..%2fb",
+    "/a/.%5cb",
+    "/a/%2e\\b",
+]
+
+
+@pytest.mark.parametrize("base_url", ["http://example.com", "http://example.com/api/v1", "http://example.com/api/v1/"])
+@pytest.mark.parametrize("hostile_path", DOT_SEGMENT_PATHS)
+async def test_dot_segments_under_any_separator_and_dot_encoding_are_refused(base_url, hostile_path):
+    controller = _controller(base_url)
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=hostile_path))
+    with pytest.raises(ProxyRoutingError):
+        await controller._get_next_url_for(context)
+
+
+@pytest.mark.parametrize("hostile_path", ["//[x/", "//][@+"])
+async def test_request_path_urlsplit_cannot_parse_returns_400(hostile_path):
+    controller = _controller("http://example.com/api/v1/")
+    controller.forward = AsyncMock(side_effect=AssertionError("must not forward a hostile request"))
+    response = await controller(HttpRequest(method="GET", path=hostile_path))
+    assert response.status == 400
+    controller.forward.assert_not_called()
+
+
+# Dots inside a segment, or a segment that only starts or ends with a dot, are no dot segment.
+NOT_DOT_SEGMENT_PATHS = [
+    "/.well-known/x",
+    "/v1.2/x",
+    "/a..b",
+    "/...",
+    "/.a/b.",
+    "/users/a%2eb",
+    "/%2e%2e%2e",
+    "/user%3A42",
+    "/a%2fb",
+    "/search%20term",
+]
+
+
+@pytest.mark.parametrize("base_url", ["http://example.com", "http://example.com/", "http://example.com/api/v1/"])
+@pytest.mark.parametrize("path", NOT_DOT_SEGMENT_PATHS)
+async def test_paths_without_dot_segments_are_forwarded_byte_for_byte(base_url, path):
+    controller = _controller(base_url)
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=path))
+    _base_url, full_url = await controller._get_next_url_for(context)
+    assert full_url == base_url.rstrip("/") + path
+    assert URL(full_url).raw_path == (urlsplit(base_url).path.rstrip("/") + path).encode()
+
+
+# Property, on the wire: whatever path comes in, the proxy either answers 400, or httpx sends the base
+# path followed by the raw request path, byte for byte, with no dot segment under any separator.
+WIRE_BASE_URLS = [
     "http://upstream",
     "http://upstream/",
     "http://upstream/api",
     "http://upstream/api/v1",
     "http://upstream/api/v1/",
 ]
-PROPERTY_ALPHABET = [
-    "",
+WIRE_ALPHABET = [
     ".",
     "..",
     "%2e",
+    "%2E",
     "%2e%2e",
+    ".%2e",
     "%2f",
+    "%2F",
     "%5c",
     "\\",
-    " ",
-    "\x01",
+    "/",
+    "//",
     "a",
+    "b",
+    "api",
+    "v1",
     "%3f",
     "%23",
     "%3A",
-    "api",
-    "v1",
+    "[",
+    "]",
+    "@",
 ]
+WIRE_SEPARATORS = re.compile(r"/|\\|%2f|%5c", re.IGNORECASE)
+WIRE_DOT_SEGMENT = re.compile(r"(?:\.|%2e){1,2}", re.IGNORECASE)
 
 
 def _generated_paths():
-    """Every path of up to 3 segments, then seeded random ones of 4 to 7 segments."""
-    for length in range(1, 4):
-        for segments in product(PROPERTY_ALPHABET, repeat=length):
-            yield "/" + "/".join(segments)
-    rng = Random(1017)
-    for _ in range(3000):
-        yield "/" + "/".join(rng.choices(PROPERTY_ALPHABET, k=rng.randint(4, 7)))
+    """Every concatenation of up to 2 tokens, then seeded random ones of 3 to 8 tokens."""
+    for length in range(1, 3):
+        for tokens in product(WIRE_ALPHABET, repeat=length):
+            yield "/" + "".join(tokens)
+    rng = Random(1020)
+    for _ in range(1500):
+        yield "/" + "".join(rng.choices(WIRE_ALPHABET, k=rng.randint(3, 8)))
 
 
-def _remove_dot_segments(path):
-    """RFC 3986 5.2.4 on an absolute path whose slashes are already merged."""
-    segments = path.split("/")[1:]
-    output = []
-    for index, segment in enumerate(segments):
-        is_last = index == len(segments) - 1
-        if segment == "..":
-            if output:
-                output.pop()
-        elif segment != ".":
-            output.append(segment)
-            continue
-        if is_last:
-            output.append("")
-    return "/" + "/".join(output)
+def _has_wire_dot_segment(path):
+    return any(WIRE_DOT_SEGMENT.fullmatch(segment) for segment in WIRE_SEPARATORS.split(path))
 
 
-def _as_resolved_by_upstream(full_url):
-    """The path an upstream decoding once and resolving dot segments serves for the URL we send."""
-    path = unquote(URL(full_url).raw_path.decode().split("?", 1)[0]).replace("\\", "/")
-    return _remove_dot_segments(re.sub("/+", "/", path))
+class _EmptyStream(AsyncByteStream):
+    """A streamed body, so the client times the response as a real transport would."""
+
+    async def __aiter__(self):
+        yield b""
 
 
-async def test_no_generated_path_resolves_outside_the_base_path_upstream():
-    for base_url in PROPERTY_BASE_URLS:
-        controller = _controller(base_url)
+async def test_what_httpx_sends_stays_under_the_base_path_with_no_dot_segment():
+    sent = []
+
+    def upstream(request):
+        sent.append(request.url.raw_path.decode("ascii"))
+        return Response(200, stream=_EmptyStream())
+
+    for base_url in WIRE_BASE_URLS:
+        endpoint = Endpoint.from_kwargs(settings={"name": "test", "port": 80, "url": base_url})
+        client = AsyncClient(transport=MockTransport(upstream))
+        controller = HttpProxyController(http_client=client, remote=endpoint.remote, name="test", logging=False)
         base_path = urlsplit(base_url).path.rsplit("/", 1)[0] + "/"
         for path in _generated_paths():
-            context = SimpleNamespace(request=HttpRequest(method="GET", path=path))
-            try:
-                _base_url, full_url = await controller._get_next_url_for(context)
-            except ProxyRoutingError:
+            sent.clear()
+            response = await controller(HttpRequest(method="GET", path=path))
+            if response.status == 400:
+                assert not sent, (base_url, path, sent)
                 continue
-            assert urlsplit(full_url).netloc == "upstream", (base_url, path, full_url)
-            try:
-                URL(full_url)
-            except InvalidURL:
-                continue  # the http client refuses to send it
-            # httpx drops the trailing slash of a path ending in a literal dot segment ("/api/v1/a/.."
-            # goes out as "/api/v1"): that is the base resource itself, not a way out of it.
-            resolved = _as_resolved_by_upstream(full_url)
-            assert resolved.startswith(base_path) or resolved == base_path.rstrip("/"), (base_url, path, full_url)
+            assert response.status == 200, (base_url, path, response.status)
+            (wire,) = sent
+            assert wire == base_path + urlsplit(path).path.lstrip("/"), (base_url, path, wire)
+            assert not _has_wire_dot_segment(wire), (base_url, path, wire)
