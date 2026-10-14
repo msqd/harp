@@ -39,10 +39,10 @@ def _parser() -> ArgumentParser:
     check.add_argument("--baseline", required=True, type=Path)
     check.add_argument("--backend", required=True, help="storage backend the runs were measured on")
     check.add_argument(
-        "--harp-errors",
-        type=int,
+        "--harp-log",
+        type=Path,
         default=None,
-        help="how many requests HARP logged as failed, used to audit the gate's own reading of the verdicts",
+        help="HARP's log of the run, whose failed requests audit the gate's own reading of the verdicts",
     )
     check.add_argument("runs", nargs="+", type=Path, help="one run, or two to confirm a regression")
 
@@ -58,6 +58,16 @@ def _parser() -> ArgumentParser:
     return parser
 
 
+#: What HARP logs for a request it failed to proxy.
+PROXY_ERROR_MARKER = "◀ HttpError"
+
+
+def _count_proxy_errors(log: Path | None) -> int | None:
+    if log is None or not log.is_file():
+        return None
+    return sum(PROXY_ERROR_MARKER in line for line in log.read_text(errors="replace").splitlines())
+
+
 def _check(options) -> int:
     baseline = load_baseline(options.baseline)
 
@@ -69,7 +79,7 @@ def _check(options) -> int:
         return CANNOT_COMPARE
 
     runs = [load_run(path) for path in options.runs]
-    print(render(baseline, runs, backend=options.backend, harp_errors=options.harp_errors))
+    print(render(baseline, runs, backend=options.backend, harp_errors=_count_proxy_errors(options.harp_log)))
 
     return REGRESSED if compare(baseline.results, runs).regressions else OK
 

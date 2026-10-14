@@ -187,17 +187,14 @@ fi
 
 check() {
     (cd "$REPO_DIR" && uv run --project "$REPO_DIR" python -m tests.cache_compliance check \
-        --baseline "$BASELINE" --backend "$BACKEND" --harp-errors "$(harp_error_count)" "$@")
+        --baseline "$BASELINE" --backend "$BACKEND" --harp-log "$RESULTS_DIR/harp.log" "$@")
 }
 
-# HARP's own count of requests it failed to proxy. The comparison recognises those failures by
-# reading upstream's prose, which is the one thing here that can silently stop matching if the suite
-# is updated. This is a second, independent instrument pointed at the same fact: if HARP logged proxy
-# errors and the comparison recognised none, the report says the pattern may have gone stale rather
-# than quietly reporting a clean run.
-harp_error_count() {
-    grep -c "◀ HttpError" "$RESULTS_DIR/harp.log" 2>/dev/null || echo 0
-}
+# --harp-log: HARP's own record of requests it failed to proxy. The comparison recognises those
+# failures by reading upstream's prose, which is the one thing here that can silently stop matching if
+# the suite is updated. The log is a second, independent instrument pointed at the same fact: if HARP
+# logged proxy errors and the comparison recognised none, the report says the pattern may have gone
+# stale rather than quietly reporting a clean run.
 
 echo ""
 set +e
