@@ -97,6 +97,28 @@ does not execute, and why a green run is a weaker statement than it looks.
     `#875 <https://github.com/msqd/harp/issues/875>`_ fixes the template pin and removes this caveat.
 
 
+Run the RFC 9111 compliance suite, on PostgreSQL
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+``make qa`` does not run it. It is a separate target, and the release run must name its storage
+backend, because the same suite on SQLite and on PostgreSQL are two different measurements.
+
+.. code-block:: shell
+
+    CACHE_TESTS_DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/cachetests \
+        uv run make test-e2e-cache
+
+**Run it on PostgreSQL, not the SQLite default.** SQLite does not enforce column widths, and a
+40-character ``blobs.id`` reached the 0.10 release candidate because every instrument pointed at it
+was pointed at SQLite. The default exists so a contributor can run the suite with nothing installed;
+it is not what validates a release.
+
+The target prints the score with its backend and fails on any test that passed in the recorded
+baseline and fails twice in a row. It does **not** fail on a lower percentage: see
+``docs/adr/0003-cache-compliance-compared-per-test-against-a-pinned-baseline.md`` for why, and
+``misc/cache-tests/README.md`` for how to read the report.
+
+
 Eventually commit the updated dependencies
 ::::::::::::::::::::::::::::::::::::::::::
 
