@@ -128,5 +128,8 @@ segment as is (``curl --path-as-is``) gets the 400. Dots inside a segment are no
 characters (``/user%3A42``, ``/a%2fb``).
 
 Not covered yet (`#1009 <https://github.com/msqd/harp/issues/1009>`_): ``..;`` segments, double
-encoding (``%252e``) and overlong UTF-8. If your upstream reads any of those as a dot segment, do not
-rely on the base path alone to restrict access.
+encoding (``%252e``), overlong UTF-8, a dot segment followed by an encoded NUL (``/%2e%2e%00/x``) and
+Unicode look-alike dots (fullwidth ``．`` U+FF0E, sent as ``%EF%BC%8E``). Each escapes only on an
+upstream that reads it as a dot segment (one that treats ``..;`` as ``..``, decodes twice, accepts
+overlong UTF-8, truncates at NUL, or applies Unicode normalisation before resolving dot segments). If
+your upstream does, do not rely on the base path alone to restrict access.
