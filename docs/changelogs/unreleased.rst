@@ -29,6 +29,9 @@ Fixed
 Security
 ::::::::
 
+- Upgraded dependencies with open advisories: anyio 4.14.2, aiohttp 3.14.5, h2 4.4.1, hpack 4.2.0 and
+  cryptography 50.0.2 (``mysql`` extra). The ``aiohttp`` and ``cryptography`` ranges are widened accordingly.
+
 Removed
 :::::::
 
