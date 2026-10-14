@@ -162,3 +162,49 @@ async def test_encoded_escape_returns_400_without_forwarding_or_tripping_the_bre
     controller.forward.assert_not_called()
     base_url = controller.remote.get_url()
     assert controller.remote[base_url].status == status_before
+
+
+# Decoded "%3f" and "%23" must not be read as the start of a query or fragment: the decoded view is
+# only ever split into path segments.
+QUERY_FRAGMENT_ESCAPE_PATHS = [
+    "/x%3f/%2e%2e/%2e%2e/admin",
+    "/x%23/%2e%2e/%2e%2e/admin",
+    "/x%3F/..%2f..%2fadmin",
+    "/x%23\\..\\..\\admin",
+]
+
+
+@pytest.mark.parametrize("hostile_path", QUERY_FRAGMENT_ESCAPE_PATHS)
+async def test_encoded_query_or_fragment_markers_hiding_an_escape_are_rejected(hostile_path):
+    controller = _controller("http://example.com/api/v1/")
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=hostile_path))
+    with pytest.raises(ProxyRoutingError):
+        await controller._get_next_url_for(context)
+
+
+@pytest.mark.parametrize("path", ["/user%3A42", "/https%3A%2F%2Fgithub.com%2Ffoo", "/a%3fb%23c"])
+async def test_encoded_scheme_or_authority_lookalikes_are_ordinary_segments(path):
+    controller = _controller("http://example.com/api/v1/")
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=path))
+    _base_url, full_url = await controller._get_next_url_for(context)
+    assert full_url == f"http://example.com/api/v1{path}"
+
+
+# Upstreams that merge slashes after decoding see no segment between "//": empty segments add no depth.
+EMPTY_SEGMENT_ESCAPE_PATHS = ["/a%2f%2f..%2f..%2fadmin", "/a%2f/..%2f..%2fadmin", "/a//../../admin"]
+
+
+@pytest.mark.parametrize("hostile_path", EMPTY_SEGMENT_ESCAPE_PATHS)
+async def test_empty_segments_do_not_hide_an_escape(hostile_path):
+    controller = _controller("http://example.com/api/v1/")
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=hostile_path))
+    with pytest.raises(ProxyRoutingError):
+        await controller._get_next_url_for(context)
+
+
+@pytest.mark.parametrize("path", ["/a//b", "/users/a%2eb", "/user%3A42", "/a%2f%2fb"])
+async def test_empty_segments_inside_ordinary_paths_are_forwarded(path):
+    controller = _controller("http://example.com/api/v1/")
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=path))
+    _base_url, full_url = await controller._get_next_url_for(context)
+    assert full_url.startswith("http://example.com/api/v1/"), full_url

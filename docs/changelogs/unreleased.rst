@@ -33,6 +33,7 @@ Security
   cryptography 50.0.2 (``mysql`` extra). The ``aiohttp`` and ``cryptography`` ranges are widened accordingly.
 - ``multidict`` range widened to ``>=6.9.1,<7`` (GHSA-54p9-h82j-f925); shipped images no longer stay on 6.7.x.
 - Proxy path guard: percent-encoded dot segments (``%2e``), encoded slashes (``%2f``) and backslashes can no longer escape the endpoint base path (400); the raw path is still forwarded unchanged.
+- Proxy path guard: encoded ``%3f`` and ``%23`` can no longer hide a base path escape (400), and encoded ``%3A``/``%2F`` in a segment no longer get a legitimate request refused.
 
 Removed
 :::::::
