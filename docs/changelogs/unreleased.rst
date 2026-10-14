@@ -31,6 +31,7 @@ Security
 
 - Upgraded dependencies with open advisories: anyio 4.14.2, aiohttp 3.14.5, h2 4.4.1, hpack 4.2.0 and
   cryptography 50.0.2 (``mysql`` extra). The ``aiohttp`` and ``cryptography`` ranges are widened accordingly.
+- Proxy path guard: percent-encoded dot segments (``%2e``), encoded slashes (``%2f``) and backslashes can no longer escape the endpoint base path (400); the raw path is still forwarded unchanged.
 
 Removed
 :::::::
