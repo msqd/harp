@@ -188,3 +188,23 @@ async def test_encoded_scheme_or_authority_lookalikes_are_ordinary_segments(path
     context = SimpleNamespace(request=HttpRequest(method="GET", path=path))
     _base_url, full_url = await controller._get_next_url_for(context)
     assert full_url == f"http://example.com/api/v1{path}"
+
+
+# Upstreams that merge slashes after decoding see no segment between "//": empty segments add no depth.
+EMPTY_SEGMENT_ESCAPE_PATHS = ["/a%2f%2f..%2f..%2fadmin", "/a%2f/..%2f..%2fadmin", "/a//../../admin"]
+
+
+@pytest.mark.parametrize("hostile_path", EMPTY_SEGMENT_ESCAPE_PATHS)
+async def test_empty_segments_do_not_hide_an_escape(hostile_path):
+    controller = _controller("http://example.com/api/v1/")
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=hostile_path))
+    with pytest.raises(ProxyRoutingError):
+        await controller._get_next_url_for(context)
+
+
+@pytest.mark.parametrize("path", ["/a//b", "/users/a%2eb", "/user%3A42", "/a%2f%2fb"])
+async def test_empty_segments_inside_ordinary_paths_are_forwarded(path):
+    controller = _controller("http://example.com/api/v1/")
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=path))
+    _base_url, full_url = await controller._get_next_url_for(context)
+    assert full_url.startswith("http://example.com/api/v1/"), full_url

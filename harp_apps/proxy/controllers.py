@@ -452,8 +452,8 @@ def _escapes_base_path(decoded_path: str, base_path: str) -> bool:
         return False  # the whole origin is exposed, there is nothing to escape from
     depth = 0  # segments below the base path
     for segment in decoded_path.replace("\\", "/").lstrip("/").split("/"):
-        if segment == ".":
-            continue
+        if segment in ("", "."):
+            continue  # upstreams may merge slashes, so an empty segment is no depth either
         if segment != "..":
             depth += 1
         elif depth == 0:
