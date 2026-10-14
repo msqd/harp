@@ -111,3 +111,54 @@ async def test_scheme_bearing_path_returns_400_and_is_never_forwarded():
     response = await controller(HttpRequest(method="GET", path="/http://evil.com/x"))
     assert response.status == 400
     controller.forward.assert_not_called()
+
+
+# The upstream may decode before it resolves dot segments, so containment is decided on the decoded
+# path (with "\" read as "/"), whatever form the escape is hidden in.
+ENCODED_DOT_PATHS = ["/%2e%2e/%2e%2e/admin", "/%2E%2E/admin", "/.%2e/admin", "/%2e./admin", "/a/%2e%2E/%2e%2e/admin"]
+ENCODED_SLASH_PATHS = ["/..%2f..%2fadmin", "/..%2F..%2Fadmin", "/a%2f..%2f..%2fadmin"]
+BACKSLASH_PATHS = ["/x\\..\\..\\admin", "/..\\admin", "/%2e%2e\\admin"]
+
+
+@pytest.mark.parametrize("hostile_path", ENCODED_DOT_PATHS)
+async def test_encoded_dot_segments_escaping_the_base_path_are_rejected(hostile_path):
+    controller = _controller("http://example.com/api/v1/")
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=hostile_path))
+    with pytest.raises(ProxyRoutingError):
+        await controller._get_next_url_for(context)
+
+
+@pytest.mark.parametrize("hostile_path", ENCODED_SLASH_PATHS)
+async def test_encoded_slashes_hiding_an_escape_are_rejected(hostile_path):
+    controller = _controller("http://example.com/api/v1/")
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=hostile_path))
+    with pytest.raises(ProxyRoutingError):
+        await controller._get_next_url_for(context)
+
+
+@pytest.mark.parametrize("hostile_path", BACKSLASH_PATHS)
+async def test_backslashes_hiding_an_escape_are_rejected(hostile_path):
+    controller = _controller("http://example.com/api/v1/")
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=hostile_path))
+    with pytest.raises(ProxyRoutingError):
+        await controller._get_next_url_for(context)
+
+
+@pytest.mark.parametrize("path", ["/users/a%2eb", "/search%20term", "/a%2fb", "/x%5cy"])
+async def test_encoded_characters_inside_a_segment_are_forwarded_with_raw_bytes(path):
+    controller = _controller("http://example.com/api/v1/")
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=path))
+    _base_url, full_url = await controller._get_next_url_for(context)
+    assert full_url == f"http://example.com/api/v1{path}"
+
+
+@pytest.mark.parametrize("hostile_path", [ENCODED_DOT_PATHS[0], ENCODED_SLASH_PATHS[0], BACKSLASH_PATHS[0]])
+async def test_encoded_escape_returns_400_without_forwarding_or_tripping_the_breaker(hostile_path):
+    controller = _controller("http://example.com/api/v1/")
+    controller.forward = AsyncMock(side_effect=AssertionError("must not forward a hostile request"))
+    status_before = controller.remote[controller.remote.get_url()].status
+    response = await controller(HttpRequest(method="GET", path=hostile_path))
+    assert response.status == 400
+    controller.forward.assert_not_called()
+    base_url = controller.remote.get_url()
+    assert controller.remote[base_url].status == status_before
