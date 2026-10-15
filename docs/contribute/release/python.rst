@@ -353,7 +353,9 @@ Then open the next version on ``main``, through a pull request: ``pyproject.toml
 Builds from ``main`` then report a development version.
 
 **After a patch release.** Bring its changelog file to ``main`` through a pull request, so the
-documentation of the next version lists it.
+documentation of the next version lists it. The same pull request deletes the
+``changelog.d/`` fragments the patch shipped, so the next minor release notes only list what is new
+since.
 
 Version Naming Conventions
 ---------------------------

@@ -191,7 +191,9 @@ The release manager performs these steps before creating a release:
       uv run towncrier build --draft --version 0.9.0 --date 2025-01-15 > docs/changelogs/0.9.0.rst
       git rm changelog.d/*.*.rst
 
-   The ``changelog.d/README.rst`` file stays. Check the first lines of the new file: the ``Version
+   The ``changelog.d/README.rst`` file stays. After a patch release, the pull request that brings
+   ``X.Y.Z.rst`` to ``main`` also runs ``git rm`` on the fragments that patch shipped, so the next
+   ``X.Y+1.0`` lists only what is new since. Check the first lines of the new file: the ``Version
    X.Y.Z (date)`` title and its underline must come first.
 
 3. **Update changelog index**
