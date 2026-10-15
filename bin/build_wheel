@@ -37,9 +37,6 @@ else
     python -m build
 fi
 
-# Copy to the original dist directory
-cp dist/* "$PWD_ORIG/dist/"
-
 # Verify frontend assets are included in the wheel.
 #
 # Counted with Python's zipfile rather than `unzip`, which is not installed
@@ -86,3 +83,7 @@ if [ -n "$UVX" ]; then
 else
     twine check dist/*
 fi
+
+# Copy to the original dist directory, only once the wheel has passed every check above:
+# a rejected wheel left in dist/ would be uploaded by anything publishing dist/*.
+cp dist/* "$PWD_ORIG/dist/"
