@@ -1,0 +1,8 @@
+Version 0.10.1 (2026-10-15)
+===========================
+
+Fixed
+:::::
+
+- Accept ``--set key=value`` in ``system config`` and ``system services``, and preserve ``=`` in configuration values.
+- Render ``--help`` of commands taking ``--set`` without raw ``[code]`` markup.
