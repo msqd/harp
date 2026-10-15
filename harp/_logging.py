@@ -68,7 +68,7 @@ def _get_logging_level(name: Optional[str], *, default="warning"):
 
 logging_config = {
     "version": 1,
-    "disable_existing_loggers": True,
+    "disable_existing_loggers": False,
     "formatters": LOGGING_FORMATTERS,
     "handlers": {
         "console": {
@@ -97,14 +97,16 @@ logging_config = {
 }
 
 
-logging.config.dictConfig(logging_config)
+def configure_logging() -> None:
+    """Apply stdlib and structlog configuration. Called by the command line entrypoint, never at import."""
+    logging.config.dictConfig(logging_config)
 
-structlog.configure(
-    logger_factory=structlog.stdlib.LoggerFactory(),
-    wrapper_class=structlog.stdlib.BoundLogger,
-    processors=processors,
-    cache_logger_on_first_use=True,
-)
+    structlog.configure(
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        processors=processors,
+        cache_logger_on_first_use=True,
+    )
 
 
 def get_logger(name, *args: Any, **initial_values: Any) -> Any:
@@ -121,4 +123,4 @@ def get_logger(name, *args: Any, **initial_values: Any) -> Any:
     return structlog.get_logger(name, *args, **initial_values)
 
 
-__all__ = ["get_logger"]
+__all__ = ["configure_logging", "get_logger"]

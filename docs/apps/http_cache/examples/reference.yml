@@ -9,18 +9,17 @@ http_cache:
   # Cache policy (default: hishel.SpecificationPolicy with RFC 9111-compliant options)
   policy:
     type: hishel.SpecificationPolicy
-    arguments:
-      cache_options:
-        shared: true  # Shared cache mode
-        supported_methods: [GET, HEAD]  # Cacheable methods
-        allow_stale: false  # Don't serve stale responses
+    options:
+      shared: true  # Shared cache mode
+      supported_methods: [GET, HEAD]  # Cacheable methods
+      allow_stale: false  # Don't serve stale responses
 
   # Cache storage (default: harp_apps.http_cache.storages.AsyncStorage)
   storage:
     base: hishel.AsyncBaseStorage
     type: harp_apps.http_cache.storages.AsyncStorage
     arguments:
-      ttl: null  # No automatic expiration
+      ttl: 86400  # Expire entries 24 hours after they were stored or freshened; null disables
       check_ttl_every: 60.0  # Check for expired entries every 60 seconds
       # Retain responses whose only freshness hint is Last-Modified (RFC 9111 §4.2.2). Off, because
       # the cache key is built from the request URL alone: an upstream that authenticates callers by

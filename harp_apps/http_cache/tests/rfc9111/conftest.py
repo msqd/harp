@@ -6,6 +6,7 @@ This module provides reusable test infrastructure for verifying HARP's
 HTTP caching implementation complies with RFC 9111 (HTTP Caching).
 """
 
+from harp_apps.http_cache.tests import ENDPOINT_HOOKS
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -13,7 +14,9 @@ import pytest
 from hishel import CacheOptions, SpecificationPolicy
 from httpx import AsyncClient, Response, AsyncHTTPTransport
 
+from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
+from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
 
 
 # ============================================================================
@@ -54,7 +57,35 @@ async def cached_client(mock_storage, rfc_compliant_policy):
         policy=rfc_compliant_policy,
     )
 
-    async with AsyncClient(transport=transport) as client:
+    async with AsyncClient(transport=transport, event_hooks=ENDPOINT_HOOKS) as client:
+        yield client
+
+
+@pytest.fixture(params=["double", "real"])
+def any_storage(request, mock_storage):
+    """A cache storage: the test double, and the real one production runs.
+
+    Behaviour that lives in ``AsyncStorage`` rather than in hishel is invisible to the double,
+    because the double implements it independently and correctly. Freshening a stored entry on
+    a 304 is exactly such behaviour: with the double alone the suite reports green while
+    production revalidates forever. Anything asserting what the cache *retains* across requests
+    has to be run against both, or it is testing the fixture.
+    """
+    if request.param == "double":
+        return mock_storage
+    return AsyncStorage(MemoryBlobStorage())
+
+
+@pytest.fixture
+async def any_cached_client(any_storage, rfc_compliant_policy):
+    """The ``cached_client`` above, once per storage implementation."""
+    transport = AsyncCacheTransport(
+        next_transport=AsyncHTTPTransport(),
+        storage=any_storage,
+        policy=rfc_compliant_policy,
+    )
+
+    async with AsyncClient(transport=transport, event_hooks=ENDPOINT_HOOKS) as client:
         yield client
 
 
@@ -95,7 +126,8 @@ def make_cacheable_response(
         private: Add Cache-Control: private directive
         public: Add Cache-Control: public directive
         must_revalidate: Add Cache-Control: must-revalidate directive
-        **extra_headers: Additional headers to include
+        **extra_headers: Additional headers to include (``date=...`` overrides the default
+            ``Date``, which is the current time)
 
     Returns:
         Response object with configured headers
@@ -104,7 +136,7 @@ def make_cacheable_response(
         >>> make_cacheable_response(max_age=3600, etag="abc123")
         Response with Cache-Control: max-age=3600 and ETag: "abc123"
     """
-    headers = {"content-type": "text/plain"}
+    headers = {"content-type": "text/plain", "date": http_date()}
 
     # Build Cache-Control header
     cache_control_parts = []

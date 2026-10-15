@@ -46,9 +46,7 @@ CLIENTS = pytest.mark.parametrize("make_client", [_uncached_client, _cached_clie
 async def _proxy(make_client, response: Response, times: int = 1) -> dict:
     """Proxy `times` upstream responses and return the headers the client ends up with."""
     endpoint = Endpoint.from_kwargs(settings={"name": "test", "port": 80, "url": "http://example.com/"})
-    controller = HttpProxyController(
-        http_client=make_client(), remote=endpoint.remote, name=endpoint.settings.name
-    )
+    controller = HttpProxyController(http_client=make_client(), remote=endpoint.remote, name=endpoint.settings.name)
     with respx.mock:
         respx.get("http://example.com/").mock(return_value=response)
         for _ in range(times):

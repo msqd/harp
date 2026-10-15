@@ -20,8 +20,7 @@ http_client:
 #   enabled: true
 #   policy:
 #     type: hishel.SpecificationPolicy
-#     arguments:
-#       cache_options:
-#         shared: true
-#         supported_methods: [GET, HEAD]
-#         allow_stale: false
+#     options:
+#       shared: true
+#       supported_methods: [GET, HEAD]
+#       allow_stale: false

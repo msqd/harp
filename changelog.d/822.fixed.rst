@@ -1,0 +1,1 @@
+Wheel no longer ships stray ``.d.ts`` files: ``vite-plugin-dts`` runs only in the frontend lib build, and ``bin/build_wheel`` fails if the wheel holds one under ``web/``.
