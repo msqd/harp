@@ -399,8 +399,12 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "INSTALL_FROM=local" >> $GITHUB_OUTPUT
 
-          # For version branches (e.g., 0.9), tag as 0.9-git and enable push
-          if echo "${{ github.ref_name }}" | grep -qE '^[0-9]+\.[0-9]+$'; then
+          # main publishes "unstable"; version branches (e.g., 0.9) publish "0.9-git"
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            TAGS="ghcr.io/${{ github.repository }}:unstable,makersquad/harp-proxy:unstable"
+            PUSH="true"
+            echo "Docker tags (main): $TAGS"
+          elif echo "${{ github.ref_name }}" | grep -qE '^[0-9]+\.[0-9]+$'; then
             TAGS="ghcr.io/${{ github.repository }}:${{ github.ref_name }}-git,makersquad/harp-proxy:${{ github.ref_name }}-git"
             PUSH="true"
             echo "Docker tags (version branch): $TAGS"
