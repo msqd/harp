@@ -20,6 +20,7 @@ Changed
 - Pushes to ``main`` publish the ``unstable`` Docker image; version moves to ``0.11.0.dev0``.
 - Dashboard Help link opens the ``X.Y`` docs only for final releases, ``latest`` otherwise.
 - Docs no longer inject an "unreleased" banner; Read the Docs notifications replace it.
+- ``uv.lock`` resolves ``redis`` 8.0 and ``hishel`` 1.3, the top of their declared ranges; cache and storage suites pass against them (#869).
 
 Fixed
 :::::
