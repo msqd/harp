@@ -24,7 +24,8 @@ dependencies = [
     "dataclasses-json>=0.6,<0.7",
     "dataclasses-jsonschema>=2.16,<2.17",
     "essentials-configuration>=2.0,<2.1",
-    "hishel>=1.1.7,<1.4.0",
+    # Capped below 1.1.10: it regresses the RFC 9111 suite (conditional-etag-vary-headers-mismatch, see #869).
+    "hishel>=1.1.7,<1.1.10",
     "http-router>=5.0,<6.0",
     # Imported directly (harp.utils.urls, http_cache). httpx 0.28 itself requires httpcore 1.*.
     "httpcore>=1.0,<2",
