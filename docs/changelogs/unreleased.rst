@@ -20,6 +20,7 @@ Changed
 - Pushes to ``main`` publish the ``unstable`` Docker image; version moves to ``0.11.0.dev0``.
 - Dashboard Help link opens the ``X.Y`` docs only for final releases, ``latest`` otherwise.
 - Docs no longer inject an "unreleased" banner; Read the Docs notifications replace it.
+- ``click``, ``httpcore`` and ``prometheus-client`` are declared dependencies (they were imported but resolved only through ``rich-click``, ``httpx`` and ``asgi-prometheus``); a test fails when shipped code imports an undeclared distribution (#900).
 - ``uv.lock`` upgraded to fixed releases for every open Dependabot advisory except asyncmy (no fix; documented, use aiomysql); ``pytest`` cap widened to ``<10`` and ``pytest-asyncio`` to ``<1.4`` (#1012).
 - ``uv.lock`` resolves ``redis`` 8.0 and ``hishel`` 1.3, the top of their declared ranges; cache and storage suites pass against them (#869).
 

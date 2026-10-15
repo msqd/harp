@@ -18,12 +18,16 @@ dependencies = [
     "asgimiddlewarestaticfile>=0.6,<0.7",
     "asgiref>=3.10,<3.13",
     "asyncpg>=0.30,<0.31",
+    # Imported directly (harp.commandline). 9.0 removes BaseCommand, which we cast to.
+    "click>=8.1,<9",
     "colorama>=0.4,<0.5",
     "dataclasses-json>=0.6,<0.7",
     "dataclasses-jsonschema>=2.16,<2.17",
     "essentials-configuration>=2.0,<2.1",
     "hishel>=1.1.7,<1.4.0",
     "http-router>=5.0,<6.0",
+    # Imported directly (harp.utils.urls, http_cache). httpx 0.28 itself requires httpcore 1.*.
+    "httpcore>=1.0,<2",
     "httpx>=0.27,<0.29",
     "hypercorn>=0.17,<0.18",
     "multidict>=6.9.1,<7",
@@ -33,6 +37,8 @@ dependencies = [
     # packages. We use two frozen names from it (Version, InvalidVersion).
     "packaging>=23.2",
     "passlib>=1.7,<1.8",
+    # Imported directly (harp_apps.metrics, harp.commandline.server).
+    "prometheus-client>=0.20,<1",
     "psycopg2-binary>=2.9,<2.10",
     "pydantic>=2.12,<2.13",
     "pyheck>=0.1,<0.2",
