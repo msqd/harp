@@ -28,6 +28,7 @@ Fixed
 - ``harp create project`` keeps author name, author email and project name verbatim (quotes, backslashes, Jinja, shell characters), and the ``uv tool run`` fallback runs a pinned cookiecutter (#1003).
 - Frontend build no longer deletes the tracked ``harp_apps/dashboard/web/.gitkeep``, so a local build leaves the checkout clean (no ``-dirty`` version).
 - Cache: a stored response with no ``Date`` header now gets one set to its time of receipt, so its ``max-age`` expires instead of serving fresh forever (#963).
+- Cache: a request reaching the cache transport without an endpoint name now raises a clear error instead of falling into a shared ``__upstream__`` namespace (#913).
 - ``harp create project`` floors ``harp-proxy`` at the installed version, ``.dev0`` for pre-releases and dev builds, so a scaffold installs during a pre-release window (#875).
 - GitHub release notes no longer start with YAML front matter (#1033).
 - ``make wheel`` no longer leaves a wheel in ``dist/`` when its asset check or ``twine check`` fails (#1004).

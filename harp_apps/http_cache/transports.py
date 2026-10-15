@@ -19,7 +19,12 @@ logger = get_logger(__name__)
 
 def _rewrite_request_url(request: httpx.Request) -> str:
     # We change the internal request url to use a host containing our proxy name, to avoid multiple cache for load balanced endpoints.
-    endpoint_name = request.extensions.get("harp", {}).get("endpoint", "__upstream__")
+    endpoint_name = request.extensions.get("harp", {}).get("endpoint")
+    if not endpoint_name:
+        raise ValueError(
+            f"The cache transport requires an endpoint name in request.extensions['harp']['endpoint'] "
+            f"(url={request.url}); without it, unrelated requests would share one cache namespace."
+        )
     return str(request.url.copy_with(netloc=ensure_bytes(endpoint_name), host=endpoint_name))
 
 
