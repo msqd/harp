@@ -15,6 +15,7 @@ from sqlalchemy import update
 from harp.models import Blob
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.janitor.settings import JanitorSettings
+from harp_apps.janitor.tests import worker_with_grace
 from harp_apps.janitor.worker import JanitorWorker
 from harp_apps.storage.models import Blob as SqlBlob
 from harp_apps.storage.services.blob_storages.sql import SqlBlobStorage
@@ -48,7 +49,7 @@ def sql_only(blob_storage: IBlobStorage):
 class TestJanitorAndHttpCache(StorageTestFixtureMixin):
     @pytest.fixture
     def worker(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
-        return JanitorWorker(sql_storage, blob_storage, JanitorSettings(), orphan_grace=NO_GRACE)
+        return worker_with_grace(sql_storage, blob_storage, JanitorSettings(), NO_GRACE)
 
     @pytest.fixture
     def cache(self, blob_storage: IBlobStorage):
@@ -117,7 +118,7 @@ class TestOrphanGrace(StorageTestFixtureMixin):
             await session.commit()
 
     async def test_young_orphans_are_kept(self, sql_storage, blob_storage):
-        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings(), orphan_grace=timedelta(minutes=10))
+        worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(minutes=10))
         young = await self.create_blob(blob_storage, "young")
         old = await self.create_blob(blob_storage, "old")
         await self.age(sql_storage, old.id, timedelta(minutes=11))
@@ -130,7 +131,7 @@ class TestOrphanGrace(StorageTestFixtureMixin):
     async def test_putting_an_old_blob_again_protects_it_from_the_next_sweep(self, sql_storage, blob_storage):
         """Single process window: a producer finds the content already stored, then the sweep runs
         before its message commits."""
-        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings(), orphan_grace=timedelta(minutes=10))
+        worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(minutes=10))
         blob = await self.create_blob(blob_storage, "reused")
         await self.age(sql_storage, blob.id, timedelta(hours=3))
 
@@ -145,7 +146,7 @@ class TestBlobStorageSharedByInstances(StorageTestFixtureMixin):
         if blob_storage.type != "sql":
             pytest.skip("sql only")
         a, b = blob_storage, SqlBlobStorage(sql_engine)
-        worker = JanitorWorker(sql_storage, a, JanitorSettings(), orphan_grace=NO_GRACE)
+        worker = worker_with_grace(sql_storage, a, JanitorSettings(), NO_GRACE)
 
         x = await self.create_blob(a, "x")
         await self.create_blob(b, "x")

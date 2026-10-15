@@ -23,18 +23,13 @@ PROMETHEUS_GAUGES = {
 
 
 class JanitorWorker:
-    def __init__(
-        self,
-        storage: IStorage,
-        blob_storage: IBlobStorage,
-        settings: JanitorSettings,
-        *,
-        orphan_grace: timedelta = ORPHAN_GRACE,
-    ):
+    #: Orphans written more recently than this are kept, see :data:`~harp_apps.storage.models.blobs.ORPHAN_GRACE`.
+    orphan_grace: timedelta = ORPHAN_GRACE
+
+    def __init__(self, storage: IStorage, blob_storage: IBlobStorage, settings: JanitorSettings):
         self.storage: SqlStorage = cast(SqlStorage, storage)
         self.blob_storage: IBlobStorage = blob_storage
         self.settings = settings
-        self.orphan_grace = orphan_grace
 
         self.running = False
         self.session_factory = self.storage.session_factory
