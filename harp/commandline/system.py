@@ -217,7 +217,7 @@ def config_subcommand(raw=False, json=False, unsecure=False, **kwargs):
             console.print(tree)
 
 
-@system.command("services", short_help="Prints the configured services.")
+@system.command("services", cls=_EnhancedParserCommand, short_help="Prints the configured services.")
 @_server_click_options
 def services_subcommand(**kwargs):
     """Prints all configured services with their dependencies and configuration.
