@@ -822,7 +822,7 @@ requires-dist = [
     { name = "redis", specifier = ">=5.2,<8.1" },
     { name = "rich", specifier = ">=14.0,<15" },
     { name = "rich-click", specifier = ">=1.9,<1.10" },
-    { name = "rodi", specifier = ">=2.0,<2.1" },
+    { name = "rodi", specifier = ">=2.0,<2.2" },
     { name = "sentry-sdk", specifier = ">=2.18,<3.0" },
     { name = "slack-sdk", specifier = ">=3.37,<3.38" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0,<2.1" },
@@ -1777,11 +1777,11 @@ wheels = [
 
 [[package]]
 name = "rodi"
-version = "2.0.8"
+version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/28/5c/2d914ad5f15bbd1cbf8589db4ec18a4b23806cbfa543f7ff91bacdf937f7/rodi-2.0.8.tar.gz", hash = "sha256:de122527dc6c0dd2d28bf57ac425b9dd22e37535fb1d7d22eadab0a079edcbe4", size = 13961, upload-time = "2025-04-12T09:10:37.708Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/19/e6/72d8fbdaf8e70b5e717a889f7d35f4983173cdcd3a5c1a9e427d064bb4c2/rodi-2.1.0.tar.gz", hash = "sha256:7e1548361dcff5eb5e5228c752ed9a3ac1535cbdc1ba0561deeb63b686f069c5", size = 16780, upload-time = "2026-03-08T19:31:22.467Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/71/2b/95b00bd0c37cae49d8d3ec6313799260ac5788763a7c64015685190ea4e2/rodi-2.0.8-py3-none-any.whl", hash = "sha256:78a4ee6a29b4a4ce5d7474e3585149b3e78d613dc0cd2a10719b7a7f0f30ca05", size = 12713, upload-time = "2025-04-12T09:10:36.455Z" },
+    { url = "https://files.pythonhosted.org/packages/96/34/9565181b12a94139376b49645f2439d57f14d01082e12d28f8d88f1a2b27/rodi-2.1.0-py3-none-any.whl", hash = "sha256:cfca0d9b9f6693850d2ec01c5680aed5f5e356aafe4494671dc8caddd569d654", size = 14734, upload-time = "2026-03-08T19:31:21.374Z" },
 ]
 
 [[package]]
