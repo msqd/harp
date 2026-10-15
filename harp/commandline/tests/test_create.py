@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from click.testing import CliRunner
 
-from harp.commandline.create import create
+from harp.commandline.create import create, harp_requirement
 
 WHICH_BOTH = {"cookiecutter": "/usr/bin/cookiecutter", "uv": "/usr/bin/uv"}
 GIT_AUTHOR = {"user.name": "Ada Lovelace", "user.email": "ada@example.com"}
@@ -124,3 +124,26 @@ class TestDocsProcessCommand:
         _cwd, command = HonchoManagerFactory()._get_docs_executable(None)
         assert "uv run" in command
         assert "poetry" not in command.lower()
+
+
+class TestHarpRequirement:
+    """The generated project's harp-proxy floor derives from the installed harp version."""
+
+    def test_stable_release_floors_at_the_release(self):
+        assert harp_requirement("0.10.0") == "harp-proxy>=0.10.0"
+
+    def test_post_release_floors_at_the_release(self):
+        assert harp_requirement("0.10.0.post1") == "harp-proxy>=0.10.0"
+
+    def test_pre_release_floors_at_dev0_of_the_release(self):
+        assert harp_requirement("0.11.0a1") == "harp-proxy>=0.11.0.dev0"
+        assert harp_requirement("0.11.0rc2") == "harp-proxy>=0.11.0.dev0"
+
+    def test_dev_build_floors_at_dev0_of_the_release(self):
+        assert harp_requirement("0.11.0.dev0") == "harp-proxy>=0.11.0.dev0"
+        assert harp_requirement("0.11.0.dev3+g1234abc") == "harp-proxy>=0.11.0.dev0"
+
+    def test_context_carries_the_requirement_of_the_installed_version(self):
+        with patch("harp.commandline.create.importlib.metadata.version", return_value="0.11.0.dev0"):
+            _, _, captured = _run(["my-proj"], git=GIT_AUTHOR)
+        assert captured["config"]["default_context"]["__harp_requirement"] == "harp-proxy>=0.11.0.dev0"

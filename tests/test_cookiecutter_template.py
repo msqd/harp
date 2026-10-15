@@ -48,16 +48,32 @@ class TestPyprojectToml:
         """Verify harp-proxy dependency exists in dependencies list."""
         # In PEP 621, dependencies are in [project] section
         assert "dependencies" in pyproject_content, "should have dependencies key"
-        assert "harp-proxy" in pyproject_content, "should depend on harp-proxy"
+        assert "cookiecutter.__harp_requirement" in pyproject_content, "should depend on harp-proxy"
 
-    def test_harp_proxy_is_pinned_to_at_least_0_10(self, pyproject_content):
-        """Verify harp-proxy is pinned to >=0.10.0.
+    def test_harp_proxy_floor_comes_from_the_context_not_the_template(self, pyproject_content):
+        """No harp version is hard-coded: the floor is injected by ``harp create``.
 
-        The generated config.yml is a fully-commented reference that only loads without crashing
-        from harp-proxy 0.10.0 onwards (the empty/comments-only config loader fix). An unpinned
-        dependency would let a scaffold install an older release and crash on ``make start``.
+        A fixed ``>=X.Y.Z`` excludes pre-releases (PEP 440), so a scaffold made during a
+        pre-release window could not install.
         """
-        assert "harp-proxy>=0.10.0" in pyproject_content, "harp-proxy should be pinned to >=0.10.0"
+        assert not re.search(r"harp-proxy\s*[<>=~!]", pyproject_content), "template must not pin a harp version"
+        assert "{{cookiecutter.__harp_requirement}}" in pyproject_content
+
+    @pytest.mark.parametrize("requirement", ["harp-proxy>=0.10.0", "harp-proxy>=0.11.0.dev0"])
+    def test_rendered_pyproject_uses_the_injected_requirement(self, tmp_path, requirement):
+        import tomllib
+
+        from cookiecutter.main import cookiecutter
+
+        project_dir = cookiecutter(
+            str(TEMPLATE_DIR),
+            output_dir=str(tmp_path),
+            no_input=True,
+            extra_context={"name": "Floor", "__harp_requirement": requirement},
+        )
+
+        dependencies = tomllib.loads(Path(project_dir, "pyproject.toml").read_text())["project"]["dependencies"]
+        assert dependencies == [requirement]
 
     def test_package_mode_conditional_preserved(self, pyproject_content):
         """Verify hatchling build configuration conditional logic is preserved for Jinja2."""
@@ -248,10 +264,8 @@ class TestPyprojectTomlDependencyFormat:
 
     def test_harp_proxy_in_dependencies_array(self, pyproject_content):
         """Verify harp-proxy is specified in dependencies array."""
-        # The dependency should be in array format, could be:
-        # dependencies = ["harp-proxy"]
-        # or dependencies = ["harp-proxy>=0.9.0"]
-        assert re.search(r'dependencies\s*=\s*\[[^\]]*"harp-proxy[^"]*"', pyproject_content), (
+        # The requirement string (name and floor) is injected as ``__harp_requirement``.
+        assert re.search(r'dependencies\s*=\s*\[[^\]]*"\{\{cookiecutter\.__harp_requirement\}\}"', pyproject_content), (
             "harp-proxy should be in dependencies array"
         )
 

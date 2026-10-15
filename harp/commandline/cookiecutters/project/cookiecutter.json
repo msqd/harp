@@ -6,6 +6,7 @@
   "author_email": "anonymous@harp-proxy.net",
   "create_application": true,
   "create_config": true,
+  "__harp_requirement": "harp-proxy",
   "__example_config": "{}",
   "__prompts__": {
     "name": "Project name (used to generate directory and package names)",
