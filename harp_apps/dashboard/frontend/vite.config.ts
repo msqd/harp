@@ -97,10 +97,8 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       ...(mode === "lib" ? [] : [emptyOutDirExcept(resolve(__dirname, "../web"), [".gitkeep"])]),
-      dts({
-        insertTypesEntry: true,
-        staticImport: true,
-      }),
+      // Declarations are for the lib build only: the app build writes into ../web, which ships in the wheel.
+      ...(mode === "lib" ? [dts({ insertTypesEntry: true, staticImport: true })] : []),
       tsconfigPaths(),
       react({
         babel: {

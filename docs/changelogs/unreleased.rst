@@ -24,13 +24,14 @@ Changed
 Fixed
 :::::
 
-- Dashboard: unknown URLs and unknown transactions show a "not found" page inside the layout instead of a crash screen or an empty card, and the "copy transaction link" button yields ``/transactions/<id>`` from the detail page (#877).
+- Wheel no longer ships stray ``.d.ts`` files: ``vite-plugin-dts`` runs only in the frontend lib build, and ``bin/build_wheel`` fails if the wheel holds one under ``web/`` (#822).
 - ``harp create project`` keeps author name, author email and project name verbatim (quotes, backslashes, Jinja, shell characters), and the ``uv tool run`` fallback runs a pinned cookiecutter (#1003).
 - Frontend build no longer deletes the tracked ``harp_apps/dashboard/web/.gitkeep``, so a local build leaves the checkout clean (no ``-dirty`` version).
 - Cache: a stored response with no ``Date`` header now gets one set to its time of receipt, so its ``max-age`` expires instead of serving fresh forever (#963).
 - ``harp create project`` floors ``harp-proxy`` at the installed version, ``.dev0`` for pre-releases and dev builds, so a scaffold installs during a pre-release window (#875).
 - GitHub release notes no longer start with YAML front matter (#1033).
 - ``make wheel`` no longer leaves a wheel in ``dist/`` when its asset check or ``twine check`` fails (#1004).
+- Dashboard: unknown URLs and unknown transactions show a "not found" page inside the layout instead of a crash screen or an empty card, and the "copy transaction link" button yields ``/transactions/<id>`` from the detail page (#877).
 
 Security
 ::::::::
