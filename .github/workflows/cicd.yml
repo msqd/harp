@@ -44,6 +44,54 @@ jobs:
       - name: uv.lock is up to date with pyproject.toml (if this fails, run `uv lock` and commit)
         run: uv lock --check
 
+  lint-python:
+    name: Lint Python
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: ruff check (if this fails, run `make format` and fix what remains)
+        run: uv run ruff check harp harp_apps tests
+
+      - name: ruff format --check (if this fails, run `make format` and commit)
+        run: uv run ruff format --check harp harp_apps tests
+
+  lint-frontend:
+    name: Lint Frontend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+          cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: cd harp_apps/dashboard/frontend && pnpm install --ignore-workspace
+
+      - name: pnpm lint (if this fails, run `make lint-frontend` locally)
+        run: cd harp_apps/dashboard/frontend && pnpm lint
+
   test-backend-core:
     name: Test Backend Core (Py${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -180,7 +228,6 @@ jobs:
     name: Build Documentation
     runs-on: ubuntu-latest
     needs: check-lockfile
-    continue-on-error: true
     permissions:
       contents: read
     steps:
@@ -214,7 +261,6 @@ jobs:
   build-storybook:
     name: Build Storybook
     runs-on: ubuntu-latest
-    continue-on-error: true
     permissions:
       contents: read
     steps:
@@ -275,11 +321,6 @@ jobs:
           chmod +x bin/validate_version
           bin/validate_version "${{ steps.version.outputs.version }}"
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-
       - name: Install uv
         uses: astral-sh/setup-uv@v4
         with:
@@ -321,6 +362,10 @@ jobs:
       - test-backend-apps
       - test-backend-e2e
       - test-frontend-unit
+      - lint-python
+      - lint-frontend
+      - build-documentation
+      - build-storybook
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -602,7 +647,7 @@ jobs:
       - name: Convert changelog to Markdown
         if: steps.changelog.outputs.exists == 'true'
         run: |
-          pandoc --wrap=none -s -o changes.md "${{ steps.changelog.outputs.file }}"
+          pandoc --wrap=none --shift-heading-level-by=-1 -o changes.md "${{ steps.changelog.outputs.file }}"
           echo "Generated changes.md from ${{ steps.changelog.outputs.file }}"
 
       - name: Create fallback changelog
