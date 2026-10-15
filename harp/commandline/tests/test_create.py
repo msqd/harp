@@ -147,3 +147,44 @@ class TestHarpRequirement:
         with patch("harp.commandline.create.importlib.metadata.version", return_value="0.11.0.dev0"):
             _, _, captured = _run(["my-proj"], git=GIT_AUTHOR)
         assert captured["config"]["default_context"]["__harp_requirement"] == "harp-proxy>=0.11.0.dev0"
+
+
+class TestHarpSource:
+    """`--harp-source` / `HARP_SOURCE` scaffold the project against a local harp checkout."""
+
+    def test_defaults_to_no_source(self):
+        _, _, captured = _run(["my-proj"], git=GIT_AUTHOR)
+        assert captured["config"]["default_context"]["__harp_source"] == ""
+
+    def test_option_passes_the_checkout_path(self, tmp_path):
+        (tmp_path / "pyproject.toml").write_text("")
+        _, _, captured = _run(["my-proj", "--harp-source", str(tmp_path)], git=GIT_AUTHOR)
+        assert captured["config"]["default_context"]["__harp_source"] == str(tmp_path)
+
+    def test_environment_variable_is_the_default(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_text("")
+        monkeypatch.setenv("HARP_SOURCE", str(tmp_path))
+        _, _, captured = _run(["my-proj"], git=GIT_AUTHOR)
+        assert captured["config"]["default_context"]["__harp_source"] == str(tmp_path)
+
+    def test_relative_path_is_made_absolute(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_text("")
+        monkeypatch.chdir(tmp_path.parent)
+        _, _, captured = _run(["my-proj", "--harp-source", tmp_path.name], git=GIT_AUTHOR)
+        assert captured["config"]["default_context"]["__harp_source"] == str(tmp_path)
+
+    def test_rejects_a_directory_that_is_not_a_checkout(self, tmp_path):
+        result, run, _ = _run(["my-proj", "--harp-source", str(tmp_path)], git=GIT_AUTHOR)
+        assert result.exit_code != 0
+        assert "pyproject.toml" in result.output
+        run.assert_not_called()
+
+    def test_rejects_a_missing_path(self, tmp_path):
+        result, run, _ = _run(["my-proj", "--harp-source", str(tmp_path / "nope")], git=GIT_AUTHOR)
+        assert result.exit_code != 0
+        run.assert_not_called()
+
+    def test_help_documents_the_option(self):
+        result = CliRunner().invoke(create, ["--help"])
+        assert "--harp-source" in result.output
+        assert "HARP_SOURCE" in result.output

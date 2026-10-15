@@ -54,16 +54,25 @@ def _cookiecutter_command():
 @click.argument("name", required=False)
 @click.option("--no-app", is_flag=True, help="Do not create an application folder for custom code.")
 @click.option("--no-config", is_flag=True, help="Do not create a config.yml file.")
-def create(template, name, no_app, no_config):
+@click.option(
+    "--harp-source",
+    envvar="HARP_SOURCE",
+    type=click.Path(file_okay=False, resolve_path=True),
+    help="Path to a local harp checkout to install editable instead of the released harp-proxy (env: HARP_SOURCE).",
+)
+def create(template, name, no_app, no_config, harp_source):
     """Creates a new project using cookiecutter.
 
     The project name can be passed as an argument to skip the interactive prompt; author
     information is taken from your git config when available. Use --no-app / --no-config to
     opt out of the application folder or the config file. The project depends on ``harp-proxy``
-    at least at the installed version (``.dev0`` floor for pre-releases and dev builds).
+    at least at the installed version (``.dev0`` floor for pre-releases and dev builds), unless --harp-source points to a local harp
+    checkout, which is installed editable instead (handy to test unreleased changes).
     """
 
     command = _cookiecutter_command()
+    if harp_source and not os.path.isfile(os.path.join(harp_source, "pyproject.toml")):
+        raise click.UsageError(f"--harp-source {harp_source!r} is not a harp checkout (no pyproject.toml found).")
     template_path = os.path.join(templates.__path__[0], template)
 
     if not name:
@@ -77,6 +86,7 @@ def create(template, name, no_app, no_config):
         "author_email": author_email,
         "create_application": not no_app,
         "create_config": not no_config,
+        "__harp_source": harp_source or "",
         "__harp_requirement": harp_requirement(importlib.metadata.version("harp-proxy")),
         # A commented, source-introspected reference config.yml; empty when config is skipped.
         "__example_config": "" if no_config else render_example_config(),
