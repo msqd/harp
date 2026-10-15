@@ -27,7 +27,7 @@ def iter_app_settings(builder: ConfigurationBuilder | None = None):
     """Yield ``(app_name, default_settings)`` for each default application that defines settings.
 
     ``app_name`` is the top-level configuration key (the application's short name); applications
-    without a settings model (e.g. ``janitor``) are skipped.
+    without a settings model are skipped.
     """
     builder = builder or ConfigurationBuilder()
     for name, app in builder.applications.items():
