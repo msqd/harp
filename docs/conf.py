@@ -116,15 +116,3 @@ if ALGOLIA_APIKEY and READTHEDOCS_VERSION == "latest":
     docsearch_api_key = ALGOLIA_APIKEY
     docsearch_index_name = "harp-proxy"
 
-
-if READTHEDOCS_VERSION and READTHEDOCS_VERSION != "latest":
-    rst_prolog = (
-        """
-    .. admonition::
-
-        This documentation is for an **unreleased** version of HARP Proxy.
-        For the latest released version, see `latest <https://docs.harp-proxy.net/en/latest>`_.
-
-    """.strip()
-        + "\n\n"
-    )

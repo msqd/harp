@@ -125,7 +125,8 @@ def make_cacheable_response(
         private: Add Cache-Control: private directive
         public: Add Cache-Control: public directive
         must_revalidate: Add Cache-Control: must-revalidate directive
-        **extra_headers: Additional headers to include
+        **extra_headers: Additional headers to include (``date=...`` overrides the default
+            ``Date``, which is the current time)
 
     Returns:
         Response object with configured headers
@@ -134,7 +135,7 @@ def make_cacheable_response(
         >>> make_cacheable_response(max_age=3600, etag="abc123")
         Response with Cache-Control: max-age=3600 and ETag: "abc123"
     """
-    headers = {"content-type": "text/plain"}
+    headers = {"content-type": "text/plain", "date": http_date()}
 
     # Build Cache-Control header
     cache_control_parts = []
