@@ -1,0 +1,1 @@
+Lock resolves ``redis`` 8.0 and ``hishel`` 1.3, the top of their declared ranges; cache and storage suites pass against them.

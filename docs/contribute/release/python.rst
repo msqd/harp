@@ -116,32 +116,24 @@ requests:
 2. Prepare the Changelog
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The version's changelog file usually exists already, carrying an ``(unreleased)`` header, because
-contributors have been adding entries to it while the release was prepared. In that case do not
-move anything: edit the header in place and replace ``(unreleased)`` with today's date.
+Contributors add a fragment to ``changelog.d/`` with each pull request. Build them into the
+version's changelog file, then remove them:
 
-.. code-block:: rst
+.. code-block:: bash
 
-    Version 0.9.0 (2025-01-15)
-    ==========================
+    # For version 0.9.0
+    uv run towncrier build --draft --version 0.9.0 --date 2025-01-15 > docs/changelogs/0.9.0.rst
+    git rm changelog.d/*.*.rst
 
-The ``Version `` prefix is part of the convention, and the ``=`` underline must be at least as long
-as the title. Match the two exactly, as the existing changelogs do.
+The file starts with the title ``Version 0.9.0 (2025-01-15)`` and an ``=`` underline at least as
+long. The ``Version `` prefix is part of the convention. Add ``0.9.0`` to ``docs/changelogs/index.rst``.
 
 .. warning::
 
     Nothing in the build will tell you if you get this wrong. A malformed title or a short underline
     is not reported by ``make docs``, so check the rendered page yourself.
 
-If the version has no changelog file yet, create one by moving the accumulated entries into it, then
-add the header above:
-
-.. code-block:: bash
-
-    # For version 0.9.0
-    mv docs/changelogs/unreleased.rst docs/changelogs/0.9.0.rst
-
-Either way, make sure an empty ``unreleased.rst`` is left in place for the next cycle.
+``changelog.d/README.rst`` stays in place for the next cycle.
 
 See :doc:`changelog` for complete changelog management workflow.
 
@@ -345,7 +337,7 @@ Once the workflow completes successfully:
 and refuses force-push and deletion; copy it from ``gh api repos/msqd/harp/branches/main/protection``.
 
 Then open the next version on ``main``, through a pull request: ``pyproject.toml`` moves to
-``X.Y+1.0.dev0`` (``uv lock`` again) and ``docs/changelogs/unreleased.rst`` is present and empty.
+``X.Y+1.0.dev0`` (``uv lock`` again) and ``changelog.d/`` holds no fragment but its ``README.rst``.
 Builds from ``main`` then report a development version.
 
 **After a patch release.** Bring its changelog file to ``main`` through a pull request, so the
@@ -525,7 +517,7 @@ Best Practices
 
 * **Test thoroughly before releasing** - Run the full test suite locally
 * **Use release candidates for major versions** - Create ``X.Y.Z-rc1`` before ``X.Y.Z``
-* **Keep the changelog updated** - Add entries per PR/feature (see :doc:`changelog`)
+* **Keep the changelog updated** - Add a fragment per PR/feature (see :doc:`changelog`)
 * **Document breaking changes clearly** - Use "Important Changes" section
 * **Release often** - Small, frequent releases are better than large, infrequent ones
 * **Monitor after release** - Watch for issues reported after release

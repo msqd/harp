@@ -161,7 +161,7 @@ Turn it on if you know your upstreams do not serve per-caller responses, or mark
     Whether heuristics are on or off, this is a **shared** cache. An upstream serving responses that
     differ per caller must say so, with ``Cache-Control: private`` or with a ``Vary`` naming the
     header that distinguishes them. HARP honours both, and will not guess which of your headers
-    carries an identity.
+    carries an identity. See the :ref:`shared cache warning <http-cache-shared>`.
 
 
 Custom implementations
