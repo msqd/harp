@@ -1,13 +1,21 @@
+# HARP configuration for the RFC 9111 compliance suite (see README.md).
+#
+# The proxy endpoint is NOT declared here: `run-tests.sh` passes it with `--endpoint`, so the ports
+# live in one place and can be moved with CACHE_TESTS_PROXY_PORT / CACHE_TESTS_ORIGIN_PORT. Declaring
+# it here as well makes HARP refuse to start, with "Endpoint «cache-tests» already exists".
+#
+# The application set is not declared here either. In a configuration file, `applications:` only
+# *adds* to the defaults and never restricts them (harp/config/builders/configuration.py); only the
+# `--applications` command line flag restricts. The suite runs with the dashboard off so it does not
+# bind a second port it has no use for.
+#
+# `storage.url` below is deliberately a file rather than HARP's `:memory:` default: on the in-memory
+# default the HTTP cache mostly does not cache, and the suite scores 40% instead of 57%.
+# `run-tests.sh` overrides it with an absolute path under `results/`.
+
 http_client: { }
 
 http_cache: { }
 
-proxy:
-  endpoints:
-    - name: cache-tests
-      description: "Reverse proxy to cache-tests origin server"
-      port: 4000
-      url: "http://localhost:8000/"
-
 storage:
-  url: postgresql://hct_user:uct_passwd@localhost:5432/hct_db
+  url: "sqlite+aiosqlite:///./results/storage.db"

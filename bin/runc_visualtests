@@ -4,19 +4,40 @@
 # shellcheck disable=SC2046
 __PATH__=$(cd $(dirname "$0")/..; pwd)
 FRONTEND_DIR=$__PATH__/harp_apps/dashboard/frontend
+MODULES_CACHE=$__PATH__/.cache/visualtests-modules
+PNPM_STORE_CACHE=$__PATH__/.cache/visualtests-pnpm-store
 ARGS="$*"
 entrypoint_script=$(mktemp)
+
+# Create every bind-mount path before docker does. The daemon creates missing ones itself and it is
+# root whatever `--user` says, so a path it creates is root-owned and the container cannot write to
+# it. That applies to the sources under .cache and equally to the two targets inside the frontend
+# directory, which is why they are here rather than left to the mount.
+mkdir -p "$MODULES_CACHE" "$PNPM_STORE_CACHE" "$FRONTEND_DIR/node_modules" "$FRONTEND_DIR/.pnpm-store"
 
 cat > $entrypoint_script <<EOF
 #! /bin/bash
 
 set -e
 
+# Same pinned versions as before, installed under HOME rather than the image's /usr prefix, which
+# an unprivileged user cannot write to. The pins stay rather than relying on what the base image
+# happens to ship, so bumping the image cannot quietly change them.
+export NPM_CONFIG_PREFIX=\$HOME/.local
+export COREPACK_HOME=\$HOME/.corepack
+export PATH=\$HOME/.local/bin:\$PATH
+mkdir -p \$HOME/.local/bin \$COREPACK_HOME
+
 npm install -g npm@11.6.2 corepack@0.34.4
 
 cd /app
+# \`corepack use\` rewrites package.json, which is tracked, so it is put back on the way out however
+# we leave. Restoring it on the last line only worked when everything before it succeeded, so any
+# failing run used to leave the developer with a modified file they did not edit.
 cp /app/package.json /tmp/package.json
-corepack enable pnpm
+trap 'mv -f /tmp/package.json /app/package.json 2>/dev/null || true' EXIT
+
+corepack enable --install-directory \$HOME/.local/bin pnpm
 corepack use pnpm@10.24.0
 
 
@@ -28,16 +49,29 @@ echo " $ pnpm test:ui:update"
 echo
 
 (cd /app; /bin/bash -c "$ARGS" )
-mv /tmp/package.json /app/package.json
 EOF
 chmod +x $entrypoint_script
 
-docker run -it --rm \
+# Allocate a TTY only when there is one to allocate. `make test-frontend` runs this from a
+# non-interactive shell, where `-it` fails outright with "the input device is not a TTY".
+tty_flags=()
+[ -t 0 ] && tty_flags=(-it)
+
+# Run as the invoking user: everything the container writes lands in three mounted directories, and
+# as root it left all of them root-owned, so the next run on the host died with EACCES.
+docker run "${tty_flags[@]}" --rm \
+           --user $(id -u):$(id -g) \
+           --env HOME=/tmp/harp-visualtests \
            --entrypoint=/entrypoint \
            --volume $entrypoint_script:/entrypoint \
            --volume "${FRONTEND_DIR}:/app" \
-           --volume "${__PATH__}/.cache/visualtests-modules:/app/node_modules" \
-           --volume "${__PATH__}/.cache/visualtests-pnpm-store:/app/.pnpm-store" \
+           --volume "${MODULES_CACHE}:/app/node_modules" \
+           --volume "${PNPM_STORE_CACHE}:/app/.pnpm-store" \
            mcr.microsoft.com/playwright:v1.57.0-jammy
+# Keep the container's exit status: the cleanup below succeeds whatever happened inside, so
+# without this the script reported success for every run, including a failing test suite.
+status=$?
 
 rm "$entrypoint_script"
+
+exit $status

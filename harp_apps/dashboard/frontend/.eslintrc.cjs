@@ -3,7 +3,7 @@
 module.exports = {
   root: true,
   env: { browser: true, es2020: true },
-  ignorePatterns: ["**/tests/*", "**/*.test.ts", "**/*.test.tsx"],
+  ignorePatterns: ["**/tests/*", "**/*.test.ts", "**/*.test.tsx", "src/Models/*.d.ts"],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",

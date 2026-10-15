@@ -1,0 +1,1 @@
+``make wheel`` no longer leaves a wheel in ``dist/`` when its asset check or ``twine check`` fails.

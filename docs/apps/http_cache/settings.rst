@@ -6,6 +6,11 @@ HTTP Cache Settings
 The ``http_cache`` application provides configuration options for controlling HTTP caching behavior according
 to RFC 9111 standards.
 
+.. note::
+
+    Nothing here changes what a **caller** can ask for. For the ``Cache-Control`` request directives
+    HARP honours, and for what HARP retains regardless of them, see :ref:`what-harp-retains`.
+
 Examples
 ::::::::
 
@@ -75,22 +80,38 @@ policy
 
 The cache policy determines what responses are cacheable and how to handle cache revalidation.
 
-Hishel uses ``SpecificationPolicy`` with ``CacheOptions`` to configure caching behavior:
-
-- **shared:** Whether this is a shared cache (default: ``true``)
-- **supported_methods:** HTTP methods to cache (default: ``["GET", "HEAD"]``)
-- **allow_stale:** Whether to serve stale responses (default: ``false``)
+Hishel's ``SpecificationPolicy`` is configured with ``CacheOptions``, which you set through
+``policy.options``. Unknown keys are rejected at load.
 
 .. code-block:: yaml
 
     http_cache:
       policy:
-        type: hishel.SpecificationPolicy
-        arguments:
-          cache_options:
-            shared: true
-            supported_methods: [GET, HEAD]
-            allow_stale: false
+        options:
+          shared: true
+          supported_methods: [GET, HEAD]
+          allow_stale: false
+
+policy.options.shared
+~~~~~~~~~~~~~~~~~~~~~
+
+**Type:** ``bool``, **Default:** ``true``
+
+Behave as a shared cache (RFC 9111). See the :ref:`shared cache warning <http-cache-shared>` before changing it.
+
+policy.options.supported_methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Type:** ``list[str]``, **Default:** ``[GET, HEAD]``
+
+HTTP methods whose responses can be cached.
+
+policy.options.allow_stale
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Type:** ``bool``, **Default:** ``false``
+
+Serve a stale entry from the cache instead of refetching it from the origin.
 
 
 storage
@@ -105,8 +126,13 @@ The storage backend for cached responses. By default, it uses the storage applic
 
 The default storage includes:
 
-- **ttl:** Time-to-live for cache entries (default: ``None`` - no TTL)
-- **check_ttl_every:** How often to check for expired entries in seconds (default: ``60.0``)
+- **ttl:** Seconds after which an entry is expired, counted from when it was stored or last freshened by a ``304``
+  (default: ``86400``, 24 hours). An entry with a longer ``max-age`` is still expired after ``ttl``. ``null`` disables
+  expiry by age. An expired entry is not served and its ``cache/meta`` blob is deleted. The header and body blobs it
+  pointed at are then removed by the :doc:`janitor </apps/janitor/index>`.
+- **check_ttl_every:** Minimum seconds between two sweeps deleting expired entries, per process (default: ``60.0``).
+  Needs a blob storage that can list its entries (SQL); with Redis, a warning is logged at startup and only entries
+  that are read again expire.
 - **allow_heuristics:** Whether to retain responses with no explicit expiry (default: ``false``)
 
 .. code-block:: yaml
@@ -156,7 +182,7 @@ Turn it on if you know your upstreams do not serve per-caller responses, or mark
     Whether heuristics are on or off, this is a **shared** cache. An upstream serving responses that
     differ per caller must say so, with ``Cache-Control: private`` or with a ``Vary`` naming the
     header that distinguishes them. HARP honours both, and will not guess which of your headers
-    carries an identity.
+    carries an identity. See the :ref:`shared cache warning <http-cache-shared>`.
 
 
 Custom implementations
@@ -212,12 +238,10 @@ For production deployments:
     http_cache:
       enabled: true
       policy:
-        type: hishel.SpecificationPolicy
-        arguments:
-          cache_options:
-            shared: true
-            supported_methods: [GET, HEAD]
-            allow_stale: false
+        options:
+          shared: true
+          supported_methods: [GET, HEAD]
+          allow_stale: false
 
 
 Development configuration

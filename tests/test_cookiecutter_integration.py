@@ -29,6 +29,26 @@ import requests
 # Path to the cookiecutter template directory
 TEMPLATE_DIR = Path(__file__).parent.parent / "harp" / "commandline" / "cookiecutters" / "project"
 
+# Root of the working tree under test, the equivalent of ``harp create project --harp-source``.
+HARP_SOURCE = str(Path(__file__).parent.parent.resolve())
+
+
+@pytest.fixture(autouse=True)
+def scaffold_against_working_tree(monkeypatch):
+    """Generate every project with ``harp-proxy`` installed editable from this working tree.
+
+    Without it, ``uv sync`` in a scaffold resolves the released ``harp-proxy`` from the index, which
+    fails before the version is published and never tests the code under review.
+    """
+    import cookiecutter.main
+
+    real = cookiecutter.main.cookiecutter
+
+    def with_harp_source(*args, extra_context=None, **kwargs):
+        return real(*args, extra_context={"__harp_source": HARP_SOURCE, **(extra_context or {})}, **kwargs)
+
+    monkeypatch.setattr(cookiecutter.main, "cookiecutter", with_harp_source)
+
 
 class TestProjectGeneration:
     """Test actual project generation using cookiecutter."""
@@ -182,11 +202,8 @@ class TestProjectGeneration:
 class TestUVCommandsInGeneratedProject:
     """Test that uv commands work in generated projects.
 
-    These run a real ``uv sync`` in the scaffolded project, which resolves ``harp-proxy`` from
-    the package index. They are marked ``subprocess`` so the standard CI run deselects them: the
-    template pins ``harp-proxy>=0.10.0``, which has no installable release on the index until
-    0.10.0 is published. End-to-end sync against the working tree is covered at recette time by
-    injecting a local source (see the ``--harp-source`` follow-up).
+    These run a real ``uv sync`` in the scaffolded project, against the working tree (see
+    :func:`scaffold_against_working_tree`). They are marked ``subprocess`` because they are slow.
     """
 
     def test_uv_sync_creates_venv(self, tmp_path):
@@ -277,9 +294,8 @@ class TestUVCommandsInGeneratedProject:
 class TestMakefileTargetsInGeneratedProject:
     """Test that Makefile targets work correctly in generated projects.
 
-    ``make install``/``make test`` shell out to a real ``uv sync``; marked ``subprocess`` so CI
-    deselects them while the pinned ``harp-proxy>=0.10.0`` has no published release (see
-    :class:`TestUVCommandsInGeneratedProject`).
+    ``make install``/``make test`` shell out to a real ``uv sync``; marked ``subprocess`` because
+    they are slow (see :class:`TestUVCommandsInGeneratedProject`).
     """
 
     def test_make_install_runs_uv_sync(self, tmp_path):

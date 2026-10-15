@@ -87,9 +87,28 @@ class WrappedRequest(Request):
             )
 
     def unwrap(self) -> Request:
-        """Return the original wrapped request.
+        """Return the request to actually send upstream.
+
+        The split is by who changed what. ``method`` and ``url`` come from the wrapped request,
+        because those are the attributes this class overrides for cache-key normalization and
+        the origin must be addressed as it really is. ``headers`` and ``stream`` are taken as
+        they stand **now**, because hishel changes those.
+
+        That second half is what makes revalidation work. hishel builds the conditional request
+        with ``dataclasses.replace(request, headers={..., "if-none-match": ...})``, and
+        ``replace()`` carries this object's metadata through untouched, so the wrapped request
+        held in that metadata is the request as it was *before* the conditional headers existed.
+        Returning it sends the revalidation with no validator at all: the origin has nothing to
+        compare against, cannot answer 304, and transfers the whole body again.
 
         Returns:
-            The original Request instance that was wrapped, with all its original attributes intact.
+            A plain Request addressed at the real origin, carrying the current headers and body.
         """
-        return self.metadata.get(_WRAPPED_REQUEST_KEY)
+        wrapped = self.metadata.get(_WRAPPED_REQUEST_KEY)
+        return Request(
+            method=wrapped.method,
+            url=wrapped.url,
+            headers=self.headers,
+            stream=self.stream,
+            metadata=wrapped.metadata,
+        )

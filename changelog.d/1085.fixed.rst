@@ -1,0 +1,1 @@
+Release job renders pre-release notes from the changelog fragments; the unreleased docs page is titled with the upcoming version and absent when nothing is pending.

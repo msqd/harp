@@ -7,12 +7,18 @@ from typing import Literal
 from pydantic import RedisDsn
 from pydantic_core import MultiHostUrl, Url
 
-mask_password_re = re.compile(r"(://[^:]+:)([^@]+)(@)")
+MASK = "***"
+
+# The username may be empty: `redis://:password@host` is the usual Redis form.
+mask_password_re = re.compile(r"(://[^:/@\s]*:)([^@]+)(@)")
+
+# Dictionary keys whose string value is a secret by name, whatever the algorithm that protects it.
+SECRET_KEYS = frozenset({"password"})
 
 
 def mask_credentials(value: str) -> str:
     """Replace the password of any ``scheme://user:password@host`` found in ``value``."""
-    return mask_password_re.sub(r"\1***\3", value)
+    return mask_password_re.sub(rf"\1{MASK}\3", value)
 
 
 def url_serializer(dsn, secure=True, **kwargs):
@@ -26,6 +32,12 @@ ADDITIONAL_SERIALIZERS = {
     RedisDsn: url_serializer,
     MultiHostUrl: url_serializer,
 }
+
+
+def _mask_secret_value(key, value, secure):
+    if secure and key in SECRET_KEYS and isinstance(value, str):
+        return MASK
+    return value
 
 
 def asdict(
@@ -75,6 +87,6 @@ def asdict(
             for k, v in obj.items():
                 result[_asdict(k)] = asdict(v, secure=secure)
             return result
-        return type(obj)((_asdict(k), _asdict(v)) for k, v in obj.items())
+        return type(obj)((_asdict(k), _mask_secret_value(k, _asdict(v), secure)) for k, v in obj.items())
 
     return copy.deepcopy(obj)

@@ -408,3 +408,56 @@ class TestHttpProxyControllerWithStorage(
         assert miss.headers["X-Cache"] == "MISS"
         assert hit.headers["X-Cache"] == "HIT"
         assert "Age" in hit.headers
+
+    @respx.mock
+    async def test_a_no_store_request_is_still_recorded_in_0_10(
+        self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        """A client's `no-store` binds HARP's cache. In 0.10 it does not bind the transaction record.
+
+        This pins 0.10's behaviour. It is not an argument that the behaviour is right, and it is
+        **expected to be replaced**: https://github.com/msqd/harp/issues/927 was decided the other
+        way, and from 0.11 a caller's `no-store` suppresses payload recording while leaving the
+        transaction and message rows in place. The decision is recorded as ADR-0002, under
+        `docs/adr/`.
+
+        So if you are implementing #927 and this test fails, that is the point: rewrite it to assert
+        the new behaviour rather than treating the failure as a regression. An earlier version of
+        this docstring argued the opposite case on the grounds that the record is an operator's
+        audit trail. That argument is withdrawn: the record is best-effort and sheds under load
+        (#945), so it was never the thing that argument needed it to be.
+
+        Everything the cache is asked to forget is still asserted present here: the
+        transaction, both messages, both header blobs and both body blobs.
+        """
+        endpoint = respx.get("http://example.com/").mock(
+            return_value=Response(200, content=b"Hello.", headers={"Cache-Control": "max-age=3600"})
+        )
+        controller = self.create_controller(
+            "http://example.com/",
+            dispatcher=dispatcher,
+            name="api",
+            http_client=self.create_cache_backed_client(),
+        )
+
+        worker = self.create_worker(dispatcher, sql_storage.engine, sql_storage, blob_storage)
+        try:
+            responses = [
+                await controller(await _create_request(headers={"cache-control": "no-store"})) for _ in range(2)
+            ]
+        finally:
+            await worker.wait_until_empty()
+
+        # The cache honoured the directive: the origin answered both times, and both responses
+        # are reported as misses rather than one of them being a hit.
+        assert endpoint.call_count == 2
+        assert [response.headers["X-Cache"] for response in responses] == ["MISS", "MISS"]
+
+        # The transaction record kept everything anyway, both times.
+        transactions = await self._find_transactions_from_storage(sql_storage)
+        assert len(transactions) == 2
+        for transaction in transactions:
+            assert transaction.extras["cached"] is False
+            request_message, response_message = transaction.messages
+            assert (await blob_storage.get(request_message.headers)).data == b"cache-control: no-store"
+            assert (await blob_storage.get(response_message.body)).data == b"Hello."

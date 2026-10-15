@@ -106,6 +106,30 @@ against, in the ordinary URL sense, so **end it with a slash if you mean it as a
 The last row is why the trailing slash matters: without it, the final segment is treated as a
 resource rather than a directory and is replaced, exactly as a relative link on a web page would be.
 
-A request may not leave the subtree the endpoint url points at. A path resolving above it, through
-``..`` segments, is refused with ``400 Bad Request`` and nothing is sent upstream. Dot segments that
-resolve back inside it are forwarded normally, so ``/a/b/../c`` reaches ``/a/c`` as expected.
+Path guard
+----------
+
+A request may not leave the subtree the endpoint url points at. The proxy appends the request path to
+that base path as received, byte for byte, and refuses anything an upstream or the http client could
+resolve out of it. These requests get ``400 Bad Request`` and nothing is sent upstream:
+
+- a path with a dot segment, ``.`` or ``..``, wherever it would resolve: ``/a/b/../c`` is refused as
+  much as ``/../../admin``. A separator may be ``/``, ``\``, ``%2f`` or ``%5c``, and a dot ``.`` or
+  ``%2e``, in any case and any mix, so ``/%2e%2e/admin``, ``/..%2fadmin`` and ``/a%2fb/../..`` are
+  refused too;
+- a path holding a space or control byte (``0x00`` to ``0x20``, ``0x7f``). HTTP/1.1 servers refuse them
+  already, HTTP/2 lets them through. ``%20`` is fine;
+- a path the proxy cannot parse, such as ``//[x/``.
+
+Ordinary traffic is unaffected: browsers and HTTP clients resolve dot segments before sending, so
+``curl http://harp/a/b/../c`` goes out as ``/a/c`` and is forwarded. Only a client sending the dot
+segment as is (``curl --path-as-is``) gets the 400. Dots inside a segment are no dot segment:
+``/.well-known/x``, ``/v1.2/x`` and ``/users/a%2eb`` are forwarded unchanged, like other encoded
+characters (``/user%3A42``, ``/a%2fb``).
+
+Not covered yet (`#1009 <https://github.com/msqd/harp/issues/1009>`_): ``..;`` segments, double
+encoding (``%252e``), overlong UTF-8, a dot segment followed by an encoded NUL (``/%2e%2e%00/x``) and
+Unicode look-alike dots (fullwidth ``．`` U+FF0E, sent as ``%EF%BC%8E``). Each escapes only on an
+upstream that reads it as a dot segment (one that treats ``..;`` as ``..``, decodes twice, accepts
+overlong UTF-8, truncates at NUL, or applies Unicode normalisation before resolving dot segments). If
+your upstream does, do not rely on the base path alone to restrict access.
