@@ -90,7 +90,7 @@ dev = [
     "sphinx-tags>=0.4,<0.5",
     "sphinxcontrib-jquery~=4.1",
     "syrupy>=5.0,<5.1",
-    "testcontainers[postgres]>=4.7,<4.14",
+    "testcontainers[postgres]>=4.7,<4.16",
     "towncrier>=26.9.0",
     "watchfiles>=1.1,<1.3",
 ]
