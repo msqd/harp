@@ -1,1 +1,0 @@
-Lock upgraded to the fixed release of every open Dependabot advisory except asyncmy (no fix, documented, use aiomysql); ``pytest`` cap widened to ``<10`` and ``pytest-asyncio`` to ``<1.4``.

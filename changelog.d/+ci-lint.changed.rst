@@ -1,1 +1,0 @@
-CI lints Python (``ruff check``, ``ruff format --check``) and the frontend (``pnpm lint``), both required by *All Checks Passed*; ``make lint-frontend`` runs ``pnpm lint``; generated ``src/Models/*.d.ts`` are excluded from ESLint.

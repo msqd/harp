@@ -1,1 +1,0 @@
-Cache: ``hishel`` is capped at ``<1.1.10`` (1.1.10 and later fail RFC 9111 compliance tests); ``redis`` 8.0 is validated.

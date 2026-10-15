@@ -1,1 +1,0 @@
-The CI wheel job no longer sets up Python itself; uv provides the interpreter, as for contributors.

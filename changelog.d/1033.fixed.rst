@@ -1,1 +1,0 @@
-GitHub release notes no longer start with YAML front matter.

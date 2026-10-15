@@ -1,1 +1,0 @@
-Janitor no longer deletes live HTTP cache entries, `storage_blobs_orphans` no longer counts the cache, young orphans are kept 10 minutes, and SQL blob storage always checks the database before skipping a write (#923, #925, #1002).

@@ -1,1 +1,0 @@
-Docs: the HTTP cache index warns before the first configuration example that the cache is shared, and what an upstream must send.

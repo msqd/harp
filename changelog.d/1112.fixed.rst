@@ -1,1 +1,0 @@
-The http_cache TTL sweep deletes expired entries in batches (one statement and one transaction per 200), spares an entry stored again since it was read, and no longer aborts when the memory backend loses a key to a concurrent delete.
