@@ -52,3 +52,43 @@ def test_proxy_endpoints_do_not_expose_upstream_credentials():
     endpoint = Endpoint.from_kwargs(settings={"name": "api", "port": 80, "url": f"http://svc:{PASSWORD}@upstream/"})
 
     assert PASSWORD not in repr(asdict([endpoint], verbose=True))
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "redis://:s3cret@cache.internal:6379/0",
+        "redis://u:s3cret@cache.internal:6379/0",
+    ],
+)
+def test_the_password_is_masked_whatever_the_username(url):
+    masked = asdict({"url": url})["url"]
+
+    assert "s3cret" not in masked
+    assert masked.endswith("@cache.internal:6379/0")
+
+
+def test_urls_without_a_password_are_left_alone():
+    values = {"none": "redis://cache.internal:6379/0", "user_only": "redis://user@cache.internal:6379/0"}
+
+    assert asdict(values) == values
+
+
+def test_an_empty_username_is_masked_in_a_settings_model():
+    assert (
+        asdict(RedisSettings(url="redis://:s3cret@cache.internal:6379/0"))["url"]
+        == "redis://:***@cache.internal:6379/0"
+    )
+
+
+@pytest.mark.parametrize("mode", ["json", "python"])
+def test_a_password_key_is_masked_whatever_its_value(mode):
+    users = {"users": {"alice": {"password": "s3cretAlice"}}}
+
+    assert asdict(users, mode=mode) == {"users": {"alice": {"password": "***"}}}
+
+
+def test_unsecure_shows_a_password_key():
+    values = {"users": {"alice": {"password": "s3cretAlice"}}}
+
+    assert asdict(values, secure=False) == values
