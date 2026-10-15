@@ -64,7 +64,7 @@ export default defineConfig(({ mode }) => {
           rollupOptions: {
             output: {
               manualChunks: {
-                react: ["react", "react-dom", "react-is"],
+                react: ["react", "react-dom"],
                 reactQuery: ["react-query"],
                 reactRouter: ["react-router-dom"],
                 syntaxHighlighter: ["prismjs", "react-syntax-highlighter"],
