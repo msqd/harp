@@ -247,6 +247,11 @@ CI runs three backend jobs, ``pnpm test:unit``, a documentation build, and two l
 check`` with ``ruff format --check`` (*Lint Python*), and ``pnpm lint`` (*Lint Frontend*). That is
 the entire automated gate. Everything else in the Makefile runs only when a human runs it.
 
+The *Build Python Package* job runs ``make clean-dist wheel`` without ``actions/setup-python``, so
+the wheel is built with the interpreter uv provides, as on a developer machine. It does not prove
+the build is independent of the system Python: the runner image still has its own on ``PATH``, so a
+bare ``python3`` call in ``bin/build_wheel`` would pass in CI and fail on a machine without one.
+
 Observed but not reported
 -------------------------
 
