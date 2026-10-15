@@ -24,6 +24,7 @@ Changed
 Fixed
 :::::
 
+- Wheel no longer ships stray ``.d.ts`` files: ``vite-plugin-dts`` runs only in the frontend lib build, and ``bin/build_wheel`` fails if the wheel holds one under ``web/`` (#822).
 - ``harp create project`` keeps author name, author email and project name verbatim (quotes, backslashes, Jinja, shell characters), and the ``uv tool run`` fallback runs a pinned cookiecutter (#1003).
 - Frontend build no longer deletes the tracked ``harp_apps/dashboard/web/.gitkeep``, so a local build leaves the checkout clean (no ``-dirty`` version).
 - Cache: a stored response with no ``Date`` header now gets one set to its time of receipt, so its ``max-age`` expires instead of serving fresh forever (#963).
