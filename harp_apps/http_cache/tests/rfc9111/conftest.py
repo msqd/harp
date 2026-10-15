@@ -6,6 +6,7 @@ This module provides reusable test infrastructure for verifying HARP's
 HTTP caching implementation complies with RFC 9111 (HTTP Caching).
 """
 
+from harp_apps.http_cache.tests import ENDPOINT_HOOKS
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -56,7 +57,7 @@ async def cached_client(mock_storage, rfc_compliant_policy):
         policy=rfc_compliant_policy,
     )
 
-    async with AsyncClient(transport=transport) as client:
+    async with AsyncClient(transport=transport, event_hooks=ENDPOINT_HOOKS) as client:
         yield client
 
 
@@ -84,7 +85,7 @@ async def any_cached_client(any_storage, rfc_compliant_policy):
         policy=rfc_compliant_policy,
     )
 
-    async with AsyncClient(transport=transport) as client:
+    async with AsyncClient(transport=transport, event_hooks=ENDPOINT_HOOKS) as client:
         yield client
 
 
