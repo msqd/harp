@@ -44,6 +44,54 @@ jobs:
       - name: uv.lock is up to date with pyproject.toml (if this fails, run `uv lock` and commit)
         run: uv lock --check
 
+  lint-python:
+    name: Lint Python
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: ruff check (if this fails, run `make format` and fix what remains)
+        run: uv run ruff check harp harp_apps tests
+
+      - name: ruff format --check (if this fails, run `make format` and commit)
+        run: uv run ruff format --check harp harp_apps tests
+
+  lint-frontend:
+    name: Lint Frontend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+          cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: cd harp_apps/dashboard/frontend && pnpm install --ignore-workspace
+
+      - name: pnpm lint (if this fails, run `make lint-frontend` locally)
+        run: cd harp_apps/dashboard/frontend && pnpm lint
+
   test-backend-core:
     name: Test Backend Core (Py${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -321,6 +369,8 @@ jobs:
       - test-backend-apps
       - test-backend-e2e
       - test-frontend-unit
+      - lint-python
+      - lint-frontend
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -399,8 +449,12 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "INSTALL_FROM=local" >> $GITHUB_OUTPUT
 
-          # For version branches (e.g., 0.9), tag as 0.9-git and enable push
-          if echo "${{ github.ref_name }}" | grep -qE '^[0-9]+\.[0-9]+$'; then
+          # main publishes "unstable"; version branches (e.g., 0.9) publish "0.9-git"
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            TAGS="ghcr.io/${{ github.repository }}:unstable,makersquad/harp-proxy:unstable"
+            PUSH="true"
+            echo "Docker tags (main): $TAGS"
+          elif echo "${{ github.ref_name }}" | grep -qE '^[0-9]+\.[0-9]+$'; then
             TAGS="ghcr.io/${{ github.repository }}:${{ github.ref_name }}-git,makersquad/harp-proxy:${{ github.ref_name }}-git"
             PUSH="true"
             echo "Docker tags (version branch): $TAGS"

@@ -241,10 +241,11 @@ In no gate at all
       - not in CI
     * - ``pnpm lint``
       - package.json
-      - nowhere
+      - CI, job *Lint Frontend*
 
-CI runs three backend jobs, ``pnpm test:unit``, and a documentation build. That is the entire
-automated gate. Everything else in the Makefile runs only when a human runs it.
+CI runs three backend jobs, ``pnpm test:unit``, a documentation build, and two lint jobs: ``ruff
+check`` with ``ruff format --check`` (*Lint Python*), and ``pnpm lint`` (*Lint Frontend*). That is
+the entire automated gate. Everything else in the Makefile runs only when a human runs it.
 
 Observed but not reported
 -------------------------
