@@ -24,7 +24,7 @@
       "Components/*": ["./Components/*"]
     }
   },
-  "include": ["src", "types/**/*.d.ts", "vitest.setup.ts", ".ladle", "vite.config.ts"],
+  "include": ["src", "types/**/*.d.ts", "vitest.setup.ts", ".ladle", "vite.config.ts", "vite-plugins"],
   "references": [
     {
       "path": "./tsconfig.node.json"
