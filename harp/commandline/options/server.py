@@ -142,7 +142,7 @@ def _server_click_options(f):
     return f
 
 
-class _EnhancedParserCommand(click.Command):
+class _EnhancedParserCommand(click.RichCommand):
     """
     This class override parse_args click function parse args enter in cli when type command with space or = for  --set
     command:
