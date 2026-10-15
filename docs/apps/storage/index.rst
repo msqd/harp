@@ -90,6 +90,12 @@ The main configuration option you're interested in is ``storage.url``, which con
 
 **MySQL/MariaDB example (asyncmy driver)**:
 
+.. warning::
+
+    asyncmy has an open critical advisory (`GHSA-qhqw-rrw9-25rm
+    <https://github.com/advisories/GHSA-qhqw-rrw9-25rm>`_, SQL injection via crafted dict keys) and no fixed release.
+    Use the aiomysql driver instead (0.3.0 and later are fixed).
+
 .. literalinclude:: ./examples/mysql-asyncmy.yml
     :language: yaml
 
