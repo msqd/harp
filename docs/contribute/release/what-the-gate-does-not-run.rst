@@ -238,7 +238,7 @@ In no gate at all
       - nowhere
     * - visual suite ``test:ui:dev``
       - ``make test-frontend``
-      - not in CI
+      - not in CI until #881 provides the browser setup
     * - ``pnpm lint``
       - package.json
       - CI, job *Lint Frontend*
@@ -325,15 +325,16 @@ them with a recorded reason, and all five were still in place two releases later
 #. ``-$(UV_RUN) pre-commit`` in ``preqa``, whose ``-`` makes ``make`` ignore the exit status.
 #. ``continue-on-error: true`` on the **Build Documentation** CI job.
 #. ``continue-on-error: true`` on the **Build Storybook** CI job.
-#. The entire ``test-frontend-visual`` CI job commented out, including the visual suite.
+#. The entire ``test-frontend-visual`` CI job commented out, including the visual suite (commit
+   ``24744970`` commented it out, ``0fbdd5a0`` deleted it; its last definition is in ``24744970``).
 
 The pattern is ordinary and forgivable: someone migrating a build system meets a wall of unrelated
 failures, silences them to get the migration through, intends to come back, and does not. It cost
 two releases and a full day of investigation to rediscover two of them from their symptoms. Reading
 one diff found the other three in minutes.
 
-Both ``continue-on-error`` jobs currently pass, so those two are dormant rather than actively hiding
-a failure. That is worth stating precisely: dormant is not the same as harmless, because the whole
+Both ``continue-on-error`` jobs passed when this was written, so those two were dormant rather than
+actively hiding a failure. The flags are now removed and both jobs block publishing. That is worth stating precisely: dormant is not the same as harmless, because the whole
 point of the flag is that the day one of them does fail, nothing will say so.
 
 The search is cheap and bounded. In the diff of any large migration, look for ``skip``, ``xfail``,
