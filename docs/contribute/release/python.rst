@@ -25,7 +25,8 @@ Prerequisites
 Before creating a release, ensure:
 
 * You have push access to the GitHub repository
-* All changes are merged to the ``main`` or version branch (e.g., ``0.9``)
+* All changes are merged to ``main``; for a patch release, backported to the version line ``X.Y``
+  (see :doc:`../branching`)
 * All CI tests are passing
 * PyPI trusted publishing is configured (see `PyPI Trusted Publishing Guide <https://docs.pypi.org/trusted-publishers/>`_)
 
@@ -103,6 +104,15 @@ If the release does carry one:
     Do not write this step's findings as a description of the current migration. The next release's
     migration will be a different one. Answer the question again each time.
 
+Steps 2 to 5 happen on a release branch, because ``main`` and the version lines only accept pull
+requests:
+
+.. code-block:: bash
+
+    # X.Y.0 and pre-releases: from main. Patch release X.Y.Z: from the version line X.Y.
+    git fetch origin
+    git switch -c release/0.11.0 origin/main
+
 2. Prepare the Changelog
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -178,6 +188,15 @@ Update the version in ``pyproject.toml`` and verify:
     git add pyproject.toml uv.lock
     git commit -m "chore: bump version to $VERSION"
 
+Push the branch and open the release pull request against the branch it came from (``main``, or
+``X.Y`` for a patch release). Its body is the version's changelog section. Merge it once *All Checks
+Passed* is green.
+
+.. code-block:: bash
+
+    git push origin HEAD:release/$VERSION
+    gh pr create --base main --head release/$VERSION --title "Release $VERSION" --body-file <section>
+
 6. Create an Annotated Git Tag
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -192,24 +211,26 @@ Update the version in ``pyproject.toml`` and verify:
 
 .. code-block:: bash
 
-    git tag -a $VERSION -m "Release $VERSION"
+    # Tag the merged release commit: origin/main, or origin/X.Y for a patch release.
+    git fetch origin
+    git tag -a $VERSION origin/main -m "Release $VERSION"
 
 .. important::
 
     Always use the ``-a`` flag to create an **annotated tag**, not a lightweight tag.
     The release workflow requires annotated tags.
 
-7. Push Changes and Tag
-~~~~~~~~~~~~~~~~~~~~~~~~
+7. Push the Tag
+~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
-    git push origin
     git push origin $VERSION
 
 .. note::
 
-    Push the tag **after** pushing the commit to ensure the tag points to the correct commit.
+    Check that the tagged commit carries the release version (``git show $VERSION:pyproject.toml |
+    grep ^version``) before pushing: the workflow rejects a mismatch.
 
 8. Monitor the Release Workflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -307,6 +328,28 @@ Once the workflow completes successfully:
 
     # For persistent installation in a project
     uv pip install harp-proxy==$VERSION
+
+10. Open the Version Line and the Next Version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**After an** ``X.Y.0`` **release only.** Create the version line on the tag and protect it like
+``main``. It serves ``/en/X.Y/`` on Read the Docs and receives the backports of patch releases (see
+:doc:`../branching`).
+
+.. code-block:: bash
+
+    git push origin 0.11.0^{commit}:refs/heads/0.11
+    gh api -X PUT repos/msqd/harp/branches/0.11/protection --input protection.json
+
+``protection.json`` requires a pull request and *All Checks Passed*, enforces it for administrators,
+and refuses force-push and deletion; copy it from ``gh api repos/msqd/harp/branches/main/protection``.
+
+Then open the next version on ``main``, through a pull request: ``pyproject.toml`` moves to
+``X.Y+1.0.dev0`` (``uv lock`` again) and ``docs/changelogs/unreleased.rst`` is present and empty.
+Builds from ``main`` then report a development version.
+
+**After a patch release.** Bring its changelog file to ``main`` through a pull request, so the
+documentation of the next version lists it.
 
 Version Naming Conventions
 ---------------------------

@@ -272,7 +272,7 @@ pnpm ui:serve
 
 - Development servers (Python, Vite, Storybook) are always running in the background. Never
   start them manually
-- The project is currently on the `migrate_to_uv` branch, migrating from Poetry to UV
+- Default branch is `main`; pull requests target it. Version lines and backports: `docs/contribute/branching.rst`
 - When implementing new features, check existing patterns in similar components first
 - Avoid code duplication - factor out common logic after writing tests
 
