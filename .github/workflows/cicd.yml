@@ -652,7 +652,7 @@ jobs:
       - name: Convert changelog to Markdown
         if: steps.changelog.outputs.exists == 'true'
         run: |
-          pandoc --wrap=none -s -o changes.md "${{ steps.changelog.outputs.file }}"
+          pandoc --wrap=none --shift-heading-level-by=-1 -o changes.md "${{ steps.changelog.outputs.file }}"
           echo "Generated changes.md from ${{ steps.changelog.outputs.file }}"
 
       - name: Create fallback changelog
