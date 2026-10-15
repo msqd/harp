@@ -5,14 +5,20 @@ bridges the two is what makes ``update_entry`` and ``remove_entry`` able to do a
 so both the resolving path and the failing path are covered here.
 """
 
+import asyncio
+import time
 import uuid
+from email.utils import parsedate_to_datetime
 
+import httpx
 import pytest
+import respx
 from dataclasses import replace
-from hishel import Headers, Request, Response
+from hishel import CacheOptions, Headers, Request, Response, SpecificationPolicy
 from hishel._core.models import AnyIterable
 
 from harp_apps.http_cache.storages import KEY_INDEX_SIZE, AsyncStorage
+from harp_apps.http_cache.transports import AsyncCacheTransport
 from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
 
 CACHEABLE = {"cache-control": "max-age=300", "content-type": "text/plain"}
@@ -171,3 +177,47 @@ class TestKeyIndexBound:
         await storage.create_entry(_request("http://endpoint/overflow"), _response(), "key-overflow")
 
         assert storage._key_for(first.id, "update") == "key-first"
+
+
+@pytest.mark.asyncio
+class TestDateOnStore:
+    """RFC 9110 §6.6.1: a cache storing a response without ``Date`` records its time of receipt."""
+
+    async def test_a_response_without_date_gets_the_time_of_receipt(self, storage):
+        before = int(time.time())
+        await storage.create_entry(_request(), _response(), "key-1")
+        after = int(time.time())
+
+        (stored,) = await storage.get_entries("key-1")
+        date = parsedate_to_datetime(stored.response.headers["date"]).timestamp()
+        assert before <= date <= after
+
+    async def test_a_response_with_date_keeps_it(self, storage):
+        date = "Wed, 21 Oct 2015 07:28:00 GMT"
+        await storage.create_entry(_request(), _response(date=date), "key-1")
+
+        (stored,) = await storage.get_entries("key-1")
+        assert stored.response.headers["date"] == date
+
+    async def test_a_stored_response_still_serves_its_body(self, storage):
+        await storage.create_entry(_request(), _response(), "key-1")
+
+        (stored,) = await storage.get_entries("key-1")
+        assert await stored.response.aread() == b"payload"
+
+    @respx.mock
+    async def test_max_age_expires_without_date_through_the_cache_transport(self, storage):
+        route = respx.get("http://example.com/resource").mock(
+            return_value=httpx.Response(200, content=b"x", headers={"cache-control": "max-age=1"})
+        )
+        transport = AsyncCacheTransport(
+            next_transport=httpx.AsyncHTTPTransport(),
+            storage=storage,
+            policy=SpecificationPolicy(cache_options=CacheOptions(shared=True, allow_stale=False)),
+        )
+        async with httpx.AsyncClient(transport=transport) as client:
+            await client.get("http://example.com/resource")
+            await asyncio.sleep(2)
+            await client.get("http://example.com/resource")
+
+        assert route.call_count == 2
