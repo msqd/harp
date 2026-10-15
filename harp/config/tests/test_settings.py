@@ -10,7 +10,7 @@ def create_settings(settings=None):
     config = ConfigurationBuilder(settings)
     config.applications.add("storage")
     config.applications.add("dashboard")
-    return asdict(config.build())
+    return asdict(config.build(), secure=False)
 
 
 class TestSettings:

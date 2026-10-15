@@ -3,6 +3,11 @@ Chores
 
 Before a new version is released, it's usually a good idea to do some housekeeping.
 
+.. note::
+
+    These are chores, not the gate. Doing all of them does not make a release ready to tag: that
+    takes the product owner's recette and the user's sign-off. See :doc:`validation`.
+
 Code review passes
 ::::::::::::::::::
 
@@ -25,6 +30,12 @@ before the next one starts.
 #. **Security review** — a final pass focused on security (input handling, authentication and
    secrets, dependency and supply-chain surface, injection and SSRF vectors) run before the
    cut.
+
+   It is not the first adversarial look a security fix gets. A pull request that fixes a security
+   finding is attacked at acceptance, by someone other than its author, with the same hostile
+   inputs this review would try. When a guard is bypassed a second time, stop patching it: replace
+   it with a rule that refuses the whole class of input, as the proxy path guard did in 0.10 after
+   four rounds.
 
 Keep this section up to date as the review process evolves.
 
@@ -72,24 +83,31 @@ Run the tests, luke
 Before you read the result, read :doc:`what-the-gate-does-not-run`. It lists everything this command
 does not execute, and why a green run is a weaker statement than it looks.
 
-.. important::
+``tests/test_cookiecutter_integration.py`` scaffolds its projects with ``HARP_SOURCE`` set to the working
+tree (see ``harp create project --help``), so it runs before the version exists on PyPI. A failure
+there is a real signal.
 
-    **Expect failures in** ``tests/test_cookiecutter_integration.py`` **before the version is
-    published, and do not stop the cut for them** (24 of them at the 0.10 cut).
 
-    The project template pins ``harp-proxy>=X.Y.Z``, and PEP 440 excludes pre-releases from that
-    specifier. So while only ``X.Y.Z-alphaN`` or ``X.Y.Z-rcN`` exist on PyPI, ``uv sync`` inside a
-    generated project cannot resolve and reports ``No solution found when resolving dependencies``.
-    They pass again on their own once ``X.Y.Z`` is published.
+Run the RFC 9111 compliance suite, on PostgreSQL
+::::::::::::::::::::::::::::::::::::::::::::::::
 
-    CI never shows this, because it runs ``-m 'not subprocess'`` and these tests are marked
-    ``subprocess``. ``make qa`` does not filter, so the release manager is the person most likely to
-    meet it, at the exact moment they are deciding whether something is wrong.
+``make qa`` does not run it. It is a separate target, and the release run must name its storage
+backend, because the same suite on SQLite and on PostgreSQL are two different measurements.
 
-    Any failure **outside** that file is a real signal. Check the file names before concluding this
-    is what you are looking at.
+.. code-block:: shell
 
-    `#875 <https://github.com/msqd/harp/issues/875>`_ fixes the template pin and removes this caveat.
+    CACHE_TESTS_DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/cachetests \
+        uv run make test-e2e-cache
+
+**Run it on PostgreSQL, not the SQLite default.** SQLite does not enforce column widths, and a
+40-character ``blobs.id`` reached the 0.10 release candidate because every instrument pointed at it
+was pointed at SQLite. The default exists so a contributor can run the suite with nothing installed;
+it is not what validates a release.
+
+The target prints the score with its backend and fails on any test that passed in the recorded
+baseline and fails twice in a row. It does **not** fail on a lower percentage: see
+``docs/adr/0003-cache-compliance-compared-per-test-against-a-pinned-baseline.md`` for why, and
+``misc/cache-tests/README.md`` for how to read the report.
 
 
 Eventually commit the updated dependencies

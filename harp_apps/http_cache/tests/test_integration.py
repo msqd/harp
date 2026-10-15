@@ -1,5 +1,6 @@
 """Integration tests for normalized cache transport with load balancing."""
 
+from harp_apps.http_cache.tests import ENDPOINT_HOOKS
 import pytest
 import respx
 from hishel import CacheOptions, SpecificationPolicy
@@ -25,7 +26,7 @@ class TestLoadBalancingCacheIntegration:
         transport = AsyncCacheTransport(next_transport=next_transport, storage=storage, policy=policy)
 
         # Create client with our transport
-        async with AsyncClient(transport=transport) as client:
+        async with AsyncClient(transport=transport, event_hooks=ENDPOINT_HOOKS) as client:
             # Mock two different backend servers
             with respx.mock:
                 # First backend
@@ -64,7 +65,7 @@ class TestLoadBalancingCacheIntegration:
         next_transport = AsyncHTTPTransport()
         transport = AsyncCacheTransport(next_transport=next_transport, storage=storage, policy=policy)
 
-        async with AsyncClient(transport=transport) as client:
+        async with AsyncClient(transport=transport, event_hooks=ENDPOINT_HOOKS) as client:
             with respx.mock:
                 # Two different paths
                 route1 = respx.get("http://backend1.example.com/api/users").mock(
@@ -94,7 +95,7 @@ class TestLoadBalancingCacheIntegration:
         next_transport = AsyncHTTPTransport()
         transport = AsyncCacheTransport(next_transport=next_transport, storage=storage, policy=policy)
 
-        async with AsyncClient(transport=transport) as client:
+        async with AsyncClient(transport=transport, event_hooks=ENDPOINT_HOOKS) as client:
             with respx.mock:
                 # Same query params, different backends
                 route1 = respx.get("http://backend1.example.com/api/search", params={"q": "test", "page": "1"}).mock(
@@ -133,7 +134,7 @@ class TestLoadBalancingCacheIntegration:
         next_transport = AsyncHTTPTransport()
         transport = AsyncCacheTransport(next_transport=next_transport, storage=storage, policy=policy)
 
-        async with AsyncClient(transport=transport) as client:
+        async with AsyncClient(transport=transport, event_hooks=ENDPOINT_HOOKS) as client:
             with respx.mock:
                 route = respx.get("http://backend1.example.com/api/cacheable").mock(
                     return_value=Response(

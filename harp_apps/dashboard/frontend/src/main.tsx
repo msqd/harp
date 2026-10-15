@@ -1,49 +1,15 @@
-import { lazy, StrictMode, Suspense } from "react"
+import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { QueryClient, QueryClientProvider } from "react-query"
 import { ReactQueryDevtools } from "react-query/devtools"
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
 
-import { Layout } from "Components/Layout"
-import { TransactionDataTable } from "Pages/Transactions/Components/List"
 import GlobalStyles from "Styles/GlobalStyles"
+
 import "./index.css"
+import { routes } from "./routes"
 
-const TransactionListPage = lazy(() => import("./Pages/Transactions/TransactionListPage"))
-const navigationItems = [
-  { label: "Overview", to: "/", exact: true },
-  { label: "Transactions", to: "/transactions" },
-  { label: "System", to: "/system" },
-]
-
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Layout navigationItems={navigationItems} />,
-    children: [
-      {
-        path: "",
-        Component: lazy(() => import("./Pages/Overview/OverviewPage")),
-      },
-      {
-        path: "transactions/:id",
-        Component: lazy(() => import("./Pages/Transactions/TransactionDetailPage")),
-      },
-      {
-        path: "transactions",
-        element: (
-          <Suspense fallback={<div>Loading...</div>}>
-            <TransactionListPage TransactionDataTable={TransactionDataTable} />
-          </Suspense>
-        ),
-      },
-      {
-        path: "system",
-        Component: lazy(() => import("./Pages/System/SystemPage")),
-      },
-    ],
-  },
-])
+const router = createBrowserRouter(routes)
 const queryClient = new QueryClient()
 
 // Enable mocking in development using msw server set up for the browser

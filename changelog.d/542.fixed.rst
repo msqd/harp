@@ -1,0 +1,1 @@
+Preserve ``=`` in ``--set`` values, and render ``--help`` of commands taking ``--set`` without raw ``[code]`` markup.

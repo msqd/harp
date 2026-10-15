@@ -101,7 +101,7 @@ def test_all_applications_default_settings(app, snapshot):
 
         instance = _type(**_kwargs)
 
-        all_defaults[_fullname] = yaml.dump(asdict(instance))
+        all_defaults[_fullname] = yaml.dump(asdict(instance, secure=False))
 
     assert all_defaults == snapshot
 

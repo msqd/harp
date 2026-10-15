@@ -2,12 +2,10 @@
 
 version: 2
 updates:
-  - package-ecosystem: "pip"
+  # The uv ecosystem updates pyproject.toml and uv.lock together (Check Lockfile), and only reads
+  # the root project: the Jinja-templated pyproject.toml of the project cookiecutter is never parsed.
+  - package-ecosystem: "uv"
     directory: "/"
-    # The generated project template ships a Jinja-templated pyproject.toml, which is not valid
-    # Python packaging metadata; exclude it so Dependabot does not fail to parse it.
-    exclude-paths:
-      - "harp/commandline/cookiecutters/**"
     schedule:
       interval: "daily"
   - package-ecosystem: "npm"

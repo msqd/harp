@@ -53,6 +53,31 @@ Features
 - **Configurable Policy:** Customize caching behavior through policy configuration
 
 
+.. _http-cache-shared:
+
+.. warning::
+
+    This is a **shared** cache: a stored response is served to any later caller whose request maps to the
+    same key, and the key does not include who is asking. Before enabling it in front of an API that
+    authenticates by cookie, ``Authorization`` or an API-key header, make sure the upstream marks per-caller
+    responses with ``Cache-Control: private`` or with a ``Vary`` naming the header that identifies the caller.
+    HARP honours both, and does not guess which of your headers carry an identity.
+
+    - ``Cache-Control: private`` keeps a response out of the shared cache altogether::
+
+        HTTP/1.1 200 OK
+        Cache-Control: private, max-age=60
+
+    - ``Vary: X-Api-Key`` makes a stored response reusable only for a request carrying the same
+      ``X-Api-Key`` value::
+
+        HTTP/1.1 200 OK
+        Cache-Control: max-age=60
+        Vary: X-Api-Key
+
+    Without one of them, the first caller's response is served to the next one until it expires.
+
+
 Loading
 :::::::
 
@@ -120,8 +145,10 @@ offers no validator for is simply fetched again, since there is nothing to reval
 
 .. note::
 
-    HARP computes a stored response's age from its ``Date`` header (RFC 9111 §4.2.3). An origin
-    that sends no ``Date`` gives the cache nothing to age its response against.
+    HARP computes a stored response's age from its ``Date`` header (RFC 9111 §4.2.3). When an
+    origin sends no ``Date``, HARP adds one set to the time it received the response before
+    storing it (RFC 9110 §6.6.1), so the response still ages. A ``Date`` sent by the origin is kept
+    as is. Responses that are forwarded but not stored are not modified.
 
 
 Cache key normalization

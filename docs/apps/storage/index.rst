@@ -39,11 +39,19 @@ backends for blobs).
 
 .. warning::
 
-    **Every transaction passing through HARP is recorded here, including requests carrying**
-    ``Cache-Control: no-store``. A caller cannot opt out of the record, by that directive or by any
-    other header. Choosing what is not recorded is the operator's decision, made with the
-    :doc:`rules application </apps/rules/index>` and the :doc:`markers` below. The reasoning is with
-    the cache, which is the store ``no-store`` does bind: see :ref:`what-harp-retains`.
+    **Recording here is best-effort.** Transactions passing through HARP are recorded, including
+    requests carrying ``Cache-Control: no-store``, but under load the storage worker sheds message
+    detail first and then whole transactions rather than slowing traffic down. Do not treat this
+    store as a complete account of what crossed the proxy. See :ref:`what-harp-retains` for what is
+    measured, and `#945 <https://github.com/msqd/harp/issues/945>`_ for the measurements.
+
+    In 0.10 a caller's ``Cache-Control: no-store`` binds the cache and does not affect what is
+    recorded here. Whether a caller may suppress payload recording is decided in
+    `#927 <https://github.com/msqd/harp/issues/927>`_ and lands in 0.11, so do not build on the
+    current behaviour in either direction.
+
+    Choosing what is not recorded is currently the operator's decision, made with the
+    :doc:`rules application </apps/rules/index>` and the :doc:`markers` below.
 
 
 Core storage
@@ -82,6 +90,12 @@ The main configuration option you're interested in is ``storage.url``, which con
 
 **MySQL/MariaDB example (asyncmy driver)**:
 
+.. warning::
+
+    asyncmy has an open critical advisory (`GHSA-qhqw-rrw9-25rm
+    <https://github.com/advisories/GHSA-qhqw-rrw9-25rm>`_, SQL injection via crafted dict keys) and no fixed release.
+    Use the aiomysql driver instead (0.3.0 and later are fixed).
+
 .. literalinclude:: ./examples/mysql-asyncmy.yml
     :language: yaml
 
@@ -116,9 +130,15 @@ To setup a redis-based blob storage, you can add the following to your configura
 Migrations
 ::::::::::
 
-By default, migrations are run averytime you start HARP, to ensure the database schema is always up-to-date.
+By default, migrations are run every time you start HARP, to ensure the database schema is always
+up-to-date. On that default, upgrading HARP and starting it is enough, and there is nothing to run by
+hand.
 
-You can disable this behaviour by adding ``storage.migrate = false`` to your configuration.
+You can disable this behaviour by setting ``storage.migrate`` to ``false`` in your configuration.
+Applying migrations then becomes yours to do, with ``harp-proxy db:migrate up head``, **before**
+starting the new version. A schema older than the running code is not a degraded mode: 0.10 widened
+``blobs.id`` for cache keys, and against a database still holding the narrow column, any response the
+cache would store fails with a 500 rather than falling back to a cache miss.
 
 Migrations are implemented using `Alembic <https://alembic.sqlalchemy.org/>`_.
 
