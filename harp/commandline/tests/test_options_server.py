@@ -3,7 +3,8 @@ import pytest
 from click import Context, UsageError
 
 from harp.commandline.options.server import _EnhancedParserCommand
-from harp.commandline.server import CommonServerOptions
+from harp.commandline.server import CommonServerOptions, server
+from harp.commandline.system import config_subcommand
 
 
 def test_default():
@@ -39,6 +40,22 @@ def test_parse_args_set_behaviour():
     assert _call_command(cmd, "--set", "arg=value", "--set", "foo", "bar") == {
         "options": (("arg", "value"), ("foo", "bar"))
     }
+
+
+def test_system_config_parses_equals_form_of_set():
+    assert _call_command(config_subcommand, "--set", "dashboard.port=8080")["options"] == (("dashboard.port", "8080"),)
+
+
+@pytest.mark.parametrize("command", [config_subcommand, server])
+@pytest.mark.parametrize(
+    "args",
+    [
+        ("--set", "storage.url=postgresql://host/db?sslmode=require"),
+        ("--set", "storage.url", "postgresql://host/db?sslmode=require"),
+    ],
+)
+def test_server_commands_keep_equals_in_set_values(command, args):
+    assert _call_command(command, *args)["options"] == (("storage.url", "postgresql://host/db?sslmode=require"),)
 
 
 def test_parse_args_mixed_arguments_behaviour():

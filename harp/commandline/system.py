@@ -5,7 +5,7 @@ from rich.pretty import Pretty
 from rich.syntax import Syntax
 from rich.tree import Tree
 
-from harp.commandline.options.server import CommonServerOptions, _server_click_options
+from harp.commandline.options.server import CommonServerOptions, _EnhancedParserCommand, _server_click_options
 from harp.config import ConfigurationBuilder
 from harp.config.asdict import asdict
 from harp.utils.commandline import click
@@ -164,7 +164,7 @@ def system():
     pass
 
 
-@system.command("config", short_help="Prints the current configuration.")
+@system.command("config", cls=_EnhancedParserCommand, short_help="Prints the current configuration.")
 @click.option("--raw", is_flag=True, help="Prints the raw configuration as a dictionary.")
 @click.option("--json", is_flag=True, help="Prints the raw configuration as JSON.")
 @click.option(
