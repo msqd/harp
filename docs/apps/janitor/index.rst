@@ -6,7 +6,13 @@ Janitor
 .. versionadded:: 0.5
 
 The ``harp_apps.janitor`` application runs a background worker to clean up the storage. It deletes all transactions
-older than the retention period (60 days by default), and the related orphan blobs.
+older than the retention period (60 days by default), and the orphan blobs.
+
+An orphan is a blob referenced by no message and by no HTTP cache entry. Blobs written in the last 10 minutes are kept,
+as the message or cache entry referencing them may not be committed yet. ``cache/meta`` blobs, the HTTP cache entries
+themselves, are never deleted by the janitor: cache storage is reclaimed by the ``ttl`` of ``http_cache.storage``
+(see :doc:`/apps/http_cache/settings`). Once an entry is expired or replaced, the janitor removes the header and body
+blobs nothing references anymore. The ``storage_blobs_orphans`` metric counts the same orphans.
 
 .. toctree::
     :hidden:

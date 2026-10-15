@@ -22,7 +22,7 @@ class TestHttpCacheSettings(BaseConfigurableTest):
             "allow_heuristics": False,
             "base": "hishel.AsyncBaseStorage",
             "check_ttl_every": 60.0,
-            "ttl": None,
+            "ttl": 86400,
             "type": "harp_apps.http_cache.storages.AsyncStorage",
         },
         # hishel 1.0: AsyncCacheTransport moved to _async_httpx module

@@ -11,7 +11,7 @@ from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 class TestJanitorWorker(StorageTestFixtureMixin):
     async def test_delete_old_transactions(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
-        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings())
+        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings(), orphan_grace=timedelta(0))
 
         await self.create_transaction(
             sql_storage, started_at=datetime.now(UTC) - timedelta(days=60) - timedelta(hours=1)
@@ -36,7 +36,7 @@ class TestJanitorWorker(StorageTestFixtureMixin):
             # explicit skip because it should be implemented later
             return pytest.skip("Redis implementation does not support cleaning up orphan blobs yet.")
 
-        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings())
+        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings(), orphan_grace=timedelta(0))
 
         b1 = await self.create_blob(blob_storage, "foo")
         b2 = await self.create_blob(blob_storage, "bar")
@@ -83,7 +83,7 @@ class TestJanitorWorker(StorageTestFixtureMixin):
         if blob_storage.type == "redis":
             return pytest.skip("Redis implementation does not support cleaning up orphan blobs yet.")
 
-        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings())
+        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings(), orphan_grace=timedelta(0))
 
         blob = await self.create_blob(blob_storage, "swept")
         assert await blob_storage.get(blob.id) is not None
@@ -99,7 +99,7 @@ class TestJanitorWorker(StorageTestFixtureMixin):
     async def test_delete_old_transactions_but_keep_flagged_ones(
         self, sql_storage: SqlStorage, blob_storage: IBlobStorage
     ):
-        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings())
+        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings(), orphan_grace=timedelta(0))
 
         t1 = await self.create_transaction(
             sql_storage, started_at=datetime.now(UTC) - timedelta(days=60) - timedelta(hours=1)

@@ -85,7 +85,7 @@
           "default": {
             "base": "hishel.AsyncBaseStorage",
             "type": "harp_apps.http_cache.storages.AsyncStorage",
-            "ttl": null,
+            "ttl": 86400,
             "check_ttl_every": 60.0
           }
         }
