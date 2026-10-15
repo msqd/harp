@@ -6,19 +6,24 @@ HARP maintains a changelog following the `Keep a Changelog <https://keepachangel
 Overview
 --------
 
-The changelog workflow:
+Entries are `towncrier <https://towncrier.readthedocs.io/>`_ fragments: one small file per pull
+request in ``changelog.d/``, so two pull requests never edit the same file and never conflict. The
+release manager assembles the fragments into ``docs/changelogs/X.Y.Z.rst``.
 
-1. **During development**: Add entries to ``docs/changelogs/unreleased.rst``
-2. **Before release**: Move unreleased changes to a version-specific file (e.g., ``0.9.0.rst``)
+1. **During development**: Add a fragment to ``changelog.d/`` in your pull request
+2. **Before release**: Build the fragments into a version-specific file (e.g., ``0.11.0.rst``)
 3. **After release**: The version-specific changelog appears in the GitHub Release
+
+The documentation build renders the pending fragments as the *unreleased* changelog page
+(``docs/changelogs/unreleased.rst``, generated and git-ignored).
 
 When to Add Entries
 -------------------
 
-Add changelog entries **per Pull Request or per feature/bugfix**:
+Add a fragment **per Pull Request**:
 
-* Before merging a PR, ensure the unreleased changelog contains entries for your changes
-* If a PR contains multiple distinct changes, add multiple entries
+* Before merging a PR, ensure ``changelog.d/`` contains a fragment for your changes
+* If a PR contains multiple distinct changes, add multiple fragments
 * Each entry should describe **what changed** from a user/contributor perspective
 
 Do NOT add entries for:
@@ -74,33 +79,24 @@ Entries are organized into these categories:
 How to Add an Entry
 -------------------
 
-1. Open ``docs/changelogs/unreleased.rst``
+Create ``changelog.d/<issue>.<category>.rst`` holding the one-line entry, where ``<category>`` is
+one of ``important``, ``added``, ``changed``, ``fixed``, ``security`` or ``removed``:
 
-2. Add your entry under the appropriate category:
+.. code-block:: bash
 
-   .. code-block:: rst
+    echo 'Support for Python 3.14t (free-threaded/no-GIL).' > changelog.d/123.added.rst
 
-      Added
-      -----
+The issue number is appended to the entry as ``(#123)``. A change without an issue uses a name
+starting with ``+`` and any slug, which renders no reference: ``changelog.d/+python-314t.added.rst``.
+A second fragment for the same issue and category takes a counter: ``123.added.1.rst``.
 
-      * Your new feature description here
-      * Support for Python 3.14t (free-threaded/no-GIL)
+Preview the result with:
 
-3. If a category doesn't exist yet, create it following the structure:
+.. code-block:: bash
 
-   .. code-block:: rst
+    uv run towncrier build --draft --version 0.11.0
 
-      Category Name
-      -------------
-
-      * Your entry here
-
-4. Commit the changelog with your changes:
-
-   .. code-block:: bash
-
-      git add docs/changelogs/unreleased.rst
-      git commit -m "docs: update changelog for feature X"
+Commit the fragment with your changes.
 
 Writing Good Entries
 --------------------
@@ -138,96 +134,66 @@ For breaking changes, be explicit:
 Changelog Format
 ----------------
 
-The unreleased changelog follows this structure:
+The assembled changelog follows this structure (empty categories are omitted):
 
 .. code-block:: rst
 
-   Unreleased
-   ==========
+   Version 0.11.0 (2026-10-30)
+   ===========================
 
    Important Changes
    :::::::::::::::::
 
-   * ⚠️ Breaking change description with warning emoji
+   - ⚠️ Breaking change description with warning emoji
 
    Added
-   -----
+   :::::
 
-   * New feature 1
-   * New feature 2
+   - New feature 1 (#123)
 
    Changed
-   -------
+   :::::::
 
-   * Changed behavior 1
-   * Dependency update: package: old → new
+   - Changed behavior 1
 
    Fixed
-   -----
+   :::::
 
-   * Bug fix 1
+   - Bug fix 1
+
+   Security
+   ::::::::
+
+   - Security fix 1
 
    Removed
-   -------
+   :::::::
 
-   * Removed feature 1
+   - Removed feature 1
 
 Before Release (Release Manager)
 ---------------------------------
 
 The release manager performs these steps before creating a release:
 
-1. **Review unreleased changes**
+1. **Review pending fragments**
 
-   Check that all entries are clear, properly categorized, and user-focused.
+   Check that all entries in ``changelog.d/`` are clear, properly categorized, and user-focused.
 
-2. **Move to version-specific file**
+2. **Build the version-specific file**
 
    .. code-block:: bash
 
       # For version 0.9.0
-      mv docs/changelogs/unreleased.rst docs/changelogs/0.9.0.rst
+      uv run towncrier build --draft --version 0.9.0 --date 2025-01-15 > docs/changelogs/0.9.0.rst
+      git rm changelog.d/*.*.rst
 
-3. **Add version header and date**
+   The ``changelog.d/README.rst`` file stays. Check the first lines of the new file: the ``Version
+   X.Y.Z (date)`` title and its underline must come first.
 
-   Edit the new file to add the version and release date:
+3. **Update changelog index**
 
-   .. code-block:: rst
-
-      0.9.0 (2025-01-15)
-      ==================
-
-      Important Changes
-      :::::::::::::::::
-      ...
-
-4. **Create new empty unreleased file**
-
-   .. code-block:: bash
-
-      cat > docs/changelogs/unreleased.rst <<EOF
-      Unreleased
-      ==========
-
-      Important Changes
-      :::::::::::::::::
-
-      Added
-      -----
-
-      Changed
-      -------
-
-      Fixed
-      -----
-
-      Removed
-      -------
-      EOF
-
-5. **Update changelog index**
-
-   Add the new version to ``docs/changelogs/index.rst``:
+   Add the new version to ``docs/changelogs/index.rst``, below ``unreleased``:
 
    .. code-block:: rst
 
@@ -239,11 +205,11 @@ The release manager performs these steps before creating a release:
          0.8.0
          ...
 
-6. **Commit changelog updates**
+4. **Commit changelog updates**
 
    .. code-block:: bash
 
-      git add docs/changelogs/
+      git add docs/changelogs/ changelog.d/
       git commit -m "docs: prepare changelog for 0.9.0"
 
 The GitHub Release workflow automatically converts the RST changelog to Markdown and includes it in the GitHub Release.

@@ -2,6 +2,7 @@
 
 import builtins
 import os
+import subprocess
 import sys
 from datetime import datetime
 
@@ -24,6 +25,26 @@ if os.environ.get("READTHEDOCS_GIT_IDENTIFIER"):
     version = release = os.environ["READTHEDOCS_GIT_IDENTIFIER"]
 else:
     version = release = ".".join(__import__("harp").__hardcoded_version__.split(".")[0:2])
+
+
+def _render_pending_changelog():
+    """Renders the pending changelog fragments as `changelogs/unreleased.rst` (generated, git-ignored)."""
+    root = os.path.abspath("..")
+    if not os.path.isdir(os.path.join(root, "changelog.d")):
+        return
+    upcoming = __import__("harp").__hardcoded_version__.split(".dev")[0]
+    body = subprocess.run(
+        [sys.executable, "-m", "towncrier", "build", "--draft", "--version", upcoming, "--date", "unreleased"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    with open(os.path.join(root, "docs", "changelogs", "unreleased.rst"), "w") as f:
+        f.write(body + "\n")
+
+
+_render_pending_changelog()
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -115,4 +136,3 @@ if ALGOLIA_APIKEY and READTHEDOCS_VERSION == "latest":
     docsearch_app_id = "ZPR2CBYLG3"
     docsearch_api_key = ALGOLIA_APIKEY
     docsearch_index_name = "harp-proxy"
-
