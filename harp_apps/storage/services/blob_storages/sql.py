@@ -14,6 +14,8 @@ from harp_apps.storage.types import IBlobStorage
 
 logger = get_logger(__name__)
 
+ITER_BATCH_SIZE = 200
+
 
 def _is_older_than(moment: datetime, age: timedelta) -> bool:
     if moment.tzinfo is None:  # sqlite hands back naive UTC
@@ -124,10 +126,24 @@ class SqlBlobStorage(IBlobStorage):
             )
 
     async def iter_blobs(self, content_type: str) -> AsyncIterator[Blob]:
-        """Every stored blob of this content type."""
-        async with self.engine.connect() as conn:
-            result = await conn.stream(
-                select(SqlBlob).where(SqlBlob.content_type == content_type).execution_options(yield_per=200)
-            )
-            async for row in result:
+        """Every stored blob of this content type.
+
+        Read in short batches, each on its own connection, so no read transaction stays open while the
+        caller works on a row: on SQLite a long streamed read would keep writers waiting.
+        """
+        last_id = ""
+        while True:
+            async with self.engine.connect() as conn:
+                rows = (
+                    await conn.execute(
+                        select(SqlBlob)
+                        .where(SqlBlob.content_type == content_type, SqlBlob.id > last_id)
+                        .order_by(SqlBlob.id)
+                        .limit(ITER_BATCH_SIZE)
+                    )
+                ).fetchall()
+            for row in rows:
                 yield Blob(id=row.id, data=row.data, content_type=row.content_type)
+            if len(rows) < ITER_BATCH_SIZE:
+                return
+            last_id = rows[-1].id

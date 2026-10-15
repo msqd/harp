@@ -3,6 +3,7 @@
 The janitor never deletes ``cache/meta`` blobs: this sweep is the only thing reclaiming them.
 """
 
+import asyncio
 import logging
 from dataclasses import replace
 
@@ -133,6 +134,7 @@ class TestSweep:
         await storage.create_entry(_request(), _response(), "old")
         clock.advance(TTL + 1)
         await storage.create_entry(_request(), _response(), "recent")
+        await storage.wait_for_sweep()
 
         assert await cache_metas(blobs) == ["recent"]
 
@@ -148,15 +150,18 @@ class TestSweep:
 
         for _ in range(5):
             await storage.get_entries("key")
+        await storage.wait_for_sweep()
         assert runs == []
 
         clock.advance(CHECK_EVERY + 1)
         for _ in range(5):
             await storage.get_entries("key")
+        await storage.wait_for_sweep()
         assert len(runs) == 1
 
         clock.advance(CHECK_EVERY + 1)
         await storage.get_entries("key")
+        await storage.wait_for_sweep()
         assert len(runs) == 2
 
 
@@ -178,3 +183,77 @@ class TestStartupWarning:
             AsyncStorage(MemoryBlobStorage(), ttl=TTL)
 
         assert caplog.text == ""
+
+
+class GatedBlobs(MemoryBlobStorage):
+    """Blob storage whose enumeration waits until the test lets it go."""
+
+    def __init__(self):
+        super().__init__()
+        self.release = asyncio.Event()
+
+    async def iter_blobs(self, content_type):
+        await self.release.wait()
+        async for blob in super().iter_blobs(content_type):
+            yield blob
+
+
+@pytest.mark.asyncio
+class TestSweepStaysOffTheRequestPath:
+    async def test_a_request_does_not_wait_for_the_sweep(self, clock):
+        blobs = GatedBlobs()
+        storage = AsyncStorage(blobs, ttl=TTL, check_ttl_every=CHECK_EVERY)
+        await storage.create_entry(_request(), _response(), "key")
+        clock.advance(CHECK_EVERY + 1)
+
+        await asyncio.wait_for(storage.get_entries("key"), timeout=1)
+        await asyncio.wait_for(storage.create_entry(_request(), _response(), "other"), timeout=1)
+
+        blobs.release.set()
+        await storage.wait_for_sweep()
+
+    async def test_only_one_sweep_runs_at_a_time(self, clock, monkeypatch):
+        blobs = GatedBlobs()
+        storage = AsyncStorage(blobs, ttl=TTL, check_ttl_every=CHECK_EVERY)
+        runs = []
+        original = blobs.iter_blobs
+        monkeypatch.setattr(blobs, "iter_blobs", lambda ct: runs.append(ct) or original(ct))
+        clock.advance(CHECK_EVERY + 1)
+        await storage.get_entries("key")
+        await asyncio.sleep(0)
+        clock.advance(CHECK_EVERY + 1)
+        await storage.get_entries("key")
+        await asyncio.sleep(0)
+
+        assert len(runs) == 1
+        blobs.release.set()
+        await storage.wait_for_sweep()
+
+    async def test_sweep_lets_the_event_loop_run(self, blobs, clock):
+        storage = AsyncStorage(blobs, ttl=TTL, check_ttl_every=CHECK_EVERY)
+        for i in range(1000):
+            await storage.create_entry(_request(), _response(), f"key-{i}")
+        clock.advance(CHECK_EVERY + 1)  # sweep due, nothing expired: only the decoding loop can yield
+        ticks = 0
+
+        async def ticker():
+            nonlocal ticks
+            while True:
+                await asyncio.sleep(0)
+                ticks += 1
+
+        task = asyncio.create_task(ticker())
+        await storage.get_entries("key-0")
+        await storage.wait_for_sweep()
+        task.cancel()
+        assert ticks >= 10
+
+    async def test_close_cancels_a_running_sweep(self, clock):
+        blobs = GatedBlobs()
+        storage = AsyncStorage(blobs, ttl=TTL, check_ttl_every=CHECK_EVERY)
+        clock.advance(CHECK_EVERY + 1)
+        await storage.get_entries("key")
+        await asyncio.sleep(0)
+
+        await storage.close()
+        await storage.wait_for_sweep()
