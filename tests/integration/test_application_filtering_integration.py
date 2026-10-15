@@ -6,33 +6,32 @@ These tests verify the COMPLETE flow from configuration to system build:
 2. Config file parsing → Application filtering → System instantiation
 3. Real file I/O, real configuration building, real SystemBuilder.abuild()
 
-TEST COVERAGE (13 passing, 3 skipped, 8 known issues):
+TEST COVERAGE (18 passing, 3 xfail):
 
-✅ PASSING TESTS:
-- test_yaml_config_with_disabled_http_client: HTTP client disabled via YAML config
-- test_json_config_with_disabled_app: Storage disabled via JSON config
-- test_strict_flag_with_unknown_app_raises_error: Strict mode raises ValueError for unknown apps
-- test_strict_flag_allows_valid_config: Strict mode allows valid configurations
-- test_strict_flag_without_strict_warns_only: Without strict, unknown apps produce warnings
-- test_config_enabled_false_takes_precedence_over_cli_enable: Config file takes precedence
-- test_cli_disable_with_no_config_entry: CLI --disable works for unconfigured apps
-- test_cli_enable_with_no_config_entry: CLI --enable works for unconfigured apps
-- test_production_like_config: Production configuration with selective app enabling
-- test_config_with_only_enabled_false_fields: All apps disabled scenario
-- test_development_config_with_all_apps: Development configuration with multiple apps
-- test_warning_log_structure: Warning logs have correct structure and app names
-- test_yaml_config_with_multiple_disabled_apps: Multiple apps disabled simultaneously
+PASSING TESTS:
+- test_yaml_config_with_disabled_http_client
+- test_yaml_config_with_multiple_disabled_apps
+- test_json_config_with_disabled_app
+- test_strict_flag_with_unknown_app_raises_error
+- test_strict_flag_allows_valid_config
+- test_strict_flag_without_strict_warns_only
+- test_strict_flag_with_disabled_app_warns_not_errors
+- test_config_enabled_false_takes_precedence_over_cli_enable
+- test_cli_disable_with_no_config_entry
+- test_cli_enable_with_no_config_entry
+- test_abuild_with_all_apps_enabled
+- test_complex_config_with_mixed_states
+- test_production_like_config
+- test_development_config_with_all_apps
+- test_config_with_only_enabled_false_fields
+- test_config_with_explicit_enabled_true
+- test_warning_log_structure
+- test_info_logs_during_system_build
 
-⏭️ SKIPPED TESTS (intentional - out of scope):
-- test_invalid_yaml_file_raises_error: File error handling (YAML parser responsibility)
-- test_nonexistent_file_raises_error: File error handling (file system responsibility)
-- test_empty_config_file: Empty file handling (parser responsibility)
-
-⚠️ KNOWN ISSUES (8 tests - require additional setup/investigation):
-- SystemBuilder.abuild() tests: Require complex proxy endpoint setup
-- Some strict flag edge cases: Need app-specific configuration validation
-- Full system build tests: Require all app dependencies and valid configs
-- Dashboard-related tests: Dashboard doesn't use ApplicationSettingsMixin (enabled field)
+EXPECTED FAILURES (xfail, storage is a required dependency; tracked under #807):
+- test_abuild_with_disabled_app_in_config
+- test_abuild_with_multiple_disabled_apps
+- test_full_flow_temp_config_to_running_system
 
 NOTE: Integration tests use REAL HARP applications (storage, proxy, http_client) rather than
 mock objects. Tests only use apps that support the 'enabled' field via extra='allow' or
@@ -661,38 +660,6 @@ class TestRealWorldScenarioMixedApps:
 
 class TestErrorHandlingAndEdgeCases:
     """Test error handling and edge cases in integration flow."""
-
-    @pytest.mark.skip(reason="File error handling is out of scope for application filtering integration tests")
-    def test_invalid_yaml_file_raises_error(self, tmp_path):
-        """Test that invalid YAML file raises appropriate error."""
-        config_file = tmp_path / "config.yaml"
-        config_file.write_text("invalid: yaml: content: [")
-
-        builder = ConfigurationBuilder()
-
-        with pytest.raises(Exception):  # YAML parsing error
-            builder.add_files([str(config_file)])
-
-    @pytest.mark.skip(reason="File error handling is out of scope for application filtering integration tests")
-    def test_nonexistent_file_raises_error(self):
-        """Test that nonexistent config file raises error."""
-        builder = ConfigurationBuilder()
-
-        with pytest.raises(FileNotFoundError):
-            builder.add_files(["/nonexistent/config.yaml"])
-
-    @pytest.mark.skip(reason="Empty file handling is out of scope for application filtering integration tests")
-    def test_empty_config_file(self, tmp_path):
-        """Test that empty config file is handled gracefully."""
-        config_file = tmp_path / "config.yaml"
-        config_file.write_text("")
-
-        builder = ConfigurationBuilder()
-        builder.add_files([str(config_file)])
-
-        # Should succeed with default config
-        config = builder.build()
-        assert config is not None
 
     def test_config_with_only_enabled_false_fields(self, tmp_path, caplog):
         """Test config where all apps are disabled."""

@@ -13,6 +13,7 @@ bearer token in a vendor header. When such an upstream answers with a ``Last-Mod
 one.
 """
 
+from harp_apps.http_cache.tests import ENDPOINT_HOOKS
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -38,7 +39,7 @@ def _client(*, allow_heuristics=False):
             cache_options=CacheOptions(shared=True, supported_methods=["GET", "HEAD"], allow_stale=False)
         ),
     )
-    return AsyncClient(transport=transport)
+    return AsyncClient(transport=transport, event_hooks=ENDPOINT_HOOKS)
 
 
 def _counting_route(url, headers):
