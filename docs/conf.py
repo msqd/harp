@@ -2,13 +2,15 @@
 
 import builtins
 import os
-import subprocess
 import sys
 from datetime import datetime
+from pathlib import Path
 
 builtins.__sphinx__ = True
 
 sys.path.insert(0, os.path.abspath(".."))
+
+from docs._extensions.pending_changelog import render_pending_changelog  # noqa: E402
 
 project = "HARP Proxy"
 
@@ -27,24 +29,7 @@ else:
     version = release = ".".join(__import__("harp").__hardcoded_version__.split(".")[0:2])
 
 
-def _render_pending_changelog():
-    """Renders the pending changelog fragments as `changelogs/unreleased.rst` (generated, git-ignored)."""
-    root = os.path.abspath("..")
-    if not os.path.isdir(os.path.join(root, "changelog.d")):
-        return
-    upcoming = __import__("harp").__hardcoded_version__.split(".dev")[0]
-    body = subprocess.run(
-        [sys.executable, "-m", "towncrier", "build", "--draft", "--version", upcoming, "--date", "unreleased"],
-        cwd=root,
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.strip()
-    with open(os.path.join(root, "docs", "changelogs", "unreleased.rst"), "w") as f:
-        f.write(body + "\n")
-
-
-_render_pending_changelog()
+render_pending_changelog(Path("..").resolve())
 
 extensions = [
     "sphinx.ext.autodoc",

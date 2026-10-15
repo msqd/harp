@@ -116,8 +116,10 @@ requests:
 2. Prepare the Changelog
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Contributors add a fragment to ``changelog.d/`` with each pull request. Build them into the
-version's changelog file, then remove them:
+Contributors add a fragment to ``changelog.d/`` with each pull request. What you do with them depends
+on the kind of release.
+
+**Final release** ``X.Y.Z``: build the fragments into the version's changelog file, then remove them:
 
 .. code-block:: bash
 
@@ -128,12 +130,21 @@ version's changelog file, then remove them:
 The file starts with the title ``Version 0.9.0 (2025-01-15)`` and an ``=`` underline at least as
 long. The ``Version `` prefix is part of the convention. Add ``0.9.0`` to ``docs/changelogs/index.rst``.
 
+**Pre-release** ``X.Y.Z-alphaN``, ``-betaN``, ``-rcN``: do nothing here. A pre-release does not consume
+the fragments, they must all still be there for the final ``X.Y.Z``. The release job renders the
+GitHub release notes from the fragments present at the tag, as ``towncrier build --draft`` does.
+Preview them with:
+
+.. code-block:: bash
+
+    uv run towncrier build --draft --version 0.11.0 --date $(date +%F)
+
 .. warning::
 
     Nothing in the build will tell you if you get this wrong. A malformed title or a short underline
     is not reported by ``make docs``, so check the rendered page yourself.
 
-``changelog.d/README.rst`` stays in place for the next cycle.
+``changelog.d/README.rst`` stays in place for the next cycle. Skip the commit below for a pre-release.
 
 See :doc:`changelog` for complete changelog management workflow.
 
@@ -252,7 +263,8 @@ Once the tag is pushed, GitHub Actions automatically runs the release workflow:
        └─ Production release
 
     6. Creates GitHub Release
-       ├─ Converts changelog (RST → Markdown)
+       ├─ Converts changelog (RST → Markdown): the fragments for a pre-release,
+       │  docs/changelogs/X.Y.Z.rst for a final release
        ├─ Attaches wheel artifacts
        └─ Marks as pre-release if applicable
 

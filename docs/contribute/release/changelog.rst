@@ -8,14 +8,17 @@ Overview
 
 Entries are `towncrier <https://towncrier.readthedocs.io/>`_ fragments: one small file per pull
 request in ``changelog.d/``, so two pull requests never edit the same file and never conflict. The
-release manager assembles the fragments into ``docs/changelogs/X.Y.Z.rst``.
+release manager assembles the fragments into ``docs/changelogs/X.Y.Z.rst`` when cutting the final
+``X.Y.Z``. A pre-release (``-alphaN``, ``-betaN``, ``-rcN``) leaves the fragments in place: its GitHub
+release notes are rendered from them, and the final release still needs them.
 
 1. **During development**: Add a fragment to ``changelog.d/`` in your pull request
 2. **Before release**: Build the fragments into a version-specific file (e.g., ``0.11.0.rst``)
 3. **After release**: The version-specific changelog appears in the GitHub Release
 
 The documentation build renders the pending fragments as the *unreleased* changelog page
-(``docs/changelogs/unreleased.rst``, generated and git-ignored).
+(``docs/changelogs/unreleased.rst``, generated and git-ignored), titled with the version read from
+``pyproject.toml``. Without a pending fragment, the page does not exist.
 
 When to Add Entries
 -------------------
@@ -180,7 +183,7 @@ The release manager performs these steps before creating a release:
 
    Check that all entries in ``changelog.d/`` are clear, properly categorized, and user-focused.
 
-2. **Build the version-specific file**
+2. **Build the version-specific file** (final release only, never for a pre-release)
 
    .. code-block:: bash
 
