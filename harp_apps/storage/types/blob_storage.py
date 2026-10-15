@@ -18,3 +18,5 @@ class IBlobStorage(Protocol):
 
     # Optional capability: `iter_blobs(content_type)` yields every stored blob of that content type
     # (async iterator). Backends that cannot enumerate, such as Redis, do not define it.
+    # Optional capability: `delete_blobs(blobs)` deletes each given blob, in batches where the backend can,
+    # unless it was stored again with other data since it was read. Absent keys are ignored.

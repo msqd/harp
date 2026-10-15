@@ -1,8 +1,8 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 from datetime import UTC, datetime, timedelta
 from typing import override
 
-from sqlalchemy import delete, func, insert, select, update
+from sqlalchemy import and_, delete, or_, func, insert, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -15,6 +15,7 @@ from harp_apps.storage.types import IBlobStorage
 logger = get_logger(__name__)
 
 ITER_BATCH_SIZE = 200
+DELETE_BATCH_SIZE = 200
 
 
 def _is_older_than(moment: datetime, age: timedelta) -> bool:
@@ -105,6 +106,20 @@ class SqlBlobStorage(IBlobStorage):
                 delete(SqlBlob).where(SqlBlob.id == blob_id),
             )
             await conn.commit()
+
+    async def delete_blobs(self, blobs: Sequence[Blob]) -> None:
+        """
+        Delete blobs in chunks, one statement and one transaction per chunk.
+
+        A blob stored again with other data since it was read is left alone.
+        """
+        for start in range(0, len(blobs), DELETE_BATCH_SIZE):
+            chunk = blobs[start : start + DELETE_BATCH_SIZE]
+            async with self.engine.connect() as conn:
+                await conn.execute(
+                    delete(SqlBlob).where(or_(*(and_(SqlBlob.id == b.id, SqlBlob.data == b.data) for b in chunk)))
+                )
+                await conn.commit()
 
     @override
     async def exists(self, blob_id: str) -> bool:
