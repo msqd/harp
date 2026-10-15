@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from "react-query/devtools"
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
 
 import GlobalStyles from "Styles/GlobalStyles"
+
 import "./index.css"
 import { routes } from "./routes"
 
