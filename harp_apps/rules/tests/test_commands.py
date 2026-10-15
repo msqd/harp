@@ -7,7 +7,7 @@ def test_run_command(httpbin, snapshot):
 
     result = runner.invoke(entrypoint, ["rules", "run", "api=" + httpbin, "GET", "/hostname"])
     assert result.exit_code == 0
-    assert result.output.strip() == snapshot
+    assert result.stdout.strip() == snapshot
 
 
 def test_lint_command(snapshot):

@@ -43,10 +43,10 @@ async def test_cacheable_response_is_stored_in_sql_blob_storage(sql_engine):
                 )
             )
 
-            first = await client.get("http://example.com/cacheable")
+            first = await client.get("http://example.com/cacheable", extensions={"harp": {"endpoint": "test"}})
             assert first.status_code == 200
 
-            second = await client.get("http://example.com/cacheable")
+            second = await client.get("http://example.com/cacheable", extensions={"harp": {"endpoint": "test"}})
             assert second.status_code == 200
 
     # The second request must not have reached the origin, which is only possible if the first
