@@ -228,7 +228,6 @@ jobs:
     name: Build Documentation
     runs-on: ubuntu-latest
     needs: check-lockfile
-    continue-on-error: true
     permissions:
       contents: read
     steps:
@@ -262,7 +261,6 @@ jobs:
   build-storybook:
     name: Build Storybook
     runs-on: ubuntu-latest
-    continue-on-error: true
     permissions:
       contents: read
     steps:
@@ -371,6 +369,8 @@ jobs:
       - test-frontend-unit
       - lint-python
       - lint-frontend
+      - build-documentation
+      - build-storybook
     runs-on: ubuntu-latest
     permissions:
       contents: read
