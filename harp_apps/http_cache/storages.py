@@ -8,6 +8,7 @@ from email.utils import formatdate
 from hishel import AsyncBaseStorage, Entry, EntryMeta, Request, Response
 
 from harp import get_logger
+from harp.models import Blob
 from harp.http.utils import parse_cache_control
 from harp_apps.storage.types import IBlobStorage
 from .adapters import AsyncStorageAdapter, stored_at_of
@@ -17,6 +18,9 @@ _YamlLoader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
 
 # How many entries the sweep decodes before handing the event loop back.
 SWEEP_YIELD_EVERY = 50
+
+# How many expired entries the sweep deletes at once.
+SWEEP_DELETE_BATCH = 200
 
 CACHE_META_CONTENT_TYPE = "cache/meta"
 DEFAULT_TTL = 86400
@@ -107,25 +111,39 @@ class AsyncStorage(AsyncBaseStorage):
         if self._sweep_task is not None:
             await asyncio.gather(self._sweep_task, return_exceptions=True)
 
+    async def _delete_expired(self, expired: list[Blob]) -> int:
+        """Delete expired entries, sparing any that were stored again since they were read."""
+        if not expired:
+            return 0
+        if hasattr(self._storage, "delete_blobs"):
+            await self._storage.delete_blobs(expired)
+        else:
+            for blob in expired:
+                await self._storage.delete(blob.id)
+        await asyncio.sleep(0)
+        return len(expired)
+
     async def _sweep(self) -> None:
         """Delete the entries not written for more than `ttl`, yielding to the event loop along the way."""
         try:
-            expired = []
+            expired: list[Blob] = []
+            removed = 0
             seen = 0
             async for blob in self._storage.iter_blobs(CACHE_META_CONTENT_TYPE):
                 try:
                     if self._is_expired(stored_at_of(yaml.load(blob.data, Loader=_YamlLoader))):
-                        expired.append(blob.id)
+                        expired.append(blob)
                 except Exception:
                     logger.exception(f"Unreadable cache entry, left alone: key={blob.id}")
+                if len(expired) >= SWEEP_DELETE_BATCH:
+                    removed += await self._delete_expired(expired)
+                    expired = []
                 seen += 1
                 if seen % SWEEP_YIELD_EVERY == 0:
                     await asyncio.sleep(0)
-            for key in expired:
-                await self._storage.delete(key)
-                await asyncio.sleep(0)
-            if expired:
-                logger.debug(f"Cache ttl sweep removed {len(expired)} entries")
+            removed += await self._delete_expired(expired)
+            if removed:
+                logger.debug(f"Cache ttl sweep removed {removed} entries")
         except asyncio.CancelledError:
             raise
         except Exception:

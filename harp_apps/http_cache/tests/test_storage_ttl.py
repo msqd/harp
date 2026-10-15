@@ -257,3 +257,38 @@ class TestSweepStaysOffTheRequestPath:
 
         await storage.close()
         await storage.wait_for_sweep()
+
+
+@pytest.mark.asyncio
+class TestSweepDeletes:
+    async def test_entry_stored_again_after_collection_survives(self, storage, blobs, clock):
+        for i in range(5):
+            await storage.create_entry(_request(), _response(), f"k{i}")
+        clock.advance(TTL + 1)
+        original = blobs.delete_blobs
+
+        async def rewrite_then_delete(expired):
+            await storage.create_entry(_request(), _response(), "k3")  # same key, fresh stored_at
+            await original(expired)
+
+        blobs.delete_blobs = rewrite_then_delete
+        await storage.get_entries("nothing")  # starts the sweep
+        await storage.wait_for_sweep()
+
+        assert await cache_metas(blobs) == ["k3"]
+
+    async def test_key_deleted_by_a_read_during_the_sweep_does_not_abort_it(self, storage, blobs, clock):
+        for i in range(5):
+            await storage.create_entry(_request(), _response(), f"k{i}")
+        clock.advance(TTL + 1)
+        original = blobs.delete_blobs
+
+        async def read_deletes_then_sweep_deletes(expired):
+            await blobs.delete("k1")
+            await original(expired)
+
+        blobs.delete_blobs = read_deletes_then_sweep_deletes
+        await storage.get_entries("nothing")
+        await storage.wait_for_sweep()
+
+        assert await cache_metas(blobs) == []
