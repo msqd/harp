@@ -214,7 +214,7 @@ test-e2e-cache-baseline: install-backend-dev  ## Records the RFC 9111 compliance
 	$(call execute,cd misc/cache-tests && CACHE_TESTS_RECORD_REASON="$(REASON)" ./run-tests.sh)
 
 lint-frontend: install-frontend  ## Lints the frontend codebase.
-	$(call execute,cd $(FRONTEND_DIR); $(PNPM) build)
+	$(call execute,cd $(FRONTEND_DIR); $(PNPM) lint)
 
 coverage:  ## Generates coverage report.
 	$(call execute,$(PYTEST) $(PYTEST_TARGETS) tests -m 'not subprocess' $(PYTEST_COVERAGE_OPTIONS) $(PYTEST_COMMON_OPTIONS) $(PYTEST_OPTIONS))

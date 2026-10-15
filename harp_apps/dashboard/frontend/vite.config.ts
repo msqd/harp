@@ -9,6 +9,7 @@ import dts from "vite-plugin-dts"
 import tsconfigPaths from "vite-tsconfig-paths" // https://vitejs.dev/config/
 
 import pkg from "./package.json"
+import { emptyOutDirExcept } from "./vite-plugins/emptyDirExcept"
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -57,7 +58,8 @@ export default defineConfig(({ mode }) => {
           outDir: "dist",
         }
       : {
-          emptyOutDir: true,
+          // Emptied by `emptyOutDirExcept` below: `web/.gitkeep` is tracked and must survive the build.
+          emptyOutDir: false,
           outDir: "../web",
           rollupOptions: {
             output: {
@@ -94,6 +96,7 @@ export default defineConfig(({ mode }) => {
       postcss: postcss,
     },
     plugins: [
+      ...(mode === "lib" ? [] : [emptyOutDirExcept(resolve(__dirname, "../web"), [".gitkeep"])]),
       dts({
         insertTypesEntry: true,
         staticImport: true,
