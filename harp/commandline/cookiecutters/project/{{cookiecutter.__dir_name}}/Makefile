@@ -19,7 +19,7 @@ endef
 .PHONY: help install start dev test clean
 
 help:  ## Shows this help message
-	@echo "📦 \033[1m{{cookiecutter.name}}\033[0m"
+	@echo '📦 \033[1m{{ cookiecutter.name | replace("'", "'\\''") | replace("$", "$$") }}\033[0m'
 	@echo
 	@echo "Available commands:"
 	@echo
