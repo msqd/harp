@@ -5,6 +5,7 @@ bridges the two is what makes ``update_entry`` and ``remove_entry`` able to do a
 so both the resolving path and the failing path are covered here.
 """
 
+from harp_apps.http_cache.tests import ENDPOINT_HOOKS
 import asyncio
 import time
 import uuid
@@ -215,7 +216,7 @@ class TestDateOnStore:
             storage=storage,
             policy=SpecificationPolicy(cache_options=CacheOptions(shared=True, allow_stale=False)),
         )
-        async with httpx.AsyncClient(transport=transport) as client:
+        async with httpx.AsyncClient(transport=transport, event_hooks=ENDPOINT_HOOKS) as client:
             await client.get("http://example.com/resource")
             await asyncio.sleep(2)
             await client.get("http://example.com/resource")

@@ -103,3 +103,4 @@ wheels/
 !/harp_apps/dashboard/web/
 /harp_apps/dashboard/web/*
 !/harp_apps/dashboard/web/.gitkeep
+docs/changelogs/unreleased.rst

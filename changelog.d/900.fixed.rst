@@ -1,0 +1,1 @@
+``click``, ``httpcore`` and ``prometheus-client`` are declared dependencies (imported directly, they resolved only through ``rich-click``, ``httpx`` and ``asgi-prometheus``); a test fails when shipped code imports an undeclared distribution.
