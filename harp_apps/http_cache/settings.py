@@ -48,7 +48,7 @@ class HttpCacheSettings(ApplicationSettingsMixin, Configurable):
         base="hishel.AsyncBaseStorage",
         type="harp_apps.http_cache.storages.AsyncStorage",
         arguments={
-            "ttl": None,
+            "ttl": 86400,
             "check_ttl_every": 60.0,
             "allow_heuristics": False,
         },

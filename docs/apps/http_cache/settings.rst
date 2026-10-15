@@ -110,8 +110,13 @@ The storage backend for cached responses. By default, it uses the storage applic
 
 The default storage includes:
 
-- **ttl:** Time-to-live for cache entries (default: ``None`` - no TTL)
-- **check_ttl_every:** How often to check for expired entries in seconds (default: ``60.0``)
+- **ttl:** Seconds after which an entry is expired, counted from when it was stored or last freshened by a ``304``
+  (default: ``86400``, 24 hours). An entry with a longer ``max-age`` is still expired after ``ttl``. ``null`` disables
+  expiry by age. An expired entry is not served and its ``cache/meta`` blob is deleted. The header and body blobs it
+  pointed at are then removed by the :doc:`janitor </apps/janitor/index>`.
+- **check_ttl_every:** Minimum seconds between two sweeps deleting expired entries, per process (default: ``60.0``).
+  Needs a blob storage that can list its entries (SQL); with Redis, a warning is logged at startup and only entries
+  that are read again expire.
 - **allow_heuristics:** Whether to retain responses with no explicit expiry (default: ``false``)
 
 .. code-block:: yaml
