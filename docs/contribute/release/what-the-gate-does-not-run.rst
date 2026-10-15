@@ -279,11 +279,15 @@ Incapable of reporting
 Every other entry here is a gate that failed to report something it did observe. This one is an
 instrument that cannot report at all, and it went unnoticed for an unknown number of releases.
 
-``make docs`` emits **zero warnings whatever it is fed**. Importing ``harp`` runs
+``make docs`` emitted **zero warnings whatever it was fed**. Importing ``harp`` ran
 ``logging.config.dictConfig`` at module import time with ``disable_existing_loggers: True``
-(``harp/_logging.py``, lines 71 and 100). The documentation build imports ``harp`` through the two
-extensions in ``docs/_extensions/``, which disables the ``sphinx`` logger that Sphinx created moments
-earlier. Its handlers stay correctly attached; the logger itself is dead.
+(``harp/_logging.py``). The documentation build imports ``harp`` through the two
+extensions in ``docs/_extensions/``, which disabled the ``sphinx`` logger that Sphinx created moments
+earlier. Its handlers stayed correctly attached; the logger itself was dead.
+
+Fixed in `PR #1063 <https://github.com/msqd/harp/pull/1063>`_: importing ``harp`` configures no logging
+any more, the ``harp`` command does it. The docs build now reports warnings again (about 350 at the
+time of the fix); fixing them is tracked separately.
 
 **A build that reports no warnings and a build that cannot report warnings look identical from the
 exit code.**

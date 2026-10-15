@@ -12,6 +12,7 @@ Added
 Changed
 :::::::
 
+- Importing ``harp`` no longer configures logging (stdlib ``dictConfig``, ``structlog.configure``) nor disables existing loggers; embedders configure logging themselves. The ``harp`` command still does, with the same formats and ``LOGGING_*`` levels (#944).
 - CI documentation and Storybook builds no longer ignore failures and are required by *All Checks Passed*, so they block publishing (#932).
 - The CI wheel job no longer sets up Python itself; uv provides the interpreter, as for contributors (#982).
 - CI lints Python (``ruff check``, ``ruff format --check``) and the frontend (``pnpm lint``), both required by *All Checks Passed*; ``make lint-frontend`` runs ``pnpm lint``; generated ``src/Models/*.d.ts`` are excluded from ESLint.
