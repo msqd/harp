@@ -255,6 +255,17 @@ Or visit: ``https://github.com/msqd/harp/actions``
 
 The workflow typically takes 10-15 minutes to complete.
 
+.. important::
+
+    **Publish to PyPI waits for a human approval.** The job runs in the ``pypi`` GitHub environment,
+    which requires a review from a maintainer listed on it (``hartym``). Until someone approves it,
+    the run shows the job as *waiting* and nothing reaches PyPI; the GitHub release job runs after
+    it.
+
+    Ask for that approval as soon as *Publish to TestPyPI* is green. Do not approve it yourself, even
+    when GitHub offers you the button: the sign-off covers the cut, not this approval, and a version
+    published to PyPI cannot be withdrawn.
+
 9. Verify the Release
 ~~~~~~~~~~~~~~~~~~~~~~
 

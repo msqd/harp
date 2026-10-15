@@ -31,6 +31,12 @@ before the next one starts.
    secrets, dependency and supply-chain surface, injection and SSRF vectors) run before the
    cut.
 
+   It is not the first adversarial look a security fix gets. A pull request that fixes a security
+   finding is attacked at acceptance, by someone other than its author, with the same hostile
+   inputs this review would try. When a guard is bypassed a second time, stop patching it: replace
+   it with a rule that refuses the whole class of input, as the proxy path guard did in 0.10 after
+   four rounds.
+
 Keep this section up to date as the review process evolves.
 
 Python dependencies (uv)
