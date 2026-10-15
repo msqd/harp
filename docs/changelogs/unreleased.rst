@@ -22,6 +22,7 @@ Fixed
 
 - Frontend build no longer deletes the tracked ``harp_apps/dashboard/web/.gitkeep``, so a local build leaves the checkout clean (no ``-dirty`` version).
 - Cache: a stored response with no ``Date`` header now gets one set to its time of receipt, so its ``max-age`` expires instead of serving fresh forever (#963).
+- Cache: a request reaching the cache transport without an endpoint name now raises a clear error instead of falling into a shared ``__upstream__`` namespace (#913).
 
 Security
 ::::::::
