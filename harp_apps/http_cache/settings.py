@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from harp.config import Configurable, Service, ApplicationSettingsMixin
 
@@ -36,6 +36,13 @@ class CachePolicyOptions(Configurable):
 class CachePolicySettings(Service):
     #: Options given to the policy, as a ``hishel.CacheOptions``.
     options: CachePolicyOptions = Field(default_factory=CachePolicyOptions)
+
+    @model_validator(mode="after")
+    def __reject_cache_options_argument(self):
+        # SpecificationPolicy does not coerce a mapping into CacheOptions: it would load, then fail on the first request.
+        if "cache_options" in (self.arguments or {}):
+            raise ValueError("cache_options cannot be set as a policy argument, use http_cache.policy.options instead.")
+        return self
 
 
 class HttpCacheSettings(ApplicationSettingsMixin, Configurable):

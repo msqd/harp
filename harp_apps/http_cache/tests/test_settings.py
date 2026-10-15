@@ -110,3 +110,20 @@ class TestHttpCachePolicyOptions:
             await transport.handle_async_request(request)
 
         assert mock_transport.request_count == origin_hits
+
+    @pytest.mark.parametrize(
+        "policy",
+        [
+            {"arguments": {"cache_options": {"allow_stale": True}}},
+            {"cache_options": {"allow_stale": True}},
+        ],
+    )
+    async def test_cache_options_argument_rejected(self, policy):
+        from harp.config import ConfigurationBuilder
+
+        builder = ConfigurationBuilder(
+            {"applications": ["http_client", "http_cache"], "http_cache": {"policy": policy}},
+            use_default_applications=False,
+        )
+        with pytest.raises(Exception, match="http_cache.policy.options"):
+            await builder.abuild_system()
