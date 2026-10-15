@@ -2,6 +2,93 @@
 # name: TestHttpCacheSettings.test_jsonschema_for_serialization
   dict({
     '$defs': dict({
+      'CachePolicyOptions': dict({
+        'additionalProperties': False,
+        'description': 'Options of the cache policy, mapped onto ``hishel.CacheOptions``.',
+        'properties': dict({
+          'allow_stale': dict({
+            'default': False,
+            'title': 'Allow Stale',
+            'type': 'boolean',
+          }),
+          'shared': dict({
+            'default': True,
+            'title': 'Shared',
+            'type': 'boolean',
+          }),
+          'supported_methods': dict({
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Supported Methods',
+            'type': 'array',
+          }),
+        }),
+        'title': 'CachePolicyOptions',
+        'type': 'object',
+      }),
+      'CachePolicySettings': dict({
+        'additionalProperties': True,
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'additionalProperties': True,
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'description': 'Arguments for the service constructor.',
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Base type for service definition.',
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Optional custom constructor for the service.',
+            'title': 'Constructor',
+          }),
+          'options': dict({
+            '$ref': '#/$defs/CachePolicyOptions',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Type for service definition.',
+            'title': 'Type',
+          }),
+        }),
+        'title': 'CachePolicySettings',
+        'type': 'object',
+      }),
       'Service': dict({
         'additionalProperties': True,
         'description': 'A settings base class for service definitions.',
@@ -72,8 +159,16 @@
         'type': 'boolean',
       }),
       'policy': dict({
-        '$ref': '#/$defs/Service',
+        '$ref': '#/$defs/CachePolicySettings',
         'default': dict({
+          'options': dict({
+            'allow_stale': False,
+            'shared': True,
+            'supported_methods': list([
+              'GET',
+              'HEAD',
+            ]),
+          }),
           'type': 'hishel.SpecificationPolicy',
         }),
       }),
@@ -83,7 +178,7 @@
           'allow_heuristics': False,
           'base': 'hishel.AsyncBaseStorage',
           'check_ttl_every': 60.0,
-          'ttl': None,
+          'ttl': 86400,
           'type': 'harp_apps.http_cache.storages.AsyncStorage',
         }),
       }),
@@ -102,6 +197,93 @@
 # name: TestHttpCacheSettings.test_jsonschema_for_validation
   dict({
     '$defs': dict({
+      'CachePolicyOptions': dict({
+        'additionalProperties': False,
+        'description': 'Options of the cache policy, mapped onto ``hishel.CacheOptions``.',
+        'properties': dict({
+          'allow_stale': dict({
+            'default': False,
+            'title': 'Allow Stale',
+            'type': 'boolean',
+          }),
+          'shared': dict({
+            'default': True,
+            'title': 'Shared',
+            'type': 'boolean',
+          }),
+          'supported_methods': dict({
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Supported Methods',
+            'type': 'array',
+          }),
+        }),
+        'title': 'CachePolicyOptions',
+        'type': 'object',
+      }),
+      'CachePolicySettings': dict({
+        'additionalProperties': True,
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'additionalProperties': True,
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'description': 'Arguments for the service constructor.',
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Base type for service definition.',
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Optional custom constructor for the service.',
+            'title': 'Constructor',
+          }),
+          'options': dict({
+            '$ref': '#/$defs/CachePolicyOptions',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Type for service definition.',
+            'title': 'Type',
+          }),
+        }),
+        'title': 'CachePolicySettings',
+        'type': 'object',
+      }),
       'Service': dict({
         'additionalProperties': True,
         'description': 'A settings base class for service definitions.',
@@ -172,8 +354,16 @@
         'type': 'boolean',
       }),
       'policy': dict({
-        '$ref': '#/$defs/Service',
+        '$ref': '#/$defs/CachePolicySettings',
         'default': dict({
+          'options': dict({
+            'allow_stale': False,
+            'shared': True,
+            'supported_methods': list([
+              'GET',
+              'HEAD',
+            ]),
+          }),
           'type': 'hishel.SpecificationPolicy',
         }),
       }),
@@ -183,7 +373,7 @@
           'allow_heuristics': False,
           'base': 'hishel.AsyncBaseStorage',
           'check_ttl_every': 60.0,
-          'ttl': None,
+          'ttl': 86400,
           'type': 'harp_apps.http_cache.storages.AsyncStorage',
         }),
       }),

@@ -9,9 +9,18 @@ describe("getDocumentationUrl", () => {
     expect(getDocumentationUrl("1.0.0")).toContain("/en/1.0/user/")
   })
 
-  it("ignores pre-release and build metadata, which docs are not published per-build", () => {
-    expect(getDocumentationUrl("0.10.0a2")).toContain("/en/0.10/user/")
-    expect(getDocumentationUrl("0.10.0-alpha2-67-g481856f4-dirty")).toContain("/en/0.10/user/")
+  it("falls back to latest for anything but a final release, which has no matching docs line", () => {
+    for (const version of [
+      "0.11.0a1",
+      "0.11.0-alpha1",
+      "0.11.0rc1",
+      "0.11.0.dev0",
+      "0.10.0-2-g394c5e09",
+      "0.10.0-alpha2-67-g481856f4-dirty",
+      "0.10.0-dirty",
+    ]) {
+      expect(getDocumentationUrl(version)).toContain("/en/latest/user/")
+    }
   })
 
   it("falls back to the latest documentation when the version cannot be read", () => {

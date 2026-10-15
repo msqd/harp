@@ -1,3 +1,5 @@
+from collections.abc import AsyncIterator
+
 from harp.models import Blob
 from harp_apps.storage.types import IBlobStorage
 
@@ -23,3 +25,8 @@ class MemoryBlobStorage(IBlobStorage):
 
     async def exists(self, blob_id: str) -> bool:
         return False
+
+    async def iter_blobs(self, content_type: str) -> AsyncIterator[Blob]:
+        for blob in list(self._blobs.values()):
+            if blob.content_type == content_type:
+                yield blob

@@ -15,6 +15,14 @@ Quick Start
 	# Start the HARP proxy server
 	make start
 
+{%- if cookiecutter.__harp_source %}
+
+.. note::
+
+    ``harp-proxy`` is installed editable from the local checkout ``{{cookiecutter.__harp_source}}``
+    (``[tool.uv.sources]`` in ``pyproject.toml``), not from the package index.
+{%- endif %}
+
 Available Commands
 ------------------
 

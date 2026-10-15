@@ -5,8 +5,10 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
 import { ItemList } from "Domain/Api/Types"
 import { useTransactionsDetailQuery } from "Domain/Transactions"
+import { TransactionNotFoundError } from "Domain/Transactions/useTransactionsDetailQuery.ts"
 import { Transaction } from "Models/Transaction"
 import { Filters } from "Types/filters"
+import { NotFound } from "ui/Components/NotFound"
 
 import {
   DetailsCloseButton,
@@ -123,11 +125,15 @@ export function TransactionListOnQuerySuccess({
             </div>
           </div>
 
-          <OnQuerySuccess query={detailQuery} onQueryError={() => setSelected()}>
-            {(query) => {
-              return <TransactionDetailOnQuerySuccess query={query} />
-            }}
-          </OnQuerySuccess>
+          {detailQuery.error instanceof TransactionNotFoundError ? (
+            <NotFound title="Transaction not found">This transaction does not exist or has been removed.</NotFound>
+          ) : (
+            <OnQuerySuccess query={detailQuery} onQueryError={() => setSelected()}>
+              {(query) => {
+                return <TransactionDetailOnQuerySuccess query={query} />
+              }}
+            </OnQuerySuccess>
+          )}
         </aside>
       ) : null}
     </div>

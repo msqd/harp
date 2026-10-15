@@ -3,9 +3,13 @@ import hashlib
 
 import pytest
 
+from harp._logging import configure_logging
 from harp.config import defaults
 
 builtins.__pytest__ = True
+
+# Importing harp configures nothing; tests expect the same logging setup as the command line.
+configure_logging()
 
 
 DISABLED_APPLICATIONS_FOR_TESTS = ()

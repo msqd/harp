@@ -208,6 +208,12 @@ boot because ``misc/cache-tests/config.yml`` hardcodes a PostgreSQL URL that not
 suite ends having executed nothing. The credentials in that file are transposed between username and
 password, which dates the last successful run: a typo like that cannot survive one.
 
+.. note::
+
+    Repaired in `#990 <https://github.com/msqd/harp/issues/990>`_. The target now provisions its own
+    file-backed SQLite database, fails when any step of the run fails, and compares the result
+    against a recorded baseline. HARP scores 207 of 365, which nobody had measured before.
+
 In no gate at all
 -----------------
 
@@ -232,13 +238,19 @@ In no gate at all
       - nowhere
     * - visual suite ``test:ui:dev``
       - ``make test-frontend``
-      - not in CI
+      - not in CI until #881 provides the browser setup
     * - ``pnpm lint``
       - package.json
-      - nowhere
+      - CI, job *Lint Frontend*
 
-CI runs three backend jobs, ``pnpm test:unit``, and a documentation build. That is the entire
-automated gate. Everything else in the Makefile runs only when a human runs it.
+CI runs three backend jobs, ``pnpm test:unit``, a documentation build, and two lint jobs: ``ruff
+check`` with ``ruff format --check`` (*Lint Python*), and ``pnpm lint`` (*Lint Frontend*). That is
+the entire automated gate. Everything else in the Makefile runs only when a human runs it.
+
+The *Build Python Package* job runs ``make clean-dist wheel`` without ``actions/setup-python``, so
+the wheel is built with the interpreter uv provides, as on a developer machine. It does not prove
+the build is independent of the system Python: the runner image still has its own on ``PATH``, so a
+bare ``python3`` call in ``bin/build_wheel`` would pass in CI and fail on a machine without one.
 
 Observed but not reported
 -------------------------
@@ -248,6 +260,12 @@ word ``Skipped.`` and a green exit, because ``... && $(MAKE) test-frontend || ec
 cannot tell a deliberate skip from a failure. ``make test-e2e-cache`` writes its RFC 9111 results to
 a JSON file that nothing reads. The second is worse than the first: a swallowed failure at least
 leaves a number on screen to scroll back to, while a file nobody opens leaves nothing at all.
+
+.. note::
+
+    The cache half was repaired in `#990 <https://github.com/msqd/harp/issues/990>`_: the results
+    file is now read, compared per test id against a recorded baseline, and printed as a score next
+    to the storage backend it was measured on.
 
 **Failure reported without observing the result**, the mirror. ``bin/build_wheel`` counted wheel
 assets by shelling to ``unzip`` and discarding its stderr, so a missing tool was indistinguishable
@@ -261,11 +279,15 @@ Incapable of reporting
 Every other entry here is a gate that failed to report something it did observe. This one is an
 instrument that cannot report at all, and it went unnoticed for an unknown number of releases.
 
-``make docs`` emits **zero warnings whatever it is fed**. Importing ``harp`` runs
+``make docs`` emitted **zero warnings whatever it was fed**. Importing ``harp`` ran
 ``logging.config.dictConfig`` at module import time with ``disable_existing_loggers: True``
-(``harp/_logging.py``, lines 71 and 100). The documentation build imports ``harp`` through the two
-extensions in ``docs/_extensions/``, which disables the ``sphinx`` logger that Sphinx created moments
-earlier. Its handlers stay correctly attached; the logger itself is dead.
+(``harp/_logging.py``). The documentation build imports ``harp`` through the two
+extensions in ``docs/_extensions/``, which disabled the ``sphinx`` logger that Sphinx created moments
+earlier. Its handlers stayed correctly attached; the logger itself was dead.
+
+Fixed in `PR #1063 <https://github.com/msqd/harp/pull/1063>`_: importing ``harp`` configures no logging
+any more, the ``harp`` command does it. The docs build now reports warnings again (about 350 at the
+time of the fix); fixing them is tracked separately.
 
 **A build that reports no warnings and a build that cannot report warnings look identical from the
 exit code.**
@@ -312,15 +334,16 @@ them with a recorded reason, and all five were still in place two releases later
 #. ``-$(UV_RUN) pre-commit`` in ``preqa``, whose ``-`` makes ``make`` ignore the exit status.
 #. ``continue-on-error: true`` on the **Build Documentation** CI job.
 #. ``continue-on-error: true`` on the **Build Storybook** CI job.
-#. The entire ``test-frontend-visual`` CI job commented out, including the visual suite.
+#. The entire ``test-frontend-visual`` CI job commented out, including the visual suite (commit
+   ``24744970`` commented it out, ``0fbdd5a0`` deleted it; its last definition is in ``24744970``).
 
 The pattern is ordinary and forgivable: someone migrating a build system meets a wall of unrelated
 failures, silences them to get the migration through, intends to come back, and does not. It cost
 two releases and a full day of investigation to rediscover two of them from their symptoms. Reading
 one diff found the other three in minutes.
 
-Both ``continue-on-error`` jobs currently pass, so those two are dormant rather than actively hiding
-a failure. That is worth stating precisely: dormant is not the same as harmless, because the whole
+Both ``continue-on-error`` jobs passed when this was written, so those two were dormant rather than
+actively hiding a failure. The flags are now removed and both jobs block publishing. That is worth stating precisely: dormant is not the same as harmless, because the whole
 point of the flag is that the day one of them does fail, nothing will say so.
 
 The search is cheap and bounded. In the diff of any large migration, look for ``skip``, ``xfail``,

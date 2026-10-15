@@ -9,11 +9,7 @@ from harp.config.example import iter_app_settings, render_example_config
 class TestIterAppSettings:
     def test_includes_default_apps_that_have_settings(self):
         names = dict(iter_app_settings())
-        assert {"dashboard", "storage", "proxy", "http_client", "http_cache"} <= set(names)
-
-    def test_skips_apps_without_a_settings_model(self):
-        # janitor is a default application but declares no settings model.
-        assert "janitor" not in dict(iter_app_settings())
+        assert {"dashboard", "storage", "proxy", "http_client", "http_cache", "janitor"} <= set(names)
 
     def test_each_app_block_is_serialisable_and_valid_yaml(self):
         for name, settings in iter_app_settings():

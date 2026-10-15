@@ -1,12 +1,14 @@
 """Tests for the `harp create` command (subprocess invocation, uv fallback, CLI-driven context)."""
 
 import json
+import subprocess
+import tomllib
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from click.testing import CliRunner
 
-from harp.commandline.create import create
+from harp.commandline.create import create, harp_requirement, literal
 
 WHICH_BOTH = {"cookiecutter": "/usr/bin/cookiecutter", "uv": "/usr/bin/uv"}
 GIT_AUTHOR = {"user.name": "Ada Lovelace", "user.email": "ada@example.com"}
@@ -55,7 +57,7 @@ class TestCreateCookiecutterInvocation:
         result, run, captured = _run(["my-proj"], which={"cookiecutter": None, "uv": "/usr/bin/uv"}, git=GIT_AUTHOR)
         assert result.exit_code == 0, result.output
         cmd = captured["cmd"]
-        assert cmd[:4] == ["uv", "tool", "run", "cookiecutter"]
+        assert cmd[:6] == ["uv", "tool", "run", "--from", "cookiecutter==2.6.0", "cookiecutter"]
         assert cmd[-1].endswith("project")
 
     def test_errors_with_uv_message_when_nothing_available(self):
@@ -69,7 +71,7 @@ class TestCreateCookiecutterInvocation:
 class TestCreateProjectContext:
     def test_name_argument_is_passed_as_context(self):
         _, _, captured = _run(["my-proj"], git=GIT_AUTHOR)
-        assert captured["config"]["default_context"]["name"] == "my-proj"
+        assert captured["config"]["default_context"]["name"] == literal("my-proj")
 
     def test_defaults_enable_application_and_config(self):
         _, _, captured = _run(["my-proj"], git=GIT_AUTHOR)
@@ -88,8 +90,8 @@ class TestCreateProjectContext:
     def test_author_is_read_from_git_config(self):
         _, _, captured = _run(["my-proj"], git=GIT_AUTHOR)
         context = captured["config"]["default_context"]
-        assert context["author_name"] == "Ada Lovelace"
-        assert context["author_email"] == "ada@example.com"
+        assert context["author_name"] == literal("Ada Lovelace")
+        assert context["author_email"] == literal("ada@example.com")
 
     def test_always_runs_non_interactively(self):
         _, _, captured = _run(["my-proj"], git=GIT_AUTHOR)
@@ -97,13 +99,13 @@ class TestCreateProjectContext:
 
     def test_prompts_for_name_when_missing(self):
         _, _, captured = _run([], git=GIT_AUTHOR, cli_input="Prompted Name\n")
-        assert captured["config"]["default_context"]["name"] == "Prompted Name"
+        assert captured["config"]["default_context"]["name"] == literal("Prompted Name")
 
     def test_prompts_for_author_when_git_config_absent(self):
         _, _, captured = _run(["my-proj"], git={}, cli_input="Jane Doe\njane@doe.net\n")
         context = captured["config"]["default_context"]
-        assert context["author_name"] == "Jane Doe"
-        assert context["author_email"] == "jane@doe.net"
+        assert context["author_name"] == literal("Jane Doe")
+        assert context["author_email"] == literal("jane@doe.net")
 
 
 class TestCreateExampleConfig:
@@ -124,3 +126,122 @@ class TestDocsProcessCommand:
         _cwd, command = HonchoManagerFactory()._get_docs_executable(None)
         assert "uv run" in command
         assert "poetry" not in command.lower()
+
+
+class TestHarpRequirement:
+    """The generated project's harp-proxy floor derives from the installed harp version."""
+
+    def test_stable_release_floors_at_the_release(self):
+        assert harp_requirement("0.10.0") == "harp-proxy>=0.10.0"
+
+    def test_post_release_floors_at_the_release(self):
+        assert harp_requirement("0.10.0.post1") == "harp-proxy>=0.10.0"
+
+    def test_pre_release_floors_at_dev0_of_the_release(self):
+        assert harp_requirement("0.11.0a1") == "harp-proxy>=0.11.0.dev0"
+        assert harp_requirement("0.11.0rc2") == "harp-proxy>=0.11.0.dev0"
+
+    def test_dev_build_floors_at_dev0_of_the_release(self):
+        assert harp_requirement("0.11.0.dev0") == "harp-proxy>=0.11.0.dev0"
+        assert harp_requirement("0.11.0.dev3+g1234abc") == "harp-proxy>=0.11.0.dev0"
+
+    def test_context_carries_the_requirement_of_the_installed_version(self):
+        with patch("harp.commandline.create.importlib.metadata.version", return_value="0.11.0.dev0"):
+            _, _, captured = _run(["my-proj"], git=GIT_AUTHOR)
+        assert captured["config"]["default_context"]["__harp_requirement"] == "harp-proxy>=0.11.0.dev0"
+
+
+class TestHarpSource:
+    """`--harp-source` / `HARP_SOURCE` scaffold the project against a local harp checkout."""
+
+    def test_defaults_to_no_source(self):
+        _, _, captured = _run(["my-proj"], git=GIT_AUTHOR)
+        assert captured["config"]["default_context"]["__harp_source"] == literal("")
+
+    def test_option_passes_the_checkout_path(self, tmp_path):
+        (tmp_path / "pyproject.toml").write_text("")
+        _, _, captured = _run(["my-proj", "--harp-source", str(tmp_path)], git=GIT_AUTHOR)
+        assert captured["config"]["default_context"]["__harp_source"] == literal(str(tmp_path))
+
+    def test_environment_variable_is_the_default(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_text("")
+        monkeypatch.setenv("HARP_SOURCE", str(tmp_path))
+        _, _, captured = _run(["my-proj"], git=GIT_AUTHOR)
+        assert captured["config"]["default_context"]["__harp_source"] == literal(str(tmp_path))
+
+    def test_relative_path_is_made_absolute(self, tmp_path, monkeypatch):
+        (tmp_path / "pyproject.toml").write_text("")
+        monkeypatch.chdir(tmp_path.parent)
+        _, _, captured = _run(["my-proj", "--harp-source", tmp_path.name], git=GIT_AUTHOR)
+        assert captured["config"]["default_context"]["__harp_source"] == literal(str(tmp_path))
+
+    def test_rejects_a_directory_that_is_not_a_checkout(self, tmp_path):
+        result, run, _ = _run(["my-proj", "--harp-source", str(tmp_path)], git=GIT_AUTHOR)
+        assert result.exit_code != 0
+        assert "pyproject.toml" in result.output
+        run.assert_not_called()
+
+    def test_rejects_a_missing_path(self, tmp_path):
+        result, run, _ = _run(["my-proj", "--harp-source", str(tmp_path / "nope")], git=GIT_AUTHOR)
+        assert result.exit_code != 0
+        run.assert_not_called()
+
+    def test_help_documents_the_option(self):
+        result = CliRunner().invoke(create, ["--help"])
+        assert "--harp-source" in result.output
+        assert "HARP_SOURCE" in result.output
+
+
+TRICKY = "Eve {{ 7*7 }} {% raw %}{% endraw %} \"Q\" \\ $(touch pwned) 'x' `id`"
+
+
+class TestLiteral:
+    def test_wraps_the_value_so_cookiecutter_does_not_evaluate_it(self):
+        assert literal("a {{ b }}") == "{% raw %}a {{ b }}{% endraw %}"
+
+    def test_neutralises_an_embedded_endraw(self):
+        from jinja2 import Environment
+
+        rendered = Environment().from_string(literal("x {% endraw %} {{ 1 }} y")).render()
+        assert rendered == "x {% endraw %} {{ 1 }} y"
+
+
+class TestVerbatimUserInput:
+    """Author and project name reach the generated project as typed, whatever they contain."""
+
+    def _generate(self, tmp_path, monkeypatch, *, name=TRICKY, author=TRICKY, email="e@x.net"):
+        monkeypatch.chdir(tmp_path)
+        git = {"user.name": author, "user.email": email}
+        with (
+            patch("harp.commandline.create.get_git_config", side_effect=lambda key: git.get(key)),
+            patch("harp.commandline.create.render_example_config", return_value=""),
+        ):
+            result = CliRunner().invoke(create, ["project", name])
+        assert result.exit_code == 0, result.output
+        (project_dir,) = [path for path in tmp_path.iterdir() if path.is_dir()]
+        return project_dir
+
+    def test_pyproject_is_valid_toml_with_the_literal_author(self, tmp_path, monkeypatch):
+        project_dir = self._generate(tmp_path, monkeypatch)
+        pyproject = tomllib.loads((project_dir / "pyproject.toml").read_text())
+        assert pyproject["project"]["authors"] == [{"name": TRICKY, "email": "e@x.net"}]
+
+    def test_readme_title_is_the_literal_name(self, tmp_path, monkeypatch):
+        project_dir = self._generate(tmp_path, monkeypatch)
+        assert (project_dir / "README.rst").read_text().startswith(f"Example: {TRICKY}\n")
+
+    def test_initial_commit_author_is_the_literal_author(self, tmp_path, monkeypatch):
+        project_dir = self._generate(tmp_path, monkeypatch)
+        log = subprocess.run(
+            ["git", "log", "-1", "--format=%an"], cwd=project_dir, capture_output=True, text=True, check=True
+        )
+        assert log.stdout.strip() == TRICKY
+
+    def test_nothing_is_executed(self, tmp_path, monkeypatch):
+        self._generate(tmp_path, monkeypatch)
+        assert not list(tmp_path.rglob("pwned"))
+
+    def test_makefile_help_title_is_the_literal_name(self, tmp_path, monkeypatch):
+        project_dir = self._generate(tmp_path, monkeypatch, name='Q "x" $HOME')
+        result = subprocess.run(["make", "help"], cwd=project_dir, capture_output=True, text=True)
+        assert 'Q "x" $HOME' in result.stdout

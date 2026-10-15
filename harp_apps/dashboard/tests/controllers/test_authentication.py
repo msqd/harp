@@ -31,7 +31,7 @@ async def test_controller_auth_plaintext():
             devserver={"enabled": True, "port": 5173},
         )
     )
-    assert asdict(controller.settings.auth) == {
+    assert asdict(controller.settings.auth, secure=False) == {
         "type": "basic",
         "algorithm": "plaintext",
         "users": {"admin": {"password": "admin"}},

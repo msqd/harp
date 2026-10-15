@@ -4,6 +4,7 @@ import { ButtonGroup } from "./Components/ButtonGroup"
 import { DataTable, type Column } from "./Components/DataTable"
 import { Radio, Checkbox } from "./Components/FormWidgets"
 import { Navbar } from "./Components/Navbar"
+import { NotFound } from "./Components/NotFound"
 import { Paginator } from "./Components/Pagination"
 import { Pane } from "./Components/Pane"
 import { SearchBar } from "./Components/SearchBar"
@@ -21,6 +22,7 @@ export {
   Radio,
   Checkbox,
   Navbar,
+  NotFound,
   Paginator,
   Pane,
   SearchBar,

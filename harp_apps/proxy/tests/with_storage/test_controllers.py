@@ -410,22 +410,22 @@ class TestHttpProxyControllerWithStorage(
         assert "Age" in hit.headers
 
     @respx.mock
-    async def test_a_no_store_request_is_still_recorded_deliberately(
+    async def test_a_no_store_request_is_still_recorded_in_0_10(
         self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
     ):
-        """A client's `no-store` binds HARP's cache. It does not bind HARP's transaction record.
+        """A client's `no-store` binds HARP's cache. In 0.10 it does not bind the transaction record.
 
-        This is not an oversight and it must not be "finished" later. Two reasons, both
-        deliberate decisions rather than consequences of the implementation:
+        This pins 0.10's behaviour. It is not an argument that the behaviour is right, and it is
+        **expected to be replaced**: https://github.com/msqd/harp/issues/927 was decided the other
+        way, and from 0.11 a caller's `no-store` suppresses payload recording while leaving the
+        transaction and message rows in place. The decision is recorded as ADR-0002, under
+        `docs/adr/`.
 
-        - **A client must not be able to switch off an operator's audit trail by setting a
-          request header.** The record is the operator's, and suppressing it is the operator's
-          decision, which is what the rules engine is for.
-        - RFC 9111 §5.2.1.5 states outright that `no-store` "is not a reliable or sufficient
-          mechanism for ensuring privacy", so a caller can infer nothing about retention from
-          it and an operator can promise nothing by honouring it.
-
-        See https://github.com/msqd/harp/issues/927 for the full reasoning.
+        So if you are implementing #927 and this test fails, that is the point: rewrite it to assert
+        the new behaviour rather than treating the failure as a regression. An earlier version of
+        this docstring argued the opposite case on the grounds that the record is an operator's
+        audit trail. That argument is withdrawn: the record is best-effort and sheds under load
+        (#945), so it was never the thing that argument needed it to be.
 
         Everything the cache is asked to forget is still asserted present here: the
         transaction, both messages, both header blobs and both body blobs.
