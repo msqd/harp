@@ -83,24 +83,9 @@ Run the tests, luke
 Before you read the result, read :doc:`what-the-gate-does-not-run`. It lists everything this command
 does not execute, and why a green run is a weaker statement than it looks.
 
-.. important::
-
-    **Expect failures in** ``tests/test_cookiecutter_integration.py`` **before the version is
-    published, and do not stop the cut for them** (24 of them at the 0.10 cut).
-
-    The project template pins ``harp-proxy>=X.Y.Z``, and PEP 440 excludes pre-releases from that
-    specifier. So while only ``X.Y.Z-alphaN`` or ``X.Y.Z-rcN`` exist on PyPI, ``uv sync`` inside a
-    generated project cannot resolve and reports ``No solution found when resolving dependencies``.
-    They pass again on their own once ``X.Y.Z`` is published.
-
-    CI never shows this, because it runs ``-m 'not subprocess'`` and these tests are marked
-    ``subprocess``. ``make qa`` does not filter, so the release manager is the person most likely to
-    meet it, at the exact moment they are deciding whether something is wrong.
-
-    Any failure **outside** that file is a real signal. Check the file names before concluding this
-    is what you are looking at.
-
-    `#875 <https://github.com/msqd/harp/issues/875>`_ fixes the template pin and removes this caveat.
+``tests/test_cookiecutter_integration.py`` scaffolds its projects with ``HARP_SOURCE`` set to the working
+tree (see ``harp create project --help``), so it runs before the version exists on PyPI. A failure
+there is a real signal.
 
 
 Run the RFC 9111 compliance suite, on PostgreSQL

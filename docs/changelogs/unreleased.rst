@@ -7,6 +7,7 @@ Important Changes
 Added
 :::::
 
+- ``harp create project --harp-source PATH`` (or ``HARP_SOURCE``) scaffolds a project that installs ``harp-proxy`` editable from a local checkout; the cookiecutter integration tests use it (#841).
 - Janitor: ``janitor.period``, ``janitor.old_after`` and ``janitor.enabled`` settings replace the hardcoded sweep period and retention (#339).
 
 Changed

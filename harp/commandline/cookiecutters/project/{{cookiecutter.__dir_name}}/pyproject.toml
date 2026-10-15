@@ -11,6 +11,12 @@ dependencies = [
     "{{cookiecutter.__harp_requirement}}",
 ]
 
+{%- if cookiecutter.__harp_source %}
+
+[tool.uv.sources]
+harp-proxy = { path = {{ cookiecutter.__harp_source | tojson }}, editable = true }
+{%- endif %}
+
 [dependency-groups]
 dev = [
     "watchfiles",

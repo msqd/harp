@@ -56,7 +56,7 @@ class TestPyprojectToml:
         A fixed ``>=X.Y.Z`` excludes pre-releases (PEP 440), so a scaffold made during a
         pre-release window could not install.
         """
-        assert not re.search(r"harp-proxy\s*[<>=~!]", pyproject_content), "template must not pin a harp version"
+        assert not re.search(r"harp-proxy\s*(?:[<>~!]=?|==)", pyproject_content), "template must not pin a harp version"
         assert "{{cookiecutter.__harp_requirement}}" in pyproject_content
 
     @pytest.mark.parametrize("requirement", ["harp-proxy>=0.10.0", "harp-proxy>=0.11.0.dev0"])
@@ -473,3 +473,34 @@ class TestPyprojectWatchfilesDependency:
         assert re.search(r"(?s)\[dependency-groups\].*?dev\s*=\s*\[[^\]]*watchfiles", pyproject_content), (
             "watchfiles should be listed in the [dependency-groups] dev group so 'uv sync' installs it"
         )
+
+
+class TestHarpSource:
+    """With ``__harp_source`` the project installs harp-proxy editable from a local checkout."""
+
+    @staticmethod
+    def _render(tmp_path, **context):
+        from cookiecutter.main import cookiecutter
+
+        project_dir = cookiecutter(
+            str(TEMPLATE_DIR), output_dir=str(tmp_path), no_input=True, extra_context={"name": "Src", **context}
+        )
+        return Path(project_dir)
+
+    def test_without_source_there_is_no_uv_sources_table(self, tmp_path):
+        import tomllib
+
+        pyproject = tomllib.loads(self._render(tmp_path).joinpath("pyproject.toml").read_text())
+        assert "sources" not in pyproject.get("tool", {}).get("uv", {})
+
+    def test_with_source_harp_proxy_is_an_editable_path(self, tmp_path):
+        import tomllib
+
+        project = self._render(tmp_path, __harp_source="/path/to/harp")
+        pyproject = tomllib.loads(project.joinpath("pyproject.toml").read_text())
+        assert pyproject["tool"]["uv"]["sources"] == {"harp-proxy": {"path": "/path/to/harp", "editable": True}}
+
+    def test_readme_mentions_the_source_only_when_set(self, tmp_path):
+        assert "/path/to/harp" not in self._render(tmp_path / "a").joinpath("README.rst").read_text()
+        readme = self._render(tmp_path / "b", __harp_source="/path/to/harp").joinpath("README.rst").read_text()
+        assert "/path/to/harp" in readme
