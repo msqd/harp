@@ -1,0 +1,1 @@
+``http_cache.policy.options`` sets ``shared``, ``supported_methods`` and ``allow_stale`` from configuration.

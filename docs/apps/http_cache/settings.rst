@@ -80,22 +80,38 @@ policy
 
 The cache policy determines what responses are cacheable and how to handle cache revalidation.
 
-Hishel uses ``SpecificationPolicy`` with ``CacheOptions`` to configure caching behavior:
-
-- **shared:** Whether this is a shared cache (default: ``true``)
-- **supported_methods:** HTTP methods to cache (default: ``["GET", "HEAD"]``)
-- **allow_stale:** Whether to serve stale responses (default: ``false``)
+Hishel's ``SpecificationPolicy`` is configured with ``CacheOptions``, which you set through
+``policy.options``. Unknown keys are rejected at load.
 
 .. code-block:: yaml
 
     http_cache:
       policy:
-        type: hishel.SpecificationPolicy
-        arguments:
-          cache_options:
-            shared: true
-            supported_methods: [GET, HEAD]
-            allow_stale: false
+        options:
+          shared: true
+          supported_methods: [GET, HEAD]
+          allow_stale: false
+
+policy.options.shared
+~~~~~~~~~~~~~~~~~~~~~
+
+**Type:** ``bool``, **Default:** ``true``
+
+Behave as a shared cache (RFC 9111). See the :ref:`shared cache warning <http-cache-shared>` before changing it.
+
+policy.options.supported_methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Type:** ``list[str]``, **Default:** ``[GET, HEAD]``
+
+HTTP methods whose responses can be cached.
+
+policy.options.allow_stale
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Type:** ``bool``, **Default:** ``false``
+
+Serve a stale entry from the cache instead of refetching it from the origin.
 
 
 storage
@@ -222,12 +238,10 @@ For production deployments:
     http_cache:
       enabled: true
       policy:
-        type: hishel.SpecificationPolicy
-        arguments:
-          cache_options:
-            shared: true
-            supported_methods: [GET, HEAD]
-            allow_stale: false
+        options:
+          shared: true
+          supported_methods: [GET, HEAD]
+          allow_stale: false
 
 
 Development configuration

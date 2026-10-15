@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from harp.config import Configurable, Service, ApplicationSettingsMixin
 
 # HTTP status codes that are heuristically cacheable according to RFC 9111
@@ -18,6 +20,24 @@ HEURISTICALLY_CACHEABLE_STATUS_CODES = (
 )
 
 
+class CachePolicyOptions(Configurable):
+    """Options of the cache policy, mapped onto ``hishel.CacheOptions``."""
+
+    #: Behave as a shared cache (RFC 9111), as opposed to a private one.
+    shared: bool = True
+
+    #: HTTP methods whose responses can be cached.
+    supported_methods: list[str] = Field(default_factory=lambda: ["GET", "HEAD"])
+
+    #: Serve stale responses instead of refetching them.
+    allow_stale: bool = False
+
+
+class CachePolicySettings(Service):
+    #: Options given to the policy, as a ``hishel.CacheOptions``.
+    options: CachePolicyOptions = Field(default_factory=CachePolicyOptions)
+
+
 class HttpCacheSettings(ApplicationSettingsMixin, Configurable):
     #: Cache transport to use for the client. This is usually a hishel._async_httpx.AsyncCacheTransport (or subclass) instance.
     transport: Service = Service(
@@ -32,11 +52,12 @@ class HttpCacheSettings(ApplicationSettingsMixin, Configurable):
     #:   - supported_methods: ["GET", "HEAD"] (only cache GET and HEAD requests)
     #:   - allow_stale: False (do not serve stale responses)
     #:
-    #: To customize cache behavior, override the entire policy service:
+    #: To customize the options, use ``policy.options`` (``shared``, ``supported_methods``, ``allow_stale``).
+    #: To change the policy itself, override the entire policy service:
     #:   http_cache:
     #:     policy:
     #:       type: my_custom_policy.CustomPolicy
-    policy: Service = Service(type="hishel.SpecificationPolicy")
+    policy: CachePolicySettings = CachePolicySettings(type="hishel.SpecificationPolicy")
 
     #: Cache storage implementation, a.k.a how to store and retrieve cache data.
     #:

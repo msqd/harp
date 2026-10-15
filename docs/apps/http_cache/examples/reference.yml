@@ -9,11 +9,10 @@ http_cache:
   # Cache policy (default: hishel.SpecificationPolicy with RFC 9111-compliant options)
   policy:
     type: hishel.SpecificationPolicy
-    arguments:
-      cache_options:
-        shared: true  # Shared cache mode
-        supported_methods: [GET, HEAD]  # Cacheable methods
-        allow_stale: false  # Don't serve stale responses
+    options:
+      shared: true  # Shared cache mode
+      supported_methods: [GET, HEAD]  # Cacheable methods
+      allow_stale: false  # Don't serve stale responses
 
   # Cache storage (default: harp_apps.http_cache.storages.AsyncStorage)
   storage:
