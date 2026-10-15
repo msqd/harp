@@ -132,6 +132,7 @@ class MockTransport(AsyncBaseTransport):
     def __init__(self):
         self.request_count = 0
         self.last_request: Optional[Request] = None
+        self.cache_control = "max-age=3600"
 
     async def handle_async_request(self, request: Request) -> Response:
         """Return a mock response."""
@@ -141,7 +142,7 @@ class MockTransport(AsyncBaseTransport):
             status_code=200,
             headers={
                 "content-type": "application/json",
-                "cache-control": "max-age=3600",
+                "cache-control": self.cache_control,
             },
             content=b'{"message": "test response"}',
         )

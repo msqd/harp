@@ -124,15 +124,7 @@
 # name: test_load_documentation_example[docs/apps/http_cache/examples/cache.yml]
   '''
   dashboard: {}
-  http_cache:
-    policy:
-      cache_options:
-        allow_stale: false
-        shared: true
-        supported_methods:
-        - GET
-        - HEAD
-      type: hishel.SpecificationPolicy
+  http_cache: {}
   http_client: {}
   janitor: {}
   proxy: {}
@@ -145,14 +137,6 @@
   '''
   dashboard: {}
   http_cache:
-    policy:
-      cache_options:
-        allow_stale: false
-        shared: true
-        supported_methods:
-        - GET
-        - HEAD
-      type: hishel.SpecificationPolicy
     transport:
       type: harp_apps.http_cache.transports.AsyncCacheTransport
   http_client: {}

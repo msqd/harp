@@ -1,63 +1,44 @@
 {
   "$defs": {
-    "Service": {
+    "CachePolicyOptions": {
+      "additionalProperties": false,
+      "description": "Options of the cache policy, mapped onto ``hishel.CacheOptions``.",
+      "properties": {
+        "shared": { "default": true, "type": "boolean" },
+        "supported_methods": { "items": { "type": "string" }, "type": "array" },
+        "allow_stale": { "default": false, "type": "boolean" }
+      },
+      "title": "CachePolicyOptions",
+      "type": "object"
+    },
+    "CachePolicySettings": {
       "additionalProperties": true,
-      "description": "A settings base class for service definitions.",
       "properties": {
         "base": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
           "default": null,
-          "description": "Base type for service definition.",
-          "title": "Base"
+          "description": "Base type for service definition."
         },
         "type": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
           "default": null,
-          "description": "Type for service definition.",
-          "title": "Type"
+          "description": "Type for service definition."
         },
         "constructor": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
           "default": null,
-          "description": "Optional custom constructor for the service.",
-          "title": "Constructor"
+          "description": "Optional custom constructor for the service."
         },
         "arguments": {
           "anyOf": [
-            {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
+            { "additionalProperties": true, "type": "object" },
+            { "type": "null" }
           ],
-          "description": "Arguments for the service constructor.",
-          "title": "Arguments"
-        }
+          "description": "Arguments for the service constructor."
+        },
+        "options": { "$ref": "#/$defs/CachePolicyOptions" }
       },
-      "title": "Service",
+      "title": "CachePolicySettings",
       "type": "object"
     },
     "HttpCacheSettings": {
@@ -65,19 +46,25 @@
       "properties": {
         "enabled": {
           "default": true,
-          "title": "Enabled",
+          "description": "Whether the application is enabled",
           "type": "boolean"
         },
         "transport": {
           "$ref": "#/$defs/Service",
           "default": {
-            "type": "hishel._async_httpx.AsyncCacheTransport"
+            "base": "hishel._async_httpx.AsyncCacheTransport",
+            "type": "harp_apps.http_cache.transports.AsyncCacheTransport"
           }
         },
         "policy": {
-          "$ref": "#/$defs/Service",
+          "$ref": "#/$defs/CachePolicySettings",
           "default": {
-            "type": "hishel.SpecificationPolicy"
+            "type": "hishel.SpecificationPolicy",
+            "options": {
+              "allow_stale": false,
+              "shared": true,
+              "supported_methods": ["GET", "HEAD"]
+            }
           }
         },
         "storage": {
@@ -86,12 +73,49 @@
             "base": "hishel.AsyncBaseStorage",
             "type": "harp_apps.http_cache.storages.AsyncStorage",
             "ttl": 86400,
-            "check_ttl_every": 60.0
+            "check_ttl_every": 60.0,
+            "allow_heuristics": false
           }
         }
       },
       "title": "HttpCacheSettings",
       "type": "object"
+    },
+    "Service": {
+      "additionalProperties": true,
+      "description": "A settings base class for service definitions.",
+      "properties": {
+        "base": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null,
+          "description": "Base type for service definition."
+        },
+        "type": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null,
+          "description": "Type for service definition."
+        },
+        "constructor": {
+          "anyOf": [{ "type": "string" }, { "type": "null" }],
+          "default": null,
+          "description": "Optional custom constructor for the service."
+        },
+        "arguments": {
+          "anyOf": [
+            { "additionalProperties": true, "type": "object" },
+            { "type": "null" }
+          ],
+          "description": "Arguments for the service constructor."
+        }
+      },
+      "title": "Service",
+      "type": "object"
     }
-  }
+  },
+  "title": "__ROOT__",
+  "anyOf": [
+    { "$ref": "#/$defs/CachePolicyOptions" },
+    { "$ref": "#/$defs/CachePolicySettings" },
+    { "$ref": "#/$defs/HttpCacheSettings" }
+  ]
 }

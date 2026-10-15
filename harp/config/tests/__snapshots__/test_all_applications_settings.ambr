@@ -37,6 +37,14 @@
 # ---
 # name: test_all_applications_default_settings[harp_apps.http_cache]
   dict({
+    'harp_apps.http_cache.settings.CachePolicyOptions': '''
+      {}
+  
+    ''',
+    'harp_apps.http_cache.settings.CachePolicySettings': '''
+      {}
+  
+    ''',
     'harp_apps.http_cache.settings.HttpCacheSettings': '''
       {}
   
