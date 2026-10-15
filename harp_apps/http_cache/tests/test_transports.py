@@ -8,7 +8,7 @@ the same endpoint group) share the same cache entries.
 ## How It Works
 
 The transport extracts the endpoint name from `request.extensions["harp"]["endpoint"]`
-(defaulting to "__upstream__") and replaces the hostname/netloc in the URL with this endpoint name.
+and replaces the hostname/netloc in the URL with this endpoint name.
 Scheme, port, path, and query parameters are preserved.
 
 Example:
@@ -24,7 +24,7 @@ share the same cache key.
 ### Core Functionality (TestEndpointBasedCacheKeyGeneration)
 - Same endpoint name generates same cache key (PRIMARY REQUIREMENT)
 - Different endpoint names generate different cache keys
-- Default endpoint "__upstream__" works correctly
+- Missing endpoint name (no extension, no key, or None) raises ValueError
 - Different paths generate different cache keys
 - Query parameters are preserved in cache keys
 
@@ -134,18 +134,22 @@ class TestEndpointBasedCacheKeyGeneration:
         assert mock_storage.created_keys[0] != mock_storage.created_keys[1]
 
     @pytest.mark.asyncio
-    async def test_default_endpoint_upstream(self, normalized_transport, mock_storage, mock_transport):
-        """Requests without endpoint extension use '__upstream__' as default."""
-        # Two requests to different backends without endpoint extension
-        request1 = Request(method="GET", url="http://backend1.local/api/users")
-        await normalized_transport.handle_async_request(request1)
+    @pytest.mark.parametrize(
+        "extensions",
+        [
+            pytest.param({}, id="no-harp-extension"),
+            pytest.param({"harp": {}}, id="no-endpoint-key"),
+            pytest.param({"harp": {"endpoint": None}}, id="endpoint-none"),
+        ],
+    )
+    async def test_missing_endpoint_name_raises(self, normalized_transport, mock_storage, extensions):
+        """Requests without an endpoint name are refused instead of sharing a cache namespace."""
+        request = Request(method="GET", url="http://backend1.local/api/users", extensions=extensions)
 
-        request2 = Request(method="GET", url="http://backend2.local/api/users")
-        await normalized_transport.handle_async_request(request2)
+        with pytest.raises(ValueError, match="cache transport requires an endpoint name"):
+            await normalized_transport.handle_async_request(request)
 
-        # Both should use __upstream__ endpoint = same cache key
-        assert len(mock_storage.created_keys) == 1
-        assert mock_transport.request_count == 1, "Second request should use cache"
+        assert mock_storage.created_keys == []
 
     @pytest.mark.asyncio
     async def test_different_paths_different_cache_keys(self, normalized_transport, mock_storage):
@@ -256,11 +260,15 @@ class TestHttpMethodInCacheKey:
         that our normalization doesn't break this RFC-compliant behavior.
         """
         # Make a GET request first
-        get_request = Request(method="GET", url="http://backend.local/api/resource")
+        get_request = Request(
+            method="GET", url="http://backend.local/api/resource", extensions={"harp": {"endpoint": "api"}}
+        )
         await normalized_transport.handle_async_request(get_request)
 
         # Make a HEAD request to the same resource
-        head_request = Request(method="HEAD", url="http://backend.local/api/resource")
+        head_request = Request(
+            method="HEAD", url="http://backend.local/api/resource", extensions={"harp": {"endpoint": "api"}}
+        )
         await normalized_transport.handle_async_request(head_request)
 
         # The exact behavior depends on Hishel's policy, but we should have cache keys
@@ -302,6 +310,7 @@ class TestVaryHeaderSupport:
         request1 = Request(
             method="GET",
             url="http://backend.local/api/resource",
+            extensions={"harp": {"endpoint": "api"}},
             headers={"accept-language": "en-US"},
         )
         await normalized.handle_async_request(request1)
@@ -310,6 +319,7 @@ class TestVaryHeaderSupport:
         request2 = Request(
             method="GET",
             url="http://backend.local/api/resource",
+            extensions={"harp": {"endpoint": "api"}},
             headers={"accept-language": "fr-FR"},
         )
         await normalized.handle_async_request(request2)
@@ -324,6 +334,7 @@ class TestVaryHeaderSupport:
         request3 = Request(
             method="GET",
             url="http://backend.local/api/resource",
+            extensions={"harp": {"endpoint": "api"}},
             headers={"accept-language": "en-US"},
         )
         await normalized.handle_async_request(request3)
@@ -331,6 +342,7 @@ class TestVaryHeaderSupport:
         request4 = Request(
             method="GET",
             url="http://backend.local/api/resource",
+            extensions={"harp": {"endpoint": "api"}},
             headers={"accept-language": "fr-FR"},
         )
         await normalized.handle_async_request(request4)
@@ -493,7 +505,7 @@ class TestCacheKeyConsistency:
 
         # Make the same request three times
         for _ in range(3):
-            request = Request(method="GET", url=url)
+            request = Request(method="GET", url=url, extensions={"harp": {"endpoint": "api"}})
             await normalized_transport.handle_async_request(request)
 
         # Should have created only one cache entry
@@ -505,7 +517,9 @@ class TestCacheKeyConsistency:
     @pytest.mark.asyncio
     async def test_cache_key_format(self, normalized_transport, mock_storage):
         """Test that cache keys are in expected format (likely SHA256 hex digest)."""
-        request = Request(method="GET", url="http://backend.local/api/resource")
+        request = Request(
+            method="GET", url="http://backend.local/api/resource", extensions={"harp": {"endpoint": "api"}}
+        )
         await normalized_transport.handle_async_request(request)
 
         assert len(mock_storage.created_keys) == 1
@@ -529,12 +543,15 @@ class TestRfcCompliance:
         post_request = Request(
             method="POST",
             url="http://backend.local/api/resource",
+            extensions={"harp": {"endpoint": "api"}},
             content=b'{"data": "value"}',
         )
         await normalized_transport.handle_async_request(post_request)
 
         # GET should be cached
-        get_request = Request(method="GET", url="http://backend.local/api/resource")
+        get_request = Request(
+            method="GET", url="http://backend.local/api/resource", extensions={"harp": {"endpoint": "api"}}
+        )
         await normalized_transport.handle_async_request(get_request)
 
         # Should have cache entries for GET, POST behavior depends on policy
@@ -558,7 +575,9 @@ class TestRfcCompliance:
             policy=SpecificationPolicy(),
         )
 
-        request = Request(method="GET", url="http://backend.local/api/resource")
+        request = Request(
+            method="GET", url="http://backend.local/api/resource", extensions={"harp": {"endpoint": "api"}}
+        )
         await normalized.handle_async_request(request)
 
         # Should respect no-store directive (depends on policy implementation)
@@ -668,7 +687,9 @@ class TestBackwardCompatibility:
     async def test_context_manager_support(self, normalized_transport):
         """Test that transport supports async context manager protocol."""
         async with normalized_transport:
-            request = Request(method="GET", url="http://backend.local/api/resource")
+            request = Request(
+                method="GET", url="http://backend.local/api/resource", extensions={"harp": {"endpoint": "api"}}
+            )
             response = await normalized_transport.handle_async_request(request)
             assert response.status_code == 200
 

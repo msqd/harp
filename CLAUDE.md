@@ -46,9 +46,12 @@ that maintain a working state throughout development.
 
 ## Development Workflow
 
-We keep a changelog in `docs/changelogs/unreleased.rst`. When making changes, new features,
-bug fixes, or refactors, update this file with a brief description of the change (one
-liners). Use the "Keep a changelog" format (https://keepachangelog.com/en/1.1.0/).
+We keep a changelog as towncrier fragments, one file per PR in `changelog.d/`, so PRs never
+conflict. When making changes, new features, bug fixes, or refactors, add
+`changelog.d/<issue>.<added|changed|fixed|security|removed|important>.rst` (or
+`+<slug>.<type>.rst` with no issue) holding a one-line entry. Never edit
+`docs/changelogs/unreleased.rst`: it is generated at docs build. Preview with
+`uv run towncrier build --draft --version 0.11.0`.
 
 ### TDD Process - THE FUNDAMENTAL PRACTICE
 
