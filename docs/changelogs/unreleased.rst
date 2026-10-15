@@ -19,6 +19,7 @@ Changed
 Fixed
 :::::
 
+- Dashboard: unknown URLs and unknown transactions show a "not found" page inside the layout instead of a crash screen or an empty card, and the "copy transaction link" button yields ``/transactions/<id>`` from the detail page (#877).
 - Cache: a stored response with no ``Date`` header now gets one set to its time of receipt, so its ``max-age`` expires instead of serving fresh forever (#963).
 
 Security
