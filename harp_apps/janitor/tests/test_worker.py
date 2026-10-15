@@ -3,6 +3,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from harp_apps.janitor.settings import JanitorSettings
+from harp_apps.janitor.tests import worker_with_grace
 from harp_apps.janitor.worker import JanitorWorker
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.types import IBlobStorage
@@ -36,7 +37,7 @@ class TestJanitorWorker(StorageTestFixtureMixin):
             # explicit skip because it should be implemented later
             return pytest.skip("Redis implementation does not support cleaning up orphan blobs yet.")
 
-        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings())
+        worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
 
         b1 = await self.create_blob(blob_storage, "foo")
         b2 = await self.create_blob(blob_storage, "bar")
@@ -83,7 +84,7 @@ class TestJanitorWorker(StorageTestFixtureMixin):
         if blob_storage.type == "redis":
             return pytest.skip("Redis implementation does not support cleaning up orphan blobs yet.")
 
-        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings())
+        worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
 
         blob = await self.create_blob(blob_storage, "swept")
         assert await blob_storage.get(blob.id) is not None

@@ -631,18 +631,41 @@ jobs:
       - name: Check if changelog exists
         id: changelog
         run: |
-          CHANGELOG_FILE="docs/changelogs/${{ steps.version.outputs.version }}.rst"
-          if [ -f "$CHANGELOG_FILE" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "file=$CHANGELOG_FILE" >> $GITHUB_OUTPUT
+          VERSION="${{ steps.version.outputs.version }}"
+          if [[ "$VERSION" == *-* ]]; then
+            # A pre-release does not consume the fragments: its notes are the fragments present at the tag.
+            if ls changelog.d/*.*.rst 2>/dev/null | grep -qv README.rst; then
+              echo "exists=true" >> $GITHUB_OUTPUT
+              echo "pending=true" >> $GITHUB_OUTPUT
+              echo "file=pending.rst" >> $GITHUB_OUTPUT
+            else
+              echo "exists=false" >> $GITHUB_OUTPUT
+              echo "Warning: no changelog fragment in changelog.d/"
+            fi
           else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Warning: Changelog file $CHANGELOG_FILE not found"
+            CHANGELOG_FILE="docs/changelogs/$VERSION.rst"
+            if [ -f "$CHANGELOG_FILE" ]; then
+              echo "exists=true" >> $GITHUB_OUTPUT
+              echo "file=$CHANGELOG_FILE" >> $GITHUB_OUTPUT
+            else
+              echo "exists=false" >> $GITHUB_OUTPUT
+              echo "Warning: Changelog file $CHANGELOG_FILE not found"
+            fi
           fi
 
       - name: Install pandoc
         if: steps.changelog.outputs.exists == 'true'
         run: sudo apt-get update && sudo apt-get install -y pandoc
+
+      - name: Install uv
+        if: steps.changelog.outputs.pending == 'true'
+        uses: astral-sh/setup-uv@v4
+
+      - name: Render pre-release notes from fragments
+        if: steps.changelog.outputs.pending == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          uvx --from "towncrier>=26.9.0" towncrier build --draft --version "${VERSION%%-*}" --date "$(date +%F)" > "${{ steps.changelog.outputs.file }}"
 
       - name: Convert changelog to Markdown
         if: steps.changelog.outputs.exists == 'true'
