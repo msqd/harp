@@ -131,6 +131,7 @@ The default storage includes:
   expiry by age. An expired entry is not served and its ``cache/meta`` blob is deleted. The header and body blobs it
   pointed at are then removed by the :doc:`janitor </apps/janitor/index>`.
 - **check_ttl_every:** Minimum seconds between two sweeps deleting expired entries, per process (default: ``60.0``).
+  A sweep runs in the background, never inside a proxied request.
   Needs a blob storage that can list its entries (SQL); with Redis, a warning is logged at startup and only entries
   that are read again expire.
 - **allow_heuristics:** Whether to retain responses with no explicit expiry (default: ``false``)

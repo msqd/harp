@@ -1,3 +1,4 @@
+import asyncio
 import time
 import typing as tp
 import uuid
@@ -10,6 +11,12 @@ from harp import get_logger
 from harp.http.utils import parse_cache_control
 from harp_apps.storage.types import IBlobStorage
 from .adapters import AsyncStorageAdapter, stored_at_of
+
+# libyaml's loader decodes an entry about ten times faster than the pure Python one.
+_YamlLoader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+
+# How many entries the sweep decodes before handing the event loop back.
+SWEEP_YIELD_EVERY = 50
 
 CACHE_META_CONTENT_TYPE = "cache/meta"
 DEFAULT_TTL = 86400
@@ -76,29 +83,53 @@ class AsyncStorage(AsyncBaseStorage):
         self._ttl = ttl
         self._allow_heuristics = allow_heuristics
         self._keys_by_id: OrderedDict[uuid.UUID, str] = OrderedDict()
+        self._sweep_task: tp.Optional[asyncio.Task] = None
 
     def _is_expired(self, stored_at: float) -> bool:
         return self._ttl is not None and time.time() - stored_at > self._ttl
 
-    async def _sweep_if_due(self) -> None:
-        """Delete the entries not written for more than `ttl`, at most once per `check_ttl_every`."""
+    def _sweep_if_due(self) -> None:
+        """Start a background sweep if one is due, at most one at a time and once per `check_ttl_every`.
+
+        Never awaited by the request: decoding every entry is work no proxied request should wait for.
+        """
         if self._ttl is None or not hasattr(self._storage, "iter_blobs"):
+            return
+        if self._sweep_task is not None and not self._sweep_task.done():
             return
         if time.monotonic() - self._last_cleaned < self._check_ttl_every:
             return
         self._last_cleaned = time.monotonic()
+        self._sweep_task = asyncio.create_task(self._sweep())
 
-        expired = []
-        async for blob in self._storage.iter_blobs(CACHE_META_CONTENT_TYPE):
-            try:
-                if self._is_expired(stored_at_of(yaml.safe_load(blob.data))):
-                    expired.append(blob.id)
-            except Exception:
-                logger.exception(f"Unreadable cache entry, left alone: key={blob.id}")
-        for key in expired:
-            await self._storage.delete(key)
-        if expired:
-            logger.debug(f"Cache ttl sweep removed {len(expired)} entries")
+    async def wait_for_sweep(self) -> None:
+        """Wait for the running sweep, if any, to end."""
+        if self._sweep_task is not None:
+            await asyncio.gather(self._sweep_task, return_exceptions=True)
+
+    async def _sweep(self) -> None:
+        """Delete the entries not written for more than `ttl`, yielding to the event loop along the way."""
+        try:
+            expired = []
+            seen = 0
+            async for blob in self._storage.iter_blobs(CACHE_META_CONTENT_TYPE):
+                try:
+                    if self._is_expired(stored_at_of(yaml.load(blob.data, Loader=_YamlLoader))):
+                        expired.append(blob.id)
+                except Exception:
+                    logger.exception(f"Unreadable cache entry, left alone: key={blob.id}")
+                seen += 1
+                if seen % SWEEP_YIELD_EVERY == 0:
+                    await asyncio.sleep(0)
+            for key in expired:
+                await self._storage.delete(key)
+                await asyncio.sleep(0)
+            if expired:
+                logger.debug(f"Cache ttl sweep removed {len(expired)} entries")
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Cache ttl sweep failed")
 
     def _remember_key(self, entry_id: uuid.UUID, key: str) -> None:
         """Record how to get back from an entry id to the key its blob is stored under."""
@@ -177,7 +208,7 @@ class AsyncStorage(AsyncBaseStorage):
         await self._impl.store_entry(key, entry)
         self._remember_key(entry.id, key)
         logger.debug(f"Cache entry stored: key={key}")
-        await self._sweep_if_due()
+        self._sweep_if_due()
         return entry
 
     async def get_entries(self, key: str) -> tp.List[Entry]:
@@ -194,7 +225,7 @@ class AsyncStorage(AsyncBaseStorage):
         """
         logger.debug(f"Retrieving cache entries: key={key}")
         try:
-            await self._sweep_if_due()
+            self._sweep_if_due()
             entry = await self._impl.retrieve_entry(key)
             if entry and self._is_expired(entry.extra["stored_at"]):
                 logger.debug(f"Cache entry expired: key={key}")
@@ -277,4 +308,5 @@ class AsyncStorage(AsyncBaseStorage):
     async def close(self) -> None:
         """Close the storage (required by AsyncBaseStorage interface)."""
         logger.debug("Closing AsyncStorage")
-        return
+        if self._sweep_task is not None:
+            self._sweep_task.cancel()
