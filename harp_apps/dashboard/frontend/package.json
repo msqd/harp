@@ -113,7 +113,7 @@
     "@typescript-eslint/parser": "^7.18.0",
     "@vitejs/plugin-react": "^4.7.0",
     "@vitest/coverage-v8": "^2.1.9",
-    "autoprefixer": "^10.4.22",
+    "autoprefixer": "^10.5.4",
     "babel-plugin-macros": "^3.1.0",
     "babel-plugin-prismjs": "^2.1.0",
     "cross-env": "^7.0.3",
