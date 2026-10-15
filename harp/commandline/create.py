@@ -1,3 +1,4 @@
+import importlib.metadata
 import json
 import os
 import shutil
@@ -6,6 +7,7 @@ import tempfile
 from typing import cast
 
 from click import BaseCommand
+from packaging.version import Version
 
 from harp.commandline import cookiecutters as templates
 from harp.config.example import render_example_config
@@ -22,6 +24,17 @@ def get_git_config(key):
     except FileNotFoundError:
         return None
     return result.stdout.strip() if result.returncode == 0 else None
+
+
+def harp_requirement(version: str) -> str:
+    """Return the ``harp-proxy`` requirement a project scaffolded by this harp should depend on.
+
+    PEP 440 excludes pre-releases from ``>=X.Y.Z``, so a pre-release or dev build floors at
+    ``X.Y.Z.dev0``, the lowest version of that release.
+    """
+    parsed = Version(version)
+    release = ".".join(str(part) for part in parsed.release)
+    return f"harp-proxy>={release}.dev0" if parsed.is_prerelease else f"harp-proxy>={release}"
 
 
 def _cookiecutter_command():
@@ -46,7 +59,8 @@ def create(template, name, no_app, no_config):
 
     The project name can be passed as an argument to skip the interactive prompt; author
     information is taken from your git config when available. Use --no-app / --no-config to
-    opt out of the application folder or the config file.
+    opt out of the application folder or the config file. The project depends on ``harp-proxy``
+    at least at the installed version (``.dev0`` floor for pre-releases and dev builds).
     """
 
     command = _cookiecutter_command()
@@ -63,6 +77,7 @@ def create(template, name, no_app, no_config):
         "author_email": author_email,
         "create_application": not no_app,
         "create_config": not no_config,
+        "__harp_requirement": harp_requirement(importlib.metadata.version("harp-proxy")),
         # A commented, source-introspected reference config.yml; empty when config is skipped.
         "__example_config": "" if no_config else render_example_config(),
     }
