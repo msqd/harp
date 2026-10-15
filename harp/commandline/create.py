@@ -16,6 +16,14 @@ from harp.utils.commandline import click
 DEFAULT_AUTHOR_NAME = "Smart Anonymous Harpist"
 DEFAULT_AUTHOR_EMAIL = "anonymous@harp-proxy.net"
 
+#: Cookiecutter version run through ``uv tool run`` when it is not installed, pinned for reproducibility.
+COOKIECUTTER_SPEC = "cookiecutter==2.6.0"
+
+
+def literal(value: str) -> str:
+    """Wrap a value so cookiecutter, which renders context values as Jinja, keeps it verbatim."""
+    return "{% raw %}" + value.replace("{% endraw %}", "{% endraw %}{{ '{% endraw %}' }}{% raw %}") + "{% endraw %}"
+
 
 def get_git_config(key):
     """Return a git config value (e.g. ``user.name``), or None if unset or git is unavailable."""
@@ -42,7 +50,7 @@ def _cookiecutter_command():
     if shutil.which("cookiecutter"):
         return ["cookiecutter"]
     if shutil.which("uv"):
-        return ["uv", "tool", "run", "cookiecutter"]
+        return ["uv", "tool", "run", "--from", COOKIECUTTER_SPEC, "cookiecutter"]
     raise click.UsageError(
         "Install cookiecutter with `uv add harp-proxy --extra dev`, or ensure `uv` is available to "
         "run it via `uv tool run`."
@@ -81,12 +89,12 @@ def create(template, name, no_app, no_config, harp_source):
     author_email = get_git_config("user.email") or click.prompt("Author email", default=DEFAULT_AUTHOR_EMAIL)
 
     context = {
-        "name": name,
-        "author_name": author_name,
-        "author_email": author_email,
+        "name": literal(name),
+        "author_name": literal(author_name),
+        "author_email": literal(author_email),
         "create_application": not no_app,
         "create_config": not no_config,
-        "__harp_source": harp_source or "",
+        "__harp_source": literal(harp_source or ""),
         "__harp_requirement": harp_requirement(importlib.metadata.version("harp-proxy")),
         # A commented, source-introspected reference config.yml; empty when config is skipped.
         "__example_config": "" if no_config else render_example_config(),

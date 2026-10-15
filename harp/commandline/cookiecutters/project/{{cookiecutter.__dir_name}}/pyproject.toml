@@ -3,7 +3,7 @@ name = "{{cookiecutter.__pkg_name}}"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "{{cookiecutter.author_name}}", email = "{{cookiecutter.author_email}}"},
+    {name = {{ cookiecutter.author_name | tojson }}, email = {{ cookiecutter.author_email | tojson }}},
 ]
 readme = "README.rst"
 requires-python = ">=3.13,<3.14"
