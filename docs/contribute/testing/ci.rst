@@ -92,7 +92,7 @@ Build and release jobs
 
   * Only runs for non-tag pushes
   * Uses local wheel from build
-  * Pushes to GHCR for all commits
+  * Other branches build only, nothing is pushed
   * ``main`` pushes ``unstable`` to GHCR and Docker Hub
   * Version branches (e.g., ``0.9``) push ``<version>-git`` to GHCR and Docker Hub
 
