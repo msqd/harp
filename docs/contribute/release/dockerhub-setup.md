@@ -42,6 +42,16 @@ Published to both registries with exact version only:
 **Docker Hub:**
 - `makersquad/harp-proxy:0.9.0-rc1`
 
+### For `main`
+
+Published to both registries on every push to `main`:
+
+**GHCR:**
+- `ghcr.io/msqd/harp:unstable`
+
+**Docker Hub:**
+- `makersquad/harp-proxy:unstable`
+
 ### For Version Branches (e.g., 0.9)
 
 Published to both registries when pushed to version branches:
@@ -56,7 +66,7 @@ Published to both registries when pushed to version branches:
 
 Once configured, the workflow will automatically publish to Docker Hub when:
 - A version tag is pushed (e.g., `0.9.0`, `0.9.0-rc1`)
-- Commits are pushed to a version branch (e.g., `0.9`)
+- Commits are pushed to `main` (`unstable`) or to a version branch (e.g., `0.9`)
 
 Pull the image from Docker Hub:
 ```bash
