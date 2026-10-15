@@ -24,6 +24,7 @@ Fixed
 
 - Cache: a stored response with no ``Date`` header now gets one set to its time of receipt, so its ``max-age`` expires instead of serving fresh forever (#963).
 - GitHub release notes no longer start with YAML front matter (#1033).
+- ``make wheel`` no longer leaves a wheel in ``dist/`` when its asset check or ``twine check`` fails (#1004).
 
 Security
 ::::::::
