@@ -55,9 +55,10 @@
       type: basic
       users:
         admin:
-          password: $pbkdf2-sha256$29000$f4.RkvLeG2OstfZ.D8F4zw$4ONvNXnHCX.8Q.40SU9KjvBsAEAhqdrGJ80tsfLPA/s
+          password: '***'
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -72,9 +73,10 @@
       type: basic
       users:
         admin:
-          password: not-so-secret
+          password: '***'
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -88,6 +90,7 @@
       port: 11111
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -99,6 +102,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -110,6 +114,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -119,16 +124,9 @@
 # name: test_load_documentation_example[docs/apps/http_cache/examples/cache.yml]
   '''
   dashboard: {}
-  http_cache:
-    policy:
-      cache_options:
-        allow_stale: false
-        shared: true
-        supported_methods:
-        - GET
-        - HEAD
-      type: hishel.SpecificationPolicy
+  http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -139,17 +137,10 @@
   '''
   dashboard: {}
   http_cache:
-    policy:
-      cache_options:
-        allow_stale: false
-        shared: true
-        supported_methods:
-        - GET
-        - HEAD
-      type: hishel.SpecificationPolicy
     transport:
       type: harp_apps.http_cache.transports.AsyncCacheTransport
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -164,6 +155,7 @@
     timeout: 10.0
     transport:
       type: httpx.AsyncHTTPTransport
+  janitor: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -175,6 +167,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -193,6 +186,7 @@
       retries: 0
       type: httpx.AsyncHTTPTransport
       verify: true
+  janitor: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -205,6 +199,7 @@
     public_url: http://localhost:4080
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -216,6 +211,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -227,6 +223,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy:
     endpoints:
     - name: httpbin
@@ -244,6 +241,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy:
     endpoints:
     - controller:
@@ -266,6 +264,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy:
     endpoints:
     - description: An informative description of the endpoint (optional)
@@ -284,6 +283,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy:
     endpoints:
     - controller: null
@@ -316,6 +316,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy:
     endpoints:
     - name: geo
@@ -338,6 +339,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy:
     endpoints:
     - name: examples
@@ -366,6 +368,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy:
     endpoints:
     - name: httpbins
@@ -391,6 +394,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy:
     endpoints:
     - name: httpbins
@@ -419,6 +423,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy:
     endpoints:
     - name: examples
@@ -437,6 +442,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy:
     endpoints:
     - controller:
@@ -464,6 +470,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy:
     endpoints:
     - name: starwars
@@ -481,6 +488,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules:
     '*':
@@ -501,6 +509,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules:
     '*':
@@ -518,6 +527,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules:
     '*':
@@ -535,6 +545,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage:
@@ -547,6 +558,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage:
@@ -559,6 +571,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage:
@@ -571,6 +584,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage:
@@ -585,6 +599,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -596,6 +611,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage:
@@ -618,15 +634,16 @@
       type: basic
       users:
         admin:
-          password: $pbkdf2-sha256$29000$f4.RkvLeG2OstfZ.D8F4zw$4ONvNXnHCX.8Q.40SU9KjvBsAEAhqdrGJ80tsfLPA/s
+          password: '***'
         charles:
-          password: $pbkdf2-sha256$29000$pVSK0ZpTytlb611LifF.bw$WtNQjr67hyS0DSSRtRSp6zU59KSk3pqvWdVCrxZhcEA
+          password: '***'
         john:
-          password: $pbkdf2-sha256$29000$DqE0hnCuVYoRIiREaM35Pw$vSB9/zMmcHwQQKdtcOtkZQNR43MA9fyvB8Gd114EZ.U
+          password: '***'
         miles:
-          password: $pbkdf2-sha256$29000$kTKmtPbeO2ds7R2DcA5BiA$UlJJGi.dHPxrTS2Jv8RXEXcpUNR7r1OYQmHmmheVjLE
+          password: '***'
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -646,6 +663,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage:
@@ -666,6 +684,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy:
     endpoints:
     - name: httpbin
@@ -691,6 +710,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy:
     endpoints:
     - name: httpbin
@@ -730,6 +750,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy:
     endpoints:
     - name: pooled
@@ -770,6 +791,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy:
     endpoints:
     - description: Python Package Index (Python)
@@ -856,6 +878,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules:
     acme*:
@@ -880,6 +903,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage: {}
@@ -899,6 +923,7 @@
   dashboard: {}
   http_cache: {}
   http_client: {}
+  janitor: {}
   proxy: {}
   rules: {}
   storage:

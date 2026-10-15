@@ -1,3 +1,4 @@
+import time
 import typing as tp
 import uuid
 import yaml
@@ -32,6 +33,19 @@ def _format_created_at(timestamp: float) -> str:
 def _parse_created_at(value: str) -> float:
     """Parse an RFC 1123 GMT string back to a POSIX timestamp."""
     return datetime.strptime(value, _CREATED_AT_GMT_FORMAT).replace(tzinfo=UTC).timestamp()
+
+
+def stored_at_of(entry_data: tp.Mapping[str, tp.Any]) -> float:
+    """When a decoded ``cache/meta`` blob was last written: stored, or freshened by a 304.
+
+    Entries written before ``stored_at`` existed fall back to when they were created.
+    """
+    meta_data = entry_data["metadata"]
+    if "stored_at" in meta_data:
+        return meta_data["stored_at"]
+    if "created_at_ts" in meta_data:
+        return meta_data["created_at_ts"]
+    return _parse_created_at(meta_data["created_at"]) if "created_at" in meta_data else 0.0
 
 
 class SerializedRequest(tp.TypedDict):
@@ -124,7 +138,10 @@ class AsyncStorageAdapter:
             response=response,
             meta=meta,
             cache_key=key.encode("utf-8"),
-            extra=entry_data.get("extra", {"number_of_uses": meta_data.get("number_of_uses", 0)}),
+            extra={
+                **entry_data.get("extra", {"number_of_uses": meta_data.get("number_of_uses", 0)}),
+                "stored_at": stored_at_of(entry_data),
+            },
         )
 
     async def _decode(self, cached):
@@ -162,6 +179,7 @@ class AsyncStorageAdapter:
                             "created_at": created_at_gmt,  # Backward compat
                             "created_at_ts": meta.created_at,  # New format
                             "deleted_at": meta.deleted_at,
+                            "stored_at": time.time(),  # last write: what the storage ttl counts from
                             "number_of_uses": extra.get("number_of_uses", 0),  # Backward compat
                         },
                         "extra": extra,  # Store full extra dict

@@ -31,9 +31,9 @@ services:
   - name: "http_cache.policy.options"
     type: "hishel.CacheOptions"
     arguments:
-      shared: true
-      supported_methods: [ "GET", "HEAD" ]
-      allow_stale: false
+      shared: !cfg "policy.options.shared"
+      supported_methods: !cfg "policy.options.supported_methods"
+      allow_stale: !cfg "policy.options.allow_stale"
 
   # Cache storage implementation, a.k.a how to store and retrieve cache data
   - name: "http_cache.storage"

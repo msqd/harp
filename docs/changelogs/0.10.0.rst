@@ -1,4 +1,4 @@
-Version 0.10.0 (unreleased)
+Version 0.10.0 (2026-10-15)
 ===========================
 
 Important Changes
@@ -17,10 +17,28 @@ Important Changes
   unloaded application, and is rejected under ``--strict``.
 - ⚠️ **This release contains a database migration.** ``blobs.id`` widens from 40 to 64 characters,
   because hishel 1.x keys cache entries with a sha256 hexdigest while message blobs use sha1, and
-  both share that column. **Run** ``harp-proxy db:migrate up head`` **before starting 0.10 on
-  PostgreSQL or MySQL**, or every cacheable response fails with a 500 rather than degrading to a
-  cache miss. Existing rows are untouched and the migration is backward compatible. SQLite needs
-  nothing: it does not enforce column widths and its schema is recreated rather than migrated.
+  both share that column. Existing rows are untouched and no value is rewritten. Only PostgreSQL and
+  MySQL are affected.
+
+  **HARP applies it for you.** ``storage.migrate`` defaults to true, and on that default the proxy
+  migrates to head while starting. Upgrading and starting 0.10 is enough, and running
+  ``harp-proxy db:migrate up head`` beforehand is optional.
+
+  **If you run** ``storage.migrate: false``, applying it is yours to do, and this one is not
+  optional: until ``blobs.id`` is widened, any response the cache would store fails with a 500
+  instead of degrading to a cache miss. Traffic the cache does not store is unaffected. Run
+  ``harp-proxy db:migrate up head`` before starting 0.10 on PostgreSQL or MySQL. The same applies if
+  you want the schema changed before the process begins serving.
+
+  SQLite needs nothing and never runs this migration: it creates its tables without alembic, and does
+  not enforce ``VARCHAR`` widths.
+
+  **0.9.1 does not run against the migrated schema by default.** The database now records revision
+  ``a1c7f3b52e04``, which 0.9.1 does not know, so a 0.9.1 started with ``storage.migrate: true``
+  fails at startup while migrating. A 0.9.1 started with ``storage.migrate: false`` runs fine on the
+  wider column. To roll back, run ``harp-proxy db:migrate down 29d104241dae`` with 0.10 before
+  reinstalling 0.9.1; it deletes the cache entries stored since the upgrade (every ``blobs`` row whose
+  id is longer than 40 characters), and nothing else.
 
 Added
 :::::
@@ -61,7 +79,6 @@ Added
 
   - Cache keys exclude protocol, hostname and port from URLs
   - Implemented by a custom ``AsyncCacheTransport`` that normalizes URLs
-  - Full HTTP RFC compliance is maintained, including ``Vary`` header support
 
 - ``harp.DEBUG`` flag for enabling debug information output, set via the ``HARP_DEBUG`` or ``DEBUG``
   environment variables. When enabled, error responses include full exception tracebacks. Do not
@@ -69,6 +86,13 @@ Added
 - Integration test suites for the ``http_cache`` application
   (``harp_apps/http_client/tests/with_http_cache/`` and ``harp_apps/proxy/tests/with_http_cache/``),
   covering cache behaviour, backward compatibility and isolation between endpoints.
+- ``make test-e2e-cache`` measures RFC 9111 compliance by running the cache-tests suite, prints the
+  score with the storage backend it was measured on, and fails when a test that passed in the recorded
+  baseline fails twice in a row. Baselines are recorded from three runs, so a test that flaps while
+  being recorded cannot later raise a false alarm, and a test HARP failed to proxy is reported as
+  unobserved rather than counted as a compliance failure. ``make test-e2e-cache-baseline REASON='...'``
+  moves the baseline deliberately. See
+  ``docs/adr/0003-cache-compliance-compared-per-test-against-a-pinned-baseline.md``.
 
 Changed
 :::::::
@@ -129,7 +153,7 @@ Changed
 
   - **Note**: ``http_cache`` uses a temporary workaround in its ``on_bind`` event to configure
     ``http_client``'s transport. This will be replaced with proper cross-app service overrides once
-    issue #806 is implemented.
+    `#806 <https://github.com/msqd/harp/issues/806>`_ is implemented.
 
 - The ``enable_ui`` setting was removed from ``DashboardSettings``. The ``enabled`` field from
   ``ApplicationSettingsMixin`` now controls whether the dashboard application is loaded; use
@@ -156,10 +180,32 @@ Changed
   cutting 0.10 would have left it on 0.9.
 - ``http-router`` is constrained to ``>=5.0,<6.0``, so installing HARP resolves the major version the
   test suite runs against. The bound briefly allowed 6.0, which no HARP release has been tested with.
+- Dashboard form controls change colour. A selected checkbox or radio is now indigo rather than blue,
+  and the borders of unselected controls are lighter. Most visible on the transaction list filters.
+  This comes from ``@tailwindcss/forms`` 0.5.11, which stopped overriding colours the dashboard's own
+  components had always specified; nothing in the dashboard was restyled.
 
 Fixed
 :::::
 
+- **http_cache**: a stale cache entry is revalidated properly instead of being downloaded again in
+  full. Two defects, fixed together because either alone leaves the cache worse than it is now:
+
+  - The conditional headers hishel adds for revalidation (``If-None-Match``, ``If-Modified-Since``)
+    never reached the origin, because the request actually sent was the one captured before they
+    were added. The origin had no validator to compare against, so it answered ``200`` with the
+    whole body at every staleness boundary rather than a small ``304``.
+  - A ``304`` freshened nothing, because ``AsyncStorage.update_entry`` did not resolve the entry
+    hishel asked it to update. The entry stayed exactly as stale as it was and was revalidated on
+    every subsequent request, without end.
+
+  Measured through a running proxy on PostgreSQL, three client requests across one staleness
+  boundary: the origin is now asked twice and transfers the body once, where it previously
+  transferred the body twice. Resources with no validator are unaffected.
+
+  This concerns responses the cache does retain, which means those the origin declared fresh. A
+  response whose *only* freshness information is a validator is still not retained at all, for the
+  reason given under *Changed* above, so there is nothing to revalidate for it.
 - The HTTP cache can store entries on PostgreSQL and MySQL again. ``blobs.id`` was declared 40
   characters wide, the length of the sha1 hexdigest that message blobs use, while hishel 1.x keys
   cache entries with a sha256 hexdigest of 64. Both share the column, so every cache write was
@@ -189,6 +235,12 @@ Fixed
 - Committed a ``.gitkeep`` in ``harp_apps/dashboard/web/`` so a fresh clone can ``uv sync`` and build
   the wheel. The directory is a hatchling force-include target and previously vanished on checkout,
   making the build fail with ``FileNotFoundError``.
+- ``make wheel`` completes on machines that ship ``python3`` but no ``python``, which is most Linux
+  distributions. It built the wheel and then exited 127 counting the bundled dashboard assets, so
+  neither that check nor the ``twine check`` below it ever ran and the wheel was never validated.
+  The interpreter is now taken from whichever branch built the wheel, since ``uv`` builds with its
+  own managed interpreter and puts no ``python`` on ``PATH``. CI did not catch this because
+  ``actions/setup-python`` provides the ``python`` the developer machine lacks.
 - Requesting a transaction that does not exist now returns a 404 from the dashboard instead of an
   unhandled error. The storage layer raised ``NoResultFound``, so the controller's 404 handling was
   never reached.
@@ -200,16 +252,14 @@ Fixed
   a single dead-end page. The button also reported itself as expanded to assistive technology while
   controlling nothing. The header no longer draws the logo on top of the user and version text at
   those widths, and the active item is now marked with ``aria-current`` rather than by colour alone.
-- Cache status tracking after the hishel 1.x migration: the proxy controller reads the ``X-Cache``
-  header to determine whether a response was cached, and stores the cache age from the ``Age`` header
-  when available. Cache status was previously never recorded, because the old ``from_cache``
-  extension no longer exists in hishel 1.x.
 - **janitor**: a sweep no longer leaves the SQL blob storage believing the blobs it just deleted
   still exist. Populating the seen-cache on write, new in this release, made that belief outlive the
   row, so every later write of the same content became a silent no-op, the HTTP cache could never
   repopulate after the first sweep, and ``Cache entry incomplete`` appeared in the logs. A cacheable
   response now costs one origin fetch per janitor sweep, as it did in 0.9.1, instead of one per
-  request. The sweep still discards live cache entries every 600 seconds, which is inherited
+  request. The seen-cache is cleared only in the process that runs the janitor, so other HARP
+  instances sharing the same database keep stale entries until they age out
+  (`#1002 <https://github.com/msqd/harp/issues/1002>`_). The sweep still discards live cache entries every 600 seconds, which is inherited
   behaviour tracked in `#923 <https://github.com/msqd/harp/issues/923>`_ and not something this
   release changes.
 - The HTTP cache ``created_at`` field is written and read as UTC. On a non-UTC host, the stored value
@@ -225,19 +275,30 @@ Fixed
 - Generated projects now properly isolate pytest tests and include correct startup instructions.
 - Fixed test discovery incorrectly including ``misc/`` directory worktree applications in
   ``test_all_applications_settings.py``.
+- ``uv.lock`` is now consistent with ``pyproject.toml``: the ``redis`` requirement recorded in the
+  lockfile had drifted from the manifest, so every ``uv sync`` on a clean checkout silently rewrote
+  ``uv.lock`` and left developers with a dirty working tree they did not create.
+- CI now runs ``uv lock --check`` before any job that runs ``uv sync``, so a pull request that
+  updates ``pyproject.toml`` without relocking fails the gate instead of being reconciled in place
+  and reported green.
 
 Security
 ::::::::
 
-- **proxy**: the upstream URL is now built from the path component of the incoming request only, and
-  the request is refused with ``400 Bad Request`` if it would resolve to another origin. A request
-  path carrying a scheme (``GET /http://example.org/``) could previously make the proxy forward to an
-  arbitrary host (CWE-918, server-side request forgery / open proxy).
-- **proxy**: an endpoint whose url carries a path exposes one subtree of an upstream. Dot segments in
-  the request path could walk above that subtree, so ``GET /../../admin`` against an endpoint on
-  ``http://upstream/api/v1/`` reached ``http://upstream/admin``. The origin was already checked and
-  stayed correct, which is why nothing else in the chain noticed. Such a request is now refused with
-  ``400 Bad Request``.
+- **proxy**: a request can only reach the endpoint's configured upstream origin, under the endpoint's
+  base path. A request path carrying a scheme (``GET /http://example.org/``) could previously make the
+  proxy forward to an arbitrary host (CWE-918, server-side request forgery / open proxy), and dot
+  segments could walk above the base path, so ``GET /../../admin`` against an endpoint on
+  ``http://upstream/api/v1/`` reached ``http://upstream/admin``. The upstream URL is now the
+  endpoint's origin and base path followed by the request path, so the host can no longer change: the
+  scheme case is forwarded as a plain path on the configured upstream
+  (``http://upstream/api/v1/http://example.org/``), not refused. These answer ``400 Bad Request`` and
+  nothing is sent upstream: any ``.`` or ``..`` segment, whatever the separator (``/``, ``\``,
+  ``%2f``, ``%5c``) and whether the dots are literal or ``%2e``, in any case; any byte at or below
+  ``0x20`` or ``0x7f`` in the path (reachable over HTTP/2); and a path the proxy cannot parse
+  (``//[x/``). Otherwise the raw path is forwarded byte for byte, so ``%3f``, ``%23``, ``%3A``,
+  ``a%2eb`` and ``/.well-known/x`` are not refused. See the *Path guard* section of the proxy
+  documentation, and *Known Limitations* below for what the guard does not cover.
 - **proxy**: HARP forwarded a malformed request that a proxy must not forward. When a client sent
   both ``Content-Length`` and ``Transfer-Encoding``, HARP passed the client's ``Content-Length`` to
   the upstream while sending a body of a different length, so the upstream was told to read bytes
@@ -266,13 +327,33 @@ Security
 - **config**: credential masking did not work in the mode most callers use. ``asdict(secure=True)``
   recognised a password by the type of the value holding it, and pydantic renders a URL to a plain
   string before that check is reached, so the masking silently did nothing. Passwords are now masked
-  wherever they appear, including in settings that are plain strings rather than typed URLs. This
+  in typed URLs and in settings that are plain strings, with one exception: a URL holding a password
+  and an empty username (``redis://:s3cret@cache.internal:6379/0``) is still returned in clear,
+  tracked in `#999 <https://github.com/msqd/harp/issues/999>`_. This
   affected ``harp-proxy system config``, which printed database and Redis passwords in full under
   ``--raw`` and ``--json``, and never masked anything without a flag; and the dashboard's
   ``GET /api/system/proxy``, which exposed credentials embedded in an upstream endpoint url on an
   API that is unauthenticated unless ``dashboard.auth`` is configured.
+- **http_cache**: a client's ``Cache-Control: no-store`` no longer prevented the response being
+  cached. RFC 9111 §5.2.1.5 makes this a ``MUST``: a cache must store no part of such a request or
+  of any response to it. hishel 0.1.x checked the request directive, hishel 1.x decides cacheability
+  from the response alone, and the check was lost when HARP migrated, so a caller asking not to be
+  retained was retained and the next caller was served that entry. Measured on PostgreSQL, two
+  identical ``no-store`` requests reached the origin once instead of twice. Such a request now
+  bypasses the cache entirely: nothing is stored, and an existing entry is not used to answer it.
+  The response directive (§5.2.2.5) was already honoured and is unchanged. Request ``no-cache``
+  keeps forcing revalidation.
+
+  This binds HARP's cache only. The transaction record is a separate store and the directive does
+  not reach it, so a request carrying ``no-store`` is recorded like any other, as far as recording
+  gets under the load you are running. See :ref:`what-harp-retains`, and *Known Limitations* below.
 - **config**: ``!cfg`` comparison operands are parsed as Python literals instead of being evaluated
   as code. Configuration is author-time and trusted, so this is defense in depth.
+- **dependencies**: upgraded packages with open advisories: ``anyio`` 4.14.2, ``aiohttp`` 3.14.5,
+  ``h2`` 4.4.1, ``hpack`` 4.2.0, ``multidict`` 6.9.1 (GHSA-54p9-h82j-f925) and, for the ``mysql`` extra,
+  ``cryptography`` 50.0.2. The ranges of ``aiohttp`` (``>=3.14.3,<3.15``), ``multidict`` (``>=6.9.1,<7``)
+  and ``cryptography`` (``>=50.0,<51``) are widened accordingly, so shipped images no longer stay on
+  ``multidict`` 6.7.x.
 
 Removed
 :::::::
@@ -280,3 +361,42 @@ Removed
 - Removed the ``telemetry`` application, which was sending anonymous usage statistics every 24 hours.
   This reduces network overhead and eliminates potential privacy concerns for users in regulated
   environments.
+
+Known Limitations
+:::::::::::::::::
+
+Not changes in this release. Carried into it, and worth knowing before you deploy.
+
+- A resource that varies gets little or no cache reuse. ``Vary`` is honoured before an entry is
+  reused, so no caller is ever served a variant that does not match their request. But the storage
+  holds one entry per cache key, so two variants of the same resource overwrite each other, and a
+  caller alternating between them gets no cache hits at all. This is not new in 0.10: the behaviour
+  is the same on 0.9.1. Tracked in `#910 <https://github.com/msqd/harp/issues/910>`_.
+- Transaction recording is best-effort, and under load it records a fraction of your traffic. When
+  the storage worker falls behind it sheds message detail first and then whole transactions, rather
+  than applying backpressure and slowing traffic down. Nothing warns you that it happened: no
+  counter, no log line, and a shed payload looks in the dashboard exactly like a request that
+  carried none. In a measured sweep on PostgreSQL at concurrencies from 5 to 60, roughly 80% of
+  transactions were never stored and two thirds of the rows that were stored held no messages at
+  all. Proxying stayed healthy throughout, so the traffic was served correctly and only the record
+  of it was lost. Do not treat the transaction record as a complete account of what passed through
+  the proxy. This is not new in 0.10, and the measurements and their exact conditions are in
+  `#945 <https://github.com/msqd/harp/issues/945>`_.
+- The proxy path guard only refuses what it can recognise as a dot segment without decoding, so some
+  shapes still reach the upstream unchanged. Each escapes the endpoint base path only on an upstream
+  that normalises it as a dot segment (`#1009 <https://github.com/msqd/harp/issues/1009>`_). Do not
+  rely on the base path alone to restrict access to an upstream that does:
+
+  - ``..;`` segments (``/..;/..;/admin``, ``/%2e%2e;/admin``), on upstreams that treat ``..;`` as
+    ``..`` (Tomcat, Spring);
+  - double encoding (``%252e%252e``), on upstreams that decode twice;
+  - overlong UTF-8 (``%c0%ae%c0%ae``), on upstreams that accept it;
+  - a dot segment followed by an encoded NUL (``/%2e%2e%00/x``), on upstreams that decode and truncate
+    at NUL;
+  - Unicode look-alike dots (fullwidth ``．`` U+FF0E, sent as ``%EF%BC%8E``), on upstreams that apply
+    Unicode normalisation before resolving dot segments.
+- Credential masking misses a URL that holds a password and an empty username
+  (``redis://:s3cret@cache.internal:6379/0``): ``asdict(secure=True)`` returns it in clear, so
+  ``harp-proxy system config`` can print it even though the help text of
+  the command says its output is safe to paste. Review that output before sharing it. Tracked in
+  `#999 <https://github.com/msqd/harp/issues/999>`_.

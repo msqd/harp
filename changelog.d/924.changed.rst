@@ -1,0 +1,1 @@
+Cache: `http_cache.storage` `ttl` now expires entries and defaults to `86400` (24 hours), `null` disables expiry; `check_ttl_every` throttles the sweep. They did nothing before (#924).
