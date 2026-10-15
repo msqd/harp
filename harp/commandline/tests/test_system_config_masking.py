@@ -9,14 +9,21 @@ import pytest
 from harp.commandline.system import config_subcommand
 from harp.utils.testing.cli import CliRunner
 
-DSN = "redis://harp:sup3rs3cr3t@cache.internal:6379/0"
+DSN = "redis://:sup3rs3cr3t@cache.internal:6379/0"
+ALICE = "s3cretAlice"
 
 
 @pytest.fixture
 def config_file(tmp_path):
     path = tmp_path / "harp.yml"
     path.write_text(
-        "applications: [storage]\n"
+        "applications: [storage, dashboard]\n"
+        "dashboard:\n"
+        "  auth:\n"
+        "    type: basic\n"
+        "    algorithm: plain\n"
+        "    users:\n"
+        f"      alice: {ALICE}\n"
         "storage:\n"
         f"  url: sqlite+aiosqlite:///{tmp_path / 'harp.db'}\n"
         "  redis:\n"
@@ -31,6 +38,7 @@ def test_the_password_is_masked_by_default(config_file, options):
 
     assert result.exit_code == 0, result.output
     assert "sup3rs3cr3t" not in result.output
+    assert ALICE not in result.output
     assert "cache.internal" in result.output
 
 
@@ -40,3 +48,4 @@ def test_unsecure_shows_the_password(config_file, options):
 
     assert result.exit_code == 0, result.output
     assert "sup3rs3cr3t" in result.output
+    assert ALICE in result.output

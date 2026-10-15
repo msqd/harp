@@ -8,7 +8,7 @@ from harp_apps.storage.services import SqlStorage
 
 from ..storage.models.base import with_session
 from ..storage.types import IBlobStorage, IStorage
-from .settings import OLD_AFTER, PERIOD
+from .settings import JanitorSettings
 
 logger = get_logger(__name__)
 
@@ -21,9 +21,10 @@ PROMETHEUS_GAUGES = {
 
 
 class JanitorWorker:
-    def __init__(self, storage: IStorage, blob_storage: IBlobStorage):
+    def __init__(self, storage: IStorage, blob_storage: IBlobStorage, settings: JanitorSettings):
         self.storage: SqlStorage = cast(SqlStorage, storage)
         self.blob_storage: IBlobStorage = blob_storage
+        self.settings = settings
 
         self.running = False
         self.session_factory = self.storage.session_factory
@@ -37,7 +38,7 @@ class JanitorWorker:
 
     async def run(self):
         """
-        Once dependencies are ready, start the main loop (basically, run the `loop()` every PERIOD seconds), until
+        Once dependencies are ready, start the main loop (basically, run the `loop()` every `period` seconds), until
         `stop()` is called.
         """
         # do not start before storage is ready
@@ -49,7 +50,7 @@ class JanitorWorker:
                     await self.loop()
                 except Exception as exc:
                     logger.exception(exc)
-                await asyncio.sleep(PERIOD)
+                await asyncio.sleep(self.settings.period)
 
     async def loop(self):
         """
@@ -70,13 +71,13 @@ class JanitorWorker:
     @with_session
     async def delete_old_transactions(self, /, *, session):
         """
-        Remove transactions older than OLD_AFTER days. On correct database implementations (postgresql for example), it
+        Remove transactions older than `old_after` days. On correct database implementations (postgresql for example), it
         will cascade to related objects. On sqlite, there will be garbage left, but it's not a big deal.
         """
 
         # TODO to storage
 
-        result = await session.execute(self.storage.transactions.delete_old(OLD_AFTER))
+        result = await session.execute(self.storage.transactions.delete_old(self.settings.old_after_delta))
         await session.commit()
         return result
 

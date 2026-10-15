@@ -120,8 +120,10 @@ offers no validator for is simply fetched again, since there is nothing to reval
 
 .. note::
 
-    HARP computes a stored response's age from its ``Date`` header (RFC 9111 §4.2.3). An origin
-    that sends no ``Date`` gives the cache nothing to age its response against.
+    HARP computes a stored response's age from its ``Date`` header (RFC 9111 §4.2.3). When an
+    origin sends no ``Date``, HARP adds one set to the time it received the response before
+    storing it (RFC 9110 §6.6.1), so the response still ages. A ``Date`` sent by the origin is kept
+    as is. Responses that are forwarded but not stored are not modified.
 
 
 Cache key normalization

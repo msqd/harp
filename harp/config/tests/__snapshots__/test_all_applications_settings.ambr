@@ -53,6 +53,10 @@
 # ---
 # name: test_all_applications_default_settings[harp_apps.janitor]
   dict({
+    'harp_apps.janitor.settings.JanitorSettings': '''
+      {}
+  
+    ''',
   })
 # ---
 # name: test_all_applications_default_settings[harp_apps.metrics]

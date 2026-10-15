@@ -3,6 +3,7 @@ import time
 import typing as tp
 import uuid
 from collections import OrderedDict
+from email.utils import formatdate
 from hishel import AsyncBaseStorage, Entry, EntryMeta, Request, Response
 
 from harp import get_logger
@@ -136,6 +137,11 @@ class AsyncStorage(AsyncBaseStorage):
         if not self._allow_heuristics and not has_explicit_freshness(response):
             logger.debug(f"Cache entry not retained (no explicit freshness, heuristics off): key={key}")
             return entry
+
+        # RFC 9110 §6.6.1: a cache without a `Date` to age the response against must record its
+        # time of receipt, or hishel computes an age of 0 and the response never goes stale.
+        if "date" not in response.headers:
+            response.headers["date"] = formatdate(entry.meta.created_at, usegmt=True)
 
         await self._impl.store_entry(key, entry)
         self._remember_key(entry.id, key)
