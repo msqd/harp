@@ -38,6 +38,7 @@ Fixed
 - ``make wheel`` no longer leaves a wheel in ``dist/`` when its asset check or ``twine check`` fails. (#1004)
 - GitHub release notes no longer start with YAML front matter. (#1033)
 - Release job renders pre-release notes from the changelog fragments; the unreleased docs page is titled with the upcoming version and absent when nothing is pending. (#1085)
+- Default Docker builds to the supported Python 3.13 runtime. (#1108)
 - Frontend build no longer deletes the tracked ``harp_apps/dashboard/web/.gitkeep``, so a local build leaves the checkout clean (no ``-dirty`` version).
 
 Security
