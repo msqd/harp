@@ -37,7 +37,7 @@ The automated release workflow handles:
 
 1. **Version validation** - Ensures ``pyproject.toml`` version matches the git tag
 2. **Package building** - Builds wheel in isolated sandbox environment with frontend bundled
-3. **Testing** - Tests installation on Python 3.13, 3.14, and 3.14t (free-threaded)
+3. **Testing** - Tests installation on Python 3.13
 4. **Publishing** - Publishes to TestPyPI, then production PyPI
 5. **GitHub Release** - Creates release with changelog and wheel artifacts
 
@@ -252,9 +252,7 @@ Once the tag is pushed, GitHub Actions automatically runs the release workflow:
        └─ Creates wheel with twine validation
 
     3. Tests the built wheel
-       ├─ Python 3.13 (standard)
-       ├─ Python 3.14 (standard)
-       └─ Python 3.14t (free-threaded/no-GIL)
+       └─ Python 3.13
 
     4. Publishes to TestPyPI
        └─ For validation before production

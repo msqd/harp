@@ -5,14 +5,13 @@ import tomllib
 from pathlib import Path
 
 import pytest
+from packaging.specifiers import SpecifierSet
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.mark.parametrize("dockerfile", ["Dockerfile", "Dockerfile.pypi"])
 def test_default_docker_python_matches_project_requirement(dockerfile):
-    from packaging.specifiers import SpecifierSet
-
     requirement = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["requires-python"]
     content = (ROOT / dockerfile).read_text()
     match = re.search(r"^ARG PYTHON_VERSION=(\d+\.\d+)$", content, re.MULTILINE)
