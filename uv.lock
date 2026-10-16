@@ -705,7 +705,7 @@ wheels = [
 
 [[package]]
 name = "harp-proxy"
-version = "0.11.0.dev0"
+version = "0.11.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },

@@ -1,1 +1,0 @@
-The http_cache TTL sweep runs in the background and reads the store in short batches, so a sweep over thousands of entries no longer stalls requests or locks SQLite writers.

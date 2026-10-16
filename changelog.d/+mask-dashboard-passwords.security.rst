@@ -1,1 +1,0 @@
-Dashboard user passwords (``dashboard.auth.users.<name>.password``) are masked by ``harp-proxy system config`` and ``GET /api/system/settings``, whatever the hashing algorithm. ``--unsecure`` still shows them.

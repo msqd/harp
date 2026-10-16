@@ -1,2 +1,0 @@
-``http_cache.policy.options`` sets ``shared``, ``supported_methods`` and ``allow_stale`` from configuration.
-A ``cache_options`` mapping under ``http_cache.policy`` now fails at startup, naming ``http_cache.policy.options``, instead of at the first request.

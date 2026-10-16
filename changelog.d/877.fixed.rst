@@ -1,1 +1,0 @@
-Dashboard: unknown URLs and unknown transactions show a "not found" page inside the layout instead of a crash screen or an empty card, and the "copy transaction link" button yields ``/transactions/<id>`` from the detail page.

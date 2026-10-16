@@ -1,1 +1,0 @@
-Cache: a request reaching the cache transport without an endpoint name now raises a clear error instead of falling into a shared ``__upstream__`` namespace.

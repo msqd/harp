@@ -1,1 +1,0 @@
-Dependabot uses the ``uv`` ecosystem: Python updates change ``pyproject.toml`` and ``uv.lock`` together, and the cookiecutter template is no longer parsed.
