@@ -26,6 +26,7 @@ from pathlib import Path
 
 from bench import metadata
 from bench.macro import measure
+from harp.config.adapters import SERVERS as adapter_servers
 
 HERE = Path(__file__).parent
 ROOT = HERE.parent.parent
@@ -37,9 +38,8 @@ HARP_BIN = Path(sys.executable).parent / "harp-proxy"
 PROFILES = {"bare", "default", "loaded"}
 STORAGE_PROFILES = {"default", "loaded"}
 CACHE_MIX_PROFILES = {"loaded"}
-# What HARP can run today: the server adapter is hardcoded (`harp/__init__.py`), the client is httpx. More choices
-# land with the adapters (#1171, #1172).
-SERVERS = ("hypercorn",)
+# The server comes from `harp server --server`; the client is httpx for now (more choices land with #1172).
+SERVERS = adapter_servers
 CLIENTS = ("httpx",)
 HOST = "127.0.0.1"
 METRICS_PATH = "/.prometheus/metrics"
@@ -149,6 +149,8 @@ def harp_command(args, cores, workdir: Path, db: Path, importtime: bool = False)
     command = [
         *python,
         "server",
+        "--server",
+        args.server,
         "-f",
         str(HERE / "profiles" / f"{args.profile}.yml"),
         "--endpoint",
@@ -156,6 +158,7 @@ def harp_command(args, cores, workdir: Path, db: Path, importtime: bool = False)
     ]
     if args.profile in STORAGE_PROFILES:
         command += ["--set", "storage.url", f"sqlite+aiosqlite:///{db}"]
+        command += ["--set", "dashboard.port", str(args.harp_port + 80)]  # 4080 by default, follows --harp-port
     if getattr(args, "scrape_metrics", False):
         command += ["--enable", "metrics"]
     return pinned(command, cores["harp"])
