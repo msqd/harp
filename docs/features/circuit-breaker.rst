@@ -8,7 +8,7 @@ unavailability. Some faults are short-lived and can be mitigated using :doc:`ret
 failures need different handling.
 
 To handle long-term remote service failures, your proxies can leverage a
-`Circuit Breaker <https://harp-proxy.net/patterns/circuit-breaker>`_ to lower pressure and responsiveness of API calls
+`Circuit Breaker <https://harp-project.net/patterns/circuit-breaker>`_ to lower pressure and responsiveness of API calls
 to failing remote services.
 
 Each endpoint has a pool of remote URLs, used in a round-robin manner as long as there are no failures.
