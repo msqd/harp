@@ -346,6 +346,9 @@ Once the workflow completes successfully:
 ``protection.json`` requires a pull request and *All Checks Passed*, enforces it for administrators,
 and refuses force-push and deletion; copy it from ``gh api repos/msqd/harp/branches/main/protection``.
 
+Rebuild the active version lines on Read the Docs (``latest``, ``stable``, the new ``X.Y`` and the previous
+one): each title carries its role (``stable``, ``oldstable``), which changes with this release.
+
 Then open the next version on ``main``, through a pull request: ``pyproject.toml`` moves to
 ``X.Y+1.0.dev0`` (``uv lock`` again) and ``changelog.d/`` holds no fragment but its ``README.rst``.
 Builds from ``main`` then report a development version.

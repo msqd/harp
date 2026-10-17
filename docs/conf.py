@@ -11,6 +11,7 @@ builtins.__sphinx__ = True
 sys.path.insert(0, os.path.abspath(".."))
 
 from docs._extensions.pending_changelog import render_pending_changelog  # noqa: E402
+from docs._extensions.version_title import docs_version, git_tags, project_version  # noqa: E402
 
 project = "HARP Proxy"
 
@@ -23,10 +24,9 @@ if current_year > first_year:
 
 READTHEDOCS_VERSION = os.environ.get("READTHEDOCS_VERSION")
 
-if os.environ.get("READTHEDOCS_GIT_IDENTIFIER"):
-    version = release = os.environ["READTHEDOCS_GIT_IDENTIFIER"]
-else:
-    version = release = ".".join(__import__("harp").__hardcoded_version__.split(".")[0:2])
+_root = Path("..").resolve()
+_docs_version = docs_version(project_version(_root), git_tags(_root), READTHEDOCS_VERSION)
+version = release = _docs_version.title
 
 
 render_pending_changelog(Path("..").resolve())
@@ -63,7 +63,7 @@ html_theme_options = {
     "light_logo": "logo.svg",
     "dark_logo": "logo-dark.svg",
     "source_repository": "https://github.com/msqd/harp/",
-    "source_branch": version,
+    "source_branch": _docs_version.source_branch,
     "source_directory": "docs/",
 }
 html_favicon = "favicon.ico"
