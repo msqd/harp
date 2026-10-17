@@ -7,6 +7,7 @@ from httpx import AsyncClient, Request, Response
 from harp import __parsed_version__
 from harp.http import HttpRequest
 from harp.http.utils import hop_by_hop_names
+from harp.utils.bytes import HEADER_ENCODING, header_bytes
 
 
 class HttpClientProxyAdapter:
@@ -28,6 +29,7 @@ class HttpClientProxyAdapter:
         """
         request = self._build_request(request, url)
         response = await self.http_client.send(request)
+        response.headers.encoding = HEADER_ENCODING  # obs-text must read back as the bytes it was
 
         # Add cache debugging headers if caching is being used
         if response.extensions.get("hishel_from_cache"):
@@ -67,7 +69,11 @@ class HttpClientProxyAdapter:
         if self.user_agent:
             request.headers["user-agent"] = self.user_agent
         dropped = hop_by_hop_names(request.headers)
-        return [(name, value) for name, value in request.headers.items() if name.lower() not in dropped]
+        return [
+            (header_bytes(name), header_bytes(value))
+            for name, value in request.headers.items()
+            if name.lower() not in dropped
+        ]
 
     def _build_request(self, request: HttpRequest, url: str) -> Request:
         """
