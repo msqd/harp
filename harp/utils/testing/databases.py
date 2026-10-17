@@ -1,5 +1,6 @@
 import functools
 import itertools
+import os
 
 import pytest
 
@@ -41,22 +42,17 @@ TEST_DATABASES_SOURCES = {
         "drivers": ["asyncpg"],
     },
     "mysql": {
-        "images": (
-            [
-                "mysql:8-oracle",
-                "mariadb:lts",
-                "mariadb:latest",
-            ]
-            if TEST_ALL_DATABASES
-            else ["mariadb:lts"]
-        ),
-        "drivers": ["aiomysql"] if TEST_ALL_DATABASES else [],
+        "images": ["mysql:8-oracle", "mariadb:lts", *(["mariadb:latest"] if TEST_ALL_DATABASES else [])],
+        "drivers": ["aiomysql"],
     },
     # disabled, does not install cleanly on osx+arm
     # see https://github.com/pymssql/pymssql/issues/769
     # supporting microsoft shit is not a priority unless someone wants to sponsor it
     # "mssql": {"drivers": ["aioodbc"]},
 }
+
+# Restrict the matrix to some dialects (comma separated, e.g. "sqlite,postgresql"), so a CI job can own a dialect.
+TEST_DATABASE_DIALECTS = [x.strip() for x in os.environ.get("TEST_DATABASE_DIALECTS", "").split(",") if x.strip()]
 
 # Combine supported databases into something our fixtures can use.
 TEST_DATABASES = list(
@@ -70,6 +66,7 @@ TEST_DATABASES = list(
                     TEST_DATABASES_SOURCES[dialect]["drivers"],
                 )
                 for dialect in TEST_DATABASES_SOURCES.keys()
+                if not TEST_DATABASE_DIALECTS or dialect in TEST_DATABASE_DIALECTS
             )
         ),
     )

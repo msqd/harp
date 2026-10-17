@@ -161,6 +161,7 @@ jobs:
         run: uv run pytest harp_apps -n 1 -m 'not subprocess'
         env:
           TESTCONTAINERS_RYUK_DISABLED: 'true'
+          TEST_DATABASE_DIALECTS: sqlite,postgresql  # mysql has its own job
 
   test-backend-e2e:
     name: Test Backend E2E (Py${{ matrix.python-version }})
@@ -196,6 +197,39 @@ jobs:
         run: uv run pytest tests -n 1 -m 'not subprocess'
         env:
           TESTCONTAINERS_RYUK_DISABLED: 'true'
+          TEST_DATABASE_DIALECTS: sqlite,postgresql  # mysql has its own job
+
+  # Storage suite against live MySQL (mysql:8-oracle) and MariaDB (mariadb:lts) through aiomysql.
+  # See https://github.com/msqd/harp/issues/868.
+  test-backend-mysql:
+    name: Test Backend MySQL
+    runs-on: ubuntu-latest
+    needs: check-lockfile
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Ensure web directory exists
+        run: mkdir -p harp_apps/dashboard/web
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run storage tests on MySQL and MariaDB
+        run: uv run pytest harp_apps/storage -n auto -m 'not subprocess'
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: 'true'
+          TEST_DATABASE_DIALECTS: mysql
 
   test-frontend-unit:
     name: Test Frontend Unit
@@ -361,6 +395,7 @@ jobs:
       - test-backend-core
       - test-backend-apps
       - test-backend-e2e
+      - test-backend-mysql
       - test-frontend-unit
       - lint-python
       - lint-frontend
