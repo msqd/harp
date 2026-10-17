@@ -72,6 +72,14 @@ A named upstream configured on the proxy, which requests are routed to. Names a 
 path.
 _Avoid_: route, service, target
 
+### Performance
+
+**Overhead**:
+What passing through HARP costs a transaction, compared with calling the origin directly: the latency
+it adds and the CPU it spends. The measure an operator pays, and the one a performance change is judged
+on.
+_Avoid_: speed, performance, throughput
+
 ## Decisions
 
 Architecture decision records live in [`docs/adr/`](./docs/adr/).

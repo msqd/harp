@@ -257,23 +257,22 @@ Benchmarks
 
 .. code-block:: shell
 
-    # Run benchmarks
-    make benchmark
+    # Run all micro benchmarks, results in bench/results/micro-<sha>.json
+    make bench-micro
 
-    # Run and save benchmark results
-    make benchmark-save
+    # Compare two results
+    make bench-compare BASE=bench/results/a.json CAND=bench/results/b.json
 
-    # Customize benchmark runs
-    make benchmark BENCHMARK_MIN_ROUNDS=500 BENCHMARK_OPTIONS="--verbose"
+    # Measure run-to-run noise of the same build
+    make bench-noise
 
-Benchmarks use pytest-benchmark to measure performance. Results are saved in ``.benchmarks/``
-and can be compared across runs. The ``benchmark-save`` target runs more iterations for
-stable results.
+Benchmarks use pyperf and live in ``bench/``, outside the test suite. See ``bench/README.md``.
 
 Available benchmark variables:
 
-* ``BENCHMARK_OPTIONS``: Additional benchmark options
-* ``BENCHMARK_MIN_ROUNDS``: Minimum benchmark iterations (default: 100, 500 for save)
+* ``BENCH_OPTIONS``: Additional pyperf options (e.g. ``--fast`` for a quick check)
+* ``BENCH_OUTPUT``: Result file written by ``bench-micro``
+* ``BENCH_NOISE_RUNS``: Number of runs of ``bench-noise`` (default: 5)
 
 Docker Image Tasks
 ------------------
