@@ -1,4 +1,5 @@
 import asyncio
+import re
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from typing import Union
@@ -93,6 +94,11 @@ async def get_scoped_database_url(database_url, test_id):
         raise RuntimeError(f"Unsupported dialect «{admin_engine.dialect.name}»")
 
 
+def with_driver(url, dialect, driver):
+    """Sets the async driver on a testcontainers url, whatever sync driver (if any) the container version put there."""
+    return re.sub(rf"^{dialect}(\+\w+)?://", f"{dialect}+{driver}://", url)
+
+
 def create_database_container_for(dialect, image, driver):
     """
     Create a database container for the given dialect, image and driver.
@@ -118,7 +124,7 @@ def create_database_container_for(dialect, image, driver):
         from testcontainers.mysql import MySqlContainer
 
         with MySqlContainer(image) as container:
-            yield container.get_connection_url().replace("mysql+pymysql://", f"{dialect}+{driver}://")
+            yield with_driver(container.get_connection_url(), dialect, driver)
     elif dialect == "mssql":
         from testcontainers.mssql import SqlServerContainer
 

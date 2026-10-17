@@ -11,7 +11,7 @@ from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
-from harp.http.utils import hop_by_hop_names, parse_cache_control
+from harp.http.utils import HOP_BY_HOP_HEADERS, hop_by_hop_names, parse_cache_control
 from harp.models import Transaction
 from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
@@ -382,12 +382,18 @@ class HttpProxyController(AbstractHttpProxyController):
         Create a new transaction from the incoming request, generating a new (random, but orderable according to the
         instant it happens) transaction ID.
 
-        Once created, it dispatches the EVENT_TRANSACTION_STARTED event to allow storage applications (or anything
-        else) to react to this creation, then it dispatches the EVENT_TRANSACTION_MESSAGE event to allow to react to
-        the fact this transaction contained a request.
+        Once created, it runs the request filters, then dispatches the EVENT_TRANSACTION_STARTED event to allow storage
+        applications (or anything else) to react to this creation, then it dispatches the EVENT_TRANSACTION_MESSAGE
+        event to allow to react to the fact this transaction contained a request.
 
         :return: Transaction
         """
+        # RFC 9110 §7.6.1: `Connection` applies to the message as received. Apply it now, before rules run, so a
+        # header a rule injects later is not mistaken for one the client marked as hop-by-hop.
+        for name in _connection_named_headers(request.headers):
+            request.headers.popall(name, None)
+        request.headers.popall("connection", None)
+
         # create the context, an event that will be passed through the transaction lifecycle.
         context = ProxyFilterEvent(
             self.name,
@@ -415,17 +421,22 @@ class HttpProxyController(AbstractHttpProxyController):
 
         self.info(f"▶ {request.method} {request.path}", transaction=context.transaction)
 
-        # dispatch transaction started event
-        # we don't really want to await this, should run in background ? or use an async queue ?
-        await self.adispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(context.transaction))
-
         # allow filtering the incoming messsage/transaction before the transaction is stored
         context.update(await self.filter_request(context))
+
+        # dispatch transaction started event, after the filters so markers they set (skip-storage) are seen
+        # we don't really want to await this, should run in background ? or use an async queue ?
+        await self.adispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(context.transaction))
 
         # dispatch message event for request
         await self.adispatch(EVENT_TRANSACTION_MESSAGE, HttpMessageEvent(context.transaction, request))
 
         return context
+
+
+def _connection_named_headers(headers) -> set:
+    """Header names the message's own `Connection` field marks as connection-specific."""
+    return hop_by_hop_names(headers) - HOP_BY_HOP_HEADERS
 
 
 @lru_cache
