@@ -1,6 +1,7 @@
 """The cache streams a response through and stores it once read, unless its body is over the recording cap (#911)."""
 
 import asyncio
+import gzip
 
 import httpx
 from hishel import CacheOptions, SpecificationPolicy
@@ -117,3 +118,38 @@ async def test_closing_an_unread_response_releases_the_upstream():
         await response.aclose()
 
     assert closed.is_set()
+
+
+class GzipOrigin(httpx.AsyncBaseTransport):
+    """Serves a cacheable gzip body: a few hundred bytes on the wire, far more once decoded."""
+
+    def __init__(self, decoded: bytes):
+        self.encoded = gzip.compress(decoded)
+        self.calls = 0
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        self.calls += 1
+        return httpx.Response(
+            200,
+            headers={"cache-control": "max-age=3600", "content-encoding": "gzip"},
+            stream=httpx.ByteStream(self.encoded),
+        )
+
+
+async def test_body_over_the_cap_once_decoded_is_not_stored_however_small_compressed():
+    origin = GzipOrigin(b"0" * 64 * 1024)
+    assert len(origin.encoded) < 1024
+    async with make_client(origin, max_recorded_body_size=1024) as client:
+        assert (await client.get(URL)).content == b"0" * 64 * 1024
+        await client.get(URL)
+
+    assert origin.calls == 2
+
+
+async def test_compressed_body_within_the_cap_once_decoded_is_stored():
+    origin = GzipOrigin(b"0" * 1000)
+    async with make_client(origin, max_recorded_body_size=1024) as client:
+        await client.get(URL)
+        await client.get(URL)
+
+    assert origin.calls == 1

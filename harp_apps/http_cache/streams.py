@@ -35,19 +35,37 @@ class UpstreamBody:
         await self._response.aclose()
 
 
+def body_decoder(content_encoding: tp.Optional[str]):
+    """The decoder httpx applies to a body sent with this ``Content-Encoding``, the one the proxy reads it through.
+
+    Built by httpx itself, so the cache measures a body exactly as the proxy does."""
+    headers = [("content-encoding", content_encoding)] if content_encoding else []
+    return httpx.Response(200, headers=headers)._get_content_decoder()
+
+
 class StoredOnceRead:
     """Passes a body through and awaits ``on_end`` with it once read to its end, unless it is over ``limit`` bytes.
 
-    At most ``limit`` bytes are held. A body left unread or longer than the limit never reaches ``on_end``.
+    The body is measured decoded, as the client receives it, whatever its size on the wire. At most ``limit`` bytes are
+    held. A body left unread, undecodable or longer than the limit never reaches ``on_end``.
     """
 
-    def __init__(self, source, *, limit: int, on_end: tp.Callable[[bytes], tp.Awaitable[None]]):
+    def __init__(
+        self,
+        source,
+        *,
+        limit: int,
+        on_end: tp.Callable[[bytes], tp.Awaitable[None]],
+        content_encoding: tp.Optional[str] = None,
+    ):
         self._source = source
         self._chunks = aiter(source)
         self._limit = limit
         self._on_end = on_end
+        self._decoder = body_decoder(content_encoding)
         self._body = bytearray()
-        self._size = 0
+        self._decoded_size = 0
+        self._over = False
         self._ended = False
 
     def __aiter__(self) -> "StoredOnceRead":
@@ -57,16 +75,26 @@ class StoredOnceRead:
         try:
             chunk = await anext(self._chunks)
         except StopAsyncIteration:
-            if not self._ended and self._size <= self._limit:
+            self._measure(self._decoder.flush)
+            if not self._ended and not self._over:
                 self._ended = True
                 await self._on_end(bytes(self._body))
             raise
-        self._size += len(chunk)
-        if self._size <= self._limit:
+        if not self._over:
             self._body += chunk
-        else:
-            self._body.clear()
+            self._measure(lambda: self._decoder.decode(chunk))
         return chunk
+
+    def _measure(self, decode: tp.Callable[[], bytes]) -> None:
+        if self._over:
+            return
+        try:
+            self._decoded_size += len(decode())
+        except httpx.DecodingError:
+            self._decoded_size = self._limit + 1
+        if self._decoded_size > self._limit or len(self._body) > self._limit:
+            self._over = True
+            self._body.clear()
 
     async def aclose(self) -> None:
         await aclose_source(self._source)

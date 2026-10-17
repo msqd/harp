@@ -247,7 +247,16 @@ class AsyncStorage(AsyncBaseStorage):
 
         # The entry is stored once its body has been read to the end, as it reaches the client.
         return replace(
-            entry, response=replace(response, stream=StoredOnceRead(response.stream, limit=limit, on_end=store))
+            entry,
+            response=replace(
+                response,
+                stream=StoredOnceRead(
+                    response.stream,
+                    limit=limit,
+                    on_end=store,
+                    content_encoding=response.headers.get("content-encoding"),
+                ),
+            ),
         )
 
     async def get_entries(self, key: str) -> tp.List[Entry]:

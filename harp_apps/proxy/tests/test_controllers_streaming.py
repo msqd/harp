@@ -197,3 +197,47 @@ async def test_a_filter_reading_the_body_leaves_it_whole_for_the_client_and_the_
     assert await read_all(response) == b"0123456789"
     recorded = dispatcher.recorded_response()
     assert await recorded.aread() == b"0123"
+
+
+async def send_through_asgi(response: HttpResponse) -> list:
+    from harp.asgi.bridge.responses import HttpResponseAsgiBridge
+
+    messages = []
+
+    async def send(message):
+        messages.append(message)
+
+    await HttpResponseAsgiBridge(response, send).send()
+    return messages
+
+
+@pytest.mark.parametrize(
+    "method, status",
+    [("GET", 204), ("GET", 304), ("HEAD", 200)],
+    ids=["204", "304", "HEAD"],
+)
+@respx.mock
+async def test_a_response_without_a_body_ends_the_transaction(method, status):
+    respx.route(method=method, url=BASE_URL).mock(return_value=httpx.Response(status))
+    dispatcher = RecordingDispatcher()
+    controller = create_controller(dispatcher)
+
+    await send_through_asgi(await controller(HttpRequest(method=method)))
+
+    assert dispatcher.ids()[-1] == EVENT_TRANSACTION_ENDED
+
+
+@respx.mock
+async def test_a_filter_leaving_the_body_unread_still_ends_the_transaction():
+    async def mark(event_id, event):
+        if event_id == EVENT_FILTER_PROXY_RESPONSE:
+            event.transaction.markers.add("seen")
+
+    respx.get(BASE_URL).mock(return_value=httpx.Response(200, content=b"hello"))
+    dispatcher = RecordingDispatcher(on_event=mark)
+    controller = create_controller(dispatcher)
+
+    messages = await send_through_asgi(await controller(HttpRequest()))
+
+    assert b"".join(message.get("body", b"") for message in messages) == b"hello"
+    assert dispatcher.ids()[-1] == EVENT_TRANSACTION_ENDED
