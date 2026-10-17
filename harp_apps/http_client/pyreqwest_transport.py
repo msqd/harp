@@ -57,8 +57,12 @@ class _ResponseStream(httpx.AsyncByteStream):
 
 class PyreqwestTransport(httpx.AsyncBaseTransport):
     """
-    An httpx transport sending requests with pyreqwest (reqwest, in Rust) instead of httpcore: the httpx
-    Request/Response contract stays, so hishel and the filters keep working on top.
+    An httpx transport sending requests with pyreqwest (reqwest, in Rust) instead of httpcore.
+
+    NON-CONFORMING, for benchmarking only, never a candidate to ship: hyper's header map loses the order of headers
+    across names, the interleaving of duplicates and their casing, and reqwest adds ``Accept`` and ``User-Agent``
+    when absent. The conformance suite lists these as strict expected failures. It exists to measure what a native
+    client could give at best.
     """
 
     def __init__(self, *, verify: bool = True, retries: int = 0, limits: httpx.Limits = DEFAULT_LIMITS):
