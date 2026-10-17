@@ -223,6 +223,34 @@ cloc:  ## Counts lines of code in the project.
 	$(call execute,cloc harp harp_apps tests --exclude-dir=node_modules$(COMMA)build$(COMMA)dist)
 
 
+
+########################################################################################################################
+# Benchmarks (outside the test suite, see bench/README.md)
+########################################################################################################################
+
+BENCH_RUN ?= $(UV_RUN) --group bench
+BENCH_SHA ?= $(shell git rev-parse --short=10 HEAD)
+BENCH_OUTPUT ?= bench/results/micro-$(BENCH_SHA).json
+BENCH_OPTIONS ?=
+BENCH_NOISE_RUNS ?= 5
+BENCH_NOISE_TARGET ?= bench/micro/bm_blob_id.py
+
+.PHONY: bench-micro bench-compare bench-noise
+
+bench-micro:  ## Runs micro benchmarks (BENCH_OUTPUT=..., BENCH_OPTIONS=--fast).
+	@mkdir -p bench/results
+	$(call execute,rm -f $(BENCH_OUTPUT); for bm in bench/micro/bm_*.py; do $(BENCH_RUN) python $$bm --append $(BENCH_OUTPUT) $(BENCH_OPTIONS) || exit 1; done)
+
+bench-compare:  ## Compares two benchmark results (BASE=<file> CAND=<file>).
+	@test -n "$(BASE)" -a -n "$(CAND)" || { echo "usage: make bench-compare BASE=<file> CAND=<file>"; exit 1; }
+	$(call execute,$(BENCH_RUN) pyperf compare_to --table $(BASE) $(CAND))
+
+bench-noise:  ## Runs the same benchmark BENCH_NOISE_RUNS times and reports the spread.
+	@mkdir -p bench/results
+	$(call execute,rm -f bench/results/noise-*.json; for i in $$(seq $(BENCH_NOISE_RUNS)); do $(BENCH_RUN) python $(BENCH_NOISE_TARGET) -o bench/results/noise-$$i.json $(BENCH_OPTIONS) || exit 1; done)
+	$(call execute,$(BENCH_RUN) pyperf compare_to --table bench/results/noise-1.json $$(ls bench/results/noise-*.json | tail -n +2))
+
+
 ########################################################################################################################
 # Docker builds
 ########################################################################################################################

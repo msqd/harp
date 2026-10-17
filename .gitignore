@@ -103,3 +103,6 @@ wheels/
 !/harp_apps/dashboard/web/
 /harp_apps/dashboard/web/*
 !/harp_apps/dashboard/web/.gitkeep
+
+# benchmarks
+/bench/results/

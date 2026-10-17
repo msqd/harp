@@ -1,0 +1,44 @@
+"""Metadata recorded in every benchmark result, so numbers stay attributable."""
+
+import os
+import platform
+import subprocess
+from pathlib import Path
+
+CPUINFO = Path("/proc/cpuinfo")
+
+
+def git_sha() -> str:
+    try:
+        return subprocess.run(
+            ["git", "rev-parse", "--short=10", "HEAD"], capture_output=True, text=True, check=True
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+
+
+def native() -> str:
+    return os.environ.get("HARP_NATIVE") or "none"
+
+
+def cpu_model(cpuinfo: Path = CPUINFO) -> str:
+    try:
+        for line in cpuinfo.read_text().splitlines():
+            if line.startswith("model name"):
+                return line.split(":", 1)[1].strip()
+    except OSError:
+        pass
+    return "unknown"
+
+
+def python_build() -> str:
+    return " ".join((platform.python_implementation(), platform.python_version(), *platform.python_build()))
+
+
+def collect() -> dict[str, str]:
+    return {
+        "git_sha": git_sha(),
+        "harp_native": native(),
+        "cpu_model": cpu_model(),
+        "python_build": python_build(),
+    }
