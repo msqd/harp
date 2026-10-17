@@ -1,1 +1,1 @@
-Add a macro benchmark harness measuring HARP overhead (latency, CPU per request) and startup time with oha.
+Add a macro benchmark harness measuring HARP overhead (latency, CPU per request), startup time, load steps (saturation rate, storage backlog, shedding share, peak RSS) with oha, on `bare`, `default` and `loaded` profiles.

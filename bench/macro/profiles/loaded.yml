@@ -1,0 +1,25 @@
+# `default` plus a representative ruleset: several patterns on the `bench` endpoint, two of them with a small script.
+# Mixed cache hits (`/cache/*`, cacheable by the origin) and misses (`/miss/*`) come from the load generator.
+storage:
+  migrate: true
+
+rules:
+  bench:
+    "GET /miss/*":
+      # language=python
+      on_request: |
+        request.headers["X-Bench-Request"] = "1"
+    "GET /*":
+      # language=python
+      on_response: |
+        tags = [name for name in ("rules", "bench") if name]
+        response.headers["X-Bench-Rules"] = ",".join(tags)
+    "POST /*":
+      on_request: |
+        pass
+    "GET /admin/*":
+      on_request: |
+        pass
+    "DELETE *":
+      on_request: |
+        pass
