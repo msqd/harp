@@ -112,7 +112,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
 
         # Eventually store the headers blob (later)
         if not skip_headers and self.pressure <= 2:
-            headers_blob = Blob.from_data(serializer.headers, content_type="http/headers")
+            headers_blob = await Blob.afrom_data(serializer.headers, content_type="http/headers")
             await self.push(partial(self.blob_storage.put, headers_blob), ignore_errors=True)
             message_data["headers"] = headers_blob.id
         elif skip_headers:
@@ -132,7 +132,9 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
 
         # Eventually store the content blob (later)
         if not skip_body and self.pressure <= 1:
-            content_blob = Blob.from_data(serializer.body, content_type=event.message.headers.get("content-type"))
+            content_blob = await Blob.afrom_data(
+                serializer.body, content_type=event.message.headers.get("content-type")
+            )
             await self.push(partial(self.blob_storage.put, content_blob), ignore_errors=True)
             message_data["body"] = content_blob.id
         elif skip_body:
