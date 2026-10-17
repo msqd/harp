@@ -1,0 +1,1 @@
+Show every circuit-breaker status menu entry for the last remote in the dashboard topology.
