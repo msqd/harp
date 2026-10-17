@@ -6,6 +6,7 @@ from typing import Any, Callable, Iterable, List, Optional, Type, Union
 from click import Command
 from click.decorators import CmdType
 
+from harp.config.adapters import DEFAULT_SERVER, SERVERS
 from harp.utils.commandline import click, code
 from harp_apps.http_client.clients import CLIENTS, DEFAULT_CLIENT
 
@@ -44,6 +45,7 @@ class CommonServerOptions(dict):
     enable: tuple = ()
     disable: tuple = ()
     strict: bool = False
+    server: str = DEFAULT_SERVER
     client: str = DEFAULT_CLIENT
 
     def as_list(self):
@@ -59,6 +61,8 @@ class CommonServerOptions(dict):
         )
         if self.strict:
             items.append("--strict")
+        if self.server != DEFAULT_SERVER:
+            items.append(f"--server {self.server}")
         if self.client != DEFAULT_CLIENT:
             items.append(f"--client {self.client}")
         return items
@@ -179,6 +183,14 @@ def server_command(
 
     def decorator(f: [Callable[..., Any]]) -> CmdType:
         command_decorator = click.command(name=name, cls=cls, **attrs)
+        f = click.option(
+            "--server",
+            type=click.Choice(SERVERS),
+            default=DEFAULT_SERVER,
+            envvar="HARP_SERVER",
+            show_default=True,
+            help='ASGI server to run on (all but the default need the "servers" extra).',
+        )(f)
         f = click.option(
             "--client",
             type=click.Choice(CLIENTS),

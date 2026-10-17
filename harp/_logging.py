@@ -92,6 +92,8 @@ logging_config = {
         "httpx": {"level": _get_logging_level("http_core")},
         "hypercorn.access": {"level": _get_logging_level("http", default="info")},
         "hypercorn.error": {"level": _get_logging_level("http", default="info")},
+        "uvicorn.access": {"level": _get_logging_level("http", default="info")},
+        "uvicorn.error": {"level": _get_logging_level("http", default="info")},
         "sqlalchemy.engine": {"level": _get_logging_level("sql")},
     },
 }
