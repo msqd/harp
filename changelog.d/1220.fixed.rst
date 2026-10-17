@@ -1,1 +1,1 @@
-The server now closes a connection whose client stays silent mid-request for longer than ``proxy.client_read_timeout`` (30 s by default).
+The server closes a connection whose client stays silent mid-request for longer than ``proxy.client_read_timeout`` (30 s), and a request body arriving below ``proxy.min_request_body_rate`` (1 KiB/s, after 10 s) is answered ``408`` and never forwarded upstream.

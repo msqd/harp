@@ -17,6 +17,7 @@ from harp.models import Transaction
 from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.tpdex import tpdex
+from harp.settings import DEFAULT_MIN_REQUEST_BODY_RATE, DEFAULT_REQUEST_BODY_GRACE_PERIOD
 from harp_apps.storage.constants import CLIENT_DISCONNECTED, DEFAULT_MAX_RECORDED_BODY_SIZE, TRUNCATED_RESPONSE_BODY
 from .adapters import HttpClientProxyAdapter, strip_credentials
 from .constants import (
@@ -46,7 +47,7 @@ from .events import (
 )
 from .helpers import extract_tags_from_request
 from .settings.remote import Remote
-from .streams import RecordingStream, UpstreamResponseStream
+from .streams import MinRateStream, RecordingStream, UpstreamResponseStream
 
 logger = get_logger(__name__)
 
@@ -87,6 +88,8 @@ class AbstractHttpProxyController(ABC):
         name=None,
         logging=True,
         max_recorded_body_size: int = DEFAULT_MAX_RECORDED_BODY_SIZE,
+        min_request_body_rate: int = DEFAULT_MIN_REQUEST_BODY_RATE,
+        request_body_grace_period: float = DEFAULT_REQUEST_BODY_GRACE_PERIOD,
     ):
         self.remote = remote
         if not isinstance(remote, Remote):
@@ -95,6 +98,8 @@ class AbstractHttpProxyController(ABC):
         self._logging = logging
         self._dispatcher = dispatcher or self._dispatcher
         self.max_recorded_body_size = max_recorded_body_size
+        self.min_request_body_rate = min_request_body_rate
+        self.request_body_grace_period = request_body_grace_period
 
         self.proxy = HttpClientProxyAdapter(
             http_client,
@@ -165,6 +170,10 @@ class HttpProxyController(AbstractHttpProxyController):
     @override
     async def __call__(self, request: HttpRequest) -> HttpResponse:
         base_url = None
+        # Applied before anything reads the body: the transaction recording does, as soon as it starts.
+        request.stream = MinRateStream(
+            request.stream, min_rate=self.min_request_body_rate, grace_period=self.request_body_grace_period
+        )
         context = await self.start_transaction(request, tags=extract_tags_from_request(request))
 
         # If nothing prepared a ready to send response, it's time to forward the request.
@@ -193,7 +202,11 @@ class HttpProxyController(AbstractHttpProxyController):
                 return await self.failure(context.transaction, base_url, response)
 
             # todo: streaming should pass through to avoid reading all the content in memory (#1130)
-            await context.request.aread()
+            try:
+                await context.request.aread()
+            except RejectedRequest as exc:
+                response = HttpError(exc.message, exception=exc, status=exc.status)
+                return await self.failure(context.transaction, base_url, response)
 
             # Attempt to forward the request to the remote server.
             try:
@@ -470,10 +483,15 @@ class HttpProxyController(AbstractHttpProxyController):
         await self.adispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(context.transaction))
 
         # dispatch message event for request
-        await self.adispatch(
-            EVENT_TRANSACTION_MESSAGE,
-            HttpMessageEvent(context.transaction, request, max_body_size=self.max_recorded_body_size),
-        )
+        try:
+            await self.adispatch(
+                EVENT_TRANSACTION_MESSAGE,
+                HttpMessageEvent(context.transaction, request, max_body_size=self.max_recorded_body_size),
+            )
+        except RejectedRequest as exc:
+            # recording the request reads its body, which the client did not send fast enough
+            error = HttpError(exc.message, exception=exc, status=exc.status)
+            context.set_response(await self.failure(context.transaction, None, error))
 
         return context
 

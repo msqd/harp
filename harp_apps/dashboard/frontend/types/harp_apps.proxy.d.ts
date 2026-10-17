@@ -206,6 +206,8 @@ declare namespace Apps.Proxy {
      */
     client_read_timeout?: number;
     max_recorded_body_size?: number;
+    min_request_body_rate?: number;
+    request_body_grace_period?: number;
   }
   export interface BaseRemoteSettings {
     min_pool_size?: number;

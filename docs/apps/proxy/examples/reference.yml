@@ -31,3 +31,5 @@ proxy:
         verify: true
   client_read_timeout: 30.0
   max_recorded_body_size: 1048576
+  min_request_body_rate: 1024
+  request_body_grace_period: 10.0

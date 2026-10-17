@@ -1,6 +1,58 @@
+import asyncio
+from time import monotonic
 from typing import AsyncIterator, Awaitable, Callable, Optional
 
 from httpx import AsyncByteStream, Response
+
+from harp.http import RejectedRequest
+
+REQUEST_TIMEOUT_STATUS_CODE = 408
+
+
+class RequestBodyTooSlow(RejectedRequest):
+    """Raised while reading a request body that arrives slower than the minimum rate."""
+
+    def __init__(self):
+        super().__init__("Request body too slow", status=REQUEST_TIMEOUT_STATUS_CODE)
+
+
+class MinRateStream(AsyncByteStream):
+    """Passes a request body through, and gives up on a client sending it too slowly.
+
+    Once ``grace_period`` seconds have elapsed, the body must have reached an average of ``min_rate`` bytes per second,
+    otherwise :class:`RequestBodyTooSlow` is raised, without waiting for the next chunk. A ``min_rate`` of zero
+    disables the check.
+    """
+
+    def __init__(self, stream: AsyncByteStream, *, min_rate: float, grace_period: float):
+        self._stream = stream
+        self._min_rate = min_rate
+        self._grace_period = grace_period
+
+    def _deadline(self, start: float, received: int) -> float:
+        """Moment at which, should nothing more arrive, the average rate falls below the minimum."""
+        return start + max(self._grace_period, received / self._min_rate)
+
+    async def __aiter__(self) -> AsyncIterator[bytes]:
+        if not self._min_rate:
+            async for chunk in self._stream:
+                yield chunk
+            return
+
+        start, received = monotonic(), 0
+        chunks = aiter(self._stream)
+        while True:
+            try:
+                chunk = await asyncio.wait_for(anext(chunks), max(self._deadline(start, received) - monotonic(), 0))
+            except StopAsyncIteration:
+                return
+            except TimeoutError:
+                raise RequestBodyTooSlow() from None
+            received += len(chunk)
+            yield chunk
+
+    async def aclose(self) -> None:
+        await self._stream.aclose()
 
 
 class UpstreamResponseStream(AsyncByteStream):

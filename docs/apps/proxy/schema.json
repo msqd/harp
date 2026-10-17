@@ -257,6 +257,16 @@
           "exclusiveMinimum": 0,
           "type": "number"
         },
+        "min_request_body_rate": {
+          "default": 1024,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "request_body_grace_period": {
+          "default": 10.0,
+          "minimum": 0,
+          "type": "number"
+        },
         "max_recorded_body_size": {
           "default": 1048576,
           "gt": 0,
