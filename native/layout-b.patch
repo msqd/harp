@@ -57,7 +57,7 @@ index b4a1cbf3..00000000
 -# editable installs of harp-proxy (see bench/FINDINGS.md).
 -module-name = "harp_native"
 diff --git a/pyproject.toml b/pyproject.toml
-index 0c76fedb..817db96f 100644
+index 2aedb476..817db96f 100644
 --- a/pyproject.toml
 +++ b/pyproject.toml
 @@ -1,6 +1,6 @@
@@ -69,26 +69,28 @@ index 0c76fedb..817db96f 100644
  
  [project]
  name = "harp-proxy"
-@@ -106,46 +106,30 @@ bench = ["pyperf>=2.8,<3"]
+@@ -61,7 +61,6 @@ mysql = [
+     "cryptography>=50.0,<51",
+ ]
+ postgresql = ["asyncpg>=0.30,<0.31"]
+-native = ["harp-proxy-native==0.12.0.dev0"]
+ 
+ [project.scripts]
+ harp-proxy = "harp.commandline:entrypoint"
+@@ -107,49 +106,30 @@ bench = ["pyperf>=2.8,<3"]
  [tool.uv]
  default-groups = ["dev"]
  
+-[tool.uv.sources]
+-harp-proxy-native = { path = "native" }
+-
 -[tool.hatch.build.targets.sdist]
-+[tool.maturin]
-+module-name = "harp._native._core"
-+python-source = "."
-+python-packages = ["harp", "harp_apps"]
-+features = ["pyo3/extension-module"]
- include = [
+-include = [
 -    "harp",
 -    "harp_apps",
 -    "harp_apps/dashboard/web",
-+    { path = "harp_apps/dashboard/web/**/*", format = ["sdist", "wheel"] },
-+    { path = "Cargo.lock", format = "sdist" },
-+    # Re-include what the test-file excludes below would drop (hatch expressed this as a "!" negation).
-+    { path = "harp/commandline/cookiecutters/**/*", format = ["sdist", "wheel"] },
- ]
- exclude = [
+-]
+-exclude = [
 -    "**/node_modules/",
 -    "harp_apps/dashboard/frontend",
 -]
@@ -97,11 +99,20 @@ index 0c76fedb..817db96f 100644
 -"harp_apps/dashboard/web" = "harp_apps/dashboard/web"
 -
 -[tool.hatch.build.targets.wheel]
--include = [
++[tool.maturin]
++module-name = "harp._native._core"
++python-source = "."
++python-packages = ["harp", "harp_apps"]
++features = ["pyo3/extension-module"]
+ include = [
 -    "harp",
 -    "harp_apps",
--]
--exclude = [
++    { path = "harp_apps/dashboard/web/**/*", format = ["sdist", "wheel"] },
++    { path = "Cargo.lock", format = "sdist" },
++    # Re-include what the test-file excludes below would drop (hatch expressed this as a "!" negation).
++    { path = "harp/commandline/cookiecutters/**/*", format = ["sdist", "wheel"] },
+ ]
+ exclude = [
 -    "**/node_modules/",
 -    "harp_apps/dashboard/frontend",
 -    # Test code and dev-only utilities: not needed to run HARP in production.
