@@ -158,6 +158,7 @@ def harp_command(args, cores, workdir: Path, db: Path, importtime: bool = False)
     ]
     if args.profile in STORAGE_PROFILES:
         command += ["--set", "storage.url", f"sqlite+aiosqlite:///{db}"]
+        command += ["--set", "dashboard.port", str(args.harp_port + 80)]  # 4080 by default, follows --harp-port
     if getattr(args, "scrape_metrics", False):
         command += ["--enable", "metrics"]
     return pinned(command, cores["harp"])
