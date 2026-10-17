@@ -13,6 +13,7 @@ from harp.http.utils import hop_by_hop_names, parse_cache_control
 from harp.utils.bytes import HEADER_ENCODING, ensure_bytes, header_bytes
 from harp_apps.http_cache.models import WrappedRequest
 from harp_apps.http_cache.storages import MAX_BODY_SIZE_METADATA
+from harp_apps.http_cache.streams import ClosableByteStream, UpstreamBody
 
 logger = get_logger(__name__)
 
@@ -25,16 +26,19 @@ def _httpx_to_internal(value):
     value.headers.encoding = HEADER_ENCODING
     internal = _hishel_httpx_to_internal(value)
     if isinstance(value, httpx.Response) and not value.is_stream_consumed:
-        internal = replace(internal, stream=value.aiter_raw())
+        internal = replace(internal, stream=UpstreamBody(value))
     return internal
 
 
 def _internal_to_httpx(value):
-    """The reverse, handing httpx bytes: given text it would insist on ascii, and refuse obs-text."""
+    """The reverse, handing httpx bytes: given text it would insist on ascii, and refuse obs-text.
+
+    Closing the httpx response closes its body, so an upstream body the client stops reading is released at once."""
     headers = [(header_bytes(name), header_bytes(val)) for name, val in value.headers.items()]
-    stream = _IteratorStream(value._aiter_stream())
     if isinstance(value, Response):
+        stream = ClosableByteStream(value.stream)
         return httpx.Response(value.status_code, headers=headers, stream=stream, extensions=value.metadata)
+    stream = _IteratorStream(value._aiter_stream())
     return httpx.Request(value.method, value.url, headers=headers, stream=stream, extensions=value.metadata)
 
 

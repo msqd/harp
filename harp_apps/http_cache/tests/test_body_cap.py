@@ -96,3 +96,24 @@ async def test_body_left_unread_is_not_stored():
         assert (await client.get(URL)).content == b"01234567"
 
     assert origin.calls == 2
+
+
+async def test_closing_an_unread_response_releases_the_upstream():
+    closed = asyncio.Event()
+
+    class UpstreamBody(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            yield b"0123"
+
+        async def aclose(self):
+            closed.set()
+
+    class ClosableOrigin(httpx.AsyncBaseTransport):
+        async def handle_async_request(self, request):
+            return httpx.Response(200, headers={"cache-control": "max-age=3600"}, stream=UpstreamBody())
+
+    async with make_client(ClosableOrigin()) as client:
+        response = await client.send(client.build_request("GET", URL), stream=True)
+        await response.aclose()
+
+    assert closed.is_set()

@@ -1,0 +1,86 @@
+"""Response bodies passed through the cache as they arrive, each closable whether read or not.
+
+hishel wraps a body in plain iterators that close nothing, so a response the client stops reading would hold its
+upstream connection until garbage collection. Each wrapper here passes ``aclose`` down to the upstream response.
+"""
+
+import typing as tp
+
+import httpx
+
+
+async def aclose_source(body) -> None:
+    """Close a body if it can be closed: hishel's own bodies (a stored entry's) cannot, and need not."""
+    aclose = getattr(body, "aclose", None)
+    if aclose is not None:
+        await aclose()
+
+
+class UpstreamBody:
+    """An upstream response's raw body, read as it arrives. Closing it releases the upstream connection."""
+
+    def __init__(self, response: httpx.Response):
+        self._response = response
+        self._chunks: tp.Optional[tp.AsyncIterator[bytes]] = None
+
+    def __aiter__(self) -> "UpstreamBody":
+        return self
+
+    async def __anext__(self) -> bytes:
+        if self._chunks is None:
+            self._chunks = self._response.aiter_raw()
+        return await anext(self._chunks)
+
+    async def aclose(self) -> None:
+        await self._response.aclose()
+
+
+class StoredOnceRead:
+    """Passes a body through and awaits ``on_end`` with it once read to its end, unless it is over ``limit`` bytes.
+
+    At most ``limit`` bytes are held. A body left unread or longer than the limit never reaches ``on_end``.
+    """
+
+    def __init__(self, source, *, limit: int, on_end: tp.Callable[[bytes], tp.Awaitable[None]]):
+        self._source = source
+        self._chunks = aiter(source)
+        self._limit = limit
+        self._on_end = on_end
+        self._body = bytearray()
+        self._size = 0
+        self._ended = False
+
+    def __aiter__(self) -> "StoredOnceRead":
+        return self
+
+    async def __anext__(self) -> bytes:
+        try:
+            chunk = await anext(self._chunks)
+        except StopAsyncIteration:
+            if not self._ended and self._size <= self._limit:
+                self._ended = True
+                await self._on_end(bytes(self._body))
+            raise
+        self._size += len(chunk)
+        if self._size <= self._limit:
+            self._body += chunk
+        else:
+            self._body.clear()
+        return chunk
+
+    async def aclose(self) -> None:
+        await aclose_source(self._source)
+
+
+class ClosableByteStream(httpx.AsyncByteStream):
+    """The httpx side of a cached or forwarded body: closing the response closes the body."""
+
+    def __init__(self, body):
+        self._body = body
+
+    async def __aiter__(self) -> tp.AsyncIterator[bytes]:
+        async for chunk in self._body:
+            yield chunk
+
+    async def aclose(self) -> None:
+        await aclose_source(self._body)

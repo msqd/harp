@@ -21,6 +21,23 @@ class HttpResponseAsgiBridge:  # todo protocol HttpResponseBridge
         self.asgi_send = send
 
     async def send(self):
+        if hasattr(self.response, "_body"):
+            await self._send_start()
+            await self.asgi_send({"type": "http.response.body", "body": ensure_bytes(self.response.body)})
+            return
+
+        stream = self.response.stream
+        try:
+            await self._send_start()
+            async with aclosing(aiter(stream)) as chunks:
+                async for chunk in chunks:
+                    if chunk:
+                        await self.asgi_send({"type": "http.response.body", "body": chunk, "more_body": True})
+            await self.asgi_send({"type": "http.response.body", "body": b""})
+        finally:
+            await stream.aclose()
+
+    async def _send_start(self):
         # set the headers as read only
         self.response._headers = CIMultiDictProxy(self.response._headers)
 
@@ -35,19 +52,3 @@ class HttpResponseAsgiBridge:  # todo protocol HttpResponseBridge
                 "headers": headers,
             }
         )
-
-        if hasattr(self.response, "_body"):
-            await self.asgi_send({"type": "http.response.body", "body": ensure_bytes(self.response.body)})
-        else:
-            await self._send_stream()
-
-    async def _send_stream(self):
-        stream = self.response.stream
-        try:
-            async with aclosing(aiter(stream)) as chunks:
-                async for chunk in chunks:
-                    if chunk:
-                        await self.asgi_send({"type": "http.response.body", "body": chunk, "more_body": True})
-            await self.asgi_send({"type": "http.response.body", "body": b""})
-        finally:
-            await stream.aclose()

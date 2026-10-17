@@ -65,6 +65,22 @@ async def test_the_stream_is_closed_when_the_client_goes_away():
     assert events[-1] == ("closed",)
 
 
+async def test_the_stream_is_closed_when_the_client_is_gone_before_the_headers():
+    events = []
+    response = HttpResponse(b"")
+    response.stream = ChunkedStream(b"one", events=events)
+
+    async def send(message):
+        raise OSError("client disconnected")
+
+    try:
+        await HttpResponseAsgiBridge(response, send).send()
+    except OSError:
+        pass
+
+    assert events == [("closed",)]
+
+
 async def test_an_in_memory_body_is_sent_in_one_message():
     events = []
     await HttpResponseAsgiBridge(HttpResponse(b"hello"), recording_send(events)).send()

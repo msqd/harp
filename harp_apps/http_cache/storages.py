@@ -15,6 +15,7 @@ from harp.http.utils import parse_cache_control
 from harp_apps.storage.constants import DEFAULT_MAX_RECORDED_BODY_SIZE
 from harp_apps.storage.types import IBlobStorage
 from .adapters import AsyncStorageAdapter, stored_at_of
+from .streams import StoredOnceRead
 
 # libyaml's loader decodes an entry about ten times faster than the pure Python one.
 _YamlLoader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
@@ -235,31 +236,19 @@ class AsyncStorage(AsyncBaseStorage):
         limit = request.metadata.get(MAX_BODY_SIZE_METADATA)
         if limit is None:
             limit = DEFAULT_MAX_RECORDED_BODY_SIZE
-        return replace(entry, response=replace(response, stream=self._store_once_read(key, entry, limit)))
 
-    async def _store_once_read(self, key: str, entry: Entry, limit: int) -> tp.AsyncIterator[bytes]:
-        """Pass the response body through as it arrives, and store the entry once the body is read to its end.
+        async def store(body: bytes) -> None:
+            await self._impl.store_entry(
+                key, replace(entry, response=replace(entry.response, stream=make_async_iterator([body])))
+            )
+            self._remember_key(entry.id, key)
+            logger.debug(f"Cache entry stored: key={key}")
+            self._sweep_if_due()
 
-        At most ``limit`` bytes are held: a longer body is not stored, and a body left unread is not either.
-        """
-        body, size = bytearray(), 0
-        async for chunk in entry.response._aiter_stream():
-            size += len(chunk)
-            if size <= limit:
-                body += chunk
-            else:
-                body.clear()
-            yield chunk
-
-        if size > limit:
-            logger.debug(f"Cache entry not retained (body over {limit} bytes): key={key}")
-            return
-
-        entry = replace(entry, response=replace(entry.response, stream=make_async_iterator([bytes(body)])))
-        await self._impl.store_entry(key, entry)
-        self._remember_key(entry.id, key)
-        logger.debug(f"Cache entry stored: key={key}")
-        self._sweep_if_due()
+        # The entry is stored once its body has been read to the end, as it reaches the client.
+        return replace(
+            entry, response=replace(response, stream=StoredOnceRead(response.stream, limit=limit, on_end=store))
+        )
 
     async def get_entries(self, key: str) -> tp.List[Entry]:
         """Retrieve all entries for a given cache key.
