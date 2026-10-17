@@ -75,10 +75,10 @@ Alternative transports
       transport:
         type: harp_apps.http_client.aiohttp_transport.AiohttpTransport
 
-``harp_apps.http_client.pyreqwest_transport.PyreqwestTransport`` (reqwest, in Rust; install the ``pyreqwest`` extra) is
-the other one. It cannot keep the order of headers across names, the interleaving of duplicates or their casing
-(hyper groups values by name), and always adds ``Accept`` and ``User-Agent`` when the request has none; it refuses
-``retries`` above 0 and a ``verify`` that is not a boolean. HARP's own client always sends both headers.
+``harp_apps.http_client.pyreqwest_transport.PyreqwestTransport`` (reqwest, in Rust; ``pyreqwest`` extra) is
+non-conforming and exists for benchmarking only: it does not keep the order of headers across names, the interleaving
+of duplicates or their casing, and adds ``Accept`` and ``User-Agent`` when the request has none. Do not use it to
+serve traffic.
 
 A transport must keep headers as given (order, duplicates, casing), add none, hand the body over undecoded, follow no
 redirects, and raise the httpx exceptions for timeouts and network errors. The common arguments are ``verify``,

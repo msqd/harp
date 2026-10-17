@@ -1,1 +1,1 @@
-Add a pyreqwest-backed HTTP transport (`harp_apps.http_client.pyreqwest_transport.PyreqwestTransport`, `pyreqwest` extra).
+Add a pyreqwest-backed HTTP transport for benchmarking (`pyreqwest` extra); it does not keep headers as given and is not meant for production.
