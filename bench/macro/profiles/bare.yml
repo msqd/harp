@@ -1,0 +1,4 @@
+# Proxy and http_client only: the floor HARP adds. Endpoint and port come from the command line (--endpoint).
+applications:
+  - http_client
+  - proxy

@@ -1,0 +1,8 @@
+[package]
+name = "harp-bench-origin"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[profile.release]
+opt-level = 3
