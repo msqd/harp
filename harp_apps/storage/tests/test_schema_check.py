@@ -68,3 +68,28 @@ async def test_database_behind_alembic_head_is_refused(sql_engine):
 
     assert "outdated" in str(exc_info.value)
     assert "harp-proxy db:migrate up head --set storage.url=" in str(exc_info.value)
+
+
+async def _build_system(path):
+    from harp.config import ConfigurationBuilder
+
+    settings = {"applications": ["storage"], "storage": {"url": f"sqlite+aiosqlite:///{path}"}}
+    return await ConfigurationBuilder(settings, use_default_applications=False).abuild_system(
+        validate_dependencies=False
+    )
+
+
+async def test_startup_refuses_0_11_sqlite_file(tmp_path):
+    path = tmp_path / "old.db"
+    await _create_sqlite_file(path, drop_transactions_markers=True)
+
+    with pytest.raises(OutdatedSchemaError, match="outdated"):
+        await _build_system(path)
+
+
+async def test_startup_accepts_current_sqlite_file(tmp_path):
+    path = tmp_path / "current.db"
+    await _create_sqlite_file(path)
+
+    system = await _build_system(path)
+    await system.dispose()
