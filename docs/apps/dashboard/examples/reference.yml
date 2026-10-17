@@ -4,5 +4,6 @@ dashboard:
     enabled: true
     port: null
   enabled: true
+  metrics_port: null
   port: 4080
   public_url: null

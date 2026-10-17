@@ -13,6 +13,7 @@ def test_defaults():
         "auth": None,
         "devserver": {"enabled": True, "port": None},
         "enabled": True,
+        "metrics_port": None,
         "port": 4080,
         "public_url": None,
     }

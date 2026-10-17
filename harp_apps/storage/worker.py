@@ -1,7 +1,9 @@
 from datetime import UTC
 from functools import partial
 from math import log10
+from time import monotonic
 
+from prometheus_client import Counter
 from sqlalchemy import insert, update
 from sqlalchemy.ext.asyncio import AsyncEngine
 from whistle import IAsyncEventDispatcher
@@ -36,6 +38,18 @@ from harp_apps.storage.types import IBlobStorage, IStorage
 
 logger = get_logger(__name__)
 
+DROPPED_COUNTER = Counter(
+    "dropped",
+    "Items the storage worker did not store because of queue pressure, by kind.",
+    ["kind"],
+)
+
+DROPPED_KINDS = ("transactions", "messages", "headers", "bodies")
+
+# Expose every series at 0 from startup, so alerts and rate() never face a missing series.
+for _kind in DROPPED_KINDS:
+    DROPPED_COUNTER.labels(_kind)
+
 
 class StorageAsyncWorkerQueue(AsyncWorkerQueue):
     def __init__(self, engine: AsyncEngine, storage: IStorage, blob_storage: IBlobStorage):
@@ -44,6 +58,25 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         self.blob_storage = blob_storage
         super().__init__()
         self.seen = set()
+        self._dropped_since_warning = dict.fromkeys(DROPPED_KINDS, 0)
+        self._last_shed_warning_at = None
+
+    #: Minimum delay (seconds) between two shedding warnings.
+    shed_warning_interval = 10.0
+
+    def _shed(self, kind: str):
+        """Counts a dropped item and, at most once per interval, logs what was dropped since the last warning."""
+        DROPPED_COUNTER.labels(kind).inc()
+        self._dropped_since_warning[kind] += 1
+
+        now = monotonic()
+        if self._last_shed_warning_at is not None and now - self._last_shed_warning_at < self.shed_warning_interval:
+            return
+
+        counts = " ".join(f"{k}={v}" for k, v in self._dropped_since_warning.items())
+        logger.warning(f"Storage under pressure (backlog ~{self._pressure}), dropped since last warning: {counts}")
+        self._dropped_since_warning = dict.fromkeys(DROPPED_KINDS, 0)
+        self._last_shed_warning_at = now
 
     def register_events(self, dispatcher: IAsyncEventDispatcher):
         dispatcher.add_listener(EVENT_TRANSACTION_STARTED, self.on_transaction_started)
@@ -64,6 +97,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
 
         if self.pressure >= 4:
             event.transaction.markers.add(SKIP_STORAGE)
+            self._shed("transactions")
 
         if SKIP_STORAGE in event.transaction.markers:
             return
@@ -83,6 +117,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
 
         if self.pressure >= 3:
             event.transaction.markers.add(SHED_MESSAGES)
+            self._shed("messages")
             return
 
         # Check if we should skip this entire message
@@ -124,6 +159,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             message_data["headers"] = headers_blob.id
         elif not skip_headers:
             event.transaction.markers.add(SHED_HEADERS)
+            self._shed("headers")
         else:
             logger.debug(
                 f"Skipping storing {event.message.kind.capitalize()} headers",
@@ -148,6 +184,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             message_data["body"] = content_blob.id
         elif not skip_body:
             event.transaction.markers.add(SHED_BODIES)
+            self._shed("bodies")
         else:
             logger.debug(
                 f"Skipping storing {event.message.kind.capitalize()} body",

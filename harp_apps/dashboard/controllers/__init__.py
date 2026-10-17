@@ -16,6 +16,7 @@ from harp_apps.proxy.settings.remote import Remote
 from harp_apps.storage.types import IStorage
 
 from ..settings import DashboardSettings
+from .metrics import METRICS_PATH, metrics_controller
 from ..settings.auth import BasicAuthSettings
 
 logger = get_logger(__name__)
@@ -117,6 +118,9 @@ class DashboardController(RoutingController):
                     headers={"WWW-Authenticate": 'Basic realm="Harp Dashboard"'},
                     content_type="text/plain",
                 )
+
+        if request.path == METRICS_PATH:
+            return await metrics_controller()
 
         # Is this a prebuilt static asset? Can we serve it using our middleware? This wil need refactoring, as it ties
         # the controller implementation to the underlying webserver protocol implementation, but for now, it works.
