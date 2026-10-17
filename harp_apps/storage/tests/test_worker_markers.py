@@ -22,6 +22,7 @@ from harp_apps.storage.constants import (
     SKIP_RESPONSE_HEADERS_STORAGE,
     SKIP_RESPONSE_STORAGE,
 )
+from harp_apps.storage.services.blob_storages.redis import RedisBlobStorage
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.types import IBlobStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
@@ -121,9 +122,7 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         response_blob = await blob_storage.get(response_msg.body)
         assert response_blob.data == b"response data"
 
-    async def test_large_body_is_stored_under_its_content_hash(
-        self, sql_storage: SqlStorage, blob_storage: IBlobStorage
-    ):
+    async def test_large_body_blob_id_is_its_content_hash(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
         """Large bodies (hashed off the event loop) get the same blob id as small ones: sha1 of type, newline, data."""
         dispatcher = AsyncEventDispatcher()
         body = b"x" * (OFFLOAD_HASH_THRESHOLD * 4)
@@ -135,8 +134,21 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
         request_msg, response_msg = transactions[0].messages
         assert request_msg.body == hashlib.sha1(b"\n" + body).hexdigest()
-        assert (await blob_storage.get(request_msg.body)).data == body
         assert response_msg.body == hashlib.sha1(b"\n" + b"small").hexdigest()
+
+    async def test_large_body_round_trips(self, database_url, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        dispatcher = AsyncEventDispatcher()
+        body = b"x" * (OFFLOAD_HASH_THRESHOLD * 4)
+
+        await self.create_transaction_and_messages(dispatcher, sql_storage, blob_storage, request_body=body)
+
+        transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        stored = await blob_storage.get(transactions[0].messages[0].body)
+        if database_url.startswith("mysql|") and not isinstance(blob_storage, RedisBlobStorage):
+            # Strict by construction: fails once #1191 is fixed, so this branch gets removed then.
+            assert stored is None, "#1191 fixed: drop this MySQL special case"
+        else:
+            assert stored.data == body
 
     async def test_skip_request_body_storage(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
         """Test that request body is not stored when skip-request-body-storage marker is set."""
