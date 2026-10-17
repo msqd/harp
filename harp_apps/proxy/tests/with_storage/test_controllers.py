@@ -529,3 +529,43 @@ class TestHttpProxyControllerWithStorage(
         transaction, recorded, _ = await self._find_one_transaction_with_messages_from_storage(sql_storage)
         assert (await blob_storage.get(recorded.body)).data == b"0123"
         assert transaction.markers == {TRUNCATED_REQUEST_BODY}
+
+    @respx.mock
+    async def test_request_body_of_exactly_the_recording_cap_is_stored_whole_and_unmarked(
+        self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        respx.post("http://example.com/").mock(return_value=Response(200, content=b"ok"))
+
+        await self.call_controller(
+            self.create_controller(dispatcher=dispatcher, max_recorded_body_size=4),
+            dispatcher=dispatcher,
+            engine=sql_storage.engine,
+            sql_storage=sql_storage,
+            blob_storage=blob_storage,
+            method="POST",
+            body=b"0123",
+        )
+
+        transaction, recorded, _ = await self._find_one_transaction_with_messages_from_storage(sql_storage)
+        assert (await blob_storage.get(recorded.body)).data == b"0123"
+        assert transaction.markers == set()
+
+    @respx.mock
+    async def test_request_body_one_byte_over_the_recording_cap_is_stored_truncated_and_marked(
+        self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        respx.post("http://example.com/").mock(return_value=Response(200, content=b"ok"))
+
+        await self.call_controller(
+            self.create_controller(dispatcher=dispatcher, max_recorded_body_size=4),
+            dispatcher=dispatcher,
+            engine=sql_storage.engine,
+            sql_storage=sql_storage,
+            blob_storage=blob_storage,
+            method="POST",
+            body=b"01234",
+        )
+
+        transaction, recorded, _ = await self._find_one_transaction_with_messages_from_storage(sql_storage)
+        assert (await blob_storage.get(recorded.body)).data == b"0123"
+        assert transaction.markers == {TRUNCATED_REQUEST_BODY}
