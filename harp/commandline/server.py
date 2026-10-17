@@ -1,9 +1,10 @@
 from typing import cast
 
-from click import BaseCommand
+from click import BaseCommand, ClickException
 
 from harp import run
 from harp.commandline.options.server import CommonServerOptions, server_command
+from harp.errors import OutdatedSchemaError
 from harp.config.utils import get_configuration_builder_type
 
 
@@ -30,6 +31,8 @@ def server(**kwargs):
 
     try:
         return run(builder)
+    except OutdatedSchemaError as exc:
+        raise ClickException(str(exc)) from exc
     finally:
         _info.state("down")
 
