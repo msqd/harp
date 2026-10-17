@@ -82,16 +82,17 @@ Loading
 :::::::
 
 The HTTP cache application is loaded automatically when present and not disabled. It depends on the
-``http_client`` application, which will be loaded automatically if not already present.
+``http_client`` application, which is loaded with the default set.
 
-To manually control loading, list the applications to load. The list replaces the default set
+To manually control loading, list the applications to load, dependencies included. The list replaces the default set
 (``--applications`` replaces the file's list; ``--enable`` and ``--disable`` apply after either; with
 several ``--file``, the last one that sets ``applications:`` wins). An unknown name fails at startup:
 
 .. code-block:: yaml
 
     applications:
-      - http_cache  # Will auto-load http_client as dependency
+      - http_client  # Required by http_cache, not auto-loaded from a list
+      - http_cache
 
     http_cache:
       enabled: true  # Set to false to disable
