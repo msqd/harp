@@ -61,6 +61,7 @@ mysql = [
     "cryptography>=50.0,<51",
 ]
 postgresql = ["asyncpg>=0.30,<0.31"]
+native = ["harp-proxy-native==0.12.0.dev0"]
 
 [project.scripts]
 harp-proxy = "harp.commandline:entrypoint"
@@ -105,6 +106,9 @@ bench = ["pyperf>=2.8,<3"]
 
 [tool.uv]
 default-groups = ["dev"]
+
+[tool.uv.sources]
+harp-proxy-native = { path = "native" }
 
 [tool.hatch.build.targets.sdist]
 include = [
