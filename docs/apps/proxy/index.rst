@@ -120,6 +120,14 @@ Still buffered:
   long as the response, and the http client's read timeout cuts a stream that stays silent for longer
   (`#1129 <https://github.com/msqd/harp/issues/1129>`_).
 
+Remote urls carrying credentials
+--------------------------------
+
+An endpoint url may carry credentials (``https://user:password@api.example.com/``). They are sent
+upstream as ``Authorization: Basic``, never in the ``Host`` header, and left out of recorded urls and
+logs. An ``Authorization`` header already on the request, from the client or a rule, wins: the url
+credentials only apply when there is none.
+
 Remote urls carrying a path
 :::::::::::::::::::::::::::
 

@@ -348,9 +348,10 @@ class TestHttpProxyControllerWithStorage(
         await self._proxy_repeatedly(controller, dispatcher, sql_storage, blob_storage, times=2)
 
         assert endpoint.call_count == 1
-        first, second = await self._find_transactions_from_storage(sql_storage)
-        assert first.extras["cached"] is False
-        assert second.extras["cached"] is True
+        # MySQL keeps `started_at` to the second, so two requests of one test tie and their order is
+        # not recoverable from storage: assert on the set of outcomes, not on their order.
+        transactions = await self._find_transactions_from_storage(sql_storage)
+        assert sorted(t.extras["cached"] for t in transactions) == [False, True]
 
     @respx.mock
     async def test_an_upstream_x_cache_header_is_not_mistaken_for_our_own(
@@ -388,8 +389,8 @@ class TestHttpProxyControllerWithStorage(
 
         # `cache_age` lives in the runtime extras only and is never persisted, so the age has to be
         # read where a client would read it.
-        _first, second = await self._find_transactions_from_storage(sql_storage)
-        assert second.extras["cached"] is True
+        transactions = await self._find_transactions_from_storage(sql_storage)
+        assert sorted(t.extras["cached"] for t in transactions) == [False, True]
         assert int(hit.headers["Age"]) < 60
 
     @respx.mock

@@ -86,6 +86,11 @@
           "description": "Port on which the dashboard application will be served.",
           "type": "integer"
         },
+        "metrics_port": {
+          "anyOf": [{ "type": "integer" }, { "type": "null" }],
+          "default": null,
+          "description": "Port on which the Prometheus metrics (`/metrics`) are also served, unauthenticated. Disabled by default. Metrics are always served on the dashboard port, under the dashboard authentication."
+        },
         "auth": {
           "anyOf": [
             {

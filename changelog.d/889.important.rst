@@ -1,0 +1,1 @@
+PostgreSQL and MySQL drivers are now extras: run ``pip install harp-proxy[postgresql]`` or ``pip install harp-proxy[mysql]`` (``asyncpg``; ``aiomysql`` with ``cryptography``) before pointing ``storage.url`` at them, else startup fails naming the extra. SQLite stays in the base install, and ``psycopg2-binary`` is no longer installed.
