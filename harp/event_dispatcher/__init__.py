@@ -25,7 +25,7 @@ class LoggingAsyncEventDispatcher(AsyncEventDispatcher):
         super().add_listener(event_id, listener, priority=priority)
 
     async def adispatch(self, event_id: str, event: Optional[IEvent] = None, /) -> IDispatchedEvent:
-        self.logger.info(f"⚡️ [Dispatch] {event_id} ({type(event).__name__})")
+        self.logger.debug(f"⚡️ [Dispatch] {event_id} ({type(event).__name__})")
         try:
             return await super().adispatch(event_id, event)
         except Exception as e:
