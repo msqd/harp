@@ -17,7 +17,7 @@ from harp.models import Transaction
 from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.tpdex import tpdex
-from .adapters import HttpClientProxyAdapter
+from .adapters import HttpClientProxyAdapter, strip_credentials
 from .constants import (
     BREAK_ON_NETWORK_ERROR,
     BREAK_ON_UNHANDLED_EXCEPTION,
@@ -191,7 +191,7 @@ class HttpProxyController(AbstractHttpProxyController):
             # Attempt to forward the request to the remote server.
             try:
                 self.debug(
-                    f"▶▶ {context.request.method} {full_url}",
+                    f"▶▶ {context.request.method} {strip_credentials(full_url)}",
                     transaction=context.transaction,
                     extensions=request.extensions,
                 )
