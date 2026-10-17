@@ -85,7 +85,10 @@ rate, peak RSS (`VmHWM` of the HARP pid at the end of the step), backlog and she
 - **Shedding share**: per step and after the drain (`drain`, also after each rerun), what the database holds against
   what was sent (readiness probes excluded): transactions against requests, messages, headers and bodies against two per
   request. The per-step figure is read at the end of the step, with the queue not yet drained, so it overestimates;
-  the figure after the drain is the reliable one. `cache_hits` counts transactions flagged `x_cached`, to check the
+  the figure after the drain is the reliable one. Headers and bodies are counted per message (column set), never per
+  distinct blob: empty bodies all share one blob id. The `shed-messages`/`shed-headers`/`shed-bodies` transaction markers
+  set by the worker are counted too (`shed_markers`: marked against really missing, on recorded transactions, they must
+  agree); transactions shed entirely leave no row and only show in the missing-vs-sent share. `cache_hits` counts transactions flagged `x_cached`, to check the
   hit share of `loaded`.
 - **Mixed hits/misses** (`loaded`): the origin answers `/cache/*` with `Cache-Control: max-age=60`; `oha
   --rand-regex-url` picks ten cacheable paths for `--cache-share` (default 0.5, in tenths) of the requests and a unique

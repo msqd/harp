@@ -204,3 +204,31 @@ class TestUrlPattern:
 
     def test_no_cache(self):
         assert "cache/" not in measure.url_pattern("http://h:1", cache_share=0)
+
+
+class TestShedMarkers:
+    def test_marked_and_observed_agree(self):
+        counts = {
+            "marked_messages": 3,
+            "marked_headers": 5,
+            "marked_bodies": 9,
+            "missing_messages": 3,
+            "missing_headers": 5,
+            "missing_bodies": 9,
+        }
+        report = measure.shed_marker_report(counts)
+        assert report["headers"] == {"marked": 5, "missing": 5, "agree": True}
+        assert all(entry["agree"] for entry in report.values())
+
+    def test_disagreement(self):
+        counts = {
+            "marked_messages": 0,
+            "marked_headers": 4,
+            "marked_bodies": 0,
+            "missing_messages": 0,
+            "missing_headers": 5,
+            "missing_bodies": 0,
+        }
+        report = measure.shed_marker_report(counts)
+        assert report["headers"]["agree"] is False
+        assert report["bodies"]["agree"] is True

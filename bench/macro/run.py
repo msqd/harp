@@ -219,15 +219,40 @@ def measured_run(args, cores, port: int, pid: int | None = None, rate=None, dura
 
 # --- storage: backlog, drain, shedding -------------------------------------------------------------------------------
 
-COUNTS_SQL = """
+
+def _marked(marker: str) -> str:
+    return f"(SELECT count(*) FROM transactions WHERE instr(',' || markers || ',', ',{marker},') > 0)"
+
+
+# `headers`/`bodies` count messages whose column is set, not distinct blobs: empty bodies all share one blob id.
+# `missing_*` count recorded transactions, to compare with the `shed-*` markers set on them.
+COUNTS_SQL = f"""
 SELECT
   (SELECT count(*) FROM transactions),
   (SELECT count(*) FROM messages),
   (SELECT count(*) FROM messages WHERE headers IS NOT NULL),
   (SELECT count(*) FROM messages WHERE body IS NOT NULL),
-  (SELECT count(*) FROM transactions WHERE x_cached = 'true')
+  (SELECT count(*) FROM transactions WHERE x_cached = 'true'),
+  {_marked("shed-messages")},
+  {_marked("shed-headers")},
+  {_marked("shed-bodies")},
+  (SELECT count(*) FROM transactions t WHERE (SELECT count(*) FROM messages WHERE transaction_id = t.id) < 2),
+  (SELECT count(DISTINCT transaction_id) FROM messages WHERE headers IS NULL),
+  (SELECT count(DISTINCT transaction_id) FROM messages WHERE body IS NULL)
 """
-COUNT_NAMES = ("transactions", "messages", "headers", "bodies", "cache_hits")
+COUNT_NAMES = (
+    "transactions",
+    "messages",
+    "headers",
+    "bodies",
+    "cache_hits",
+    "marked_messages",
+    "marked_headers",
+    "marked_bodies",
+    "missing_messages",
+    "missing_headers",
+    "missing_bodies",
+)
 
 
 def db_counts(db: Path) -> dict[str, int] | None:
@@ -277,6 +302,7 @@ class Ledger:
             "sent": self.sent,
             "recorded": recorded,
             "shed_share": measure.shedding_shares(sent=self.sent, counts=recorded),
+            "shed_markers": measure.shed_marker_report(recorded),
         }
 
 

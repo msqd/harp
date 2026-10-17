@@ -140,3 +140,16 @@ def url_pattern(base: str, *, cache_share: float) -> str:
     cached = round(cache_share * 10)
     branches = ["cache/[0-9]"] * cached + ["miss/[0-9]{9}"] * (10 - cached)
     return f"{base}/({'|'.join(branches)})"
+
+
+def shed_marker_report(counts: dict[str, int]) -> dict[str, dict]:
+    """Recorded transactions flagged ``shed-*`` by the storage worker against recorded transactions that really miss a
+    message, headers or body. They must agree; transactions shed entirely appear in neither."""
+    return {
+        kind: {
+            "marked": counts[f"marked_{kind}"],
+            "missing": counts[f"missing_{kind}"],
+            "agree": counts[f"marked_{kind}"] == counts[f"missing_{kind}"],
+        }
+        for kind in ("messages", "headers", "bodies")
+    }
