@@ -24,12 +24,13 @@ def server(**kwargs):
 
     configration_builder = get_configuration_builder_type()
 
-    builder = configration_builder.from_commandline_options(CommonServerOptions(**kwargs))
+    options = CommonServerOptions(**kwargs)
+    builder = configration_builder.from_commandline_options(options)
 
     _info.state("up")
 
     try:
-        return run(builder)
+        return run(builder, server=options.server)
     finally:
         _info.state("down")
 

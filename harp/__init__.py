@@ -114,27 +114,34 @@ __parsed_version__ = _parse_version(__version__)
 from ._logging import get_logger  # noqa: E402
 
 
-async def arun(builder: "_ConfigurationBuilder"):
-    from harp.config.adapters.hypercorn import HypercornAdapter
+async def arun(builder: "_ConfigurationBuilder", server: str = "hypercorn"):
+    from harp.config.adapters import get_server
 
     system = await builder.abuild_system()
-    server = HypercornAdapter(system)
+    adapter = get_server(server).adapter_type(system)
     try:
-        return await server.serve()
+        return await adapter.serve()
     finally:
         await system.dispose()
 
 
-def run(builder: "_ConfigurationBuilder"):
+def run(builder: "_ConfigurationBuilder", server: str = "hypercorn"):
     """
-    Run the default server using provided configuration.
+    Run the server using provided configuration.
 
     :param builder: Config
+    :param server: Name of the ASGI server to run on (see :data:`harp.config.adapters.SERVERS`).
     :return:
     """
     import asyncio
 
-    return asyncio.run(arun(builder))
+    from harp.config.adapters import get_server
+
+    if get_server(server).uvloop:
+        import uvloop
+
+        return asyncio.run(arun(builder, server), loop_factory=uvloop.new_event_loop)
+    return asyncio.run(arun(builder, server))
 
 
 __all__ = [
