@@ -64,6 +64,8 @@ postgresql = ["asyncpg>=0.30,<0.31"]
 native = ["harp-proxy-native==0.12.0.dev0"]
 # Alternative ASGI servers, see `harp server --server`.
 servers = ["uvicorn[standard]>=0.30", "uvloop>=0.21", "granian>=2.0"]
+# Alternative HTTP transport, see `http_client.transport.type`.
+pyreqwest = ["pyreqwest>=0.15,<0.16"]
 
 [project.scripts]
 harp-proxy = "harp.commandline:entrypoint"
@@ -75,7 +77,7 @@ dev = [
     "freezegun>=1.5.5,<2",
     "furo>=2023.9.10,<2026.0.0",
     "hatchling==1.27.0",
-    "harp-proxy[mysql,postgresql,servers]",
+    "harp-proxy[mysql,postgresql,servers,pyreqwest]",
     "honcho>=2.0,<2.1",
     "jscc>=0.3.0,<0.4",
     "jsonpointer>=3.0.0,<4",

@@ -1,5 +1,6 @@
 import asyncio
-from typing import AsyncIterator, Optional
+import ssl
+from typing import AsyncIterator, Optional, Union
 
 import aiohttp
 import httpx
@@ -7,9 +8,8 @@ from aiohttp import hdrs
 
 from harp.utils.bytes import HEADER_ENCODING
 
-# What httpx's default transport allows (httpx.Limits and its keepalive_expiry).
-MAX_CONNECTIONS = 100
-KEEPALIVE_EXPIRY = 5.0
+# What httpx's default transport allows.
+DEFAULT_LIMITS = httpx.Limits(max_connections=100, max_keepalive_connections=None, keepalive_expiry=5.0)
 
 
 def _translate(exc: BaseException, request: httpx.Request) -> httpx.TransportError:
@@ -52,10 +52,20 @@ class AiohttpTransport(httpx.AsyncBaseTransport):
     decodes when the content is read, as with its own transport).
     """
 
-    def __init__(self, *, verify: bool = True, retries: int = 0):
+    def __init__(
+        self, *, verify: Union[bool, ssl.SSLContext] = True, retries: int = 0, limits: httpx.Limits = DEFAULT_LIMITS
+    ):
+        # What aiohttp cannot honour is refused here, never ignored.
         if retries:
-            raise ValueError("The aiohttp transport does not support `retries`.")
+            raise ValueError("The aiohttp transport cannot honour `retries`: aiohttp does not retry.")
+        if not isinstance(verify, (bool, ssl.SSLContext)):
+            raise ValueError("The aiohttp transport cannot honour this `verify`: give a boolean or an SSLContext.")
+        if limits.max_keepalive_connections is not None:
+            raise ValueError(
+                "The aiohttp transport cannot honour `max_keepalive_connections`: aiohttp has no such limit."
+            )
         self._verify = verify
+        self._limits = limits
         self._session: Optional[aiohttp.ClientSession] = None
 
     def _get_session(self) -> aiohttp.ClientSession:
@@ -63,9 +73,9 @@ class AiohttpTransport(httpx.AsyncBaseTransport):
         if self._session is None:
             self._session = aiohttp.ClientSession(
                 connector=aiohttp.TCPConnector(
-                    limit=MAX_CONNECTIONS,
-                    keepalive_timeout=KEEPALIVE_EXPIRY,
-                    ssl=None if self._verify else False,
+                    limit=self._limits.max_connections or 0,
+                    keepalive_timeout=self._limits.keepalive_expiry or 0,
+                    ssl=self._verify if isinstance(self._verify, ssl.SSLContext) else (None if self._verify else False),
                 ),
                 cookie_jar=aiohttp.DummyCookieJar(),
                 auto_decompress=False,
@@ -84,14 +94,20 @@ class AiohttpTransport(httpx.AsyncBaseTransport):
         )
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
-        body = await request.aread()
-        headers = [(name.decode(HEADER_ENCODING), value.decode(HEADER_ENCODING)) for name, value in request.headers.raw]
+        chunked = "transfer-encoding" in request.headers
+        body = request.stream if chunked else await request.aread()
+        headers = [
+            (name.decode(HEADER_ENCODING), value.decode(HEADER_ENCODING))
+            for name, value in request.headers.raw
+            if not (chunked and name.lower() == b"transfer-encoding")  # aiohttp sets it when asked to chunk
+        ]
         try:
             response = await self._get_session().request(
                 request.method,
                 str(request.url),
                 data=body or None,
                 headers=headers,
+                chunked=chunked or None,
                 allow_redirects=False,
                 timeout=self._timeout(request),
             )

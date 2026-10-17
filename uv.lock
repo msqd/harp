@@ -750,6 +750,9 @@ native = [
 postgresql = [
     { name = "asyncpg" },
 ]
+pyreqwest = [
+    { name = "pyreqwest" },
+]
 servers = [
     { name = "granian" },
     { name = "uvicorn", extra = ["standard"] },
@@ -764,7 +767,7 @@ dev = [
     { name = "cookiecutter" },
     { name = "freezegun" },
     { name = "furo" },
-    { name = "harp-proxy", extra = ["mysql", "postgresql", "servers"] },
+    { name = "harp-proxy", extra = ["mysql", "postgresql", "pyreqwest", "servers"] },
     { name = "hatchling" },
     { name = "honcho" },
     { name = "jscc" },
@@ -826,6 +829,7 @@ requires-dist = [
     { name = "prometheus-client", specifier = ">=0.20,<1" },
     { name = "pydantic", specifier = ">=2.12,<2.13" },
     { name = "pyheck", specifier = ">=0.1,<0.2" },
+    { name = "pyreqwest", marker = "extra == 'pyreqwest'", specifier = ">=0.15,<0.16" },
     { name = "pyyaml", specifier = ">=6.0,<6.1" },
     { name = "redis", specifier = ">=5.2,<8.1" },
     { name = "rich", specifier = ">=14.0,<15" },
@@ -841,7 +845,7 @@ requires-dist = [
     { name = "uvloop", marker = "extra == 'servers'", specifier = ">=0.21" },
     { name = "whistle", specifier = ">=2.0.1,<3" },
 ]
-provides-extras = ["mysql", "postgresql", "native", "servers"]
+provides-extras = ["mysql", "postgresql", "native", "servers", "pyreqwest"]
 
 [package.metadata.requires-dev]
 bench = [{ name = "pyperf", specifier = ">=2.8,<3" }]
@@ -849,7 +853,7 @@ dev = [
     { name = "cookiecutter", specifier = ">=2.6,<2.7" },
     { name = "freezegun", specifier = ">=1.5.5,<2" },
     { name = "furo", specifier = ">=2023.9.10,<2026.0.0" },
-    { name = "harp-proxy", extras = ["mysql", "postgresql", "servers"] },
+    { name = "harp-proxy", extras = ["mysql", "postgresql", "servers", "pyreqwest"] },
     { name = "hatchling", specifier = "==1.27.0" },
     { name = "honcho", specifier = ">=2.0,<2.1" },
     { name = "jscc", specifier = ">=0.3.0,<0.4" },
@@ -1592,6 +1596,27 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/16/91/39ca77aa58f13e8c65d747ac7e06584b55acabfa98987fb8d546bc24860d/pyperf-2.10.0.tar.gz", hash = "sha256:dd93ccfda79214725293e95f1fa6e00cb4a64adcf1326039486d4e1f91caaa62", size = 227609, upload-time = "2026-02-07T11:35:14.693Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/91/26/f7bd5e37c254c2671f4dfff316d123eba13663bdfee941a01b09ab02d72d/pyperf-2.10.0-py3-none-any.whl", hash = "sha256:79196bc4a11e3c926dd4c6b14c80136c6b37f884fe913cbc57037f37636e9841", size = 144430, upload-time = "2026-02-07T11:35:12.636Z" },
+]
+
+[[package]]
+name = "pyreqwest"
+version = "0.15.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/88/8e/6b124128860840df5657f0aaac772effa8619b6f4fdaf8f4c6fd95178d95/pyreqwest-0.15.0.tar.gz", hash = "sha256:e5ce96aff99d3e1d7c5d0869395a5a2cc8bc2a28a41a5b9ec639315506fa3411", size = 4654535, upload-time = "2026-10-11T07:38:27.14Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/74/4a/a0f28d282fd8d48cfed255ea9475b620a39cbc6fa2effbbba7e6094da5ad/pyreqwest-0.15.0-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:dfa8e56fc41e287bf3fc93c0f0ebe30dda53a6f28f8f1af8f359f3418067a8e7", size = 4028147, upload-time = "2026-10-11T07:36:54.373Z" },
+    { url = "https://files.pythonhosted.org/packages/81/55/0264446da14b77b58b9ccb28f27f14f73f76e7cb2043278a54d818e128d7/pyreqwest-0.15.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:a2d96fbd184609982caa1c08f64541a7231c2a7f9132a37a8f91442720bc2610", size = 3773125, upload-time = "2026-10-11T07:36:56.035Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/dc/24ece25b3766668a5afe1c7a3b151c86d97bdcbe376c8869e7e9755e44d7/pyreqwest-0.15.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2938a90e871fce9b8ba0d7d18302f3ed0ea1ec7d82681e8db91cd91808b10398", size = 3944855, upload-time = "2026-10-11T07:36:57.386Z" },
+    { url = "https://files.pythonhosted.org/packages/be/95/af427808b6909a0ae2a7951daaa984ac9847ac9ebb0ca288b5e79d76598b/pyreqwest-0.15.0-cp313-cp313-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:049fc8574f3e39d97c8eaac3c0553a60a133b3444a6c26460e6c1f415ff37869", size = 3444645, upload-time = "2026-10-11T07:36:58.525Z" },
+    { url = "https://files.pythonhosted.org/packages/d8/b5/f7599c72d945b41068f12fa9458916be88d48ede401196f3ab3672907e85/pyreqwest-0.15.0-cp313-cp313-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:d87e965e42fd7df9fd305689b5a3b87fcf8087eea1f821360b3f3f80ab630e24", size = 3862077, upload-time = "2026-10-11T07:36:59.816Z" },
+    { url = "https://files.pythonhosted.org/packages/26/91/f216c55786b287e76d6d23ccd1a34dae1034cf511f50de43d2d870e2b611/pyreqwest-0.15.0-cp313-cp313-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:c6ae0fa0ae1b2aee5046b97b8b12317f650175b50d93e71c5cfcad03416710b7", size = 3822860, upload-time = "2026-10-11T07:37:01.201Z" },
+    { url = "https://files.pythonhosted.org/packages/39/1d/7908f214d2e21bd1754d80c60b4a2a27714b697a2a6e8074d2a7e806edeb/pyreqwest-0.15.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:76064f01bbf260b2f8584d82a0bbfc13b51ba743196999bdd59cd822d126eea9", size = 4173432, upload-time = "2026-10-11T07:37:02.597Z" },
+    { url = "https://files.pythonhosted.org/packages/bf/be/c32fe2d1979e82d7d6102413b48b3a14b973150e0c0b4d9dc4c92657b39d/pyreqwest-0.15.0-cp313-cp313-manylinux_2_28_ppc64le.whl", hash = "sha256:4f432e2ae11aeb0f523f12af1bbfe86f4ea86bd93eeabe5a5f9346879f82160d", size = 3990428, upload-time = "2026-10-11T07:37:03.95Z" },
+    { url = "https://files.pythonhosted.org/packages/cb/1a/52c82dd5e3b1425bda26fd95d7cf6310ebdd645f8ca819214a40561eb098/pyreqwest-0.15.0-cp313-cp313-musllinux_1_1_aarch64.whl", hash = "sha256:24128c70eae5465d51590695026435b6e9864db5122b95ac5ee38b82e9d19620", size = 4123337, upload-time = "2026-10-11T07:37:05.517Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/aa/8fa8948ada9bd0dafe1d7d821c80dd8e1e0501d49242f3bb7c85da57d1c5/pyreqwest-0.15.0-cp313-cp313-musllinux_1_1_armv7l.whl", hash = "sha256:b2a7af3af48e93727ab362bee417433a9037589e0b4de581023246560b21d692", size = 3679242, upload-time = "2026-10-11T07:37:06.942Z" },
+    { url = "https://files.pythonhosted.org/packages/05/c8/3d0e50f126ab1502d0a4f6cd2d57a44124586659df7b7107026c345a3534/pyreqwest-0.15.0-cp313-cp313-musllinux_1_1_x86_64.whl", hash = "sha256:9d7ebdd57391b14167b08377e9e5d2e4925bc9e5b97d1ccf69c7fb3ad2ad574a", size = 4420949, upload-time = "2026-10-11T07:37:08.27Z" },
+    { url = "https://files.pythonhosted.org/packages/ad/c9/e007a70a8b6c2622c0b9ec80d902b69d3b7cdde0cec2fd7ce317b78edcdf/pyreqwest-0.15.0-cp313-cp313-win_amd64.whl", hash = "sha256:9fa22ae2ea766ffe568c1469488e573f6f0a447d84d8eb1770450f745f640d7d", size = 3904445, upload-time = "2026-10-11T07:37:09.601Z" },
+    { url = "https://files.pythonhosted.org/packages/1e/4c/9dbe36c2fe508d667fd9b5c83d242cbd7fa0d256302921fe78530cc69cd0/pyreqwest-0.15.0-cp313-cp313-win_arm64.whl", hash = "sha256:5261298baf990cb8c9a7bc1d134d9b6fa56c9cc9e880a8a32653cb170f8656ec", size = 3843553, upload-time = "2026-10-11T07:37:11.043Z" },
 ]
 
 [[package]]
