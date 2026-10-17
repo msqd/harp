@@ -28,7 +28,6 @@
     'docs/apps/rules/examples/rules.toml',
     'docs/apps/rules/examples/rules.yml',
     'docs/apps/storage/examples/mysql-aiomysql.yml',
-    'docs/apps/storage/examples/mysql-asyncmy.yml',
     'docs/apps/storage/examples/postgres-asyncpg.yml',
     'docs/apps/storage/examples/redis.yml',
     'docs/apps/storage/examples/reference.yml',
@@ -550,19 +549,6 @@
   rules: {}
   storage:
     url: mysql+aiomysql://user:***@localhost:3306/harp
-  
-  '''
-# ---
-# name: test_load_documentation_example[docs/apps/storage/examples/mysql-asyncmy.yml]
-  '''
-  dashboard: {}
-  http_cache: {}
-  http_client: {}
-  janitor: {}
-  proxy: {}
-  rules: {}
-  storage:
-    url: mysql+asyncmy://user:***@localhost:3306/harp
   
   '''
 # ---

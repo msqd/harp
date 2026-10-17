@@ -67,7 +67,7 @@ are not included in the test suite and may bring unexpected behaviours):
 - `PostgreSQL <https://www.postgresql.org/>`_ (our favorite choice for production), using `asyncpg
   <https://magicstack.github.io/asyncpg/>`_ driver.
 - `MySQL <https://www.mysql.com/>`_ / `MariaDB <https://mariadb.org/>`_, using `aiomysql
-  <https://aiomysql.readthedocs.io/>`_ or `asyncmy <https://github.com/long2ice/asyncmy>`_ driver.
+  <https://aiomysql.readthedocs.io/>`_ driver.
 
 
 Configuration
@@ -86,17 +86,6 @@ The main configuration option you're interested in is ``storage.url``, which con
 **MySQL/MariaDB example (aiomysql driver)**:
 
 .. literalinclude:: ./examples/mysql-aiomysql.yml
-    :language: yaml
-
-**MySQL/MariaDB example (asyncmy driver)**:
-
-.. warning::
-
-    asyncmy has an open critical advisory (`GHSA-qhqw-rrw9-25rm
-    <https://github.com/advisories/GHSA-qhqw-rrw9-25rm>`_, SQL injection via crafted dict keys) and no fixed release.
-    Use the aiomysql driver instead (0.3.0 and later are fixed).
-
-.. literalinclude:: ./examples/mysql-asyncmy.yml
     :language: yaml
 
 **SQLite example (aiosqlite driver)**:
