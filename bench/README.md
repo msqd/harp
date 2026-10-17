@@ -34,7 +34,7 @@ make bench-macro PROFILE=bare BENCH_MACRO_OPTIONS="--rate 50 --duration 30 --war
 
 `overhead` runs `oha` at the same fixed open-loop rate (`-q`, `--latency-correction`) once against the origin and once
 through HARP, and reports p50/p90/p99 for both plus the difference, and HARP's CPU per request
-(utime+stime delta of the process over the measured window / requests completed). Any error invalidates the run.
+(utime+stime delta of the process over the measured window / requests completed). Any error invalidates the run. Overhead percentiles are differences of percentiles (proxied pN minus direct pN), not percentiles of per-request differences; CPU per request counts all HARP process CPU in the window, background storage work included.
 `startup` measures exec to first proxied 200 (polled every 10 ms): `cold` is a fresh database, `warm` an already
 migrated one (`default` only, `bare` has no database); median, min, max over `--reps` plus raw samples.
 
