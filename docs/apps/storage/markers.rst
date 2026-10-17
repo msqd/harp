@@ -21,7 +21,7 @@ Prefix          Cause                                           Markers
                                                                 ``skip-request-headers-storage``,
                                                                 ``skip-response-headers-storage``
 ``shed-``       Storage dropped data under pressure             ``shed-messages``, ``shed-headers``, ``shed-bodies``
-``truncated-``  A recording cap cut the data                    ``truncated-response-body``
+``truncated-``  A recording cap cut the data                    ``truncated-request-body``, ``truncated-response-body``
 ``client-``     The client went away                            ``client-disconnected``
 ==============  ==============================================  ==========================================================
 
@@ -89,6 +89,15 @@ This is useful for:
 
 Truncation Markers
 ------------------
+
+``truncated-request-body``
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 0.12
+
+Set by the storage worker when a request body is longer than the recording cap (``proxy.max_recorded_body_size``,
+1 MiB by default). The stored body holds the first bytes of the request, up to the cap; the upstream received it
+whole.
 
 ``truncated-response-body``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

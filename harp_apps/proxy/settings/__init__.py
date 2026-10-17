@@ -41,9 +41,9 @@ class ProxySettings(ApplicationSettingsMixin, BaseProxySettings):
 
     endpoints: list[EndpointSettings] = []
 
-    #: How much of a response body is recorded, at most: a byte count or a size with its unit (``"1MiB"``). A
-    #: longer body is still sent whole to the client, recorded truncated and marked ``truncated-response-body``, and
-    #: not stored in the http cache.
+    #: How much of a request or response body is recorded, at most: a byte count or a size with its unit (``"1MiB"``). A
+    #: longer body is still sent whole, recorded truncated and marked ``truncated-request-body`` or
+    #: ``truncated-response-body``; a response is also not stored in the http cache.
     max_recorded_body_size: ByteSize = Field(ByteSize(DEFAULT_MAX_RECORDED_BODY_SIZE), gt=0)
 
     #: Seconds a client may stay silent in the middle of a request (headers or body) before the server closes its

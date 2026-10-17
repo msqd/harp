@@ -102,6 +102,9 @@ the client, and:
 - the response is not stored in the :doc:`http cache </apps/http_cache/index>`, which would otherwise have to hold all
   of it.
 
+The same cap applies to request bodies: a longer one is forwarded whole to the upstream, recorded cut at the cap, and
+the transaction carries the ``truncated-request-body`` marker.
+
 .. code-block:: yaml
 
     proxy:

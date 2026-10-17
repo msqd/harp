@@ -105,9 +105,11 @@ class TransactionEvent(Event):
 
 
 class HttpMessageEvent(TransactionEvent):
-    def __init__(self, transaction: Transaction, message: BaseHttpMessage):
+    def __init__(self, transaction: Transaction, message: BaseHttpMessage, *, max_body_size: Optional[int] = None):
         super().__init__(transaction)
         self.message = message
+        #: How many bytes of the body recorders should keep, ``None`` for all of it.
+        self.max_body_size = max_body_size
 
 
 class ProxyErrorEvent(TransactionEvent):

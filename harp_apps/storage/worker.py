@@ -31,6 +31,7 @@ from harp_apps.storage.constants import (
     SHED_HEADERS,
     SHED_MESSAGES,
     SKIP_STORAGE,
+    TRUNCATED_REQUEST_BODY,
 )
 from harp_apps.storage.models import Message as SqlMessage
 from harp_apps.storage.models import Transaction as SqlTransaction
@@ -177,9 +178,11 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
 
         # Eventually store the content blob (later)
         if not skip_body and self.pressure <= 1:
-            content_blob = await Blob.afrom_data(
-                serializer.body, content_type=event.message.headers.get("content-type")
-            )
+            body = serializer.body
+            if event.max_body_size is not None and len(body) > event.max_body_size:
+                body = body[: event.max_body_size]
+                event.transaction.markers.add(TRUNCATED_REQUEST_BODY)
+            content_blob = await Blob.afrom_data(body, content_type=event.message.headers.get("content-type"))
             await self.push(partial(self.blob_storage.put, content_blob), ignore_errors=True)
             message_data["body"] = content_blob.id
         elif not skip_body:

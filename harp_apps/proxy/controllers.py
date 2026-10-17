@@ -470,7 +470,10 @@ class HttpProxyController(AbstractHttpProxyController):
         await self.adispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(context.transaction))
 
         # dispatch message event for request
-        await self.adispatch(EVENT_TRANSACTION_MESSAGE, HttpMessageEvent(context.transaction, request))
+        await self.adispatch(
+            EVENT_TRANSACTION_MESSAGE,
+            HttpMessageEvent(context.transaction, request, max_body_size=self.max_recorded_body_size),
+        )
 
         return context
 
