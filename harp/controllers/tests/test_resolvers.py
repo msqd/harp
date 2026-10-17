@@ -1,3 +1,5 @@
+import logging
+
 from httpx import AsyncClient
 
 from harp.controllers import ProxyControllerResolver
@@ -47,3 +49,18 @@ def test_resolve_from_endpoint_name():
 
     controller = resolver.resolve_by_name("non-existent")
     assert controller is resolver.default_controller
+
+
+def test_startup_log_masks_upstream_url_passwords(caplog):
+    http_client = AsyncClient()
+    endpoint = Endpoint.from_kwargs(
+        settings={"name": "secured", "port": 8081, "url": "http://user:p%40ss@upstream.example/"}
+    )
+    controller = HttpProxyController(http_client=http_client, remote=endpoint.remote, name=endpoint.settings.name)
+
+    with caplog.at_level(logging.INFO):
+        ProxyControllerResolver().add_endpoint(endpoint, controller=controller)
+
+    assert "upstream.example" in caplog.text
+    assert "p%40ss" not in caplog.text
+    assert "user:***@upstream.example" in caplog.text

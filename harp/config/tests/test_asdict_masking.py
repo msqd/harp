@@ -9,8 +9,10 @@ working.
 """
 
 import pytest
+from pydantic import HttpUrl, PostgresDsn, TypeAdapter
 
-from harp.config.asdict import asdict
+from harp.config.asdict import asdict, mask_credentials
+from harp_apps.proxy.settings.remote.endpoint import RemoteEndpointSettings
 from harp_apps.proxy.settings import Endpoint
 from harp_apps.storage.settings.redis import RedisSettings
 
@@ -92,3 +94,38 @@ def test_unsecure_shows_a_password_key():
     values = {"users": {"alice": {"password": "s3cretAlice"}}}
 
     assert asdict(values, secure=False) == values
+
+
+@pytest.mark.parametrize("mode", ["json", "python"])
+@pytest.mark.parametrize("userinfo", ["user:secret", ":secret"], ids=["with-username", "empty-username"])
+def test_an_http_url_field_is_masked_in_either_mode(mode, userinfo):
+    """``HttpUrl`` is neither ``Url`` nor a string once ``model_dump(mode="python")`` has run."""
+    settings = RemoteEndpointSettings(url=f"http://{userinfo}@127.0.0.1:1/")
+
+    masked = asdict(settings, secure=True, mode=mode, verbose=True)["url"]
+
+    assert "secret" not in str(masked)
+    assert str(masked) == f"http://{userinfo.split(':')[0]}:***@127.0.0.1:1/"
+
+
+@pytest.mark.parametrize("mode", ["json", "python"])
+def test_unsecure_shows_an_http_url_field(mode):
+    settings = RemoteEndpointSettings(url="http://user:secret@127.0.0.1:1/")
+
+    assert str(asdict(settings, secure=False, mode=mode, verbose=True)["url"]) == "http://user:secret@127.0.0.1:1/"
+
+
+@pytest.mark.parametrize("mode", ["json", "python"])
+def test_a_bare_url_object_is_masked(mode):
+    url = TypeAdapter(HttpUrl).validate_python("http://user:secret@127.0.0.1:1/")
+    hosts = TypeAdapter(PostgresDsn).validate_python("postgresql://u:secret@h1,h2/db")
+
+    assert asdict(url, mode=mode) == "http://user:***@127.0.0.1:1/"
+    assert asdict(hosts, mode=mode) == "postgresql://u:***@h1,h2/db"
+    assert asdict(url, secure=False, mode=mode) == "http://user:secret@127.0.0.1:1/"
+
+
+def test_two_urls_in_one_string_are_masked_separately():
+    text = "HttpUrl('http://a:one@x/'), HttpUrl('http://b:two@y/')"
+
+    assert mask_credentials(text) == "HttpUrl('http://a:***@x/'), HttpUrl('http://b:***@y/')"
