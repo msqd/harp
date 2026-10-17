@@ -5,6 +5,7 @@ from functools import partial
 from typing import Literal
 
 from pydantic import RedisDsn
+from pydantic.networks import _BaseMultiHostUrl, _BaseUrl
 from pydantic_core import MultiHostUrl, Url
 
 MASK = "***"
@@ -27,11 +28,9 @@ def url_serializer(dsn, secure=True, **kwargs):
     return str(dsn)
 
 
-ADDITIONAL_SERIALIZERS = {
-    Url: url_serializer,
-    RedisDsn: url_serializer,
-    MultiHostUrl: url_serializer,
-}
+# Pydantic wraps its URL types (``HttpUrl``, ``PostgresDsn``...) in classes that do not inherit from the
+# ``pydantic_core`` ones, so masking is keyed on the bases of every one of them, not on an exact type.
+URL_TYPES = (Url, MultiHostUrl, _BaseUrl, _BaseMultiHostUrl, RedisDsn)
 
 
 def _mask_secret_value(key, value, secure):
@@ -48,8 +47,8 @@ def asdict(
     verbose=False,
     mode: Literal["json", "python"] | str = "json",
 ):
-    if type(obj) in ADDITIONAL_SERIALIZERS:
-        return ADDITIONAL_SERIALIZERS[type(obj)](obj, secure=secure, verbose=verbose)
+    if isinstance(obj, URL_TYPES):
+        return url_serializer(obj, secure=secure, verbose=verbose)
 
     if hasattr(obj, "_asdict"):
         return obj._asdict(secure=secure)

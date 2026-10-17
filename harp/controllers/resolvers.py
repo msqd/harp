@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Optional, TypedDict
 
 from harp import get_logger
+from harp.config.asdict import mask_credentials
 from harp.http import HttpRequest
 from harp_apps.proxy.settings.endpoint import Endpoint
 
@@ -17,7 +18,7 @@ def _log_add_controller(controller, name, port):
     info = ["🏭"]
     if port is not None:
         info.append(f"*:{port} ->")
-    info.append(str(controller))
+    info.append(mask_credentials(str(controller)))
     if name is not None:
         info.append(f"({name})")
     logger.info(" ".join(info))

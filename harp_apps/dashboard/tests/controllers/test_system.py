@@ -233,3 +233,29 @@ class TestSystemControllerThroughASGI(
 
         assert response["status"] == 200
         assert b"s3cret" not in response["body"]
+
+    @parametrize_with_settings(
+        {
+            "applications": ["proxy", "http_client", "storage", "dashboard"],
+            "proxy": {
+                "endpoints": [
+                    {"name": "api", "port": 4000, "url": "http://user:p%40ss@127.0.0.1:1/"},
+                    {"name": "bare", "port": 4001, "url": "http://:p%40ss@127.0.0.1:2/"},
+                ],
+            },
+        }
+    )
+    @parametrize_with_database_urls("sqlite")
+    @parametrize_with_blob_storages_urls("sql")
+    async def test_no_system_endpoint_exposes_an_endpoint_password(self, client: ASGICommunicator, blob_storage):
+        bodies = {}
+        for path in ("/api/system/", "/api/system/settings", "/api/system/proxy", "/api/system/storage"):
+            response = await client.http_get(path)
+            assert response["status"] == 200, path
+            bodies[path] = response["body"]
+
+        assert b"user:***@127.0.0.1:1" in bodies["/api/system/settings"]
+        assert b":***@127.0.0.1:2" in bodies["/api/system/settings"]
+        for body in bodies.values():
+            assert b"p%40ss" not in body
+            assert b"p@ss" not in body
