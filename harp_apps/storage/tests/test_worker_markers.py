@@ -19,6 +19,8 @@ from harp_apps.storage.constants import (
     SKIP_RESPONSE_BODY_STORAGE,
     SKIP_RESPONSE_HEADERS_STORAGE,
     SKIP_RESPONSE_STORAGE,
+    SHED_BODIES,
+    SHED_MESSAGES,
 )
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.types import IBlobStorage
@@ -48,9 +50,11 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         markers: set[str] | None = None,
         request_body: bytes = b"request content",
         response_body: bytes = b"response content",
+        pressure: int = 0,
     ) -> Transaction:
         """Helper to create a transaction with request/response messages through events."""
         worker = self.create_worker(dispatcher, sql_storage, blob_storage)
+        worker._pressure = pressure
 
         # Create transaction
         transaction = Transaction(
@@ -403,3 +407,46 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
 
         # Verify no messages were stored
         assert len(stored_transaction.messages) == 0
+
+    async def test_rule_markers_are_persisted(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        await self.create_transaction_and_messages(
+            AsyncEventDispatcher(),
+            sql_storage,
+            blob_storage,
+            markers={SKIP_REQUEST_BODY_STORAGE, SKIP_RESPONSE_HEADERS_STORAGE},
+        )
+
+        (stored,) = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert stored.markers == {SKIP_REQUEST_BODY_STORAGE, SKIP_RESPONSE_HEADERS_STORAGE}
+
+    async def test_no_markers_persisted_as_empty_set(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        await self.create_transaction_and_messages(AsyncEventDispatcher(), sql_storage, blob_storage)
+
+        (stored,) = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert stored.markers == set()
+
+    async def test_shed_bodies_marker_persisted(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        await self.create_transaction_and_messages(AsyncEventDispatcher(), sql_storage, blob_storage, pressure=100)
+
+        (stored,) = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert stored.markers == {SHED_BODIES}
+        assert stored.messages[0].body is None
+
+    async def test_shed_messages_marker_persisted(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        await self.create_transaction_and_messages(AsyncEventDispatcher(), sql_storage, blob_storage, pressure=1000)
+
+        (stored,) = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert stored.markers == {SHED_MESSAGES}
+        assert stored.messages == []
+
+    async def test_rule_skip_is_not_reported_as_shed(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        await self.create_transaction_and_messages(
+            AsyncEventDispatcher(),
+            sql_storage,
+            blob_storage,
+            markers={SKIP_REQUEST_BODY_STORAGE, SKIP_RESPONSE_BODY_STORAGE},
+            pressure=100,
+        )
+
+        (stored,) = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert stored.markers == {SKIP_REQUEST_BODY_STORAGE, SKIP_RESPONSE_BODY_STORAGE}
