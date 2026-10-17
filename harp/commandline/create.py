@@ -52,8 +52,7 @@ def _cookiecutter_command():
     if shutil.which("uv"):
         return ["uv", "tool", "run", "--from", COOKIECUTTER_SPEC, "cookiecutter"]
     raise click.UsageError(
-        "Install cookiecutter with `uv add harp-proxy --extra dev`, or ensure `uv` is available to "
-        "run it via `uv tool run`."
+        "Install cookiecutter with `pip install cookiecutter`, or ensure `uv` is available to run it via `uv tool run`."
     )
 
 

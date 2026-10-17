@@ -3,13 +3,6 @@ FROM python:${PYTHON_VERSION}-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      build-essential \
-      libpq-dev \
-      && rm -rf /var/lib/apt/lists/*
-
 # Copy and install wheel
 ARG INSTALL_FROM=local
 ARG VERSION
@@ -18,10 +11,10 @@ COPY dist/*.whl /tmp/
 
 RUN if [ "$INSTALL_FROM" = "pypi" ]; then \
       echo "Installing from PyPI: harp-proxy==$VERSION"; \
-      pip install --no-cache-dir "harp-proxy==$VERSION"; \
+      pip install --no-cache-dir "harp-proxy[postgresql,mysql]==$VERSION"; \
     else \
       echo "Installing from local wheel"; \
-      pip install --no-cache-dir /tmp/*.whl; \
+      pip install --no-cache-dir "harp-proxy[postgresql,mysql] @ file://$(ls /tmp/*.whl)"; \
     fi && \
     rm -rf /tmp/*.whl
 
