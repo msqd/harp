@@ -1,3 +1,6 @@
+import importlib.util
+import re
+
 import pytest
 from pydantic import ValidationError
 
@@ -87,3 +90,28 @@ def test_settings_normalization_does_not_hide_password():
 def test_asyncmy_refused():
     with pytest.raises(ValidationError, match=r"mysql\+aiomysql://"):
         StorageSettings(url="mysql+asyncmy://user:password@localhost:3306/db")
+
+
+@pytest.mark.parametrize(
+    ("url", "module", "extra"),
+    [
+        ("postgresql://user:password@localhost:5432/db", "asyncpg", "postgresql"),
+        ("postgresql+asyncpg://user:password@localhost:5432/db", "asyncpg", "postgresql"),
+        ("mysql://user:password@localhost:3306/db", "aiomysql", "mysql"),
+        ("mysql+aiomysql://user:password@localhost:3306/db", "aiomysql", "mysql"),
+    ],
+)
+def test_missing_driver_names_the_extra(monkeypatch, url, module, extra):
+    real_find_spec = importlib.util.find_spec
+    monkeypatch.setattr(
+        importlib.util, "find_spec", lambda name, *a, **kw: None if name == module else real_find_spec(name, *a, **kw)
+    )
+
+    with pytest.raises(ValidationError, match=re.escape(f"pip install harp-proxy[{extra}]")):
+        StorageSettings(url=url)
+
+
+def test_sqlite_needs_no_extra(monkeypatch):
+    monkeypatch.setattr(importlib.util, "find_spec", lambda name, *a, **kw: None)
+
+    assert StorageSettings(url="sqlite:///:memory:").url.scheme == "sqlite+aiosqlite"

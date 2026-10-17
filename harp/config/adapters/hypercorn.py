@@ -2,8 +2,6 @@ import logging
 import sys
 from typing import cast
 
-from asyncpg import PostgresError
-
 from harp import get_logger
 from harp.config.builders.system import System
 
@@ -43,6 +41,6 @@ class HypercornAdapter:
             return await serve(cast(Framework, self.system.asgi_app), hypercorn_config, mode="asgi")
         except LifespanFailureError as exc:
             logger.exception(f"Server initiliation failed: {repr(exc.__cause__)}", exc_info=exc.__cause__)
-            if isinstance(exc.__cause__, PostgresError):
+            if type(exc.__cause__).__module__.startswith("asyncpg"):
                 logger.error("Could not connect to underlying postgres storage backend, check your config.")
             sys.exit(-1)
