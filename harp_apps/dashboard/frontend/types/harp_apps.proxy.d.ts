@@ -201,6 +201,7 @@ declare namespace Apps.Proxy {
      */
     enabled?: boolean;
     endpoints?: EndpointSettings[];
+    max_recorded_body_size?: number;
   }
   export interface BaseRemoteSettings {
     min_pool_size?: number;

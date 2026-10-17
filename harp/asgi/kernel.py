@@ -65,7 +65,7 @@ class ASGIKernel:
             response = await self.handle_http(scope, receive, send)
             if isinstance(response, AlreadyHandledHttpResponse):
                 return
-            return await HttpResponseAsgiBridge(response, send).send()
+            return await HttpResponseAsgiBridge(response, send, receive).send()
 
         if asgi_type == "lifespan":
             await receive()

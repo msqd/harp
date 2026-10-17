@@ -123,7 +123,17 @@ Request flow
 3. **Vary header matching** ensures the correct variant is selected
 4. **Freshness check** determines if the cached response is still fresh
 5. **Return cached response** if fresh, or forward to origin server if stale/missing
-6. **Store response** from origin server for future requests
+6. **Store response** from origin server for future requests, once its body has been passed on to the client
+
+Response size
+-------------
+
+.. versionadded:: 0.12
+
+The cache passes an origin's body on as it arrives and stores the response once the whole body has gone
+through. A body larger, once decoded, than the proxy's recording cap (``proxy.max_recorded_body_size``, 1 MiB by default, see
+:ref:`proxy-buffering-and-streaming`) is sent to the client whole and **not stored**: the next request for it goes
+to the origin again. A response the client stopped reading before its end is not stored either.
 
 
 Revalidation
