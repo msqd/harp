@@ -17,7 +17,7 @@ ALICE = "s3cretAlice"
 def config_file(tmp_path):
     path = tmp_path / "harp.yml"
     path.write_text(
-        "applications: [storage, dashboard]\n"
+        "applications: [http_client, proxy, storage, dashboard]\n"
         "dashboard:\n"
         "  auth:\n"
         "    type: basic\n"

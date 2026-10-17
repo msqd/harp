@@ -60,6 +60,28 @@ Combine project and configuration:
 
     uv run harp-proxy server --enable your_app --file config.yml
 
+Choosing the loaded applications
+--------------------------------
+
+By default, all default applications load. To load only some, list them in a configuration file:
+
+.. code:: yaml
+
+    applications:
+      - http_client
+      - proxy
+      - storage
+
+Precedence, from the weakest to the strongest:
+
+#. The default set.
+#. ``applications:`` in a configuration file replaces it. With several ``--file``, the last one that sets
+   ``applications:`` wins.
+#. ``--applications`` replaces the file's list.
+#. ``--enable`` and ``--disable`` apply after all of the above.
+
+An unknown application name fails at startup, naming it.
+
 
 Project structure
 :::::::::::::::::
