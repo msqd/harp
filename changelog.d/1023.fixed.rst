@@ -1,0 +1,1 @@
+Overlong request paths now answer 414 URI Too Long instead of 500, without reaching the upstream or counting against its liveness.
