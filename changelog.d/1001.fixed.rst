@@ -1,0 +1,1 @@
+A client ``Connection`` header no longer strips headers injected by rules: it is applied to the incoming request before rules run.

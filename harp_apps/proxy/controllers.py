@@ -11,7 +11,7 @@ from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
 from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
-from harp.http.utils import hop_by_hop_names, parse_cache_control
+from harp.http.utils import HOP_BY_HOP_HEADERS, hop_by_hop_names, parse_cache_control
 from harp.models import Transaction
 from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
@@ -388,6 +388,12 @@ class HttpProxyController(AbstractHttpProxyController):
 
         :return: Transaction
         """
+        # RFC 9110 §7.6.1: `Connection` applies to the message as received. Apply it now, before rules run, so a
+        # header a rule injects later is not mistaken for one the client marked as hop-by-hop.
+        for name in _connection_named_headers(request.headers):
+            request.headers.popall(name, None)
+        request.headers.popall("connection", None)
+
         # create the context, an event that will be passed through the transaction lifecycle.
         context = ProxyFilterEvent(
             self.name,
@@ -426,6 +432,11 @@ class HttpProxyController(AbstractHttpProxyController):
         await self.adispatch(EVENT_TRANSACTION_MESSAGE, HttpMessageEvent(context.transaction, request))
 
         return context
+
+
+def _connection_named_headers(headers) -> set:
+    """Header names the message's own `Connection` field marks as connection-specific."""
+    return hop_by_hop_names(headers) - HOP_BY_HOP_HEADERS
 
 
 @lru_cache
