@@ -34,6 +34,8 @@ DELIBERATELY_UNDECLARED = {
     "uvicorn",
     "uvloop",
     "granian",
+    # Optional `pyreqwest` extra, imported only when `http_client.transport.type` names its transport.
+    "pyreqwest",
 }
 
 

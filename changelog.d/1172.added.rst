@@ -1,0 +1,1 @@
+Add an aiohttp-backed HTTP transport, selected with `http_client.transport.type: harp_apps.http_client.aiohttp_transport.AiohttpTransport`.

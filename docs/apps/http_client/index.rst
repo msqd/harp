@@ -63,6 +63,29 @@ Configuration options:
 - **transport:** The base HTTP transport implementation (default: ``httpx.AsyncHTTPTransport``)
 - **proxy_transport:** The proxy transport wrapper (default: ``AsyncFilterableTransport``)
 
+Alternative transports
+::::::::::::::::::::::
+
+``transport.type`` takes the full class path of any httpx ``AsyncBaseTransport``. HARP ships
+``harp_apps.http_client.aiohttp_transport.AiohttpTransport``, which sends requests with aiohttp instead of httpcore:
+
+.. code-block:: yaml
+
+    http_client:
+      transport:
+        type: harp_apps.http_client.aiohttp_transport.AiohttpTransport
+
+``harp_apps.http_client.pyreqwest_transport.PyreqwestTransport`` (reqwest, in Rust; install the ``pyreqwest`` extra) is
+the other one. It cannot keep the order of headers across names, the interleaving of duplicates or their casing
+(hyper groups values by name), and always adds ``Accept`` and ``User-Agent`` when the request has none; it refuses
+``retries`` above 0 and a ``verify`` that is not a boolean. HARP's own client always sends both headers.
+
+A transport must keep headers as given (order, duplicates, casing), add none, hand the body over undecoded, follow no
+redirects, and raise the httpx exceptions for timeouts and network errors. The common arguments are ``verify``,
+``retries`` and ``limits`` (``httpx.Limits``); the timeout comes from the client. A transport honours them or refuses
+them at startup. The aiohttp one refuses ``retries`` above 0, ``limits.max_keepalive_connections`` and a ``verify``
+that is neither a boolean nor an ``ssl.SSLContext``.
+
 For caching configuration, see the :doc:`http_cache </apps/http_cache/index>` application documentation.
 
 Internal Implementation
