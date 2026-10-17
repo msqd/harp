@@ -1,1 +1,1 @@
-Choose the HTTP client sending the proxied requests with `--client` or `HARP_CLIENT`: `httpx` (default) or `aiohttp`, an httpx transport backed by aiohttp.
+Add an aiohttp-backed HTTP transport, selected with `http_client.transport.type: harp_apps.http_client.aiohttp_transport.AiohttpTransport`.

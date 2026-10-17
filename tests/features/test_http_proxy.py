@@ -13,7 +13,7 @@ from harp.config import ConfigurationBuilder
 from harp.controllers import ProxyControllerResolver
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.http import parametrize_with_http_methods
-from harp_apps.http_client.clients import CLIENTS, get_client
+from harp_apps.http_client.tests.transports import TRANSPORT_TYPES
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.settings import Endpoint
 
@@ -79,10 +79,10 @@ class TestAsgiProxyWithStubApi:
 
     """
 
-    @pytest.fixture(params=CLIENTS)
+    @pytest.fixture(params=TRANSPORT_TYPES)
     async def kernel(self, request, test_api):
         builder = ConfigurationBuilder(use_default_applications=False)
-        builder.add_value("http_client.transport.type", get_client(request.param).transport_type)
+        builder.add_value("http_client.transport.type", request.param)
         builder.applications.add("http_client")
         builder.applications.add("proxy")
         builder.applications.add("storage")
