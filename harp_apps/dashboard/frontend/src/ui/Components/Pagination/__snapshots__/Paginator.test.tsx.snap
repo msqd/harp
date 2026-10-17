@@ -76,7 +76,7 @@ exports[`Paginator > renders correctly 1`] = `
           </a>
           <a
             aria-current="page"
-            class="relative z-10 inline-flex items-center bg-primary-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+            class="relative z-10 inline-flex items-center bg-primary-900 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-900"
             href="#"
           >
             1
