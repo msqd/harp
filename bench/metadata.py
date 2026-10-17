@@ -1,9 +1,12 @@
 """Metadata recorded in every benchmark result, so numbers stay attributable."""
 
+import json
 import os
 import platform
 import subprocess
 from pathlib import Path
+
+from harp._native import active
 
 CPUINFO = Path("/proc/cpuinfo")
 
@@ -31,6 +34,10 @@ def native() -> str:
     return os.environ.get("HARP_NATIVE") or "none"
 
 
+def native_active() -> str:
+    return json.dumps(active(), sort_keys=True)
+
+
 def cpu_model(cpuinfo: Path = CPUINFO) -> str:
     try:
         for line in cpuinfo.read_text().splitlines():
@@ -50,6 +57,7 @@ def collect() -> dict[str, str]:
         "git_sha": git_sha(),
         "git_dirty": git_dirty(),
         "harp_native": native(),
+        "harp_native_active": native_active(),
         "cpu_model": cpu_model(),
         "python_build": python_build(),
     }

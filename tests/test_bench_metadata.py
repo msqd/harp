@@ -1,5 +1,6 @@
 """Tests for the metadata recorded alongside benchmark results (see `bench/`)."""
 
+import json
 import subprocess
 
 from bench import metadata
@@ -13,6 +14,12 @@ class TestNative:
     def test_value_when_set(self, monkeypatch):
         monkeypatch.setenv("HARP_NATIVE", "blobs,hashing")
         assert metadata.native() == "blobs,hashing"
+
+
+class TestNativeActive:
+    def test_json_of_active_implementations(self, monkeypatch):
+        monkeypatch.setattr(metadata, "active", lambda: {"blobs": "python"})
+        assert json.loads(metadata.native_active()) == {"blobs": "python"}
 
 
 class TestCpuModel:
@@ -43,7 +50,14 @@ class TestGitDirty:
 
 class TestCollect:
     def test_has_all_keys(self):
-        assert set(metadata.collect()) == {"git_sha", "git_dirty", "harp_native", "cpu_model", "python_build"}
+        assert set(metadata.collect()) == {
+            "git_sha",
+            "git_dirty",
+            "harp_native",
+            "harp_native_active",
+            "cpu_model",
+            "python_build",
+        }
 
     def test_values_are_strings(self):
         assert all(isinstance(value, str) and value for value in metadata.collect().values())
