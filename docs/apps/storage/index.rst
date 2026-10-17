@@ -69,6 +69,15 @@ are not included in the test suite and may bring unexpected behaviours):
 - `MySQL <https://www.mysql.com/>`_ / `MariaDB <https://mariadb.org/>`_, using `aiomysql
   <https://aiomysql.readthedocs.io/>`_ driver.
 
+SQLite ships with the base install. The PostgreSQL and MySQL drivers are extras, install the one you need:
+
+.. code-block:: shell
+
+    pip install harp-proxy[postgresql]  # asyncpg
+    pip install harp-proxy[mysql]       # aiomysql, with cryptography
+
+Without it, a ``storage.url`` for that database fails at startup with the extra to install.
+
 
 Configuration
 -------------

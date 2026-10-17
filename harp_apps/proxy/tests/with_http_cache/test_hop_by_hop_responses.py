@@ -51,6 +51,7 @@ async def _proxy(make_client, response: Response, times: int = 1) -> dict:
         respx.get("http://example.com/").mock(return_value=response)
         for _ in range(times):
             result = await controller(HttpRequest(method="GET", path="/"))
+            await result.aread()  # the cache stores a response once its body is read
     return {name.lower(): value for name, value in result.headers.items()}
 
 

@@ -1,7 +1,7 @@
 import re
 import unicodedata
 from abc import ABC, abstractmethod
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from functools import cached_property, lru_cache
 from time import time
 from httpx import AsyncClient, codes
@@ -17,7 +17,8 @@ from harp.models import Transaction
 from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.tpdex import tpdex
-from .adapters import HttpClientProxyAdapter
+from harp_apps.storage.constants import CLIENT_DISCONNECTED, DEFAULT_MAX_RECORDED_BODY_SIZE, TRUNCATED_RESPONSE_BODY
+from .adapters import HttpClientProxyAdapter, strip_credentials
 from .constants import (
     BREAK_ON_NETWORK_ERROR,
     BREAK_ON_UNHANDLED_EXCEPTION,
@@ -45,6 +46,7 @@ from .events import (
 )
 from .helpers import extract_tags_from_request
 from .settings.remote import Remote
+from .streams import RecordingStream, UpstreamResponseStream
 
 logger = get_logger(__name__)
 
@@ -84,6 +86,7 @@ class AbstractHttpProxyController(ABC):
         dispatcher: Optional[IAsyncEventDispatcher] = None,
         name=None,
         logging=True,
+        max_recorded_body_size: int = DEFAULT_MAX_RECORDED_BODY_SIZE,
     ):
         self.remote = remote
         if not isinstance(remote, Remote):
@@ -91,8 +94,12 @@ class AbstractHttpProxyController(ABC):
         self.name = name or self.name
         self._logging = logging
         self._dispatcher = dispatcher or self._dispatcher
+        self.max_recorded_body_size = max_recorded_body_size
 
-        self.proxy = HttpClientProxyAdapter(http_client, extensions={"endpoint": self.name})
+        self.proxy = HttpClientProxyAdapter(
+            http_client,
+            extensions={"endpoint": self.name, "max_recorded_body_size": self.max_recorded_body_size},
+        )
 
         self.initialize()
 
@@ -185,13 +192,13 @@ class HttpProxyController(AbstractHttpProxyController):
                 response = HttpError(exc.message, exception=exc, status=exc.status)
                 return await self.failure(context.transaction, base_url, response)
 
-            # todo: streaming should pass through to avoid reading all the content in memory
+            # todo: streaming should pass through to avoid reading all the content in memory (#1130)
             await context.request.aread()
 
             # Attempt to forward the request to the remote server.
             try:
                 self.debug(
-                    f"▶▶ {context.request.method} {full_url}",
+                    f"▶▶ {context.request.method} {strip_credentials(full_url)}",
                     transaction=context.transaction,
                     extensions=request.extensions,
                 )
@@ -200,12 +207,38 @@ class HttpProxyController(AbstractHttpProxyController):
                 return await self.failure(context.transaction, base_url, exc)
             context.set_response(response)
 
+        response = context.response
         context = await self.filter_response(context) or context
+        if context.response is not response:
+            # A filter answered in place of the upstream, whose body nobody will read.
+            await response.stream.aclose()
 
-        # todo: streaming should pass through to avoid reading all the content in memory
-        await context.response.aread()
+        return self.stream_and_record(context.transaction, base_url, context.response)
 
-        return await self.end_transaction(context.transaction, context.response)
+    def stream_and_record(self, transaction: Transaction, base_url: Optional[str], response: HttpResponse):
+        """Hand the response body to the client as it arrives, and end the transaction once it is over.
+
+        At most :attr:`max_recorded_body_size` bytes of the body are recorded and held in memory. A longer body is
+        still sent whole, and the transaction gets the ``truncated-response-body`` marker. A client going away before
+        the end of the body leaves the transaction recorded with what was read, and the ``client-disconnected`` marker.
+        """
+
+        async def on_end(stream: RecordingStream, error: Optional[Exception]):
+            if error is not None:
+                await self.failure(transaction, base_url, error)
+                return
+            if stream.truncated:
+                transaction.markers.add(TRUNCATED_RESPONSE_BODY)
+            if stream.abandoned:
+                transaction.markers.add(CLIENT_DISCONNECTED)
+            recorded = HttpResponse(
+                stream.recorded, status=response.status, headers=response.headers, extensions=response.extensions
+            )
+            recorded.created_at = response.created_at
+            await self.end_transaction(transaction, recorded)
+
+        response.stream = RecordingStream(response.stream, limit=self.max_recorded_body_size, on_end=on_end)
+        return response
 
     async def forward(
         self,
@@ -221,15 +254,12 @@ class HttpProxyController(AbstractHttpProxyController):
         :param context: The proxy filter event context.
         :param base_url: The base URL of the remote server.
         :param full_url: The full URL to which the request is forwarded.
-        :return: The HTTP response received from the remote server.
+        :return: The HTTP response received from the remote server, its body streamed from the remote as it is read.
         """
         response = await self.proxy.send(context.request, full_url)
 
         # Update the status of the remote URL based on the response status code
         self.remote.notify_url_status(base_url, response.status_code)
-
-        await response.aread()
-        await response.aclose()
 
         # Our cache answers this in the response extensions, and the adapter copies that answer into
         # `X-Cache` for the client's benefit. Reading the header back here instead would take the
@@ -242,8 +272,7 @@ class HttpProxyController(AbstractHttpProxyController):
             self.remote.set_up(base_url)
 
         self.debug(
-            f"◀◀ {response.status_code} {response.reason_phrase} "
-            f"({_format_elapsed(response.elapsed)}{' cached' if is_response_from_cache else ''})",
+            f"◀◀ {response.status_code} {response.reason_phrase}{' (cached)' if is_response_from_cache else ''}",
             transaction=transaction,
         )
 
@@ -266,7 +295,9 @@ class HttpProxyController(AbstractHttpProxyController):
             if created_at is not None:
                 transaction.extras["cache_age"] = int(time() - created_at)
 
-        return HttpResponse(response.content, status=response.status_code, headers=headers)
+        proxied = HttpResponse(b"", status=response.status_code, headers=headers)
+        proxied.stream = UpstreamResponseStream(response)
+        return proxied
 
     async def _get_next_url_for(self, context) -> tuple[str, str]:
         base_url = self.remote.get_url()
@@ -522,10 +553,3 @@ def _get_base_network_error_type(exc_type):
     for _type in NETWORK_ERRORS:
         if issubclass(exc_type, _type):
             return _type
-
-
-def _format_elapsed(elapsed: timedelta):
-    try:
-        return f"{elapsed.total_seconds()}s"
-    except RuntimeError:
-        return "n/a"

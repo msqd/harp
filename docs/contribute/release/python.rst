@@ -356,8 +356,11 @@ Once the workflow completes successfully:
 ``protection.json`` requires a pull request and *All Checks Passed*, enforces it for administrators,
 and refuses force-push and deletion; copy it from ``gh api repos/msqd/harp/branches/main/protection``.
 
-Check that ``https://docs.harp-proxy.net/en/X.Y/`` answers once Read the Docs has built the new
+Check that ``https://docs.harp-project.net/en/X.Y/`` answers once Read the Docs has built the new
 branch; activate the version on Read the Docs if it does not. The dashboard's Help link opens it.
+
+Rebuild the active version lines on Read the Docs (``latest``, ``stable``, the new ``X.Y`` and the previous
+one): each title carries its role (``stable``, ``oldstable``), which changes with this release.
 
 Then open the next version on ``main``, through a pull request: ``pyproject.toml`` moves to
 ``X.Y+1.0.dev0`` (``uv lock`` again) and ``changelog.d/`` holds no fragment but its ``README.rst``.

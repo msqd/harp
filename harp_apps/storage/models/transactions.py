@@ -1,10 +1,11 @@
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import TIMESTAMP, Boolean, Column, Float, ForeignKey, Integer, String, Table, exists, insert
+from sqlalchemy import TIMESTAMP, Boolean, Column, Float, ForeignKey, Integer, String, Table, Text, exists, insert
 from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
 
 from harp.models.transactions import Transaction as TransactionModel
+from harp.models.transactions import decode_markers
 
 from .base import Base, Repository, with_session
 from .flags import FLAGS_BY_TYPE, UserFlag
@@ -39,6 +40,7 @@ class Transaction(Base):
     x_status_class: Mapped[str] = mapped_column(String(3), nullable=True, index=True)
     x_cached: Mapped[str] = mapped_column(String(32), nullable=True)
     x_no_cache: Mapped[bool] = mapped_column(Boolean(), nullable=True, default=False)
+    markers: Mapped[str] = mapped_column(Text(), nullable=True)
 
     messages: Mapped[List["Message"]] = relationship(
         back_populates="transaction",
@@ -92,6 +94,7 @@ class Transaction(Base):
             ),
             messages=([message.to_model() for message in self.messages] if self.messages else []),
             tags=self.tags,
+            markers=decode_markers(self.markers),
         )
 
 

@@ -1,0 +1,1 @@
+Endpoint url credentials (`http://user:pass@host/`) are no longer sent in the `Host` header: they go out as `Authorization: Basic` unless the request already carries an `Authorization`, and are left out of the recorded remote url and logs.

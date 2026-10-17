@@ -14,7 +14,7 @@ from harp.config.example import render_example_config
 from harp.utils.commandline import click
 
 DEFAULT_AUTHOR_NAME = "Smart Anonymous Harpist"
-DEFAULT_AUTHOR_EMAIL = "anonymous@harp-proxy.net"
+DEFAULT_AUTHOR_EMAIL = "anonymous@harp-project.net"
 
 #: Cookiecutter version run through ``uv tool run`` when it is not installed, pinned for reproducibility.
 COOKIECUTTER_SPEC = "cookiecutter==2.6.0"
@@ -52,8 +52,7 @@ def _cookiecutter_command():
     if shutil.which("uv"):
         return ["uv", "tool", "run", "--from", COOKIECUTTER_SPEC, "cookiecutter"]
     raise click.UsageError(
-        "Install cookiecutter with `uv add harp-proxy --extra dev`, or ensure `uv` is available to "
-        "run it via `uv tool run`."
+        "Install cookiecutter with `pip install cookiecutter`, or ensure `uv` is available to run it via `uv tool run`."
     )
 
 

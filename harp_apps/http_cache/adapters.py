@@ -14,6 +14,9 @@ from harp_apps.http_cache.utils import (
 )
 from harp_apps.storage.types import IBlobStorage
 
+_Dumper = getattr(yaml, "CSafeDumper", yaml.SafeDumper)
+_Loader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+
 # httpcore extension keys to preserve during serialization
 # Migrated from hishel._serializers to avoid dependency on removed internal module
 KNOWN_REQUEST_EXTENSIONS = ("timeout", "sni_hostname")
@@ -46,6 +49,14 @@ def stored_at_of(entry_data: tp.Mapping[str, tp.Any]) -> float:
     if "created_at_ts" in meta_data:
         return meta_data["created_at_ts"]
     return _parse_created_at(meta_data["created_at"]) if "created_at" in meta_data else 0.0
+
+
+def _load_entry(raw: bytes) -> tp.Any:
+    return yaml.load(raw.decode(), Loader=_Loader)
+
+
+def _dump_entry(data: tp.Any) -> bytes:
+    return yaml.dump(data, Dumper=_Dumper, sort_keys=False).encode()
 
 
 class SerializedRequest(tp.TypedDict):
@@ -146,7 +157,7 @@ class AsyncStorageAdapter:
 
     async def _decode(self, cached):
         """Decode cached blob data into structured format."""
-        return yaml.safe_load(cached.data.decode())
+        return _load_entry(cached.data)
 
     async def _store_entry_blob(
         self,
@@ -169,7 +180,7 @@ class AsyncStorageAdapter:
         return await self.storage.force_put(
             Blob(
                 id=key,
-                data=yaml.safe_dump(
+                data=_dump_entry(
                     {
                         "id": str(entry_id),  # Store UUID for hishel 1.0
                         "request": request,
@@ -184,8 +195,7 @@ class AsyncStorageAdapter:
                         },
                         "extra": extra,  # Store full extra dict
                     },
-                    sort_keys=False,
-                ).encode(),
+                ),
                 content_type="cache/meta",
             ),
         )

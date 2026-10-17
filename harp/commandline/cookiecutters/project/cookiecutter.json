@@ -3,7 +3,7 @@
   "__dir_name": "{{cookiecutter.name | slugify}}",
   "__pkg_name": "{{cookiecutter.name | slugify(separator='_')}}",
   "author_name": "Smart Anonymous Harpist",
-  "author_email": "anonymous@harp-proxy.net",
+  "author_email": "anonymous@harp-project.net",
   "create_application": true,
   "create_config": true,
   "__harp_source": "",

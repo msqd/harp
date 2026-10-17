@@ -1,4 +1,4 @@
-const DOCUMENTATION_BASE_URL = "https://docs.harp-proxy.net/en"
+const DOCUMENTATION_BASE_URL = "https://docs.harp-project.net/en"
 const DOCUMENTATION_CAMPAIGN = "utm_source=dashboard&utm_medium=help"
 
 /**

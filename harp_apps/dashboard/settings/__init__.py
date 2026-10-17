@@ -15,6 +15,12 @@ class DashboardSettings(ApplicationSettingsMixin, Configurable):
         description="Port on which the dashboard application will be served.",
     )
 
+    metrics_port: Optional[int] = Field(
+        None,
+        description="Port on which the Prometheus metrics (`/metrics`) are also served, unauthenticated. Disabled by "
+        "default. Metrics are always served on the dashboard port, under the dashboard authentication.",
+    )
+
     auth: Optional[BasicAuthSettings] = Field(
         None,
         discriminator="type",

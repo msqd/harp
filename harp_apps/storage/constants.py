@@ -18,3 +18,17 @@ SKIP_REQUEST_BODY_STORAGE = "skip-request-body-storage"
 SKIP_RESPONSE_BODY_STORAGE = "skip-response-body-storage"
 SKIP_REQUEST_HEADERS_STORAGE = "skip-request-headers-storage"
 SKIP_RESPONSE_HEADERS_STORAGE = "skip-response-headers-storage"
+
+# Transaction markers set by the storage worker when it sheds data under pressure
+SHED_MESSAGES = "shed-messages"
+SHED_HEADERS = "shed-headers"
+SHED_BODIES = "shed-bodies"
+
+# Transaction markers set when a recording cap cuts data (#911)
+TRUNCATED_RESPONSE_BODY = "truncated-response-body"
+
+# How much of a response body HARP records, and holds in memory per response, at most (#911)
+DEFAULT_MAX_RECORDED_BODY_SIZE = 1024 * 1024
+
+# Transaction marker set when the client went away before the end of the response body (#911)
+CLIENT_DISCONNECTED = "client-disconnected"

@@ -51,6 +51,18 @@ Read the Docs slug        Built from                  Warning shown
 ``X.Y``                   the ``X.Y`` branch          not the stable version
 ========================  ==========================  =============================================
 
+Each version titles itself ``HARP Proxy X.Y (role)``, the role computed at build time from the version
+built and the release tags (never from the Read the Docs name):
+
+- ``next``: unreleased, ahead of the highest release tag (``latest``, ``0.12 (next)``).
+- ``stable``: the line of the highest release tag, built as ``stable`` or as its ``X.Y`` branch.
+- ``oldstable``: the line before it.
+- older lines show only ``X.Y``.
+
+"Edit on GitHub" opens ``main`` on ``latest`` and the ``X.Y`` branch elsewhere. A local build titles
+itself from the package version. A line only changes role when it is rebuilt: see
+:doc:`release/python`, step 10.
+
 The warnings are Read the Docs' own (Addons, version warning), not part of our build. The dashboard's
 Help link opens ``/en/X.Y/`` for a release and ``/en/latest/`` for a development build.
 

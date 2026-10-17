@@ -10,6 +10,7 @@ import pytest
 from hishel import Headers, Request, Response
 from hishel._core.models import AnyIterable
 
+from harp_apps.http_cache.tests import store_entry
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.storage.engines import SQLAlchemyEngine
 from harp_apps.storage.models import Base
@@ -51,7 +52,7 @@ async def test_entries_stored_concurrently_are_all_served(default_engine):
             await storage.get_entries("absent")
 
     await asyncio.gather(
-        *(storage.create_entry(_request(i), _response(i), f"key-{i}") for i in range(ENTRIES)),
+        *(store_entry(storage, _request(i), _response(i), f"key-{i}") for i in range(ENTRIES)),
         *(miss() for _ in range(5)),
     )
 

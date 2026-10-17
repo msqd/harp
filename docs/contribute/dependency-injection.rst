@@ -75,7 +75,7 @@ creation being externalized, it is now possible to configure the database withou
 parent/owner class.
 
 This is a quite simple concept, shown on a quite simple example. In real-world applications like
-`HARP Proxy <https://harp-proxy.net>`_, dependency injection is widely used to make the code more modular, testable,
+`HARP Proxy <https://harp-project.net>`_, dependency injection is widely used to make the code more modular, testable,
 and maintainable, and you should think about it when writing your code.
 
 Dependency Injection is a concept that does not require any tools or libraries to be implemented, it's just a good

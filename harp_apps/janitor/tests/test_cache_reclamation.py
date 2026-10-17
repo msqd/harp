@@ -13,6 +13,7 @@ from hishel._core.models import AnyIterable
 from sqlalchemy import update
 
 from harp.models import Blob
+from harp_apps.http_cache.tests import store_entry
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.janitor.settings import JanitorSettings
 from harp_apps.janitor.tests import worker_with_grace
@@ -60,7 +61,7 @@ class TestJanitorAndHttpCache(StorageTestFixtureMixin):
             return (await worker.compute_metrics(session))["storage.blobs.orphans"]
 
     async def test_cached_entry_survives_janitor_passes(self, worker, cache):
-        await cache.create_entry(_request(), _response(), "key-1")
+        await store_entry(cache, _request(), _response(), "key-1")
 
         for _ in range(3):
             await worker.delete_orphan_blobs()
@@ -69,25 +70,25 @@ class TestJanitorAndHttpCache(StorageTestFixtureMixin):
         assert await entry.response.aread() == b"payload"
 
     async def test_cache_blobs_are_not_counted_as_orphans(self, worker, cache, sql_storage, blob_storage):
-        await cache.create_entry(_request(), _response(), "key-1")
+        await store_entry(cache, _request(), _response(), "key-1")
         assert await self.orphans(worker, sql_storage) == 0
 
         await self.create_blob(blob_storage, "referenced by nothing")
         assert await self.orphans(worker, sql_storage) == 1
 
     async def test_blobs_of_a_replaced_entry_are_reclaimed(self, worker, cache, blob_storage):
-        await cache.create_entry(_request(), _response(b"old"), "key-1")
+        await store_entry(cache, _request(), _response(b"old"), "key-1")
         old_body = Blob.from_data(b"old", content_type="text/plain")
         assert await blob_storage.get(old_body.id) is not None
 
-        await cache.create_entry(_request(), _response(b"new"), "key-1")
+        await store_entry(cache, _request(), _response(b"new"), "key-1")
         await worker.delete_orphan_blobs()
 
         assert await blob_storage.get(old_body.id) is None
         assert await blob_storage.get(Blob.from_data(b"new", content_type="text/plain").id) is not None
 
     async def test_blob_shared_with_a_message_outlives_the_cache_entry(self, worker, cache, blob_storage, sql_storage):
-        await cache.create_entry(_request(), _response(b"shared"), "key-1")
+        await store_entry(cache, _request(), _response(b"shared"), "key-1")
         shared = Blob.from_data(b"shared", content_type="text/plain")
         t = await self.create_transaction(sql_storage)
         await self.create_message(

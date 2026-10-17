@@ -1,6 +1,7 @@
 import time
 from typing import Any, Dict, Optional
-from urllib.parse import urlparse
+from base64 import b64encode
+from urllib.parse import unquote, urlparse
 
 from httpx import AsyncClient, Request, Response
 
@@ -8,6 +9,12 @@ from harp import __parsed_version__
 from harp.http import HttpRequest
 from harp.http.utils import hop_by_hop_names
 from harp.utils.bytes import HEADER_ENCODING, header_bytes
+
+
+def strip_credentials(url: str) -> str:
+    """The url without its ``user:password@`` part, safe to log and record."""
+    parsed_url = urlparse(url)
+    return parsed_url._replace(netloc=parsed_url.netloc.rpartition("@")[2]).geturl()
 
 
 class HttpClientProxyAdapter:
@@ -25,10 +32,10 @@ class HttpClientProxyAdapter:
 
         :param request: The HttpRequest object to be sent.
         :param url: The URL to which the request is sent.
-        :return: The HTTP response received.
+        :return: The HTTP response received, its body not read yet: the caller reads it, then closes it.
         """
         request = self._build_request(request, url)
-        response = await self.http_client.send(request)
+        response = await self.http_client.send(request, stream=True)
         response.headers.encoding = HEADER_ENCODING  # obs-text must read back as the bytes it was
 
         # Add cache debugging headers if caching is being used
@@ -65,11 +72,17 @@ class HttpClientProxyAdapter:
         :return: A list of updated headers.
         """
         parsed_url = urlparse(url)
-        request.headers["host"] = parsed_url.netloc
+        request.headers["host"] = parsed_url.netloc.rpartition("@")[2]
         if self.user_agent:
             request.headers["user-agent"] = self.user_agent
         dropped = hop_by_hop_names(request.headers)
-        return [(name, value) for name, value in request.headers.items() if name.lower() not in dropped]
+        headers = [(name, value) for name, value in request.headers.items() if name.lower() not in dropped]
+        # Endpoint credentials are a fallback: any Authorization already on the request wins. Added to the
+        # outgoing list only, so they never land on the recorded request.
+        if parsed_url.username is not None and "authorization" not in request.headers:
+            credentials = f"{unquote(parsed_url.username)}:{unquote(parsed_url.password or '')}"
+            headers.append(("authorization", "Basic " + b64encode(credentials.encode()).decode()))
+        return headers
 
     def _build_request(self, request: HttpRequest, url: str) -> Request:
         """
@@ -81,9 +94,11 @@ class HttpClientProxyAdapter:
         """
         headers = self._get_updated_headers(request, url=url)
 
+        # Credentials travel in the Authorization header built above. Left in the url, httpx would override
+        # that header with its own and the url would be recorded with the secret.
         remote_request = self.http_client.build_request(
             request.method,
-            url,
+            strip_credentials(url),
             headers=[(header_bytes(name), header_bytes(value)) for name, value in headers],
             content=request.body,
             extensions={"harp": {**self.extensions}},

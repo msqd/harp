@@ -1,7 +1,9 @@
 from datetime import UTC
 from functools import partial
 from math import log10
+from time import monotonic
 
+from prometheus_client import Counter
 from sqlalchemy import insert, update
 from sqlalchemy.ext.asyncio import AsyncEngine
 from whistle import IAsyncEventDispatcher
@@ -9,7 +11,7 @@ from whistle import IAsyncEventDispatcher
 from harp import get_logger
 from harp.http import get_serializer_for
 from harp.models import Blob
-from harp.models.transactions import encode_cache_flag
+from harp.models.transactions import encode_cache_flag, encode_markers
 from harp.utils.background import AsyncWorkerQueue
 from harp_apps.proxy.events import (
     EVENT_TRANSACTION_ENDED,
@@ -25,6 +27,9 @@ from harp_apps.storage.constants import (
     SKIP_RESPONSE_BODY_STORAGE,
     SKIP_RESPONSE_HEADERS_STORAGE,
     SKIP_RESPONSE_STORAGE,
+    SHED_BODIES,
+    SHED_HEADERS,
+    SHED_MESSAGES,
     SKIP_STORAGE,
 )
 from harp_apps.storage.models import Message as SqlMessage
@@ -32,6 +37,18 @@ from harp_apps.storage.models import Transaction as SqlTransaction
 from harp_apps.storage.types import IBlobStorage, IStorage
 
 logger = get_logger(__name__)
+
+DROPPED_COUNTER = Counter(
+    "dropped",
+    "Items the storage worker did not store because of queue pressure, by kind.",
+    ["kind"],
+)
+
+DROPPED_KINDS = ("transactions", "messages", "headers", "bodies")
+
+# Expose every series at 0 from startup, so alerts and rate() never face a missing series.
+for _kind in DROPPED_KINDS:
+    DROPPED_COUNTER.labels(_kind)
 
 
 class StorageAsyncWorkerQueue(AsyncWorkerQueue):
@@ -41,6 +58,25 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         self.blob_storage = blob_storage
         super().__init__()
         self.seen = set()
+        self._dropped_since_warning = dict.fromkeys(DROPPED_KINDS, 0)
+        self._last_shed_warning_at = None
+
+    #: Minimum delay (seconds) between two shedding warnings.
+    shed_warning_interval = 10.0
+
+    def _shed(self, kind: str):
+        """Counts a dropped item and, at most once per interval, logs what was dropped since the last warning."""
+        DROPPED_COUNTER.labels(kind).inc()
+        self._dropped_since_warning[kind] += 1
+
+        now = monotonic()
+        if self._last_shed_warning_at is not None and now - self._last_shed_warning_at < self.shed_warning_interval:
+            return
+
+        counts = " ".join(f"{k}={v}" for k, v in self._dropped_since_warning.items())
+        logger.warning(f"Storage under pressure (backlog ~{self._pressure}), dropped since last warning: {counts}")
+        self._dropped_since_warning = dict.fromkeys(DROPPED_KINDS, 0)
+        self._last_shed_warning_at = now
 
     def register_events(self, dispatcher: IAsyncEventDispatcher):
         dispatcher.add_listener(EVENT_TRANSACTION_STARTED, self.on_transaction_started)
@@ -61,6 +97,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
 
         if self.pressure >= 4:
             event.transaction.markers.add(SKIP_STORAGE)
+            self._shed("transactions")
 
         if SKIP_STORAGE in event.transaction.markers:
             return
@@ -75,7 +112,12 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         await self.push(create_transaction)
 
     async def on_transaction_message(self, event: HttpMessageEvent):
-        if SKIP_STORAGE in event.transaction.markers or self.pressure >= 3:
+        if SKIP_STORAGE in event.transaction.markers:
+            return
+
+        if self.pressure >= 3:
+            event.transaction.markers.add(SHED_MESSAGES)
+            self._shed("messages")
             return
 
         # Check if we should skip this entire message
@@ -115,7 +157,10 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             headers_blob = await Blob.afrom_data(serializer.headers, content_type="http/headers")
             await self.push(partial(self.blob_storage.put, headers_blob), ignore_errors=True)
             message_data["headers"] = headers_blob.id
-        elif skip_headers:
+        elif not skip_headers:
+            event.transaction.markers.add(SHED_HEADERS)
+            self._shed("headers")
+        else:
             logger.debug(
                 f"Skipping storing {event.message.kind.capitalize()} headers",
                 transaction_id=event.transaction.id,
@@ -137,7 +182,10 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             )
             await self.push(partial(self.blob_storage.put, content_blob), ignore_errors=True)
             message_data["body"] = content_blob.id
-        elif skip_body:
+        elif not skip_body:
+            event.transaction.markers.add(SHED_BODIES)
+            self._shed("bodies")
+        else:
             logger.debug(
                 f"Skipping storing {event.message.kind.capitalize()} body",
                 transaction_id=event.transaction.id,
@@ -163,6 +211,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             "tpdex": event.transaction.tpdex,
             "x_status_class": event.transaction.extras.get("status_class"),
             "x_cached": encode_cache_flag(event.transaction.extras.get("cached")),
+            "markers": encode_markers(event.transaction.markers),
         }
 
         async def update_transaction():
