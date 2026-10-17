@@ -6,7 +6,7 @@ HARP — HTTP API Runtime Proxy
     :widths: 15 85
 
     +------------------------------+------------------------------------------------------------------------------------+
-    | .. figure:: /images/logo.png | `HARP Proxy <https://harp-proxy.net/>`_ is a forward proxy sitting between your    |
+    | .. figure:: /images/logo.png | `HARP Proxy <https://harp-project.net/>`_ is a forward proxy sitting between your    |
     |    :alt: HARP logo           | application(s) and remote APIs, to improve their reliability, performances, and    |
     |                              | security. It adds builtin observability features via its dashboard and monitoring, |
     |                              | and reduces the amount of userland code required for common HTTP-related,          |

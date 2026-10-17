@@ -31,7 +31,7 @@ describe("getDocumentationUrl", () => {
 
   it("keeps the campaign parameters so documentation traffic stays attributable", () => {
     expect(getDocumentationUrl("0.10.0")).toBe(
-      "https://docs.harp-proxy.net/en/0.10/user/?utm_source=dashboard&utm_medium=help",
+      "https://docs.harp-project.net/en/0.10/user/?utm_source=dashboard&utm_medium=help",
     )
   })
 })

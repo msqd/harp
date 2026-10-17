@@ -14,7 +14,7 @@ from harp.config.example import render_example_config
 from harp.utils.commandline import click
 
 DEFAULT_AUTHOR_NAME = "Smart Anonymous Harpist"
-DEFAULT_AUTHOR_EMAIL = "anonymous@harp-proxy.net"
+DEFAULT_AUTHOR_EMAIL = "anonymous@harp-project.net"
 
 #: Cookiecutter version run through ``uv tool run`` when it is not installed, pinned for reproducibility.
 COOKIECUTTER_SPEC = "cookiecutter==2.6.0"
