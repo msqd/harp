@@ -1,0 +1,1 @@
+Moved every harp-proxy.net link to harp-project.net, and dropped the Plausible script from the docs (Google Analytics stays).

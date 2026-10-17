@@ -17,7 +17,6 @@ dependencies = [
     "asgi-tools>=1.3,<1.4",
     "asgimiddlewarestaticfile>=0.6,<0.7",
     "asgiref>=3.10,<3.13",
-    "asyncpg>=0.30,<0.31",
     # Imported directly (harp.commandline). 9.0 removes BaseCommand, which we cast to.
     "click>=8.1,<9",
     "colorama>=0.4,<0.5",
@@ -40,7 +39,6 @@ dependencies = [
     "passlib>=1.7,<1.8",
     # Imported directly (harp_apps.metrics, harp.commandline.server).
     "prometheus-client>=0.20,<1",
-    "psycopg2-binary>=2.9,<2.10",
     "pydantic>=2.12,<2.13",
     "pyheck>=0.1,<0.2",
     "pyyaml>=6.0,<6.1",
@@ -57,6 +55,13 @@ dependencies = [
     "whistle>=2.0.1,<3",
 ]
 
+[project.optional-dependencies]
+mysql = [
+    "aiomysql>=0.2,<0.4",
+    "cryptography>=50.0,<51",
+]
+postgresql = ["asyncpg>=0.30,<0.31"]
+
 [project.scripts]
 harp-proxy = "harp.commandline:entrypoint"
 harp = "harp.commandline:entrypoint"
@@ -67,12 +72,14 @@ dev = [
     "freezegun>=1.5.5,<2",
     "furo>=2023.9.10,<2026.0.0",
     "hatchling==1.27.0",
+    "harp-proxy[mysql,postgresql]",
     "honcho>=2.0,<2.1",
     "jscc>=0.3.0,<0.4",
     "jsonpointer>=3.0.0,<4",
     "jsonref>=1.1.0,<2",
     "myst-parser>=4.0.0,<6",
     "pre-commit>=3.7.1,<5.0.0",
+    "psycopg2-binary>=2.9,<2.10",
     "pytest-asyncio>=1.3,<1.4",
     "pytest-cov>=7.0,<7.1",
     "pytest-timeout>=2.3.1,<3",
@@ -95,18 +102,9 @@ dev = [
     "watchfiles>=1.1,<1.3",
 ]
 bench = ["pyperf>=2.8,<3"]
-mysql = [
-    "aiomysql>=0.2,<0.4",
-    "cryptography>=50.0,<51",
-]
-postgresql = ["aiopg>=1.4,<1.5"]
 
 [tool.uv]
-default-groups = [
-    "dev",
-    "mysql",
-    "postgresql",
-]
+default-groups = ["dev"]
 
 [tool.hatch.build.targets.sdist]
 include = [

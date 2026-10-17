@@ -74,19 +74,6 @@ wheels = [
 ]
 
 [[package]]
-name = "aiopg"
-version = "1.4.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "async-timeout" },
-    { name = "psycopg2-binary" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/b0/0a/aba75a9ffcb1704b98c39986344230eaa70c40ac28e5ca635df231db912f/aiopg-1.4.0.tar.gz", hash = "sha256:116253bef86b4d954116716d181e9a0294037f266718b2e1c9766af995639d71", size = 35593, upload-time = "2022-10-26T09:31:49.478Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9b/2f/ab8690bf995171b9a8b60b98a2ca91d4108a42422abf10bf622397437d26/aiopg-1.4.0-py3-none-any.whl", hash = "sha256:aea46e8aff30b039cfa818e6db4752c97656e893fc75e5a5dc57355a9e9dedbd", size = 34770, upload-time = "2022-10-26T09:31:48.019Z" },
-]
-
-[[package]]
 name = "aiosignal"
 version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -220,15 +207,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/46/08/4dfec9b90758a59acc6be32ac82e98d1fbfc321cb5cfa410436dbacf821c/asgiref-3.10.0.tar.gz", hash = "sha256:d89f2d8cd8b56dada7d52fa7dc8075baa08fb836560710d38c292a7a3f78c04e", size = 37483, upload-time = "2025-10-05T09:15:06.557Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/17/9c/fc2331f538fbf7eedba64b2052e99ccf9ba9d6888e2f41441ee28847004b/asgiref-3.10.0-py3-none-any.whl", hash = "sha256:aef8a81283a34d0ab31630c9b7dfe70c812c95eba78171367ca8745e88124734", size = 24050, upload-time = "2025-10-05T09:15:05.11Z" },
-]
-
-[[package]]
-name = "async-timeout"
-version = "4.0.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/87/d6/21b30a550dafea84b1b8eee21b5e23fa16d010ae006011221f33dcd8d7f8/async-timeout-4.0.3.tar.gz", hash = "sha256:4640d96be84d82d02ed59ea2b7105a0f7b33abe8703703cd0ab0bf87c427522f", size = 8345, upload-time = "2023-08-10T16:35:56.907Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a7/fa/e01228c2938de91d47b307831c62ab9e4001e747789d0b05baf779a6488c/async_timeout-4.0.3-py3-none-any.whl", hash = "sha256:7405140ff1230c310e51dc27b3145b9092d659ce68ff733fb0cefe3ee42be028", size = 5721, upload-time = "2023-08-10T16:35:55.203Z" },
 ]
 
 [[package]]
@@ -709,7 +687,6 @@ dependencies = [
     { name = "asgi-tools" },
     { name = "asgimiddlewarestaticfile" },
     { name = "asgiref" },
-    { name = "asyncpg" },
     { name = "click" },
     { name = "colorama" },
     { name = "dataclasses-json" },
@@ -725,7 +702,6 @@ dependencies = [
     { name = "packaging" },
     { name = "passlib" },
     { name = "prometheus-client" },
-    { name = "psycopg2-binary" },
     { name = "pydantic" },
     { name = "pyheck" },
     { name = "pyyaml" },
@@ -742,6 +718,15 @@ dependencies = [
     { name = "whistle" },
 ]
 
+[package.optional-dependencies]
+mysql = [
+    { name = "aiomysql" },
+    { name = "cryptography" },
+]
+postgresql = [
+    { name = "asyncpg" },
+]
+
 [package.dev-dependencies]
 bench = [
     { name = "pyperf" },
@@ -750,6 +735,7 @@ dev = [
     { name = "cookiecutter" },
     { name = "freezegun" },
     { name = "furo" },
+    { name = "harp-proxy", extra = ["mysql", "postgresql"] },
     { name = "hatchling" },
     { name = "honcho" },
     { name = "jscc" },
@@ -757,6 +743,7 @@ dev = [
     { name = "jsonref" },
     { name = "myst-parser" },
     { name = "pre-commit" },
+    { name = "psycopg2-binary" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -778,26 +765,21 @@ dev = [
     { name = "towncrier" },
     { name = "watchfiles" },
 ]
-mysql = [
-    { name = "aiomysql" },
-    { name = "cryptography" },
-]
-postgresql = [
-    { name = "aiopg" },
-]
 
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.14.3,<3.15" },
+    { name = "aiomysql", marker = "extra == 'mysql'", specifier = ">=0.2,<0.4" },
     { name = "aiosqlite", specifier = ">=0.20,<0.22" },
     { name = "alembic", specifier = ">=1.17,<1.18" },
     { name = "asgi-prometheus", specifier = ">=1.2,<1.3" },
     { name = "asgi-tools", specifier = ">=1.3,<1.4" },
     { name = "asgimiddlewarestaticfile", specifier = ">=0.6,<0.7" },
     { name = "asgiref", specifier = ">=3.10,<3.13" },
-    { name = "asyncpg", specifier = ">=0.30,<0.31" },
+    { name = "asyncpg", marker = "extra == 'postgresql'", specifier = ">=0.30,<0.31" },
     { name = "click", specifier = ">=8.1,<9" },
     { name = "colorama", specifier = ">=0.4,<0.5" },
+    { name = "cryptography", marker = "extra == 'mysql'", specifier = ">=50.0,<51" },
     { name = "dataclasses-json", specifier = ">=0.6,<0.7" },
     { name = "dataclasses-jsonschema", specifier = ">=2.16,<2.17" },
     { name = "essentials-configuration", specifier = ">=2.0,<2.1" },
@@ -811,7 +793,6 @@ requires-dist = [
     { name = "packaging", specifier = ">=23.2" },
     { name = "passlib", specifier = ">=1.7,<1.8" },
     { name = "prometheus-client", specifier = ">=0.20,<1" },
-    { name = "psycopg2-binary", specifier = ">=2.9,<2.10" },
     { name = "pydantic", specifier = ">=2.12,<2.13" },
     { name = "pyheck", specifier = ">=0.1,<0.2" },
     { name = "pyyaml", specifier = ">=6.0,<6.1" },
@@ -827,6 +808,7 @@ requires-dist = [
     { name = "svix-ksuid", specifier = ">=0.6,<0.7" },
     { name = "whistle", specifier = ">=2.0.1,<3" },
 ]
+provides-extras = ["mysql", "postgresql"]
 
 [package.metadata.requires-dev]
 bench = [{ name = "pyperf", specifier = ">=2.8,<3" }]
@@ -834,6 +816,7 @@ dev = [
     { name = "cookiecutter", specifier = ">=2.6,<2.7" },
     { name = "freezegun", specifier = ">=1.5.5,<2" },
     { name = "furo", specifier = ">=2023.9.10,<2026.0.0" },
+    { name = "harp-proxy", extras = ["mysql", "postgresql"] },
     { name = "hatchling", specifier = "==1.27.0" },
     { name = "honcho", specifier = ">=2.0,<2.1" },
     { name = "jscc", specifier = ">=0.3.0,<0.4" },
@@ -841,6 +824,7 @@ dev = [
     { name = "jsonref", specifier = ">=1.1.0,<2" },
     { name = "myst-parser", specifier = ">=4.0.0,<6" },
     { name = "pre-commit", specifier = ">=3.7.1,<5.0.0" },
+    { name = "psycopg2-binary", specifier = ">=2.9,<2.10" },
     { name = "pytest", specifier = ">=7.4.3,<10" },
     { name = "pytest-asyncio", specifier = ">=1.3,<1.4" },
     { name = "pytest-cov", specifier = ">=7.0,<7.1" },
@@ -862,11 +846,6 @@ dev = [
     { name = "towncrier", specifier = ">=26.9.0" },
     { name = "watchfiles", specifier = ">=1.1,<1.3" },
 ]
-mysql = [
-    { name = "aiomysql", specifier = ">=0.2,<0.4" },
-    { name = "cryptography", specifier = ">=50.0,<51" },
-]
-postgresql = [{ name = "aiopg", specifier = ">=1.4,<1.5" }]
 
 [[package]]
 name = "hatchling"

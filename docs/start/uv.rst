@@ -43,6 +43,13 @@ This will start the proxy with SQLite storage and a httpbin endpoint. The dashbo
 
    UV will automatically download and manage the correct Python version for you.
 
+To store in PostgreSQL or MySQL/MariaDB, add the matching extra:
+
+.. code-block:: shell
+
+    uvx --from "harp-proxy[postgresql]" harp-proxy server
+    uvx --from "harp-proxy[mysql]" harp-proxy server
+
 Test Your Proxy
 :::::::::::::::
 

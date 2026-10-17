@@ -1,3 +1,4 @@
+import importlib.util
 from typing import Annotated
 
 from pydantic import AfterValidator, BeforeValidator, UrlConstraints
@@ -40,12 +41,29 @@ def _fix_unasync_dsns(url: str | MultiHostUrl) -> MultiHostUrl:
     return MultiHostUrl(url)
 
 
+# Driver module and the extra that installs it, for the backends not in the base install.
+_DRIVER_EXTRAS = {
+    "mysql+aiomysql": ("aiomysql", "mysql"),
+    "postgresql+asyncpg": ("asyncpg", "postgresql"),
+}
+
+
+def _require_driver(url: MultiHostUrl) -> MultiHostUrl:
+    module, extra = _DRIVER_EXTRAS.get(url.scheme, (None, None))
+    if module and importlib.util.find_spec(module) is None:
+        raise ValueError(
+            f"{url.scheme} needs the {module} driver, which is not installed: pip install harp-proxy[{extra}]"
+        )
+    return url
+
+
 DatabaseUrl = Annotated[
     MultiHostUrl,
     UrlConstraints(allowed_schemes=ALLOWED_SCHEMES),
     BeforeValidator(_refuse_asyncmy),
     BeforeValidator(_unwrap_sqlalchemy_urls),
     AfterValidator(_fix_unasync_dsns),
+    AfterValidator(_require_driver),
 ]
 
 

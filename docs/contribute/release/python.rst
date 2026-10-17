@@ -356,7 +356,7 @@ Once the workflow completes successfully:
 ``protection.json`` requires a pull request and *All Checks Passed*, enforces it for administrators,
 and refuses force-push and deletion; copy it from ``gh api repos/msqd/harp/branches/main/protection``.
 
-Check that ``https://docs.harp-proxy.net/en/X.Y/`` answers once Read the Docs has built the new
+Check that ``https://docs.harp-project.net/en/X.Y/`` answers once Read the Docs has built the new
 branch; activate the version on Read the Docs if it does not. The dashboard's Help link opens it.
 
 Then open the next version on ``main``, through a pull request: ``pyproject.toml`` moves to
