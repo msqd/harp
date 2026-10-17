@@ -10,6 +10,8 @@ import { HTMLAttributes } from "react"
 import { Link } from "react-router-dom"
 import tw, { styled } from "twin.macro"
 
+import CopyToClipboard from "ui/Components/CopyToClipBoard/CopyToClipboard"
+
 interface ButtonProps {
   onClick?: () => unknown
 }
@@ -80,10 +82,24 @@ export function RefreshButton({ onClick, ...moreProps }: ButtonProps & HTMLAttri
   )
 }
 
+const StyledTransactionLinkButton = styled(StyledButton)`
+  ${tw`text-gray-600 inline-flex items-center gap-x-1 space-x-0`}
+  > span,
+  > svg {
+    ${tw`m-0 text-inherit`}
+  }
+`
+
+const StyledCopyTransactionLinkButton = StyledTransactionLinkButton.withComponent(CopyToClipboard)
+
+export function CopyTransactionLinkButton({ url }: { url: string }) {
+  return <StyledCopyTransactionLinkButton text={url} description="copy transaction link" />
+}
+
 export function OpenInNewWindowLink({ id }: { id: string }) {
   return (
-    <StyledButton as={(props) => <Link {...props} target="_blank" to={`/transactions/${id}`} />}>
+    <StyledTransactionLinkButton as={(props) => <Link {...props} target="_blank" to={`/transactions/${id}`} />}>
       <LinkIcon /> open in new window
-    </StyledButton>
+    </StyledTransactionLinkButton>
   )
 }
