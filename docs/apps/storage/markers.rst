@@ -111,6 +111,9 @@ Set by the proxy when the client goes away before the end of the response body. 
 with the response body read until then, and ends when the client left. The dashboard shows it on the response. See
 :ref:`proxy-buffering-and-streaming`.
 
+It is also set when the client goes away before the end of its request body: nothing is sent upstream, since the
+request is incomplete, and the transaction is recorded as a ``400`` error.
+
 Message Storage Markers
 -----------------------
 
