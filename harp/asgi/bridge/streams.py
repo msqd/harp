@@ -3,6 +3,8 @@ from typing import AsyncIterator, cast
 from asgiref.typing import ASGIReceiveCallable
 from httpx import AsyncByteStream
 
+from harp.http import ClientDisconnected
+
 
 class AsyncStreamFromAsgiReceive(AsyncByteStream):
     def __init__(self, asgi_receive: ASGIReceiveCallable) -> None:
@@ -14,6 +16,9 @@ class AsyncStreamFromAsgiReceive(AsyncByteStream):
             raise RuntimeError("Whole stream has already been read.")
         while not self._closed:
             message = await self.asgi_receive()
+            if message.get("type") == "http.disconnect":
+                self._closed = True
+                raise ClientDisconnected("Client disconnected before the end of the request body.")
             self._closed = not message.get("more_body", False)
             yield cast(bytes, message.get("body", b""))
 
