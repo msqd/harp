@@ -29,3 +29,11 @@ def header_str(x):
     if isinstance(x, str):
         return x
     return x.decode(HEADER_ENCODING)
+
+
+def header_display(x: str) -> str:
+    """Readable text for a wire-form (latin-1) header: utf-8 when the bytes are valid utf-8, else as is."""
+    try:
+        return x.encode(HEADER_ENCODING).decode("utf-8")
+    except UnicodeError:
+        return x
