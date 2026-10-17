@@ -88,3 +88,84 @@ hash. Large bodies are bound by the hash itself, where OpenSSL's assembly beats 
 - The layout B diff is kept as `native/layout-b.patch` (applies on the spike commit, `git apply`).
 - Open point for the ADR: if native components multiply and become mandatory, B's single dist becomes attractive again;
   it is a packaging move, the shim (`CORE_MODULES`) already supports both.
+
+## ASGI server matrix
+
+Issue #1171. `harp server --server <name>` (or `HARP_SERVER`) picks the server; `hypercorn` stays the default. Everything
+but the default needs the `servers` extra. `make bench-macro|bench-load|bench-startup` take `--server`.
+
+**Indicative only.** Laptop (Core Ultra 7 255H, `powersave` governor, hybrid), shared with other jobs: load average was
+2 to 40 during the runs. HARP on P-cores 4,5, origin 3, load generator 2. 3 runs per cell, order rotated each round,
+50 req/s, 30 s measured + 5 s warmup, `oha` 1.16.0, HTTP/1.1 keep-alive, 1 KiB body. Verdict waits for the external
+runner (#1168). Cells show the median of 3 runs, `[min-max]` where useful.
+
+### Overhead (proxied minus direct, ms) and CPU per request
+
+| profile | server | p50 | p90 | p99 | CPU us/req | peak RSS MiB |
+|---|---|---|---|---|---|---|
+| bare | hypercorn | 2.44 [2.27-2.53] | 2.49 | 3.24 [2.7-7.3] | 2693 | 104 |
+| bare | hypercorn+uvloop | 2.32 [2.24-2.40] | 2.77 | 3.52 [3.1-4.5] | 2680 | 106 |
+| bare | uvicorn | 2.38 [2.26-2.47] | 2.87 | 3.62 [3.3-7.5] | 2340 | 106 |
+| bare | granian | 2.80 [2.80-2.92] | 3.33 | 5.03 [3.2-16.8] | 2433 | 110 |
+| default | hypercorn | 6.10 [5.34-6.22] | 6.72 | 7.63 [7.6-15.2] | 11587 | 111 |
+| default | hypercorn+uvloop | 5.93 [5.57-6.00] | 6.94 | 8.91 [7.9-14.3] | 10327 | 114 |
+| default | uvicorn | 5.61 [5.44-5.79] | 6.38 | 6.86 [6.8-12.6] | 10067 | 113 |
+| default | granian | 6.38 [6.29-6.51] | 9.41 | 22.48 [13.3-55.8] | 10427 | 121 |
+
+Reading:
+
+- The server is a small part of the overhead: about 2.4 ms bare, and `default` adds the storage and cache work (about
+  3.5 ms more). The three Python-loop options differ by less than the spread between runs on p50 and p90.
+- **CPU per request is the steadiest signal**: uvicorn -13% (bare and default), hypercorn+uvloop -11% on `default` (equal
+  on `bare`), granian -10% on `default`, -10% on `bare`. Bare CPU is the h11 vs httptools parsing plus loop cost; on
+  `default` the storage work, identical for all, dilutes it.
+- granian is slower at p50 (+0.4 ms bare, +0.3 default) and clearly worse at p99: HARP still runs on a Python asyncio
+  loop, so every request crosses the Rust/Python boundary and a thread hop on top of the same Python work. It gains
+  nothing while the handler stays in Python.
+- Peak RSS: granian +5 to +10 MiB (Rust runtime), others equal.
+
+### Saturation (`bench-load`, steps 25..1600 req/s, 32 connections)
+
+Saturation rate per run (3 runs, sorted) and, in brackets, the best one. Spread is huge because the machine was shared:
+the same option moved from 25 to 400 between runs. Do not read a ranking beyond the order of magnitude.
+
+| profile | hypercorn | hypercorn+uvloop | uvicorn | granian |
+|---|---|---|---|---|
+| bare | 25, 200, 400 | 25, 50, 400 | 50, 800, 800 | 50, 50, 200 |
+| default | 25, 25, 25 | 25, 100, 200 | 50, 50, 200 | 25, 50, 100 |
+
+On `bare`, uvicorn is the only one reaching 800 req/s (twice); hypercorn and hypercorn+uvloop reach 400; granian 200 at
+best. On `default` storage dominates (transactions and bodies were shed from 50-200 req/s) and every server lands
+between 25 and 200.
+
+### Startup (exec to first proxied 200, `default`, warm)
+
+Bimodal on this machine (about 0.5 s when quiet, 0.9 to 1.3 s when it is not), independent of the server. Best warm run
+per server: hypercorn 0.51 s, hypercorn+uvloop 0.49 s, uvicorn 0.53 s, granian 0.52 s. No measurable difference.
+
+### What each option breaks
+
+| | hypercorn (default) | hypercorn+uvloop | uvicorn | granian |
+|---|---|---|---|---|
+| HTTP/2 (h2c prior knowledge, checked with curl) | yes | yes | **no**, HTTP/1.1 only | yes |
+| lifespan | yes | yes | yes, but needs `interface="asgi3"`: its auto detection takes the metrics middleware (plain `__call__`) for ASGI 2 and fails startup | yes, once only: see below |
+| several binds (proxy ports + dashboard) | one lifespan, all binds | same | same (sockets passed to one `Server`) | embed serves **one address per server**: one server per bind, first carries the lifespan, the others run without it, so they can answer 500 for a few ms before startup completes |
+| server port in scope | int | int | int | **string** (spec says int): controllers are resolved by port, every request was a 404 until the adapter coerced it |
+| logging | `hypercorn.access/error` through HARP's logging | same | `uvicorn.access/error` through HARP's logging | **none**: disabled by the adapter (embed would configure logging on its own); no access log |
+| signals (SIGTERM, exit code) | graceful, 0 | graceful, 0 | graceful, 0 after the adapter replaces `capture_signals`; stock uvicorn re-raises the signal and kills the process before `system.dispose()` (143) | graceful, 0 (handlers installed by the adapter, embed installs none) |
+| reload | not used by HARP | same | same | embed refuses reload |
+| TLS / acme | HARP's adapter never configured TLS: nothing lost | same | same | same |
+| Windows | yes | **no** (uvloop) | **no** (the adapter requires uvloop) | yes, not tried |
+| new deps | none | `uvloop` | `uvicorn[standard]`, `uvloop` | `granian` (Rust wheel) |
+| other | | needs `asyncio.run(loop_factory=...)`, no policy change | | embed API is experimental (it logs so at startup) |
+
+Not tested: HTTP/2 under load, slow clients, request body streaming limits, websockets (HARP ignores them), Windows.
+
+### Provisional recommendation
+
+Keep **hypercorn** as default. If one alternative is worth carrying, it is **hypercorn+uvloop**: same server, same HTTP/2,
+logging and signal behaviour, 11% less CPU per request on `default`, one optional dependency, no code path of its own.
+**uvicorn** has the best CPU and the best saturation here but drops HTTP/2 and needed two workarounds (ASGI 3 detection,
+signals). **granian** loses on latency and p99, loses logging and carries the embed caveats: do not pursue while the
+handlers are Python. Decide on the external runner (#1168): rerun `bare` and `default` with the same options, pinned
+and quiet; the CPU per request column is the one to trust first.
