@@ -80,6 +80,31 @@ a permanent solution.
 You can use multiple ``--endpoint ...`` arguments and the option is available for all server-like commands
 (``harp-proxy start ...``, ``harp-proxy server ...``, ...).
 
+Buffering and streaming
+:::::::::::::::::::::::
+
+The proxy reads each request body and each response body in full before it sends anything on. This
+is a known limit, not a setting:
+
+- Server-sent events, long-polling, streamed JSON and other responses that stay open are not
+  supported. The client gets nothing until the upstream has finished.
+- Large downloads and uploads are not streamed.
+- Every in-flight body is held whole in memory, so the cost is the size of the bodies multiplied by
+  the number of concurrent requests. Size the memory of the process for your largest bodies at your
+  peak concurrency.
+
+Lifting the limit is tracked in `#911 <https://github.com/msqd/harp/issues/911>`_ (bounded response
+streaming), `#1129 <https://github.com/msqd/harp/issues/1129>`_ (server-sent events) and
+`#1130 <https://github.com/msqd/harp/issues/1130>`_ (request streaming).
+
+Remote urls carrying credentials
+--------------------------------
+
+An endpoint url may carry credentials (``https://user:password@api.example.com/``). They are sent
+upstream as ``Authorization: Basic``, never in the ``Host`` header, and left out of recorded urls and
+logs. An ``Authorization`` header already on the request, from the client or a rule, wins: the url
+credentials only apply when there is none.
+
 Remote urls carrying a path
 :::::::::::::::::::::::::::
 
@@ -127,9 +152,14 @@ segment as is (``curl --path-as-is``) gets the 400. Dots inside a segment are no
 ``/.well-known/x``, ``/v1.2/x`` and ``/users/a%2eb`` are forwarded unchanged, like other encoded
 characters (``/user%3A42``, ``/a%2fb``).
 
-Not covered yet (`#1009 <https://github.com/msqd/harp/issues/1009>`_): ``..;`` segments, double
-encoding (``%252e``), overlong UTF-8, a dot segment followed by an encoded NUL (``/%2e%2e%00/x``) and
-Unicode look-alike dots (fullwidth ``．`` U+FF0E, sent as ``%EF%BC%8E``). Each escapes only on an
-upstream that reads it as a dot segment (one that treats ``..;`` as ``..``, decodes twice, accepts
-overlong UTF-8, truncates at NUL, or applies Unicode normalisation before resolving dot segments). If
-your upstream does, do not rely on the base path alone to restrict access.
+Shapes an upstream may reduce to a dot segment after its own normalisation are refused too, so none
+of them relies on the upstream's behaviour:
+
+- ``..;`` and ``.;`` segments (parameters dropped by Tomcat, Spring): ``/..;/..;/admin``,
+  ``/%2e%2e;/admin``;
+- double or deeper encoding: ``/%252e%252e/admin``;
+- overlong UTF-8 dots: ``/%c0%ae%c0%ae/admin``;
+- a dot segment followed by an encoded NUL: ``/%2e%2e%00/x``;
+- Unicode look-alike dots (fullwidth ``．`` U+FF0E, sent as ``%EF%BC%8E``): ``/%EF%BC%8E%EF%BC%8E/x``.
+
+Legitimate paths are forwarded unchanged: ``/a%2eb``, ``/%20``, ``/%C3%A9``, ``/page;jsessionid=abc``.

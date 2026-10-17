@@ -1,31 +1,77 @@
 import time
 
 import httpx
-from hishel import Response
-from hishel._async_httpx import (
-    _httpx_to_internal,
-    _internal_to_httpx,
-)
+from hishel import Request, Response
+from hishel._async_httpx import _httpx_to_internal as _hishel_httpx_to_internal
+from hishel._async_httpx import _IteratorStream
 from hishel._core.models import ResponseMetadata
 from hishel.httpx import AsyncCacheTransport as HishelAsyncCacheTransport
 
 from harp import get_logger
 from harp.http.utils import hop_by_hop_names, parse_cache_control
-from harp.utils.bytes import ensure_bytes
+from harp.utils.bytes import HEADER_ENCODING, ensure_bytes, header_bytes
 from harp_apps.http_cache.models import WrappedRequest
 
 logger = get_logger(__name__)
 
 
-def _rewrite_request_url(request: httpx.Request) -> str:
-    # We change the internal request url to use a host containing our proxy name, to avoid multiple cache for load balanced endpoints.
+def _httpx_to_internal(value):
+    """hishel reads headers as text, and httpx guesses how to decode them: obs-text must not be guessed."""
+    value.headers.encoding = HEADER_ENCODING
+    return _hishel_httpx_to_internal(value)
+
+
+def _internal_to_httpx(value):
+    """The reverse, handing httpx bytes: given text it would insist on ascii, and refuse obs-text."""
+    headers = [(header_bytes(name), header_bytes(val)) for name, val in value.headers.items()]
+    stream = _IteratorStream(value._aiter_stream())
+    if isinstance(value, Response):
+        return httpx.Response(value.status_code, headers=headers, stream=stream, extensions=value.metadata)
+    return httpx.Request(value.method, value.url, headers=headers, stream=stream, extensions=value.metadata)
+
+
+def _endpoint_name(request: httpx.Request) -> str:
     endpoint_name = request.extensions.get("harp", {}).get("endpoint")
     if not endpoint_name:
         raise ValueError(
             f"The cache transport requires an endpoint name in request.extensions['harp']['endpoint'] "
             f"(url={request.url}); without it, unrelated requests would share one cache namespace."
         )
-    return str(request.url.copy_with(netloc=ensure_bytes(endpoint_name), host=endpoint_name))
+    return endpoint_name
+
+
+def _cache_url(url: httpx.URL, endpoint_name: str) -> str:
+    # We change the internal request url to use a host containing our proxy name, to avoid multiple cache for load balanced endpoints.
+    return str(url.copy_with(netloc=ensure_bytes(endpoint_name), host=endpoint_name))
+
+
+def _rewrite_request_url(request: httpx.Request) -> str:
+    return _cache_url(request.url, _endpoint_name(request))
+
+
+# Methods that RFC 9110 §9.2.1 defines as safe: they never invalidate anything.
+SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
+
+
+def _invalidated_urls(request: httpx.Request, response: httpx.Response) -> list[httpx.URL]:
+    """The URIs a successful unsafe request invalidates, per RFC 9111 §4.4.
+
+    That is the target URI, plus the ``Location`` and ``Content-Location`` URIs when they are on the
+    same host as the target (the host check stops an origin from invalidating another site's entries).
+    """
+    urls = [request.url]
+    for name in ("location", "content-location"):
+        value = response.headers.get(name)
+        if not value:
+            continue
+        try:
+            url = request.url.join(value)
+        except httpx.InvalidURL:
+            logger.debug(f"Ignoring unparsable {name} header for invalidation: value={value!r}")
+            continue
+        if (url.host, url.port, url.scheme) == (request.url.host, request.url.port, request.url.scheme):
+            urls.append(url)
+    return [url.copy_with(fragment=None) for url in urls]
 
 
 def _forbids_storage(request: httpx.Request) -> bool:
@@ -52,10 +98,25 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
 
         if _forbids_storage(request):
             logger.debug(f"Bypassing cache, the request forbids storage (RFC 9111 §5.2.1.5): url={request.url}")
-            return _internal_to_httpx(await self._send_without_caching(wrapped_request))
+            internal_response = await self._send_without_caching(wrapped_request)
+        else:
+            internal_response = await self._cache_proxy.handle_request(wrapped_request)
 
-        internal_response = await self._cache_proxy.handle_request(wrapped_request)
-        return _internal_to_httpx(internal_response)
+        response = _internal_to_httpx(internal_response)
+        if request.method not in SAFE_METHODS and response.status_code < 400:
+            await self._invalidate(request, response)
+        return response
+
+    async def _invalidate(self, request: httpx.Request, response: httpx.Response) -> None:
+        """Drop the stored entries for the resources a successful unsafe request has changed (RFC 9111 §4.4)."""
+        endpoint_name = _endpoint_name(request)
+        for url in _invalidated_urls(request, response):
+            key = await self._cache_proxy._get_key_for_request(
+                Request(method="GET", url=_cache_url(url, endpoint_name))
+            )
+            for entry in await self.storage.get_entries(key):
+                await self.storage.remove_entry(entry.id)
+            logger.debug(f"Cache invalidated by {request.method} {request.url}: url={url}")
 
     async def _send_without_caching(self, request: WrappedRequest) -> Response:
         """Go upstream without involving the cache at all, and report the result as a plain miss.
@@ -92,7 +153,10 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         ``content-length`` is deliberately kept: it describes the body being stored, and the
         controller drops it on the way out to the client anyway.
         """
-        response = await super().request_sender(request.unwrap())
+        httpx_response = await self.next_transport.handle_async_request(_internal_to_httpx(request.unwrap()))
+        if httpx_response.status_code == 304:
+            await httpx_response.aread()  # never leave a stream unconsumed
+        response = _httpx_to_internal(httpx_response)
         dropped = hop_by_hop_names(response.headers) - {"content-length"}
         for name in [name for name in response.headers if name.lower() in dropped]:
             del response.headers[name]

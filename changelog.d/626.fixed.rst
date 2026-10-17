@@ -1,0 +1,1 @@
+Overview performance chart legend lists the G grade, and G scores render in G's colour instead of grey.

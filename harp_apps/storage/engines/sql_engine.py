@@ -1,7 +1,7 @@
 from typing import Any, Union
 
 from pydantic_core import MultiHostUrl
-from sqlalchemy import URL, StaticPool, make_url
+from sqlalchemy import URL, AsyncAdaptedQueuePool, make_url
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.asyncio import create_async_engine as _create_async_engine
 
@@ -27,11 +27,16 @@ class SQLAlchemyEngine(AsyncEngine):
     @staticmethod
     def from_url(url: MultiHostUrl) -> AsyncEngine:
         database_url = make_url(str(url))
-        if database_url.get_dialect() == "sqlite" and database_url.database == ":memory:":
+        if database_url.get_backend_name() == "sqlite" and database_url.database == ":memory:":
+            # The database lives in its one connection, so every user must share it, one at a time: a
+            # connection shared at once (StaticPool) lets a reader's rollback undo a concurrent writer's
+            # uncommitted insert. A pool of exactly one queues the users instead.
             return create_async_engine(
                 database_url,
                 connect_args={"check_same_thread": False},
-                poolclass=StaticPool,
+                poolclass=AsyncAdaptedQueuePool,
+                pool_size=1,
+                max_overflow=0,
             )
 
         return create_async_engine(database_url)

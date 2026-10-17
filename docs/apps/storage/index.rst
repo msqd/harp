@@ -69,6 +69,15 @@ are not included in the test suite and may bring unexpected behaviours):
 - `MySQL <https://www.mysql.com/>`_ / `MariaDB <https://mariadb.org/>`_, using `aiomysql
   <https://aiomysql.readthedocs.io/>`_ driver.
 
+SQLite ships with the base install. The PostgreSQL and MySQL drivers are extras, install the one you need:
+
+.. code-block:: shell
+
+    pip install harp-proxy[postgresql]  # asyncpg
+    pip install harp-proxy[mysql]       # aiomysql, with cryptography
+
+Without it, a ``storage.url`` for that database fails at startup with the extra to install.
+
 
 Configuration
 -------------
@@ -92,6 +101,14 @@ The main configuration option you're interested in is ``storage.url``, which con
 
 SQLite is the default storage engine because requires no configuration. *Do not use it in production*. It is slow and
 has concurrency issues. It is only suitable (and handy) for development and testing.
+
+The default URL, ``sqlite+aiosqlite:///:memory:?cache=shared``, keeps the database in memory: it is lost at
+shutdown, and it lives in a single connection that database operations take in turn, so they never run in
+parallel. Point ``storage.url`` at a file to keep the data across restarts.
+
+The default URL, ``sqlite+aiosqlite:///:memory:?cache=shared``, keeps the database in memory: it is lost at
+shutdown, and it lives in a single connection that database operations take in turn, so they never run in
+parallel. Point ``storage.url`` at a file to keep the data across restarts.
 
 .. literalinclude:: ./examples/sqlite-aiosqlite.yml
     :language: yaml

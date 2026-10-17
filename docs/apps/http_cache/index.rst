@@ -84,7 +84,9 @@ Loading
 The HTTP cache application is loaded automatically when present and not disabled. It depends on the
 ``http_client`` application, which will be loaded automatically if not already present.
 
-To manually control loading:
+To manually control loading, list the applications to load. The list replaces the default set
+(``--applications`` replaces the file's list; ``--enable`` and ``--disable`` apply after either; with
+several ``--file``, the last one that sets ``applications:`` wins). An unknown name fails at startup:
 
 .. code-block:: yaml
 
@@ -149,6 +151,24 @@ offers no validator for is simply fetched again, since there is nothing to reval
     origin sends no ``Date``, HARP adds one set to the time it received the response before
     storing it (RFC 9110 §6.6.1), so the response still ages. A ``Date`` sent by the origin is kept
     as is. Responses that are forwarded but not stored are not modified.
+
+
+Invalidation by unsafe requests
+-------------------------------
+
+.. versionadded:: 0.12
+
+A successful write through the proxy drops the stored responses it made out of date (RFC 9111 §4.4), so a
+client reading its own write gets the new body rather than the cached one. When the origin answers a
+``PUT``, ``POST``, ``PATCH``, ``DELETE`` (any method other than ``GET``, ``HEAD``, ``OPTIONS`` and ``TRACE``)
+with a ``2xx`` or ``3xx`` status, HARP invalidates:
+
+- the target URI of the request;
+- the URIs named by the response's ``Location`` and ``Content-Location`` headers, when they are on the same
+  host as the target. A header pointing at another host is ignored.
+
+An error response (``4xx``, ``5xx``) invalidates nothing. Invalidation applies within the endpoint that
+handled the request, like the cache itself, and also when the request carries ``Cache-Control: no-store``.
 
 
 Cache key normalization

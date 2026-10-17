@@ -121,6 +121,9 @@ Frontend Test Options
     # Run browser tests
     cd harp_apps/dashboard/frontend && pnpm test:browser
 
+    # Open the HTML report of the last browser run (never opened automatically)
+    cd harp_apps/dashboard/frontend && pnpm test:browser:report
+
     # Update unit test snapshots
     make test-frontend-update
 
@@ -502,6 +505,7 @@ Backend Testing
 * ``PYTEST_OPTIONS``: Additional pytest arguments
 * ``TEST_SKIP_FRONT``: Skip frontend tests if set
 * ``TEST_ALL_DATABASES``: Test all database backends if set
+* ``TEST_DATABASE_DIALECTS``: Comma separated dialects to test (for example ``mysql``), default all
 
 Docker
 ^^^^^^

@@ -10,7 +10,7 @@ from urllib.parse import urlsplit
 import pytest
 from httpx import URL, AsyncByteStream, AsyncClient, MockTransport, Response
 
-from harp.http import HttpRequest
+from harp.http import HttpRequest, RejectedRequest
 from harp_apps.proxy.controllers import HttpProxyController, ProxyRoutingError
 from harp_apps.proxy.settings import Endpoint
 
@@ -309,6 +309,35 @@ async def test_dot_segments_under_any_separator_and_dot_encoding_are_refused(bas
         await controller._get_next_url_for(context)
 
 
+# Shapes an upstream may read as a dot segment after its own normalisation (#1009): ";" path
+# parameters, a second decoding, overlong UTF-8, truncation at NUL, Unicode normalisation.
+ALTERNATE_DOT_SEGMENT_PATHS = [
+    "/..;/..;/admin",
+    "/%2e%2e;/%2e%2e;/admin",
+    "/.;x=1/admin",
+    "/%252e%252e/%252e%252e/admin",
+    "/%25252e%25252e/admin",
+    "/%252e%252e%252fadmin",
+    "/%c0%ae%c0%ae/admin",
+    "/%C0%AE%C0%AE/admin",
+    "/%e0%80%ae%e0%80%ae/admin",
+    "/%2e%2e%00/x",
+    "/..%00/x",
+    "/%EF%BC%8E%EF%BC%8E/x",
+    "/%EF%BC%8E./x",
+]
+
+
+@pytest.mark.parametrize("base_url", ["http://example.com", "http://example.com/api/v1/"])
+@pytest.mark.parametrize("hostile_path", ALTERNATE_DOT_SEGMENT_PATHS)
+async def test_alternate_dot_segment_shapes_return_400_and_are_never_forwarded(base_url, hostile_path):
+    controller = _controller(base_url)
+    controller.forward = AsyncMock(side_effect=AssertionError("must not forward a hostile request"))
+    response = await controller(HttpRequest(method="GET", path=hostile_path))
+    assert response.status == 400
+    controller.forward.assert_not_called()
+
+
 @pytest.mark.parametrize("hostile_path", ["//[x/", "//][@+"])
 async def test_request_path_urlsplit_cannot_parse_returns_400(hostile_path):
     controller = _controller("http://example.com/api/v1/")
@@ -330,6 +359,12 @@ NOT_DOT_SEGMENT_PATHS = [
     "/user%3A42",
     "/a%2fb",
     "/search%20term",
+    "/a%2eb",
+    "/%20",
+    "/%C3%A9",
+    "/page;jsessionid=abc",
+    "/a;jsessionid=abc/b",
+    "/%2520",
 ]
 
 
@@ -423,3 +458,26 @@ async def test_what_httpx_sends_stays_under_the_base_path_with_no_dot_segment():
             (wire,) = sent
             assert wire == base_path + urlsplit(path).path.lstrip("/"), (base_url, path, wire)
             assert not _has_wire_dot_segment(wire), (base_url, path, wire)
+
+
+# httpx refuses URLs over 65,536 characters; the forwarded URL is base path + request path, so a long
+# base path lets a short enough request (h2 only) overflow it. 414, never the upstream, never liveness.
+OVERLONG_PATH = "/" + "a/" * 40000
+
+
+async def test_overlong_forwarded_url_is_rejected_with_414():
+    controller = _controller("http://example.com/" + "b/" * 90)
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=OVERLONG_PATH))
+    with pytest.raises(RejectedRequest) as exc_info:
+        await controller._get_next_url_for(context)
+    assert exc_info.value.status == 414
+
+
+async def test_overlong_forwarded_url_returns_414_without_forwarding_or_tripping_the_breaker():
+    controller = _controller("http://example.com/" + "b/" * 90)
+    controller.forward = AsyncMock(side_effect=AssertionError("must not forward an overlong url"))
+    status_before = controller.remote[controller.remote.get_url()].status
+    response = await controller(HttpRequest(method="GET", path=OVERLONG_PATH))
+    assert response.status == 414
+    controller.forward.assert_not_called()
+    assert controller.remote[controller.remote.get_url()].status == status_before

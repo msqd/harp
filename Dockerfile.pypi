@@ -3,20 +3,13 @@ FROM python:${PYTHON_VERSION}-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      build-essential \
-      libpq-dev \
-      && rm -rf /var/lib/apt/lists/*
-
 # Install from PyPI
 ARG VERSION
 RUN if [ -z "$VERSION" ]; then \
       echo "ERROR: VERSION build argument is required" && exit 1; \
     fi && \
     echo "Installing from PyPI: harp-proxy==$VERSION" && \
-    pip install --no-cache-dir "harp-proxy==$VERSION"
+    pip install --no-cache-dir "harp-proxy[postgresql,mysql]==$VERSION"
 
 # Create non-root user and set up shell aliases
 RUN useradd -m -u 1000 harp && \

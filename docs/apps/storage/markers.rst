@@ -7,6 +7,30 @@ The storage application recognizes specific transaction markers that control how
 Markers can be added to transactions through the :doc:`rules application </apps/rules/index>` or programmatically
 through the transaction API.
 
+Vocabulary
+::::::::::
+
+One prefix per cause:
+
+==============  ==============================================  ==========================================================
+Prefix          Cause                                           Markers
+==============  ==============================================  ==========================================================
+``skip-``       A rule asked for it                             ``skip-storage``, ``skip-request-storage``,
+                                                                ``skip-response-storage``, ``skip-request-body-storage``,
+                                                                ``skip-response-body-storage``,
+                                                                ``skip-request-headers-storage``,
+                                                                ``skip-response-headers-storage``
+``shed-``       Storage dropped data under pressure             ``shed-messages``, ``shed-headers``, ``shed-bodies``
+``truncated-``  A recording cap cut the data                    ``truncated-response-body``
+==============  ==============================================  ==========================================================
+
+The storage worker sets the ``shed-`` markers when it drops the messages, headers or bodies of a transaction because
+of its :attr:`pressure <harp_apps.storage.worker.StorageAsyncWorkerQueue.pressure>`. They tell an empty payload caused
+by load shedding apart from one caused by a rule.
+
+.. versionchanged:: 0.12
+   Markers are persisted with the transaction (``markers`` column, comma separated) and returned by the transaction API.
+
 Available Markers
 :::::::::::::::::
 
@@ -103,7 +127,8 @@ automatically set by the storage worker when it detects high system pressure
 Notes
 :::::
 
-- Markers are stored as part of the transaction metadata even when data is skipped
+- Markers are persisted with the transaction row, written when the transaction ends, even when data is skipped. A
+  transaction marked ``skip-storage`` has no row, so its markers are not persisted
 - Multiple markers can be combined on a single transaction
 - Message-level markers (``skip-request-storage``, ``skip-response-storage``) take precedence over component markers
   (``skip-request-body-storage``, ``skip-request-headers-storage``, etc.)

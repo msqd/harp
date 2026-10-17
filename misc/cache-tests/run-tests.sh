@@ -84,8 +84,8 @@ mkdir -p "$RESULTS_DIR"
 if [ -n "${CACHE_TESTS_DATABASE_URL:-}" ]; then
     DATABASE_URL="$CACHE_TESTS_DATABASE_URL"
 else
-    # A file, not HARP's `:memory:` default: on the in-memory default the cache mostly does not
-    # cache, and the suite scores 40% instead of 57%. Removed before each run so every run is cold.
+    # A file, so what the cache stored can be inspected after the run. Removed before each run so
+    # every run is cold.
     rm -f "$RESULTS_DIR/storage.db"
     DATABASE_URL="sqlite+aiosqlite:///$RESULTS_DIR/storage.db"
 fi
@@ -119,7 +119,6 @@ wait_for_port "$ORIGIN_PORT" "the origin server" "$RESULTS_DIR/origin.log"
 echo "Starting HARP on :$PROXY_PORT..."
 (cd "$SCRIPT_DIR" && uv run --project "$REPO_DIR" harp-proxy server \
     --file config.yml \
-    --applications http_client,http_cache,proxy,storage \
     --endpoint "cache-tests=$PROXY_PORT:http://localhost:$ORIGIN_PORT/" \
     --set "storage.url=$DATABASE_URL") > "$RESULTS_DIR/harp.log" 2>&1 &
 HARP_PID=$!

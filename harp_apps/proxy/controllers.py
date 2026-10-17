@@ -1,4 +1,5 @@
 import re
+import unicodedata
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
 from functools import cached_property, lru_cache
@@ -6,17 +7,17 @@ from time import time
 from httpx import AsyncClient, codes
 from pyheck import shouty_snake
 from typing import Optional, cast, override
-from urllib.parse import urlencode, urlsplit
+from urllib.parse import unquote_to_bytes, urlencode, urlsplit
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
+from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse, RejectedRequest
 from harp.http.utils import HOP_BY_HOP_HEADERS, hop_by_hop_names, parse_cache_control
 from harp.models import Transaction
 from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.tpdex import tpdex
-from .adapters import HttpClientProxyAdapter
+from .adapters import HttpClientProxyAdapter, strip_credentials
 from .constants import (
     BREAK_ON_NETWORK_ERROR,
     BREAK_ON_UNHANDLED_EXCEPTION,
@@ -49,6 +50,10 @@ logger = get_logger(__name__)
 
 # XXX: move to some type module ?
 ProxyFilterResult = Optional[ProxyFilterEvent | HttpResponse | dict]
+
+
+MAX_FORWARDED_URL_LENGTH = 65_536
+"""Longest URL httpx accepts; anything longer is refused before it gets there."""
 
 
 class ProxyRoutingError(Exception):
@@ -176,6 +181,9 @@ class HttpProxyController(AbstractHttpProxyController):
                     status=ERR_BAD_REQUEST_STATUS_CODE,
                 )
                 return await self.failure(context.transaction, base_url, response)
+            except RejectedRequest as exc:
+                response = HttpError(exc.message, exception=exc, status=exc.status)
+                return await self.failure(context.transaction, base_url, response)
 
             # todo: streaming should pass through to avoid reading all the content in memory
             await context.request.aread()
@@ -183,7 +191,7 @@ class HttpProxyController(AbstractHttpProxyController):
             # Attempt to forward the request to the remote server.
             try:
                 self.debug(
-                    f"▶▶ {context.request.method} {full_url}",
+                    f"▶▶ {context.request.method} {strip_credentials(full_url)}",
                     transaction=context.transaction,
                     extensions=request.extensions,
                 )
@@ -280,6 +288,8 @@ class HttpProxyController(AbstractHttpProxyController):
         base = urlsplit(base_url)
         forwarded_url = f"{base.scheme}://{base.netloc}{_base_path_of(base_url)}{raw_path.lstrip('/')}"
         full_url = forwarded_url + (f"?{urlencode(context.request.query)}" if context.request.query else "")
+        if len(full_url) > MAX_FORWARDED_URL_LENGTH:
+            raise RejectedRequest("Request path is too long.", status=414)
         return base_url, full_url
 
     async def failure(
@@ -460,17 +470,51 @@ def _has_control_or_space(raw_path: str) -> bool:
     return any(char <= " " or char == "\x7f" for char in raw_path)
 
 
-_PATH_SEPARATOR = re.compile(r"/|\\|%2f|%5c", re.IGNORECASE)
-_DOT_SEGMENT = re.compile(r"(?:\.|%2e){1,2}", re.IGNORECASE)
+_PATH_SEPARATOR = re.compile(r"[/\\]")
+_DOT_SEGMENT = re.compile(r"\.{1,2}")
+# Overlong UTF-8 forms of "." "/" and "\\" that lenient decoders accept (a strict one rejects them).
+_OVERLONG_UTF8 = {
+    b"\xc0\xae": b".",
+    b"\xe0\x80\xae": b".",
+    b"\xf0\x80\x80\xae": b".",
+    b"\xc0\xaf": b"/",
+    b"\xe0\x80\xaf": b"/",
+    b"\xc1\x9c": b"\\",
+    b"\xe0\x81\x9c": b"\\",
+}
+_MAX_DECODING_ROUNDS = 8
+
+
+def _decoded_as_any_upstream_might(raw_path: str) -> str:
+    """The path after every decoding a lenient upstream may apply: repeated percent-decoding, overlong
+    UTF-8 and Unicode (NFKC) normalisation, until nothing changes."""
+    data = raw_path.encode()
+    for _ in range(_MAX_DECODING_ROUNDS):
+        previous = data
+        data = unquote_to_bytes(data)
+        for overlong, char in _OVERLONG_UTF8.items():
+            data = data.replace(overlong, char)
+        data = unicodedata.normalize("NFKC", data.decode(errors="replace")).encode()
+        if data == previous:
+            break
+    return data.decode()
 
 
 def _has_dot_segment(raw_path: str) -> bool:
     """Whether a raw path holds a "." or ".." segment, as any normaliser on the way could read one.
 
-    Separators are "/", "\\" and their encodings "%2f" and "%5c"; dots may be literal or "%2e", in any
-    case and any mix. A dot inside a segment (".well-known", "v1.2", "a%2eb") is not a dot segment.
+    Separators are "/", "\\" and their encodings, dots may be literal or encoded, in any case and any
+    mix. Beyond a plain decoding, a segment counts as a dot segment when an upstream may reduce it to
+    one: ";" parameters are dropped ("..;"), a NUL truncates, and the path is decoded again, accepts
+    overlong UTF-8 and applies Unicode normalisation (fullwidth dots). A dot inside a segment
+    (".well-known", "v1.2", "a%2eb") is not a dot segment.
     """
-    return any(_DOT_SEGMENT.fullmatch(segment) for segment in _PATH_SEPARATOR.split(raw_path))
+    decoded = _decoded_as_any_upstream_might(raw_path)
+    for segment in _PATH_SEPARATOR.split(decoded):
+        segment = segment.split("\x00", 1)[0].split(";", 1)[0]
+        if _DOT_SEGMENT.fullmatch(segment):
+            return True
+    return False
 
 
 @lru_cache

@@ -3,6 +3,8 @@ from urllib.parse import urlencode
 
 from httpx import codes
 
+from harp.utils.bytes import header_display
+
 from .errors import HttpError
 from .requests import HttpRequest
 from .responses import HttpResponse
@@ -24,7 +26,7 @@ class BaseHttpMessageSerializer(MessageSerializer):
 
     @cached_property
     def headers(self) -> str:
-        return "\n".join([f"{k}: {v}" for k, v in self.wrapped.headers.items()])
+        return "\n".join([f"{header_display(k)}: {header_display(v)}" for k, v in self.wrapped.headers.items()])
 
     @cached_property
     def body(self) -> bytes:

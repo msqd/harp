@@ -45,6 +45,13 @@ We can also run a single test file by specifying the file path as an argument to
 
     pnpm run test:browser transactions.spec.ts
 
+A failing run prints the failures and exits non-zero; it never blocks on a report server. The HTML report is still
+written to ``playwright-report/``, and opened only on request:
+
+.. code-block:: bash
+
+    pnpm test:browser:report
+
 
 Writing E2E Tests
 :::::::::::::::::

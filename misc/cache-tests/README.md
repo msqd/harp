@@ -74,10 +74,9 @@ how a 40-character `blobs.id` survived into 0.10.
 CACHE_TESTS_DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/cachetests make test-e2e-cache
 ```
 
-> **Do not point this at HARP's default `:memory:` storage.** With `sqlite+aiosqlite:///:memory:`
-> the cache mostly does not store anything and the suite scores about 40% instead of 56.7%, varying
-> by several tests between runs. That is HARP's default when `storage.url` is unset, which is why
-> `config.yml` here sets it explicitly.
+HARP's default `:memory:` storage scores like the file: before 0.12 it lost cache writes under
+concurrent use and scored about 40% (#995). The suite keeps a file so the cache can be inspected
+after a run; both share the `sqlite` baseline.
 
 | variable | default | |
 |---|---|---|
@@ -113,7 +112,6 @@ git submodule update --init --recursive misc/cache-tests/cache-tests
 # harp, in another terminal
 cd misc/cache-tests
 uv run harp-proxy server --file config.yml \
-    --applications http_client,http_cache,proxy,storage \
     --endpoint cache-tests=4000:http://localhost:8000/ \
     --set storage.url=sqlite+aiosqlite:///$PWD/results/storage.db
 
@@ -126,9 +124,8 @@ uv run harp-proxy server --file config.yml \
 > `sys.path`, so `import harp` reports the version you are standing next to rather than the one you
 > installed, and every number in the comparison is silently the wrong version's.
 
-`--applications` is a command line flag and not a `config.yml` key on purpose: in a configuration file
-`applications:` only *adds* to the default set, it never restricts it. The endpoint is passed on the
-command line for the same kind of reason: declaring it in `config.yml` as well makes HARP refuse to
+`config.yml` restricts the application set with its `applications:` key, so the dashboard stays off. The
+endpoint is passed on the command line: declaring it in `config.yml` as well makes HARP refuse to
 start with `Endpoint «cache-tests» already exists`.
 
 ## When it fails
@@ -141,6 +138,15 @@ twice in a row.
 It used to exit 0 for every one of those. See
 [#990](https://github.com/msqd/harp/issues/990) and
 [ADR-0003](../../docs/adr/0003-cache-compliance-compared-per-test-against-a-pinned-baseline.md).
+
+## Known `retry`
+
+`304-etag-update-response-ETag` reports `retry` and is recorded as failing, and that is the expected
+outcome, not a defect. The suite's origin answers the conditional request with a 304 carrying a
+different strong `ETag`. RFC 9111 section 4.3.4 matches a 304 only to stored responses with the same
+strong `ETag`, so HARP refetches unconditionally, the origin sees the request twice, and the suite
+calls that a retry. Pinned by `harp_apps/http_cache/tests/test_revalidation_etag_mismatch.py`; see
+[#993](https://github.com/msqd/harp/issues/993).
 
 ## Related
 

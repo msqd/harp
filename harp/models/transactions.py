@@ -6,6 +6,16 @@ from .base import Entity
 from .messages import Message
 
 
+def encode_markers(markers) -> str | None:
+    """Encode transaction markers for the ``markers`` storage column (sorted, comma separated)."""
+    return ",".join(sorted(markers)) or None
+
+
+def decode_markers(value: str | None) -> set:
+    """Decode the ``markers`` storage column back to a set."""
+    return set(value.split(",")) if value else set()
+
+
 def encode_cache_flag(cached) -> str | None:
     """Encode a transaction cache-hit flag for the ``x_cached`` storage column.
 
@@ -66,6 +76,7 @@ class Transaction(Entity):
 
         extras = data.pop("extras", {})
 
+        data["markers"] = encode_markers(self.markers)
         data["x_cached"] = encode_cache_flag(extras.get("cached"))
         data["x_method"] = extras.get("method")
         data["x_no_cache"] = bool(extras.get("no_cache"))
@@ -75,5 +86,5 @@ class Transaction(Entity):
 
     def _asdict(self, /, *, secure=True):
         result = dataclasses.asdict(self)
-        del result["markers"]
+        result["markers"] = sorted(self.markers)
         return result
