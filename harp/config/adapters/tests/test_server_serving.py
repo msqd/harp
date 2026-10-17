@@ -26,12 +26,25 @@ class Lifespan:
         await send({"type": "http.response.body", "body": b"hello"})
 
 
+class PlainCallMiddleware:
+    """Like the metrics application's middleware: a plain (non-async) ``__call__`` returning an awaitable."""
+
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, scope, receive, send):
+        return self.app(scope, receive, send)
+
+
+@pytest.mark.parametrize("wrap", [False, True], ids=["app", "plain-call-middleware"])
 @pytest.mark.parametrize("host", ["127.0.0.1", "[::]"])
 @pytest.mark.parametrize("name", SERVERS)
-async def test_serves_a_request_in_process(name, host):
+async def test_serves_a_request_in_process(name, host, wrap):
     app = Lifespan()
     ports = [get_available_network_port(), get_available_network_port()]
-    system = SimpleNamespace(binds=[Bind(host, port) for port in ports], asgi_app=app)
+    system = SimpleNamespace(
+        binds=[Bind(host, port) for port in ports], asgi_app=PlainCallMiddleware(app) if wrap else app
+    )
     adapter = get_server(name).adapter_type(system)
 
     task = asyncio.ensure_future(adapter.serve())
