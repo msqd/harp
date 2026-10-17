@@ -64,7 +64,7 @@ postgresql = ["asyncpg>=0.30,<0.31"]
 native = ["harp-proxy-native==0.12.0.dev0"]
 # Alternative ASGI servers, see `harp server --server`.
 servers = ["uvicorn[standard]>=0.30", "uvloop>=0.21", "granian>=2.0"]
-# Alternative HTTP transport, see `http_client.transport.type`.
+# Benchmark-only HTTP transport (non-conforming: it does not keep headers as given), never to ship.
 pyreqwest = ["pyreqwest>=0.15,<0.16"]
 
 [project.scripts]

@@ -67,8 +67,14 @@ it. aiohttp is the adopt-native option and gives 1-8% on `bare`; the Rust client
 93 µs of transport CPU, -7% vs -1/-8% end to end), costs header fidelity, and needs an extra and an unstable API. There
 is no case for own Rust on this seam.
 
+Strict header fidelity is required, so pyreqwest fails the contract and stays a measurement ceiling only (non-conforming,
+benchmark use, never to ship). An own Rust transport (hyper with `preserve_header_case` and an ordered header map) is
+the only native path for the client, and it is not started: it is built only if the verdict run on the external runner
+(#1168) shows the pyreqwest ceiling still beating aiohttp by ≥15% CPU/request on `bare`, since an own hyper transport
+cannot beat that ceiling by much. On the laptop it does not (-7% vs aiohttp's -1 to -8%).
+
 Provisional recommendation, pending #1168: keep httpx the default; aiohttp is a safe opt-in (already a dependency, no
-divergence, ~5-8% on the proxy path); pyreqwest only as an experiment. If client cost still matters, the lever is the
+divergence, ~5-8% on the proxy path); pyreqwest only as the ceiling. If client cost still matters, the lever is the
 httpx client layer above the transport, not the transport. `default` and `loaded` do not move: storage dominates.
 
 ## SQLite lock contention (#1169)
