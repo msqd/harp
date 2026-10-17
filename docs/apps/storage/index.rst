@@ -149,6 +149,13 @@ starting the new version. A schema older than the running code is not a degraded
 ``blobs.id`` for cache keys, and against a database still holding the narrow column, any response the
 cache would store fails with a 500 rather than falling back to a cache miss.
 
+HARP checks the schema at every start and refuses to boot, with a fatal error and a non-zero exit code, if it
+is older than the code expects. The error names the database and the commands to run.
+
+SQLite files are not migrated: they are created from the models and never altered. A SQLite file written by
+0.11 lacks ``transactions.markers``, so it must be deleted (it is recreated on next start) or reset with
+``harp-proxy db:reset``. PostgreSQL and MySQL need ``harp-proxy db:migrate up head``.
+
 Migrations are implemented using `Alembic <https://alembic.sqlalchemy.org/>`_.
 
 

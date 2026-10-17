@@ -1,0 +1,1 @@
+HARP now refuses to start on an outdated storage schema, with the commands to fix it. A SQLite file written by 0.11 must be deleted or reset (``harp-proxy db:reset``); PostgreSQL and MySQL need ``harp-proxy db:migrate up head``.
