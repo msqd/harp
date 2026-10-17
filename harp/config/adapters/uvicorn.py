@@ -1,9 +1,33 @@
+import asyncio
+import contextlib
+import signal
 import socket
 
 from harp import get_logger
 from harp.config.builders.system import System
 
 logger = get_logger(__name__)
+
+
+def _create_server_type():
+    from uvicorn import Server
+
+    class _Server(Server):
+        @contextlib.contextmanager
+        def capture_signals(self):
+            # uvicorn re-raises the signal it caught once stopped, which kills the process before the system is
+            # disposed. Ask for a graceful exit instead and return normally.
+            loop = asyncio.get_running_loop()
+            signums = (signal.SIGINT, signal.SIGTERM)
+            for signum in signums:
+                loop.add_signal_handler(signum, self.handle_exit, signum, None)
+            try:
+                yield
+            finally:
+                for signum in signums:
+                    loop.remove_signal_handler(signum)
+
+    return _Server
 
 
 class UvicornAdapter:
@@ -27,7 +51,7 @@ class UvicornAdapter:
         """
         Serves the proxy using uvicorn, on the running event loop (uvloop is chosen by the caller).
         """
-        from uvicorn import Config, Server
+        from uvicorn import Config
 
         # logging is configured by harp (loggers "uvicorn.error" and "uvicorn.access"), loop is already running.
         config = Config(
@@ -37,7 +61,7 @@ class UvicornAdapter:
             loop="none",
             interface="asgi3",  # "auto" takes a plain `__call__` (middlewares) for a double-callable ASGI 2 app
         )
-        server = Server(config)
+        server = _create_server_type()(config)
         logger.debug(f"🌎 {type(self).__name__}::serve({', '.join(map(str, self.system.binds))})")
 
         await server.serve(sockets=self._create_sockets())

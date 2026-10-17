@@ -1,4 +1,6 @@
 import asyncio
+import os
+import signal
 from types import SimpleNamespace
 
 import httpx
@@ -59,3 +61,16 @@ async def test_serves_a_request_in_process(name, host, wrap):
     finally:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)
+
+
+@pytest.mark.parametrize("name", SERVERS)
+async def test_returns_on_sigterm_so_the_system_can_be_disposed(name):
+    port = get_available_network_port()
+    system = SimpleNamespace(binds=[Bind("127.0.0.1", port)], asgi_app=Lifespan())
+    adapter = get_server(name).adapter_type(system)
+
+    task = asyncio.ensure_future(adapter.serve())
+    await asyncio.to_thread(wait_for_port, port, "127.0.0.1")
+    os.kill(os.getpid(), signal.SIGTERM)  # uvicorn would otherwise re-raise it once stopped, killing the process
+
+    await asyncio.wait_for(task, timeout=10)
