@@ -1,5 +1,40 @@
 # Findings
 
+Rules (milestone explore/extensions): each candidate declares its target metric up front; native code must gain ≥15%
+on it, net of the best adopt-native option, against the best reasonable Python, median of ≥5 runs outside the spread,
+with no regression elsewhere. Laptop numbers validate tooling only; verdicts need the external runner (#1168).
+
+## Status
+
+| Candidate | Option | Verdict | Why |
+|---|---|---|---|
+| ASGI kernel | own Rust | **rejected** | ~100 µs of `await` glue; every hop calls back into Python controllers and listeners |
+| Config parsing | own Rust | **rejected** | startup only, already pydantic-core + libyaml; dwarfed by imports and migrations |
+| Rules, headers, path regex, cache key, dashboard | own Rust | **rejected** | microseconds of C-backed work, or DB-bound |
+| Blob ID | own Rust | **no perf case** | toolchain spike only: 1.2–1.5× on small bodies (call overhead), slower than OpenSSL at 5 MB |
+| Cache entry (de)serialisation | Python fix | **done** | libyaml (#1176, #1186) |
+| Blob hashing on the request path | Python fix | **done** | no copy, off-loop above 64 KiB (#1177, #1187) |
+| Dispatch logging | Python fix | **done** | `debug` (#1184, #1188) |
+| SQLite storage | Python fix | **done** | WAL + busy_timeout (#1152, #1206) |
+| ASGI server (hypercorn, pure h11) | adopt | open | #1171: needs a server switch first, HARP hardcodes `HypercornAdapter` |
+| Upstream client (httpx) | adopt | open | #1172 |
+| Storage write pipeline | Python design | open lead | see below |
+
+## SQLite lock contention (#1169)
+
+With cache + storage on a file-backed SQLite database in rollback-journal mode, the cache's blob reads waited on
+locks held by the storage writers. The event loop was idle (~60% in `select`), and the time was spent in aiosqlite
+threads. On `default` at 50 req/s, overhead p90 was 1.1–2.2 s and storage recorded ~13% of transactions under load.
+With WAL: overhead p90 6.6–7.8 ms and 100% recorded (laptop, 3 alternating runs each). Until this fix, the `default`
+profile measured lock contention, not HARP. Any baseline recorded before the fix is void.
+
+## Next lead: storage cost per transaction
+
+After WAL, `default` costs ~11 ms of HARP CPU per transaction vs ~4 ms on `bare`, saturates around 100 req/s, and sheds
+bodies from that rate on (laptop). The difference is the storage pipeline: SQLAlchemy ORM writes through one consumer
+queue. That is ORM and database work, not Rust material; batching writes or more than one consumer are the levers to
+measure first.
+
 ## Toolchain spike: blob ID
 
 Issue #1174. Rust `blob_id(data: bytes, content_type: str | None) -> str` (hex sha1 of `content_type`, `\n`, `data`),
