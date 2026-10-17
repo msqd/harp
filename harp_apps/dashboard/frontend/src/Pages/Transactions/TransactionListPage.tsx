@@ -12,7 +12,7 @@ import { Filters } from "Types/filters"
 import { SearchBar } from "ui/Components/SearchBar/SearchBar"
 import { H1 } from "ui/Components/Typography"
 
-import { RefreshButton } from "./Components/Buttons.tsx"
+import { LiveUpdatesButton, RefreshButton } from "./Components/Buttons.tsx"
 import { TransactionsDataTableProps } from "./Components/List/TransactionDataTable.tsx"
 import { OptionalPaginator } from "./Components/OptionalPaginator.tsx"
 import { TransactionListOnQuerySuccess } from "./TransactionListOnQuerySuccess.tsx"
@@ -57,7 +57,8 @@ export default function TransactionListPage({ TransactionDataTable }: Transactio
   const search = searchParams.get("search")
   const page = searchParams.get("page") ? parseInt(searchParams.get("page")!) : 1
 
-  const query = useTransactionsListQuery({ filters, page, cursor, search })
+  const [paused, setPaused] = useState(false)
+  const query = useTransactionsListQuery({ filters, page, cursor, search, paused })
 
   // Keep refs of filters and search to reset page when a change is detected
   const prevSearchRef = useRef<string | null>(null)
@@ -109,7 +110,11 @@ export default function TransactionListPage({ TransactionDataTable }: Transactio
           title={
             <H1 className="flex">
               Transactions
-              <RefreshButton onClick={() => void queryClient.invalidateQueries(["transactions"])} />
+              <RefreshButton
+                aria-label="Refresh transactions"
+                onClick={() => void queryClient.invalidateQueries(["transactions"])}
+              />
+              <LiveUpdatesButton paused={paused} onClick={() => setPaused((value) => !value)} />
             </H1>
           }
           description="Explore transactions that went through the proxy"

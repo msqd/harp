@@ -14,6 +14,7 @@ exports[`TransactionListPage > renders well when the query is successful 1`] = `
         >
           Transactions
           <button
+            aria-label="Refresh transactions"
             class="css-xaoupp"
           >
             <svg
@@ -29,6 +30,26 @@ exports[`TransactionListPage > renders well when the query is successful 1`] = `
                 fill-rule="evenodd"
               />
             </svg>
+          </button>
+          <button
+            aria-label="Pause live updates"
+            aria-pressed="false"
+            class="css-xaoupp"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              data-slot="icon"
+              fill="currentColor"
+              viewBox="0 0 16 16"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4.5 2a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-1ZM10.5 2a.5.5 0 0 0-.5.5v11a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-11a.5.5 0 0 0-.5-.5h-1Z"
+              />
+            </svg>
+             
+            pause
           </button>
         </h1>
         <p

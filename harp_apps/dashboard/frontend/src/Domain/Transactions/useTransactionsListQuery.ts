@@ -35,7 +35,9 @@ export function useTransactionsListQuery({
   cursor = undefined,
   filters = undefined,
   search = undefined,
+  paused = false,
 }: {
+  paused?: boolean
   filters?: Filters
   page?: number
   cursor?: string | null
@@ -50,7 +52,9 @@ export function useTransactionsListQuery({
     ["transactions", qs],
     () => api.fetch("/transactions" + (qs ? `?${qs}` : "")).then((r) => r.json()),
     {
-      refetchInterval: 10000,
+      refetchInterval: paused ? false : 10000,
+      refetchOnWindowFocus: !paused,
+      refetchOnReconnect: !paused,
     },
   )
 }
