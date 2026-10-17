@@ -7,6 +7,7 @@ from multidict import CIMultiDict, MultiDict
 
 from harp.asgi.bridge.streams import AsyncStreamFromAsgiReceive
 from harp.http import HttpRequestBridge, RejectedRequest
+from harp.utils.bytes import header_str
 
 _default_host = (None, None)
 
@@ -66,7 +67,7 @@ class HttpRequestAsgiBridge(HttpRequestBridge):
         """Get the headers from asgi scope, as a case-insensitive multidict."""
         headers = CIMultiDict()
         for name, value in self.asgi_scope.get("headers", []):
-            headers.add(name.decode("utf-8"), value.decode("utf-8"))
+            headers.add(header_str(name), header_str(value))
         return headers
 
     def get_stream(self) -> AsyncByteStream:
