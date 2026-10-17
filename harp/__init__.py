@@ -42,6 +42,9 @@ ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 #: Debug mode flag. When enabled, HARP will output additional debugging information that may not be safe for
 #: production environments (e.g., exception tracebacks in error responses). Set via HARP_DEBUG or DEBUG environment
 #: variables.
+# ASGI server run by default, see `harp.config.adapters`.
+DEFAULT_SERVER: str = "hypercorn"
+
 DEBUG: bool = bool(os.environ.get("HARP_DEBUG") or os.environ.get("DEBUG"))
 
 
@@ -114,7 +117,7 @@ __parsed_version__ = _parse_version(__version__)
 from ._logging import get_logger  # noqa: E402
 
 
-async def arun(builder: "_ConfigurationBuilder", server: str = "hypercorn"):
+async def arun(builder: "_ConfigurationBuilder", server: str = DEFAULT_SERVER):
     from harp.config.adapters import get_server
 
     system = await builder.abuild_system()
@@ -125,7 +128,7 @@ async def arun(builder: "_ConfigurationBuilder", server: str = "hypercorn"):
         await system.dispose()
 
 
-def run(builder: "_ConfigurationBuilder", server: str = "hypercorn"):
+def run(builder: "_ConfigurationBuilder", server: str = DEFAULT_SERVER):
     """
     Run the server using provided configuration.
 
@@ -146,6 +149,7 @@ def run(builder: "_ConfigurationBuilder", server: str = "hypercorn"):
 
 __all__ = [
     "DEBUG",
+    "DEFAULT_SERVER",
     "ROOT_DIR",
     "__revision__",
     "__version__",

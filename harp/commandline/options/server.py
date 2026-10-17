@@ -44,7 +44,7 @@ class CommonServerOptions(dict):
     enable: tuple = ()
     disable: tuple = ()
     strict: bool = False
-    server: str = "hypercorn"
+    server: str = DEFAULT_SERVER
 
     def as_list(self):
         items = list(
@@ -59,7 +59,7 @@ class CommonServerOptions(dict):
         )
         if self.strict:
             items.append("--strict")
-        if self.server != "hypercorn":
+        if self.server != DEFAULT_SERVER:
             items.append(f"--server {self.server}")
         return items
 

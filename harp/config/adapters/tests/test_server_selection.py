@@ -1,7 +1,10 @@
+import inspect
 import sys
 
 import pytest
 from click.testing import CliRunner
+
+import harp
 
 from harp.commandline.options.server import CommonServerOptions
 from harp.commandline.server import server
@@ -67,3 +70,10 @@ def test_command_reads_server_from_environment(monkeypatch):
     result = CliRunner().invoke(server, [], env={"HARP_SERVER": "granian"})
     assert result.exit_code == 0, result.output
     assert seen == {"server": "granian"}
+
+
+def test_every_default_follows_the_default_server():
+    assert CommonServerOptions().server == DEFAULT_SERVER
+    assert CommonServerOptions(server=DEFAULT_SERVER).as_list() == []
+    assert inspect.signature(harp.run).parameters["server"].default == DEFAULT_SERVER
+    assert inspect.signature(harp.arun).parameters["server"].default == DEFAULT_SERVER

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from harp import DEFAULT_SERVER
 from harp.config.adapters.granian import GranianAdapter
 from harp.config.adapters.hypercorn import HypercornAdapter
 from harp.config.adapters.uvicorn import UvicornAdapter
@@ -21,7 +22,8 @@ _SERVERS = {
 }
 
 SERVERS = tuple(_SERVERS)
-DEFAULT_SERVER = "hypercorn"
+
+__all__ = ["DEFAULT_SERVER", "SERVERS", "Server", "get_server"]
 
 
 def get_server(name: str) -> Server:
