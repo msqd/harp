@@ -30,6 +30,10 @@ DELIBERATELY_UNDECLARED = {
     "freezegun",
     # Development environment only (`harp start`), gated by check_packages/assert_package_is_available.
     "honcho",
+    # Optional `servers` extra, imported lazily by the matching adapter (harp/config/adapters).
+    "uvicorn",
+    "uvloop",
+    "granian",
 }
 
 
