@@ -69,11 +69,7 @@ class HttpClientProxyAdapter:
         if self.user_agent:
             request.headers["user-agent"] = self.user_agent
         dropped = hop_by_hop_names(request.headers)
-        return [
-            (header_bytes(name), header_bytes(value))
-            for name, value in request.headers.items()
-            if name.lower() not in dropped
-        ]
+        return [(name, value) for name, value in request.headers.items() if name.lower() not in dropped]
 
     def _build_request(self, request: HttpRequest, url: str) -> Request:
         """
@@ -88,7 +84,7 @@ class HttpClientProxyAdapter:
         remote_request = self.http_client.build_request(
             request.method,
             url,
-            headers=headers,
+            headers=[(header_bytes(name), header_bytes(value)) for name, value in headers],
             content=request.body,
             extensions={"harp": {**self.extensions}},
         )
