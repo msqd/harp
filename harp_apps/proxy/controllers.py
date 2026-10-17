@@ -10,7 +10,7 @@ from urllib.parse import urlencode, urlsplit
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse
+from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse, RejectedRequest
 from harp.http.utils import HOP_BY_HOP_HEADERS, hop_by_hop_names, parse_cache_control
 from harp.models import Transaction
 from harp.utils.api import api
@@ -49,6 +49,10 @@ logger = get_logger(__name__)
 
 # XXX: move to some type module ?
 ProxyFilterResult = Optional[ProxyFilterEvent | HttpResponse | dict]
+
+
+MAX_FORWARDED_URL_LENGTH = 65_536
+"""Longest URL httpx accepts; anything longer is refused before it gets there."""
 
 
 class ProxyRoutingError(Exception):
@@ -176,6 +180,9 @@ class HttpProxyController(AbstractHttpProxyController):
                     status=ERR_BAD_REQUEST_STATUS_CODE,
                 )
                 return await self.failure(context.transaction, base_url, response)
+            except RejectedRequest as exc:
+                response = HttpError(exc.message, exception=exc, status=exc.status)
+                return await self.failure(context.transaction, base_url, response)
 
             # todo: streaming should pass through to avoid reading all the content in memory
             await context.request.aread()
@@ -280,6 +287,8 @@ class HttpProxyController(AbstractHttpProxyController):
         base = urlsplit(base_url)
         forwarded_url = f"{base.scheme}://{base.netloc}{_base_path_of(base_url)}{raw_path.lstrip('/')}"
         full_url = forwarded_url + (f"?{urlencode(context.request.query)}" if context.request.query else "")
+        if len(full_url) > MAX_FORWARDED_URL_LENGTH:
+            raise RejectedRequest("Request path is too long.", status=414)
         return base_url, full_url
 
     async def failure(

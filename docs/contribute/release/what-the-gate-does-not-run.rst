@@ -166,7 +166,7 @@ honest answer to "why are these off" was that nobody knew, and nothing in the re
 Deselected by marker
 --------------------
 
-All three CI backend jobs run ``-m 'not subprocess'``, excluding **35 tests** from every CI run: 27
+All four CI backend jobs run ``-m 'not subprocess'``, excluding **35 tests** from every CI run: 27
 cookiecutter integration tests and the 8 above, which are therefore excluded twice. Removing either
 lock alone would have changed nothing.
 
@@ -229,7 +229,7 @@ In no gate at all
       - Where it runs
     * - ``make qa-full`` (all databases)
       - Makefile
-      - nowhere; ``TEST_ALL_DATABASES`` defaults false
+      - nowhere; ``TEST_ALL_DATABASES`` defaults false (CI covers MySQL and MariaDB only)
     * - ``-m subprocess`` (35 tests)
       - pytest marker
       - nowhere
@@ -246,7 +246,7 @@ In no gate at all
       - package.json
       - CI, job *Lint Frontend*
 
-CI runs three backend jobs, ``pnpm test:unit``, a documentation build, and two lint jobs: ``ruff
+CI runs four backend jobs (one of them on MySQL and MariaDB), ``pnpm test:unit``, a documentation build, and two lint jobs: ``ruff
 check`` with ``ruff format --check`` (*Lint Python*), and ``pnpm lint`` (*Lint Frontend*). That is
 the entire automated gate. Everything else in the Makefile runs only when a human runs it.
 

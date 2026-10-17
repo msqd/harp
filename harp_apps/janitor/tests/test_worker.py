@@ -1,10 +1,13 @@
+import asyncio
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from sqlalchemy import select
 
 from harp_apps.janitor.settings import JanitorSettings
 from harp_apps.janitor.tests import worker_with_grace
 from harp_apps.janitor.worker import JanitorWorker
+from harp_apps.storage.models.metrics import MetricValue
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.types import IBlobStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
@@ -31,6 +34,17 @@ class TestJanitorWorker(StorageTestFixtureMixin):
 
         async with sql_storage.session_factory() as session:
             assert (await worker.compute_metrics(session))["storage.transactions"] == 1
+
+    async def test_compute_and_store_metrics(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        """Runs on one connection: the in-memory default database has no second one to give (#995)."""
+        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings())
+        await self.create_transaction(sql_storage)
+
+        await asyncio.wait_for(worker.compute_and_store_metrics(), timeout=10)
+
+        metric = await sql_storage.metrics.find_one({"name": "storage.transactions"})
+        async with sql_storage.session_factory() as session:
+            assert (await session.execute(select(MetricValue.value).filter_by(metric_id=metric.id))).scalar_one() == 1
 
     async def test_delete_orphan_blobs(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
         if blob_storage.type == "redis":

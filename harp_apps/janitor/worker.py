@@ -124,7 +124,7 @@ class JanitorWorker:
 
         # TODO to storage
 
-        await self.storage.metrics.insert_values(await self.compute_metrics(session))
+        await self.storage.metrics.insert_values(await self.compute_metrics(session), session=session)
 
     async def compute_metrics(self, session):
         values = {
