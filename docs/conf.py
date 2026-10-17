@@ -4,10 +4,13 @@ import builtins
 import os
 import sys
 from datetime import datetime
+from pathlib import Path
 
 builtins.__sphinx__ = True
 
 sys.path.insert(0, os.path.abspath(".."))
+
+from docs._extensions.pending_changelog import render_pending_changelog  # noqa: E402
 
 project = "HARP Proxy"
 
@@ -24,6 +27,9 @@ if os.environ.get("READTHEDOCS_GIT_IDENTIFIER"):
     version = release = os.environ["READTHEDOCS_GIT_IDENTIFIER"]
 else:
     version = release = ".".join(__import__("harp").__hardcoded_version__.split(".")[0:2])
+
+
+render_pending_changelog(Path("..").resolve())
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -115,16 +121,3 @@ if ALGOLIA_APIKEY and READTHEDOCS_VERSION == "latest":
     docsearch_app_id = "ZPR2CBYLG3"
     docsearch_api_key = ALGOLIA_APIKEY
     docsearch_index_name = "harp-proxy"
-
-
-if READTHEDOCS_VERSION and READTHEDOCS_VERSION != "latest":
-    rst_prolog = (
-        """
-    .. admonition::
-
-        This documentation is for an **unreleased** version of HARP Proxy.
-        For the latest released version, see `latest <https://docs.harp-proxy.net/en/latest>`_.
-
-    """.strip()
-        + "\n\n"
-    )

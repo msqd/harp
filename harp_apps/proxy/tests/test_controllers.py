@@ -59,8 +59,8 @@ class TestEventOrder:
 
         # Verify the event order
         assert len(event_order) >= 3
-        assert event_order[0] == EVENT_TRANSACTION_STARTED
-        assert event_order[1] == EVENT_FILTER_PROXY_REQUEST
+        assert event_order[0] == EVENT_FILTER_PROXY_REQUEST
+        assert event_order[1] == EVENT_TRANSACTION_STARTED
         assert event_order[2] == EVENT_TRANSACTION_MESSAGE
 
         # Verify the context was returned with a transaction
@@ -113,3 +113,46 @@ class TestEventOrder:
         # Verify the transaction was modified by the filter
         assert modified_tag == "modified-by-filter"
         assert context.transaction.tags == ["modified-by-filter"]
+
+
+class TestConnectionHeaderScope:
+    """RFC 9110 §7.6.1 applies ``Connection`` to the message as received, before rules touch it."""
+
+    @staticmethod
+    def _controller(inject=None):
+        async def dispatch(event_id, event=None):
+            if event_id == EVENT_FILTER_PROXY_REQUEST and inject:
+                event.request.headers.update(inject)
+            return event
+
+        dispatcher = AsyncMock()
+        dispatcher.adispatch = dispatch
+        endpoint = Endpoint.from_kwargs(settings={"name": "test", "port": 80, "url": "http://example.com"})
+        return HttpProxyController(
+            http_client=AsyncClient(),
+            remote=endpoint.remote,
+            name=endpoint.settings.name,
+            dispatcher=dispatcher,
+        )
+
+    @pytest.mark.asyncio
+    async def test_header_injected_by_rule_survives_client_connection_naming_it(self):
+        controller = self._controller(inject={"x-api-key": "secret"})
+        request = HttpRequest(method="GET", path="/", headers={"connection": "x-api-key"})
+
+        context = await controller.start_transaction(request)
+        headers = controller.proxy._get_updated_headers(context.request, url="http://example.com/")
+
+        assert ("x-api-key", "secret") in headers
+
+    @pytest.mark.asyncio
+    async def test_header_named_by_client_connection_is_removed_before_rules_run(self):
+        controller = self._controller()
+        request = HttpRequest(method="GET", path="/", headers={"connection": "x-foo", "x-foo": "1", "x-bar": "2"})
+
+        context = await controller.start_transaction(request)
+        headers = controller.proxy._get_updated_headers(context.request, url="http://example.com/")
+
+        assert "x-foo" not in context.request.headers
+        assert "x-foo" not in [name.lower() for name, _ in headers]
+        assert ("x-bar", "2") in headers

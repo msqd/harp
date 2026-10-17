@@ -97,3 +97,14 @@ def test_force_include_sources_survive_a_fresh_checkout():
     assert sources, "expected at least one force-include source directory to guard"
     missing = [source for source in sources if not _tracked_files(source)]
     assert missing == [], f"force-include sources with no git-tracked file (break fresh clones): {missing}"
+
+
+def test_wheel_ships_no_typescript_declarations_in_dashboard_web():
+    """The app build must not leak ``.d.ts`` files into the shipped dashboard assets.
+
+    ``vite-plugin-dts`` belongs to the lib build only. Checked against whatever the
+    frontend build left in ``harp_apps/dashboard/web`` (vacuous on a fresh checkout).
+    """
+    paths = _wheel_distribution_paths()
+    leaked = sorted(p for p in paths if p.startswith("harp_apps/dashboard/web/") and p.endswith(".d.ts"))
+    assert leaked == [], f"declaration files should not ship in the wheel: {leaked}"

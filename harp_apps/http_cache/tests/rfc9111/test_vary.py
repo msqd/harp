@@ -22,7 +22,7 @@ class TestVaryHeader:
     """Tests for Vary header behavior per RFC 9111 §4.1."""
 
     @respx.mock
-    async def test_vary_creates_separate_cache_entries_rfc9111_4_1(self, cached_client, mock_storage):
+    async def test_vary_creates_separate_cache_entries_rfc9111_4_1(self, any_cached_client, any_storage, request):
         """RFC 9111 §4.1: Vary header creates separate cache entries per variant.
 
         Quote from RFC:
@@ -31,7 +31,18 @@ class TestVaryHeader:
         > response unless all of the selecting request-headers nominated by
         > the Vary header field match in both the original request and the
         > new request.
+
+        The third request, repeating the first variant, tells coexisting variants from variants
+        evicting each other. The shipped storage keeps one entry per key.
         """
+        if request.node.callspec.params["any_storage"] == "real":
+            request.applymarker(
+                pytest.mark.xfail(
+                    strict=True,
+                    reason="storage keeps one variant per key, see https://github.com/msqd/harp/issues/910",
+                )
+            )
+
         # Arrange: Response varies by Accept-Language
         route = respx.get("http://example.com/resource").mock(
             return_value=make_cacheable_response(
@@ -41,20 +52,15 @@ class TestVaryHeader:
             )
         )
 
-        # Act: Make two requests with different Accept-Language headers
-        response1 = await cached_client.get(
-            "http://example.com/resource",
-            headers={"Accept-Language": "en"},
-        )
-        response2 = await cached_client.get(
-            "http://example.com/resource",
-            headers={"Accept-Language": "fr"},
-        )
+        # Act: two variants, then the first one again
+        response1 = await any_cached_client.get("http://example.com/resource", headers={"Accept-Language": "en"})
+        response2 = await any_cached_client.get("http://example.com/resource", headers={"Accept-Language": "fr"})
+        response3 = await any_cached_client.get("http://example.com/resource", headers={"Accept-Language": "en"})
 
-        # Assert: Different Accept-Language means different cache entries
+        # Assert: the repeated variant is a hit, so the origin was fetched once per variant
         assert response1.status_code == 200
         assert response2.status_code == 200
-        # Both requests should hit the backend (different variants)
+        assert response3.status_code == 200
         assert route.call_count == 2
 
     @respx.mock

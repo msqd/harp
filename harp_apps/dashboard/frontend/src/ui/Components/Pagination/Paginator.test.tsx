@@ -9,6 +9,11 @@ describe("Paginator", () => {
     expect(container).toMatchSnapshot()
   })
 
+  it("keeps white text readable on the current page (WCAG AA, 4.5:1)", () => {
+    const { getByText } = render(<Paginator current={2} />)
+    expect(getByText("2")).toHaveClass("bg-primary-900", "text-white")
+  })
+
   it("renders without crashing", () => {
     const { getAllByText } = render(<Paginator />)
     const previousButtons = getAllByText("Previous")

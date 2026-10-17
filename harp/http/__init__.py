@@ -1,4 +1,4 @@
-from .errors import HttpError
+from .errors import HttpError, RejectedRequest
 from .requests import HttpRequest
 from .responses import AlreadyHandledHttpResponse, HttpResponse, JsonHttpResponse
 from .serializers import HttpRequestSerializer, get_serializer_for
@@ -17,5 +17,6 @@ __all__ = [
     "HttpResponse",
     "HttpResponseBridge",
     "JsonHttpResponse",
+    "RejectedRequest",
     "get_serializer_for",
 ]

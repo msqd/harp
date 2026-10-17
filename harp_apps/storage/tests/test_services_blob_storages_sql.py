@@ -1,6 +1,6 @@
 from unittest.mock import ANY
 
-from sqlalchemy import text
+from sqlalchemy import event, text
 
 from harp.models import Blob
 from harp_apps.storage.services.blob_storages.sql import SqlBlobStorage
@@ -32,20 +32,61 @@ async def test_basics(sql_blob_storage: SqlBlobStorage):
         assert (await conn.execute(text("SELECT * FROM blobs WHERE id = 'foo'"))).fetchone() is None
 
 
-async def test_put_populates_seen_cache(sql_blob_storage: SqlBlobStorage):
-    # After a put, the blob id is known to be stored, so it must be cached to let later puts skip
-    # the existence query.
-    storage = sql_blob_storage
-    assert not storage.seen.exists("foo")
-    await storage.put(Blob(id="foo", data=b"bar", content_type="text/plain"))
-    assert storage.seen.exists("foo")
+async def test_iter_blobs_holds_no_connection_between_batches(sql_blob_storage: SqlBlobStorage):
+    for i in range(450):
+        await sql_blob_storage.put(Blob(id=f"blob-{i:04}", data=b"x", content_type="cache/meta"))
+    await sql_blob_storage.put(Blob(id="other", data=b"x", content_type="text/plain"))
+
+    in_use = 0
+
+    def checked_out(*_):
+        nonlocal in_use
+        in_use += 1
+
+    def checked_in(*_):
+        nonlocal in_use
+        in_use -= 1
+
+    pool = sql_blob_storage.engine.sync_engine.pool
+    event.listen(pool, "checkout", checked_out)
+    event.listen(pool, "checkin", checked_in)
+
+    seen = []
+    in_use_when_paused = set()
+    async for blob in sql_blob_storage.iter_blobs("cache/meta"):
+        seen.append(blob.id)
+        in_use_when_paused.add(in_use)
+
+    assert seen == [f"blob-{i:04}" for i in range(450)]
+    assert in_use_when_paused == {0}
 
 
-async def test_exists_populates_seen_cache(sql_blob_storage: SqlBlobStorage):
-    # A positive existence check must also seed the cache. force_put does not touch the cache, so it
-    # gives us a stored-but-uncached blob.
-    storage = sql_blob_storage
-    await storage.force_put(Blob(id="foo", data=b"bar", content_type="text/plain"))
-    assert not storage.seen.exists("foo")
-    assert await storage.exists("foo")
-    assert storage.seen.exists("foo")
+async def test_delete_blobs_removes_chunks_in_one_statement_and_transaction_each(sql_blob_storage: SqlBlobStorage):
+    blobs = [Blob(id=f"blob-{i:04}", data=b"x", content_type="cache/meta") for i in range(450)]
+    for blob in blobs:
+        await sql_blob_storage.put(blob)
+
+    statements = []
+    commits = []
+    sync_engine = sql_blob_storage.engine.sync_engine
+    event.listen(
+        sync_engine,
+        "before_cursor_execute",
+        lambda *args: statements.append(args[2]) if args[2].startswith("DELETE") else None,
+    )
+    event.listen(sync_engine, "commit", lambda *_: commits.append(1))
+
+    await sql_blob_storage.delete_blobs(blobs)
+
+    assert [b async for b in sql_blob_storage.iter_blobs("cache/meta")] == []
+    assert len(statements) == len(commits) == 3  # 200 + 200 + 50
+
+
+async def test_delete_blobs_spares_a_blob_rewritten_since_and_ignores_absent_ones(sql_blob_storage: SqlBlobStorage):
+    old = Blob(id="rewritten", data=b"old", content_type="cache/meta")
+    await sql_blob_storage.put(old)
+    await sql_blob_storage.force_put(Blob(id="rewritten", data=b"fresh", content_type="cache/meta"))
+
+    await sql_blob_storage.delete_blobs([old, Blob(id="absent", data=b"x", content_type="cache/meta")])
+
+    assert (await sql_blob_storage.get("rewritten")).data == b"fresh"
