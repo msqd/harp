@@ -1,0 +1,1 @@
+Transaction markers (`skip-*`, new `shed-*` set when storage drops data under pressure) are now persisted and returned by the transaction API.

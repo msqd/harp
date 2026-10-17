@@ -186,6 +186,7 @@ class TestHttpProxyControllerWithStorage(
             "finished_at": ANY,
             "messages": ANY,
             "tags": {},
+            "markers": [],
             "extras": {
                 "flags": [],
                 "method": "GET",
@@ -253,6 +254,7 @@ class TestHttpProxyControllerWithStorage(
             "finished_at": ANY,
             "messages": ANY,
             "tags": {"foo": "bar"},
+            "markers": [],
             "extras": {
                 "flags": [],
                 "method": "GET",
