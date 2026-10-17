@@ -111,6 +111,30 @@ the transaction carries the ``truncated-request-body`` marker.
       # a byte count, or a size with its unit: 512KiB, 1MiB, 10MB
       max_recorded_body_size: 4MiB
 
+.. _proxy-client-read-timeout:
+
+**A silent client is cut.** A client that stops sending in the middle of a request, headers or body, is disconnected
+after ``client_read_timeout`` seconds (30 by default), so stalled clients cannot hold every connection. The proxy and
+the dashboard are served by the same server and share this setting. Each silence is timed on its own: a client that
+keeps sending, however slowly, at shorter intervals is not cut. A client waiting for a slow response is not concerned. A client that keeps sending too slowly is handled below.
+
+.. code-block:: yaml
+
+    proxy:
+      client_read_timeout: 30.0
+
+**A slow upload is cut.** A client must send its request body at ``min_request_body_rate`` bytes per second on average
+(1 KiB/s by default), once ``request_body_grace_period`` seconds (10 by default) have elapsed. A slower one, such as a
+client sending a byte every few seconds, is answered ``408`` and disconnected, and its request is never forwarded
+upstream. A normal slow upload above the rate completes, however long it takes. Set ``min_request_body_rate`` to ``0``
+to disable the check. The silence timeout above does not catch such a client, since it keeps sending.
+
+.. code-block:: yaml
+
+    proxy:
+      min_request_body_rate: 1KiB
+      request_body_grace_period: 10.0
+
 The transaction ends once the body has been sent, so its duration, and the :doc:`TPDEX </user/performances>`
 computed from it, cover the whole exchange including the transfer to the client. When the client goes away before the
 end of the body, HARP stops reading the upstream and releases its connection at once, and the transaction is recorded

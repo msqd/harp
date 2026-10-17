@@ -32,3 +32,29 @@ async def test_recording_cap_reaches_the_endpoint_controllers():
         assert controller.max_recorded_body_size == 2 * 1024 * 1024
     finally:
         await system.dispose()
+
+
+def test_request_body_rate_defaults():
+    settings = ProxySettings()
+    assert settings.min_request_body_rate == 1024
+    assert settings.request_body_grace_period == 10.0
+
+
+async def test_request_body_rate_reaches_the_endpoint_controllers():
+    system = await ConfigurationBuilder(
+        {
+            "applications": ["http_client", "proxy"],
+            "proxy": {
+                "min_request_body_rate": "2KiB",
+                "request_body_grace_period": 5,
+                "endpoints": [{"name": "api", "port": 8080, "url": "http://example.com/"}],
+            },
+        },
+        use_default_applications=False,
+    ).abuild_system(validate_dependencies=False)
+
+    try:
+        controller = system.provider.get("proxy.controllers.api_controller")
+        assert (controller.min_request_body_rate, controller.request_body_grace_period) == (2048, 5)
+    finally:
+        await system.dispose()
