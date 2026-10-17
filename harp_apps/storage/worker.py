@@ -61,6 +61,8 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
 
         if self.pressure >= 4:
             event.transaction.markers.add(SKIP_STORAGE)
+
+        if SKIP_STORAGE in event.transaction.markers:
             return
 
         # Copy fields into a dict that won't change before the task is handled

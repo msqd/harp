@@ -9,7 +9,6 @@ from harp.config import Configurable
 ALLOWED_SCHEMES = [
     "mysql",
     "mysql+aiomysql",
-    "mysql+asyncmy",
     "postgresql",
     "postgresql+asyncpg",
     "sqlite",
@@ -20,6 +19,12 @@ ALLOWED_SCHEMES = [
 def _unwrap_sqlalchemy_urls(url):
     if isinstance(url, URL):
         return url.render_as_string(hide_password=False)
+    return url
+
+
+def _refuse_asyncmy(url):
+    if str(url).startswith("mysql+asyncmy:"):
+        raise ValueError("asyncmy is not supported anymore, use mysql+aiomysql:// instead")
     return url
 
 
@@ -38,6 +43,7 @@ def _fix_unasync_dsns(url: str | MultiHostUrl) -> MultiHostUrl:
 DatabaseUrl = Annotated[
     MultiHostUrl,
     UrlConstraints(allowed_schemes=ALLOWED_SCHEMES),
+    BeforeValidator(_refuse_asyncmy),
     BeforeValidator(_unwrap_sqlalchemy_urls),
     AfterValidator(_fix_unasync_dsns),
 ]

@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from asgiref.typing import ASGISendCallable
 from multidict import CIMultiDictProxy
 
-from harp.utils.bytes import ensure_bytes
+from harp.utils.bytes import ensure_bytes, header_bytes
 
 if TYPE_CHECKING:
     from harp.http import HttpResponse
@@ -22,7 +22,7 @@ class HttpResponseAsgiBridge:  # todo protocol HttpResponseBridge
         self.response._headers = CIMultiDictProxy(self.response._headers)
 
         # prepare headers for asgi
-        headers = tuple((ensure_bytes(k), ensure_bytes(v)) for k, v in self.response.headers.items())
+        headers = tuple((header_bytes(k), header_bytes(v)) for k, v in self.response.headers.items())
 
         # start the response
         await self.asgi_send(

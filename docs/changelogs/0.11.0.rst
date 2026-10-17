@@ -1,0 +1,51 @@
+Version 0.11.0 (2026-10-15)
+===========================
+
+Added
+:::::
+
+- Janitor: ``janitor.period``, ``janitor.old_after`` and ``janitor.enabled`` settings replace the hardcoded sweep period and retention. (#339)
+- ``harp create project --harp-source PATH`` (or ``HARP_SOURCE``) scaffolds a project that installs ``harp-proxy`` editable from a local checkout; the cookiecutter integration tests use it. (#841)
+- ``http_cache.policy.options`` sets ``shared``, ``supported_methods`` and ``allow_stale`` from configuration.
+  A ``cache_options`` mapping under ``http_cache.policy`` now fails at startup, naming ``http_cache.policy.options``, instead of at the first request. (#933)
+
+Changed
+:::::::
+
+- Cache: ``http_cache.storage`` ``ttl`` now expires entries and defaults to ``86400`` (24 hours), ``null`` disables expiry; ``check_ttl_every`` throttles the sweep, which runs in the background and deletes in batches. They did nothing before. (#924, #1105, #1112)
+- CI documentation and Storybook builds no longer ignore failures and are required by *All Checks Passed*, so they block publishing. (#932)
+- Importing ``harp`` no longer configures logging (stdlib ``dictConfig``, ``structlog.configure``) nor disables existing loggers; embedders configure logging themselves. The ``harp`` command still does, with the same formats and ``LOGGING_*`` levels. (#944)
+- The CI wheel job no longer sets up Python itself; uv provides the interpreter, as for contributors. (#982)
+- Dependabot uses the ``uv`` ecosystem: Python updates change ``pyproject.toml`` and ``uv.lock`` together, and the cookiecutter template is no longer parsed. (#1043)
+- CI lints Python (``ruff check``, ``ruff format --check``) and the frontend (``pnpm lint``), both required by *All Checks Passed*; ``make lint-frontend`` runs ``pnpm lint``; generated ``src/Models/*.d.ts`` are excluded from ESLint.
+- Dashboard Help link opens the ``X.Y`` docs only for final releases, ``latest`` otherwise.
+- Docs no longer inject an "unreleased" banner; Read the Docs notifications replace it.
+- Pushes to ``main`` publish the ``unstable`` Docker image; version moves to ``0.11.0.dev0``.
+
+Fixed
+:::::
+
+- Wheel no longer ships stray ``.d.ts`` files: ``vite-plugin-dts`` runs only in the frontend lib build, and ``bin/build_wheel`` fails if the wheel holds one under ``web/``. (#822)
+- Cache: ``hishel`` is capped at ``<1.1.10`` (1.1.10 and later fail RFC 9111 compliance tests); ``redis`` 8.0 is validated. (#869)
+- Docs: the HTTP cache index warns before the first configuration example that the cache is shared, and what an upstream must send. (#873)
+- ``harp create project`` floors ``harp-proxy`` at the installed version, ``.dev0`` for pre-releases and dev builds, so a scaffold installs during a pre-release window. (#875)
+- Dashboard: unknown URLs and unknown transactions show a "not found" page inside the layout instead of a crash screen or an empty card, and the "copy transaction link" button yields ``/transactions/<id>`` from the detail page. (#877)
+- ``click``, ``httpcore`` and ``prometheus-client`` are declared dependencies (imported directly, they resolved only through ``rich-click``, ``httpx`` and ``asgi-prometheus``); a test fails when shipped code imports an undeclared distribution. (#900)
+- Cache: a request reaching the cache transport without an endpoint name now raises a clear error instead of falling into a shared ``__upstream__`` namespace. (#913)
+- Janitor no longer deletes live HTTP cache entries, ``storage_blobs_orphans`` no longer counts the cache, young orphans are kept 10 minutes, and SQL blob storage always checks the database before skipping a write. (#923, #925, #1002)
+- Cache: a stored response with no ``Date`` header now gets one set to its time of receipt, so its ``max-age`` expires instead of serving fresh forever. (#963)
+- ``harp create project`` keeps author name, author email and project name verbatim (quotes, backslashes, Jinja, shell characters), and the ``uv tool run`` fallback runs a pinned cookiecutter. (#1003)
+- ``make wheel`` no longer leaves a wheel in ``dist/`` when its asset check or ``twine check`` fails. (#1004)
+- GitHub release notes no longer start with YAML front matter. (#1033)
+- Release job renders pre-release notes from the changelog fragments; the unreleased docs page is titled with the upcoming version and absent when nothing is pending. (#1085)
+- Default Docker builds to the supported Python 3.13 runtime. (#1108)
+- Frontend build no longer deletes the tracked ``harp_apps/dashboard/web/.gitkeep``, so a local build leaves the checkout clean (no ``-dirty`` version).
+
+Security
+::::::::
+
+- Lock upgraded to the fixed release of every open Dependabot advisory except asyncmy (no fix, documented, use aiomysql); ``pytest`` cap widened to ``<10`` and ``pytest-asyncio`` to ``<1.4``. (#1012)
+- Dashboard user passwords (``dashboard.auth.users.<name>.password``) are masked by ``harp-proxy system config`` and ``GET /api/system/settings``, whatever the hashing algorithm. ``--unsecure`` still shows them.
+- URL passwords are masked when the username is empty (``redis://:password@host``).
+
+

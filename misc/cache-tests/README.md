@@ -74,10 +74,9 @@ how a 40-character `blobs.id` survived into 0.10.
 CACHE_TESTS_DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/cachetests make test-e2e-cache
 ```
 
-> **Do not point this at HARP's default `:memory:` storage.** With `sqlite+aiosqlite:///:memory:`
-> the cache mostly does not store anything and the suite scores about 40% instead of 56.7%, varying
-> by several tests between runs. That is HARP's default when `storage.url` is unset, which is why
-> `config.yml` here sets it explicitly.
+HARP's default `:memory:` storage scores like the file: before 0.12 it lost cache writes under
+concurrent use and scored about 40% (#995). The suite keeps a file so the cache can be inspected
+after a run; both share the `sqlite` baseline.
 
 | variable | default | |
 |---|---|---|

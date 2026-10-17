@@ -25,6 +25,9 @@ Under the default test matrix, HARP's MySQL tests are not red. They are **absent
 The one test that collects compiles SQL and never opens a connection. ``make qa`` does not fail on
 MySQL. It silently has no MySQL, and reports success.
 
+Since #916, ``make qa-full`` installs the ``mysql`` driver group and runs the MySQL and MariaDB test bodies
+through aiomysql. The default ``make qa`` still does not: it runs no MySQL at all.
+
 That is not a broken test or a failing gate. It is a whole supported backend quietly not present in
 the run, counted as a pass. Everything else in this document is a variation on it.
 
@@ -61,9 +64,6 @@ something else.
     * - ``unzip`` absent, stderr discarded
       - frontend assets missing from the wheel
       - the tool was missing; the wheel held all 32
-    * - a warning attributed to an ``asyncmy`` test
-      - asyncmy has a teardown defect
-      - a garbage collector finalizer, attributed to whatever ran when the collector woke
     * - ``FakeDatetime`` rejected by MariaDB
       - HARP cannot write transactions on MariaDB
       - freezegun's test double, never constructed in production
@@ -166,7 +166,7 @@ honest answer to "why are these off" was that nobody knew, and nothing in the re
 Deselected by marker
 --------------------
 
-All three CI backend jobs run ``-m 'not subprocess'``, excluding **35 tests** from every CI run: 27
+All four CI backend jobs run ``-m 'not subprocess'``, excluding **35 tests** from every CI run: 27
 cookiecutter integration tests and the 8 above, which are therefore excluded twice. Removing either
 lock alone would have changed nothing.
 
@@ -192,6 +192,9 @@ the URL; and the ``mysql`` dependency group was never synced, so no driver was i
 consequence worth noticing on its own: because the driver never reached the URL, the two driver legs
 of the matrix produced an identical connection string, so one of them had never been executed by
 anything while appearing in every test id.
+
+Both defects are fixed (#916): the URL builder sets the driver whatever URL format testcontainers returns, the
+``mysql`` group is synced by default, and asyncmy is dropped. MySQL and MariaDB bodies now run under ``make qa-full``.
 
 Repaired locally, the suite ran and **HARP worked on MySQL and MariaDB**, including the full-text
 search path that a fix in that release had repaired and that no gate had ever executed.
@@ -226,7 +229,7 @@ In no gate at all
       - Where it runs
     * - ``make qa-full`` (all databases)
       - Makefile
-      - nowhere; ``TEST_ALL_DATABASES`` defaults false
+      - nowhere; ``TEST_ALL_DATABASES`` defaults false (CI covers MySQL and MariaDB only)
     * - ``-m subprocess`` (35 tests)
       - pytest marker
       - nowhere
@@ -238,13 +241,19 @@ In no gate at all
       - nowhere
     * - visual suite ``test:ui:dev``
       - ``make test-frontend``
-      - not in CI
+      - not in CI until #881 provides the browser setup
     * - ``pnpm lint``
       - package.json
-      - nowhere
+      - CI, job *Lint Frontend*
 
-CI runs three backend jobs, ``pnpm test:unit``, and a documentation build. That is the entire
-automated gate. Everything else in the Makefile runs only when a human runs it.
+CI runs four backend jobs (one of them on MySQL and MariaDB), ``pnpm test:unit``, a documentation build, and two lint jobs: ``ruff
+check`` with ``ruff format --check`` (*Lint Python*), and ``pnpm lint`` (*Lint Frontend*). That is
+the entire automated gate. Everything else in the Makefile runs only when a human runs it.
+
+The *Build Python Package* job runs ``make clean-dist wheel`` without ``actions/setup-python``, so
+the wheel is built with the interpreter uv provides, as on a developer machine. It does not prove
+the build is independent of the system Python: the runner image still has its own on ``PATH``, so a
+bare ``python3`` call in ``bin/build_wheel`` would pass in CI and fail on a machine without one.
 
 Observed but not reported
 -------------------------
@@ -273,11 +282,15 @@ Incapable of reporting
 Every other entry here is a gate that failed to report something it did observe. This one is an
 instrument that cannot report at all, and it went unnoticed for an unknown number of releases.
 
-``make docs`` emits **zero warnings whatever it is fed**. Importing ``harp`` runs
+``make docs`` emitted **zero warnings whatever it was fed**. Importing ``harp`` ran
 ``logging.config.dictConfig`` at module import time with ``disable_existing_loggers: True``
-(``harp/_logging.py``, lines 71 and 100). The documentation build imports ``harp`` through the two
-extensions in ``docs/_extensions/``, which disables the ``sphinx`` logger that Sphinx created moments
-earlier. Its handlers stay correctly attached; the logger itself is dead.
+(``harp/_logging.py``). The documentation build imports ``harp`` through the two
+extensions in ``docs/_extensions/``, which disabled the ``sphinx`` logger that Sphinx created moments
+earlier. Its handlers stayed correctly attached; the logger itself was dead.
+
+Fixed in `PR #1063 <https://github.com/msqd/harp/pull/1063>`_: importing ``harp`` configures no logging
+any more, the ``harp`` command does it. The docs build now reports warnings again (about 350 at the
+time of the fix); fixing them is tracked separately.
 
 **A build that reports no warnings and a build that cannot report warnings look identical from the
 exit code.**
@@ -324,15 +337,16 @@ them with a recorded reason, and all five were still in place two releases later
 #. ``-$(UV_RUN) pre-commit`` in ``preqa``, whose ``-`` makes ``make`` ignore the exit status.
 #. ``continue-on-error: true`` on the **Build Documentation** CI job.
 #. ``continue-on-error: true`` on the **Build Storybook** CI job.
-#. The entire ``test-frontend-visual`` CI job commented out, including the visual suite.
+#. The entire ``test-frontend-visual`` CI job commented out, including the visual suite (commit
+   ``24744970`` commented it out, ``0fbdd5a0`` deleted it; its last definition is in ``24744970``).
 
 The pattern is ordinary and forgivable: someone migrating a build system meets a wall of unrelated
 failures, silences them to get the migration through, intends to come back, and does not. It cost
 two releases and a full day of investigation to rediscover two of them from their symptoms. Reading
 one diff found the other three in minutes.
 
-Both ``continue-on-error`` jobs currently pass, so those two are dormant rather than actively hiding
-a failure. That is worth stating precisely: dormant is not the same as harmless, because the whole
+Both ``continue-on-error`` jobs passed when this was written, so those two were dormant rather than
+actively hiding a failure. The flags are now removed and both jobs block publishing. That is worth stating precisely: dormant is not the same as harmless, because the whole
 point of the flag is that the day one of them does fail, nothing will say so.
 
 The search is cheap and bounded. In the diff of any large migration, look for ``skip``, ``xfail``,

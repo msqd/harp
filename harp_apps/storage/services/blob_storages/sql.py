@@ -1,48 +1,27 @@
-from collections import OrderedDict
-from collections.abc import Iterable
+from collections.abc import AsyncIterator, Sequence
+from datetime import UTC, datetime, timedelta
 from typing import override
 
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import and_, delete, or_, func, insert, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from harp import get_logger
 from harp.models import Blob
 from harp_apps.storage.models import Blob as SqlBlob
+from harp_apps.storage.models.blobs import ORPHAN_GRACE
 from harp_apps.storage.types import IBlobStorage
 
 logger = get_logger(__name__)
 
+ITER_BATCH_SIZE = 200
+DELETE_BATCH_SIZE = 200
 
-class LRUSet:
-    def __init__(self, capacity):
-        self.capacity = capacity
-        self.items = OrderedDict()
 
-    def add(self, item):
-        if item in self.items:
-            # Move to the end to mark as recently used
-            self.items.move_to_end(item)
-        else:
-            self.items[item] = True
-            if len(self.items) > self.capacity:
-                # Remove the least recently used item
-                self.items.popitem(last=False)
-
-    def remove(self, item):
-        if item in self.items:
-            del self.items[item]
-
-    def exists(self, item):
-        return item in self.items
-
-    def get_lru(self):
-        if self.items:
-            return next(iter(self.items))
-        return None
-
-    def __repr__(self):
-        return f"LRUSet({set(self.items.keys())})"
+def _is_older_than(moment: datetime, age: timedelta) -> bool:
+    if moment.tzinfo is None:  # sqlite hands back naive UTC
+        moment = moment.replace(tzinfo=UTC)
+    return datetime.now(UTC) - moment > age
 
 
 class SqlBlobStorage(IBlobStorage):
@@ -50,7 +29,6 @@ class SqlBlobStorage(IBlobStorage):
 
     def __init__(self, engine: AsyncEngine):
         self.engine = engine
-        self.seen = LRUSet(1000)
 
     @override
     async def get(self, blob_id):
@@ -72,22 +50,22 @@ class SqlBlobStorage(IBlobStorage):
     @override
     async def put(self, blob: Blob) -> Blob:
         """
-        Store a blob in the database.
+        Store a blob in the database, unless it is already there.
 
-        :param blob_id: content hash identifying the blob (sha1 for message blobs, sha256 for cache entries)
-        :param data: blob data
+        Always asks the database: another process (the janitor, another instance) may have deleted
+        the row since this one last wrote it, and a local memory of "stored" cannot know.
+
+        Content that is already stored is written again in the one way that matters: its
+        `created_at` is renewed once it gets old, so the orphan sweep leaves it alone while the
+        message that is about to reference it commits. See `ORPHAN_GRACE`.
+
+        :param blob: content-addressed blob (sha1 for message blobs, sha256 for cache entries)
         """
-        if self.seen.exists(blob.id):
-            return blob
-
         async with self.engine.connect() as conn:
-            if not (
-                await conn.execute(
-                    select(
-                        select(SqlBlob.id).where(SqlBlob.id == blob.id).exists(),
-                    ),
-                )
-            ).scalar_one():
+            created_at = (
+                await conn.execute(select(SqlBlob.created_at).where(SqlBlob.id == blob.id))
+            ).scalar_one_or_none()
+            if created_at is None:
                 try:
                     await conn.execute(
                         insert(SqlBlob).values(id=blob.id, data=blob.data, content_type=blob.content_type),
@@ -95,12 +73,9 @@ class SqlBlobStorage(IBlobStorage):
                     await conn.commit()
                 except IntegrityError:
                     pass  # already there? that's fine!
-        # the blob is now known to be stored: remember it so later puts skip the existence query.
-        # A cache populated from what you did, rather than from what the database confirmed, is only
-        # valid while you are the only writer. Anything else deleting rows (the janitor sweep does,
-        # in bulk) has to call `forget()`, or this entry outlives the row it stands for and both
-        # `put()` and `exists()` go on answering from it.
-        self.seen.add(blob.id)
+            elif _is_older_than(created_at, ORPHAN_GRACE / 2):
+                await conn.execute(update(SqlBlob).where(SqlBlob.id == blob.id).values(created_at=func.now()))
+                await conn.commit()
         return blob
 
     @override
@@ -126,22 +101,25 @@ class SqlBlobStorage(IBlobStorage):
 
         :param blob_id: content hash identifying the blob (sha1 for message blobs, sha256 for cache entries)
         """
-        self.seen.remove(blob_id)
         async with self.engine.connect() as conn:
             await conn.execute(
                 delete(SqlBlob).where(SqlBlob.id == blob_id),
             )
             await conn.commit()
 
-    @override
-    def forget(self, blob_ids: Iterable[str]) -> None:
-        """Drop the `seen` entries for blobs deleted without going through `delete`.
-
-        Both `put()` and `exists()` answer from `seen`, so both are wrong about a swept blob until
-        this is called.
+    async def delete_blobs(self, blobs: Sequence[Blob]) -> None:
         """
-        for blob_id in blob_ids:
-            self.seen.remove(blob_id)
+        Delete blobs in chunks, one statement and one transaction per chunk.
+
+        A blob stored again with other data since it was read is left alone.
+        """
+        for start in range(0, len(blobs), DELETE_BATCH_SIZE):
+            chunk = blobs[start : start + DELETE_BATCH_SIZE]
+            async with self.engine.connect() as conn:
+                await conn.execute(
+                    delete(SqlBlob).where(or_(*(and_(SqlBlob.id == b.id, SqlBlob.data == b.data) for b in chunk)))
+                )
+                await conn.commit()
 
     @override
     async def exists(self, blob_id: str) -> bool:
@@ -151,11 +129,8 @@ class SqlBlobStorage(IBlobStorage):
         :param blob_id: content hash identifying the blob (sha1 for message blobs, sha256 for cache entries)
         :return: True if the blob exists, False otherwise
         """
-        if self.seen.exists(blob_id):
-            return True
-
         async with self.engine.connect() as conn:
-            found = bool(
+            return bool(
                 (
                     await conn.execute(
                         select(
@@ -164,7 +139,26 @@ class SqlBlobStorage(IBlobStorage):
                     )
                 ).scalar_one()
             )
-        if found:
-            # remember it so later exists()/put() calls skip the existence query.
-            self.seen.add(blob_id)
-        return found
+
+    async def iter_blobs(self, content_type: str) -> AsyncIterator[Blob]:
+        """Every stored blob of this content type.
+
+        Read in short batches, each on its own connection, so no read transaction stays open while the
+        caller works on a row: on SQLite a long streamed read would keep writers waiting.
+        """
+        last_id = ""
+        while True:
+            async with self.engine.connect() as conn:
+                rows = (
+                    await conn.execute(
+                        select(SqlBlob)
+                        .where(SqlBlob.content_type == content_type, SqlBlob.id > last_id)
+                        .order_by(SqlBlob.id)
+                        .limit(ITER_BATCH_SIZE)
+                    )
+                ).fetchall()
+            for row in rows:
+                yield Blob(id=row.id, data=row.data, content_type=row.content_type)
+            if len(rows) < ITER_BATCH_SIZE:
+                return
+            last_id = rows[-1].id

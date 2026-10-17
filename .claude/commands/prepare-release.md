@@ -5,7 +5,7 @@ description: Prepare a future $ARGUMENTS release.
 
 We want to prepare the next release (either "$ARGUMENTS", if empty try to read VERSION variable).
 
-For that, we need to move all changelog entries from `docs/changelogs/unreleased.rst` to
+For that, build the fragments in `changelog.d/` into `docs/changelogs/VERSION.rst` with towncrier (see `docs/contribute/release/changelog.rst`), then remove them.
 `docs/changelogs/VERSION.rst`.
 
 Look at other changelogs to understand formating, the title should be

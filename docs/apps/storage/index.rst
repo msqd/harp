@@ -67,7 +67,7 @@ are not included in the test suite and may bring unexpected behaviours):
 - `PostgreSQL <https://www.postgresql.org/>`_ (our favorite choice for production), using `asyncpg
   <https://magicstack.github.io/asyncpg/>`_ driver.
 - `MySQL <https://www.mysql.com/>`_ / `MariaDB <https://mariadb.org/>`_, using `aiomysql
-  <https://aiomysql.readthedocs.io/>`_ or `asyncmy <https://github.com/long2ice/asyncmy>`_ driver.
+  <https://aiomysql.readthedocs.io/>`_ driver.
 
 
 Configuration
@@ -88,15 +88,18 @@ The main configuration option you're interested in is ``storage.url``, which con
 .. literalinclude:: ./examples/mysql-aiomysql.yml
     :language: yaml
 
-**MySQL/MariaDB example (asyncmy driver)**:
-
-.. literalinclude:: ./examples/mysql-asyncmy.yml
-    :language: yaml
-
 **SQLite example (aiosqlite driver)**:
 
 SQLite is the default storage engine because requires no configuration. *Do not use it in production*. It is slow and
 has concurrency issues. It is only suitable (and handy) for development and testing.
+
+The default URL, ``sqlite+aiosqlite:///:memory:?cache=shared``, keeps the database in memory: it is lost at
+shutdown, and it lives in a single connection that database operations take in turn, so they never run in
+parallel. Point ``storage.url`` at a file to keep the data across restarts.
+
+The default URL, ``sqlite+aiosqlite:///:memory:?cache=shared``, keeps the database in memory: it is lost at
+shutdown, and it lives in a single connection that database operations take in turn, so they never run in
+parallel. Point ``storage.url`` at a file to keep the data across restarts.
 
 .. literalinclude:: ./examples/sqlite-aiosqlite.yml
     :language: yaml

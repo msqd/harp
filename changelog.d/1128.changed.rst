@@ -1,0 +1,1 @@
+Document that the proxy buffers request and response bodies in full: no SSE, no long-polling, memory cost per in-flight body.

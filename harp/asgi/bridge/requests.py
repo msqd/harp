@@ -6,7 +6,8 @@ from httpx import AsyncByteStream
 from multidict import CIMultiDict, MultiDict
 
 from harp.asgi.bridge.streams import AsyncStreamFromAsgiReceive
-from harp.http import HttpRequestBridge
+from harp.http import HttpRequestBridge, RejectedRequest
+from harp.utils.bytes import header_str
 
 _default_host = (None, None)
 
@@ -47,7 +48,10 @@ class HttpRequestAsgiBridge(HttpRequestBridge):
     def get_path(self) -> str:
         """Get the HTTP path from asgi scope (/foo/bar), without the query string part."""
         if "raw_path" in self.asgi_scope:
-            return self.asgi_scope["raw_path"].decode("utf-8")
+            try:
+                return self.asgi_scope["raw_path"].decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise RejectedRequest("Request path is not valid UTF-8.", status=400) from exc
         return self.asgi_scope.get("path", "/")
 
     def get_query(self) -> MultiDict:
@@ -63,7 +67,7 @@ class HttpRequestAsgiBridge(HttpRequestBridge):
         """Get the headers from asgi scope, as a case-insensitive multidict."""
         headers = CIMultiDict()
         for name, value in self.asgi_scope.get("headers", []):
-            headers.add(name.decode("utf-8"), value.decode("utf-8"))
+            headers.add(header_str(name), header_str(value))
         return headers
 
     def get_stream(self) -> AsyncByteStream:

@@ -41,6 +41,7 @@ from typing import cast
 
 from click import Command
 
+from harp._logging import configure_logging
 from harp.commandline.system import system
 from harp.commandline.create import create
 from harp.commandline.examples import entrypoint as examples
@@ -67,7 +68,7 @@ def entrypoint():
     The following commands are available to help you setup and run your HTTP proxy application.
 
     """
-    pass
+    configure_logging()
 
 
 if IS_DEVELOPMENT_ENVIRONMENT:
