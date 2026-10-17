@@ -139,6 +139,15 @@ It used to exit 0 for every one of those. See
 [#990](https://github.com/msqd/harp/issues/990) and
 [ADR-0003](../../docs/adr/0003-cache-compliance-compared-per-test-against-a-pinned-baseline.md).
 
+## Known `retry`
+
+`304-etag-update-response-ETag` reports `retry` and is recorded as failing, and that is the expected
+outcome, not a defect. The suite's origin answers the conditional request with a 304 carrying a
+different strong `ETag`. RFC 9111 section 4.3.4 matches a 304 only to stored responses with the same
+strong `ETag`, so HARP refetches unconditionally, the origin sees the request twice, and the suite
+calls that a retry. Pinned by `harp_apps/http_cache/tests/test_revalidation_etag_mismatch.py`; see
+[#993](https://github.com/msqd/harp/issues/993).
+
 ## Related
 
 - **cache-tests**: https://github.com/http-tests/cache-tests
