@@ -27,7 +27,7 @@ All test jobs run directly on the runner using ``uv`` (no Docker containers):
 
   * Runs ``uv run pytest harp -n auto -m 'not subprocess'``
   * Uses parallel execution (``-n auto``)
-  * Skips subprocess-marked tests
+  * Skips subprocess-marked tests (run by ``test-backend-subprocess``)
   * Python 3.13
 
 **test-backend-apps**
@@ -44,6 +44,13 @@ All test jobs run directly on the runner using ``uv`` (no Docker containers):
   * Runs ``uv run pytest tests -n 1 -m 'not subprocess'``
   * Single worker (``-n 1``)
   * Tests complete workflows
+  * Python 3.13
+
+**test-backend-subprocess**
+  Runs the tests that spawn real processes (``uv run harp-proxy``, ``uvx harp-proxy``, ``python -m harp``, ``harp create project``)
+
+  * Runs ``uv run pytest -m subprocess -n auto -v``
+  * Required by *All Checks Passed*
   * Python 3.13
 
 **test-frontend-unit**

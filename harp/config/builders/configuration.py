@@ -76,13 +76,47 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         self.applications = self.create_application_registry()
         self.applications_registry_type = type(self.applications)
 
-        for app_name in self._defaults.pop("applications", []):
+        # Applications given with the defaults (``--applications``) pin the set: files cannot replace it.
+        pinned_applications = self._defaults.pop("applications", [])
+        self._applications_pinned = bool(pinned_applications)
+        self._application_ops: list[tuple[str, str]] = []
+        for app_name in pinned_applications:
             self.applications.add(app_name)
 
         if use_default_applications:
             self.applications.add(*DEFAULT_APPLICATIONS)
 
         super().__init__()
+
+        for source in _get_system_configuration_sources():
+            self._replace_applications_from(source)
+
+    def enable_application(self, name: str):
+        """Adds an application, remembering it so it is applied again after a file replaces the set."""
+        self._application_ops.append(("add", name))
+        self.applications.add(name)
+
+    def disable_application(self, name: str):
+        """Removes an application, remembering it so it is applied again after a file replaces the set."""
+        self._application_ops.append(("remove", name))
+        self.applications.remove(name)
+
+    def _replace_applications_from(self, source):
+        """
+        If a file source sets ``applications:``, it replaces the current set (the last file wins), then
+        ``--enable`` / ``--disable`` are applied again. Does nothing when ``--applications`` pinned the set.
+        """
+        if self._applications_pinned:
+            return
+        names = (source.get_values() or {}).get("applications")
+        if not names:
+            return
+        # Resolve every name first so an unknown one fails before the set is touched.
+        replacement = self.create_application_registry()
+        replacement.add(*names)
+        self.applications._applications = replacement._applications
+        for operation, name in self._application_ops:
+            getattr(self.applications, operation)(name)
 
     def create_application_registry(self):
         return ApplicationsRegistry()
@@ -101,21 +135,24 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         if ext in (".yaml", ".yml"):
             from config.yaml import YAMLFile
 
-            self.add_source(YAMLFile(filename))
+            source = YAMLFile(filename)
         elif ext in (".json",):
             from config.json import JSONFile
 
-            self.add_source(JSONFile(filename))
+            source = JSONFile(filename)
         elif ext in (".ini", ".conf"):
             from config.ini import INIFile
 
-            self.add_source(INIFile(filename))
+            source = INIFile(filename)
         elif ext in (".toml",):
             from config.toml import TOMLFile
 
-            self.add_source(TOMLFile(filename))
+            source = TOMLFile(filename)
         else:
             raise ValueError(f"Unknown file extension: {ext}")
+
+        self._replace_applications_from(source)
+        self.add_source(source)
 
     def add_files(self, filenames: Iterable[str]):
         """
@@ -375,9 +412,9 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         # todo: raise if enabling AND disabling an app at the same time? maybe not but instructions should be taken in
         #  order, which looks hard to do using click...
         for _enabled_application in options.enable or ():
-            builder.applications.add(_enabled_application)
+            builder.enable_application(_enabled_application)
         for _disabled_application in options.disable or ():
-            builder.applications.remove(_disabled_application)
+            builder.disable_application(_disabled_application)
 
         builder.add_files((get_example_filename(example) for example in options.examples))
         builder.add_files(options.files or ())

@@ -112,7 +112,6 @@ git submodule update --init --recursive misc/cache-tests/cache-tests
 # harp, in another terminal
 cd misc/cache-tests
 uv run harp-proxy server --file config.yml \
-    --applications http_client,http_cache,proxy,storage \
     --endpoint cache-tests=4000:http://localhost:8000/ \
     --set storage.url=sqlite+aiosqlite:///$PWD/results/storage.db
 
@@ -125,9 +124,8 @@ uv run harp-proxy server --file config.yml \
 > `sys.path`, so `import harp` reports the version you are standing next to rather than the one you
 > installed, and every number in the comparison is silently the wrong version's.
 
-`--applications` is a command line flag and not a `config.yml` key on purpose: in a configuration file
-`applications:` only *adds* to the default set, it never restricts it. The endpoint is passed on the
-command line for the same kind of reason: declaring it in `config.yml` as well makes HARP refuse to
+`config.yml` restricts the application set with its `applications:` key, so the dashboard stays off. The
+endpoint is passed on the command line: declaring it in `config.yml` as well makes HARP refuse to
 start with `Endpoint «cache-tests» already exists`.
 
 ## When it fails
