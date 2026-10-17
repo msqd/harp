@@ -1,0 +1,1 @@
+Storage load shedding is no longer silent: periodic warning, `dropped` Prometheus counter by kind, and `/metrics` on the dashboard port (optionally on its own `dashboard.metrics_port`).
