@@ -1,5 +1,7 @@
 """A streamed response body crosses the ASGI bridge chunk by chunk, as it arrives."""
 
+import asyncio
+
 from httpx import AsyncByteStream
 
 from harp.asgi.bridge.responses import HttpResponseAsgiBridge
@@ -86,3 +88,29 @@ async def test_an_in_memory_body_is_sent_in_one_message():
     await HttpResponseAsgiBridge(HttpResponse(b"hello"), recording_send(events)).send()
 
     assert events == [("start", 200), ("sent", b"hello", False)]
+
+
+async def test_a_client_gone_mid_body_interrupts_the_read_and_closes_the_stream():
+    events = []
+    never = asyncio.Event()
+
+    class StalledStream(ChunkedStream):
+        async def __aiter__(self):
+            yield b"one"
+            try:
+                await never.wait()
+            finally:
+                self.events.append(("interrupted",))
+            yield b"two"
+
+    response = HttpResponse(b"")
+    response.stream = StalledStream(events=events)
+
+    async def receive():
+        return {"type": "http.disconnect"}
+
+    await asyncio.wait_for(HttpResponseAsgiBridge(response, recording_send(events), receive).send(), timeout=1)
+
+    assert ("interrupted",) in events
+    assert events[-1] == ("closed",)
+    assert ("sent", b"", False) not in events
