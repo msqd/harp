@@ -7,6 +7,21 @@ from harp.config.builders.system import System
 logger = get_logger(__name__)
 
 
+def _with_integer_server_port(app):
+    """
+    Granian sends the server port as a string in the scope (the ASGI spec says integer), and the controller
+    resolver looks controllers up by port.
+    """
+
+    async def wrapper(scope, receive, send):
+        if scope["type"] == "http":
+            host, port = scope["server"]
+            scope["server"] = (host, int(port))
+        return await app(scope, receive, send)
+
+    return wrapper
+
+
 class GranianAdapter:
     def __init__(self, system: System):
         self.system = system
@@ -19,8 +34,8 @@ class GranianAdapter:
         # the same app without it (the lifespan must run once).
         return [
             Server(
-                self.system.asgi_app,
-                address=bind.host,
+                _with_integer_server_port(self.system.asgi_app),
+                address=bind.host.strip("[]"),
                 port=bind.port,
                 interface=Interfaces.ASGI if index == 0 else Interfaces.ASGINL,
                 log_enabled=False,
