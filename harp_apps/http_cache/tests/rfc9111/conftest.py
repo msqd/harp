@@ -6,6 +6,7 @@ This module provides reusable test infrastructure for verifying HARP's
 HTTP caching implementation complies with RFC 9111 (HTTP Caching).
 """
 
+from harp_apps.http_cache.tests import ENDPOINT_HOOKS
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -56,7 +57,7 @@ async def cached_client(mock_storage, rfc_compliant_policy):
         policy=rfc_compliant_policy,
     )
 
-    async with AsyncClient(transport=transport) as client:
+    async with AsyncClient(transport=transport, event_hooks=ENDPOINT_HOOKS) as client:
         yield client
 
 
@@ -84,7 +85,7 @@ async def any_cached_client(any_storage, rfc_compliant_policy):
         policy=rfc_compliant_policy,
     )
 
-    async with AsyncClient(transport=transport) as client:
+    async with AsyncClient(transport=transport, event_hooks=ENDPOINT_HOOKS) as client:
         yield client
 
 
@@ -125,7 +126,8 @@ def make_cacheable_response(
         private: Add Cache-Control: private directive
         public: Add Cache-Control: public directive
         must_revalidate: Add Cache-Control: must-revalidate directive
-        **extra_headers: Additional headers to include
+        **extra_headers: Additional headers to include (``date=...`` overrides the default
+            ``Date``, which is the current time)
 
     Returns:
         Response object with configured headers
@@ -134,7 +136,7 @@ def make_cacheable_response(
         >>> make_cacheable_response(max_age=3600, etag="abc123")
         Response with Cache-Control: max-age=3600 and ETag: "abc123"
     """
-    headers = {"content-type": "text/plain"}
+    headers = {"content-type": "text/plain", "date": http_date()}
 
     # Build Cache-Control header
     cache_control_parts = []

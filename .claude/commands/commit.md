@@ -16,7 +16,7 @@ features, fixes, and breaking changes made in commit messages.
 
 Do not be too verbose. Don't say the tests pass, this is obvious. Avoid all obvious stuff.
 
-Make sure unreleased changelog file is updated, if needed (it is only needed if there is a
+Make sure a changelog.d fragment exists, if needed (it is only needed if there is a
 user facing change, do not add entries for typos, documentation (unless massive update),
 minor code changes (like small refactorings without impact...).
 

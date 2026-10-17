@@ -29,12 +29,12 @@ def test_basic_auth_defaults():
 
 def test_basic_auth_userlist():
     settings = BasicAuthSettings.from_dict({"users": {"john": "foo", "jane": "bar"}})
-    assert asdict(settings) == {
+    assert asdict(settings, secure=False) == {
         "type": "basic",
         "users": {"jane": {"password": "bar"}, "john": {"password": "foo"}},
     }
 
-    assert asdict(settings, verbose=True) == {
+    assert asdict(settings, verbose=True, secure=False) == {
         "algorithm": "pbkdf2_sha256",
         "type": "basic",
         "users": {"jane": {"password": "bar"}, "john": {"password": "foo"}},
@@ -46,7 +46,9 @@ def test_basic_auth_userlist_fromfile():
         f.write("john: foo\njane: bar\n")
         f.flush()
 
-        assert asdict(BasicAuthSettings.from_dict({"users": {"fromFile": f.name}, "algorithm": "plain"})) == {
+        assert asdict(
+            BasicAuthSettings.from_dict({"users": {"fromFile": f.name}, "algorithm": "plain"}), secure=False
+        ) == {
             "algorithm": "plaintext",
             "type": "basic",
             "users": {"jane": {"password": "bar"}, "john": {"password": "foo"}},

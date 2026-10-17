@@ -25,7 +25,8 @@ Prerequisites
 Before creating a release, ensure:
 
 * You have push access to the GitHub repository
-* All changes are merged to the ``main`` or version branch (e.g., ``0.9``)
+* All changes are merged to ``main``; for a patch release, backported to the version line ``X.Y``
+  (see :doc:`../branching`)
 * All CI tests are passing
 * PyPI trusted publishing is configured (see `PyPI Trusted Publishing Guide <https://docs.pypi.org/trusted-publishers/>`_)
 
@@ -36,7 +37,7 @@ The automated release workflow handles:
 
 1. **Version validation** - Ensures ``pyproject.toml`` version matches the git tag
 2. **Package building** - Builds wheel in isolated sandbox environment with frontend bundled
-3. **Testing** - Tests installation on Python 3.13, 3.14, and 3.14t (free-threaded)
+3. **Testing** - Tests installation on Python 3.13
 4. **Publishing** - Publishes to TestPyPI, then production PyPI
 5. **GitHub Release** - Creates release with changelog and wheel artifacts
 
@@ -103,35 +104,47 @@ If the release does carry one:
     Do not write this step's findings as a description of the current migration. The next release's
     migration will be a different one. Answer the question again each time.
 
+Steps 2 to 5 happen on a release branch, because ``main`` and the version lines only accept pull
+requests:
+
+.. code-block:: bash
+
+    # X.Y.0 and pre-releases: from main. Patch release X.Y.Z: from the version line X.Y.
+    git fetch origin
+    git switch -c release/0.11.0 origin/main
+
 2. Prepare the Changelog
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The version's changelog file usually exists already, carrying an ``(unreleased)`` header, because
-contributors have been adding entries to it while the release was prepared. In that case do not
-move anything: edit the header in place and replace ``(unreleased)`` with today's date.
+Contributors add a fragment to ``changelog.d/`` with each pull request. What you do with them depends
+on the kind of release.
 
-.. code-block:: rst
+**Final release** ``X.Y.Z``: build the fragments into the version's changelog file, then remove them:
 
-    Version 0.9.0 (2025-01-15)
-    ==========================
+.. code-block:: bash
 
-The ``Version `` prefix is part of the convention, and the ``=`` underline must be at least as long
-as the title. Match the two exactly, as the existing changelogs do.
+    # For version 0.9.0
+    uv run towncrier build --draft --version 0.9.0 --date 2025-01-15 > docs/changelogs/0.9.0.rst
+    git rm changelog.d/*.*.rst
+
+The file starts with the title ``Version 0.9.0 (2025-01-15)`` and an ``=`` underline at least as
+long. The ``Version `` prefix is part of the convention. Add ``0.9.0`` to ``docs/changelogs/index.rst``.
+
+**Pre-release** ``X.Y.Z-alphaN``, ``-betaN``, ``-rcN``: do nothing here. A pre-release does not consume
+the fragments, they must all still be there for the final ``X.Y.Z``. The release job renders the
+GitHub release notes from the fragments present at the tag, as ``towncrier build --draft`` does.
+Preview them with:
+
+.. code-block:: bash
+
+    uv run towncrier build --draft --version 0.11.0 --date $(date +%F)
 
 .. warning::
 
     Nothing in the build will tell you if you get this wrong. A malformed title or a short underline
     is not reported by ``make docs``, so check the rendered page yourself.
 
-If the version has no changelog file yet, create one by moving the accumulated entries into it, then
-add the header above:
-
-.. code-block:: bash
-
-    # For version 0.9.0
-    mv docs/changelogs/unreleased.rst docs/changelogs/0.9.0.rst
-
-Either way, make sure an empty ``unreleased.rst`` is left in place for the next cycle.
+``changelog.d/README.rst`` stays in place for the next cycle. Skip the commit below for a pre-release.
 
 See :doc:`changelog` for complete changelog management workflow.
 
@@ -178,6 +191,25 @@ Update the version in ``pyproject.toml`` and verify:
     git add pyproject.toml uv.lock
     git commit -m "chore: bump version to $VERSION"
 
+Push the branch and open the release pull request against the branch it came from (``main``, or
+``X.Y`` for a patch release). Its body is the version's changelog section converted to GitHub
+Markdown; raw ReST renders as plain text with ``:::::`` underlines. Merge it once *All Checks
+Passed* is green.
+
+.. code-block:: bash
+
+    git push origin HEAD:release/$VERSION
+    pandoc --wrap=none --shift-heading-level-by=1 -f rst -t gfm -o body.md <section>
+    gh pr create --base main --head release/$VERSION --title "Release $VERSION" --body-file body.md
+
+**A fix taken into the release** after the changelog is built goes through the release branch:
+
+1. Retarget its pull request to ``release/$VERSION`` and merge it there.
+2. Move its fragment into ``docs/changelogs/$VERSION.rst`` and ``git rm`` it from ``changelog.d/``;
+   otherwise it lands on the next version's notes.
+3. Close its issue by hand once the release pull request is merged: ``Closes #N`` only fires on a
+   merge into the default branch.
+
 6. Create an Annotated Git Tag
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -192,24 +224,26 @@ Update the version in ``pyproject.toml`` and verify:
 
 .. code-block:: bash
 
-    git tag -a $VERSION -m "Release $VERSION"
+    # Tag the merged release commit: origin/main, or origin/X.Y for a patch release.
+    git fetch origin
+    git tag -a $VERSION origin/main -m "Release $VERSION"
 
 .. important::
 
     Always use the ``-a`` flag to create an **annotated tag**, not a lightweight tag.
     The release workflow requires annotated tags.
 
-7. Push Changes and Tag
-~~~~~~~~~~~~~~~~~~~~~~~~
+7. Push the Tag
+~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
-    git push origin
     git push origin $VERSION
 
 .. note::
 
-    Push the tag **after** pushing the commit to ensure the tag points to the correct commit.
+    Check that the tagged commit carries the release version (``git show $VERSION:pyproject.toml |
+    grep ^version``) before pushing: the workflow rejects a mismatch.
 
 8. Monitor the Release Workflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -228,9 +262,7 @@ Once the tag is pushed, GitHub Actions automatically runs the release workflow:
        └─ Creates wheel with twine validation
 
     3. Tests the built wheel
-       ├─ Python 3.13 (standard)
-       ├─ Python 3.14 (standard)
-       └─ Python 3.14t (free-threaded/no-GIL)
+       └─ Python 3.13
 
     4. Publishes to TestPyPI
        └─ For validation before production
@@ -239,7 +271,8 @@ Once the tag is pushed, GitHub Actions automatically runs the release workflow:
        └─ Production release
 
     6. Creates GitHub Release
-       ├─ Converts changelog (RST → Markdown)
+       ├─ Converts changelog (RST → Markdown): the fragments for a pre-release,
+       │  docs/changelogs/X.Y.Z.rst for a final release
        ├─ Attaches wheel artifacts
        └─ Marks as pre-release if applicable
 
@@ -307,6 +340,33 @@ Once the workflow completes successfully:
 
     # For persistent installation in a project
     uv pip install harp-proxy==$VERSION
+
+10. Open the Version Line and the Next Version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**After an** ``X.Y.0`` **release only.** Create the version line on the tag and protect it like
+``main``. It serves ``/en/X.Y/`` on Read the Docs and receives the backports of patch releases (see
+:doc:`../branching`).
+
+.. code-block:: bash
+
+    git push origin 0.11.0^{commit}:refs/heads/0.11
+    gh api -X PUT repos/msqd/harp/branches/0.11/protection --input protection.json
+
+``protection.json`` requires a pull request and *All Checks Passed*, enforces it for administrators,
+and refuses force-push and deletion; copy it from ``gh api repos/msqd/harp/branches/main/protection``.
+
+Check that ``https://docs.harp-proxy.net/en/X.Y/`` answers once Read the Docs has built the new
+branch; activate the version on Read the Docs if it does not. The dashboard's Help link opens it.
+
+Then open the next version on ``main``, through a pull request: ``pyproject.toml`` moves to
+``X.Y+1.0.dev0`` (``uv lock`` again) and ``changelog.d/`` holds no fragment but its ``README.rst``.
+Builds from ``main`` then report a development version.
+
+**After a patch release.** Bring its changelog file to ``main`` through a pull request, so the
+documentation of the next version lists it. The same pull request deletes the
+``changelog.d/`` fragments the patch shipped, so the next minor release notes only list what is new
+since.
 
 Version Naming Conventions
 ---------------------------
@@ -482,7 +542,7 @@ Best Practices
 
 * **Test thoroughly before releasing** - Run the full test suite locally
 * **Use release candidates for major versions** - Create ``X.Y.Z-rc1`` before ``X.Y.Z``
-* **Keep the changelog updated** - Add entries per PR/feature (see :doc:`changelog`)
+* **Keep the changelog updated** - Add a fragment per PR/feature (see :doc:`changelog`)
 * **Document breaking changes clearly** - Use "Important Changes" section
 * **Release often** - Small, frequent releases are better than large, infrequent ones
 * **Monitor after release** - Watch for issues reported after release

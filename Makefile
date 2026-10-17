@@ -214,7 +214,7 @@ test-e2e-cache-baseline: install-backend-dev  ## Records the RFC 9111 compliance
 	$(call execute,cd misc/cache-tests && CACHE_TESTS_RECORD_REASON="$(REASON)" ./run-tests.sh)
 
 lint-frontend: install-frontend  ## Lints the frontend codebase.
-	$(call execute,cd $(FRONTEND_DIR); $(PNPM) build)
+	$(call execute,cd $(FRONTEND_DIR); $(PNPM) lint)
 
 coverage:  ## Generates coverage report.
 	$(call execute,$(PYTEST) $(PYTEST_TARGETS) tests -m 'not subprocess' $(PYTEST_COVERAGE_OPTIONS) $(PYTEST_COMMON_OPTIONS) $(PYTEST_OPTIONS))
@@ -257,10 +257,10 @@ bench-noise:  ## Runs the same benchmark BENCH_NOISE_RUNS times and reports the 
 
 .PHONY: buildc buildc-pypi pushc runc runc-shell runc-example-repositories
 
-buildc: wheel  ## Builds the docker image from wheel (supports PYTHON_VERSION=3.13 or 3.14).
+buildc: wheel  ## Builds the docker image from wheel (PYTHON_VERSION, default 3.13).
 	$(call execute,$(DOCKER) build $(DOCKER_OPTIONS) $(DOCKER_BUILD_OPTIONS) --build-arg PYTHON_VERSION=$(PYTHON_VERSION) --build-arg INSTALL_FROM=local --build-arg VERSION=$(VERSION) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .)
 
-buildc-pypi:  ## Builds the docker image from PyPI (requires VERSION, supports PYTHON_VERSION=3.13 or 3.14).
+buildc-pypi:  ## Builds the docker image from PyPI (requires VERSION, PYTHON_VERSION, default 3.13).
 	@if [ -z "$(VERSION)" ]; then \
 		echo "ERROR: VERSION is required. Usage: make buildc-pypi VERSION=0.9.0"; \
 		exit 1; \

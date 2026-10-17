@@ -1,4 +1,5 @@
 import asyncio
+from datetime import UTC, datetime, timedelta
 from typing import cast
 
 from prometheus_client import Gauge
@@ -7,8 +8,9 @@ from harp import get_logger
 from harp_apps.storage.services import SqlStorage
 
 from ..storage.models.base import with_session
+from ..storage.models.blobs import ORPHAN_GRACE
 from ..storage.types import IBlobStorage, IStorage
-from .settings import OLD_AFTER, PERIOD
+from .settings import JanitorSettings
 
 logger = get_logger(__name__)
 
@@ -16,14 +18,18 @@ PROMETHEUS_GAUGES = {
     "storage.transactions": Gauge("storage_transactions", "Transactions currently in storage."),
     "storage.messages": Gauge("storage_messages", "Messages currently in storage."),
     "storage.blobs": Gauge("storage_blobs", "Blob objects currently in storage."),
-    "storage.blobs.orphans": Gauge("storage_blobs_orphans", "Orphan blobs currently in storage."),
+    "storage.blobs.orphans": Gauge("storage_blobs_orphans", "Blobs referenced by no message and no HTTP cache entry."),
 }
 
 
 class JanitorWorker:
-    def __init__(self, storage: IStorage, blob_storage: IBlobStorage):
+    #: Orphans written more recently than this are kept, see :data:`~harp_apps.storage.models.blobs.ORPHAN_GRACE`.
+    orphan_grace: timedelta = ORPHAN_GRACE
+
+    def __init__(self, storage: IStorage, blob_storage: IBlobStorage, settings: JanitorSettings):
         self.storage: SqlStorage = cast(SqlStorage, storage)
         self.blob_storage: IBlobStorage = blob_storage
+        self.settings = settings
 
         self.running = False
         self.session_factory = self.storage.session_factory
@@ -37,7 +43,7 @@ class JanitorWorker:
 
     async def run(self):
         """
-        Once dependencies are ready, start the main loop (basically, run the `loop()` every PERIOD seconds), until
+        Once dependencies are ready, start the main loop (basically, run the `loop()` every `period` seconds), until
         `stop()` is called.
         """
         # do not start before storage is ready
@@ -49,7 +55,7 @@ class JanitorWorker:
                     await self.loop()
                 except Exception as exc:
                     logger.exception(exc)
-                await asyncio.sleep(PERIOD)
+                await asyncio.sleep(self.settings.period)
 
     async def loop(self):
         """
@@ -70,13 +76,13 @@ class JanitorWorker:
     @with_session
     async def delete_old_transactions(self, /, *, session):
         """
-        Remove transactions older than OLD_AFTER days. On correct database implementations (postgresql for example), it
+        Remove transactions older than `old_after` days. On correct database implementations (postgresql for example), it
         will cascade to related objects. On sqlite, there will be garbage left, but it's not a big deal.
         """
 
         # TODO to storage
 
-        result = await session.execute(self.storage.transactions.delete_old(OLD_AFTER))
+        result = await session.execute(self.storage.transactions.delete_old(self.settings.old_after_delta))
         await session.commit()
         return result
 
@@ -89,15 +95,12 @@ class JanitorWorker:
         count = None
 
         if self.blob_storage.type == "sql":
-            # Read the ids before deleting them. The deletion is a bulk statement, so the blob
-            # storage never sees it and would go on believing those rows exist, refusing to write
-            # the same content again. Anything that stores blobs, the HTTP cache first among them,
-            # would then silently write nothing after every sweep.
-            orphans = (await session.execute(self.storage.blobs.select_orphans())).scalars().all()
-            result = await session.execute(self.storage.blobs.delete_orphans())
-            await session.commit()
-            self.blob_storage.forget(orphans)
-            count = result.rowcount if result.rowcount else 0
+            # A blob is an orphan when no message and no HTTP cache entry references it. Cache entries
+            # themselves are reclaimed by the cache's TTL sweep, never here. Blobs written within the
+            # grace period are kept: their message or cache entry may not be committed yet.
+            older_than = datetime.now(UTC) - self.orphan_grace
+            orphans = await self.storage.blobs.find_orphans(session=session, older_than=older_than)
+            count = await self.storage.blobs.delete_orphans(orphans, session=session, older_than=older_than)
         elif self.blob_storage.type == "redis":
             pass
         else:
@@ -121,14 +124,14 @@ class JanitorWorker:
 
         # TODO to storage
 
-        await self.storage.metrics.insert_values(await self.compute_metrics(session))
+        await self.storage.metrics.insert_values(await self.compute_metrics(session), session=session)
 
     async def compute_metrics(self, session):
         values = {
             "storage.transactions": await self.do_count(session, "transactions"),
             "storage.messages": await self.do_count(session, "messages"),
             "storage.blobs": await self.do_count(session, "blobs"),
-            "storage.blobs.orphans": await self.do_count(session, "blobs", method="count_orphans"),
+            "storage.blobs.orphans": await self.storage.blobs.count_orphans(session=session),
         }
 
         for key, value in values.items():

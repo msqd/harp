@@ -16,8 +16,9 @@ from harp.utils.testing.mixins.controllers import _create_request
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
 from harp_apps.proxy.controllers import HttpProxyController
-from harp_apps.proxy.events import EVENT_TRANSACTION_STARTED
+from harp_apps.proxy.events import EVENT_FILTER_PROXY_REQUEST, EVENT_TRANSACTION_STARTED
 from harp_apps.proxy.settings.remote import Remote
+from harp_apps.storage.constants import SKIP_STORAGE
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
 from harp_apps.storage.types import IBlobStorage, IStorage
@@ -461,3 +462,23 @@ class TestHttpProxyControllerWithStorage(
             request_message, response_message = transaction.messages
             assert (await blob_storage.get(request_message.headers)).data == b"cache-control: no-store"
             assert (await blob_storage.get(response_message.body)).data == b"Hello."
+
+    @respx.mock
+    async def test_skip_storage_marker_set_by_filter_leaves_no_row(
+        self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        self.mock_http_endpoint("http://example.com/", content="Hello.")
+
+        async def skip_storage(event):
+            event.transaction.markers.add(SKIP_STORAGE)
+
+        dispatcher.add_listener(EVENT_FILTER_PROXY_REQUEST, skip_storage)
+
+        await self.call_controller(
+            dispatcher=dispatcher,
+            engine=sql_storage.engine,
+            sql_storage=sql_storage,
+            blob_storage=blob_storage,
+        )
+
+        assert len(await sql_storage.get_transaction_list(username="anonymous", with_messages=True)) == 0

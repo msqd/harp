@@ -106,3 +106,6 @@ wheels/
 
 # benchmarks
 /bench/results/
+
+docs/changelogs/unreleased.rst
+docs/changelogs/_unreleased_toctree.inc

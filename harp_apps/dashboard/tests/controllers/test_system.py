@@ -218,3 +218,18 @@ class TestSystemControllerThroughASGI(
             b':memory:","enabled":true,"migrate":true,"blobs":{"type":"redis"},"redis":{"url":"redis://us'
             b'er:***@localhost:6379/0"}}}'
         )
+
+    @parametrize_with_settings(
+        {
+            "applications": ["http_client", "storage", "dashboard"],
+            "storage": {"redis": {"url": "redis://:s3cret@localhost:6379/0"}},
+            "dashboard": {"auth": {"type": "basic", "algorithm": "plain", "users": {"alice": "s3cretAlice"}}},
+        }
+    )
+    @parametrize_with_database_urls("sqlite")
+    @parametrize_with_blob_storages_urls("sql")
+    async def test_get_settings_masks_every_credential(self, client: ASGICommunicator, blob_storage):
+        response = await client.http_get("/api/system/settings")
+
+        assert response["status"] == 200
+        assert b"s3cret" not in response["body"]

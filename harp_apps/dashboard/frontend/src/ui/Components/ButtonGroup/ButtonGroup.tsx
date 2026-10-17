@@ -15,7 +15,7 @@ const StyledButton = styled.button(({ isCurrent = false }: { isCurrent: boolean 
   tw`ring-1 ring-inset ring-gray-300`,
   tw`text-sm font-semibold`,
   isCurrent
-    ? tw`text-white bg-primary-600 focus-visible:outline-blue-500`
+    ? tw`text-white bg-primary-900 focus-visible:outline-blue-500`
     : tw`bg-white text-gray-900 hover:bg-gray-50`,
   tw`focus:z-10`,
 ])

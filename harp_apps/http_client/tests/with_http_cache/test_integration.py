@@ -66,13 +66,13 @@ class TestHttpClientWithCache:
             )
 
             # First request - should hit the backend
-            response1 = await http_client.get("http://api.example.com/data")
+            response1 = await http_client.get("http://api.example.com/data", extensions={"harp": {"endpoint": "test"}})
             assert response1.status_code == 200
             assert response1.json() == {"value": "cached_data"}
             assert route.call_count == 1
 
             # Second request - should be served from cache (no additional backend call)
-            response2 = await http_client.get("http://api.example.com/data")
+            response2 = await http_client.get("http://api.example.com/data", extensions={"harp": {"endpoint": "test"}})
             assert response2.status_code == 200
             assert response2.json() == {"value": "cached_data"}
             assert route.call_count == 1, "Second request should be served from cache"
@@ -105,12 +105,16 @@ class TestHttpClientWithCache:
             )
 
             # First request
-            response1 = await http_client.get("http://api.example.com/dynamic")
+            response1 = await http_client.get(
+                "http://api.example.com/dynamic", extensions={"harp": {"endpoint": "test"}}
+            )
             assert response1.status_code == 200
             assert route.call_count == 1
 
             # Second request - should hit backend again (not cached due to no-store)
-            response2 = await http_client.get("http://api.example.com/dynamic")
+            response2 = await http_client.get(
+                "http://api.example.com/dynamic", extensions={"harp": {"endpoint": "test"}}
+            )
             assert response2.status_code == 200
             assert route.call_count == 2, "Second request should hit backend (no-store prevents caching)"
 

@@ -292,11 +292,8 @@ HARP provides two Docker build approaches:
     # Build from local wheel (builds wheel first, then Docker image)
     make buildc
 
-    # Build with Python 3.13
+    # Build with an explicit Python version (default: 3.13)
     make buildc PYTHON_VERSION=3.13
-
-    # Build with Python 3.14 (default)
-    make buildc PYTHON_VERSION=3.14
 
     # Build for specific platform
     make buildc DOCKER_PLATFORM=linux/amd64
@@ -355,7 +352,7 @@ Available Docker environment variables:
 * ``DOCKER_RUN_OPTIONS``: Additional run options
 * ``DOCKER_RUN_COMMAND``: Command to run in container
 * ``DOCKER_PLATFORM``: Target platform (default: auto-detected from host architecture)
-* ``PYTHON_VERSION``: Python version for Docker image (default: ``3.14``)
+* ``PYTHON_VERSION``: Python version for Docker image (default: ``3.13``)
 
 Cleanup
 -------
@@ -504,6 +501,7 @@ Backend Testing
 * ``PYTEST_OPTIONS``: Additional pytest arguments
 * ``TEST_SKIP_FRONT``: Skip frontend tests if set
 * ``TEST_ALL_DATABASES``: Test all database backends if set
+* ``TEST_DATABASE_DIALECTS``: Comma separated dialects to test (for example ``mysql``), default all
 
 Docker
 ^^^^^^
@@ -519,7 +517,7 @@ Docker
 * ``DOCKER_RUN_OPTIONS``: Additional docker run options
 * ``DOCKER_RUN_COMMAND``: Container command
 * ``DOCKER_NETWORK``: Docker network name (default: ``harp``)
-* ``PYTHON_VERSION``: Python version for Docker image builds (default: ``3.14``)
+* ``PYTHON_VERSION``: Python version for Docker image builds (default: ``3.13``)
 
 Frontend
 ^^^^^^^^

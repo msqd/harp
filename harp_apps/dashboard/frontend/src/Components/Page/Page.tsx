@@ -24,10 +24,7 @@ export function Error(props: FallbackProps) {
         <div className="card-body">
           <details className="error-details">
             <summary>Click for error details</summary>
-            <pre>
-              {/* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */}
-              {props.error.stack}
-            </pre>
+            <pre>{(props.error as Error).stack}</pre>
           </details>
         </div>
 

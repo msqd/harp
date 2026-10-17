@@ -177,7 +177,7 @@ def config_subcommand(raw=False, json=False, unsecure=False, **kwargs):
     """Compiles and dumps the current configuration.
 
     Passwords embedded in configured URLs (a database DSN, a Redis URL, an upstream carrying
-    credentials) are masked in every output shape, so the output is safe to paste into a bug
+    credentials) and dashboard user passwords are masked in every output shape, so the output is safe to paste into a bug
     report. Pass --unsecure to see them.
 
     Example:

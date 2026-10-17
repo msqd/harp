@@ -92,8 +92,9 @@ Build and release jobs
 
   * Only runs for non-tag pushes
   * Uses local wheel from build
-  * Pushes to GHCR for all commits
-  * Version branches (e.g., ``0.9``) also push to Docker Hub as ``<version>-git``
+  * Other branches build only, nothing is pushed
+  * ``main`` pushes ``unstable`` to GHCR and Docker Hub
+  * Version branches (e.g., ``0.9``) push ``<version>-git`` to GHCR and Docker Hub
 
 **publish-to-testpypi**
   Publishes to Test PyPI
@@ -364,7 +365,8 @@ Different jobs run based on push type:
 
 **Development images** (``build-docker-image-development``):
   * All non-tag pushes
-  * Version branches (e.g., ``0.9``) also push to Docker Hub as ``<version>-git``
+  * ``main`` pushes ``unstable`` to GHCR and Docker Hub
+  * Version branches (e.g., ``0.9``) push ``<version>-git`` to GHCR and Docker Hub
 
 **PyPI releases** (``publish-to-pypi``):
   * Only semver tags (``0.9.0``, ``0.9.0-rc1``, etc.)

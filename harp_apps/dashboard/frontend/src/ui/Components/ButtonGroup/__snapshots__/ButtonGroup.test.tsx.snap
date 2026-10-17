@@ -6,7 +6,7 @@ exports[`ButtonGroup > renders correctly 1`] = `
     class="isolate inline-flex rounded-md shadow-sm"
   >
     <button
-      class="css-lwf935"
+      class="css-lyr4ie"
       type="button"
     >
       Button 1
