@@ -136,7 +136,7 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         assert request_msg.body == hashlib.sha1(b"\n" + body).hexdigest()
         assert response_msg.body == hashlib.sha1(b"\n" + b"small").hexdigest()
 
-    async def test_large_body_round_trips(self, database_url, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+    async def test_large_body_round_trips(self, request, sql_storage: SqlStorage, blob_storage: IBlobStorage):
         dispatcher = AsyncEventDispatcher()
         body = b"x" * (OFFLOAD_HASH_THRESHOLD * 4)
 
@@ -144,7 +144,9 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
 
         transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
         stored = await blob_storage.get(transactions[0].messages[0].body)
-        if database_url.startswith("mysql|") and not isinstance(blob_storage, RedisBlobStorage):
+        if request.node.callspec.params["database_url"].startswith("mysql|") and not isinstance(
+            blob_storage, RedisBlobStorage
+        ):
             # Strict by construction: fails once #1191 is fixed, so this branch gets removed then.
             assert stored is None, "#1191 fixed: drop this MySQL special case"
         else:
