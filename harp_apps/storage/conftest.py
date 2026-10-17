@@ -8,7 +8,7 @@ from conftest import DEFAULT_STORAGE_SETTINGS
 from harp.utils.testing.databases import TEST_DATABASES
 from harp_apps.storage.services import SqlStorage
 
-from .engines.sql_engine import create_async_engine
+from .engines.sql_engine import SQLAlchemyEngine
 from .services.blob_storages.redis import RedisBlobStorage
 from .settings import StorageSettings
 from .utils.migrations import create_alembic_config, do_migrate
@@ -66,7 +66,8 @@ async def sql_engine(database_url, test_id) -> AsyncEngine:
 
     """
     async with get_scoped_database_url(database_url, test_id) as scoped_database_url:
-        engine = create_async_engine(scoped_database_url)
+        # Built the way the application builds it, so tests share its pooling, in-memory SQLite included.
+        engine = SQLAlchemyEngine.from_url(scoped_database_url)
         try:
             # todo refactor (dup in sqlstorage.initialize / sqlstorage._run_migrations)
             alembic_cfg = create_alembic_config(engine.url.render_as_string(hide_password=False))
