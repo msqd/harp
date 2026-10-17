@@ -1,1 +1,0 @@
-``applications:`` in a configuration file now replaces the default set (``--applications`` replaces the file's list, ``--enable`` / ``--disable`` apply after); it was silently ignored.

@@ -57,3 +57,12 @@ def test_last_file_list_wins(tmp_path):
     b = _write(tmp_path, "b.yml", "applications: [storage]\n")
     c = _write(tmp_path, "c.yml", "storage: {}\n")
     assert _loaded(files=[a, b, c]) == {"storage"}
+
+
+def test_incomplete_list_error_names_missing_application_and_fix(tmp_path):
+    from harp.errors import MissingDependencyError
+
+    f = _write(tmp_path, "a.yml", "applications: [storage]\n")
+    builder = ConfigurationBuilder.from_commandline_options(_options(files=[f]))
+    with pytest.raises(MissingDependencyError, match=r"requires 'proxy'.*Add it to the 'applications' list"):
+        builder.applications.resolve_dependencies()
