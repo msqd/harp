@@ -10,8 +10,10 @@ import * as echarts from "echarts/core"
 import { CanvasRenderer } from "echarts/renderers"
 import ReactEChartsCore from "echarts-for-react/lib/core"
 
-import { getTpdexRating, tpdexScale } from "Components/Badges/constants.ts"
+import { getTpdexRating } from "Components/Badges/constants.ts"
 import { defaultEchartOptions } from "Settings"
+
+import { tpdexPieces } from "./tpdexPieces.ts"
 
 echarts.use([
   LineChart,
@@ -72,20 +74,7 @@ const SummaryPerformancesChart = ({ data }: { data: { value: number; datetime: s
     visualMap: {
       bottom: 4,
       right: 4,
-      pieces: [...Array(tpdexScale.length - 1).keys()].map((i) =>
-        i
-          ? {
-              label: tpdexScale[i].label,
-              lt: tpdexScale[i - 1].threshold,
-              gte: tpdexScale[i].threshold,
-              color: tpdexScale[i].bgColor,
-            }
-          : {
-              label: tpdexScale[i].label,
-              gte: tpdexScale[i].threshold,
-              color: tpdexScale[i].bgColor,
-            },
-      ),
+      pieces: tpdexPieces(),
       outOfRange: {
         color: "#999",
       },
