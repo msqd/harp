@@ -15,6 +15,10 @@ def create_async_engine(url: Union[str, URL], **kw: Any) -> AsyncEngine:
         # This is necessary so that postgres always send back utc datetimes, we'll handle timezone specific logic
         # ourselves to avoid differences between environments. Override at your own risk.
         kw["connect_args"]["server_settings"].setdefault("timezone", "UTC")
+    elif url.get_dialect().name == "mysql":
+        # Same for MySQL: TIMESTAMP values are converted to and from the session timezone, which defaults to
+        # the server's. Pinning the session to UTC makes grace comparisons independent of the server.
+        kw["connect_args"].setdefault("init_command", "SET time_zone = '+00:00'")
     engine = _create_async_engine(url, **kw)
     return engine
 
