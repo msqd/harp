@@ -1,0 +1,1 @@
+Reject requests whose path is not valid UTF-8 with a 400 instead of failing unguarded.

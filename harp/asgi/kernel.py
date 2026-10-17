@@ -7,7 +7,7 @@ from hypercorn.utils import LifespanFailureError
 from whistle import AsyncEventDispatcher, Event, IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
+from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse, RejectedRequest
 
 from ..utils.types import typeof
 from .bridge.requests import HttpRequestAsgiBridge
@@ -154,7 +154,10 @@ class ASGIKernel:
         return event.response or response
 
     async def handle_http(self, scope: Scope, receive: ASGIReceiveCallable, send: ASGISendCallable):
-        request = HttpRequest(HttpRequestAsgiBridge(scope, receive))
+        try:
+            request = HttpRequest(HttpRequestAsgiBridge(scope, receive))
+        except RejectedRequest as exc:
+            return HttpResponse(exc.message, status=exc.status, content_type="text/plain")
 
         if not self.started:
             return HttpResponse(

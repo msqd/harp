@@ -5,7 +5,7 @@ import pytest
 from multidict import MultiDict
 
 from harp.asgi.bridge.requests import HttpRequestAsgiBridge
-from harp.http import HttpRequestBridge
+from harp.http import HttpRequestBridge, RejectedRequest
 from harp.http.utils import HTTP_METHODS
 
 DEFAULT_SERVER_IPADDR = "127.0.0.1"
@@ -201,3 +201,13 @@ class TestHttpRequestAsgiBridgeBody(BaseHttpRequestAsgiBridgeTest):
         assert b"".join(chunks) == b'{"foo": "bar"}'
         assert len(chunks) == 2
         assert not len(messages)
+
+
+class TestHttpRequestAsgiBridgeInvalidPath(BaseHttpRequestAsgiBridgeTest):
+    def test_non_utf8_raw_path_is_rejected_as_bad_request(self):
+        bridge = self.create_bridge(raw_path=b"/\xff")
+
+        with pytest.raises(RejectedRequest) as exc_info:
+            bridge.get_path()
+
+        assert exc_info.value.status == 400
