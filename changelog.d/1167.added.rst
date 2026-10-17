@@ -1,0 +1,1 @@
+Add a macro benchmark harness measuring HARP overhead (latency, CPU per request) and startup time with oha.

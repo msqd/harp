@@ -1,0 +1,4 @@
+# Default applications (http_client, http_cache, proxy, storage, dashboard, janitor, rules), no rules defined.
+# Endpoint (--endpoint) and storage url (--set storage.url, in a temporary directory) come from the command line.
+storage:
+  migrate: true

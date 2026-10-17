@@ -1,0 +1,47 @@
+//! Static-response HTTP/1.1 origin for the macro benchmarks: every request gets 200 and a fixed body.
+//!
+//! Usage: harp-bench-origin <port> [body-size-bytes]   (default size: 1024)
+//! std only, thread per connection, keep-alive: far cheaper than the proxy it sits behind.
+
+use std::io::{Read, Write};
+use std::net::{TcpListener, TcpStream};
+use std::sync::Arc;
+use std::thread;
+
+fn serve(mut stream: TcpStream, response: &[u8]) {
+    let _ = stream.set_nodelay(true);
+    let mut buf = [0u8; 8192];
+    let mut pending: Vec<u8> = Vec::new();
+    loop {
+        match stream.read(&mut buf) {
+            Ok(0) | Err(_) => return,
+            Ok(n) => pending.extend_from_slice(&buf[..n]),
+        }
+        // Requests carry no body (GET): answer once per complete header block.
+        while let Some(end) = pending.windows(4).position(|w| w == b"\r\n\r\n") {
+            pending.drain(..end + 4);
+            if stream.write_all(response).is_err() {
+                return;
+            }
+        }
+    }
+}
+
+fn main() {
+    let mut args = std::env::args().skip(1);
+    let port: u16 = args.next().and_then(|a| a.parse().ok()).expect("usage: harp-bench-origin <port> [size]");
+    let size: usize = args.next().map(|a| a.parse().expect("size must be an integer")).unwrap_or(1024);
+
+    let mut response = format!(
+        "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {size}\r\n\r\n"
+    )
+    .into_bytes();
+    response.extend(std::iter::repeat(b'x').take(size));
+    let response = Arc::new(response);
+
+    let listener = TcpListener::bind(("127.0.0.1", port)).expect("bind");
+    for stream in listener.incoming().flatten() {
+        let response = Arc::clone(&response);
+        thread::spawn(move || serve(stream, &response));
+    }
+}
