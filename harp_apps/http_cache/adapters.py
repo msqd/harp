@@ -14,12 +14,8 @@ from harp_apps.http_cache.utils import (
 )
 from harp_apps.storage.types import IBlobStorage
 
-try:
-    from yaml import CSafeDumper as _Dumper
-    from yaml import CSafeLoader as _Loader
-except ImportError:  # libyaml not available
-    from yaml import SafeDumper as _Dumper
-    from yaml import SafeLoader as _Loader
+_Dumper = getattr(yaml, "CSafeDumper", yaml.SafeDumper)
+_Loader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
 
 # httpcore extension keys to preserve during serialization
 # Migrated from hishel._serializers to avoid dependency on removed internal module
