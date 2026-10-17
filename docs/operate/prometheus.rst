@@ -21,6 +21,31 @@ The ``metrics`` application will decorate the HARP ASGI implementation with a mi
 under the path ``/.prometheus/metrics``. You can configure your prometheus instance to scrape this path (see below).
 
 
+Storage load shedding
+:::::::::::::::::::::
+
+When the storage queue backs up, HARP sheds observability instead of failing requests: transactions, then messages,
+headers and bodies are not stored. Shedding is never silent:
+
+* A warning is logged at most every 10 seconds, with the counts dropped since the previous warning.
+* ``dropped_total{kind="transactions|messages|headers|bodies"}`` counts the same items.
+* ``async_worker_queue_backlog`` reports the queue depth (values below 1 are reported as 1).
+
+These two metrics are always available on ``/metrics``, whether or not the ``metrics`` application is enabled.
+
+
+Metrics endpoint
+::::::::::::::::
+
+``/metrics`` is served on the dashboard port (4080 by default) and follows the dashboard authentication. To also
+serve it on a dedicated port, without authentication (off by default), set ``dashboard.metrics_port``:
+
+.. code-block:: yaml
+
+    dashboard:
+      metrics_port: 9100
+
+
 Metrics
 :::::::
 
