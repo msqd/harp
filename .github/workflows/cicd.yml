@@ -548,6 +548,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The PyPI index can lag the upload, and the Dockerfile `pip install` fails on a miss
+      # (see https://github.com/msqd/harp/issues/1103). Poll with pip itself, up to ~10 minutes.
+      - name: Wait for the release on PyPI
+        run: |
+          for attempt in $(seq 1 30); do
+            if python -m pip download --no-deps --no-cache-dir -d "$RUNNER_TEMP/pypi-wait" "harp-proxy==${{ github.ref_name }}"; then
+              exit 0
+            fi
+            echo "harp-proxy==${{ github.ref_name }} not on PyPI yet (attempt $attempt/30), retrying in 20s"
+            sleep 20
+          done
+          echo "harp-proxy==${{ github.ref_name }} still not installable from PyPI after 10 minutes"
+          exit 1
+
       - name: Determine version and tags
         id: meta
         run: |
