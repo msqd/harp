@@ -18,9 +18,25 @@ import pytest
 from harp_apps.http_client.tests.transports import TRANSPORT_TYPES, transport_class
 
 AIOHTTP = "harp_apps.http_client.aiohttp_transport.AiohttpTransport"
+PYREQWEST = "harp_apps.http_client.pyreqwest_transport.PyreqwestTransport"
 
 #: (test name, transport type) -> why the transport cannot pass.
-KNOWN_DIVERGENCES: dict[tuple[str, str], str] = {}
+KNOWN_DIVERGENCES: dict[tuple[str, str], str] = {
+    ("test_request_line_headers_and_body_are_sent_as_given", PYREQWEST): (
+        "hyper's header map groups values by name and title-cases names: order across names, interleaving of "
+        "duplicates and casing are not kept"
+    ),
+    ("test_response_headers_keep_order_duplicates_and_casing", PYREQWEST): (
+        "hyper's header map groups values by name and lower-cases names"
+    ),
+    (
+        "test_no_header_is_added_on_its_own",
+        PYREQWEST,
+    ): "pyreqwest adds `Accept: */*` and a `User-Agent` when the request has none, and cannot be told not to",
+    ("test_read_timeout", PYREQWEST): (
+        "reqwest reports a timeout waiting for the response head as a connect timeout (still an httpx.TimeoutException)"
+    ),
+}
 
 OK = b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok"
 
@@ -388,3 +404,25 @@ def test_aiohttp_refuses_what_it_cannot_honour(transport_type):
         cls(limits=httpx.Limits(max_keepalive_connections=20))
     with pytest.raises(ValueError, match="verify"):
         cls(verify="/path/to/ca.pem")
+
+
+@pytest.mark.parametrize("transport_type", [PYREQWEST])
+async def test_pyreqwest_adds_accept_and_user_agent_only_when_absent(transport_type, make_transport):
+    transport = make_transport()
+    async with RawServer() as server:
+        await send(transport, get(server.url, headers=[("host", "stub")]))
+    names = {line.split(b":")[0].lower() for line in server.requests[0].split(b"\r\n")[1:] if line}
+    assert names == {b"host", b"accept", b"user-agent"}
+    async with RawServer() as server:
+        headers = [("host", "stub"), ("accept", "text/x"), ("user-agent", "me")]
+        await send(transport, get(server.url, headers=headers))
+    assert server.requests[0].lower().split(b"\r\n")[1:4] == [b"host: stub", b"accept: text/x", b"user-agent: me"]
+
+
+@pytest.mark.parametrize("transport_type", [PYREQWEST])
+def test_pyreqwest_refuses_what_it_cannot_honour(transport_type):
+    cls = transport_class(PYREQWEST)
+    with pytest.raises(ValueError, match="retries"):
+        cls(retries=1)
+    with pytest.raises(ValueError, match="verify"):
+        cls(verify=ssl.create_default_context())
