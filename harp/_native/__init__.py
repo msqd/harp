@@ -5,16 +5,22 @@ Choice between pure Python and native implementations, driven by the ``HARP_NATI
 - ``all``: native wherever the extension provides a component, hard failure if the extension is missing.
 - ``a,b``: native for the listed components, hard failure if the extension or a listed implementation is missing.
 
-The extension is expected at ``harp._native._core``, exposing each component under its name.
+The extension is a module exposing each component under its name, looked up in ``CORE_MODULES`` order:
+``harp._native._core`` (built inside harp-proxy) then ``harp_native`` (the ``harp-proxy-native`` distribution).
 
 """
 
 import os
 from importlib import import_module
+from types import ModuleType
 from typing import Callable
 
 #: Components that may have a native implementation.
-COMPONENTS: frozenset[str] = frozenset()
+COMPONENTS: frozenset[str] = frozenset({"blob_id"})
+
+
+#: Where the extension may live.
+CORE_MODULES = ("harp._native._core", "harp_native")
 
 
 class NativeUnavailableError(RuntimeError):
@@ -35,20 +41,26 @@ def _requested() -> tuple[frozenset[str], bool]:
     return names, True
 
 
-def _core():
-    try:
-        return import_module("harp._native._core")
-    except ImportError as exc:
-        raise NativeUnavailableError("HARP_NATIVE requests native code but harp._native._core is missing.") from exc
+def core() -> ModuleType:
+    """The extension module, or raise `NativeUnavailableError`."""
+    error = None
+    for name in CORE_MODULES:
+        try:
+            return import_module(name)
+        except ImportError as exc:
+            error = exc
+    raise NativeUnavailableError(
+        f"HARP_NATIVE requests native code but none of {', '.join(CORE_MODULES)} could be imported."
+    ) from error
 
 
 def _native(component: str) -> Callable | None:
     requested, strict = _requested()
     if component not in requested:
         return None
-    impl = getattr(_core(), component, None)
+    impl = getattr(core(), component, None)
     if impl is None and strict:
-        raise NativeUnavailableError(f"HARP_NATIVE requests native {component!r} but harp._native._core has none.")
+        raise NativeUnavailableError(f"HARP_NATIVE requests native {component!r} but the extension has none.")
     return impl
 
 

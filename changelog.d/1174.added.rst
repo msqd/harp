@@ -1,0 +1,1 @@
+Added Rust blob id (`harp-proxy-native`, opt-in with `HARP_NATIVE=blob_id`), toolchain spike only.
