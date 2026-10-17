@@ -14,6 +14,9 @@ themselves, are never deleted by the janitor: cache storage is reclaimed by the 
 (see :doc:`/apps/http_cache/settings`). Once an entry is expired or replaced, the janitor removes the header and body
 blobs nothing references anymore. The ``storage_blobs_orphans`` metric counts the same orphans.
 
+A sweep works in short batches and gives the database connection back between them, so requests are served while it
+runs, even with the default in-memory storage that has a single connection.
+
 .. toctree::
     :hidden:
     :maxdepth: 1
