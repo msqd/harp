@@ -15,7 +15,7 @@ from harp_apps.proxy.events import (
     EVENT_TRANSACTION_MESSAGE,
 )
 from harp_apps.proxy.settings.remote import Remote
-from harp_apps.storage.constants import TRUNCATED_RESPONSE_BODY
+from harp_apps.storage.constants import CLIENT_DISCONNECTED, TRUNCATED_RESPONSE_BODY
 
 BASE_URL = "http://example.com"
 
@@ -241,3 +241,45 @@ async def test_a_filter_leaving_the_body_unread_still_ends_the_transaction():
 
     assert b"".join(message.get("body", b"") for message in messages) == b"hello"
     assert dispatcher.ids()[-1] == EVENT_TRANSACTION_ENDED
+
+
+@respx.mock
+async def test_client_leaving_mid_body_is_marked_and_the_body_read_so_far_is_recorded():
+    async def upstream_body():
+        for chunk in (b"first", b"second", b"third"):
+            yield chunk
+
+    respx.get(BASE_URL).mock(side_effect=lambda request: httpx.Response(200, content=upstream_body()))
+    dispatcher = RecordingDispatcher()
+    controller = create_controller(dispatcher)
+    response = await controller(HttpRequest())
+
+    sent = []
+
+    async def send(message):
+        if message.get("body"):
+            if sent:
+                raise OSError("client disconnected")
+            sent.append(message["body"])
+
+    from harp.asgi.bridge.responses import HttpResponseAsgiBridge
+
+    with pytest.raises(OSError):
+        await HttpResponseAsgiBridge(response, send).send()
+
+    (_, ended) = dispatcher.events[-1]
+    assert CLIENT_DISCONNECTED in ended.transaction.markers
+    recorded = dispatcher.recorded_response()
+    assert await recorded.aread() == b"firstsecond"
+
+
+@respx.mock
+async def test_client_reading_the_whole_body_is_not_marked_as_disconnected():
+    respx.get(BASE_URL).mock(return_value=httpx.Response(200, content=b"hello"))
+    dispatcher = RecordingDispatcher()
+    controller = create_controller(dispatcher)
+
+    await send_through_asgi(await controller(HttpRequest()))
+
+    (_, ended) = dispatcher.events[-1]
+    assert CLIENT_DISCONNECTED not in ended.transaction.markers

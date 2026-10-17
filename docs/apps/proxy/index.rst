@@ -108,9 +108,14 @@ the client, and:
       # a byte count, or a size with its unit: 512KiB, 1MiB, 10MB
       max_recorded_body_size: 4MiB
 
-The transaction ends once the body has been sent, so its duration includes the transfer to the client. When the
-upstream fails halfway through a body, the client's connection is cut, since its response has already started, and the
-transaction is recorded as an error.
+The transaction ends once the body has been sent, so its duration, and the :doc:`TPDEX </user/performances>`
+computed from it, cover the whole exchange including the transfer to the client. When the client goes away before the
+end of the body, the transaction is recorded with the body read until then and the ``client-disconnected`` marker. When
+the upstream fails halfway through a body, the client's connection is cut, since its response has already started, and
+the transaction is recorded as an error.
+
+The cap applies to the body as the client receives it: a compressed upstream body is measured once decoded, for the
+recording and for the cache alike.
 
 Still buffered:
 

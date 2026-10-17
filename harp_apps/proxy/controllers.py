@@ -17,7 +17,7 @@ from harp.models import Transaction
 from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.tpdex import tpdex
-from harp_apps.storage.constants import DEFAULT_MAX_RECORDED_BODY_SIZE, TRUNCATED_RESPONSE_BODY
+from harp_apps.storage.constants import CLIENT_DISCONNECTED, DEFAULT_MAX_RECORDED_BODY_SIZE, TRUNCATED_RESPONSE_BODY
 from .adapters import HttpClientProxyAdapter, strip_credentials
 from .constants import (
     BREAK_ON_NETWORK_ERROR,
@@ -219,7 +219,8 @@ class HttpProxyController(AbstractHttpProxyController):
         """Hand the response body to the client as it arrives, and end the transaction once it is over.
 
         At most :attr:`max_recorded_body_size` bytes of the body are recorded and held in memory. A longer body is
-        still sent whole, and the transaction gets the ``truncated-response-body`` marker.
+        still sent whole, and the transaction gets the ``truncated-response-body`` marker. A client going away before
+        the end of the body leaves the transaction recorded with what was read, and the ``client-disconnected`` marker.
         """
 
         async def on_end(stream: RecordingStream, error: Optional[Exception]):
@@ -228,6 +229,8 @@ class HttpProxyController(AbstractHttpProxyController):
                 return
             if stream.truncated:
                 transaction.markers.add(TRUNCATED_RESPONSE_BODY)
+            if stream.abandoned:
+                transaction.markers.add(CLIENT_DISCONNECTED)
             recorded = HttpResponse(
                 stream.recorded, status=response.status, headers=response.headers, extensions=response.extensions
             )

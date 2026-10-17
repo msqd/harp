@@ -131,7 +131,7 @@ Response size
 .. versionadded:: 0.12
 
 The cache passes an origin's body on as it arrives and stores the response once the whole body has gone
-through. A body larger than the proxy's recording cap (``proxy.max_recorded_body_size``, 1 MiB by default, see
+through. A body larger, once decoded, than the proxy's recording cap (``proxy.max_recorded_body_size``, 1 MiB by default, see
 :ref:`proxy-buffering-and-streaming`) is sent to the client whole and **not stored**: the next request for it goes
 to the origin again. A response the client stopped reading before its end is not stored either.
 

@@ -22,6 +22,7 @@ Prefix          Cause                                           Markers
                                                                 ``skip-response-headers-storage``
 ``shed-``       Storage dropped data under pressure             ``shed-messages``, ``shed-headers``, ``shed-bodies``
 ``truncated-``  A recording cap cut the data                    ``truncated-response-body``
+``client-``     The client went away                            ``client-disconnected``
 ==============  ==============================================  ==========================================================
 
 The storage worker sets the ``shed-`` markers when it drops the messages, headers or bodies of a transaction because
@@ -97,6 +98,18 @@ Truncation Markers
 Set by the proxy when a response body is longer than the recording cap (``proxy.max_recorded_body_size``, 1 MiB by
 default). The stored body holds the first bytes of the response, up to the cap; the client received it whole. The
 dashboard shows the truncation on the response. See :ref:`proxy-buffering-and-streaming`.
+
+Client Markers
+--------------
+
+``client-disconnected``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 0.12
+
+Set by the proxy when the client goes away before the end of the response body. The transaction is still recorded,
+with the response body read until then, and ends when the client left. The dashboard shows it on the response. See
+:ref:`proxy-buffering-and-streaming`.
 
 Message Storage Markers
 -----------------------

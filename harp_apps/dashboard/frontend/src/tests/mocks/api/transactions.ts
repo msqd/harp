@@ -86,7 +86,7 @@ const mockTransaction2: Transaction = {
 
   tags: {},
   extras: {},
-  markers: ["truncated-response-body"],
+  markers: ["client-disconnected", "truncated-response-body"],
 }
 const mockTransactions: { [key: string]: Transaction } = {
   ABCD1234: mockTransaction1,
