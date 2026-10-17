@@ -548,15 +548,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
       # The PyPI index can lag the upload, and the Dockerfile `pip install` fails on a miss
       # (see https://github.com/msqd/harp/issues/1103). Poll with pip itself, up to ~10 minutes.
       - name: Wait for the release on PyPI
         run: |
           for attempt in $(seq 1 30); do
-            if python -m pip download --no-deps --only-binary=:all: --python-version 3.13 --no-cache-dir -d "$RUNNER_TEMP/pypi-wait" "harp-proxy==${{ github.ref_name }}"; then
+            if out=$(python -m pip download --no-deps --only-binary=:all: --python-version 3.13 --no-cache-dir -d "$RUNNER_TEMP/pypi-wait" "harp-proxy==${{ github.ref_name }}" 2>&1); then
               exit 0
             fi
-            echo "harp-proxy==${{ github.ref_name }} not on PyPI yet (attempt $attempt/30), retrying in 20s"
+            echo "harp-proxy==${{ github.ref_name }} not on PyPI yet (attempt $attempt/30): $(echo "$out" | tail -n 1)"
             sleep 20
           done
           echo "harp-proxy==${{ github.ref_name }} still not installable from PyPI after 10 minutes"
