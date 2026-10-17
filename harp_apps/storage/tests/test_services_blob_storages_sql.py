@@ -1,12 +1,14 @@
+import time
 from datetime import UTC, datetime, timedelta
 from unittest.mock import ANY
 
 import pytest
+from pydantic_core import MultiHostUrl
 from sqlalchemy import delete, event, text, update
 from sqlalchemy.ext.asyncio import AsyncConnection, async_sessionmaker
 
 from harp.models import Blob
-from harp_apps.storage.engines.sql_engine import create_async_engine
+from harp_apps.storage.engines.sql_engine import SQLAlchemyEngine, create_async_engine
 from harp_apps.storage.models import Blob as SqlBlob
 from harp_apps.storage.models.blobs import ORPHAN_GRACE, BlobsRepository
 from harp_apps.storage.services.blob_storages.sql import SqlBlobStorage
@@ -155,3 +157,15 @@ async def test_put_renews_a_blob_the_janitor_sweeps_in_between(sql_blob_storage:
     monkeypatch.undo()
 
     assert await storage.exists("old")
+
+
+async def test_put_of_a_new_blob_needs_one_connection_at_a_time():
+    engine = SQLAlchemyEngine.from_url(MultiHostUrl("sqlite+aiosqlite:///:memory:"))  # a pool of one
+    async with engine.begin() as conn:
+        await conn.run_sync(SqlBlob.metadata.create_all)
+    try:
+        started = time.monotonic()
+        await SqlBlobStorage(engine).put(Blob(id="new", data=b"x", content_type="text/plain"))
+        assert time.monotonic() - started < 2
+    finally:
+        await engine.dispose()

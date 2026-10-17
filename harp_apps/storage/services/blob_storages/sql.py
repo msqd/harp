@@ -64,7 +64,11 @@ class SqlBlobStorage(IBlobStorage):
                 .values(created_at=func.now())
             )
             await conn.commit()
-            if renewed.rowcount == 0 and not await self.exists(blob.id):
+            # the check shares `conn`: a second connection would deadlock a pool of one
+            if (
+                renewed.rowcount == 0
+                and not (await conn.execute(select(SqlBlob.id).where(SqlBlob.id == blob.id))).first()
+            ):
                 try:
                     await conn.execute(
                         insert(SqlBlob).values(id=blob.id, data=blob.data, content_type=blob.content_type),
