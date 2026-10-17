@@ -121,6 +121,9 @@ Frontend Test Options
     # Run browser tests
     cd harp_apps/dashboard/frontend && pnpm test:browser
 
+    # Open the HTML report of the last browser run (never opened automatically)
+    cd harp_apps/dashboard/frontend && pnpm test:browser:report
+
     # Update unit test snapshots
     make test-frontend-update
 
