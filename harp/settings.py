@@ -18,6 +18,9 @@ PAGE_SIZE = 40
 #: Default timeout for http requests
 DEFAULT_TIMEOUT = 30.0
 
+#: Seconds a client may stay silent in the middle of a request before the server hangs up.
+DEFAULT_CLIENT_READ_TIMEOUT = 30.0
+
 #: Force environment override (dev or prod)
 HARP_ENV = environ.pop("HARP_ENV", None)
 if HARP_ENV is not None:

@@ -108,6 +108,18 @@ the client, and:
       # a byte count, or a size with its unit: 512KiB, 1MiB, 10MB
       max_recorded_body_size: 4MiB
 
+.. _proxy-client-read-timeout:
+
+**A silent client is cut.** A client that stops sending in the middle of a request, headers or body, is disconnected
+after ``client_read_timeout`` seconds (30 by default), so stalled clients cannot hold every connection. The proxy and
+the dashboard are served by the same server and share this setting. Each silence is timed on its own: a client that
+keeps sending, however slowly, at shorter intervals is not cut. A client waiting for a slow response is not concerned.
+
+.. code-block:: yaml
+
+    proxy:
+      client_read_timeout: 30.0
+
 The transaction ends once the body has been sent, so its duration, and the :doc:`TPDEX </user/performances>`
 computed from it, cover the whole exchange including the transfer to the client. When the client goes away before the
 end of the body, HARP stops reading the upstream and releases its connection at once, and the transaction is recorded

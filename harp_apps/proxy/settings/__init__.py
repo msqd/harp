@@ -2,6 +2,7 @@ from functools import cached_property
 
 from pydantic import ByteSize, Field
 
+from harp.settings import DEFAULT_CLIENT_READ_TIMEOUT
 from harp.config import ApplicationSettingsMixin, Configurable, Stateful
 from harp_apps.storage.constants import DEFAULT_MAX_RECORDED_BODY_SIZE
 
@@ -44,6 +45,11 @@ class ProxySettings(ApplicationSettingsMixin, BaseProxySettings):
     #: longer body is still sent whole to the client, recorded truncated and marked ``truncated-response-body``, and
     #: not stored in the http cache.
     max_recorded_body_size: ByteSize = Field(ByteSize(DEFAULT_MAX_RECORDED_BODY_SIZE), gt=0)
+
+    #: Seconds a client may stay silent in the middle of a request (headers or body) before the server closes its
+    #: connection. Applies to the proxy and dashboard servers, which share it. Each silence is timed on its own: a
+    #: client sending a byte at shorter intervals is not cut.
+    client_read_timeout: float = Field(DEFAULT_CLIENT_READ_TIMEOUT, gt=0)
 
 
 class Proxy(Stateful[ProxySettings]):

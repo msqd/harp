@@ -201,6 +201,10 @@ declare namespace Apps.Proxy {
      */
     enabled?: boolean;
     endpoints?: EndpointSettings[];
+    /**
+     * Seconds a client may stay silent in the middle of a request before the server closes its connection.
+     */
+    client_read_timeout?: number;
     max_recorded_body_size?: number;
   }
   export interface BaseRemoteSettings {
