@@ -42,6 +42,9 @@ ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 #: Debug mode flag. When enabled, HARP will output additional debugging information that may not be safe for
 #: production environments (e.g., exception tracebacks in error responses). Set via HARP_DEBUG or DEBUG environment
 #: variables.
+# ASGI server run by default, see `harp.config.adapters`.
+DEFAULT_SERVER: str = "hypercorn"
+
 DEBUG: bool = bool(os.environ.get("HARP_DEBUG") or os.environ.get("DEBUG"))
 
 
@@ -114,31 +117,39 @@ __parsed_version__ = _parse_version(__version__)
 from ._logging import get_logger  # noqa: E402
 
 
-async def arun(builder: "_ConfigurationBuilder"):
-    from harp.config.adapters.hypercorn import HypercornAdapter
+async def arun(builder: "_ConfigurationBuilder", server: str = DEFAULT_SERVER):
+    from harp.config.adapters import get_server
 
     system = await builder.abuild_system()
-    server = HypercornAdapter(system)
+    adapter = get_server(server).adapter_type(system)
     try:
-        return await server.serve()
+        return await adapter.serve()
     finally:
         await system.dispose()
 
 
-def run(builder: "_ConfigurationBuilder"):
+def run(builder: "_ConfigurationBuilder", server: str = DEFAULT_SERVER):
     """
-    Run the default server using provided configuration.
+    Run the server using provided configuration.
 
     :param builder: Config
+    :param server: Name of the ASGI server to run on (see :data:`harp.config.adapters.SERVERS`).
     :return:
     """
     import asyncio
 
-    return asyncio.run(arun(builder))
+    from harp.config.adapters import get_server
+
+    if get_server(server).uvloop:
+        import uvloop
+
+        return asyncio.run(arun(builder, server), loop_factory=uvloop.new_event_loop)
+    return asyncio.run(arun(builder, server))
 
 
 __all__ = [
     "DEBUG",
+    "DEFAULT_SERVER",
     "ROOT_DIR",
     "__revision__",
     "__version__",
