@@ -30,7 +30,13 @@ class UvicornAdapter:
         from uvicorn import Config, Server
 
         # logging is configured by harp (loggers "uvicorn.error" and "uvicorn.access"), loop is already running.
-        config = Config(self.system.asgi_app, log_config=None, lifespan="on", loop="none")
+        config = Config(
+            self.system.asgi_app,
+            log_config=None,
+            lifespan="on",
+            loop="none",
+            interface="asgi3",  # "auto" takes a plain `__call__` (middlewares) for a double-callable ASGI 2 app
+        )
         server = Server(config)
         logger.debug(f"🌎 {type(self).__name__}::serve({', '.join(map(str, self.system.binds))})")
 
