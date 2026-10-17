@@ -1,4 +1,5 @@
 import time
+from dataclasses import replace
 
 import httpx
 from hishel import Request, Response
@@ -11,22 +12,33 @@ from harp import get_logger
 from harp.http.utils import hop_by_hop_names, parse_cache_control
 from harp.utils.bytes import HEADER_ENCODING, ensure_bytes, header_bytes
 from harp_apps.http_cache.models import WrappedRequest
+from harp_apps.http_cache.storages import MAX_BODY_SIZE_METADATA
+from harp_apps.http_cache.streams import ClosableByteStream, UpstreamBody
 
 logger = get_logger(__name__)
 
 
 def _httpx_to_internal(value):
-    """hishel reads headers as text, and httpx guesses how to decode them: obs-text must not be guessed."""
+    """hishel reads headers as text, and httpx guesses how to decode them: obs-text must not be guessed.
+
+    hishel also gathers a response body into 128 KiB pieces, which holds back what arrives first until the piece
+    fills: the body is passed on as it arrives instead."""
     value.headers.encoding = HEADER_ENCODING
-    return _hishel_httpx_to_internal(value)
+    internal = _hishel_httpx_to_internal(value)
+    if isinstance(value, httpx.Response) and not value.is_stream_consumed:
+        internal = replace(internal, stream=UpstreamBody(value))
+    return internal
 
 
 def _internal_to_httpx(value):
-    """The reverse, handing httpx bytes: given text it would insist on ascii, and refuse obs-text."""
+    """The reverse, handing httpx bytes: given text it would insist on ascii, and refuse obs-text.
+
+    Closing the httpx response closes its body, so an upstream body the client stops reading is released at once."""
     headers = [(header_bytes(name), header_bytes(val)) for name, val in value.headers.items()]
-    stream = _IteratorStream(value._aiter_stream())
     if isinstance(value, Response):
+        stream = ClosableByteStream(value.stream)
         return httpx.Response(value.status_code, headers=headers, stream=stream, extensions=value.metadata)
+    stream = _IteratorStream(value._aiter_stream())
     return httpx.Request(value.method, value.url, headers=headers, stream=stream, extensions=value.metadata)
 
 
@@ -38,6 +50,11 @@ def _endpoint_name(request: httpx.Request) -> str:
             f"(url={request.url}); without it, unrelated requests would share one cache namespace."
         )
     return endpoint_name
+
+
+def _max_recorded_body_size(request: httpx.Request) -> int | None:
+    """The proxy's recording cap for this request, if it set one: the cache stores no body larger."""
+    return request.extensions.get("harp", {}).get("max_recorded_body_size")
 
 
 def _cache_url(url: httpx.URL, endpoint_name: str) -> str:
@@ -94,7 +111,11 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
             f"Handling async request with rewritten URL for caching: original_url={request.url}, rewritten_url={url}"
         )
 
-        wrapped_request = WrappedRequest(internal_request, url=url)
+        wrapped_request = WrappedRequest(
+            internal_request,
+            url=url,
+            metadata={**internal_request.metadata, MAX_BODY_SIZE_METADATA: _max_recorded_body_size(request)},
+        )
 
         if _forbids_storage(request):
             logger.debug(f"Bypassing cache, the request forbids storage (RFC 9111 §5.2.1.5): url={request.url}")

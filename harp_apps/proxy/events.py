@@ -17,7 +17,7 @@ EVENT_TRANSACTION_STARTED = "proxy.transaction.started"
 #: Event fired when a message is sent to a transaction (either request or response).
 EVENT_TRANSACTION_MESSAGE = "proxy.transaction.message"
 
-#: Event fired when a transaction is finished, before the response is sent back to the caller.
+#: Event fired when a transaction is finished, once the response body has been streamed to the caller.
 EVENT_TRANSACTION_ENDED = "proxy.transaction.ended"
 
 #: Event fired when an incoming request is ready to be filtered, for example by the rules application.

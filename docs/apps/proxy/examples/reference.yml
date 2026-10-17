@@ -29,3 +29,4 @@ proxy:
         path: /
         timeout: 10.0
         verify: true
+  max_recorded_body_size: 1048576

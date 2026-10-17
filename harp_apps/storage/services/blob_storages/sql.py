@@ -1,5 +1,5 @@
 from collections.abc import AsyncIterator, Sequence
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import override
 
 from sqlalchemy import and_, delete, or_, func, insert, select, update
@@ -16,12 +16,6 @@ logger = get_logger(__name__)
 
 ITER_BATCH_SIZE = 200
 DELETE_BATCH_SIZE = 200
-
-
-def _is_older_than(moment: datetime, age: timedelta) -> bool:
-    if moment.tzinfo is None:  # sqlite hands back naive UTC
-        moment = moment.replace(tzinfo=UTC)
-    return datetime.now(UTC) - moment > age
 
 
 class SqlBlobStorage(IBlobStorage):
@@ -62,10 +56,19 @@ class SqlBlobStorage(IBlobStorage):
         :param blob: content-addressed blob (sha1 for message blobs, sha256 for cache entries)
         """
         async with self.engine.connect() as conn:
-            created_at = (
-                await conn.execute(select(SqlBlob.created_at).where(SqlBlob.id == blob.id))
-            ).scalar_one_or_none()
-            if created_at is None:
+            # One conditional statement: reading `created_at` first would leave the janitor a window to delete
+            # the blob before it is renewed.
+            renewed = await conn.execute(
+                update(SqlBlob)
+                .where(SqlBlob.id == blob.id, SqlBlob.created_at < datetime.now(UTC) - ORPHAN_GRACE / 2)
+                .values(created_at=func.now())
+            )
+            await conn.commit()
+            # the check shares `conn`: a second connection would deadlock a pool of one
+            if (
+                renewed.rowcount == 0
+                and not (await conn.execute(select(SqlBlob.id).where(SqlBlob.id == blob.id))).first()
+            ):
                 try:
                     await conn.execute(
                         insert(SqlBlob).values(id=blob.id, data=blob.data, content_type=blob.content_type),
@@ -73,9 +76,6 @@ class SqlBlobStorage(IBlobStorage):
                     await conn.commit()
                 except IntegrityError:
                     pass  # already there? that's fine!
-            elif _is_older_than(created_at, ORPHAN_GRACE / 2):
-                await conn.execute(update(SqlBlob).where(SqlBlob.id == blob.id).values(created_at=func.now()))
-                await conn.commit()
         return blob
 
     @override
