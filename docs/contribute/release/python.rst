@@ -192,13 +192,23 @@ Update the version in ``pyproject.toml`` and verify:
     git commit -m "chore: bump version to $VERSION"
 
 Push the branch and open the release pull request against the branch it came from (``main``, or
-``X.Y`` for a patch release). Its body is the version's changelog section. Merge it once *All Checks
+``X.Y`` for a patch release). Its body is the version's changelog section converted to GitHub
+Markdown; raw ReST renders as plain text with ``:::::`` underlines. Merge it once *All Checks
 Passed* is green.
 
 .. code-block:: bash
 
     git push origin HEAD:release/$VERSION
-    gh pr create --base main --head release/$VERSION --title "Release $VERSION" --body-file <section>
+    pandoc --wrap=none --shift-heading-level-by=1 -f rst -t gfm -o body.md <section>
+    gh pr create --base main --head release/$VERSION --title "Release $VERSION" --body-file body.md
+
+**A fix taken into the release** after the changelog is built goes through the release branch:
+
+1. Retarget its pull request to ``release/$VERSION`` and merge it there.
+2. Move its fragment into ``docs/changelogs/$VERSION.rst`` and ``git rm`` it from ``changelog.d/``;
+   otherwise it lands on the next version's notes.
+3. Close its issue by hand once the release pull request is merged: ``Closes #N`` only fires on a
+   merge into the default branch.
 
 6. Create an Annotated Git Tag
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -345,6 +355,9 @@ Once the workflow completes successfully:
 
 ``protection.json`` requires a pull request and *All Checks Passed*, enforces it for administrators,
 and refuses force-push and deletion; copy it from ``gh api repos/msqd/harp/branches/main/protection``.
+
+Check that ``https://docs.harp-proxy.net/en/X.Y/`` answers once Read the Docs has built the new
+branch; activate the version on Read the Docs if it does not. The dashboard's Help link opens it.
 
 Then open the next version on ``main``, through a pull request: ``pyproject.toml`` moves to
 ``X.Y+1.0.dev0`` (``uv lock`` again) and ``changelog.d/`` holds no fragment but its ``README.rst``.
