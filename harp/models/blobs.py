@@ -5,6 +5,7 @@ import json
 
 import orjson
 
+from harp._native import select
 from harp.utils.bytes import ensure_bytes, ensure_str
 
 from .base import Entity
@@ -12,6 +13,18 @@ from .base import Entity
 
 # Above this size, hashing is offloaded to a thread (hashlib releases the GIL on large buffers).
 OFFLOAD_HASH_THRESHOLD = 64 * 1024
+
+
+def blob_id_python(data: bytes, content_type: str | None) -> str:
+    """Hex sha1 of ``content_type``, a newline, then ``data``. The native ``blob_id`` is its exact equivalent."""
+    digest = hashlib.sha1(content_type.encode("utf-8") if content_type else b"")
+    digest.update(b"\n")
+    digest.update(data)
+    return digest.hexdigest()
+
+
+# Resolved once, at import: HARP_NATIVE=blob_id switches it.
+_blob_id = select("blob_id", blob_id_python)
 
 
 @dataclasses.dataclass(kw_only=True)
@@ -28,10 +41,7 @@ class Blob(Entity):
             content_type = content_type.split(";", 1)[0].strip()
 
         data = ensure_bytes(data)
-        digest = hashlib.sha1(content_type.encode("utf-8") if content_type else b"")
-        digest.update(b"\n")
-        digest.update(data)
-        return cls(id=digest.hexdigest(), data=data, content_type=content_type)
+        return cls(id=_blob_id(data, content_type), data=data, content_type=content_type)
 
     @classmethod
     async def afrom_data(cls, data, /, *, content_type=None):

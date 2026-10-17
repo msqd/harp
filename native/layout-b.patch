@@ -1,0 +1,159 @@
+diff --git a/native/Cargo.lock b/Cargo.lock
+similarity index 99%
+rename from native/Cargo.lock
+rename to Cargo.lock
+index 34a0644d..c5fd5673 100644
+--- a/native/Cargo.lock
++++ b/Cargo.lock
+@@ -53,7 +53,7 @@ dependencies = [
+ ]
+ 
+ [[package]]
+-name = "harp-native"
++name = "harp-proxy"
+ version = "0.12.0-dev0"
+ dependencies = [
+  "hex",
+diff --git a/native/Cargo.toml b/Cargo.toml
+similarity index 86%
+rename from native/Cargo.toml
+rename to Cargo.toml
+index a8ea065a..6966eb7a 100644
+--- a/native/Cargo.toml
++++ b/Cargo.toml
+@@ -1,11 +1,11 @@
+ [package]
+-name = "harp-native"
++name = "harp-proxy"
+ version = "0.12.0-dev0"
+ edition = "2021"
+ publish = false
+ 
+ [lib]
+-name = "harp_native"
++name = "_core"
+ crate-type = ["cdylib"]
+ 
+ [dependencies]
+diff --git a/native/pyproject.toml b/native/pyproject.toml
+deleted file mode 100644
+index b4a1cbf3..00000000
+--- a/native/pyproject.toml
++++ /dev/null
+@@ -1,15 +0,0 @@
+-[build-system]
+-requires = ["maturin>=1.7,<2"]
+-build-backend = "maturin"
+-
+-[project]
+-name = "harp-proxy-native"
+-version = "0.12.0.dev0"
+-description = "Native (Rust) components for HARP, loaded through HARP_NATIVE."
+-requires-python = ">=3.13,<3.14"
+-dependencies = []
+-
+-[tool.maturin]
+-# Top level module, not harp._native._core: injecting a file into another distribution's package tree is invisible to
+-# editable installs of harp-proxy (see bench/FINDINGS.md).
+-module-name = "harp_native"
+diff --git a/pyproject.toml b/pyproject.toml
+index 2aedb476..817db96f 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,6 +1,6 @@
+ [build-system]
+-requires = ["hatchling==1.27.0"]
+-build-backend = "hatchling.build"
++requires = ["maturin>=1.7,<2"]
++build-backend = "maturin"
+ 
+ [project]
+ name = "harp-proxy"
+@@ -61,7 +61,6 @@ mysql = [
+     "cryptography>=50.0,<51",
+ ]
+ postgresql = ["asyncpg>=0.30,<0.31"]
+-native = ["harp-proxy-native==0.12.0.dev0"]
+ 
+ [project.scripts]
+ harp-proxy = "harp.commandline:entrypoint"
+@@ -107,49 +106,30 @@ bench = ["pyperf>=2.8,<3"]
+ [tool.uv]
+ default-groups = ["dev"]
+ 
+-[tool.uv.sources]
+-harp-proxy-native = { path = "native" }
+-
+-[tool.hatch.build.targets.sdist]
+-include = [
+-    "harp",
+-    "harp_apps",
+-    "harp_apps/dashboard/web",
+-]
+-exclude = [
+-    "**/node_modules/",
+-    "harp_apps/dashboard/frontend",
+-]
+-
+-[tool.hatch.build.targets.sdist.force-include]
+-"harp_apps/dashboard/web" = "harp_apps/dashboard/web"
+-
+-[tool.hatch.build.targets.wheel]
++[tool.maturin]
++module-name = "harp._native._core"
++python-source = "."
++python-packages = ["harp", "harp_apps"]
++features = ["pyo3/extension-module"]
+ include = [
+-    "harp",
+-    "harp_apps",
++    { path = "harp_apps/dashboard/web/**/*", format = ["sdist", "wheel"] },
++    { path = "Cargo.lock", format = "sdist" },
++    # Re-include what the test-file excludes below would drop (hatch expressed this as a "!" negation).
++    { path = "harp/commandline/cookiecutters/**/*", format = ["sdist", "wheel"] },
+ ]
+ exclude = [
+-    "**/node_modules/",
+-    "harp_apps/dashboard/frontend",
+-    # Test code and dev-only utilities: not needed to run HARP in production.
+-    "**/tests/",
++    "**/node_modules/**",
++    "harp_apps/dashboard/frontend/**",
++    "**/tests/**",
+     "**/test_*.py",
+     "**/*_test.py",
+-    "**/testing/",
++    "**/testing/**",
+     "**/conftest.py",
+-    "**/__snapshots__/",
+-    "**/__pycache__/",
++    "**/__snapshots__/**",
++    "**/__pycache__/**",
+     "**/*.pyc",
+-    # Keep the project scaffolding shipped by `harp create project`: the
+-    # cookiecutter template legitimately contains tests/ and conftest.py that
+-    # end up in the user's generated project.
+-    "!harp/commandline/cookiecutters/**",
+ ]
+ 
+-[tool.hatch.build.targets.wheel.force-include]
+-"harp_apps/dashboard/web" = "harp_apps/dashboard/web"
+-
+ [tool.ruff]
+ line-length = 120
+ exclude = [
+diff --git a/native/src/lib.rs b/src/lib.rs
+similarity index 94%
+rename from native/src/lib.rs
+rename to src/lib.rs
+index 966b52d6..05e624ab 100644
+--- a/native/src/lib.rs
++++ b/src/lib.rs
+@@ -28,6 +28,6 @@ fn blob_id(py: Python<'_>, data: &[u8], content_type: Option<&str>) -> String {
+ }
+ 
+ #[pymodule]
+-fn harp_native(m: &Bound<'_, PyModule>) -> PyResult<()> {
++fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
+     m.add_function(wrap_pyfunction!(blob_id, m)?)
+ }

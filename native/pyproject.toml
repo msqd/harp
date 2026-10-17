@@ -1,0 +1,15 @@
+[build-system]
+requires = ["maturin>=1.7,<2"]
+build-backend = "maturin"
+
+[project]
+name = "harp-proxy-native"
+version = "0.12.0.dev0"
+description = "Native (Rust) components for HARP, loaded through HARP_NATIVE."
+requires-python = ">=3.13,<3.14"
+dependencies = []
+
+[tool.maturin]
+# Top level module, not harp._native._core: injecting a file into another distribution's package tree is invisible to
+# editable installs of harp-proxy (see bench/FINDINGS.md).
+module-name = "harp_native"

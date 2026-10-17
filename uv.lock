@@ -723,6 +723,9 @@ mysql = [
     { name = "aiomysql" },
     { name = "cryptography" },
 ]
+native = [
+    { name = "harp-proxy-native" },
+]
 postgresql = [
     { name = "asyncpg" },
 ]
@@ -783,6 +786,7 @@ requires-dist = [
     { name = "dataclasses-json", specifier = ">=0.6,<0.7" },
     { name = "dataclasses-jsonschema", specifier = ">=2.16,<2.17" },
     { name = "essentials-configuration", specifier = ">=2.0,<2.1" },
+    { name = "harp-proxy-native", marker = "extra == 'native'", directory = "native" },
     { name = "hishel", specifier = ">=1.1.7,<1.1.10" },
     { name = "http-router", specifier = ">=5.0,<6.0" },
     { name = "httpcore", specifier = ">=1.0,<2" },
@@ -808,7 +812,7 @@ requires-dist = [
     { name = "svix-ksuid", specifier = ">=0.6,<0.7" },
     { name = "whistle", specifier = ">=2.0.1,<3" },
 ]
-provides-extras = ["mysql", "postgresql"]
+provides-extras = ["mysql", "postgresql", "native"]
 
 [package.metadata.requires-dev]
 bench = [{ name = "pyperf", specifier = ">=2.8,<3" }]
@@ -846,6 +850,11 @@ dev = [
     { name = "towncrier", specifier = ">=26.9.0" },
     { name = "watchfiles", specifier = ">=1.1,<1.3" },
 ]
+
+[[package]]
+name = "harp-proxy-native"
+version = "0.12.0.dev0"
+source = { directory = "native" }
 
 [[package]]
 name = "hatchling"

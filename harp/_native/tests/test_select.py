@@ -52,6 +52,7 @@ def test_unknown_component_in_env(monkeypatch):
 def test_missing_extension_fails_hard(monkeypatch, value):
     monkeypatch.setenv("HARP_NATIVE", value)
     monkeypatch.setitem(sys.modules, "harp._native._core", None)
+    monkeypatch.setitem(sys.modules, "harp_native", None)
     with pytest.raises(NativeUnavailableError):
         select("blob_id", python_impl)
 
