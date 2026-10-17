@@ -1,7 +1,7 @@
 from typing import Any, Union
 
 from pydantic_core import MultiHostUrl
-from sqlalchemy import URL, AsyncAdaptedQueuePool, make_url
+from sqlalchemy import URL, AsyncAdaptedQueuePool, event, make_url
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.asyncio import create_async_engine as _create_async_engine
 
@@ -17,6 +17,21 @@ def create_async_engine(url: Union[str, URL], **kw: Any) -> AsyncEngine:
         kw["connect_args"]["server_settings"].setdefault("timezone", "UTC")
     engine = _create_async_engine(url, **kw)
     return engine
+
+
+# Long enough to ride out a checkpoint or a slow disk, short enough that a stuck writer surfaces as an error.
+SQLITE_BUSY_TIMEOUT_MS = 10_000
+
+
+def configure_sqlite_connection(dbapi_connection, _record) -> None:
+    """Write-ahead log: readers and the one writer no longer block each other, which rollback-journal mode does."""
+    cursor = dbapi_connection.cursor()
+    try:
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute(f"PRAGMA busy_timeout={SQLITE_BUSY_TIMEOUT_MS}")
+    finally:
+        cursor.close()
 
 
 class SQLAlchemyEngine(AsyncEngine):
@@ -35,4 +50,7 @@ class SQLAlchemyEngine(AsyncEngine):
                 max_overflow=0,
             )
 
-        return create_async_engine(database_url)
+        engine = create_async_engine(database_url)
+        if database_url.get_backend_name() == "sqlite":
+            event.listen(engine.sync_engine, "connect", configure_sqlite_connection)
+        return engine

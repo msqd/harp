@@ -106,9 +106,12 @@ The default URL, ``sqlite+aiosqlite:///:memory:?cache=shared``, keeps the databa
 shutdown, and it lives in a single connection that database operations take in turn, so they never run in
 parallel. Point ``storage.url`` at a file to keep the data across restarts.
 
-The default URL, ``sqlite+aiosqlite:///:memory:?cache=shared``, keeps the database in memory: it is lost at
-shutdown, and it lives in a single connection that database operations take in turn, so they never run in
-parallel. Point ``storage.url`` at a file to keep the data across restarts.
+A file database runs in write-ahead log mode (``journal_mode=WAL``, ``synchronous=NORMAL``) with a 10 s
+``busy_timeout``, set on every connection. Readers no longer wait for the writer, which removes the multi-second
+stalls the default rollback journal caused under concurrent requests. This adds ``-wal`` and ``-shm`` files next to the
+database (keep them with it when copying), and the file must be on a local filesystem: WAL does not work over network
+filesystems. A single writer remains: writes still queue, and a lock held longer than the timeout raises
+``database is locked``.
 
 .. literalinclude:: ./examples/sqlite-aiosqlite.yml
     :language: yaml
