@@ -97,6 +97,14 @@ Lifting the limit is tracked in `#911 <https://github.com/msqd/harp/issues/911>`
 streaming), `#1129 <https://github.com/msqd/harp/issues/1129>`_ (server-sent events) and
 `#1130 <https://github.com/msqd/harp/issues/1130>`_ (request streaming).
 
+Remote urls carrying credentials
+--------------------------------
+
+An endpoint url may carry credentials (``https://user:password@api.example.com/``). They are sent
+upstream as ``Authorization: Basic``, never in the ``Host`` header, and left out of recorded urls and
+logs. An ``Authorization`` header already on the request, from the client or a rule, wins: the url
+credentials only apply when there is none.
+
 Remote urls carrying a path
 :::::::::::::::::::::::::::
 

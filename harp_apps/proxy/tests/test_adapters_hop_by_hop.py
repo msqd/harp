@@ -22,7 +22,7 @@ from harp.http import HttpRequest
 from harp_apps.proxy.adapters import HttpClientProxyAdapter
 
 
-async def _forward(headers, body=b"hello world"):
+async def _forward(headers, body=b"hello world", url_userinfo=""):
     """Forward a request through the adapter and return the raw bytes the upstream received."""
     received = asyncio.Queue()
 
@@ -41,7 +41,8 @@ async def _forward(headers, body=b"hello world"):
             adapter = HttpClientProxyAdapter(client, extensions={"endpoint": "test"})
             request = HttpRequest(method="POST", path="/x", headers=headers, body=body)
             await request.aread()
-            await adapter.send(request, f"http://127.0.0.1:{port}/x")
+            userinfo = f"{url_userinfo}@" if url_userinfo else ""
+            await adapter.send(request, f"http://{userinfo}127.0.0.1:{port}/x")
         return (await received.get()).decode("latin-1")
     finally:
         server.close()
