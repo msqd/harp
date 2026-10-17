@@ -4,13 +4,16 @@
 # live in one place and can be moved with CACHE_TESTS_PROXY_PORT / CACHE_TESTS_ORIGIN_PORT. Declaring
 # it here as well makes HARP refuse to start, with "Endpoint «cache-tests» already exists".
 #
-# The application set is not declared here either. In a configuration file, `applications:` only
-# *adds* to the defaults and never restricts them (harp/config/builders/configuration.py); only the
-# `--applications` command line flag restricts. The suite runs with the dashboard off so it does not
-# bind a second port it has no use for.
-#
 # `storage.url` below is a file rather than HARP's `:memory:` default, so what the cache stored can be
 # inspected after the run. `run-tests.sh` overrides it with an absolute path under `results/`.
+
+# The application set is restricted here, so the suite runs without the dashboard and does not bind
+# a second port it has no use for.
+applications:
+  - http_client
+  - http_cache
+  - proxy
+  - storage
 
 http_client: { }
 

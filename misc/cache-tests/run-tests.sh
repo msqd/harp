@@ -119,7 +119,6 @@ wait_for_port "$ORIGIN_PORT" "the origin server" "$RESULTS_DIR/origin.log"
 echo "Starting HARP on :$PROXY_PORT..."
 (cd "$SCRIPT_DIR" && uv run --project "$REPO_DIR" harp-proxy server \
     --file config.yml \
-    --applications http_client,http_cache,proxy,storage \
     --endpoint "cache-tests=$PROXY_PORT:http://localhost:$ORIGIN_PORT/" \
     --set "storage.url=$DATABASE_URL") > "$RESULTS_DIR/harp.log" 2>&1 &
 HARP_PID=$!
