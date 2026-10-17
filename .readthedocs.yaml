@@ -8,6 +8,9 @@ build:
   apt_packages:
     - graphviz
   jobs:
+    post_checkout:
+      # shallow clone: the version role (stable, oldstable) is computed from the release tags
+      - git fetch --tags origin
     post_create_environment:
       - pip install uv
     post_install:
