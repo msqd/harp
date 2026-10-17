@@ -23,7 +23,8 @@ lifecycle.
 ⚡️ EVENT_TRANSACTION_STARTED
 -----------------------------
 
-Dispatched as a :attr:`EVENT_TRANSACTION_STARTED` event when a transaction object is created, with a
+Dispatched as a :attr:`EVENT_TRANSACTION_STARTED` event once a transaction object is created and the request filters
+have run (so markers they set are in place), with a
 :class:`TransactionEvent` instance.
 
 .. dropdown:: Example

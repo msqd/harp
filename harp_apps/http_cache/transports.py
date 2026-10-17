@@ -2,24 +2,42 @@ import time
 
 import httpx
 from hishel import Response
-from hishel._async_httpx import (
-    _httpx_to_internal,
-    _internal_to_httpx,
-)
+from hishel._async_httpx import _httpx_to_internal as _hishel_httpx_to_internal
+from hishel._async_httpx import _IteratorStream
 from hishel._core.models import ResponseMetadata
 from hishel.httpx import AsyncCacheTransport as HishelAsyncCacheTransport
 
 from harp import get_logger
 from harp.http.utils import hop_by_hop_names, parse_cache_control
-from harp.utils.bytes import ensure_bytes
+from harp.utils.bytes import HEADER_ENCODING, ensure_bytes, header_bytes
 from harp_apps.http_cache.models import WrappedRequest
 
 logger = get_logger(__name__)
 
 
+def _httpx_to_internal(value):
+    """hishel reads headers as text, and httpx guesses how to decode them: obs-text must not be guessed."""
+    value.headers.encoding = HEADER_ENCODING
+    return _hishel_httpx_to_internal(value)
+
+
+def _internal_to_httpx(value):
+    """The reverse, handing httpx bytes: given text it would insist on ascii, and refuse obs-text."""
+    headers = [(header_bytes(name), header_bytes(val)) for name, val in value.headers.items()]
+    stream = _IteratorStream(value._aiter_stream())
+    if isinstance(value, Response):
+        return httpx.Response(value.status_code, headers=headers, stream=stream, extensions=value.metadata)
+    return httpx.Request(value.method, value.url, headers=headers, stream=stream, extensions=value.metadata)
+
+
 def _rewrite_request_url(request: httpx.Request) -> str:
     # We change the internal request url to use a host containing our proxy name, to avoid multiple cache for load balanced endpoints.
-    endpoint_name = request.extensions.get("harp", {}).get("endpoint", "__upstream__")
+    endpoint_name = request.extensions.get("harp", {}).get("endpoint")
+    if not endpoint_name:
+        raise ValueError(
+            f"The cache transport requires an endpoint name in request.extensions['harp']['endpoint'] "
+            f"(url={request.url}); without it, unrelated requests would share one cache namespace."
+        )
     return str(request.url.copy_with(netloc=ensure_bytes(endpoint_name), host=endpoint_name))
 
 
@@ -87,7 +105,10 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         ``content-length`` is deliberately kept: it describes the body being stored, and the
         controller drops it on the way out to the client anyway.
         """
-        response = await super().request_sender(request.unwrap())
+        httpx_response = await self.next_transport.handle_async_request(_internal_to_httpx(request.unwrap()))
+        if httpx_response.status_code == 304:
+            await httpx_response.aread()  # never leave a stream unconsumed
+        response = _httpx_to_internal(httpx_response)
         dropped = hop_by_hop_names(response.headers) - {"content-length"}
         for name in [name for name in response.headers if name.lower() in dropped]:
             del response.headers[name]

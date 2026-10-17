@@ -1,6 +1,5 @@
 import { format } from "date-fns"
 import { QueryObserverSuccessResult } from "react-query/types/core/types"
-import { useLocation } from "react-router-dom"
 
 import { KeyValueSettings } from "Domain/System/useSystemSettingsQuery"
 import { Transaction } from "Models/Transaction"
@@ -28,8 +27,6 @@ function Tags({ tags }: { tags: [string, string] }) {
 }
 
 export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserverSuccessResult<Transaction> }) {
-  const location = useLocation()
-
   const transaction = query.data
   const [duration, tpdex, cached, noCache] = [
     transaction.elapsed ? Math.trunc(transaction.elapsed) / 1000 : null,
@@ -38,7 +35,7 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
     !!transaction.extras?.no_cache,
   ]
   const tags = (transaction.tags ? Object.entries(transaction.tags) : []) as unknown as [string, string]
-  const transactionUrl = `${window.location.origin}${location.pathname}/${transaction.id}`
+  const transactionUrl = `${window.location.origin}/transactions/${transaction.id}`
   return (
     <Pane hasDefaultPadding={false} className="divide-y divide-gray-100 overflow-hidden text-gray-900 sm:text-sm">
       <Foldable

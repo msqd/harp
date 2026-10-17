@@ -1,3 +1,6 @@
+import pytest
+from pydantic import ValidationError
+
 from harp.config import Application
 from harp.config.asdict import asdict
 from harp_apps.storage.settings import StorageSettings
@@ -79,3 +82,8 @@ def test_settings_normalization_does_not_hide_password():
     app = Application(settings_type=StorageSettings)
     settings = app.normalize({"url": "postgresql://user:password@localhost:5432/db"})
     assert settings["url"] == "postgresql+asyncpg://user:password@localhost:5432/db"
+
+
+def test_asyncmy_refused():
+    with pytest.raises(ValidationError, match=r"mysql\+aiomysql://"):
+        StorageSettings(url="mysql+asyncmy://user:password@localhost:3306/db")

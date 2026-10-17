@@ -21,14 +21,17 @@ class ParseError(Exception):
 
 BODY_MAX_LENGTH_TO_DISPLAY = 4096
 
-console = Console()
+
+def console() -> Console:
+    """Built per call so colour detection follows the environment of the running command."""
+    return Console()
 
 
 async def on_proxy_request_dump(event: ProxyFilterEvent):
     serializer = HttpRequestSerializer(event.request)
     await event.request.aread()
-    console.print(f"[blue]▶[/blue] Request ({typeof(event.request)})")
-    console.print(
+    console().print(f"[blue]▶[/blue] Request ({typeof(event.request)})")
+    console().print(
         Syntax(
             "\n".join(
                 (
@@ -46,8 +49,8 @@ async def on_proxy_request_dump(event: ProxyFilterEvent):
 async def on_proxy_response_dump(event: ProxyFilterEvent):
     serializer = HttpResponseSerializer(event.response)
     await event.response.aread()
-    console.print(f"[green]◀[/green] Proxy Response ({typeof(event.response)})")
-    console.print(
+    console().print(f"[green]◀[/green] Proxy Response ({typeof(event.response)})")
+    console().print(
         Syntax(
             "\n".join(
                 (
@@ -101,8 +104,8 @@ def dump_httpx_response(response: httpx.Response) -> str:
 
 
 async def on_remote_request_dump(event: HttpClientFilterEvent):
-    console.print(f"[blue]▶▶[/blue] Remote Request ({typeof(event.request)})")
-    console.print(
+    console().print(f"[blue]▶▶[/blue] Remote Request ({typeof(event.request)})")
+    console().print(
         Syntax(
             dump_httpx_request(event.request),
             "http",
@@ -112,8 +115,8 @@ async def on_remote_request_dump(event: HttpClientFilterEvent):
 
 
 async def on_remote_response_dump(event: HttpClientFilterEvent):
-    console.print(f"[green]◀◀[/green] Remote Response ({typeof(event.response)})")
-    console.print(
+    console().print(f"[green]◀◀[/green] Remote Response ({typeof(event.response)})")
+    console().print(
         Syntax(
             dump_httpx_response(event.response),
             "http",
@@ -131,8 +134,8 @@ async def on_remote_response_show_cache_control(event: HttpClientFilterEvent):
         except ParseError as exc:
             parsed_cached_control = exc
 
-        console.print("[green]◀◀[/green] Cache Control")
-        console.print(
+        console().print("[green]◀◀[/green] Cache Control")
+        console().print(
             Syntax(
                 f"{typeof(parsed_cached_control, short=True)}: {parsed_cached_control}",
                 "http",

@@ -16,4 +16,7 @@ class CliRunner(BaseCliRunner):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("env", {})
         kwargs["env"]["COLUMNS"] = "80"
+        # Plain output whatever the caller's environment sets (None unsets the variable).
+        kwargs["env"]["FORCE_COLOR"] = None
+        kwargs["env"]["NO_COLOR"] = "1"
         super().__init__(*args, **kwargs)

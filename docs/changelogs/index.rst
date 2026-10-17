@@ -1,10 +1,12 @@
 Changelogs & History
 ====================
 
+.. include:: _unreleased_toctree.inc
+
 .. toctree::
     :maxdepth: 1
 
-    unreleased
+    0.11.0
     0.10.1
     0.10.0
     0.9.1

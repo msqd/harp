@@ -10,7 +10,7 @@ from urllib.parse import urlsplit
 import pytest
 from httpx import URL, AsyncByteStream, AsyncClient, MockTransport, Response
 
-from harp.http import HttpRequest
+from harp.http import HttpRequest, RejectedRequest
 from harp_apps.proxy.controllers import HttpProxyController, ProxyRoutingError
 from harp_apps.proxy.settings import Endpoint
 
@@ -423,3 +423,26 @@ async def test_what_httpx_sends_stays_under_the_base_path_with_no_dot_segment():
             (wire,) = sent
             assert wire == base_path + urlsplit(path).path.lstrip("/"), (base_url, path, wire)
             assert not _has_wire_dot_segment(wire), (base_url, path, wire)
+
+
+# httpx refuses URLs over 65,536 characters; the forwarded URL is base path + request path, so a long
+# base path lets a short enough request (h2 only) overflow it. 414, never the upstream, never liveness.
+OVERLONG_PATH = "/" + "a/" * 40000
+
+
+async def test_overlong_forwarded_url_is_rejected_with_414():
+    controller = _controller("http://example.com/" + "b/" * 90)
+    context = SimpleNamespace(request=HttpRequest(method="GET", path=OVERLONG_PATH))
+    with pytest.raises(RejectedRequest) as exc_info:
+        await controller._get_next_url_for(context)
+    assert exc_info.value.status == 414
+
+
+async def test_overlong_forwarded_url_returns_414_without_forwarding_or_tripping_the_breaker():
+    controller = _controller("http://example.com/" + "b/" * 90)
+    controller.forward = AsyncMock(side_effect=AssertionError("must not forward an overlong url"))
+    status_before = controller.remote[controller.remote.get_url()].status
+    response = await controller(HttpRequest(method="GET", path=OVERLONG_PATH))
+    assert response.status == 414
+    controller.forward.assert_not_called()
+    assert controller.remote[controller.remote.get_url()].status == status_before

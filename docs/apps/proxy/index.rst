@@ -80,6 +80,23 @@ a permanent solution.
 You can use multiple ``--endpoint ...`` arguments and the option is available for all server-like commands
 (``harp-proxy start ...``, ``harp-proxy server ...``, ...).
 
+Buffering and streaming
+:::::::::::::::::::::::
+
+The proxy reads each request body and each response body in full before it sends anything on. This
+is a known limit, not a setting:
+
+- Server-sent events, long-polling, streamed JSON and other responses that stay open are not
+  supported. The client gets nothing until the upstream has finished.
+- Large downloads and uploads are not streamed.
+- Every in-flight body is held whole in memory, so the cost is the size of the bodies multiplied by
+  the number of concurrent requests. Size the memory of the process for your largest bodies at your
+  peak concurrency.
+
+Lifting the limit is tracked in `#911 <https://github.com/msqd/harp/issues/911>`_ (bounded response
+streaming), `#1129 <https://github.com/msqd/harp/issues/1129>`_ (server-sent events) and
+`#1130 <https://github.com/msqd/harp/issues/1130>`_ (request streaming).
+
 Remote urls carrying a path
 :::::::::::::::::::::::::::
 

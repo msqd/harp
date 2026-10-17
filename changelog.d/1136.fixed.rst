@@ -1,0 +1,1 @@
+Current button group and paginator item use primary-900, white text now passes WCAG AA.

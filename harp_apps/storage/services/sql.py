@@ -138,7 +138,6 @@ class SqlStorage(IStorage):
 
     - asyncpg (postgresql+asyncpg://...)
     - aiomysql (mysql+aiomysql://...)
-    - asyncmy (mysql+asyncmy://...)
 
     And also, for development/testing purposes:
 

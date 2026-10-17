@@ -37,9 +37,6 @@ else
     python -m build
 fi
 
-# Copy to the original dist directory
-cp dist/* "$PWD_ORIG/dist/"
-
 # Verify frontend assets are included in the wheel.
 #
 # Counted with Python's zipfile rather than `unzip`, which is not installed
@@ -73,9 +70,20 @@ if [ "$WEB_ASSET_COUNT" -lt 10 ]; then
     exit 1
 fi
 
+# No TypeScript declarations may ship in the dashboard assets (the app build must not run vite-plugin-dts).
+WEB_DTS=$("${PYTHON[@]}" -c 'import sys, zipfile; print("\n".join(n for n in zipfile.ZipFile(sys.argv[1]).namelist() if n.startswith("harp_apps/dashboard/web/") and n.endswith(".d.ts")))' "$WHEEL_FILE")
+if [ -n "$WEB_DTS" ]; then
+    printf "❌ ERROR: wheel contains .d.ts files under harp_apps/dashboard/web/:\n%s\n" "$WEB_DTS" >&2
+    exit 1
+fi
+
 # Check the wheel with twine
 if [ -n "$UVX" ]; then
     $UVX twine check dist/*
 else
     twine check dist/*
 fi
+
+# Copy to the original dist directory, only once the wheel has passed every check above:
+# a rejected wheel left in dist/ would be uploaded by anything publishing dist/*.
+cp dist/* "$PWD_ORIG/dist/"

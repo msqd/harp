@@ -9,6 +9,7 @@ import dts from "vite-plugin-dts"
 import tsconfigPaths from "vite-tsconfig-paths" // https://vitejs.dev/config/
 
 import pkg from "./package.json"
+import { emptyOutDirExcept } from "./vite-plugins/emptyDirExcept"
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -57,12 +58,13 @@ export default defineConfig(({ mode }) => {
           outDir: "dist",
         }
       : {
-          emptyOutDir: true,
+          // Emptied by `emptyOutDirExcept` below: `web/.gitkeep` is tracked and must survive the build.
+          emptyOutDir: false,
           outDir: "../web",
           rollupOptions: {
             output: {
               manualChunks: {
-                react: ["react", "react-dom", "react-is"],
+                react: ["react", "react-dom"],
                 reactQuery: ["react-query"],
                 reactRouter: ["react-router-dom"],
                 syntaxHighlighter: ["prismjs", "react-syntax-highlighter"],
@@ -94,10 +96,9 @@ export default defineConfig(({ mode }) => {
       postcss: postcss,
     },
     plugins: [
-      dts({
-        insertTypesEntry: true,
-        staticImport: true,
-      }),
+      ...(mode === "lib" ? [] : [emptyOutDirExcept(resolve(__dirname, "../web"), [".gitkeep"])]),
+      // Declarations are for the lib build only: the app build writes into ../web, which ships in the wheel.
+      ...(mode === "lib" ? [dts({ insertTypesEntry: true, staticImport: true })] : []),
       tsconfigPaths(),
       react({
         babel: {

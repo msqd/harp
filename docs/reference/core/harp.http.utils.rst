@@ -16,4 +16,5 @@ Submodules
 
     harp.http.utils.cache
     harp.http.utils.cookies
+    harp.http.utils.hop_by_hop
     harp.http.utils.methods
