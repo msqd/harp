@@ -235,7 +235,7 @@ BENCH_OPTIONS ?=
 BENCH_NOISE_RUNS ?= 5
 BENCH_NOISE_TARGET ?= bench/micro/bm_blob_id.py
 
-.PHONY: bench-micro bench-compare bench-noise bench-macro bench-startup
+.PHONY: bench-micro bench-compare bench-noise bench-macro bench-startup bench-load
 
 bench-micro:  ## Runs micro benchmarks (BENCH_OUTPUT=..., BENCH_OPTIONS=--fast).
 	@mkdir -p bench/results
@@ -253,11 +253,14 @@ bench-noise:  ## Runs the same benchmark BENCH_NOISE_RUNS times and reports the 
 PROFILE ?= bare
 BENCH_MACRO_OPTIONS ?=
 
-bench-macro:  ## Overhead at a fixed open-loop rate (PROFILE=bare|default, BENCH_MACRO_OPTIONS="--rate 200 --duration 30").
+bench-macro:  ## Overhead at a fixed open-loop rate (PROFILE=bare|default|loaded, BENCH_MACRO_OPTIONS="--rate 200 --duration 30").
 	$(call execute,$(BENCH_RUN) python -m bench.macro.run overhead --profile $(PROFILE) $(BENCH_MACRO_OPTIONS))
 
-bench-startup:  ## Startup time, exec to first proxied 200 (PROFILE=bare|default, BENCH_MACRO_OPTIONS="--reps 5").
+bench-startup:  ## Startup time, exec to first proxied 200 (PROFILE=bare|default|loaded, BENCH_MACRO_OPTIONS="--reps 5").
 	$(call execute,$(BENCH_RUN) python -m bench.macro.run startup --profile $(PROFILE) $(BENCH_MACRO_OPTIONS))
+
+bench-load:  ## Rate steps, saturation, backlog, shedding, peak rss (PROFILE=..., BENCH_MACRO_OPTIONS="--rates 25,50,100").
+	$(call execute,$(BENCH_RUN) python -m bench.macro.run load --profile $(PROFILE) $(BENCH_MACRO_OPTIONS))
 
 
 ########################################################################################################################
