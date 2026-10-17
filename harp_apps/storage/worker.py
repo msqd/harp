@@ -46,6 +46,10 @@ DROPPED_COUNTER = Counter(
 
 DROPPED_KINDS = ("transactions", "messages", "headers", "bodies")
 
+# Expose every series at 0 from startup, so alerts and rate() never face a missing series.
+for _kind in DROPPED_KINDS:
+    DROPPED_COUNTER.labels(_kind)
+
 
 class StorageAsyncWorkerQueue(AsyncWorkerQueue):
     def __init__(self, engine: AsyncEngine, storage: IStorage, blob_storage: IBlobStorage):

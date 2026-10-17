@@ -79,3 +79,12 @@ async def test_metrics_port_serves_metrics_on_its_own_port():
     response = await resolver.resolve_by_port(9100)()
     assert response.status == 200
     assert "async_worker_queue_backlog" in response.body.decode()
+
+
+async def test_dropped_series_exist_before_any_drop():
+    # alerting and rate() need the series to exist at 0 from startup
+    response = await create_controller()(metrics_request(), AsyncMock())
+
+    body = response.body.decode()
+    for kind in ("transactions", "messages", "headers", "bodies"):
+        assert f'dropped_total{{kind="{kind}"}}' in body
