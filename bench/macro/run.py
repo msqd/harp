@@ -26,6 +26,8 @@ from pathlib import Path
 
 from bench import metadata
 from bench.macro import measure
+from harp_apps.http_client.clients import CLIENTS as HARP_CLIENTS
+from harp_apps.http_client.clients import DEFAULT_CLIENT
 
 HERE = Path(__file__).parent
 ROOT = HERE.parent.parent
@@ -37,10 +39,9 @@ HARP_BIN = Path(sys.executable).parent / "harp-proxy"
 PROFILES = {"bare", "default", "loaded"}
 STORAGE_PROFILES = {"default", "loaded"}
 CACHE_MIX_PROFILES = {"loaded"}
-# What HARP can run today: the server adapter is hardcoded (`harp/__init__.py`), the client is httpx. More choices
-# land with the adapters (#1171, #1172).
+# What HARP can run today: the server adapter is hardcoded (`harp/__init__.py`), the client is chosen with --client.
 SERVERS = ("hypercorn",)
-CLIENTS = ("httpx",)
+CLIENTS = HARP_CLIENTS
 HOST = "127.0.0.1"
 METRICS_PATH = "/.prometheus/metrics"
 BODY_BYTES = {"loaded": 16384}
@@ -154,6 +155,8 @@ def harp_command(args, cores, workdir: Path, db: Path, importtime: bool = False)
         "--endpoint",
         f"bench={args.harp_port}:http://{HOST}:{args.origin_port}/",
     ]
+    if args.client != DEFAULT_CLIENT:
+        command += ["--client", args.client]
     if args.profile in STORAGE_PROFILES:
         command += ["--set", "storage.url", f"sqlite+aiosqlite:///{db}"]
     if getattr(args, "scrape_metrics", False):
@@ -608,7 +611,7 @@ def parser() -> argparse.ArgumentParser:
         help="load, storage profiles: enable the metrics app to scrape the queue backlog gauge (default: on)",
     )
     p.add_argument("--server", choices=SERVERS, default=SERVERS[0], help="HARP server adapter (default: %(default)s)")
-    p.add_argument("--client", choices=CLIENTS, default=CLIENTS[0], help="HARP http client (default: %(default)s)")
+    p.add_argument("--client", choices=CLIENTS, default=DEFAULT_CLIENT, help="HARP http client (default: %(default)s)")
     p.add_argument("--reps", type=int, default=5, help="startup repetitions (default: %(default)s)")
     p.add_argument("--harp-port", type=int, default=4000)
     p.add_argument("--origin-port", type=int, default=9100)

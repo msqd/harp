@@ -17,8 +17,55 @@ with no regression elsewhere. Laptop numbers validate tooling only; verdicts nee
 | Dispatch logging | Python fix | **done** | `debug` (#1184, #1188) |
 | SQLite storage | Python fix | **done** | WAL + busy_timeout (#1152, #1206) |
 | ASGI server (hypercorn, pure h11) | adopt | open | #1171: needs a server switch first, HARP hardcodes `HypercornAdapter` |
-| Upstream client (httpx) | adopt | open | #1172 |
+| Upstream client (httpx) | adopt | **provisional** | #1172: aiohttp transport -6 to -15% CPU, Rust client ceiling -23% more, see below |
 | Storage write pipeline | Python design | open lead | see below |
+
+## Upstream client matrix (#1172)
+
+Target metric: HARP CPU per request on `bare` (all of the process, tokio threads included), the layer profile of #1171
+puts the client stack at ~35% of it. HARP pinned on cpus 0-1, origin 2, loadgen 3, 50 and 200 req/s, alternating runs,
+laptop with other tenants (load average 2-20): read as ±10%, verdicts wait for #1168.
+
+`--client httpx|aiohttp` (`HARP_CLIENT`) swaps the transport under the filter and cache transports; httpx
+`Request`/`Response` stay, so hishel and the filters are untouched. The Rust client is a throwaway httpx transport on
+pyreqwest 0.15 (reqwest/hyper), no error mapping, `bare` only.
+
+CPU per request, median of 5 alternating runs (`bare`):
+
+| Client | 50 req/s | vs httpx | 200 req/s | vs httpx | vs aiohttp |
+|---|---|---|---|---|---|
+| httpx (httpcore + h11) | 3310 µs | | 2708 µs | | |
+| aiohttp transport | 3100 µs | -6% | 2308 µs | -15% | |
+| pyreqwest (ceiling) | 2390 µs | -28% | 1778 µs | -34% | **-23%** (both rates) |
+
+Run ranges do not overlap between aiohttp and pyreqwest at either rate. Latency is noise-bound here: overhead p50 at
+50 req/s is 2.2 ms for httpx and aiohttp (6 runs each), p90 2.5 ms, p99 3.1 vs 3.9 ms.
+
+| Profile (50 req/s, overhead) | httpx CPU | aiohttp CPU | p50 / p90 / p99 |
+|---|---|---|---|
+| `bare` | 2750 µs | 2450 µs (-11%) | same within noise |
+| `default` | 10610 µs | 10940 µs | same: storage dominates |
+| `loaded` | ~12.3 ms | ~12.3 ms | same: storage dominates |
+
+`bench-load` saturation does not separate the clients: rates are noise-bound (`bare` stops at 400 req/s for httpx
+twice, at 100 for aiohttp twice, while a fixed 200 req/s overhead run shows aiohttp as good or better; at 32
+connections both clients swing from 2 to 80 ms p90 between identical runs; the one-core thread-per-connection origin
+is the likely limit). `default` saturates at 100-200 req/s for both, from the storage pipeline.
+
+What the aiohttp transport changes or breaks:
+- no `retries` (refused at startup); no HTTP/2 (HARP does not use it);
+- aiohttp keeps its own DNS cache; connection limits are matched to httpx's (100, 5 s keep-alive);
+- certificate and other connect failures surface as `ConnectError` like with httpx; exception text differs;
+- a startup flake (`no 200 after 60 s`) hit 3 of 30 harness runs, all on httpx, not reproducible; unrelated to the client.
+
+Reading against the rule (≥15% net of the best adopt-native option, on the declared metric, ≥5 runs outside the
+spread): the aiohttp transport is the adopt-native option and gives 6-15% on `bare`, below the bar on its own. A Rust
+client clears the bar over it (-23%, 5 runs, non-overlapping) even before the cost of error mapping and streaming,
+which the throwaway ignores. `default` and `loaded` do not move: there the work is storage (see above).
+
+Provisional recommendation, pending #1168: keep httpx the default; ship the aiohttp transport as an opt-in (cheap, pure
+Python, ~10% on the proxy path); open the Rust adapter question on the external runner, since the ceiling clears the
+bar on `bare` only. The `default` profile gains nothing from either until the storage pipeline is fixed.
 
 ## SQLite lock contention (#1169)
 

@@ -1,8 +1,12 @@
 """Tests for the pure logic of the macro benchmark harness (see `bench/macro/`)."""
 
+import argparse
+from pathlib import Path
+
 import pytest
 
-from bench.macro import measure
+from bench.macro import measure, run
+from harp_apps.http_client.clients import CLIENTS
 
 
 class TestParseCpuList:
@@ -232,3 +236,19 @@ class TestShedMarkers:
         report = measure.shed_marker_report(counts)
         assert report["headers"]["agree"] is False
         assert report["bodies"]["agree"] is True
+
+
+class TestHarpCommand:
+    def command(self, client="httpx"):
+        args = argparse.Namespace(profile="bare", harp_port=4000, origin_port=4100, client=client)
+        return run.harp_command(args, {"harp": [0]}, Path("/tmp"), Path("/tmp/h.db"))
+
+    def test_default_client_is_not_passed(self):
+        assert "--client" not in self.command()
+
+    def test_client_is_passed(self):
+        command = self.command("aiohttp")
+        assert command[command.index("--client") + 1] == "aiohttp"
+
+    def test_clients_are_the_ones_harp_knows(self):
+        assert run.CLIENTS == CLIENTS
