@@ -1,0 +1,1 @@
+Stop advertising unsupported ``--set`` overrides for rules commands and format unsupported-option errors correctly.

@@ -45,3 +45,32 @@ def test_run_command_ends_the_transaction(httpbin, monkeypatch):
     result = CliRunner().invoke(entrypoint, ["rules", "run", "api=" + httpbin, "GET", "/hostname"])
     assert result.exit_code == 0
     assert len(ended) == 1
+
+
+@pytest.mark.parametrize("command", ["lint", "run"])
+def test_rules_help_only_advertises_supported_configuration_options(command):
+    result = CliRunner().invoke(entrypoint, ["rules", command, "--help"])
+
+    assert result.exit_code == 0, result.output
+    assert "--file" in result.output
+    assert "--example" in result.output
+    assert "--set" not in result.output
+
+
+def test_unsupported_rules_options_have_a_usage_error():
+    from click import UsageError
+
+    from harp_apps.rules.commandline.utils.loaders import load_ruleset_from_files
+
+    with pytest.raises(UsageError, match="Unsupported options: foo=bar, baz=qux"):
+        load_ruleset_from_files((), (), (("foo", "bar"), ("baz", "qux")))
+
+
+@pytest.mark.parametrize("command", ["lint", "run"])
+@pytest.mark.parametrize("options", [["--set", "foo=bar"], ["--set", "foo", "bar"]])
+def test_rules_reject_set_as_an_unknown_option(command, options):
+    result = CliRunner().invoke(entrypoint, ["rules", command, *options])
+
+    assert result.exit_code == 2
+    assert "No such option: --set" in result.output
+    assert not isinstance(result.exception, TypeError)
