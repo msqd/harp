@@ -382,9 +382,9 @@ class HttpProxyController(AbstractHttpProxyController):
         Create a new transaction from the incoming request, generating a new (random, but orderable according to the
         instant it happens) transaction ID.
 
-        Once created, it dispatches the EVENT_TRANSACTION_STARTED event to allow storage applications (or anything
-        else) to react to this creation, then it dispatches the EVENT_TRANSACTION_MESSAGE event to allow to react to
-        the fact this transaction contained a request.
+        Once created, it runs the request filters, then dispatches the EVENT_TRANSACTION_STARTED event to allow storage
+        applications (or anything else) to react to this creation, then it dispatches the EVENT_TRANSACTION_MESSAGE
+        event to allow to react to the fact this transaction contained a request.
 
         :return: Transaction
         """
@@ -421,12 +421,12 @@ class HttpProxyController(AbstractHttpProxyController):
 
         self.info(f"▶ {request.method} {request.path}", transaction=context.transaction)
 
-        # dispatch transaction started event
-        # we don't really want to await this, should run in background ? or use an async queue ?
-        await self.adispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(context.transaction))
-
         # allow filtering the incoming messsage/transaction before the transaction is stored
         context.update(await self.filter_request(context))
+
+        # dispatch transaction started event, after the filters so markers they set (skip-storage) are seen
+        # we don't really want to await this, should run in background ? or use an async queue ?
+        await self.adispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(context.transaction))
 
         # dispatch message event for request
         await self.adispatch(EVENT_TRANSACTION_MESSAGE, HttpMessageEvent(context.transaction, request))

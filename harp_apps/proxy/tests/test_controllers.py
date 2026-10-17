@@ -59,8 +59,8 @@ class TestEventOrder:
 
         # Verify the event order
         assert len(event_order) >= 3
-        assert event_order[0] == EVENT_TRANSACTION_STARTED
-        assert event_order[1] == EVENT_FILTER_PROXY_REQUEST
+        assert event_order[0] == EVENT_FILTER_PROXY_REQUEST
+        assert event_order[1] == EVENT_TRANSACTION_STARTED
         assert event_order[2] == EVENT_TRANSACTION_MESSAGE
 
         # Verify the context was returned with a transaction
