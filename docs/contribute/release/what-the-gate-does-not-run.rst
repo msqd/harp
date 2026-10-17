@@ -25,6 +25,9 @@ Under the default test matrix, HARP's MySQL tests are not red. They are **absent
 The one test that collects compiles SQL and never opens a connection. ``make qa`` does not fail on
 MySQL. It silently has no MySQL, and reports success.
 
+Since #916, ``make qa-full`` installs the ``mysql`` driver group and runs the MySQL and MariaDB test bodies
+through aiomysql. The default ``make qa`` still does not: it runs no MySQL at all.
+
 That is not a broken test or a failing gate. It is a whole supported backend quietly not present in
 the run, counted as a pass. Everything else in this document is a variation on it.
 
@@ -61,9 +64,6 @@ something else.
     * - ``unzip`` absent, stderr discarded
       - frontend assets missing from the wheel
       - the tool was missing; the wheel held all 32
-    * - a warning attributed to an ``asyncmy`` test
-      - asyncmy has a teardown defect
-      - a garbage collector finalizer, attributed to whatever ran when the collector woke
     * - ``FakeDatetime`` rejected by MariaDB
       - HARP cannot write transactions on MariaDB
       - freezegun's test double, never constructed in production
@@ -192,6 +192,9 @@ the URL; and the ``mysql`` dependency group was never synced, so no driver was i
 consequence worth noticing on its own: because the driver never reached the URL, the two driver legs
 of the matrix produced an identical connection string, so one of them had never been executed by
 anything while appearing in every test id.
+
+Both defects are fixed (#916): the URL builder sets the driver whatever URL format testcontainers returns, the
+``mysql`` group is synced by default, and asyncmy is dropped. MySQL and MariaDB bodies now run under ``make qa-full``.
 
 Repaired locally, the suite ran and **HARP worked on MySQL and MariaDB**, including the full-text
 search path that a fix in that release had repaired and that no gate had ever executed.
