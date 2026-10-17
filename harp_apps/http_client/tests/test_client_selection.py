@@ -43,6 +43,9 @@ def test_command_rejects_unknown_client():
 
 def test_command_reads_client_from_environment(monkeypatch):
     seen = {}
+    monkeypatch.setattr(
+        "prometheus_client.Enum", lambda *args, **kwargs: type("E", (), {"state": lambda self, s: None})()
+    )
     module = sys.modules["harp.commandline.server"]  # the package attribute is shadowed by the command
     monkeypatch.setattr(module, "run", lambda builder, **kwargs: None)
     monkeypatch.setattr(
