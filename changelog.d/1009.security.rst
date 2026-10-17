@@ -1,0 +1,1 @@
+Proxy path guard also refuses dot segments written as ``..;``, double-encoded, overlong UTF-8, NUL-terminated or fullwidth (400).
