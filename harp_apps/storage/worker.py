@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.http import get_serializer_for
+from harp.http import ClientDisconnected, get_serializer_for
 from harp.models import Blob
 from harp.models.transactions import encode_cache_flag, encode_markers
 from harp.utils.background import AsyncWorkerQueue
@@ -21,6 +21,7 @@ from harp_apps.proxy.events import (
     TransactionEvent,
 )
 from harp_apps.storage.constants import (
+    CLIENT_DISCONNECTED,
     SKIP_REQUEST_BODY_STORAGE,
     SKIP_REQUEST_HEADERS_STORAGE,
     SKIP_REQUEST_STORAGE,
@@ -135,7 +136,11 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             )
             return
 
-        await event.message.aread()
+        try:
+            await event.message.aread()
+        except ClientDisconnected:
+            # The client left mid-body: record what arrived. The proxy ends the transaction on its own.
+            event.transaction.markers.add(CLIENT_DISCONNECTED)
         serializer = get_serializer_for(event.message)
 
         message_data = {
