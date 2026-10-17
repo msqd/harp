@@ -9,9 +9,8 @@
 # `--applications` command line flag restricts. The suite runs with the dashboard off so it does not
 # bind a second port it has no use for.
 #
-# `storage.url` below is deliberately a file rather than HARP's `:memory:` default: on the in-memory
-# default the HTTP cache mostly does not cache, and the suite scores 40% instead of 57%.
-# `run-tests.sh` overrides it with an absolute path under `results/`.
+# `storage.url` below is a file rather than HARP's `:memory:` default, so what the cache stored can be
+# inspected after the run. `run-tests.sh` overrides it with an absolute path under `results/`.
 
 http_client: { }
 
