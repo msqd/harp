@@ -11,7 +11,7 @@ from urllib.parse import unquote_to_bytes, urlencode, urlsplit
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse, RejectedRequest
+from harp.http import BaseHttpMessage, ClientDisconnected, HttpError, HttpRequest, HttpResponse, RejectedRequest
 from harp.http.utils import HOP_BY_HOP_HEADERS, hop_by_hop_names, parse_cache_control
 from harp.models import Transaction
 from harp.utils.api import api
@@ -193,7 +193,13 @@ class HttpProxyController(AbstractHttpProxyController):
                 return await self.failure(context.transaction, base_url, response)
 
             # todo: streaming should pass through to avoid reading all the content in memory (#1130)
-            await context.request.aread()
+            try:
+                await context.request.aread()
+            except ClientDisconnected as exc:
+                # The body is incomplete: forwarding it would hand the upstream a request the client never made.
+                context.transaction.markers.add(CLIENT_DISCONNECTED)
+                response = HttpError("Client disconnected", exception=exc, status=ERR_BAD_REQUEST_STATUS_CODE)
+                return await self.failure(context.transaction, base_url, response)
 
             # Attempt to forward the request to the remote server.
             try:
@@ -470,7 +476,10 @@ class HttpProxyController(AbstractHttpProxyController):
         await self.adispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(context.transaction))
 
         # dispatch message event for request
-        await self.adispatch(EVENT_TRANSACTION_MESSAGE, HttpMessageEvent(context.transaction, request))
+        await self.adispatch(
+            EVENT_TRANSACTION_MESSAGE,
+            HttpMessageEvent(context.transaction, request, max_body_size=self.max_recorded_body_size),
+        )
 
         return context
 

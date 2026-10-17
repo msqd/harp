@@ -1,0 +1,1 @@
+Mask URL passwords of every URL type in ``/api/system/settings`` and in the startup log, not only strings and DSNs (``--unsecure`` still shows them).
