@@ -12,6 +12,8 @@ from harp.utils.config.yaml import include_constructor  # noqa
 from harp import get_logger
 
 from ..applications import ApplicationsRegistry
+from harp_apps.http_client.clients import DEFAULT_CLIENT, get_client
+
 from ..defaults import DEFAULT_APPLICATIONS, DEFAULT_SYSTEM_CONFIG_FILENAMES
 from ..examples import get_example_filename
 from .system import System
@@ -419,6 +421,9 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         builder.add_files((get_example_filename(example) for example in options.examples))
         builder.add_files(options.files or ())
         builder.add_source(EnvVars(prefix="HARP_"))
+        client = getattr(options, "client", DEFAULT_CLIENT)
+        if client != DEFAULT_CLIENT:
+            builder.add_value("http_client.transport.type", get_client(client).transport_type)
         builder.add_values(options.options or {})
 
         _endpoints = []

@@ -7,6 +7,7 @@ from click import Command
 from click.decorators import CmdType
 
 from harp.utils.commandline import click, code
+from harp_apps.http_client.clients import CLIENTS, DEFAULT_CLIENT
 
 
 @dataclass(kw_only=True)
@@ -43,6 +44,7 @@ class CommonServerOptions(dict):
     enable: tuple = ()
     disable: tuple = ()
     strict: bool = False
+    client: str = DEFAULT_CLIENT
 
     def as_list(self):
         items = list(
@@ -57,6 +59,8 @@ class CommonServerOptions(dict):
         )
         if self.strict:
             items.append("--strict")
+        if self.client != DEFAULT_CLIENT:
+            items.append(f"--client {self.client}")
         return items
 
     def __post_init__(self):
@@ -175,6 +179,14 @@ def server_command(
 
     def decorator(f: [Callable[..., Any]]) -> CmdType:
         command_decorator = click.command(name=name, cls=cls, **attrs)
+        f = click.option(
+            "--client",
+            type=click.Choice(CLIENTS),
+            default=DEFAULT_CLIENT,
+            envvar="HARP_CLIENT",
+            show_default=True,
+            help="HTTP client sending the proxied requests.",
+        )(f)
         f = _server_click_options(f)
         f = command_decorator(f)
         return f

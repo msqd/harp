@@ -1,0 +1,1 @@
+Choose the HTTP client sending the proxied requests with `--client` or `HARP_CLIENT`: `httpx` (default) or `aiohttp`, an httpx transport backed by aiohttp.
