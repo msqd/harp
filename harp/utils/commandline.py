@@ -12,7 +12,7 @@ if getattr(builtins, "__sphinx__", False):
 try:
     import rich_click as click
 
-    click.rich_click.USE_RICH_MARKUP = True
+    click.rich_click.TEXT_MARKUP = "rich"
 
     if not code:
 

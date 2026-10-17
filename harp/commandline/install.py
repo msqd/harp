@@ -2,7 +2,7 @@ import os
 import subprocess
 from typing import cast
 
-from click import BaseCommand
+from click import Command
 
 from harp import ROOT_DIR
 from harp.utils.commandline import click
@@ -14,4 +14,4 @@ def install_dev():
     subprocess.run(["pnpm", "install"], cwd=os.path.join(ROOT_DIR, "harp_apps/dashboard/frontend"))
 
 
-install_dev = cast(BaseCommand, install_dev)
+install_dev = cast(Command, install_dev)
