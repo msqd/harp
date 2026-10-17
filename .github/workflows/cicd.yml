@@ -225,8 +225,8 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Run storage tests on MySQL and MariaDB
-        run: uv run pytest harp_apps/storage -n auto -m 'not subprocess'
+      - name: Run storage and proxy-with-storage tests on MySQL and MariaDB
+        run: uv run pytest harp_apps/storage harp_apps/proxy/tests/with_storage -n auto -m 'not subprocess'
         env:
           TESTCONTAINERS_RYUK_DISABLED: 'true'
           TEST_DATABASE_DIALECTS: mysql
