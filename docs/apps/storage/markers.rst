@@ -86,6 +86,18 @@ This is useful for:
 - Responses with sensitive headers that should not be persisted
 - Compliance requirements that prohibit storing certain response headers
 
+Truncation Markers
+------------------
+
+``truncated-response-body``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 0.12
+
+Set by the proxy when a response body is longer than the recording cap (``proxy.max_recorded_body_size``, 1 MiB by
+default). The stored body holds the first bytes of the response, up to the cap; the client received it whole. The
+dashboard shows the truncation on the response. See :ref:`proxy-buffering-and-streaming`.
+
 Message Storage Markers
 -----------------------
 

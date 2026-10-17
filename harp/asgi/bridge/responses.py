@@ -1,3 +1,4 @@
+from contextlib import aclosing
 from typing import TYPE_CHECKING
 
 from asgiref.typing import ASGISendCallable
@@ -10,8 +11,10 @@ if TYPE_CHECKING:
 
 
 class HttpResponseAsgiBridge:  # todo protocol HttpResponseBridge
-    """Implements the ability of sending our HttpResponse object over the asgi protocol. This is still early impl. and
-    it will need to support streaming responses in the future."""
+    """Implements the ability of sending our HttpResponse object over the asgi protocol.
+
+    A body held in memory goes out in one message. A streamed body goes out chunk by chunk, each chunk sent before the
+    next one is read, and its stream is closed once sent or once the client is gone."""
 
     def __init__(self, response: "HttpResponse", send: ASGISendCallable):
         self.response = response
@@ -33,10 +36,18 @@ class HttpResponseAsgiBridge:  # todo protocol HttpResponseBridge
             }
         )
 
-        # send the body
-        await self.asgi_send(
-            {
-                "type": "http.response.body",
-                "body": ensure_bytes(self.response.body),
-            }
-        )
+        if hasattr(self.response, "_body"):
+            await self.asgi_send({"type": "http.response.body", "body": ensure_bytes(self.response.body)})
+        else:
+            await self._send_stream()
+
+    async def _send_stream(self):
+        stream = self.response.stream
+        try:
+            async with aclosing(aiter(stream)) as chunks:
+                async for chunk in chunks:
+                    if chunk:
+                        await self.asgi_send({"type": "http.response.body", "body": chunk, "more_body": True})
+            await self.asgi_send({"type": "http.response.body", "body": b""})
+        finally:
+            await stream.aclose()

@@ -53,6 +53,12 @@ response), with a :class:`HttpMessageEvent` instance.
 Dispatched as a :attr:`EVENT_TRANSACTION_ENDED` event, with a :class:`TransactionEvent` instance, when a transaction is
 finished.
 
+.. versionchanged:: 0.12
+
+    A transaction finishes once its response body has been streamed to the caller, not before the response is sent.
+    The response given to :attr:`EVENT_TRANSACTION_MESSAGE` just before is the response as recorded: its body is cut
+    at the recording cap (see :ref:`proxy-buffering-and-streaming`).
+
 .. dropdown:: Example
 
     Here is an example of a listener coroutine for the :attr:`EVENT_TRANSACTION_ENDED` event:
@@ -94,6 +100,11 @@ Dispatched as a :attr:`EVENT_FILTER_PROXY_RESPONSE` event, with the same :class:
 previous event, with the response set.
 
 You can change the response instance on the event to modify the response that will be returned to the caller.
+
+.. versionchanged:: 0.12
+
+    The response body is streamed: it has not been read when this event is dispatched. ``await response.aread()``
+    reads it whole into memory, which gives up streaming for that response.
 
 .. dropdown:: Example
 

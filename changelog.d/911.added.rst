@@ -1,0 +1,1 @@
+Response bodies are streamed to the client as they arrive. HARP records at most ``proxy.max_recorded_body_size`` (1 MiB) of each: a longer body is recorded truncated, marked ``truncated-response-body`` and not stored in the HTTP cache. Transactions end once the body is sent.

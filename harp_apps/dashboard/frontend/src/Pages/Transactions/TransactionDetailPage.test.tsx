@@ -38,3 +38,16 @@ it("copies the transaction link as /transactions/<id> from the detail page", asy
   fireEvent.click(await result.findByText("copy transaction link"))
   expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/transactions/ABCD1234`)
 })
+
+it("says the response body was truncated when the recording cap cut it", async () => {
+  const result = renderDetailAt("/transactions/EFGH5678")
+
+  expect(await result.findByRole("note")).toHaveTextContent(/only the beginning of this body was recorded/i)
+})
+
+it("says nothing of truncation for a body recorded whole", async () => {
+  const result = renderDetailAt("/transactions/ABCD1234")
+
+  await result.findByText("identity")
+  expect(result.queryByRole("note")).toBeNull()
+})

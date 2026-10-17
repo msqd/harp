@@ -34,6 +34,7 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
     !!transaction.extras?.cached,
     !!transaction.extras?.no_cache,
   ]
+  const isResponseBodyTruncated = (transaction.markers ?? []).includes("truncated-response-body")
   const tags = (transaction.tags ? Object.entries(transaction.tags) : []) as unknown as [string, string]
   const transactionUrl = `${window.location.origin}/transactions/${transaction.id}`
   return (
@@ -73,6 +74,11 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
           className="relative"
         >
           <MessageHeaders id={message.headers} />
+          {message.kind == "response" && isResponseBodyTruncated ? (
+            <p role="note" className="px-2 pt-2 text-xs text-amber-700">
+              Truncated: only the beginning of this body was recorded, the client received it whole.
+            </p>
+          ) : null}
           <MessageBody id={message.body} />
         </Foldable>
       ))}

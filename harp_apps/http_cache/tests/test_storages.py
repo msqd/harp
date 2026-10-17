@@ -5,6 +5,7 @@ bridges the two is what makes ``update_entry`` and ``remove_entry`` able to do a
 so both the resolving path and the failing path are covered here.
 """
 
+from harp_apps.http_cache.tests import store_entry
 from harp_apps.http_cache.tests import ENDPOINT_HOOKS
 import asyncio
 import time
@@ -52,7 +53,7 @@ class TestUpdateEntry:
         a method that returned a correctly updated object without writing it would satisfy
         the caller and still freshen nothing.
         """
-        created = await storage.create_entry(_request(), _response(), "key-1")
+        created = await store_entry(storage, _request(), _response(), "key-1")
 
         updated = await storage.update_entry(
             created.id,
@@ -71,7 +72,7 @@ class TestUpdateEntry:
 
     async def test_update_entry_accepts_a_whole_entry(self, storage):
         """hishel's contract allows an Entry as well as a callable, so both are supported."""
-        created = await storage.create_entry(_request(), _response(), "key-1")
+        created = await store_entry(storage, _request(), _response(), "key-1")
         replacement = replace(
             created,
             response=Response(
@@ -95,7 +96,7 @@ class TestUpdateEntry:
         ``create_entry``, so a version of this that only indexed on create would pass the test
         above and fail in the proxy.
         """
-        await storage.create_entry(_request(), _response(), "key-1")
+        await store_entry(storage, _request(), _response(), "key-1")
 
         fresh_storage = AsyncStorage(storage._storage)
         (retrieved,) = await fresh_storage.get_entries("key-1")
@@ -132,7 +133,7 @@ class TestUpdateEntry:
 @pytest.mark.asyncio
 class TestRemoveEntry:
     async def test_remove_entry_deletes_the_stored_entry(self, storage):
-        created = await storage.create_entry(_request(), _response(), "key-1")
+        created = await store_entry(storage, _request(), _response(), "key-1")
         assert len(await storage.get_entries("key-1")) == 1
 
         await storage.remove_entry(created.id)
@@ -141,7 +142,7 @@ class TestRemoveEntry:
 
     async def test_removing_an_unknown_id_is_harmless_and_says_so_loudly(self, storage, caplog):
         """Paired with the test above so "nothing was deleted" cannot be read as "it worked"."""
-        created = await storage.create_entry(_request(), _response(), "key-1")
+        created = await store_entry(storage, _request(), _response(), "key-1")
         unknown = uuid.uuid4()
 
         with caplog.at_level("WARNING"):
@@ -161,21 +162,21 @@ class TestKeyIndexBound:
         It exists to bridge one request cycle, not to mirror the cache.
         """
         for i in range(KEY_INDEX_SIZE + 50):
-            await storage.create_entry(_request(f"http://endpoint/{i}"), _response(), f"key-{i}")
+            await store_entry(storage, _request(f"http://endpoint/{i}"), _response(), f"key-{i}")
 
         assert len(storage._keys_by_id) == KEY_INDEX_SIZE
 
     async def test_the_most_recently_seen_entry_survives_eviction(self, storage):
         """Eviction is least-recently-used, so the entry currently in flight is the last to go."""
-        first = await storage.create_entry(_request("http://endpoint/first"), _response(), "key-first")
+        first = await store_entry(storage, _request("http://endpoint/first"), _response(), "key-first")
 
         for i in range(KEY_INDEX_SIZE - 1):
-            await storage.create_entry(_request(f"http://endpoint/{i}"), _response(), f"key-{i}")
+            await store_entry(storage, _request(f"http://endpoint/{i}"), _response(), f"key-{i}")
 
         # Touching it moves it back to the front, the way `get_entries` does mid-cycle.
         assert storage._key_for(first.id, "update") == "key-first"
 
-        await storage.create_entry(_request("http://endpoint/overflow"), _response(), "key-overflow")
+        await store_entry(storage, _request("http://endpoint/overflow"), _response(), "key-overflow")
 
         assert storage._key_for(first.id, "update") == "key-first"
 
@@ -186,7 +187,7 @@ class TestDateOnStore:
 
     async def test_a_response_without_date_gets_the_time_of_receipt(self, storage):
         before = int(time.time())
-        await storage.create_entry(_request(), _response(), "key-1")
+        await store_entry(storage, _request(), _response(), "key-1")
         after = int(time.time())
 
         (stored,) = await storage.get_entries("key-1")
@@ -195,13 +196,13 @@ class TestDateOnStore:
 
     async def test_a_response_with_date_keeps_it(self, storage):
         date = "Wed, 21 Oct 2015 07:28:00 GMT"
-        await storage.create_entry(_request(), _response(date=date), "key-1")
+        await store_entry(storage, _request(), _response(date=date), "key-1")
 
         (stored,) = await storage.get_entries("key-1")
         assert stored.response.headers["date"] == date
 
     async def test_a_stored_response_still_serves_its_body(self, storage):
-        await storage.create_entry(_request(), _response(), "key-1")
+        await store_entry(storage, _request(), _response(), "key-1")
 
         (stored,) = await storage.get_entries("key-1")
         assert await stored.response.aread() == b"payload"

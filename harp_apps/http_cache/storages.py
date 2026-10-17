@@ -3,13 +3,16 @@ import time
 import typing as tp
 import uuid
 from collections import OrderedDict
+from dataclasses import replace
 import yaml
 from email.utils import formatdate
 from hishel import AsyncBaseStorage, Entry, EntryMeta, Request, Response
+from hishel._utils import make_async_iterator
 
 from harp import get_logger
 from harp.models import Blob
 from harp.http.utils import parse_cache_control
+from harp_apps.storage.constants import DEFAULT_MAX_RECORDED_BODY_SIZE
 from harp_apps.storage.types import IBlobStorage
 from .adapters import AsyncStorageAdapter, stored_at_of
 
@@ -27,6 +30,9 @@ DEFAULT_TTL = 86400
 
 logger = get_logger(__name__)
 HEADERS_ENCODING = "iso-8859-1"
+
+#: Request metadata key holding the largest response body the cache may store (the proxy's recording cap).
+MAX_BODY_SIZE_METADATA = "harp_max_recorded_body_size"
 
 
 def has_explicit_freshness(response: Response) -> bool:
@@ -182,7 +188,10 @@ class AsyncStorage(AsyncBaseStorage):
         key: str,
         id_: tp.Optional[uuid.UUID] = None,
     ) -> Entry:
-        """Create and store a new cache entry.
+        """Create a new cache entry, stored once its response body has been read to the end.
+
+        The returned entry's response streams the body as it arrives, so nothing waits for the whole of it. A body
+        over the proxy's recording cap (request metadata, see :data:`MAX_BODY_SIZE_METADATA`) is not stored.
 
         Args:
             request: The HTTP request
@@ -223,11 +232,34 @@ class AsyncStorage(AsyncBaseStorage):
         if "date" not in response.headers:
             response.headers["date"] = formatdate(entry.meta.created_at, usegmt=True)
 
+        limit = request.metadata.get(MAX_BODY_SIZE_METADATA)
+        if limit is None:
+            limit = DEFAULT_MAX_RECORDED_BODY_SIZE
+        return replace(entry, response=replace(response, stream=self._store_once_read(key, entry, limit)))
+
+    async def _store_once_read(self, key: str, entry: Entry, limit: int) -> tp.AsyncIterator[bytes]:
+        """Pass the response body through as it arrives, and store the entry once the body is read to its end.
+
+        At most ``limit`` bytes are held: a longer body is not stored, and a body left unread is not either.
+        """
+        body, size = bytearray(), 0
+        async for chunk in entry.response._aiter_stream():
+            size += len(chunk)
+            if size <= limit:
+                body += chunk
+            else:
+                body.clear()
+            yield chunk
+
+        if size > limit:
+            logger.debug(f"Cache entry not retained (body over {limit} bytes): key={key}")
+            return
+
+        entry = replace(entry, response=replace(entry.response, stream=make_async_iterator([bytes(body)])))
         await self._impl.store_entry(key, entry)
         self._remember_key(entry.id, key)
         logger.debug(f"Cache entry stored: key={key}")
         self._sweep_if_due()
-        return entry
 
     async def get_entries(self, key: str) -> tp.List[Entry]:
         """Retrieve all entries for a given cache key.
