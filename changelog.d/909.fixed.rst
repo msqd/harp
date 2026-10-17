@@ -1,0 +1,1 @@
+Cache: a successful ``PUT``, ``POST``, ``PATCH`` or ``DELETE`` now invalidates the stored responses for its target and its same-host ``Location`` / ``Content-Location`` URIs (RFC 9111 §4.4).

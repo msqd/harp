@@ -90,6 +90,10 @@ class Application:
 class ApplicationsRegistry:
     namespaces = ["harp_apps"]
 
+    MISSING_HINT = (
+        "Add it to the 'applications' list (or use --enable), or remove the 'applications' key to load the default set."
+    )
+
     def __init__(self, *, namespaces: Optional[list[str]] = None):
         self._applications = {}
         self.namespaces = namespaces or self.namespaces
@@ -251,11 +255,11 @@ class ApplicationsRegistry:
             if missing_deps:
                 if len(missing_deps) == 1:
                     raise MissingDependencyError(
-                        f"Application '{app_name}' requires '{missing_deps[0]}' but it is not enabled"
+                        f"Application '{app_name}' requires '{missing_deps[0]}' but it is not enabled. {self.MISSING_HINT}"
                     )
                 else:
                     raise MissingDependencyError(
-                        f"Application '{app_name}' requires {missing_deps} but they are not enabled"
+                        f"Application '{app_name}' requires {missing_deps} but they are not enabled. {self.MISSING_HINT}"
                     )
 
     def _detect_dependency_cycles(self, graph: dict[str, list[str]]) -> None:
@@ -314,7 +318,9 @@ class ApplicationsRegistry:
         for app_name in self._applications:
             for dep in graph[app_name]:
                 if dep not in graph:
-                    raise MissingDependencyError(f"Application '{app_name}' requires '{dep}' but it is not enabled")
+                    raise MissingDependencyError(
+                        f"Application '{app_name}' requires '{dep}' but it is not enabled. {self.MISSING_HINT}"
+                    )
 
         # Detect cycles
         self._detect_dependency_cycles(graph)

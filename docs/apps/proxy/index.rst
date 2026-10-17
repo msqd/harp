@@ -144,9 +144,14 @@ segment as is (``curl --path-as-is``) gets the 400. Dots inside a segment are no
 ``/.well-known/x``, ``/v1.2/x`` and ``/users/a%2eb`` are forwarded unchanged, like other encoded
 characters (``/user%3A42``, ``/a%2fb``).
 
-Not covered yet (`#1009 <https://github.com/msqd/harp/issues/1009>`_): ``..;`` segments, double
-encoding (``%252e``), overlong UTF-8, a dot segment followed by an encoded NUL (``/%2e%2e%00/x``) and
-Unicode look-alike dots (fullwidth ``．`` U+FF0E, sent as ``%EF%BC%8E``). Each escapes only on an
-upstream that reads it as a dot segment (one that treats ``..;`` as ``..``, decodes twice, accepts
-overlong UTF-8, truncates at NUL, or applies Unicode normalisation before resolving dot segments). If
-your upstream does, do not rely on the base path alone to restrict access.
+Shapes an upstream may reduce to a dot segment after its own normalisation are refused too, so none
+of them relies on the upstream's behaviour:
+
+- ``..;`` and ``.;`` segments (parameters dropped by Tomcat, Spring): ``/..;/..;/admin``,
+  ``/%2e%2e;/admin``;
+- double or deeper encoding: ``/%252e%252e/admin``;
+- overlong UTF-8 dots: ``/%c0%ae%c0%ae/admin``;
+- a dot segment followed by an encoded NUL: ``/%2e%2e%00/x``;
+- Unicode look-alike dots (fullwidth ``．`` U+FF0E, sent as ``%EF%BC%8E``): ``/%EF%BC%8E%EF%BC%8E/x``.
+
+Legitimate paths are forwarded unchanged: ``/a%2eb``, ``/%20``, ``/%C3%A9``, ``/page;jsessionid=abc``.
