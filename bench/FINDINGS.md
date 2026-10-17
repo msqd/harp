@@ -17,8 +17,59 @@ with no regression elsewhere. Laptop numbers validate tooling only; verdicts nee
 | Dispatch logging | Python fix | **done** | `debug` (#1184, #1188) |
 | SQLite storage | Python fix | **done** | WAL + busy_timeout (#1152, #1206) |
 | ASGI server (hypercorn, pure h11) | adopt | open | #1171: needs a server switch first, HARP hardcodes `HypercornAdapter` |
-| Upstream client (httpx) | adopt | open | #1172 |
+| Upstream client (httpx) | adopt | **provisional** | #1172: aiohttp and pyreqwest transports both ~-5 to -8% CPU on `bare`; the cost left is above the transport |
 | Storage write pipeline | Python design | open lead | see below |
+
+## Upstream client matrix (#1172)
+
+Target metric: HARP CPU per request on `bare` (all of the process, tokio threads included). The layer profile of #1171
+puts the client stack at ~35% of it. HARP pinned on cpus 0-1, origin 2, loadgen 3, 20 s runs, alternating transports,
+laptop with other tenants (load average 3-17): ranges overlap, read as ±10%. Verdicts wait for #1168.
+
+The seam is the httpx `AsyncBaseTransport` (`http_client.transport.type`, full class path, `--transport` in the
+harness); the httpx client, `Request` and `Response` stay, so hishel and the filters are untouched. Transports:
+httpx's own (httpcore + h11), aiohttp, pyreqwest (reqwest/hyper in Rust). All three run the same conformance suite
+(`harp_apps/http_client/tests/test_transport_conformance.py`).
+
+CPU per request, median of 5 alternating runs (3 for `default` and `loaded`), overhead rate 50 req/s unless noted:
+
+| Profile | httpx | aiohttp | pyreqwest |
+|---|---|---|---|
+| `bare` | 2900 µs | 2870 µs (-1%) | 2710 µs (-7%) |
+| `bare`, 200 req/s | 2430 µs | 2230 µs (-8%) | 2265 µs (-7%) |
+| `default` | 13730 µs | 13060 µs (-5%) | 12500 µs (-9%) |
+| `loaded` | 15350 µs | 15310 µs | 15180 µs |
+
+Overhead p50/p90/p99 are the same within noise (`bare` 50 req/s: 2.6-3.4 ms p50 for all three). The ranges overlap on
+every row but `bare` at 200 req/s (httpx 2300-2780, aiohttp 2150-2425, pyreqwest 2145-2362).
+
+Transport alone, in-process against the origin (3000 sequential requests, CPU of the whole process, 3 runs): httpx
+~215 µs, aiohttp ~93 µs, pyreqwest ~85 µs. Swapping the transport can therefore save ~0.12-0.13 ms per request, about
+5% of `bare`; the rest of the client cost sits above the transport, in `httpx.Client` itself (request building,
+response objects, event hooks), which no transport reaches.
+
+Correction: an earlier ceiling measurement (pyreqwest at -23% vs aiohttp) was void. The throwaway transport raised on
+every request (a float where reqwest wants a `timedelta`), HARP answered 500s quickly, and the script did not check
+statuses. The harness above invalidates a run on any non-200.
+
+What the transports change or break (the suite lists these as declared divergences, strict xfail):
+- aiohttp: none found. `retries` > 0, `limits.max_keepalive_connections` and a non-bool, non-`SSLContext` `verify` are
+  refused at startup; it keeps its own DNS cache.
+- pyreqwest: hyper's header map groups values by name and changes case (request names are title-cased, response names
+  lower-cased): order across names, interleaving of duplicates and casing are lost; it adds `Accept: */*` and a
+  `User-Agent` when absent; a timeout waiting for the response head surfaces as a connect timeout; a peer hanging up
+  without answering is recognised by message. `retries` > 0 and a non-bool `verify` are refused. One reqwest client per
+  distinct timeout triple, since httpx timeouts are per request and reqwest's per client.
+- a startup flake (`no 200 after 60 s`) hit 3 of 30 early harness runs on httpx, not reproducible, unrelated.
+
+Reading against the rule (≥15% net of the best adopt-native option, on the declared metric): no transport gets near
+it. aiohttp is the adopt-native option and gives 1-8% on `bare`; the Rust client is no better than aiohttp (85 vs
+93 µs of transport CPU, -7% vs -1/-8% end to end), costs header fidelity, and needs an extra and an unstable API. There
+is no case for own Rust on this seam.
+
+Provisional recommendation, pending #1168: keep httpx the default; aiohttp is a safe opt-in (already a dependency, no
+divergence, ~5-8% on the proxy path); pyreqwest only as an experiment. If client cost still matters, the lever is the
+httpx client layer above the transport, not the transport. `default` and `loaded` do not move: storage dominates.
 
 ## SQLite lock contention (#1169)
 
