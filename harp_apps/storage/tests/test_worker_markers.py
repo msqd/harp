@@ -1,9 +1,11 @@
+import hashlib
 from datetime import UTC, datetime
 
 from whistle import AsyncEventDispatcher
 
 from harp.http import HttpRequest, HttpResponse
 from harp.models import Transaction
+from harp.models.blobs import OFFLOAD_HASH_THRESHOLD
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp_apps.proxy.events import (
     EVENT_TRANSACTION_ENDED,
@@ -118,6 +120,23 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         assert response_msg.body is not None
         response_blob = await blob_storage.get(response_msg.body)
         assert response_blob.data == b"response data"
+
+    async def test_large_body_is_stored_under_its_content_hash(
+        self, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        """Large bodies (hashed off the event loop) get the same blob id as small ones: sha1 of type, newline, data."""
+        dispatcher = AsyncEventDispatcher()
+        body = b"x" * (OFFLOAD_HASH_THRESHOLD * 4)
+
+        await self.create_transaction_and_messages(
+            dispatcher, sql_storage, blob_storage, request_body=body, response_body=b"small"
+        )
+
+        transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        request_msg, response_msg = transactions[0].messages
+        assert request_msg.body == hashlib.sha1(b"\n" + body).hexdigest()
+        assert (await blob_storage.get(request_msg.body)).data == body
+        assert response_msg.body == hashlib.sha1(b"\n" + b"small").hexdigest()
 
     async def test_skip_request_body_storage(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
         """Test that request body is not stored when skip-request-body-storage marker is set."""
