@@ -17,6 +17,10 @@ class RejectedRequest(Exception):
         self.status = status
 
 
+class ClientDisconnected(Exception):
+    """Raised while reading a request body when the client went away before sending all of it."""
+
+
 class HttpError(BaseHttpMessage):
     kind = "error"
 

@@ -11,7 +11,7 @@ from urllib.parse import unquote_to_bytes, urlencode, urlsplit
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.http import BaseHttpMessage, HttpError, HttpRequest, HttpResponse, RejectedRequest
+from harp.http import BaseHttpMessage, ClientDisconnected, HttpError, HttpRequest, HttpResponse, RejectedRequest
 from harp.http.utils import HOP_BY_HOP_HEADERS, hop_by_hop_names, parse_cache_control
 from harp.models import Transaction
 from harp.utils.api import api
@@ -206,6 +206,11 @@ class HttpProxyController(AbstractHttpProxyController):
                 await context.request.aread()
             except RejectedRequest as exc:
                 response = HttpError(exc.message, exception=exc, status=exc.status)
+                return await self.failure(context.transaction, base_url, response)
+            except ClientDisconnected as exc:
+                # The body is incomplete: forwarding it would hand the upstream a request the client never made.
+                context.transaction.markers.add(CLIENT_DISCONNECTED)
+                response = HttpError("Client disconnected", exception=exc, status=ERR_BAD_REQUEST_STATUS_CODE)
                 return await self.failure(context.transaction, base_url, response)
 
             # Attempt to forward the request to the remote server.
