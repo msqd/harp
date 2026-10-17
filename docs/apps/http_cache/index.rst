@@ -82,16 +82,17 @@ Loading
 :::::::
 
 The HTTP cache application is loaded automatically when present and not disabled. It depends on the
-``http_client`` application, which will be loaded automatically if not already present.
+``http_client`` application, which is loaded with the default set.
 
-To manually control loading, list the applications to load. The list replaces the default set
+To manually control loading, list the applications to load, dependencies included. The list replaces the default set
 (``--applications`` replaces the file's list; ``--enable`` and ``--disable`` apply after either; with
 several ``--file``, the last one that sets ``applications:`` wins). An unknown name fails at startup:
 
 .. code-block:: yaml
 
     applications:
-      - http_cache  # Will auto-load http_client as dependency
+      - http_client  # Required by http_cache, not auto-loaded from a list
+      - http_cache
 
     http_cache:
       enabled: true  # Set to false to disable
@@ -123,7 +124,17 @@ Request flow
 3. **Vary header matching** ensures the correct variant is selected
 4. **Freshness check** determines if the cached response is still fresh
 5. **Return cached response** if fresh, or forward to origin server if stale/missing
-6. **Store response** from origin server for future requests
+6. **Store response** from origin server for future requests, once its body has been passed on to the client
+
+Response size
+-------------
+
+.. versionadded:: 0.12
+
+The cache passes an origin's body on as it arrives and stores the response once the whole body has gone
+through. A body larger, once decoded, than the proxy's recording cap (``proxy.max_recorded_body_size``, 1 MiB by default, see
+:ref:`proxy-buffering-and-streaming`) is sent to the client whole and **not stored**: the next request for it goes
+to the origin again. A response the client stopped reading before its end is not stored either.
 
 
 Revalidation

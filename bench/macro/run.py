@@ -26,8 +26,7 @@ from pathlib import Path
 
 from bench import metadata
 from bench.macro import measure
-from harp_apps.http_client.clients import CLIENTS as HARP_CLIENTS
-from harp_apps.http_client.clients import DEFAULT_CLIENT
+from harp.config.adapters import SERVERS as adapter_servers
 
 HERE = Path(__file__).parent
 ROOT = HERE.parent.parent
@@ -39,9 +38,9 @@ HARP_BIN = Path(sys.executable).parent / "harp-proxy"
 PROFILES = {"bare", "default", "loaded"}
 STORAGE_PROFILES = {"default", "loaded"}
 CACHE_MIX_PROFILES = {"loaded"}
-# What HARP can run today: the server adapter is hardcoded (`harp/__init__.py`), the client is chosen with --client.
-SERVERS = ("hypercorn",)
-CLIENTS = HARP_CLIENTS
+# The server comes from `harp server --server`; the client transport is `http_client.transport.type`, a full class path.
+SERVERS = adapter_servers
+DEFAULT_TRANSPORT = "httpx.AsyncHTTPTransport"
 HOST = "127.0.0.1"
 METRICS_PATH = "/.prometheus/metrics"
 BODY_BYTES = {"loaded": 16384}
@@ -150,15 +149,18 @@ def harp_command(args, cores, workdir: Path, db: Path, importtime: bool = False)
     command = [
         *python,
         "server",
+        "--server",
+        args.server,
         "-f",
         str(HERE / "profiles" / f"{args.profile}.yml"),
         "--endpoint",
         f"bench={args.harp_port}:http://{HOST}:{args.origin_port}/",
     ]
-    if args.client != DEFAULT_CLIENT:
-        command += ["--client", args.client]
+    if args.transport != DEFAULT_TRANSPORT:
+        command += ["--set", "http_client.transport.type", args.transport]
     if args.profile in STORAGE_PROFILES:
         command += ["--set", "storage.url", f"sqlite+aiosqlite:///{db}"]
+        command += ["--set", "dashboard.port", str(args.harp_port + 80)]  # 4080 by default, follows --harp-port
     if getattr(args, "scrape_metrics", False):
         command += ["--enable", "metrics"]
     return pinned(command, cores["harp"])
@@ -361,7 +363,7 @@ def common_metadata(args, cores) -> dict:
         "oha_version": oha_version(),
         "oha_connections": args.connections,
         "server": args.server,
-        "client": args.client,
+        "transport": args.transport,
         "origin": {"command": args.origin_cmd, "port": args.origin_port, "body_bytes": args.size},
         "cache_share": args.cache_share if args.profile in CACHE_MIX_PROFILES else 0,
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -553,7 +555,7 @@ def summarize_step(step: dict) -> str:
 
 
 def summarize_load(result: dict, path: Path) -> None:
-    print(f"load profile={result['profile']} server={result['server']} client={result['client']} ms")
+    print(f"load profile={result['profile']} server={result['server']} transport={result['transport']} ms")
     for step in result["steps"]:
         print(summarize_step(step))
     saturation = result["saturation_rate"]
@@ -611,7 +613,11 @@ def parser() -> argparse.ArgumentParser:
         help="load, storage profiles: enable the metrics app to scrape the queue backlog gauge (default: on)",
     )
     p.add_argument("--server", choices=SERVERS, default=SERVERS[0], help="HARP server adapter (default: %(default)s)")
-    p.add_argument("--client", choices=CLIENTS, default=DEFAULT_CLIENT, help="HARP http client (default: %(default)s)")
+    p.add_argument(
+        "--transport",
+        default=DEFAULT_TRANSPORT,
+        help="http_client.transport.type, full class path (default: %(default)s)",
+    )
     p.add_argument("--reps", type=int, default=5, help="startup repetitions (default: %(default)s)")
     p.add_argument("--harp-port", type=int, default=4000)
     p.add_argument("--origin-port", type=int, default=9100)

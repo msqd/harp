@@ -59,6 +59,14 @@ def stored_at_of(entry_data: tp.Mapping[str, tp.Any]) -> float:
     return _parse_created_at(meta_data["created_at"]) if "created_at" in meta_data else 0.0
 
 
+def _load_entry(raw: bytes) -> tp.Any:
+    return yaml.load(raw.decode(), Loader=_Loader)
+
+
+def _dump_entry(data: tp.Any) -> bytes:
+    return yaml.dump(data, Dumper=_Dumper, sort_keys=False).encode()
+
+
 class SerializedRequest(tp.TypedDict):
     method: str
     url: str

@@ -48,7 +48,9 @@ class ControllerTestFixtureMixin:
         if controller is None:
             controller = self.create_controller()
         request = await _create_request(body or b"", method=method, headers=headers)
-        return request, await controller(request)
+        response = await controller(request)
+        await response.aread()  # read the body as a client would, which ends a streamed transaction
+        return request, response
 
     @pytest.fixture
     def controller(self, storage):

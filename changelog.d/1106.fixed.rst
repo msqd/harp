@@ -1,0 +1,1 @@
+SQL blob storage: MySQL sessions are pinned to UTC so the orphan grace holds on non-UTC servers, and `put()` renews a blob in one statement so the janitor cannot delete it in between.

@@ -80,22 +80,51 @@ a permanent solution.
 You can use multiple ``--endpoint ...`` arguments and the option is available for all server-like commands
 (``harp-proxy start ...``, ``harp-proxy server ...``, ...).
 
+.. _proxy-buffering-and-streaming:
+
 Buffering and streaming
 :::::::::::::::::::::::
 
-The proxy reads each request body and each response body in full before it sends anything on. This
-is a known limit, not a setting:
+.. versionchanged:: 0.12
 
-- Server-sent events, long-polling, streamed JSON and other responses that stay open are not
-  supported. The client gets nothing until the upstream has finished.
-- Large downloads and uploads are not streamed.
-- Every in-flight body is held whole in memory, so the cost is the size of the bodies multiplied by
-  the number of concurrent requests. Size the memory of the process for your largest bodies at your
-  peak concurrency.
+    Response bodies are streamed to the client, and recorded up to a cap.
 
-Lifting the limit is tracked in `#911 <https://github.com/msqd/harp/issues/911>`_ (bounded response
-streaming), `#1129 <https://github.com/msqd/harp/issues/1129>`_ (server-sent events) and
-`#1130 <https://github.com/msqd/harp/issues/1130>`_ (request streaming).
+**Responses are streamed.** The proxy passes the upstream's response body on to the client as it arrives, whether the
+upstream sent a ``Content-Length`` or a chunked body, with or without the http cache. The client gets the first bytes
+as soon as the upstream sends them, not once the upstream has finished.
+
+**What HARP records is capped.** The transaction keeps at most the first ``max_recorded_body_size`` bytes of a response
+body, 1 MiB by default, and that is all of the body the proxy holds in memory. A longer body is still sent whole to
+the client, and:
+
+- the recorded body is cut at the cap, and the transaction carries the ``truncated-response-body``
+  :doc:`marker </apps/storage/markers>`, which the dashboard shows on the response;
+- the response is not stored in the :doc:`http cache </apps/http_cache/index>`, which would otherwise have to hold all
+  of it.
+
+.. code-block:: yaml
+
+    proxy:
+      # a byte count, or a size with its unit: 512KiB, 1MiB, 10MB
+      max_recorded_body_size: 4MiB
+
+The transaction ends once the body has been sent, so its duration, and the :doc:`TPDEX </user/performances>`
+computed from it, cover the whole exchange including the transfer to the client. When the client goes away before the
+end of the body, HARP stops reading the upstream and releases its connection at once, and the transaction is recorded
+with the body read until then and the ``client-disconnected`` marker. When
+the upstream fails halfway through a body, the client's connection is cut, since its response has already started, and
+the transaction is recorded as an error.
+
+The cap applies to the body as the client receives it: a compressed upstream body is measured once decoded, for the
+recording and for the cache alike.
+
+Still buffered:
+
+- Request bodies are read in full before anything is sent upstream, and held in memory
+  (`#1130 <https://github.com/msqd/harp/issues/1130>`_).
+- Responses that stay open, such as server-sent events and long-polling, are not supported yet: the transaction lasts as
+  long as the response, and the http client's read timeout cuts a stream that stays silent for longer
+  (`#1129 <https://github.com/msqd/harp/issues/1129>`_).
 
 Remote urls carrying credentials
 --------------------------------

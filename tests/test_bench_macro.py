@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 
 from bench.macro import measure, run
-from harp_apps.http_client.clients import CLIENTS
 
 
 class TestParseCpuList:
@@ -239,16 +238,17 @@ class TestShedMarkers:
 
 
 class TestHarpCommand:
-    def command(self, client="httpx"):
-        args = argparse.Namespace(profile="bare", harp_port=4000, origin_port=4100, client=client)
+    def command(self, transport=run.DEFAULT_TRANSPORT):
+        args = argparse.Namespace(
+            profile="bare", server="hypercorn", harp_port=4000, origin_port=4100, transport=transport
+        )
         return run.harp_command(args, {"harp": [0]}, Path("/tmp"), Path("/tmp/h.db"))
 
-    def test_default_client_is_not_passed(self):
-        assert "--client" not in self.command()
+    def test_default_transport_is_not_set(self):
+        assert "http_client.transport.type" not in self.command()
 
-    def test_client_is_passed(self):
-        command = self.command("aiohttp")
-        assert command[command.index("--client") + 1] == "aiohttp"
-
-    def test_clients_are_the_ones_harp_knows(self):
-        assert run.CLIENTS == CLIENTS
+    def test_transport_is_set_by_class_path(self):
+        command = self.command("harp_apps.http_client.aiohttp_transport.AiohttpTransport")
+        at = command.index("http_client.transport.type")
+        assert command[at - 1] == "--set"
+        assert command[at + 1] == "harp_apps.http_client.aiohttp_transport.AiohttpTransport"

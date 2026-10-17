@@ -1,6 +1,9 @@
 from functools import cached_property
 
+from pydantic import ByteSize, Field
+
 from harp.config import ApplicationSettingsMixin, Configurable, Stateful
+from harp_apps.storage.constants import DEFAULT_MAX_RECORDED_BODY_SIZE
 
 from .endpoint import Endpoint, EndpointSettings
 from .remote import Remote, RemoteEndpoint, RemoteEndpointSettings, RemoteProbe, RemoteProbeSettings, RemoteSettings
@@ -36,6 +39,11 @@ class ProxySettings(ApplicationSettingsMixin, BaseProxySettings):
     """
 
     endpoints: list[EndpointSettings] = []
+
+    #: How much of a response body is recorded, at most: a byte count or a size with its unit (``"1MiB"``). A
+    #: longer body is still sent whole to the client, recorded truncated and marked ``truncated-response-body``, and
+    #: not stored in the http cache.
+    max_recorded_body_size: ByteSize = Field(ByteSize(DEFAULT_MAX_RECORDED_BODY_SIZE), gt=0)
 
 
 class Proxy(Stateful[ProxySettings]):
