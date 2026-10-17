@@ -42,9 +42,13 @@ async def on_bind(event: OnBindEvent):
 
 async def on_bound(event: OnBoundEvent):
     settings = event.provider.get(StorageSettings)
+    engine = event.provider.get(AsyncEngine)
     if settings.migrate:
-        engine = event.provider.get(AsyncEngine)
         await _run_migrations(engine)
+
+    from harp_apps.storage.utils.migrations import ensure_schema_is_current
+
+    await ensure_schema_is_current(engine)
 
     storage = event.provider.get(IStorage)
     await storage.initialize()
