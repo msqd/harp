@@ -13,6 +13,13 @@ from harp_apps.http_cache.utils import (
 )
 from harp_apps.storage.types import IBlobStorage
 
+try:
+    from yaml import CSafeDumper as _Dumper
+    from yaml import CSafeLoader as _Loader
+except ImportError:  # libyaml not available
+    from yaml import SafeDumper as _Dumper
+    from yaml import SafeLoader as _Loader
+
 # httpcore extension keys to preserve during serialization
 # Migrated from hishel._serializers to avoid dependency on removed internal module
 KNOWN_REQUEST_EXTENSIONS = ("timeout", "sni_hostname")
@@ -32,6 +39,14 @@ def _format_created_at(timestamp: float) -> str:
 def _parse_created_at(value: str) -> float:
     """Parse an RFC 1123 GMT string back to a POSIX timestamp."""
     return datetime.strptime(value, _CREATED_AT_GMT_FORMAT).replace(tzinfo=UTC).timestamp()
+
+
+def _load_entry(raw: bytes) -> tp.Any:
+    return yaml.load(raw.decode(), Loader=_Loader)
+
+
+def _dump_entry(data: tp.Any) -> bytes:
+    return yaml.dump(data, Dumper=_Dumper, sort_keys=False).encode()
 
 
 class SerializedRequest(tp.TypedDict):
@@ -129,7 +144,7 @@ class AsyncStorageAdapter:
 
     async def _decode(self, cached):
         """Decode cached blob data into structured format."""
-        return yaml.safe_load(cached.data.decode())
+        return _load_entry(cached.data)
 
     async def _store_entry_blob(
         self,
@@ -152,7 +167,7 @@ class AsyncStorageAdapter:
         return await self.storage.force_put(
             Blob(
                 id=key,
-                data=yaml.safe_dump(
+                data=_dump_entry(
                     {
                         "id": str(entry_id),  # Store UUID for hishel 1.0
                         "request": request,
@@ -166,8 +181,7 @@ class AsyncStorageAdapter:
                         },
                         "extra": extra,  # Store full extra dict
                     },
-                    sort_keys=False,
-                ).encode(),
+                ),
                 content_type="cache/meta",
             ),
         )
