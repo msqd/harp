@@ -17,6 +17,16 @@ def git_sha() -> str:
         return "unknown"
 
 
+def git_dirty(cwd: Path | None = None) -> str:
+    try:
+        status = subprocess.run(
+            ["git", "status", "--porcelain"], capture_output=True, text=True, check=True, cwd=cwd
+        ).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+    return "true" if status.strip() else "false"
+
+
 def native() -> str:
     return os.environ.get("HARP_NATIVE") or "none"
 
@@ -38,6 +48,7 @@ def python_build() -> str:
 def collect() -> dict[str, str]:
     return {
         "git_sha": git_sha(),
+        "git_dirty": git_dirty(),
         "harp_native": native(),
         "cpu_model": cpu_model(),
         "python_build": python_build(),
