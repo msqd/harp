@@ -67,7 +67,7 @@ export default defineConfig(({ mode }) => {
                 react: ["react", "react-dom"],
                 reactQuery: ["react-query"],
                 reactRouter: ["react-router-dom"],
-                syntaxHighlighter: ["prismjs", "react-syntax-highlighter"],
+                syntaxHighlighter: ["react-syntax-highlighter"],
                 ui: ["@headlessui/react", "@heroicons/react", "@emotion/react"],
                 sentry: ["@sentry/browser"],
                 dateFns: ["date-fns"],
