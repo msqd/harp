@@ -166,7 +166,7 @@ If you want to reset the storage content, you can run the ``harp-proxy db:reset`
 then run the migrations again (if enabled), so that you get an empty and up-to-date database schema.
 
 You must provide your configuration files and configuration arguments to this command, like you'd do with the
-``harp-proxy start`` command, so that it points to the right storage.
+``harp-proxy server`` command, so that it points to the right storage.
 
 .. code-block:: shell
 
@@ -186,6 +186,6 @@ To instruct SQLAlchemy to log all queries, set ``LOGGING_SQLALCHEMY=INFO`` in yo
 
 .. code-block:: shell
 
-    LOGGING_SQLALCHEMY=INFO harp-proxy start ...
+    LOGGING_SQLALCHEMY=INFO harp-proxy server ...
 
 It works with all HARP commands, not just ``start``.

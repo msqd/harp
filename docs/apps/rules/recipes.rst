@@ -110,7 +110,7 @@ You can run it with:
 
 .. code-block:: bash
 
-    harp-proxy start --example rules:storage-markers
+    harp-proxy server --example rules:storage-markers
 
 .. collapse:: View complete example source
 
