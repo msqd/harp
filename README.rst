@@ -132,8 +132,7 @@ Overview
   response times and improved overall performance of your application, even before any configuration is done.
 * **Simplified Development:** HARP eliminates the need for writing extensive code for functionalities such as caching,
   monitoring, circuit breaking, logging, and more. These features can be easily delegated to the proxy, reducing the
-  amount of code you need to write and maintain. Prefetching, rate limiting, retries, tracing and alerting are on the
-  roadmap, not available yet.
+  amount of code you need to write and maintain.
 * **Seamless HTTP Integration:** HARP seamlessly integrates with your application using the HTTP protocol. This means
   that the integration or removal cost is virtually zero, or even negative when considering the reduction in code you
   won't need to write.
