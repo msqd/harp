@@ -49,7 +49,7 @@ Dependency Installation
     # Install all dependencies (backend + frontend) without dev tools
     make install
 
-    # Install all dependencies including dev tools (recommended)
+    # Install all dependencies including dev tools and pre-commit hooks (recommended)
     make install-dev
 
     # Install only backend dependencies
@@ -466,7 +466,7 @@ Best Practices
 --------------
 
 1. **Always use ``make install-dev``** before starting development to ensure all
-   dependencies (including playwright browsers) are installed.
+   dependencies (backend, frontend, pre-commit hooks) are installed. See :doc:`setup`.
 
 2. **Use Makefile tasks instead of direct commands** to ensure consistency with
    CI and avoid configuration drift.
