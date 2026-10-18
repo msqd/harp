@@ -52,7 +52,7 @@ Overriding the Cache-Control
 
 You can override the Cache-Control header of the incoming response to override the default caching behavior.
 
-This will disable caching (although you will prefer to set this on the request side):
+This will force revalidation on every use of a stored response (although you will prefer to set this on the request side):
 
 .. code-block:: toml
 

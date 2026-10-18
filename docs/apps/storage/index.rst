@@ -45,10 +45,10 @@ backends for blobs).
     store as a complete account of what crossed the proxy. See :ref:`what-harp-retains` for what is
     measured, and `#945 <https://github.com/msqd/harp/issues/945>`_ for the measurements.
 
-    In 0.10 a caller's ``Cache-Control: no-store`` binds the cache and does not affect what is
-    recorded here. Whether a caller may suppress payload recording is decided in
-    `#927 <https://github.com/msqd/harp/issues/927>`_ and lands in 0.11, so do not build on the
-    current behaviour in either direction.
+    A caller's ``Cache-Control: no-store`` binds the cache and does not affect what is recorded
+    here. Whether a caller may suppress payload recording is undecided, see
+    `#927 <https://github.com/msqd/harp/issues/927>`_, so do not build on the current behaviour in
+    either direction.
 
     Choosing what is not recorded is currently the operator's decision, made with the
     :doc:`rules application </apps/rules/index>` and the :doc:`markers` below.

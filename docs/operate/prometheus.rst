@@ -21,6 +21,8 @@ The ``metrics`` application will decorate the HARP ASGI implementation with a mi
 under the path ``/.prometheus/metrics``. You can configure your prometheus instance to scrape this path (see below).
 
 
+.. _storage-load-shedding:
+
 Storage load shedding
 :::::::::::::::::::::
 
