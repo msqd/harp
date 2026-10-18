@@ -223,7 +223,7 @@ jobs:
         run: mkdir -p harp_apps/dashboard/web
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --group mysql
 
       - name: Run storage tests on MySQL and MariaDB
         run: uv run pytest harp_apps/storage -n auto -m 'not subprocess'
