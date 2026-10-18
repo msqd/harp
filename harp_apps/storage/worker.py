@@ -1,13 +1,11 @@
 import asyncio
 from dataclasses import dataclass, field
 from datetime import UTC
-from functools import partial
 from math import log10
 from time import monotonic
-from types import SimpleNamespace
 
 from prometheus_client import Counter
-from sqlalchemy import insert, update
+from sqlalchemy import insert, select, tuple_, update
 from sqlalchemy.ext.asyncio import AsyncEngine
 from whistle import IAsyncEventDispatcher
 
@@ -36,9 +34,13 @@ from harp_apps.storage.constants import (
     SKIP_STORAGE,
 )
 from harp_apps.storage.models import Message as SqlMessage
+from harp_apps.storage.models import Tag as SqlTag
+from harp_apps.storage.models import TagValue as SqlTagValue
 from harp_apps.storage.models import Transaction as SqlTransaction
 from harp_apps.storage.services.blob_storages.sql import SqlBlobStorage
+from harp_apps.storage.models.transactions import transaction_tag_values_association_table
 from harp_apps.storage.types import IBlobStorage, IStorage
+from harp_apps.storage.utils.upsert import insert_ignoring_duplicates
 
 logger = get_logger(__name__)
 
@@ -46,6 +48,11 @@ DROPPED_COUNTER = Counter(
     "dropped",
     "Items the storage worker did not store because of queue pressure, by kind.",
     ["kind"],
+)
+
+FLUSH_FAILURES_COUNTER = Counter(
+    "storage_flush_failures",
+    "Writes of ended transactions to the database that failed (a batch, then each transaction of it alone).",
 )
 
 DROPPED_KINDS = ("transactions", "messages", "headers", "bodies")
@@ -58,8 +65,8 @@ for _kind in DROPPED_KINDS:
 @dataclass
 class PendingTransaction:
     """
-    What the worker knows of a transaction until it is written: held in memory, written once when it ends. Once
-    inserted early, its payload (messages, blobs) is written and freed: only a light entry stays until the end.
+    What the worker knows of a transaction until it is written: held in memory, written once when it ends, in a
+    batch. Once inserted early, its payload (messages, blobs) is written and freed: only a light entry stays.
     """
 
     id: str
@@ -70,9 +77,7 @@ class PendingTransaction:
     end_data: dict = field(default_factory=dict)
     inserted: bool = False
     ended: bool = False
-    tags_written: bool = False
-    timer: asyncio.TimerHandle | None = None
-    expiry: asyncio.TimerHandle | None = None
+    started_at: float = field(default_factory=monotonic)
 
 
 class StorageAsyncWorkerQueue(AsyncWorkerQueue):
@@ -83,6 +88,8 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         blob_storage: IBlobStorage,
         early_insert_after: float = 1.0,
         pending_max_age: float = 3600.0,
+        flush_interval: float = 1.0,
+        flush_batch_size: int = 500,
     ):
         self.engine = engine
         self.storage = storage
@@ -91,9 +98,15 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         self.early_insert_after = early_insert_after
         #: Seconds after which the worker forgets a transaction that never ended (it stays as it was last written).
         self.pending_max_age = pending_max_age
+        #: Ended transactions are written together, every ``flush_interval`` seconds or ``flush_batch_size`` of them.
+        self.flush_interval = flush_interval
+        self.flush_batch_size = flush_batch_size
+        self._pending: dict[str, PendingTransaction] = {}
+        self._ended: list[PendingTransaction] = []
+        self._flush_queued = False
         super().__init__()
         self.seen = set()
-        self._pending: dict[str, PendingTransaction] = {}
+        self._tick_handle = asyncio.get_running_loop().call_later(self.flush_interval, self._tick)
         self._dropped_since_warning = dict.fromkeys(DROPPED_KINDS, 0)
         self._last_shed_warning_at = None
 
@@ -121,6 +134,8 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
 
     def cleanup(self):
         super().cleanup()
+        # What waits to be written: the queue, and the ended transactions the next flush will take.
+        self._pressure += len(getattr(self, "_ended", ()))
 
     @property
     def pressure(self):
@@ -145,35 +160,6 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             tags=dict(event.transaction.tags or {}),
         )
         self._pending[pending.id] = pending
-        loop = asyncio.get_running_loop()
-        pending.timer = loop.call_later(self.early_insert_after, self._early_insert_due, pending)
-        pending.expiry = loop.call_later(self.pending_max_age, self._expire, pending)
-
-    def _expire(self, pending: PendingTransaction):
-        """Forgets a transaction whose end never came (client gone, stream never closed...), so memory stays bounded."""
-        pending.expiry = None
-        if self._pending.pop(pending.id, None) is pending:
-            self._cancel_timers(pending)
-            logger.debug(f"Transaction never ended, forgotten after {self.pending_max_age}s", transaction_id=pending.id)
-
-    @staticmethod
-    def _cancel_timers(pending: PendingTransaction):
-        for name in ("timer", "expiry"):
-            if handle := getattr(pending, name):
-                handle.cancel()
-                setattr(pending, name, None)
-
-    def _early_insert_due(self, pending: PendingTransaction):
-        pending.timer = None
-        if pending.ended or not self._running:
-            return
-
-        async def insert_early():
-            if pending.ended or pending.inserted:
-                return
-            await self._write([pending], finished=False)
-
-        self.push_nowait(insert_early)
 
     async def on_transaction_message(self, event: HttpMessageEvent):
         if SKIP_STORAGE in event.transaction.markers:
@@ -269,7 +255,9 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         if pending is None:
             return
 
-        await self.push(partial(self.flush, [pending]))
+        self._ended.append(pending)
+        if len(self._ended) >= self.flush_batch_size:
+            self._schedule_flush()
 
     def take_pending(self, transaction) -> PendingTransaction | None:
         """Closes what the worker kept of an ended transaction, ready to be flushed. None if there is nothing to write."""
@@ -277,7 +265,6 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         if pending is None:
             return None
         pending.ended = True
-        self._cancel_timers(pending)
 
         if SKIP_STORAGE in transaction.markers:
             return None
@@ -292,21 +279,83 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         }
         return pending
 
+    def _tick(self):
+        self._tick_handle = None
+        if not self._running:
+            return
+        self._schedule_flush()
+        self._tick_handle = asyncio.get_running_loop().call_later(self.flush_interval, self._tick)
+
+    def _schedule_flush(self):
+        """Queues one flush, unless one is already waiting: it takes everything ready when it runs."""
+        if self._flush_queued or not self._running:
+            return
+        self._flush_queued = True
+        self.push_nowait(self._flush_job)
+
+    async def _flush_job(self):
+        self._flush_queued = False
+        ended, self._ended = self._ended, []
+        self._pressure = self._queue.qsize() + len(ended)
+        await self._flush_resiliently(ended + self._sweep())
+
+    def _sweep(self) -> list[PendingTransaction]:
+        """
+        One pass over the transactions still open: forgets those silent for too long, and returns those running for
+        longer than the early-insert threshold and not yet in the database, to be inserted with the batch.
+        """
+        now = monotonic()
+        due = []
+        for pending in list(self._pending.values()):
+            age = now - pending.started_at
+            if age >= self.pending_max_age:
+                del self._pending[pending.id]
+                logger.debug(
+                    f"Transaction never ended, forgotten after {self.pending_max_age}s", transaction_id=pending.id
+                )
+            elif age >= self.early_insert_after and not pending.inserted:
+                due.append(pending)
+        return due
+
+    async def wait_until_empty(self):
+        """Waits until everything handed to the worker is written, ended transactions included."""
+        if self._running:
+            self._schedule_flush()
+        await super().wait_until_empty()
+
+    async def _flush_resiliently(self, pendings: list[PendingTransaction]):
+        """Writes the batch; if it fails, logs and counts it, then tries each transaction alone so one cannot lose all."""
+        try:
+            await self._write(pendings)
+            return
+        except Exception:
+            FLUSH_FAILURES_COUNTER.inc()
+            logger.exception(f"Could not write a batch of {len(pendings)} transactions")
+        if len(pendings) < 2:
+            return
+        for pending in pendings:
+            try:
+                await self._write([pending])
+            except Exception:
+                FLUSH_FAILURES_COUNTER.inc()
+                logger.exception("Could not write a transaction", transaction_id=pending.id)
+
     async def flush(self, ended: list[PendingTransaction]):
         """Writes ended transactions, their messages and blobs, in one database transaction."""
-        await self._write(ended, finished=True)
+        await self._write(ended)
 
-    async def _write(self, pendings: list[PendingTransaction], *, finished: bool):
+    async def _write(self, pendings: list[PendingTransaction]):
         """
         Writes what the given transactions hold, in one database transaction: the transaction rows (inserted, or
-        updated once inserted early), then their messages and blobs. With ``finished`` False, the rows are inserted
-        unfinished and the payload is written and freed, so that a transaction that never ends holds no payload.
+        updated once inserted early), their messages, blobs and tags. Transactions still open are inserted
+        unfinished and their payload is written and freed, so that one that never ends holds no payload.
         """
         if not pendings:
             return
 
-        # Taken now: messages may arrive while the write waits for the database.
-        taken = [(pending, pending.messages, pending.blobs) for pending in pendings]
+        # Taken now: messages may arrive, and transactions end, while the write waits for the database.
+        taken = [(pending, pending.messages, pending.blobs, pending.ended) for pending in pendings]
+        end_data = [pending.end_data if pending.ended else {} for pending in pendings]
         for pending in pendings:
             pending.messages, pending.blobs = [], {}
 
@@ -320,7 +369,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             if not in_database:
                 # Another blob storage: its writes cannot share the database transaction. A failed blob is logged and
                 # the message keeps pointing at it, as before.
-                for _, _, blobs in taken:
+                for _, _, blobs, _ in taken:
                     for blob in blobs.values():
                         try:
                             await self.blob_storage.put(blob)
@@ -330,44 +379,78 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             transactions = SqlTransaction.__table__
             async with self.engine.begin() as conn:
                 if in_database:
-                    blobs = {blob.id: blob for _, _, blobs in taken for blob in blobs.values()}
+                    blobs = {blob.id: blob for _, _, blobs, _ in taken for blob in blobs.values()}
                     await self.blob_storage.put_in(conn, list(blobs.values()))
 
-                end = [pending.end_data if finished else {} for pending in pendings]
-                to_insert = [{**p.data, **e} for p, e in zip(pendings, end) if not p.inserted]
-                for pending, values in zip(pendings, end):
+                to_insert = [{**p.data, **e} for p, e in zip(pendings, end_data) if not p.inserted]
+                for pending, values in zip(pendings, end_data):
                     if pending.inserted and values:
                         await conn.execute(update(transactions).where(transactions.c.id == pending.id).values(**values))
                 if to_insert:
                     await conn.execute(insert(transactions), to_insert)
 
-                messages = [message for _, messages, _ in taken for message in messages]
+                messages = [message for _, messages, _, _ in taken for message in messages]
                 if messages:
                     await conn.execute(insert(SqlMessage.__table__), messages)
+
+                await self._write_tags(conn, [p for p in pendings if p.tags])
         except BaseException:
-            for pending, messages, blobs in taken:  # nothing was written: keep it for the end
+            for pending, messages, blobs, _ in taken:  # nothing was written: keep it for the next write
                 pending.messages = messages + pending.messages
                 pending.blobs = {**blobs, **pending.blobs}
             raise
 
-        for pending in pendings:
+        for pending, _, _, finished in taken:
             pending.inserted = True
-            await self._write_tags(pending)
+            pending.tags = {}
             if not finished:
                 pending.data = {}  # the row is there: only what the end needs stays
 
-    async def _write_tags(self, pending: PendingTransaction):
-        if pending.tags and not pending.tags_written:
-            pending.tags_written = True
-            await self.storage.transactions.set_tags(SimpleNamespace(id=pending.id), pending.tags)
-            pending.tags = {}
+    async def _write_tags(self, conn, pendings: list[PendingTransaction]):
+        """Stores the tags, their values and the links to the transactions: a few statements for any number of them."""
+        if not pendings:
+            return
+        dialect = conn.dialect.name
+        names = {name for pending in pendings for name in pending.tags}
+        await conn.execute(
+            insert_ignoring_duplicates(dialect, SqlTag.__table__, ("name",)), [{"name": name} for name in names]
+        )
+        tag_ids = {
+            row.name: row.id for row in await conn.execute(select(SqlTag.id, SqlTag.name).where(SqlTag.name.in_(names)))
+        }
+
+        pairs = {(tag_ids[name], str(value)) for pending in pendings for name, value in pending.tags.items()}
+        await conn.execute(
+            insert_ignoring_duplicates(dialect, SqlTagValue.__table__, ("tag_id", "value")),
+            [{"tag_id": tag_id, "value": value} for tag_id, value in pairs],
+        )
+        value_ids = {
+            (row.tag_id, row.value): row.id
+            for row in await conn.execute(
+                select(SqlTagValue.id, SqlTagValue.tag_id, SqlTagValue.value).where(
+                    tuple_(SqlTagValue.tag_id, SqlTagValue.value).in_(list(pairs))
+                )
+            )
+        }
+        await conn.execute(
+            insert_ignoring_duplicates(
+                dialect, transaction_tag_values_association_table, ("transaction_id", "value_id")
+            ),
+            [
+                {"transaction_id": pending.id, "value_id": value_ids[(tag_ids[name], str(value))]}
+                for pending in pendings
+                for name, value in pending.tags.items()
+            ],
+        )
 
     async def close(self):
         """
-        Stops accepting work and waits for the queue: transactions that ended are written. Transactions still open
-        are not: those older than the early-insert threshold are in the database already, unfinished, younger ones
-        are lost (recording is best effort).
+        Stops accepting work, flushes the transactions that ended and waits for the queue. Transactions still open
+        are not: those older than the early-insert threshold are in the database already, unfinished (the last
+        flush put them there), younger ones are lost (recording is best effort).
         """
-        for pending in self._pending.values():
-            self._cancel_timers(pending)
+        if self._tick_handle:
+            self._tick_handle.cancel()
+            self._tick_handle = None
+        self._schedule_flush()
         await super().close()

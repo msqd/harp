@@ -40,6 +40,8 @@ class TestDefaultsWithStorage(BaseTestDefaultsWith):
             "migrate": ANY,
             "early_insert_after": 1.0,
             "pending_max_age": 3600.0,
+            "flush_interval": 1.0,
+            "flush_batch_size": 500,
             "url": ANY,
             "redis": None,
         }

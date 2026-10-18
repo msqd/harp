@@ -11,25 +11,12 @@ from harp.models import Blob
 from harp_apps.storage.models import Blob as SqlBlob
 from harp_apps.storage.models.blobs import ORPHAN_GRACE
 from harp_apps.storage.types import IBlobStorage
+from harp_apps.storage.utils.upsert import insert_ignoring_duplicates
 
 logger = get_logger(__name__)
 
 ITER_BATCH_SIZE = 200
 DELETE_BATCH_SIZE = 200
-
-
-def _insert_ignoring_duplicates(dialect: str, table):
-    """An insert that leaves rows with an existing primary key alone, on every supported database."""
-    if dialect == "postgresql":
-        from sqlalchemy.dialects.postgresql import insert as dialect_insert
-    elif dialect == "sqlite":
-        from sqlalchemy.dialects.sqlite import insert as dialect_insert
-    else:
-        # mysql: not IGNORE, which would silently truncate data wider than the column instead of failing
-        from sqlalchemy.dialects.mysql import insert as dialect_insert
-
-        return dialect_insert(table).on_duplicate_key_update(id=table.c.id)
-    return dialect_insert(table).on_conflict_do_nothing(index_elements=["id"])
 
 
 class SqlBlobStorage(IBlobStorage):
@@ -110,7 +97,7 @@ class SqlBlobStorage(IBlobStorage):
             .values(created_at=func.now())
         )
         await conn.execute(
-            _insert_ignoring_duplicates(conn.dialect.name, table),
+            insert_ignoring_duplicates(conn.dialect.name, table),
             [{"id": blob.id, "data": blob.data, "content_type": blob.content_type} for blob in blobs],
         )
 

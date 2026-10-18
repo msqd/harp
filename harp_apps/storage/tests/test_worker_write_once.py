@@ -46,7 +46,9 @@ class Recording:
 
 @pytest.fixture
 async def worker(sql_storage, sql_blob_storage):
-    worker = StorageAsyncWorkerQueue(sql_storage.engine, sql_storage, sql_blob_storage, early_insert_after=60)
+    worker = StorageAsyncWorkerQueue(
+        sql_storage.engine, sql_storage, sql_blob_storage, flush_interval=0.05, early_insert_after=60
+    )
     worker.dispatcher = AsyncEventDispatcher()
     worker.register_events(worker.dispatcher)
     yield worker
@@ -120,7 +122,9 @@ async def test_a_blob_shared_by_two_messages_is_stored_once(worker, sql_storage)
 
 
 async def test_a_transaction_still_open_after_the_threshold_is_inserted_then_updated(sql_storage, sql_blob_storage):
-    worker = StorageAsyncWorkerQueue(sql_storage.engine, sql_storage, sql_blob_storage, early_insert_after=0.05)
+    worker = StorageAsyncWorkerQueue(
+        sql_storage.engine, sql_storage, sql_blob_storage, flush_interval=0.05, early_insert_after=0.05
+    )
     worker.dispatcher = AsyncEventDispatcher()
     worker.register_events(worker.dispatcher)
     try:
@@ -146,7 +150,9 @@ async def test_a_transaction_still_open_after_the_threshold_is_inserted_then_upd
 
 
 async def test_a_transaction_that_never_ends_holds_no_payload_once_inserted(sql_storage, sql_blob_storage):
-    worker = StorageAsyncWorkerQueue(sql_storage.engine, sql_storage, sql_blob_storage, early_insert_after=0.05)
+    worker = StorageAsyncWorkerQueue(
+        sql_storage.engine, sql_storage, sql_blob_storage, flush_interval=0.05, early_insert_after=0.05
+    )
     worker.dispatcher = AsyncEventDispatcher()
     worker.register_events(worker.dispatcher)
     try:
@@ -167,7 +173,12 @@ async def test_a_transaction_that_never_ends_holds_no_payload_once_inserted(sql_
 
 async def test_a_transaction_that_never_ends_is_forgotten_after_the_max_age(sql_storage, sql_blob_storage):
     worker = StorageAsyncWorkerQueue(
-        sql_storage.engine, sql_storage, sql_blob_storage, early_insert_after=0.05, pending_max_age=0.2
+        sql_storage.engine,
+        sql_storage,
+        sql_blob_storage,
+        flush_interval=0.05,
+        early_insert_after=0.05,
+        pending_max_age=0.2,
     )
     worker.dispatcher = AsyncEventDispatcher()
     worker.register_events(worker.dispatcher)
@@ -187,7 +198,9 @@ async def test_a_transaction_that_never_ends_is_forgotten_after_the_max_age(sql_
 
 
 async def test_messages_after_the_early_insert_are_written_once_at_the_end(sql_storage, sql_blob_storage):
-    worker = StorageAsyncWorkerQueue(sql_storage.engine, sql_storage, sql_blob_storage, early_insert_after=0.05)
+    worker = StorageAsyncWorkerQueue(
+        sql_storage.engine, sql_storage, sql_blob_storage, flush_interval=0.05, early_insert_after=0.05
+    )
     worker.dispatcher = AsyncEventDispatcher()
     worker.register_events(worker.dispatcher)
     try:
@@ -214,7 +227,9 @@ async def test_messages_after_the_early_insert_are_written_once_at_the_end(sql_s
 
 
 async def test_closing_writes_the_transactions_that_ended(sql_storage, sql_blob_storage):
-    worker = StorageAsyncWorkerQueue(sql_storage.engine, sql_storage, sql_blob_storage, early_insert_after=60)
+    worker = StorageAsyncWorkerQueue(
+        sql_storage.engine, sql_storage, sql_blob_storage, flush_interval=0.05, early_insert_after=60
+    )
     worker.dispatcher = AsyncEventDispatcher()
     worker.register_events(worker.dispatcher)
     ended, open_ = new_transaction(), new_transaction()
@@ -229,11 +244,12 @@ async def test_closing_writes_the_transactions_that_ended(sql_storage, sql_blob_
         await worker.wait_until_empty()
     rows = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
     assert [t.id for t in rows] == [ended.id]  # the young open one is lost: recording is best effort
-    assert worker._pending[open_.id].timer is None
 
 
 async def test_a_transaction_ended_before_the_threshold_is_never_inserted_early(sql_storage, sql_blob_storage):
-    worker = StorageAsyncWorkerQueue(sql_storage.engine, sql_storage, sql_blob_storage, early_insert_after=0.1)
+    worker = StorageAsyncWorkerQueue(
+        sql_storage.engine, sql_storage, sql_blob_storage, flush_interval=0.05, early_insert_after=0.1
+    )
     worker.dispatcher = AsyncEventDispatcher()
     worker.register_events(worker.dispatcher)
     recording = Recording(sql_storage.engine)
@@ -295,7 +311,7 @@ async def test_transactions_ended_together_can_be_flushed_in_one_database_transa
 
 async def test_blobs_of_another_blob_storage_are_put_there(sql_storage):
     blobs = MemoryBlobStorage()
-    worker = StorageAsyncWorkerQueue(sql_storage.engine, sql_storage, blobs, early_insert_after=60)
+    worker = StorageAsyncWorkerQueue(sql_storage.engine, sql_storage, blobs, flush_interval=0.05, early_insert_after=60)
     worker.dispatcher = AsyncEventDispatcher()
     worker.register_events(worker.dispatcher)
     try:
@@ -325,7 +341,9 @@ async def test_tags_are_stored(worker, sql_storage):
 
 
 async def test_a_failed_early_insert_leaves_the_payload_for_the_end(sql_storage, sql_blob_storage, monkeypatch):
-    worker = StorageAsyncWorkerQueue(sql_storage.engine, sql_storage, sql_blob_storage, early_insert_after=0.05)
+    worker = StorageAsyncWorkerQueue(
+        sql_storage.engine, sql_storage, sql_blob_storage, flush_interval=0.05, early_insert_after=0.05
+    )
     worker.dispatcher = AsyncEventDispatcher()
     worker.register_events(worker.dispatcher)
     original = sql_blob_storage.put_in

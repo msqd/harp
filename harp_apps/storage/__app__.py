@@ -56,7 +56,7 @@ async def on_bound(event: OnBoundEvent):
 
 async def on_shutdown(event: OnShutdownEvent):
     worker = event.provider.get(StorageAsyncWorkerQueue)
-    await worker.wait_until_empty()
+    await worker.close()  # flushes what ended
     await event.provider.get(IStorage).finalize()
 
 
