@@ -209,3 +209,8 @@ showcontent = true
 directory = "removed"
 name = "Removed"
 showcontent = true
+
+[[tool.towncrier.type]]
+directory = "tooling"
+name = "Tooling"
+showcontent = true
