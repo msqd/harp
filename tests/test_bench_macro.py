@@ -1,7 +1,6 @@
 """Tests for the pure logic of the macro benchmark harness (see `bench/macro/`)."""
 
 import argparse
-from pathlib import Path
 
 import pytest
 
@@ -24,14 +23,89 @@ class TestFormatCpuList:
         assert measure.format_cpu_list([0, 1, 2, 12]) == "0,1,2,12"
 
 
-class TestAssignCores:
-    def test_disjoint_cores_in_order(self):
-        cores = measure.assign_cores([0, 1, 2, 3, 4, 5], harp=2, origin=1, loadgen=1)
+class TestUsableCores:
+    def test_the_process_affinity_decides(self):
+        assert measure.usable_cores({3, 1, 0, 2}, performance_cores=None) == [0, 1, 2, 3]
+
+    def test_hybrid_performance_cores_within_the_affinity(self):
+        assert measure.usable_cores({0, 1, 2, 3, 8, 9}, performance_cores=[0, 1, 2, 3, 4, 5]) == [0, 1, 2, 3]
+
+    def test_performance_cores_outside_the_affinity_are_ignored(self):
+        assert measure.usable_cores({8, 9, 10}, performance_cores=[0, 1, 2, 3]) == [8, 9, 10]
+
+
+class TestAssignHarnessCores:
+    def test_six_cores_leave_two_unused(self):
+        cores = measure.assign_harness_cores([0, 1, 2, 3, 4, 5], harp=2)
         assert cores == {"harp": [0, 1], "origin": [2], "loadgen": [3]}
+
+    def test_four_cores_are_disjoint(self):
+        cores = measure.assign_harness_cores([0, 1, 2, 3], harp=2)
+        assert cores == {"harp": [0, 1], "origin": [2], "loadgen": [3]}
+
+    def test_three_cores_share_the_last_between_origin_and_loadgen(self):
+        cores = measure.assign_harness_cores([0, 1, 2], harp=2)
+        assert cores == {"harp": [0, 1], "origin": [2], "loadgen": [2]}
 
     def test_not_enough_cores(self):
         with pytest.raises(ValueError, match="cores"):
-            measure.assign_cores([0, 1], harp=2, origin=1, loadgen=1)
+            measure.assign_harness_cores([0, 1], harp=2)
+
+
+class TestSharedRoles:
+    def test_none_when_disjoint(self):
+        assert measure.shared_roles({"harp": [0, 1], "origin": [2], "loadgen": [3]}) == []
+
+    def test_origin_and_loadgen(self):
+        assert measure.shared_roles({"harp": [0, 1], "origin": [2], "loadgen": [2]}) == ["origin", "loadgen"]
+
+
+class TestRequireDatabaseUrl:
+    URL = "postgresql+asyncpg://bench@/bench?host=/run/postgresql"
+
+    def test_recording_profile_takes_it_from_the_environment(self):
+        assert measure.require_database_url({"BENCH_DATABASE_URL": self.URL}, stores=True) == self.URL
+
+    @pytest.mark.parametrize("env", [{}, {"BENCH_DATABASE_URL": ""}])
+    def test_recording_profile_refuses_when_unset(self, env):
+        with pytest.raises(ValueError, match="BENCH_DATABASE_URL is not set"):
+            measure.require_database_url(env, stores=True)
+
+    @pytest.mark.parametrize("url", ["sqlite+aiosqlite:///x.db", "mysql+aiomysql://u@h/db"])
+    def test_only_postgresql_is_accepted(self, url):
+        with pytest.raises(ValueError, match="PostgreSQL"):
+            measure.require_database_url({"BENCH_DATABASE_URL": url}, stores=True)
+
+    def test_bare_needs_no_database(self):
+        assert measure.require_database_url({}, stores=False) is None
+        assert measure.require_database_url({"BENCH_DATABASE_URL": self.URL}, stores=False) is None
+
+
+class TestAsyncpgArguments:
+    def test_unix_socket_directory(self):
+        url = "postgresql+asyncpg://bench@/bench?host=/run/postgresql"
+        assert measure.asyncpg_arguments(url) == {"user": "bench", "database": "bench", "host": "/run/postgresql"}
+
+    def test_tcp_with_password_and_port(self):
+        url = "postgresql+asyncpg://u:p%40ss@db.example:5433/bench"
+        assert measure.asyncpg_arguments(url) == {
+            "user": "u",
+            "password": "p@ss",
+            "database": "bench",
+            "host": "db.example",
+            "port": 5433,
+        }
+
+
+class TestCountsSql:
+    def test_is_postgresql(self):
+        assert "instr(" not in measure.COUNTS_SQL
+        assert "position(" in measure.COUNTS_SQL
+
+    def test_one_value_per_name(self):
+        assert measure.COUNTS_SQL.count("(SELECT count(") + measure.COUNTS_SQL.count("(SELECT count(DISTINCT") >= len(
+            measure.COUNT_NAMES
+        )
 
 
 class TestParseOha:
@@ -238,11 +312,18 @@ class TestShedMarkers:
 
 
 class TestHarpCommand:
-    def command(self, transport=run.DEFAULT_TRANSPORT):
+    URL = "postgresql+asyncpg://bench@/bench?host=/run/postgresql"
+
+    def command(self, transport=run.DEFAULT_TRANSPORT, profile="bare", url=None):
         args = argparse.Namespace(
-            profile="bare", server="hypercorn", harp_port=4000, origin_port=4100, transport=transport
+            profile=profile,
+            server="hypercorn",
+            harp_port=4000,
+            origin_port=4100,
+            transport=transport,
+            database_url=url,
         )
-        return run.harp_command(args, {"harp": [0]}, Path("/tmp"), Path("/tmp/h.db"))
+        return run.harp_command(args, {"harp": [0]})
 
     def test_default_transport_is_not_set(self):
         assert "http_client.transport.type" not in self.command()
@@ -252,3 +333,11 @@ class TestHarpCommand:
         at = command.index("http_client.transport.type")
         assert command[at - 1] == "--set"
         assert command[at + 1] == "harp_apps.http_client.aiohttp_transport.AiohttpTransport"
+
+    def test_recording_profile_gets_the_database_url(self):
+        command = self.command(profile="default", url=self.URL)
+        at = command.index("storage.url")
+        assert (command[at - 1], command[at + 1]) == ("--set", self.URL)
+
+    def test_bare_has_no_storage_url(self):
+        assert "storage.url" not in self.command()

@@ -2,6 +2,9 @@
 
 import re
 import statistics
+from typing import Iterable, Mapping, Optional
+
+from sqlalchemy import make_url
 
 
 def parse_cpu_list(text: str) -> list[int]:
@@ -19,16 +22,101 @@ def format_cpu_list(cpus: list[int]) -> str:
     return ",".join(str(cpu) for cpu in cpus)
 
 
-def assign_cores(available: list[int], **counts: int) -> dict[str, list[int]]:
-    """Hands out disjoint cores, in order, to each role (``harp=2, origin=1, ...``)."""
-    if sum(counts.values()) > len(available):
-        raise ValueError(f"not enough cores: need {sum(counts.values())}, have {len(available)}")
-    assigned: dict[str, list[int]] = {}
-    start = 0
-    for role, count in counts.items():
-        assigned[role] = available[start : start + count]
-        start += count
-    return assigned
+def usable_cores(affinity: Iterable[int], performance_cores: Optional[list[int]]) -> list[int]:
+    """The cores the harness may use: its process affinity, narrowed to the performance cores of a hybrid cpu."""
+    allowed = sorted(set(affinity))
+    if performance_cores:
+        narrowed = [cpu for cpu in allowed if cpu in performance_cores]
+        if narrowed:
+            return narrowed
+    return allowed
+
+
+def assign_harness_cores(available: list[int], *, harp: int) -> dict[str, list[int]]:
+    """
+    Cores for harp, origin and load generator, in order. With one spare core only, the origin and the load generator
+    share it; with more, every role has its own and the extra cores stay unused.
+    """
+    if len(available) < harp + 1:
+        raise ValueError(f"not enough cores: need {harp + 1}, have {len(available)}")
+    harp_cores, rest = available[:harp], available[harp:]
+    if len(rest) == 1:
+        return {"harp": harp_cores, "origin": rest[:1], "loadgen": rest[:1]}
+    return {"harp": harp_cores, "origin": rest[:1], "loadgen": rest[1:2]}
+
+
+def shared_roles(cores: dict[str, list[int]]) -> list[str]:
+    """The roles that run on a core another role also uses, in the order of ``cores``."""
+    owners: dict[int, list[str]] = {}
+    for role, cpus in cores.items():
+        for cpu in cpus:
+            owners.setdefault(cpu, []).append(role)
+    shared = [role for roles in owners.values() if len(roles) > 1 for role in roles]
+    return [role for role in cores if role in shared]
+
+
+DATABASE_URL_ENV = "BENCH_DATABASE_URL"
+
+
+def require_database_url(env: Mapping[str, str], *, stores: bool) -> Optional[str]:
+    """The PostgreSQL url the recording profiles use; refused when unset or not PostgreSQL. None if nothing is stored."""
+    if not stores:
+        return None
+    url = env.get(DATABASE_URL_ENV, "")
+    if not url:
+        raise ValueError(
+            f"{DATABASE_URL_ENV} is not set: profiles that record need a PostgreSQL database, "
+            "e.g. postgresql+asyncpg://bench@/bench?host=/run/postgresql"
+        )
+    if not url.startswith("postgresql"):
+        raise ValueError(
+            f"{DATABASE_URL_ENV} must be a PostgreSQL url (postgresql+asyncpg://...), got {url.split(':')[0]}"
+        )
+    return url
+
+
+def asyncpg_arguments(url: str) -> dict:
+    """``asyncpg.connect`` keyword arguments for a SQLAlchemy url (``host`` may be a unix socket directory)."""
+    parsed = make_url(url)
+    arguments = {"user": parsed.username, "password": parsed.password, "database": parsed.database}
+    arguments["host"] = parsed.query.get("host") or parsed.host
+    arguments["port"] = parsed.port
+    return {key: value for key, value in arguments.items() if value is not None}
+
+
+def _marked(marker: str) -> str:
+    return f"(SELECT count(*) FROM transactions WHERE position(',{marker},' in ',' || markers || ',') > 0)"
+
+
+# `headers`/`bodies` count messages whose column is set, not distinct blobs: empty bodies all share one blob id.
+# `missing_*` count recorded transactions, to compare with the `shed-*` markers set on them.
+COUNTS_SQL = f"""
+SELECT
+  (SELECT count(*) FROM transactions),
+  (SELECT count(*) FROM messages),
+  (SELECT count(*) FROM messages WHERE headers IS NOT NULL),
+  (SELECT count(*) FROM messages WHERE body IS NOT NULL),
+  (SELECT count(*) FROM transactions WHERE x_cached = 'true'),
+  {_marked("shed-messages")},
+  {_marked("shed-headers")},
+  {_marked("shed-bodies")},
+  (SELECT count(*) FROM transactions t WHERE (SELECT count(*) FROM messages WHERE transaction_id = t.id) < 2),
+  (SELECT count(DISTINCT transaction_id) FROM messages WHERE headers IS NULL),
+  (SELECT count(DISTINCT transaction_id) FROM messages WHERE body IS NULL)
+"""
+COUNT_NAMES = (
+    "transactions",
+    "messages",
+    "headers",
+    "bodies",
+    "cache_hits",
+    "marked_messages",
+    "marked_headers",
+    "marked_bodies",
+    "missing_messages",
+    "missing_headers",
+    "missing_bodies",
+)
 
 
 def parse_oha(report: dict) -> dict:
