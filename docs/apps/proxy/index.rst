@@ -113,10 +113,11 @@ the transaction carries the ``truncated-request-body`` marker.
 
 .. _proxy-client-read-timeout:
 
-**A silent client is cut.** A client that stops sending in the middle of a request, headers or body, is disconnected
-after ``client_read_timeout`` seconds (30 by default), so stalled clients cannot hold every connection. The proxy and
-the dashboard are served by the same server and share this setting. Each silence is timed on its own: a client that
-keeps sending, however slowly, at shorter intervals is not cut. A client waiting for a slow response is not concerned. A client that keeps sending too slowly is handled below.
+**A silent client is cut.** A client that stops sending in the middle of a request body is answered ``408`` and
+disconnected after ``client_read_timeout`` seconds (30 by default), and its request is never forwarded upstream, so
+stalled clients cannot hold every connection. Each silence is timed on its own: a client that keeps sending, however
+slowly, at shorter intervals is not cut. The timeout concerns the request only: a response streaming for longer, to a
+client that sends nothing meanwhile, is not cut. A client that keeps sending too slowly is handled below.
 
 .. code-block:: yaml
 

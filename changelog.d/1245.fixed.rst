@@ -1,0 +1,1 @@
+A response streaming for longer than ``proxy.client_read_timeout`` is no longer cut: the timeout now applies to the request body only, and answers ``408``.

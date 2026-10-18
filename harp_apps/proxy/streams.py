@@ -16,38 +16,47 @@ class RequestBodyTooSlow(RejectedRequest):
         super().__init__("Request body too slow", status=REQUEST_TIMEOUT_STATUS_CODE)
 
 
-class MinRateStream(AsyncByteStream):
-    """Passes a request body through, and gives up on a client sending it too slowly.
+class RequestBodyStalled(RejectedRequest):
+    """Raised while reading a request body when the client stays silent for too long."""
 
-    Once ``grace_period`` seconds have elapsed, the body must have reached an average of ``min_rate`` bytes per second,
-    otherwise :class:`RequestBodyTooSlow` is raised, without waiting for the next chunk. A ``min_rate`` of zero
-    disables the check.
+    def __init__(self):
+        super().__init__("Request body stalled", status=REQUEST_TIMEOUT_STATUS_CODE)
+
+
+class MinRateStream(AsyncByteStream):
+    """Passes a request body through, and gives up on a client sending it too slowly or not at all.
+
+    A client silent for ``idle_timeout`` seconds raises :class:`RequestBodyStalled`. Once ``grace_period`` seconds have
+    elapsed, the body must also have reached an average of ``min_rate`` bytes per second, otherwise
+    :class:`RequestBodyTooSlow` is raised, without waiting for the next chunk. A ``min_rate`` of zero disables the
+    rate check. Only the request is concerned: a response streaming to a silent client is not.
     """
 
-    def __init__(self, stream: AsyncByteStream, *, min_rate: float, grace_period: float):
+    def __init__(self, stream: AsyncByteStream, *, min_rate: float, grace_period: float, idle_timeout: float):
         self._stream = stream
         self._min_rate = min_rate
         self._grace_period = grace_period
+        self._idle_timeout = idle_timeout
 
-    def _deadline(self, start: float, received: int) -> float:
+    def _rate_deadline(self, start: float, received: int) -> float:
         """Moment at which, should nothing more arrive, the average rate falls below the minimum."""
         return start + max(self._grace_period, received / self._min_rate)
 
     async def __aiter__(self) -> AsyncIterator[bytes]:
-        if not self._min_rate:
-            async for chunk in self._stream:
-                yield chunk
-            return
-
         start, received = monotonic(), 0
         chunks = aiter(self._stream)
         while True:
+            now = monotonic()
+            idle_deadline = now + self._idle_timeout
+            deadline, error = idle_deadline, RequestBodyStalled
+            if self._min_rate and (rate_deadline := self._rate_deadline(start, received)) < idle_deadline:
+                deadline, error = rate_deadline, RequestBodyTooSlow
             try:
-                chunk = await asyncio.wait_for(anext(chunks), max(self._deadline(start, received) - monotonic(), 0))
+                chunk = await asyncio.wait_for(anext(chunks), max(deadline - now, 0))
             except StopAsyncIteration:
                 return
             except TimeoutError:
-                raise RequestBodyTooSlow() from None
+                raise error() from None
             received += len(chunk)
             yield chunk
 

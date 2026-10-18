@@ -17,7 +17,7 @@ from harp.models import Transaction
 from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.tpdex import tpdex
-from harp.settings import DEFAULT_MIN_REQUEST_BODY_RATE, DEFAULT_REQUEST_BODY_GRACE_PERIOD
+from harp.settings import DEFAULT_CLIENT_READ_TIMEOUT, DEFAULT_MIN_REQUEST_BODY_RATE, DEFAULT_REQUEST_BODY_GRACE_PERIOD
 from harp_apps.storage.constants import CLIENT_DISCONNECTED, DEFAULT_MAX_RECORDED_BODY_SIZE, TRUNCATED_RESPONSE_BODY
 from .adapters import HttpClientProxyAdapter, strip_credentials
 from .constants import (
@@ -90,6 +90,7 @@ class AbstractHttpProxyController(ABC):
         max_recorded_body_size: int = DEFAULT_MAX_RECORDED_BODY_SIZE,
         min_request_body_rate: int = DEFAULT_MIN_REQUEST_BODY_RATE,
         request_body_grace_period: float = DEFAULT_REQUEST_BODY_GRACE_PERIOD,
+        client_read_timeout: float = DEFAULT_CLIENT_READ_TIMEOUT,
     ):
         self.remote = remote
         if not isinstance(remote, Remote):
@@ -100,6 +101,7 @@ class AbstractHttpProxyController(ABC):
         self.max_recorded_body_size = max_recorded_body_size
         self.min_request_body_rate = min_request_body_rate
         self.request_body_grace_period = request_body_grace_period
+        self.client_read_timeout = client_read_timeout
 
         self.proxy = HttpClientProxyAdapter(
             http_client,
@@ -172,7 +174,10 @@ class HttpProxyController(AbstractHttpProxyController):
         base_url = None
         # Applied before anything reads the body: the transaction recording does, as soon as it starts.
         request.stream = MinRateStream(
-            request.stream, min_rate=self.min_request_body_rate, grace_period=self.request_body_grace_period
+            request.stream,
+            min_rate=self.min_request_body_rate,
+            grace_period=self.request_body_grace_period,
+            idle_timeout=self.client_read_timeout,
         )
         context = await self.start_transaction(request, tags=extract_tags_from_request(request))
 
