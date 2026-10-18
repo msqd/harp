@@ -80,7 +80,7 @@ beats aiohttp by 3 %, far from the 15 % that would justify an own hyper transpor
 
 ### What this leaves
 
-With storage on, the proxy path is no longer where the cost is: recording to PostgreSQL is ~80 % of CPU/request on
+With storage on, the proxy path is no longer where the cost is: what `default` adds over `bare` (recording to PostgreSQL first) is ~80 % of CPU/request on
 `default` and sets saturation. The next candidate is the storage write pipeline (batching, fewer round trips), in
 Python first.
 
