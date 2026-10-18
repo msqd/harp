@@ -4,7 +4,7 @@ from unittest.mock import ANY
 
 import pytest
 from pydantic_core import MultiHostUrl
-from sqlalchemy import delete, event, text, update
+from sqlalchemy import delete, event, select, text, update
 from sqlalchemy.ext.asyncio import AsyncConnection, async_sessionmaker
 
 from harp.models import Blob
@@ -169,3 +169,46 @@ async def test_put_of_a_new_blob_needs_one_connection_at_a_time():
         assert time.monotonic() - started < 2
     finally:
         await engine.dispose()
+
+
+async def test_put_in_stores_missing_blobs_and_leaves_existing_ones(sql_blob_storage: SqlBlobStorage):
+    storage = sql_blob_storage
+    await storage.put(Blob(id="there", data=b"first", content_type="text/plain"))
+
+    async with storage.engine.begin() as conn:
+        await storage.put_in(
+            conn,
+            [
+                Blob(id="there", data=b"other", content_type="text/plain"),
+                Blob(id="new", data=b"new", content_type=None),
+            ],
+        )
+
+    assert (await storage.get("there")).data == b"first"
+    assert (await storage.get("new")).data == b"new"
+
+
+async def test_put_in_renews_old_blobs_in_the_callers_transaction(sql_blob_storage: SqlBlobStorage):
+    storage = sql_blob_storage
+    await storage.put(Blob(id="old", data=b"x", content_type="text/plain"))
+    await _age(storage.engine, "old", ORPHAN_GRACE * 2)
+
+    async with storage.engine.connect() as conn:
+        await storage.put_in(conn, [Blob(id="old", data=b"x", content_type="text/plain")])
+        await conn.rollback()  # nothing committed: the renewal belongs to the caller's transaction
+
+    async with storage.engine.connect() as conn:
+        created_at = (await conn.execute(select(SqlBlob.created_at).where(SqlBlob.id == "old"))).scalar_one()
+    assert created_at.replace(tzinfo=UTC) < datetime.now(UTC) - ORPHAN_GRACE
+
+    async with storage.engine.begin() as conn:
+        await storage.put_in(conn, [Blob(id="old", data=b"x", content_type="text/plain")])
+
+    async with storage.engine.connect() as conn:
+        created_at = (await conn.execute(select(SqlBlob.created_at).where(SqlBlob.id == "old"))).scalar_one()
+    assert created_at.replace(tzinfo=UTC) > datetime.now(UTC) - ORPHAN_GRACE / 2
+
+
+async def test_put_in_with_nothing_does_nothing(sql_blob_storage: SqlBlobStorage):
+    async with sql_blob_storage.engine.begin() as conn:
+        await sql_blob_storage.put_in(conn, [])

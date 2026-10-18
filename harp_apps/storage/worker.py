@@ -1,7 +1,10 @@
+import asyncio
+from dataclasses import dataclass, field
 from datetime import UTC
 from functools import partial
 from math import log10
 from time import monotonic
+from types import SimpleNamespace
 
 from prometheus_client import Counter
 from sqlalchemy import insert, update
@@ -34,6 +37,7 @@ from harp_apps.storage.constants import (
 )
 from harp_apps.storage.models import Message as SqlMessage
 from harp_apps.storage.models import Transaction as SqlTransaction
+from harp_apps.storage.services.blob_storages.sql import SqlBlobStorage
 from harp_apps.storage.types import IBlobStorage, IStorage
 
 logger = get_logger(__name__)
@@ -51,13 +55,34 @@ for _kind in DROPPED_KINDS:
     DROPPED_COUNTER.labels(_kind)
 
 
+@dataclass
+class PendingTransaction:
+    """What the worker knows of a transaction until it is written: held in memory, written once when it ends."""
+
+    id: str
+    data: dict
+    tags: dict
+    messages: list[dict] = field(default_factory=list)
+    blobs: dict[str, Blob] = field(default_factory=dict)
+    end_data: dict = field(default_factory=dict)
+    inserted: bool = False
+    ended: bool = False
+    tags_written: bool = False
+    timer: asyncio.TimerHandle | None = None
+
+
 class StorageAsyncWorkerQueue(AsyncWorkerQueue):
-    def __init__(self, engine: AsyncEngine, storage: IStorage, blob_storage: IBlobStorage):
+    def __init__(
+        self, engine: AsyncEngine, storage: IStorage, blob_storage: IBlobStorage, early_insert_after: float = 1.0
+    ):
         self.engine = engine
         self.storage = storage
         self.blob_storage = blob_storage
+        #: Seconds after which a transaction still open is inserted, so that it can be seen while it runs.
+        self.early_insert_after = early_insert_after
         super().__init__()
         self.seen = set()
+        self._pending: dict[str, PendingTransaction] = {}
         self._dropped_since_warning = dict.fromkeys(DROPPED_KINDS, 0)
         self._last_shed_warning_at = None
 
@@ -102,18 +127,33 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         if SKIP_STORAGE in event.transaction.markers:
             return
 
-        # Copy fields into a dict that won't change before the task is handled
-        transaction_data = event.transaction.as_storable_dict(with_tags=True)
+        # Copy fields into a dict that won't change while the transaction runs
+        pending = PendingTransaction(
+            id=event.transaction.id,
+            data=event.transaction.as_storable_dict(),
+            tags=dict(event.transaction.tags or {}),
+        )
+        self._pending[pending.id] = pending
+        pending.timer = asyncio.get_running_loop().call_later(self.early_insert_after, self._early_insert_due, pending)
 
-        async def create_transaction():
-            return await self.storage.transactions.create(transaction_data)
+    def _early_insert_due(self, pending: PendingTransaction):
+        pending.timer = None
+        if pending.ended or not self._running:
+            return
 
-        # Schedule
-        await self.push(create_transaction)
+        async def insert_early():
+            if pending.ended or pending.inserted:
+                return
+            await self.flush_insert(pending)
+
+        self.push_nowait(insert_early)
 
     async def on_transaction_message(self, event: HttpMessageEvent):
         if SKIP_STORAGE in event.transaction.markers:
             return
+
+        # A message for a transaction the worker never saw start has nowhere to go: handled, then dropped.
+        pending = self._pending.get(event.transaction.id) or PendingTransaction(event.transaction.id, {}, {})
 
         if self.pressure >= 3:
             event.transaction.markers.add(SHED_MESSAGES)
@@ -142,6 +182,9 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             "kind": event.message.kind,
             "summary": serializer.summary,
             "created_at": event.message.created_at,
+            # always present, so that messages of a transaction share the keys of one multi-row insert
+            "headers": None,
+            "body": None,
         }
 
         # Check if we should skip headers
@@ -155,7 +198,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         # Eventually store the headers blob (later)
         if not skip_headers and self.pressure <= 2:
             headers_blob = await Blob.afrom_data(serializer.headers, content_type="http/headers")
-            await self.push(partial(self.blob_storage.put, headers_blob), ignore_errors=True)
+            pending.blobs[headers_blob.id] = headers_blob
             message_data["headers"] = headers_blob.id
         elif not skip_headers:
             event.transaction.markers.add(SHED_HEADERS)
@@ -180,7 +223,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             content_blob = await Blob.afrom_data(
                 serializer.body, content_type=event.message.headers.get("content-type")
             )
-            await self.push(partial(self.blob_storage.put, content_blob), ignore_errors=True)
+            pending.blobs[content_blob.id] = content_blob
             message_data["body"] = content_blob.id
         elif not skip_body:
             event.transaction.markers.add(SHED_BODIES)
@@ -192,37 +235,87 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
                 summary=serializer.summary,
             )
 
-        async def create_message():
-            async with self.engine.connect() as conn:
-                await conn.execute(insert(SqlMessage).values(**message_data))
-                await conn.commit()
-
-        await self.push(create_message)
+        pending.messages.append(message_data)
 
     async def on_transaction_ended(self, event: TransactionEvent):
-        if SKIP_STORAGE in event.transaction.markers:
+        pending = self.take_pending(event.transaction)
+        if pending is None:
             return
 
-        transaction_id = event.transaction.id
+        await self.push(partial(self.flush, [pending]))
 
-        transaction_data = {
-            "finished_at": event.transaction.finished_at.astimezone(UTC),
-            "elapsed": event.transaction.elapsed,
-            "tpdex": event.transaction.tpdex,
-            "x_status_class": event.transaction.extras.get("status_class"),
-            "x_cached": encode_cache_flag(event.transaction.extras.get("cached")),
-            "markers": encode_markers(event.transaction.markers),
+    def take_pending(self, transaction) -> PendingTransaction | None:
+        """Closes what the worker kept of an ended transaction, ready to be flushed. None if there is nothing to write."""
+        pending = self._pending.pop(transaction.id, None)
+        if pending is None:
+            return None
+        pending.ended = True
+        if pending.timer:
+            pending.timer.cancel()
+            pending.timer = None
+
+        if SKIP_STORAGE in transaction.markers:
+            return None
+
+        pending.end_data = {
+            "finished_at": transaction.finished_at.astimezone(UTC),
+            "elapsed": transaction.elapsed,
+            "tpdex": transaction.tpdex,
+            "x_status_class": transaction.extras.get("status_class"),
+            "x_cached": encode_cache_flag(transaction.extras.get("cached")),
+            "markers": encode_markers(transaction.markers),
         }
+        return pending
 
-        async def update_transaction():
-            async with self.engine.connect() as conn:
-                await conn.execute(
-                    update(SqlTransaction)
-                    .where(
-                        SqlTransaction.id == transaction_id,
+    async def flush(self, ended: list[PendingTransaction]):
+        """Writes ended transactions, their messages and blobs, in one database transaction."""
+        if not ended:
+            return
+
+        in_database = isinstance(self.blob_storage, SqlBlobStorage) and self.blob_storage.engine is self.engine
+        if not in_database:
+            # Another blob storage: its writes cannot share the database transaction.
+            for pending in ended:
+                for blob in pending.blobs.values():
+                    await self.blob_storage.put(blob)
+
+        transactions = SqlTransaction.__table__
+        async with self.engine.begin() as conn:
+            if in_database:
+                blobs = {blob.id: blob for pending in ended for blob in pending.blobs.values()}
+                await self.blob_storage.put_in(conn, list(blobs.values()))
+
+            to_insert = [{**p.data, **p.end_data} for p in ended if not p.inserted]
+            for pending in ended:
+                if pending.inserted:
+                    await conn.execute(
+                        update(transactions).where(transactions.c.id == pending.id).values(**pending.end_data)
                     )
-                    .values(**transaction_data)
-                )
-                await conn.commit()
+            if to_insert:
+                await conn.execute(insert(transactions), to_insert)
 
-        await self.push(update_transaction)
+            messages = [message for pending in ended for message in pending.messages]
+            if messages:
+                await conn.execute(insert(SqlMessage.__table__), messages)
+
+        for pending in ended:
+            await self._write_tags(pending)
+
+    async def flush_insert(self, pending: PendingTransaction):
+        """Inserts a transaction that is still running, so that it can be seen; its end will update it."""
+        async with self.engine.begin() as conn:
+            await conn.execute(insert(SqlTransaction.__table__), [pending.data])
+        pending.inserted = True
+        await self._write_tags(pending)
+
+    async def _write_tags(self, pending: PendingTransaction):
+        if pending.tags and not pending.tags_written:
+            pending.tags_written = True
+            await self.storage.transactions.set_tags(SimpleNamespace(id=pending.id), pending.tags)
+
+    async def close(self):
+        for pending in self._pending.values():
+            if pending.timer:
+                pending.timer.cancel()
+                pending.timer = None
+        await super().close()

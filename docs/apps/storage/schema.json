@@ -92,6 +92,7 @@
           "type": "boolean"
         },
         "migrate": { "default": true, "type": "boolean" },
+        "early_insert_after": { "default": 1.0, "type": "number" },
         "blobs": {
           "$ref": "#/$defs/BlobStorageSettings",
           "default": { "type": "sql" }

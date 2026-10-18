@@ -14,6 +14,7 @@ class TestStorageApplication(BaseTestForApplications):
         "blobs": {"type": "sql"},
         "enabled": True,
         "migrate": True,
+        "early_insert_after": 1.0,
         "redis": None,
         "url": "sqlite+aiosqlite:///:memory:?cache=shared",
     }

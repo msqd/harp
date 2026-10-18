@@ -1,6 +1,7 @@
 storage:
   blobs:
     type: sql
+  early_insert_after: 1.0
   enabled: true
   migrate: true
   redis: null

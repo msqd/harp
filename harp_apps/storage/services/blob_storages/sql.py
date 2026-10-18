@@ -4,7 +4,7 @@ from typing import override
 
 from sqlalchemy import and_, delete, or_, func, insert, select, update
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
 from harp import get_logger
 from harp.models import Blob
@@ -16,6 +16,17 @@ logger = get_logger(__name__)
 
 ITER_BATCH_SIZE = 200
 DELETE_BATCH_SIZE = 200
+
+
+def _insert_ignoring_duplicates(dialect: str, table):
+    """An insert that leaves rows with an existing primary key alone, on every supported database."""
+    if dialect == "postgresql":
+        from sqlalchemy.dialects.postgresql import insert as dialect_insert
+    elif dialect == "sqlite":
+        from sqlalchemy.dialects.sqlite import insert as dialect_insert
+    else:
+        return insert(table).prefix_with("IGNORE")  # mysql
+    return dialect_insert(table).on_conflict_do_nothing(index_elements=["id"])
 
 
 class SqlBlobStorage(IBlobStorage):
@@ -77,6 +88,28 @@ class SqlBlobStorage(IBlobStorage):
                 except IntegrityError:
                     pass  # already there? that's fine!
         return blob
+
+    async def put_in(self, conn: AsyncConnection, blobs: Sequence[Blob]) -> None:
+        """
+        Store blobs on ``conn``, inside the caller's database transaction: two statements for any number of blobs.
+
+        Same guarantee as :meth:`put` (see ``ORPHAN_GRACE``), with the renewal committing together with the message that
+        references the blob. Blobs already there are left alone, or renewed once old.
+        """
+        if not blobs:
+            return
+        table = SqlBlob.__table__
+        await conn.execute(
+            update(table)
+            .where(
+                table.c.id.in_([blob.id for blob in blobs]), table.c.created_at < datetime.now(UTC) - ORPHAN_GRACE / 2
+            )
+            .values(created_at=func.now())
+        )
+        await conn.execute(
+            _insert_ignoring_duplicates(conn.dialect.name, table),
+            [{"id": blob.id, "data": blob.data, "content_type": blob.content_type} for blob in blobs],
+        )
 
     @override
     async def force_put(self, blob: Blob) -> Blob:
