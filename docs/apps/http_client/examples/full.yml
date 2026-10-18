@@ -2,10 +2,10 @@ http_client:
   # HTTP timeout (default to `harp.settings.DEFAULT_TIMEOUT`)
   timeout: 10.0
 
-  # Customize the httpx transport layer (optional)
+  # Customize the transport layer (optional)
   transport:
-    # This is the default, only set if you want to use a custom transport. Most users don't need to set this.
-    type: httpx.AsyncHTTPTransport
+    # This is the default (aiohttp), only set if you want to use a custom transport. Most users don't need to set this.
+    type: harp_apps.http_client.aiohttp_transport.AiohttpTransport
 
   # Proxy transport layer (optional) - wraps the transport for filtering and middleware
   proxy_transport:

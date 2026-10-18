@@ -8,9 +8,9 @@ class HttpClientSettings(ApplicationSettingsMixin, Service):
     type: str = Field("httpx.AsyncClient", description=Service.model_fields["type"].description)
     arguments: dict = {"timeout": DEFAULT_TIMEOUT}
 
-    #: HTTP transport to use for the client. This is usually a httpx.AsyncHTTPTransport (or subclass) instance.
+    #: HTTP transport to use for the client: any httpx transport. Set `httpx.AsyncHTTPTransport` for the pre-0.12 one.
     transport: Service = Service(
-        type="httpx.AsyncHTTPTransport",
+        type="harp_apps.http_client.aiohttp_transport.AiohttpTransport",
         arguments={
             "verify": True,
             "retries": 0,

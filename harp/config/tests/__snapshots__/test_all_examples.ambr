@@ -153,7 +153,7 @@
   http_client:
     timeout: 10.0
     transport:
-      type: httpx.AsyncHTTPTransport
+      type: harp_apps.http_client.aiohttp_transport.AiohttpTransport
   janitor: {}
   proxy: {}
   rules: {}
@@ -179,12 +179,6 @@
   http_cache: {}
   http_client:
     timeout: 10.0
-    transport:
-      http1: true
-      http2: false
-      retries: 0
-      type: httpx.AsyncHTTPTransport
-      verify: true
   janitor: {}
   proxy: {}
   rules: {}

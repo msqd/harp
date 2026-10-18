@@ -32,7 +32,7 @@
         "transport": {
           "$ref": "#/$defs/Service",
           "default": {
-            "type": "httpx.AsyncHTTPTransport",
+            "type": "harp_apps.http_client.aiohttp_transport.AiohttpTransport",
             "verify": true,
             "retries": 0
           }

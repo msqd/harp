@@ -28,6 +28,7 @@ Contents
 """
 
 import os
+import sys
 from subprocess import check_output
 from typing import TYPE_CHECKING
 
@@ -39,12 +40,12 @@ if TYPE_CHECKING:
 
 ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# ASGI server run by default, see `harp.config.adapters`. No uvloop on Windows.
+DEFAULT_SERVER: str = "hypercorn" if sys.platform in ("win32", "cygwin") else "hypercorn+uvloop"
+
 #: Debug mode flag. When enabled, HARP will output additional debugging information that may not be safe for
 #: production environments (e.g., exception tracebacks in error responses). Set via HARP_DEBUG or DEBUG environment
 #: variables.
-# ASGI server run by default, see `harp.config.adapters`.
-DEFAULT_SERVER: str = "hypercorn"
-
 DEBUG: bool = bool(os.environ.get("HARP_DEBUG") or os.environ.get("DEBUG"))
 
 
@@ -141,8 +142,13 @@ def run(builder: "_ConfigurationBuilder", server: str = DEFAULT_SERVER):
     from harp.config.adapters import get_server
 
     if get_server(server).uvloop:
-        import uvloop
-
+        try:
+            import uvloop
+        except ImportError:  # no uvloop on Windows
+            get_logger(__name__).warning(
+                f"uvloop is not available on {sys.platform}, running the {server} server on the asyncio loop."
+            )
+            return asyncio.run(arun(builder, server), loop_factory=None)
         return asyncio.run(arun(builder, server), loop_factory=uvloop.new_event_loop)
     return asyncio.run(arun(builder, server))
 

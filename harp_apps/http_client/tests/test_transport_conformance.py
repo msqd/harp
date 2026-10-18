@@ -404,6 +404,46 @@ def test_aiohttp_refuses_what_it_cannot_honour(transport_type):
         cls(limits=httpx.Limits(max_keepalive_connections=20))
     with pytest.raises(ValueError, match="verify"):
         cls(verify="/path/to/ca.pem")
+    with pytest.raises(ValueError, match="http2"):
+        cls(http2=True)
+
+
+@pytest.mark.parametrize("transport_type", [AIOHTTP])
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        {"http1": False},
+        {"cert": "/path/to/client.pem"},
+        {"proxy": "http://proxy:3128"},
+        {"uds": "/run/api.sock"},
+        {"local_address": "127.0.0.1"},
+        {"socket_options": [(1, 2, 3)]},
+        {"trust_env": False},
+        {"retries": 1},
+        {"limits": httpx.Limits(max_keepalive_connections=20)},
+        {"verify": "/path/to/ca.pem"},
+        {"http2": True},
+    ],
+)
+def test_aiohttp_refusals_name_the_httpx_transport_as_the_way_out(transport_type, arguments):
+    with pytest.raises(ValueError, match=r"httpx\.AsyncHTTPTransport"):
+        transport_class(transport_type)(**arguments)
+
+
+@pytest.mark.parametrize("transport_type", [AIOHTTP])
+def test_aiohttp_accepts_the_httpx_defaults_it_honours(transport_type):
+    transport_class(transport_type)(http1=True, http2=False, verify=True, retries=0)
+
+
+@pytest.mark.parametrize("transport_type", [AIOHTTP])
+def test_aiohttp_verify_true_trusts_certifi_like_httpx(transport_type):
+    import certifi
+
+    ours = transport_class(transport_type)(verify=True)._verify
+    expected = ssl.create_default_context(cafile=certifi.where())
+
+    assert isinstance(ours, ssl.SSLContext)
+    assert {c["serialNumber"] for c in ours.get_ca_certs()} == {c["serialNumber"] for c in expected.get_ca_certs()}
 
 
 @pytest.mark.parametrize("transport_type", [PYREQWEST])
