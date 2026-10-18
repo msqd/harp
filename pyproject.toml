@@ -17,8 +17,9 @@ dependencies = [
     "asgi-tools>=1.3,<1.4",
     "asgimiddlewarestaticfile>=0.6,<0.7",
     "asgiref>=3.10,<3.13",
-    # Imported directly (harp.commandline). 9.0 removes BaseCommand, which we cast to.
+    # Imported directly (aiohttp transport trusts what httpx trusts).
     "certifi>=2023.7.22",
+    # Imported directly (harp.commandline). 9.0 removes BaseCommand, which we cast to.
     "click>=8.1,<9",
     "colorama>=0.4,<0.5",
     "dataclasses-json>=0.6,<0.7",
