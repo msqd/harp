@@ -50,9 +50,9 @@ class ProxySettings(ApplicationSettingsMixin, BaseProxySettings):
     #: ``truncated-response-body``; a response is also not stored in the http cache.
     max_recorded_body_size: ByteSize = Field(ByteSize(DEFAULT_MAX_RECORDED_BODY_SIZE), gt=0)
 
-    #: Seconds a client may stay silent in the middle of a request (headers or body) before the server closes its
-    #: connection. Applies to the proxy and dashboard servers, which share it. Each silence is timed on its own: a
-    #: client sending a byte at shorter intervals is not cut.
+    #: Seconds a client may stay silent in the middle of a request body before it is answered ``408``, disconnected,
+    #: and its request is never forwarded upstream. Each silence is timed on its own: a client sending a byte at shorter
+    #: intervals is not cut (see ``min_request_body_rate``). Does not apply to a response being sent.
     client_read_timeout: float = Field(DEFAULT_CLIENT_READ_TIMEOUT, gt=0)
 
     #: Bytes per second (or a size with its unit: ``"1KiB"``) a request body must average once

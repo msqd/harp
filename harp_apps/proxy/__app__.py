@@ -62,6 +62,7 @@ async def on_bound(event: OnBoundEvent):
             max_recorded_body_size=proxy.settings.max_recorded_body_size,
             min_request_body_rate=proxy.settings.min_request_body_rate,
             request_body_grace_period=proxy.settings.request_body_grace_period,
+            client_read_timeout=proxy.settings.client_read_timeout,
         )
         controller = event.provider.get(f"proxy.controllers.{name}_controller")
         event.resolver.add_endpoint(endpoint, controller=controller)

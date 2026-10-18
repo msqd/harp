@@ -253,7 +253,7 @@
         },
         "client_read_timeout": {
           "default": 30.0,
-          "description": "Seconds a client may stay silent in the middle of a request (headers or body) before the server closes its connection. Applies to the proxy and dashboard servers, which share it. Each silence is timed on its own: a client sending a byte at shorter intervals is not cut.",
+          "description": "Seconds a client may stay silent in the middle of a request body before it is answered 408. Each silence is timed on its own: a client sending a byte at shorter intervals is not cut.",
           "exclusiveMinimum": 0,
           "type": "number"
         },

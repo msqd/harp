@@ -4,7 +4,6 @@ from typing import cast
 
 from harp import get_logger
 from harp.config.builders.system import System
-from harp.settings import DEFAULT_CLIENT_READ_TIMEOUT
 
 logger = get_logger(__name__)
 
@@ -25,12 +24,7 @@ class HypercornAdapter:
         config.bind = [*map(str, binds)]
         config.accesslog = logging.getLogger("hypercorn.access")
         config.errorlog = logging.getLogger("hypercorn.error")
-        config.read_timeout = self._client_read_timeout()
         return config
-
-    def _client_read_timeout(self) -> float:
-        proxy_settings = self.system.config.get("proxy")
-        return getattr(proxy_settings, "client_read_timeout", DEFAULT_CLIENT_READ_TIMEOUT)
 
     async def serve(self):
         """
