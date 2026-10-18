@@ -67,6 +67,8 @@ class PendingTransaction:
     tags: dict
     messages: list[dict] = field(default_factory=list)
     blobs: dict[str, Blob] = field(default_factory=dict)
+    #: Bytes of the blobs held, not yet written (counted in the worker's pending bytes).
+    payload_bytes: int = 0
     end_data: dict = field(default_factory=dict)
     inserted: bool = False
     ended: bool = False
@@ -83,6 +85,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         blob_storage: IBlobStorage,
         early_insert_after: float = 1.0,
         pending_max_age: float = 3600.0,
+        pending_max_bytes: int = 64 * 1024 * 1024,
     ):
         self.engine = engine
         self.storage = storage
@@ -91,6 +94,10 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         self.early_insert_after = early_insert_after
         #: Seconds after which the worker forgets a transaction that never ended (it stays as it was last written).
         self.pending_max_age = pending_max_age
+        #: Bytes of payload held for transactions not yet written, past which new bodies, then headers, then messages
+        #: are shed (at once, 1.25 times and 1.5 times the limit).
+        self.pending_max_bytes = pending_max_bytes
+        self._pending_bytes = 0
         super().__init__()
         self.seen = set()
         self._pending: dict[str, PendingTransaction] = {}
@@ -110,7 +117,9 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             return
 
         counts = " ".join(f"{k}={v}" for k, v in self._dropped_since_warning.items())
-        logger.warning(f"Storage under pressure (backlog ~{self._pressure}), dropped since last warning: {counts}")
+        logger.warning(
+            f"Storage under pressure (backlog ~{self._pressure}, ~{self._pending_bytes} bytes pending), dropped since last warning: {counts}"
+        )
         self._dropped_since_warning = dict.fromkeys(DROPPED_KINDS, 0)
         self._last_shed_warning_at = now
 
@@ -149,11 +158,29 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         pending.timer = loop.call_later(self.early_insert_after, self._early_insert_due, pending)
         pending.expiry = loop.call_later(self.pending_max_age, self._expire, pending)
 
+    def _over_bytes(self, factor: float) -> bool:
+        return self._pending_bytes >= self.pending_max_bytes * factor
+
+    def _hold(self, pending: PendingTransaction, blob: Blob):
+        """Keeps a blob until the transaction is written, counting its bytes if the worker is keeping the transaction."""
+        if blob.id in pending.blobs:
+            return
+        pending.blobs[blob.id] = blob
+        if self._pending.get(pending.id) is pending:
+            pending.payload_bytes += len(blob.data)
+            self._pending_bytes += len(blob.data)
+
+    def _release(self, pending: PendingTransaction):
+        """Gives back the bytes of a transaction the worker drops without writing them."""
+        self._pending_bytes -= pending.payload_bytes
+        pending.payload_bytes = 0
+
     def _expire(self, pending: PendingTransaction):
         """Forgets a transaction whose end never came (client gone, stream never closed...), so memory stays bounded."""
         pending.expiry = None
         if self._pending.pop(pending.id, None) is pending:
             self._cancel_timers(pending)
+            self._release(pending)
             logger.debug(f"Transaction never ended, forgotten after {self.pending_max_age}s", transaction_id=pending.id)
 
     @staticmethod
@@ -182,7 +209,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         # A message for a transaction the worker never saw start has nowhere to go: handled, then dropped.
         pending = self._pending.get(event.transaction.id) or PendingTransaction(event.transaction.id, {}, {})
 
-        if self.pressure >= 3:
+        if self.pressure >= 3 or self._over_bytes(1.5):
             event.transaction.markers.add(SHED_MESSAGES)
             self._shed("messages")
             return
@@ -223,9 +250,9 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         )
 
         # Eventually store the headers blob (later)
-        if not skip_headers and self.pressure <= 2:
+        if not skip_headers and self.pressure <= 2 and not self._over_bytes(1.25):
             headers_blob = await Blob.afrom_data(serializer.headers, content_type="http/headers")
-            pending.blobs[headers_blob.id] = headers_blob
+            self._hold(pending, headers_blob)
             message_data["headers"] = headers_blob.id
         elif not skip_headers:
             event.transaction.markers.add(SHED_HEADERS)
@@ -246,11 +273,11 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         )
 
         # Eventually store the content blob (later)
-        if not skip_body and self.pressure <= 1:
+        if not skip_body and self.pressure <= 1 and not self._over_bytes(1.0):
             content_blob = await Blob.afrom_data(
                 serializer.body, content_type=event.message.headers.get("content-type")
             )
-            pending.blobs[content_blob.id] = content_blob
+            self._hold(pending, content_blob)
             message_data["body"] = content_blob.id
         elif not skip_body:
             event.transaction.markers.add(SHED_BODIES)
@@ -280,6 +307,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         self._cancel_timers(pending)
 
         if SKIP_STORAGE in transaction.markers:
+            self._release(pending)
             return None
 
         pending.end_data = {
@@ -294,7 +322,12 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
 
     async def flush(self, ended: list[PendingTransaction]):
         """Writes ended transactions, their messages and blobs, in one database transaction."""
-        await self._write(ended, finished=True)
+        try:
+            await self._write(ended, finished=True)
+        except BaseException:
+            for pending in ended:  # ended, so nothing will write them again
+                self._release(pending)
+            raise
 
     async def _write(self, pendings: list[PendingTransaction], *, finished: bool):
         """
@@ -349,6 +382,11 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
                 pending.messages = messages + pending.messages
                 pending.blobs = {**blobs, **pending.blobs}
             raise
+
+        for pending, _, blobs in taken:
+            written = min(sum(len(blob.data) for blob in blobs.values()), pending.payload_bytes)
+            pending.payload_bytes -= written
+            self._pending_bytes -= written
 
         for pending in pendings:
             pending.inserted = True

@@ -1,0 +1,1 @@
+The storage worker also sheds by pending payload bytes: past ``storage.pending_max_bytes`` (64 MiB by default) new bodies, then headers, then messages are not recorded, with the usual markers and ``dropped_total`` counters.
