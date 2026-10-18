@@ -72,7 +72,7 @@ class SystemController(RoutingController):
                 endpoint = _endpoint
                 break
         if not endpoint:
-            return HttpResponse(f"Endpoint not found: {request.query.get('endpoint')}", status=404)
+            return HttpResponse(f"Endpoint not found: {input_data.endpoint}", status=404)
 
         try:
             endpoint.remote[input_data.url]
