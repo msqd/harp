@@ -188,14 +188,41 @@ async def test_the_proxy_is_never_blocked_by_a_failing_database(sql_storage, sql
         await worker.close()
 
 
-async def test_pressure_counts_the_transactions_waiting_for_the_flush(sql_storage, sql_blob_storage):
+async def test_waiting_for_the_flush_interval_is_not_pressure(sql_storage, sql_blob_storage):
     worker = make_worker(sql_storage, sql_blob_storage, flush_interval=60, early_insert_after=60)
     try:
-        for _ in range(3):
+        for _ in range(300):
             await run(worker, new_transaction())
         worker.cleanup()
-        assert worker._pressure == 3
+        assert worker.pressure == 0
     finally:
+        await worker.close()
+
+
+async def test_pressure_is_what_ended_while_the_writer_was_busy(sql_storage, sql_blob_storage):
+    worker = make_worker(sql_storage, sql_blob_storage, flush_interval=60, early_insert_after=60)
+    release = asyncio.Event()
+    original = worker._write
+
+    async def slow_write(pendings):
+        await release.wait()
+        return await original(pendings)
+
+    worker._write = slow_write
+    try:
+        await run(worker, new_transaction())
+        worker._schedule_flush()
+        await asyncio.sleep(0.05)  # the writer holds the first one
+        for _ in range(150):
+            await run(worker, new_transaction())
+        assert worker._pressure == 150
+        assert worker.pressure == 2  # bodies are shed from here
+
+        release.set()
+        await worker.wait_until_empty()
+        assert worker._pressure == 0
+    finally:
+        release.set()
         await worker.close()
 
 

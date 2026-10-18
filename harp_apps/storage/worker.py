@@ -104,6 +104,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         self._pending: dict[str, PendingTransaction] = {}
         self._ended: list[PendingTransaction] = []
         self._flush_queued = False
+        self._flush_running = False
         super().__init__()
         self.seen = set()
         self._tick_handle = asyncio.get_running_loop().call_later(self.flush_interval, self._tick)
@@ -134,8 +135,18 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
 
     def cleanup(self):
         super().cleanup()
-        # What waits to be written: the queue, and the ended transactions the next flush will take.
-        self._pressure += len(getattr(self, "_ended", ()))
+        self._refresh_pressure()
+
+    def _refresh_pressure(self):
+        """
+        The backlog is the transactions that ended while the writer was busy and wait for its next flush: with a
+        healthy writer that stays small, however many ended since the last flush. Ended transactions that just wait
+        for the flush interval are not a backlog.
+        """
+        if getattr(self, "_flush_busy", False):
+            self._pressure = len(self._ended)
+        elif hasattr(self, "_ended"):
+            self._pressure = 0
 
     @property
     def pressure(self):
@@ -258,6 +269,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         self._ended.append(pending)
         if len(self._ended) >= self.flush_batch_size:
             self._schedule_flush()
+        self._refresh_pressure()
 
     def take_pending(self, transaction) -> PendingTransaction | None:
         """Closes what the worker kept of an ended transaction, ready to be flushed. None if there is nothing to write."""
@@ -293,11 +305,20 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         self._flush_queued = True
         self.push_nowait(self._flush_job)
 
+    @property
+    def _flush_busy(self) -> bool:
+        return self._flush_queued or self._flush_running
+
     async def _flush_job(self):
         self._flush_queued = False
+        self._flush_running = True
         ended, self._ended = self._ended, []
-        self._pressure = self._queue.qsize() + len(ended)
-        await self._flush_resiliently(ended + self._sweep())
+        self._refresh_pressure()
+        try:
+            await self._flush_resiliently(ended + self._sweep())
+        finally:
+            self._flush_running = False
+            self._refresh_pressure()
 
     def _sweep(self) -> list[PendingTransaction]:
         """
