@@ -112,7 +112,7 @@ You can run it with:
 
     harp-proxy start --example rules:storage-markers
 
-.. collapse:: View complete example source
+.. dropdown:: View complete example source
 
     .. literalinclude:: ../../../harp_apps/rules/examples/storage-markers.toml
        :language: toml

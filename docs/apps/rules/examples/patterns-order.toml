@@ -1,0 +1,10 @@
+# Every rule matching a stage runs, in the order it is written. No rule overrides another one.
+[rules."*"."*"]
+on_request = """
+request.headers["X-Trail"] = "general"
+"""
+
+[rules."api"."GET /*"]
+on_request = """
+request.headers["X-Trail"] += ",specific"
+"""
