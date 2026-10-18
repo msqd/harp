@@ -25,7 +25,10 @@ def _insert_ignoring_duplicates(dialect: str, table):
     elif dialect == "sqlite":
         from sqlalchemy.dialects.sqlite import insert as dialect_insert
     else:
-        return insert(table).prefix_with("IGNORE")  # mysql
+        # mysql: not IGNORE, which would silently truncate data wider than the column instead of failing
+        from sqlalchemy.dialects.mysql import insert as dialect_insert
+
+        return dialect_insert(table).on_duplicate_key_update(id=table.c.id)
     return dialect_insert(table).on_conflict_do_nothing(index_elements=["id"])
 
 

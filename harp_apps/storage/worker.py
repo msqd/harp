@@ -272,12 +272,21 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         if not ended:
             return
 
-        in_database = isinstance(self.blob_storage, SqlBlobStorage) and self.blob_storage.engine is self.engine
+        # MySQL keeps blobs apart: a blob too wide for its column must not take the transaction down with it.
+        in_database = (
+            isinstance(self.blob_storage, SqlBlobStorage)
+            and self.blob_storage.engine is self.engine
+            and self.engine.dialect.name != "mysql"
+        )
         if not in_database:
-            # Another blob storage: its writes cannot share the database transaction.
+            # Another blob storage: its writes cannot share the database transaction. A failed blob is logged and
+            # the message keeps pointing at it, as before.
             for pending in ended:
                 for blob in pending.blobs.values():
-                    await self.blob_storage.put(blob)
+                    try:
+                        await self.blob_storage.put(blob)
+                    except Exception:
+                        logger.exception(f"Could not store blob {blob.id}")
 
         transactions = SqlTransaction.__table__
         async with self.engine.begin() as conn:
