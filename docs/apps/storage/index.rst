@@ -45,10 +45,10 @@ backends for blobs).
     store as a complete account of what crossed the proxy. See :ref:`what-harp-retains` for what is
     measured, and `#945 <https://github.com/msqd/harp/issues/945>`_ for the measurements.
 
-    In 0.10 a caller's ``Cache-Control: no-store`` binds the cache and does not affect what is
-    recorded here. Whether a caller may suppress payload recording is decided in
-    `#927 <https://github.com/msqd/harp/issues/927>`_ and lands in 0.11, so do not build on the
-    current behaviour in either direction.
+    A caller's ``Cache-Control: no-store`` binds the cache and does not affect what is recorded
+    here. Whether a caller may suppress payload recording is undecided, see
+    `#927 <https://github.com/msqd/harp/issues/927>`_, so do not build on the current behaviour in
+    either direction.
 
     Choosing what is not recorded is currently the operator's decision, made with the
     :doc:`rules application </apps/rules/index>` and the :doc:`markers` below.
@@ -166,7 +166,7 @@ If you want to reset the storage content, you can run the ``harp-proxy db:reset`
 then run the migrations again (if enabled), so that you get an empty and up-to-date database schema.
 
 You must provide your configuration files and configuration arguments to this command, like you'd do with the
-``harp-proxy start`` command, so that it points to the right storage.
+``harp-proxy server`` command, so that it points to the right storage.
 
 .. code-block:: shell
 
@@ -186,6 +186,6 @@ To instruct SQLAlchemy to log all queries, set ``LOGGING_SQLALCHEMY=INFO`` in yo
 
 .. code-block:: shell
 
-    LOGGING_SQLALCHEMY=INFO harp-proxy start ...
+    LOGGING_SQLALCHEMY=INFO harp-proxy server ...
 
 It works with all HARP commands, not just ``start``.

@@ -14,8 +14,15 @@ To download the latest stable version, use:
 
     docker image pull makersquad/harp-proxy
 
-Tags are available for all tagged versions, and for latest points of main and dev branches (`git-main` and `git-dev`
-respectively).
+Published tags:
+
+- ``X.Y.Z``, ``X.Y``, ``X`` and ``latest`` for stable releases (``latest`` is the most recent stable release).
+- ``X.Y.Z-rcN`` (or any other pre-release suffix) for pre-releases, exact tag only.
+- ``unstable`` for the latest commit of the ``main`` branch.
+- ``X.Y-git`` for the latest commit of a version branch (e.g. ``0.11-git``).
+
+The image runs as a non-root user (uid 1000) and expects ``docker run --init`` (a minimal init process, for proper
+signal handling), which all the examples below use.
 
 
 Start a proxy
@@ -25,7 +32,7 @@ For a test run, you can:
 
 .. code-block:: shell
 
-    docker run -it --rm -p 4000-4100:4000-4100 makersquad/harp-proxy
+    docker run --init -it --rm -p 4000-4100:4000-4100 makersquad/harp-proxy server
 
 This will start the proxy using the default settings (in memory sqlite storage) and by default, the dashboard will be
 available at http://localhost:4080.
@@ -36,7 +43,7 @@ Stop this container and run another with a remote endpoint setup:
 
 .. code-block:: shell
 
-    docker run -it --rm -p 4000-4100:4000-4100 makersquad/harp-proxy server --endpoint httpbin=4000:http://httpbin.org
+    docker run --init -it --rm -p 4000-4100:4000-4100 makersquad/harp-proxy server --endpoint httpbin=4000:http://httpbin.org
 
 This will start a container with an additional port that will proxy requests to `httpbin.org <http://httpbin.org>`_.
 
@@ -64,7 +71,7 @@ Then run the container again, binding it to ``/etc/harp.yaml``:
 
 .. code:: shell
 
-    docker run -it --rm -p 4000-4100:4000-4100 --volume $(pwd)/harp.yaml:/etc/harp.yaml makersquad/harp-proxy server
+    docker run --init -it --rm -p 4000-4100:4000-4100 --volume $(pwd)/harp.yaml:/etc/harp.yaml makersquad/harp-proxy server
 
 
 Use docker compose
@@ -80,6 +87,8 @@ To add a harp proxy to your `docker-compose.yml` file, first create a configurat
         - name: httpbin
           url: http://httpbin.org
           port: 4000
+    storage:
+      url: sqlite+aiosqlite:////data/harp.db
     EOF
 
 Then add the following to your `docker-compose.yml` file:
@@ -89,21 +98,28 @@ Then add the following to your `docker-compose.yml` file:
     services:
       harp:
         image: makersquad/harp-proxy
+        command: server
+        init: true
         volumes:
           - "./harp.yaml:/etc/harp.yaml"
-          - "./harp-data:/var/lib/harp/data"
+          - "./harp-data:/data"
         ports:
           - 4000-4100:4000-4100
 
-This example setup will bind two volumes: one for the local configuration file and one to store data locally. You must
-create the `harp.yaml` file (empty will do) and the `harp-data` directory before starting the container, but you don't
-*have* to bind those volumes if you don't want to.
+This example setup will bind two volumes: one for the local configuration file and one holding the SQLite database
+(``storage.url`` in ``harp.yaml``). Without ``storage.url``, storage is in memory and nothing is written to the volume.
+Create the ``harp-data`` directory before starting the container, owned by uid 1000 (the user inside the container),
+otherwise the database cannot be created:
+
+.. code-block:: shell
+
+    mkdir harp-data && sudo chown 1000:1000 harp-data
 
 Once you're ready, just start your service set:
 
 .. code-block:: shell
 
-    docker-compose up
+    docker compose up
 
 You'll be able to find the same setup as we previously described using docker by itself, but with the added benefit of
 having a configuration file instead of passing all settings on the command line.

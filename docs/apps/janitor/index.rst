@@ -50,11 +50,11 @@ See the :doc:`settings reference <settings>`.
 Loading
 :::::::
 
-The ``janitor`` application is loaded by default when using the ``harp-proxy start`` command.
+The ``janitor`` application is loaded by default when using the ``harp-proxy server`` command.
 
 You can disable it (not recommended) with ``janitor.enabled: false``, or by passing it as an argument to the
-``harp-proxy start`` command:
+``harp-proxy server`` command:
 
 .. code-block:: bash
 
-    harp-proxy start --disable janitor ...
+    harp-proxy server --disable janitor ...

@@ -15,7 +15,7 @@ System Requirements
 HARP Proxy has minimal system requirements:
 
 - **Python**: 3.13+ (automatically managed by UV)
-- **Ports**: Default ports are 4000-4100 (proxy endpoints) and 4080 (dashboard)
+- **Ports**: 4080 for the dashboard by default; proxy endpoints listen on the ports you configure (no endpoint exists by default)
 - **Memory**: Minimal (~50MB base, scales with traffic and cache size)
 - **Storage**: Depends on database backend (SQLite in-memory by default)
 
@@ -30,8 +30,8 @@ Several options exist to install HARP Proxy on your development machine.
 The **recommended** method is :doc:`using UV <uv>`, a fast Python package manager that makes installation and execution simple.
 
 For containerized environments, you can use :doc:`Docker containers <docker>`, ensuring you have the exact set of
-dependencies, including the system, that we have battle-tested. There is also an :doc:`helm chart <helm>` available for
-kubernetes users.
+dependencies, including the system, that we have battle-tested. There is also an unsupported, experimental :doc:`helm chart <helm>`,
+not tested against current images.
 
 For traditional Python environments, you can choose to :doc:`install from PyPI, using pip <python>`. This method
 is more flexible but requires a working Python environment and some knowledge of Python.
