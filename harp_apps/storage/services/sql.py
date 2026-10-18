@@ -422,26 +422,20 @@ class SqlStorage(IStorage):
 
     @override
     async def set_user_flag(self, *, transaction_id: str, username: str, flag: int, value=True):
-        """Sets or unsets a user flag on a transaction."""
+        """Sets or unsets a user flag on a transaction, idempotently. Raises NoResultFound if the transaction is unknown."""
         async with self.begin() as session:
             user = await self.users.find_one_by_username(username)
             transaction = await self.transactions.find_one_by_id(transaction_id)
 
-            if value:
-                session.add(
-                    SqlUserFlag(
-                        transaction_id=transaction.id,
-                        user_id=user.id,
-                        type=flag,
-                    )
-                )
-            else:
-                await session.execute(
-                    delete(SqlUserFlag).where(
-                        SqlUserFlag.transaction_id == transaction.id,
-                        SqlUserFlag.user_id == user.id,
-                    )
-                )
+            criteria = (
+                SqlUserFlag.transaction_id == transaction.id,
+                SqlUserFlag.user_id == user.id,
+                SqlUserFlag.type == flag,
+            )
+            if not value:
+                await session.execute(delete(SqlUserFlag).where(*criteria))
+            elif not (await session.execute(select(SqlUserFlag.id).where(*criteria))).first():
+                session.add(SqlUserFlag(transaction_id=transaction.id, user_id=user.id, type=flag))
 
     async def ready(self):
         await self._is_ready.wait()
