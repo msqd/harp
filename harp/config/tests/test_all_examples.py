@@ -55,3 +55,10 @@ def test_load_documentation_example(configfile, snapshot):
     assert len(set(settings.keys()).difference(set(builder.applications.keys()))) == 0
     assert len(applications) >= len(settings)
     assert yaml.dump(asdict(settings)) == snapshot
+
+
+def test_sentry_example_has_placeholder_dsn():
+    with open(get_example_filename("sentry")) as f:
+        content = f.read()
+    assert "o514633" not in content
+    assert "examplePublicKey" in content
