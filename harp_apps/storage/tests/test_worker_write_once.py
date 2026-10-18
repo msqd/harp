@@ -21,6 +21,11 @@ from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
 from harp_apps.storage.worker import StorageAsyncWorkerQueue
 
 
+def one_commit_only(sql_storage):
+    if sql_storage.engine.dialect.name == "mysql":
+        pytest.skip("MySQL writes blobs apart from the transaction (a blob too wide must not take it down)")
+
+
 class Recording:
     """Counts what the database sees: commits, and statements by their first word."""
 
@@ -81,6 +86,7 @@ async def test_nothing_is_written_before_the_transaction_ends(worker, sql_storag
 
 
 async def test_an_ended_transaction_is_written_in_one_database_transaction(worker, sql_storage):
+    one_commit_only(sql_storage)
     recording = Recording(sql_storage.engine)
     transaction = new_transaction()
     await start(worker, transaction)
@@ -156,6 +162,7 @@ async def test_a_transaction_ended_before_the_threshold_is_never_inserted_early(
 
 
 async def test_blob_renewal_shares_the_database_transaction_of_the_message(worker, sql_storage):
+    one_commit_only(sql_storage)
     old = Blob.from_data(b"request")
     async with sql_storage.engine.begin() as conn:
         await conn.execute(
@@ -181,6 +188,7 @@ async def test_blob_renewal_shares_the_database_transaction_of_the_message(worke
 
 
 async def test_transactions_ended_together_can_be_flushed_in_one_database_transaction(worker, sql_storage):
+    one_commit_only(sql_storage)
     first, second = new_transaction(), new_transaction()
     for transaction in (first, second):
         await start(worker, transaction)
