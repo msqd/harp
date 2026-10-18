@@ -133,7 +133,7 @@ async def test_a_transaction_still_open_after_the_threshold_is_inserted_then_upd
         (early,) = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
         assert early.id == transaction.id
         assert early.finished_at is None
-        assert len(early.messages) == 0
+        assert [m.kind for m in early.messages] == ["request", "response"]
 
         await end(worker, transaction)
         await worker.wait_until_empty()
@@ -143,6 +143,93 @@ async def test_a_transaction_still_open_after_the_threshold_is_inserted_then_upd
         assert [m.kind for m in final.messages] == ["request", "response"]
     finally:
         await worker.close()
+
+
+async def test_a_transaction_that_never_ends_holds_no_payload_once_inserted(sql_storage, sql_blob_storage):
+    worker = StorageAsyncWorkerQueue(sql_storage.engine, sql_storage, sql_blob_storage, early_insert_after=0.05)
+    worker.dispatcher = AsyncEventDispatcher()
+    worker.register_events(worker.dispatcher)
+    try:
+        transaction = new_transaction()
+        transaction.tags = {"color": "blue"}
+        await start(worker, transaction)
+        await messages(worker, transaction, request_body=b"x" * 1000)
+        await asyncio.sleep(0.3)
+        await worker.wait_until_empty()
+
+        (row,) = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert len(row.messages) == 2  # the payload is in the database...
+        light = worker._pending[transaction.id]
+        assert (light.messages, light.blobs, light.data, light.tags) == ([], {}, {}, {})  # ...and not in memory
+    finally:
+        await worker.close()
+
+
+async def test_a_transaction_that_never_ends_is_forgotten_after_the_max_age(sql_storage, sql_blob_storage):
+    worker = StorageAsyncWorkerQueue(
+        sql_storage.engine, sql_storage, sql_blob_storage, early_insert_after=0.05, pending_max_age=0.2
+    )
+    worker.dispatcher = AsyncEventDispatcher()
+    worker.register_events(worker.dispatcher)
+    try:
+        transaction = new_transaction()
+        await start(worker, transaction)
+        await messages(worker, transaction)
+        assert transaction.id in worker._pending
+        await asyncio.sleep(0.5)
+        await worker.wait_until_empty()
+
+        assert transaction.id not in worker._pending
+        (row,) = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert row.finished_at is None
+    finally:
+        await worker.close()
+
+
+async def test_messages_after_the_early_insert_are_written_once_at_the_end(sql_storage, sql_blob_storage):
+    worker = StorageAsyncWorkerQueue(sql_storage.engine, sql_storage, sql_blob_storage, early_insert_after=0.05)
+    worker.dispatcher = AsyncEventDispatcher()
+    worker.register_events(worker.dispatcher)
+    try:
+        transaction = new_transaction()
+        await start(worker, transaction)
+        await worker.dispatcher.adispatch(
+            EVENT_TRANSACTION_MESSAGE,
+            HttpMessageEvent(transaction=transaction, message=HttpRequest(method="GET", path="/", body=b"")),
+        )
+        await asyncio.sleep(0.3)
+        await worker.wait_until_empty()
+        await worker.dispatcher.adispatch(
+            EVENT_TRANSACTION_MESSAGE,
+            HttpMessageEvent(transaction=transaction, message=HttpResponse(b"late", status=200)),
+        )
+        await end(worker, transaction)
+        await worker.wait_until_empty()
+
+        (row,) = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert [m.kind for m in row.messages] == ["request", "response"]
+        assert row.finished_at is not None
+    finally:
+        await worker.close()
+
+
+async def test_closing_writes_the_transactions_that_ended(sql_storage, sql_blob_storage):
+    worker = StorageAsyncWorkerQueue(sql_storage.engine, sql_storage, sql_blob_storage, early_insert_after=60)
+    worker.dispatcher = AsyncEventDispatcher()
+    worker.register_events(worker.dispatcher)
+    ended, open_ = new_transaction(), new_transaction()
+    await start(worker, ended)
+    await messages(worker, ended)
+    await end(worker, ended)
+    await start(worker, open_)
+
+    await worker.close()
+
+    async with asyncio.timeout(0):  # close() returned only once the queue was done: nothing left to wait for
+        await worker.wait_until_empty()
+    rows = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+    assert [t.id for t in rows] == [ended.id]  # the young open one is lost: recording is best effort
+    assert worker._pending[open_.id].timer is None
 
 
 async def test_a_transaction_ended_before_the_threshold_is_never_inserted_early(sql_storage, sql_blob_storage):
@@ -235,3 +322,33 @@ async def test_tags_are_stored(worker, sql_storage):
 
     (row,) = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
     assert row.tags == {"color": "blue"}
+
+
+async def test_a_failed_early_insert_leaves_the_payload_for_the_end(sql_storage, sql_blob_storage, monkeypatch):
+    worker = StorageAsyncWorkerQueue(sql_storage.engine, sql_storage, sql_blob_storage, early_insert_after=0.05)
+    worker.dispatcher = AsyncEventDispatcher()
+    worker.register_events(worker.dispatcher)
+    original = sql_blob_storage.put_in
+    calls = []
+
+    async def failing_once(conn, blobs):
+        calls.append(1)
+        if len(calls) == 1:
+            raise RuntimeError("database hiccup")
+        return await original(conn, blobs)
+
+    monkeypatch.setattr(sql_blob_storage, "put_in", failing_once)
+    try:
+        transaction = new_transaction()
+        await start(worker, transaction)
+        await messages(worker, transaction)
+        await asyncio.sleep(0.3)
+        await worker.wait_until_empty()
+        await end(worker, transaction)
+        await worker.wait_until_empty()
+
+        (row,) = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert [m.kind for m in row.messages] == ["request", "response"]
+        assert row.finished_at is not None
+    finally:
+        await worker.close()

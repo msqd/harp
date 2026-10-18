@@ -15,6 +15,7 @@ class TestStorageApplication(BaseTestForApplications):
         "enabled": True,
         "migrate": True,
         "early_insert_after": 1.0,
+        "pending_max_age": 3600.0,
         "redis": None,
         "url": "sqlite+aiosqlite:///:memory:?cache=shared",
     }

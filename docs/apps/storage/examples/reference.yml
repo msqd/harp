@@ -4,5 +4,6 @@ storage:
   early_insert_after: 1.0
   enabled: true
   migrate: true
+  pending_max_age: 3600.0
   redis: null
   url: sqlite+aiosqlite:///:memory:?cache=shared
