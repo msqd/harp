@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 def _get_system_configuration_sources():
     for _candidate in DEFAULT_SYSTEM_CONFIG_FILENAMES:
         if os.path.exists(_candidate):
-            from config.yaml import YAMLFile
+            from harp.utils.config.yaml import YAMLFile
 
             yield YAMLFile(_candidate)
             break
@@ -133,7 +133,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         """
         _, ext = os.path.splitext(filename)
         if ext in (".yaml", ".yml"):
-            from config.yaml import YAMLFile
+            from harp.utils.config.yaml import YAMLFile
 
             source = YAMLFile(filename)
         elif ext in (".json",):

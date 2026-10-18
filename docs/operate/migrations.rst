@@ -65,14 +65,16 @@ MySQL (and MariaDB)
 -------------------
 
 MySQL and MariaDB will add full-text indexes to the searchable columns. This is done without any additional
-configuration.
+configuration. The dashboard transaction search matches substrings literally (``LIKE``), on every backend, so these
+indexes do not speed it up.
 
 
 PostgreSQL (and TimescaleDB)
 ----------------------------
 
-PostgreSQL can use the pg_trgm extension to implement full-text search. This extension is not enabled by default, but
-you can install it with the associated GIN indexes using:
+PostgreSQL can use the pg_trgm extension to index the columns the dashboard transaction search reads (``ILIKE`` on
+endpoint and message summary). This extension is not enabled by default, but you can install it with the associated GIN
+indexes using:
 
 .. code-block:: shell
 
