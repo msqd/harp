@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
@@ -31,6 +32,27 @@ async def worker():
     await worker.close()
 
 
+@pytest.fixture
+async def backlog(worker):
+    """Stalls the consumer, returns a coroutine function that queues ``size`` items behind it."""
+    release = asyncio.Event()
+
+    async def stalled():
+        await release.wait()
+
+    async def noop():
+        pass
+
+    async def build(size: int):
+        await worker.push(stalled)
+        await asyncio.sleep(0)  # consumer is now stuck on the first item
+        for _ in range(size):
+            await worker.push(noop)
+
+    yield build
+    release.set()
+
+
 def new_transaction() -> Transaction:
     return Transaction(id=generate_transaction_id_ksuid(), type="http", endpoint="/test", started_at=datetime.now(UTC))
 
@@ -44,8 +66,8 @@ async def message(worker, transaction):
     await worker.dispatcher.adispatch(EVENT_TRANSACTION_MESSAGE, event)
 
 
-async def test_dropped_transactions_are_counted_and_warned(worker, caplog):
-    worker._pressure = 10_000
+async def test_dropped_transactions_are_counted_and_warned(worker, backlog, caplog):
+    await backlog(10_000)
     before = dropped("transactions")
 
     with caplog.at_level(logging.WARNING):
@@ -55,8 +77,8 @@ async def test_dropped_transactions_are_counted_and_warned(worker, caplog):
     assert "transactions=1" in caplog.text
 
 
-async def test_dropped_messages_are_counted(worker):
-    worker._pressure = 1000
+async def test_dropped_messages_are_counted(worker, backlog):
+    await backlog(1000)
     before = dropped("messages")
     transaction = new_transaction()
 
@@ -66,8 +88,8 @@ async def test_dropped_messages_are_counted(worker):
     assert dropped("messages") == before + 1
 
 
-async def test_dropped_bodies_are_counted_without_headers(worker):
-    worker._pressure = 100
+async def test_dropped_bodies_are_counted_without_headers(worker, backlog):
+    await backlog(100)
     before_bodies, before_headers = dropped("bodies"), dropped("headers")
     transaction = new_transaction()
 
@@ -87,10 +109,10 @@ async def test_dropped_headers_are_counted(worker, monkeypatch):
     assert dropped("headers") == before + 1
 
 
-async def test_warning_is_periodic_and_carries_counts_since_last_warning(worker, caplog, monkeypatch):
+async def test_warning_is_periodic_and_carries_counts_since_last_warning(worker, backlog, caplog, monkeypatch):
     clock = [1000.0]
     monkeypatch.setattr("harp_apps.storage.worker.monotonic", lambda: clock[0])
-    worker._pressure = 10_000
+    await backlog(10_000)
 
     with caplog.at_level(logging.WARNING):
         await start(worker, new_transaction())  # first drop warns right away
@@ -103,3 +125,15 @@ async def test_warning_is_periodic_and_carries_counts_since_last_warning(worker,
 
     assert caplog.text.count("transactions=") == 2
     assert "transactions=3" in caplog.text
+
+
+async def test_pressure_follows_pushes_while_consumer_is_stalled(worker, backlog):
+    await backlog(100)
+
+    before = dropped("bodies")
+    await message(worker, new_transaction())
+    gauge = REGISTRY.get_sample_value("async_worker_queue_backlog", {"queue_id": str(id(worker))})
+
+    assert worker.pressure >= 2
+    assert dropped("bodies") == before + 1
+    assert gauge >= 100
