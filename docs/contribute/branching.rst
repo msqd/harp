@@ -40,6 +40,20 @@ A fix lands on ``main`` first, through a normal pull request. A second pull requ
 cherry-picks it with ``git cherry-pick -x <sha>`` so the commit names its origin. A fix that no longer
 applies to ``main`` goes to ``X.Y`` directly, and its pull request says why.
 
+Security fixes
+::::::::::::::
+
+A security fix is not public until the patch release is. Do not follow the flow above.
+
+1. Report arrives through the repository's private vulnerability reporting. A maintainer drafts a
+   security advisory from it.
+2. The fix and its backport to ``X.Y`` are written in the advisory's temporary private fork, never in a
+   public branch or pull request.
+3. Patch releases are cut as in :doc:`release/python`, then the advisory is published with them, crediting
+   the reporter.
+4. The ``security`` changelog fragment (``changelog.d/<issue>.security.rst``) states only that a
+   vulnerability was fixed, with no detail on the defect before the release.
+
 Documentation versions
 ::::::::::::::::::::::
 
