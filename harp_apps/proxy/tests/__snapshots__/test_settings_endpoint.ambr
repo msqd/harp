@@ -1,4 +1,848 @@
 # serializer version: 1
+# name: TestEndpointSettingsWithCustomController.test_jsonschema_for_serialization
+  dict({
+    '$defs': dict({
+      'IgnoreLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'ignore',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'IgnoreLivenessSettings',
+        'type': 'object',
+      }),
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakyBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'capacity': dict({
+            'default': 60.0,
+            'title': 'Capacity',
+            'type': 'number',
+          }),
+          'rate': dict({
+            'default': 1.0,
+            'title': 'Rate',
+            'type': 'number',
+          }),
+          'threshold': dict({
+            'default': 10.0,
+            'title': 'Threshold',
+            'type': 'number',
+          }),
+          'type': dict({
+            'const': 'leaky',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakyBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+      'RemoteEndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              url: "http://my-endpoint:8080"
+              pools: [fallback]  # omit for default pool
+              failure_threshold: 3
+              success_threshold: 1
+        ''',
+        'properties': dict({
+          'liveness': dict({
+            'discriminator': dict({
+              'mapping': dict({
+                'ignore': '#/$defs/IgnoreLivenessSettings',
+                'inherit': '#/$defs/InheritLivenessSettings',
+                'leaky': '#/$defs/LeakyBucketLivenessSettings',
+                'naive': '#/$defs/NaiveLivenessSettings',
+              }),
+              'propertyName': 'type',
+            }),
+            'oneOf': list([
+              dict({
+                '$ref': '#/$defs/IgnoreLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/InheritLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/LeakyBucketLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/NaiveLivenessSettings',
+              }),
+            ]),
+            'title': 'Liveness',
+          }),
+          'pools': dict({
+            'default': list([
+              'default',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Pools',
+            'type': 'array',
+          }),
+          'url': dict({
+            'format': 'uri',
+            'maxLength': 2083,
+            'minLength': 1,
+            'title': 'Url',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'url',
+        ]),
+        'title': 'RemoteEndpointSettings',
+        'type': 'object',
+      }),
+      'RemoteProbeSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.probe`` settings.
+          
+          .. code-block:: yaml
+          
+              type: http
+              method: GET
+              path: /health
+              headers:
+                x-purpose: "health probe"
+              timeout: 5.0
+        ''',
+        'properties': dict({
+          'headers': dict({
+            'additionalProperties': True,
+            'title': 'Headers',
+            'type': 'object',
+          }),
+          'interval': dict({
+            'default': 10.0,
+            'title': 'Interval',
+            'type': 'number',
+          }),
+          'method': dict({
+            'default': 'GET',
+            'title': 'Method',
+            'type': 'string',
+          }),
+          'path': dict({
+            'default': '/',
+            'title': 'Path',
+            'type': 'string',
+          }),
+          'timeout': dict({
+            'default': 10.0,
+            'title': 'Timeout',
+            'type': 'number',
+          }),
+          'verify': dict({
+            'default': True,
+            'title': 'Verify',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'RemoteProbeSettings',
+        'type': 'object',
+      }),
+      'RemoteSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote`` settings.
+          
+          .. code-block:: yaml
+          
+              min_pool_size: 1
+              endpoints:
+                # see HttpEndpoint
+                - ...
+              probe:
+                # see HttpProbe
+                ...
+        ''',
+        'properties': dict({
+          'break_on': dict({
+            'default': list([
+              'network_error',
+              'unhandled_exception',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Break On',
+            'type': 'array',
+          }),
+          'check_after': dict({
+            'default': 10.0,
+            'title': 'Check After',
+            'type': 'number',
+          }),
+          'endpoints': dict({
+            'default': None,
+            'items': dict({
+              '$ref': '#/$defs/RemoteEndpointSettings',
+            }),
+            'title': 'Endpoints',
+            'type': 'array',
+          }),
+          'liveness': dict({
+            'default': dict({
+              'type': 'inherit',
+            }),
+            'discriminator': dict({
+              'mapping': dict({
+                'ignore': '#/$defs/IgnoreLivenessSettings',
+                'inherit': '#/$defs/InheritLivenessSettings',
+                'leaky': '#/$defs/LeakyBucketLivenessSettings',
+                'naive': '#/$defs/NaiveLivenessSettings',
+              }),
+              'propertyName': 'type',
+            }),
+            'oneOf': list([
+              dict({
+                '$ref': '#/$defs/IgnoreLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/InheritLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/LeakyBucketLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/NaiveLivenessSettings',
+              }),
+            ]),
+            'title': 'Liveness',
+          }),
+          'min_pool_size': dict({
+            'default': 1,
+            'title': 'Min Pool Size',
+            'type': 'integer',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbeSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'title': 'RemoteSettings',
+        'type': 'object',
+      }),
+      'Service': dict({
+        'additionalProperties': True,
+        'description': 'A settings base class for service definitions.',
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'additionalProperties': True,
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'description': 'Arguments for the service constructor.',
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Base type for service definition.',
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Optional custom constructor for the service.',
+            'title': 'Constructor',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Type for service definition.',
+            'title': 'Type',
+          }),
+        }),
+        'title': 'Service',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'controller': dict({
+        'anyOf': list([
+          dict({
+            '$ref': '#/$defs/Service',
+          }),
+          dict({
+            'type': 'string',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': dict({
+          'dispatcher': dict({
+            'type': 'IAsyncEventDispatcher',
+          }),
+          'type': 'harp_apps.proxy.controllers.HttpProxyController',
+        }),
+        'title': 'Controller',
+      }),
+      'description': dict({
+        'anyOf': list([
+          dict({
+            'type': 'string',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+        'title': 'Description',
+      }),
+      'name': dict({
+        'title': 'Name',
+        'type': 'string',
+      }),
+      'port': dict({
+        'anyOf': list([
+          dict({
+            'type': 'integer',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+        'title': 'Port',
+      }),
+      'remote': dict({
+        'anyOf': list([
+          dict({
+            '$ref': '#/$defs/RemoteSettings',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+      }),
+    }),
+    'required': list([
+      'name',
+    ]),
+    'title': 'EndpointSettings',
+    'type': 'object',
+  })
+# ---
+# name: TestEndpointSettingsWithCustomController.test_jsonschema_for_validation
+  dict({
+    '$defs': dict({
+      'IgnoreLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'ignore',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'IgnoreLivenessSettings',
+        'type': 'object',
+      }),
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakyBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'capacity': dict({
+            'default': 60.0,
+            'title': 'Capacity',
+            'type': 'number',
+          }),
+          'rate': dict({
+            'default': 1.0,
+            'title': 'Rate',
+            'type': 'number',
+          }),
+          'threshold': dict({
+            'default': 10.0,
+            'title': 'Threshold',
+            'type': 'number',
+          }),
+          'type': dict({
+            'const': 'leaky',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakyBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+      'RemoteEndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              url: "http://my-endpoint:8080"
+              pools: [fallback]  # omit for default pool
+              failure_threshold: 3
+              success_threshold: 1
+        ''',
+        'properties': dict({
+          'liveness': dict({
+            'discriminator': dict({
+              'mapping': dict({
+                'ignore': '#/$defs/IgnoreLivenessSettings',
+                'inherit': '#/$defs/InheritLivenessSettings',
+                'leaky': '#/$defs/LeakyBucketLivenessSettings',
+                'naive': '#/$defs/NaiveLivenessSettings',
+              }),
+              'propertyName': 'type',
+            }),
+            'oneOf': list([
+              dict({
+                '$ref': '#/$defs/IgnoreLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/InheritLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/LeakyBucketLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/NaiveLivenessSettings',
+              }),
+            ]),
+            'title': 'Liveness',
+          }),
+          'pools': dict({
+            'default': list([
+              'default',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Pools',
+            'type': 'array',
+          }),
+          'url': dict({
+            'format': 'uri',
+            'maxLength': 2083,
+            'minLength': 1,
+            'title': 'Url',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'url',
+        ]),
+        'title': 'RemoteEndpointSettings',
+        'type': 'object',
+      }),
+      'RemoteProbeSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.probe`` settings.
+          
+          .. code-block:: yaml
+          
+              type: http
+              method: GET
+              path: /health
+              headers:
+                x-purpose: "health probe"
+              timeout: 5.0
+        ''',
+        'properties': dict({
+          'headers': dict({
+            'additionalProperties': True,
+            'title': 'Headers',
+            'type': 'object',
+          }),
+          'interval': dict({
+            'default': 10.0,
+            'title': 'Interval',
+            'type': 'number',
+          }),
+          'method': dict({
+            'default': 'GET',
+            'title': 'Method',
+            'type': 'string',
+          }),
+          'path': dict({
+            'default': '/',
+            'title': 'Path',
+            'type': 'string',
+          }),
+          'timeout': dict({
+            'default': 10.0,
+            'title': 'Timeout',
+            'type': 'number',
+          }),
+          'verify': dict({
+            'default': True,
+            'title': 'Verify',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'RemoteProbeSettings',
+        'type': 'object',
+      }),
+      'RemoteSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote`` settings.
+          
+          .. code-block:: yaml
+          
+              min_pool_size: 1
+              endpoints:
+                # see HttpEndpoint
+                - ...
+              probe:
+                # see HttpProbe
+                ...
+        ''',
+        'properties': dict({
+          'break_on': dict({
+            'default': list([
+              'network_error',
+              'unhandled_exception',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Break On',
+            'type': 'array',
+          }),
+          'check_after': dict({
+            'default': 10.0,
+            'title': 'Check After',
+            'type': 'number',
+          }),
+          'endpoints': dict({
+            'default': None,
+            'items': dict({
+              '$ref': '#/$defs/RemoteEndpointSettings',
+            }),
+            'title': 'Endpoints',
+            'type': 'array',
+          }),
+          'liveness': dict({
+            'default': dict({
+              'type': 'inherit',
+            }),
+            'discriminator': dict({
+              'mapping': dict({
+                'ignore': '#/$defs/IgnoreLivenessSettings',
+                'inherit': '#/$defs/InheritLivenessSettings',
+                'leaky': '#/$defs/LeakyBucketLivenessSettings',
+                'naive': '#/$defs/NaiveLivenessSettings',
+              }),
+              'propertyName': 'type',
+            }),
+            'oneOf': list([
+              dict({
+                '$ref': '#/$defs/IgnoreLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/InheritLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/LeakyBucketLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/NaiveLivenessSettings',
+              }),
+            ]),
+            'title': 'Liveness',
+          }),
+          'min_pool_size': dict({
+            'default': 1,
+            'title': 'Min Pool Size',
+            'type': 'integer',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbeSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'title': 'RemoteSettings',
+        'type': 'object',
+      }),
+      'Service': dict({
+        'additionalProperties': True,
+        'description': 'A settings base class for service definitions.',
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'additionalProperties': True,
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'description': 'Arguments for the service constructor.',
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Base type for service definition.',
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Optional custom constructor for the service.',
+            'title': 'Constructor',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Type for service definition.',
+            'title': 'Type',
+          }),
+        }),
+        'title': 'Service',
+        'type': 'object',
+      }),
+    }),
+    'additionalProperties': False,
+    'properties': dict({
+      'controller': dict({
+        'anyOf': list([
+          dict({
+            '$ref': '#/$defs/Service',
+          }),
+          dict({
+            'type': 'string',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': dict({
+          'dispatcher': dict({
+            'type': 'IAsyncEventDispatcher',
+          }),
+          'type': 'harp_apps.proxy.controllers.HttpProxyController',
+        }),
+        'title': 'Controller',
+      }),
+      'description': dict({
+        'anyOf': list([
+          dict({
+            'type': 'string',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+        'title': 'Description',
+      }),
+      'name': dict({
+        'title': 'Name',
+        'type': 'string',
+      }),
+      'port': dict({
+        'anyOf': list([
+          dict({
+            'type': 'integer',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+        'title': 'Port',
+      }),
+      'remote': dict({
+        'anyOf': list([
+          dict({
+            '$ref': '#/$defs/RemoteSettings',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+      }),
+    }),
+    'required': list([
+      'name',
+    ]),
+    'title': 'EndpointSettings',
+    'type': 'object',
+  })
+# ---
 # name: TestEndpointSettingsWithRemote.test_jsonschema_for_serialization
   dict({
     '$defs': dict({
@@ -840,6 +1684,1131 @@
       'name',
     ]),
     'title': 'EndpointSettings',
+    'type': 'object',
+  })
+# ---
+# name: TestEndpointStatefulWithCustomController.test_jsonschema_for_serialization
+  dict({
+    '$defs': dict({
+      'EndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          Configuration parser for ``proxy.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              name: my-endpoint
+              port: 8080
+              description: My endpoint
+              remote:
+                # see HttpRemote
+                ...
+              controller : optional controller Service definition, default to HttpProxyController
+          
+          A shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require
+          fine-tuning the endpoint settings:
+          
+          .. code-block:: yaml
+          
+              name: my-endpoint
+              port: 8080
+              description: My endpoint
+              url: http://my-endpoint:8080
+        ''',
+        'properties': dict({
+          'controller': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/Service',
+              }),
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': dict({
+              'dispatcher': dict({
+                'type': 'IAsyncEventDispatcher',
+              }),
+              'type': 'harp_apps.proxy.controllers.HttpProxyController',
+            }),
+            'title': 'Controller',
+          }),
+          'description': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Description',
+          }),
+          'name': dict({
+            'title': 'Name',
+            'type': 'string',
+          }),
+          'port': dict({
+            'anyOf': list([
+              dict({
+                'type': 'integer',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Port',
+          }),
+          'remote': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'required': list([
+          'name',
+        ]),
+        'title': 'EndpointSettings',
+        'type': 'object',
+      }),
+      'IgnoreLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'ignore',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'IgnoreLivenessSettings',
+        'type': 'object',
+      }),
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakyBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'capacity': dict({
+            'default': 60.0,
+            'title': 'Capacity',
+            'type': 'number',
+          }),
+          'rate': dict({
+            'default': 1.0,
+            'title': 'Rate',
+            'type': 'number',
+          }),
+          'threshold': dict({
+            'default': 10.0,
+            'title': 'Threshold',
+            'type': 'number',
+          }),
+          'type': dict({
+            'const': 'leaky',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakyBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+      'Remote': dict({
+        'properties': dict({
+          'current_pool': dict({
+            'items': dict({
+              'type': 'string',
+            }),
+            'readOnly': True,
+            'title': 'Current Pool',
+            'type': 'array',
+          }),
+          'current_pool_name': dict({
+            'default': 'default',
+            'title': 'Current Pool Name',
+            'type': 'string',
+          }),
+          'endpoints': dict({
+            'items': dict({
+              '$ref': '#/$defs/RemoteEndpoint',
+            }),
+            'readOnly': True,
+            'title': 'Endpoints',
+            'type': 'array',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbe',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+          'settings': dict({
+            '$ref': '#/$defs/RemoteSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+          'current_pool',
+          'endpoints',
+        ]),
+        'title': 'Remote',
+        'type': 'object',
+      }),
+      'RemoteEndpoint': dict({
+        'description': 'Stateful version of a remote endpoint definition.',
+        'properties': dict({
+          'failure_reasons': dict({
+            'anyOf': list([
+              dict({
+                'items': dict({
+                }),
+                'type': 'array',
+                'uniqueItems': True,
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Failure Reasons',
+          }),
+          'settings': dict({
+            '$ref': '#/$defs/RemoteEndpointSettings',
+          }),
+          'status': dict({
+            'default': 0,
+            'title': 'Status',
+            'type': 'integer',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'RemoteEndpoint',
+        'type': 'object',
+      }),
+      'RemoteEndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              url: "http://my-endpoint:8080"
+              pools: [fallback]  # omit for default pool
+              failure_threshold: 3
+              success_threshold: 1
+        ''',
+        'properties': dict({
+          'liveness': dict({
+            'discriminator': dict({
+              'mapping': dict({
+                'ignore': '#/$defs/IgnoreLivenessSettings',
+                'inherit': '#/$defs/InheritLivenessSettings',
+                'leaky': '#/$defs/LeakyBucketLivenessSettings',
+                'naive': '#/$defs/NaiveLivenessSettings',
+              }),
+              'propertyName': 'type',
+            }),
+            'oneOf': list([
+              dict({
+                '$ref': '#/$defs/IgnoreLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/InheritLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/LeakyBucketLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/NaiveLivenessSettings',
+              }),
+            ]),
+            'title': 'Liveness',
+          }),
+          'pools': dict({
+            'default': list([
+              'default',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Pools',
+            'type': 'array',
+          }),
+          'url': dict({
+            'format': 'uri',
+            'maxLength': 2083,
+            'minLength': 1,
+            'title': 'Url',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'url',
+        ]),
+        'title': 'RemoteEndpointSettings',
+        'type': 'object',
+      }),
+      'RemoteProbe': dict({
+        'description': 'Stateful version of a probe definition.',
+        'properties': dict({
+          'settings': dict({
+            '$ref': '#/$defs/RemoteProbeSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'RemoteProbe',
+        'type': 'object',
+      }),
+      'RemoteProbeSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.probe`` settings.
+          
+          .. code-block:: yaml
+          
+              type: http
+              method: GET
+              path: /health
+              headers:
+                x-purpose: "health probe"
+              timeout: 5.0
+        ''',
+        'properties': dict({
+          'headers': dict({
+            'additionalProperties': True,
+            'title': 'Headers',
+            'type': 'object',
+          }),
+          'interval': dict({
+            'default': 10.0,
+            'title': 'Interval',
+            'type': 'number',
+          }),
+          'method': dict({
+            'default': 'GET',
+            'title': 'Method',
+            'type': 'string',
+          }),
+          'path': dict({
+            'default': '/',
+            'title': 'Path',
+            'type': 'string',
+          }),
+          'timeout': dict({
+            'default': 10.0,
+            'title': 'Timeout',
+            'type': 'number',
+          }),
+          'verify': dict({
+            'default': True,
+            'title': 'Verify',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'RemoteProbeSettings',
+        'type': 'object',
+      }),
+      'RemoteSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote`` settings.
+          
+          .. code-block:: yaml
+          
+              min_pool_size: 1
+              endpoints:
+                # see HttpEndpoint
+                - ...
+              probe:
+                # see HttpProbe
+                ...
+        ''',
+        'properties': dict({
+          'break_on': dict({
+            'default': list([
+              'network_error',
+              'unhandled_exception',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Break On',
+            'type': 'array',
+          }),
+          'check_after': dict({
+            'default': 10.0,
+            'title': 'Check After',
+            'type': 'number',
+          }),
+          'endpoints': dict({
+            'default': None,
+            'items': dict({
+              '$ref': '#/$defs/RemoteEndpointSettings',
+            }),
+            'title': 'Endpoints',
+            'type': 'array',
+          }),
+          'liveness': dict({
+            'default': dict({
+              'type': 'inherit',
+            }),
+            'discriminator': dict({
+              'mapping': dict({
+                'ignore': '#/$defs/IgnoreLivenessSettings',
+                'inherit': '#/$defs/InheritLivenessSettings',
+                'leaky': '#/$defs/LeakyBucketLivenessSettings',
+                'naive': '#/$defs/NaiveLivenessSettings',
+              }),
+              'propertyName': 'type',
+            }),
+            'oneOf': list([
+              dict({
+                '$ref': '#/$defs/IgnoreLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/InheritLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/LeakyBucketLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/NaiveLivenessSettings',
+              }),
+            ]),
+            'title': 'Liveness',
+          }),
+          'min_pool_size': dict({
+            'default': 1,
+            'title': 'Min Pool Size',
+            'type': 'integer',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbeSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'title': 'RemoteSettings',
+        'type': 'object',
+      }),
+      'Service': dict({
+        'additionalProperties': True,
+        'description': 'A settings base class for service definitions.',
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'additionalProperties': True,
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'description': 'Arguments for the service constructor.',
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Base type for service definition.',
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Optional custom constructor for the service.',
+            'title': 'Constructor',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Type for service definition.',
+            'title': 'Type',
+          }),
+        }),
+        'title': 'Service',
+        'type': 'object',
+      }),
+    }),
+    'properties': dict({
+      'remote': dict({
+        '$ref': '#/$defs/Remote',
+        'default': None,
+      }),
+      'settings': dict({
+        '$ref': '#/$defs/EndpointSettings',
+      }),
+    }),
+    'required': list([
+      'settings',
+    ]),
+    'title': 'Endpoint',
+    'type': 'object',
+  })
+# ---
+# name: TestEndpointStatefulWithCustomController.test_jsonschema_for_validation
+  dict({
+    '$defs': dict({
+      'EndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          Configuration parser for ``proxy.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              name: my-endpoint
+              port: 8080
+              description: My endpoint
+              remote:
+                # see HttpRemote
+                ...
+              controller : optional controller Service definition, default to HttpProxyController
+          
+          A shorthand syntax is also available for cases where you only need to proxy to a single URL and do not require
+          fine-tuning the endpoint settings:
+          
+          .. code-block:: yaml
+          
+              name: my-endpoint
+              port: 8080
+              description: My endpoint
+              url: http://my-endpoint:8080
+        ''',
+        'properties': dict({
+          'controller': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/Service',
+              }),
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': dict({
+              'dispatcher': dict({
+                'type': 'IAsyncEventDispatcher',
+              }),
+              'type': 'harp_apps.proxy.controllers.HttpProxyController',
+            }),
+            'title': 'Controller',
+          }),
+          'description': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Description',
+          }),
+          'name': dict({
+            'title': 'Name',
+            'type': 'string',
+          }),
+          'port': dict({
+            'anyOf': list([
+              dict({
+                'type': 'integer',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Port',
+          }),
+          'remote': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'required': list([
+          'name',
+        ]),
+        'title': 'EndpointSettings',
+        'type': 'object',
+      }),
+      'IgnoreLiveness': dict({
+        'properties': dict({
+          'settings': dict({
+            '$ref': '#/$defs/IgnoreLivenessSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'IgnoreLiveness',
+        'type': 'object',
+      }),
+      'IgnoreLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'ignore',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'IgnoreLivenessSettings',
+        'type': 'object',
+      }),
+      'InheritLiveness': dict({
+        'description': '''
+          This is a placeholder for inheriting liveness, the parent stateful object will replace it. We do not need to
+          implement the BaseLiveness interface, as it won't exist anymore once everything is setup.
+        ''',
+        'properties': dict({
+          'settings': dict({
+            '$ref': '#/$defs/InheritLivenessSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'InheritLiveness',
+        'type': 'object',
+      }),
+      'InheritLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'type': dict({
+            'const': 'inherit',
+            'default': 'inherit',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'title': 'InheritLivenessSettings',
+        'type': 'object',
+      }),
+      'LeakyBucketLiveness': dict({
+        'properties': dict({
+          'settings': dict({
+            '$ref': '#/$defs/LeakyBucketLivenessSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'LeakyBucketLiveness',
+        'type': 'object',
+      }),
+      'LeakyBucketLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'capacity': dict({
+            'default': 60.0,
+            'title': 'Capacity',
+            'type': 'number',
+          }),
+          'rate': dict({
+            'default': 1.0,
+            'title': 'Rate',
+            'type': 'number',
+          }),
+          'threshold': dict({
+            'default': 10.0,
+            'title': 'Threshold',
+            'type': 'number',
+          }),
+          'type': dict({
+            'const': 'leaky',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'LeakyBucketLivenessSettings',
+        'type': 'object',
+      }),
+      'NaiveLiveness': dict({
+        'properties': dict({
+          'settings': dict({
+            '$ref': '#/$defs/NaiveLivenessSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'NaiveLiveness',
+        'type': 'object',
+      }),
+      'NaiveLivenessSettings': dict({
+        'additionalProperties': False,
+        'properties': dict({
+          'failure_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Failure Threshold',
+            'type': 'integer',
+          }),
+          'success_threshold': dict({
+            'default': 1,
+            'exclusiveMinimum': 0,
+            'title': 'Success Threshold',
+            'type': 'integer',
+          }),
+          'type': dict({
+            'const': 'naive',
+            'title': 'Type',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'type',
+        ]),
+        'title': 'NaiveLivenessSettings',
+        'type': 'object',
+      }),
+      'Remote': dict({
+        'properties': dict({
+          'current_pool_name': dict({
+            'default': 'default',
+            'title': 'Current Pool Name',
+            'type': 'string',
+          }),
+          'liveness': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/IgnoreLiveness',
+              }),
+              dict({
+                '$ref': '#/$defs/InheritLiveness',
+              }),
+              dict({
+                '$ref': '#/$defs/LeakyBucketLiveness',
+              }),
+              dict({
+                '$ref': '#/$defs/NaiveLiveness',
+              }),
+            ]),
+            'default': None,
+            'title': 'Liveness',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbe',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+          'settings': dict({
+            '$ref': '#/$defs/RemoteSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'Remote',
+        'type': 'object',
+      }),
+      'RemoteEndpointSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpEndpoint`` is an instrumented target URL that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.endpoints[]`` settings.
+          
+          .. code-block:: yaml
+          
+              url: "http://my-endpoint:8080"
+              pools: [fallback]  # omit for default pool
+              failure_threshold: 3
+              success_threshold: 1
+        ''',
+        'properties': dict({
+          'liveness': dict({
+            'discriminator': dict({
+              'mapping': dict({
+                'ignore': '#/$defs/IgnoreLivenessSettings',
+                'inherit': '#/$defs/InheritLivenessSettings',
+                'leaky': '#/$defs/LeakyBucketLivenessSettings',
+                'naive': '#/$defs/NaiveLivenessSettings',
+              }),
+              'propertyName': 'type',
+            }),
+            'oneOf': list([
+              dict({
+                '$ref': '#/$defs/IgnoreLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/InheritLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/LeakyBucketLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/NaiveLivenessSettings',
+              }),
+            ]),
+            'title': 'Liveness',
+          }),
+          'pools': dict({
+            'default': list([
+              'default',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Pools',
+            'type': 'array',
+          }),
+          'url': dict({
+            'format': 'uri',
+            'maxLength': 2083,
+            'minLength': 1,
+            'title': 'Url',
+            'type': 'string',
+          }),
+        }),
+        'required': list([
+          'url',
+        ]),
+        'title': 'RemoteEndpointSettings',
+        'type': 'object',
+      }),
+      'RemoteProbe': dict({
+        'description': 'Stateful version of a probe definition.',
+        'properties': dict({
+          'settings': dict({
+            '$ref': '#/$defs/RemoteProbeSettings',
+          }),
+        }),
+        'required': list([
+          'settings',
+        ]),
+        'title': 'RemoteProbe',
+        'type': 'object',
+      }),
+      'RemoteProbeSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpProbe`` is a health check that can be used to check the health of a remote's endpoints. It is used as the
+          configuration parser for ``proxy.endpoints[].remote.probe`` settings.
+          
+          .. code-block:: yaml
+          
+              type: http
+              method: GET
+              path: /health
+              headers:
+                x-purpose: "health probe"
+              timeout: 5.0
+        ''',
+        'properties': dict({
+          'headers': dict({
+            'additionalProperties': True,
+            'title': 'Headers',
+            'type': 'object',
+          }),
+          'interval': dict({
+            'default': 10.0,
+            'title': 'Interval',
+            'type': 'number',
+          }),
+          'method': dict({
+            'default': 'GET',
+            'title': 'Method',
+            'type': 'string',
+          }),
+          'path': dict({
+            'default': '/',
+            'title': 'Path',
+            'type': 'string',
+          }),
+          'timeout': dict({
+            'default': 10.0,
+            'title': 'Timeout',
+            'type': 'number',
+          }),
+          'verify': dict({
+            'default': True,
+            'title': 'Verify',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'RemoteProbeSettings',
+        'type': 'object',
+      }),
+      'RemoteSettings': dict({
+        'additionalProperties': False,
+        'description': '''
+          A ``HttpRemote`` is a collection of endpoints that a proxy will use to route requests. It is used as the
+          configuration parser for ``proxy.endpoints[].remote`` settings.
+          
+          .. code-block:: yaml
+          
+              min_pool_size: 1
+              endpoints:
+                # see HttpEndpoint
+                - ...
+              probe:
+                # see HttpProbe
+                ...
+        ''',
+        'properties': dict({
+          'break_on': dict({
+            'default': list([
+              'network_error',
+              'unhandled_exception',
+            ]),
+            'items': dict({
+              'type': 'string',
+            }),
+            'title': 'Break On',
+            'type': 'array',
+          }),
+          'check_after': dict({
+            'default': 10.0,
+            'title': 'Check After',
+            'type': 'number',
+          }),
+          'endpoints': dict({
+            'default': None,
+            'items': dict({
+              '$ref': '#/$defs/RemoteEndpointSettings',
+            }),
+            'title': 'Endpoints',
+            'type': 'array',
+          }),
+          'liveness': dict({
+            'default': dict({
+              'type': 'inherit',
+            }),
+            'discriminator': dict({
+              'mapping': dict({
+                'ignore': '#/$defs/IgnoreLivenessSettings',
+                'inherit': '#/$defs/InheritLivenessSettings',
+                'leaky': '#/$defs/LeakyBucketLivenessSettings',
+                'naive': '#/$defs/NaiveLivenessSettings',
+              }),
+              'propertyName': 'type',
+            }),
+            'oneOf': list([
+              dict({
+                '$ref': '#/$defs/IgnoreLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/InheritLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/LeakyBucketLivenessSettings',
+              }),
+              dict({
+                '$ref': '#/$defs/NaiveLivenessSettings',
+              }),
+            ]),
+            'title': 'Liveness',
+          }),
+          'min_pool_size': dict({
+            'default': 1,
+            'title': 'Min Pool Size',
+            'type': 'integer',
+          }),
+          'probe': dict({
+            'anyOf': list([
+              dict({
+                '$ref': '#/$defs/RemoteProbeSettings',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+          }),
+        }),
+        'title': 'RemoteSettings',
+        'type': 'object',
+      }),
+      'Service': dict({
+        'additionalProperties': True,
+        'description': 'A settings base class for service definitions.',
+        'properties': dict({
+          'arguments': dict({
+            'anyOf': list([
+              dict({
+                'additionalProperties': True,
+                'type': 'object',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'description': 'Arguments for the service constructor.',
+            'title': 'Arguments',
+          }),
+          'base': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Base type for service definition.',
+            'title': 'Base',
+          }),
+          'constructor': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Optional custom constructor for the service.',
+            'title': 'Constructor',
+          }),
+          'type': dict({
+            'anyOf': list([
+              dict({
+                'type': 'string',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'description': 'Type for service definition.',
+            'title': 'Type',
+          }),
+        }),
+        'title': 'Service',
+        'type': 'object',
+      }),
+    }),
+    'properties': dict({
+      'remote': dict({
+        '$ref': '#/$defs/Remote',
+        'default': None,
+      }),
+      'settings': dict({
+        '$ref': '#/$defs/EndpointSettings',
+      }),
+    }),
+    'required': list([
+      'settings',
+    ]),
+    'title': 'Endpoint',
     'type': 'object',
   })
 # ---

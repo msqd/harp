@@ -17,6 +17,16 @@ class BaseEndpointSettings(Configurable):
     description: Optional[str] = None
 
 
+DEFAULT_CONTROLLER_TYPE = "harp_apps.proxy.controllers.HttpProxyController"
+
+
+def _uses_default_controller(values) -> bool:
+    controller = values.get("controller")
+    if controller is None:
+        return True
+    return (controller.get("type") if isinstance(controller, dict) else controller.type) == DEFAULT_CONTROLLER_TYPE
+
+
 class EndpointSettings(BaseEndpointSettings):
     """
     Configuration parser for ``proxy.endpoints[]`` settings.
@@ -48,7 +58,7 @@ class EndpointSettings(BaseEndpointSettings):
 
     #: custom controller
     controller: Optional[Service | str] = Service(
-        type="harp_apps.proxy.controllers.HttpProxyController",
+        type=DEFAULT_CONTROLLER_TYPE,
         arguments={"dispatcher": LazyService(type="IAsyncEventDispatcher")},
     )
 
@@ -63,16 +73,16 @@ class EndpointSettings(BaseEndpointSettings):
                     "a historical shorthand syntax for the first one."
                 )
             values["remote"] = RemoteSettings(endpoints=[RemoteEndpointSettings(url=values.pop("url"))])
-        if values.get("remote") is None:
-            raise ValueError(
-                f"Endpoint {values.get('name')!r} needs a destination: define either proxy.endpoints[].url or "
-                "proxy.endpoints[].remote."
-            )
         if "controller" in values and values["controller"] is None:
             # null means default
             del values["controller"]
         if "controller" in values and isinstance(values["controller"], str):
             values["controller"] = Service(type=values["controller"])
+        if values.get("remote") is None and _uses_default_controller(values):
+            raise ValueError(
+                f"Endpoint {values.get('name')!r} needs a destination: define either proxy.endpoints[].url or "
+                "proxy.endpoints[].remote (only a custom controller can go without)."
+            )
 
         return values
 
