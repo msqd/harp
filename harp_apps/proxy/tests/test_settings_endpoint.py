@@ -1,3 +1,6 @@
+import pytest
+from pydantic import ValidationError
+
 from harp.config.asdict import asdict
 from harp.utils.testing.config import BaseConfigurableTest
 from harp_apps.proxy.settings import EndpointSettings
@@ -10,24 +13,11 @@ base_settings = {
 remote_settings = {"endpoints": [{"url": "http://example.com/"}]}
 
 
-class TestEndpointSettings(BaseConfigurableTest):
-    type = EndpointSettings
-    initial = {**base_settings}
-    expected = {**initial}
-    expected_verbose = {
-        **expected,
-        "description": None,
-        "remote": None,
-        "controller": {
-            "type": "harp_apps.proxy.controllers.HttpProxyController",
-            "dispatcher": {"type": "IAsyncEventDispatcher"},
-        },
-    }
-
+class TestEndpointSettings:
     def test_old_url_syntax(self):
-        obj = self.create(url="http://my-endpoint:8080")
+        obj = EndpointSettings(**base_settings, url="http://my-endpoint:8080")
         assert asdict(obj) == {
-            **self.expected,
+            **base_settings,
             "remote": {"endpoints": [{"url": "http://my-endpoint:8080/"}]},
         }
 
@@ -63,27 +53,6 @@ class TestEndpointSettingsWithRemote(BaseConfigurableTest):
     }
 
 
-class TestEndpointStateful(BaseConfigurableTest):
-    type = Endpoint
-    initial = {
-        "settings": TestEndpointSettings.initial,
-    }
-    expected = {
-        "settings": {
-            **TestEndpointSettings.expected,
-            "description": None,
-        },
-    }
-    expected_verbose = {
-        **expected,
-        "remote": None,
-    }
-
-    def test_repr(self):
-        obj = self.create()
-        assert repr(obj) == "Endpoint(remote=None)"
-
-
 class TestEndpointStatefulWithRemote(BaseConfigurableTest):
     type = Endpoint
     initial = {
@@ -108,7 +77,7 @@ class TestEndpointStatefulWithRemote(BaseConfigurableTest):
             },
         },
         "settings": {
-            **TestEndpointSettings.expected,
+            **base_settings,
             "description": None,
         },
     }
@@ -129,3 +98,13 @@ class TestEndpointStatefulWithRemote(BaseConfigurableTest):
         },
         "settings": expected["settings"],
     }
+
+
+class TestEndpointSettingsValidation:
+    def test_null_controller_selects_default(self):
+        settings = EndpointSettings(**base_settings, url="http://example.com/", controller=None)
+        assert settings.controller == EndpointSettings(**base_settings, url="http://example.com/").controller
+
+    def test_endpoint_without_url_nor_remote_is_refused(self):
+        with pytest.raises(ValidationError, match="my-endpoint"):
+            EndpointSettings(**base_settings)

@@ -1,0 +1,1 @@
+The proxy full example no longer crashes at startup: ``controller: null`` selects the default controller, and an endpoint with neither ``url`` nor ``remote`` is refused at settings validation, naming the endpoint.

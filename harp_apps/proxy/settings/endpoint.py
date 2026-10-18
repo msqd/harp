@@ -63,6 +63,14 @@ class EndpointSettings(BaseEndpointSettings):
                     "a historical shorthand syntax for the first one."
                 )
             values["remote"] = RemoteSettings(endpoints=[RemoteEndpointSettings(url=values.pop("url"))])
+        if values.get("remote") is None:
+            raise ValueError(
+                f"Endpoint {values.get('name')!r} needs a destination: define either proxy.endpoints[].url or "
+                "proxy.endpoints[].remote."
+            )
+        if "controller" in values and values["controller"] is None:
+            # null means default
+            del values["controller"]
         if "controller" in values and isinstance(values["controller"], str):
             values["controller"] = Service(type=values["controller"])
 

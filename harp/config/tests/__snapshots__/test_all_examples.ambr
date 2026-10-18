@@ -285,8 +285,7 @@
   janitor: {}
   proxy:
     endpoints:
-    - controller: null
-      description: A very informative description
+    - description: A very informative description
       name: httpbins
       port: 4000
       remote:
