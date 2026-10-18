@@ -9,10 +9,8 @@ on:
       - '*.*.*-*'    # Pre-release tags (e.g., 0.9.0-rc1, 0.9.0-beta.1)
   pull_request:
 
-permissions:
-  contents: write   # Required for creating GitHub releases
-  packages: write   # Required for pushing to GHCR
-  id-token: write   # Required for trusted publishing to PyPI
+# Least privilege: every job declares what it needs. No job pushes with the checkout credentials.
+permissions: {}
 
 env:
   DOCKER_BUILDKIT: "1"
@@ -37,6 +35,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
@@ -52,6 +52,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
@@ -73,6 +75,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -106,6 +110,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -141,6 +147,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -177,6 +185,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -210,6 +220,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -242,6 +254,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -270,6 +284,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -298,6 +314,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -331,6 +349,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -361,10 +381,13 @@ jobs:
   build-python-package:
     name: Build Python Package
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           fetch-depth: 0
           submodules: recursive
 
@@ -451,6 +474,8 @@ jobs:
       - name: Checkout code
         if: matrix.python-version
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         if: matrix.python-version
@@ -480,6 +505,14 @@ jobs:
           python -c "import sys; print(f'Python: {sys.version}')"
           ${{ matrix.python-gil && 'python -c "import sys; print(f\"GIL enabled: {sys._is_gil_enabled()}\")"' || 'echo "GIL enabled (standard Python)"' }}
 
+      - name: Run the installed wheel (rules run)
+        if: matrix.python-version
+        run: |
+          cd "$(mktemp -d)"
+          printf 'rules:\n  "*":\n    "*":\n      on_remote_response: |\n        logger.info("hi")\n' > rules.yml
+          harp-proxy rules run --help
+          harp-proxy rules run -f rules.yml api=http://127.0.0.1:9 GET /
+
   # Docker image with wheel from local build (non-release branches)
   build-docker-image-development:
     name: Build Docker Image (Development)
@@ -495,6 +528,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Download wheel artifact
@@ -613,6 +647,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Set up Python
@@ -699,6 +734,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Download wheel artifact

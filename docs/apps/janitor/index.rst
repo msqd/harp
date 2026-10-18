@@ -6,7 +6,8 @@ Janitor
 .. versionadded:: 0.5
 
 The ``harp_apps.janitor`` application runs a background worker to clean up the storage. It deletes all transactions
-older than the retention period (60 days by default), and the orphan blobs.
+older than the retention period (60 days by default), and the orphan blobs. Transactions flagged by a user
+(favorites) are kept past the retention period.
 
 An orphan is a blob referenced by no message and by no HTTP cache entry. Blobs written in the last 10 minutes are kept,
 as the message or cache entry referencing them may not be committed yet. ``cache/meta`` blobs, the HTTP cache entries
