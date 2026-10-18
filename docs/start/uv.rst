@@ -50,6 +50,9 @@ To store in PostgreSQL or MySQL/MariaDB, add the matching extra:
     uvx --from "harp-proxy[postgresql]" harp-proxy server
     uvx --from "harp-proxy[mysql]" harp-proxy server
 
+On Windows the default server runs on the asyncio event loop, because uvloop is not available there (see
+:doc:`/operate/server`).
+
 Test Your Proxy
 :::::::::::::::
 

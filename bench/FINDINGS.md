@@ -16,9 +16,9 @@ with no regression elsewhere. Laptop numbers validate tooling only; verdicts nee
 | Blob hashing on the request path | Python fix | **done** | no copy, off-loop above 64 KiB (#1177, #1187) |
 | Dispatch logging | Python fix | **done** | `debug` (#1184, #1188) |
 | SQLite storage | Python fix | **done** | WAL + busy_timeout (#1152, #1206) |
-| ASGI server (hypercorn) | adopt | **keep hypercorn** | verdict run: best on `default` is uvicorn -11% CPU, under the bar (and no h2c); hypercorn+uvloop -7% is a free opt-in |
-| Upstream client (httpx transport) | adopt | **aiohttp opt-in** | verdict run on `bare`: aiohttp -16% CPU, pyreqwest ceiling -18 to -19%; on `default` ≈200 µs of 6.6 ms. No own Rust: the ceiling is 3% under aiohttp |
-| Storage write pipeline | Python design | open lead | see below |
+| ASGI server (hypercorn) | adopt | **keep hypercorn, uvloop by default** | verdict run: best on `default` is uvicorn -11% CPU, under the bar (and no h2c); hypercorn+uvloop -7%, default with aiohttp (#1362) |
+| Upstream client (httpx transport) | adopt | **aiohttp by default** | verdict run on `bare`: aiohttp -16% CPU, pyreqwest ceiling -18 to -19%. No own Rust: the ceiling is 3% under aiohttp. Default with uvloop (#1362), compatibility review #1363 |
+| Storage write pipeline | Python design | **write once, batched** | 55.6% of `default` CPU; ADR-0006, #1365, #1366, #1367 |
 
 ## Verdict runs
 
@@ -78,11 +78,51 @@ aiohttp saves ~200 µs and ~0.2 ms of p50 per request, conforming (no divergence
 ~3 % of 6.6 ms: under the bar on the verdict profile, worth it as an opt-in for proxy-only deployments. The Rust ceiling
 beats aiohttp by 3 %, far from the 15 % that would justify an own hyper transport: **no own Rust on the client**.
 
+### Default stack (interleaved, 5 rounds)
+
+| Stack | `default` CPU/req | `default` p99 overhead | `bare` CPU/req |
+|---|---|---|---|
+| hypercorn + httpx | 7713 µs | 3.98 ms | 1500 µs |
+| hypercorn+uvloop + httpx | -7.0 % | 3.78 ms | -5.8 % |
+| hypercorn + aiohttp | -5.1 % | 3.39 ms | -13.8 % |
+| hypercorn+uvloop + aiohttp | **-10.3 %** | **3.33 ms** | **-18.2 %** |
+
+The gains add up only in part (about -12 % expected, -10.3 % measured). Under the bar on `default`, but both are
+adoptions with no code to own: they become the defaults (#1362). Absolute numbers differ from the baseline table
+because this ran on another VM; only the interleaved ratios compare.
+
+### Where `default` CPU goes (py-spy, 90 s at 50 req/s, hypercorn + httpx)
+
+| Part | Share of HARP samples |
+|---|---|
+| Recording (storage worker, SQLAlchemy, asyncpg) | 55.6 % |
+| Event loop and socket I/O | 20.0 % |
+| Kernel and proxy controller | 6.9 % |
+| HTTP cache (hishel) | 5.2 % |
+| Imports at startup | 4.8 % |
+| hypercorn and h11 | 3.9 % |
+| Upstream client | 3.5 % |
+
+Inside recording, 58 % of samples end in SQLAlchemy Python code (cache keys, compilation, ORM unit of work,
+greenlets), 17 % in asyncpg, 12 % in asyncio. Each transaction costs about eight committed round trips:
+transaction insert, two message inserts, four blob puts, transaction update. With uvloop, 28 % of samples land in
+the loop's compiled code, which py-spy cannot split; recording stays the largest part.
+
+### Saturation on `default` (rates 50 to 250 req/s, 20 s steps, 2 rounds each)
+
+| Stack | Records everything up to | Bodies shed from | p99 latency at 250 req/s | Peak RSS |
+|---|---|---|---|---|
+| hypercorn + httpx | 50 req/s | 100 req/s | 21 to 31 ms | 113 to 126 MiB |
+| hypercorn+uvloop + aiohttp | 100 req/s | 125 req/s | 28 to 37 ms | 120 to 126 MiB |
+
+The proxy serves 250 req/s with no error and a flat p50 on both stacks: recording sets the limit. Shedding bounds
+the backlog, so RSS stays flat. In some steps one message is missing without its marker (#1367 checks it).
+
 ### What this leaves
 
 With storage on, the proxy path is no longer where the cost is: what `default` adds over `bare` (recording to PostgreSQL first) is ~80 % of CPU/request on
 `default` and sets saturation. The next candidate is the storage write pipeline (batching, fewer round trips), in
-Python first.
+Python first: ADR-0006.
 
 ## Upstream client matrix (#1172)
 

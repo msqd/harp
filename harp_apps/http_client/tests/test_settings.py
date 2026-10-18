@@ -1,8 +1,10 @@
 import httpx
+import pytest
 from httpx import AsyncClient
 
 from harp.config import ConfigurationBuilder
 from harp.utils.testing.config import BaseConfigurableTest
+from harp_apps.http_client.aiohttp_transport import AiohttpTransport
 from harp_apps.http_client.settings import HttpClientSettings
 from harp_apps.http_client.transports import AsyncFilterableTransport
 
@@ -27,7 +29,11 @@ class TestHttpClientSettings(BaseHttpClientSettingsTest):
         "enabled": True,
         "proxy_transport": {"type": "harp_apps.http_client.transports.AsyncFilterableTransport"},
         "timeout": 30.0,
-        "transport": {"retries": 0, "type": "httpx.AsyncHTTPTransport", "verify": True},
+        "transport": {
+            "retries": 0,
+            "type": "harp_apps.http_client.aiohttp_transport.AiohttpTransport",
+            "verify": True,
+        },
         "type": "httpx.AsyncClient",
     }
 
@@ -40,7 +46,31 @@ class TestHttpClientSettings(BaseHttpClientSettingsTest):
         http_client = system.provider.get("http_client")
         assert http_client is system.provider.get(AsyncClient)
         assert isinstance(http_client._transport, AsyncFilterableTransport)
+        assert isinstance(http_client._transport._transport, AiohttpTransport)
+
+    async def test_partial_transport_block_keeps_the_default_type(self):
+        settings = self.create(transport={"arguments": {"verify": True}})
+
+        system = await self.create_system(settings)
+        http_client = system.provider.get("http_client")
+
+        assert isinstance(http_client._transport._transport, AiohttpTransport)
+
+    async def test_httpx_transport_stays_selectable(self):
+        settings = self.create(transport={"type": "httpx.AsyncHTTPTransport", "arguments": {"verify": True}})
+
+        system = await self.create_system(settings)
+        http_client = system.provider.get("http_client")
+
         assert isinstance(http_client._transport._transport, httpx.AsyncHTTPTransport)
+
+    async def test_refused_transport_arguments_fail_naming_the_way_out(self):
+        settings = self.create(transport={"arguments": {"verify": True, "retries": 2}})
+
+        system = await self.create_system(settings)
+
+        with pytest.raises(ValueError, match=r"httpx\.AsyncHTTPTransport"):
+            system.provider.get("http_client")
 
     async def test_with_custom_transport(self):
         """Test http_client with custom transport."""

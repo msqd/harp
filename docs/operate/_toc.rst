@@ -7,6 +7,7 @@
 
     configure/index
     migrations
+    server
     logging
     prometheus
     runtime

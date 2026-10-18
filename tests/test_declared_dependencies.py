@@ -32,7 +32,6 @@ DELIBERATELY_UNDECLARED = {
     "honcho",
     # Optional `servers` extra, imported lazily by the matching adapter (harp/config/adapters).
     "uvicorn",
-    "uvloop",
     "granian",
     # Optional `pyreqwest` extra, imported only when `http_client.transport.type` names its transport.
     "pyreqwest",

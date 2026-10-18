@@ -7,8 +7,8 @@ http_client:
   transport:
     # You can customize the default transport implementation. The values shown are the
     # defaults, and you only need to set them if you want to provide different values.
-    type: httpx.AsyncHTTPTransport
+    # The default is aiohttp-based: set `httpx.AsyncHTTPTransport` for HTTP/2, retries,
+    # a CA path as `verify`, client certificates, proxies, etc.
+    type: harp_apps.http_client.aiohttp_transport.AiohttpTransport
     retries: 0
     verify: true
-    http1: true
-    http2: false

@@ -27,7 +27,7 @@ class TestDefaultsWithNoStorage(BaseTestDefaultsWith):
                 "timeout": 30.0,
                 "transport": {
                     "retries": 0,
-                    "type": "httpx.AsyncHTTPTransport",
+                    "type": "harp_apps.http_client.aiohttp_transport.AiohttpTransport",
                     "verify": True,
                 },
                 "type": "httpx.AsyncClient",
@@ -37,7 +37,7 @@ class TestDefaultsWithNoStorage(BaseTestDefaultsWith):
     @respx.mock
     async def test_events(self):
         """Test that http_client events are fired correctly."""
-        system = await self.create_system()
+        system = await self.create_system({"http_client": {"transport": {"type": "httpx.AsyncHTTPTransport"}}})
         endpoint = respx.get(URL).mock(return_value=Response(200, content=b"Hello, world."))
         http_client = system.provider.get(AsyncClient)
 

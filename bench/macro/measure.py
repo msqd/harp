@@ -66,7 +66,7 @@ def require_database_url(env: Mapping[str, str], *, stores: bool) -> Optional[st
     if not url:
         raise ValueError(
             f"{DATABASE_URL_ENV} is not set: profiles that record need a PostgreSQL database, "
-            "e.g. postgresql+asyncpg://bench@/bench?host=/run/postgresql"
+            "e.g. postgresql+asyncpg://bench@127.0.0.1:5432/bench"
         )
     if not url.startswith("postgresql"):
         raise ValueError(

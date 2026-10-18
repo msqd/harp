@@ -21,7 +21,10 @@ class TestProxyWithHttpCache:
         builder = ConfigurationBuilder(
             {
                 "applications": ["http_client", "http_cache", "proxy"],
-                "http_client": {"enabled": True},
+                "http_client": {
+                    "enabled": True,
+                    "transport": {"type": "httpx.AsyncHTTPTransport"},
+                },  # respx mocks httpx
                 "http_cache": {"enabled": True},
                 "proxy": {
                     "enabled": True,
@@ -65,7 +68,10 @@ class TestProxyWithHttpCache:
         builder = ConfigurationBuilder(
             {
                 "applications": ["http_client", "proxy"],  # NO http_cache
-                "http_client": {"enabled": True},
+                "http_client": {
+                    "enabled": True,
+                    "transport": {"type": "httpx.AsyncHTTPTransport"},
+                },  # respx mocks httpx
                 "proxy": {
                     "enabled": True,
                     "endpoints": [{"name": "api", "port": 80, "url": "http://api.example.com/"}],
@@ -100,7 +106,10 @@ class TestProxyWithHttpCache:
         builder = ConfigurationBuilder(
             {
                 "applications": ["http_client", "http_cache", "proxy"],
-                "http_client": {"enabled": True},
+                "http_client": {
+                    "enabled": True,
+                    "transport": {"type": "httpx.AsyncHTTPTransport"},
+                },  # respx mocks httpx
                 "http_cache": {"enabled": True},
                 "proxy": {
                     "enabled": True,
