@@ -71,6 +71,10 @@ class TestRequireDatabaseUrl:
         with pytest.raises(ValueError, match="BENCH_DATABASE_URL is not set"):
             measure.require_database_url(env, stores=True)
 
+    def test_unset_message_gives_a_tcp_example(self):
+        with pytest.raises(ValueError, match=r"postgresql\+asyncpg://bench@127\.0\.0\.1:5432/bench"):
+            measure.require_database_url({}, stores=True)
+
     @pytest.mark.parametrize("url", ["sqlite+aiosqlite:///x.db", "mysql+aiomysql://u@h/db"])
     def test_only_postgresql_is_accepted(self, url):
         with pytest.raises(ValueError, match="PostgreSQL"):
