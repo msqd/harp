@@ -16,8 +16,8 @@ of the APIs you use. It runs in your infrastructure, close to your applications.
     :target: https://github.com/msqd/harp/actions/workflows/cicd.yml
     :alt: CI/CD Pipeline Status
 
-.. image:: https://readthedocs.org/projects/harp-proxy/badge/?version=0.9
-    :target: https://docs.harp-project.net/en/0.9/
+.. image:: https://readthedocs.org/projects/harp-proxy/badge/?version=stable
+    :target: https://docs.harp-project.net/en/stable/
     :alt: Documentation
 
 .. image:: https://img.shields.io/pypi/pyversions/harp-proxy.svg
@@ -108,7 +108,7 @@ For more installation options:
 * **Quick & Easy:** Use ``uvx`` (shown above) - runs without installing HARP globally
 * **Traditional Python:** ``pip install harp-proxy`` - for standard Python environments
 * **Containerized:** `Docker <https://docs.harp-project.net/en/latest/start/docker.html>`_ - for production deployments
-* **From Source:** `Development setup <https://docs.harp-project.net/en/latest/start/python.html>`_ - for contributing
+* **From Source:** `Development setup <https://docs.harp-project.net/en/latest/start/sources.html>`_ - for contributing
 
 Refer to the `Getting Started Guide <https://docs.harp-project.net/en/latest/start/index.html>`_ for detailed instructions.
 
@@ -119,7 +119,7 @@ How it works?
 Overview
 --------
 
-.. figure:: https://github.com/msqd/harp/raw/0.9/docs/images/HowItWorks-Overview.png
+.. figure:: https://github.com/msqd/harp/raw/main/docs/images/HowItWorks-Overview.png
     :alt: An overview of how HARP works in your system
     :align: center
 
@@ -128,11 +128,12 @@ Overview
   configuration required. Of course, everything is modular and configurable, so you'll be able to fine-tune for your
   taste later.
 * **Reduced Network Distance:** As a *nearline* proxy, HARP minimizes the network distance between your application
-  and external services, when possible, using standard techniques like caching or prefetching. This leads to faster
+  and external services, when possible, using standard techniques like caching. This leads to faster
   response times and improved overall performance of your application, even before any configuration is done.
 * **Simplified Development:** HARP eliminates the need for writing extensive code for functionalities such as caching,
-  monitoring, alerting, rate limiting, circuit breaking, retries, tracing, logging, and more. These features can be
-  easily delegated to the proxy, reducing the amount of code you need to write and maintain.
+  monitoring, circuit breaking, logging, and more. These features can be easily delegated to the proxy, reducing the
+  amount of code you need to write and maintain. Prefetching, rate limiting, retries, tracing and alerting are on the
+  roadmap, not available yet.
 * **Seamless HTTP Integration:** HARP seamlessly integrates with your application using the HTTP protocol. This means
   that the integration or removal cost is virtually zero, or even negative when considering the reduction in code you
   won't need to write.
@@ -143,7 +144,7 @@ Overview
 Hub to external services
 ------------------------
 
-.. figure:: https://github.com/msqd/harp/raw/0.6/docs/images/HowItWorks-OverviewMultipleApps.png
+.. figure:: https://github.com/msqd/harp/raw/main/docs/images/HowItWorks-OverviewMultipleApps.png
     :alt: An overview of how HARP works in your system when you have multiple consumers
     :align: center
 
@@ -158,13 +159,13 @@ Service
 -------
 
 Within the service, harp runs one or more proxies, each one listening to one port to instrument your external API calls
-with the features you need (auditing, caching, alerting, circuit breaker switch, health checks, etc.).
+with the features you need (auditing, caching, circuit breaker, health checks, etc.).
 
 Each proxy is configured to intercept and forward requests to a specific external API, with independent configuration.
 
 An additional (optional) port serves a dashboard to observe your proxies in real-time.
 
-.. figure:: https://github.com/msqd/harp/raw/0.9/docs/images/HowItWorks-Service.png
+.. figure:: https://github.com/msqd/harp/raw/main/docs/images/HowItWorks-Service.png
     :alt: What happens within the harp service
     :align: center
 
@@ -184,7 +185,7 @@ HTTP before, you will still speak HTTP. The only change needed in your applicati
 is the base endpoint of the external services. In a modern 12factor-like application, it usually only means changing an
 environment variable.
 
-.. figure:: https://github.com/msqd/harp/raw/0.9/docs/images/HowItWorks-Proxy.png
+.. figure:: https://github.com/msqd/harp/raw/main/docs/images/HowItWorks-Proxy.png
     :alt: What happens within one proxy
     :align: center
 

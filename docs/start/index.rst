@@ -15,7 +15,7 @@ System Requirements
 HARP Proxy has minimal system requirements:
 
 - **Python**: 3.13+ (automatically managed by UV)
-- **Ports**: Default ports are 4000-4100 (proxy endpoints) and 4080 (dashboard)
+- **Ports**: 4080 for the dashboard by default; proxy endpoints listen on the ports you configure (no endpoint exists by default)
 - **Memory**: Minimal (~50MB base, scales with traffic and cache size)
 - **Storage**: Depends on database backend (SQLite in-memory by default)
 
