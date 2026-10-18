@@ -27,6 +27,7 @@ Contents
 
 """
 
+import gc
 import os
 import sys
 from subprocess import check_output
@@ -122,6 +123,10 @@ async def arun(builder: "_ConfigurationBuilder", server: str = DEFAULT_SERVER):
     from harp.config.adapters import get_server
 
     system = await builder.abuild_system()
+    # Everything built at startup lives as long as the process: out of the collector's sight, so its full collections
+    # (which the allocations of a busy proxy trigger) do not walk it, and stay short on the request path.
+    gc.collect()
+    gc.freeze()
     adapter = get_server(server).adapter_type(system)
     try:
         return await adapter.serve()
