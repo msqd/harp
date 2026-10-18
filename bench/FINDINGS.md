@@ -16,9 +16,73 @@ with no regression elsewhere. Laptop numbers validate tooling only; verdicts nee
 | Blob hashing on the request path | Python fix | **done** | no copy, off-loop above 64 KiB (#1177, #1187) |
 | Dispatch logging | Python fix | **done** | `debug` (#1184, #1188) |
 | SQLite storage | Python fix | **done** | WAL + busy_timeout (#1152, #1206) |
-| ASGI server (hypercorn, pure h11) | adopt | open | #1171: needs a server switch first, HARP hardcodes `HypercornAdapter` |
-| Upstream client (httpx) | adopt | **provisional** | #1172: aiohttp and pyreqwest transports both ~-5 to -8% CPU on `bare`; the cost left is above the transport |
+| ASGI server (hypercorn) | adopt | **keep hypercorn** | verdict run: best on `default` is uvicorn -11% CPU, under the bar (and no h2c); hypercorn+uvloop -7% is a free opt-in |
+| Upstream client (httpx transport) | adopt | **aiohttp opt-in** | verdict run on `bare`: aiohttp -16% CPU, pyreqwest ceiling -18 to -19%; on `default` ≈200 µs of 6.6 ms. No own Rust: the ceiling is 3% under aiohttp |
 | Storage write pipeline | Python design | open lead | see below |
+
+## Verdict runs
+
+Remote dedicated VM: 4 physical cores, SMT off (Xeon Platinum 8488C), HARP on 2 cores, origin and load generator sharing
+the third, PostgreSQL 17 alone on the fourth. `explore/extensions` at `b240b57b`, 50 req/s open loop, 30 s measured
+after 5 s warmup, 0 errors (any non-200 counts as one) in every run below.
+
+### Noise gate
+
+Same build, 5 runs per profile, on two machines.
+
+| Profile | Machine A: CPU/req (spread) | Machine B: CPU/req (spread) | A vs B |
+|---|---|---|---|
+| `bare` | 1467 µs (1.8 %) | 1300 µs (2.6 %) | -11 % |
+| `default` | 7460 µs (1.6 %) | 6607 µs (1.6 %) | -11 % |
+
+- Within a machine, CPU/request, p90 and p99 stay within 2–4 %: a 15 % bar is unambiguous.
+- Across machines of the same type there is a ~11 % offset. **A verdict only compares variants interleaved on one
+  machine** (round-robin, 5 rounds); a campaign is never compared with another.
+- `default` and `loaded` p50 can be bimodal on some machines (12–19 % spread, p90 stable): judge them on CPU and
+  p90/p99.
+- Micro (`bench-noise`, blob id): ≤ 2 % across 5 runs.
+
+### Baseline
+
+| Profile | CPU/req | Overhead p50 / p90 / p99 (ms) | Cold startup |
+|---|---|---|---|
+| `bare` | 1280 µs | 1.08 / 1.10 / 1.56 | 0.55 s |
+| `default` | 6547 µs | 2.54 / 2.63 / 3.05 | 0.64 s |
+| `loaded` | 7033 µs | 3.89 / 4.07 / 4.95 | 0.64 s |
+
+`default` rate steps: p99 3.5–4.7 ms and storage backlog ≤ 7 up to 100 req/s; at 200 req/s p99 20 ms, backlog 3631,
+1880 messages shed (all marked), drained in 3.2 s. Saturation sits between 100 and 200 req/s and is storage-bound:
+recording costs ~5× the proxying itself.
+
+### ASGI servers (interleaved)
+
+| Server | `bare` CPU/req | `default` CPU/req | `default` p50 / p99 (ms) |
+|---|---|---|---|
+| hypercorn | 1280 µs | 6620 µs | 2.55 / 3.09 |
+| hypercorn+uvloop | -4.7 % | -7.2 % | 2.50 / 3.00 |
+| uvicorn | -21.9 % | -11.1 % | 2.41 / 2.93 |
+| granian | -17.7 % | -1.1 % | 2.60 / 3.37 |
+
+Ranges do not overlap, but nothing clears 15 % on `default`, the verdict profile. hypercorn stays. uvicorn is rejected
+(under the bar, no h2c, two workarounds). hypercorn+uvloop is the one alternative worth carrying.
+
+### HTTP transports (interleaved, `bare`)
+
+| Transport | 50 req/s CPU/req | 200 req/s CPU/req | p50 / p99 at 50 req/s (ms) |
+|---|---|---|---|
+| httpx | 1287 µs | 1247 µs | 1.08 / 1.56 |
+| aiohttp | -15.5 % | -16.3 % | 0.88 / 1.42 |
+| pyreqwest (ceiling, non-conforming) | -18.1 % | -19.0 % | 0.85 / 1.35 |
+
+aiohttp saves ~200 µs and ~0.2 ms of p50 per request, conforming (no divergence in the suite). On `default` that is
+~3 % of 6.6 ms: under the bar on the verdict profile, worth it as an opt-in for proxy-only deployments. The Rust ceiling
+beats aiohttp by 3 %, far from the 15 % that would justify an own hyper transport: **no own Rust on the client**.
+
+### What this leaves
+
+With storage on, the proxy path is no longer where the cost is: what `default` adds over `bare` (recording to PostgreSQL first) is ~80 % of CPU/request on
+`default` and sets saturation. The next candidate is the storage write pipeline (batching, fewer round trips), in
+Python first.
 
 ## Upstream client matrix (#1172)
 
