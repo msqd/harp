@@ -68,8 +68,8 @@ own and the rest stay unused. Override with `--harp-cpus/--origin-cpus/--loadgen
 ### Database
 
 Recording profiles (`default`, `loaded`) use PostgreSQL only, from the environment variable `BENCH_DATABASE_URL`, e.g.
-`postgresql+asyncpg://bench@localhost/bench` (add `?host=/run/postgresql` to reach it over a unix socket; HARP rejects
-an empty host). Unset, or not PostgreSQL, the harness exits with a message before starting anything: there is no SQLite
+`postgresql+asyncpg://bench@127.0.0.1:5432/bench`. A unix socket (`?host=/run/postgresql`) does not work yet: HARP's
+migrations fail on the percent-encoded path. Unset, or not PostgreSQL, the harness exits with a message before starting anything: there is no SQLite
 fallback. `bare` needs no database.
 
 Before every HARP start the harness drops and recreates the `public` schema (`DROP SCHEMA public CASCADE; CREATE SCHEMA
