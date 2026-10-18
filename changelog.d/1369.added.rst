@@ -1,0 +1,1 @@
+Document the ``--server`` / ``HARP_SERVER`` choice, uvloop and its Windows fallback in the operator guide.
