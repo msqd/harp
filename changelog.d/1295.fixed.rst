@@ -1,0 +1,1 @@
+Docs for users run ``harp-proxy server`` instead of the development launcher ``harp-proxy start``.

@@ -70,7 +70,7 @@ Set the ``LOGGING_FORMAT`` environment variable to choose a format (defaults to 
 
 .. code-block:: bash
 
-    LOGGING_FORMAT=json harp-proxy start ...
+    LOGGING_FORMAT=json harp-proxy server ...
 
 
 Using Logging in Code
