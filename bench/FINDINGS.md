@@ -18,7 +18,7 @@ with no regression elsewhere. Laptop numbers validate tooling only; verdicts nee
 | SQLite storage | Python fix | **done** | WAL + busy_timeout (#1152, #1206) |
 | ASGI server (hypercorn) | adopt | **keep hypercorn, uvloop by default** | verdict run: best on `default` is uvicorn -11% CPU, under the bar (and no h2c); hypercorn+uvloop -7%, default with aiohttp (#1362) |
 | Upstream client (httpx transport) | adopt | **aiohttp by default** | verdict run on `bare`: aiohttp -16% CPU, pyreqwest ceiling -18 to -19%. No own Rust: the ceiling is 3% under aiohttp. Default with uvloop (#1362), compatibility review #1363 |
-| Storage write pipeline | Python design | **write once, batched** | 55.6% of `default` CPU; ADR-0006, #1365, #1366, #1367 |
+| Storage write pipeline | Python design | **write once: done (-48.9 % CPU)**, batching next | 55.6% of `default` CPU; ADR-0006, #1365 merged, #1366, #1367 |
 
 ## Verdict runs
 
@@ -117,6 +117,22 @@ the loop's compiled code, which py-spy cannot split; recording stays the largest
 
 The proxy serves 250 req/s with no error and a flat p50 on both stacks: recording sets the limit. Shedding bounds
 the backlog, so RSS stays flat. In some steps one message is missing without its marker (#1367 checks it).
+
+### Write once per transaction (#1365, interleaved, 5 rounds)
+
+Two commits on one VM, alternating: `explore/extensions` at `b2d39dd4` (base) and #1365 at `717dd7ad`. Both sides ran
+hypercorn on the asyncio loop with the aiohttp transport (the harness labels it httpx, #1374).
+
+| | base | write once |
+|---|---|---|
+| `default` CPU/req at 50 req/s | 6487 µs | **3313 µs (-48.9 %)** |
+| overhead p50 / p99 at 50 req/s | 2.35 / 3.09 ms | 2.32 / 3.11 ms |
+| records everything up to | 100 req/s | **250 req/s** |
+| proxy p99 at 200 req/s | 9.92 ms | 3.22 ms |
+| peak RSS under load | 116 to 121 MiB | 116 to 120 MiB |
+
+Recording drops from about eight committed round trips per transaction to one database transaction. At 300 req/s it
+sheds bodies again (backlog 669, p99 29 ms): batching (#1366) is the next step.
 
 ### What this leaves
 
