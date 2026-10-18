@@ -7,9 +7,11 @@ from http_router import NotFoundError, Router
 from httpx import AsyncClient
 
 from harp import get_logger
+from harp.asgi.events import ViewEvent
 from harp.controllers import RoutingController
 from harp.errors import ConfigurationError
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
+from harp.views.json import on_json_response
 from harp_apps import dashboard
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.settings.remote import Remote
@@ -20,6 +22,46 @@ from .metrics import METRICS_PATH, metrics_controller
 from ..settings.auth import BasicAuthSettings
 
 logger = get_logger(__name__)
+
+#: Sent on every dashboard response: never sniff a type, never render the dashboard in a frame.
+BASE_SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+}
+
+#: What the built dashboard needs, nothing more. Emotion injects <style> elements, hence 'unsafe-inline' for styles
+#: only; message bodies render images through blob: URLs.
+DASHBOARD_CONTENT_SECURITY_POLICY = "; ".join(
+    (
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob:",
+        "font-src 'self' data:",
+        "connect-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+    )
+)
+
+
+def _send_with_headers(asgi_send: ASGISendCallable, headers: dict) -> ASGISendCallable:
+    """Wraps an ASGI send callable to add the given headers to responses written directly to it (static assets),
+    leaving any header the response already carries untouched."""
+
+    async def send(message):
+        if message["type"] == "http.response.start":
+            present = {name.lower() for name, _ in message.get("headers", ())}
+            extra = [(name.lower().encode(), value.encode()) for name, value in headers.items()]
+            message = {
+                **message,
+                "headers": [*message.get("headers", ()), *(h for h in extra if h[0] not in present)],
+            }
+        await asgi_send(message)
+
+    return send
 
 
 class DashboardController(RoutingController):
@@ -103,6 +145,25 @@ class DashboardController(RoutingController):
         )
 
     async def __call__(self, request: HttpRequest, asgi_send: ASGISendCallable, *, transaction_id=None) -> HttpResponse:
+        headers = self._security_headers()
+        response = await self._handle(request, _send_with_headers(asgi_send, headers))
+        if not isinstance(response, HttpResponse):
+            # sub-controllers return view values (json); render them here so they get the headers too
+            event = ViewEvent(request, response)
+            await on_json_response(event)
+            response = event.response or response
+        if isinstance(response, HttpResponse):
+            for name, value in headers.items():
+                response.headers.setdefault(name, value)
+        return response
+
+    def _security_headers(self) -> dict:
+        # the vite devserver relies on inline scripts, so only the built dashboard gets the content security policy
+        if self._ui_devserver_proxy_controller:
+            return BASE_SECURITY_HEADERS
+        return {**BASE_SECURITY_HEADERS, "Content-Security-Policy": DASHBOARD_CONTENT_SECURITY_POLICY}
+
+    async def _handle(self, request: HttpRequest, asgi_send: ASGISendCallable) -> HttpResponse:
         request.extensions.setdefault("user", None)
 
         if self.settings.auth:
