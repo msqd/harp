@@ -106,6 +106,10 @@ class TestCountsSql:
         assert "instr(" not in measure.COUNTS_SQL
         assert "position(" in measure.COUNTS_SQL
 
+    def test_missing_counts_only_finished_transactions(self):
+        # an early-inserted transaction still running has no markers yet: counting it shows a loss that is not one
+        assert measure.COUNTS_SQL.count("finished_at IS NOT NULL") == 3
+
     def test_one_value_per_name(self):
         assert measure.COUNTS_SQL.count("(SELECT count(") + measure.COUNTS_SQL.count("(SELECT count(DISTINCT") >= len(
             measure.COUNT_NAMES

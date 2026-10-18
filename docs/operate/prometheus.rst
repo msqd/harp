@@ -27,6 +27,9 @@ Storage load shedding
 When the storage queue backs up, HARP sheds observability instead of failing requests: transactions, then messages,
 headers and bodies are not stored. Shedding is never silent:
 
+* Payload waiting to be written is also bounded: past ``storage.pending_max_bytes`` (64 MiB by default) new bodies are
+  not stored, then headers (at 1.25 times the limit), then messages (at 1.5 times). Shed items carry the same markers and
+  counters.
 * A warning is logged at most every 10 seconds, with the counts dropped since the previous warning.
 * ``dropped_total{kind="transactions|messages|headers|bodies"}`` counts the same items.
 * ``async_worker_queue_backlog`` reports the queue depth (values below 1 are reported as 1).

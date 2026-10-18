@@ -13,5 +13,7 @@ class StorageSettings(ApplicationSettingsMixin, DatabaseSettings):
     early_insert_after: float = 1.0
     #: Seconds after which a transaction that never ended is forgotten by the worker.
     pending_max_age: float = 3600.0
+    #: Bytes of payload waiting to be written, past which bodies, then headers, then messages are not recorded.
+    pending_max_bytes: int = 64 * 1024 * 1024
     blobs: BlobStorageSettings = BlobStorageSettings()
     redis: Optional[RedisSettings] = None
