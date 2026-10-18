@@ -6,7 +6,14 @@ from sqlalchemy import func, select, text
 from whistle import AsyncEventDispatcher
 
 from harp_apps.storage.models import Tag, TagValue
-from harp_apps.storage.tests.test_worker_write_once import Recording, end, messages, new_transaction, start
+from harp_apps.storage.tests.test_worker_write_once import (
+    Recording,
+    end,
+    messages,
+    new_transaction,
+    one_commit_only,
+    start,
+)
 from harp_apps.storage.worker import StorageAsyncWorkerQueue
 
 
@@ -33,6 +40,7 @@ def failures() -> float:
 
 
 async def test_ended_transactions_wait_for_the_flush_interval_then_go_together(sql_storage, sql_blob_storage):
+    one_commit_only(sql_storage)
     worker = make_worker(sql_storage, sql_blob_storage, flush_interval=0.3, early_insert_after=60)
     recording = Recording(sql_storage.engine)
     try:
@@ -49,6 +57,7 @@ async def test_ended_transactions_wait_for_the_flush_interval_then_go_together(s
 
 
 async def test_a_full_batch_is_flushed_without_waiting(sql_storage, sql_blob_storage):
+    one_commit_only(sql_storage)
     worker = make_worker(sql_storage, sql_blob_storage, flush_interval=60, flush_batch_size=2, early_insert_after=60)
     recording = Recording(sql_storage.engine)
     try:
@@ -85,6 +94,7 @@ async def test_waiting_until_empty_flushes_what_ended(sql_storage, sql_blob_stor
 
 
 async def test_open_transactions_are_inserted_with_the_batch(sql_storage, sql_blob_storage):
+    one_commit_only(sql_storage)
     worker = make_worker(sql_storage, sql_blob_storage, flush_interval=0.3, early_insert_after=0.05)
     recording = Recording(sql_storage.engine)
     try:
@@ -116,6 +126,7 @@ async def test_silent_transactions_are_forgotten_by_the_sweep(sql_storage, sql_b
 
 
 async def test_tags_of_a_batch_are_written_in_its_database_transaction(sql_storage, sql_blob_storage):
+    one_commit_only(sql_storage)
     worker = make_worker(sql_storage, sql_blob_storage, flush_interval=60, early_insert_after=60)
     recording = Recording(sql_storage.engine)
     try:
@@ -227,6 +238,7 @@ async def test_pressure_is_what_ended_while_the_writer_was_busy(sql_storage, sql
 
 
 async def test_a_big_batch_is_written_in_chunks_of_one_database_transaction(sql_storage, sql_blob_storage):
+    one_commit_only(sql_storage)
     worker = make_worker(sql_storage, sql_blob_storage, flush_interval=60, early_insert_after=60)
     recording = Recording(sql_storage.engine)
     try:
