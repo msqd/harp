@@ -87,6 +87,36 @@ async def test_failing_delete_does_not_break_an_invalidating_request(caplog):
     assert "Failed to remove cache entry" in caplog.text
 
 
+class RevalidatingOrigin(httpx.AsyncBaseTransport):
+    """Serves a body that is stale at once, then answers 304 to its validator."""
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        headers = {"cache-control": "max-age=0", "etag": '"v1"'}
+        if "if-none-match" in request.headers:
+            return httpx.Response(304, headers=headers)
+        return httpx.Response(200, headers=headers, content=BODY)
+
+
+async def test_failing_put_while_freshening_on_a_304_serves_the_stored_body(caplog):
+    blobs = FailingBlobStorage()
+    transport = AsyncCacheTransport(
+        next_transport=RevalidatingOrigin(),
+        storage=AsyncStorage(blobs),
+        policy=SpecificationPolicy(cache_options=CacheOptions(shared=True, supported_methods=["GET", "HEAD"])),
+    )
+
+    async def name_endpoint(request: httpx.Request) -> None:
+        request.extensions["harp"] = {"endpoint": "api"}
+
+    async with httpx.AsyncClient(transport=transport, event_hooks={"request": [name_endpoint]}) as client:
+        await client.get(URL)
+        blobs.fail("put")
+        response = await client.get(URL)
+
+    assert response.content == BODY
+    assert "Failed to update cache entry" in caplog.text
+
+
 @pytest.mark.parametrize("operation", ["put", "get", "delete"])
 async def test_failing_storage_never_raises_into_the_client(operation):
     blobs = FailingBlobStorage()
