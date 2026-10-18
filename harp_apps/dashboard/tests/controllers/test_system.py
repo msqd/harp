@@ -1,3 +1,4 @@
+import logging
 from re import escape
 from unittest.mock import ANY, patch
 
@@ -259,3 +260,26 @@ class TestSystemControllerThroughASGI(
         for body in bodies.values():
             assert b"p%40ss" not in body
             assert b"p@ss" not in body
+
+    @parametrize_with_settings(
+        {
+            "applications": ["proxy", "http_client", "storage", "dashboard"],
+            "proxy": {"endpoints": [{"name": "api", "port": 4000, "url": "http://user:secret@127.0.0.1:1/"}]},
+        }
+    )
+    @parametrize_with_database_urls("sqlite")
+    @parametrize_with_blob_storages_urls("sql")
+    async def test_system_endpoints_emit_no_warning_or_log_with_the_password(
+        self, client: ASGICommunicator, blob_storage, caplog, recwarn
+    ):
+        caplog.set_level(logging.DEBUG)
+        bodies = []
+        for path in ("/api/system/", "/api/system/settings", "/api/system/proxy", "/api/system/storage"):
+            response = await client.http_get(path)
+            assert response["status"] == 200, path
+            bodies.append(response["body"])
+
+        assert b"user:***@127.0.0.1:1" in bodies[2]
+        emitted = caplog.text + "\n".join(str(w.message) for w in recwarn.list)
+        assert "secret" not in emitted
+        assert not [str(w.message)[:300] for w in recwarn.list if "Pydantic serializer" in str(w.message)]
