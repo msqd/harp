@@ -33,7 +33,8 @@ def create_alembic_config(url: Union[str, URL, Url, MultiHostUrl]):
     )
     alembic_cfg.set_main_option("truncate_slug_length", "40")
     alembic_cfg.set_main_option("output_encoding", "utf-8")
-    alembic_cfg.set_main_option("sqlalchemy.url", url.render_as_string(hide_password=False))
+    # configparser reads `%` as interpolation: escape the percent-encoding SQLAlchemy puts in urls.
+    alembic_cfg.set_main_option("sqlalchemy.url", url.render_as_string(hide_password=False).replace("%", "%%"))
     alembic_cfg.set_main_option("configure_logger", "false")
 
     return alembic_cfg
