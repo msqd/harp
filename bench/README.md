@@ -110,6 +110,6 @@ rate, peak RSS (`VmHWM` of the HARP pid at the end of the step), backlog and she
 - **Mixed hits/misses** (`loaded`): the origin answers `/cache/*` with `Cache-Control: max-age=60`; `oha
   --rand-regex-url` picks ten cacheable paths for `--cache-share` (default 0.5, in tenths) of the requests and a unique
   `/miss/*` path for the others.
-- **Server / client**: `--server hypercorn` and `--client httpx` are recorded in the result. HARP has no switch for
-  either today (the server adapter is hardcoded in `harp/__init__.py`), so these are the only accepted values until the
-  adapters of #1171/#1172 land.
+- **Server / transport**: `--server` (default HARP's `DEFAULT_SERVER`) and `--transport` (default the `http_client.transport.type` of
+  HARP's settings, a full class path, `httpx.AsyncHTTPTransport` for httpx) are always passed to `harp server` and recorded
+  in the result, so it names the stack that ran.

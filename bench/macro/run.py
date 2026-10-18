@@ -27,7 +27,9 @@ from pathlib import Path
 
 from bench import metadata
 from bench.macro import measure
+from harp import DEFAULT_SERVER
 from harp.config.adapters import SERVERS as adapter_servers
+from harp_apps.http_client.settings import HttpClientSettings
 
 HERE = Path(__file__).parent
 ROOT = HERE.parent.parent
@@ -41,7 +43,7 @@ STORAGE_PROFILES = {"default", "loaded"}
 CACHE_MIX_PROFILES = {"loaded"}
 # The server comes from `harp server --server`; the client transport is `http_client.transport.type`, a full class path.
 SERVERS = adapter_servers
-DEFAULT_TRANSPORT = "httpx.AsyncHTTPTransport"
+DEFAULT_TRANSPORT = HttpClientSettings().transport.type  # what HARP runs without a setting
 HOST = "127.0.0.1"
 METRICS_PATH = "/.prometheus/metrics"
 BODY_BYTES = {"loaded": 16384}
@@ -160,8 +162,7 @@ def harp_command(args, cores, importtime: bool = False) -> list[str]:
         "--endpoint",
         f"bench={args.harp_port}:http://{HOST}:{args.origin_port}/",
     ]
-    if args.transport != DEFAULT_TRANSPORT:
-        command += ["--set", "http_client.transport.type", args.transport]
+    command += ["--set", "http_client.transport.type", args.transport]  # always: the result names what ran
     if args.profile in STORAGE_PROFILES:
         command += ["--set", "storage.url", args.database_url]
         command += ["--set", "dashboard.port", str(args.harp_port + 80)]  # 4080 by default, follows --harp-port
@@ -629,7 +630,9 @@ def parser() -> argparse.ArgumentParser:
         default=True,
         help="load, storage profiles: enable the metrics app to scrape the queue backlog gauge (default: on)",
     )
-    p.add_argument("--server", choices=SERVERS, default=SERVERS[0], help="HARP server adapter (default: %(default)s)")
+    p.add_argument(
+        "--server", choices=SERVERS, default=DEFAULT_SERVER, help="HARP server adapter (default: %(default)s)"
+    )
     p.add_argument(
         "--transport",
         default=DEFAULT_TRANSPORT,

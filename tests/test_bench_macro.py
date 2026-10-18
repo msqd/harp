@@ -318,10 +318,10 @@ class TestShedMarkers:
 class TestHarpCommand:
     URL = "postgresql+asyncpg://bench@/bench?host=/run/postgresql"
 
-    def command(self, transport=run.DEFAULT_TRANSPORT, profile="bare", url=None):
+    def command(self, transport=run.DEFAULT_TRANSPORT, profile="bare", url=None, server="hypercorn"):
         args = argparse.Namespace(
             profile=profile,
-            server="hypercorn",
+            server=server,
             harp_port=4000,
             origin_port=4100,
             transport=transport,
@@ -329,8 +329,26 @@ class TestHarpCommand:
         )
         return run.harp_command(args, {"harp": [0]})
 
-    def test_default_transport_is_not_set(self):
-        assert "http_client.transport.type" not in self.command()
+    def test_the_transport_is_always_passed_even_when_it_is_the_default(self):
+        command = self.command()
+        at = command.index("http_client.transport.type")
+        assert (command[at - 1], command[at + 1]) == ("--set", run.DEFAULT_TRANSPORT)
+
+    def test_httpx_can_be_selected_explicitly(self):
+        command = self.command("httpx.AsyncHTTPTransport")
+        assert command[command.index("http_client.transport.type") + 1] == "httpx.AsyncHTTPTransport"
+
+    def test_the_server_is_always_passed(self):
+        command = self.command(server="uvicorn")
+        assert command[command.index("--server") + 1] == "uvicorn"
+
+    def test_defaults_are_the_ones_of_harp(self):
+        from harp import DEFAULT_SERVER
+        from harp_apps.http_client.settings import HttpClientSettings
+
+        args = run.parser().parse_args(["overhead"])
+        assert args.server == DEFAULT_SERVER
+        assert args.transport == HttpClientSettings().transport.type
 
     def test_transport_is_set_by_class_path(self):
         command = self.command("harp_apps.http_client.aiohttp_transport.AiohttpTransport")
