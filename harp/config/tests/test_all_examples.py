@@ -58,7 +58,5 @@ def test_load_documentation_example(configfile, snapshot):
 
 
 def test_sentry_example_has_placeholder_dsn():
-    with open(get_example_filename("sentry")) as f:
-        content = f.read()
-    assert "o514633" not in content
-    assert "examplePublicKey" in content
+    data = yaml.load(get_example_filename("sentry"))
+    assert data["sentry"]["dsn"] == "https://examplePublicKey@o0.ingest.sentry.io/0"

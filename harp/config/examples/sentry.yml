@@ -1,2 +1,3 @@
 sentry:
+  # Replace with your own project's DSN (Sentry > Settings > Client Keys).
   dsn: https://examplePublicKey@o0.ingest.sentry.io/0

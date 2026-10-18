@@ -1,1 +1,1 @@
-Replace the real Sentry DSN in the `sentry` example with a placeholder.
+Replace the real Sentry DSN in the ``sentry`` example with a placeholder.
