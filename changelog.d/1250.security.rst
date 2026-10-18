@@ -1,0 +1,1 @@
+Stop logging the endpoint password from health-check probes; credentials are sent as a Basic Authorization header.
