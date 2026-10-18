@@ -55,6 +55,15 @@ class AsyncWorkerQueue:
 
         await self._queue.put((item, ignore_errors))
 
+    def push_nowait(self, item, /, *, ignore_errors=False):
+        """Like :meth:`push`, for callers that cannot await (timers). The queue is unbounded: never blocks."""
+        if not self._running:
+            raise RuntimeError("Queue is closed.")
+        if not iscoroutinefunction(item):
+            raise ValueError(f"Unknown item type: {type(item)}, expecting coroutine function.")
+
+        self._queue.put_nowait((item, ignore_errors))
+
     async def wait_until_empty(self):
         await self._queue.join()
 

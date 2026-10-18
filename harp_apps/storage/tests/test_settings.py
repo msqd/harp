@@ -15,6 +15,8 @@ def test_empty_settings():
     assert asdict(settings, verbose=True) == {
         "enabled": True,
         "migrate": True,
+        "early_insert_after": 1.0,
+        "pending_max_age": 3600.0,
         "url": "sqlite+aiosqlite:///:memory:?cache=shared",
         "blobs": {"type": "sql"},
         "redis": None,
@@ -29,6 +31,8 @@ def test_secure():
     assert asdict(settings, verbose=True, mode="python") == {
         "enabled": True,
         "migrate": True,
+        "early_insert_after": 1.0,
+        "pending_max_age": 3600.0,
         "url": "postgresql+asyncpg://user:***@localhost:5432/db",
         "blobs": {"type": "sql"},
         "redis": None,
@@ -41,6 +45,8 @@ def test_secure():
     assert asdict(settings, verbose=True, secure=False) == {
         "enabled": True,
         "migrate": True,
+        "early_insert_after": 1.0,
+        "pending_max_age": 3600.0,
         "url": "postgresql+asyncpg://user:password@localhost:5432/db",
         "blobs": {"type": "sql"},
         "redis": None,
@@ -56,6 +62,8 @@ def test_override_blob_storage_type():
     assert asdict(settings, verbose=True) == {
         "enabled": True,
         "migrate": True,
+        "early_insert_after": 1.0,
+        "pending_max_age": 3600.0,
         "url": "sqlite+aiosqlite:///:memory:?cache=shared",
         "blobs": {"type": "redis"},
         "redis": None,
@@ -72,6 +80,8 @@ def test_override_redis_url():
         "blobs": {"type": "redis"},
         "enabled": True,
         "migrate": True,
+        "early_insert_after": 1.0,
+        "pending_max_age": 3600.0,
         "redis": {"url": "redis://example.com:1234/42"},
         "url": "sqlite+aiosqlite:///:memory:?cache=shared",
     }

@@ -1,0 +1,1 @@
+The storage worker writes each transaction once, when it ends (messages and blobs in the same database transaction); one still open after `storage.early_insert_after` seconds (default 1) is inserted then.
