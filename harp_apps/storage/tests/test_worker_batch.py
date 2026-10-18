@@ -197,3 +197,18 @@ async def test_pressure_counts_the_transactions_waiting_for_the_flush(sql_storag
         assert worker._pressure == 3
     finally:
         await worker.close()
+
+
+async def test_a_big_batch_is_written_in_chunks_of_one_database_transaction(sql_storage, sql_blob_storage):
+    worker = make_worker(sql_storage, sql_blob_storage, flush_interval=60, early_insert_after=60)
+    recording = Recording(sql_storage.engine)
+    try:
+        for i in range(120):
+            await run(worker, new_transaction(), request_body=b"request %d" % i)
+        await worker.wait_until_empty()
+
+        assert recording.commits == 1
+        assert recording.statements.count("INSERT") >= 7  # 120 rows, 240 messages and ~120 blobs, 100 per statement
+        assert await count(sql_storage) == 120
+    finally:
+        await worker.close()

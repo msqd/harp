@@ -15,3 +15,13 @@ def insert_ignoring_duplicates(dialect: str, table, keys: tuple[str, ...] = ("id
     else:
         return insert(table)
     return dialect_insert(table).on_conflict_do_nothing(index_elements=list(keys))
+
+
+#: Rows sent per statement: a batch is one database transaction, but never one long stretch on the event loop.
+CHUNK_SIZE = 100
+
+
+async def execute_in_chunks(conn, statement, rows: list[dict], size: int = CHUNK_SIZE) -> None:
+    """Executes ``statement`` for ``rows`` a chunk at a time, in the caller's transaction, letting the loop run between."""
+    for start in range(0, len(rows), size):
+        await conn.execute(statement, rows[start : start + size])

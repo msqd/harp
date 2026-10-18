@@ -40,7 +40,7 @@ from harp_apps.storage.models import Transaction as SqlTransaction
 from harp_apps.storage.services.blob_storages.sql import SqlBlobStorage
 from harp_apps.storage.models.transactions import transaction_tag_values_association_table
 from harp_apps.storage.types import IBlobStorage, IStorage
-from harp_apps.storage.utils.upsert import insert_ignoring_duplicates
+from harp_apps.storage.utils.upsert import execute_in_chunks, insert_ignoring_duplicates
 
 logger = get_logger(__name__)
 
@@ -386,12 +386,10 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
                 for pending, values in zip(pendings, end_data):
                     if pending.inserted and values:
                         await conn.execute(update(transactions).where(transactions.c.id == pending.id).values(**values))
-                if to_insert:
-                    await conn.execute(insert(transactions), to_insert)
+                await execute_in_chunks(conn, insert(transactions), to_insert)
 
                 messages = [message for _, messages, _, _ in taken for message in messages]
-                if messages:
-                    await conn.execute(insert(SqlMessage.__table__), messages)
+                await execute_in_chunks(conn, insert(SqlMessage.__table__), messages)
 
                 await self._write_tags(conn, [p for p in pendings if p.tags])
         except BaseException:

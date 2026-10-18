@@ -11,7 +11,7 @@ from harp.models import Blob
 from harp_apps.storage.models import Blob as SqlBlob
 from harp_apps.storage.models.blobs import ORPHAN_GRACE
 from harp_apps.storage.types import IBlobStorage
-from harp_apps.storage.utils.upsert import insert_ignoring_duplicates
+from harp_apps.storage.utils.upsert import execute_in_chunks, insert_ignoring_duplicates
 
 logger = get_logger(__name__)
 
@@ -96,7 +96,8 @@ class SqlBlobStorage(IBlobStorage):
             )
             .values(created_at=func.now())
         )
-        await conn.execute(
+        await execute_in_chunks(
+            conn,
             insert_ignoring_duplicates(conn.dialect.name, table),
             [{"id": blob.id, "data": blob.data, "content_type": blob.content_type} for blob in blobs],
         )
