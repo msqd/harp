@@ -2,6 +2,15 @@ from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.http import HttpResponse
 from harp_apps.storage.types import IBlobStorage
 
+#: Blobs are captured traffic, hence untrusted. The dashboard reads them with fetch(), which needs the recorded
+#: content type, but a browser opening a blob URL directly must never render it as a document in the dashboard
+#: origin: download it instead, never sniff its type, and if rendered anyway, sandbox it with no script nor resource.
+INERT_BLOB_HEADERS = {
+    "Content-Disposition": "attachment",
+    "X-Content-Type-Options": "nosniff",
+    "Content-Security-Policy": "sandbox; default-src 'none'",
+}
+
 
 @RouterPrefix("/api/blobs")
 class BlobsController(RoutingController):
@@ -22,4 +31,4 @@ class BlobsController(RoutingController):
         except (ValueError, NotImplementedError):
             data = blob.data
 
-        return HttpResponse(data, content_type=content_type)
+        return HttpResponse(data, content_type=content_type, headers=INERT_BLOB_HEADERS)

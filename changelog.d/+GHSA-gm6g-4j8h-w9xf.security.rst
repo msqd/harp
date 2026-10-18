@@ -1,0 +1,1 @@
+Dashboard serves captured bodies as inert attachments (``Content-Disposition: attachment``, ``nosniff``, sandbox CSP), and sends ``nosniff``, ``X-Frame-Options: DENY`` and a ``Content-Security-Policy`` on every response.
