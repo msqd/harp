@@ -5,6 +5,15 @@ from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 class TestStorageTransactions(StorageTestFixtureMixin):
     @parametrize_with_database_urls()
+    async def test_get_transaction_has_messages(self, sql_storage: SqlStorage):
+        t = await self.create_transaction(sql_storage, endpoint="foo")
+        await self.create_message(sql_storage, transaction_id=t.id, kind="misc", summary="s", headers="h", body="b")
+
+        transaction = await sql_storage.get_transaction(t.id, username="anonymous")
+
+        assert len(transaction.messages) == 1
+
+    @parametrize_with_database_urls()
     async def test_get_transaction_list_without_messages(self, sql_storage: SqlStorage):
         t = await self.create_transaction(sql_storage, endpoint="foo")
         await self.create_message(sql_storage, transaction_id=t.id, kind="misc", summary="s", headers="h", body="b")
