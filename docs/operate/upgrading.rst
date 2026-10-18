@@ -43,6 +43,17 @@ Request and response bodies
   never forwarded upstream. Set ``min_request_body_rate`` to ``0`` to disable the rate check. See
   :ref:`proxy-buffering-and-streaming`.
 
+Upstreams
+---------
+
+- Credentials in an endpoint url (``https://user:password@host/``) are no longer sent in the ``Host``
+  header: they go upstream as ``Authorization: Basic``, unless the request already carries an
+  ``Authorization`` header (from the client or a rule). Check which of your upstreams have userinfo in
+  their urls: they now receive that header.
+- With the http cache, a successful (2xx or 3xx) ``POST``, ``PUT``, ``PATCH`` or ``DELETE`` invalidates
+  the stored responses for its target and its same-host ``Location`` / ``Content-Location`` urls. Expect
+  more requests to reach your upstreams after writes.
+
 Storage
 -------
 
