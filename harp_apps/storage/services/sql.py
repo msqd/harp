@@ -334,7 +334,7 @@ class SqlStorage(IStorage):
                 query = query.offset(max(0, (page - 1) * PAGE_SIZE))
 
             for transaction in (await session.scalars(query)).unique().all():
-                result.append(transaction.to_model(with_user_flags=True))
+                result.append(transaction.to_model(with_user_flags=True, with_messages=with_messages))
 
         return result
 
@@ -352,7 +352,7 @@ class SqlStorage(IStorage):
         except NoResultFound:
             return None
 
-        return transaction.to_model(with_user_flags=True)
+        return transaction.to_model(with_user_flags=True, with_messages=True)
 
     @override
     async def transactions_grouped_by_time_bucket(
