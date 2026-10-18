@@ -54,6 +54,8 @@ class AsyncWorkerQueue:
             raise ValueError(f"Unknown item type: {type(item)}, expecting coroutine function.")
 
         await self._queue.put((item, ignore_errors))
+        # Measure on push: a stalled consumer never gets to refresh it.
+        self.cleanup()
 
     async def wait_until_empty(self):
         await self._queue.join()
