@@ -5,6 +5,7 @@ from typing import Optional
 from httpx import AsyncByteStream, ByteStream
 from multidict import CIMultiDict
 
+from .bridges import HttpRequestStubBridge
 from .errors import ClientDisconnected
 from .typing import BaseHttpMessage, HttpRequestBridge
 from .utils.cookies import parse_cookie
@@ -23,8 +24,6 @@ class HttpRequest(BaseHttpMessage):
         super().__init__(extensions=extensions)
 
         if impl is None:
-            from .tests.stubs import HttpRequestStubBridge
-
             impl = HttpRequestStubBridge(**kwargs)
         else:
             if len(kwargs) > 0:
