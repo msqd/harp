@@ -12,6 +12,7 @@ stays with its status changed.
 | [0003](./0003-cache-compliance-compared-per-test-against-a-pinned-baseline.md) | RFC 9111 compliance is compared per test id against a baseline pinned to its storage backend | accepted |
 | [0004](./0004-trunk-main-and-version-line-branches.md) | Development happens on `main`; a version line gets its branch when it ships | accepted |
 | [0005](./0005-native-code-ships-as-a-separate-optional-distribution.md) | Native code ships as a separate, optional distribution | accepted, not yet implemented outside `explore/extensions` |
+| [0006](./0006-recording-writes-each-transaction-once-in-batches.md) | Recording writes each transaction once, in batches, best effort | accepted, not yet implemented outside `explore/extensions` |
 
 ## Writing one
 
