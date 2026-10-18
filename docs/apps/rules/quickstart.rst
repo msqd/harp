@@ -3,7 +3,7 @@ Getting Started
 
 To get started with the rules engine, you need to write a configuration file that defines the rules you want to apply:
 
-.. include:: examples/rules.rst
+.. include:: examples/rules.inc
 
 Loading
 :::::::

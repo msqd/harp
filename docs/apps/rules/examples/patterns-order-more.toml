@@ -1,0 +1,5 @@
+# Loaded after patterns-order.toml: E joins the existing "*" / "GET *" rule.
+[rules."*"."GET *"]
+on_request = """
+request.headers["X-Trail"] = request.headers.get("X-Trail", "") + ",E"
+"""
