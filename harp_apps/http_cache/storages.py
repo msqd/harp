@@ -238,9 +238,14 @@ class AsyncStorage(AsyncBaseStorage):
             limit = DEFAULT_MAX_RECORDED_BODY_SIZE
 
         async def store(body: bytes) -> None:
-            await self._impl.store_entry(
-                key, replace(entry, response=replace(entry.response, stream=make_async_iterator([body])))
-            )
+            try:
+                await self._impl.store_entry(
+                    key, replace(entry, response=replace(entry.response, stream=make_async_iterator([body])))
+                )
+            except Exception:
+                # The upstream served this response correctly: a cache that cannot keep it must not break it.
+                logger.warning(f"Failed to store cache entry, response not cached: key={key}", exc_info=True)
+                return
             self._remember_key(entry.id, key)
             logger.debug(f"Cache entry stored: key={key}")
             self._sweep_if_due()
@@ -320,14 +325,18 @@ class AsyncStorage(AsyncBaseStorage):
         if key is None:
             return None
 
-        entry = await self._impl.retrieve_entry(key)
-        if entry is None or entry.id != id:
-            # The blob was evicted or replaced between the lookup and here.
-            logger.debug(f"Cache entry vanished before update: entry_id={id}, key={key}")
-            return None
+        try:
+            entry = await self._impl.retrieve_entry(key)
+            if entry is None or entry.id != id:
+                # The blob was evicted or replaced between the lookup and here.
+                logger.debug(f"Cache entry vanished before update: entry_id={id}, key={key}")
+                return None
 
-        updated = new_entry if isinstance(new_entry, Entry) else new_entry(entry)
-        await self._impl.store_entry(key, updated)
+            updated = new_entry if isinstance(new_entry, Entry) else new_entry(entry)
+            await self._impl.store_entry(key, updated)
+        except Exception:
+            logger.warning(f"Failed to update cache entry: key={key}, entry_id={id}", exc_info=True)
+            return None
         logger.debug(f"Cache entry updated: key={key}, entry_id={id}")
         return updated
 
@@ -349,7 +358,11 @@ class AsyncStorage(AsyncBaseStorage):
         if key is None:
             return
 
-        await self._storage.delete(key)
+        try:
+            await self._storage.delete(key)
+        except Exception:
+            logger.warning(f"Failed to remove cache entry: key={key}, entry_id={id}", exc_info=True)
+            return
         self._keys_by_id.pop(id, None)
         logger.debug(f"Cache entry removed: key={key}, entry_id={id}")
 
