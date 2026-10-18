@@ -3,6 +3,7 @@ import ssl
 from typing import AsyncIterator, Optional, Union
 
 import aiohttp
+import certifi
 import httpx
 from aiohttp import hdrs
 
@@ -43,6 +44,8 @@ class _ResponseStream(httpx.AsyncByteStream):
         self._response.release()
 
 
+HTTPX_ONLY_ARGUMENTS = ("cert", "proxy", "uds", "local_address", "socket_options", "trust_env")
+
 _WAY_OUT = " Set `http_client.transport.type: httpx.AsyncHTTPTransport` to keep httpx's transport."
 
 
@@ -61,7 +64,9 @@ class AiohttpTransport(httpx.AsyncBaseTransport):
         verify: Union[bool, ssl.SSLContext] = True,
         retries: int = 0,
         limits: httpx.Limits = DEFAULT_LIMITS,
+        http1: bool = True,
         http2: bool = False,
+        **httpx_only,
     ):
         # What aiohttp cannot honour is refused here, never ignored.
         if retries:
@@ -76,6 +81,15 @@ class AiohttpTransport(httpx.AsyncBaseTransport):
             )
         if http2:
             raise ValueError("The aiohttp transport cannot honour `http2`: aiohttp speaks HTTP/1.1 only." + _WAY_OUT)
+        if not http1:
+            raise ValueError("The aiohttp transport cannot honour `http1: false`: it speaks HTTP/1.1 only." + _WAY_OUT)
+        for name in httpx_only:
+            if name in HTTPX_ONLY_ARGUMENTS:
+                raise ValueError(f"The aiohttp transport cannot honour `{name}`: it is an httpx setting." + _WAY_OUT)
+        if httpx_only:
+            raise TypeError(f"Unexpected arguments: {', '.join(httpx_only)}.")
+        if verify is True:
+            verify = ssl.create_default_context(cafile=certifi.where())  # what httpx trusts
         self._verify = verify
         self._limits = limits
         self._session: Optional[aiohttp.ClientSession] = None

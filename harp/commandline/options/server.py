@@ -185,7 +185,7 @@ def server_command(
             default=DEFAULT_SERVER,
             envvar="HARP_SERVER",
             show_default=True,
-            help='ASGI server to run on (all but the default need the "servers" extra).',
+            help='ASGI server to run on (uvicorn and granian need the "servers" extra; uvloop servers fall back to asyncio on Windows).',
         )(f)
         f = _server_click_options(f)
         f = command_decorator(f)

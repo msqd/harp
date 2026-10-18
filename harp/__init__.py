@@ -142,8 +142,13 @@ def run(builder: "_ConfigurationBuilder", server: str = DEFAULT_SERVER):
     from harp.config.adapters import get_server
 
     if get_server(server).uvloop:
-        import uvloop
-
+        try:
+            import uvloop
+        except ImportError:  # no uvloop on Windows
+            get_logger(__name__).warning(
+                f"uvloop is not available on {sys.platform}, running the {server} server on the asyncio loop."
+            )
+            return asyncio.run(arun(builder, server), loop_factory=None)
         return asyncio.run(arun(builder, server), loop_factory=uvloop.new_event_loop)
     return asyncio.run(arun(builder, server))
 

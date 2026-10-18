@@ -14,7 +14,7 @@ Filtering Events
 .. py:currentmodule:: harp_apps.http_client.events
 
 Whenever an external HTTP request goes through the :service:`http_client` service to be sent out (assuming you're using
-the default service implementation), the :class:`harp_apps.http_client.transport.AsyncFilterableTransport` transport
+the default service implementation), the :class:`harp_apps.http_client.transports.AsyncFilterableTransport` transport
 wrapper will dispach events to filter both :class:`httpx.Request` and :class:`httpx.Response` instances that represents
 the HTTP request and response, respectively.
 

@@ -48,6 +48,14 @@ class TestHttpClientSettings(BaseHttpClientSettingsTest):
         assert isinstance(http_client._transport, AsyncFilterableTransport)
         assert isinstance(http_client._transport._transport, AiohttpTransport)
 
+    async def test_partial_transport_block_keeps_the_default_type(self):
+        settings = self.create(transport={"arguments": {"verify": True}})
+
+        system = await self.create_system(settings)
+        http_client = system.provider.get("http_client")
+
+        assert isinstance(http_client._transport._transport, AiohttpTransport)
+
     async def test_httpx_transport_stays_selectable(self):
         settings = self.create(transport={"type": "httpx.AsyncHTTPTransport", "arguments": {"verify": True}})
 

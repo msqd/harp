@@ -85,7 +85,9 @@ A transport must keep headers as given (order, duplicates, casing), add none, ha
 redirects, and raise the httpx exceptions for timeouts and network errors. The common arguments are ``verify``,
 ``retries`` and ``limits`` (``httpx.Limits``); the timeout comes from the client. A transport honours them or refuses
 them at startup. The aiohttp one refuses ``retries`` above 0, ``limits.max_keepalive_connections`` and a ``verify``
-that is neither a boolean nor an ``ssl.SSLContext``, and ``http2``, with a message naming ``httpx.AsyncHTTPTransport``.
+that is neither a boolean nor an ``ssl.SSLContext``, and ``http2``, ``http1: false``, ``cert``, ``proxy``, ``uds``, ``local_address``, ``socket_options`` and ``trust_env``, with a message
+naming ``httpx.AsyncHTTPTransport``. ``verify: true`` trusts certifi, like httpx. The ``write`` timeout is not applied and
+responses always report HTTP/1.1.
 
 For caching configuration, see the :doc:`http_cache </apps/http_cache/index>` application documentation.
 
