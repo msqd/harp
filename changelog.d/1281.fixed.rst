@@ -1,0 +1,1 @@
+Dashboard syntax highlighter now ships prismjs 1.30.0 (pnpm override), not 1.27.0 via refractor.
