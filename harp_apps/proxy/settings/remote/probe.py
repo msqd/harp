@@ -1,6 +1,7 @@
+from base64 import b64encode
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
-from urllib.parse import urljoin
+from urllib.parse import unquote, urljoin, urlparse
 
 import httpx
 from pydantic import Field
@@ -8,6 +9,7 @@ from pyheck import shouty_snake
 
 from harp import get_logger
 from harp.config import Configurable, Stateful
+from harp_apps.proxy.adapters import strip_credentials
 
 if TYPE_CHECKING:
     from harp_apps.proxy.settings.remote.endpoint import RemoteEndpoint
@@ -46,14 +48,25 @@ class RemoteProbe(Stateful[RemoteProbeSettings]):
         async with httpx.AsyncClient(verify=self.settings.verify) as client:
             yield client
 
+    def _get_headers(self, url: str) -> dict:
+        """Probe headers, with the endpoint credentials as a Basic fallback (never in the url, so never logged)."""
+        headers = dict(self.settings.headers)
+        parsed_url = urlparse(url)
+        if parsed_url.username is not None and "authorization" not in {name.lower() for name in headers}:
+            credentials = f"{unquote(parsed_url.username)}:{unquote(parsed_url.password or '')}"
+            headers["Authorization"] = "Basic " + b64encode(credentials.encode()).decode()
+        return headers
+
     async def check(self, client: httpx.AsyncClient, endpoint: "RemoteEndpoint"):
-        probe_url = urljoin(str(endpoint.settings.url), self.settings.path)
+        full_url = urljoin(str(endpoint.settings.url), self.settings.path)
+        probe_url = strip_credentials(full_url)
+        headers = self._get_headers(full_url)
         response = None
         try:
             response = await client.request(
                 self.settings.method,
                 probe_url,
-                headers=self.settings.headers,
+                headers=headers,
                 timeout=float(self.settings.timeout),
             )
             if 200 <= response.status_code < 400:
