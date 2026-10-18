@@ -11,7 +11,7 @@ from harp.models import Blob
 from harp_apps.storage.models import Blob as SqlBlob
 from harp_apps.storage.models.blobs import ORPHAN_GRACE
 from harp_apps.storage.types import IBlobStorage
-from harp_apps.storage.utils.upsert import execute_in_chunks, insert_ignoring_duplicates
+from harp_apps.storage.utils.upsert import CHUNK_SIZE, execute_in_chunks, insert_ignoring_duplicates
 
 logger = get_logger(__name__)
 
@@ -89,17 +89,19 @@ class SqlBlobStorage(IBlobStorage):
         if not blobs:
             return
         table = SqlBlob.__table__
-        await conn.execute(
-            update(table)
-            .where(
-                table.c.id.in_([blob.id for blob in blobs]), table.c.created_at < datetime.now(UTC) - ORPHAN_GRACE / 2
+        renewable_before = datetime.now(UTC) - ORPHAN_GRACE / 2
+        for start in range(0, len(blobs), CHUNK_SIZE):
+            ids = [blob.id for blob in blobs[start : start + CHUNK_SIZE]]
+            await conn.execute(
+                update(table)
+                .where(table.c.id.in_(ids), table.c.created_at < renewable_before)
+                .values(created_at=func.now())
             )
-            .values(created_at=func.now())
-        )
         await execute_in_chunks(
             conn,
             insert_ignoring_duplicates(conn.dialect.name, table),
-            [{"id": blob.id, "data": blob.data, "content_type": blob.content_type} for blob in blobs],
+            blobs,
+            make_row=lambda blob: {"id": blob.id, "data": blob.data, "content_type": blob.content_type},
         )
 
     @override

@@ -1,3 +1,5 @@
+import asyncio
+
 from sqlalchemy import insert
 
 
@@ -18,10 +20,16 @@ def insert_ignoring_duplicates(dialect: str, table, keys: tuple[str, ...] = ("id
 
 
 #: Rows sent per statement: a batch is one database transaction, but never one long stretch on the event loop.
-CHUNK_SIZE = 100
+CHUNK_SIZE = 50
 
 
-async def execute_in_chunks(conn, statement, rows: list[dict], size: int = CHUNK_SIZE) -> None:
-    """Executes ``statement`` for ``rows`` a chunk at a time, in the caller's transaction, letting the loop run between."""
+async def execute_in_chunks(conn, statement, rows, size: int | None = None, make_row=None) -> None:
+    """
+    Executes ``statement`` for ``rows`` a chunk at a time, in the caller's transaction, giving the loop a turn after
+    each. ``make_row`` builds the parameters of an item just before its chunk is sent, so no long list is built up front.
+    """
+    size = size or CHUNK_SIZE
     for start in range(0, len(rows), size):
-        await conn.execute(statement, rows[start : start + size])
+        chunk = rows[start : start + size]
+        await conn.execute(statement, [make_row(row) for row in chunk] if make_row else chunk)
+        await asyncio.sleep(0)

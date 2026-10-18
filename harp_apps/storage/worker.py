@@ -437,12 +437,14 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
                 if in_database:
                     blobs = {blob.id: blob for _, _, blobs, _ in taken for blob in blobs.values()}
                     await self.blob_storage.put_in(conn, list(blobs.values()))
+                    await asyncio.sleep(0)
 
                 to_insert = [{**p.data, **e} for p, e in zip(pendings, end_data) if not p.inserted]
                 for pending, values in zip(pendings, end_data):
                     if pending.inserted and values:
                         await conn.execute(update(transactions).where(transactions.c.id == pending.id).values(**values))
                 await execute_in_chunks(conn, insert(transactions), to_insert)
+                await asyncio.sleep(0)
 
                 messages = [message for _, messages, _, _ in taken for message in messages]
                 await execute_in_chunks(conn, insert(SqlMessage.__table__), messages)
