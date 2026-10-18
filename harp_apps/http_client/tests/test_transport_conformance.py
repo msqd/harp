@@ -404,6 +404,23 @@ def test_aiohttp_refuses_what_it_cannot_honour(transport_type):
         cls(limits=httpx.Limits(max_keepalive_connections=20))
     with pytest.raises(ValueError, match="verify"):
         cls(verify="/path/to/ca.pem")
+    with pytest.raises(ValueError, match="http2"):
+        cls(http2=True)
+
+
+@pytest.mark.parametrize("transport_type", [AIOHTTP])
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        {"retries": 1},
+        {"limits": httpx.Limits(max_keepalive_connections=20)},
+        {"verify": "/path/to/ca.pem"},
+        {"http2": True},
+    ],
+)
+def test_aiohttp_refusals_name_the_httpx_transport_as_the_way_out(transport_type, arguments):
+    with pytest.raises(ValueError, match=r"httpx\.AsyncHTTPTransport"):
+        transport_class(transport_type)(**arguments)
 
 
 @pytest.mark.parametrize("transport_type", [PYREQWEST])

@@ -52,6 +52,7 @@ dependencies = [
     "sqlalchemy-utils>=0.42,<0.43",
     "structlog>=25,<27",
     "svix-ksuid>=0.6,<0.7",
+    "uvloop>=0.21; sys_platform != 'win32'",
     "whistle>=2.0.1,<3",
 ]
 
@@ -63,7 +64,7 @@ mysql = [
 postgresql = ["asyncpg>=0.30,<0.31"]
 native = ["harp-proxy-native==0.12.0.dev0"]
 # Alternative ASGI servers, see `harp server --server`.
-servers = ["uvicorn[standard]>=0.30", "uvloop>=0.21", "granian>=2.0"]
+servers = ["uvicorn[standard]>=0.30", "granian>=2.0"]
 # Benchmark-only HTTP transport (non-conforming: it does not keep headers as given), never to ship.
 pyreqwest = ["pyreqwest>=0.15,<0.16"]
 

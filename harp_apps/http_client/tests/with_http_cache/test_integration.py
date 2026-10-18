@@ -21,7 +21,10 @@ class TestHttpClientWithCache:
         builder = ConfigurationBuilder(
             {
                 "applications": ["http_client", "http_cache"],
-                "http_client": {"enabled": True},
+                "http_client": {
+                    "enabled": True,
+                    "transport": {"type": "httpx.AsyncHTTPTransport"},
+                },  # respx mocks httpx
                 "http_cache": {"enabled": True},
             },
             use_default_applications=False,
@@ -46,7 +49,10 @@ class TestHttpClientWithCache:
         builder = ConfigurationBuilder(
             {
                 "applications": ["http_client", "http_cache"],
-                "http_client": {"enabled": True},
+                "http_client": {
+                    "enabled": True,
+                    "transport": {"type": "httpx.AsyncHTTPTransport"},
+                },  # respx mocks httpx
                 "http_cache": {"enabled": True},
             },
             use_default_applications=False,
@@ -85,7 +91,10 @@ class TestHttpClientWithCache:
         builder = ConfigurationBuilder(
             {
                 "applications": ["http_client", "http_cache"],
-                "http_client": {"enabled": True},
+                "http_client": {
+                    "enabled": True,
+                    "transport": {"type": "httpx.AsyncHTTPTransport"},
+                },  # respx mocks httpx
                 "http_cache": {"enabled": True},
             },
             use_default_applications=False,

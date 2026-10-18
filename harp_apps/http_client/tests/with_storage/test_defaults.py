@@ -29,7 +29,7 @@ class TestDefaultsWithStorage(BaseTestDefaultsWith):
             "timeout": 30.0,
             "transport": {
                 "retries": 0,
-                "type": "httpx.AsyncHTTPTransport",
+                "type": "harp_apps.http_client.aiohttp_transport.AiohttpTransport",
                 "verify": True,
             },
             "type": "httpx.AsyncClient",

@@ -60,20 +60,21 @@ Below is an example configuration for the HTTP client:
 Configuration options:
 
 - **timeout:** Specifies the request timeout duration in seconds (default: ``30.0``)
-- **transport:** The base HTTP transport implementation (default: ``httpx.AsyncHTTPTransport``)
+- **transport:** The base HTTP transport implementation (default: ``harp_apps.http_client.aiohttp_transport.AiohttpTransport``)
 - **proxy_transport:** The proxy transport wrapper (default: ``AsyncFilterableTransport``)
 
 Alternative transports
 ::::::::::::::::::::::
 
-``transport.type`` takes the full class path of any httpx ``AsyncBaseTransport``. HARP ships
-``harp_apps.http_client.aiohttp_transport.AiohttpTransport``, which sends requests with aiohttp instead of httpcore:
+``transport.type`` takes the full class path of any httpx ``AsyncBaseTransport``. The default is
+``harp_apps.http_client.aiohttp_transport.AiohttpTransport``, which sends requests with aiohttp instead of httpcore. To
+get httpx's own transport back (HTTP/2 upstream, retries, a CA path as ``verify``, ``max_keepalive_connections``):
 
 .. code-block:: yaml
 
     http_client:
       transport:
-        type: harp_apps.http_client.aiohttp_transport.AiohttpTransport
+        type: httpx.AsyncHTTPTransport
 
 ``harp_apps.http_client.pyreqwest_transport.PyreqwestTransport`` (reqwest, in Rust; ``pyreqwest`` extra) is
 non-conforming and exists for benchmarking only: it does not keep the order of headers across names, the interleaving
@@ -84,7 +85,7 @@ A transport must keep headers as given (order, duplicates, casing), add none, ha
 redirects, and raise the httpx exceptions for timeouts and network errors. The common arguments are ``verify``,
 ``retries`` and ``limits`` (``httpx.Limits``); the timeout comes from the client. A transport honours them or refuses
 them at startup. The aiohttp one refuses ``retries`` above 0, ``limits.max_keepalive_connections`` and a ``verify``
-that is neither a boolean nor an ``ssl.SSLContext``.
+that is neither a boolean nor an ``ssl.SSLContext``, and ``http2``, with a message naming ``httpx.AsyncHTTPTransport``.
 
 For caching configuration, see the :doc:`http_cache </apps/http_cache/index>` application documentation.
 

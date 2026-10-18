@@ -43,6 +43,9 @@ class _ResponseStream(httpx.AsyncByteStream):
         self._response.release()
 
 
+_WAY_OUT = " Set `http_client.transport.type: httpx.AsyncHTTPTransport` to keep httpx's transport."
+
+
 class AiohttpTransport(httpx.AsyncBaseTransport):
     """
     An httpx transport sending requests with aiohttp instead of httpcore: the httpx Request/Response contract stays,
@@ -53,17 +56,26 @@ class AiohttpTransport(httpx.AsyncBaseTransport):
     """
 
     def __init__(
-        self, *, verify: Union[bool, ssl.SSLContext] = True, retries: int = 0, limits: httpx.Limits = DEFAULT_LIMITS
+        self,
+        *,
+        verify: Union[bool, ssl.SSLContext] = True,
+        retries: int = 0,
+        limits: httpx.Limits = DEFAULT_LIMITS,
+        http2: bool = False,
     ):
         # What aiohttp cannot honour is refused here, never ignored.
         if retries:
-            raise ValueError("The aiohttp transport cannot honour `retries`: aiohttp does not retry.")
+            raise ValueError("The aiohttp transport cannot honour `retries`: aiohttp does not retry." + _WAY_OUT)
         if not isinstance(verify, (bool, ssl.SSLContext)):
-            raise ValueError("The aiohttp transport cannot honour this `verify`: give a boolean or an SSLContext.")
+            raise ValueError(
+                "The aiohttp transport cannot honour this `verify`: give a boolean or an SSLContext." + _WAY_OUT
+            )
         if limits.max_keepalive_connections is not None:
             raise ValueError(
-                "The aiohttp transport cannot honour `max_keepalive_connections`: aiohttp has no such limit."
+                "The aiohttp transport cannot honour `max_keepalive_connections`: aiohttp has no such limit." + _WAY_OUT
             )
+        if http2:
+            raise ValueError("The aiohttp transport cannot honour `http2`: aiohttp speaks HTTP/1.1 only." + _WAY_OUT)
         self._verify = verify
         self._limits = limits
         self._session: Optional[aiohttp.ClientSession] = None

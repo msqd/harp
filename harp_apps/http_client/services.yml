@@ -13,7 +13,7 @@ services:
       - transport: !ref "http_client.transport"
     arguments: [!cfg "proxy_transport.arguments", {}]
 
-  # Default httpx transport implementation, handling the actual http requests
+  # Default transport implementation (aiohttp), handling the actual http requests
   - name: "http_client.transport"
-    type: [!cfg "transport.type", "httpx.AsyncHTTPTransport"]
+    type: [!cfg "transport.type", "harp_apps.http_client.aiohttp_transport.AiohttpTransport"]
     arguments: [!cfg "transport.arguments", {}]

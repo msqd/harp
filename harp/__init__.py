@@ -28,6 +28,7 @@ Contents
 """
 
 import os
+import sys
 from subprocess import check_output
 from typing import TYPE_CHECKING
 
@@ -43,7 +44,7 @@ ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 #: production environments (e.g., exception tracebacks in error responses). Set via HARP_DEBUG or DEBUG environment
 #: variables.
 # ASGI server run by default, see `harp.config.adapters`.
-DEFAULT_SERVER: str = "hypercorn"
+DEFAULT_SERVER: str = "hypercorn" if sys.platform == "win32" else "hypercorn+uvloop"
 
 DEBUG: bool = bool(os.environ.get("HARP_DEBUG") or os.environ.get("DEBUG"))
 

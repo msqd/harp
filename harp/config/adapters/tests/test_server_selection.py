@@ -14,9 +14,16 @@ from harp.config.adapters.hypercorn import HypercornAdapter
 from harp.config.adapters.uvicorn import UvicornAdapter
 
 
-def test_default_is_hypercorn():
-    assert DEFAULT_SERVER == "hypercorn"
+@pytest.mark.skipif(sys.platform == "win32", reason="uvloop does not exist on Windows")
+def test_default_is_hypercorn_on_uvloop():
+    assert DEFAULT_SERVER == "hypercorn+uvloop"
     assert get_server(DEFAULT_SERVER).adapter_type is HypercornAdapter
+    assert get_server(DEFAULT_SERVER).uvloop is True
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_default_is_plain_hypercorn_on_windows():
+    assert DEFAULT_SERVER == "hypercorn"
 
 
 @pytest.mark.parametrize(
