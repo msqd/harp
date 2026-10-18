@@ -480,6 +480,14 @@ jobs:
           python -c "import sys; print(f'Python: {sys.version}')"
           ${{ matrix.python-gil && 'python -c "import sys; print(f\"GIL enabled: {sys._is_gil_enabled()}\")"' || 'echo "GIL enabled (standard Python)"' }}
 
+      - name: Run the installed wheel (rules run)
+        if: matrix.python-version
+        run: |
+          cd "$(mktemp -d)"
+          printf 'rules:\n  "*":\n    "*":\n      on_remote_response: |\n        logger.info("hi")\n' > rules.yml
+          harp-proxy rules run --help
+          harp-proxy rules run -f rules.yml api=http://127.0.0.1:9 GET /
+
   # Docker image with wheel from local build (non-release branches)
   build-docker-image-development:
     name: Build Docker Image (Development)
