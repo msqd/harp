@@ -50,5 +50,4 @@ Choosing
 ::::::::
 
 Keep the default unless you have a reason. ``uvicorn`` and ``granian`` are there for comparison; measure with your own
-traffic before moving. See ``bench/FINDINGS.md`` in the repository for the numbers measured so far (laptop runs, only
-indicative).
+traffic before moving. See ``bench/FINDINGS.md`` in the repository for the numbers measured so far.
