@@ -55,3 +55,8 @@ def test_load_documentation_example(configfile, snapshot):
     assert len(set(settings.keys()).difference(set(builder.applications.keys()))) == 0
     assert len(applications) >= len(settings)
     assert yaml.dump(asdict(settings)) == snapshot
+
+
+def test_sentry_example_has_placeholder_dsn():
+    data = yaml.load(get_example_filename("sentry"))
+    assert data["sentry"]["dsn"] == "https://examplePublicKey@o0.ingest.sentry.io/0"
