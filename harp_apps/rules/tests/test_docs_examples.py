@@ -126,16 +126,20 @@ class TestStageLevel:
 
 
 class TestPrecedence:
-    rules = ruleset("patterns-order.toml")
-
-    def test_every_matching_rule_runs_in_written_order(self):
-        event = proxy_event("proxy.filter.request", "api", "GET", "/x")
-        for script in self.rules.match(*event.criteria):
+    def trail(self, rules, endpoint):
+        event = proxy_event("proxy.filter.request", endpoint, "GET", "/x")
+        for script in rules.match(*event.criteria):
             event.execute_script(script)
-        assert event.request.headers["X-Trail"] == "general,specific"
+        return event.request.headers["X-Trail"]
+
+    def test_matches_are_grouped_by_endpoint_then_request_then_stage(self):
+        assert self.trail(ruleset("patterns-order.toml"), "api") == ",A,C,B"
 
     def test_only_matching_rules_run(self):
-        event = proxy_event("proxy.filter.request", "web", "GET", "/x")
-        for script in self.rules.match(*event.criteria):
-            event.execute_script(script)
-        assert event.request.headers["X-Trail"] == "general"
+        assert self.trail(ruleset("patterns-order.toml"), "web") == ",A,C"
+
+    def test_later_file_joins_the_existing_group(self):
+        settings = RulesSettings()
+        settings.load(os.path.join(EXAMPLES_DIR, "patterns-order.toml"))
+        settings.load(os.path.join(EXAMPLES_DIR, "patterns-order-more.toml"))
+        assert self.trail(settings.ruleset, "api") == ",A,C,E,B"

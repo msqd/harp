@@ -1,10 +1,15 @@
-# Every rule matching a stage runs, in the order it is written. No rule overrides another one.
+# Written A, B, C. Run as A, C, B: C shares its endpoint pattern with A.
 [rules."*"."*"]
 on_request = """
-request.headers["X-Trail"] = "general"
+request.headers["X-Trail"] = request.headers.get("X-Trail", "") + ",A"
 """
 
-[rules."api"."GET /*"]
+[rules."api"."*"]
 on_request = """
-request.headers["X-Trail"] += ",specific"
+request.headers["X-Trail"] = request.headers.get("X-Trail", "") + ",B"
+"""
+
+[rules."*"."GET *"]
+on_request = """
+request.headers["X-Trail"] = request.headers.get("X-Trail", "") + ",C"
 """

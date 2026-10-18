@@ -60,11 +60,21 @@ Which rule wins
 ---------------
 
 None: there is no precedence, a more specific pattern does not override a more general one. Every rule matching the
-three levels runs, one after the other, in the order the rules are written (and in the order the configuration files
-are loaded). A later script sees what the earlier ones did to the request or the response.
+three levels runs, and a later script sees what the earlier ones did to the request or the response.
+
+Rules are stored as a tree and walked depth first: grouped by endpoint pattern, then by request pattern, then by stage,
+each in order of first appearance across all the loaded files. Scripts under the very same keys run in the order they
+are written, then in the order the files are loaded.
 
 .. literalinclude:: examples/patterns-order.toml
     :language: toml
 
-On ``GET /x`` for endpoint ``api``, ``X-Trail`` ends up as ``general,specific``. For any other endpoint, it is
-``general``.
+On ``GET /x`` for endpoint ``api``, ``X-Trail`` ends up as ``,A,C,B``, not ``,A,B,C``: C is grouped with A under the
+``*`` endpoint pattern, before B. For any other endpoint it is ``,A,C``.
+
+If a second file, loaded after the first one, adds a script under the same keys:
+
+.. literalinclude:: examples/patterns-order-more.toml
+    :language: toml
+
+the result becomes ``,A,C,E,B``: E joins the existing ``*`` / ``GET *`` group.
