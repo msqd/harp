@@ -46,10 +46,10 @@ Request and response bodies
 Upstreams
 ---------
 
-- Credentials in an endpoint url (``https://user:password@host/``) are no longer sent in the ``Host``
-  header: they go upstream as ``Authorization: Basic``, unless the request already carries an
-  ``Authorization`` header (from the client or a rule). Check which of your upstreams have userinfo in
-  their urls: they now receive that header.
+- Credentials in an endpoint url (``https://user:password@host/``) no longer appear in the ``Host``
+  header. An ``Authorization`` header set by the client or a rule now takes precedence over them; 0.11
+  replaced it with ``Authorization: Basic``. If you relied on url credentials overriding client
+  authentication, check those endpoints.
 - With the http cache, a successful (2xx or 3xx) ``POST``, ``PUT``, ``PATCH`` or ``DELETE`` invalidates
   the stored responses for its target and its same-host ``Location`` / ``Content-Location`` urls. Expect
   more requests to reach your upstreams after writes.
