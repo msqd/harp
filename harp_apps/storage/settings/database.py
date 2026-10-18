@@ -1,5 +1,7 @@
 import importlib.util
+import re
 from typing import Annotated
+from urllib.parse import parse_qs, urlsplit
 
 from pydantic import AfterValidator, BeforeValidator, UrlConstraints
 from pydantic_core import MultiHostUrl
@@ -20,6 +22,19 @@ ALLOWED_SCHEMES = [
 def _unwrap_sqlalchemy_urls(url):
     if isinstance(url, URL):
         return url.render_as_string(hide_password=False)
+    return url
+
+
+_EMPTY_HOST = re.compile(r"^([\w+]+://[^/@]+@)(?=/)")
+
+
+def _name_socket_hosts(url):
+    """
+    Gives a placeholder host to ``scheme://user@/db?host=/socket/dir``: the url parser refuses credentials with an
+    empty host, but the ``host`` query parameter overrides it in SQLAlchemy and the drivers.
+    """
+    if isinstance(url, str) and "host" in parse_qs(urlsplit(url).query):
+        return _EMPTY_HOST.sub(r"\1localhost", url)
     return url
 
 
@@ -61,6 +76,7 @@ DatabaseUrl = Annotated[
     MultiHostUrl,
     UrlConstraints(allowed_schemes=ALLOWED_SCHEMES),
     BeforeValidator(_refuse_asyncmy),
+    BeforeValidator(_name_socket_hosts),
     BeforeValidator(_unwrap_sqlalchemy_urls),
     AfterValidator(_fix_unasync_dsns),
     AfterValidator(_require_driver),
