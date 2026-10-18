@@ -76,8 +76,8 @@ class JanitorWorker:
     @with_session
     async def delete_old_transactions(self, /, *, session):
         """
-        Remove transactions older than `old_after` days. On correct database implementations (postgresql for example), it
-        will cascade to related objects. On sqlite, there will be garbage left, but it's not a big deal.
+        Remove transactions older than `old_after` days, except flagged ones. The database cascades the deletion to
+        messages and tag values; their blobs are then freed by the orphan sweep.
         """
 
         # TODO to storage

@@ -62,7 +62,110 @@ exports[`renders the title and data when the query is successful 1`] = `
             </span>
             <div
               class="flex flex-col divide-y divide-gray-200 css-1iyv17h"
-            />
+            >
+              <div
+                class="flex items-center"
+              >
+                <span
+                  class="inline-flex items-center gap-x-1 px-2 py-0.5 text-sm font-medium text-gray-800"
+                >
+                  <span
+                    title="Remote endpoint is active"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="h-1.5 w-1.5 fill-blue-500"
+                      viewBox="0 0 6 6"
+                    >
+                      <circle
+                        cx="3"
+                        cy="3"
+                        r="3"
+                      />
+                    </svg>
+                  </span>
+                  <a
+                    class="hover:underline"
+                    href="https://api1.example.com/"
+                    target="_blank"
+                  >
+                    https://api1.example.com/
+                  </a>
+                </span>
+                <div
+                  class="relative text-left"
+                  data-headlessui-state=""
+                >
+                  <div
+                    class="flex"
+                  >
+                    <button
+                      aria-expanded="false"
+                      aria-haspopup="menu"
+                      class="inline-flex w-full justify-center rounded bg-white px-2 py-0.5 text-xs text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 capitalize items-center gap-x-1 mx-1"
+                      data-headlessui-state=""
+                      id="headlessui-menu-button-:r4:"
+                      type="button"
+                    >
+                      <span
+                        title="Remote endpoint is up and running"
+                      >
+                        <svg
+                          aria-hidden="true"
+                          class="h-1.5 w-1.5 fill-green-500"
+                          viewBox="0 0 6 6"
+                        >
+                          <circle
+                            cx="3"
+                            cy="3"
+                            r="3"
+                          />
+                        </svg>
+                      </span>
+                      <span>
+                        up
+                      </span>
+                      <svg
+                        aria-hidden="true"
+                        class="-mx-1 size-4 text-gray-400"
+                        data-slot="icon"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          clip-rule="evenodd"
+                          d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+                          fill-rule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <span
+                  class="inline-flex items-center gap-x-1 rounded-full px-2 py-0.5 text-xs font-medium text-gray-500 ring-1 ring-inset ring-gray-200 mx-1"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="size-3"
+                    data-slot="icon"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H6.911a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661Z"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                   
+                  default
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

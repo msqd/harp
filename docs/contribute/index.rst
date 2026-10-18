@@ -7,6 +7,10 @@ features of HARP are implemented as such, making your own applications as powerf
 You can also contribute to HARP without writing code: send feedback, proofread documentation, join `discussions
 <https://github.com/msqd/harp/discussions>`_ on GitHub, report issues, sponsor the project, or suggest new features.
 
+To report a security vulnerability, do not open a public issue: use the repository's `private vulnerability
+reporting <https://github.com/msqd/harp/security/advisories/new>`_ (see `SECURITY.md
+<https://github.com/msqd/harp/blob/main/SECURITY.md>`_).
+
 Don't hesitate to `reach out <https://harp-project.net/contact>`_ to us!
 
 .. table::

@@ -36,6 +36,7 @@ export const handlers: RequestHandler[] = [
   api.system,
   api.system.dependencies,
   api.system.proxy,
+  api.system.proxy.put,
   api.system.settings,
   api.system.storage,
 
