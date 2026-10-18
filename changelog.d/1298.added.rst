@@ -1,0 +1,1 @@
+New "Upgrading to 0.12" page in the operator guide, and a ``tooling`` fragment type kept out of the release notes.

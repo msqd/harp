@@ -6,6 +6,7 @@
     :maxdepth: 2
 
     configure/index
+    upgrading
     migrations
     logging
     prometheus

@@ -1,1 +1,0 @@
-SQLite now enforces foreign keys on every connection, so retention also removes the messages and tags of deleted transactions, and the orphan sweep frees their blobs.

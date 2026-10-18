@@ -1,1 +1,1 @@
-Document that the proxy buffers request and response bodies in full: no SSE, no long-polling, memory cost per in-flight body.
+Document the remaining buffering limits: request bodies are read in full before going upstream, and streams that stay open (SSE, long-polling) are not supported yet.
