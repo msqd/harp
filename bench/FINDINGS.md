@@ -2,7 +2,7 @@
 
 Rules (milestone explore/extensions): each candidate declares its target metric up front; native code must gain ≥15%
 on it, net of the best adopt-native option, against the best reasonable Python, median of ≥5 runs outside the spread,
-with no regression elsewhere. Laptop numbers validate tooling only; verdicts need the external runner (#1168).
+with no regression elsewhere. Laptop numbers validate tooling only; verdicts need the external runner (#1168). Recording profiles (`default`, `loaded`) use PostgreSQL.
 
 ## Status
 

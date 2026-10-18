@@ -3,7 +3,8 @@
 Run from the repo root through the Makefile (`make bench-macro`, `make bench-startup`, `make bench-load`), or:
 `uv run --group bench python -m bench.macro.run overhead --profile bare`.
 
-Processes (origin, HARP, oha) are native and pinned on disjoint cores. Nothing here needs docker.
+Processes (origin, HARP, oha) are native and pinned on cores taken from the process affinity (the origin and the load
+generator share one when only three are left). Profiles that record use the PostgreSQL database of BENCH_DATABASE_URL.
 """
 
 import argparse
@@ -14,8 +15,8 @@ import os
 import shlex
 import shutil
 import signal
+import asyncio
 import socket
-import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -51,11 +52,11 @@ DEFAULT_BODY_BYTES = 1024
 
 
 def available_cores() -> tuple[list[int], bool]:
-    """Performance cores of a hybrid cpu if the kernel exposes them, else every online cpu."""
-    for path, hybrid in (("/sys/devices/cpu_core/cpus", True), ("/sys/devices/system/cpu/online", False)):
-        with contextlib.suppress(OSError):
-            return measure.parse_cpu_list(Path(path).read_text()), hybrid
-    return list(range(os.cpu_count() or 1)), False
+    """The cores this process may run on, narrowed to the performance cores of a hybrid cpu if the kernel exposes them."""
+    performance = None
+    with contextlib.suppress(OSError):
+        performance = measure.parse_cpu_list(Path("/sys/devices/cpu_core/cpus").read_text())
+    return measure.usable_cores(os.sched_getaffinity(0), performance), performance is not None
 
 
 def governor(cpu: int) -> str:
@@ -74,7 +75,10 @@ def resolve_cores(args) -> dict[str, list[int]]:
         if len(used) != len(set(used)):
             sys.exit("pinning error: harp, origin and loadgen cpus must be disjoint")
         return cores
-    return measure.assign_cores(available, harp=args.harp_cores, origin=1, loadgen=1)
+    try:
+        return measure.assign_harness_cores(available, harp=args.harp_cores)
+    except ValueError as error:
+        sys.exit(f"{error} (process affinity: {measure.format_cpu_list(available)})")
 
 
 def pinned(command: list[str], cpus: list[int]) -> list[str]:
@@ -144,7 +148,7 @@ def origin_process(args, cores):
     return running(pinned(command, cores["origin"]), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def harp_command(args, cores, workdir: Path, db: Path, importtime: bool = False) -> list[str]:
+def harp_command(args, cores, importtime: bool = False) -> list[str]:
     python = [sys.executable, "-X", "importtime", str(HARP_BIN)] if importtime else [str(HARP_BIN)]
     command = [
         *python,
@@ -159,16 +163,18 @@ def harp_command(args, cores, workdir: Path, db: Path, importtime: bool = False)
     if args.transport != DEFAULT_TRANSPORT:
         command += ["--set", "http_client.transport.type", args.transport]
     if args.profile in STORAGE_PROFILES:
-        command += ["--set", "storage.url", f"sqlite+aiosqlite:///{db}"]
+        command += ["--set", "storage.url", args.database_url]
         command += ["--set", "dashboard.port", str(args.harp_port + 80)]  # 4080 by default, follows --harp-port
     if getattr(args, "scrape_metrics", False):
         command += ["--enable", "metrics"]
     return pinned(command, cores["harp"])
 
 
-def harp_process(args, cores, workdir: Path, db: Path, **kwargs):
+def harp_process(args, cores, workdir: Path, **kwargs):
+    if args.database_url:
+        reset_database(args.database_url)
     return running(
-        harp_command(args, cores, workdir, db),
+        harp_command(args, cores),
         cwd=workdir,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -225,51 +231,52 @@ def measured_run(args, cores, port: int, pid: int | None = None, rate=None, dura
 # --- storage: backlog, drain, shedding -------------------------------------------------------------------------------
 
 
-def _marked(marker: str) -> str:
-    return f"(SELECT count(*) FROM transactions WHERE instr(',' || markers || ',', ',{marker},') > 0)"
+async def _connect(url: str):
+    import asyncpg
+
+    return await asyncpg.connect(**measure.asyncpg_arguments(url))
 
 
-# `headers`/`bodies` count messages whose column is set, not distinct blobs: empty bodies all share one blob id.
-# `missing_*` count recorded transactions, to compare with the `shed-*` markers set on them.
-COUNTS_SQL = f"""
-SELECT
-  (SELECT count(*) FROM transactions),
-  (SELECT count(*) FROM messages),
-  (SELECT count(*) FROM messages WHERE headers IS NOT NULL),
-  (SELECT count(*) FROM messages WHERE body IS NOT NULL),
-  (SELECT count(*) FROM transactions WHERE x_cached = 'true'),
-  {_marked("shed-messages")},
-  {_marked("shed-headers")},
-  {_marked("shed-bodies")},
-  (SELECT count(*) FROM transactions t WHERE (SELECT count(*) FROM messages WHERE transaction_id = t.id) < 2),
-  (SELECT count(DISTINCT transaction_id) FROM messages WHERE headers IS NULL),
-  (SELECT count(DISTINCT transaction_id) FROM messages WHERE body IS NULL)
-"""
-COUNT_NAMES = (
-    "transactions",
-    "messages",
-    "headers",
-    "bodies",
-    "cache_hits",
-    "marked_messages",
-    "marked_headers",
-    "marked_bodies",
-    "missing_messages",
-    "missing_headers",
-    "missing_bodies",
-)
-
-
-def db_counts(db: Path) -> dict[str, int] | None:
-    """What HARP recorded so far, read from outside. None while the database is not readable yet."""
+async def _fetch(url: str, query: str):
+    connection = await _connect(url)
     try:
-        with contextlib.closing(sqlite3.connect(f"file:{db}?mode=ro", uri=True, timeout=5)) as conn:
-            return dict(zip(COUNT_NAMES, conn.execute(COUNTS_SQL).fetchone()))
-    except sqlite3.Error:
+        return await connection.fetchrow(query)
+    finally:
+        await connection.close()
+
+
+def db_counts(url: str) -> dict[str, int] | None:
+    """What HARP recorded so far, read from outside. None while the schema is not there yet."""
+    try:
+        row = asyncio.run(_fetch(url, measure.COUNTS_SQL))
+    except Exception:  # the connection or the tables are not ready: the caller polls again
         return None
+    return dict(zip(measure.COUNT_NAMES, row))
 
 
-def wait_settled(db: Path, *, quiet: float = 2.0, timeout: float = 120.0) -> tuple[list[tuple[float, int]], bool]:
+def server_version(url: str) -> str:
+    return asyncio.run(_fetch(url, "SHOW server_version"))["server_version"]
+
+
+async def _reset(url: str) -> None:
+    connection = await _connect(url)
+    try:
+        await connection.execute("DROP SCHEMA public CASCADE; CREATE SCHEMA public;")
+    finally:
+        await connection.close()
+
+
+def reset_database(url: str) -> None:
+    """
+    Back to an empty database, as a fresh sqlite file used to be: the public schema is dropped and recreated, so HARP
+    starts on no tables and its own migrations (``storage.migrate``) build the schema before it serves, leaving every
+    run the same starting state, migrations applied and tables empty. HARP must not be running; the role must own the
+    database (or its public schema).
+    """
+    asyncio.run(_reset(url))
+
+
+def wait_settled(db: str, *, quiet: float = 2.0, timeout: float = 120.0) -> tuple[list[tuple[float, int]], bool]:
     """Polls the recorded rows until they stop growing for ``quiet`` seconds. Returns the samples and a settled flag."""
     samples: list[tuple[float, int]] = []
     started = time.monotonic()
@@ -291,10 +298,10 @@ def wait_settled(db: Path, *, quiet: float = 2.0, timeout: float = 120.0) -> tup
 class Ledger:
     """What was sent to HARP against what its database holds (readiness probes excluded through a baseline)."""
 
-    def __init__(self, db: Path):
+    def __init__(self, db: str):
         self.db = db
         self.sent = 0
-        self.baseline = {name: 0 for name in COUNT_NAMES}
+        self.baseline = {name: 0 for name in measure.COUNT_NAMES}
 
     def start(self) -> None:
         wait_settled(self.db)
@@ -302,7 +309,7 @@ class Ledger:
 
     def snapshot(self) -> dict:
         counts = db_counts(self.db) or {}
-        recorded = {name: counts.get(name, 0) - self.baseline[name] for name in COUNT_NAMES}
+        recorded = {name: counts.get(name, 0) - self.baseline[name] for name in measure.COUNT_NAMES}
         return {
             "sent": self.sent,
             "recorded": recorded,
@@ -358,7 +365,10 @@ def common_metadata(args, cores) -> dict:
         **metadata.collect(),
         "profile": args.profile,
         "cores": cores,
-        "cores_source": "hybrid P-cores" if hybrid else "all online cpus (no hybrid topology found)",
+        "cores_source": "process affinity, narrowed to the hybrid P-cores" if hybrid else "process affinity",
+        "affinity": sorted(os.sched_getaffinity(0)),
+        "cores_shared": measure.shared_roles(cores),
+        "database": database_info(args),
         "governor": {str(cpu): governor(cpu) for cpu in used},
         "oha_version": oha_version(),
         "oha_connections": args.connections,
@@ -368,6 +378,12 @@ def common_metadata(args, cores) -> dict:
         "cache_share": args.cache_share if args.profile in CACHE_MIX_PROFILES else 0,
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
+
+
+def database_info(args) -> dict:
+    if not args.database_url:
+        return {"backend": None}
+    return {"backend": "postgresql", "server_version": server_version(args.database_url)}
 
 
 def write_result(name: str, result: dict) -> Path:
@@ -384,7 +400,7 @@ def overhead(args) -> int:
     with tempfile.TemporaryDirectory(prefix="harp-bench-") as tmp, origin_process(args, cores):
         wait_port(args.origin_port)
         direct, _ = measured_run(args, cores, args.origin_port)
-        with harp_process(args, cores, Path(tmp), Path(tmp) / "harp.db") as harp:
+        with harp_process(args, cores, Path(tmp)) as harp:
             wait_first_200(args.harp_port)
             proxied, ticks = measured_run(args, cores, args.harp_port, pid=harp.pid)
     clk = os.sysconf("SC_CLK_TCK")
@@ -416,8 +432,11 @@ def summarize_overhead(result: dict, path: Path) -> None:
     print(f"-> {path}")
 
 
-def startup_once(args, cores, workdir: Path, db: Path, importtime_file: Path | None = None) -> float:
-    command = harp_command(args, cores, workdir, db, importtime=importtime_file is not None)
+def startup_once(args, cores, workdir: Path, *, reset: bool, importtime_file: Path | None = None) -> float:
+    """Exec to first proxied 200. ``reset`` starts on an empty database (cold), else on the migrated one (warm)."""
+    if reset and args.database_url:
+        reset_database(args.database_url)
+    command = harp_command(args, cores, importtime=importtime_file is not None)
     stderr = importtime_file.open("w") if importtime_file else subprocess.DEVNULL
     started = time.perf_counter()
     with running(command, cwd=workdir, stdout=subprocess.DEVNULL, stderr=stderr):
@@ -435,14 +454,13 @@ def startup(args) -> int:
         wait_port(args.origin_port)
         for mode in modes:
             if mode == "warm":  # database migrated by a first, discarded start
-                startup_once(args, cores, workdir, workdir / "warm.db")
-            for i in range(args.reps):
-                db = workdir / (f"cold-{i}.db" if mode == "cold" else "warm.db")
-                timings[mode].append(startup_once(args, cores, workdir, db))
+                startup_once(args, cores, workdir, reset=True)
+            for _ in range(args.reps):
+                timings[mode].append(startup_once(args, cores, workdir, reset=mode == "cold"))
         RESULTS.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
         importtime = RESULTS / f"startup-{args.profile}-importtime-{stamp}.txt"
-        startup_once(args, cores, workdir, workdir / "importtime.db", importtime_file=importtime)
+        startup_once(args, cores, workdir, reset=True, importtime_file=importtime)
     result = {
         **common_metadata(args, cores),
         "reps": args.reps,
@@ -505,11 +523,10 @@ def load(args) -> int:
     ensure_origin_built(args.origin_cmd)
     steps: list[dict] = []
     with tempfile.TemporaryDirectory(prefix="harp-bench-") as tmp, origin_process(args, cores):
-        db = Path(tmp) / "harp.db"
         wait_port(args.origin_port)
-        with harp_process(args, cores, Path(tmp), db) as harp:
+        with harp_process(args, cores, Path(tmp)) as harp:
             wait_first_200(args.harp_port)
-            ledger = Ledger(db) if storage else None
+            ledger = Ledger(args.database_url) if storage else None
             if ledger:
                 ledger.start()
             for rate in args.rates:
@@ -637,6 +654,10 @@ def main() -> int:
     for tool in ("taskset", "oha"):
         if not shutil.which(tool):
             sys.exit(f"missing tool: {tool} (see bench/README.md)")
+    try:
+        args.database_url = measure.require_database_url(os.environ, stores=args.profile in STORAGE_PROFILES)
+    except ValueError as error:
+        sys.exit(str(error))
     args.size = args.size or BODY_BYTES.get(args.profile, DEFAULT_BODY_BYTES)
     args.connections = args.connections or (32 if args.command == "load" else 8)
     return {"overhead": overhead, "startup": startup, "load": load}[args.command](args)

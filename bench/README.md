@@ -23,8 +23,8 @@ Laptop numbers validate the tooling only. Verdict runs happen on an external run
 
 ## Macro harness (overhead, startup, load)
 
-End-to-end: HARP runs as a real server process between a load generator and an origin, all native and pinned on
-disjoint P-cores with `taskset`. No docker needed.
+End-to-end: HARP runs as a real server process between a load generator and an origin, all native and pinned with
+`taskset`. The profiles that record need a PostgreSQL database (below); no docker needed.
 
 ```shell
 make bench-macro PROFILE=bare|default|loaded       # bench/results/macro-<profile>-<sha>-<ts>.json
@@ -42,8 +42,8 @@ migrated one (`default` only, `bare` has no database); median, min, max over `--
 Options: `python -m bench.macro.run --help`. Rate defaults to 50 req/s: on the laptop `default` already queues at 200
 req/s on one core, and the point is overhead at low load, not saturation.
 
-Profiles (`bench/macro/profiles/`): `bare` = `proxy` + `http_client`; `default` = default applications, sqlite in a
-temp dir, no rules; `loaded` = `default` + a ruleset (five patterns on the `bench` endpoint, two with a small script),
+Profiles (`bench/macro/profiles/`): `bare` = `proxy` + `http_client`; `default` = default applications, PostgreSQL
+(`BENCH_DATABASE_URL`), no rules; `loaded` = `default` + a ruleset (five patterns on the `bench` endpoint, two with a small script),
 a mix of cache hits and misses and a 16 KiB body (`--size`). Endpoint and storage url are passed on the command line so ports stay parametric.
 
 ### Tools
@@ -58,8 +58,25 @@ a mix of cache hits and misses and a 16 KiB body (`--size`). Endpoint and storag
 
 ### Pinning and metadata
 
-Cores come from `/sys/devices/cpu_core/cpus` (P-cores of a hybrid cpu; all online cpus otherwise), handed out
-disjointly: HARP 2 (`--harp-cores`), origin 1, load generator 1. Override with `--harp-cpus/--origin-cpus/--loadgen-cpus`.
+Cores come from the process affinity (`os.sched_getaffinity(0)`), narrowed to the P-cores of a hybrid cpu: start the
+harness under `taskset -c 0-2` to give it three. HARP gets 2 (`--harp-cores`), the origin 1 and the load generator 1;
+with exactly three cores left the origin and the load generator share the third, with four or more every role has its
+own and the rest stay unused. Override with `--harp-cpus/--origin-cpus/--loadgen-cpus`. The result records `cores`,
+`cores_shared` (the roles on a shared core), `cores_source`, the `affinity` and the `database` (`backend`,
+`server_version`; `null` backend for `bare`).
+
+### Database
+
+Recording profiles (`default`, `loaded`) use PostgreSQL only, from the environment variable `BENCH_DATABASE_URL`, e.g.
+`postgresql+asyncpg://bench@localhost/bench` (add `?host=/run/postgresql` to reach it over a unix socket; HARP rejects
+an empty host). Unset, or not PostgreSQL, the harness exits with a message before starting anything: there is no SQLite
+fallback. `bare` needs no database.
+
+Before every HARP start the harness drops and recreates the `public` schema (`DROP SCHEMA public CASCADE; CREATE SCHEMA
+public`), so each run starts on no tables and HARP's own migrations (`storage.migrate`) build the schema before it
+serves: the same starting state every time, migrations applied, tables empty. The role must own the database (or its
+`public` schema), and no other client may use it. Warm `startup` resets once, then restarts on the migrated database.
+The ledger, drain and shedding figures are read from the same database with `asyncpg`.
 Recorded in the result with the cpu governor of those cores (not changed: needs root), oha version, profile, rate,
 duration and the origin description, next to `bench.metadata.collect()`.
 
@@ -81,7 +98,7 @@ rate, peak RSS (`VmHWM` of the HARP pid at the end of the step), backlog and she
   only refreshed by the worker every 5 s and not at all while the queue is idle, and the metrics middleware adds a
   little latency of its own (recorded as `metrics_scraped`): treat it as an indication, the database is the reference.
 - **Drain**: seconds from the end of the last step until the rows of `transactions` and `messages` stop growing
-  (unchanged for 2 s), read from the sqlite file.
+  (unchanged for 2 s), read from the database.
 - **Shedding share**: per step and after the drain (`drain`, also after each rerun), what the database holds against
   what was sent (readiness probes excluded): transactions against requests, messages, headers and bodies against two per
   request. The per-step figure is read at the end of the step, with the queue not yet drained, so it overestimates;
