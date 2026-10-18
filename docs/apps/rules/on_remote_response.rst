@@ -68,7 +68,7 @@ Or if you want to cache anonymous responses for one hour:
     [rules."*"."GET *"]
     on_remote_response = """
     cache_control = response.headers.get('Cache-Control', '').lower()
-    if 'Authorization' not in request.headers and 'Cookie' not in request.headers and 'private' not in cache_control:
+    if 'Authorization' not in request.headers and 'Cookie' not in request.headers and 'Set-Cookie' not in response.headers and 'private' not in cache_control:
         response.headers['Cache-Control'] = 'max-age=3600'
     """
 

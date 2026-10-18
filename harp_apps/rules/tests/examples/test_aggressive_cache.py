@@ -35,3 +35,7 @@ class TestAggressiveCacheExample:
     def test_upstream_private_is_kept(self):
         response = apply_aggressive_cache({}, {"Cache-Control": "Private, max-age=60"})
         assert response.headers["Cache-Control"] == "Private, max-age=60"
+
+    def test_upstream_set_cookie_is_not_cached(self):
+        response = apply_aggressive_cache({}, {"Set-Cookie": "session=abc"})
+        assert "Cache-Control" not in response.headers
