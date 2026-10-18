@@ -20,6 +20,9 @@ SQLite storage works out of the box. To store in PostgreSQL or MySQL/MariaDB, in
     pip install harp-proxy[postgresql]
     pip install harp-proxy[mysql]
 
+On Windows the default server runs on the asyncio event loop, because uvloop is not available there (see
+:doc:`/operate/server`).
+
 
 Start a proxy
 :::::::::::::
