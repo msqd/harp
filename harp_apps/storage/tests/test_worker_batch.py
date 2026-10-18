@@ -251,3 +251,57 @@ async def test_a_big_batch_is_written_in_chunks_of_one_database_transaction(sql_
         assert await count(sql_storage) == 120
     finally:
         await worker.close()
+
+
+async def test_the_bytes_of_a_batch_are_given_back_when_it_commits(sql_storage, sql_blob_storage):
+    worker = make_worker(sql_storage, sql_blob_storage, flush_interval=60, early_insert_after=60)
+    try:
+        for _ in range(3):
+            await run(worker, new_transaction(), request_body=b"x" * 500)
+        assert worker._pending_bytes >= 1500
+
+        await worker.wait_until_empty()
+
+        assert worker._pending_bytes == 0
+    finally:
+        await worker.close()
+
+
+async def test_the_bytes_of_a_batch_that_cannot_be_written_are_given_back(sql_storage, sql_blob_storage, monkeypatch):
+    worker = make_worker(sql_storage, sql_blob_storage, flush_interval=60, early_insert_after=60)
+
+    def broken(*args, **kwargs):
+        raise RuntimeError("database down")
+
+    monkeypatch.setattr(worker, "engine", SimpleNamespace(begin=broken, dialect=sql_storage.engine.dialect))
+    try:
+        for _ in range(3):
+            await run(worker, new_transaction(), request_body=b"x" * 500)
+        await worker.wait_until_empty()  # ended entries are not retried: nothing will write them again
+
+        assert worker._pending_bytes == 0
+    finally:
+        await worker.close()
+
+
+async def test_an_open_transaction_keeps_its_bytes_when_the_early_insert_fails(
+    sql_storage, sql_blob_storage, monkeypatch
+):
+    worker = make_worker(sql_storage, sql_blob_storage, flush_interval=60, early_insert_after=0)
+
+    def broken(*args, **kwargs):
+        raise RuntimeError("database down")
+
+    try:
+        open_ = new_transaction()
+        await start(worker, open_)
+        await messages(worker, open_, request_body=b"x" * 500)
+        held = worker._pending_bytes
+        assert held >= 500
+
+        monkeypatch.setattr(worker, "engine", SimpleNamespace(begin=broken, dialect=sql_storage.engine.dialect))
+        await worker.wait_until_empty()  # the sweep tries to insert it: fails, it stays for its end
+        monkeypatch.undo()
+        assert worker._pending_bytes == held
+    finally:
+        await worker.close()

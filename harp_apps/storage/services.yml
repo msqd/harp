@@ -19,7 +19,7 @@ services:
   - name: "storage.worker"
     description: "Storage async worker"
     base: harp_apps.storage.worker.StorageAsyncWorkerQueue
-    arguments: { "early_insert_after": [!cfg "early_insert_after"], "pending_max_age": [!cfg "pending_max_age"], "flush_interval": [!cfg "flush_interval"], "flush_batch_size": [!cfg "flush_batch_size"] }
+    arguments: { "early_insert_after": [!cfg "early_insert_after"], "pending_max_age": [!cfg "pending_max_age"], "pending_max_bytes": [!cfg "pending_max_bytes"], "flush_interval": [!cfg "flush_interval"], "flush_batch_size": [!cfg "flush_batch_size"] }
 
   - condition: [!cfg "blobs.type == 'sql'", !!bool "true"]
     services:

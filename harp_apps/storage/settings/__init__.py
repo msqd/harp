@@ -18,5 +18,7 @@ class StorageSettings(ApplicationSettingsMixin, DatabaseSettings):
     flush_interval: float = 1.0
     #: ...or as soon as this many have ended, whichever comes first.
     flush_batch_size: int = 500
+    #: Bytes of payload waiting to be written, past which bodies, then headers, then messages are not recorded.
+    pending_max_bytes: int = 64 * 1024 * 1024
     blobs: BlobStorageSettings = BlobStorageSettings()
     redis: Optional[RedisSettings] = None

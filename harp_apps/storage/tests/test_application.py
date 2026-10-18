@@ -18,6 +18,7 @@ class TestStorageApplication(BaseTestForApplications):
         "pending_max_age": 3600.0,
         "flush_interval": 1.0,
         "flush_batch_size": 500,
+        "pending_max_bytes": 67108864,
         "redis": None,
         "url": "sqlite+aiosqlite:///:memory:?cache=shared",
     }

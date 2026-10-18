@@ -31,6 +31,7 @@ class TestSystemController(
                 "pending_max_age": 3600.0,
                 "flush_interval": 1.0,
                 "flush_batch_size": 500,
+                "pending_max_bytes": 67108864,
                 "url": "sqlite+aiosqlite:///:memory:",
                 "redis": None,
             },
@@ -51,6 +52,7 @@ class TestSystemController(
                 "pending_max_age": 3600.0,
                 "flush_interval": 1.0,
                 "flush_batch_size": 500,
+                "pending_max_bytes": 67108864,
                 "url": "sqlite+aiosqlite:///:memory:",
                 "redis": {"url": "redis://redis.example.com:1234/42"},
             },
@@ -70,6 +72,7 @@ class TestSystemController(
                 "pending_max_age": 3600.0,
                 "flush_interval": 1.0,
                 "flush_batch_size": 500,
+                "pending_max_bytes": 67108864,
                 "url": "sqlite+aiosqlite:///:memory:",
                 "redis": None,
             },
@@ -88,6 +91,7 @@ class TestSystemController(
                 "pending_max_age": 3600.0,
                 "flush_interval": 1.0,
                 "flush_batch_size": 500,
+                "pending_max_bytes": 67108864,
                 "url": RE(r".*://test:\*\*\*@.*"),
                 "blobs": ANY,
                 "redis": None,
@@ -140,7 +144,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","enabled":true,"migrate":true,"early_insert_after":1.0,"pending_max_age":3600.0,"flush_interval":1.0,"flush_batch_size":500,"blobs":{"type":"sql"},"redis":null}}'
+            b':memory:","enabled":true,"migrate":true,"early_insert_after":1.0,"pending_max_age":3600.0,"flush_interval":1.0,"flush_batch_size":500,"pending_max_bytes":67108864,"blobs":{"type":"sql"},"redis":null}}'
         )
 
     @parametrize_with_settings({})
@@ -153,7 +157,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","enabled":true,"migrate":true,"early_insert_after":1.0,"pending_max_age":3600.0,"flush_interval":1.0,"flush_batch_size":500,"blobs":{"type":"redis"},"redis":null}}'
+            b':memory:","enabled":true,"migrate":true,"early_insert_after":1.0,"pending_max_age":3600.0,"flush_interval":1.0,"flush_batch_size":500,"pending_max_bytes":67108864,"blobs":{"type":"redis"},"redis":null}}'
         )
 
     @parametrize_with_settings(
@@ -171,7 +175,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","enabled":true,"migrate":true,"early_insert_after":1.0,"pending_max_age":3600.0,"flush_interval":1.0,"flush_batch_size":500,"blobs":{"type":"sql"},"redis":null}}'
+            b':memory:","enabled":true,"migrate":true,"early_insert_after":1.0,"pending_max_age":3600.0,"flush_interval":1.0,"flush_batch_size":500,"pending_max_bytes":67108864,"blobs":{"type":"sql"},"redis":null}}'
         )
 
     @parametrize_with_settings(
@@ -192,7 +196,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","enabled":true,"migrate":true,"early_insert_after":1.0,"pending_max_age":3600.0,"flush_interval":1.0,"flush_batch_size":500,"blobs":{"type":"redis"},"redis":null}}'
+            b':memory:","enabled":true,"migrate":true,"early_insert_after":1.0,"pending_max_age":3600.0,"flush_interval":1.0,"flush_batch_size":500,"pending_max_bytes":67108864,"blobs":{"type":"redis"},"redis":null}}'
         )
 
     @parametrize_with_database_urls("postgresql")
@@ -212,6 +216,7 @@ class TestSystemControllerThroughASGI(
                 "pending_max_age": 3600.0,
                 "flush_interval": 1.0,
                 "flush_batch_size": 500,
+                "pending_max_bytes": 67108864,
                 "redis": None,
                 "url": RE(escape("postgresql+asyncpg://test:***@") + r".*"),
             },
@@ -235,7 +240,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","enabled":true,"migrate":true,"early_insert_after":1.0,"pending_max_age":3600.0,"flush_interval":1.0,"flush_batch_size":500,"blobs":{"type":"redis"},"redis":{"url":"redis://us'
+            b':memory:","enabled":true,"migrate":true,"early_insert_after":1.0,"pending_max_age":3600.0,"flush_interval":1.0,"flush_batch_size":500,"pending_max_bytes":67108864,"blobs":{"type":"redis"},"redis":{"url":"redis://us'
             b'er:***@localhost:6379/0"}}}'
         )
 

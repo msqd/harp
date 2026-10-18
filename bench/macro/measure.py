@@ -89,7 +89,9 @@ def _marked(marker: str) -> str:
 
 
 # `headers`/`bodies` count messages whose column is set, not distinct blobs: empty bodies all share one blob id.
-# `missing_*` count recorded transactions, to compare with the `shed-*` markers set on them.
+# `missing_*` count recorded transactions, to compare with the `shed-*` markers set on them. Only finished ones: a
+# transaction open for more than a second is inserted early with what it has so far (a request, no response yet), and
+# its markers are written when it ends.
 COUNTS_SQL = f"""
 SELECT
   (SELECT count(*) FROM transactions),
@@ -100,9 +102,12 @@ SELECT
   {_marked("shed-messages")},
   {_marked("shed-headers")},
   {_marked("shed-bodies")},
-  (SELECT count(*) FROM transactions t WHERE (SELECT count(*) FROM messages WHERE transaction_id = t.id) < 2),
-  (SELECT count(DISTINCT transaction_id) FROM messages WHERE headers IS NULL),
-  (SELECT count(DISTINCT transaction_id) FROM messages WHERE body IS NULL)
+  (SELECT count(*) FROM transactions t WHERE t.finished_at IS NOT NULL
+     AND (SELECT count(*) FROM messages WHERE transaction_id = t.id) < 2),
+  (SELECT count(DISTINCT m.transaction_id) FROM messages m JOIN transactions t ON t.id = m.transaction_id
+     WHERE t.finished_at IS NOT NULL AND m.headers IS NULL),
+  (SELECT count(DISTINCT m.transaction_id) FROM messages m JOIN transactions t ON t.id = m.transaction_id
+     WHERE t.finished_at IS NOT NULL AND m.body IS NULL)
 """
 COUNT_NAMES = (
     "transactions",
