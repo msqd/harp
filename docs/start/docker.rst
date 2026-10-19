@@ -34,7 +34,7 @@ For a test run, you can:
 
     docker run --init -it --rm -p 4000-4100:4000-4100 makersquad/harp-proxy server
 
-This will start the proxy using the default settings (in memory sqlite storage) and by default, the dashboard will be
+This will start the proxy using the default settings (in memory sqlite storage, for development only) and by default, the dashboard will be
 available at http://localhost:4080.
 
 Without configured endpoints, no traffic can be proxied yet.
@@ -105,6 +105,8 @@ Then add the following to your `docker-compose.yml` file:
           - "./harp-data:/data"
         ports:
           - 4000-4100:4000-4100
+
+SQLite suits this development setup. For production, point ``storage.url`` at PostgreSQL.
 
 This example setup will bind two volumes: one for the local configuration file and one holding the SQLite database
 (``storage.url`` in ``harp.yaml``). Without ``storage.url``, storage is in memory and nothing is written to the volume.

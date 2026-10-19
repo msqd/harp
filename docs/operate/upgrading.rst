@@ -21,6 +21,10 @@ documented way back to 0.11.
 - **Drivers**: PostgreSQL and MySQL drivers are extras. Install ``harp-proxy[postgresql]`` or
   ``harp-proxy[mysql]``, or startup fails naming the extra. ``mysql+asyncmy://`` urls are refused: use
   ``mysql+aiomysql://``.
+- **MySQL and MariaDB are deprecated**: they keep working and stay tested in CI, but have no production
+  support and no performance commitment, and will be removed in a future version (not decided). HARP logs a
+  warning at boot for them. PostgreSQL is the only production-supported database; SQLite is for development
+  only. See :doc:`the storage page </apps/storage/index>`.
 - **Applications list**: an ``applications:`` list in your configuration now replaces the default set
   (it used to be ignored). List every application you need, including dependencies such as ``proxy``
   for ``storage``, or remove the key.
