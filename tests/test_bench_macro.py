@@ -367,3 +367,95 @@ class TestHarpCommand:
 
     def test_bare_has_no_storage_url(self):
         assert "storage.url" not in self.command()
+
+
+class TestSummarizeProbe:
+    @staticmethod
+    def lag(t, ms):
+        return {"k": "lag", "t": t, "ms": ms}
+
+    @staticmethod
+    def collection(t, ms, gen=2):
+        return {"k": "gc", "t": t, "ms": ms, "gen": gen, "collected": 10}
+
+    @staticmethod
+    def flush(t, ms, wait_ms=1.0, **rows):
+        return {
+            "k": "flush",
+            "t": t,
+            "ms": ms,
+            "cpu_ms": ms / 2,
+            "wait_ms": wait_ms,
+            "transactions": 50,
+            "open": 0,
+            "messages": 100,
+            "blobs": 90,
+            **rows,
+        }
+
+    def summarize(self, *events, start=0.0, end=100.0):
+        return measure.summarize_probe([{"k": "meta"}, *events], start=start, end=end)
+
+    def test_only_the_measured_window_counts(self):
+        summary = self.summarize(self.lag(5, 3.0), self.lag(50, 4.0), start=10, end=60)
+        assert summary["spikes"]["total"][">=2ms"] == 1
+        assert summary["spikes"]["worst"][0]["ms"] == 4.0
+
+    def test_a_spike_covered_by_a_collection_is_gc(self):
+        summary = self.summarize(self.lag(10.0, 4.0), self.collection(10.0, 3.5))
+        assert [s["cause"] for s in summary["spikes"]["worst"]] == ["gc"]
+
+    def test_a_spike_during_a_flush_is_flush(self):
+        summary = self.summarize(self.lag(10.003, 2.0), self.flush(10.0, 8.0))
+        assert [s["cause"] for s in summary["spikes"]["worst"]] == ["flush"]
+
+    def test_gc_wins_over_flush(self):
+        summary = self.summarize(self.lag(10.003, 2.0), self.flush(10.0, 8.0), self.collection(10.003, 2.0))
+        assert [s["cause"] for s in summary["spikes"]["worst"]] == ["gc"]
+
+    def test_a_spike_with_nothing_around_is_other(self):
+        summary = self.summarize(self.lag(10.0, 2.0), self.flush(20.0, 8.0))
+        assert summary["spikes"]["by_cause"]["other"][">=2ms"] == 1
+
+    def test_thresholds_count_by_cause(self):
+        summary = self.summarize(self.lag(10, 2.5), self.lag(20, 4.0), self.lag(30, 12))
+        assert summary["spikes"]["total"] == {
+            ">=2ms": 3,
+            ">=3ms": 2,
+            ">=5ms": 1,
+            ">=10ms": 1,
+            ">=20ms": 0,
+            ">=50ms": 0,
+        }
+
+    def test_collections_by_generation(self):
+        summary = self.summarize(self.collection(1, 0.2, 0), self.collection(2, 0.4, 0), self.collection(3, 9.0, 2))
+        assert summary["gc"]["0"] == {"n": 2, "total_ms": 0.6, "max_ms": 0.4}
+        assert summary["gc"]["2"]["max_ms"] == 9.0
+        assert summary["gc"]["1"]["n"] == 0
+
+    def test_flush_figures(self):
+        summary = self.summarize(
+            self.flush(1, 4.0, wait_ms=0.5), self.flush(2, 8.0, wait_ms=None), self.flush(3, 6.0, wait_ms=1.5)
+        )
+        assert summary["flush"]["wall_ms"]["median"] == 6.0
+        assert summary["flush"]["wall_ms"]["max"] == 8.0
+        assert summary["flush"]["wait_ms"]["n"] == 2  # a full batch has no tick to wait for
+        assert summary["flush"]["transactions"]["median"] == 50
+
+    def test_nothing_recorded(self):
+        summary = self.summarize()
+        assert summary["flush"]["wall_ms"] == {"n": 0}
+        assert summary["spikes"]["worst"] == []
+
+    def test_worst_lag_during_flushes_against_the_same_stretch_later(self):
+        summary = self.summarize(
+            self.flush(10.0, 5.0),
+            self.lag(10.004, 3.0),  # inside the flush
+            self.flush(11.0, 5.0),
+            self.lag(11.504, 1.0),  # half a second after the second flush's start
+        )
+        worst = summary["worst_lag_ms"]
+        assert worst["during_flushes"]["max"] == 3.0
+        assert worst["during_flushes"]["median"] == 1.5
+        assert worst["half_a_second_later"]["max"] == 1.0

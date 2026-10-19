@@ -56,6 +56,17 @@ a mix of cache hits and misses and a 16 KiB body (`--size`). Endpoint and storag
   Another origin (nginx, go-httpbin, a container) plugs in through `--origin-cmd` / `BENCH_ORIGIN_CMD`, a command
   template with `{port}` and `{size}`.
 
+### Loop probe (`--probe`)
+
+`overhead --probe` turns on an opt-in diagnostic in the HARP process (`BENCH_LOOP_PROBE=<file>`, `harp/utils/loop_probe.py`;
+nothing runs without it). It records, with `time.monotonic()` stamps shared with the harness: loop lag (a 2 ms timer,
+overruns above 1.5 ms kept, all in a histogram), garbage collections above 0.1 ms (generation, pause), and each flush of
+the storage worker (wall and loop-thread CPU, rows, wait after its tick). The result JSON gets a `probe` object, summed
+over the measured window only: spikes by threshold and by cause (`gc`, `flush` = a flush was in progress, `other`), the
+worst lag during each flush span against the same span half a second later, collections by generation, flush figures.
+The raw events stay next to the result as `<result>.probe.jsonl`. The probe adds timer wakeups: compare runs that all
+have it, never a probed run with an unprobed one. Lag below ~1 ms is the timer's own resolution, not a stall.
+
 ### Pinning and metadata
 
 Cores come from the process affinity (`os.sched_getaffinity(0)`), narrowed to the P-cores of a hybrid cpu: start the

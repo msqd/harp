@@ -1,0 +1,1 @@
+Add `--probe` to the macro harness: loop lag, garbage collections and storage flushes recorded in the HARP process, summarized in the result.
