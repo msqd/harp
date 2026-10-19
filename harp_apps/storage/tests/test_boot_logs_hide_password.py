@@ -29,6 +29,34 @@ def _error_embedding_the_url(monkeypatch):
     monkeypatch.setattr("alembic.command.upgrade", fail)
 
 
+class _AttributeError(Exception):
+    """Builds its text from an attribute, like DBAPIError and asyncpg errors do."""
+
+    def __init__(self):
+        super().__init__("failed")
+        self.detail = URL
+
+    def __str__(self):
+        return f"failed: {self.detail}"
+
+
+def _error_rendering_an_attribute(monkeypatch):
+    def fail(*args, **kwargs):
+        raise _AttributeError()
+
+    monkeypatch.setattr("alembic.command.upgrade", fail)
+
+
+def _error_chained_to_one_embedding_the_url(monkeypatch):
+    def fail(*args, **kwargs):
+        try:
+            raise ValueError(f"cannot connect to {URL}")
+        except ValueError as exc:
+            raise OSError("storage unavailable") from exc
+
+    monkeypatch.setattr("alembic.command.upgrade", fail)
+
+
 async def _boot(url):
     builder = ConfigurationBuilder()
     builder.add_values({"storage": {"url": url}, "proxy": {}})
@@ -36,7 +64,16 @@ async def _boot(url):
     await SystemBuilder(builder.applications, config).abuild()
 
 
-@pytest.mark.parametrize("failure", [_unreachable_host, _missing_driver, _error_embedding_the_url])
+@pytest.mark.parametrize(
+    "failure",
+    [
+        _unreachable_host,
+        _missing_driver,
+        _error_embedding_the_url,
+        _error_rendering_an_attribute,
+        _error_chained_to_one_embedding_the_url,
+    ],
+)
 async def test_boot_failure_logs_no_password(failure, monkeypatch, caplog):
     failure(monkeypatch)
     caplog.set_level(logging.DEBUG)

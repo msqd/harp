@@ -1,5 +1,6 @@
 import asyncio
 import os
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from typing import Union
 from urllib.parse import quote
@@ -25,6 +26,24 @@ def hide_password(message: str, url: Union[str, URL, Url, MultiHostUrl]) -> str:
     for form in {password, quote(password, safe=""), quote(password)}:
         message = message.replace(form, "***")
     return message
+
+
+class StorageBootError(RuntimeError):
+    """A storage failure whose message is the password-masked rendering of the original failure chain."""
+
+
+def render_failure(exc: BaseException, url) -> str:
+    """Render ``exc`` and its whole cause chain (any attribute ``str()`` uses), password masked."""
+    return hide_password("".join(traceback.format_exception(exc, limit=0)).strip(), url)
+
+
+def mask_failure(exc: BaseException, url) -> BaseException:
+    """Return ``exc`` itself when its rendering holds no password, else a :class:`StorageBootError` that replaces it."""
+    raw = "".join(traceback.format_exception(exc, limit=0)).strip()
+    masked = hide_password(raw, url)
+    if masked == raw:
+        return exc
+    return StorageBootError(masked).with_traceback(exc.__traceback__)
 
 
 def create_alembic_config(url: Union[str, URL, Url, MultiHostUrl]):
@@ -118,7 +137,7 @@ async def do_migrate(engine, *, migrator, reset=False):
     try:
         await _do_migrate(engine, migrator=migrator, reset=reset)
     except Exception as e:
-        message = hide_password(str(e), engine.url)
+        message = render_failure(e, engine.url)
         logger.error(f"🛢 [db:migrate] Migrations failed: {message}")
         raise RuntimeError(f"Could not run migrations ({message}).").with_traceback(e.__traceback__) from None
 
