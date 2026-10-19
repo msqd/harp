@@ -1,0 +1,1 @@
+Document memory sizing under recording backlog and on-off message shedding on a slow database, and fix three wording errors.
