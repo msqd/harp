@@ -25,6 +25,11 @@
     'docs/apps/proxy/examples/reference.yml',
     'docs/apps/proxy/examples/swapi.yml',
     'docs/apps/rules/examples/overview.toml',
+    'docs/apps/rules/examples/patterns-endpoint.toml',
+    'docs/apps/rules/examples/patterns-order-more.toml',
+    'docs/apps/rules/examples/patterns-order.toml',
+    'docs/apps/rules/examples/patterns-request.toml',
+    'docs/apps/rules/examples/patterns-stage.toml',
     'docs/apps/rules/examples/rules.toml',
     'docs/apps/rules/examples/rules.yml',
     'docs/apps/storage/examples/mysql-aiomysql.yml',
@@ -285,8 +290,7 @@
   janitor: {}
   proxy:
     endpoints:
-    - controller: null
-      description: A very informative description
+    - description: A very informative description
       name: httpbins
       port: 4000
       remote:
@@ -499,6 +503,99 @@
           == \"I'm root, let me in\":\n    response = HttpResponse('Ok, then.')\nelse:\n
           \   request.headers['Via'] = 'Ferrata'"
         on_response: response.headers['X-Signature'] = 'Best regards, Joe.'
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[docs/apps/rules/examples/patterns-endpoint.toml]
+  '''
+  dashboard: {}
+  http_cache: {}
+  http_client: {}
+  janitor: {}
+  proxy: {}
+  rules:
+    api:
+      '*':
+        on_request: request.headers['X-Api'] = 'yes'
+    httpbin-*:
+      '*':
+        on_request: request.headers['X-Region'] = 'any'
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[docs/apps/rules/examples/patterns-order-more.toml]
+  '''
+  dashboard: {}
+  http_cache: {}
+  http_client: {}
+  janitor: {}
+  proxy: {}
+  rules:
+    '*':
+      GET *:
+        on_request: request.headers['X-Trail'] = request.headers.get('X-Trail', '')
+          + ',E'
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[docs/apps/rules/examples/patterns-order.toml]
+  '''
+  dashboard: {}
+  http_cache: {}
+  http_client: {}
+  janitor: {}
+  proxy: {}
+  rules:
+    '*':
+      '*':
+        on_request: request.headers['X-Trail'] = request.headers.get('X-Trail', '')
+          + ',A'
+      GET *:
+        on_request: request.headers['X-Trail'] = request.headers.get('X-Trail', '')
+          + ',C'
+    api:
+      '*':
+        on_request: request.headers['X-Trail'] = request.headers.get('X-Trail', '')
+          + ',B'
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[docs/apps/rules/examples/patterns-request.toml]
+  '''
+  dashboard: {}
+  http_cache: {}
+  http_client: {}
+  janitor: {}
+  proxy: {}
+  rules:
+    '*':
+      '* /health':
+        on_request: request.headers['X-Probe'] = 'yes'
+      GET /users/*:
+        on_request: request.headers['X-Read'] = 'user'
+      POST /orders:
+        on_request: request.headers['X-Write'] = 'order'
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[docs/apps/rules/examples/patterns-stage.toml]
+  '''
+  dashboard: {}
+  http_cache: {}
+  http_client: {}
+  janitor: {}
+  proxy: {}
+  rules:
+    '*':
+      '*':
+        on_response: response.headers['X-Served-By'] = 'harp'
+      GET *:
+        on_remote_*: logger.info('remote exchange for %s', request.url)
   storage: {}
   
   '''

@@ -1,0 +1,1 @@
+⚠️ Request bodies are recorded at most ``proxy.max_recorded_body_size`` (1 MiB) like responses: a longer one is recorded truncated, marked ``truncated-request-body``, and still forwarded whole.

@@ -1,0 +1,1 @@
+Mark the Helm chart as unsupported and not production-ready in the docs.

@@ -1,0 +1,1 @@
+Storage load shedding now engages while the database is stalled: queue pressure is measured on every push instead of every 5 s by the consumer.

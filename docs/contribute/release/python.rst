@@ -451,13 +451,16 @@ If publishing fails:
 
 1. **Verify trusted publisher configuration** on PyPI:
 
-   * Go to https://pypi.org/manage/account/publishing/
-   * Ensure ``harp-proxy`` has a trusted publisher for:
+   * Go to https://pypi.org/manage/account/publishing/ (PyPI) and https://test.pypi.org/manage/account/publishing/
+     (TestPyPI)
+   * Ensure ``harp-proxy`` has a trusted publisher on each index, pinning:
 
-     * Owner: ``msqd``
-     * Repository: ``harp``
-     * Workflow: ``release.yml``
-     * Environment: ``pypi`` and ``testpypi``
+     ==========  =========  ==========  ===============  ===========
+     Index       Owner      Repository  Workflow         Environment
+     ==========  =========  ==========  ===============  ===========
+     PyPI        ``msqd``   ``harp``    ``cicd.yml``     ``pypi``
+     TestPyPI    ``msqd``   ``harp``    ``cicd.yml``     ``testpypi``
+     ==========  =========  ==========  ===============  ===========
 
 2. See the `PyPI Trusted Publishing Guide <https://docs.pypi.org/trusted-publishers/>`_ for setup instructions
 

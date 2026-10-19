@@ -1,0 +1,1 @@
+Aggressive-cache rules example and cache recipes no longer add `public` and skip requests with `Authorization` or `Cookie` and upstream `private` responses, so authenticated responses are not shared.

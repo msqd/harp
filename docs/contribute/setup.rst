@@ -36,8 +36,11 @@ Install the project's dependencies in an isolated virtual environment:
 
     make install-dev
 
-This will install the dependencies in a separate virtual environment (managed by uv) and set up the development
-environment.
+This installs, in order:
+
+- the backend and its development tools, in a separate virtual environment managed by uv;
+- the dashboard's frontend dependencies (``pnpm install``);
+- the git pre-commit hooks.
 
 .. note::
 

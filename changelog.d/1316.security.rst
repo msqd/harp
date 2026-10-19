@@ -1,0 +1,1 @@
+Narrow CI workflow token permissions per job and stop persisting checkout credentials.

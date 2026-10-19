@@ -1,1 +1,0 @@
-A request body from a client silent for longer than ``proxy.client_read_timeout`` (30 s), or arriving below ``proxy.min_request_body_rate`` (1 KiB/s, after 10 s), is answered ``408`` and never forwarded upstream.

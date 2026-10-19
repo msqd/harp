@@ -1,10 +1,10 @@
 Helm & Kubernetes
 =================
 
-.. note::
+.. warning::
 
-    We use this chart internally in production. However, as we approach general availability, the configuration
-    format and chart structure may change. Please review release notes and chart content before upgrading.
+    The Helm chart is **unsupported** and **not production-ready**. It is not tested against current images and cannot
+    start them as is. Do not rely on it. Use :doc:`Docker <docker>` instead.
 
 Install or upgrade
 ::::::::::::::::::

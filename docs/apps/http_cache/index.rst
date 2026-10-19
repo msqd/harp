@@ -275,11 +275,11 @@ answer the *next* caller, which is why ``no-store`` binds it: the directive is a
 transaction record retains in order to show operators what passed through their own proxy, and
 nothing in it is ever read back into a response.
 
-**In 0.10, a caller's** ``no-store`` **binds the cache and does not affect the transaction record.**
+**A caller's** ``no-store`` **binds the cache and does not affect the transaction record.**
 Such a request is not served from a stored entry and nothing about it is cached, and it is recorded
-like any other request. Whether a caller may suppress payload recording is decided in
-`#927 <https://github.com/msqd/harp/issues/927>`_ and lands in 0.11, so do not build on the current
-behaviour in either direction.
+like any other request. Whether a caller may suppress payload recording is undecided, see
+`#927 <https://github.com/msqd/harp/issues/927>`_, so do not build on the current behaviour in
+either direction.
 
 Note also what RFC 9111 §5.2.1.5 says of the directive: it "is not a reliable or sufficient
 mechanism for ensuring privacy. In particular, malicious or compromised caches might not recognize

@@ -12,7 +12,7 @@ Branches
 
 Version line ``X.Y``
     A branch created on the ``X.Y.0`` tag when that release ships (``0.10`` holds ``0.10.x``). It moves
-    only through backports, freezes once ``X.Y+1.0`` ships, and is never deleted: its documentation and
+    only through backports, freezes once ``X.Y+2.0`` ships, and is never deleted: its documentation and
     the Help links of installations still running it depend on it.
 
 Work branch
@@ -33,12 +33,27 @@ Versions
 Patch releases and backports
 ::::::::::::::::::::::::::::
 
-Only the latest version line receives patch releases, for bugs and security fixes, never features. The
+The latest version line (``stable``) receives patch releases for bugs and security fixes, never features. The
+line before it (``oldstable``) receives security fixes only. The
 product owner proposes a patch release and the user decides it.
 
 A fix lands on ``main`` first, through a normal pull request. A second pull request, targeting ``X.Y``,
 cherry-picks it with ``git cherry-pick -x <sha>`` so the commit names its origin. A fix that no longer
 applies to ``main`` goes to ``X.Y`` directly, and its pull request says why.
+
+Security fixes
+::::::::::::::
+
+A security fix is not public until the patch release is. Do not follow the flow above.
+
+1. Report arrives through the repository's private vulnerability reporting. A maintainer drafts a
+   security advisory from it.
+2. The fix and its backports to the supported lines (``stable`` and ``oldstable``) are written in the advisory's temporary private fork, never in a
+   public branch or pull request.
+3. Patch releases are cut as in :doc:`release/python`, then the advisory is published with them, crediting
+   the reporter.
+4. The ``security`` changelog fragment (``changelog.d/<issue>.security.rst``) states only that a
+   vulnerability was fixed, with no detail on the defect before the release.
 
 Documentation versions
 ::::::::::::::::::::::

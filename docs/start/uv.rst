@@ -43,7 +43,7 @@ This will start the proxy with SQLite storage and a httpbin endpoint. The dashbo
 
    UV will automatically download and manage the correct Python version for you.
 
-To store in PostgreSQL or MySQL/MariaDB, add the matching extra:
+To store in PostgreSQL (the production database), add its extra. MySQL/MariaDB is deprecated:
 
 .. code-block:: shell
 

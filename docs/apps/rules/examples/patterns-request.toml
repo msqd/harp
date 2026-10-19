@@ -1,0 +1,17 @@
+# GET requests under /users/, whatever the rest of the path is.
+[rules."*"."GET /users/*"]
+on_request = """
+request.headers["X-Read"] = "user"
+"""
+
+# Exactly POST /orders.
+[rules."*"."POST /orders"]
+on_request = """
+request.headers["X-Write"] = "order"
+"""
+
+# Any method on /health.
+[rules."*"."* /health"]
+on_request = """
+request.headers["X-Probe"] = "yes"
+"""
