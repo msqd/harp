@@ -1,4 +1,5 @@
 import asyncio
+import random
 from dataclasses import dataclass, field
 from datetime import UTC
 from math import log10
@@ -116,7 +117,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         self._tick_at = None
         super().__init__()
         self.seen = set()
-        self._tick_handle = asyncio.get_running_loop().call_later(self.flush_interval, self._tick)
+        self._tick_handle = asyncio.get_running_loop().call_later(self._next_delay(), self._tick)
         self._dropped_since_warning = dict.fromkeys(DROPPED_KINDS, 0)
         self._last_shed_warning_at = None
 
@@ -320,13 +321,23 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         }
         return pending
 
+    #: Share of ``flush_interval`` the delay of each tick varies by, up and down.
+    tick_jitter = 0.1
+
+    def _next_delay(self) -> float:
+        """
+        The delay to the next tick. Fixed, it would meet the same phase of any periodic load (a request every 20 ms
+        against a tick every 1 s) on every tick of a run: either never or always, which p99 then sees.
+        """
+        return self.flush_interval * random.uniform(1 - self.tick_jitter, 1 + self.tick_jitter)
+
     def _tick(self):
         self._tick_handle = None
         if not self._running:
             return
         self._tick_at = monotonic()
         self._schedule_flush()
-        self._tick_handle = asyncio.get_running_loop().call_later(self.flush_interval, self._tick)
+        self._tick_handle = asyncio.get_running_loop().call_later(self._next_delay(), self._tick)
 
     def _schedule_flush(self):
         """Queues one flush, unless one is already waiting: it takes everything ready when it runs."""

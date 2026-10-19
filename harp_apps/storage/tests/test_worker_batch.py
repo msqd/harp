@@ -1,6 +1,7 @@
 import asyncio
 from types import SimpleNamespace
 
+import pytest
 from prometheus_client import REGISTRY
 from sqlalchemy import func, select, text
 from whistle import AsyncEventDispatcher
@@ -340,3 +341,35 @@ async def test_nothing_is_recorded_without_the_probe(sql_storage, sql_blob_stora
         assert await count(sql_storage) == 1
     finally:
         await worker.close()
+
+
+async def test_ticks_are_jittered_around_the_interval(sql_storage, sql_blob_storage):
+    worker = make_worker(sql_storage, sql_blob_storage, flush_interval=1.0, early_insert_after=60)
+    try:
+        delays = [worker._next_delay() for _ in range(500)]
+        assert len(set(delays)) > 100  # not one fixed period: it must not lock onto a periodic load
+        assert min(delays) >= 0.9 and max(delays) <= 1.1
+        assert 0.98 < sum(delays) / len(delays) < 1.02
+    finally:
+        await worker.close()
+
+
+async def test_every_tick_rearms_with_its_own_delay(sql_storage, sql_blob_storage, monkeypatch):
+    worker = make_worker(sql_storage, sql_blob_storage, flush_interval=60, early_insert_after=60)
+    try:
+        monkeypatch.setattr(worker, "_next_delay", lambda: 0.123)
+        worker._tick()
+        loop = asyncio.get_running_loop()
+        assert worker._tick_handle.when() - loop.time() == pytest.approx(0.123, abs=0.02)
+    finally:
+        await worker.close()
+
+
+async def test_the_first_tick_is_jittered_too(sql_storage, sql_blob_storage):
+    # Started with a fixed delay, every worker would tick on the same phase of its second.
+    delays = []
+    for _ in range(20):
+        worker = make_worker(sql_storage, sql_blob_storage, flush_interval=10.0, early_insert_after=60)
+        delays.append(worker._tick_handle.when() - asyncio.get_running_loop().time())
+        await worker.close()
+    assert len({round(d, 2) for d in delays}) > 5
