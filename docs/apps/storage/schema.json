@@ -94,6 +94,8 @@
         "migrate": { "default": true, "type": "boolean" },
         "early_insert_after": { "default": 1.0, "type": "number" },
         "pending_max_age": { "default": 3600.0, "type": "number" },
+        "flush_interval": { "default": 1.0, "type": "number" },
+        "flush_batch_size": { "default": 500, "type": "integer" },
         "pending_max_bytes": { "default": 67108864, "type": "integer" },
         "blobs": {
           "$ref": "#/$defs/BlobStorageSettings",

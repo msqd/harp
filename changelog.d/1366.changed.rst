@@ -1,0 +1,1 @@
+The storage worker writes ended transactions in batches, every `storage.flush_interval` seconds (default 1) or `storage.flush_batch_size` transactions (default 500), tags included; shutdown flushes what ended.

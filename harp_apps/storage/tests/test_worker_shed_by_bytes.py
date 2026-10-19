@@ -126,9 +126,10 @@ async def test_further_still_whole_messages_are_shed(worker):
 async def test_a_forgotten_transaction_gives_its_bytes_back(worker):
     transaction = await started(worker)
     await request(worker, transaction, body=b"x" * 100)
-    pending = worker._pending[transaction.id]
+    worker.pending_max_age = 0
 
-    worker._expire(pending)
+    worker._sweep()  # the periodic sweep forgets what has been silent for too long
+    assert transaction.id not in worker._pending
 
     assert worker._pending_bytes == 0
 
