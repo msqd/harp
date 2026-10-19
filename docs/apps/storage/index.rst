@@ -136,6 +136,39 @@ To setup a redis-based blob storage, you can add the following to your configura
     :language: yaml
 
 
+.. _storage-recording-capacity:
+
+Recording capacity
+::::::::::::::::::
+
+The storage worker runs its writes one at a time, in the order they are queued. A recorded request
+costs about 8 jobs: the transaction, its end, and a message, a headers blob and a body blob for each
+of the request and the response.
+
+On PostgreSQL 16, the worker drains about 150 to 400 jobs per second, so HARP records about **20 to
+45 requests per second in full**. Measured on a shared 6 vCPU host running the proxy, the upstream,
+the load generator and PostgreSQL in Docker: the bound is the proxy's CPU (one Python event loop)
+more than the database, which commits in about 1 ms. To estimate yours, divide the drain rate you
+observe (the fall of ``async_worker_queue_backlog`` per second once traffic stops) by 8.
+
+Above that rate, the queue grows and the worker sheds, by backlog size:
+
+============= ====================================================
+Backlog       Not recorded
+============= ====================================================
+100 jobs      request and response bodies (``shed-bodies``)
+1,000 jobs    messages (``shed-messages``)
+10,000 jobs   whole transactions
+============= ====================================================
+
+A level engages only once the backlog has stayed at or above it for 2 seconds, so a burst the worker
+absorbs within 2 seconds is recorded in full. It stops as soon as the backlog falls below the level
+again. Just above the capacity, only some bodies are lost: in one run at 50 requests per second for
+a minute, 339 of 3,000 transactions were recorded without bodies. Messages, then whole transactions,
+go when the database falls far behind, for instance when it stalls. Proxied traffic is not slowed
+down by shedding. See :ref:`storage-load-shedding` for the warning and the metrics that report it.
+
+
 Migrations
 ::::::::::
 
