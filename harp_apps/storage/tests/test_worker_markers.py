@@ -47,9 +47,12 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         return worker
 
     async def build_backlog(self, worker: StorageAsyncWorkerQueue, size: int, release: asyncio.Event):
-        """Stall the consumer until ``release`` is set, with ``size`` items waiting behind it."""
+        """Stall the consumer until ``release`` is set, with ``size`` items waiting behind it for the pressure hold."""
         if not size:
             return
+
+        now = worker.clock()
+        worker.clock = lambda: now
 
         async def stalled():
             await release.wait()
@@ -61,6 +64,7 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         await asyncio.sleep(0)  # consumer is now stuck on the first item
         for _ in range(size):
             await worker.push(noop)
+        worker.clock = lambda: now + worker.pressure_hold
 
     async def create_transaction_and_messages(
         self,

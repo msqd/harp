@@ -65,6 +65,11 @@ Storage
   it removes, and the orphan sweep frees their blobs. A database that kept those rows will shrink.
 - The dashboard transaction search matches substrings on every backend. On MySQL and MariaDB it used
   to match word prefixes, so it can return more transactions.
+- Load shedding engages only under sustained backlog: bodies, messages, then whole transactions stop
+  being recorded once the storage queue has stayed at or above 100, 1,000 or 10,000 jobs for 2
+  seconds, and recording resumes as soon as it drains. Short bursts are recorded in full. Above the
+  :ref:`recording capacity <storage-recording-capacity>`, expect ``shed-bodies`` and
+  ``shed-messages`` markers. ``async_worker_queue_backlog`` now reports 0, not 1, for an empty queue.
 - File SQLite storage runs in WAL mode and adds ``-wal`` and ``-shm`` files next to the database:
   keep them together when copying or backing up.
 
