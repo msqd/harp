@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from harp import get_logger
 from harp.config import Application
 from harp.config.events import OnBindEvent, OnBoundEvent, OnShutdownEvent
+from harp_apps.storage.engines import warn_if_database_is_deprecated
 from harp_apps.storage.models import Base
 from harp_apps.storage.settings import StorageSettings
 from harp_apps.storage.types import IStorage
@@ -43,6 +44,7 @@ async def on_bind(event: OnBindEvent):
 async def on_bound(event: OnBoundEvent):
     settings = event.provider.get(StorageSettings)
     engine = event.provider.get(AsyncEngine)
+    warn_if_database_is_deprecated(engine.url)
     if settings.migrate:
         await _run_migrations(engine)
 

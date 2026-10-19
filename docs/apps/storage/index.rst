@@ -59,15 +59,22 @@ Core storage
 
 The core storage leverages `SQLAlchemy <https://www.sqlalchemy.org/>`_ to store the transactions in a SQL database.
 
-We officially support the following SQL databases (although any async SQLAlchemy-supported database should work, they
+HARP works with the following SQL databases (although any async SQLAlchemy-supported database should work, they
 are not included in the test suite and may bring unexpected behaviours):
 
-- `SQLite <https://www.sqlite.org/>`_ (config-less default, **do not use for production**), using `aiosqlite
+- `PostgreSQL <https://www.postgresql.org/>`_ (**the production database**), using `asyncpg
+  <https://magicstack.github.io/asyncpg/>`_ driver. It is the only database we support in production and benchmark
+  against.
+- `SQLite <https://www.sqlite.org/>`_ (config-less default, **for development only**), using `aiosqlite
   <https://aiosqlite.omnilib.dev/>`_ driver.
-- `PostgreSQL <https://www.postgresql.org/>`_ (our favorite choice for production), using `asyncpg
-  <https://magicstack.github.io/asyncpg/>`_ driver.
 - `MySQL <https://www.mysql.com/>`_ / `MariaDB <https://mariadb.org/>`_, using `aiomysql
-  <https://aiomysql.readthedocs.io/>`_ driver.
+  <https://aiomysql.readthedocs.io/>`_ driver. MariaDB uses the same ``mysql+aiomysql://`` URL. **Deprecated**, see below.
+
+.. deprecated:: 0.12
+
+   MySQL and MariaDB keep working and stay tested in CI, but come with no production support and no performance
+   commitment, and will be removed in a future version (not decided yet). HARP logs a deprecation warning at boot
+   when ``storage.url`` points to one of them. Use PostgreSQL for production.
 
 SQLite ships with the base install. The PostgreSQL and MySQL drivers are extras, install the one you need:
 
@@ -92,12 +99,12 @@ The main configuration option you're interested in is ``storage.url``, which con
 .. literalinclude:: ./examples/postgres-asyncpg.yml
     :language: yaml
 
-**MySQL/MariaDB example (aiomysql driver)**:
+**MySQL/MariaDB example (aiomysql driver, deprecated)**:
 
 .. literalinclude:: ./examples/mysql-aiomysql.yml
     :language: yaml
 
-**SQLite example (aiosqlite driver)**:
+**SQLite example (aiosqlite driver, development only)**:
 
 SQLite is the default storage engine because requires no configuration. *Do not use it in production*. It is slow and
 has concurrency issues. It is only suitable (and handy) for development and testing.
@@ -154,7 +161,7 @@ is older than the code expects. The error names the database and the commands to
 
 SQLite files are not migrated: they are created from the models and never altered. A SQLite file written by
 0.11 lacks ``transactions.markers``, so it must be deleted (it is recreated on next start) or reset with
-``harp-proxy db:reset``. PostgreSQL and MySQL need ``harp-proxy db:migrate up head``.
+``harp-proxy db:reset``. PostgreSQL (and the deprecated MySQL) need ``harp-proxy db:migrate up head``.
 
 Migrations are implemented using `Alembic <https://alembic.sqlalchemy.org/>`_.
 

@@ -5,6 +5,19 @@ from sqlalchemy import URL, AsyncAdaptedQueuePool, event, make_url
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.asyncio import create_async_engine as _create_async_engine
 
+from harp import get_logger
+
+logger = get_logger(__name__)
+
+
+def warn_if_database_is_deprecated(url: Union[str, URL]) -> None:
+    """Log one line for MySQL/MariaDB (both use the mysql dialect). Never the url: it may carry a password."""
+    if make_url(str(url)).get_backend_name() == "mysql":
+        logger.warning(
+            "MySQL/MariaDB storage is deprecated and will be removed in a future version. PostgreSQL is the "
+            "supported production database."
+        )
+
 
 def create_async_engine(url: Union[str, URL], **kw: Any) -> AsyncEngine:
     url = make_url(url)

@@ -19,7 +19,7 @@ HARP Proxy has minimal system requirements:
 - **Memory**: Minimal (~50MB base, scales with traffic and cache size)
 - **Storage**: Depends on database backend (SQLite in-memory by default)
 
-For production deployments, consider using PostgreSQL or MySQL for persistent storage.
+For production deployments, use PostgreSQL for persistent storage. SQLite is for development only and MySQL/MariaDB is deprecated.
 
 
 Installation
