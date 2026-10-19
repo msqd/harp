@@ -18,7 +18,7 @@ with no regression elsewhere. Laptop numbers validate tooling only; verdicts nee
 | SQLite storage | Python fix | **done** | WAL + busy_timeout (#1152, #1206) |
 | ASGI server (hypercorn) | adopt | **keep hypercorn, uvloop by default** | verdict run: best on `default` is uvicorn -11% CPU, under the bar (and no h2c); hypercorn+uvloop -7%, default with aiohttp (#1362) |
 | Upstream client (httpx transport) | adopt | **aiohttp by default** | verdict run on `bare`: aiohttp -16% CPU, pyreqwest ceiling -18 to -19%. No own Rust: the ceiling is 3% under aiohttp. Default with uvloop (#1362), compatibility review #1363 |
-| Storage write pipeline | Python design | **write once: done (-48.9 % CPU)**, batching next | 55.6% of `default` CPU; ADR-0006, #1365 merged, #1366, #1367 |
+| Storage write pipeline | Python design | **write once (-48.9 %) + batches (-34.4 %): done** | ADR-0006; #1365, #1366, #1367 merged; p99 tail at low rate #1379 |
 
 ## Verdict runs
 
@@ -133,6 +133,24 @@ hypercorn on the asyncio loop with the aiohttp transport (the harness labels it 
 
 Recording drops from about eight committed round trips per transaction to one database transaction. At 300 req/s it
 sheds bodies again (backlog 669, p99 29 ms): batching (#1366) is the next step.
+
+### Batched writes (#1366, interleaved, 5 rounds)
+
+`explore/extensions` at `7e615bb8` (base, write once) vs #1366 at `420d0572`, both hypercorn+uvloop with aiohttp.
+
+| | base | batches |
+|---|---|---|
+| `default` CPU/req at 50 req/s | 3220 µs | **2113 µs (-34.4 %)** |
+| overhead p50 at 50 req/s | 2.31 ms | 1.88 ms |
+| overhead p99 at 50 req/s, per run | 3.02 to 3.10 ms | 2.60, 2.65, 3.66, 4.35, 4.46 ms |
+| records everything up to | 250 req/s | **400 req/s** |
+| p99 latency at 300 req/s | 34.5 ms | 5.6 ms |
+| peak RSS under load | 118 to 120 MiB | 118 to 121 MiB |
+
+Ended transactions are written every second (or 500 at a time) in one database transaction, tags included; the
+heap built at startup is frozen out of the collector (`gc.freeze()`), which removed 30 to 40 ms full-collection stalls
+around flushes. The low-rate p99 tail remains (#1379). From `b240b57b` to here, `default` went from about 7.7 ms to
+2.1 ms of CPU per request (different VMs; each step measured interleaved).
 
 ### What this leaves
 
