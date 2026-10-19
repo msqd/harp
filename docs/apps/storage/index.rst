@@ -59,8 +59,9 @@ Core storage
 
 The core storage leverages `SQLAlchemy <https://www.sqlalchemy.org/>`_ to store the transactions in a SQL database.
 
-HARP works with the following SQL databases (although any async SQLAlchemy-supported database should work, they
-are not included in the test suite and may bring unexpected behaviours):
+HARP works with the following SQL databases. ``storage.url`` accepts only these schemes (``postgresql``,
+``postgresql+asyncpg``, ``sqlite``, ``sqlite+aiosqlite``, ``mysql``, ``mysql+aiomysql``), any other is refused at
+startup:
 
 - `PostgreSQL <https://www.postgresql.org/>`_ (**the production database**), using `asyncpg
   <https://magicstack.github.io/asyncpg/>`_ driver. It is the only database we support in production and benchmark
@@ -173,7 +174,29 @@ absorbs within 2 seconds is recorded in full. It stops as soon as the backlog fa
 again. Just above the capacity, only some bodies are lost: in one run at 50 requests per second for
 a minute, 339 of 3,000 transactions were recorded without bodies. Messages, then whole transactions,
 go when the database falls far behind, for instance when it stalls. Proxied traffic is not slowed
-down by shedding. See :ref:`storage-load-shedding` for the warning and the metrics that report it.
+down by shedding.
+
+There is no hysteresis: a level switches on after the 2 second hold and off the moment the backlog
+drops below its threshold. On a slow, not stalled, database whose backlog hovers around 1,000 jobs,
+message shedding therefore switches on and off, and messages drop in bursts rather than evenly. See :ref:`storage-load-shedding` for the warning and the metrics that report it.
+
+.. _storage-memory-sizing:
+
+Memory under recording backlog
+------------------------------
+
+Queued jobs hold their bodies in memory, up to 1 MiB each for the request and the response, until the
+worker writes them. Bodies are shed from 100 jobs, but jobs already queued keep theirs, and the queue
+only stops growing at the last level: 10,000 jobs, after the 2 second hold. The backlog, so the memory, is
+bounded by that level. The worst case, with every request and response body at the 1 MiB cap, is::
+
+    memory ≈ base + (10,000 jobs / 8 jobs per request) × (request body + response body)
+           ≈ base + 1,250 × 2 MiB ≈ base + 2.5 GiB
+
+Smaller bodies scale it down linearly: with 10 KiB bodies the backlog holds about 25 MiB of bodies.
+Measured: 32 clients POSTing 1 MiB bodies against a paused PostgreSQL, the proxy grew from 109 MB to a
+plateau of 1,670 MB. Size the memory limit of the container for the formula with your own body sizes, not
+for the base footprint.
 
 
 Migrations
