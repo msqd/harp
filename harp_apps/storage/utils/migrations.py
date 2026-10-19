@@ -2,6 +2,7 @@ import asyncio
 import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import Union
+from urllib.parse import quote
 
 from pydantic_core import MultiHostUrl, Url
 from sqlalchemy import URL, make_url, text
@@ -13,6 +14,16 @@ from harp_apps import storage
 from harp_apps.storage.models import Base, Message, Transaction
 
 logger = get_logger(__name__)
+
+
+def hide_password(message: str, url: Union[str, URL, Url, MultiHostUrl]) -> str:
+    """Mask the password of ``url`` (raw and percent-encoded) in ``message``."""
+    password = make_url(url if isinstance(url, URL) else str(url)).password
+    if not password:
+        return message
+    for form in {password, quote(password, safe=""), quote(password)}:
+        message = message.replace(form, "***")
+    return message
 
 
 def create_alembic_config(url: Union[str, URL, Url, MultiHostUrl]):
@@ -106,5 +117,6 @@ async def do_migrate(engine, *, migrator, reset=False):
     try:
         await _do_migrate(engine, migrator=migrator, reset=reset)
     except Exception as e:
-        logger.error(f"🛢 [db:migrate] Migrations failed: {e}")
-        raise RuntimeError(f"Could not run migrations ({e}).") from e
+        message = hide_password(str(e), engine.url)
+        logger.error(f"🛢 [db:migrate] Migrations failed: {message}")
+        raise RuntimeError(f"Could not run migrations ({message}).").with_traceback(e.__traceback__) from None
