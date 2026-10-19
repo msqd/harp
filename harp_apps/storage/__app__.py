@@ -12,7 +12,7 @@ from harp.config.events import OnBindEvent, OnBoundEvent, OnShutdownEvent
 from harp_apps.storage.models import Base
 from harp_apps.storage.settings import StorageSettings
 from harp_apps.storage.types import IStorage
-from harp_apps.storage.utils.migrations import hide_password
+from harp_apps.storage.utils.migrations import mask_failure
 from harp_apps.storage.worker import StorageAsyncWorkerQueue
 
 logger = get_logger(__name__)
@@ -47,14 +47,10 @@ async def on_bound(event: OnBoundEvent):
         await _boot_storage(event)
     except Exception as exc:
         # exception messages may embed the storage url, the password must not reach the logs
-        _hide_password_in(exc, settings.url)
-        raise
-
-
-def _hide_password_in(exc: BaseException | None, url):
-    while exc is not None:
-        exc.args = tuple(hide_password(arg, url) if isinstance(arg, str) else arg for arg in exc.args)
-        exc = exc.__cause__ or exc.__context__
+        safe = mask_failure(exc, settings.url)
+        if safe is exc:
+            raise
+        raise safe from None
 
 
 async def _boot_storage(event: OnBoundEvent):
