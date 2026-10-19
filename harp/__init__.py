@@ -127,10 +127,14 @@ async def arun(builder: "_ConfigurationBuilder", server: str = DEFAULT_SERVER):
     # (which the allocations of a busy proxy trigger) do not walk it, and stay short on the request path.
     gc.collect()
     gc.freeze()
+    from harp.utils import loop_probe
+
+    loop_probe.start_from_environment()
     adapter = get_server(server).adapter_type(system)
     try:
         return await adapter.serve()
     finally:
+        loop_probe.stop()
         await system.dispose()
 
 

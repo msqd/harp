@@ -45,6 +45,7 @@ CACHE_MIX_PROFILES = {"loaded"}
 SERVERS = adapter_servers
 DEFAULT_TRANSPORT = HttpClientSettings().transport.type  # what HARP runs without a setting
 HOST = "127.0.0.1"
+PROBE_FILE = "loop-probe.jsonl"
 METRICS_PATH = "/.prometheus/metrics"
 BODY_BYTES = {"loaded": 16384}
 DEFAULT_BODY_BYTES = 1024
@@ -174,6 +175,8 @@ def harp_command(args, cores, importtime: bool = False) -> list[str]:
 def harp_process(args, cores, workdir: Path, **kwargs):
     if args.database_url:
         reset_database(args.database_url)
+    if getattr(args, "probe", False):
+        kwargs["env"] = {**os.environ, "BENCH_LOOP_PROBE": str(workdir / PROBE_FILE)}
     return running(
         harp_command(args, cores),
         cwd=workdir,
@@ -223,8 +226,11 @@ def measured_run(args, cores, port: int, pid: int | None = None, rate=None, dura
     rate, duration, warmup = rate or args.rate, duration or args.duration, warmup or args.warmup
     warm = oha(args, cores, port, rate, warmup)
     before = cpu_ticks(pid) if pid else None
+    window_start = time.monotonic()
     report = oha(args, cores, port, rate, duration)
+    window_end = time.monotonic()
     after = cpu_ticks(pid) if pid else None
+    report["window_monotonic"] = [window_start, window_end]
     report["sent_with_warmup"] = warm["sent"] + report["sent"]
     return report, None if pid is None else after - before
 
@@ -381,6 +387,24 @@ def common_metadata(args, cores) -> dict:
     }
 
 
+def read_probe(path: Path) -> str:
+    """What the loop probe of the HARP process wrote when it stopped."""
+    if not path.exists():
+        sys.exit(f"--probe: HARP wrote no probe file ({path}): did it stop cleanly?")
+    return path.read_text()
+
+
+def probe_summary(text: str, window: list[float]) -> dict:
+    events = [json.loads(line) for line in text.splitlines()]
+    meta = next(event for event in events if event["k"] == "meta")
+    return {
+        "summary": measure.summarize_probe(events, start=window[0], end=window[1]),
+        "histogram_ms": {"buckets": meta["buckets_ms"], "counts": meta["histogram"]},
+        "gc": {"threshold": meta["gc_threshold"], "frozen": meta["gc_frozen"], "stats": meta["gc_stats"]},
+        "period_ms": meta["period_ms"],
+    }
+
+
 def database_info(args) -> dict:
     if not args.database_url:
         return {"backend": None}
@@ -404,6 +428,7 @@ def overhead(args) -> int:
         with harp_process(args, cores, Path(tmp)) as harp:
             wait_first_200(args.harp_port)
             proxied, ticks = measured_run(args, cores, args.harp_port, pid=harp.pid)
+        probe_text = read_probe(Path(tmp) / PROBE_FILE) if args.probe else None
     clk = os.sysconf("SC_CLK_TCK")
     cpu = measure.cpu_us_per_request(ticks=ticks, clock_ticks_per_second=clk, requests=proxied["requests"])
     result = {
@@ -413,7 +438,13 @@ def overhead(args) -> int:
         "warmup_s": args.warmup,
         **measure.assemble_overhead(direct, proxied, cpu_us_per_request=cpu),
     }
+    if probe_text is not None:
+        result["probe"] = probe_summary(probe_text, proxied["window_monotonic"])
     path = write_result(f"macro-{args.profile}", result)
+    if probe_text is not None:
+        probe_path = path.with_suffix(".probe.jsonl")
+        probe_path.write_text(probe_text)
+        print(f"-> {probe_path}")
     summarize_overhead(result, path)
     return 0
 
@@ -430,6 +461,20 @@ def summarize_overhead(result: dict, path: Path) -> None:
     ):
         print(f"{label:<10}{values['p50']:>9.3f}{values['p90']:>9.3f}{values['p99']:>9.3f}")
     print(f"harp cpu: {result['harp_cpu_us_per_request']:.0f} us/request ({result['proxied']['requests']} requests)")
+    if "probe" in result:
+        summary = result["probe"]["summary"]
+        print("loop lag spikes:", " ".join(f"{k}:{v}" for k, v in summary["spikes"]["total"].items()))
+        print("  by cause >=2ms: " + " ".join(f"{c}:{v['>=2ms']}" for c, v in summary["spikes"]["by_cause"].items()))
+        worst = summary["worst_lag_ms"]
+        print(
+            "worst lag per flush span, median/max ms: during "
+            f"{worst['during_flushes'].get('median')}/{worst['during_flushes'].get('max')}, half a second later "
+            f"{worst['half_a_second_later'].get('median')}/{worst['half_a_second_later'].get('max')}"
+        )
+        flush = summary["flush"]
+        print(
+            f"flushes: {flush['wall_ms'].get('n', 0)}, wall median/max ms {flush['wall_ms'].get('median')}/{flush['wall_ms'].get('max')}"
+        )
     print(f"-> {path}")
 
 
@@ -637,6 +682,12 @@ def parser() -> argparse.ArgumentParser:
         "--transport",
         default=DEFAULT_TRANSPORT,
         help="http_client.transport.type, full class path (default: %(default)s)",
+    )
+    p.add_argument(
+        "--probe",
+        action="store_true",
+        help="overhead: record loop lag, collections and flushes in HARP (BENCH_LOOP_PROBE), summarized in the result "
+        "and kept next to it as .probe.jsonl. The probe adds timer wakeups: compare runs that all have it.",
     )
     p.add_argument("--reps", type=int, default=5, help="startup repetitions (default: %(default)s)")
     p.add_argument("--harp-port", type=int, default=4000)

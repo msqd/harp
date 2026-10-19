@@ -246,3 +246,95 @@ def shed_marker_report(counts: dict[str, int]) -> dict[str, dict]:
         }
         for kind in ("messages", "headers", "bodies")
     }
+
+
+# --- loop probe ------------------------------------------------------------------------------------------------------
+
+SPIKE_THRESHOLDS_MS = (2, 3, 5, 10, 20, 50)
+
+
+def _overlap(a_start: float, a_end: float, b_start: float, b_end: float) -> float:
+    return max(0.0, min(a_end, b_end) - max(a_start, b_start))
+
+
+def _stats(values: list[float]) -> dict:
+    if not values:
+        return {"n": 0}
+    ordered = sorted(values)
+    return {
+        "n": len(values),
+        "median": statistics.median(ordered),
+        "p90": ordered[min(len(ordered) - 1, int(0.9 * len(ordered)))],
+        "max": ordered[-1],
+    }
+
+
+def summarize_probe(events: list[dict], *, start: float, end: float) -> dict:
+    """
+    What the loop probe saw between ``start`` and ``end`` (monotonic seconds, the measured window of the run).
+
+    Every loop-lag spike is attributed: ``gc`` if a collection covers at least half of it, else ``flush`` if a flush of
+    the storage worker was in progress (its span includes time spent waiting for the database, so this says "while a
+    flush was running", not "because of it"), else ``other``.
+    """
+    inside = [e for e in events if e["k"] != "meta" and start <= e["t"] <= end]
+    lags = [e for e in inside if e["k"] == "lag"]
+    collections = [e for e in inside if e["k"] == "gc"]
+    flushes = [e for e in inside if e["k"] == "flush"]
+
+    gc_spans = [(e["t"] - e["ms"] / 1000, e["t"]) for e in collections]
+    flush_spans = [(e["t"], e["t"] + e["ms"] / 1000) for e in flushes]
+
+    spikes = []
+    for lag in lags:
+        span = (lag["t"] - lag["ms"] / 1000, lag["t"])
+        if sum(_overlap(*span, *gc) for gc in gc_spans) >= (span[1] - span[0]) / 2:
+            cause = "gc"
+        elif any(_overlap(*span, *flush) > 0 for flush in flush_spans):
+            cause = "flush"
+        else:
+            cause = "other"
+        spikes.append({"t": round(lag["t"] - start, 3), "ms": lag["ms"], "cause": cause})
+
+    lag_spans = [(e["t"] - e["ms"] / 1000, e["t"], e["ms"]) for e in lags]
+
+    def worst_lag_in(span_start: float, span_end: float) -> float:
+        return max((ms for a, b, ms in lag_spans if _overlap(a, b, span_start, span_end) > 0), default=0.0)
+
+    # The same question asked of a stretch of the same length half a flush interval later, when no flush runs.
+    during_flushes = [worst_lag_in(a, b) for a, b in flush_spans]
+    elsewhere = [worst_lag_in(a + 0.5, b + 0.5) for a, b in flush_spans]
+
+    by_cause = {
+        cause: {
+            f">={threshold}ms": sum(1 for s in spikes if s["cause"] == cause and s["ms"] >= threshold)
+            for threshold in SPIKE_THRESHOLDS_MS
+        }
+        for cause in ("gc", "flush", "other")
+    }
+    return {
+        "window_s": round(end - start, 3),
+        "spikes": {
+            "total": {f">={t}ms": sum(1 for s in spikes if s["ms"] >= t) for t in SPIKE_THRESHOLDS_MS},
+            "by_cause": by_cause,
+            "worst": sorted(spikes, key=lambda s: -s["ms"])[:20],
+        },
+        "worst_lag_ms": {"during_flushes": _stats(during_flushes), "half_a_second_later": _stats(elsewhere)},
+        "gc": {
+            str(generation): {
+                "n": sum(1 for e in collections if e["gen"] == generation),
+                "total_ms": round(sum(e["ms"] for e in collections if e["gen"] == generation), 3),
+                "max_ms": max((e["ms"] for e in collections if e["gen"] == generation), default=0),
+            }
+            for generation in (0, 1, 2)
+        },
+        "flush": {
+            "wall_ms": _stats([e["ms"] for e in flushes]),
+            "cpu_ms": _stats([e["cpu_ms"] for e in flushes]),
+            "wait_ms": _stats([e["wait_ms"] for e in flushes if e["wait_ms"] is not None]),
+            "transactions": _stats([e["transactions"] for e in flushes]),
+            "messages": _stats([e["messages"] for e in flushes]),
+            "blobs": _stats([e["blobs"] for e in flushes]),
+            "open": _stats([e["open"] for e in flushes]),
+        },
+    }

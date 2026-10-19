@@ -2,7 +2,7 @@ import asyncio
 from dataclasses import dataclass, field
 from datetime import UTC
 from math import log10
-from time import monotonic
+from time import monotonic, thread_time
 
 from prometheus_client import Counter
 from sqlalchemy import insert, select, tuple_, update
@@ -13,6 +13,7 @@ from harp import get_logger
 from harp.http import get_serializer_for
 from harp.models import Blob
 from harp.models.transactions import encode_cache_flag, encode_markers
+from harp.utils import loop_probe
 from harp.utils.background import AsyncWorkerQueue
 from harp_apps.proxy.events import (
     EVENT_TRANSACTION_ENDED,
@@ -112,6 +113,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         self._ended: list[PendingTransaction] = []
         self._flush_queued = False
         self._flush_running = False
+        self._tick_at = None
         super().__init__()
         self.seen = set()
         self._tick_handle = asyncio.get_running_loop().call_later(self.flush_interval, self._tick)
@@ -322,6 +324,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         self._tick_handle = None
         if not self._running:
             return
+        self._tick_at = monotonic()
         self._schedule_flush()
         self._tick_handle = asyncio.get_running_loop().call_later(self.flush_interval, self._tick)
 
@@ -341,11 +344,32 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         self._flush_running = True
         ended, self._ended = self._ended, []
         self._refresh_pressure()
+        probe = loop_probe.current()
+        rows = {}
+        if probe:
+            started, cpu_started, tick_at = monotonic(), thread_time(), self._tick_at
+            self._tick_at = None  # a flush that no tick asked for (a full batch) has nothing to wait for
         try:
-            await self._flush_resiliently(ended + self._sweep())
+            pendings = ended + self._sweep()
+            if probe:
+                rows = dict(
+                    transactions=len(ended),
+                    open=len(pendings) - len(ended),
+                    messages=sum(len(p.messages) for p in pendings),
+                    blobs=sum(len(p.blobs) for p in pendings),
+                )
+            await self._flush_resiliently(pendings)
         finally:
             self._flush_running = False
             self._refresh_pressure()
+            if probe:
+                probe.flush(
+                    tick_at=tick_at,
+                    started=started,
+                    wall=monotonic() - started,
+                    cpu=thread_time() - cpu_started,
+                    **rows,
+                )
 
     def _sweep(self) -> list[PendingTransaction]:
         """

@@ -305,3 +305,38 @@ async def test_an_open_transaction_keeps_its_bytes_when_the_early_insert_fails(
         assert worker._pending_bytes == held
     finally:
         await worker.close()
+
+
+async def test_flushes_are_reported_to_the_loop_probe(sql_storage, sql_blob_storage, monkeypatch, tmp_path):
+    from harp.utils import loop_probe
+
+    monkeypatch.setenv(loop_probe.ENV, str(tmp_path / "probe.jsonl"))
+    probe = loop_probe.start_from_environment()
+    worker = make_worker(sql_storage, sql_blob_storage, flush_interval=0.05, early_insert_after=60)
+    try:
+        for _ in range(3):
+            await run(worker, new_transaction())
+        await asyncio.sleep(0.2)
+        await worker.wait_until_empty()
+    finally:
+        await worker.close()
+        loop_probe.stop()
+
+    flushes = [e for e in probe.events if e["k"] == "flush"]
+    assert sum(f["transactions"] for f in flushes) == 3
+    assert sum(f["messages"] for f in flushes) == 6
+    assert all(f["ms"] > 0 and f["cpu_ms"] >= 0 for f in flushes)
+    assert any(f["wait_ms"] is not None for f in flushes)
+
+
+async def test_nothing_is_recorded_without_the_probe(sql_storage, sql_blob_storage):
+    from harp.utils import loop_probe
+
+    assert loop_probe.current() is None
+    worker = make_worker(sql_storage, sql_blob_storage, flush_interval=0.05, early_insert_after=60)
+    try:
+        await run(worker, new_transaction())
+        await worker.wait_until_empty()
+        assert await count(sql_storage) == 1
+    finally:
+        await worker.close()
