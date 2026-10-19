@@ -59,7 +59,7 @@ Core storage
 
 The core storage leverages `SQLAlchemy <https://www.sqlalchemy.org/>`_ to store the transactions in a SQL database.
 
-We officially support the following SQL databases (although any async SQLAlchemy-supported database should work, they
+HARP works with the following SQL databases (although any async SQLAlchemy-supported database should work, they
 are not included in the test suite and may bring unexpected behaviours):
 
 - `PostgreSQL <https://www.postgresql.org/>`_ (**the production database**), using `asyncpg
@@ -68,7 +68,7 @@ are not included in the test suite and may bring unexpected behaviours):
 - `SQLite <https://www.sqlite.org/>`_ (config-less default, **for development only**), using `aiosqlite
   <https://aiosqlite.omnilib.dev/>`_ driver.
 - `MySQL <https://www.mysql.com/>`_ / `MariaDB <https://mariadb.org/>`_, using `aiomysql
-  <https://aiomysql.readthedocs.io/>`_ driver. **Deprecated**, see below.
+  <https://aiomysql.readthedocs.io/>`_ driver. MariaDB uses the same ``mysql+aiomysql://`` URL. **Deprecated**, see below.
 
 .. deprecated:: 0.12
 

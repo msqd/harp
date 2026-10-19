@@ -9,17 +9,13 @@ from harp import get_logger
 
 logger = get_logger(__name__)
 
-DEPRECATED_BACKENDS = frozenset({"mysql", "mariadb"})
-
 
 def warn_if_database_is_deprecated(url: Union[str, URL]) -> None:
-    """Log one line for MySQL/MariaDB. Never the url: it may carry a password."""
-    backend = make_url(str(url)).get_backend_name()
-    if backend in DEPRECATED_BACKENDS:
+    """Log one line for MySQL/MariaDB (both use the mysql dialect). Never the url: it may carry a password."""
+    if make_url(str(url)).get_backend_name() == "mysql":
         logger.warning(
-            "%s storage is deprecated and will be removed in a future version. PostgreSQL is the supported "
-            "production database.",
-            "MariaDB" if backend == "mariadb" else "MySQL",
+            "MySQL/MariaDB storage is deprecated and will be removed in a future version. PostgreSQL is the "
+            "supported production database."
         )
 
 

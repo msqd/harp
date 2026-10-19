@@ -61,8 +61,8 @@ Dialect-specific migrations and features
 Some database implementations allows us to implement specific optimizations.
 
 
-MySQL (and MariaDB, deprecated)
--------------------------------
+MySQL and MariaDB (deprecated)
+------------------------------
 
 MySQL and MariaDB will add full-text indexes to the searchable columns. This is done without any additional
 configuration. The dashboard transaction search matches substrings literally (``LIKE``), on every backend, so these
