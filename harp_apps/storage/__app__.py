@@ -13,9 +13,14 @@ from harp_apps.storage.engines import warn_if_database_is_deprecated
 from harp_apps.storage.models import Base
 from harp_apps.storage.settings import StorageSettings
 from harp_apps.storage.types import IStorage
+from harp_apps.storage.utils.migrations import hide_password
 from harp_apps.storage.worker import StorageAsyncWorkerQueue
 
 logger = get_logger(__name__)
+
+
+class StorageBootError(RuntimeError):
+    """Storage failed to boot; the message has the database password masked."""
 
 
 async def _run_migrations(engine: AsyncEngine):
@@ -42,6 +47,16 @@ async def on_bind(event: OnBindEvent):
 
 
 async def on_bound(event: OnBoundEvent):
+    settings = event.provider.get(StorageSettings)
+    try:
+        await _boot_storage(event)
+    except Exception as exc:
+        # exception messages may embed the storage url, the password must not reach the logs
+        message = hide_password(f"{type(exc).__qualname__}: {exc}", settings.url)
+        raise StorageBootError(message).with_traceback(exc.__traceback__) from None
+
+
+async def _boot_storage(event: OnBoundEvent):
     settings = event.provider.get(StorageSettings)
     engine = event.provider.get(AsyncEngine)
     warn_if_database_is_deprecated(engine.url)
