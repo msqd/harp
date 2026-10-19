@@ -18,10 +18,6 @@ from harp_apps.storage.worker import StorageAsyncWorkerQueue
 logger = get_logger(__name__)
 
 
-class StorageBootError(RuntimeError):
-    """Storage failed to boot; the message has the database password masked."""
-
-
 async def _run_migrations(engine: AsyncEngine):
     if engine.dialect.name == "sqlite" and engine.url.database == ":memory:":  # pragma: no cover
         # in memory sqlite won't be able to reconnect to the same instance, so we create the tables directly
@@ -51,8 +47,14 @@ async def on_bound(event: OnBoundEvent):
         await _boot_storage(event)
     except Exception as exc:
         # exception messages may embed the storage url, the password must not reach the logs
-        message = hide_password(f"{type(exc).__qualname__}: {exc}", settings.url)
-        raise StorageBootError(message).with_traceback(exc.__traceback__) from None
+        _hide_password_in(exc, settings.url)
+        raise
+
+
+def _hide_password_in(exc: BaseException | None, url):
+    while exc is not None:
+        exc.args = tuple(hide_password(arg, url) if isinstance(arg, str) else arg for arg in exc.args)
+        exc = exc.__cause__ or exc.__context__
 
 
 async def _boot_storage(event: OnBoundEvent):
