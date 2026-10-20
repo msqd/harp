@@ -1,9 +1,10 @@
 import asyncio
 import os
+import re
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from typing import Union
-from urllib.parse import quote
+from urllib.parse import quote, quote_plus
 
 from pydantic_core import MultiHostUrl, Url
 from sqlalchemy import URL, make_url, text
@@ -17,24 +18,48 @@ from harp_apps.storage.models import Base, Message, Transaction
 logger = get_logger(__name__)
 
 
-def _password_forms(url: URL) -> set[str]:
-    """Every way the password of ``url`` can show up in a message."""
-    password = url.password
-    forms = {password, quote(password, safe=""), quote(password)}
-    shown = url.render_as_string(hide_password=False)
-    start = url.render_as_string(hide_password=True).index("***")
-    forms.add(shown[start : shown.index("@", start)])
+AnyUrl = Union[str, URL, Url, MultiHostUrl]
+
+
+def _as_sqlalchemy_url(url: AnyUrl) -> URL:
+    return make_url(url if isinstance(url, URL) else str(url))
+
+
+def _passwords(url: URL) -> list[str]:
+    """The password of ``url``, from its userinfo and from a ``?password=`` query parameter (asyncpg reads both)."""
+    query = url.query.get("password", ())
+    return [password for password in (url.password, *((query,) if isinstance(query, str) else query)) if password]
+
+
+def _forms(password: str) -> set[str]:
+    """Every way ``password`` can be written in a rendered url."""
+    forms = {password, quote(password, safe=""), quote(password), quote_plus(password)}
+    # SQLAlchemy only escapes the characters that would end the userinfo
+    forms.add(URL.create("x", username="", password=password).render_as_string(hide_password=False)[len("x://:") : -1])
     # the form given to configparser doubles every percent sign
     return forms | {form.replace("%", "%%") for form in forms}
 
 
-def hide_password(message: str, url: Union[str, URL, Url, MultiHostUrl]) -> str:
-    """Mask the password of ``url`` in ``message``, in each form it can take."""
-    url = make_url(url if isinstance(url, URL) else str(url))
-    if not url.password:
+def _url_scoped_patterns(url: URL) -> list[re.Pattern]:
+    forms = sorted({form for password in _passwords(url) for form in _forms(password)}, key=len, reverse=True)
+    alternatives = "|".join(map(re.escape, forms))
+    return [
+        re.compile(rf"(://[^:/@\s]*:)(?:{alternatives})(?=@)"),
+        re.compile(rf"([?&]password=)(?:{alternatives})(?![\w%+.~*-])"),
+    ]
+
+
+def hide_password(message: str, url: AnyUrl) -> str:
+    """Mask the password of ``url`` where it sits in a url in ``message``: its userinfo or ``?password=``.
+
+    Elsewhere the password is left alone: it is often a common word, or the user or database name, and masking
+    it there would corrupt the message.
+    """
+    url = _as_sqlalchemy_url(url)
+    if not _passwords(url):
         return message
-    for form in sorted(_password_forms(url), key=len, reverse=True):
-        message = message.replace(form, "***")
+    for pattern in _url_scoped_patterns(url):
+        message = pattern.sub(r"\1***", message)
     return message
 
 
@@ -42,15 +67,15 @@ class StorageBootError(RuntimeError):
     """A storage failure whose message is the password-masked rendering of the original failure chain."""
 
 
-def render_failure(exc: BaseException, url) -> str:
+def render_failure(exc: BaseException, url: AnyUrl) -> str:
     """Render ``exc`` and its whole cause chain (any attribute ``str()`` uses), password masked."""
     return hide_password("".join(traceback.format_exception(exc, limit=0)).strip(), url)
 
 
-def mask_failure(exc: BaseException, url) -> BaseException:
+def mask_failure(exc: BaseException, url: AnyUrl) -> BaseException:
     """Return ``exc`` itself when its rendering holds no password, else a :class:`StorageBootError` that replaces it."""
     raw = "".join(traceback.format_exception(exc, limit=0)).strip()
-    masked = hide_password(raw, url)
+    masked = render_failure(exc, url)
     if masked == raw:
         return exc
     return StorageBootError(masked).with_traceback(exc.__traceback__)
