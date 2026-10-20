@@ -12,13 +12,17 @@ MASK = "***"
 # The username may be empty: `redis://:password@host` is the usual Redis form.
 mask_password_re = re.compile(r"(://[^:/@\s]*:)([^@]+)(@)")
 
+# asyncpg also reads the password from a `?password=` query parameter.
+mask_query_password_re = re.compile(r"([?&]password=)[^&#\s'\"]*")
+
 # Dictionary keys whose string value is a secret by name, whatever the algorithm that protects it.
 SECRET_KEYS = frozenset({"password"})
 
 
 def mask_credentials(value: str) -> str:
-    """Replace the password of any ``scheme://user:password@host`` found in ``value``."""
-    return mask_password_re.sub(rf"\1{MASK}\3", value)
+    """Replace the password of any ``scheme://user:password@host`` or ``?password=`` found in ``value``."""
+    value = mask_password_re.sub(rf"\1{MASK}\3", value)
+    return mask_query_password_re.sub(rf"\1{MASK}", value)
 
 
 def url_serializer(dsn, secure=True, **kwargs):
