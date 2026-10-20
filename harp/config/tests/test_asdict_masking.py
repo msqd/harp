@@ -154,6 +154,7 @@ def test_unsecure_shows_a_query_password():
         ("http://h/p?a=1&password=s3cret#top", "http://h/p?a=1&password=***#top"),
         ("http://u:one@h/p?password=two", "http://u:***@h/p?password=***"),
         ("http://h/p?old_password=s3cret", "http://h/p?old_password=s3cret"),
+        ("http://h/p?Password=s3cret&PASSWORD=s3cret", "http://h/p?Password=***&PASSWORD=***"),
     ],
 )
 def test_mask_credentials_masks_the_query_password(url, masked):
