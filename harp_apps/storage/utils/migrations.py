@@ -1,7 +1,9 @@
 import asyncio
 import os
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from typing import Union
+from urllib.parse import quote
 
 from pydantic_core import MultiHostUrl, Url
 from sqlalchemy import URL, make_url, text
@@ -13,6 +15,45 @@ from harp_apps import storage
 from harp_apps.storage.models import Base, Message, Transaction
 
 logger = get_logger(__name__)
+
+
+def _password_forms(url: URL) -> set[str]:
+    """Every way the password of ``url`` can show up in a message."""
+    password = url.password
+    forms = {password, quote(password, safe=""), quote(password)}
+    shown = url.render_as_string(hide_password=False)
+    start = url.render_as_string(hide_password=True).index("***")
+    forms.add(shown[start : shown.index("@", start)])
+    # the form given to configparser doubles every percent sign
+    return forms | {form.replace("%", "%%") for form in forms}
+
+
+def hide_password(message: str, url: Union[str, URL, Url, MultiHostUrl]) -> str:
+    """Mask the password of ``url`` in ``message``, in each form it can take."""
+    url = make_url(url if isinstance(url, URL) else str(url))
+    if not url.password:
+        return message
+    for form in sorted(_password_forms(url), key=len, reverse=True):
+        message = message.replace(form, "***")
+    return message
+
+
+class StorageBootError(RuntimeError):
+    """A storage failure whose message is the password-masked rendering of the original failure chain."""
+
+
+def render_failure(exc: BaseException, url) -> str:
+    """Render ``exc`` and its whole cause chain (any attribute ``str()`` uses), password masked."""
+    return hide_password("".join(traceback.format_exception(exc, limit=0)).strip(), url)
+
+
+def mask_failure(exc: BaseException, url) -> BaseException:
+    """Return ``exc`` itself when its rendering holds no password, else a :class:`StorageBootError` that replaces it."""
+    raw = "".join(traceback.format_exception(exc, limit=0)).strip()
+    masked = hide_password(raw, url)
+    if masked == raw:
+        return exc
+    return StorageBootError(masked).with_traceback(exc.__traceback__)
 
 
 def create_alembic_config(url: Union[str, URL, Url, MultiHostUrl]):
@@ -32,7 +73,8 @@ def create_alembic_config(url: Union[str, URL, Url, MultiHostUrl]):
     )
     alembic_cfg.set_main_option("truncate_slug_length", "40")
     alembic_cfg.set_main_option("output_encoding", "utf-8")
-    alembic_cfg.set_main_option("sqlalchemy.url", url.render_as_string(hide_password=False))
+    # configparser reads `%` as interpolation: escape the percent-encoding SQLAlchemy puts in urls.
+    alembic_cfg.set_main_option("sqlalchemy.url", url.render_as_string(hide_password=False).replace("%", "%%"))
     alembic_cfg.set_main_option("configure_logger", "false")
 
     return alembic_cfg
@@ -105,5 +147,6 @@ async def do_migrate(engine, *, migrator, reset=False):
     try:
         await _do_migrate(engine, migrator=migrator, reset=reset)
     except Exception as e:
-        logger.error(f"🛢 [db:migrate] Migrations failed: {e}")
-        raise RuntimeError(f"Could not run migrations ({e}).") from e
+        message = render_failure(e, engine.url)
+        logger.error(f"🛢 [db:migrate] Migrations failed: {message}")
+        raise RuntimeError(f"Could not run migrations ({message}).").with_traceback(e.__traceback__) from None
