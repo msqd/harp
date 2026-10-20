@@ -94,16 +94,16 @@ async def test_boot_failure_logs_no_password(failure, monkeypatch, caplog):
 
 @pytest.mark.parametrize("password", ["Top@Secret", "Ab+cd@ef", "sp ace%x"])
 async def test_failure_outside_migrations_logs_no_password(password, monkeypatch, caplog):
-    """The schema check runs without migrations (``migrate: false``); its failures are masked too."""
+    """Storage initialization runs without migrations (``migrate: false``); its failures are masked too."""
     from sqlalchemy import URL
 
     url = URL.create("postgresql+asyncpg", username="enc", password=password, host="127.0.0.1", port=1, database="harp")
     rendered = url.render_as_string(hide_password=False)
 
-    async def fail(engine):
+    async def fail(self):
         raise ValueError(f"cannot check {rendered}")
 
-    monkeypatch.setattr("harp_apps.storage.utils.migrations.ensure_schema_is_current", fail)
+    monkeypatch.setattr("harp_apps.storage.services.sql.SqlStorage.initialize", fail)
     caplog.set_level(logging.DEBUG)
     builder = ConfigurationBuilder()
     builder.add_values({"storage": {"url": rendered, "migrate": False}, "proxy": {}})
