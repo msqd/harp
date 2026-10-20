@@ -156,7 +156,7 @@ def test_a_failure_holding_the_password_anywhere_is_masked(password):
     rendered = url.render_as_string(hide_password=False)
     encoded = rendered.split(":", 2)[2].split("@")[0]
 
-    masked = str(mask_failure(ValueError(f"bad {rendered}; config {rendered.replace('%', '%%')}; raw {password}"), url))
+    masked = str(mask_failure(ValueError(f"bad {rendered}; config {rendered.replace('%', '%%')}"), url))
 
     assert password not in masked
     assert encoded not in masked

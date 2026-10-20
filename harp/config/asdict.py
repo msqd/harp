@@ -13,7 +13,7 @@ MASK = "***"
 mask_password_re = re.compile(r"(://[^:/@\s]*:)([^@]+)(@)")
 
 # asyncpg also reads the password from a `?password=` query parameter.
-mask_query_password_re = re.compile(r"([?&]password=)[^&#\s'\"]*")
+mask_query_password_re = re.compile(r"([?&]password=)[^&#\s'\"]*", re.IGNORECASE)
 
 # Dictionary keys whose string value is a secret by name, whatever the algorithm that protects it.
 SECRET_KEYS = frozenset({"password"})

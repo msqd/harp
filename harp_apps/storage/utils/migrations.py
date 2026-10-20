@@ -63,27 +63,13 @@ def hide_password(message: str, url: AnyUrl) -> str:
     return message
 
 
-def _is_distinctive(password: str) -> bool:
-    """Whether ``password`` cannot be mistaken for a word of a message: long enough, and not only letters."""
-    return len(password) >= 6 and not password.isalpha()
-
-
-def _scrub_password(message: str, url: URL) -> str:
-    """Last resort: a distinctive password still in ``message`` after url-scoped masking leaked as free text."""
-    forms = {form for password in _passwords(url) if _is_distinctive(password) for form in _forms(password)}
-    for form in sorted(forms, key=len, reverse=True):
-        message = message.replace(form, "***")
-    return message
-
-
 class StorageBootError(RuntimeError):
     """A storage failure whose message is the password-masked rendering of the original failure chain."""
 
 
 def render_failure(exc: BaseException, url: AnyUrl) -> str:
     """Render ``exc`` and its whole cause chain (any attribute ``str()`` uses), password masked."""
-    url = _as_sqlalchemy_url(url)
-    return _scrub_password(hide_password("".join(traceback.format_exception(exc, limit=0)).strip(), url), url)
+    return hide_password("".join(traceback.format_exception(exc, limit=0)).strip(), url)
 
 
 def mask_failure(exc: BaseException, url: AnyUrl) -> BaseException:

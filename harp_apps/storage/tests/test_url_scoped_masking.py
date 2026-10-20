@@ -21,7 +21,7 @@ from harp.utils.testing.databases import parametrize_with_database_urls
 from harp_apps.storage.utils.migrations import StorageBootError, hide_password, mask_failure
 
 # Passwords that also read as free text: the user name, a common word, a single character.
-WORD_LIKE = [("harp", "harp"), ("user", "password"), ("u", "1")]
+WORD_LIKE = [("harp", "harp"), ("user", "password"), ("u", "1"), ("app_user", "app_user")]
 
 
 def _url(username, password, *, database="harp", **query):
@@ -84,24 +84,6 @@ def test_a_failure_without_the_password_in_a_url_is_kept_as_is(username, passwor
         assert mask_failure(exc, url) is exc
 
 
-def test_a_failure_holding_the_password_as_free_text_is_masked():
-    url = _url("harp", "Top@Secret")
-
-    masked = mask_failure(ValueError("connect(user='harp', password='Top@Secret') failed"), url)
-
-    assert isinstance(masked, StorageBootError)
-    assert str(masked) == "ValueError: connect(user='harp', password='***') failed"
-
-
-def test_a_failure_holding_the_password_in_a_url_and_as_free_text_is_masked():
-    url = _url("harp", "Top@Secret")
-    shown = url.render_as_string(hide_password=False)
-
-    masked = mask_failure(ValueError(f"cannot reach {shown} with Top@Secret"), url)
-
-    assert str(masked) == f"ValueError: cannot reach {url.render_as_string(hide_password=True)} with ***"
-
-
 @asynccontextmanager
 async def _database_owned_by(database_url, username, password):
     """An empty database, owned by a login role with the given password, on the test container."""
@@ -129,13 +111,14 @@ async def _boot(url: str, **storage):
 
 
 @parametrize_with_database_urls("postgresql")
-async def test_a_wrong_password_keeps_the_driver_error(database_url):
-    async with _database_owned_by(database_url, "user", "other") as url:
+@pytest.mark.parametrize("username, password", [("user", "password"), ("app_user", "app_user")])
+async def test_a_wrong_password_keeps_the_driver_error(database_url, username, password):
+    async with _database_owned_by(database_url, username, "other") as url:
         with pytest.raises(Exception) as exc_info:
-            await _boot(url.set(password="password").render_as_string(hide_password=False))
+            await _boot(url.set(password=password).render_as_string(hide_password=False))
 
     assert not isinstance(exc_info.value, StorageBootError)
-    assert 'password authentication failed for user "user"' in str(exc_info.value)
+    assert f'password authentication failed for user "{username}"' in str(exc_info.value)
 
 
 QUERY_PASSWORD = "Qu3ry@Secret"
