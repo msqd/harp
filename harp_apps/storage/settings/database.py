@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import AfterValidator, BeforeValidator, UrlConstraints
+from pydantic import AfterValidator, BeforeValidator, ConfigDict, UrlConstraints
 from pydantic_core import MultiHostUrl
 from sqlalchemy import URL
 
@@ -44,4 +44,7 @@ DatabaseUrl = Annotated[
 
 
 class DatabaseSettings(Configurable):
+    # validation errors must not echo the url: it carries the database password
+    model_config = ConfigDict(hide_input_in_errors=True)
+
     url: DatabaseUrl = DatabaseUrl("sqlite+aiosqlite:///:memory:?cache=shared")
