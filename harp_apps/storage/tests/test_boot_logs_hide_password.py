@@ -90,3 +90,51 @@ async def test_boot_failure_logs_no_password(failure, monkeypatch, caplog):
     for text in (logged, raised):
         assert PASSWORD not in text
         assert ENCODED_PASSWORD not in text
+
+
+@pytest.mark.parametrize("password", ["Top@Secret", "Ab+cd@ef", "sp ace%x"])
+async def test_failure_outside_migrations_logs_no_password(password, monkeypatch, caplog):
+    """The schema check runs without migrations (``migrate: false``); its failures are masked too."""
+    from sqlalchemy import URL
+
+    url = URL.create("postgresql+asyncpg", username="enc", password=password, host="127.0.0.1", port=1, database="harp")
+    rendered = url.render_as_string(hide_password=False)
+
+    async def fail(engine):
+        raise ValueError(f"cannot check {rendered}")
+
+    monkeypatch.setattr("harp_apps.storage.utils.migrations.ensure_schema_is_current", fail)
+    caplog.set_level(logging.DEBUG)
+    builder = ConfigurationBuilder()
+    builder.add_values({"storage": {"url": rendered, "migrate": False}, "proxy": {}})
+    config = builder.build()
+
+    with pytest.raises(Exception) as exc_info:
+        await SystemBuilder(builder.applications, config).abuild()
+
+    logged = "\n".join(
+        [record.getMessage() for record in caplog.records]
+        + ["".join(traceback.format_exception(*record.exc_info)) for record in caplog.records if record.exc_info]
+    )
+    raised = "".join(traceback.format_exception(exc_info.value))
+    for text in (logged, raised):
+        assert password not in text
+        assert rendered not in text
+        assert rendered.split(":", 2)[2].split("@")[0] not in text
+
+
+@pytest.mark.parametrize("password", ["Ab+cd@ef", "sp ace%x", "plain", "a/b?c#d:e"])
+def test_hide_password_masks_every_rendering_of_the_password(password):
+    from sqlalchemy import URL
+
+    from harp_apps.storage.utils.migrations import hide_password
+
+    url = URL.create("postgresql+asyncpg", username="u", password=password, host="db", database="h")
+    rendered = url.render_as_string(hide_password=False)
+    encoded = rendered.split(":", 2)[2].split("@")[0]
+
+    masked = hide_password(f"bad {rendered}; config {rendered.replace('%', '%%')}; raw {password}", url)
+
+    assert "***" in masked
+    assert password not in masked
+    assert encoded not in masked

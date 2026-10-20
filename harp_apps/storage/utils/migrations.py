@@ -18,12 +18,23 @@ from harp_apps.storage.models import Base, Message, Transaction
 logger = get_logger(__name__)
 
 
+def _password_forms(url: URL) -> set[str]:
+    """Every way the password of ``url`` can show up in a message."""
+    password = url.password
+    forms = {password, quote(password, safe=""), quote(password)}
+    shown = url.render_as_string(hide_password=False)
+    start = url.render_as_string(hide_password=True).index("***")
+    forms.add(shown[start : shown.index("@", start)])
+    # the form given to configparser doubles every percent sign
+    return forms | {form.replace("%", "%%") for form in forms}
+
+
 def hide_password(message: str, url: Union[str, URL, Url, MultiHostUrl]) -> str:
-    """Mask the password of ``url`` (raw and percent-encoded) in ``message``."""
-    password = make_url(url if isinstance(url, URL) else str(url)).password
-    if not password:
+    """Mask the password of ``url`` in ``message``, in each form it can take."""
+    url = make_url(url if isinstance(url, URL) else str(url))
+    if not url.password:
         return message
-    for form in {password, quote(password, safe=""), quote(password)}:
+    for form in sorted(_password_forms(url), key=len, reverse=True):
         message = message.replace(form, "***")
     return message
 
