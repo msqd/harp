@@ -73,6 +73,16 @@ Storage
 - File SQLite storage runs in WAL mode and adds ``-wal`` and ``-shm`` files next to the database:
   keep them together when copying or backing up.
 
+Known issue
+-----------
+
+- With the http cache stored in the same SQL database as the transactions (the default), a stalled
+  database stalls proxied requests too: each cache read waits for the connection pool timeout (30 s),
+  and some requests wait until the database is back. Recording sheds as documented, but traffic is
+  slowed by the cache. If your database may stall and you can do without caching, disable the cache
+  (``--disable http_cache``). Tracked in `#1352 <https://github.com/msqd/harp/issues/1352>`_. 0.11 behaves
+  the same.
+
 Logging
 -------
 
