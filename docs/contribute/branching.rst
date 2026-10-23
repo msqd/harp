@@ -50,10 +50,22 @@ A security fix is not public until the patch release is. Do not follow the flow 
    security advisory from it.
 2. The fix and its backports to the supported lines (``stable`` and ``oldstable``) are written in the advisory's temporary private fork, never in a
    public branch or pull request.
-3. Patch releases are cut as in :doc:`release/python`, then the advisory is published with them, crediting
+3. CI cannot run in a temporary private fork, so its pull requests never get the required ``All Checks
+   Passed``. Test the fix locally before merging. On release day, a repository admin merges them from the
+   advisory page using the admin bypass (see `Branch protection`_), then waits for CI on ``main`` and the
+   version lines.
+4. Patch releases are cut as in :doc:`release/python`, then the advisory is published with them, crediting
    the reporter.
-4. The ``security`` changelog fragment (``changelog.d/<issue>.security.rst``) states only that a
+5. The ``security`` changelog fragment (``changelog.d/<issue>.security.rst``) states only that a
    vulnerability was fixed, with no detail on the defect before the release.
+
+Branch protection
+:::::::::::::::::
+
+One repository ruleset, *Protected branches*, covers ``main`` and every version line (``0.*``). Changes need a
+pull request with a green ``All Checks Passed``; force pushes and deletions are refused. Repository admins may
+bypass it for pull requests only: they can merge a pull request whose checks cannot run, such as a security
+advisory's, but cannot push directly.
 
 Documentation versions
 ::::::::::::::::::::::
