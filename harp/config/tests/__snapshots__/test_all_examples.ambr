@@ -2,6 +2,7 @@
 # name: test_documentation_examples_list
   list([
     'docs/apps/dashboard/examples/auth.basic.yml',
+    'docs/apps/dashboard/examples/auth.none.yml',
     'docs/apps/dashboard/examples/auth.yml',
     'docs/apps/dashboard/examples/devserver.yml',
     'docs/apps/dashboard/examples/main.yml',
