@@ -16,6 +16,7 @@ from harp.config import ConfigurationBuilder
 from harp.config.asdict import asdict
 from harp.utils.testing.communicators import ASGICommunicator
 from harp_apps.dashboard.controllers import DashboardController
+from harp_apps.dashboard.settings import DashboardSettings
 from harp_apps.storage.models import User as SqlUser
 
 DASHBOARD_PORT = 4080
@@ -159,6 +160,15 @@ class TestDefaultDashboardAuth:
             assert credentials["password"] not in body
         assert credentials["password"] not in repr(asdict(system.config, secure=False, verbose=True))
         assert caplog.text.count(credentials["password"]) == 1
+
+    async def test_generated_auth_is_not_copied_into_the_settings(self, boot, caplog):
+        system, client = await boot()
+        (credentials,) = logged_credentials(caplog)
+        good = basic(credentials["username"], credentials["password"])
+
+        assert system.provider.get(DashboardSettings).auth is None
+        response = await get(client, "GET", "/api/system/settings", good)
+        assert orjson.loads(response["body"])["dashboard"].get("auth") is None
 
     async def test_repeated_boots_leave_one_user_row(self, boot, tmp_path):
         url = f"sqlite:///{tmp_path}/harp.db"
