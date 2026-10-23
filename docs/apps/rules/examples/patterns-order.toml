@@ -1,0 +1,15 @@
+# Written A, B, C. Run as A, C, B: C shares its endpoint pattern with A.
+[rules."*"."*"]
+on_request = """
+request.headers["X-Trail"] = request.headers.get("X-Trail", "") + ",A"
+"""
+
+[rules."api"."*"]
+on_request = """
+request.headers["X-Trail"] = request.headers.get("X-Trail", "") + ",B"
+"""
+
+[rules."*"."GET *"]
+on_request = """
+request.headers["X-Trail"] = request.headers.get("X-Trail", "") + ",C"
+"""

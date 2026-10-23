@@ -10,6 +10,7 @@ the real include/exclude rules from ``pyproject.toml`` without building a wheel
 (no network, no frontend build required).
 """
 
+import ast
 import re
 import subprocess
 import tomllib
@@ -108,3 +109,45 @@ def test_wheel_ships_no_typescript_declarations_in_dashboard_web():
     paths = _wheel_distribution_paths()
     leaked = sorted(p for p in paths if p.startswith("harp_apps/dashboard/web/") and p.endswith(".d.ts"))
     assert leaked == [], f"declaration files should not ship in the wheel: {leaked}"
+
+
+def _module_name(path: str) -> str:
+    parts = path.removesuffix(".py").split("/")
+    return ".".join(parts[:-1] if parts[-1] == "__init__" else parts)
+
+
+def _imported_modules(path: str, tree: ast.AST):
+    """Absolute names of the modules imported anywhere in ``tree`` (lazy imports included)."""
+    module = _module_name(path)
+    package = module if path.endswith("__init__.py") else module.rpartition(".")[0]
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            yield from (alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            if node.level:
+                base = ".".join(package.split(".")[: len(package.split(".")) - node.level + 1])
+                base = f"{base}.{node.module}" if node.module else base
+            else:
+                base = node.module
+            yield base
+            yield from (f"{base}.{alias.name}" for alias in node.names)
+
+
+def test_wheel_modules_only_import_modules_the_wheel_ships():
+    """A module shipped in the wheel must not import a first-party module the wheel leaves out."""
+    shipped_files = {p for p in _wheel_distribution_paths() if p.endswith(".py")}
+    paths = {p for p in shipped_files if not p.startswith(TEMPLATE_PREFIX)}
+    shipped = {_module_name(p) for p in shipped_files}
+    on_disk = {
+        _module_name(str(p.relative_to(REPO_ROOT)))
+        for root in ("harp", "harp_apps")
+        for p in (REPO_ROOT / root).rglob("*.py")
+    }
+    left_out = on_disk - shipped
+
+    broken = [
+        f"{path} imports {name}"
+        for path in sorted(paths)
+        for name in sorted(set(_imported_modules(path, ast.parse((REPO_ROOT / path).read_text()))) & left_out)
+    ]
+    assert broken == [], f"wheel modules import modules the wheel does not ship: {broken}"

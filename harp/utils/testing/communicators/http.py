@@ -1,4 +1,4 @@
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote
 
 from asgiref.testing import ApplicationCommunicator
 
@@ -15,13 +15,15 @@ class HTTPCommunicator(ApplicationCommunicator):
     """
 
     def __init__(self, application, method, path, body=b"", headers=None, *, hostname="0.0.0.0", port=80):
-        parsed = urlparse(path)
+        # Like hypercorn: split the raw request target at "?", never parse it as a URL.
+        raw_path, _, query_string = path.encode("ascii").partition(b"?")
         self.scope = {
             "type": "http",
             "http_version": "1.1",
             "method": method.upper(),
-            "path": unquote(parsed.path),
-            "query_string": parsed.query.encode("utf-8"),
+            "path": unquote(raw_path.decode("ascii")),
+            "raw_path": raw_path,
+            "query_string": query_string,
             "headers": headers or [],
             **({"server": (hostname, port)} if port and hostname else {}),
         }

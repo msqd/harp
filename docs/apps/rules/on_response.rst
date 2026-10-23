@@ -55,7 +55,12 @@ Although the reason may be debatable, if you need to, you can replace the respon
     response = HttpResponse('Goodbye, World!')
     """
 
-The event instance passed to ``on_response`` lifecycle event scripts is a :class:`ProxyFilterEvent
+Reading the response body
+:::::::::::::::::::::::::
+
+The response body is streamed, not loaded in memory. Reading ``response.body`` before it has been read raises a
+``RuntimeError`` (``await response.aread()`` loads it). Rule scripts are synchronous, so they cannot await
+``aread()``: filter on the status and the headers, or replace the whole response.
 
 
 Context reference

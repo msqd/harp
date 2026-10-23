@@ -1,0 +1,1 @@
+Storage urls holding ``%`` (unix socket ``host=``, encoded passwords) now migrate. Boot errors mask the url password only, so the outdated-schema message and its ``harp-proxy db:migrate`` command show intact again.

@@ -144,7 +144,5 @@ class LazySettingReference(BaseReference):
         return f"!cfg {self.target}"
 
 
-yaml.add_constructor("!ref", LazyServiceReference.build_from_yaml, Loader=yaml.Loader)
-yaml.add_constructor("!ref", LazyServiceReference.build_from_yaml, Loader=yaml.SafeLoader)
-yaml.add_constructor("!cfg", LazySettingReference.build_from_yaml, Loader=yaml.Loader)
-yaml.add_constructor("!cfg", LazySettingReference.build_from_yaml, Loader=yaml.SafeLoader)
+yaml.add_constructor("!ref", LazyServiceReference.build_from_yaml)
+yaml.add_constructor("!cfg", LazySettingReference.build_from_yaml)

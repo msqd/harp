@@ -45,10 +45,10 @@ backends for blobs).
     store as a complete account of what crossed the proxy. See :ref:`what-harp-retains` for what is
     measured, and `#945 <https://github.com/msqd/harp/issues/945>`_ for the measurements.
 
-    In 0.10 a caller's ``Cache-Control: no-store`` binds the cache and does not affect what is
-    recorded here. Whether a caller may suppress payload recording is decided in
-    `#927 <https://github.com/msqd/harp/issues/927>`_ and lands in 0.11, so do not build on the
-    current behaviour in either direction.
+    A caller's ``Cache-Control: no-store`` binds the cache and does not affect what is recorded
+    here. Whether a caller may suppress payload recording is undecided, see
+    `#927 <https://github.com/msqd/harp/issues/927>`_, so do not build on the current behaviour in
+    either direction.
 
     Choosing what is not recorded is currently the operator's decision, made with the
     :doc:`rules application </apps/rules/index>` and the :doc:`markers` below.
@@ -59,15 +59,23 @@ Core storage
 
 The core storage leverages `SQLAlchemy <https://www.sqlalchemy.org/>`_ to store the transactions in a SQL database.
 
-We officially support the following SQL databases (although any async SQLAlchemy-supported database should work, they
-are not included in the test suite and may bring unexpected behaviours):
+HARP works with the following SQL databases. ``storage.url`` accepts only these schemes (``postgresql``,
+``postgresql+asyncpg``, ``sqlite``, ``sqlite+aiosqlite``, ``mysql``, ``mysql+aiomysql``), any other is refused at
+startup:
 
-- `SQLite <https://www.sqlite.org/>`_ (config-less default, **do not use for production**), using `aiosqlite
+- `PostgreSQL <https://www.postgresql.org/>`_ (**the production database**), using `asyncpg
+  <https://magicstack.github.io/asyncpg/>`_ driver. It is the only database we support in production and benchmark
+  against.
+- `SQLite <https://www.sqlite.org/>`_ (config-less default, **for development only**), using `aiosqlite
   <https://aiosqlite.omnilib.dev/>`_ driver.
-- `PostgreSQL <https://www.postgresql.org/>`_ (our favorite choice for production), using `asyncpg
-  <https://magicstack.github.io/asyncpg/>`_ driver.
 - `MySQL <https://www.mysql.com/>`_ / `MariaDB <https://mariadb.org/>`_, using `aiomysql
-  <https://aiomysql.readthedocs.io/>`_ driver.
+  <https://aiomysql.readthedocs.io/>`_ driver. MariaDB uses the same ``mysql+aiomysql://`` URL. **Deprecated**, see below.
+
+.. deprecated:: 0.12
+
+   MySQL and MariaDB keep working and stay tested in CI, but come with no production support and no performance
+   commitment, and will be removed in a future version (not decided yet). HARP logs a deprecation warning at boot
+   when ``storage.url`` points to one of them. Use PostgreSQL for production.
 
 SQLite ships with the base install. The PostgreSQL and MySQL drivers are extras, install the one you need:
 
@@ -92,12 +100,12 @@ The main configuration option you're interested in is ``storage.url``, which con
 .. literalinclude:: ./examples/postgres-asyncpg.yml
     :language: yaml
 
-**MySQL/MariaDB example (aiomysql driver)**:
+**MySQL/MariaDB example (aiomysql driver, deprecated)**:
 
 .. literalinclude:: ./examples/mysql-aiomysql.yml
     :language: yaml
 
-**SQLite example (aiosqlite driver)**:
+**SQLite example (aiosqlite driver, development only)**:
 
 SQLite is the default storage engine because requires no configuration. *Do not use it in production*. It is slow and
 has concurrency issues. It is only suitable (and handy) for development and testing.
@@ -136,6 +144,61 @@ To setup a redis-based blob storage, you can add the following to your configura
     :language: yaml
 
 
+.. _storage-recording-capacity:
+
+Recording capacity
+::::::::::::::::::
+
+The storage worker runs its writes one at a time, in the order they are queued. A recorded request
+costs about 8 jobs: the transaction, its end, and a message, a headers blob and a body blob for each
+of the request and the response.
+
+On PostgreSQL 16, the worker drains about 150 to 400 jobs per second, so HARP records about **20 to
+45 requests per second in full**. Measured on a shared 6 vCPU host running the proxy, the upstream,
+the load generator and PostgreSQL in Docker: the bound is the proxy's CPU (one Python event loop)
+more than the database, which commits in about 1 ms. To estimate yours, divide the drain rate you
+observe (the fall of ``async_worker_queue_backlog`` per second once traffic stops) by 8.
+
+Above that rate, the queue grows and the worker sheds, by backlog size:
+
+============= ====================================================
+Backlog       Not recorded
+============= ====================================================
+100 jobs      request and response bodies (``shed-bodies``)
+1,000 jobs    messages (``shed-messages``)
+10,000 jobs   whole transactions
+============= ====================================================
+
+A level engages only once the backlog has stayed at or above it for 2 seconds, so a burst the worker
+absorbs within 2 seconds is recorded in full. It stops as soon as the backlog falls below the level
+again. Just above the capacity, only some bodies are lost: in one run at 50 requests per second for
+a minute, 339 of 3,000 transactions were recorded without bodies. Messages, then whole transactions,
+go when the database falls far behind, for instance when it stalls. Proxied traffic is not slowed
+down by shedding.
+
+There is no hysteresis: a level switches on after the 2 second hold and off the moment the backlog
+drops below its threshold. On a slow, not stalled, database whose backlog hovers around 1,000 jobs,
+message shedding therefore switches on and off, and messages drop in bursts rather than evenly. See :ref:`storage-load-shedding` for the warning and the metrics that report it.
+
+.. _storage-memory-sizing:
+
+Memory under recording backlog
+------------------------------
+
+Queued jobs hold their bodies in memory, up to 1 MiB each for the request and the response, until the
+worker writes them. Bodies are shed from 100 jobs, but jobs already queued keep theirs, and the queue
+only stops growing at the last level: 10,000 jobs, after the 2 second hold. The backlog, so the memory, is
+bounded by that level. The worst case, with every request and response body at the 1 MiB cap, is::
+
+    memory ≈ base + (10,000 jobs / 8 jobs per request) × (request body + response body)
+           ≈ base + 1,250 × 2 MiB ≈ base + 2.5 GiB
+
+Smaller bodies scale it down linearly: with 10 KiB bodies the backlog holds about 25 MiB of bodies.
+Measured: 32 clients POSTing 1 MiB bodies against a paused PostgreSQL, the proxy grew from 109 MB to a
+plateau of 1,670 MB. Size the memory limit of the container for the formula with your own body sizes, not
+for the base footprint.
+
+
 Migrations
 ::::::::::
 
@@ -154,7 +217,7 @@ is older than the code expects. The error names the database and the commands to
 
 SQLite files are not migrated: they are created from the models and never altered. A SQLite file written by
 0.11 lacks ``transactions.markers``, so it must be deleted (it is recreated on next start) or reset with
-``harp-proxy db:reset``. PostgreSQL and MySQL need ``harp-proxy db:migrate up head``.
+``harp-proxy db:reset``. PostgreSQL (and the deprecated MySQL) need ``harp-proxy db:migrate up head``.
 
 Migrations are implemented using `Alembic <https://alembic.sqlalchemy.org/>`_.
 
@@ -166,7 +229,7 @@ If you want to reset the storage content, you can run the ``harp-proxy db:reset`
 then run the migrations again (if enabled), so that you get an empty and up-to-date database schema.
 
 You must provide your configuration files and configuration arguments to this command, like you'd do with the
-``harp-proxy start`` command, so that it points to the right storage.
+``harp-proxy server`` command, so that it points to the right storage.
 
 .. code-block:: shell
 
@@ -186,6 +249,6 @@ To instruct SQLAlchemy to log all queries, set ``LOGGING_SQLALCHEMY=INFO`` in yo
 
 .. code-block:: shell
 
-    LOGGING_SQLALCHEMY=INFO harp-proxy start ...
+    LOGGING_SQLALCHEMY=INFO harp-proxy server ...
 
 It works with all HARP commands, not just ``start``.

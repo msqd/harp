@@ -9,7 +9,7 @@ set -e
 set -x
 
 # Install dependencies and build frontend
-make install-dev build-frontend
+make install-backend-dev install-frontend build-frontend
 
 # Remove unnecessary files from the wheel (frontend source, keep only built assets in web/)
 rm -rf harp_apps/dashboard/frontend

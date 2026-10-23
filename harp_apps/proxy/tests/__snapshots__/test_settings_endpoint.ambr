@@ -1,5 +1,5 @@
 # serializer version: 1
-# name: TestEndpointSettings.test_jsonschema_for_serialization
+# name: TestEndpointSettingsWithCustomController.test_jsonschema_for_serialization
   dict({
     '$defs': dict({
       'IgnoreLivenessSettings': dict({
@@ -421,7 +421,7 @@
     'type': 'object',
   })
 # ---
-# name: TestEndpointSettings.test_jsonschema_for_validation
+# name: TestEndpointSettingsWithCustomController.test_jsonschema_for_validation
   dict({
     '$defs': dict({
       'IgnoreLivenessSettings': dict({
@@ -1687,7 +1687,7 @@
     'type': 'object',
   })
 # ---
-# name: TestEndpointStateful.test_jsonschema_for_serialization
+# name: TestEndpointStatefulWithCustomController.test_jsonschema_for_serialization
   dict({
     '$defs': dict({
       'EndpointSettings': dict({
@@ -2240,7 +2240,7 @@
     'type': 'object',
   })
 # ---
-# name: TestEndpointStateful.test_jsonschema_for_validation
+# name: TestEndpointStatefulWithCustomController.test_jsonschema_for_validation
   dict({
     '$defs': dict({
       'EndpointSettings': dict({

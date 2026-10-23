@@ -71,6 +71,10 @@ Entries are organized into these categories:
   * Fixed race condition in transaction storage
   * Corrected timezone handling in dashboard
 
+**Security**
+  Security fixes. Keep the entry terse: state that something was fixed, never how it could be exploited
+  (see :doc:`../branching`).
+
 **Removed**
   Removed features or dependencies.
 
@@ -79,11 +83,24 @@ Entries are organized into these categories:
   * Removed Poetry dependency
   * Removed deprecated ``--legacy`` flag
 
+**Tooling**
+  CI, test and build tooling changes. Rendered nowhere in the release notes: use it for entries that
+  matter to contributors only.
+
+  Examples:
+
+  * CI runs the storage suite against MySQL in its own job
+  * Test runner pins plain output
+
+Type by impact on operators, not by the kind of work. A fix that changes what an operator observes (a new
+status code, a cap, a timeout, data kept or deleted) is ``important``, and is listed in the
+upgrade notes of the release (see :ref:`upgrading-0-12`).
+
 How to Add an Entry
 -------------------
 
 Create ``changelog.d/<issue>.<category>.rst`` holding the one-line entry, where ``<category>`` is
-one of ``important``, ``added``, ``changed``, ``fixed``, ``security`` or ``removed``:
+one of ``important``, ``added``, ``changed``, ``fixed``, ``security``, ``removed`` or ``tooling``:
 
 .. code-block:: bash
 

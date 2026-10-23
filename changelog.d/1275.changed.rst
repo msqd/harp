@@ -1,0 +1,1 @@
+Transaction text search counts and pages transactions instead of joined messages, and matches ``%`` and ``_`` literally on every backend. On MySQL and MariaDB it matches substrings instead of word prefixes.

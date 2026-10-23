@@ -1,0 +1,1 @@
+Storage sheds only under sustained backlog: a level engages once the queue has stayed at or above it for 2 s, so short bursts are recorded in full, and recording resumes as soon as the queue drains. ``async_worker_queue_backlog`` now reports 0 when the queue is empty.
