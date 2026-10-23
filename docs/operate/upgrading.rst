@@ -57,6 +57,9 @@ Upstreams
 - With the http cache, a successful (2xx or 3xx) ``POST``, ``PUT``, ``PATCH`` or ``DELETE`` invalidates
   the stored responses for its target and its same-host ``Location`` / ``Content-Location`` urls. Expect
   more requests to reach your upstreams after writes.
+- The TLS trust store is certifi 2026.10.19 or later, which also drops roots Mozilla removed since
+  2025.10 (DigiCert Global Root CA, DigiCert High Assurance EV, Entrust and AffirmTrust among them). An
+  upstream whose chain ends only at one of them now fails TLS verification.
 
 Storage
 -------
