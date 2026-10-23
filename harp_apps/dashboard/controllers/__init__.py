@@ -17,9 +17,9 @@ from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.settings.remote import Remote
 from harp_apps.storage.types import IStorage
 
+from ..security.auth import resolve_authentication
 from ..settings import DashboardSettings
 from .metrics import METRICS_PATH, metrics_controller
-from ..settings.auth import BasicAuthSettings
 
 logger = get_logger(__name__)
 
@@ -92,12 +92,13 @@ class DashboardController(RoutingController):
         self.storage = storage
         self.settings = settings
 
+        # the authentication actually enforced, which is not necessarily what is configured (see the security module)
+        self._auth = resolve_authentication(self.settings.auth)
+
         # create users if they don't exist; keep a strong reference to the task, as the event loop
         # only holds a weak one and would let it be garbage-collected before completion.
-        if isinstance(self.settings.auth, BasicAuthSettings):
-            self._create_users_task = asyncio.create_task(
-                self.storage.create_users_once_ready(self.settings.auth.users)
-            )
+        if self._auth:
+            self._create_users_task = asyncio.create_task(self.storage.create_users_once_ready(self._auth.users))
 
         # UI is always initialized when the dashboard app is enabled
         # (the `enabled` setting controls whether the entire app loads)
@@ -166,11 +167,11 @@ class DashboardController(RoutingController):
     async def _handle(self, request: HttpRequest, asgi_send: ASGISendCallable) -> HttpResponse:
         request.extensions.setdefault("user", None)
 
-        if self.settings.auth:
+        if self._auth:
             current_auth = request.basic_auth
 
             if current_auth:
-                request.extensions["user"] = self.settings.auth.check(current_auth[0], current_auth[1])
+                request.extensions["user"] = self._auth.check(current_auth[0], current_auth[1])
 
             if not request.extensions["user"]:
                 return HttpResponse(

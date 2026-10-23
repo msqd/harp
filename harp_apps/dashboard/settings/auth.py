@@ -35,7 +35,7 @@ class User(Configurable):
 class BasicAuthSettings(Configurable):
     type: Literal["basic"] = Field(
         None,
-        description="Authentication type. Only «basic» is supported for now.",
+        description="Authentication type.",
     )
 
     algorithm: Annotated[
@@ -78,4 +78,20 @@ class BasicAuthSettings(Configurable):
         """This validator overcomes the behaviour of model_dump(exclude_defaults=True, exclude_unset=True) and forces
         some defaults to be dumped everytime."""
         data.setdefault("type", "basic")
+        return data
+
+
+class NoAuthSettings(Configurable):
+    """Explicit opt-out: the dashboard is served without any authentication."""
+
+    type: Literal["none"] = Field(
+        None,
+        description="Authentication type. «none» serves the dashboard without authentication.",
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def model_always_shown_defaults(cls, data):
+        """Same as for basic authentication: the type must survive dumps that exclude defaults."""
+        data.setdefault("type", "none")
         return data

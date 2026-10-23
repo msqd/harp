@@ -64,6 +64,20 @@
   
   '''
 # ---
+# name: test_load_documentation_example[docs/apps/dashboard/examples/auth.none.yml]
+  '''
+  dashboard:
+    auth:
+      type: none
+  http_cache: {}
+  http_client: {}
+  janitor: {}
+  proxy: {}
+  rules: {}
+  storage: {}
+  
+  '''
+# ---
 # name: test_load_documentation_example[docs/apps/dashboard/examples/auth.yml]
   '''
   dashboard:
