@@ -72,6 +72,10 @@ class HonchoManagerFactory:
         cmd = f"{sys.executable} -m harp server"
         proxy_options = list(self.proxy_options)
 
+        # the server restarts on every change, a dashboard password generated at each boot would be of no use
+        if not any("dashboard.auth" in option for option in proxy_options):
+            proxy_options.append("--set dashboard.auth.type=none")
+
         if HARP_DASHBOARD_SERVICE in processes:
             proxy_options.append(f"--set dashboard.devserver.port={quote(self.ports[HARP_DASHBOARD_SERVICE])}")
 

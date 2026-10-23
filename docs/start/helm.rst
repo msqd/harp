@@ -31,8 +31,13 @@ get an internal ``foobar-proxy`` service in your cluster, that your applications
 Ingress
 :::::::
 
-You can enable the dashboard ingress by setting ``ingress.enabled`` to ``true`` in your values. Make sure to add
-authentication if your cluster is public!
+You can enable the dashboard ingress by setting ``ingress.enabled`` to ``true`` in your values.
+
+The dashboard requires a login. Without ``dashboard.auth`` in ``harp.settings``, HARP generates a password for the
+``admin`` user at each pod start and prints it once in the pod logs (``kubectl logs <pod> | grep "Dashboard login"``),
+so it changes whenever the pod restarts. To choose your own users, set ``dashboard.auth`` through ``harp.settings``
+(see :doc:`/apps/dashboard/index`), taking the password hashes from a secret you manage. ``dashboard.auth.type: none``
+serves the dashboard unauthenticated and logs a warning at every start: do not use it with a public ingress.
 
 
 Database

@@ -1,9 +1,9 @@
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from pydantic import Field, model_validator
 
 from harp.config import ApplicationSettingsMixin, Configurable
-from harp_apps.dashboard.settings.auth import BasicAuthSettings
+from harp_apps.dashboard.settings.auth import BasicAuthSettings, NoAuthSettings
 from harp_apps.dashboard.settings.devserver import DevserverSettings
 
 
@@ -15,10 +15,12 @@ class DashboardSettings(ApplicationSettingsMixin, Configurable):
         description="Port on which the dashboard application will be served.",
     )
 
-    auth: Optional[BasicAuthSettings] = Field(
+    auth: Optional[Union[BasicAuthSettings, NoAuthSettings]] = Field(
         None,
         discriminator="type",
-        description="Authentication settings for the dashboard.",
+        description="Authentication settings for the dashboard. When not set, the dashboard requires a login with the "
+        "`admin` user and a random password generated and logged at each boot. Use `type: none` to explicitly serve "
+        "the dashboard without authentication.",
     )
 
     devserver: Optional[DevserverSettings] = Field(
@@ -30,6 +32,13 @@ class DashboardSettings(ApplicationSettingsMixin, Configurable):
         None,
         description="Public URL of the dashboard application, used to generate absolute links, for example in notifications.",
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def default_auth_type_to_basic(cls, data: Any) -> Any:
+        if isinstance(data, dict) and isinstance(data.get("auth"), dict):
+            return {**data, "auth": {"type": "basic", **data["auth"]}}
+        return data
 
     @model_validator(mode="before")
     @classmethod

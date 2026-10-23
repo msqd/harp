@@ -30,6 +30,31 @@ For a test run, you can:
 This will start the proxy using the default settings (in memory sqlite storage) and by default, the dashboard will be
 available at http://localhost:4080.
 
+.. _docker-dashboard-login:
+
+The dashboard requires a login. Without ``dashboard.auth`` configured, HARP generates a password for the ``admin`` user at each start and
+prints it once in the container logs:
+
+.. code-block:: shell
+
+    docker logs <container> 2>&1 | grep "Dashboard login"
+
+The password changes every time the container starts. To choose your own users, add ``dashboard.auth`` to your
+configuration file (see :doc:`/apps/dashboard/index`), for example with a hashed password:
+
+.. code-block:: yaml
+
+    dashboard:
+      auth:
+        type: basic
+        algorithm: pbkdf2_sha256
+        users:
+          admin:
+            password: "<hash>"
+
+To serve the dashboard without any authentication, pass ``--set dashboard.auth.type=none``: HARP then logs a warning at every start,
+as anyone reaching the port can read the proxied traffic.
+
 Without configured endpoints, no traffic can be proxied yet.
 
 Stop this container and run another with a remote endpoint setup:
