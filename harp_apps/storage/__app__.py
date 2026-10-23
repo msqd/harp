@@ -12,6 +12,7 @@ from harp.config.events import OnBindEvent, OnBoundEvent, OnShutdownEvent
 from harp_apps.storage.models import Base
 from harp_apps.storage.settings import StorageSettings
 from harp_apps.storage.types import IStorage
+from harp_apps.storage.utils.migrations import mask_failure
 from harp_apps.storage.worker import StorageAsyncWorkerQueue
 
 logger = get_logger(__name__)
@@ -41,6 +42,18 @@ async def on_bind(event: OnBindEvent):
 
 
 async def on_bound(event: OnBoundEvent):
+    settings = event.provider.get(StorageSettings)
+    try:
+        await _boot_storage(event)
+    except Exception as exc:
+        # exception messages may embed the storage url, the password must not reach the logs
+        safe = mask_failure(exc, settings.url)
+        if safe is exc:
+            raise
+        raise safe from None
+
+
+async def _boot_storage(event: OnBoundEvent):
     settings = event.provider.get(StorageSettings)
     if settings.migrate:
         engine = event.provider.get(AsyncEngine)

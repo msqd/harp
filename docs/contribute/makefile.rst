@@ -502,6 +502,7 @@ Backend Testing
 * ``PYTEST_OPTIONS``: Additional pytest arguments
 * ``TEST_SKIP_FRONT``: Skip frontend tests if set
 * ``TEST_ALL_DATABASES``: Test all database backends if set
+* ``TEST_DATABASE_DIALECTS``: Comma separated dialects to test (for example ``mysql``), default all
 
 Docker
 ^^^^^^

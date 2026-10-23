@@ -10,8 +10,9 @@ working.
 
 import pytest
 
-from harp.config.asdict import asdict
+from harp.config.asdict import asdict, mask_credentials
 from harp_apps.proxy.settings import Endpoint
+from harp_apps.storage.settings import StorageSettings
 from harp_apps.storage.settings.redis import RedisSettings
 
 PASSWORD = "hunter2"
@@ -92,3 +93,32 @@ def test_unsecure_shows_a_password_key():
     values = {"users": {"alice": {"password": "s3cretAlice"}}}
 
     assert asdict(values, secure=False) == values
+
+
+QUERY_DSN = "postgresql+asyncpg://harp@db.internal:5432/harp?password=Top%40Secret&ssl=disable"
+
+
+@pytest.mark.parametrize("mode", ["json", "python"])
+def test_a_query_password_is_masked_in_either_mode(mode):
+    """asyncpg reads a ``?password=`` query parameter: the settings and storage APIs must not show it."""
+    masked = asdict(StorageSettings(url=QUERY_DSN), secure=True, mode=mode)["url"]
+
+    assert str(masked) == "postgresql+asyncpg://harp@db.internal:5432/harp?password=***&ssl=disable"
+
+
+def test_unsecure_shows_a_query_password():
+    assert asdict({"url": QUERY_DSN}, secure=False) == {"url": QUERY_DSN}
+
+
+@pytest.mark.parametrize(
+    "url, masked",
+    [
+        ("http://h/p?password=s3cret", "http://h/p?password=***"),
+        ("http://h/p?a=1&password=s3cret#top", "http://h/p?a=1&password=***#top"),
+        ("http://u:one@h/p?password=two", "http://u:***@h/p?password=***"),
+        ("http://h/p?old_password=s3cret", "http://h/p?old_password=s3cret"),
+        ("http://h/p?Password=s3cret&PASSWORD=s3cret", "http://h/p?Password=***&PASSWORD=***"),
+    ],
+)
+def test_mask_credentials_masks_the_query_password(url, masked):
+    assert mask_credentials(f"see {url} now") == f"see {masked} now"

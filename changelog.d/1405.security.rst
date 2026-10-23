@@ -1,0 +1,1 @@
+harp-proxy now requires certifi 2026.10.19 or later, so the TLS trust store no longer contains the eMudhra roots whose intermediates were compromised. It also drops roots Mozilla removed since 2025.10 (DigiCert Global Root CA, DigiCert High Assurance EV, Entrust, AffirmTrust among them): an upstream whose chain ends only at one of them now fails TLS verification.
