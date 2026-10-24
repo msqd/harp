@@ -76,6 +76,20 @@ Storage
 - File SQLite storage runs in WAL mode and adds ``-wal`` and ``-shm`` files next to the database:
   keep them together when copying or backing up.
 
+Dashboard
+---------
+
+- **The dashboard now requires a login by default.** Without ``dashboard.auth``, HARP generates a random
+  password for the ``admin`` user at each start and logs it once, in a ``Dashboard login`` line. It changes
+  at every start and is nowhere else: not in the settings, the storage or any other log line.
+- To pick your own users, configure ``dashboard.auth`` (``type: basic``): nothing is generated then, and
+  nothing changes for deployments that already did.
+- To keep the previous behaviour, set ``dashboard.auth.type: none`` (``--set dashboard.auth.type=none``).
+  The dashboard is then open to anyone who can reach its port, and exposes the proxied traffic: HARP logs a
+  warning at every start. Only do it behind a network boundary you trust.
+- Scrapers, health checks or scripts calling the dashboard port (``/metrics``, ``/api/...``) must send the
+  credentials, or use ``dashboard.metrics_port`` for Prometheus. See :doc:`/apps/dashboard/index`.
+
 Known issue
 -----------
 

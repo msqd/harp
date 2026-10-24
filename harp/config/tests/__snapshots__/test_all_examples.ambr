@@ -2,6 +2,7 @@
 # name: test_documentation_examples_list
   list([
     'docs/apps/dashboard/examples/auth.basic.yml',
+    'docs/apps/dashboard/examples/auth.none.yml',
     'docs/apps/dashboard/examples/auth.yml',
     'docs/apps/dashboard/examples/devserver.yml',
     'docs/apps/dashboard/examples/main.yml',
@@ -60,6 +61,20 @@
       users:
         admin:
           password: '***'
+  http_cache: {}
+  http_client: {}
+  janitor: {}
+  proxy: {}
+  rules: {}
+  storage: {}
+  
+  '''
+# ---
+# name: test_load_documentation_example[docs/apps/dashboard/examples/auth.none.yml]
+  '''
+  dashboard:
+    auth:
+      type: none
   http_cache: {}
   http_client: {}
   janitor: {}
