@@ -18,10 +18,6 @@ def resolve_authentication(auth: Optional[BasicAuthSettings | NoAuthSettings]) -
     Without configured authentication, a random password is generated and logged once. It is only kept as a hash.
     """
     if isinstance(auth, NoAuthSettings):
-        logger.warning(
-            "Dashboard authentication is disabled (dashboard.auth.type=none): the dashboard is unauthenticated and "
-            "exposes proxied traffic to anyone who can reach its port."
-        )
         return None
 
     if auth is not None:

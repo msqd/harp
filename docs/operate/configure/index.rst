@@ -169,6 +169,8 @@ Example: Environment-Specific Configuration
         enabled: true
         url: "sqlite+aiosqlite:///dev.db"
 
+.. _configure-debug-mode:
+
 Debug Mode
 ----------
 
@@ -209,3 +211,16 @@ You can also check the debug status programmatically:
 
     if harp.DEBUG:
         print("Debug mode is enabled")
+
+Development-only Settings
+-------------------------
+
+At startup, HARP logs one ``WARNING`` per setting that suits a laptop but not production, naming the setting and what
+to use instead:
+
+- ``storage.url`` pointing to SQLite, file or ``:memory:``, which is also the default: use PostgreSQL (or MySQL).
+- ``dashboard.auth.type: none``: use ``dashboard.auth.type: basic``. A missing ``dashboard.auth`` is not one, the
+  dashboard then generates a password.
+- ``HARP_DEBUG`` (or the deprecated ``DEBUG``) enabling :ref:`debug mode <configure-debug-mode>`: leave it unset.
+
+With PostgreSQL, authentication set or left to its default, and debug off, nothing is logged.
