@@ -6,6 +6,7 @@ import tomllib
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from click import unstyle
 from click.testing import CliRunner
 
 from harp.commandline.create import create, harp_requirement, literal
@@ -252,7 +253,8 @@ class TestCreateHelp:
         result = CliRunner().invoke(create, ["--help"], terminal_width=120, env={"NO_COLOR": "1", "FORCE_COLOR": None})
 
         assert result.exit_code == 0, result.output
-        help_text = " ".join(result.output.split())
+        # rich-click colours each wrapped line: compare the plain words.
+        help_text = " ".join(unstyle(result.output).split())
         assert "A HARP project is a minimal Python package" in help_text
         assert "your configuration and optional custom application code" in help_text
-        assert "https://docs.harp-project.net/en/latest/develop/quick-start.html" in result.output
+        assert "https://docs.harp-project.net/en/latest/develop/quick-start.html" in help_text
