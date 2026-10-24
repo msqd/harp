@@ -739,6 +739,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Export uv.lock as the image constraints
         run: uv run --locked --no-dev python bin/check_docker_lock.py export > dist/constraints.txt
@@ -899,6 +901,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Export uv.lock as the image constraints
         run: uv run --locked --no-dev python bin/check_docker_lock.py export > dist/constraints.txt
