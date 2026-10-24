@@ -1,0 +1,1 @@
+The janitor now deletes the Redis and in-memory blobs of transactions removed by retention, and of expired HTTP cache entries, and reports their figures.

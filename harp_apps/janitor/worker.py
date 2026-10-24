@@ -8,7 +8,7 @@ from harp import get_logger
 from harp_apps.storage.services import SqlStorage
 
 from ..storage.models.base import with_session
-from ..storage.models.blobs import ORPHAN_GRACE
+from ..storage.models.blobs import CACHE_META_CONTENT_TYPE, ORPHAN_GRACE, cache_meta_references
 from ..storage.types import IBlobStorage, IStorage
 from .settings import JanitorSettings
 
@@ -100,10 +100,11 @@ class JanitorWorker:
             older_than = datetime.now(UTC) - self.orphan_grace
             orphans = await self.storage.blobs.find_orphans(older_than=older_than)
             count = await self.storage.blobs.delete_orphans(orphans, older_than=older_than)
-        elif self.blob_storage.type == "redis":
-            pass
-        else:
-            pass
+        elif self._lists_blob_ids:
+            # Blobs of a backend that lives outside the SQL database: the same definition of an orphan, read from
+            # the messages (SQL) and the cache entries (the backend), then deleted unless written within the grace.
+            _, orphans = await self._find_unreferenced_blobs()
+            count = await self.blob_storage.delete_stale(orphans, older_than=datetime.now(UTC) - self.orphan_grace)
 
         if count is None:
             # The blob storage may need to clean orphans but no implementation is available
@@ -114,6 +115,25 @@ class JanitorWorker:
                 self.blob_storage.type,
                 count,
             )
+
+    @property
+    def _lists_blob_ids(self) -> bool:
+        return hasattr(self.blob_storage, "iter_blob_ids")
+
+    async def _find_unreferenced_blobs(self, session=None) -> tuple[int, list[str]]:
+        """Count the blobs of a backend that can list them, and find those nothing references.
+
+        Ids are listed before the cache entries are read, so a blob stored in between is either seen as
+        referenced or too young to be removed.
+        """
+        blob_ids = [blob_id async for blob_id in self.blob_storage.iter_blob_ids()]
+        kept = set()
+        async for meta in self.blob_storage.iter_blobs(CACHE_META_CONTENT_TYPE):
+            kept.add(meta.id)
+            kept |= cache_meta_references(meta.data)
+        candidates = [blob_id for blob_id in blob_ids if blob_id not in kept]
+        referenced = await self.storage.blobs.referenced_by_messages(candidates, session=session)
+        return len(blob_ids), [blob_id for blob_id in candidates if blob_id not in referenced]
 
     async def compute_and_store_metrics(self):
         """
@@ -129,17 +149,20 @@ class JanitorWorker:
     async def compute_metrics(self, session=None):
         """Counts of stored objects. Without a session, each count takes the connection only for its own query."""
         values = {}
-        for key, name in (
-            ("storage.transactions", "transactions"),
-            ("storage.messages", "messages"),
-            ("storage.blobs", "blobs"),
-        ):
+        counted = [("storage.transactions", "transactions"), ("storage.messages", "messages")]
+        if not self._lists_blob_ids:
+            counted.append(("storage.blobs", "blobs"))  # the blobs table is where this backend keeps them
+        for key, name in counted:
             if session is not None:
                 values[key] = await self.do_count(session, name)
             else:
                 async with self.session_factory() as own:
                     values[key] = await self.do_count(own, name)
-        values["storage.blobs.orphans"] = await self.storage.blobs.count_orphans(session=session)
+        if self._lists_blob_ids:
+            values["storage.blobs"], orphans = await self._find_unreferenced_blobs(session)
+            values["storage.blobs.orphans"] = len(orphans)
+        else:
+            values["storage.blobs.orphans"] = await self.storage.blobs.count_orphans(session=session)
 
         for key, value in values.items():
             PROMETHEUS_GAUGES[key].set(value)

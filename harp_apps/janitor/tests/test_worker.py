@@ -1,9 +1,9 @@
 import asyncio
 from datetime import UTC, datetime, timedelta
 
-import pytest
 from sqlalchemy import func, select
 
+from harp.models import Blob as BlobModel
 from harp_apps.janitor.settings import JanitorSettings
 from harp_apps.janitor.tests import worker_with_grace
 from harp_apps.janitor.worker import JanitorWorker
@@ -38,9 +38,6 @@ class TestJanitorWorker(StorageTestFixtureMixin):
             assert (await worker.compute_metrics(session))["storage.transactions"] == 1
 
     async def test_retention_leaves_no_child_row_nor_blob(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
-        if blob_storage.type == "redis":
-            return pytest.skip("Redis implementation does not support cleaning up orphan blobs yet.")
-
         worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
         transaction = await self.create_transaction(sql_storage, started_at=datetime.now(UTC) - timedelta(days=90))
         await sql_storage.transactions.set_tags(transaction, {"env": "tests"})
@@ -56,6 +53,8 @@ class TestJanitorWorker(StorageTestFixtureMixin):
         async with sql_storage.session_factory() as session:
             for model in (Message, transaction_tag_values_association_table, Blob):
                 assert (await session.execute(select(func.count()).select_from(model))).scalar_one() == 0, model
+        assert await blob_storage.get(headers.id) is None
+        assert await blob_storage.get(body.id) is None
 
     async def test_compute_and_store_metrics(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
         """Runs on one connection: the in-memory default database has no second one to give (#995)."""
@@ -69,10 +68,6 @@ class TestJanitorWorker(StorageTestFixtureMixin):
             assert (await session.execute(select(MetricValue.value).filter_by(metric_id=metric.id))).scalar_one() == 1
 
     async def test_delete_orphan_blobs(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
-        if blob_storage.type == "redis":
-            # explicit skip because it should be implemented later
-            return pytest.skip("Redis implementation does not support cleaning up orphan blobs yet.")
-
         worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
 
         b1 = await self.create_blob(blob_storage, "foo")
@@ -117,8 +112,6 @@ class TestJanitorWorker(StorageTestFixtureMixin):
         The pre-existing sweep test stops at the deletion. This one carries on to the write, which
         is where a cache, or anything else that stores blobs, meets the consequence.
         """
-        if blob_storage.type == "redis":
-            return pytest.skip("Redis implementation does not support cleaning up orphan blobs yet.")
 
         worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
 
@@ -187,3 +180,61 @@ class TestJanitorWorker(StorageTestFixtureMixin):
         await worker.run()
 
         assert sleeps == [7]
+
+
+class TestRetentionKeepsSharedBlobs(StorageTestFixtureMixin):
+    async def test_a_body_recorded_twice_outlives_the_first_expired_transaction(
+        self, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
+        old = await self.create_transaction(sql_storage, started_at=datetime.now(UTC) - timedelta(days=90))
+        recent = await self.create_transaction(sql_storage)
+        headers = await self.create_blob(blob_storage, "headers")
+        body = await self.create_blob(blob_storage, "same body")
+        for transaction in (old, recent):
+            await self.create_message(
+                sql_storage, transaction_id=transaction.id, kind="misc", summary="x", headers=headers.id, body=body.id
+            )
+
+        await worker.delete_old_transactions()
+        await worker.delete_orphan_blobs()
+
+        assert await blob_storage.get(body.id) == body
+        assert await blob_storage.get(headers.id) == headers
+
+    async def test_blobs_written_during_the_grace_period_are_kept(
+        self, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings())
+        young = await self.create_blob(blob_storage, "its message is not committed yet")
+
+        await worker.delete_orphan_blobs()
+
+        assert await blob_storage.get(young.id) is not None
+
+
+class TestMetricsOfBlobStorage(StorageTestFixtureMixin):
+    async def test_blob_figures_come_from_the_blob_storage_in_use(
+        self, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
+        await self.create_blob(blob_storage, "one")
+        await self.create_blob(blob_storage, "two")
+
+        metrics = await worker.compute_metrics()
+
+        assert metrics["storage.blobs"] == 2
+        assert metrics["storage.blobs.orphans"] == 2
+
+
+async def test_memory_blobs_are_swept_too(sql_storage: SqlStorage):
+    from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
+
+    blob_storage = MemoryBlobStorage()
+    worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
+    orphan = await blob_storage.put(BlobModel.from_data("orphan"))
+
+    assert (await worker.compute_metrics())["storage.blobs.orphans"] == 1
+    await worker.delete_orphan_blobs()
+
+    assert await blob_storage.get(orphan.id) is None

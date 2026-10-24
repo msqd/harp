@@ -1,9 +1,12 @@
+from datetime import UTC, datetime, timedelta
+
 import pytest
 from redis.asyncio import Redis
 
 from harp.config import ConfigurationBuilder
 from harp.models import Blob
 from harp.services import CannotResolveTypeException
+from harp_apps.storage.models.blobs import ORPHAN_GRACE
 from harp_apps.storage.services.blob_storages.redis import RedisBlobStorage
 
 
@@ -105,3 +108,58 @@ class TestRedisBlobStorageNotConfigured(SystemTestMixin):
                 system.provider.get("storage.redis")
         finally:
             await system.dispose()
+
+
+class TestEnumeration:
+    async def test_iter_blob_ids_lists_blobs_only(self, redis_blob_storage: RedisBlobStorage):
+        await redis_blob_storage.put(Blob(id="a", data=b"1", content_type="text/plain"))
+        await redis_blob_storage.put(Blob(id="b", data=b"2", content_type="text/plain"))
+
+        assert sorted([blob_id async for blob_id in redis_blob_storage.iter_blob_ids()]) == ["a", "b"]
+
+    async def test_iter_blobs_filters_by_content_type(self, redis_blob_storage: RedisBlobStorage):
+        meta = Blob(id="m", data=b"entry", content_type="cache/meta")
+        await redis_blob_storage.put(meta)
+        await redis_blob_storage.put(Blob(id="b", data=b"2", content_type="text/plain"))
+
+        assert [blob async for blob in redis_blob_storage.iter_blobs("cache/meta")] == [meta]
+
+    async def test_delete_blobs_spares_a_blob_stored_again_with_other_data(self, redis_blob_storage: RedisBlobStorage):
+        read = Blob(id="a", data=b"old", content_type="text/plain")
+        await redis_blob_storage.force_put(read)
+        await redis_blob_storage.put(Blob(id="b", data=b"same", content_type="text/plain"))
+        await redis_blob_storage.force_put(Blob(id="a", data=b"new", content_type="text/plain"))
+
+        await redis_blob_storage.delete_blobs([read, Blob(id="b", data=b"same", content_type="text/plain")])
+
+        assert (await redis_blob_storage.get("a")).data == b"new"
+        assert await redis_blob_storage.get("b") is None
+
+
+class TestDeleteStale:
+    async def test_deletes_blobs_not_written_since(self, redis_blob_storage: RedisBlobStorage):
+        await redis_blob_storage.put(Blob(id="a", data=b"1", content_type="text/plain"))
+
+        later = datetime.now(UTC) + timedelta(seconds=1)
+        assert await redis_blob_storage.delete_stale(["a"], older_than=later) == 1
+        assert await redis_blob_storage.get("a") is None
+
+    async def test_keeps_blobs_written_since(self, redis_blob_storage: RedisBlobStorage):
+        await redis_blob_storage.put(Blob(id="a", data=b"1", content_type="text/plain"))
+
+        earlier = datetime.now(UTC) - timedelta(minutes=10)
+        assert await redis_blob_storage.delete_stale(["a"], older_than=earlier) == 0
+        assert await redis_blob_storage.get("a") is not None
+
+    async def test_deletes_blobs_that_were_never_marked(self, redis_blob_storage: RedisBlobStorage):
+        """Blobs written before the marker existed carry none."""
+        await redis_blob_storage.client.set("a", b"text/plain\n1")
+
+        assert await redis_blob_storage.delete_stale(["a"], older_than=datetime.now(UTC) - timedelta(hours=1)) == 1
+
+    async def test_write_markers_expire(self, redis_blob_storage: RedisBlobStorage):
+        await redis_blob_storage.put(Blob(id="a", data=b"1", content_type="text/plain"))
+
+        keys = [key async for key in redis_blob_storage.client.scan_iter()]
+        ttls = [await redis_blob_storage.client.ttl(key) for key in keys if key != b"a"]
+        assert len(ttls) == 1 and 0 < ttls[0] <= int(ORPHAN_GRACE.total_seconds())

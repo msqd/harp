@@ -15,6 +15,11 @@ themselves, are never deleted by the janitor: cache storage is reclaimed by the 
 (see :doc:`/apps/http_cache/settings`). Once an entry is expired or replaced, the janitor removes the header and body
 blobs nothing references anymore. The ``storage_blobs_orphans`` metric counts the same orphans.
 
+The sweep runs on every blob backend that can list its blobs (``sql``, ``redis`` and ``memory``). With ``redis``, the
+janitor scans the keys, keeps those referenced by a message in the SQL storage or by a ``cache/meta`` entry, and deletes
+the others unless they were written in the last 10 minutes (tracked by short-lived ``harp:blob-written:<id>`` keys).
+The ``storage_blobs`` and ``storage_blobs_orphans`` metrics count what the blob backend holds.
+
 A sweep works in short batches and gives the database connection back between them, so requests are served while it
 runs, even with the default in-memory storage that has a single connection.
 
