@@ -137,9 +137,7 @@ def test_hide_password_masks_every_rendering_of_the_password(password):
     rendered = url.render_as_string(hide_password=False)
     encoded = rendered.split(":", 2)[2].split("@")[0]
 
-    masked = hide_password(
-        f"bad {rendered}; config {rendered.replace('%', '%%')}; settings {MultiHostUrl(rendered)}", url
-    )
+    masked = hide_password(f"bad {rendered}; config {rendered.replace('%', '%%')}; settings {MultiHostUrl(rendered)}")
 
     assert masked.count("u:***@db/h") == 3
     assert password not in masked
@@ -156,7 +154,7 @@ def test_a_failure_holding_the_password_anywhere_is_masked(password):
     rendered = url.render_as_string(hide_password=False)
     encoded = rendered.split(":", 2)[2].split("@")[0]
 
-    masked = str(mask_failure(ValueError(f"bad {rendered}; config {rendered.replace('%', '%%')}"), url))
+    masked = str(mask_failure(ValueError(f"bad {rendered}; config {rendered.replace('%', '%%')}")))
 
     assert password not in masked
     assert encoded not in masked
