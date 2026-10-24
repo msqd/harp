@@ -39,11 +39,6 @@ if TYPE_CHECKING:
 
 ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-#: Debug mode flag. When enabled, HARP will output additional debugging information that may not be safe for
-#: production environments (e.g., exception tracebacks in error responses). Set via HARP_DEBUG or DEBUG environment
-#: variables.
-DEBUG: bool = bool(os.environ.get("HARP_DEBUG") or os.environ.get("DEBUG"))
-
 
 def get_relative_path(path: str) -> str:
     """
@@ -112,6 +107,39 @@ else:
 __parsed_version__ = _parse_version(__version__)
 
 from ._logging import get_logger  # noqa: E402
+
+
+_TRUE_VALUES = frozenset({"1", "true", "yes", "on"})
+_FALSE_VALUES = frozenset({"0", "false", "no", "off", ""})
+
+
+def _parse_debug(environ) -> bool:
+    """
+    Decides the debug flag from the environment. ``HARP_DEBUG`` is a strict boolean (anything else raises
+    ``ValueError``). The generic ``DEBUG`` is deprecated, only enables when ``HARP_DEBUG`` is unset, and never fails.
+    """
+    harp_debug = environ.get("HARP_DEBUG")
+    if harp_debug is not None:
+        value = harp_debug.strip().lower()
+        if value in _TRUE_VALUES:
+            return True
+        if value in _FALSE_VALUES:
+            return False
+        raise ValueError(f"Invalid HARP_DEBUG value {harp_debug!r}: use one of 1, true, yes, on, 0, false, no, off.")
+
+    generic = environ.get("DEBUG", "").strip().lower()
+    if generic in _FALSE_VALUES:
+        return False
+    get_logger(__name__).warning(
+        "The generic DEBUG environment variable is deprecated and will be ignored from 0.14, use HARP_DEBUG instead."
+    )
+    return True
+
+
+#: Debug mode flag. When enabled, HARP will output additional debugging information that may not be safe for
+#: production environments (e.g., exception tracebacks in error responses). Set via the HARP_DEBUG environment
+#: variable (boolean). The generic DEBUG variable is deprecated and ignored from 0.14.
+DEBUG: bool = _parse_debug(os.environ)
 
 
 async def arun(builder: "_ConfigurationBuilder"):

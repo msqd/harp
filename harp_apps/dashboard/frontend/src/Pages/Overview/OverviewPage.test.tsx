@@ -2,7 +2,7 @@ import { it } from "vitest"
 
 import { renderWithClient } from "tests/utils"
 
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { MemoryRouter, Route, Routes } from "react-router"
 import OverviewPage from "./OverviewPage.tsx"
 import { waitForElementToBeRemoved } from "@testing-library/react"
 

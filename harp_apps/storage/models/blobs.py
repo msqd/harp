@@ -169,6 +169,23 @@ class BlobsRepository(Repository[Blob]):
             await asyncio.sleep(0)
         return deleted
 
+    async def referenced_by_messages(self, blob_ids: list[str], /, *, session=None) -> set[str]:
+        """The given ids that at least one message references, as headers or as body.
+
+        Asks the messages table, not the blobs table: for blob backends that live elsewhere (Redis, memory) this
+        table holds no blob. One short query per chunk, each in its own session unless the caller passes one.
+        """
+        referenced: set[str] = set()
+        for i in range(0, len(blob_ids), _DELETE_CHUNK):
+            chunk = blob_ids[i : i + _DELETE_CHUNK]
+            async with self._batch_session(session) as batch:
+                for column in (Message.headers, Message.body):
+                    referenced.update(
+                        (await batch.execute(select(column).where(column.in_(chunk)).distinct())).scalars()
+                    )
+            await asyncio.sleep(0)
+        return referenced
+
     @with_session
     async def create(self, values: dict | BlobModel, /, *, session):
         if isinstance(values, BlobModel):

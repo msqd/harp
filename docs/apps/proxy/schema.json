@@ -272,9 +272,20 @@
           "gt": 0,
           "minimum": 0,
           "type": "integer"
-        }
+        },
+        "tags": { "$ref": "#/$defs/TagsSettings" }
       },
       "title": "ProxySettings",
+      "type": "object"
+    },
+    "TagsSettings": {
+      "description": "Bounds on the tags a client sets with x-harp-* request headers. A tag over a bound is dropped, never the request.",
+      "properties": {
+        "max_count": { "default": 20, "description": "Tags kept per transaction: the first ones in request header order.", "exclusiveMinimum": 0, "type": "integer" },
+        "max_name_length": { "default": 64, "description": "Longest tag name kept, in characters.", "exclusiveMinimum": 0, "type": "integer" },
+        "max_value_length": { "default": 256, "description": "Longest tag value kept, in characters.", "exclusiveMinimum": 0, "type": "integer" }
+      },
+      "title": "TagsSettings",
       "type": "object"
     },
     "Remote": {

@@ -1,0 +1,1 @@
+Dashboard API errors answer JSON instead of an HTML page, and carry the traceback only when ``HARP_DEBUG`` is on; it is always logged server-side.

@@ -1,0 +1,1 @@
+Pause and resume automatic transaction-list updates while keeping manual refresh available.

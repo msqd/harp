@@ -1,0 +1,1 @@
+Remove ``harp.controllers.dump_request_controller``, which echoed the ASGI scope including ``Authorization``.

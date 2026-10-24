@@ -6,6 +6,20 @@
   '''
   ▶ Request (harp.http.requests.HttpRequest)
   GET /hostname HTTP/1.1
+  ▶▶ Remote Request (httpx.Request)
+  GET /hostname HTTP/1.1
+  accept: */*
+  accept-encoding: gzip, deflate
+  connection: keep-alive
+  host: <host>
+  user-agent: <user-agent>
+  ◀◀ Remote Response (httpx.Response)
+  HTTP/1.1 200 OK
+  access-control-allow-credentials: true
+  access-control-allow-origin: *
+  content-type: application/json; charset=utf-8
+  date: <date>
+  content-length: 31
   ◀ Proxy Response (harp.http.responses.HttpResponse)
   HTTP/1.1 200 OK
   access-control-allow-credentials: true

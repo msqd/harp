@@ -5,6 +5,7 @@ import httpx
 from hishel import Request, Response
 from hishel._async_httpx import _httpx_to_internal as _hishel_httpx_to_internal
 from hishel._async_httpx import _IteratorStream
+from hishel._core._spec import parse_date
 from hishel._core.models import ResponseMetadata
 from hishel.httpx import AsyncCacheTransport as HishelAsyncCacheTransport
 
@@ -40,6 +41,33 @@ def _internal_to_httpx(value):
         return httpx.Response(value.status_code, headers=headers, stream=stream, extensions=value.metadata)
     stream = _IteratorStream(value._aiter_stream())
     return httpx.Request(value.method, value.url, headers=headers, stream=stream, extensions=value.metadata)
+
+
+# An HTTP date in the past, standing for "already expired".
+_ALREADY_EXPIRED = "Thu, 01 Jan 1970 00:00:00 GMT"
+# Carries the upstream's malformed Expires through the cache, so the client can be given it back.
+_ORIGINAL_EXPIRES = "x-harp-original-expires"
+
+
+def _expire_malformed_expires(response: Response) -> None:
+    """RFC 9111 §5.3: an invalid ``Expires`` value means "already expired".
+
+    hishel raises on a value it cannot parse, which would answer the client a 500 for an upstream's mistake.
+    The cache is told the response is already expired; the original value is kept aside, because a proxy does
+    not change what the client receives (see :func:`_restore_original_expires`).
+    """
+    if "expires" in response.headers and parse_date(response.headers["expires"]) is None:
+        response.headers[_ORIGINAL_EXPIRES] = response.headers["expires"]
+        del response.headers["expires"]  # assigning would add a value next to the malformed one
+        response.headers["expires"] = _ALREADY_EXPIRED
+
+
+def _restore_original_expires(response: httpx.Response) -> None:
+    """Give the client the upstream's own ``Expires``, whether the response is fresh, cached or revalidated."""
+    if _ORIGINAL_EXPIRES in response.headers:
+        original = response.headers[_ORIGINAL_EXPIRES]
+        del response.headers[_ORIGINAL_EXPIRES]
+        response.headers["expires"] = original
 
 
 def _endpoint_name(request: httpx.Request) -> str:
@@ -124,6 +152,7 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
             internal_response = await self._cache_proxy.handle_request(wrapped_request)
 
         response = _internal_to_httpx(internal_response)
+        _restore_original_expires(response)
         if request.method not in SAFE_METHODS and response.status_code < 400:
             await self._invalidate(request, response)
         return response
@@ -181,4 +210,5 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         dropped = hop_by_hop_names(response.headers) - {"content-length"}
         for name in [name for name in response.headers if name.lower() in dropped]:
             del response.headers[name]
+        _expire_malformed_expires(response)
         return response

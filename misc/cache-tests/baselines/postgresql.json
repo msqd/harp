@@ -124,7 +124,7 @@
     "freshness-expires-ansi-c": true,
     "freshness-expires-far-future": true,
     "freshness-expires-future": true,
-    "freshness-expires-invalid": false,
+    "freshness-expires-invalid": true,
     "freshness-expires-invalid-1-digit-hour": false,
     "freshness-expires-invalid-2-digit-year": false,
     "freshness-expires-invalid-aest": false,

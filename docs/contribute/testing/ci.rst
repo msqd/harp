@@ -87,11 +87,15 @@ Build and release jobs
   * Validates with twine
   * Uploads wheel artifact (7 day retention)
 
-**all-checks-passed**
-  Consolidation job ensuring all tests pass
+**test-python-package**
+  Installs the built wheel on Python 3.13 and runs it
 
-  * Depends on all test jobs and package build
-  * Tests wheel installation on Python 3.13
+  * Depends on the package build
+
+**all-checks-passed**
+  Consolidation job, the required status check ("All Checks Passed")
+
+  * Depends on every other check, lockfile included, and fails unless each succeeded
   * Must pass before any releases
 
 **build-docker-image-development**
@@ -142,13 +146,13 @@ Tests run directly on the GitHub Actions runner using ``uv``:
 .. code-block:: bash
 
     # Install uv
-    uses: astral-sh/setup-uv@v4
+    uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
 
     # Create required directories
     mkdir -p harp_apps/dashboard/web
 
     # Install dependencies
-    uv sync
+    uv sync --locked
 
     # Run tests
     uv run pytest harp -n auto -m 'not subprocess'
@@ -232,7 +236,7 @@ To reproduce CI failures locally:
     mkdir -p harp_apps/dashboard/web
 
     # 2. Install dependencies (matches CI)
-    uv sync
+    uv sync --locked
 
     # 3. Run tests exactly as CI does
     uv run pytest harp -n auto -m 'not subprocess'
@@ -381,6 +385,13 @@ Different jobs run based on push type:
 **Release images** (``build-docker-image-release``):
   * Only after PyPI publish succeeds
   * Installs from PyPI, not local wheel
+
+Supply chain
+^^^^^^^^^^^^
+
+* Every third-party action is pinned to a full commit SHA, with its version as a trailing comment. Never use a tag or a branch.
+* Dependabot (``.github/dependabot.yml``) bumps ``uv``, ``npm``, ``github-actions`` and ``docker`` dependencies, including the pinned SHAs.
+* A new release waits 3 days before being adopted: the Dependabot ``cooldown``, ``exclude-newer`` in ``pyproject.toml`` (uv) and ``minimum-release-age`` in ``harp_apps/dashboard/frontend/.npmrc`` (pnpm). Keep the three in sync.
 
 Further reading
 ---------------

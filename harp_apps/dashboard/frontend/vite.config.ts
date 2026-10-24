@@ -66,7 +66,7 @@ export default defineConfig(({ mode }) => {
               manualChunks: {
                 react: ["react", "react-dom"],
                 reactQuery: ["react-query"],
-                reactRouter: ["react-router-dom"],
+                reactRouter: ["react-router"],
                 syntaxHighlighter: ["react-syntax-highlighter"],
                 ui: ["@headlessui/react", "@heroicons/react", "@emotion/react"],
                 sentry: ["@sentry/browser"],

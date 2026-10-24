@@ -2,7 +2,8 @@ import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { QueryClient, QueryClientProvider } from "react-query"
 import { ReactQueryDevtools } from "react-query/devtools"
-import { createBrowserRouter, RouterProvider } from "react-router-dom"
+import { createBrowserRouter } from "react-router"
+import { RouterProvider } from "react-router/dom"
 
 import GlobalStyles from "Styles/GlobalStyles"
 
@@ -36,7 +37,7 @@ void enableMocking().then(() => {
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <GlobalStyles />
-        <RouterProvider router={router} />
+        <RouterProvider router={router} useTransitions={false} />
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </StrictMode>,

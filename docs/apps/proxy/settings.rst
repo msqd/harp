@@ -31,6 +31,14 @@ Implementation (python): :class:`ProxySettings <harp_apps.proxy.settings.ProxySe
    :pointer: /$defs/ProxySettings
 
 
+.tags
+-----
+
+Implementation (python): :class:`TagsSettings <harp_apps.proxy.settings.TagsSettings>`
+
+.. jsonschema:: ./schema.json
+   :pointer: /$defs/TagsSettings
+
 .endpoints[]
 ------------
 

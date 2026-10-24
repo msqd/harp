@@ -8,7 +8,7 @@ def load_ruleset_from_files(files, examples, options):
 
     # todo not easy to implement for now, and not really important for this command set
     if len(options):
-        raise click.UsageError("Unsupported options: " + ", ".join(options))
+        raise click.UsageError("Unsupported options: " + ", ".join(f"{key}={value}" for key, value in options))
 
     settings = RulesSettings()
     for file in files:

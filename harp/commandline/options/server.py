@@ -64,7 +64,7 @@ class CommonServerOptions(dict):
         self.endpoints = dict(map(lambda x: x.split("=", 1), self.endpoints))
 
 
-def _config_click_options(f):
+def _config_click_options(f, *, include_set=True):
     """
     Decorate a click command to add configuration options, in the right order.
     """
@@ -86,14 +86,17 @@ def _config_click_options(f):
             multiple=True,
             help="""Load configuration from example (can be used multiple times).""",
         ),
-        click.option(
-            "--set",
-            "options",
-            multiple=True,
-            type=(str, str),
-            help=f"Add configuration options (e.g. {code('--set foo=bar')} or {code('--set foo bar')}, can be used multiple times).",
-        ),
     ]
+    if include_set:
+        options.append(
+            click.option(
+                "--set",
+                "options",
+                multiple=True,
+                type=(str, str),
+                help=f"Add configuration options (e.g. {code('--set foo=bar')} or {code('--set foo bar')}, can be used multiple times).",
+            )
+        )
 
     # apply options in reversed order so that click will apply them in the right order (it's intended to be used as a
     # decorator, hence the reversal).
@@ -185,15 +188,17 @@ def server_command(
 def config_command(
     name: Union[Optional[str], Callable[..., Any]] = None,
     cls: Type[CmdType] = _EnhancedParserCommand,
+    *,
+    include_set: bool = True,
     **attrs: Any,
 ) -> Union[Command, Callable[[Callable[..., Any]], Union[Command, CmdType]]]:
     """
-    Creates a click command with configuration options (--set, --example, --file).
+    Creates a click command with configuration options (--example, --file, and optionally --set).
     """
 
     def decorator(f: [Callable[..., Any]]) -> CmdType:
         command_decorator = click.command(name=name, cls=cls, **attrs)
-        f = _config_click_options(f)
+        f = _config_click_options(f, include_set=include_set)
         f = command_decorator(f)
         return f
 

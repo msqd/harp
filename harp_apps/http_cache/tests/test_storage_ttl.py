@@ -15,7 +15,7 @@ from harp_apps.http_cache.tests import store_entry
 from harp_apps.http_cache.settings import HttpCacheSettings
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
-from harp_apps.storage.services.blob_storages.redis import RedisBlobStorage
+from harp_apps.storage.services.blob_storages.null import NullBlobStorage
 
 TTL = 100
 CHECK_EVERY = 10
@@ -169,13 +169,13 @@ class TestSweep:
 class TestStartupWarning:
     def test_warns_when_the_blob_storage_cannot_enumerate(self, caplog):
         with caplog.at_level(logging.WARNING):
-            AsyncStorage(RedisBlobStorage(client=None), ttl=TTL)
+            AsyncStorage(NullBlobStorage(), ttl=TTL)
 
         assert "http_cache.storage" in caplog.text and "ttl" in caplog.text
 
     def test_no_warning_without_ttl(self, caplog):
         with caplog.at_level(logging.WARNING):
-            AsyncStorage(RedisBlobStorage(client=None), ttl=None)
+            AsyncStorage(NullBlobStorage(), ttl=None)
 
         assert caplog.text == ""
 

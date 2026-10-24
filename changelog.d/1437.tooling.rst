@@ -1,0 +1,1 @@
+CI installs with `uv sync --locked`, and the "All Checks Passed" gate now also requires the lockfile check and the wheel-install test.

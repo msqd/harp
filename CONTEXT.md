@@ -46,6 +46,12 @@ Dropping transactions or message detail because storage is under pressure. Not a
 traffic, and never a promise to anyone.
 _Avoid_: throttling, sampling
 
+**Redaction**:
+Replacing the value of a credential with a placeholder before it is stored, keeping the name it was
+sent under. The message is still recorded and the value is visibly replaced, not absent. See
+[ADR-0009](./docs/adr/0009-credentials-redacted-before-storage-by-rule.md).
+_Avoid_: masking, scrubbing, obfuscation
+
 **Marker**:
 A string attached to a transaction that carries a decision about it, which storage and other
 applications may act on. The vocabulary in which such decisions are expressed.

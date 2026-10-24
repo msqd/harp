@@ -34,12 +34,12 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
 
       - name: uv.lock is up to date with pyproject.toml (if this fails, run `uv lock` and commit)
         run: uv lock --check
@@ -47,19 +47,20 @@ jobs:
   lint-python:
     name: Lint Python
     runs-on: ubuntu-latest
+    needs: check-lockfile
     permissions:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --locked
 
       - name: ruff check (if this fails, run `make format` and fix what remains)
         run: uv run ruff check harp harp_apps tests
@@ -74,17 +75,17 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
         with:
           version: 10
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
           cache: 'pnpm'
@@ -109,24 +110,24 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --locked
 
       - name: Run core tests
         run: uv run pytest harp -n auto -m 'not subprocess'
@@ -146,24 +147,24 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --locked
 
       - name: Run apps tests
         run: uv run pytest harp_apps -n 1 -m 'not subprocess'
@@ -184,24 +185,24 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --locked
 
       - name: Run e2e tests
         run: uv run pytest tests -n 1 -m 'not subprocess'
@@ -219,23 +220,23 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.13'
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --locked
 
       - name: Run storage and proxy-with-storage tests on MySQL and MariaDB
         run: uv run pytest harp_apps/storage harp_apps/proxy/tests/with_storage -n auto -m 'not subprocess'
@@ -253,23 +254,23 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.13'
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --locked
 
       - name: Run subprocess tests
         run: uv run pytest -m subprocess -n auto -v
@@ -283,17 +284,17 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
         with:
           version: 10
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
           cache: 'pnpm'
@@ -313,29 +314,29 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.13'
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --locked
 
       - name: Build documentation
         run: make docs
 
       - name: Upload documentation artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: harp-doc
           path: docs/_build/html/
@@ -348,17 +349,17 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
         with:
           version: 10
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
           cache: 'pnpm'
@@ -371,7 +372,7 @@ jobs:
         run: cd harp_apps/dashboard/frontend && pnpm ui:build
 
       - name: Upload storybook artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: harp-ui
           path: harp_apps/dashboard/frontend/build/
@@ -385,7 +386,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -410,17 +411,17 @@ jobs:
           bin/validate_version "${{ steps.version.outputs.version }}"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
         with:
           enable-cache: true
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
         with:
           version: 10
 
@@ -436,16 +437,67 @@ jobs:
           UVX: uvx
 
       - name: Upload wheel artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: python-package-distributions
           path: dist/
           retention-days: 7
 
+  # The built wheel installs and runs on a clean Python.
+  test-python-package:
+    name: Test Python Package (Py${{ matrix.python-version }})
+    needs: build-python-package
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: '3.13'
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+
+      - name: Download wheel artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+
+      - name: Test wheel installation
+        run: |
+          WHEEL=$(ls dist/*.whl)
+          echo "Testing wheel: $WHEEL on Python ${{ matrix.python-version }}"
+          uv pip install --system "$WHEEL"
+          python -c "import harp; print(f'HARP version: {harp.__version__}')"
+          python -c "import sys; print(f'Python: {sys.version}')"
+
+      - name: Run the installed wheel (rules run)
+        run: |
+          cd "$(mktemp -d)"
+          printf 'rules:\n  "*":\n    "*":\n      on_remote_response: |\n        logger.info("hi")\n' > rules.yml
+          harp-proxy rules run --help
+          harp-proxy rules run -f rules.yml api=http://127.0.0.1:9 GET /
+
+  # The one required status check: fails unless every job it needs succeeded.
   all-checks-passed:
-    name: ${{ (matrix.python-version && format('Test Python Package (Py{0}{1})', matrix.python-version, matrix.python-gil && 't' || '')) || 'All Checks Passed' }}
+    name: All Checks Passed
     needs:
+      - check-lockfile
       - build-python-package
+      - test-python-package
       - test-backend-core
       - test-backend-apps
       - test-backend-e2e
@@ -456,62 +508,21 @@ jobs:
       - lint-frontend
       - build-documentation
       - build-storybook
+    # always() so a failed need fails the gate instead of skipping it (a skipped required check passes)
+    if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - python-version: '3.13'
-          - check-only: true  # Consolidation job with no Python testing
     steps:
+      - name: Fail unless every needed job succeeded
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          echo "$NEEDS" | jq -e 'all(.[]; .result == "success")' > /dev/null
+
       - name: All checks passed
-        if: matrix.check-only
         run: echo "✅ All tests and package builds completed successfully"
-
-      - name: Checkout code
-        if: matrix.python-version
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Set up Python
-        if: matrix.python-version
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
-
-      - name: Download wheel artifact
-        if: matrix.python-version
-        uses: actions/download-artifact@v4
-        with:
-          name: python-package-distributions
-          path: dist/
-
-      - name: Install uv
-        if: matrix.python-version
-        uses: astral-sh/setup-uv@v4
-
-      - name: Test wheel installation
-        if: matrix.python-version
-        run: |
-          WHEEL=$(ls dist/*.whl)
-          echo "Testing wheel: $WHEEL on Python ${{ matrix.python-version }}${{ matrix.python-gil && ' (free-threaded)' || '' }}"
-          uv pip install --system "$WHEEL"
-          python -c "import harp; print(f'HARP version: {harp.__version__}')"
-          python -c "import sys; print(f'Python: {sys.version}')"
-          ${{ matrix.python-gil && 'python -c "import sys; print(f\"GIL enabled: {sys._is_gil_enabled()}\")"' || 'echo "GIL enabled (standard Python)"' }}
-
-      - name: Run the installed wheel (rules run)
-        if: matrix.python-version
-        run: |
-          cd "$(mktemp -d)"
-          printf 'rules:\n  "*":\n    "*":\n      on_remote_response: |\n        logger.info("hi")\n' > rules.yml
-          harp-proxy rules run --help
-          harp-proxy rules run -f rules.yml api=http://127.0.0.1:9 GET /
 
   # Docker image with wheel from local build (non-release branches)
   build-docker-image-development:
@@ -526,13 +537,13 @@ jobs:
       tags: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Download wheel artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: python-package-distributions
           path: dist/
@@ -563,10 +574,10 @@ jobs:
           echo "push=$PUSH" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -574,13 +585,13 @@ jobs:
 
       - name: Log in to Docker Hub
         if: steps.meta.outputs.push == 'true'
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image (GIL enabled)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           file: Dockerfile
@@ -606,13 +617,13 @@ jobs:
       id-token: write
     steps:
       - name: Download wheel artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: python-package-distributions
           path: dist/
 
       - name: Publish to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           repository-url: https://test.pypi.org/legacy/
 
@@ -627,13 +638,13 @@ jobs:
       id-token: write
     steps:
       - name: Download wheel artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: python-package-distributions
           path: dist/
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
 
   # Docker image with wheel from PyPI (release tags only)
   build-docker-image-release:
@@ -645,13 +656,13 @@ jobs:
       packages: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.13'
 
@@ -696,23 +707,23 @@ jobs:
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image (GIL enabled)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           file: Dockerfile.pypi
@@ -732,13 +743,13 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Download wheel artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: python-package-distributions
           path: dist/
@@ -781,7 +792,7 @@ jobs:
 
       - name: Install uv
         if: steps.changelog.outputs.pending == 'true'
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
 
       - name: Render pre-release notes from fragments
         if: steps.changelog.outputs.pending == 'true'
@@ -813,7 +824,7 @@ jobs:
           EOF
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           body_path: changes.md
           files: dist/*
