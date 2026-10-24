@@ -67,6 +67,12 @@ class HttpRequestAsgiBridge(HttpRequestBridge):
         headers = CIMultiDict()
         for name, value in self.asgi_scope.get("headers", []):
             headers.add(header_str(name), header_str(value))
+        if "content-length" in headers and "transfer-encoding" in headers:
+            raise RejectedRequest(
+                "Request has both Content-Length and Transfer-Encoding.",
+                status=400,
+                headers={"Connection": "close"},
+            )
         return headers
 
     def get_stream(self) -> AsyncByteStream:
