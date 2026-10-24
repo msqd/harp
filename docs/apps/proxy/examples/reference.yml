@@ -33,3 +33,7 @@ proxy:
   max_recorded_body_size: 1048576
   min_request_body_rate: 1024
   request_body_grace_period: 10.0
+  tags:
+    max_count: 20
+    max_name_length: 64
+    max_value_length: 256

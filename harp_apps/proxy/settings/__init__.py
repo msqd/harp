@@ -24,11 +24,26 @@ __all__ = [
     "RemoteProbe",
     "RemoteProbeSettings",
     "RemoteSettings",
+    "TagsSettings",
 ]
 
 
 class BaseProxySettings(Configurable):
     pass
+
+
+class TagsSettings(Configurable):
+    """Bounds on the tags a client sets with ``x-harp-*`` request headers. A tag over a bound is dropped, never the
+    request."""
+
+    #: Tags kept per transaction: the first ones in request header order.
+    max_count: int = Field(20, gt=0)
+
+    #: Longest tag name kept, in characters.
+    max_name_length: int = Field(64, gt=0)
+
+    #: Longest tag value kept, in characters.
+    max_value_length: int = Field(256, gt=0)
 
 
 class ProxySettings(ApplicationSettingsMixin, BaseProxySettings):
@@ -62,6 +77,9 @@ class ProxySettings(ApplicationSettingsMixin, BaseProxySettings):
 
     #: Seconds during which a request body is not held to ``min_request_body_rate``.
     request_body_grace_period: float = Field(DEFAULT_REQUEST_BODY_GRACE_PERIOD, ge=0)
+
+    #: Bounds on the tags clients set with ``x-harp-*`` request headers.
+    tags: TagsSettings = TagsSettings()
 
 
 class Proxy(Stateful[ProxySettings]):

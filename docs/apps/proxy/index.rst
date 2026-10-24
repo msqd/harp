@@ -80,6 +80,36 @@ a permanent solution.
 You can use multiple ``--endpoint ...`` arguments and the option is available for all server-like commands
 (``harp-proxy server ...``, ...).
 
+.. _proxy-client-tags:
+
+Client tags
+:::::::::::
+
+.. versionchanged:: 0.13
+
+    Client tags are bounded.
+
+A request header starting with ``x-harp-`` is removed from the request and stored as a tag on the transaction:
+``x-harp-team: billing`` tags the transaction ``team=billing``. Clients need no authentication to set them, so tags are
+bounded, and a tag over a bound is dropped while the request is proxied as usual:
+
+- 20 tags per transaction (``max_count``): the first ones in request header order are kept;
+- names up to 64 characters (``max_name_length``), values up to 256 (``max_value_length``). Oversized tags are dropped
+  first and do not count towards the 20.
+
+Dropped tags are logged at debug level with the transaction id, never their value.
+
+.. code-block:: yaml
+
+    proxy:
+      tags:
+        max_count: 20
+        max_name_length: 64
+        max_value_length: 256
+
+Tagging stays open: any name is accepted. If HARP is exposed to untrusted callers, strip ``x-harp-*`` headers from the
+requests you do not trust (at your load balancer or gateway), or lower these bounds, since every kept tag is stored.
+
 .. _proxy-buffering-and-streaming:
 
 Buffering and streaming
