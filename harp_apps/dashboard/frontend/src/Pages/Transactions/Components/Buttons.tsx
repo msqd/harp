@@ -3,6 +3,8 @@ import {
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
   LinkIcon,
+  PauseIcon,
+  PlayIcon,
   XMarkIcon,
 } from "@heroicons/react/16/solid"
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/outline"
@@ -68,6 +70,20 @@ export function NextButton({ onClick }: ButtonProps) {
   return (
     <StyledButton onClick={onClick}>
       <ArrowDownIcon /> next
+    </StyledButton>
+  )
+}
+
+export function LiveUpdatesButton({ paused, onClick }: ButtonProps & { paused: boolean }) {
+  const Icon = paused ? PlayIcon : PauseIcon
+  return (
+    <StyledButton
+      type="button"
+      onClick={onClick}
+      aria-label={paused ? "Resume live updates" : "Pause live updates"}
+      aria-pressed={paused}
+    >
+      <Icon /> {paused ? "resume" : "pause"}
     </StyledButton>
   )
 }
