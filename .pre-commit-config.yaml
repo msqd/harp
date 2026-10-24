@@ -1,7 +1,7 @@
 # See https://pre-commit.com/hooks.html
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: 2c9f875913ee60ca25ce70243dc24d5b6415598c # v4.6.0
     hooks:
       - id: trailing-whitespace
         exclude: '\.(tsx\.snap|ambr)$'
@@ -11,10 +11,17 @@ repos:
         args: ["--unsafe"]
       - id: check-added-large-files
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.7
+    rev: e84319e627902e1b348574ecf3238dc511933dc7 # v0.11.7
     hooks:
     - id: ruff
       args: [ --fix ]
       exclude: 'harp/commandline/cookiecutters'
     - id: ruff-format
       exclude: 'harp/commandline/cookiecutters'
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: 01886c8a910c64595c47f186ca1ffc0b77fa5458 # v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        # Fixtures and docs hold placeholder credentials on purpose; the rest is baselined in .secrets.baseline.
+        exclude: '(^|/)tests?/|^docs/|^misc/|/migrations/|mockServiceWorker\.js$|^\.pre-commit-config\.yaml$|\.lock$|pnpm-lock\.yaml$|\.snap$|\.ambr$|^\.secrets\.baseline$'
