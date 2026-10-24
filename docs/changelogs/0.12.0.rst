@@ -64,7 +64,7 @@ Fixed
 - The contributor setup installs the frontend dependencies and pre-commit hooks, so a fresh clone gives a working development server. (#1292)
 - Configuration page examples use the right storage key, and the page documents environment variables, precedence and the ``/etc`` files. (#1293)
 - Fix stale statements in the README and start page, and in the audit log, storage, cache and rules docs. (#1294)
-- Docs for users run ``harp-proxy server`` instead of the development launcher ``harp-proxy start``. (#1295)
+- Docs for users run ``harp-proxy server`` instead of the development launcher. (#1295)
 - Rules docs: render the examples, document the matching grammar, fix the recipe directive and the truncated ``on_response`` page. (#1296)
 - The proxy full example no longer crashes at startup: ``controller: null`` selects the default controller, and an endpoint using the default controller with neither ``url`` nor ``remote`` is refused at settings validation, naming the endpoint. Endpoints with a custom controller are unaffected. (#1297)
 - Storage sheds only under sustained backlog: a level engages once the queue has stayed at or above it for 2 s, so short bursts are recorded in full, and recording resumes as soon as the queue drains. ``async_worker_queue_backlog`` now reports 0 when the queue is empty. (#1382)
