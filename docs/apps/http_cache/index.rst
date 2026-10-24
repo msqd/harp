@@ -34,13 +34,22 @@ The cache automatically handles:
 - **Vary matching**, so a stored response is never reused for a request whose selecting headers differ
 - **Cache directives** including no-store, no-cache, private, public, and must-revalidate
 
-.. note::
+Variants of a ``Vary`` resource
+:::::::::::::::::::::::::::::::
 
-    ``Vary`` is matched correctly but currently buys you no reuse. The storage holds one entry per
-    cache key, so two variants of the same resource overwrite each other, and a caller alternating
-    between them gets no cache hits at all. Nobody is served the wrong variant; they are served no
-    cache. This is not new in 0.10, the behaviour is the same on 0.9.1, and it is tracked in
-    `#910 <https://github.com/msqd/harp/issues/910>`_.
+A cache key holds up to **8 variants** of its resource, one per distinct value of the request headers the response
+varies on, so a caller alternating between ``Accept: text/html`` and ``Accept: application/json`` is served from the
+cache each time. The limit is ``harp_apps.http_cache.storages.MAX_VARIANTS_PER_KEY``. Storing a ninth variant evicts the
+oldest stored one. Storing a variant again, with the same selecting headers, replaces it. Each variant expires on its
+own, after the storage ``ttl``.
+
+A cache entry is a ``cache/meta`` blob holding the list of its variants, oldest first. Entries written before this
+version hold a single entry and are read as one variant. They are rewritten in the new format the next time their key is
+written, which makes them unreadable by an earlier version.
+
+.. versionchanged:: 0.13
+
+    A cache key used to hold a single entry, so variants of a resource evicted each other.
 
 
 Features
@@ -171,7 +180,7 @@ offers no validator for is simply fetched again, since there is nothing to reval
 
 
 Invalidation by unsafe requests
--------------------------------
+:::::::::::::::::::::::::::::::
 
 .. versionadded:: 0.12
 
@@ -315,16 +324,10 @@ The suite lives in ``harp_apps/http_cache/tests/rfc9111/``.
 
 .. warning::
 
-    **Read this before citing the suite as evidence of compliance.** It runs against a storage
-    double, not against the storage that ships. The double holds several entries per cache key;
-    ``AsyncStorage`` holds one, as its own docstring says. So the suite is evidence about what the
-    policy *decides to store*, and no evidence at all about what the storage *retains*.
-
-    ``Vary`` (§4.1) is where that difference bites, and it is why ``Vary`` is not in the list above.
-    The double can hold two variants side by side and the shipped storage cannot, so those tests
-    pass on a behaviour that does not work in production. See
-    `#910 <https://github.com/msqd/harp/issues/910>`_ for the behaviour and
-    `#965 <https://github.com/msqd/harp/issues/965>`_ for why the tests do not catch it.
+    **Read this before citing the suite as evidence of compliance.** Most of it runs against a storage double,
+    which holds several entries per cache key and applies no ``ttl``. It is evidence about what the policy
+    *decides to store*; what the storage *retains* is covered by the tests that run against ``AsyncStorage``
+    itself.
 
 
 Configuration reference

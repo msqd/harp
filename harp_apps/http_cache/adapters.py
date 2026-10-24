@@ -52,6 +52,34 @@ def stored_at_of(entry_data: tp.Mapping[str, tp.Any]) -> float:
     return _parse_created_at(meta_data["created_at"]) if "created_at" in meta_data else 0.0
 
 
+#: Top-level field of a ``cache/meta`` blob holding its variants, oldest first.
+VARIANTS = "variants"
+
+
+def variants_of(decoded: tp.Mapping[str, tp.Any]) -> list[dict[str, tp.Any]]:
+    """The variants of a decoded ``cache/meta`` blob. One written before variants existed is a single entry."""
+    return list(decoded[VARIANTS]) if VARIANTS in decoded else [dict(decoded)]
+
+
+def variant_id(key: str, variant: tp.Mapping[str, tp.Any]) -> uuid.UUID:
+    """The id of a stored variant, derived from its cache key when it was stored without one."""
+    return uuid.UUID(variant["id"]) if variant.get("id") else uuid.uuid5(uuid.NAMESPACE_URL, key)
+
+
+def selecting_headers(request: Request, response: Response) -> dict[str, tp.Optional[str]]:
+    """The values of the request headers the response varies on: what makes it one variant among others.
+
+    Two exchanges with equal selecting headers are the same variant, whichever was stored last wins. ``Vary: *``
+    cannot be told apart by headers, so it is one variant of its own.
+    """
+    names = sorted(
+        {name.strip().lower() for value in response.headers.get_list("vary") or [] for name in value.split(",")} - {""}
+    )
+    if "*" in names:
+        return {"*": None}
+    return {name: request.headers.get(name) for name in names}
+
+
 def _load_entry(raw: bytes) -> tp.Any:
     return yaml.load(raw.decode(), Loader=_Loader)
 
@@ -86,49 +114,54 @@ class AsyncStorageAdapter:
     def __init__(self, storage: IBlobStorage):
         self.storage = storage
 
-    async def store_entry(self, key: str, entry: Entry, redaction: tp.Optional[Redaction] = None) -> Blob:
-        """Store an Entry object in blob storage.
+    async def serialize_variant(self, entry: Entry, redaction: tp.Optional[Redaction] = None) -> dict[str, tp.Any]:
+        """Write the header and body blobs of an entry, and describe it as one variant of its cache key.
 
         Args:
-            key: The cache key
-            entry: The Entry to store
+            entry: The Entry to serialize
             redaction: Which request header values are replaced by the placeholder (the default set if omitted)
 
         Returns:
-            The stored Blob
+            The variant, ready for :meth:`write_variants`
         """
-        serialized_request = await self._serialize_request(entry.request, redaction or Redaction())
-        serialized_response = await self._serialize_response(entry.response)
+        return {
+            "id": str(entry.id),  # Store UUID for hishel 1.0
+            "request": await self._serialize_request(entry.request, redaction or Redaction()),
+            "response": await self._serialize_response(entry.response),
+            "selecting": selecting_headers(entry.request, entry.response),
+            "metadata": {
+                "cache_key": entry.cache_key.decode("utf-8") if entry.cache_key else None,
+                # Store both timestamp (new format) and formatted string (backward compat)
+                "created_at": _format_created_at(entry.meta.created_at),
+                "created_at_ts": entry.meta.created_at,
+                "deleted_at": entry.meta.deleted_at,
+                "stored_at": time.time(),  # last write: what the storage ttl counts from
+                "number_of_uses": entry.extra.get("number_of_uses", 0),  # Backward compat
+            },
+            "extra": dict(entry.extra),  # Store full extra dict
+        }
 
-        return await self._store_entry_blob(
-            key,
-            entry_id=entry.id,
-            request=serialized_request,
-            response=serialized_response,
-            meta=entry.meta,
-            extra=entry.extra,
+    async def load_variants(self, key: str) -> list[dict[str, tp.Any]]:
+        """The variants stored under a cache key, oldest first. Empty when the key holds nothing."""
+        cached = await self.storage.get(key)
+        return variants_of(_load_entry(cached.data)) if cached else []
+
+    async def write_variants(self, key: str, variants: list[dict[str, tp.Any]]) -> None:
+        """Replace what a cache key holds by these variants, or delete the key when there are none."""
+        if not variants:
+            await self.storage.delete(key)
+            return
+        await self.storage.force_put(
+            Blob(id=key, data=_dump_entry({VARIANTS: variants}), content_type="cache/meta"),
         )
 
-    async def retrieve_entry(self, key: str) -> tp.Optional[Entry]:
-        """Retrieve an Entry object from blob storage.
-
-        Args:
-            key: The cache key
-
-        Returns:
-            The Entry if found, None otherwise
-        """
-        cached = await self.storage.get(key)
-        if not cached:
-            return None
-
-        entry_data = await self._decode(cached)
-
-        response = await self._unserialize_response(entry_data["response"])
-        request = await self._unserialize_request(entry_data["request"])
+    async def unserialize_variant(self, key: str, data: tp.Mapping[str, tp.Any]) -> Entry:
+        """Read a variant back into an Entry, raising ValueError when blobs it points at are missing."""
+        response = await self._unserialize_response(data["response"])
+        request = await self._unserialize_request(data["request"])
 
         # Parse metadata
-        meta_data = entry_data["metadata"]
+        meta_data = data["metadata"]
         meta = EntryMeta(
             created_at=meta_data.get(
                 "created_at_ts",
@@ -137,69 +170,16 @@ class AsyncStorageAdapter:
             deleted_at=meta_data.get("deleted_at"),
         )
 
-        # Parse entry ID (use stored UUID or generate from key for backward compat)
-        entry_id_str = entry_data.get("id")
-        if entry_id_str:
-            entry_id = uuid.UUID(entry_id_str)
-        else:
-            # Backward compatibility: generate deterministic UUID from cache key
-            entry_id = uuid.uuid5(uuid.NAMESPACE_URL, key)
-
         return Entry(
-            id=entry_id,
+            id=variant_id(key, data),
             request=request,
             response=response,
             meta=meta,
             cache_key=key.encode("utf-8"),
             extra={
-                **entry_data.get("extra", {"number_of_uses": meta_data.get("number_of_uses", 0)}),
-                "stored_at": stored_at_of(entry_data),
+                **data.get("extra", {"number_of_uses": meta_data.get("number_of_uses", 0)}),
+                "stored_at": stored_at_of(data),
             },
-        )
-
-    async def _decode(self, cached):
-        """Decode cached blob data into structured format."""
-        return _load_entry(cached.data)
-
-    async def _store_entry_blob(
-        self,
-        key: str,
-        /,
-        *,
-        entry_id: uuid.UUID,
-        request: SerializedRequest,
-        response: SerializedResponse,
-        meta: EntryMeta,
-        extra: tp.Mapping[str, tp.Any],
-    ):
-        """Store entry data as a blob.
-
-        This maintains the existing YAML format with added fields for hishel 1.0.
-        """
-        # Store both timestamp (new format) and formatted string (backward compat)
-        created_at_gmt = _format_created_at(meta.created_at)
-
-        return await self.storage.force_put(
-            Blob(
-                id=key,
-                data=_dump_entry(
-                    {
-                        "id": str(entry_id),  # Store UUID for hishel 1.0
-                        "request": request,
-                        "response": response,
-                        "metadata": {
-                            "cache_key": key,
-                            "created_at": created_at_gmt,  # Backward compat
-                            "created_at_ts": meta.created_at,  # New format
-                            "deleted_at": meta.deleted_at,
-                            "stored_at": time.time(),  # last write: what the storage ttl counts from
-                            "number_of_uses": extra.get("number_of_uses", 0),  # Backward compat
-                        },
-                        "extra": extra,  # Store full extra dict
-                    },
-                ),
-                content_type="cache/meta",
-            ),
         )
 
     async def _serialize_request(self, request: Request, redaction: Redaction) -> SerializedRequest:
