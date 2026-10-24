@@ -1,5 +1,6 @@
 import asyncio
 from typing import List, Optional
+from urllib.parse import urlsplit, urlunsplit
 
 from harp import get_logger
 from whistle import IAsyncEventDispatcher
@@ -13,6 +14,14 @@ from harp_apps.notifications.typing import NotificationSender
 logger = get_logger(__name__)
 
 AVAILABLE_WEBHOOK_URLS = ["slack_webhook_url", "google_chat_webhook_url"]
+
+
+def _without_query(url: Optional[str]) -> Optional[str]:
+    """Keep scheme, host and path only: the query string and fragment can hold credentials."""
+    if not url:
+        return url
+    parts = urlsplit(url)
+    return urlunsplit((parts.scheme, parts.netloc.rpartition("@")[2], parts.path, "", ""))
 
 
 class NotificationSubscriber:
@@ -55,7 +64,7 @@ class NotificationSubscriber:
             self._enqueue(
                 dict(
                     method=event.request.extensions.get("remote_method"),
-                    url=event.request.extensions.get("remote_url"),
+                    url=_without_query(event.request.extensions.get("remote_url")),
                     status_code=event.response.status,
                     message=event.response.reason_phrase,
                     transaction_id=transaction.id if transaction else None,

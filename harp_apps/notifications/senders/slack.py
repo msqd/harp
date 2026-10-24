@@ -3,6 +3,10 @@ from typing import Optional
 from httpx import AsyncClient
 
 
+def _escape_mrkdwn(text: str) -> str:
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
 class SlackNotificationSender:
     def __init__(self, webhook_url: str, public_url: Optional[str] = None, timeout: float = 5.0) -> None:
         self.webhook_url = webhook_url
@@ -35,6 +39,7 @@ class SlackNotificationSender:
         transaction_id: Optional[str],
         public_url: Optional[str] = None,
     ) -> dict:
+        url, message = _escape_mrkdwn(url or ""), _escape_mrkdwn(message)
         blocks = [
             {
                 "type": "header",
