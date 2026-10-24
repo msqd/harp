@@ -44,16 +44,22 @@ _DELETE_CHUNK = 500
 
 
 def cache_meta_references(data: bytes) -> set[str]:
-    """The blob ids a ``cache/meta`` blob points at: request headers, response headers and body.
+    """The blob ids a ``cache/meta`` blob points at: request headers, response headers and body, of every variant.
 
-    A blob that cannot be read references nothing; its entry is already unusable.
+    A blob written before variants existed holds a single entry at its top. A blob that cannot be read
+    references nothing; its entry is already unusable.
     """
     try:
         meta = yaml.load(data, Loader=_YamlLoader)
+        variants = meta["variants"] if "variants" in meta else [meta]
         return {
-            meta["request"]["headers"],
-            meta["response"]["headers"],
-            meta["response"]["body"],
+            blob_id
+            for variant in variants
+            for blob_id in (
+                variant["request"]["headers"],
+                variant["response"]["headers"],
+                variant["response"]["body"],
+            )
         }
     except (yaml.YAMLError, KeyError, TypeError):
         logger.warning("Unreadable cache/meta blob, its references are ignored.")

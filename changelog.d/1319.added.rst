@@ -1,0 +1,1 @@
+Dashboard: new ``dashboard.host`` setting (default ``[::]``) to choose the bind address, named in the startup warning.

@@ -36,6 +36,7 @@ class _ControllerDefinitionForProxyControllerResolver(TypedDict):
     controller: IAsyncController
     name: Optional[str]
     port: Optional[int]
+    host: Optional[str]
 
 
 class ProxyControllerResolver(DefaultControllerResolver):
@@ -58,6 +59,10 @@ class ProxyControllerResolver(DefaultControllerResolver):
     @property
     def ports(self):
         return tuple(self._port_to_controller_index.keys())
+
+    def host_for_port(self, port: int) -> Optional[str]:
+        """Address a controller asked to be bound to, or None to use the server default."""
+        return self._controllers[self._port_to_controller_index[port]]["host"]
 
     def __len__(self):
         return len(self._controllers)
@@ -84,12 +89,19 @@ class ProxyControllerResolver(DefaultControllerResolver):
 
         self.add_controller(controller, name=endpoint.settings.name, port=endpoint.settings.port)
 
-    def add_controller(self, controller: IAsyncController, *, name: Optional[str] = None, port: Optional[int]):
+    def add_controller(
+        self,
+        controller: IAsyncController,
+        *,
+        name: Optional[str] = None,
+        port: Optional[int],
+        host: Optional[str] = None,
+    ):
         if port is None and name is None:
             raise RuntimeError("Either port or name must be provided.")
 
         index = len(self)
-        self._controllers.append({"controller": controller, "name": name, "port": port})
+        self._controllers.append({"controller": controller, "name": name, "port": port, "host": host})
 
         if port is not None:
             if port in self._port_to_controller_index:

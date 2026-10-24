@@ -40,3 +40,28 @@ async def test_send_notification():
     payload = json.loads(route.calls.last.request.content)
     assert payload["text"] == "ERROR NOTIFICATION"
     assert payload["blocks"][0]["type"] == "header"
+
+
+@respx.mock
+async def test_send_notification_reports_failure_as_http_error_and_reuses_client():
+    respx.post("http://example.com/webhook").mock(return_value=httpx.Response(500, text="boom"))
+    sender = SlackNotificationSender("http://example.com/webhook")
+    client = sender._client
+
+    for _ in range(2):
+        with pytest.raises(httpx.HTTPStatusError):
+            await sender.send_notification("GET", "http://example.com/", 500, "Error", "1")
+
+    assert sender._client is client
+    await sender.aclose()
+
+
+def test_message_escapes_mrkdwn_control_characters():
+    message = SlackNotificationSender._format_error_message(
+        "GET", "https://example.com/a<b>&y", 500, "<!channel> & co", "123"
+    )
+
+    rendered = json.dumps(message)
+    assert "<!channel>" not in rendered
+    assert "https://example.com/a&lt;b&gt;&amp;y" in rendered
+    assert "&lt;!channel&gt; &amp; co" in rendered

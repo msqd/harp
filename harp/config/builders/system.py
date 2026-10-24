@@ -259,7 +259,10 @@ class SystemBuilder:
         # todo: this should be instanciated by the service container, probably using a factory to dispatch the event,
         #  etc. Binds should not sit here, but where?
         asgi_app = self.KernelType(dispatcher=dispatcher, resolver=controller_resolver)
-        binds = [Bind(host=self.hostname, port=port) for port in controller_resolver.ports]
+        binds = [
+            Bind(host=controller_resolver.host_for_port(port) or self.hostname, port=port)
+            for port in controller_resolver.ports
+        ]
         try:
             return cast(
                 OnReadyEvent,

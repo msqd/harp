@@ -76,18 +76,19 @@ class SystemController(RoutingController):
         if not endpoint:
             return HttpResponse(f"Endpoint not found: {input_data.endpoint}", status=404)
 
+        # The remote is identified by position: its url is masked on the way out, so it cannot be sent back.
         try:
-            endpoint.remote[input_data.url]
-        except KeyError:
-            return HttpResponse(f"Endpoint URL not found: {input_data.url}", status=404)
+            url = str(endpoint.remote.endpoints[input_data.index].settings.url)
+        except IndexError:
+            return HttpResponse(f"Remote endpoint not found: {input_data.index}", status=404)
 
         match input_data.action:
             case "up":
-                endpoint.remote.set_up(input_data.url)
+                endpoint.remote.set_up(url)
             case "down":
-                endpoint.remote.set_down(input_data.url)
+                endpoint.remote.set_down(url)
             case "checking":
-                endpoint.remote.set_checking(input_data.url)
+                endpoint.remote.set_checking(url)
             case _:
                 return HttpResponse(b"Invalid action", status=400)
 

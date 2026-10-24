@@ -16,7 +16,7 @@ export function useSystemProxyMutation() {
   const queryClient = useQueryClient()
   const api = useApi()
   return useMutation({
-    mutationFn: (data: { endpoint: string; action: string; url: string }) =>
+    mutationFn: (data: { endpoint: string; action: string; index: number }) =>
       api.put(QUERY_URL, { body: JSON.stringify(data) }).then((r) => r.json()),
     onSuccess: (data) => {
       queryClient.setQueryData(QUERY_KEY, data)

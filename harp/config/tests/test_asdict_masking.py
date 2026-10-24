@@ -159,3 +159,18 @@ def test_unsecure_shows_a_query_password():
 )
 def test_mask_credentials_masks_the_query_password(url, masked):
     assert mask_credentials(f"see {url} now") == f"see {masked} now"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("http://h:8080/p?email=a@b.com", "http://h:8080/p?email=a@b.com"),
+        ("http://h:8080?email=a@b.com", "http://h:8080?email=a@b.com"),
+        ("http://h:8080/p#a@b.com", "http://h:8080/p#a@b.com"),
+        ("http://h:8080/a@b/c", "http://h:8080/a@b/c"),
+        ("http://u:secret@h:8080/p?email=a@b.com", "http://u:***@h:8080/p?email=a@b.com"),
+        ("http://:secret@h/", "http://:***@h/"),
+    ],
+)
+def test_url_masking_only_touches_the_userinfo_password(value, expected):
+    assert mask_credentials(value) == expected

@@ -1,13 +1,19 @@
 from harp_apps.rules.models.rulesets import RuleSet
+from harp_apps.rules.subscribers import DEFAULT_TIME_BUDGET
 
 
 class RulesSettings:
-    def __init__(self, /, **sources):
+    def __init__(self, /, *, time_budget: float = DEFAULT_TIME_BUDGET, **sources):
+        #: Seconds a rule script may run, see :class:`RulesSubscriber`. Not usable as an endpoint pattern.
+        self.time_budget = time_budget
         self.ruleset = RuleSet()
         self.ruleset.add(sources)
 
     def _asdict(self, /, *, secure=True):
-        return self.ruleset._asdict(secure=secure)
+        rules = self.ruleset._asdict(secure=secure)
+        if self.time_budget != DEFAULT_TIME_BUDGET:
+            rules["time_budget"] = self.time_budget
+        return rules
 
     def __repr__(self):
         return f"{self.__class__.__name__}(rules={self.ruleset})"

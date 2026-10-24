@@ -8,6 +8,7 @@ import { waitForElementToBeRemoved } from "@testing-library/react"
 
 it.skip(
   "renders the title and data when the query is successful",
+  { timeout: 10000 },
   async () => {
     const result = renderWithClient(
       <MemoryRouter initialEntries={["/"]}>
@@ -27,5 +28,4 @@ it.skip(
     //  here, for too little value.
     //expect(result.container).toMatchSnapshot()
   },
-  { timeout: 10000 },
 )

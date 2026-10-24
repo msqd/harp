@@ -23,6 +23,7 @@ Scripts are written in python, and are applied conditionally based on patterns m
     Getting Started <quickstart>
     patterns
     lifecycle
+    execution
     recipes
     commands
     Internals </reference/apps/harp_apps.rules>
