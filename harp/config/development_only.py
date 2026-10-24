@@ -38,7 +38,8 @@ def development_only_settings(config: GlobalSettings) -> list[DevelopmentOnlySet
             DevelopmentOnlySetting(
                 "dashboard.auth.type",
                 "Dashboard authentication is disabled (dashboard.auth.type=none): the dashboard is unauthenticated "
-                "and exposes proxied traffic to anyone who can reach its port. Use dashboard.auth.type=basic.",
+                f"and exposes proxied traffic to anyone who can reach {dashboard.host}:{dashboard.port}. "
+                "Use dashboard.auth.type=basic.",
             )
         )
 
