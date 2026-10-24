@@ -52,6 +52,23 @@ written, which makes them unreadable by an earlier version.
     A cache key used to hold a single entry, so variants of a resource evicted each other.
 
 
+Concurrent misses
+:::::::::::::::::
+
+When several requests for one variant of a resource miss together, one of them fetches from the origin and the others wait
+for the stored entry, then are served from it. Requests for another variant, or for another endpoint, do not wait for it.
+The coalescing is within one HARP process.
+
+A request never fails because of it. It waits at most ``coalescing_timeout`` seconds (30 by default, a
+``transport.arguments`` entry), and fetches on its own if the leading fetch fails, takes longer, or leaves nothing to
+share: a response that cannot be stored, or one the cache does not retain.
+
+On a cold key the ``Vary`` of the resource is not known until the first response arrives, so a request for another
+variant waits for that response's headers, not for its body.
+
+.. versionadded:: 0.13
+
+
 Features
 ::::::::
 
