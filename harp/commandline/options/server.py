@@ -162,6 +162,8 @@ class _EnhancedParserCommand(click.RichCommand):
     def parse_args(self, ctx: click.Context, args: List[str]) -> List[str]:
         index = 0
         while index < len(args):
+            if args[index].startswith("--set="):
+                args = args[:index] + ["--set", args[index].removeprefix("--set=")] + args[index + 1 :]
             if args[index] == "--set":
                 if index + 1 < len(args):
                     # if an equal sign is present, we expand the argument into two separated arguments

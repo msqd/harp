@@ -15,6 +15,10 @@ Metrics
   alerts built on them stop matching: use the ``controller_*`` families instead (``controller_requests_count``,
   ``controller_requests_time``, ``controller_requests_in_progress``, ``controller_responses_count``,
   ``controller_exceptions_count``).
+- Exception metrics lose their unbounded labels: ``path`` on ``controller_exceptions_count`` and ``url`` on
+  ``remote_exceptions_count`` are removed (they grew the series count with every distinct path or query string).
+  Aggregate queries still work; any ``by (path)`` or ``by (url)`` grouping, or matcher on these labels, stops
+  matching. The remaining labels are listed in :doc:`prometheus`.
 
 .. _upgrading-0-12:
 
