@@ -1,0 +1,1 @@
+Treat a malformed upstream ``Expires`` header as already expired instead of answering 500.

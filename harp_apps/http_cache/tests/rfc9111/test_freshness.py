@@ -216,6 +216,38 @@ class TestExpires:
         assert response.status_code == 200
         assert_cache_miss(mock_storage)
 
+    @respx.mock
+    @pytest.mark.parametrize("malformed", ["0", "garbage", "-1", ""])
+    async def test_malformed_expires_is_served_and_stale_rfc9111_5_3(self, cached_client, mock_storage, malformed):
+        """RFC 9111 §5.3: an invalid Expires is already expired, it must not break the response."""
+        route = respx.get("http://example.com/resource").mock(
+            return_value=make_cacheable_response(content=b"body", expires=malformed, etag="e1")
+        )
+
+        response1 = await cached_client.get("http://example.com/resource")
+        response2 = await cached_client.get("http://example.com/resource")
+
+        assert response1.status_code == 200
+        assert response1.content == b"body"
+        assert response2.status_code == 200
+        assert response1.headers["expires"] == malformed  # a proxy does not rewrite what the client receives
+        assert response2.headers["expires"] == malformed
+        assert "x-harp-original-expires" not in response2.headers
+        assert route.call_count == 2  # stale: revalidated, not served from cache
+
+    @respx.mock
+    async def test_max_age_wins_over_malformed_expires_rfc9111_5_3(self, cached_client, mock_storage):
+        route = respx.get("http://example.com/resource").mock(
+            return_value=make_cacheable_response(content=b"body", max_age=3600, expires="garbage")
+        )
+
+        response1 = await cached_client.get("http://example.com/resource")
+        response2 = await cached_client.get("http://example.com/resource")
+
+        assert response1.status_code == 200
+        assert response2.status_code == 200
+        assert route.call_count == 1
+
 
 @pytest.mark.asyncio
 class TestAgeCalculation:
