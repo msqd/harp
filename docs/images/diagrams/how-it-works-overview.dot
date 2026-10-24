@@ -1,0 +1,50 @@
+digraph "how-it-works-overview" {
+    rankdir = LR
+    bgcolor = "white"
+    compound = true
+    nodesep = 0.5
+    ranksep = 0.9
+    fontname = "Helvetica"
+    node [shape = box, style = "rounded,filled", fillcolor = white, color = "#444444", fontname = "Helvetica", fontsize = 13, margin = "0.25,0.15"]
+    edge [color = "#444444", fontname = "Helvetica", fontsize = 11]
+
+    users [label = "Users", shape = ellipse]
+
+    subgraph cluster_infra {
+        label = "YOUR INFRASTRUCTURE"
+        labeljust = l
+        style = "rounded,filled"
+        color = "#d08a20"
+        fillcolor = "#fcfaf4"
+        fontname = "Helvetica"
+        fontsize = 11
+
+        app [label = "Your App"]
+
+        subgraph cluster_harp {
+            label = "HARP"
+            labeljust = l
+            color = "#3aa655"
+            fillcolor = "#f4fbf6"
+            fontsize = 11
+
+            features [
+                shape = plain
+                label = <<table border="0" cellborder="1" cellspacing="10" cellpadding="10" style="rounded">
+                    <tr><td>Database</td><td>Cache</td><td port="breaker">Circuit<br/>Breaker</td></tr>
+                    <tr><td>Dashboard</td><td>Monitoring</td><td>Alerting</td></tr>
+                </table>>
+            ]
+        }
+    }
+
+    api1 [label = "External API 1", shape = ellipse]
+    api2 [label = "External API 2", shape = ellipse]
+    api3 [label = "External API 3", shape = ellipse]
+
+    users -> app
+    app -> features [lhead = cluster_harp]
+    features:breaker:e -> api1
+    features:breaker:e -> api2
+    features:breaker:e -> api3
+}
