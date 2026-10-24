@@ -75,12 +75,17 @@ Fixed
 Security
 ::::::::
 
+- Proxy path guard also refuses dot segments written as ``..;``, double-encoded, overlong UTF-8, NUL-terminated or fullwidth (400). (#1009, GHSA-vvjr-4qwm-6xjx)
 - Dashboard dependencies bumped to patch and minor releases that close advisories (react-router-dom, lodash, @babel/runtime); `@ladle/react` and `sort-by` moved to devDependencies. (#1016)
 - Mask URL passwords of every URL type in ``/api/system/settings`` and in the startup log, not only strings and DSNs (``--unsecure`` still shows them). (#1219)
 - Stop pydantic serializer warnings, which printed endpoint URL passwords on stderr at every ``GET /api/system/proxy``. (#1246)
 - Stop logging the endpoint password from health-check probes; credentials are sent as a Basic Authorization header. (#1250)
 - Aggressive-cache rules example and cache recipes no longer add `public` and skip requests with `Authorization` or `Cookie` and upstream `private` responses, so authenticated responses are not shared. (#1271)
 - Narrow CI workflow token permissions per job and stop persisting checkout credentials. (#1316)
+- harp-proxy now requires certifi 2026.10.19 or later, so the TLS trust store no longer contains the eMudhra roots whose intermediates were compromised. (#1405)
+- Dashboard serves captured bodies as inert attachments (``Content-Disposition: attachment``, ``nosniff``, sandbox CSP), and sends ``nosniff``, ``X-Frame-Options: DENY`` and a ``Content-Security-Policy`` on every response. (GHSA-gm6g-4j8h-w9xf)
+- Never store upstream cookies in the shared HTTP client: a ``Set-Cookie`` from one client's upstream session was replayed to other clients (GHSA-jpw8-42g9-g437).
+- The dashboard now requires authentication by default: without ``dashboard.auth``, a random ``admin`` password is generated at each start and logged once; ``dashboard.auth.type: none`` opts out (see :ref:`upgrading-0-12`). (GHSA-75m3-4r56-gcwm)
 
 Removed
 :::::::
