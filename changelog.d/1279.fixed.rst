@@ -1,1 +1,0 @@
-The endpoint status change API (``PUT /api/system/proxy``) now names the endpoint it received in its "not found" error.

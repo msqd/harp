@@ -1,1 +1,0 @@
-⚠️ MySQL and MariaDB are deprecated: they keep working, with no production support, and HARP logs a warning at boot. PostgreSQL is the production database, SQLite is for development.

@@ -1,1 +1,0 @@
-Config files no longer register HARP yaml tags (`!include`, `!ref`, `!cfg`) on PyYAML's global `SafeLoader`; HARP uses its own safe loader, and included files use it too.

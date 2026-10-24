@@ -1,1 +1,0 @@
-Under the default in-memory storage (``sqlite+aiosqlite:///:memory:``), the HTTP cache no longer loses entries written while other requests use the database: the one connection is now taken in turn instead of shared at once.

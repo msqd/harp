@@ -1,1 +1,0 @@
-Blob ids are hashed without copying the body, and large bodies off the event loop.

@@ -1,1 +1,0 @@
-Dashboard dependencies bumped to patch and minor releases that close advisories (react-router-dom, lodash, @babel/runtime); `@ladle/react` and `sort-by` moved to devDependencies.

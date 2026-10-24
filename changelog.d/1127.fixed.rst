@@ -1,1 +1,0 @@
-Rules setting ``skip-storage`` no longer leave an unfinished transaction row in storage: the transaction started event is now dispatched after the request filters.

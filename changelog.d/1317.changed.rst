@@ -1,1 +1,0 @@
-Add ``SECURITY.md`` with the private vulnerability reporting route, a security-fix flow in the branching guide, and the correct trusted-publisher workflow (``cicd.yml``) in the release guide.
