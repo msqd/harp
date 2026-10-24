@@ -1,1 +1,0 @@
-Fix transaction flags API: repeated PUT is idempotent, unknown flag answers 400, unknown transaction 404, DELETE removes only the named flag, and the list star reverts when the request fails.

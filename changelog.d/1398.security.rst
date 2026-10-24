@@ -1,1 +1,0 @@
-A ``?password=`` in the storage url is masked in ``harp-proxy system config``, the dashboard settings and storage APIs, and boot errors.

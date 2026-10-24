@@ -1,1 +1,0 @@
-Release Docker build now waits for the version to be installable from PyPI before building, instead of failing on index lag.

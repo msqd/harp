@@ -1,1 +1,0 @@
-Stop pydantic serializer warnings, which printed endpoint URL passwords on stderr at every ``GET /api/system/proxy``.

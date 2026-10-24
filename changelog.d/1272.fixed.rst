@@ -1,1 +1,0 @@
-A failing cache storage is logged as a warning and no longer breaks the response nor counts against the upstream's circuit breaker.

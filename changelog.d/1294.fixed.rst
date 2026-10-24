@@ -1,1 +1,0 @@
-Fix stale statements in the README and start page, and in the audit log, storage, cache and rules docs.

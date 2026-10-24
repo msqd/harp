@@ -1,0 +1,30 @@
+Version 0.11.1 (2026-10-24)
+===========================
+
+Added
+:::::
+
+- CI runs the storage suite against MySQL and MariaDB in its own job. (#868)
+- CI runs the subprocess-marked tests in their own required job. (#921)
+
+Changed
+:::::::
+
+- Docs titles name the version line and its role (``HARP Proxy 0.11 (stable)``, ``0.12 (next)``), and "Edit on GitHub" opens the right branch. (#1121)
+
+Fixed
+:::::
+
+- Release Docker build now waits for the version to be installable from PyPI before building, instead of failing on index lag. (#1103)
+- Storage urls holding ``%`` (unix socket ``host=``, encoded passwords) now migrate. Boot errors mask the url password only, leaving the rest of the message intact. (#1398)
+
+Security
+::::::::
+
+- Proxy path guard also refuses dot segments written as ``..;``, double-encoded, overlong UTF-8, NUL-terminated or fullwidth (400). (#1009, GHSA-vvjr-4qwm-6xjx)
+- The storage url password no longer appears in boot error logs. (#1255)
+- A ``?password=`` in the storage url is masked in ``harp-proxy system config``, the dashboard settings and storage APIs, and boot errors. (#1398)
+- harp-proxy now requires certifi 2026.10.19 or later, so the TLS trust store no longer contains the eMudhra roots whose intermediates were compromised. It also drops roots Mozilla removed since 2025.10 (DigiCert Global Root CA, DigiCert High Assurance EV, Entrust, AffirmTrust among them): an upstream whose chain ends only at one of them now fails TLS verification. (#1405)
+- Dashboard serves captured bodies as inert attachments (``Content-Disposition: attachment``, ``nosniff``, sandbox CSP), and sends ``nosniff``, ``X-Frame-Options: DENY`` and a ``Content-Security-Policy`` on every response. (GHSA-gm6g-4j8h-w9xf)
+- Never store upstream cookies in the shared HTTP client: a ``Set-Cookie`` from one client's upstream session was replayed to other clients (GHSA-jpw8-42g9-g437).
+- The dashboard now requires authentication by default. Without ``dashboard.auth``, HARP generates a random password for the ``admin`` user at each start and logs it once (``Dashboard login`` line, in ``docker logs`` for a container), held only as a hash in memory and never in the settings, the storage or another log line. Configure ``dashboard.auth`` (``type: basic``) to choose your own users: nothing is generated then. Set ``dashboard.auth.type: none`` (``--set dashboard.auth.type=none``) to keep the previous open dashboard: HARP then logs a warning at every start, as anyone reaching the dashboard port can read the proxied traffic. Scripts calling the dashboard port must send the credentials. (GHSA-75m3-4r56-gcwm)

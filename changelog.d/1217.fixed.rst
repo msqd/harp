@@ -1,1 +1,0 @@
-A client aborting an upload is no longer forwarded upstream as a complete request: the transaction ends with the ``client-disconnected`` marker.

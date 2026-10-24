@@ -1,1 +1,0 @@
-Fix `get_transaction_list(with_messages=False)` raising `MissingGreenlet`.

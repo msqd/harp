@@ -1,1 +1,0 @@
-Document the remaining buffering limits: request bodies are read in full before going upstream, and streams that stay open (SSE, long-polling) are not supported yet.

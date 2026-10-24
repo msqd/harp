@@ -1,1 +1,0 @@
-The contributor setup installs the frontend dependencies and pre-commit hooks, so a fresh clone gives a working development server.

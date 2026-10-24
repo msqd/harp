@@ -1,1 +1,0 @@
-Rules docs: render the examples, document the matching grammar, fix the recipe directive and the truncated ``on_response`` page.

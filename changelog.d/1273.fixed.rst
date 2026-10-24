@@ -1,1 +1,0 @@
-Ship the in-memory request bridge in production code so ``harp-proxy rules run`` works when installed from the wheel.

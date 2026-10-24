@@ -1,1 +1,0 @@
-Configuration page examples use the right storage key, and the page documents environment variables, precedence and the ``/etc`` files.

@@ -1,1 +1,0 @@
-harp-proxy now requires certifi 2026.10.19 or later, so the TLS trust store no longer contains the eMudhra roots whose intermediates were compromised.
