@@ -43,7 +43,8 @@ it("warns about development-only settings in use", async () => {
   const result = renderLayout()
 
   await result.findByText("v.test version")
-  expect(result.getByRole("button", { name: /development-only settings/i })).toBeInTheDocument()
+  // One pill in the bar below `sm`, one beside the user from `sm` up; CSS shows the right one.
+  expect(result.getAllByRole("button", { name: /development-only settings in use: 1/i })).toHaveLength(2)
 })
 
 it("shows no warning when no development-only setting is in use", async () => {
