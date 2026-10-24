@@ -1,3 +1,4 @@
+import click
 import pytest
 
 from harp.commandline import entrypoint
@@ -72,5 +73,6 @@ def test_rules_reject_set_as_an_unknown_option(command, options):
     result = CliRunner().invoke(entrypoint, ["rules", command, *options])
 
     assert result.exit_code == 2
-    assert "No such option: --set" in result.output
+    # rich-click colours and wraps its error panel: compare the plain words.
+    assert "No such option: --set" in " ".join(click.unstyle(result.output).split())
     assert not isinstance(result.exception, TypeError)
