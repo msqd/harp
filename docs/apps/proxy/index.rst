@@ -197,11 +197,11 @@ to disable the check. The silence timeout above does not catch such a client, si
 
 .. _proxy-max-request-body-size:
 
-**An oversized request is refused.** A request body larger than ``max_request_body_size`` (100 MiB by default) is
-answered ``413`` and its request is never forwarded upstream. A declared ``Content-Length`` above the cap is refused
-before any of the body is read; a chunked body is refused as soon as it crosses the
-cap. Without a cap, the proxy would hold the whole body in memory. An endpoint may set its own cap, in place of the
-global one.
+**An oversized request can be refused.** There is no limit on the request body size by default. Set
+``max_request_body_size`` and a request body larger than it is answered ``413``, and its request is never forwarded
+upstream. A declared ``Content-Length`` above the cap is refused before any of the body is read; a chunked body is
+refused as soon as it crosses the cap. Without a cap, the proxy holds the whole body in memory, so set one when HARP is
+exposed to untrusted clients. An endpoint may set its own cap, in place of the global one.
 
 .. code-block:: yaml
 

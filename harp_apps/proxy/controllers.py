@@ -20,7 +20,6 @@ from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.tpdex import tpdex
 from harp.settings import (
     DEFAULT_CLIENT_READ_TIMEOUT,
-    DEFAULT_MAX_REQUEST_BODY_SIZE,
     DEFAULT_MIN_REQUEST_BODY_RATE,
     DEFAULT_REQUEST_BODY_GRACE_PERIOD,
 )
@@ -95,7 +94,7 @@ class AbstractHttpProxyController(ABC):
         name=None,
         logging=True,
         max_recorded_body_size: int = DEFAULT_MAX_RECORDED_BODY_SIZE,
-        max_request_body_size: int = DEFAULT_MAX_REQUEST_BODY_SIZE,
+        max_request_body_size: int | None = None,
         min_request_body_rate: int = DEFAULT_MIN_REQUEST_BODY_RATE,
         request_body_grace_period: float = DEFAULT_REQUEST_BODY_GRACE_PERIOD,
         client_read_timeout: float = DEFAULT_CLIENT_READ_TIMEOUT,
@@ -185,13 +184,15 @@ class HttpProxyController(AbstractHttpProxyController):
     @override
     async def __call__(self, request: HttpRequest) -> HttpResponse:
         base_url = None
-        if _declared_length(request) > self.max_request_body_size:
+        limit = self.max_request_body_size
+        if limit is not None and _declared_length(request) > limit:
             # Nothing read, nothing recorded: the body is refused on its declared size alone.
             rejected = RequestBodyTooLarge()
             return HttpResponse(
                 rejected.message, status=rejected.status, headers=rejected.headers, content_type="text/plain"
             )
-        request.stream = MaxSizeStream(request.stream, limit=self.max_request_body_size)
+        if limit is not None:
+            request.stream = MaxSizeStream(request.stream, limit=limit)
         # Applied before anything reads the body: the transaction recording does, as soon as it starts.
         request.stream = MinRateStream(
             request.stream,

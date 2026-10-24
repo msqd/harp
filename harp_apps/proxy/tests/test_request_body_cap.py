@@ -67,6 +67,18 @@ async def test_chunked_body_crossing_the_cap_is_413_mid_stream():
 
 
 @respx.mock
+async def test_no_cap_configured_lets_a_large_body_through():
+    route = respx.post(BASE_URL).mock(return_value=httpx.Response(200))
+    size = 5 * 1024 * 1024
+    request = post(SpyStream(b"x" * size), **{"Content-Length": str(size)})
+
+    response = await create_controller()(request)
+
+    assert response.status == 200
+    assert route.called
+
+
+@respx.mock
 async def test_body_at_the_cap_is_forwarded():
     route = respx.post(BASE_URL).mock(return_value=httpx.Response(200))
     request = post(SpyStream(b"x" * CAP), **{"Content-Length": str(CAP)})
@@ -77,8 +89,8 @@ async def test_body_at_the_cap_is_forwarded():
     assert route.called
 
 
-def test_proxy_setting_has_a_default_and_an_endpoint_overrides_it():
-    assert ProxySettings().max_request_body_size == 100 * 1024 * 1024
+def test_proxy_setting_is_unset_by_default_and_an_endpoint_overrides_it():
+    assert ProxySettings().max_request_body_size is None
     assert ProxySettings(max_request_body_size="1MiB").max_request_body_size == 1024 * 1024
     assert EndpointSettings(name="a", url="http://x", max_request_body_size="2KiB").max_request_body_size == 2048
     assert EndpointSettings(name="a", url="http://x").max_request_body_size is None

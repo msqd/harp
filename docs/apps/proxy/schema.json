@@ -265,10 +265,11 @@
           "type": "integer"
         },
         "max_request_body_size": {
-          "default": 104857600,
-          "gt": 0,
-          "minimum": 0,
-          "type": "integer"
+          "anyOf": [
+            { "gt": 0, "minimum": 0, "type": "integer" },
+            { "type": "null" }
+          ],
+          "default": null
         },
         "client_read_timeout": {
           "default": 30.0,
