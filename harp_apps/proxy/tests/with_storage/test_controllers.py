@@ -17,6 +17,7 @@ from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.events import EVENT_FILTER_PROXY_REQUEST, EVENT_TRANSACTION_STARTED
+from harp_apps.proxy.settings import TagsSettings
 from harp_apps.proxy.settings.remote import Remote
 from harp_apps.storage.constants import SKIP_STORAGE, TRUNCATED_REQUEST_BODY, TRUNCATED_RESPONSE_BODY
 from harp_apps.storage.services.sql import SqlStorage
@@ -120,6 +121,48 @@ class TestHttpProxyController(HttpProxyControllerTestFixtureMixin, DispatcherTes
         assert response.status == 200
         assert response.headers == {}
         assert response.body == b"Hello."
+
+    @respx.mock
+    async def test_get_with_too_many_tags_is_proxied_with_the_first_ones(self, dispatcher: IAsyncEventDispatcher):
+        endpoint = self.mock_http_endpoint("http://example.com/", content="Hello.")
+        transaction_started_handler = AsyncMock()
+        dispatcher.add_listener(EVENT_TRANSACTION_STARTED, transaction_started_handler)
+
+        _, response = await self.call_controller(
+            self.create_controller("http://example.com/", dispatcher=dispatcher),
+            headers={f"x-harp-t{i}": "v" for i in range(200)} | {"x-harp-" + "n" * 65: "v"},
+        )
+
+        assert response.status == 200
+        assert endpoint.call_count == 1
+        tags = transaction_started_handler.call_args.args[0].transaction.tags
+        assert list(tags) == [f"t{i}" for i in range(20)]
+
+    @respx.mock
+    async def test_tag_bounds_come_from_the_controller_settings(self, dispatcher: IAsyncEventDispatcher):
+        self.mock_http_endpoint("http://example.com/", content="Hello.")
+        transaction_started_handler = AsyncMock()
+        dispatcher.add_listener(EVENT_TRANSACTION_STARTED, transaction_started_handler)
+
+        await self.call_controller(
+            self.create_controller("http://example.com/", dispatcher=dispatcher, tags=TagsSettings(max_count=1)),
+            headers={"x-harp-a": "1", "x-harp-b": "2"},
+        )
+
+        assert transaction_started_handler.call_args.args[0].transaction.tags == {"a": "1"}
+
+    @respx.mock
+    async def test_dropped_tags_are_logged_with_the_transaction_not_the_value(self, dispatcher: IAsyncEventDispatcher):
+        self.mock_http_endpoint("http://example.com/", content="Hello.")
+        controller = self.create_controller("http://example.com/", dispatcher=dispatcher)
+
+        with patch.object(controller, "debug") as debug:
+            await self.call_controller(controller, headers={"x-harp-big": "secret-value" * 100})
+
+        dropped = [call for call in debug.call_args_list if "client tag dropped" in call.args[0]]
+        assert len(dropped) == 1
+        assert dropped[0].kwargs["transaction"].id
+        assert "secret-value" not in str(dropped[0].args)
 
     async def test_get_next_url_for(self):
         controller = self.create_controller("http://example.com/base/")

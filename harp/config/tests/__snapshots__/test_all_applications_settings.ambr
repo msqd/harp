@@ -101,6 +101,10 @@
       {}
   
     ''',
+    'harp_apps.proxy.settings.TagsSettings': '''
+      {}
+  
+    ''',
     'harp_apps.proxy.settings.endpoint.BaseEndpointSettings': '''
       name: api
       port: 4000

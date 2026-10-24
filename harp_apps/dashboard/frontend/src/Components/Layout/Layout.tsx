@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { Link, Outlet, useLocation } from "react-router-dom"
+import { Link, Outlet, useLocation } from "react-router"
 import tw, { styled } from "twin.macro"
 
 import logo from "Assets/logo.svg"

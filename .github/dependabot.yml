@@ -8,7 +8,23 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    cooldown:
+      default-days: 3
   - package-ecosystem: "npm"
     directory: "/harp_apps/dashboard/frontend"
     schedule:
       interval: "daily"
+    cooldown:
+      default-days: 3
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 3
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    cooldown:
+      default-days: 3

@@ -56,12 +56,11 @@ class HttpRequestAsgiBridge(HttpRequestBridge):
 
     def get_query(self) -> MultiDict:
         """Get the query string from asgi scope, as a multidict."""
-        return MultiDict(
-            parse_qsl(
-                self.asgi_scope.get("query_string", b"").decode("utf-8"),
-                keep_blank_values=True,
-            )
-        )
+        try:
+            query_string = self.asgi_scope.get("query_string", b"").decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise RejectedRequest("Request query string is not valid UTF-8.", status=400) from exc
+        return MultiDict(parse_qsl(query_string, keep_blank_values=True))
 
     def get_headers(self) -> CIMultiDict:
         """Get the headers from asgi scope, as a case-insensitive multidict."""
