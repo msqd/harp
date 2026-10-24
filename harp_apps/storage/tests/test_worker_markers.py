@@ -1,9 +1,12 @@
+import asyncio
+import hashlib
 from datetime import UTC, datetime
 
 from whistle import AsyncEventDispatcher
 
 from harp.http import HttpRequest, HttpResponse
 from harp.models import Transaction
+from harp.models.blobs import OFFLOAD_HASH_THRESHOLD
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp_apps.proxy.events import (
     EVENT_TRANSACTION_ENDED,
@@ -22,6 +25,7 @@ from harp_apps.storage.constants import (
     SHED_BODIES,
     SHED_MESSAGES,
 )
+from harp_apps.storage.services.blob_storages.redis import RedisBlobStorage
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.types import IBlobStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
@@ -42,6 +46,26 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         worker.register_events(dispatcher)
         return worker
 
+    async def build_backlog(self, worker: StorageAsyncWorkerQueue, size: int, release: asyncio.Event):
+        """Stall the consumer until ``release`` is set, with ``size`` items waiting behind it for the pressure hold."""
+        if not size:
+            return
+
+        now = worker.clock()
+        worker.clock = lambda: now
+
+        async def stalled():
+            await release.wait()
+
+        async def noop():
+            pass
+
+        await worker.push(stalled)
+        await asyncio.sleep(0)  # consumer is now stuck on the first item
+        for _ in range(size):
+            await worker.push(noop)
+        worker.clock = lambda: now + worker.pressure_hold
+
     async def create_transaction_and_messages(
         self,
         dispatcher: AsyncEventDispatcher,
@@ -54,7 +78,8 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
     ) -> Transaction:
         """Helper to create a transaction with request/response messages through events."""
         worker = self.create_worker(dispatcher, sql_storage, blob_storage)
-        worker._pressure = pressure
+        release = asyncio.Event()
+        await self.build_backlog(worker, pressure, release)
 
         # Create transaction
         transaction = Transaction(
@@ -84,6 +109,7 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         await dispatcher.adispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(transaction=transaction))
 
         # Wait for worker to process all events
+        release.set()
         await worker.wait_until_empty()
 
         return transaction
@@ -122,6 +148,36 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         assert response_msg.body is not None
         response_blob = await blob_storage.get(response_msg.body)
         assert response_blob.data == b"response data"
+
+    async def test_large_body_blob_id_is_its_content_hash(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        """Large bodies (hashed off the event loop) get the same blob id as small ones: sha1 of type, newline, data."""
+        dispatcher = AsyncEventDispatcher()
+        body = b"x" * (OFFLOAD_HASH_THRESHOLD * 4)
+
+        await self.create_transaction_and_messages(
+            dispatcher, sql_storage, blob_storage, request_body=body, response_body=b"small"
+        )
+
+        transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        request_msg, response_msg = transactions[0].messages
+        assert request_msg.body == hashlib.sha1(b"\n" + body).hexdigest()
+        assert response_msg.body == hashlib.sha1(b"\n" + b"small").hexdigest()
+
+    async def test_large_body_round_trips(self, request, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        dispatcher = AsyncEventDispatcher()
+        body = b"x" * (OFFLOAD_HASH_THRESHOLD * 4)
+
+        await self.create_transaction_and_messages(dispatcher, sql_storage, blob_storage, request_body=body)
+
+        transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        stored = await blob_storage.get(transactions[0].messages[0].body)
+        if request.node.callspec.params["database_url"].startswith("mysql|") and not isinstance(
+            blob_storage, RedisBlobStorage
+        ):
+            # Strict by construction: fails once #1191 is fixed, so this branch gets removed then.
+            assert stored is None, "#1191 fixed: drop this MySQL special case"
+        else:
+            assert stored.data == body
 
     async def test_skip_request_body_storage(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
         """Test that request body is not stored when skip-request-body-storage marker is set."""

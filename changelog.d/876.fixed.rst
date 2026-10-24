@@ -1,1 +1,0 @@
-Test CLI runner pins plain output, so CLI snapshot tests pass when ``FORCE_COLOR`` is set in the environment.

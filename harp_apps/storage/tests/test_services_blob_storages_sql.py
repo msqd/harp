@@ -1,8 +1,16 @@
+import time
+from datetime import UTC, datetime, timedelta
 from unittest.mock import ANY
 
-from sqlalchemy import event, text
+import pytest
+from pydantic_core import MultiHostUrl
+from sqlalchemy import delete, event, text, update
+from sqlalchemy.ext.asyncio import AsyncConnection, async_sessionmaker
 
 from harp.models import Blob
+from harp_apps.storage.engines.sql_engine import SQLAlchemyEngine, create_async_engine
+from harp_apps.storage.models import Blob as SqlBlob
+from harp_apps.storage.models.blobs import ORPHAN_GRACE, BlobsRepository
 from harp_apps.storage.services.blob_storages.sql import SqlBlobStorage
 
 
@@ -90,3 +98,74 @@ async def test_delete_blobs_spares_a_blob_rewritten_since_and_ignores_absent_one
     await sql_blob_storage.delete_blobs([old, Blob(id="absent", data=b"x", content_type="cache/meta")])
 
     assert (await sql_blob_storage.get("rewritten")).data == b"fresh"
+
+
+async def _age(engine, blob_id: str, age: timedelta):
+    async with engine.connect() as conn:
+        await conn.execute(
+            update(SqlBlob).where(SqlBlob.id == blob_id).values(created_at=datetime.now(UTC) - age),
+        )
+        await conn.commit()
+
+
+@pytest.fixture
+async def server_behind_utc(sql_engine):
+    """On MySQL, a server whose own timezone is behind UTC. Other backends are timezone-free."""
+    if sql_engine.dialect.name != "mysql":
+        yield
+        return
+    root = create_async_engine(sql_engine.url.set(username="root"))
+    async with root.connect() as conn:
+        previous = (await conn.execute(text("SELECT @@global.time_zone"))).scalar_one()
+        await conn.execute(text("SET GLOBAL time_zone = '-08:00'"))
+    await sql_engine.dispose()  # connections opened from now on see the new server timezone
+    try:
+        yield
+    finally:
+        async with root.connect() as conn:
+            await conn.execute(text(f"SET GLOBAL time_zone = '{previous}'"))
+        await root.dispose()
+
+
+async def test_find_orphans_keeps_a_blob_younger_than_the_grace(server_behind_utc, sql_blob_storage: SqlBlobStorage):
+    await sql_blob_storage.put(Blob(id="fresh", data=b"x", content_type="text/plain"))
+    repository = BlobsRepository(async_sessionmaker(sql_blob_storage.engine))
+
+    assert await repository.find_orphans(older_than=datetime.now(UTC) - ORPHAN_GRACE) == []
+    assert await repository.find_orphans(older_than=datetime.now(UTC) + timedelta(minutes=1)) == ["fresh"]
+
+
+async def test_put_renews_a_blob_the_janitor_sweeps_in_between(sql_blob_storage: SqlBlobStorage, monkeypatch):
+    storage = sql_blob_storage
+    await storage.put(Blob(id="old", data=b"x", content_type="text/plain"))
+    await _age(storage.engine, "old", ORPHAN_GRACE * 2)
+
+    swept = False
+    original_execute = AsyncConnection.execute
+
+    async def execute_then_sweep(self, *args, **kwargs):
+        nonlocal swept
+        result = await original_execute(self, *args, **kwargs)
+        if not swept:  # the janitor runs right after put's first statement
+            swept = True
+            await original_execute(self, delete(SqlBlob).where(SqlBlob.created_at < datetime.now(UTC) - ORPHAN_GRACE))
+            await self.commit()
+        return result
+
+    monkeypatch.setattr(AsyncConnection, "execute", execute_then_sweep)
+    await storage.put(Blob(id="old", data=b"x", content_type="text/plain"))
+    monkeypatch.undo()
+
+    assert await storage.exists("old")
+
+
+async def test_put_of_a_new_blob_needs_one_connection_at_a_time():
+    engine = SQLAlchemyEngine.from_url(MultiHostUrl("sqlite+aiosqlite:///:memory:"))  # a pool of one
+    async with engine.begin() as conn:
+        await conn.run_sync(SqlBlob.metadata.create_all)
+    try:
+        started = time.monotonic()
+        await SqlBlobStorage(engine).put(Blob(id="new", data=b"x", content_type="text/plain"))
+        assert time.monotonic() - started < 2
+    finally:
+        await engine.dispose()

@@ -9,9 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from harp import get_logger
 from harp.config import Application
 from harp.config.events import OnBindEvent, OnBoundEvent, OnShutdownEvent
+from harp_apps.storage.engines import warn_if_database_is_deprecated
 from harp_apps.storage.models import Base
 from harp_apps.storage.settings import StorageSettings
 from harp_apps.storage.types import IStorage
+from harp_apps.storage.utils.migrations import mask_failure
 from harp_apps.storage.worker import StorageAsyncWorkerQueue
 
 logger = get_logger(__name__)
@@ -42,9 +44,26 @@ async def on_bind(event: OnBindEvent):
 
 async def on_bound(event: OnBoundEvent):
     settings = event.provider.get(StorageSettings)
+    try:
+        await _boot_storage(event)
+    except Exception as exc:
+        # exception messages may embed the storage url, the password must not reach the logs
+        safe = mask_failure(exc, settings.url)
+        if safe is exc:
+            raise
+        raise safe from None
+
+
+async def _boot_storage(event: OnBoundEvent):
+    settings = event.provider.get(StorageSettings)
+    engine = event.provider.get(AsyncEngine)
+    warn_if_database_is_deprecated(engine.url)
     if settings.migrate:
-        engine = event.provider.get(AsyncEngine)
         await _run_migrations(engine)
+
+    from harp_apps.storage.utils.migrations import ensure_schema_is_current
+
+    await ensure_schema_is_current(engine)
 
     storage = event.provider.get(IStorage)
     await storage.initialize()

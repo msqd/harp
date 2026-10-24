@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
 import yaml
@@ -38,6 +39,7 @@ CACHE_META_CONTENT_TYPE = "cache/meta"
 ORPHAN_GRACE = timedelta(minutes=10)
 
 _CACHE_META_BATCH = 200
+_SCAN_BATCH = 1000
 _DELETE_CHUNK = 500
 
 
@@ -67,54 +69,90 @@ class BlobsRepository(Repository[Blob]):
 
     Type = Blob
 
-    def _orphans_subquery(self):
-        """Blobs paired with the number of messages referencing them, so zero means unreferenced."""
+    @asynccontextmanager
+    async def _batch_session(self, session):
+        """The caller's session when it brought one, else a fresh one that ends with the batch.
+
+        A sweep reads in batches: on a store with a single connection (the default in-memory SQLite),
+        holding one session for the whole pass would keep every request waiting.
+        """
+        if session is not None:
+            yield session
+            return
+        async with self.session_factory() as own:
+            yield own
+
+    def _orphans_query(self, after: str, upto: str, older_than: datetime | None):
+        """Ids in ``(after, upto]`` that no message references (hence no joined row counts)."""
         MH = aliased(Message, name="mh")
         MB = aliased(Message, name="mb")
-        return (
-            select(Blob.id, func.count(MH.id) + func.count(MB.id))
+        query = (
+            select(Blob.id)
             .select_from(Blob)
             .outerjoin(MH, MH.headers == Blob.id)
             .outerjoin(MB, MB.body == Blob.id)
+            .where(Blob.id > after, Blob.id <= upto)
             .where(or_(Blob.content_type.is_(None), Blob.content_type != CACHE_META_CONTENT_TYPE))
             .group_by(Blob.id)
-            .subquery()
+            .having(func.count(MH.id) + func.count(MB.id) == 0)
         )
-
-    @with_session
-    async def _cache_references(self, /, *, session) -> set[str]:
-        references: set[str] = set()
-        result = await session.stream_scalars(
-            select(Blob.data)
-            .where(Blob.content_type == CACHE_META_CONTENT_TYPE)
-            .execution_options(yield_per=_CACHE_META_BATCH)
-        )
-        count = 0
-        async for data in result:
-            references |= cache_meta_references(data)
-            count += 1
-            if count % _CACHE_META_BATCH == 0:
-                await asyncio.sleep(0)  # a large cache must not hold the event loop for the whole pass
-        return references
-
-    @with_session
-    async def find_orphans(self, /, *, session, older_than: datetime | None = None) -> list[str]:
-        """Ids of the blobs referenced by nothing, optionally only those written before `older_than`."""
-        subquery = self._orphans_subquery()
-        query = select(subquery.c.id).where(subquery.c[1] == 0)
         if older_than is not None:
-            query = query.join(Blob, Blob.id == subquery.c.id).where(Blob.created_at < older_than)
-        candidates = (await session.execute(query)).scalars().all()
-        referenced = await self._cache_references(session=session)
+            query = query.where(Blob.created_at < older_than)
+        return query
+
+    async def _cache_references(self, session=None) -> set[str]:
+        references: set[str] = set()
+        last_id = ""
+        while True:
+            async with self._batch_session(session) as batch:
+                rows = (
+                    await batch.execute(
+                        select(Blob.id, Blob.data)
+                        .where(Blob.content_type == CACHE_META_CONTENT_TYPE, Blob.id > last_id)
+                        .order_by(Blob.id)
+                        .limit(_CACHE_META_BATCH)
+                    )
+                ).all()
+            for _, data in rows:
+                references |= cache_meta_references(data)
+            await asyncio.sleep(0)  # a large cache must not hold the event loop for the whole pass
+            if len(rows) < _CACHE_META_BATCH:
+                return references
+            last_id = rows[-1][0]
+
+    async def _candidates(self, session, older_than: datetime | None) -> list[str]:
+        candidates: list[str] = []
+        last_id = ""
+        while True:
+            async with self._batch_session(session) as batch:
+                page = (
+                    (await batch.execute(select(Blob.id).where(Blob.id > last_id).order_by(Blob.id).limit(_SCAN_BATCH)))
+                    .scalars()
+                    .all()
+                )
+                if not page:
+                    return candidates
+                query = self._orphans_query(last_id, page[-1], older_than)
+                candidates.extend((await batch.execute(query)).scalars().all())
+            await asyncio.sleep(0)
+            if len(page) < _SCAN_BATCH:
+                return candidates
+            last_id = page[-1]
+
+    async def find_orphans(self, /, *, session=None, older_than: datetime | None = None) -> list[str]:
+        """Ids of the blobs referenced by nothing, optionally only those written before `older_than`.
+
+        Scans in short batches, each in its own session unless the caller passes one.
+        """
+        candidates = await self._candidates(session, older_than)
+        referenced = await self._cache_references(session)
         return [blob_id for blob_id in candidates if blob_id not in referenced]
 
-    @with_session
-    async def count_orphans(self, /, *, session) -> int:
+    async def count_orphans(self, /, *, session=None) -> int:
         return len(await self.find_orphans(session=session))
 
-    @with_session
-    async def delete_orphans(self, orphans: list[str], /, *, session, older_than: datetime | None = None) -> int:
-        """Delete the given ids, as returned by `find_orphans`, in chunks the database accepts.
+    async def delete_orphans(self, orphans: list[str], /, *, session=None, older_than: datetime | None = None) -> int:
+        """Delete the given ids, as returned by `find_orphans`, one short transaction per chunk.
 
         `older_than` is applied again here: a blob written again since the ids were read is no
         longer eligible.
@@ -124,9 +162,11 @@ class BlobsRepository(Repository[Blob]):
             query = delete(Blob).where(Blob.id.in_(orphans[i : i + _DELETE_CHUNK]))
             if older_than is not None:
                 query = query.where(Blob.created_at < older_than)
-            result = await session.execute(query)
+            async with self._batch_session(session) as batch:
+                result = await batch.execute(query)
+                await batch.commit()
             deleted += result.rowcount or 0
-        await session.commit()
+            await asyncio.sleep(0)
         return deleted
 
     @with_session

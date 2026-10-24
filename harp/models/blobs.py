@@ -1,3 +1,4 @@
+import asyncio
 import dataclasses
 import hashlib
 import json
@@ -7,6 +8,10 @@ import orjson
 from harp.utils.bytes import ensure_bytes, ensure_str
 
 from .base import Entity
+
+
+# Above this size, hashing is offloaded to a thread (hashlib releases the GIL on large buffers).
+OFFLOAD_HASH_THRESHOLD = 64 * 1024
 
 
 @dataclasses.dataclass(kw_only=True)
@@ -23,11 +28,17 @@ class Blob(Entity):
             content_type = content_type.split(";", 1)[0].strip()
 
         data = ensure_bytes(data)
-        return cls(
-            id=hashlib.sha1((content_type.encode("utf-8") if content_type else b"") + b"\n" + data).hexdigest(),
-            data=data,
-            content_type=content_type,
-        )
+        digest = hashlib.sha1(content_type.encode("utf-8") if content_type else b"")
+        digest.update(b"\n")
+        digest.update(data)
+        return cls(id=digest.hexdigest(), data=data, content_type=content_type)
+
+    @classmethod
+    async def afrom_data(cls, data, /, *, content_type=None):
+        """Same as `from_data`, hashing large bodies in a thread to keep the event loop responsive."""
+        if len(data) < OFFLOAD_HASH_THRESHOLD:
+            return cls.from_data(data, content_type=content_type)
+        return await asyncio.to_thread(cls.from_data, data, content_type=content_type)
 
     def __len__(self):
         return len(self.data)

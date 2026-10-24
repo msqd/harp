@@ -25,6 +25,10 @@
       type: basic
   
     ''',
+    'harp_apps.dashboard.settings.auth.NoAuthSettings': '''
+      type: none
+  
+    ''',
     'harp_apps.dashboard.settings.auth.User': '''
       password: secret
   
@@ -103,6 +107,22 @@
   
     ''',
     'harp_apps.proxy.settings.endpoint.Endpoint': '''
+      remote:
+        current_pool:
+        - https://www.example.com/
+        endpoints:
+        - settings:
+            liveness:
+              type: inherit
+            pools:
+            - default
+            url: https://www.example.com/
+        settings:
+          break_on:
+          - network_error
+          - unhandled_exception
+          check_after: 10.0
+          min_pool_size: 1
       settings:
         description: null
         name: api
@@ -112,6 +132,9 @@
     'harp_apps.proxy.settings.endpoint.EndpointSettings': '''
       name: api
       port: 4000
+      remote:
+        endpoints:
+        - url: https://www.example.com/
   
     ''',
     'harp_apps.proxy.settings.liveness.base.BaseLivenessSettings': '''

@@ -64,9 +64,10 @@ REQUIRED_SETTINGS = {
     },
 }
 
-REQUIRED_SETTINGS["harp_apps.proxy.settings.endpoint.EndpointSettings"] = REQUIRED_SETTINGS[
-    "harp_apps.proxy.settings.endpoint.BaseEndpointSettings"
-]
+REQUIRED_SETTINGS["harp_apps.proxy.settings.endpoint.EndpointSettings"] = {
+    **REQUIRED_SETTINGS["harp_apps.proxy.settings.endpoint.BaseEndpointSettings"],
+    "url": "https://www.example.com/",
+}
 IGNORE_TYPES = {
     "harp_apps.proxy.settings.liveness.base.BaseLiveness",
 }

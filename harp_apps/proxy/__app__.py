@@ -55,7 +55,15 @@ async def on_bound(event: OnBoundEvent):
     for endpoint in proxy.endpoints:
         name = endpoint.settings.name
         service_name = _get_controller_service_name(name)
-        event.provider._map[service_name].bind(remote=endpoint.remote, name=name, dispatcher=event.dispatcher)
+        event.provider._map[service_name].bind(
+            remote=endpoint.remote,
+            name=name,
+            dispatcher=event.dispatcher,
+            max_recorded_body_size=proxy.settings.max_recorded_body_size,
+            min_request_body_rate=proxy.settings.min_request_body_rate,
+            request_body_grace_period=proxy.settings.request_body_grace_period,
+            client_read_timeout=proxy.settings.client_read_timeout,
+        )
         controller = event.provider.get(f"proxy.controllers.{name}_controller")
         event.resolver.add_endpoint(endpoint, controller=controller)
 

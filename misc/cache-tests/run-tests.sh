@@ -128,7 +128,9 @@ wait_for_port "$PROXY_PORT" "HARP" "$RESULTS_DIR/harp.log"
 # 365 setup errors and a score of zero, which reads like a compliance collapse rather than a broken
 # run.
 echo "Checking the proxy actually reaches the origin..."
-curl -fsS "http://localhost:$PROXY_PORT/" | grep -q "HTTP Caching Tests" || {
+# grep reads the whole page rather than `grep -q`: quitting at the first match closes the pipe while curl is still
+# writing a streamed body, and pipefail then reports curl's broken pipe as a failure.
+curl -fsS "http://localhost:$PROXY_PORT/" | grep "HTTP Caching Tests" > /dev/null || {
     echo "--- last lines of $RESULTS_DIR/harp.log ---" >&2
     tail -n 30 "$RESULTS_DIR/harp.log" >&2 || true
     fail "HARP is listening on :$PROXY_PORT but did not serve the origin's index page"

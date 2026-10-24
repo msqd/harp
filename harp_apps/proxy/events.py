@@ -17,7 +17,7 @@ EVENT_TRANSACTION_STARTED = "proxy.transaction.started"
 #: Event fired when a message is sent to a transaction (either request or response).
 EVENT_TRANSACTION_MESSAGE = "proxy.transaction.message"
 
-#: Event fired when a transaction is finished, before the response is sent back to the caller.
+#: Event fired when a transaction is finished, once the response body has been streamed to the caller.
 EVENT_TRANSACTION_ENDED = "proxy.transaction.ended"
 
 #: Event fired when an incoming request is ready to be filtered, for example by the rules application.
@@ -105,9 +105,11 @@ class TransactionEvent(Event):
 
 
 class HttpMessageEvent(TransactionEvent):
-    def __init__(self, transaction: Transaction, message: BaseHttpMessage):
+    def __init__(self, transaction: Transaction, message: BaseHttpMessage, *, max_body_size: Optional[int] = None):
         super().__init__(transaction)
         self.message = message
+        #: How many bytes of the body recorders should keep, ``None`` for all of it.
+        self.max_body_size = max_body_size
 
 
 class ProxyErrorEvent(TransactionEvent):

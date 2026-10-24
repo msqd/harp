@@ -65,7 +65,7 @@ class ASGIKernel:
             response = await self.handle_http(scope, receive, send)
             if isinstance(response, AlreadyHandledHttpResponse):
                 return
-            return await HttpResponseAsgiBridge(response, send).send()
+            return await HttpResponseAsgiBridge(response, send, receive).send()
 
         if asgi_type == "lifespan":
             await receive()
@@ -82,7 +82,8 @@ class ASGIKernel:
 
         if asgi_type == "websocket":
             # NOT IMPLEMENTED YET!
-            # This is ignored here to avoid huge errors in the console.
+            # This is ignored here to avoid huge errors in the console. Whatever implements it must go through the
+            # same controllers, so that the dashboard authentication also gates any upgrade.
             return
 
         raise RuntimeError(f'Unable to handle request, invalid type "{asgi_type}".')

@@ -21,15 +21,18 @@ The ``metrics`` application will decorate the HARP ASGI implementation with a mi
 under the path ``/.prometheus/metrics``. You can configure your prometheus instance to scrape this path (see below).
 
 
+.. _storage-load-shedding:
+
 Storage load shedding
 :::::::::::::::::::::
 
-When the storage queue backs up, HARP sheds observability instead of failing requests: transactions, then messages,
-headers and bodies are not stored. Shedding is never silent:
+When the storage queue backs up, HARP sheds observability instead of failing requests: bodies, then messages, then
+whole transactions are not stored. A level engages only once the backlog has stayed at or above it for 2 seconds (see
+:ref:`storage-recording-capacity`). Shedding is never silent:
 
 * A warning is logged at most every 10 seconds, with the counts dropped since the previous warning.
 * ``dropped_total{kind="transactions|messages|headers|bodies"}`` counts the same items.
-* ``async_worker_queue_backlog`` reports the queue depth (values below 1 are reported as 1).
+* ``async_worker_queue_backlog`` reports the queue depth, 0 when the queue is empty.
 
 These two metrics are always available on ``/metrics``, whether or not the ``metrics`` application is enabled.
 

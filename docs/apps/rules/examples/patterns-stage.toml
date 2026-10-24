@@ -1,0 +1,11 @@
+# Only before the response goes back to the client.
+[rules."*"."*"]
+on_response = """
+response.headers["X-Served-By"] = "harp"
+"""
+
+# Both stages that deal with the remote server.
+[rules."*"."GET *"]
+"on_remote_*" = """
+logger.info("remote exchange for %s", request.url)
+"""

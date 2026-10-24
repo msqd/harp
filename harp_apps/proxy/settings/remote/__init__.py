@@ -3,7 +3,6 @@ import warnings
 from collections import deque
 from typing import ClassVar, Iterable, List, Mapping, Optional
 
-from _operator import attrgetter
 from pydantic import Field, computed_field, field_serializer, field_validator, model_validator
 
 from harp import get_logger
@@ -114,7 +113,7 @@ class Remote(Stateful[RemoteSettings]):
     @computed_field
     @property
     def current_pool(self) -> List[str]:
-        return list(map(attrgetter("settings.url"), self._current_pool))
+        return [str(endpoint.settings.url) for endpoint in self._current_pool]
 
     @computed_field
     @property

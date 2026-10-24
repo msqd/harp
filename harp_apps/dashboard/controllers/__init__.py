@@ -7,19 +7,61 @@ from http_router import NotFoundError, Router
 from httpx import AsyncClient
 
 from harp import get_logger
+from harp.asgi.events import ViewEvent
 from harp.controllers import RoutingController
 from harp.errors import ConfigurationError
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
+from harp.views.json import on_json_response
 from harp_apps import dashboard
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.settings.remote import Remote
 from harp_apps.storage.types import IStorage
 
+from ..security.auth import resolve_authentication
 from ..settings import DashboardSettings
 from .metrics import METRICS_PATH, metrics_controller
-from ..settings.auth import BasicAuthSettings
 
 logger = get_logger(__name__)
+
+#: Sent on every dashboard response: never sniff a type, never render the dashboard in a frame.
+BASE_SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+}
+
+#: What the built dashboard needs, nothing more. Emotion injects <style> elements, hence 'unsafe-inline' for styles
+#: only; message bodies render images through blob: URLs.
+DASHBOARD_CONTENT_SECURITY_POLICY = "; ".join(
+    (
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob:",
+        "font-src 'self' data:",
+        "connect-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+    )
+)
+
+
+def _send_with_headers(asgi_send: ASGISendCallable, headers: dict) -> ASGISendCallable:
+    """Wraps an ASGI send callable to add the given headers to responses written directly to it (static assets),
+    leaving any header the response already carries untouched."""
+
+    async def send(message):
+        if message["type"] == "http.response.start":
+            present = {name.lower() for name, _ in message.get("headers", ())}
+            extra = [(name.lower().encode(), value.encode()) for name, value in headers.items()]
+            message = {
+                **message,
+                "headers": [*message.get("headers", ()), *(h for h in extra if h[0] not in present)],
+            }
+        await asgi_send(message)
+
+    return send
 
 
 class DashboardController(RoutingController):
@@ -50,12 +92,13 @@ class DashboardController(RoutingController):
         self.storage = storage
         self.settings = settings
 
+        # the authentication actually enforced, which is not necessarily what is configured (see the security module)
+        self._auth = resolve_authentication(self.settings.auth)
+
         # create users if they don't exist; keep a strong reference to the task, as the event loop
         # only holds a weak one and would let it be garbage-collected before completion.
-        if isinstance(self.settings.auth, BasicAuthSettings):
-            self._create_users_task = asyncio.create_task(
-                self.storage.create_users_once_ready(self.settings.auth.users)
-            )
+        if self._auth:
+            self._create_users_task = asyncio.create_task(self.storage.create_users_once_ready(self._auth.users))
 
         # UI is always initialized when the dashboard app is enabled
         # (the `enabled` setting controls whether the entire app loads)
@@ -103,13 +146,32 @@ class DashboardController(RoutingController):
         )
 
     async def __call__(self, request: HttpRequest, asgi_send: ASGISendCallable, *, transaction_id=None) -> HttpResponse:
+        headers = self._security_headers()
+        response = await self._handle(request, _send_with_headers(asgi_send, headers))
+        if not isinstance(response, HttpResponse):
+            # sub-controllers return view values (json); render them here so they get the headers too
+            event = ViewEvent(request, response)
+            await on_json_response(event)
+            response = event.response or response
+        if isinstance(response, HttpResponse):
+            for name, value in headers.items():
+                response.headers.setdefault(name, value)
+        return response
+
+    def _security_headers(self) -> dict:
+        # the vite devserver relies on inline scripts, so only the built dashboard gets the content security policy
+        if self._ui_devserver_proxy_controller:
+            return BASE_SECURITY_HEADERS
+        return {**BASE_SECURITY_HEADERS, "Content-Security-Policy": DASHBOARD_CONTENT_SECURITY_POLICY}
+
+    async def _handle(self, request: HttpRequest, asgi_send: ASGISendCallable) -> HttpResponse:
         request.extensions.setdefault("user", None)
 
-        if self.settings.auth:
+        if self._auth:
             current_auth = request.basic_auth
 
             if current_auth:
-                request.extensions["user"] = self.settings.auth.check(current_auth[0], current_auth[1])
+                request.extensions["user"] = self._auth.check(current_auth[0], current_auth[1])
 
             if not request.extensions["user"]:
                 return HttpResponse(

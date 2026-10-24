@@ -25,6 +25,10 @@ class ConfigurationRuntimeError(ConfigurationError, RuntimeError):
     pass
 
 
+class OutdatedSchemaError(ConfigurationRuntimeError):
+    """Raised when the storage schema is older than the one this version of HARP expects."""
+
+
 class ConfigurationRemovedSettingError(ConfigurationError):
     pass
 

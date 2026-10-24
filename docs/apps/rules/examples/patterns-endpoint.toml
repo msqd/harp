@@ -1,0 +1,11 @@
+# Every endpoint whose name starts with "httpbin-" (httpbin-eu, httpbin-us, ...).
+[rules."httpbin-*"."*"]
+on_request = """
+request.headers["X-Region"] = "any"
+"""
+
+# Exactly the endpoint named "api".
+[rules."api"."*"]
+on_request = """
+request.headers["X-Api"] = "yes"
+"""
