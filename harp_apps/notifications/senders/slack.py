@@ -1,12 +1,11 @@
 from typing import Optional
 
-from slack_sdk.webhook.async_client import AsyncWebhookClient
+from httpx import AsyncClient
 
 
 class SlackNotificationSender:
     def __init__(self, webhook_url: str, public_url: Optional[str] = None) -> None:
         self.webhook_url = webhook_url
-        self.client = AsyncWebhookClient(webhook_url)
         self.public_url = public_url
 
     async def send_notification(
@@ -18,9 +17,12 @@ class SlackNotificationSender:
         transaction_id: Optional[str],
     ) -> None:
         slack_message = self._format_error_message(method, url, status_code, message, transaction_id, self.public_url)
-        response = await self.client.send(text="ERROR NOTIFICATION", blocks=slack_message["blocks"])
+        async with AsyncClient() as client:
+            response = await client.post(
+                self.webhook_url, json={"text": "ERROR NOTIFICATION", "blocks": slack_message["blocks"]}
+            )
         assert response.status_code == 200
-        assert response.body == "ok"
+        assert response.text == "ok"
 
     @staticmethod
     def _format_error_message(
