@@ -24,7 +24,7 @@ DASHBOARD_CSP = (
 def _create_controller(settings: DashboardSettings = None):
     controller = DashboardController(
         storage=cast(IStorage, Mock(spec=IStorage)),
-        settings=settings or DashboardSettings(devserver={"enabled": True, "port": 5173}),
+        settings=settings or DashboardSettings(auth={"type": "none"}, devserver={"enabled": True, "port": 5173}),
         http_client=Mock(spec=AsyncClient),
     )
     controller._ui_devserver_proxy_controller = None
@@ -53,6 +53,16 @@ async def test_json_views_carry_security_headers():
     assert response.status == 200
     assert response.content_type == "application/json"
     assert response.body == b'{"a":1}'
+    _assert_security_headers(response.headers)
+
+
+async def test_default_login_gate_carries_security_headers():
+    controller = _create_controller(DashboardSettings(devserver={"enabled": True, "port": 5173}))
+
+    response = await controller(HttpRequest(path="/api/system"), AsyncMock())
+
+    assert response.status == 401
+    assert response.headers["www-authenticate"].startswith("Basic")
     _assert_security_headers(response.headers)
 
 

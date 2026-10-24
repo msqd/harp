@@ -55,6 +55,19 @@ Authentication
 
 Configuration for dashboard user authentication.
 
+**By default, the dashboard requires a login.** Without ``dashboard.auth``, HARP generates a random password for the
+``admin`` user at each start and logs it once:
+
+.. code-block:: text
+
+    Dashboard login (generated for this boot only): username=admin password=<password> ...
+
+The password is new at every start, kept only as a hash in memory, and never shown in the settings, the storage or any
+other log line. Every route of the dashboard port is behind it. In a container, read it with
+``docker logs <container>``.
+
+To choose your own users, configure basic authentication: nothing is generated then.
+
 .. literalinclude:: ./examples/auth.yml
     :language: yaml
 
@@ -62,11 +75,20 @@ Configuration for dashboard user authentication.
 .. literalinclude:: ./examples/auth.basic.yml
     :language: yaml
 
-Internal implementation: :class:`DashboardAuthSetting <harp_apps.dashboard.settings.DashboardAuthSetting>`,
-:class:`DashboardAuthBasicSetting <harp_apps.dashboard.settings.DashboardAuthBasicSetting>`
+Internal implementation: :class:`BasicAuthSettings <harp_apps.dashboard.settings.auth.BasicAuthSettings>`
 
 .. include:: ./_howto_auth_hash.rst
 
+To explicitly serve the dashboard without authentication, set the type to ``none`` (or
+``--set dashboard.auth.type=none``).
+
+.. literalinclude:: ./examples/auth.none.yml
+    :language: yaml
+
+.. warning::
+
+    An unauthenticated dashboard exposes everything that goes through the proxy to anyone who can reach its port. HARP
+    logs a warning at every start. Only use it behind a network boundary you trust.
 
 Security headers
 ----------------

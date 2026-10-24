@@ -69,7 +69,7 @@ async def test_create_users_task_is_retained():
 async def _create_mock_controller(settings: DashboardSettings = None):
     controller = DashboardController(
         storage=cast(IStorage, Mock(spec=IStorage)),
-        settings=settings or DashboardSettings(devserver={"enabled": True, "port": 5173}),
+        settings=settings or DashboardSettings(auth={"type": "none"}, devserver={"enabled": True, "port": 5173}),
         http_client=Mock(spec=AsyncClient),
     )
     # Disable the devserver proxy to avoid actual HTTP calls in tests
