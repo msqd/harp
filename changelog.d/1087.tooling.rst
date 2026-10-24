@@ -1,0 +1,1 @@
+Pin every third-party GitHub Action to a full commit SHA, bump actions and Docker base images with Dependabot, and wait 3 days before adopting a new Python or npm release.

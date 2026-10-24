@@ -62,9 +62,9 @@ describe("TransactionDataTable", () => {
       useSetUserFlagMutation: () => ({ mutate }),
     }))
 
-    vi.mock("react-router-dom", async () => {
+    vi.mock("react-router", async () => {
       const navigate = vi.fn()
-      const actualReactRouterDom = await vi.importActual("react-router-dom")
+      const actualReactRouterDom = await vi.importActual("react-router")
       return {
         ...actualReactRouterDom,
         useNavigate: () => navigate,
@@ -84,7 +84,7 @@ describe("TransactionDataTable", () => {
   })
 
   it.skip("calls navigate when a row is clicked", async () => {
-    const reactRouterDom = await import("react-router-dom")
+    const reactRouterDom = await import("react-router")
     const navigate = reactRouterDom.useNavigate()
 
     const { getAllByRole } = render(<TransactionDataTable transactions={transactions} />)

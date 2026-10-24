@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "react-query"
-import { createMemoryRouter, RouteObject, RouterProvider } from "react-router-dom"
+import { createMemoryRouter, RouteObject, RouterProvider } from "react-router"
 import { afterEach, expect, it, vi } from "vitest"
 
 import { routes } from "./routes"
