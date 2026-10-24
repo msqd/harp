@@ -1,0 +1,1 @@
+Explain what a HARP project contains and link to the developer quick start in ``harp create --help``.

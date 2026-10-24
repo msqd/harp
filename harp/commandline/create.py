@@ -70,6 +70,11 @@ def _cookiecutter_command():
 def create(template, name, no_app, no_config, harp_source):
     """Creates a new project using cookiecutter.
 
+    A HARP project is a minimal Python package that runs HARP with
+    your configuration and optional custom application code.
+
+    Developer quick start: https://docs.harp-project.net/en/latest/develop/quick-start.html
+
     The project name can be passed as an argument to skip the interactive prompt; author
     information is taken from your git config when available. Use --no-app / --no-config to
     opt out of the application folder or the config file. The project depends on ``harp-proxy``
