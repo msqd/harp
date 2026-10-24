@@ -221,3 +221,16 @@ class TestHttpRequestAsgiBridgeInvalidQuery(BaseHttpRequestAsgiBridgeTest):
             bridge.get_query()
 
         assert exc_info.value.status == 400
+
+
+class TestHttpRequestAsgiBridgeClient(BaseHttpRequestAsgiBridgeTest):
+    """
+    Test the peer address from ASGI brigde implementation.
+    """
+
+    def test_get_client_ipaddr(self):
+        assert self.create_bridge(client=["203.0.113.7", 4242]).get_client_ipaddr() == "203.0.113.7"
+
+    @pytest.mark.parametrize("client", [None, [], unset])
+    def test_get_client_ipaddr_unknown(self, client):
+        assert self.create_bridge(client=client).get_client_ipaddr() is None

@@ -41,6 +41,13 @@ class HttpRequestAsgiBridge(HttpRequestBridge):
         except IndexError:
             return None
 
+    def get_client_ipaddr(self) -> Optional[str]:
+        """Get the address of the peer HARP is talking to from asgi scope."""
+        try:
+            return (self.asgi_scope.get("client", _default_host) or _default_host)[0]
+        except IndexError:
+            return None
+
     def get_method(self) -> str:
         """Get the HTTP method from asgi scope."""
         return self.asgi_scope.get("method", None)
