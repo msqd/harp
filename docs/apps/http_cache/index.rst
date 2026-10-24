@@ -290,11 +290,26 @@ answer the *next* caller, which is why ``no-store`` binds it: the directive is a
 transaction record retains in order to show operators what passed through their own proxy, and
 nothing in it is ever read back into a response.
 
-**A caller's** ``no-store`` **binds the cache and does not affect the transaction record.**
-Such a request is not served from a stored entry and nothing about it is cached, and it is recorded
-like any other request. Whether a caller may suppress payload recording is undecided, see
-`#927 <https://github.com/msqd/harp/issues/927>`_, so do not build on the current behaviour in
-either direction.
+**A caller's** ``no-store`` **binds the cache and suppresses the payload of the transaction record.**
+Such a request is not served from a stored entry and nothing about it is cached. It is still
+recorded, with its summary (method, path and query string) and its timing, but neither its headers
+nor its body are stored, and neither are those of the response. The transaction carries the markers
+``no-store-request`` and ``no-store-response``, and the dashboard says the payload was not recorded
+and why, which tells it apart from a payload shed under load.
+
+**An origin's** ``no-store`` **suppresses its own response payload only.** The response headers and
+body are not stored and the transaction carries ``no-store-response``; the request is recorded
+normally, since it is evidence of what was asked of a third party.
+
+.. versionchanged:: 0.13
+   Up to 0.12, a ``no-store`` of either side was recorded like any other message.
+
+.. warning::
+
+    HARP does not currently provide a way to override this. An override is owed, and the intended
+    mechanism is the transaction markers. The decision is recorded in
+    `ADR-0002 <https://github.com/msqd/harp/blob/main/docs/adr/0002-caller-no-store-suppresses-payload-recording.md>`_.
+    The query string and path of the request summary are still stored: see :doc:`/apps/storage/redaction`.
 
 Note also what RFC 9111 §5.2.1.5 says of the directive: it "is not a reliable or sufficient
 mechanism for ensuring privacy. In particular, malicious or compromised caches might not recognize
