@@ -119,7 +119,7 @@ How it works?
 Overview
 --------
 
-.. figure:: https://github.com/msqd/harp/raw/main/docs/images/HowItWorks-Overview.png
+.. figure:: https://github.com/msqd/harp/raw/main/docs/images/diagrams/how-it-works-overview.svg
     :alt: An overview of how HARP works in your system
     :align: center
 
@@ -143,7 +143,7 @@ Overview
 Hub to external services
 ------------------------
 
-.. figure:: https://github.com/msqd/harp/raw/main/docs/images/HowItWorks-OverviewMultipleApps.png
+.. figure:: https://github.com/msqd/harp/raw/main/docs/images/diagrams/how-it-works-multiple-apps.svg
     :alt: An overview of how HARP works in your system when you have multiple consumers
     :align: center
 
@@ -164,7 +164,7 @@ Each proxy is configured to intercept and forward requests to a specific externa
 
 An additional (optional) port serves a dashboard to observe your proxies in real-time.
 
-.. figure:: https://github.com/msqd/harp/raw/main/docs/images/HowItWorks-Service.png
+.. figure:: https://github.com/msqd/harp/raw/main/docs/images/diagrams/how-it-works-service.svg
     :alt: What happens within the harp service
     :align: center
 
@@ -184,7 +184,7 @@ HTTP before, you will still speak HTTP. The only change needed in your applicati
 is the base endpoint of the external services. In a modern 12factor-like application, it usually only means changing an
 environment variable.
 
-.. figure:: https://github.com/msqd/harp/raw/main/docs/images/HowItWorks-Proxy.png
+.. figure:: https://github.com/msqd/harp/raw/main/docs/images/diagrams/how-it-works-proxy.svg
     :alt: What happens within one proxy
     :align: center
 

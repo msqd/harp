@@ -13,6 +13,7 @@
     events
     extending
     makefile
+    images
     storage/index
     ../apps/dashboard/development/index
     testing/index
