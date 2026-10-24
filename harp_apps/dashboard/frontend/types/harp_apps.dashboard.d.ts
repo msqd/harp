@@ -12,6 +12,35 @@ declare namespace Apps.Dashboard {
     url: string;
     [k: string]: unknown;
   }
+  /**
+   * Root settings for the dashboard application.
+   */
+  export interface DashboardSettings {
+    /**
+     * Whether the application is enabled
+     */
+    enabled?: boolean;
+    /**
+     * Port on which the dashboard application will be served.
+     */
+    port?: number;
+    /**
+     * Port on which the Prometheus metrics (`/metrics`) are also served, unauthenticated. Disabled by default. Metrics are always served on the dashboard port, under the dashboard authentication.
+     */
+    metrics_port?: number | null;
+    /**
+     * Authentication settings for the dashboard. When not set, the dashboard requires a login with the `admin` user and a random password generated and logged at each boot. Use `type: none` to explicitly serve the dashboard without authentication.
+     */
+    auth?: (BasicAuthSettings | NoAuthSettings) | null;
+    /**
+     * Development server settings, only useful for internal frontend development.
+     */
+    devserver?: DevserverSettings | null;
+    /**
+     * Public URL of the dashboard application, used to generate absolute links, for example in notifications.
+     */
+    public_url?: string | null;
+  }
   export interface BasicAuthSettings {
     /**
      * Authentication type.
@@ -96,34 +125,5 @@ declare namespace Apps.Dashboard {
      * Port on which the development server will be served (internal). The proxy will forward dashboard requests to this port, if enabled.
      */
     port?: number | null;
-  }
-  /**
-   * Root settings for the dashboard application.
-   */
-  export interface DashboardSettings {
-    /**
-     * Whether the application is enabled
-     */
-    enabled?: boolean;
-    /**
-     * Port on which the dashboard application will be served.
-     */
-    port?: number;
-    /**
-     * Port on which the Prometheus metrics (`/metrics`) are also served, unauthenticated. Disabled by default. Metrics are always served on the dashboard port, under the dashboard authentication.
-     */
-    metrics_port?: number | null;
-    /**
-     * Authentication settings for the dashboard. When not set, the dashboard requires a login with the `admin` user and a random password generated and logged at each boot. Use `type: none` to explicitly serve the dashboard without authentication.
-     */
-    auth?: (BasicAuthSettings | NoAuthSettings) | null;
-    /**
-     * Development server settings, only useful for internal frontend development.
-     */
-    devserver?: DevserverSettings | null;
-    /**
-     * Public URL of the dashboard application, used to generate absolute links, for example in notifications.
-     */
-    public_url?: string | null;
   }
 }
