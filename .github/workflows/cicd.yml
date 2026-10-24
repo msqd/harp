@@ -848,25 +848,9 @@ jobs:
       - name: Determine version and tags
         id: meta
         run: |
-          VERSION="$GITHUB_REF_NAME"
-
-          # Determine Docker tags based on version format
-          if echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            # Mainline release (e.g., 0.9.0) - tag with full, minor, and major versions
-            MAJOR=$(echo "$VERSION" | cut -d. -f1)
-            MINOR=$(echo "$VERSION" | cut -d. -f1-2)
-            TAGS="ghcr.io/$GITHUB_REPOSITORY:$VERSION,makersquad/harp-proxy:$VERSION"
-            TAGS="$TAGS,ghcr.io/$GITHUB_REPOSITORY:$MINOR,makersquad/harp-proxy:$MINOR"
-            TAGS="$TAGS,ghcr.io/$GITHUB_REPOSITORY:$MAJOR,makersquad/harp-proxy:$MAJOR"
-            # `latest` tracks the most recent mainline stable release (pre-releases are excluded by
-            # the branch above). Previously pinned to 0.9.x, which would have frozen `latest` at 0.9.
-            TAGS="$TAGS,makersquad/harp-proxy:latest"
-            echo "Docker tags (mainline): $TAGS"
-          else
-            # Pre-release (e.g., 0.9.0-rc1) - only exact tag
-            TAGS="ghcr.io/$GITHUB_REPOSITORY:$VERSION,makersquad/harp-proxy:$VERSION"
-            echo "Docker tags (pre-release): $TAGS"
-          fi
+          # The moving tags (`X`, `latest`) only follow the highest stable version, see bin/docker_tags.py
+          TAGS=$(python3 bin/docker_tags.py "$GITHUB_REF_NAME" "$GITHUB_REPOSITORY" $(git tag))
+          echo "Docker tags: $TAGS"
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
