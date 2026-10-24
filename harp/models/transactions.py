@@ -31,6 +31,8 @@ def encode_cache_flag(cached) -> str | None:
 
 @dataclasses.dataclass(kw_only=True)
 class Transaction(Entity):
+    """An HTTP transaction, as stored and as sent to the dashboard."""
+
     id: str = None
     """Unique identifier for this transaction."""
 
@@ -67,6 +69,11 @@ class Transaction(Entity):
 
     # Which header and query parameter values are replaced by a placeholder before anything is stored
     redaction: Redaction = dataclasses.field(default_factory=Redaction)
+
+    @classmethod
+    def _get_fields(cls, base_fields=True):
+        """Redaction rules are working state: kept out of the serialised form (dict and schema)."""
+        return [f for f in super()._get_fields(base_fields) if f.field.name != "redaction"]
 
     def as_storable_dict(self, /, *, with_messages=False, with_tags=False):
         """Create a dict that can be passed to a storage creation method."""

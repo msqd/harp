@@ -201,13 +201,30 @@ declare namespace Apps.Proxy {
      */
     enabled?: boolean;
     endpoints?: EndpointSettings[];
-    /**
-     * Seconds a client may stay silent in the middle of a request before the server closes its connection.
-     */
-    client_read_timeout?: number;
     max_recorded_body_size?: number;
+    client_read_timeout?: number;
     min_request_body_rate?: number;
     request_body_grace_period?: number;
+    trusted_proxies?: string[];
+    tags?: TagsSettings;
+  }
+  /**
+   * Bounds on the tags a client sets with ``x-harp-*`` request headers. A tag over a bound is dropped, never the
+   * request.
+   */
+  export interface TagsSettings {
+    max_count?: number;
+    max_name_length?: number;
+    max_value_length?: number;
+  }
+  /**
+   * Bounds on the tags a client sets with ``x-harp-*`` request headers. A tag over a bound is dropped, never the
+   * request.
+   */
+  export interface TagsSettings1 {
+    max_count?: number;
+    max_name_length?: number;
+    max_value_length?: number;
   }
   export interface BaseRemoteSettings {
     min_pool_size?: number;

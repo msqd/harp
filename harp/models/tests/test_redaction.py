@@ -1,3 +1,4 @@
+import json
 from datetime import UTC, datetime
 
 from multidict import CIMultiDict, MultiDict
@@ -41,6 +42,16 @@ class TestRedactionSet:
         transaction = _transaction()
         assert "redaction" not in transaction.as_storable_dict()
         assert "redaction" not in transaction._asdict()
+
+    def test_dashboard_dict_is_json_serialisable_without_redaction(self):
+        data = _transaction().to_dict()
+        assert "redaction" not in data
+        json.dumps(data)
+
+    def test_json_schema_is_json_serialisable_without_redaction(self):
+        schema = Transaction.json_schema()
+        assert "redaction" not in schema["properties"]
+        json.dumps(schema)
 
 
 class TestRequestSerializer:
