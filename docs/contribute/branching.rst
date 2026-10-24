@@ -52,8 +52,11 @@ A security fix is not public until the patch release is. Do not follow the flow 
    public branch or pull request.
 3. CI cannot run in a temporary private fork, so its pull requests never get the required ``All Checks
    Passed``. Test the fix locally before merging. On release day, a repository admin merges them from the
-   advisory page using the admin bypass (see `Branch protection`_), then waits for CI on ``main`` and the
-   version lines.
+   advisory page (**Merge pull requests**), one advisory at a time, then waits for CI on ``main`` and the
+   version lines. The advisory page does not count as a pull request merge for the ruleset: switch the
+   admin bypass to *Always* for the merges, then back to *For pull requests only* (see `Branch protection`_).
+   A fix stacked on another advisory's fix merges after it, and anything merged meanwhile can turn its pull
+   requests into conflicts: resolve them in the fork by merging the base branch, never by a rebase.
 4. Patch releases are cut as in :doc:`release/python`, then the advisory is published with them, crediting
    the reporter.
 5. The ``security`` changelog fragment (``changelog.d/<issue>.security.rst``) states only that a
@@ -64,8 +67,8 @@ Branch protection
 
 One repository ruleset, *Protected branches*, covers ``main`` and every version line (``0.*``). Changes need a
 pull request with a green ``All Checks Passed``; force pushes and deletions are refused. Repository admins may
-bypass it for pull requests only: they can merge a pull request whose checks cannot run, such as a security
-advisory's, but cannot push directly.
+bypass it for pull requests only: they can merge a pull request whose checks cannot run, but cannot push
+directly. Merging a security advisory's fixes needs the bypass set to *Always* for the duration of the merges.
 
 Documentation versions
 ::::::::::::::::::::::
