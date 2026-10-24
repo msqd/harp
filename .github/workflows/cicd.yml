@@ -159,6 +159,86 @@ jobs:
       - name: zizmor (if this fails, run `uvx zizmor@1.14.2 --offline .github` locally)
         run: uvx zizmor@1.14.2 --offline .github
 
+  # Fails a pull request that adds a dependency with a high or critical advisory (runtime scope only).
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      # Only meaningful on a pull request (needs a base to diff against); a step-level condition keeps the
+      # job green on pushes, so the gate can require it unconditionally.
+      - name: Review dependency changes
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          fail-on-scopes: runtime
+
+  # Fails on any known advisory in the locked Python dependencies (dev tools included).
+  audit-python:
+    name: Audit uv.lock
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+
+      - name: Export locked requirements
+        run: uv export --frozen --all-extras --all-groups --no-emit-project --format requirements-txt -o "$RUNNER_TEMP/requirements.txt"
+
+      - name: pip-audit (if this fails, bump the vulnerable pin and run `uv lock`)
+        run: uvx pip-audit==2.9.0 --disable-pip --no-deps --strict -r "$RUNNER_TEMP/requirements.txt"
+
+  # Fails on any high or critical advisory in the locked frontend dependencies.
+  audit-frontend:
+    name: Audit pnpm-lock.yaml
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        with:
+          version: 10
+
+      - name: pnpm audit (if this fails, bump the vulnerable package and refresh pnpm-lock.yaml)
+        run: cd harp_apps/dashboard/frontend && pnpm audit --audit-level high
+
+  # Fails when a secret is committed: the same hooks as `pre-commit`, pinned to SHAs in .pre-commit-config.yaml.
+  pre-commit:
+    name: Pre-commit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+
+      - name: pre-commit (if this fails, run `uvx pre-commit run --all-files` locally)
+        run: uvx pre-commit==4.3.0 run --all-files --show-diff-on-failure
+
   test-backend-core:
     name: Test Backend Core (Py${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -574,6 +654,10 @@ jobs:
       - lint-frontend
       - check-types
       - lint-workflows
+      - dependency-review
+      - audit-python
+      - audit-frontend
+      - pre-commit
       - build-documentation
       - build-storybook
     # always() so a failed need fails the gate instead of skipping it (a skipped required check passes)
@@ -615,6 +699,12 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+
+      - name: Export uv.lock as the image constraints
+        run: uv run --locked --no-dev python bin/check_docker_lock.py export > dist/constraints.txt
 
       - name: Determine version and tags
         id: meta
@@ -671,6 +761,11 @@ jobs:
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
         run: bin/smoke_docker_image "${TAGS%%,*}"
+
+      - name: Image ships exactly uv.lock
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: uv run --locked --no-dev python bin/check_docker_lock.py check "${TAGS%%,*}"
 
       - name: Push the tested Docker image
         if: steps.meta.outputs.push == 'true'
@@ -744,6 +839,12 @@ jobs:
           name: python-package-distributions
           path: dist/
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+
+      - name: Export uv.lock as the image constraints
+        run: uv run --locked --no-dev python bin/check_docker_lock.py export > dist/constraints.txt
+
       - name: Determine version and tags
         id: meta
         run: |
@@ -798,6 +899,11 @@ jobs:
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
         run: bin/smoke_docker_image "${TAGS%%,*}"
+
+      - name: Image ships exactly uv.lock
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: uv run --locked --no-dev python bin/check_docker_lock.py check "${TAGS%%,*}"
 
       - name: Push the tested Docker image
         env:

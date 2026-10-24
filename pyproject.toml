@@ -28,7 +28,6 @@ dependencies = [
     # Any other narrower cap carries a comment naming the regression.
     "aiosqlite>=0.20,<0.22",
     "alembic>=1.17,<2",
-    "asgi-prometheus>=1.2,<2",
     "asgimiddlewarestaticfile>=0.6,<0.7",
     "asgiref>=3.10,<3.13",
     # Not imported directly (httpx's trust store). Floor: older bundles trust compromised eMudhra intermediates, see #1405.
@@ -127,6 +126,8 @@ dev = [
 default-groups = ["dev"]
 # Keep in sync with the cooldown in .github/dependabot.yml
 exclude-newer = "3 days"
+# GHSA-cx6f-vjhg-g3cc: 21.14.9 to 21.14.12 are vulnerable, 21.14.13 is the fix. Drop once it is 3 days old.
+exclude-newer-package = { virtualenv = false }
 # First uv that reads a relative exclude-newer is 0.9.17 (bisected with `uv lock --check`).
 # Older uv cannot even parse this table, so this line documents the floor more than it enforces it.
 required-version = ">=0.9.17"

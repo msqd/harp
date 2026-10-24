@@ -47,5 +47,3 @@ Security
 - Lock upgraded to the fixed release of every open Dependabot advisory except asyncmy (no fix, documented, use aiomysql); ``pytest`` cap widened to ``<10`` and ``pytest-asyncio`` to ``<1.4``. (#1012)
 - Dashboard user passwords (``dashboard.auth.users.<name>.password``) are masked by ``harp-proxy system config`` and ``GET /api/system/settings``, whatever the hashing algorithm. ``--unsecure`` still shows them.
 - URL passwords are masked when the username is empty (``redis://:password@host``).
-
-
