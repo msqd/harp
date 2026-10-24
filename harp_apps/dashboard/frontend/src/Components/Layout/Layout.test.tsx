@@ -1,4 +1,4 @@
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter } from "react-router"
 import { expect, it } from "vitest"
 
 import { renderWithClient } from "tests/utils"

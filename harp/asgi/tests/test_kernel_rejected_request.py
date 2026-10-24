@@ -12,7 +12,7 @@ from harp.utils.network import get_available_network_port, wait_for_port
 from harp.utils.testing.communicators import ASGICommunicator
 
 
-async def _call(kernel, raw_path: bytes) -> dict:
+async def _call(kernel, raw_path: bytes, query_string: bytes = b"") -> dict:
     scope = {
         "type": "http",
         "http_version": "2",
@@ -20,7 +20,7 @@ async def _call(kernel, raw_path: bytes) -> dict:
         "scheme": "http",
         "path": "/",
         "raw_path": raw_path,
-        "query_string": b"",
+        "query_string": query_string,
         "headers": [],
         "server": ("localhost", 80),
     }
@@ -46,6 +46,11 @@ class TestKernelRejectedRequest:
     @pytest.mark.asyncio
     async def test_non_utf8_path_gets_400_then_next_request_is_served(self, kernel):
         assert (await _call(kernel, b"/\xff"))["status"] == 400
+        assert (await _call(kernel, b"/"))["status"] == 404
+
+    @pytest.mark.asyncio
+    async def test_non_utf8_query_gets_400_then_next_request_is_served(self, kernel):
+        assert (await _call(kernel, b"/", b"a=\xff"))["status"] == 400
         assert (await _call(kernel, b"/"))["status"] == 404
 
 

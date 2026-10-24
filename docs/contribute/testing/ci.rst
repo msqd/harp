@@ -146,7 +146,7 @@ Tests run directly on the GitHub Actions runner using ``uv``:
 .. code-block:: bash
 
     # Install uv
-    uses: astral-sh/setup-uv@v4
+    uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
 
     # Create required directories
     mkdir -p harp_apps/dashboard/web
@@ -385,6 +385,13 @@ Different jobs run based on push type:
 **Release images** (``build-docker-image-release``):
   * Only after PyPI publish succeeds
   * Installs from PyPI, not local wheel
+
+Supply chain
+^^^^^^^^^^^^
+
+* Every third-party action is pinned to a full commit SHA, with its version as a trailing comment. Never use a tag or a branch.
+* Dependabot (``.github/dependabot.yml``) bumps ``uv``, ``npm``, ``github-actions`` and ``docker`` dependencies, including the pinned SHAs.
+* A new release waits 3 days before being adopted: the Dependabot ``cooldown``, ``exclude-newer`` in ``pyproject.toml`` (uv) and ``minimum-release-age`` in ``harp_apps/dashboard/frontend/.npmrc`` (pnpm). Keep the three in sync.
 
 Further reading
 ---------------

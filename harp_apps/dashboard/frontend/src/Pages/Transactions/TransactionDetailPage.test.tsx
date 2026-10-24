@@ -1,5 +1,5 @@
 import { fireEvent } from "@testing-library/react"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { MemoryRouter, Route, Routes } from "react-router"
 import { expect, it, vi } from "vitest"
 
 import { renderWithClient } from "tests/utils"

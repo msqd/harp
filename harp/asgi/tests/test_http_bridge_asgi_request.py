@@ -211,3 +211,13 @@ class TestHttpRequestAsgiBridgeInvalidPath(BaseHttpRequestAsgiBridgeTest):
             bridge.get_path()
 
         assert exc_info.value.status == 400
+
+
+class TestHttpRequestAsgiBridgeInvalidQuery(BaseHttpRequestAsgiBridgeTest):
+    def test_non_utf8_query_string_is_rejected_as_bad_request(self):
+        bridge = self.create_bridge(query_string=b"a=\xff")
+
+        with pytest.raises(RejectedRequest) as exc_info:
+            bridge.get_query()
+
+        assert exc_info.value.status == 400

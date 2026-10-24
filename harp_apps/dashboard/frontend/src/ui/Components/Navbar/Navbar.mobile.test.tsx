@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react"
 import { AriaAttributes, ReactNode } from "react"
-import { To } from "react-router-dom"
+import { To } from "react-router"
 import { describe, expect, it } from "vitest"
 
 import { Navbar } from "./Navbar"
