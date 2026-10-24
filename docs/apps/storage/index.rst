@@ -18,6 +18,7 @@ The ``harp_apps.storage`` application implements various storage systems for you
     :maxdepth: 1
 
     Transaction Markers <markers>
+    Redaction <redaction>
     Services <services>
     Settings <settings>
     Internals </reference/apps/harp_apps.storage>

@@ -161,7 +161,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         except ClientDisconnected:
             # The client left mid-body: record what arrived. The proxy ends the transaction on its own.
             event.transaction.markers.add(CLIENT_DISCONNECTED)
-        serializer = get_serializer_for(event.message)
+        serializer = get_serializer_for(event.message, event.transaction.redaction)
 
         message_data = {
             "transaction_id": event.transaction.id,
