@@ -23,6 +23,7 @@ Prefix          Cause                                           Markers
 ``shed-``       Storage dropped data under pressure             ``shed-messages``, ``shed-headers``, ``shed-bodies``
 ``truncated-``  A recording cap cut the data                    ``truncated-request-body``, ``truncated-response-body``
 ``client-``     The client went away                            ``client-disconnected``
+``no-store-``   A ``Cache-Control: no-store`` suppressed it     ``no-store-request``, ``no-store-response``
 ==============  ==============================================  ==========================================================
 
 The storage worker sets the ``shed-`` markers when it drops the messages, headers or bodies of a transaction because
@@ -129,6 +130,29 @@ with the response body read until then, and ends when the client left. The dashb
 
 It is also set when the client goes away before the end of its request body: nothing is sent upstream, since the
 request is incomplete, and the transaction is recorded as a ``400`` error.
+
+No-store Markers
+----------------
+
+``no-store-request``
+~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 0.13
+
+Set by the storage worker when the request carries ``Cache-Control: no-store``. Neither the headers nor the body of
+the request, nor of its response, are stored: it sets ``no-store-response`` too. The transaction and both message
+rows are still recorded, with their summaries.
+
+``no-store-response``
+~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 0.13
+
+Set by the storage worker when the response carries ``Cache-Control: no-store``, or when the request did. The headers
+and the body of the response are not stored; the request is recorded normally when only the response asked.
+
+These markers tell a payload suppressed on purpose from one shed under load (``shed-``). HARP does not currently
+provide a way to override them. See :ref:`what-harp-retains`.
 
 Message Storage Markers
 -----------------------
