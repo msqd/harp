@@ -28,7 +28,7 @@ def development_only_settings(config: GlobalSettings) -> list[DevelopmentOnlySet
         found.append(
             DevelopmentOnlySetting(
                 "storage.url",
-                "SQLite storage is meant for development: use PostgreSQL (or MySQL) in production.",
+                "SQLite storage is meant for development: use PostgreSQL in production.",
             )
         )
 

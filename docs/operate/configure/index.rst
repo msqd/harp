@@ -218,7 +218,7 @@ Development-only Settings
 At startup, HARP logs one ``WARNING`` per setting that suits a laptop but not production, naming the setting and what
 to use instead:
 
-- ``storage.url`` pointing to SQLite, file or ``:memory:``, which is also the default: use PostgreSQL (or MySQL).
+- ``storage.url`` pointing to SQLite, file or ``:memory:``, which is also the default: use PostgreSQL.
 - ``dashboard.auth.type: none``: use ``dashboard.auth.type: basic``. A missing ``dashboard.auth`` is not one, the
   dashboard then generates a password.
 - ``HARP_DEBUG`` (or the deprecated ``DEBUG``) enabling :ref:`debug mode <configure-debug-mode>`: leave it unset.
