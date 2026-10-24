@@ -1,21 +1,19 @@
+import traceback
 from inspect import signature
 from typing import Optional
 
 from http_router import NotFoundError, Router
 from http_router.types import TMethodsArg, TPath
-from rich.console import Console
-from rich.traceback import Traceback
+import orjson
 
+import harp
+from harp import get_logger
 from harp.http import HttpRequest, HttpResponse
 from harp.meta import get_meta, has_meta, set_meta
 from harp.utils.arguments import Arguments
 
 
-def get_exception_traceback_str(exc):
-    console = Console(record=True)
-    traceback = Traceback.from_exception(type(exc), exc, exc.__traceback__)
-    console.print(traceback)
-    return console.export_html()
+logger = get_logger(__name__)
 
 
 class RoutingController:
@@ -66,11 +64,12 @@ class RoutingController:
             return self.handle_error(exc)
 
     def handle_error(self, exc, *, status=500):
-        return HttpResponse(
-            f"<h1>{type(exc).__name__}</h1><h2>Stack trace</h2>{get_exception_traceback_str(exc)}",
-            status=status,
-            content_type="text/html",
-        )
+        if status >= 500:
+            logger.exception("Unhandled error in controller.", exc_info=exc)
+        body = {"error": type(exc).__name__, "status": status}
+        if harp.DEBUG:
+            body["traceback"] = "".join(traceback.format_exception(exc))
+        return HttpResponse(orjson.dumps(body), status=status, content_type="application/json")
 
 
 def RouterPrefix(prefix):
