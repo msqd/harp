@@ -27,6 +27,9 @@ DEFAULT_MIN_REQUEST_BODY_RATE = 1024
 #: Seconds during which a request body is not held to the minimum rate.
 DEFAULT_REQUEST_BODY_GRACE_PERIOD = 10.0
 
+#: Largest request body, in bytes, a proxy endpoint accepts: 100 MiB.
+DEFAULT_MAX_REQUEST_BODY_SIZE = 100 * 1024 * 1024
+
 #: Force environment override (dev or prod)
 HARP_ENV = environ.pop("HARP_ENV", None)
 if HARP_ENV is not None:

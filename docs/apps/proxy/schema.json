@@ -114,6 +114,13 @@
           "anyOf": [{ "type": "string" }, { "type": "null" }],
           "default": null
         },
+        "max_request_body_size": {
+          "anyOf": [
+            { "gt": 0, "minimum": 0, "type": "integer" },
+            { "type": "null" }
+          ],
+          "default": null
+        },
         "remote": {
           "anyOf": [{ "$ref": "#/$defs/RemoteSettings" }, { "type": "null" }],
           "default": null
@@ -253,6 +260,12 @@
         },
         "max_recorded_body_size": {
           "default": 1048576,
+          "gt": 0,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max_request_body_size": {
+          "default": 104857600,
           "gt": 0,
           "minimum": 0,
           "type": "integer"

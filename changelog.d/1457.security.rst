@@ -1,0 +1,1 @@
+A request body larger than `proxy.max_request_body_size` (100 MiB by default, overridable per endpoint) is answered 413 and never forwarded upstream: before reading it when the declared `Content-Length` is above the cap, as soon as it crosses the cap when chunked.

@@ -60,6 +60,7 @@ async def on_bound(event: OnBoundEvent):
             name=name,
             dispatcher=event.dispatcher,
             max_recorded_body_size=proxy.settings.max_recorded_body_size,
+            max_request_body_size=endpoint.settings.max_request_body_size or proxy.settings.max_request_body_size,
             min_request_body_rate=proxy.settings.min_request_body_rate,
             request_body_grace_period=proxy.settings.request_body_grace_period,
             client_read_timeout=proxy.settings.client_read_timeout,
