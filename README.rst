@@ -1,5 +1,9 @@
-HARP, the HTTP API Runtime Platform
-===================================
+HARP, the HTTP API Runtime Proxy
+================================
+
+HARP is an open-source proxy that sits between your application and the HTTP APIs it calls. It adds caching, a circuit
+breaker, a rules engine and a searchable record of the traffic, without changes to your code other than the base URL.
+It runs in your infrastructure, next to your application.
 
 HARP is an open-source API Proxy toolkit designed to improve the reliability, performance, security, and observability
 of the APIs you use. It runs in your infrastructure, close to your applications.
@@ -26,13 +30,6 @@ of the APIs you use. It runs in your infrastructure, close to your applications.
 
 ----
 
-**Quick links:** `Documentation <https://docs.harp-project.net/en/latest/>`_
-| `Getting Started <https://docs.harp-project.net/en/latest/start/index.html>`_
-| `Install (Docker) <https://docs.harp-project.net/en/latest/start/docker.html>`_
-| `Install (PIP) <https://docs.harp-project.net/en/latest/start/python.html>`_
-| `Repository (Git) <https://github.com/msqd/harp>`_
-| `CI/CD <https://github.com/msqd/harp/actions/workflows/cicd.yml>`_
-
 **Community**: |badge_list| |badge_discord| |badge_contributors|
 
 .. |badge_list| image:: https://img.shields.io/badge/Subscribe_to_release_announcements-085E9F?logo=maildotru
@@ -47,170 +44,95 @@ of the APIs you use. It runs in your infrastructure, close to your applications.
     :target: https://github.com/msqd/harp/graphs/contributors
     :alt: All Contributors
 
+What it is, and what it is not
+::::::::::::::::::::::::::::::
 
-*HARP is used both in development and production, and it works well for us. However, it is still under heavy active
-development and some features may not be as polished as you expect, and some APIs may change.*
+HARP is a forward proxy for outgoing HTTP calls, written in Python. You point your application at HARP instead of at the
+remote API, and HARP forwards the request. Along the way it can answer from its cache, stop sending traffic to a
+failing server, apply your own rules, and record the exchange so you can look at it in a dashboard.
 
-*We are actively looking for feedback, please reach out with your thoughts, ideas, rants or issues. We can help.*
+.. figure:: https://github.com/msqd/harp/raw/main/docs/images/diagrams/how-it-works-overview.svg
+    :alt: Your applications call HARP, which calls the external APIs
 
+HARP is released as ``0.x`` and is used by its authors in development and in production. Some features are less
+polished than others and some APIs may still change between minor versions: the rules engine, for one, is documented as
+a preview. The `upgrade guide <https://docs.harp-project.net/en/stable/operate/upgrading.html>`_ covers moving to a
+new version.
 
-What is HARP?
-:::::::::::::
+Two limits to know before relying on it:
 
-HARP is a python-based framework to build API proxies. From no-configuration 1 minute start to try it locally with an in
-memory database to a full production ready proxy with multiple storage backends and custom filtering, it got you
-covered.
+* **Recording is best-effort.** Under load HARP sheds message detail first, then whole transactions, instead of slowing
+  your traffic down. Treat the transaction record as an operational view, not as a complete account. The `storage
+  documentation <https://docs.harp-project.net/en/stable/apps/storage/>`_ gives the measured capacity and the memory it
+  needs.
+* **PostgreSQL is the production database.** The default SQLite storage lives in memory and is for development. MySQL
+  and MariaDB are deprecated.
 
-The main goal is to improve the performance, reliability, security, and observability of the APIs you already use,
-without changing anything except the base URL of your API calls. Ultimately, you can use HARP to "fix the Internet," or
-at least the subset your application depends on.
+What you get
+::::::::::::
 
-Out of the box, you'll get standard-compliant caching (based on `hishel <https://hishel.com/>`_), a world class http
-client (based on `httpx <https://www.python-httpx.org/>`_), a `circuit breaker
-<https://docs.harp-project.net/en/latest/features/circuit-breaker.html>`_, a `python-based rules engine
-<https://docs.harp-project.net/en/latest/features/rules.html>`_, an audit log and an `observation dashboard
-<https://docs.harp-project.net/en/latest/features/dashboard.html>`_. The `features guide
-<https://docs.harp-project.net/en/latest/features/index.html>`_ will tell you more.
+* `Caching <https://docs.harp-project.net/en/stable/features/caching.html>`_ that follows HTTP caching headers (RFC 9111).
+* A `circuit breaker <https://docs.harp-project.net/en/stable/features/circuit-breaker.html>`_ with pools of remote URLs
+  and health probes.
+* A `rules engine <https://docs.harp-project.net/en/stable/features/rules.html>`_ (preview) to change requests and
+  responses with small Python scripts.
+* An `audit log <https://docs.harp-project.net/en/stable/features/auditlog.html>`_ of the transactions, shown in a
+  `dashboard <https://docs.harp-project.net/en/stable/features/dashboard.html>`_ protected by a login.
+* `Prometheus metrics <https://docs.harp-project.net/en/stable/operate/prometheus.html>`_, when enabled.
 
-.. figure:: https://docs.harp-project.net/en/latest/_images/overview.png
-    :alt: HARP Overview
-    :align: center
+.. figure:: https://github.com/msqd/harp/raw/main/docs/user/images/transactions.png
+    :alt: The transactions list of the HARP dashboard
 
-To instantly get insights on how your application is interacting with external services, you get a searchable
-transaction record, with detailed information on each recorded request and response. Recording is best-effort: under
-load HARP sheds detail rather than slowing your traffic down, so treat it as an operational view rather than a
-complete one.
+Try it
+::::::
 
-.. figure:: https://docs.harp-project.net/en/latest/_images/transactions.png
-    :alt: HARP Transactions
-    :align: center
-
-No more doubts about what happened. Now, you ***know***.
-
-`Discover all HARP features <https://docs.harp-project.net/en/latest/features/index.html>`_
-
-
-Getting Started
-:::::::::::::::
-
-The quickest way to try HARP is using `uvx <https://docs.astral.sh/uv/>`_:
+You need `uv <https://docs.astral.sh/uv/getting-started/installation/>`_, which also fetches the Python 3.13 that HARP
+requires. Start a proxy to `httpbin.org <http://httpbin.org>`_ on port 4000, with the dashboard on port 4080:
 
 .. code-block:: bash
 
-    # Run HARP directly with uvx
-    uvx harp-proxy --help
+    uvx harp-proxy server --endpoint httpbin=4000:http://httpbin.org
 
-    # Start a proxy with example configuration
-    uvx harp-proxy server --example sqlite --example proxy:httpbin
+The dashboard asks for a login. HARP prints a generated password for the ``admin`` user in its output, on a line that
+starts with ``Dashboard login``. It changes at every start.
 
-For more installation options:
+In another terminal, send a few requests through the proxy:
 
-* **Quick & Easy:** Use ``uvx`` (shown above) - runs without installing HARP globally
-* **Traditional Python:** ``pip install harp-proxy`` - for standard Python environments
-* **Containerized:** `Docker <https://docs.harp-project.net/en/latest/start/docker.html>`_ - for production deployments
-* **From Source:** `Development setup <https://docs.harp-project.net/en/latest/start/sources.html>`_ - for contributing
+.. code-block:: bash
 
-Refer to the `Getting Started Guide <https://docs.harp-project.net/en/latest/start/index.html>`_ for detailed instructions.
+    curl "http://localhost:4000/get"
+    curl -X POST "http://localhost:4000/post"
 
+Then open http://localhost:4080 and go to the *Transactions* tab.
 
-How it works?
-:::::::::::::
+With Docker, the same thing is:
 
-Overview
---------
+.. code-block:: bash
 
-.. figure:: https://github.com/msqd/harp/raw/main/docs/images/diagrams/how-it-works-overview.svg
-    :alt: An overview of how HARP works in your system
-    :align: center
+    docker run --init -it --rm -p 4000-4100:4000-4100 makersquad/harp-proxy server --endpoint httpbin=4000:http://httpbin.org
 
-* **Easy Integration:** Integrating with your application is a breeze, because it speaks the same language you already
-  use: HTTP. Simply run the proxy, update your API endpoints, and you're ready to go. No complex setup or extensive
-  configuration required. Of course, everything is modular and configurable, so you'll be able to fine-tune for your
-  taste later.
-* **Reduced Network Distance:** As a *nearline* proxy, HARP minimizes the network distance between your application
-  and external services, when possible, using standard techniques like caching. This leads to faster
-  response times and improved overall performance of your application, even before any configuration is done.
-* **Simplified Development:** HARP eliminates the need for writing extensive code for functionalities such as caching,
-  monitoring, circuit breaking, logging, and more. These features can be easily delegated to the proxy, reducing the
-  amount of code you need to write and maintain.
-* **Seamless HTTP Integration:** HARP seamlessly integrates with your application using the HTTP protocol. This means
-  that the integration or removal cost is virtually zero, or even negative when considering the reduction in code you
-  won't need to write.
+The proxy and the dashboard use the same ports, and the generated password is printed in the container output.
 
-`Read the full documentation <https://docs.harp-project.net/en/latest/>`_
+Where to go next
+::::::::::::::::
 
+The documentation is at https://docs.harp-project.net/en/stable/.
 
-Hub to external services
-------------------------
+* `Quick start <https://docs.harp-project.net/en/stable/start/quick.html>`_: the first run, explained, and how to read
+  the dashboard.
+* `Run it in Docker <https://docs.harp-project.net/en/stable/start/docker.html>`_: image tags, a configuration file and
+  Docker Compose.
+* `Operate it in production <https://docs.harp-project.net/en/stable/operate/>`_: configuration, PostgreSQL, logging,
+  metrics, upgrades.
+* `Explore the features <https://docs.harp-project.net/en/stable/features/>`_: caching, circuit breaker, rules, audit
+  log, one page each.
+* `Extend it <https://docs.harp-project.net/en/stable/develop/>`_: write your own applications and customize the proxy.
+* `Contribute <https://docs.harp-project.net/en/stable/contribute/>`_: set up the sources, the architecture and how to
+  send a change.
 
-.. figure:: https://github.com/msqd/harp/raw/main/docs/images/diagrams/how-it-works-multiple-apps.svg
-    :alt: An overview of how HARP works in your system when you have multiple consumers
-    :align: center
-
-* **Mutualize Client Logic**: Having n API consumers does not mean you have to implement n times each client-side
-  feature. Use HARP as a hub and greatly reduce the amount of client code you need to write and maintain.
-* **Observes and Controls**: You get a central place to observe and control all your API interactions.
-* **Grow and Scale**: As your company grows and develop new applications, you can leverage the work done on existing
-  external services without having to write a single new line of code.
-
-
-Service
--------
-
-Within the service, harp runs one or more proxies, each one listening to one port to instrument your external API calls
-with the features you need (auditing, caching, circuit breaker, health checks, etc.).
-
-Each proxy is configured to intercept and forward requests to a specific external API, with independent configuration.
-
-An additional (optional) port serves a dashboard to observe your proxies in real-time.
-
-.. figure:: https://github.com/msqd/harp/raw/main/docs/images/diagrams/how-it-works-service.svg
-    :alt: What happens within the harp service
-    :align: center
-
-* **Features**: Harp comes builtin with a set of industry-standard client side features that you can leverage with a few
-  lines of configuration.
-* **Flexibility**: Each feature is optional, and it's up to you to chose the setup that fits your needs.
-* **Customizable**: You can write code to extend the proxy features, using the same interface as all the builtin
-  features. It guarantees that you can basically implement pretty much anything that make sense inbetween your
-  applications and the external services.
-
-
-Proxy
------
-
-As an HTTP Proxy, HARP does not change anything to the way you communicate with the external services. You were speaking
-HTTP before, you will still speak HTTP. The only change needed in your applications configuration to plug or unplug HARP
-is the base endpoint of the external services. In a modern 12factor-like application, it usually only means changing an
-environment variable.
-
-.. figure:: https://github.com/msqd/harp/raw/main/docs/images/diagrams/how-it-works-proxy.svg
-    :alt: What happens within one proxy
-    :align: center
-
-* **Reversibility**: By requiring 0 code change on your application side (except endpoint url configuration, that
-  should be outside the code if you follow the 12factor principles), HARP can be plugged and unplugged at a very low
-  cost. You have absolutely no vendor lock-in.
-* **Sidecar**: Harp runs in your infrastructure, implementing the client side features right next to your application.
-  The service is fast, and the minimum network distance between your application and the proxy makes it even faster.
-* **Open Core**: Harp is an open software. The core and reference implementation of the proxy is open source, and you
-  can extend it to fit your needs.
-
-Proxy features
---------------
-
-Here is a non-exhaustive list of HARP features:
-
-* `Configuration <https://docs.harp-project.net/en/latest/features/configuration.html>`_
-* `Dashboard <https://docs.harp-project.net/en/latest/features/dashboard.html>`_
-* `Proxy <https://docs.harp-project.net/en/latest/features/proxy.html>`_
-* `Audit Log <https://docs.harp-project.net/en/latest/features/auditlog.html>`_
-* `Caching <https://docs.harp-project.net/en/latest/features/caching.html>`_
-* `Circuit Breaker <https://docs.harp-project.net/en/latest/features/circuit-breaker.html>`_
-* `Rules Engine <https://docs.harp-project.net/en/latest/features/rules.html>`_
-
-You can `read more about all HARP features <https://docs.harp-project.net/en/latest/features/index.html>`_ in the
-`Features Guide <https://docs.harp-project.net/en/latest/features/index.html>`_.
+HARP Community Edition is licensed under the LGPL 3.0 or later, see `LICENSE.rst
+<https://github.com/msqd/harp/blob/main/LICENSE.rst>`_. To report a vulnerability, see `SECURITY.md
+<https://github.com/msqd/harp/blob/main/SECURITY.md>`_.
 
 
 People & Credits
