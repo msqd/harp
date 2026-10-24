@@ -18,15 +18,28 @@ async def on_bind(event: OnBindEvent):
     event.dispatcher.add_listener(EVENT_PROXY_ERROR, on_proxy_error)
 
 
+def init_sentry(dsn: str, **options):
+    import sentry_sdk
+    from sentry_sdk.integrations.argv import ArgvIntegration
+
+    sentry_sdk.init(
+        dsn=dsn,
+        traces_sample_rate=1.0,
+        # Secrets travel on the command line (--set storage.url=...) and in local variables of failing frames.
+        disabled_integrations=[ArgvIntegration()],
+        include_local_variables=False,
+        **options,
+    )
+
+
 async def on_ready(event: OnReadyEvent):
     settings = event.provider.get(SentrySettings)
     if not settings.dsn:
         return
 
-    import sentry_sdk
     from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
-    sentry_sdk.init(dsn=settings.dsn, traces_sample_rate=1.0)
+    init_sentry(settings.dsn)
     event.asgi_app = SentryAsgiMiddleware(event.asgi_app)
 
 
