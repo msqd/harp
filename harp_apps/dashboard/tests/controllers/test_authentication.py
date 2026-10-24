@@ -1,9 +1,12 @@
 import asyncio
+import logging
+import threading
 from base64 import b64encode
 from typing import cast
 from unittest.mock import AsyncMock, Mock
 
 from httpx import AsyncClient
+from passlib.hash import pbkdf2_sha256
 
 from harp.config.asdict import asdict
 from harp.http import HttpRequest
@@ -64,6 +67,101 @@ async def test_create_users_task_is_retained():
         )
     )
     assert isinstance(controller._create_users_task, asyncio.Task)
+
+
+class _VerifySpy:
+    """Stands in for the algorithm implementation, recording the threads it runs on."""
+
+    def __init__(self, result=True):
+        self.result = result
+        self.threads = []
+
+    def __call__(self, password, hashed):
+        self.threads.append(threading.get_ident())
+        return self.result
+
+
+def _hashed_controller_settings(users=None):
+    return DashboardSettings(
+        auth=BasicAuthSettings(
+            type="basic",
+            algorithm="pbkdf2_sha256",
+            users=users or {"admin": User(password=pbkdf2_sha256.hash("admin"))},
+        ),
+        devserver={"enabled": True, "port": 5173},
+    )
+
+
+async def test_password_check_runs_off_the_event_loop(monkeypatch):
+    controller = await _create_mock_controller(settings=_hashed_controller_settings())
+    spy = _VerifySpy()
+    monkeypatch.setattr(BasicAuthSettings, "algorithm_impl", spy)
+
+    response = await controller(HttpRequest(headers=_get_auth_headers("admin", "admin")), AsyncMock())
+
+    assert response.status == 404
+    assert spy.threads and threading.get_ident() not in spy.threads
+
+
+async def test_successful_check_is_cached(monkeypatch):
+    controller = await _create_mock_controller(settings=_hashed_controller_settings())
+    spy = _VerifySpy()
+    monkeypatch.setattr(BasicAuthSettings, "algorithm_impl", spy)
+
+    for _ in range(3):
+        response = await controller(HttpRequest(headers=_get_auth_headers("admin", "admin")), AsyncMock())
+        assert response.status == 404
+
+    assert len(spy.threads) == 1
+
+
+async def test_cached_check_expires(monkeypatch):
+    controller = await _create_mock_controller(settings=_hashed_controller_settings())
+    spy = _VerifySpy()
+    monkeypatch.setattr(BasicAuthSettings, "algorithm_impl", spy)
+    now = [1000.0]
+    monkeypatch.setattr("harp_apps.dashboard.settings.auth.monotonic", lambda: now[0])
+
+    await controller(HttpRequest(headers=_get_auth_headers("admin", "admin")), AsyncMock())
+    now[0] += 3600
+    await controller(HttpRequest(headers=_get_auth_headers("admin", "admin")), AsyncMock())
+
+    assert len(spy.threads) == 2
+
+
+async def test_failed_check_is_not_cached(monkeypatch):
+    controller = await _create_mock_controller(settings=_hashed_controller_settings())
+    spy = _VerifySpy(result=False)
+    monkeypatch.setattr(BasicAuthSettings, "algorithm_impl", spy)
+
+    for _ in range(2):
+        response = await controller(HttpRequest(headers=_get_auth_headers("admin", "wrong")), AsyncMock())
+        assert response.status == 401
+
+    assert len(spy.threads) == 2
+
+
+async def test_unknown_user_pays_the_same_verification_as_a_wrong_password(monkeypatch):
+    controller = await _create_mock_controller(settings=_hashed_controller_settings())
+    spy = _VerifySpy(result=True)  # even a verifier that accepts everything must not let an unknown user in
+    monkeypatch.setattr(BasicAuthSettings, "algorithm_impl", spy)
+
+    response = await controller(HttpRequest(headers=_get_auth_headers("nobody", "whatever")), AsyncMock())
+
+    assert response.status == 401
+    assert len(spy.threads) == 1
+
+
+async def test_malformed_stored_hash_answers_401_and_logs(caplog):
+    caplog.set_level(logging.ERROR)
+    controller = await _create_mock_controller(
+        settings=_hashed_controller_settings(users={"admin": User(password="not-a-hash")})
+    )
+
+    response = await controller(HttpRequest(headers=_get_auth_headers("admin", "admin")), AsyncMock())
+
+    assert response.status == 401
+    assert "admin" in caplog.text and "hash" in caplog.text.lower()
 
 
 async def _create_mock_controller(settings: DashboardSettings = None):

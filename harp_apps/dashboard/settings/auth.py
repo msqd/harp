@@ -1,11 +1,20 @@
+import asyncio
+import hashlib
 from functools import cached_property
+from time import monotonic
 from typing import Annotated, Any, Literal
 
 from pydantic import BeforeValidator, Field, model_validator
 
+from harp import get_logger
 from harp.config import Configurable
 from harp.utils.config import yaml
 from harp_apps.dashboard.constants import TAlgorithm
+
+logger = get_logger(__name__)
+
+CHECK_CACHE_TTL = 60.0
+CHECK_CACHE_MAX_ENTRIES = 1024
 
 
 def _replace_plain_algorithm_for_bc(value):
@@ -57,20 +66,56 @@ class BasicAuthSettings(Configurable):
     ]
 
     @cached_property
+    def _algorithm_module(self):
+        return getattr(__import__("passlib.hash", fromlist=[self.algorithm]), self.algorithm)
+
+    @cached_property
     def algorithm_impl(self):
-        impl = __import__("passlib.hash", fromlist=[self.algorithm])
-        return getattr(impl, self.algorithm).verify
+        return self._algorithm_module.verify
+
+    @cached_property
+    def _dummy_hash(self):
+        """A valid hash for the configured algorithm, verified against when the user is unknown."""
+        return self._algorithm_module.hash("harp")
+
+    @cached_property
+    def _verified(self) -> dict[bytes, float]:
+        return {}
 
     def check(self, username, password):
+        """Blocking check (hashing is slow by design), prefer :meth:`acheck` from the event loop."""
         user = self.users.get(username)
+        stored = user.password if user else self._dummy_hash
 
-        if not user:
+        try:
+            matches = self.algorithm_impl(password, stored)
+        except ValueError:
+            logger.error(
+                f"Dashboard user «{username}» has a stored password that is not a valid {self.algorithm} hash, "
+                "authentication refused. Check dashboard.auth.users."
+            )
             return False
 
-        if not self.algorithm_impl(password, user.password):
+        if not user or not matches:
             return False
 
         return username
+
+    async def acheck(self, username, password):
+        """Same as :meth:`check`, without blocking the event loop. Successful checks are remembered for a while."""
+        key = hashlib.sha256(f"{len(username)}:{username}:{password}".encode()).digest()
+        now = monotonic()
+
+        if self._verified.get(key, 0) > now:
+            return username
+
+        result = await asyncio.to_thread(self.check, username, password)
+        if result:
+            for expired in [k for k, v in self._verified.items() if v <= now]:
+                del self._verified[expired]
+            if len(self._verified) < CHECK_CACHE_MAX_ENTRIES:
+                self._verified[key] = now + CHECK_CACHE_TTL
+        return result
 
     @model_validator(mode="before")
     @classmethod
