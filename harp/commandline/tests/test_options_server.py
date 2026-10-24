@@ -61,6 +61,19 @@ def test_server_commands_keep_equals_in_set_values(command, args):
 
 
 @pytest.mark.parametrize("command", [config_subcommand, server])
+@pytest.mark.parametrize(
+    "args",
+    [
+        ("--set=dashboard.port=8080",),
+        ("--set=storage.url=postgresql://host/db?sslmode=require",),
+    ],
+)
+def test_server_commands_accept_long_equals_form_of_set(command, args):
+    name, value = args[0].removeprefix("--set=").split("=", 1)
+    assert _call_command(command, *args)["options"] == ((name, value),)
+
+
+@pytest.mark.parametrize("command", [config_subcommand, server])
 def test_server_commands_render_rich_help(command):
     result = CliRunner().invoke(command, ["--help"])
 
