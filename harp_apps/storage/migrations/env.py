@@ -7,12 +7,24 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from harp import get_logger
 from harp_apps.storage.models.base import Base
+from harp_apps.storage.utils.migrations import table_belongs_to
 
 config = context.config
 
 target_metadata = Base.metadata
 
 logger = get_logger(__name__)
+
+
+def include_object(obj, name, type_, reflected, compare_to) -> bool:
+    """When autogenerating for one application (``config.attributes["application"]``), skip other applications' tables."""
+    application = config.attributes.get("application")
+    if application is None:
+        return True
+    table = name if type_ == "table" else getattr(getattr(obj, "table", None), "name", None)
+    if table is None:
+        return True
+    return table_belongs_to(application, table, config.attributes["locations"])
 
 
 def run_migrations_offline() -> None:
@@ -31,6 +43,7 @@ def run_migrations_offline() -> None:
     context.configure(
         url=url,
         target_metadata=target_metadata,
+        include_object=include_object,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -40,7 +53,7 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(connection=connection, target_metadata=target_metadata, include_object=include_object)
 
     with context.begin_transaction():
         context.run_migrations()

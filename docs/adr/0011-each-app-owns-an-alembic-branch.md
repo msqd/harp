@@ -30,7 +30,8 @@ revision it cannot locate. A static list closes that failure by construction.
 - All models stay on storage's `Base`, because an in-memory SQLite database is built with
   `Base.metadata.create_all` (`harp_apps/storage/__app__.py:26`) and never sees alembic.
 - Autogenerating a revision for one application filters the metadata with `include_object` on that
-  application's table prefix, so a revision never picks up another application's tables.
+  application's table prefix (`<application>_`), so a revision never picks up another application's tables.
+  Storage's tables predate the convention, so storage owns every table that no other application claims by prefix.
 - A `naming_convention` on the metadata comes first, in the storage branch: today's constraints have no
   names, and SQLite batch migrations cannot alter an unnamed foreign key such as
   `trans_user_flags.user_id`.
