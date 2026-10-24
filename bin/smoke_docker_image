@@ -19,17 +19,23 @@ docker run --rm --entrypoint python "$image" -c "import importlib.util, sys; sys
 docker run -d --init --name "$name" -p "$proxy_port:4000" -p "$dashboard_port:4080" "$image" \
     server --example sqlite --example proxy:httpbin > /dev/null
 
+# fetch <url> <accepted status codes...>: the dashboard answers 401 until credentials are configured.
 fetch() {
+    url="$1"
+    shift
     for _ in $(seq 1 60); do
-        if curl -fsS -o /dev/null "$1"; then
-            echo "ok: $1"
-            return 0
-        fi
+        code="$(curl -s -o /dev/null -w '%{http_code}' "$url" || true)"
+        for accepted in "$@"; do
+            if [ "$code" = "$accepted" ]; then
+                echo "ok: $url ($code)"
+                return 0
+            fi
+        done
         sleep 1
     done
-    echo "failed: $1" >&2
+    echo "failed: $url (last status $code)" >&2
     return 1
 }
 
-fetch "http://127.0.0.1:$proxy_port/healthz"
-fetch "http://127.0.0.1:$dashboard_port/"
+fetch "http://127.0.0.1:$proxy_port/healthz" 200
+fetch "http://127.0.0.1:$dashboard_port/" 200 401
