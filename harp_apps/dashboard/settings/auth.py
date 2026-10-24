@@ -3,7 +3,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BeforeValidator, Field, model_validator
 
-from harp.config import Configurable
+from harp.config import Configurable, Secret
 from harp.utils.config import yaml
 from harp_apps.dashboard.constants import TAlgorithm
 
@@ -22,7 +22,7 @@ def _load(value):
 
 
 class User(Configurable):
-    password: str
+    password: Secret
 
     @model_validator(mode="before")
     @classmethod
@@ -67,7 +67,7 @@ class BasicAuthSettings(Configurable):
         if not user:
             return False
 
-        if not self.algorithm_impl(password, user.password):
+        if not self.algorithm_impl(password, user.password.get_secret_value()):
             return False
 
         return username

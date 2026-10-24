@@ -15,6 +15,7 @@
     'OnBoundEvent',
     'OnReadyEvent',
     'OnShutdownEvent',
+    'Secret',
     'Service',
     'Stateful',
     'asdict',

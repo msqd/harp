@@ -35,7 +35,9 @@ class NotificationSubscriber:
                 try:
                     webhook_url = getattr(settings, name)
                     (
-                        self.senders.append(GoogleChatNotificationSender(webhook_url, public_url, self.timeout))
+                        self.senders.append(
+                            GoogleChatNotificationSender(webhook_url.get_secret_value(), public_url, self.timeout)
+                        )
                         if webhook_url
                         else None
                     )
@@ -45,7 +47,9 @@ class NotificationSubscriber:
                 try:
                     webhook_url = getattr(settings, name)
                     (
-                        self.senders.append(SlackNotificationSender(webhook_url, public_url, self.timeout))
+                        self.senders.append(
+                            SlackNotificationSender(webhook_url.get_secret_value(), public_url, self.timeout)
+                        )
                         if webhook_url
                         else None
                     )
