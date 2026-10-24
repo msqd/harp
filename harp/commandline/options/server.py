@@ -49,10 +49,10 @@ class CommonServerOptions(dict):
             chain(
                 (f"--set {quote(key)}={quote(value)}" for key, value in self.options.items()),
                 (f"--endpoint {quote(key)}={quote(value)}" for key, value in self.endpoints.items()),
-                ("--enable {app}".format(app=app) for app in self.enable),
-                ("--disable {app}".format(app=app) for app in self.disable),
-                ("--file " + file for file in self.files),
-                ("--example " + example for example in self.examples),
+                (f"--enable {quote(app)}" for app in self.enable),
+                (f"--disable {quote(app)}" for app in self.disable),
+                (f"--file {quote(file)}" for file in self.files),
+                (f"--example {quote(example)}" for example in self.examples),
             )
         )
         if self.strict:

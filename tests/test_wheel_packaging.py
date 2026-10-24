@@ -181,3 +181,10 @@ def test_wheel_metadata_offers_the_sentry_extra():
     assert not any(
         line.startswith("Requires-Dist: sentry-sdk") and "extra" not in line for line in metadata.splitlines()
     )
+
+
+def test_wheel_excludes_typescript_generation_helper():
+    """The type generation helper is dev tooling: it lives in tools/, outside the shipped package."""
+    paths = _wheel_distribution_paths()
+    assert [p for p in paths if "typescript" in p.split("/")] == []
+    assert (REPO_ROOT / "tools" / "typescript.py").exists()

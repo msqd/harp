@@ -103,3 +103,32 @@ def _call_command(cmd, *args):
     ctx = Context(cmd)
     cmd.parse_args(ctx, list(args))
     return ctx.params
+
+
+def test_as_list_quotes_every_value():
+    import shlex
+
+    nasty = "x; touch /tmp/pwned $(id) `id` 'q' \"d\""
+    options = CommonServerOptions(
+        options=(),
+        endpoints=(f"{nasty}=4000:http://localhost/",),
+        files=(nasty,),
+        examples=(nasty,),
+        enable=(nasty,),
+        disable=(nasty,),
+    )
+
+    argv = shlex.split(" ".join(options.as_list()))
+
+    assert argv == [
+        "--endpoint",
+        f"{nasty}=4000:http://localhost/",
+        "--enable",
+        nasty,
+        "--disable",
+        nasty,
+        "--file",
+        nasty,
+        "--example",
+        nasty,
+    ]
