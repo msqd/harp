@@ -51,6 +51,13 @@ def undeclared_imports(
     return {distribution: paths for distribution, paths in imported.items() if distribution not in declared}
 
 
+def unimported_declarations(
+    files: list[Path], declared: set[str], import_to_distributions: dict[str, list[str]]
+) -> set[str]:
+    """Declared distributions that none of the files imports."""
+    return declared - set(imported_distributions(files, import_to_distributions))
+
+
 def _imported_top_level_modules(file: Path) -> set[str]:
     modules = set()
     for node in ast.walk(ast.parse(file.read_text())):

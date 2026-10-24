@@ -151,3 +151,33 @@ def test_wheel_modules_only_import_modules_the_wheel_ships():
         for name in sorted(set(_imported_modules(path, ast.parse((REPO_ROOT / path).read_text()))) & left_out)
     ]
     assert broken == [], f"wheel modules import modules the wheel does not ship: {broken}"
+
+
+def _wheel_metadata():
+    pytest.importorskip("hatchling.builders.wheel")
+    from hatchling.builders.wheel import WheelBuilder
+
+    if not (REPO_ROOT / "pyproject.toml").exists():
+        pytest.skip("not a source checkout")
+
+    builder = WheelBuilder(str(REPO_ROOT))
+    return builder.config.core_metadata_constructor(builder.metadata)
+
+
+def test_wheel_metadata_declares_license_classifiers_and_urls():
+    metadata = _wheel_metadata()
+
+    assert "License-Expression: LGPL-3.0-or-later" in metadata
+    assert "License-File: LICENSE.rst" in metadata
+    assert "Classifier: Programming Language :: Python :: 3.13" in metadata
+    assert "Project-URL: Repository, https://github.com/msqd/harp" in metadata
+
+
+def test_wheel_metadata_offers_the_sentry_extra():
+    metadata = _wheel_metadata()
+
+    assert "Provides-Extra: sentry" in metadata
+    assert "Requires-Dist: sentry-sdk" in metadata
+    assert not any(
+        line.startswith("Requires-Dist: sentry-sdk") and "extra" not in line for line in metadata.splitlines()
+    )

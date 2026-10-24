@@ -41,6 +41,11 @@ class HttpClientFilterEvent(Event):
     def fingerprint(self):
         return f"{self.request.method} {self.request.url.raw_path.decode()}"
 
+    @property
+    def path_fingerprint(self):
+        """The fingerprint without the query string, the form every level moves to (see ``rules`` application)."""
+        return f"{self.request.method} {self.request.url.raw_path.decode().partition('?')[0]}"
+
     def _get_rule_name(self) -> str | None:
         if not self.name:
             return None
