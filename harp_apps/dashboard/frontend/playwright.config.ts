@@ -9,7 +9,8 @@ import { defineConfig, devices } from "@playwright/test"
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  timeout: 10000,
+  /* CI runners are slower and the first spec pays for the cold Vite start. */
+  timeout: process.env.CI ? 30000 : 10000,
   testDir: './tests',
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -73,5 +74,6 @@ export default defineConfig({
     command: 'pnpm exec vite --host localhost --port 49768 --strictPort --clearScreen false',
     url: 'http://localhost:49768/',
     reuseExistingServer: !process.env.CI,
+    timeout: 120000,
   },
 });
