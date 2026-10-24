@@ -1,0 +1,1 @@
+Sentry events no longer carry the command line nor the local variables of traceback frames, which could leak a database password.
