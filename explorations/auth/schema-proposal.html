@@ -1,0 +1,303 @@
+<title>Schéma auth HARP</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout : une colonne de lecture, tables et diagrammes peuvent déborder dans leur propre conteneur. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --fg: #1b2230;
+  --muted: #5a6475;
+  --line: #d9dee6;
+  --accent: #2448c8;
+  --accent-soft: #e6ecfb;
+  --new: #1d7a4e;
+  --new-soft: #e3f3ea;
+  --open: #a35a00;
+  --open-soft: #fbefdc;
+  --font-display: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151c; --surface: #181d26; --fg: #e3e7ee; --muted: #9aa3b2; --line: #2b3240;
+    --accent: #7d9bff; --accent-soft: #1d2a4d; --new: #5fcf98; --new-soft: #15301f;
+    --open: #f0b25a; --open-soft: #33260f; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151c; --surface: #181d26; --fg: #e3e7ee; --muted: #9aa3b2; --line: #2b3240;
+  --accent: #7d9bff; --accent-soft: #1d2a4d; --new: #5fcf98; --new-soft: #15301f;
+  --open: #f0b25a; --open-soft: #33260f; color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+main { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: 2.1rem; }
+h2 { font-size: 1.45rem; padding-top: 8px; border-top: 1px solid var(--line); }
+h3 { font-size: 1.1rem; }
+p, ul, ol { margin: 0; max-width: 68ch; }
+li + li { margin-top: 4px; }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+code { background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.12rem; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 0.9rem; color: var(--muted); }
+.chip { display: inline-block; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; padding: 1px 7px; border-radius: 999px; vertical-align: 1px; }
+.chip.new { background: var(--new-soft); color: var(--new); }
+.chip.keep { background: var(--accent-soft); color: var(--accent); }
+.chip.open { background: var(--open-soft); color: var(--open); }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+pre.mermaid { margin: 0; padding: 16px; background: var(--surface); text-align: center; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.col { font-family: var(--font-mono); white-space: nowrap; font-weight: 600; }
+td.type { font-family: var(--font-mono); white-space: nowrap; color: var(--muted); font-size: 0.85rem; }
+.tablehead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
+.tablehead h3 { font-family: var(--font-mono); }
+.why { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.why > div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; min-width: 0; }
+.why h3 { font-size: 1rem; margin-bottom: 6px; }
+.why p { font-size: 0.93rem; color: var(--muted); }
+.questions { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; max-width: none; }
+.questions li { background: var(--open-soft); border-radius: 8px; padding: 12px 16px; margin: 0; }
+.questions strong { color: var(--open); }
+.questions p { color: var(--fg); font-size: 0.95rem; margin-top: 4px; }
+.rejected td:first-child { font-weight: 600; white-space: nowrap; }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <span class="eyebrow">explore/auth · schéma après grill · 24 octobre 2026</span>
+    <h1>Comptes, identités, sessions et jetons</h1>
+    <p class="lede">Une app <code>harp_apps/auth</code>, toujours chargée, possède cinq tables préfixées <code>auth_</code>. Personne n'entre sans une invitation. Une session se révoque appareil par appareil. Un jeton n'agit jamais au-delà du rôle de son compte. Cette page reprend les 27 décisions du grill.</p>
+  </header>
+
+  <section>
+    <h2>Vocabulaire</h2>
+    <div class="scroll"><table>
+      <tr><th>Terme</th><th>Sens</th></tr>
+      <tr><td class="col">Account</td><td>Ce qui se connecte à HARP et porte un rôle : une personne, ou une machine (CI, agent). L'Operator a un account, mais les deux notions restent distinctes.</td></tr>
+      <tr><td class="col">Role</td><td>Viewer, Editor ou Admin, dans cet ordre. Chaque rôle inclut celui du dessous.</td></tr>
+      <tr><td class="col">Sign-in method</td><td>Une façon d'entrer que l'Operator active : mot de passe, un fournisseur OIDC nommé, jeton, Basic (déprécié). Le mot de passe est actif si aucune méthode n'est configurée.</td></tr>
+      <tr><td class="col">Identity</td><td>Le lien entre un account et une méthode : « Alice, via Google ». Un compte machine n'en a aucune.</td></tr>
+      <tr><td class="col">Invitation</td><td>Offre d'un Admin, à usage unique et qui expire, d'un account avec un rôle donné. C'est la seule façon de créer l'account d'une personne.</td></tr>
+      <tr><td class="col">Session</td><td>Un navigateur connecté à un account par une identity. Fermer une session laisse les autres ouvertes.</td></tr>
+      <tr><td class="col">Token</td><td>Un secret qu'un account confie à une machine pour qu'elle agisse en son nom, au plus avec son rôle.</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Le schéma</h2>
+    <div class="legend">
+      <span><span class="chip keep">EXISTE</span> table actuelle, reprise</span>
+      <span><span class="chip new">NOUVEAU</span> créé par la branche alembic auth</span>
+    </div>
+    <div class="scroll">
+<pre class="mermaid">
+erDiagram
+  auth_accounts ||--o{ auth_identities : "entre via"
+  auth_accounts ||--o{ auth_sessions : "ouvre"
+  auth_identities ||--o{ auth_sessions : "a ouvert"
+  auth_accounts ||--o{ auth_tokens : "possède"
+  auth_accounts ||--o{ auth_invitations : "invite (Admin)"
+  auth_accounts |o--o| auth_invitations : "né de"
+  auth_accounts ||--o{ trans_user_flags : "favoris (storage)"
+  auth_accounts {
+    int id PK
+    string username UK "255"
+    string display_name "nullable"
+    string email UK "nullable, minuscules"
+    string kind "person | machine | system"
+    string role "viewer | editor | admin"
+    datetime created_at
+    datetime last_seen_at "nullable"
+    datetime disabled_at "nullable"
+  }
+  auth_identities {
+    int id PK
+    int account_id FK
+    string method "password | oidc"
+    string issuer "OIDC iss, vide pour password"
+    string subject "login ou sub"
+    string password_hash "PHC, password seulement"
+    datetime created_at
+    datetime last_sign_in_at "nullable"
+  }
+  auth_sessions {
+    int id PK
+    int account_id FK
+    int identity_id FK
+    datetime created_at
+    datetime last_seen_at "1 écriture par minute"
+    datetime expires_at "created_at + 7 j"
+    datetime revoked_at "nullable"
+    string user_agent
+    string ip
+  }
+  auth_tokens {
+    int id PK
+    int account_id FK
+    string name
+    string prefix UK "8 car. base62"
+    string secret_hash "sha256"
+    string role "nullable = celui du compte"
+    datetime created_at
+    datetime expires_at "obligatoire"
+    datetime last_used_at "nullable"
+    datetime revoked_at "nullable"
+  }
+  auth_invitations {
+    int id PK
+    string secret_hash "sha256"
+    string role
+    string expected_email "nullable"
+    int invited_by FK "nullable pour le setup"
+    int account_id FK "rempli à l'acceptation"
+    datetime created_at
+    datetime expires_at "72 h"
+    datetime accepted_at "nullable"
+    datetime revoked_at "nullable"
+  }
+</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Les tables, colonne par colonne</h2>
+
+    <div class="tablehead"><h3>auth_accounts</h3><span class="chip keep">EXISTE, renommée</span><span>ex-<code>users</code></span></div>
+    <div class="scroll"><table>
+      <tr><th>Colonne</th><th>Type</th><th>Rôle</th></tr>
+      <tr><td class="col">id, username</td><td class="type">int PK, varchar(255)</td><td>Reprises de <code>users</code>. <code>username</code> passe de 32 à 255 caractères. Les favoris (<code>trans_user_flags</code>) gardent leur FK.</td></tr>
+      <tr><td class="col">email</td><td class="type">nullable, unique</td><td>Insensible à la casse, stocké en minuscules. Il sert à l'affichage et à vérifier l'email attendu d'une invitation, jamais à entrer.</td></tr>
+      <tr><td class="col">kind</td><td class="type">varchar(16)</td><td><code>person</code>, <code>machine</code> (créé par un Admin, sans identity) ou <code>system</code>. <code>anonymous</code> passe en <code>system</code> : il reste l'auteur des favoris déjà enregistrés et plus aucune requête ne lui est attribuée.</td></tr>
+      <tr><td class="col">role</td><td class="type">varchar(16)</td><td>Modifiable dans l'UI par un Admin et relu à chaque requête. Les comptes Basic importés à la migration deviennent <code>admin</code>, puisqu'ils peuvent déjà tout faire aujourd'hui.</td></tr>
+      <tr><td class="col">disabled_at</td><td class="type">nullable</td><td>On désactive au lieu de supprimer. Désactiver révoque les sessions et bloque les jetons dès la requête suivante.</td></tr>
+    </table></div>
+
+    <div class="tablehead"><h3>auth_identities</h3><span class="chip new">NOUVEAU</span></div>
+    <div class="scroll"><table>
+      <tr><th>Colonne</th><th>Type</th><th>Rôle</th></tr>
+      <tr><td class="col">method, issuer, subject</td><td class="type">unique ensemble</td><td>Pour un mot de passe : <code>(password, '', login)</code>. Pour OIDC : <code>(oidc, iss, sub)</code>. On n'y met jamais le nom du fournisseur tel qu'il est écrit dans les settings, si bien que le renommer n'orpheline personne.</td></tr>
+      <tr><td class="col">password_hash</td><td class="type">nullable, PHC</td><td>Argon2id (19 MiB, t=2), rehaché au login si les paramètres changent. Les hashs Basic sont repris selon leur type : <code>pbkdf2_sha256</code> et <code>argon2</code> tels quels, <code>plaintext</code> haché à l'import, les autres pas du tout, ce qui demande une nouvelle invitation.</td></tr>
+    </table></div>
+    <p>Une identity s'ajoute depuis sa propre session, après réauthentification si la session a plus de 15 minutes, jamais en rapprochant des emails. Un account ne peut pas retirer sa dernière identity ; un Admin peut en retirer n'importe laquelle. Retirer une identity révoque les sessions qu'elle a ouvertes. Désactiver une méthode dans les settings suspend ses identities sans les effacer.</p>
+
+    <div class="tablehead"><h3>auth_sessions</h3><span class="chip new">NOUVEAU</span><span>remplace le cookie sans état</span></div>
+    <p>Le cookie signé ne porte que l'id de la session. Il est préfixé <code>__Host-</code> en HTTPS, posé en HttpOnly et SameSite=Lax. Une session s'arrête après 12 h d'inactivité ou au bout de 7 jours, et c'est le serveur qui fait respecter ces deux délais. Le logout révoque une session ; « déconnecter partout » les révoque toutes, en un seul UPDATE. Lire la session coûte autant que la lecture du compte, déjà faite à chaque requête.</p>
+
+    <div class="tablehead"><h3>auth_tokens</h3><span class="chip new">NOUVEAU</span></div>
+    <div class="scroll"><table>
+      <tr><th>Colonne</th><th>Type</th><th>Rôle</th></tr>
+      <tr><td class="col">prefix, secret_hash</td><td class="type">unique, sha256</td><td>Le jeton s'écrit <code>harp_&lt;prefix 8&gt;&lt;secret 43&gt;&lt;crc32 6&gt;</code>, en base62, sans <code>_</code> après <code>harp_</code>. Le checksum rejette une faute de frappe avant toute lecture en base et rend le jeton repérable par le secret scanning. Le secret ne s'affiche qu'une fois, à la création.</td></tr>
+      <tr><td class="col">role</td><td class="type">nullable</td><td>Le rôle effectif vaut <code>min(token.role, account.role)</code>, recalculé à chaque requête. Rétrograder un account plafonne donc tous ses jetons d'un coup.</td></tr>
+      <tr><td class="col">expires_at</td><td class="type">obligatoire</td><td>90 jours par défaut, 365 au maximum (réglages), avec un avertissement 7 jours avant.</td></tr>
+    </table></div>
+    <p>Chaque account crée ses propres jetons, Viewer compris, au plus avec son rôle. Un Admin crée les comptes machine et leurs jetons, et peut voir et révoquer tous les jetons.</p>
+
+    <div class="tablehead"><h3>auth_invitations</h3><span class="chip new">NOUVEAU</span></div>
+    <p>Une invitation est à usage unique et expire au bout de 72 h (réglable). Elle se stocke hachée, comme un jeton. L'invité choisit sa méthode parmi celles qui sont activées. Si l'Admin a renseigné un email attendu, une acceptation par OIDC exige un <code>email_verified</code> qui lui correspond. Un Admin voit les invitations en attente et peut les révoquer. Le lien de setup est l'invitation au rôle Admin que HARP écrit dans ses logs tant qu'aucun Admin n'existe ; elle n'a pas d'auteur (<code>invited_by</code> vide).</p>
+  </section>
+
+  <section>
+    <h2>Le premier lancement</h2>
+    <div class="scroll">
+<pre class="mermaid">
+sequenceDiagram
+  participant O as Operator
+  participant H as HARP
+  participant N as Navigateur
+  O->>H: harp start, aucune méthode configurée
+  H->>H: active la méthode password, sans aucun compte
+  H->>O: log : lien de setup (invitation Admin, 72 h)
+  Note over H: le proxy tourne, le dashboard refuse toute connexion
+  O->>N: ouvre le lien
+  N->>H: choisit un mot de passe (15 caractères ou plus, liste noire)
+  H->>H: crée l'account Admin et son identity password, invitation acceptée
+  H->>N: Set-Cookie __Host-session (id de session)
+</pre>
+    </div>
+    <p>Il n'y a plus de mode ouvert ni d'identifiants par défaut. Si l'on perd tous les Admins, on récupère l'accès par <code>harp auth:create-account</code>, depuis la machine. Les comptes déclarés en config sont dépréciés. Une config <code>dashboard.auth.type: basic</code> continue de marcher : elle active les méthodes password et Basic, ses comptes sont importés une fois, et Basic disparaît une version mineure après la sortie de l'app auth.</p>
+  </section>
+
+  <section>
+    <h2>Une requête au dashboard</h2>
+    <div class="scroll">
+<pre class="mermaid">
+flowchart LR
+  R[Requête] --> C{Cookie de session ?}
+  C -- oui --> S[auth_sessions par id, refuse si révoquée, expirée ou inactive depuis 12 h] --> A
+  C -- non --> B{Bearer harp_… ?}
+  B -- oui --> K[vérifie le checksum, prefix vers auth_tokens, compare sha256, refuse si révoqué ou expiré] --> A
+  B -- non --> BA{Basic, si la méthode est activée ?}
+  BA -- oui --> P[identity password, vérification Argon2id, nombre de vérifications simultanées limité] --> A
+  BA -- non --> X[401, ou /login pour un navigateur]
+  A[auth_accounts par id] --> D{compte désactivé ?}
+  D -- oui --> X
+  D -- non --> E[rôle effectif] --> G{rôle requis par la route ?}
+  G -- non --> F[403]
+  G -- oui --> OK[contrôleur]
+</pre>
+    </div>
+    <div class="scroll"><table>
+      <tr><th>Rôle</th><th>Lit</th><th>Agit</th></tr>
+      <tr><td class="col">Viewer</td><td>Overview, transactions et leurs corps, métriques</td><td>Ses favoris, ses jetons, ses identities</td></tr>
+      <tr><td class="col">Editor</td><td>En plus : topologie, état du storage</td><td>En plus : invalider le cache, passer un endpoint up ou down (<code>PUT /api/system/proxy</code>)</td></tr>
+      <tr><td class="col">Admin</td><td>En plus : settings, dépendances</td><td>En plus : accounts, rôles, invitations, comptes machine, tous les jetons</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Côté proxy</h2>
+    <p>Avant de transmettre une requête à une origin, le proxy en retire toujours le cookie de session HARP et tout <code>Authorization: Bearer harp_…</code>, et il trace ce retrait sur la transaction. Un cookie est rattaché au host, pas au port : sans ce retrait, le navigateur connecté au dashboard enverrait sa session à l'origin. Aucun réglage ne désactive ce retrait : c'est l'exception à ADR-0001 que consigne ADR-0010, sur la branche locale explore/auth.</p>
+  </section>
+
+  <section>
+    <h2>Demain : des agents qui se connectent en MCP</h2>
+    <p>Pour le serveur MCP, la spec 2025-11-25 fait de HARP un <em>resource server</em> OAuth 2.1 : il publie ses métadonnées RFC 9728, n'accepte que les jetons émis pour son audience et ne les fait jamais suivre en amont. Le modèle absorbe les trois façons de connecter un agent sans rien bouleverser.</p>
+    <div class="scroll"><table>
+      <tr><th>Voie</th><th>Comment l'agent entre</th><th>Ce que le modèle doit gagner</th></tr>
+      <tr><td class="col">Jeton collé</td><td>Un jeton <code>harp_…</code> dans la config du client MCP. Un agent autonome passe par un compte machine.</td><td>Rien : c'est le premier jet.</td></tr>
+      <tr><td class="col">IdP externe</td><td>Keycloak ou Entra délivre au client MCP un access token pour l'audience de HARP. HARP vérifie la signature, <code>iss</code>, <code>aud</code> et <code>exp</code>.</td><td><strong>Aucune table.</strong> Le token retrouve une identity existante par <code>(issuer, sub)</code>, et ses scopes plafonnent le rôle. C'est la voie que vise explore/mcp en premier.</td></tr>
+      <tr><td class="col">HARP serveur d'autorisation</td><td>Le client MCP ouvre <code>/authorize</code> ; l'utilisateur, connecté par sa session, consent.</td><td>Uniquement des ajouts : <code>client_id</code>, <code>kind</code> et <code>parent_id</code> sur <code>auth_tokens</code>, une table de codes à usage unique de la même forme que les invitations, et des clients résolus par leur URL de métadonnées.</td></tr>
+    </table></div>
+    <p>Pour que ces voies restent des ajouts, trois précautions s'appliquent dès le premier jet :</p>
+    <ul>
+      <li><strong>Un contexte d'acteur unique.</strong> La résolution d'auth produit <code>account</code>, le rôle effectif, <code>via</code> (session, token, plus tard access token), <code>via_id</code> et un <code>client</code> optionnel. Les contrôleurs et l'audit ne lisent que lui, si bien que « Alice via Claude Desktop » reste distinct de « Alice ».</li>
+      <li><strong>Une règle de plafond unique :</strong> le rôle effectif vaut <code>min(rôle du compte, plafond du justificatif)</code>, que ce plafond vienne du rôle d'un jeton ou des scopes d'un access token.</li>
+      <li><strong>Pas de type de compte <code>agent</code>.</strong> Un agent qui agit pour une personne est le compte de cette personne, avec un client ; un agent autonome est un compte machine.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Migrations</h2>
+    <p>Chaque app possède une branche de l'unique historique alembic (ADR-0011). La liste des branches est statique : toutes les apps de <code>harp_apps/</code> qui ont des migrations, qu'elles soient activées ou non. <code>alembic_version</code> contient donc une ligne par app.</p>
+    <ol>
+      <li><strong>Branche storage :</strong> on pose une <code>naming_convention</code> sur la metadata et on nomme les contraintes existantes. Ça ne change rien au fonctionnement et peut partir sur <code>main</code> tout de suite.</li>
+      <li><strong>Branche auth, première révision</strong> (<code>depends_on</code> la précédente) : <code>users</code> devient <code>auth_accounts</code>, avec ses nouvelles colonnes, puis on crée les quatre autres tables.</li>
+      <li><strong>Démarrage, fixtures et CLI</strong> passent de <code>head</code> à <code>heads</code>. Les modèles restent sur la <code>Base</code> de storage, et l'autogénération filtre par préfixe de table.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Dépendances et hors périmètre</h2>
+    <ul>
+      <li><a href="https://github.com/msqd/harp/issues/1324" target="_blank" rel="noopener noreferrer">#1324</a> (0.13) apporte la protection CSRF dont les cookies de session ont besoin.</li>
+      <li><a href="https://github.com/msqd/harp/issues/1459" target="_blank" rel="noopener noreferrer">#1459</a> et <a href="https://github.com/msqd/harp/issues/1321" target="_blank" rel="noopener noreferrer">#1321</a> restent en 0.13 et ne serviront plus quand l'app auth remplacera Basic.</li>
+      <li>L'OAuth pour MCP (RFC 9728, délégation à l'IdP) est traité dans explore/mcp.</li>
+      <li>Les événements d'audit (connexions, administration des accès, actions sur le trafic) sont traités dans explore/audit.</li>
+    </ul>
+  </section>
+</main>

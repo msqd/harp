@@ -71,12 +71,55 @@ _Avoid_: backend, upstream, remote, server
 **Operator**:
 Whoever runs this HARP instance. Accountable for what the proxy does, and therefore able to override
 any default. See [ADR-0001](./docs/adr/0001-compliant-by-default-operator-may-override.md).
-_Avoid_: admin, user, owner
+_Avoid_: user, owner
 
 **Endpoint**:
 A named upstream configured on the proxy, which requests are routed to. Names a destination, not a URL
 path.
 _Avoid_: route, service, target
+
+### Access
+
+**Account**:
+Something that signs in to HARP and holds a role: a person, or a machine such as a CI job or an
+agent. The Operator has an account, but the two are not the same thing.
+_Avoid_: user, member, principal
+
+**Sign-in method**:
+A way into HARP that the Operator enables: password, one named OpenID Connect provider, token, or
+HTTP Basic. Password is enabled when no method is configured. A disabled method lets nobody in,
+whatever identities exist for it.
+
+**Identity**:
+The link between an account and one sign-in method, such as "Alice, through Google". An account may
+have several; a machine account usually has none and signs in with tokens.
+_Avoid_: login, credential, provider
+
+**Token**:
+A secret that an account hands to a machine so that it can act as that account, with at most that
+account's role.
+_Avoid_: API key, personal access token
+
+**Invitation**:
+An admin's single-use offer of an account with a given role, which expires. The only way an account
+for a person comes to exist; the person accepting it chooses the sign-in method.
+
+**Session**:
+One browser signed in to an account through one identity. It ends on its own, at sign-out, or when
+an admin or the account revokes it; ending one session leaves the others open.
+
+**Role**:
+What a person or machine signed in to HARP may do. One of three, ordered: Viewer, Editor, Admin. Each
+includes everything the one below it may do.
+
+**Viewer**:
+The role that may read what HARP shows, and act on nothing.
+
+**Editor**:
+The role that may also act on traffic, such as invalidating cached responses.
+
+**Admin**:
+The role that may also manage who has access and with which role. A role, not the Operator.
 
 ## Decisions
 
