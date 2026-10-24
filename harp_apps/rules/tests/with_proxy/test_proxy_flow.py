@@ -38,3 +38,22 @@ class TestProxyRulesFlow(BaseRulesFlowTest):
         response_transaction = mock.call_args_list[3].args[0]["transaction"]
         assert response_transaction is not None
         assert request_transaction.id == response_transaction.id
+
+    async def test_failing_on_request_rule_answers_an_error_and_never_calls_the_upstream(self, httpbin):
+        def fail_on_request(context):
+            if context["rule"] == "on_request":
+                raise RuntimeError("boom")
+
+        mock = Mock(side_effect=fail_on_request)
+        system = await self.create_system(
+            {"proxy": {"endpoints": [{"name": "httpbin", "port": 80, "url": httpbin}]}},
+            mock=mock,
+        )
+
+        client = ASGICommunicator(system.asgi_app)
+        await client.asgi_lifespan_startup()
+
+        response = await client.http_get("/")
+
+        assert response["status"] == 500
+        assert "on_remote_request" not in [call.args[0]["rule"] for call in mock.call_args_list]
