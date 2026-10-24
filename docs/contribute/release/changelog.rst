@@ -210,7 +210,9 @@ The release manager performs these steps before creating a release:
 
    The ``changelog.d/README.rst`` file stays. After a patch release, the pull request that brings
    ``X.Y.Z.rst`` to ``main`` also runs ``git rm`` on the fragments that patch shipped, so the next
-   ``X.Y+1.0`` lists only what is new since. Check the first lines of the new file: the ``Version
+   ``X.Y+1.0`` lists only what is new since. Security entries are the exception: ``X.Y+1.0`` repeats those of the
+   patches shipped since ``X.Y.0``, with their advisory ids, so a reader upgrading across the patches sees
+   them. Check the first lines of the new file: the ``Version
    X.Y.Z (date)`` title and its underline must come first.
 
 3. **Update changelog index**

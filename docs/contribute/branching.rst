@@ -41,10 +41,13 @@ A fix lands on ``main`` first, through a normal pull request. A second pull requ
 cherry-picks it with ``git cherry-pick -x <sha>`` so the commit names its origin. A fix that no longer
 applies to ``main`` goes to ``X.Y`` directly, and its pull request says why.
 
+.. _branching-security-fixes:
+
 Security fixes
 ::::::::::::::
 
-A security fix is not public until the patch release is. Do not follow the flow above.
+A security fix is not public until the patch release is. Do not follow the flow above. The order of operations
+is :doc:`release/security`.
 
 1. Report arrives through the repository's private vulnerability reporting. A maintainer drafts a
    security advisory from it.
