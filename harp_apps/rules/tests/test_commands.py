@@ -1,3 +1,5 @@
+import re
+
 import click
 import pytest
 
@@ -10,7 +12,9 @@ def test_run_command(httpbin, snapshot):
 
     result = runner.invoke(entrypoint, ["rules", "run", "api=" + httpbin, "GET", "/hostname"])
     assert result.exit_code == 0
-    assert result.stdout.strip() == snapshot
+    # Remote dumps carry the ephemeral port and the current date.
+    stable = re.sub(r"^(host|date|user-agent): .*$", r"\1: <\1>", result.stdout.strip(), flags=re.MULTILINE)
+    assert stable == snapshot
 
 
 @pytest.mark.parametrize("env", [{"FORCE_COLOR": "3"}, {"NO_COLOR": "1"}])
@@ -76,3 +80,13 @@ def test_rules_reject_set_as_an_unknown_option(command, options):
     # rich-click colours and wraps its error panel: compare the plain words.
     assert "No such option: --set" in " ".join(click.unstyle(result.output).split())
     assert not isinstance(result.exception, TypeError)
+
+
+def test_run_command_fires_on_remote_request_rules(httpbin, tmp_path):
+    rules = tmp_path / "rules.toml"
+    rules.write_text('[rules."*"."GET *"]\non_remote_request = """\nrequest.headers["x-rule-fired"] = "yes"\n"""\n')
+
+    result = CliRunner().invoke(entrypoint, ["rules", "run", "--file", str(rules), "api=" + httpbin, "GET", "/headers"])
+
+    assert result.exit_code == 0, result.output
+    assert "X-Rule-Fired" in result.stdout
