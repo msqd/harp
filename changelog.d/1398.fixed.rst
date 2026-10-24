@@ -1,1 +1,0 @@
-Storage urls holding ``%`` (unix socket ``host=``, encoded passwords) now migrate. Boot errors mask the url password only, leaving the rest of the message intact.
