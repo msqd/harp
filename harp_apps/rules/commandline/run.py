@@ -25,11 +25,11 @@ from .utils.loaders import load_ruleset_from_files
 from .utils.subscribers import DebugRulesSubscriber
 
 
-@config_command("run")
+@config_command("run", include_set=False)
 @click.argument("endpoint")
 @click.argument("method")
 @click.argument("path")
-def run_command(files, examples, options, endpoint, method, path):
+def run_command(files, examples, endpoint, method, path, options=()):
     try:
         endpoint_name, endpoint_target = endpoint.split("=", 1)
     except ValueError:

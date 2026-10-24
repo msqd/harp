@@ -7,8 +7,8 @@ from harp.utils.console import console
 from .utils.loaders import load_ruleset_from_files
 
 
-@config_command("lint")
-def lint_command(files, examples, options):
+@config_command("lint", include_set=False)
+def lint_command(files, examples, options=()):
     """Lint the rules."""
 
     ruleset = load_ruleset_from_files(files, examples, options)
