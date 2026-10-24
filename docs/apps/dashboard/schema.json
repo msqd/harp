@@ -185,6 +185,7 @@
   "anyOf": [
     { "$ref": "#/$defs/SystemPutProxyInput" },
     { "$ref": "#/$defs/BasicAuthSettings" },
+    { "$ref": "#/$defs/NoAuthSettings" },
     { "$ref": "#/$defs/User" },
     { "$ref": "#/$defs/DevserverSettings" },
     { "$ref": "#/$defs/DashboardSettings" }

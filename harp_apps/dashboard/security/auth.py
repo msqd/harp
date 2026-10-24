@@ -18,13 +18,9 @@ def resolve_authentication(
     Returns the basic authentication enforced by the dashboard, or None if it was explicitly left open.
 
     Without configured authentication, a random password is generated and logged once. It is only kept as a hash.
-    The warnings name the address the dashboard listens on (``bind``).
+    The warning names the address the dashboard listens on (``bind``).
     """
     if isinstance(auth, NoAuthSettings):
-        logger.warning(
-            "Dashboard authentication is disabled (dashboard.auth.type=none): the dashboard is unauthenticated and "
-            f"exposes proxied traffic to anyone who can reach {bind}."
-        )
         return None
 
     if auth is not None:
