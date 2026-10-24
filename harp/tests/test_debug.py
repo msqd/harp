@@ -1,5 +1,8 @@
 import sys
 
+import pytest
+from structlog.testing import capture_logs
+
 
 def _harp_modules():
     """Currently imported ``harp`` and ``harp.*`` modules."""
@@ -27,35 +30,47 @@ class TestDebugFlag:
                 del sys.modules[name]
             sys.modules.update(saved)
 
+    def _debug_with(self, monkeypatch, **env):
+        for name in ("DEBUG", "HARP_DEBUG"):
+            monkeypatch.delenv(name, raising=False)
+        for name, value in env.items():
+            monkeypatch.setenv(name, value)
+        return self._reload_harp_debug()
+
     def test_debug_is_false_when_no_env_vars_set(self, monkeypatch):
-        monkeypatch.delenv("DEBUG", raising=False)
-        monkeypatch.delenv("HARP_DEBUG", raising=False)
-        assert self._reload_harp_debug() is False
+        assert self._debug_with(monkeypatch) is False
 
-    def test_debug_is_true_when_debug_env_var_set(self, monkeypatch):
-        monkeypatch.delenv("HARP_DEBUG", raising=False)
-        monkeypatch.setenv("DEBUG", "1")
-        assert self._reload_harp_debug() is True
+    @pytest.mark.parametrize("value", ["1", "true", "yes", "on", "TRUE", "Yes", "On"])
+    def test_harp_debug_truthy_values_enable(self, monkeypatch, value):
+        assert self._debug_with(monkeypatch, HARP_DEBUG=value) is True
 
-    def test_debug_is_true_when_harp_debug_env_var_set(self, monkeypatch):
-        monkeypatch.delenv("DEBUG", raising=False)
-        monkeypatch.setenv("HARP_DEBUG", "1")
-        assert self._reload_harp_debug() is True
+    @pytest.mark.parametrize("value", ["0", "false", "no", "off", "FALSE", "Off", ""])
+    def test_harp_debug_falsy_values_disable(self, monkeypatch, value):
+        assert self._debug_with(monkeypatch, HARP_DEBUG=value) is False
 
-    def test_debug_is_true_when_both_env_vars_set(self, monkeypatch):
-        monkeypatch.setenv("DEBUG", "1")
-        monkeypatch.setenv("HARP_DEBUG", "1")
-        assert self._reload_harp_debug() is True
-
-    def test_debug_is_false_when_env_vars_are_empty(self, monkeypatch):
-        monkeypatch.setenv("DEBUG", "")
-        monkeypatch.setenv("HARP_DEBUG", "")
-        assert self._reload_harp_debug() is False
+    @pytest.mark.parametrize("value", ["maybe", "2", "enabled"])
+    def test_harp_debug_other_values_fail_at_startup(self, monkeypatch, value):
+        with pytest.raises(ValueError, match="HARP_DEBUG"):
+            self._debug_with(monkeypatch, HARP_DEBUG=value)
 
     def test_harp_debug_takes_precedence_over_debug(self, monkeypatch):
-        monkeypatch.setenv("DEBUG", "")
-        monkeypatch.setenv("HARP_DEBUG", "1")
-        assert self._reload_harp_debug() is True
+        assert self._debug_with(monkeypatch, HARP_DEBUG="0", DEBUG="1") is False
+
+    def test_harp_debug_set_does_not_warn_about_debug(self, monkeypatch):
+        with capture_logs() as logs:
+            self._debug_with(monkeypatch, HARP_DEBUG="1", DEBUG="1")
+        assert not [entry for entry in logs if entry["log_level"] == "warning"]
+
+    def test_generic_debug_still_enables_with_deprecation_warning(self, monkeypatch):
+        with capture_logs() as logs:
+            assert self._debug_with(monkeypatch, DEBUG="1") is True
+        warnings = [entry for entry in logs if entry["log_level"] == "warning"]
+        assert len(warnings) == 1
+        assert "HARP_DEBUG" in warnings[0]["event"]
+
+    @pytest.mark.parametrize("value", ["0", "false", "no", "off", ""])
+    def test_generic_debug_falsy_values_do_not_enable(self, monkeypatch, value):
+        assert self._debug_with(monkeypatch, DEBUG=value) is False
 
     def test_reload_leaves_sys_modules_untouched(self, monkeypatch):
         """Reloading must not leak fresh module objects into the interpreter, which would break

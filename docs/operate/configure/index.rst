@@ -177,12 +177,15 @@ Debug Mode
 HARP provides a debug mode that enables additional diagnostic information. This is controlled via
 environment variables:
 
-- ``HARP_DEBUG``: The primary environment variable for enabling debug mode
-- ``DEBUG``: Alternative environment variable (for compatibility)
+- ``HARP_DEBUG``: A boolean. ``1``, ``true``, ``yes`` and ``on`` (any case) enable debug mode; ``0``, ``false``,
+  ``no``, ``off`` and the empty string disable it. Any other value stops HARP at startup with an error.
+- ``DEBUG``: Deprecated generic variable, only read when ``HARP_DEBUG`` is not set. It still enables debug mode in 0.13
+  and logs a deprecation warning; it is ignored from 0.14.
 
-When debug mode is enabled (``harp.DEBUG`` is truthy):
+When debug mode is enabled (``harp.DEBUG`` is true):
 
-- Error responses include full exception tracebacks
+- Error responses include full exception tracebacks and values; without it, JSON error responses only carry the
+  error and its type, and the traceback is logged server-side
 - Additional diagnostic information may be included in outputs
 
 .. warning::
@@ -197,9 +200,6 @@ Example usage:
 
     # Enable debug mode
     $ HARP_DEBUG=1 harp-proxy server
-
-    # Or using the DEBUG variable
-    $ DEBUG=1 harp-proxy server
 
 You can also check the debug status programmatically:
 
