@@ -87,6 +87,7 @@ exports[`renders the title and data when the query is successful 1`] = `
                   <a
                     class="hover:underline"
                     href="https://api1.example.com/"
+                    rel="noopener noreferrer"
                     target="_blank"
                   >
                     https://api1.example.com/
