@@ -231,7 +231,8 @@ cloc:  ## Counts lines of code in the project.
 
 .PHONY: buildc pushc runc runc-shell runc-example-repositories
 
-buildc: wheel  ## Builds the docker image from wheel.
+buildc: wheel  ## Builds the docker image from wheel, constrained to uv.lock.
+	$(call execute,$(UV) run python bin/check_docker_lock.py export > dist/constraints.txt)
 	$(call execute,$(DOCKER) build $(DOCKER_OPTIONS) $(DOCKER_BUILD_OPTIONS) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .)
 
 pushc:  ## Pushes the docker image to the registry.

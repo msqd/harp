@@ -48,6 +48,12 @@ The automated release workflow handles:
 Tag builds restore no cache: ``setup-uv`` and ``setup-node`` cache nothing, and the release image build
 sets no BuildKit cache, so a dependency run once on a branch cannot reach a release.
 
+The Docker image is built from the same wheel, and ships the versions pinned in ``uv.lock`` rather
+than the newest in the wheel's ranges (see ``docs/adr/0010-docker-images-install-exactly-uv-lock.md``).
+CI fails the image build if what is installed differs from ``uv.lock``. Releasing therefore ships
+whatever ``uv.lock`` holds at the tag: refresh it first with ``uv lock`` (Dependabot does so routinely),
+because a dependency fix that is not in the lock is not in the image.
+
 Who does what, and when
 -----------------------
 

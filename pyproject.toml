@@ -28,7 +28,6 @@ dependencies = [
     # Any other narrower cap carries a comment naming the regression.
     "aiosqlite>=0.20,<0.22",
     "alembic>=1.17,<2",
-    "asgi-prometheus>=1.2,<2",
     "asgimiddlewarestaticfile>=0.6,<0.7",
     "asgiref>=3.10,<3.13",
     # Not imported directly (httpx's trust store). Floor: older bundles trust compromised eMudhra intermediates, see #1405.

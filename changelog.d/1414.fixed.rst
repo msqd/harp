@@ -1,0 +1,1 @@
+With the `metrics` application enabled, `/.prometheus/metrics` is no longer answered on the proxy ports: it is proxied to the upstream like any other path. Metrics stay on `/metrics` on the dashboard port and on `dashboard.metrics_port`. The `requests_*`, `responses_count` and `exceptions_count` families (ASGI level) are removed.

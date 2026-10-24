@@ -16,7 +16,9 @@ To download the latest stable version, use:
 
 Published tags:
 
-- ``X.Y.Z``, ``X.Y``, ``X`` and ``latest`` for stable releases (``latest`` is the most recent stable release).
+- ``X.Y.Z`` and ``X.Y`` for stable releases.
+- ``X`` for the highest stable release of that major, and ``latest`` for the highest stable release overall: a patch
+  release on an older line (e.g. ``0.11.1`` once ``0.12.0`` is out) does not move them.
 - ``X.Y.Z-rcN`` (or any other pre-release suffix) for pre-releases, exact tag only.
 - ``unstable`` for the latest commit of the ``main`` branch.
 - ``X.Y-git`` for the latest commit of a version branch (e.g. ``0.11-git``).
