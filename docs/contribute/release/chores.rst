@@ -110,6 +110,20 @@ baseline and fails twice in a row. It does **not** fail on a lower percentage: s
 ``misc/cache-tests/README.md`` for how to read the report.
 
 
+README and credits (minor releases)
+:::::::::::::::::::::::::::::::::::
+
+The README is the first page most people read. Before each minor release:
+
+* **Credits**: bring People & Credits up to date with every contributor since the last minor
+  release, as :doc:`contributors` describes.
+* **README**: reread it against the release. Every claim must hold for this version and match the
+  docs; every link must resolve; every path it offers into the docs must still lead somewhere
+  useful. Regenerate its captures and diagrams if the UI or the architecture changed.
+
+Fix what is wrong in the same release.
+
+
 Eventually commit the updated dependencies
 ::::::::::::::::::::::::::::::::::::::::::
 
