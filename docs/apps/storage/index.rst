@@ -18,6 +18,7 @@ The ``harp_apps.storage`` application implements various storage systems for you
     :maxdepth: 1
 
     Transaction Markers <markers>
+    Redaction <redaction>
     Services <services>
     Settings <settings>
     Internals </reference/apps/harp_apps.storage>
@@ -261,3 +262,13 @@ To instruct SQLAlchemy to log all queries, set ``LOGGING_SQLALCHEMY=INFO`` in yo
     LOGGING_SQLALCHEMY=INFO harp-proxy server ...
 
 It works with all HARP commands, not just ``start``.
+
+
+Blob ids
+::::::::
+
+Blobs are content-addressed. A blob id is the SHA-256 of the content type (length-framed) and the body, truncated to
+160 bits: 40 hexadecimal characters, so no schema change.
+
+Blobs written by earlier versions carry SHA-1 ids. They keep resolving, and are not rewritten. A body already stored
+under its old id is stored once more under its new id the next time it is seen, until retention removes the old row.

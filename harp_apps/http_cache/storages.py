@@ -6,13 +6,19 @@ from collections import OrderedDict
 from dataclasses import replace
 import yaml
 from email.utils import formatdate
+from urllib.parse import parse_qsl, urlsplit
 from hishel import AsyncBaseStorage, Entry, EntryMeta, Request, Response
 from hishel._utils import make_async_iterator
 
 from harp import get_logger
 from harp.models import Blob
+from harp.models.redaction import Redaction
 from harp.http.utils import parse_cache_control
-from harp_apps.storage.constants import DEFAULT_MAX_RECORDED_BODY_SIZE
+from harp_apps.storage.constants import (
+    DEFAULT_MAX_RECORDED_BODY_SIZE,
+    SKIP_REQUEST_STORAGE,
+    SKIP_RESPONSE_STORAGE,
+)
 from harp_apps.storage.types import IBlobStorage
 from .adapters import AsyncStorageAdapter, stored_at_of
 from .streams import StoredOnceRead
@@ -34,6 +40,39 @@ HEADERS_ENCODING = "iso-8859-1"
 
 #: Request metadata key holding the largest response body the cache may store (the proxy's recording cap).
 MAX_BODY_SIZE_METADATA = "harp_max_recorded_body_size"
+
+#: Request metadata key holding the :class:`~harp.models.redaction.Redaction` in force for the request.
+REDACTION_METADATA = "harp_redaction"
+
+#: Request metadata key holding the markers of the request's transaction.
+MARKERS_METADATA = "harp_markers"
+
+#: Markers that keep a transaction's messages out of storage, the cache included. ``skip-storage`` is not one:
+#: the storage worker sets it itself under pressure, and load must not switch the cache off.
+_SKIP_MARKERS = frozenset({SKIP_REQUEST_STORAGE, SKIP_RESPONSE_STORAGE})
+
+
+def _redaction_of(request: Request) -> Redaction:
+    return request.metadata.get(REDACTION_METADATA) or Redaction()
+
+
+def is_withheld(request: Request, response: Response) -> bool:
+    """Whether this exchange must stay out of the cache, because storing it would keep a credential.
+
+    The cache reads back what it stores to answer requests, so a redacted value is only safe where it is never
+    compared or replayed (ADR-0009). Hence three cases where nothing is stored at all: the response varies on a
+    redacted header, its URL carries a redacted query parameter, or it carries a redacted header itself. What an
+    operator keeps out of storage with a ``skip-*-storage`` marker stays out of the cache too.
+    """
+    if _SKIP_MARKERS & set(request.metadata.get(MARKERS_METADATA) or ()):
+        return True
+
+    redaction = _redaction_of(request)
+    if any(name.strip() in redaction.headers for name in ",".join(response.headers.get_list("vary") or []).split(",")):
+        return True
+    if any(name in redaction.headers for name in response.headers):
+        return True
+    return any(name in redaction.query for name, _ in parse_qsl(urlsplit(request.url).query, keep_blank_values=True))
 
 
 def has_explicit_freshness(response: Response) -> bool:
@@ -228,6 +267,10 @@ class AsyncStorage(AsyncBaseStorage):
             logger.debug(f"Cache entry not retained (no explicit freshness, heuristics off): key={key}")
             return entry
 
+        if is_withheld(request, response):
+            logger.debug(f"Cache entry not retained (withheld, see ADR-0009): key={key}")
+            return entry
+
         # RFC 9110 §6.6.1: a cache without a `Date` to age the response against must record its
         # time of receipt, or hishel computes an age of 0 and the response never goes stale.
         if "date" not in response.headers:
@@ -240,7 +283,9 @@ class AsyncStorage(AsyncBaseStorage):
         async def store(body: bytes) -> None:
             try:
                 await self._impl.store_entry(
-                    key, replace(entry, response=replace(entry.response, stream=make_async_iterator([body])))
+                    key,
+                    replace(entry, response=replace(entry.response, stream=make_async_iterator([body]))),
+                    _redaction_of(request),
                 )
             except Exception:
                 # The upstream served this response correctly: a cache that cannot keep it must not break it.
@@ -333,6 +378,11 @@ class AsyncStorage(AsyncBaseStorage):
                 return None
 
             updated = new_entry if isinstance(new_entry, Entry) else new_entry(entry)
+            if is_withheld(updated.request, updated.response):
+                # A revalidation brought in a header that must not be stored: the entry goes, not the header.
+                await self._storage.delete(key)
+                self._keys_by_id.pop(id, None)
+                return None
             await self._impl.store_entry(key, updated)
         except Exception:
             logger.warning(f"Failed to update cache entry: key={key}, entry_id={id}", exc_info=True)

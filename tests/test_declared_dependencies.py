@@ -17,6 +17,7 @@ from tests.utils.declared_imports import (
     imported_distributions,
     shipped_python_files,
     undeclared_imports,
+    unimported_declarations,
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -30,6 +31,8 @@ DELIBERATELY_UNDECLARED = {
     "freezegun",
     # Development environment only (`harp start`), gated by check_packages/assert_package_is_available.
     "honcho",
+    # Same development-only helper (`harp start`), colors the dev server banner.
+    "colorama",
 }
 
 
@@ -89,10 +92,45 @@ def test_shipped_code_imports_only_declared_distributions():
 
     undeclared = undeclared_imports(
         shipped_python_files(REPO_ROOT),
-        declared_distributions(project["dependencies"]) | DELIBERATELY_UNDECLARED,
+        declared_distributions(project["dependencies"])
+        | declared_distributions(sum(project["optional-dependencies"].values(), []))
+        | DELIBERATELY_UNDECLARED,
         packages_distributions(),
     )
 
     assert not undeclared, "shipped code imports distributions missing from [project.dependencies]: " + ", ".join(
         f"{dist} (e.g. {sorted(paths)[0].relative_to(REPO_ROOT)})" for dist, paths in sorted(undeclared.items())
+    )
+
+
+# Declared and deliberately not imported by shipped code. Each entry states why.
+DELIBERATELY_UNIMPORTED = {
+    # Not imported directly (httpx trust store). Floor: see tests/test_trust_store.py.
+    "certifi",
+    # Loaded by SQLAlchemy from the `sqlite+aiosqlite://` storage url.
+    "aiosqlite",
+}
+
+
+def test_unimported_declared_distributions_are_reported_by_name(tmp_path):
+    path = _write(tmp_path, "mod.py", "import click\n")
+
+    unused = unimported_declarations([path], {"click", "httpx"}, {"click": ["click"]})
+
+    assert unused == {"httpx"}
+
+
+def test_every_declared_dependency_is_imported_by_shipped_code():
+    if not (REPO_ROOT / "pyproject.toml").exists():
+        pytest.skip("not a source checkout")
+    project = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text())["project"]
+
+    unused = unimported_declarations(
+        shipped_python_files(REPO_ROOT),
+        declared_distributions(project["dependencies"]) - DELIBERATELY_UNIMPORTED,
+        packages_distributions(),
+    )
+
+    assert not unused, "[project.dependencies] declares distributions no shipped code imports: " + ", ".join(
+        sorted(unused)
     )

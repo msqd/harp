@@ -7,6 +7,7 @@ from hishel import Entry, EntryMeta, Request, Response
 from hishel._core.models import AnyIterable
 
 from harp.models import Blob
+from harp.models.redaction import Redaction
 from harp.utils.urls import _convert_url_to_string
 from harp_apps.http_cache.utils import (
     deserialize_headers,
@@ -85,17 +86,18 @@ class AsyncStorageAdapter:
     def __init__(self, storage: IBlobStorage):
         self.storage = storage
 
-    async def store_entry(self, key: str, entry: Entry) -> Blob:
+    async def store_entry(self, key: str, entry: Entry, redaction: tp.Optional[Redaction] = None) -> Blob:
         """Store an Entry object in blob storage.
 
         Args:
             key: The cache key
             entry: The Entry to store
+            redaction: Which request header values are replaced by the placeholder (the default set if omitted)
 
         Returns:
             The stored Blob
         """
-        serialized_request = await self._serialize_request(entry.request)
+        serialized_request = await self._serialize_request(entry.request, redaction or Redaction())
         serialized_response = await self._serialize_response(entry.response)
 
         return await self._store_entry_blob(
@@ -200,8 +202,10 @@ class AsyncStorageAdapter:
             ),
         )
 
-    async def _serialize_request(self, request: Request) -> SerializedRequest:
-        headers, varying_headers, metadata = prepare_headers_for_serialization(request.headers)
+    async def _serialize_request(self, request: Request, redaction: Redaction) -> SerializedRequest:
+        headers, varying_headers, metadata = prepare_headers_for_serialization(
+            request.headers, redacted=redaction.headers
+        )
         headers = await self.storage.put(Blob.from_data(headers, content_type="http/headers"))
         return {
             # hishel 1.0: method and url are already strings

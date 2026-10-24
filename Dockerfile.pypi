@@ -9,7 +9,7 @@ RUN if [ -z "$VERSION" ]; then \
       echo "ERROR: VERSION build argument is required" && exit 1; \
     fi && \
     echo "Installing from PyPI: harp-proxy==$VERSION" && \
-    pip install --no-cache-dir "harp-proxy[postgresql,mysql]==$VERSION"
+    pip install --no-cache-dir "harp-proxy[postgresql,mysql,sentry]==$VERSION"
 
 # Create non-root user and set up shell aliases
 RUN useradd -m -u 1000 harp && \

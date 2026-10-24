@@ -64,6 +64,7 @@ async def on_bound(event: OnBoundEvent):
             request_body_grace_period=proxy.settings.request_body_grace_period,
             client_read_timeout=proxy.settings.client_read_timeout,
             tags=proxy.settings.tags,
+            trusted_proxies=proxy.settings.trusted_proxies,
         )
         controller = event.provider.get(f"proxy.controllers.{name}_controller")
         event.resolver.add_endpoint(endpoint, controller=controller)

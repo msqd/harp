@@ -1,0 +1,1 @@
+Log a startup warning for each development-only setting in use: SQLite storage, ``dashboard.auth.type: none`` and debug mode.
