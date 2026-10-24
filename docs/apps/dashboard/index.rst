@@ -68,6 +68,18 @@ Internal implementation: :class:`DashboardAuthSetting <harp_apps.dashboard.setti
 .. include:: ./_howto_auth_hash.rst
 
 
+Security headers
+----------------
+
+Every dashboard response carries ``X-Content-Type-Options: nosniff`` and ``X-Frame-Options: DENY``; the built
+dashboard also sends a ``Content-Security-Policy`` that allows only its own scripts, styles and API, and forbids
+framing (``frame-ancestors 'none'``). The dashboard cannot be embedded in another page.
+
+Captured message bodies (``/api/blobs/{id}``) are served with ``Content-Disposition: attachment`` and
+``Content-Security-Policy: sandbox; default-src 'none'``: opening one in a browser downloads it, and it never runs as
+a page of the dashboard.
+
+
 Dev Server
 ----------
 
