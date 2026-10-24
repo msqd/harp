@@ -3,10 +3,11 @@ import unicodedata
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 from functools import cached_property, lru_cache
+from ipaddress import IPv4Network, IPv6Network
 from time import time
 from httpx import AsyncClient, codes
 from pyheck import shouty_snake
-from typing import Optional, cast, override
+from typing import Optional, Sequence, cast, override
 from urllib.parse import unquote_to_bytes, urlencode, urlsplit
 from whistle import IAsyncEventDispatcher
 
@@ -93,6 +94,7 @@ class AbstractHttpProxyController(ABC):
         request_body_grace_period: float = DEFAULT_REQUEST_BODY_GRACE_PERIOD,
         client_read_timeout: float = DEFAULT_CLIENT_READ_TIMEOUT,
         tags: TagsSettings | None = None,
+        trusted_proxies: Sequence[IPv4Network | IPv6Network] = (),
     ):
         self.remote = remote
         if not isinstance(remote, Remote):
@@ -108,6 +110,7 @@ class AbstractHttpProxyController(ABC):
 
         self.proxy = HttpClientProxyAdapter(
             http_client,
+            trusted_proxies=trusted_proxies,
             extensions={"endpoint": self.name, "max_recorded_body_size": self.max_recorded_body_size},
         )
 

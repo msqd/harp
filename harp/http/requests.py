@@ -37,6 +37,7 @@ class HttpRequest(BaseHttpMessage):
         self.query = self._impl.get_query()
         self.server_ipaddr = self._impl.get_server_ipaddr()
         self.server_port = self._impl.get_server_port()
+        self.client_ipaddr = self._impl.get_client_ipaddr()
         self._headers = self._impl.get_headers()
         self._stream = self._impl.get_stream()
 
