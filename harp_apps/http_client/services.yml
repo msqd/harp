@@ -4,7 +4,12 @@ services:
     type: [!cfg "type", "httpx.AsyncClient"]
     defaults:
       transport: !ref "http_client.proxy_transport"
+      cookies: !ref "http_client.cookies"
     arguments: [!cfg "arguments", {}]
+
+  # Cookie jar of the shared client, storing nothing: cookies must never leak from one client to another
+  - name: "http_client.cookies"
+    type: "harp_apps.http_client.cookies.NoCookieJar"
 
   # Proxy filter, decorating the regular http transport
   - name: "http_client.proxy_transport"
