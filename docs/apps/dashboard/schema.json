@@ -167,9 +167,9 @@
       "properties": {
         "endpoint": { "type": "string" },
         "action": { "enum": ["up", "down", "checking"], "type": "string" },
-        "url": { "type": "string" }
+        "index": { "type": "integer" }
       },
-      "required": ["endpoint", "action", "url"],
+      "required": ["endpoint", "action", "index"],
       "title": "SystemPutProxyInput",
       "type": "object"
     },

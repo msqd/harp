@@ -9,7 +9,7 @@ declare namespace Apps.Dashboard {
   export interface SystemPutProxyInput {
     endpoint: string;
     action: "up" | "down" | "checking";
-    url: string;
+    index: number;
     [k: string]: unknown;
   }
   /**
@@ -20,6 +20,10 @@ declare namespace Apps.Dashboard {
      * Whether the application is enabled
      */
     enabled?: boolean;
+    /**
+     * Address on which the dashboard application will listen. The default listens on every interface, which a published Docker port needs. Use `127.0.0.1` to listen on the loopback interface only.
+     */
+    host?: string;
     /**
      * Port on which the dashboard application will be served.
      */
