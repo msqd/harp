@@ -87,11 +87,15 @@ Build and release jobs
   * Validates with twine
   * Uploads wheel artifact (7 day retention)
 
-**all-checks-passed**
-  Consolidation job ensuring all tests pass
+**test-python-package**
+  Installs the built wheel on Python 3.13 and runs it
 
-  * Depends on all test jobs and package build
-  * Tests wheel installation on Python 3.13
+  * Depends on the package build
+
+**all-checks-passed**
+  Consolidation job, the required status check ("All Checks Passed")
+
+  * Depends on every other check, lockfile included, and fails unless each succeeded
   * Must pass before any releases
 
 **build-docker-image-development**
@@ -148,7 +152,7 @@ Tests run directly on the GitHub Actions runner using ``uv``:
     mkdir -p harp_apps/dashboard/web
 
     # Install dependencies
-    uv sync
+    uv sync --locked
 
     # Run tests
     uv run pytest harp -n auto -m 'not subprocess'
@@ -232,7 +236,7 @@ To reproduce CI failures locally:
     mkdir -p harp_apps/dashboard/web
 
     # 2. Install dependencies (matches CI)
-    uv sync
+    uv sync --locked
 
     # 3. Run tests exactly as CI does
     uv run pytest harp -n auto -m 'not subprocess'
