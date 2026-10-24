@@ -179,9 +179,10 @@
   "title": "__ROOT__",
   "anyOf": [
     { "$ref": "#/$defs/SystemPutProxyInput" },
+    { "$ref": "#/$defs/DashboardSettings" },
     { "$ref": "#/$defs/BasicAuthSettings" },
+    { "$ref": "#/$defs/NoAuthSettings" },
     { "$ref": "#/$defs/User" },
-    { "$ref": "#/$defs/DevserverSettings" },
-    { "$ref": "#/$defs/DashboardSettings" }
+    { "$ref": "#/$defs/DevserverSettings" }
   ]
 }

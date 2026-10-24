@@ -6,15 +6,32 @@
  */
 
 declare namespace Apps.Proxy {
-  export interface BaseEndpointSettings {
-    name: string;
-    port?: number | null;
-    description?: string | null;
-  }
-  export interface Endpoint {
-    settings: EndpointSettings;
-    remote?: Remote;
+  export interface BaseProxySettings {}
+  export interface Proxy {
+    settings: ProxySettings;
     [k: string]: unknown;
+  }
+  /**
+   * Configuration parser for ``proxy`` settings.
+   *
+   * .. code-block:: yaml
+   *
+   *     endpoints:
+   *       # see ProxyEndpoint
+   *       - ...
+   */
+  export interface ProxySettings {
+    /**
+     * Whether the application is enabled
+     */
+    enabled?: boolean;
+    endpoints?: EndpointSettings[];
+    max_recorded_body_size?: number;
+    client_read_timeout?: number;
+    min_request_body_rate?: number;
+    request_body_grace_period?: number;
+    trusted_proxies?: string[];
+    tags?: TagsSettings;
   }
   /**
    * Configuration parser for ``proxy.endpoints[]`` settings.
@@ -157,6 +174,34 @@ declare namespace Apps.Proxy {
     } | null;
     [k: string]: unknown;
   }
+  /**
+   * Bounds on the tags a client sets with ``x-harp-*`` request headers. A tag over a bound is dropped, never the
+   * request.
+   */
+  export interface TagsSettings {
+    max_count?: number;
+    max_name_length?: number;
+    max_value_length?: number;
+  }
+  /**
+   * Bounds on the tags a client sets with ``x-harp-*`` request headers. A tag over a bound is dropped, never the
+   * request.
+   */
+  export interface TagsSettings1 {
+    max_count?: number;
+    max_name_length?: number;
+    max_value_length?: number;
+  }
+  export interface BaseEndpointSettings {
+    name: string;
+    port?: number | null;
+    description?: string | null;
+  }
+  export interface Endpoint {
+    settings: EndpointSettings;
+    remote?: Remote;
+    [k: string]: unknown;
+  }
   export interface Remote {
     settings: RemoteSettings;
     current_pool_name?: string;
@@ -179,47 +224,6 @@ declare namespace Apps.Proxy {
     settings: RemoteEndpointSettings;
     status?: number;
     failure_reasons?: unknown[] | null;
-    [k: string]: unknown;
-  }
-  export interface BaseProxySettings {}
-  export interface Proxy {
-    settings: ProxySettings;
-    [k: string]: unknown;
-  }
-  /**
-   * Configuration parser for ``proxy`` settings.
-   *
-   * .. code-block:: yaml
-   *
-   *     endpoints:
-   *       # see ProxyEndpoint
-   *       - ...
-   */
-  export interface ProxySettings {
-    /**
-     * Whether the application is enabled
-     */
-    enabled?: boolean;
-    endpoints?: EndpointSettings[];
-    /**
-     * Seconds a client may stay silent in the middle of a request before the server closes its connection.
-     */
-    client_read_timeout?: number;
-    max_recorded_body_size?: number;
-    min_request_body_rate?: number;
-    request_body_grace_period?: number;
-  }
-  export interface BaseRemoteSettings {
-    min_pool_size?: number;
-    break_on?: string[];
-    check_after?: number;
-  }
-  export interface Remote1 {
-    settings: RemoteSettings;
-    current_pool_name?: string;
-    probe?: RemoteProbe | null;
-    current_pool: string[];
-    endpoints: RemoteEndpoint[];
     [k: string]: unknown;
   }
   export interface BaseLiveness {
@@ -249,6 +253,10 @@ declare namespace Apps.Proxy {
     settings: NaiveLivenessSettings;
     [k: string]: unknown;
   }
+  export interface IgnoreLiveness {
+    settings: IgnoreLivenessSettings;
+    [k: string]: unknown;
+  }
   /**
    * This is a placeholder for inheriting liveness, the parent stateful object will replace it. We do not need to
    * implement the BaseLiveness interface, as it won't exist anymore once everything is setup.
@@ -266,10 +274,6 @@ declare namespace Apps.Proxy {
     current?: number;
     [k: string]: unknown;
   }
-  export interface IgnoreLiveness {
-    settings: IgnoreLivenessSettings;
-    [k: string]: unknown;
-  }
   export interface NaiveLiveness {
     settings: NaiveLivenessSettings;
     [k: string]: unknown;
@@ -281,6 +285,19 @@ declare namespace Apps.Proxy {
   export interface NaiveLivenessSubjectState {
     failure_score?: number;
     success_score?: number;
+    [k: string]: unknown;
+  }
+  export interface BaseRemoteSettings {
+    min_pool_size?: number;
+    break_on?: string[];
+    check_after?: number;
+  }
+  export interface Remote1 {
+    settings: RemoteSettings;
+    current_pool_name?: string;
+    probe?: RemoteProbe | null;
+    current_pool: string[];
+    endpoints: RemoteEndpoint[];
     [k: string]: unknown;
   }
 }
