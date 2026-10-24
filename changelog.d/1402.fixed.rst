@@ -1,0 +1,1 @@
+Boot-error masking now hides the password of any url by shape, whatever its encoding, and no longer fails on urls SQLAlchemy cannot parse (multi-host).
