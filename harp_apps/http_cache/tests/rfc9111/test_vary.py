@@ -22,7 +22,7 @@ class TestVaryHeader:
     """Tests for Vary header behavior per RFC 9111 §4.1."""
 
     @respx.mock
-    async def test_vary_creates_separate_cache_entries_rfc9111_4_1(self, any_cached_client, any_storage, request):
+    async def test_vary_creates_separate_cache_entries_rfc9111_4_1(self, any_cached_client, any_storage):
         """RFC 9111 §4.1: Vary header creates separate cache entries per variant.
 
         Quote from RFC:
@@ -33,15 +33,8 @@ class TestVaryHeader:
         > new request.
 
         The third request, repeating the first variant, tells coexisting variants from variants
-        evicting each other. The shipped storage keeps one entry per key.
+        evicting each other.
         """
-        if request.node.callspec.params["any_storage"] == "real":
-            request.applymarker(
-                pytest.mark.xfail(
-                    strict=True,
-                    reason="storage keeps one variant per key, see https://github.com/msqd/harp/issues/910",
-                )
-            )
 
         # Arrange: Response varies by Accept-Language
         route = respx.get("http://example.com/resource").mock(

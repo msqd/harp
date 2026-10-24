@@ -101,7 +101,7 @@ class DashboardController(RoutingController):
         self.settings = settings
 
         # the authentication actually enforced, which is not necessarily what is configured (see the security module)
-        self._auth = resolve_authentication(self.settings.auth)
+        self._auth = resolve_authentication(self.settings.auth, f"{self.settings.host}:{self.settings.port}")
 
         # create users if they don't exist; keep a strong reference to the task, as the event loop
         # only holds a weak one and would let it be garbage-collected before completion.

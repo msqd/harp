@@ -153,3 +153,19 @@ async def test_burst_is_bounded_and_overflow_is_dropped(caplog):
     assert sender.send_notification.call_count <= 3
     assert any("dropped" in r.getMessage() for r in caplog.records)
     await subscriber.aclose()
+
+
+async def test_notification_url_drops_query_string():
+    subscriber = NotificationSubscriber(NotificationsSettings())
+    sender = mock.AsyncMock()
+    subscriber.senders = [sender]
+    request = HttpRequest(
+        extensions={"remote_url": "https://example.com/api/v1?token=s3cr3t&x=1#frag", "remote_method": "GET"}
+    )
+    response = HttpResponse("", status=500)
+
+    await subscriber.on_response_send_error_notifications(ResponseEvent(request, response))
+    await subscriber.join()
+    await subscriber.aclose()
+
+    assert sender.send_notification.call_args.args[1] == "https://example.com/api/v1"

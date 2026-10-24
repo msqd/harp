@@ -1,3 +1,4 @@
+from html import escape
 from typing import Optional
 
 from httpx import AsyncClient
@@ -33,6 +34,7 @@ class GoogleChatNotificationSender:
         transaction_id: Optional[str],
         public_url: Optional[str] = None,
     ) -> dict:
+        url, message = escape(url or "", quote=False), escape(message, quote=False)
         sections = [
             {"widgets": [{"textParagraph": {"text": f"<b>Error in {method} request to {url}</b>"}}]},
             {

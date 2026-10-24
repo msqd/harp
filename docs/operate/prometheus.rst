@@ -51,7 +51,8 @@ serve it on a dedicated port, without authentication (off by default), set ``das
 .. warning::
 
     The dedicated port has **no authentication**: anyone who can reach it reads your metrics. It binds all
-    interfaces (``[::]``, like every HARP port) and its address is not configurable. Restrict it outside HARP:
+    interfaces (``[::]``, like every HARP port) and its address is not configurable: ``dashboard.host`` does not apply to
+    it. Restrict it outside HARP:
     a firewall or security group, a Kubernetes ``NetworkPolicy``, or, with Docker, publish it on loopback only
     (``-p 127.0.0.1:9100:9100``). Leave it unset to keep ``/metrics`` behind the dashboard authentication.
 

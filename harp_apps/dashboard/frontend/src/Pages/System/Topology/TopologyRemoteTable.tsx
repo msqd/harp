@@ -37,7 +37,7 @@ export default function TopologyRemoteTable({
               {remoteEndpoint.settings.url}
             </a>
           </span>
-          <RemoteEndpointStatusDropDown endpointName={endpointName} remoteEndpoint={remoteEndpoint} />
+          <RemoteEndpointStatusDropDown endpointName={endpointName} index={j} remoteEndpoint={remoteEndpoint} />
           {remoteEndpoint.failure_reasons ? (
             <code className="inline-flex font-mono text-xs">{remoteEndpoint.failure_reasons.join(",")}</code>
           ) : null}
