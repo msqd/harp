@@ -5,12 +5,13 @@ and shared with message blobs. Only the ``cache/meta`` blob says which of them t
 so the janitor has to follow those references before calling anything an orphan.
 """
 
+import asyncio
 from datetime import UTC, datetime, timedelta
 
 import pytest
 from hishel import Headers, Request, Response
 from hishel._core.models import AnyIterable
-from sqlalchemy import update
+from sqlalchemy import select, update
 
 from harp.models import Blob
 from harp_apps.http_cache.tests import store_entry
@@ -46,7 +47,6 @@ def sql_only(blob_storage: IBlobStorage):
         pytest.skip("The janitor only sweeps SQL blob storage.")
 
 
-@pytest.mark.usefixtures("sql_only")
 class TestJanitorAndHttpCache(StorageTestFixtureMixin):
     @pytest.fixture
     def worker(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
@@ -158,3 +158,46 @@ class TestBlobStorageSharedByInstances(StorageTestFixtureMixin):
         await self.create_message(sql_storage, transaction_id=t.id, kind="misc", summary="x", headers="h", body=x.id)
 
         assert await b.get(x.id) is not None
+
+
+async def _all_ids(blob_storage):
+    if blob_storage.type == "sql":
+        async with blob_storage.engine.connect() as conn:
+            for row in await conn.execute(select(SqlBlob.id)):
+                yield row.id
+    else:
+        async for blob_id in blob_storage.iter_blob_ids():
+            yield blob_id
+
+
+class TestExpiredEntriesReleaseTheirBlobs(StorageTestFixtureMixin):
+    """Whatever the blob backend, an expired entry's header and body blobs do not outlive it."""
+
+    @pytest.fixture(params=["sql", "redis", "memory"])
+    def any_blob_storage(self, request, blob_storage):
+        if request.param == "memory":
+            if blob_storage.type != "sql":
+                pytest.skip("independent of the blob_storage parametrization")
+            from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
+
+            return MemoryBlobStorage()
+        if request.param != blob_storage.type:
+            pytest.skip("covered by the other parametrization of blob_storage")
+        return blob_storage
+
+    @pytest.mark.parametrize("expiry", ["read", "sweep"])
+    async def test_header_and_body_blobs_are_released(self, sql_storage, any_blob_storage, expiry):
+        worker = worker_with_grace(sql_storage, any_blob_storage, JanitorSettings(), NO_GRACE)
+        cache = AsyncStorage(any_blob_storage, ttl=0.01)
+        await store_entry(cache, _request(), _response(b"expiring"), "key-1")
+        body = Blob.from_data(b"expiring", content_type="text/plain")
+        assert await any_blob_storage.get(body.id) is not None
+
+        await asyncio.sleep(0.05)
+        if expiry == "read":
+            assert await cache.get_entries("key-1") == []
+        else:
+            await cache._sweep()
+        await worker.delete_orphan_blobs()
+
+        assert [blob_id async for blob_id in _all_ids(any_blob_storage)] == []

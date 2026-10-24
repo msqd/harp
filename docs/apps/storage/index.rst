@@ -128,9 +128,18 @@ filesystems. A single writer remains: writes still queue, and a lock held longer
 Blob storage
 ::::::::::::
 
-Without configuration, the blob storage will use the same SQL database as the core storage. For intensive production
-use, we suggest you switch the underlying implementation to a Redis-based one. The test suite only runs against the
-official redis docker image, but we'll add tested support for alternatives, like KeyDB or Valkey in the future.
+Without configuration, the blob storage uses the same SQL database as the core storage. PostgreSQL is the recommended
+production setup. Redis is a supported option when you want to keep bodies and headers out of the SQL database. The test
+suite only runs against the official redis docker image, but we'll add tested support for alternatives, like KeyDB or
+Valkey in the future.
+
+Retention differs per blob backend, see :doc:`/apps/janitor/index`:
+
+- ``sql``: the janitor deletes the blobs nothing references anymore.
+- ``redis``: same, by scanning the keys. Blobs carry no TTL, as they are shared between transactions and the HTTP
+  cache. Each write also leaves a short-lived ``harp:blob-written:<id>`` marker key that protects fresh blobs from the
+  sweep.
+- ``memory``: same, and the blobs are lost on restart anyway.
 
 
 Configuration

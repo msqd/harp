@@ -1,9 +1,48 @@
+import time
+from collections.abc import AsyncIterator, Iterable
+from datetime import datetime
 from typing import override
 
 from redis.asyncio import Redis
 
 from harp.models import Blob
+from harp_apps.storage.models.blobs import ORPHAN_GRACE
 from harp_apps.storage.types import IBlobStorage
+
+#: Marks a blob as recently written: key ``<prefix><blob id>``, holding the write time, living `ORPHAN_GRACE`.
+#: Redis blobs have no ``created_at``; the marker is what keeps the janitor from deleting content whose message is
+#: not committed yet, as ``blobs.created_at`` does for SQL.
+WRITE_MARKER_PREFIX = "harp:blob-written:"
+
+SCAN_BATCH_SIZE = 500
+
+# Deletes the blobs (KEYS) whose write marker is older than ARGV[1], or missing. Atomic: a producer storing
+# the same content again cannot slip in between the check and the deletion.
+_DELETE_STALE = """
+local deleted = 0
+for _, id in ipairs(KEYS) do
+    local written = redis.call('GET', ARGV[2] .. id)
+    if not written or tonumber(written) < tonumber(ARGV[1]) then
+        deleted = deleted + redis.call('DEL', id)
+    end
+end
+return deleted
+"""
+
+# Deletes the blobs (KEYS) still holding exactly the given value (ARGV, same order).
+_DELETE_IF_UNCHANGED = """
+local deleted = 0
+for i, id in ipairs(KEYS) do
+    if redis.call('GET', id) == ARGV[i] then
+        deleted = deleted + redis.call('DEL', id)
+    end
+end
+return deleted
+"""
+
+
+def _encode(blob: Blob) -> bytes:
+    return ((blob.content_type or "") + "\n").encode() + blob.data
 
 
 class RedisBlobStorage(IBlobStorage):
@@ -25,7 +64,10 @@ class RedisBlobStorage(IBlobStorage):
 
     @override
     async def put(self, blob: Blob) -> Blob:
-        await self.client.set(blob.id, ((blob.content_type or "") + "\n").encode() + blob.data)
+        async with self.client.pipeline(transaction=True) as pipe:
+            pipe.set(blob.id, _encode(blob))
+            pipe.set(WRITE_MARKER_PREFIX + blob.id, time.time(), ex=int(ORPHAN_GRACE.total_seconds()))
+            await pipe.execute()
         return blob
 
     force_put = put
@@ -36,4 +78,57 @@ class RedisBlobStorage(IBlobStorage):
 
     @override
     async def exists(self, blob_id: str) -> bool:
-        return await self.client.exists(blob_id)
+        return bool(await self.client.exists(blob_id))
+
+    async def iter_blob_ids(self) -> AsyncIterator[str]:
+        """Every stored blob id."""
+        async for key in self.client.scan_iter(count=SCAN_BATCH_SIZE):
+            key = key.decode() if isinstance(key, bytes) else key
+            if not key.startswith(WRITE_MARKER_PREFIX):
+                yield key
+
+    async def iter_blobs(self, content_type: str) -> AsyncIterator[Blob]:
+        """Every stored blob of this content type.
+
+        Only the first bytes of each value are read to tell the type, so the bodies of other blobs stay in Redis.
+        """
+        header = (content_type + "\n").encode()
+        batch: list[str] = []
+        async for blob_id in self.iter_blob_ids():
+            batch.append(blob_id)
+            if len(batch) >= SCAN_BATCH_SIZE:
+                async for blob in self._matching(batch, header):
+                    yield blob
+                batch = []
+        async for blob in self._matching(batch, header):
+            yield blob
+
+    async def _matching(self, blob_ids: list[str], header: bytes) -> AsyncIterator[Blob]:
+        if not blob_ids:
+            return
+        async with self.client.pipeline(transaction=False) as pipe:
+            for blob_id in blob_ids:
+                pipe.getrange(blob_id, 0, len(header) - 1)
+            starts = await pipe.execute()
+        for blob_id, start in zip(blob_ids, starts):
+            if start == header:
+                blob = await self.get(blob_id)
+                if blob is not None:
+                    yield blob
+
+    async def delete_blobs(self, blobs: Iterable[Blob]) -> None:
+        """Delete each blob, unless it was stored again with other data since it was read."""
+        blobs = list(blobs)
+        if blobs:
+            await self.client.eval(
+                _DELETE_IF_UNCHANGED, len(blobs), *(b.id for b in blobs), *(_encode(b) for b in blobs)
+            )
+
+    async def delete_stale(self, blob_ids: Iterable[str], /, *, older_than: datetime) -> int:
+        """Delete the given blobs, except those written after `older_than`. Returns how many were deleted."""
+        blob_ids = list(blob_ids)
+        if not blob_ids:
+            return 0
+        return await self.client.eval(
+            _DELETE_STALE, len(blob_ids), *blob_ids, older_than.timestamp(), WRITE_MARKER_PREFIX
+        )
