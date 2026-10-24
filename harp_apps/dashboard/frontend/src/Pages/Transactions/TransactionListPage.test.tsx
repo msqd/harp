@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter } from "react-router"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { server } from "tests/mocks/node"

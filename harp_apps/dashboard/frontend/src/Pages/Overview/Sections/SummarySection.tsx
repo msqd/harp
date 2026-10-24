@@ -1,5 +1,5 @@
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline"
-import { Link } from "react-router-dom"
+import { Link } from "react-router"
 import tw, { css, styled } from "twin.macro"
 
 import { StyledJumboBadge } from "Components/Badges/StyledJumboBadge.tsx"

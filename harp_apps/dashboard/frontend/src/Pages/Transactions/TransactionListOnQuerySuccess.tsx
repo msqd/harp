@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { QueryObserverSuccessResult } from "react-query/types/core/types"
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { useLocation, useNavigate, useSearchParams } from "react-router"
 
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
 import { ItemList } from "Domain/Api/Types"
@@ -53,7 +53,7 @@ export function TransactionListOnQuerySuccess({
 
   const resetFilters = (keys: string[]) => {
     keys.forEach((key) => searchParams.delete(key))
-    navigate(
+    void navigate(
       {
         pathname: location.pathname,
         search: searchParams.toString(),
@@ -73,7 +73,7 @@ export function TransactionListOnQuerySuccess({
       searchParams.delete(paramName)
     }
 
-    navigate(
+    void navigate(
       {
         pathname: location.pathname,
         search: searchParams.toString(),

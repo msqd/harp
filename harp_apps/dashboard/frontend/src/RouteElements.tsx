@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { Link, useRouteError } from "react-router-dom"
+import { Link, useRouteError } from "react-router"
 
 import { Error as ErrorDetails, Page } from "Components/Page"
 import { NotFound } from "ui/Components/NotFound"

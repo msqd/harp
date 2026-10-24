@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react"
-import { RouteObject } from "react-router-dom"
+import { RouteObject } from "react-router"
 
 import { Layout } from "Components/Layout"
 import { TransactionDataTable } from "Pages/Transactions/Components/List"
