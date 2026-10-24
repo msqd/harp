@@ -309,6 +309,35 @@ async def test_dot_segments_under_any_separator_and_dot_encoding_are_refused(bas
         await controller._get_next_url_for(context)
 
 
+# Shapes an upstream may read as a dot segment after its own normalisation (#1009): ";" path
+# parameters, a second decoding, overlong UTF-8, truncation at NUL, Unicode normalisation.
+ALTERNATE_DOT_SEGMENT_PATHS = [
+    "/..;/..;/admin",
+    "/%2e%2e;/%2e%2e;/admin",
+    "/.;x=1/admin",
+    "/%252e%252e/%252e%252e/admin",
+    "/%25252e%25252e/admin",
+    "/%252e%252e%252fadmin",
+    "/%c0%ae%c0%ae/admin",
+    "/%C0%AE%C0%AE/admin",
+    "/%e0%80%ae%e0%80%ae/admin",
+    "/%2e%2e%00/x",
+    "/..%00/x",
+    "/%EF%BC%8E%EF%BC%8E/x",
+    "/%EF%BC%8E./x",
+]
+
+
+@pytest.mark.parametrize("base_url", ["http://example.com", "http://example.com/api/v1/"])
+@pytest.mark.parametrize("hostile_path", ALTERNATE_DOT_SEGMENT_PATHS)
+async def test_alternate_dot_segment_shapes_return_400_and_are_never_forwarded(base_url, hostile_path):
+    controller = _controller(base_url)
+    controller.forward = AsyncMock(side_effect=AssertionError("must not forward a hostile request"))
+    response = await controller(HttpRequest(method="GET", path=hostile_path))
+    assert response.status == 400
+    controller.forward.assert_not_called()
+
+
 @pytest.mark.parametrize("hostile_path", ["//[x/", "//][@+"])
 async def test_request_path_urlsplit_cannot_parse_returns_400(hostile_path):
     controller = _controller("http://example.com/api/v1/")
@@ -330,6 +359,12 @@ NOT_DOT_SEGMENT_PATHS = [
     "/user%3A42",
     "/a%2fb",
     "/search%20term",
+    "/a%2eb",
+    "/%20",
+    "/%C3%A9",
+    "/page;jsessionid=abc",
+    "/a;jsessionid=abc/b",
+    "/%2520",
 ]
 
 
