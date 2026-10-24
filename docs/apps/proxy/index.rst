@@ -110,6 +110,35 @@ Dropped tags are logged at debug level with the transaction id, never their valu
 Tagging stays open: any name is accepted. If HARP is exposed to untrusted callers, strip ``x-harp-*`` headers from the
 requests you do not trust (at your load balancer or gateway), or lower these bounds, since every kept tag is stored.
 
+.. _proxy-forwarding-headers:
+
+Forwarding headers and trusted proxies
+::::::::::::::::::::::::::::::::::::::
+
+.. versionchanged:: 0.13
+
+    The peer address is sent upstream, and inbound forwarding headers are stripped unless the peer is trusted.
+
+HARP tells the upstream who is calling it. On every proxied request it appends the address of the peer it is talking to
+to ``X-Forwarded-For`` and to ``Forwarded`` (RFC 7239, ``for=``; an IPv6 address is bracketed and quoted:
+``for="[2001:db8::1]"``). This applies to the request sent upstream only, never to the request recorded in the
+dashboard.
+
+The ``X-Forwarded-For``, ``Forwarded`` and ``X-Real-IP`` headers a client sends are claims it chose freely, so by default
+they are stripped before the request goes upstream, and the upstream only sees the real peer. If HARP runs behind a load
+balancer or gateway of yours, list its addresses in ``trusted_proxies``: what a trusted peer sends is kept, and the peer
+is appended after it, so the upstream sees the whole chain.
+
+.. code-block:: yaml
+
+    proxy:
+      trusted_proxies:
+        - 10.0.0.0/8
+        - fd00::/8
+
+``trusted_proxies`` is a list of CIDR ranges (a single address works too) and is empty by default. Only list proxies you
+operate: anything in these ranges can set the client address your upstream sees.
+
 .. _proxy-buffering-and-streaming:
 
 Buffering and streaming
