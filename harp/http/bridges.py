@@ -26,6 +26,7 @@ class HttpRequestStubBridge(HttpRequestBridge):
         *,
         server_ipaddr: str = "127.0.0.1",
         server_port: int = 80,
+        client_ipaddr: str | None = None,
         method: str = "GET",
         path: str = "/",
         query: Mapping | str = None,
@@ -34,6 +35,7 @@ class HttpRequestStubBridge(HttpRequestBridge):
     ):
         self._server_ipaddr = server_ipaddr
         self._server_port = server_port
+        self._client_ipaddr = client_ipaddr
         self._method = str(method).upper()
         self._path = path
 
@@ -55,6 +57,9 @@ class HttpRequestStubBridge(HttpRequestBridge):
 
     def get_server_port(self) -> int:
         return self._server_port
+
+    def get_client_ipaddr(self) -> str | None:
+        return self._client_ipaddr
 
     def get_method(self) -> str:
         return self._method

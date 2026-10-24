@@ -2,7 +2,7 @@ import { isEqual } from "lodash"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Helmet } from "react-helmet"
 import { useQueryClient } from "react-query"
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { useLocation, useNavigate, useSearchParams } from "react-router"
 
 import { OnQuerySuccess } from "Components"
 import { Page } from "Components/Page"
@@ -74,7 +74,7 @@ export default function TransactionListPage({ TransactionDataTable }: Transactio
         }
       })
 
-      navigate(
+      void navigate(
         {
           pathname: location.pathname,
           search: searchParams.toString(),

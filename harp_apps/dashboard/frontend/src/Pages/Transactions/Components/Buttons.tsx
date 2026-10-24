@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/16/solid"
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/outline"
 import { HTMLAttributes } from "react"
-import { Link } from "react-router-dom"
+import { Link } from "react-router"
 import tw, { styled } from "twin.macro"
 
 interface ButtonProps {

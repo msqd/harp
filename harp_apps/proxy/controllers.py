@@ -3,10 +3,11 @@ import unicodedata
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 from functools import cached_property, lru_cache
+from ipaddress import IPv4Network, IPv6Network
 from time import time
 from httpx import AsyncClient, codes
 from pyheck import shouty_snake
-from typing import Optional, cast, override
+from typing import Optional, Sequence, cast, override
 from urllib.parse import unquote_to_bytes, urlencode, urlsplit
 from whistle import IAsyncEventDispatcher
 
@@ -46,6 +47,7 @@ from .events import (
     TransactionEvent,
 )
 from .helpers import extract_tags_from_request
+from .settings import TagsSettings
 from .settings.remote import Remote
 from .streams import MinRateStream, RecordingStream, UpstreamResponseStream
 
@@ -91,6 +93,8 @@ class AbstractHttpProxyController(ABC):
         min_request_body_rate: int = DEFAULT_MIN_REQUEST_BODY_RATE,
         request_body_grace_period: float = DEFAULT_REQUEST_BODY_GRACE_PERIOD,
         client_read_timeout: float = DEFAULT_CLIENT_READ_TIMEOUT,
+        tags: TagsSettings | None = None,
+        trusted_proxies: Sequence[IPv4Network | IPv6Network] = (),
     ):
         self.remote = remote
         if not isinstance(remote, Remote):
@@ -102,9 +106,11 @@ class AbstractHttpProxyController(ABC):
         self.min_request_body_rate = min_request_body_rate
         self.request_body_grace_period = request_body_grace_period
         self.client_read_timeout = client_read_timeout
+        self.tags = tags or TagsSettings()
 
         self.proxy = HttpClientProxyAdapter(
             http_client,
+            trusted_proxies=trusted_proxies,
             extensions={"endpoint": self.name, "max_recorded_body_size": self.max_recorded_body_size},
         )
 
@@ -179,7 +185,10 @@ class HttpProxyController(AbstractHttpProxyController):
             grace_period=self.request_body_grace_period,
             idle_timeout=self.client_read_timeout,
         )
-        context = await self.start_transaction(request, tags=extract_tags_from_request(request))
+        tags, dropped_tags = extract_tags_from_request(request, self.tags)
+        context = await self.start_transaction(request, tags=tags)
+        for name, reason in dropped_tags:
+            self.debug("client tag dropped (%s): %s", reason, name, transaction=context.transaction)
 
         # If nothing prepared a ready to send response, it's time to forward the request.
         if not context.response:

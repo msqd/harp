@@ -1,4 +1,4 @@
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { useLocation, useNavigate, useSearchParams } from "react-router"
 
 import { tpdexScale } from "Components/Badges/constants"
 import { useTransactionsFiltersQuery } from "Domain/Transactions"
@@ -59,7 +59,7 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
       })
     }
 
-    navigate(
+    void navigate(
       {
         pathname: location.pathname,
         search: searchParams.toString(),
@@ -84,7 +84,7 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
       searchParams.delete("tpdexmax")
     }
 
-    navigate(
+    void navigate(
       {
         pathname: location.pathname,
         search: searchParams.toString(),

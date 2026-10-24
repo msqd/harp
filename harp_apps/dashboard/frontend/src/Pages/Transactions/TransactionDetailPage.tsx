@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom"
+import { Link, useParams } from "react-router"
 
 import { Page, PageTitle } from "Components/Page"
 import { OnQuerySuccess } from "Components/Utilities/OnQuerySuccess.tsx"
