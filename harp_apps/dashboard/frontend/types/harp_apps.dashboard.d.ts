@@ -14,7 +14,7 @@ declare namespace Apps.Dashboard {
   }
   export interface BasicAuthSettings {
     /**
-     * Authentication type. Only «basic» is supported for now.
+     * Authentication type.
      */
     type?: "basic";
     /**
@@ -78,6 +78,15 @@ declare namespace Apps.Dashboard {
   export interface User {
     password: string;
   }
+  /**
+   * Explicit opt-out: the dashboard is served without any authentication.
+   */
+  export interface NoAuthSettings {
+    /**
+     * Authentication type. «none» serves the dashboard without authentication.
+     */
+    type?: "none";
+  }
   export interface DevserverSettings {
     /**
      * Enable or disable the development server.
@@ -101,9 +110,13 @@ declare namespace Apps.Dashboard {
      */
     port?: number;
     /**
-     * Authentication settings for the dashboard.
+     * Port on which the Prometheus metrics (`/metrics`) are also served, unauthenticated. Disabled by default. Metrics are always served on the dashboard port, under the dashboard authentication.
      */
-    auth?: BasicAuthSettings | null;
+    metrics_port?: number | null;
+    /**
+     * Authentication settings for the dashboard. When not set, the dashboard requires a login with the `admin` user and a random password generated and logged at each boot. Use `type: none` to explicitly serve the dashboard without authentication.
+     */
+    auth?: (BasicAuthSettings | NoAuthSettings) | null;
     /**
      * Development server settings, only useful for internal frontend development.
      */
