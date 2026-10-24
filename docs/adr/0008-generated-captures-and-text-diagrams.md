@@ -1,4 +1,4 @@
-# ADR-0006: Captures come from a seeded HARP through Playwright; diagrams are Graphviz text
+# ADR-0008: Captures come from a seeded HARP through Playwright; diagrams are Graphviz text
 
 - **Status**: draft
 - **Date**: 2026-10-24

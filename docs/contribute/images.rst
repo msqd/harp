@@ -40,5 +40,5 @@ sources. ``make docs-assets`` renders them too, or only them with ``uv run pytho
 Class diagrams, such as the event hierarchies in :doc:`/core/events`, have no source file: they are derived from the
 code with the ``inheritance-diagram`` directive.
 
-The choices behind this, and the options rejected, are in `ADR-0006
-<https://github.com/msqd/harp/blob/main/docs/adr/0006-generated-captures-and-text-diagrams.md>`_.
+The choices behind this, and the options rejected, are in `ADR-0008
+<https://github.com/msqd/harp/blob/main/docs/adr/0008-generated-captures-and-text-diagrams.md>`_.
