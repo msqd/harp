@@ -1,0 +1,1 @@
+Document the rollback from 0.12 to 0.11 (down migration to `a1c7f3b52e04`) and that `dashboard.metrics_port` has no authentication and binds all interfaces.

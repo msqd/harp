@@ -7,8 +7,10 @@ from harp.models import Blob
 from harp.models.blobs import OFFLOAD_HASH_THRESHOLD
 
 
-def _legacy_id(data: bytes, content_type: str | None) -> str:
-    return hashlib.sha1((content_type.encode("utf-8") if content_type else b"") + b"\n" + data).hexdigest()
+def _expected_id(data: bytes, content_type: str | None) -> str:
+    content_type_bytes = content_type.encode("utf-8") if content_type else b""
+    framed = len(content_type_bytes).to_bytes(8, "big") + content_type_bytes + data
+    return hashlib.sha256(framed).hexdigest()[:40]
 
 
 @pytest.mark.parametrize(
@@ -21,10 +23,24 @@ def _legacy_id(data: bytes, content_type: str | None) -> str:
         (bytes(range(256)) * 10, "http/headers", "http/headers"),
     ],
 )
-def test_blob_id_is_sha1_of_type_newline_data(data, content_type, expected_type):
+def test_blob_id_is_truncated_sha256_of_framed_type_and_data(data, content_type, expected_type):
     blob = Blob.from_data(data, content_type=content_type)
-    assert blob.id == _legacy_id(blob.data, expected_type)
+    assert blob.id == _expected_id(blob.data, expected_type)
     assert blob.content_type == expected_type
+
+
+def test_content_type_and_body_cannot_shift_into_each_other():
+    assert Blob.from_data(b"b/c\nx", content_type="a").id != Blob.from_data(b"x", content_type="a\nb/c").id
+    assert Blob.from_data(b"\nx", content_type="a").id != Blob.from_data(b"x", content_type="a\n").id
+
+
+def test_different_content_types_never_share_an_id():
+    assert Blob.from_data(b"x", content_type="text/plain").id != Blob.from_data(b"x", content_type="text/html").id
+    assert Blob.from_data(b"x").id != Blob.from_data(b"x", content_type="text/plain").id
+
+
+def test_id_is_40_hex_characters():
+    assert len(Blob.from_data(b"x").id) == 40
 
 
 @pytest.mark.parametrize("size", [0, 10, 1 << 20])

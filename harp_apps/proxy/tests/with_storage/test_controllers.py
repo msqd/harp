@@ -249,8 +249,8 @@ class TestHttpProxyControllerWithStorage(
             "transaction_id": ANY,
             "kind": "request",
             "summary": "GET / HTTP/1.1",
-            "headers": "916ef336ce8ac9a91de41ce88c4b4bfc747b3ac9",
-            "body": "adc83b19e793491b1c6ea0fd8b46cd9f32e592fc",
+            "headers": "e16aaad8ef3406ba55f2c90748d15fcbb6cdd66a",
+            "body": "af5570f5a1810b7af78caf4bc70a660f0df51e42",
             "created_at": ANY,
         }
 
@@ -264,8 +264,8 @@ class TestHttpProxyControllerWithStorage(
             "transaction_id": ANY,
             "kind": "response",
             "summary": "HTTP/1.1 200 OK",
-            "headers": "916ef336ce8ac9a91de41ce88c4b4bfc747b3ac9",
-            "body": "6ffdd89703735cc316470566467b816446f008ce",
+            "headers": "e16aaad8ef3406ba55f2c90748d15fcbb6cdd66a",
+            "body": "ce9e973bfc3d9e7e5c8987ea1ee70bbc00896a98",
             "created_at": ANY,
         }
 
@@ -316,8 +316,8 @@ class TestHttpProxyControllerWithStorage(
             "transaction_id": ANY,
             "kind": "request",
             "summary": "GET / HTTP/1.1",
-            "headers": "62ccbc3696048078cc4ced90d9239c1d4abc9e49",
-            "body": "adc83b19e793491b1c6ea0fd8b46cd9f32e592fc",
+            "headers": "c7a6a4abca83566b122a9d7117af9ae9bb9a5b60",
+            "body": "af5570f5a1810b7af78caf4bc70a660f0df51e42",
             "created_at": ANY,
         }
 
@@ -330,8 +330,8 @@ class TestHttpProxyControllerWithStorage(
             "transaction_id": ANY,
             "kind": "response",
             "summary": "HTTP/1.1 200 OK",
-            "headers": "916ef336ce8ac9a91de41ce88c4b4bfc747b3ac9",
-            "body": "6ffdd89703735cc316470566467b816446f008ce",
+            "headers": "e16aaad8ef3406ba55f2c90748d15fcbb6cdd66a",
+            "body": "ce9e973bfc3d9e7e5c8987ea1ee70bbc00896a98",
             "created_at": ANY,
         }
 

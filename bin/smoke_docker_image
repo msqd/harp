@@ -15,6 +15,7 @@ trap cleanup EXIT
 
 # No package manager in the runtime image.
 docker run --rm --entrypoint python "$image" -c "import importlib.util, sys; sys.exit(any(importlib.util.find_spec(m) for m in ('pip', 'setuptools')))"
+docker run --rm --entrypoint python "$image" -c "import sentry_sdk"
 
 docker run -d --init --name "$name" -p "$proxy_port:4000" -p "$dashboard_port:4080" "$image" \
     server --example sqlite --example proxy:httpbin > /dev/null
