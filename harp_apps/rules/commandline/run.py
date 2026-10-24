@@ -1,12 +1,9 @@
 import asyncio
-from typing import cast
 
 import click
-from whistle import IAsyncEventDispatcher
 
 from harp.commandline.options.server import config_command
 from harp.config import ConfigurationBuilder
-from harp.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.http import HttpRequest
 from harp.utils.urls import normalize_url
 from harp_apps.http_client.events import EVENT_FILTER_HTTP_CLIENT_REQUEST, EVENT_FILTER_HTTP_CLIENT_RESPONSE
@@ -38,14 +35,14 @@ def run_command(files, examples, endpoint, method, path, options=()):
 
     ruleset = load_ruleset_from_files(files, examples, options)
 
-    dispatcher: IAsyncEventDispatcher = cast(IAsyncEventDispatcher, LoggingAsyncEventDispatcher())
-
     system = asyncio.run(
         ConfigurationBuilder({"applications": ["http_client", "rules"]}, use_default_applications=False).abuild_system(
             validate_dependencies=False
         )
     )
 
+    # The http client transport dispatches on the system dispatcher: listeners must live there.
+    dispatcher = system.dispatcher
     http_client = system.provider.get("http_client")
 
     dispatcher.add_listener(EVENT_FILTER_PROXY_REQUEST, on_proxy_request_dump, priority=-100)
