@@ -1,1 +1,0 @@
-The dashboard now requires authentication by default: without ``dashboard.auth``, a random ``admin`` password is generated at each start and logged once; ``dashboard.auth.type: none`` opts out (see :ref:`upgrading-0-12`).
