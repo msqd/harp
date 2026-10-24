@@ -130,7 +130,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               >
                 <a
                   href="https://docs.harp-project.net/en/latest/user/?utm_source=dashboard&utm_medium=help"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   target="_blank"
                 >
                   <svg

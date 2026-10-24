@@ -1,0 +1,1 @@
+Dashboard responses carry ``Referrer-Policy: same-origin``; state-changing API requests must be same-origin ``application/json``; links opening a new window carry ``rel="noopener noreferrer"``, enforced by lint.

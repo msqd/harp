@@ -33,7 +33,7 @@ export default function TopologyRemoteTable({
                 </svg>
               </span>
             )}
-            <a href={remoteEndpoint.settings.url} className="hover:underline" target="_blank">
+            <a href={remoteEndpoint.settings.url} className="hover:underline" target="_blank" rel="noopener noreferrer">
               {remoteEndpoint.settings.url}
             </a>
           </span>
