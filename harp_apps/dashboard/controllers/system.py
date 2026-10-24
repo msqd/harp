@@ -6,6 +6,7 @@ from sqlalchemy.orm import aliased, joinedload
 
 from harp import __revision__, __version__, get_logger
 from harp.config.asdict import asdict
+from harp.config.development_only import development_only_settings
 from harp.controllers import GetHandler, ProxyControllerResolver, PutHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest, HttpResponse, JsonHttpResponse
 from harp.typedefs.global_settings import GlobalSettings
@@ -48,6 +49,7 @@ class SystemController(RoutingController):
                 "version": __version__,
                 "revision": __revision__,
                 "user": user,
+                "development_only_settings": development_only_settings(self.settings),
             }
         )
 
