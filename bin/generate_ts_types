@@ -2,6 +2,7 @@
 
 import glob
 import os
+import sys
 from shutil import copyfile
 
 import pyheck
@@ -9,7 +10,10 @@ import pyheck
 from harp import ROOT_DIR, get_logger
 from harp.config import asdict
 from harp.utils.config import yaml
-from harp.utils.typescript import generate_schema, generate_typescript_and_jsonschema
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from tools.typescript import generate_schema, generate_typescript_and_jsonschema
 
 logger = get_logger(__name__)
 
