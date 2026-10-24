@@ -1,3 +1,25 @@
+.. _upgrading-0-13:
+
+Upgrading to 0.13
+=================
+
+Metrics
+:::::::
+
+- With the ``metrics`` application enabled, ``/.prometheus/metrics`` is no longer answered on the proxy
+  ports: the request is proxied to the upstream like any other. Metrics are served on ``/metrics`` by the
+  dashboard port, behind its authentication, and on ``dashboard.metrics_port`` when set. Point your scrape
+  configuration at one of them. See :doc:`prometheus`.
+- The ASGI-level metric families disappear with the middleware that produced them: ``requests_count``,
+  ``requests_time``, ``requests_in_progress``, ``responses_count`` and ``exceptions_count``. Dashboards and
+  alerts built on them stop matching: use the ``controller_*`` families instead (``controller_requests_count``,
+  ``controller_requests_time``, ``controller_requests_in_progress``, ``controller_responses_count``,
+  ``controller_exceptions_count``).
+- Exception metrics lose their unbounded labels: ``path`` on ``controller_exceptions_count`` and ``url`` on
+  ``remote_exceptions_count`` are removed (they grew the series count with every distinct path or query string).
+  Aggregate queries still work; any ``by (path)`` or ``by (url)`` grouping, or matcher on these labels, stops
+  matching. The remaining labels are listed in :doc:`prometheus`.
+
 .. _upgrading-0-12:
 
 Upgrading to 0.12

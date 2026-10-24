@@ -38,7 +38,7 @@ def decorate_proxy_controller(wrapped: IAsyncController, *, name: Optional[str] 
             CONTROLLER_RESPONSES.labels(**labels, status=getattr(response, "status", "-")).inc()
             return response
         except Exception as exc:  # noqa: BLE001
-            CONTROLLER_EXCEPTIONS.labels(**labels, path=request.path, exception=type(exc).__name__).inc()
+            CONTROLLER_EXCEPTIONS.labels(**labels, exception=type(exc).__name__).inc()
             raise exc from None
         finally:
             after_time = time.perf_counter()
@@ -65,7 +65,7 @@ def decorate_http_client_send(wrapped):
             REMOTE_RESPONSES.labels(**labels, status=getattr(response, "status_code", "-")).inc()
             return response
         except Exception as exc:  # noqa: BLE001
-            REMOTE_EXCEPTIONS.labels(**labels, url=str(request.url), exception=type(exc).__name__).inc()
+            REMOTE_EXCEPTIONS.labels(**labels, exception=type(exc).__name__).inc()
             raise exc from None
         finally:
             after_time = time.perf_counter()

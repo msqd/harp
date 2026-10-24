@@ -1,0 +1,1 @@
+The TypeScript type generation helper moves from `harp.utils.typescript` to `tools/typescript.py` and no longer ships in the wheel; `bin/generate_types` and `bin/generate_ts_types` now fail when `json2ts` or `prettier` fails.
