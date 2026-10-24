@@ -1,7 +1,7 @@
 import { Disclosure } from "@headlessui/react"
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline"
 import { AriaAttributes, ComponentType, MouseEventHandler, ReactElement, ReactNode } from "react"
-import { To } from "react-router-dom"
+import { To } from "react-router"
 import tw, { styled } from "twin.macro"
 
 import defaultLogo from "./Assets/logo.svg"

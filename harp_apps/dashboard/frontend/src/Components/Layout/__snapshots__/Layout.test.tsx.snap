@@ -59,6 +59,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             >
               <a
                 class="flex"
+                data-discover="true"
                 href="/"
               >
                 <img
@@ -80,18 +81,21 @@ exports[`renders the title and data when the query is successful 1`] = `
               <a
                 aria-current="page"
                 class="inline-flex items-center border-b-4 px-2 pt-1 text-sm font-medium text-white border-primary"
+                data-discover="true"
                 href="/"
               >
                 Overview
               </a>
               <a
                 class="inline-flex items-center border-b-4 px-2 pt-1 text-sm font-medium text-white border-transparent hover:border-white hover:text-white"
+                data-discover="true"
                 href="/transactions"
               >
                 Transactions
               </a>
               <a
                 class="inline-flex items-center border-b-4 px-2 pt-1 text-sm font-medium text-white border-transparent hover:border-white hover:text-white"
+                data-discover="true"
                 href="/system"
               >
                 System

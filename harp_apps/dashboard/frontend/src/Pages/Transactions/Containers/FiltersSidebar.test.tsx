@@ -6,7 +6,7 @@ import { Filters } from "Types/filters"
 import { renderWithClient } from "tests/utils"
 
 import { FiltersSidebar } from "./FiltersSidebar"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter } from "react-router"
 
 const filters: Filters = {}
 
