@@ -1,11 +1,10 @@
 import asyncio
-import hashlib
 from datetime import UTC, datetime
 
 from whistle import AsyncEventDispatcher
 
 from harp.http import HttpRequest, HttpResponse
-from harp.models import Transaction
+from harp.models import Blob, Transaction
 from harp.models.blobs import OFFLOAD_HASH_THRESHOLD
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp_apps.proxy.events import (
@@ -150,7 +149,7 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         assert response_blob.data == b"response data"
 
     async def test_large_body_blob_id_is_its_content_hash(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
-        """Large bodies (hashed off the event loop) get the same blob id as small ones: sha1 of type, newline, data."""
+        """Large bodies (hashed off the event loop) get the same blob id as small ones: `Blob.from_data` id."""
         dispatcher = AsyncEventDispatcher()
         body = b"x" * (OFFLOAD_HASH_THRESHOLD * 4)
 
@@ -160,8 +159,8 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
 
         transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
         request_msg, response_msg = transactions[0].messages
-        assert request_msg.body == hashlib.sha1(b"\n" + body).hexdigest()
-        assert response_msg.body == hashlib.sha1(b"\n" + b"small").hexdigest()
+        assert request_msg.body == Blob.from_data(body).id
+        assert response_msg.body == Blob.from_data(b"small").id
 
     async def test_large_body_round_trips(self, request, sql_storage: SqlStorage, blob_storage: IBlobStorage):
         dispatcher = AsyncEventDispatcher()

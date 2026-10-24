@@ -288,7 +288,7 @@ class HttpProxyController(AbstractHttpProxyController):
         :param full_url: The full URL to which the request is forwarded.
         :return: The HTTP response received from the remote server, its body streamed from the remote as it is read.
         """
-        response = await self.proxy.send(context.request, full_url)
+        response = await self.proxy.send(context.request, full_url, transaction=transaction)
 
         # Update the status of the remote URL based on the response status code
         self.remote.notify_url_status(base_url, response.status_code)

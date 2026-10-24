@@ -6,6 +6,12 @@ Sentry
 The ``harp_apps.contrib.sentry`` application reports proxy errors and traces to `Sentry <https://sentry.io>`_ when a
 ``dsn`` is configured.
 
+Install the ``sentry`` extra, the Docker images already include it:
+
+.. code-block:: shell
+
+    pip install harp-proxy[sentry]
+
 .. toctree::
     :hidden:
     :maxdepth: 1

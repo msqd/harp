@@ -13,7 +13,7 @@ from harp import get_logger
 from harp.http.utils import hop_by_hop_names, parse_cache_control
 from harp.utils.bytes import HEADER_ENCODING, ensure_bytes, header_bytes
 from harp_apps.http_cache.models import WrappedRequest
-from harp_apps.http_cache.storages import MAX_BODY_SIZE_METADATA
+from harp_apps.http_cache.storages import MARKERS_METADATA, MAX_BODY_SIZE_METADATA, REDACTION_METADATA
 from harp_apps.http_cache.streams import ClosableByteStream, UpstreamBody
 
 logger = get_logger(__name__)
@@ -142,7 +142,12 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         wrapped_request = WrappedRequest(
             internal_request,
             url=url,
-            metadata={**internal_request.metadata, MAX_BODY_SIZE_METADATA: _max_recorded_body_size(request)},
+            metadata={
+                **internal_request.metadata,
+                MAX_BODY_SIZE_METADATA: _max_recorded_body_size(request),
+                REDACTION_METADATA: request.extensions.get("harp", {}).get("redaction"),
+                MARKERS_METADATA: request.extensions.get("harp", {}).get("markers"),
+            },
         )
 
         if _forbids_storage(request):
