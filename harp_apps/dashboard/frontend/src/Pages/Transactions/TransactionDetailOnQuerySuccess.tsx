@@ -5,9 +5,9 @@ import { KeyValueSettings } from "Domain/System/useSystemSettingsQuery"
 import { Transaction } from "Models/Transaction"
 import { SettingsTable } from "Pages/System/Components"
 import { ucfirst } from "Utils/Strings"
-import CopyToClipboard from "ui/Components/CopyToClipBoard/CopyToClipboard.tsx"
 import { Pane } from "ui/Components/Pane"
 
+import { CopyTransactionLinkButton } from "./Components/Buttons"
 import { Duration } from "./Components/Duration.tsx"
 import { Foldable } from "./Components/Foldable"
 import { MessageBody } from "./Components/MessageBody"
@@ -46,7 +46,7 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
         title={
           <div className="flex gap-x-0.5 items-center">
             <span className="grow">Transaction</span>
-            <CopyToClipboard text={transactionUrl} description="copy transaction link" className="font-light" />
+            <CopyTransactionLinkButton url={transactionUrl} />
             <Duration
               duration={duration}
               tpdex={tpdex}
