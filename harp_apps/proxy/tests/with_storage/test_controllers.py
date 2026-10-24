@@ -18,7 +18,7 @@ from harp_apps.http_cache.transports import AsyncCacheTransport
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.events import EVENT_FILTER_PROXY_REQUEST, EVENT_TRANSACTION_STARTED
 from harp_apps.proxy.settings.remote import Remote
-from harp_apps.storage.constants import SKIP_STORAGE
+from harp_apps.storage.constants import SKIP_STORAGE, TRUNCATED_REQUEST_BODY, TRUNCATED_RESPONSE_BODY
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
 from harp_apps.storage.types import IBlobStorage, IStorage
@@ -318,7 +318,9 @@ class TestHttpProxyControllerWithStorage(
         responses = []
         try:
             for _ in range(times):
-                responses.append(await controller(await _create_request()))
+                response = await controller(await _create_request())
+                await response.aread()
+                responses.append(response)
         finally:
             await worker.wait_until_empty()
         return responses
@@ -446,9 +448,11 @@ class TestHttpProxyControllerWithStorage(
 
         worker = self.create_worker(dispatcher, sql_storage.engine, sql_storage, blob_storage)
         try:
-            responses = [
-                await controller(await _create_request(headers={"cache-control": "no-store"})) for _ in range(2)
-            ]
+            responses = []
+            for _ in range(2):
+                response = await controller(await _create_request(headers={"cache-control": "no-store"}))
+                await response.aread()
+                responses.append(response)
         finally:
             await worker.wait_until_empty()
 
@@ -485,3 +489,83 @@ class TestHttpProxyControllerWithStorage(
         )
 
         assert len(await sql_storage.get_transaction_list(username="anonymous", with_messages=True)) == 0
+
+    @respx.mock
+    async def test_body_over_the_recording_cap_is_stored_truncated_and_marked(
+        self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        self.mock_http_endpoint("http://example.com/", content="0123456789")
+
+        _, response = await self.call_controller(
+            self.create_controller(dispatcher=dispatcher, max_recorded_body_size=4),
+            dispatcher=dispatcher,
+            engine=sql_storage.engine,
+            sql_storage=sql_storage,
+            blob_storage=blob_storage,
+        )
+
+        assert response.body == b"0123456789"
+        transaction, _, recorded = await self._find_one_transaction_with_messages_from_storage(sql_storage)
+        assert (await blob_storage.get(recorded.body)).data == b"0123"
+        assert transaction.markers == {TRUNCATED_RESPONSE_BODY}
+
+    @respx.mock
+    async def test_request_body_over_the_recording_cap_is_stored_truncated_and_marked(
+        self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        route = respx.post("http://example.com/").mock(return_value=Response(200, content=b"ok"))
+
+        await self.call_controller(
+            self.create_controller(dispatcher=dispatcher, max_recorded_body_size=4),
+            dispatcher=dispatcher,
+            engine=sql_storage.engine,
+            sql_storage=sql_storage,
+            blob_storage=blob_storage,
+            method="POST",
+            body=b"0123456789",
+        )
+
+        assert route.calls.last.request.content == b"0123456789"
+        transaction, recorded, _ = await self._find_one_transaction_with_messages_from_storage(sql_storage)
+        assert (await blob_storage.get(recorded.body)).data == b"0123"
+        assert transaction.markers == {TRUNCATED_REQUEST_BODY}
+
+    @respx.mock
+    async def test_request_body_of_exactly_the_recording_cap_is_stored_whole_and_unmarked(
+        self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        respx.post("http://example.com/").mock(return_value=Response(200, content=b"ok"))
+
+        await self.call_controller(
+            self.create_controller(dispatcher=dispatcher, max_recorded_body_size=4),
+            dispatcher=dispatcher,
+            engine=sql_storage.engine,
+            sql_storage=sql_storage,
+            blob_storage=blob_storage,
+            method="POST",
+            body=b"0123",
+        )
+
+        transaction, recorded, _ = await self._find_one_transaction_with_messages_from_storage(sql_storage)
+        assert (await blob_storage.get(recorded.body)).data == b"0123"
+        assert transaction.markers == set()
+
+    @respx.mock
+    async def test_request_body_one_byte_over_the_recording_cap_is_stored_truncated_and_marked(
+        self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        respx.post("http://example.com/").mock(return_value=Response(200, content=b"ok"))
+
+        await self.call_controller(
+            self.create_controller(dispatcher=dispatcher, max_recorded_body_size=4),
+            dispatcher=dispatcher,
+            engine=sql_storage.engine,
+            sql_storage=sql_storage,
+            blob_storage=blob_storage,
+            method="POST",
+            body=b"01234",
+        )
+
+        transaction, recorded, _ = await self._find_one_transaction_with_messages_from_storage(sql_storage)
+        assert (await blob_storage.get(recorded.body)).data == b"0123"
+        assert transaction.markers == {TRUNCATED_REQUEST_BODY}

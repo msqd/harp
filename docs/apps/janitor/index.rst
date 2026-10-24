@@ -6,13 +6,17 @@ Janitor
 .. versionadded:: 0.5
 
 The ``harp_apps.janitor`` application runs a background worker to clean up the storage. It deletes all transactions
-older than the retention period (60 days by default), and the orphan blobs.
+older than the retention period (60 days by default), and the orphan blobs. Transactions flagged by a user
+(favorites) are kept past the retention period.
 
 An orphan is a blob referenced by no message and by no HTTP cache entry. Blobs written in the last 10 minutes are kept,
 as the message or cache entry referencing them may not be committed yet. ``cache/meta`` blobs, the HTTP cache entries
 themselves, are never deleted by the janitor: cache storage is reclaimed by the ``ttl`` of ``http_cache.storage``
 (see :doc:`/apps/http_cache/settings`). Once an entry is expired or replaced, the janitor removes the header and body
 blobs nothing references anymore. The ``storage_blobs_orphans`` metric counts the same orphans.
+
+A sweep works in short batches and gives the database connection back between them, so requests are served while it
+runs, even with the default in-memory storage that has a single connection.
 
 .. toctree::
     :hidden:
@@ -46,11 +50,11 @@ See the :doc:`settings reference <settings>`.
 Loading
 :::::::
 
-The ``janitor`` application is loaded by default when using the ``harp-proxy start`` command.
+The ``janitor`` application is loaded by default when using the ``harp-proxy server`` command.
 
 You can disable it (not recommended) with ``janitor.enabled: false``, or by passing it as an argument to the
-``harp-proxy start`` command:
+``harp-proxy server`` command:
 
 .. code-block:: bash
 
-    harp-proxy start --disable janitor ...
+    harp-proxy server --disable janitor ...

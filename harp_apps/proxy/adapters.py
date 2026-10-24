@@ -32,10 +32,10 @@ class HttpClientProxyAdapter:
 
         :param request: The HttpRequest object to be sent.
         :param url: The URL to which the request is sent.
-        :return: The HTTP response received.
+        :return: The HTTP response received, its body not read yet: the caller reads it, then closes it.
         """
         request = self._build_request(request, url)
-        response = await self.http_client.send(request)
+        response = await self.http_client.send(request, stream=True)
         response.headers.encoding = HEADER_ENCODING  # obs-text must read back as the bytes it was
 
         # Add cache debugging headers if caching is being used

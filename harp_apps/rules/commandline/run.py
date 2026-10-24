@@ -75,4 +75,10 @@ def run_command(files, examples, options, endpoint, method, path):
     rules_subscriber.subscribe(dispatcher)
 
     request = HttpRequest(method=method, path=path)
-    asyncio.run(controller(request))
+    asyncio.run(_send(controller, request))
+
+
+async def _send(controller: HttpProxyController, request: HttpRequest):
+    """Proxy the request and read the response through, as a client would: the transaction ends once it is read."""
+    response = await controller(request)
+    await response.aread()

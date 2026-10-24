@@ -6,6 +6,12 @@ Transaction performances are evaluated based on response time (Time to Last Byte
 
 This score is then converted into a letter rating for display.
 
+.. versionchanged:: 0.12
+
+    The response time is the whole exchange, from the request reaching HARP to the last byte of the response body
+    sent to the client. Response bodies are streamed, so a slow client or a long download counts in the transaction's
+    duration and lowers its TPDEX. Before 0.12 it stopped once HARP had read the upstream's body, before sending it.
+
 .. figure:: images/tpdex.png
    :align: center
    :alt: Transaction Performance Index

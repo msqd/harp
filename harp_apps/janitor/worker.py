@@ -76,8 +76,8 @@ class JanitorWorker:
     @with_session
     async def delete_old_transactions(self, /, *, session):
         """
-        Remove transactions older than `old_after` days. On correct database implementations (postgresql for example), it
-        will cascade to related objects. On sqlite, there will be garbage left, but it's not a big deal.
+        Remove transactions older than `old_after` days, except flagged ones. The database cascades the deletion to
+        messages and tag values; their blobs are then freed by the orphan sweep.
         """
 
         # TODO to storage
@@ -86,8 +86,7 @@ class JanitorWorker:
         await session.commit()
         return result
 
-    @with_session
-    async def delete_orphan_blobs(self, /, *, session):
+    async def delete_orphan_blobs(self):
         """
         Find and remove blobs that are not referenced anymore by any transaction.
         """
@@ -99,8 +98,8 @@ class JanitorWorker:
             # themselves are reclaimed by the cache's TTL sweep, never here. Blobs written within the
             # grace period are kept: their message or cache entry may not be committed yet.
             older_than = datetime.now(UTC) - self.orphan_grace
-            orphans = await self.storage.blobs.find_orphans(session=session, older_than=older_than)
-            count = await self.storage.blobs.delete_orphans(orphans, session=session, older_than=older_than)
+            orphans = await self.storage.blobs.find_orphans(older_than=older_than)
+            count = await self.storage.blobs.delete_orphans(orphans, older_than=older_than)
         elif self.blob_storage.type == "redis":
             pass
         else:
@@ -116,23 +115,31 @@ class JanitorWorker:
                 count,
             )
 
-    @with_session
-    async def compute_and_store_metrics(self, /, *, session):
+    async def compute_and_store_metrics(self):
         """
         Compute counts of objects in storage, and store them as metrics.
         """
 
         # TODO to storage
 
-        await self.storage.metrics.insert_values(await self.compute_metrics(session), session=session)
+        values = await self.compute_metrics()
+        async with self.session_factory() as session:
+            await self.storage.metrics.insert_values(values, session=session)
 
-    async def compute_metrics(self, session):
-        values = {
-            "storage.transactions": await self.do_count(session, "transactions"),
-            "storage.messages": await self.do_count(session, "messages"),
-            "storage.blobs": await self.do_count(session, "blobs"),
-            "storage.blobs.orphans": await self.storage.blobs.count_orphans(session=session),
-        }
+    async def compute_metrics(self, session=None):
+        """Counts of stored objects. Without a session, each count takes the connection only for its own query."""
+        values = {}
+        for key, name in (
+            ("storage.transactions", "transactions"),
+            ("storage.messages", "messages"),
+            ("storage.blobs", "blobs"),
+        ):
+            if session is not None:
+                values[key] = await self.do_count(session, name)
+            else:
+                async with self.session_factory() as own:
+                    values[key] = await self.do_count(own, name)
+        values["storage.blobs.orphans"] = await self.storage.blobs.count_orphans(session=session)
 
         for key, value in values.items():
             PROMETHEUS_GAUGES[key].set(value)

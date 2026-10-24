@@ -9,7 +9,8 @@ responses, whether or not forwarded to a remote backend) in a storage for future
 .. warning::
 
     **Recording is best-effort, and the name overpromises.** Under load, storage sheds message detail and then whole
-    transactions rather than slowing traffic down, and nothing tells you it happened. Treat this as an operational
+    transactions rather than slowing traffic down. Shedding is logged and counted (see :ref:`storage load shedding
+    <storage-load-shedding>`). Treat this as an operational
     view of your traffic rather than a complete one, and do not rely on it as evidence. See
     :ref:`what-harp-retains` and `#945 <https://github.com/msqd/harp/issues/945>`_.
 

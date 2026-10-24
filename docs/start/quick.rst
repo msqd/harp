@@ -52,7 +52,8 @@ Once the container runs, it will serve two different ports from your local host:
 - `localhost:4000 <http://localhost:4000/>`_ serves a proxy to httpbin.org (an example external api that we'll use as our first proxy
   target)
 - `localhost:4080 <http://localhost:4080/>`_ serves a dashboard allowing to observe the network traffic going through the proxy. It is
-  activated and unsecure by default but for production environments you can disable it or add authentication.
+  activated by default and requires a login: the ``admin`` password is generated at each start and printed in the logs
+  (see :doc:`docker`), or you can :doc:`set your own </apps/dashboard/index>`.
 
 Open the dashboard and go to the «Transactions» tab. It should be empty.
 

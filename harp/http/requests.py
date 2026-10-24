@@ -5,6 +5,8 @@ from typing import Optional
 from httpx import AsyncByteStream, ByteStream
 from multidict import CIMultiDict
 
+from .bridges import HttpRequestStubBridge
+from .errors import ClientDisconnected
 from .typing import BaseHttpMessage, HttpRequestBridge
 from .utils.cookies import parse_cookie
 
@@ -22,8 +24,6 @@ class HttpRequest(BaseHttpMessage):
         super().__init__(extensions=extensions)
 
         if impl is None:
-            from .tests.stubs import HttpRequestStubBridge
-
             impl = HttpRequestStubBridge(**kwargs)
         else:
             if len(kwargs) > 0:
@@ -93,9 +93,22 @@ class HttpRequest(BaseHttpMessage):
 
     async def aread(self) -> bytes:
         """Read all chunks from request. We may want to be able to read partial body later, but for now it's all or
-        nothing. This method does nothing if the body has already been read."""
+        nothing. This method does nothing if the body has already been read. When the client left before the end, the
+        partial body is available as ``body`` and :class:`ClientDisconnected` is raised on every call."""
+        if getattr(self, "_disconnected", False):
+            raise ClientDisconnected("Client disconnected before the end of the request body.")
         if not hasattr(self, "_body"):
-            self._body = b"".join([part async for part in self._stream])
+            parts = []
+            try:
+                async for part in self._stream:
+                    parts.append(part)
+            except ClientDisconnected:
+                # Keep what arrived, so it can still be recorded, but never present it as the whole body.
+                self._body = b"".join(parts)
+                self._stream = ByteStream(self._body)
+                self._disconnected = True
+                raise
+            self._body = b"".join(parts)
             # self.headers["content-length"] = str(len(self.body))
         if not isinstance(self._stream, ByteStream):
             self._stream = ByteStream(self._body)

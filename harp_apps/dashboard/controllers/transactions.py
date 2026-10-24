@@ -1,5 +1,7 @@
 import math
 
+from sqlalchemy.exc import NoResultFound
+
 from harp import get_logger
 from harp.controllers import GetHandler, RouteHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest, JsonHttpResponse
@@ -87,12 +89,17 @@ class TransactionsController(RoutingController):
     async def set_user_flag(self, request: HttpRequest, id, flag):
         username = request.extensions.get("user", None) or "anonymous"
         flag_id = FLAGS_BY_NAME.get(flag)
+        if flag_id is None:
+            return JsonHttpResponse({"error": "Unknown flag"}, status=400)
 
-        await self.storage.set_user_flag(
-            transaction_id=id,
-            username=username,
-            flag=flag_id,
-            value=False if request.method == "DELETE" else True,
-        )
+        try:
+            await self.storage.set_user_flag(
+                transaction_id=id,
+                username=username,
+                flag=flag_id,
+                value=request.method != "DELETE",
+            )
+        except NoResultFound:
+            return JsonHttpResponse({"error": "Transaction not found"}, status=404)
 
         return JsonHttpResponse({"success": True})

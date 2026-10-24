@@ -1,11 +1,10 @@
 import asyncio
-import re
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from operator import itemgetter
 from typing import Iterable, Optional, override
 
-from sqlalchemy import and_, bindparam, case, delete, func, literal, null, or_, select, text
+from sqlalchemy import and_, case, delete, func, literal, null, or_, select, text
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from sqlalchemy.sql.functions import count
@@ -109,25 +108,20 @@ def _filter_query_for_user_flags(query, values, /, *, user_id):
     return query
 
 
-def _filter_transactions_based_on_text(query, search_text: str, dialect_name: str):
-    # Escape special characters in search_text
-    search_text = re.sub(r"([-\*\(\)~\"@<>\^+]+)", r"", search_text)
-    query = query.join(SqlMessage, isouter=True)
-    # check dialect and use appropriate full text search
-    if dialect_name == "mysql":
-        return query.filter(
-            text(
-                f"MATCH ({SqlTransaction.__tablename__}.endpoint) "
-                f"AGAINST (:search_text IN BOOLEAN MODE) OR "
-                f"MATCH ({SqlMessage.__tablename__}.summary) "
-                f"AGAINST (:search_text IN BOOLEAN MODE)",
-            ).bindparams(bindparam("search_text", f"{search_text}*"))
+def _filter_transactions_based_on_text(query, search_text: str):
+    """
+    Keep transactions whose endpoint or any message summary contains ``search_text``, matched literally (``%`` and
+    ``_`` are not wildcards). Messages are tested with ``EXISTS``, not joined, so a transaction is one row however many
+    messages match, and the count and the page apply to transactions.
+    """
+    message_matches = (
+        select(SqlMessage.id)
+        .where(
+            SqlMessage.transaction_id == SqlTransaction.id, SqlMessage.summary.icontains(search_text, autoescape=True)
         )
-
-    return query.filter(
-        (SqlTransaction.endpoint.ilike(bindparam("search_text", f"%{search_text}%")))
-        | SqlMessage.summary.ilike(bindparam("search_text", f"%{search_text}%"))
+        .exists()
     )
+    return query.filter(SqlTransaction.endpoint.icontains(search_text, autoescape=True) | message_matches)
 
 
 class SqlStorage(IStorage):
@@ -313,7 +307,7 @@ class SqlStorage(IStorage):
             query = _numerical_filter_query(query, "tpdex", filters.get("tpdex", None))
 
         if text_search:
-            query = _filter_transactions_based_on_text(query, text_search, dialect_name=self.engine.dialect.name)
+            query = _filter_transactions_based_on_text(query, text_search)
 
         query = query.order_by(SqlTransaction.started_at.desc())
 
@@ -334,7 +328,7 @@ class SqlStorage(IStorage):
                 query = query.offset(max(0, (page - 1) * PAGE_SIZE))
 
             for transaction in (await session.scalars(query)).unique().all():
-                result.append(transaction.to_model(with_user_flags=True))
+                result.append(transaction.to_model(with_user_flags=True, with_messages=with_messages))
 
         return result
 
@@ -352,7 +346,7 @@ class SqlStorage(IStorage):
         except NoResultFound:
             return None
 
-        return transaction.to_model(with_user_flags=True)
+        return transaction.to_model(with_user_flags=True, with_messages=True)
 
     @override
     async def transactions_grouped_by_time_bucket(
@@ -422,26 +416,20 @@ class SqlStorage(IStorage):
 
     @override
     async def set_user_flag(self, *, transaction_id: str, username: str, flag: int, value=True):
-        """Sets or unsets a user flag on a transaction."""
+        """Sets or unsets a user flag on a transaction, idempotently. Raises NoResultFound if the transaction is unknown."""
         async with self.begin() as session:
             user = await self.users.find_one_by_username(username)
             transaction = await self.transactions.find_one_by_id(transaction_id)
 
-            if value:
-                session.add(
-                    SqlUserFlag(
-                        transaction_id=transaction.id,
-                        user_id=user.id,
-                        type=flag,
-                    )
-                )
-            else:
-                await session.execute(
-                    delete(SqlUserFlag).where(
-                        SqlUserFlag.transaction_id == transaction.id,
-                        SqlUserFlag.user_id == user.id,
-                    )
-                )
+            criteria = (
+                SqlUserFlag.transaction_id == transaction.id,
+                SqlUserFlag.user_id == user.id,
+                SqlUserFlag.type == flag,
+            )
+            if not value:
+                await session.execute(delete(SqlUserFlag).where(*criteria))
+            elif not (await session.execute(select(SqlUserFlag.id).where(*criteria))).first():
+                session.add(SqlUserFlag(transaction_id=transaction.id, user_id=user.id, type=flag))
 
     async def ready(self):
         await self._is_ready.wait()

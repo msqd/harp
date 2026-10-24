@@ -12,7 +12,7 @@ Branches
 
 Version line ``X.Y``
     A branch created on the ``X.Y.0`` tag when that release ships (``0.10`` holds ``0.10.x``). It moves
-    only through backports, freezes once ``X.Y+1.0`` ships, and is never deleted: its documentation and
+    only through backports, freezes once ``X.Y+2.0`` ships, and is never deleted: its documentation and
     the Help links of installations still running it depend on it.
 
 Work branch
@@ -33,12 +33,45 @@ Versions
 Patch releases and backports
 ::::::::::::::::::::::::::::
 
-Only the latest version line receives patch releases, for bugs and security fixes, never features. The
+The latest version line (``stable``) receives patch releases for bugs and security fixes, never features. The
+line before it (``oldstable``) receives security fixes only. The
 product owner proposes a patch release and the user decides it.
 
 A fix lands on ``main`` first, through a normal pull request. A second pull request, targeting ``X.Y``,
 cherry-picks it with ``git cherry-pick -x <sha>`` so the commit names its origin. A fix that no longer
 applies to ``main`` goes to ``X.Y`` directly, and its pull request says why.
+
+.. _branching-security-fixes:
+
+Security fixes
+::::::::::::::
+
+A security fix is not public until the patch release is. Do not follow the flow above. The order of operations
+is :doc:`release/security`.
+
+1. Report arrives through the repository's private vulnerability reporting. A maintainer drafts a
+   security advisory from it.
+2. The fix and its backports to the supported lines (``stable`` and ``oldstable``) are written in the advisory's temporary private fork, never in a
+   public branch or pull request.
+3. CI cannot run in a temporary private fork, so its pull requests never get the required ``All Checks
+   Passed``. Test the fix locally before merging. On release day, a repository admin merges them from the
+   advisory page (**Merge pull requests**), one advisory at a time, then waits for CI on ``main`` and the
+   version lines. The advisory page does not count as a pull request merge for the ruleset: switch the
+   admin bypass to *Always* for the merges, then back to *For pull requests only* (see `Branch protection`_).
+   A fix stacked on another advisory's fix merges after it, and anything merged meanwhile can turn its pull
+   requests into conflicts: resolve them in the fork by merging the base branch, never by a rebase.
+4. Patch releases are cut as in :doc:`release/python`, then the advisory is published with them, crediting
+   the reporter.
+5. The ``security`` changelog fragment (``changelog.d/<issue>.security.rst``) states only that a
+   vulnerability was fixed, with no detail on the defect before the release.
+
+Branch protection
+:::::::::::::::::
+
+One repository ruleset, *Protected branches*, covers ``main`` and every version line (``0.*``). Changes need a
+pull request with a green ``All Checks Passed``; force pushes and deletions are refused. Repository admins may
+bypass it for pull requests only: they can merge a pull request whose checks cannot run, but cannot push
+directly. Merging a security advisory's fixes needs the bypass set to *Always* for the duration of the merges.
 
 Documentation versions
 ::::::::::::::::::::::

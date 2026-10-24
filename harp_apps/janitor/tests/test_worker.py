@@ -2,11 +2,13 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from harp_apps.janitor.settings import JanitorSettings
 from harp_apps.janitor.tests import worker_with_grace
 from harp_apps.janitor.worker import JanitorWorker
+from harp_apps.storage.models import Blob, Message
+from harp_apps.storage.models.transactions import transaction_tag_values_association_table
 from harp_apps.storage.models.metrics import MetricValue
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.types import IBlobStorage
@@ -34,6 +36,26 @@ class TestJanitorWorker(StorageTestFixtureMixin):
 
         async with sql_storage.session_factory() as session:
             assert (await worker.compute_metrics(session))["storage.transactions"] == 1
+
+    async def test_retention_leaves_no_child_row_nor_blob(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        if blob_storage.type == "redis":
+            return pytest.skip("Redis implementation does not support cleaning up orphan blobs yet.")
+
+        worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
+        transaction = await self.create_transaction(sql_storage, started_at=datetime.now(UTC) - timedelta(days=90))
+        await sql_storage.transactions.set_tags(transaction, {"env": "tests"})
+        headers = await self.create_blob(blob_storage, "headers")
+        body = await self.create_blob(blob_storage, "body")
+        await self.create_message(
+            sql_storage, transaction_id=transaction.id, kind="misc", summary="x", headers=headers.id, body=body.id
+        )
+
+        await worker.delete_old_transactions()
+        await worker.delete_orphan_blobs()
+
+        async with sql_storage.session_factory() as session:
+            for model in (Message, transaction_tag_values_association_table, Blob):
+                assert (await session.execute(select(func.count()).select_from(model))).scalar_one() == 0, model
 
     async def test_compute_and_store_metrics(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
         """Runs on one connection: the in-memory default database has no second one to give (#995)."""

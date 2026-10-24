@@ -17,7 +17,7 @@ from harp_apps.storage.types import IStorage
 def create_controller(settings: DashboardSettings | None = None) -> DashboardController:
     controller = DashboardController(
         storage=cast(IStorage, Mock(spec=IStorage)),
-        settings=settings or DashboardSettings(devserver={"enabled": True, "port": 5173}),
+        settings=settings or DashboardSettings(auth={"type": "none"}, devserver={"enabled": True, "port": 5173}),
         http_client=Mock(spec=AsyncClient),
     )
     controller._ui_devserver_proxy_controller = None
@@ -59,7 +59,10 @@ async def _build(dashboard_settings: dict):
     return await ConfigurationBuilder(
         {
             "applications": ["http_client", "storage", "harp_apps.dashboard"],
-            "dashboard": {**asdict(DashboardSettings(devserver={"enabled": True, "port": 5173})), **dashboard_settings},
+            "dashboard": {
+                **asdict(DashboardSettings(auth={"type": "none"}, devserver={"enabled": True, "port": 5173})),
+                **dashboard_settings,
+            },
         },
         use_default_applications=False,
     ).abuild_system(validate_dependencies=False)
@@ -76,7 +79,7 @@ async def test_metrics_port_serves_metrics_on_its_own_port():
     resolver = system.provider.get(ProxyControllerResolver)
 
     assert 9100 in resolver.ports
-    response = await resolver.resolve_by_port(9100)()
+    response = await resolver.resolve_by_port(9100)(metrics_request())
     assert response.status == 200
     assert "async_worker_queue_backlog" in response.body.decode()
 

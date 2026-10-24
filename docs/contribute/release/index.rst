@@ -19,6 +19,7 @@ Releasing
     chores
     what-the-gate-does-not-run
     python
+    security
     changelog
     helm
     contributors

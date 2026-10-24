@@ -3,15 +3,19 @@ import time
 import typing as tp
 import uuid
 from collections import OrderedDict
+from dataclasses import replace
 import yaml
 from email.utils import formatdate
 from hishel import AsyncBaseStorage, Entry, EntryMeta, Request, Response
+from hishel._utils import make_async_iterator
 
 from harp import get_logger
 from harp.models import Blob
 from harp.http.utils import parse_cache_control
+from harp_apps.storage.constants import DEFAULT_MAX_RECORDED_BODY_SIZE
 from harp_apps.storage.types import IBlobStorage
 from .adapters import AsyncStorageAdapter, stored_at_of
+from .streams import StoredOnceRead
 
 # libyaml's loader decodes an entry about ten times faster than the pure Python one.
 _YamlLoader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
@@ -27,6 +31,9 @@ DEFAULT_TTL = 86400
 
 logger = get_logger(__name__)
 HEADERS_ENCODING = "iso-8859-1"
+
+#: Request metadata key holding the largest response body the cache may store (the proxy's recording cap).
+MAX_BODY_SIZE_METADATA = "harp_max_recorded_body_size"
 
 
 def has_explicit_freshness(response: Response) -> bool:
@@ -182,7 +189,10 @@ class AsyncStorage(AsyncBaseStorage):
         key: str,
         id_: tp.Optional[uuid.UUID] = None,
     ) -> Entry:
-        """Create and store a new cache entry.
+        """Create a new cache entry, stored once its response body has been read to the end.
+
+        The returned entry's response streams the body as it arrives, so nothing waits for the whole of it. A body
+        over the proxy's recording cap (request metadata, see :data:`MAX_BODY_SIZE_METADATA`) is not stored.
 
         Args:
             request: The HTTP request
@@ -223,11 +233,36 @@ class AsyncStorage(AsyncBaseStorage):
         if "date" not in response.headers:
             response.headers["date"] = formatdate(entry.meta.created_at, usegmt=True)
 
-        await self._impl.store_entry(key, entry)
-        self._remember_key(entry.id, key)
-        logger.debug(f"Cache entry stored: key={key}")
-        self._sweep_if_due()
-        return entry
+        limit = request.metadata.get(MAX_BODY_SIZE_METADATA)
+        if limit is None:
+            limit = DEFAULT_MAX_RECORDED_BODY_SIZE
+
+        async def store(body: bytes) -> None:
+            try:
+                await self._impl.store_entry(
+                    key, replace(entry, response=replace(entry.response, stream=make_async_iterator([body])))
+                )
+            except Exception:
+                # The upstream served this response correctly: a cache that cannot keep it must not break it.
+                logger.warning(f"Failed to store cache entry, response not cached: key={key}", exc_info=True)
+                return
+            self._remember_key(entry.id, key)
+            logger.debug(f"Cache entry stored: key={key}")
+            self._sweep_if_due()
+
+        # The entry is stored once its body has been read to the end, as it reaches the client.
+        return replace(
+            entry,
+            response=replace(
+                response,
+                stream=StoredOnceRead(
+                    response.stream,
+                    limit=limit,
+                    on_end=store,
+                    content_encoding=response.headers.get("content-encoding"),
+                ),
+            ),
+        )
 
     async def get_entries(self, key: str) -> tp.List[Entry]:
         """Retrieve all entries for a given cache key.
@@ -290,14 +325,18 @@ class AsyncStorage(AsyncBaseStorage):
         if key is None:
             return None
 
-        entry = await self._impl.retrieve_entry(key)
-        if entry is None or entry.id != id:
-            # The blob was evicted or replaced between the lookup and here.
-            logger.debug(f"Cache entry vanished before update: entry_id={id}, key={key}")
-            return None
+        try:
+            entry = await self._impl.retrieve_entry(key)
+            if entry is None or entry.id != id:
+                # The blob was evicted or replaced between the lookup and here.
+                logger.debug(f"Cache entry vanished before update: entry_id={id}, key={key}")
+                return None
 
-        updated = new_entry if isinstance(new_entry, Entry) else new_entry(entry)
-        await self._impl.store_entry(key, updated)
+            updated = new_entry if isinstance(new_entry, Entry) else new_entry(entry)
+            await self._impl.store_entry(key, updated)
+        except Exception:
+            logger.warning(f"Failed to update cache entry: key={key}, entry_id={id}", exc_info=True)
+            return None
         logger.debug(f"Cache entry updated: key={key}, entry_id={id}")
         return updated
 
@@ -319,7 +358,11 @@ class AsyncStorage(AsyncBaseStorage):
         if key is None:
             return
 
-        await self._storage.delete(key)
+        try:
+            await self._storage.delete(key)
+        except Exception:
+            logger.warning(f"Failed to remove cache entry: key={key}, entry_id={id}", exc_info=True)
+            return
         self._keys_by_id.pop(id, None)
         logger.debug(f"Cache entry removed: key={key}, entry_id={id}")
 
