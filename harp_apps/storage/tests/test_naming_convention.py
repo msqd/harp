@@ -242,3 +242,48 @@ async def test_schema_is_current_after_migrating_from_0_12(legacy_engine):
         await in_thread(command.upgrade, alembic_cfg, "head")
 
     await ensure_schema_is_current(legacy_engine)
+
+
+def _insert_rows(path):
+    with sqlite3.connect(path) as conn:
+        conn.executescript(
+            """
+            INSERT INTO blobs (id, data, content_type) VALUES ('b1', x'00', 'text/plain');
+            INSERT INTO users (id, username) VALUES (1, 'anonymous');
+            INSERT INTO tags (id, name) VALUES (1, 'tag');
+            INSERT INTO tag_values (id, tag_id, value) VALUES (1, 1, 'v');
+            INSERT INTO transactions (id, type, endpoint, started_at) VALUES ('t1', 'http', 'e', '2026-01-01');
+            INSERT INTO trans_tag_values (transaction_id, value_id) VALUES ('t1', 1);
+            INSERT INTO trans_user_flags (id, type, user_id, transaction_id) VALUES (1, 1, 1, 't1');
+            INSERT INTO messages (id, kind, summary, created_at, transaction_id)
+                VALUES (1, 'request', 's', '2026-01-01', 't1');
+            INSERT INTO metrics (id, name) VALUES (1, 'm');
+            INSERT INTO metric_values (metric_id, created_at, value) VALUES (1, '2026-01-01', 3);
+            """
+        )
+
+
+def _dump_rows(path):
+    with sqlite3.connect(path) as conn:
+        tables = [r[0] for r in conn.execute("select name from sqlite_master where type='table' order by 1")]
+        rows = {t: conn.execute(f"select * from {t} order by 1, 2").fetchall() for t in tables}
+        rows.pop("alembic_version", None)
+        return rows, conn.execute("PRAGMA foreign_key_check").fetchall()
+
+
+@parametrize_with_database_urls("sqlite")
+async def test_naming_migration_keeps_the_rows_of_a_sqlite_file(legacy_engine):
+    """The alembic chain cannot run on SQLite (``ALTER COLUMN ... TYPE``), so the file is the 0.12 ``create_all`` one."""
+    path = legacy_engine.url.database
+    alembic_cfg = create_alembic_config(legacy_engine.url.render_as_string(hide_password=False))
+    _insert_rows(path)
+    before = _dump_rows(path)
+    assert before[1] == []
+
+    async with legacy_engine.begin() as conn:
+        await conn.run_sync(run_in_context, naming_revision(alembic_cfg).upgrade)
+    assert _dump_rows(path) == before
+
+    async with legacy_engine.begin() as conn:
+        await conn.run_sync(run_in_context, naming_revision(alembic_cfg).downgrade)
+    assert _dump_rows(path) == before
