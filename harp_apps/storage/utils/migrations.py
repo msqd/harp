@@ -1,8 +1,10 @@
 import asyncio
 import os
+import re
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from typing import Union
+from urllib.parse import quote, quote_plus
 
 from pydantic_core import MultiHostUrl, Url
 from sqlalchemy import URL, inspect, make_url, text
@@ -25,13 +27,45 @@ def _as_sqlalchemy_url(url: AnyUrl) -> URL:
     return make_url(url if isinstance(url, URL) else str(url))
 
 
-def hide_password(message: str) -> str:
-    """Mask the password of every url in ``message``: its userinfo or ``?password=``, whatever its encoding.
+def _passwords(url: URL) -> list[str]:
+    """The password of ``url``, from its userinfo and from a ``?password=`` query parameter (asyncpg reads both)."""
+    query = url.query.get("password", ())
+    return [password for password in (url.password, *((query,) if isinstance(query, str) else query)) if password]
 
-    Free text is left alone: a password is often a common word, or the user or database name, and masking it
-    there would corrupt the message. The urls are matched by shape, never parsed, so a url SQLAlchemy cannot
-    read (multi-host) is masked too.
+
+def _forms(password: str) -> set[str]:
+    """Every way ``password`` can be written in a rendered url."""
+    forms = {password, quote(password, safe=""), quote(password), quote_plus(password)}
+    # SQLAlchemy only escapes the characters that would end the userinfo
+    forms.add(URL.create("x", username="", password=password).render_as_string(hide_password=False)[len("x://:") : -1])
+    forms |= {re.sub(r"%[0-9A-F]{2}", lambda m: m.group().lower(), form) for form in forms}
+    # the form given to configparser doubles every percent sign
+    return forms | {form.replace("%", "%%") for form in forms}
+
+
+def _url_scoped_patterns(url: URL) -> list[re.Pattern]:
+    forms = sorted({form for password in _passwords(url) for form in _forms(password)}, key=len, reverse=True)
+    alternatives = "|".join(map(re.escape, forms))
+    return [
+        re.compile(rf"(://[^:/@\s]*:)(?:{alternatives})(?=@)"),
+        re.compile(rf"([?&]password=)(?:{alternatives})(?![\w%+.~*-])"),
+    ]
+
+
+def hide_password(message: str, url: AnyUrl) -> str:
+    """Mask the password of ``url`` where it sits in a url in ``message``: its userinfo or ``?password=``.
+
+    The shared shape-based masking runs on top, so any other url is covered whatever its encoding. Elsewhere the
+    password is left alone: it is often a common word, or the user or database name, and masking it there would
+    corrupt the message.
     """
+    try:
+        patterns = _url_scoped_patterns(_as_sqlalchemy_url(url))
+    except Exception:
+        # a url SQLAlchemy cannot parse (multi-host): only the shape-based masking applies
+        patterns = []
+    for pattern in patterns:
+        message = pattern.sub(r"\1***", message)
     return mask_credentials(message)
 
 
@@ -44,15 +78,15 @@ class StorageBootError(RuntimeError):
     """A storage failure whose message is the password-masked rendering of the original failure chain."""
 
 
-def render_failure(exc: BaseException) -> str:
+def render_failure(exc: BaseException, url: AnyUrl) -> str:
     """Render ``exc`` and its whole cause chain (any attribute ``str()`` uses), password masked."""
-    return hide_password("".join(traceback.format_exception(exc, limit=0)).strip())
+    return hide_password("".join(traceback.format_exception(exc, limit=0)).strip(), url)
 
 
-def mask_failure(exc: BaseException) -> BaseException:
+def mask_failure(exc: BaseException, url: AnyUrl) -> BaseException:
     """Return ``exc`` itself when its rendering holds no password, else a :class:`StorageBootError` that replaces it."""
     raw = "".join(traceback.format_exception(exc, limit=0)).strip()
-    masked = render_failure(exc)
+    masked = render_failure(exc, url)
     if masked == raw:
         return exc
     return StorageBootError(masked).with_traceback(exc.__traceback__)
@@ -149,7 +183,7 @@ async def do_migrate(engine, *, migrator, reset=False):
     try:
         await _do_migrate(engine, migrator=migrator, reset=reset)
     except Exception as e:
-        message = render_failure(e)
+        message = render_failure(e, engine.url)
         logger.error(f"🛢 [db:migrate] Migrations failed: {message}")
         raise RuntimeError(f"Could not run migrations ({message}).").with_traceback(e.__traceback__) from None
 

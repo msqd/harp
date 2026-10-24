@@ -50,9 +50,8 @@ def test_hide_password_leaves_the_rest_of_the_message_intact(username, password)
     )
 
     masked = hide_password(
-        template.format(
-            shown, MultiHostUrl(shown), shown.replace("%", "%%"), username, username, password + "2", password + "2"
-        )
+        template.format(shown, MultiHostUrl(shown), shown.replace("%", "%%"), username, username, password, password),
+        url,
     )
 
     hidden = url.render_as_string(hide_password=True)
@@ -70,7 +69,7 @@ def test_hide_password_masks_a_query_password(password):
     )
     shown = url.render_as_string(hide_password=False)
 
-    masked = hide_password(f"bad {shown}; settings {MultiHostUrl(shown)}; config {shown.replace('%', '%%')}")
+    masked = hide_password(f"bad {shown}; settings {MultiHostUrl(shown)}; config {shown.replace('%', '%%')}", url)
 
     hidden = "postgresql+asyncpg://harp@db/harp?password=***&ssl=disable"
     assert masked == f"bad {hidden}; settings {hidden}; config {hidden}"
@@ -89,7 +88,7 @@ def test_a_failure_without_the_password_in_a_url_is_kept_as_is(username, passwor
         OutdatedSchemaError(f"The storage schema of {printable_url(url)} is outdated: harp-proxy db:migrate up head"),
         ConnectionError(f'password authentication failed for user "{username}"'),
     ):
-        assert mask_failure(exc) is exc
+        assert mask_failure(exc, url) is exc
 
 
 @asynccontextmanager
@@ -197,7 +196,7 @@ async def test_system_config_masks_a_query_password(database_url, options, tmp_p
     ],
 )
 def test_hide_password_masks_a_url_whatever_its_encoding(written):
-    masked = hide_password(f"boom {written}!")
+    masked = hide_password(f"boom {written}!", "postgresql://u:Zq9!b@db/harp")
 
     assert "Zq9" not in masked
     assert "***" in masked
@@ -207,8 +206,15 @@ MULTI_HOST_URL = "postgresql+asyncpg://u:Zq9!b%24@127.0.0.1:1,127.0.0.1:2/harp"
 
 
 def test_mask_failure_masks_a_url_sqlalchemy_cannot_parse():
-    safe = mask_failure(ValueError(f"cannot connect to {MULTI_HOST_URL}"))
+    safe = mask_failure(ValueError(f"cannot connect to {MULTI_HOST_URL}"), MULTI_HOST_URL)
 
     assert isinstance(safe, StorageBootError)
     assert "Zq9" not in str(safe)
     assert "u:***@127.0.0.1:1,127.0.0.1:2/harp" in str(safe)
+
+
+def test_a_password_with_spaces_is_masked_in_the_storage_url():
+    url = _url("u", "sp ace x")
+    shown = url.render_as_string(hide_password=False)
+
+    assert hide_password(f"boom {shown}!", url) == f"boom {url.render_as_string(hide_password=True)}!"

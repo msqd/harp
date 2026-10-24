@@ -43,11 +43,12 @@ async def on_bind(event: OnBindEvent):
 
 
 async def on_bound(event: OnBoundEvent):
+    settings = event.provider.get(StorageSettings)
     try:
         await _boot_storage(event)
     except Exception as exc:
         # exception messages may embed the storage url, the password must not reach the logs
-        safe = mask_failure(exc)
+        safe = mask_failure(exc, settings.url)
         if safe is exc:
             raise
         raise safe from None

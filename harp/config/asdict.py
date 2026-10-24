@@ -10,9 +10,9 @@ from pydantic_core import MultiHostUrl, Url
 
 MASK = "***"
 
-# Only the userinfo of the authority is touched (up to the first `/`, `?` or `#`). The password may hold spaces, as
-# SQLAlchemy renders them raw. The username may be empty: `redis://:password@host` is the usual Redis form.
-mask_password_re = re.compile(r"(://[^:/?#@\s]*:)([^/?#\r\n]+)(@)")
+# Only the userinfo of the authority is touched (up to the first `/`, `?` or `#`). The username may be empty:
+# `redis://:password@host` is the usual Redis form.
+mask_password_re = re.compile(r"(://[^:/?#@\s]*:)([^/?#\s]+)(@)")
 
 # asyncpg also reads the password from a `?password=` query parameter.
 mask_query_password_re = re.compile(r"([?&]password=)[^&#\s'\"]*", re.IGNORECASE)
