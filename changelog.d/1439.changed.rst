@@ -1,0 +1,1 @@
+Rewrite the README as the entry point to HARP: what it is, its maturity and limits, a copy-paste first run, and one link per path into the docs.

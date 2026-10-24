@@ -12,6 +12,7 @@ stays with its status changed.
 | [0003](./0003-cache-compliance-compared-per-test-against-a-pinned-baseline.md) | RFC 9111 compliance is compared per test id against a baseline pinned to its storage backend | accepted |
 | [0004](./0004-trunk-main-and-version-line-branches.md) | Development happens on `main`; a version line gets its branch when it ships | accepted |
 | [0005](./0005-postgresql-production-database.md) | PostgreSQL is the production database; MySQL and MariaDB are deprecated | accepted |
+| [0008](./0008-generated-captures-and-text-diagrams.md) | Captures come from a seeded HARP through Playwright; diagrams are Graphviz text | draft |
 | [0009](./0009-credentials-redacted-before-storage-by-rule.md) | Credentials are redacted before storage, by rule, and credential headers are redacted by default | accepted, not yet implemented |
 
 ## Writing one
