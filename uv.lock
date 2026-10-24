@@ -586,6 +586,7 @@ dependencies = [
     { name = "orjson" },
     { name = "packaging" },
     { name = "passlib" },
+    { name = "pillow" },
     { name = "prometheus-client" },
     { name = "pydantic" },
     { name = "pyheck" },
@@ -673,6 +674,7 @@ requires-dist = [
     { name = "orjson", specifier = ">=3.11,<4" },
     { name = "packaging", specifier = ">=23.2" },
     { name = "passlib", specifier = ">=1.7,<2" },
+    { name = "pillow", specifier = "==10.0.0" },
     { name = "prometheus-client", specifier = ">=0.20,<1" },
     { name = "pydantic", specifier = ">=2.12,<2.13" },
     { name = "pyheck", specifier = ">=0.1,<0.2" },
@@ -1161,6 +1163,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/ca/bc/f35b8446f4531a7cb
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cc/20/ff623b09d963f88bfde16306a54e12ee5ea43e9b597108672ff3a408aad6/pathspec-0.12.1-py3-none-any.whl", hash = "sha256:a0d503e138a4c123b27490a4f7beda6a01c6f288df0e4a8b79c7eb0dc7b4cc08", size = 31191, upload-time = "2023-12-10T22:30:43.14Z" },
 ]
+
+[[package]]
+name = "pillow"
+version = "10.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0f/8b/2ebaf9adcf4260c00f842154865f8730cf745906aa5dd499141fb6063e26/Pillow-10.0.0.tar.gz", hash = "sha256:9c82b5b3e043c7af0d95792d0d20ccf68f61a1fec6b3530e718b688422727396", size = 50527522, upload-time = "2023-07-01T14:59:45.775Z" }
 
 [[package]]
 name = "platformdirs"

@@ -67,8 +67,8 @@ importers:
         specifier: ^1.10.0
         version: 1.10.0
       lodash:
-        specifier: ^4.18.1
-        version: 4.18.1
+        specifier: ^4.17.15
+        version: 4.17.15
       match-sorter:
         specifier: ^6.3.4
         version: 6.3.4
@@ -3185,6 +3185,9 @@ packages:
 
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
+
+  lodash@4.17.15:
+    resolution: {integrity: sha512-8xOcRHvCjnocdS5cpwXQXVzmmh5e5+saE2QGoeQmbKmRS6J3VQppPOIt0MnmE+4xlZoumy0GPG0D0MVIQbNA1A==}
 
   lodash@4.18.1:
     resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
@@ -7907,6 +7910,8 @@ snapshots:
   lodash.get@4.4.2: {}
 
   lodash.merge@4.6.2: {}
+
+  lodash@4.17.15: {}
 
   lodash@4.18.1: {}
 

@@ -51,6 +51,7 @@ dependencies = [
     "packaging>=23.2",
     "passlib>=1.7,<2",
     # Imported directly (harp_apps.metrics, harp.commandline.server).
+    "pillow==10.0.0",
     "prometheus-client>=0.20,<1",
     # Capped below 2.13, the last series validated: 2.14.1 breaks model_dump in our serializers (PydanticSerializationError, "index_key").
     "pydantic>=2.12,<2.13",
