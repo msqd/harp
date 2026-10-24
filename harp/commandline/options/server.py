@@ -28,6 +28,12 @@ def _parse_option(option: tuple[str, str]) -> tuple[str, Union[str, bool]]:
     return key, value
 
 
+def _format_value(value) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
+
+
 @dataclass(kw_only=True)
 class CommonServerOptions(dict):
     """
@@ -47,7 +53,7 @@ class CommonServerOptions(dict):
     def as_list(self):
         items = list(
             chain(
-                (f"--set {quote(key)}={quote(value)}" for key, value in self.options.items()),
+                (f"--set {quote(key)}={quote(_format_value(value))}" for key, value in self.options.items()),
                 (f"--endpoint {quote(key)}={quote(value)}" for key, value in self.endpoints.items()),
                 (f"--enable {quote(app)}" for app in self.enable),
                 (f"--disable {quote(app)}" for app in self.disable),

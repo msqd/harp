@@ -132,3 +132,13 @@ def test_as_list_quotes_every_value():
         "--example",
         nasty,
     ]
+
+
+def test_set_values_parsed_as_non_strings_reach_the_command():
+    import shlex
+
+    options = CommonServerOptions(options=(("x", "true"), ("y", "false"), ("n", "3")))
+
+    argv = shlex.split(" ".join(options.as_list()))
+
+    assert argv == ["--set", "x=true", "--set", "y=false", "--set", "n=3"]
