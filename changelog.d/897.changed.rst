@@ -1,0 +1,1 @@
+Client tags set with ``x-harp-*`` request headers are bounded: 20 per transaction, names up to 64 characters, values up to 256 (``proxy.tags``). Excess tags are dropped, never the request.
