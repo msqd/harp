@@ -700,6 +700,12 @@ jobs:
           name: python-package-distributions
           path: dist/
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+
+      - name: Export uv.lock as the image constraints
+        run: uv run --locked --no-dev python bin/check_docker_lock.py export > dist/constraints.txt
+
       - name: Determine version and tags
         id: meta
         run: |
@@ -755,6 +761,11 @@ jobs:
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
         run: bin/smoke_docker_image "${TAGS%%,*}"
+
+      - name: Image ships exactly uv.lock
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: uv run --locked --no-dev python bin/check_docker_lock.py check "${TAGS%%,*}"
 
       - name: Push the tested Docker image
         if: steps.meta.outputs.push == 'true'
@@ -828,6 +839,12 @@ jobs:
           name: python-package-distributions
           path: dist/
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+
+      - name: Export uv.lock as the image constraints
+        run: uv run --locked --no-dev python bin/check_docker_lock.py export > dist/constraints.txt
+
       - name: Determine version and tags
         id: meta
         run: |
@@ -882,6 +899,11 @@ jobs:
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
         run: bin/smoke_docker_image "${TAGS%%,*}"
+
+      - name: Image ships exactly uv.lock
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: uv run --locked --no-dev python bin/check_docker_lock.py check "${TAGS%%,*}"
 
       - name: Push the tested Docker image
         env:

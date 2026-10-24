@@ -1,5 +1,7 @@
 import os
+import subprocess
 from contextlib import contextmanager
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from orjson import orjson
@@ -29,6 +31,10 @@ def generate_schema(models, type="serialization"):
     return schema
 
 
+def _run(argv, *, input=None):
+    return subprocess.run(argv, input=input, cwd=ROOT_DIR, check=True, capture_output=True, text=True).stdout
+
+
 @contextmanager
 def generate_typescript_and_jsonschema(schema, *, namespace):
     with (
@@ -38,14 +44,14 @@ def generate_typescript_and_jsonschema(schema, *, namespace):
     ):
         infile.write(orjson.dumps(schema))
         infile.close()
-        os.system(
-            f"cd {ROOT_DIR}; {JSON2TS} {infile.name}"
-            f" | sed '/export type __ROOT__ =/i \\\ndeclare namespace {namespace} {{\n'"
-            f" | sed 's/\\(export type __ROOT__ = \\)/\\1\\n/'"
-            f" | sed '/export type __ROOT__/,/;/d'"
-            f" | sed '$ a \\\n }}'"
-            f" | {PRETTIER} --parser typescript"
-            f" > {outfile.name}"
-        )
-        os.system(f"cd {ROOT_DIR}; cat {infile.name} | {PRETTIER} --parser json > {schema_outfile.name}")
+
+        types = _run([JSON2TS, infile.name])
+        types = _run(["sed", f"/export type __ROOT__ =/i \\\ndeclare namespace {namespace} {{\n"], input=types)
+        types = _run(["sed", "s/\\(export type __ROOT__ = \\)/\\1\\n/"], input=types)
+        types = _run(["sed", "/export type __ROOT__/,/;/d"], input=types)
+        types = _run(["sed", "$ a \\\n }"], input=types)
+        Path(outfile.name).write_text(_run([PRETTIER, "--parser", "typescript"], input=types))
+
+        with open(infile.name) as schema_in:
+            Path(schema_outfile.name).write_text(_run([PRETTIER, "--parser", "json"], input=schema_in.read()))
         yield outfile.name, schema_outfile.name

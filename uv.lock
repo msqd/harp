@@ -100,19 +100,6 @@ wheels = [
 ]
 
 [[package]]
-name = "asgi-prometheus"
-version = "1.2.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "asgi-tools" },
-    { name = "prometheus-client" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/7e/f0/59eeda10f472c450969042b952ce3b6f390ef41d683b7986d909237f2b16/asgi_prometheus-1.2.3.tar.gz", hash = "sha256:8e047959ff1cef1b1bad9ddce46723a8f030ad7e7b98bb3d58e1b1619ad166b8", size = 5114, upload-time = "2024-07-31T13:25:31.088Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/01/6c/43a1a98f014e9aab28bf3a1bd77d5182df12cd057131486352bde0013ec4/asgi_prometheus-1.2.3-py3-none-any.whl", hash = "sha256:c37e0d8dbd7561fd169511d4f0fde0c040d4e89e58ee4889a29fcf4bff0fef78", size = 5041, upload-time = "2024-07-31T13:25:29.456Z" },
-]
-
-[[package]]
 name = "asgi-tools"
 version = "1.3.3"
 source = { registry = "https://pypi.org/simple" }
@@ -573,7 +560,6 @@ source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
     { name = "alembic" },
-    { name = "asgi-prometheus" },
     { name = "asgimiddlewarestaticfile" },
     { name = "asgiref" },
     { name = "certifi" },
@@ -658,7 +644,6 @@ requires-dist = [
     { name = "aiomysql", marker = "extra == 'mysql'", specifier = ">=0.2,<0.4" },
     { name = "aiosqlite", specifier = ">=0.20,<0.22" },
     { name = "alembic", specifier = ">=1.17,<2" },
-    { name = "asgi-prometheus", specifier = ">=1.2,<2" },
     { name = "asgimiddlewarestaticfile", specifier = ">=0.6,<0.7" },
     { name = "asgiref", specifier = ">=3.10,<3.13" },
     { name = "asyncpg", marker = "extra == 'postgresql'", specifier = ">=0.30,<0.31" },
