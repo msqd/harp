@@ -230,6 +230,9 @@ class TestExpires:
         assert response1.status_code == 200
         assert response1.content == b"body"
         assert response2.status_code == 200
+        assert response1.headers["expires"] == malformed  # a proxy does not rewrite what the client receives
+        assert response2.headers["expires"] == malformed
+        assert "x-harp-original-expires" not in response2.headers
         assert route.call_count == 2  # stale: revalidated, not served from cache
 
     @respx.mock
