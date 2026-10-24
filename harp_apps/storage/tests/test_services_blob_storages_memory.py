@@ -38,3 +38,11 @@ async def test_delete_stale_deletes_blobs_not_written_since():
 
     assert await storage.delete_stale(["a", "absent"], older_than=datetime.now(UTC) + timedelta(seconds=1)) == 1
     assert await storage.get("a") is None
+
+
+async def test_blob_stored_under_a_legacy_sha1_id_still_reads():
+    legacy_id = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+    storage = MemoryBlobStorage()
+    await storage.put(Blob(id=legacy_id, data=b"old body", content_type="text/plain"))
+
+    assert (await storage.get(legacy_id)).data == b"old body"

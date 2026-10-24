@@ -1,0 +1,1 @@
+Blob ids are SHA-256 truncated to 160 bits with the content type length-framed, instead of SHA-1; existing ids keep resolving.
