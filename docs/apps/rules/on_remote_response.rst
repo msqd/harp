@@ -52,7 +52,7 @@ Overriding the Cache-Control
 
 You can override the Cache-Control header of the incoming response to override the default caching behavior.
 
-This will disable caching (although you will prefer to set this on the request side):
+This will force revalidation on every use of a stored response (although you will prefer to set this on the request side):
 
 .. code-block:: toml
 
@@ -61,14 +61,22 @@ This will disable caching (although you will prefer to set this on the request s
     response.headers['Cache-Control'] = 'no-cache'
     """
 
-Or if you want to cache everything for one hour:
+Or if you want to cache anonymous responses for one hour:
 
 .. code-block:: toml
 
-    [rules."*"."*"]
+    [rules."*"."GET *"]
     on_remote_response = """
-    response.headers['Cache-Control'] = 'public, max-age=3600'
+    cache_control = response.headers.get('Cache-Control', '').lower()
+    if 'Authorization' not in request.headers and 'Cookie' not in request.headers and 'Set-Cookie' not in response.headers and 'private' not in cache_control:
+        response.headers['Cache-Control'] = 'max-age=3600'
     """
+
+.. warning::
+
+    The HTTP cache is shared: a response stored for one caller is served to the next. Only force caching on
+    requests that carry no identity, and never override ``private``. See the
+    :ref:`shared cache warning <http-cache-shared>`.
 
 Switching the response
 ::::::::::::::::::::::

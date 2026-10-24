@@ -85,11 +85,11 @@ kitchen-sink:  ## Starts the kitchen-sink demo environment (docker compose + har
 # Dependencies
 ########################################################################################################################
 
-.PHONY: install install-dev install-frontend install-backend install-backend-dev
+.PHONY: install install-dev install-frontend install-backend install-backend-dev install-hooks
 
 install: install-frontend install-backend  ## Installs harp dependencies (backend, dashboard) without development tools.
 
-install-dev: install-backend-dev  ## Installs harp dependencies (backend, dashboard) with development tools.
+install-dev: install-backend-dev install-frontend install-hooks  ## Installs harp dependencies (backend, dashboard) with development tools and pre-commit hooks.
 
 install-frontend:  ## Installs harp dashboard dependencies (frontend).
 	@mkdir -p harp_apps/dashboard/web
@@ -101,6 +101,9 @@ install-backend:  ## Installs harp dependencides (backend).
 
 install-backend-dev:  ## Installs harp dependencies (backend) with development tools.
 	$(call execute,UV_SYNC_OPTIONS="--group dev" $(MAKE) install-backend)
+
+install-hooks:  ## Installs the git pre-commit hooks.
+	$(call execute,$(UV_RUN) pre-commit install)
 
 
 ########################################################################################################################

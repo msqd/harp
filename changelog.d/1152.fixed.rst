@@ -1,1 +1,0 @@
-File-backed SQLite storage uses a write-ahead log, which removes multi-second request stalls under concurrent requests.

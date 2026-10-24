@@ -6,7 +6,7 @@
         "type": {
           "const": "basic",
           "default": null,
-          "description": "Authentication type. Only «basic» is supported for now.",
+          "description": "Authentication type.",
           "type": "string"
         },
         "algorithm": {
@@ -95,15 +95,21 @@
           "anyOf": [
             {
               "discriminator": {
-                "mapping": { "basic": "#/$defs/BasicAuthSettings" },
+                "mapping": {
+                  "basic": "#/$defs/BasicAuthSettings",
+                  "none": "#/$defs/NoAuthSettings"
+                },
                 "propertyName": "type"
               },
-              "oneOf": [{ "$ref": "#/$defs/BasicAuthSettings" }]
+              "oneOf": [
+                { "$ref": "#/$defs/BasicAuthSettings" },
+                { "$ref": "#/$defs/NoAuthSettings" }
+              ]
             },
             { "type": "null" }
           ],
           "default": null,
-          "description": "Authentication settings for the dashboard."
+          "description": "Authentication settings for the dashboard. When not set, the dashboard requires a login with the `admin` user and a random password generated and logged at each boot. Use `type: none` to explicitly serve the dashboard without authentication."
         },
         "devserver": {
           "anyOf": [
@@ -136,6 +142,20 @@
         }
       },
       "title": "DevserverSettings",
+      "type": "object"
+    },
+    "NoAuthSettings": {
+      "additionalProperties": false,
+      "description": "Explicit opt-out: the dashboard is served without any authentication.",
+      "properties": {
+        "type": {
+          "const": "none",
+          "default": null,
+          "description": "Authentication type. «none» serves the dashboard without authentication.",
+          "type": "string"
+        }
+      },
+      "title": "NoAuthSettings",
       "type": "object"
     },
     "SystemPutProxyInput": {

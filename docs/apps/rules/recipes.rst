@@ -12,8 +12,17 @@ Force some (sub) endpoints to cache the response for a given time
     rules:
         "my-endpoint":
             "GET /foo/bar":
-                on_remote_response:
-                    response.headers['Cache-Control'] = 'max-age=3600'
+                on_remote_response: |
+                    cache_control = response.headers.get('Cache-Control', '').lower()
+                    if 'Authorization' not in request.headers and 'Cookie' not in request.headers and 'Set-Cookie' not in response.headers and 'private' not in cache_control:
+                        response.headers['Cache-Control'] = 'max-age=3600'
+
+.. warning::
+
+    The HTTP cache is shared: a response stored for one caller is served to the next. This recipe skips requests
+    carrying ``Authorization`` or ``Cookie`` and responses marked ``private`` or setting a cookie. If your API identifies callers
+    another way (API key header), add that header to the condition. See the
+    :ref:`shared cache warning <http-cache-shared>`.
 
 
 Storage Control
@@ -101,9 +110,9 @@ You can run it with:
 
 .. code-block:: bash
 
-    harp-proxy start --example rules:storage-markers
+    harp-proxy server --example rules:storage-markers
 
-.. collapse:: View complete example source
+.. dropdown:: View complete example source
 
     .. literalinclude:: ../../../harp_apps/rules/examples/storage-markers.toml
        :language: toml

@@ -1,1 +1,0 @@
-Cache entries are read and written with libyaml when available.

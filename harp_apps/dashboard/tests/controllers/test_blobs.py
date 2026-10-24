@@ -34,6 +34,27 @@ class TestBlobsController(
         assert response.status == 404
         assert response.content_type == "text/plain"
 
+    @pytest.mark.parametrize(
+        "content_type, data",
+        [
+            ("text/html", b"<script>alert(document.domain)</script>"),
+            ("image/svg+xml", b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'),
+            ("application/json", b'{"a": 1}'),
+            (None, b"\x00\x01"),
+        ],
+    )
+    async def test_get_is_never_rendered_as_a_document(
+        self, controller, blob_storage: IBlobStorage, content_type, data
+    ):
+        await blob_storage.put(Blob(id="blob-1", data=data, content_type=content_type))
+
+        response = await controller.get("blob-1")
+
+        assert response.status == 200
+        assert response.headers["content-disposition"] == "attachment"
+        assert response.headers["x-content-type-options"] == "nosniff"
+        assert response.headers["content-security-policy"] == "sandbox; default-src 'none'"
+
 
 class TestBlobsControllerThroughASGI(
     BlobsControllerTestFixtureMixin,

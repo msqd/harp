@@ -1,11 +1,15 @@
 Changelogs & History
 ====================
 
+Upgrading from 0.11? Read :ref:`upgrading-0-12` first.
+
 .. include:: _unreleased_toctree.inc
 
 .. toctree::
     :maxdepth: 1
 
+    0.12.0
+    0.11.1
     0.11.0
     0.10.1
     0.10.0

@@ -5,6 +5,19 @@ from sqlalchemy import URL, AsyncAdaptedQueuePool, event, make_url
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.asyncio import create_async_engine as _create_async_engine
 
+from harp import get_logger
+
+logger = get_logger(__name__)
+
+
+def warn_if_database_is_deprecated(url: Union[str, URL]) -> None:
+    """Log one line for MySQL/MariaDB (both use the mysql dialect). Never the url: it may carry a password."""
+    if make_url(str(url)).get_backend_name() == "mysql":
+        logger.warning(
+            "MySQL/MariaDB storage is deprecated and will be removed in a future version. PostgreSQL is the "
+            "supported production database."
+        )
+
 
 def create_async_engine(url: Union[str, URL], **kw: Any) -> AsyncEngine:
     url = make_url(url)
@@ -27,10 +40,24 @@ def create_async_engine(url: Union[str, URL], **kw: Any) -> AsyncEngine:
 SQLITE_BUSY_TIMEOUT_MS = 10_000
 
 
+def enforce_sqlite_foreign_keys(cursor) -> None:
+    """SQLite ignores foreign keys, so every ``ON DELETE CASCADE`` is inert, unless each connection asks for them."""
+    cursor.execute("PRAGMA foreign_keys=ON")
+
+
+def enforce_sqlite_foreign_keys_on_connect(dbapi_connection, _record) -> None:
+    cursor = dbapi_connection.cursor()
+    try:
+        enforce_sqlite_foreign_keys(cursor)
+    finally:
+        cursor.close()
+
+
 def configure_sqlite_connection(dbapi_connection, _record) -> None:
     """Write-ahead log: readers and the one writer no longer block each other, which rollback-journal mode does."""
     cursor = dbapi_connection.cursor()
     try:
+        enforce_sqlite_foreign_keys(cursor)
         cursor.execute("PRAGMA journal_mode=WAL")
         cursor.execute("PRAGMA synchronous=NORMAL")
         cursor.execute(f"PRAGMA busy_timeout={SQLITE_BUSY_TIMEOUT_MS}")
@@ -46,13 +73,15 @@ class SQLAlchemyEngine(AsyncEngine):
             # The database lives in its one connection, so every user must share it, one at a time: a
             # connection shared at once (StaticPool) lets a reader's rollback undo a concurrent writer's
             # uncommitted insert. A pool of exactly one queues the users instead.
-            return create_async_engine(
+            engine = create_async_engine(
                 database_url,
                 connect_args={"check_same_thread": False},
                 poolclass=AsyncAdaptedQueuePool,
                 pool_size=1,
                 max_overflow=0,
             )
+            event.listen(engine.sync_engine, "connect", enforce_sqlite_foreign_keys_on_connect)
+            return engine
 
         engine = create_async_engine(database_url)
         if database_url.get_backend_name() == "sqlite":

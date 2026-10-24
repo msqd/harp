@@ -36,5 +36,5 @@ class Stateful(BaseConfigurable, Generic[TSettings]):
     def __serialize_settings(cls, settings: TSettings):
         BaseType = type(settings).__mro__[type(settings).__mro__.index(Configurable) - 1]
         return BaseType.model_construct(
-            **{k: v for k, v in settings.model_dump().items() if k in BaseType.model_fields}
+            **{name: getattr(settings, name) for name in BaseType.model_fields}
         ).model_dump()

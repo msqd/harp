@@ -1,1 +1,0 @@
-``make qa`` no longer hangs on Playwright's HTML report server when a browser test fails: it prints the failure and exits non-zero. Open the report with ``pnpm test:browser:report``.

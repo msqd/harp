@@ -71,6 +71,10 @@ Entries are organized into these categories:
   * Fixed race condition in transaction storage
   * Corrected timezone handling in dashboard
 
+**Security**
+  Security fixes. Keep the entry terse: state that something was fixed, never how it could be exploited
+  (see :doc:`../branching`).
+
 **Removed**
   Removed features or dependencies.
 
@@ -79,11 +83,24 @@ Entries are organized into these categories:
   * Removed Poetry dependency
   * Removed deprecated ``--legacy`` flag
 
+**Tooling**
+  CI, test and build tooling changes. Rendered nowhere in the release notes: use it for entries that
+  matter to contributors only.
+
+  Examples:
+
+  * CI runs the storage suite against MySQL in its own job
+  * Test runner pins plain output
+
+Type by impact on operators, not by the kind of work. A fix that changes what an operator observes (a new
+status code, a cap, a timeout, data kept or deleted) is ``important``, and is listed in the
+upgrade notes of the release (see :ref:`upgrading-0-12`).
+
 How to Add an Entry
 -------------------
 
 Create ``changelog.d/<issue>.<category>.rst`` holding the one-line entry, where ``<category>`` is
-one of ``important``, ``added``, ``changed``, ``fixed``, ``security`` or ``removed``:
+one of ``important``, ``added``, ``changed``, ``fixed``, ``security``, ``removed`` or ``tooling``:
 
 .. code-block:: bash
 
@@ -193,7 +210,9 @@ The release manager performs these steps before creating a release:
 
    The ``changelog.d/README.rst`` file stays. After a patch release, the pull request that brings
    ``X.Y.Z.rst`` to ``main`` also runs ``git rm`` on the fragments that patch shipped, so the next
-   ``X.Y+1.0`` lists only what is new since. Check the first lines of the new file: the ``Version
+   ``X.Y+1.0`` lists only what is new since. Security entries are the exception: ``X.Y+1.0`` repeats those of the
+   patches shipped since ``X.Y.0``, with their advisory ids, so a reader upgrading across the patches sees
+   them. Check the first lines of the new file: the ``Version
    X.Y.Z (date)`` title and its underline must come first.
 
 3. **Update changelog index**

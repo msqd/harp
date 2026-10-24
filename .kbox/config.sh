@@ -8,11 +8,6 @@
 # (host-side `multipass set`); resize a RUNNING VM with stop+set+start.
 VM_MEMORY="4G"
 
-# Kongo (company mail) wiring, forwarded to the provision hook so it can register
-# the kongo MCP against the canonical LAN Kongo. Empty on the host = MCP skipped.
-# (These are also exported in the VM's login shells.)
-PROVISION_ENV="KONGO_CANONICAL_URL KONGO_API_URL KONGO_REPO_URL"
-
 # Files local to the host checkout (outside git — .env, secrets) copied into the
 # VM's clone after cloning. Missing on the host = skipped.
 #SEED_PROJECT_FILES=".env"

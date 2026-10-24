@@ -1,1 +1,0 @@
-Fix the http_cache documentation example: an explicit `applications:` list must include `http_client`. A test now loads every documented `applications:` example.

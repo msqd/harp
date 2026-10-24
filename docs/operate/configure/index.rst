@@ -40,6 +40,41 @@ documentation section:
 * :doc:`Storage </apps/storage/index>`: Settings for managing relational and non-relational storage solutions.
 * :doc:`Rules Engine </apps/rules/index>`: Fine-tuning and configuration of the request lifecycle through rules.
 
+Environment Variables
+---------------------
+
+Any setting can be passed by environment variable: ``HARP_`` prefix, then the application name, then the setting name,
+joined by a **double underscore** (``__``).
+
+.. code-block:: bash
+
+    # same as `storage.url` in a configuration file
+    $ HARP_STORAGE__URL="postgresql+asyncpg://user:password@db:5432/harp" harp-proxy server
+
+Nested settings add one ``__`` per level. Names are case-insensitive: ``HARP_STORAGE__URL`` and ``harp_storage__url``
+are the same variable. Upper case is the convention.
+
+.. warning::
+
+   A single underscore is **not** read as a separator. ``HARP_STORAGE_URL`` is not ``storage.url``: it is taken as the
+   settings of an application named ``storage_url``, which does not exist. It is ignored, with a warning about an
+   application that is not loaded (an error with ``--strict``), and the storage keeps its default URL.
+
+Precedence
+^^^^^^^^^^
+
+An environment variable overrides the same setting from configuration files. A command line option overrides both.
+With ``storage.url`` set in a file given with ``--file``:
+
+- ``HARP_STORAGE__URL`` replaces the value from the file;
+- ``--set storage.url=...`` replaces the file and the environment variable.
+
+System configuration file
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When present, ``/etc/harp.yaml`` is loaded, or ``/etc/harp.yml`` if the former does not exist (only one is read). It
+ranks above the built-in defaults and below files given with ``--file``.
+
 Application Filtering
 ---------------------
 
@@ -59,10 +94,13 @@ To disable an application, set ``enabled: false`` at the application's root leve
     # config.yaml
     storage:
         enabled: false  # Storage application will not be loaded
-        database_url: "postgresql://..."  # Configuration preserved but unused
+        url: "postgresql+asyncpg://user:password@localhost:5432/harp"  # Configuration preserved but unused
 
-    http_client:
-        enabled: false  # HTTP client will not be loaded
+    dashboard:
+        enabled: false  # Dashboard will not be loaded (it requires storage)
+
+    janitor:
+        enabled: false  # Janitor will not be loaded (it requires storage)
 
 When an application is disabled:
 
@@ -119,7 +157,7 @@ Example: Environment-Specific Configuration
 
     storage:
         enabled: true
-        database_url: "postgresql://prod-db:5432/harp"
+        url: "postgresql+asyncpg://user:password@prod-db:5432/harp"
 
 .. code-block:: yaml
 
@@ -129,7 +167,7 @@ Example: Environment-Specific Configuration
 
     storage:
         enabled: true
-        database_url: "sqlite:///dev.db"
+        url: "sqlite+aiosqlite:///dev.db"
 
 Debug Mode
 ----------

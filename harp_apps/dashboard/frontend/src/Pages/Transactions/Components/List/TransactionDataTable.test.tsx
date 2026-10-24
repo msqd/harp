@@ -5,6 +5,8 @@ import { Transaction } from "Models/Transaction"
 
 import { TransactionDataTable } from "./TransactionDataTable"
 
+const mutate = vi.hoisted(() => vi.fn())
+
 const transactions: Transaction[] = [
   {
     id: "1",
@@ -57,7 +59,7 @@ describe("TransactionDataTable", () => {
   beforeAll(() => {
     vi.spyOn(console, "error").mockImplementation(() => {})
     vi.mock("Domain/Transactions", () => ({
-      useSetUserFlagMutation: () => ({ mutate: vi.fn() }),
+      useSetUserFlagMutation: () => ({ mutate }),
     }))
 
     vi.mock("react-router-dom", async () => {
@@ -91,5 +93,27 @@ describe("TransactionDataTable", () => {
     fireEvent.click(rows[1])
 
     expect(navigate).toHaveBeenCalledWith("/transactions/1")
+  })
+
+  describe("favorite star", () => {
+    const stars = (container: HTMLElement) => container.querySelectorAll("svg")
+
+    it("reverts when the request fails", () => {
+      mutate.mockImplementation((_variables, options) => options?.onError?.(new Error("500")))
+      const { container } = render(<TransactionDataTable transactions={[transactions[1]]} />)
+
+      fireEvent.click(stars(container)[0])
+
+      expect(stars(container)[0].getAttribute("class")).not.toContain("fill-current")
+    })
+
+    it("stays flipped when the request succeeds", () => {
+      mutate.mockImplementation(() => {})
+      const { container } = render(<TransactionDataTable transactions={[transactions[1]]} />)
+
+      fireEvent.click(stars(container)[0])
+
+      expect(stars(container)[0].getAttribute("class")).toContain("fill-current")
+    })
   })
 })

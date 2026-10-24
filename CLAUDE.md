@@ -48,7 +48,7 @@ that maintain a working state throughout development.
 
 We keep a changelog as towncrier fragments, one file per PR in `changelog.d/`, so PRs never
 conflict. When making changes, new features, bug fixes, or refactors, add
-`changelog.d/<issue>.<added|changed|fixed|security|removed|important>.rst` (or
+`changelog.d/<issue>.<added|changed|fixed|security|removed|important|tooling>.rst` (or
 `+<slug>.<type>.rst` with no issue) holding a one-line entry. Never edit
 `docs/changelogs/unreleased.rst`: it is generated at docs build. Preview with
 `uv run towncrier build --draft --version 0.11.0`.

@@ -1,7 +1,9 @@
+import logging
 from re import escape
 from unittest.mock import ANY, patch
 
 import orjson
+import pytest
 
 from harp.utils.testing import RE
 from harp.utils.testing.communicators import ASGICommunicator
@@ -9,6 +11,7 @@ from harp.utils.testing.databases import parametrize_with_blob_storages_urls, pa
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
 from harp_apps.dashboard.controllers.system import SystemController
 from harp_apps.dashboard.tests._mixins import SystemControllerTestFixtureMixin, parametrize_with_settings
+from harp_apps.proxy.constants import CHECKING, DOWN, UP
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 
@@ -259,3 +262,83 @@ class TestSystemControllerThroughASGI(
         for body in bodies.values():
             assert b"p%40ss" not in body
             assert b"p@ss" not in body
+
+    @parametrize_with_settings(
+        {
+            "applications": ["proxy", "http_client", "storage", "dashboard"],
+            "proxy": {"endpoints": [{"name": "api", "port": 4000, "url": "http://user:secret@127.0.0.1:1/"}]},
+        }
+    )
+    @parametrize_with_database_urls("sqlite")
+    @parametrize_with_blob_storages_urls("sql")
+    async def test_system_endpoints_emit_no_warning_or_log_with_the_password(
+        self, client: ASGICommunicator, blob_storage, caplog, recwarn
+    ):
+        caplog.set_level(logging.DEBUG)
+        bodies = []
+        for path in ("/api/system/", "/api/system/settings", "/api/system/proxy", "/api/system/storage"):
+            response = await client.http_get(path)
+            assert response["status"] == 200, path
+            bodies.append(response["body"])
+
+        assert b"user:***@127.0.0.1:1" in bodies[2]
+        emitted = caplog.text + "\n".join(str(w.message) for w in recwarn.list)
+        assert "secret" not in emitted
+        assert not [str(w.message)[:300] for w in recwarn.list if "Pydantic serializer" in str(w.message)]
+
+
+PROXY_SETTINGS = {
+    "applications": ["proxy", "http_client", "storage", "dashboard"],
+    "proxy": {"endpoints": [{"name": "api", "port": 4000, "url": "http://127.0.0.1:1/"}]},
+}
+REMOTE_URL = "http://127.0.0.1:1/"
+
+
+async def put_proxy(client: ASGICommunicator, **data):
+    return await client.http_request(
+        "PUT", "/api/system/proxy", body=orjson.dumps(data), headers=[(b"content-type", b"application/json")]
+    )
+
+
+def remote_status(response) -> int:
+    return orjson.loads(response["body"])["endpoints"][0]["remote"]["endpoints"][0]["status"]
+
+
+class TestSystemControllerPutProxy(
+    SystemControllerTestFixtureMixin,
+    StorageTestFixtureMixin,
+    ControllerThroughASGIFixtureMixin,
+):
+    @parametrize_with_settings(PROXY_SETTINGS)
+    @parametrize_with_database_urls("sqlite")
+    @parametrize_with_blob_storages_urls("sql")
+    @pytest.mark.parametrize(
+        ("action", "previous", "expected"),
+        [("up", "down", UP), ("down", "up", DOWN), ("checking", "up", CHECKING)],
+    )
+    async def test_put_proxy_changes_remote_status(
+        self, client: ASGICommunicator, blob_storage, action, previous, expected
+    ):
+        await put_proxy(client, endpoint="api", url=REMOTE_URL, action=previous)
+
+        response = await put_proxy(client, endpoint="api", url=REMOTE_URL, action=action)
+
+        assert response["status"] == 200
+        assert remote_status(response) == expected
+
+    @parametrize_with_settings(PROXY_SETTINGS)
+    @parametrize_with_database_urls("sqlite")
+    @parametrize_with_blob_storages_urls("sql")
+    @pytest.mark.parametrize(
+        ("data", "status", "message"),
+        [
+            ({"endpoint": "api", "url": REMOTE_URL, "action": "explode"}, 400, b"Invalid input"),
+            ({"endpoint": "nope", "url": REMOTE_URL, "action": "up"}, 404, b"Endpoint not found: nope"),
+            ({"endpoint": "api", "url": "http://elsewhere/", "action": "up"}, 404, b"Endpoint URL not found"),
+        ],
+    )
+    async def test_put_proxy_rejects_bad_input(self, client: ASGICommunicator, blob_storage, data, status, message):
+        response = await put_proxy(client, **data)
+
+        assert response["status"] == status
+        assert message in response["body"]

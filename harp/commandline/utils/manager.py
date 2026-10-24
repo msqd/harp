@@ -163,3 +163,24 @@ def get_honcho_manager_factory_type():
     except (ImportError, AttributeError):
         return HonchoManagerFactory
     return HonchoManagerFactoryType
+
+
+def development_server_options(options) -> list[str]:
+    """
+    Server options of the development environment.
+
+    The server restarts on every change, so a dashboard password generated at each boot would be of no use: unless the
+    configuration (files, examples, environment or options) already sets `dashboard.auth`, the dashboard is explicitly
+    left open.
+    """
+    from harp.config import ConfigurationBuilder
+
+    server_options = options.as_list()
+    try:
+        dashboard = ConfigurationBuilder.from_commandline_options(options).build().get("dashboard")
+    except Exception:  # the server reports invalid configurations itself
+        return server_options
+
+    if not (dashboard and dashboard.auth):
+        server_options.append("--set dashboard.auth.type=none")
+    return server_options

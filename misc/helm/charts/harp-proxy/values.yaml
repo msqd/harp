@@ -12,6 +12,14 @@ harp:
     subcommand: ["server"]
     arguments: []
     env: {}
+  # Extra harp settings. The dashboard requires a login: without `dashboard.auth` here, a password is generated at
+  # each pod start and logged once for the `admin` user. Example:
+  #   dashboard:
+  #     auth:
+  #       type: basic
+  #       algorithm: pbkdf2_sha256
+  #       users:
+  #         admin: { password: "<hash>" }
   settings: {}
 
 endpoints:

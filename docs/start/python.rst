@@ -13,11 +13,16 @@ To install it, run:
 
     pip install harp-proxy
 
-SQLite storage works out of the box. To store in PostgreSQL or MySQL/MariaDB, install the matching extra:
+SQLite storage works out of the box. To store in PostgreSQL (the production database), install its extra:
 
 .. code-block:: shell
 
     pip install harp-proxy[postgresql]
+
+MySQL/MariaDB is deprecated, its extra is:
+
+.. code-block:: shell
+
     pip install harp-proxy[mysql]
 
 

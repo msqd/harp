@@ -1,1 +1,0 @@
-Header values holding obs-text (bytes above 0x7F, e.g. an ``ETag``) are proxied and cached byte for byte instead of answering 500.

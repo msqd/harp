@@ -11,6 +11,7 @@ stays with its status changed.
 | [0002](./0002-caller-no-store-suppresses-payload-recording.md) | A caller's `no-store` suppresses payload recording, but not the record that traffic happened | accepted, not yet implemented |
 | [0003](./0003-cache-compliance-compared-per-test-against-a-pinned-baseline.md) | RFC 9111 compliance is compared per test id against a baseline pinned to its storage backend | accepted |
 | [0004](./0004-trunk-main-and-version-line-branches.md) | Development happens on `main`; a version line gets its branch when it ships | accepted |
+| [0005](./0005-postgresql-production-database.md) | PostgreSQL is the production database; MySQL and MariaDB are deprecated | accepted |
 
 ## Writing one
 

@@ -48,3 +48,15 @@ async def test_memory_database_keeps_its_journal():
 def test_other_databases_get_no_sqlite_setup(url):
     engine = SQLAlchemyEngine.from_url(MultiHostUrl(url))
     assert not any("sqlite" in listener.__name__ for listener in engine.pool.dispatch.connect)
+
+
+async def test_file_database_enforces_foreign_keys(file_engine):
+    assert await pragma(file_engine, "foreign_keys") == 1
+
+
+async def test_in_memory_database_enforces_foreign_keys():
+    engine = SQLAlchemyEngine.from_url(MultiHostUrl("sqlite+aiosqlite:///:memory:"))
+    try:
+        assert await pragma(engine, "foreign_keys") == 1
+    finally:
+        await engine.dispose()
