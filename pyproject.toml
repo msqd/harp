@@ -105,6 +105,8 @@ dev = [
 
 [tool.uv]
 default-groups = ["dev"]
+# Keep in sync with the cooldown in .github/dependabot.yml
+exclude-newer = "3 days"
 
 [tool.hatch.build.targets.sdist]
 include = [
