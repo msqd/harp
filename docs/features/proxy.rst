@@ -6,6 +6,10 @@ them based on various criteria.
 
 .. figure:: proxy.svg
 
+How a request goes through HARP:
+
+.. graphviz:: ../images/diagrams/how-it-works-proxy.dot
+
 
 Basics
 ::::::
@@ -25,6 +29,8 @@ Multiple ports
 You can define multiple ports to listen to, each with its own target configuration.
 
 Typically, you'll define one port per external (or semi-external) API you want to use.
+
+.. graphviz:: ../images/diagrams/how-it-works-multiple-apps.dot
 
 .. literalinclude:: ../apps/proxy/examples/multiple.yml
     :language: yaml

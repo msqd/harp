@@ -5,9 +5,14 @@ build-backend = "hatchling.build"
 [project]
 name = "harp-proxy"
 version = "0.13.0.dev0"
-description = "HARP is an API Runtime Proxy, a toolkit to enhance the speed, reliability and observability of external APIs."
+description = "HARP is an HTTP API Runtime Proxy, a toolkit to enhance the speed, reliability and observability of external APIs."
 authors = [{ name = "Romain Dorgueil", email = "romain@makersquad.fr" }]
 requires-python = ">=3.13,<3.14"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.13",
+]
 readme = "README.rst"
 dependencies = [
     "aiohttp>=3.14.3,<3.15",

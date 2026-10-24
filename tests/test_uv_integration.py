@@ -52,7 +52,7 @@ class TestUVIntegration:
             cwd=Path(__file__).parent.parent,
         )
         assert result.returncode == 0
-        assert "HTTP Application Runtime Proxy (HARP)" in result.stdout
+        assert "HTTP API Runtime Proxy (HARP)" in result.stdout
         assert "server" in result.stdout
         assert "system" in result.stdout
 
@@ -78,7 +78,7 @@ class TestUVIntegration:
             cwd=Path(__file__).parent.parent,
         )
         assert result.returncode == 0
-        assert "HTTP Application Runtime Proxy (HARP)" in result.stdout
+        assert "HTTP API Runtime Proxy (HARP)" in result.stdout
 
     @pytest.mark.skipif(not is_uvx_available(), reason="UVX not available")
     def test_uvx_harp_proxy_help(self):
@@ -92,7 +92,7 @@ class TestUVIntegration:
             text=True,
         )
         assert result.returncode == 0
-        assert "HTTP Application Runtime Proxy (HARP)" in result.stdout
+        assert "HTTP API Runtime Proxy (HARP)" in result.stdout
 
     @pytest.mark.skipif(not is_uvx_available(), reason="UVX not available")
     def test_uvx_harp_proxy_version(self):
@@ -116,7 +116,7 @@ class TestUVIntegration:
             text=True,
         )
         assert result.returncode == 0
-        assert "HTTP Application Runtime Proxy (HARP)" in result.stdout
+        assert "HTTP API Runtime Proxy (HARP)" in result.stdout
 
     @pytest.mark.skipif(not is_uv_available(), reason="UV not available")
     def test_uv_run_harp_proxy_config(self):

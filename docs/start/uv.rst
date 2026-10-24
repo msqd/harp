@@ -22,7 +22,7 @@ The fastest way to try HARP:
 
 .. code-block:: shell
 
-    # Run HARP directly (UV will automatically install Python 3.13 if needed)
+    # Run HARP directly
     uvx harp-proxy --help
 
     # Start a server with example configuration
@@ -95,7 +95,6 @@ Common Commands
     uvx harp-proxy server --help
 
     # Run from local project
-    uv run harp-proxy server
     uv run harp-proxy server
 
     # Install dependencies

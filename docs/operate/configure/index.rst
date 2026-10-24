@@ -153,7 +153,7 @@ Example: Environment-Specific Configuration
 
     # production.yaml
     dashboard:
-        enabled: false  # No dashboard in production
+        enabled: true
 
     storage:
         enabled: true
@@ -163,7 +163,7 @@ Example: Environment-Specific Configuration
 
     # development.yaml
     dashboard:
-        enabled: true  # Dashboard available for developers
+        enabled: true
 
     storage:
         enabled: true

@@ -3,7 +3,7 @@ Regenerate the images used by the README and the docs.
 
     uv run python -m docs._captures [captures|diagrams]
 
-``captures``: a throwaway SQLite database is migrated and filled with the fixed data of :mod:`docs._captures.seed`, a
+``captures``: a throwaway SQLite database is created and filled with the fixed data of :mod:`docs._captures.seed`, a
 real HARP serves the real dashboard on it with a frozen clock, and Playwright (the one of the dashboard frontend) takes
 the screenshots, into ``docs/user/images``.
 

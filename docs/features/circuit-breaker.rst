@@ -4,7 +4,7 @@ Circuit Breaker
 .. versionadded:: 0.7
 
 Interactions with remote resources can fail due to issues like slow network connections, timeouts, or temporary
-unavailability. Some faults are short-lived and can be mitigated using :doc:`retry strategies <./retry>`, but longer
+unavailability. Some faults are short-lived and can be mitigated using retry strategies, but longer
 failures need different handling.
 
 To handle long-term remote service failures, your proxies can leverage a
