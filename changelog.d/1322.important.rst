@@ -1,0 +1,1 @@
+Rule scripts run isolated from each other, in worker threads with a time budget (``time_budget``, one second by default). A failing ``on_request`` rule now answers a ``500`` and does not call the upstream, other levels carry on with a warning, and every failure is counted in ``rules_failures_count``. See the rules documentation, "Execution".
