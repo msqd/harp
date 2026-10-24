@@ -1,5 +1,6 @@
 import asyncio
-import hashlib
+import hmac
+import secrets
 from functools import cached_property
 from time import monotonic
 from typing import Annotated, Any, Literal
@@ -82,6 +83,14 @@ class BasicAuthSettings(Configurable):
     def _verified(self) -> dict[bytes, float]:
         return {}
 
+    @cached_property
+    def _cache_secret(self) -> bytes:
+        """Random key of this process, never logged nor persisted, so cache keys are useless outside of it."""
+        return secrets.token_bytes(32)
+
+    def _cache_key(self, username, password) -> bytes:
+        return hmac.new(self._cache_secret, f"{len(username)}:{username}:{password}".encode(), "sha256").digest()
+
     def check(self, username, password):
         """Blocking check (hashing is slow by design), prefer :meth:`acheck` from the event loop."""
         user = self.users.get(username)
@@ -103,7 +112,7 @@ class BasicAuthSettings(Configurable):
 
     async def acheck(self, username, password):
         """Same as :meth:`check`, without blocking the event loop. Successful checks are remembered for a while."""
-        key = hashlib.sha256(f"{len(username)}:{username}:{password}".encode()).digest()
+        key = self._cache_key(username, password)
         now = monotonic()
 
         if self._verified.get(key, 0) > now:

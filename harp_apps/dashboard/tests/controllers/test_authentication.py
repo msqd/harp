@@ -164,6 +164,14 @@ async def test_malformed_stored_hash_answers_401_and_logs(caplog):
     assert "admin" in caplog.text and "hash" in caplog.text.lower()
 
 
+def test_cache_keys_differ_between_instances():
+    first = _hashed_controller_settings().auth
+    second = _hashed_controller_settings().auth
+
+    assert first._cache_key("admin", "admin") == first._cache_key("admin", "admin")
+    assert first._cache_key("admin", "admin") != second._cache_key("admin", "admin")
+
+
 async def _create_mock_controller(settings: DashboardSettings = None):
     controller = DashboardController(
         storage=cast(IStorage, Mock(spec=IStorage)),
