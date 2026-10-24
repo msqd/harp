@@ -18,6 +18,7 @@ The ``harp_apps.storage`` application implements various storage systems for you
     :maxdepth: 1
 
     Transaction Markers <markers>
+    Redaction <redaction>
     Services <services>
     Settings <settings>
     Internals </reference/apps/harp_apps.storage>
@@ -183,7 +184,8 @@ absorbs within 2 seconds is recorded in full. It stops as soon as the backlog fa
 again. Just above the capacity, only some bodies are lost: in one run at 50 requests per second for
 a minute, 339 of 3,000 transactions were recorded without bodies. Messages, then whole transactions,
 go when the database falls far behind, for instance when it stalls. Proxied traffic is not slowed
-down by shedding.
+down by shedding (one exception: a stalled database shared with the http cache, `#1352
+<https://github.com/msqd/harp/issues/1352>`_, see :doc:`/operate/upgrading`).
 
 There is no hysteresis: a level switches on after the 2 second hold and off the moment the backlog
 drops below its threshold. On a slow, not stalled, database whose backlog hovers around 1,000 jobs,
@@ -226,7 +228,8 @@ is older than the code expects. The error names the database and the commands to
 
 SQLite files are not migrated: they are created from the models and never altered. A SQLite file written by
 0.11 lacks ``transactions.markers``, so it must be deleted (it is recreated on next start) or reset with
-``harp-proxy db:reset``. PostgreSQL (and the deprecated MySQL) need ``harp-proxy db:migrate up head``.
+``harp-proxy db:reset``. PostgreSQL (and the deprecated MySQL) are migrated automatically at boot, unless ``storage.migrate`` is ``false``,
+in which case ``harp-proxy db:migrate up head`` is yours to run.
 
 Migrations are implemented using `Alembic <https://alembic.sqlalchemy.org/>`_.
 
@@ -260,4 +263,4 @@ To instruct SQLAlchemy to log all queries, set ``LOGGING_SQLALCHEMY=INFO`` in yo
 
     LOGGING_SQLALCHEMY=INFO harp-proxy server ...
 
-It works with all HARP commands, not just ``start``.
+It works with all HARP commands, not just ``server``.

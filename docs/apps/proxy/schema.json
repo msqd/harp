@@ -273,6 +273,12 @@
           "minimum": 0,
           "type": "integer"
         },
+        "trusted_proxies": {
+          "default": [],
+          "description": "CIDR ranges of the proxies in front of HARP. The X-Forwarded-For, Forwarded and X-Real-IP headers of a peer outside these ranges are stripped, a trusted peer's are kept. The peer address is appended to X-Forwarded-For and Forwarded in both cases.",
+          "items": { "format": "ipvanynetwork", "type": "string" },
+          "type": "array"
+        },
         "tags": { "$ref": "#/$defs/TagsSettings" }
       },
       "title": "ProxySettings",

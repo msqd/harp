@@ -5,7 +5,7 @@ repository.
 
 ## Project Overview
 
-HARP is an open-source API Runtime Proxy toolkit built with Python to improve reliability,
+HARP is an open-source HTTP API Runtime Proxy toolkit built with Python to improve reliability,
 performance, security, and observability of APIs. It runs in your infrastructure, close to
 your applications.
 

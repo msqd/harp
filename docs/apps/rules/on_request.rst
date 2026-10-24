@@ -75,6 +75,23 @@ is processed by various applications. For example, you can add markers to contro
 See the :doc:`storage markers documentation </apps/storage/markers>` for a complete list of available markers.
 
 
+Redacting credentials before storage
+::::::::::::::::::::::::::::::::::::
+
+Header and query parameter values are replaced by ``REDACTED`` before they are stored. The transaction's ``redaction``
+attribute holds the names concerned, two sets that a rule edits:
+
+.. code-block:: yaml
+
+    rules:
+      "*":
+        "GET /oauth/token":
+          on_request: |
+            transaction.redaction.query.add("client_secret")
+
+See :doc:`redaction </apps/storage/redaction>` for the default set and what it means for the cache.
+
+
 Context reference
 :::::::::::::::::
 

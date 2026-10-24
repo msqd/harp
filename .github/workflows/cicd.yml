@@ -97,6 +97,24 @@ jobs:
       - name: pnpm lint (if this fails, run `make lint-frontend` locally)
         run: cd harp_apps/dashboard/frontend && pnpm lint
 
+  # Fails on a ${{ }} expression pasted into a run: script (template injection). Rules: .github/zizmor.yml
+  lint-workflows:
+    name: Lint Workflows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+
+      - name: zizmor (if this fails, run `uvx zizmor@1.14.2 --offline .github` locally)
+        run: uvx zizmor@1.14.2 --offline .github
+
   test-backend-core:
     name: Test Backend Core (Py${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -395,7 +413,7 @@ jobs:
       - name: Extract version
         id: version
         run: |
-          if [ "${{ github.ref_type }}" = "tag" ]; then
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
             VERSION=${GITHUB_REF#refs/tags/}
             echo "Building release version: $VERSION"
           else
@@ -406,9 +424,11 @@ jobs:
 
       - name: Validate version matches tag
         if: github.ref_type == 'tag'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           chmod +x bin/validate_version
-          bin/validate_version "${{ steps.version.outputs.version }}"
+          bin/validate_version "$VERSION"
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
@@ -477,9 +497,11 @@ jobs:
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
 
       - name: Test wheel installation
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
           WHEEL=$(ls dist/*.whl)
-          echo "Testing wheel: $WHEEL on Python ${{ matrix.python-version }}"
+          echo "Testing wheel: $WHEEL on Python $PYTHON_VERSION"
           uv pip install --system "$WHEEL"
           python -c "import harp; print(f'HARP version: {harp.__version__}')"
           python -c "import sys; print(f'Python: {sys.version}')"
@@ -506,6 +528,7 @@ jobs:
       - test-frontend-unit
       - lint-python
       - lint-frontend
+      - lint-workflows
       - build-documentation
       - build-storybook
     # always() so a failed need fails the gate instead of skipping it (a skipped required check passes)
@@ -557,16 +580,16 @@ jobs:
           echo "INSTALL_FROM=local" >> $GITHUB_OUTPUT
 
           # main publishes "unstable"; version branches (e.g., 0.9) publish "0.9-git"
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            TAGS="ghcr.io/${{ github.repository }}:unstable,makersquad/harp-proxy:unstable"
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            TAGS="ghcr.io/$GITHUB_REPOSITORY:unstable,makersquad/harp-proxy:unstable"
             PUSH="true"
             echo "Docker tags (main): $TAGS"
-          elif echo "${{ github.ref_name }}" | grep -qE '^[0-9]+\.[0-9]+$'; then
-            TAGS="ghcr.io/${{ github.repository }}:${{ github.ref_name }}-git,makersquad/harp-proxy:${{ github.ref_name }}-git"
+          elif echo "$GITHUB_REF_NAME" | grep -qE '^[0-9]+\.[0-9]+$'; then
+            TAGS="ghcr.io/$GITHUB_REPOSITORY:$GITHUB_REF_NAME-git,makersquad/harp-proxy:$GITHUB_REF_NAME-git"
             PUSH="true"
             echo "Docker tags (version branch): $TAGS"
           else
-            TAGS="ghcr.io/${{ github.repository }}:${{ github.sha }}"
+            TAGS="ghcr.io/$GITHUB_REPOSITORY:$GITHUB_SHA"
             PUSH="false"
             echo "Docker tags (other branch): $TAGS (push disabled for non-mainline branches)"
           fi
@@ -671,19 +694,19 @@ jobs:
       - name: Wait for the release on PyPI
         run: |
           for attempt in $(seq 1 30); do
-            if out=$(python -m pip download --no-deps --only-binary=:all: --python-version 3.13 --no-cache-dir -d "$RUNNER_TEMP/pypi-wait" "harp-proxy==${{ github.ref_name }}" 2>&1); then
+            if out=$(python -m pip download --no-deps --only-binary=:all: --python-version 3.13 --no-cache-dir -d "$RUNNER_TEMP/pypi-wait" "harp-proxy==$GITHUB_REF_NAME" 2>&1); then
               exit 0
             fi
-            echo "harp-proxy==${{ github.ref_name }} not on PyPI yet (attempt $attempt/30): $(echo "$out" | tail -n 1)"
+            echo "harp-proxy==$GITHUB_REF_NAME not on PyPI yet (attempt $attempt/30): $(echo "$out" | tail -n 1)"
             sleep 20
           done
-          echo "harp-proxy==${{ github.ref_name }} still not installable from PyPI after 10 minutes"
+          echo "harp-proxy==$GITHUB_REF_NAME still not installable from PyPI after 10 minutes"
           exit 1
 
       - name: Determine version and tags
         id: meta
         run: |
-          VERSION="${{ github.ref_name }}"
+          VERSION="$GITHUB_REF_NAME"
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "INSTALL_FROM=pypi" >> $GITHUB_OUTPUT
 
@@ -692,16 +715,16 @@ jobs:
             # Mainline release (e.g., 0.9.0) - tag with full, minor, and major versions
             MAJOR=$(echo "$VERSION" | cut -d. -f1)
             MINOR=$(echo "$VERSION" | cut -d. -f1-2)
-            TAGS="ghcr.io/${{ github.repository }}:$VERSION,makersquad/harp-proxy:$VERSION"
-            TAGS="$TAGS,ghcr.io/${{ github.repository }}:$MINOR,makersquad/harp-proxy:$MINOR"
-            TAGS="$TAGS,ghcr.io/${{ github.repository }}:$MAJOR,makersquad/harp-proxy:$MAJOR"
+            TAGS="ghcr.io/$GITHUB_REPOSITORY:$VERSION,makersquad/harp-proxy:$VERSION"
+            TAGS="$TAGS,ghcr.io/$GITHUB_REPOSITORY:$MINOR,makersquad/harp-proxy:$MINOR"
+            TAGS="$TAGS,ghcr.io/$GITHUB_REPOSITORY:$MAJOR,makersquad/harp-proxy:$MAJOR"
             # `latest` tracks the most recent mainline stable release (pre-releases are excluded by
             # the branch above). Previously pinned to 0.9.x, which would have frozen `latest` at 0.9.
             TAGS="$TAGS,makersquad/harp-proxy:latest"
             echo "Docker tags (mainline): $TAGS"
           else
             # Pre-release (e.g., 0.9.0-rc1) - only exact tag
-            TAGS="ghcr.io/${{ github.repository }}:$VERSION,makersquad/harp-proxy:$VERSION"
+            TAGS="ghcr.io/$GITHUB_REPOSITORY:$VERSION,makersquad/harp-proxy:$VERSION"
             echo "Docker tags (pre-release): $TAGS"
           fi
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
@@ -763,8 +786,10 @@ jobs:
 
       - name: Check if changelog exists
         id: changelog
+        env:
+          VERSION_OUT: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
+          VERSION="$VERSION_OUT"
           if [[ "$VERSION" == *-* ]]; then
             # A pre-release does not consume the fragments: its notes are the fragments present at the tag.
             if ls changelog.d/*.*.rst 2>/dev/null | grep -qv README.rst; then
@@ -796,32 +821,40 @@ jobs:
 
       - name: Render pre-release notes from fragments
         if: steps.changelog.outputs.pending == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          CHANGELOG_FILE: ${{ steps.changelog.outputs.file }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          uvx --from "towncrier>=26.9.0" towncrier build --draft --version "${VERSION%%-*}" --date "$(date +%F)" > "${{ steps.changelog.outputs.file }}"
+          uvx --from "towncrier>=26.9.0" towncrier build --draft --version "${VERSION%%-*}" --date "$(date +%F)" > "$CHANGELOG_FILE"
 
       - name: Convert changelog to Markdown
         if: steps.changelog.outputs.exists == 'true'
+        env:
+          CHANGELOG_FILE: ${{ steps.changelog.outputs.file }}
         run: |
-          pandoc --wrap=none --shift-heading-level-by=-1 -o changes.md "${{ steps.changelog.outputs.file }}"
-          echo "Generated changes.md from ${{ steps.changelog.outputs.file }}"
+          pandoc --wrap=none --shift-heading-level-by=-1 -o changes.md "$CHANGELOG_FILE"
+          echo "Generated changes.md from $CHANGELOG_FILE"
 
       - name: Create fallback changelog
         if: steps.changelog.outputs.exists == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          cat > changes.md <<EOF
-          # Release ${{ steps.version.outputs.version }}
+          cat > changes.md <<'EOF'
+          # Release $VERSION
 
-          This release was automatically created from tag ${{ github.ref_name }}.
+          This release was automatically created from tag $GITHUB_REF_NAME.
 
           ## Installation
 
-          \`\`\`bash
-          pip install harp-proxy==${{ steps.version.outputs.version }}
-          \`\`\`
+          ```bash
+          pip install harp-proxy==$VERSION
+          ```
 
           See the [documentation](https://docs.harp-project.net/) for more information.
           EOF
+          envsubst '$VERSION $GITHUB_REF_NAME' < changes.md > changes.md.tmp
+          mv changes.md.tmp changes.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2

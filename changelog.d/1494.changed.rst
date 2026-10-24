@@ -1,0 +1,1 @@
+Align the README and the docs with the code: limits stated, broken links, Python version and Prometheus wording fixed, project name read "HTTP API Runtime Proxy".

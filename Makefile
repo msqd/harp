@@ -124,7 +124,7 @@ docs:  ## Build html documentation
 docs-dev:  ## Spin up a livereload documentation server
 	$(call execute,$(UV_RUN) $(MAKE) -C docs dev)
 
-docs-assets: install-frontend  ## Regenerates the dashboard captures and the README diagrams (needs graphviz and playwright chromium).
+docs-assets: install-frontend  ## Regenerates the dashboard captures and the README diagrams (needs graphviz, and the frontend dependencies with playwright chromium).
 	$(call execute,$(UV_RUN) python -m docs._captures)
 
 

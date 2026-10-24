@@ -29,7 +29,7 @@ It is implemented by two applications working together:
   attempts to store them asynchronously in a storage.
 
 When the background worker falls behind, it skips storing transaction data to maintain the system's ability to process
-requests. This is not a rare edge: in a measured sweep on PostgreSQL, roughly 80% of transactions were never stored and
-two thirds of the rows that were stored held no messages. Proxying stayed healthy throughout, so the traffic was served
-correctly and only the record of it was lost. `#945 <https://github.com/msqd/harp/issues/945>`_ carries the
-measurements and the conditions they were taken under.
+requests. This is not a rare edge: on PostgreSQL, HARP records about 20 to 45 requests per second in full, and sheds
+above that (see :ref:`storage-recording-capacity`). Proxying stays healthy, so the traffic is served correctly and
+only the record of it is lost. `#945 <https://github.com/msqd/harp/issues/945>`_ carries the measurements and the
+conditions they were taken under.

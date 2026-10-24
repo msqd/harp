@@ -53,6 +53,12 @@ Features
 - **Configurable Policy:** Customize caching behavior through policy configuration
 
 
+.. note::
+
+    Credentials are :doc:`redacted </apps/storage/redaction>` in what the cache stores. A response that varies on,
+    carries (``Set-Cookie``) or was requested with a redacted value is not cached at all, unless you opt the name out of
+    redaction.
+
 .. _http-cache-shared:
 
 .. warning::

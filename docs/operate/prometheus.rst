@@ -18,7 +18,9 @@ To enable it, use ``--enable metrics`` in the command line:
     harp-proxy server --enable metrics ...
 
 The ``metrics`` application will decorate the HARP ASGI implementation with a middleware that will expose the metrics
-under the path ``/.prometheus/metrics``. You can configure your prometheus instance to scrape this path (see below).
+under the path ``/.prometheus/metrics``, on every port HARP listens to. That path is answered before the dashboard
+authentication, so it needs no credentials: do not expose it beyond your network. You can configure your prometheus
+instance to scrape it, or the authenticated ``/metrics`` of the dashboard (see below).
 
 
 .. _storage-load-shedding:
@@ -40,8 +42,9 @@ These two metrics are always available on ``/metrics``, whether or not the ``met
 Metrics endpoint
 ::::::::::::::::
 
-``/metrics`` is served on the dashboard port (4080 by default) and follows the dashboard authentication. To also
-serve it on a dedicated port, without authentication (off by default), set ``dashboard.metrics_port``:
+``/metrics`` is always served on the dashboard port (4080 by default), whether or not the ``metrics`` application is
+enabled, and follows the dashboard authentication: a scraper must send credentials. To also serve it on a dedicated
+port, without authentication (off by default), set ``dashboard.metrics_port``:
 
 .. code-block:: yaml
 
@@ -82,7 +85,9 @@ Additionally, a few python-related metrics and info are available, check the met
 Scrape configuration
 :::::::::::::::::::::
 
-Here is an example scrape configuration for prometheus:
+Here is an example scrape configuration for prometheus, for the ``metrics`` application path (no credentials needed).
+To scrape ``/metrics`` on the dashboard port instead, set ``metrics_path: /metrics`` and add ``basic_auth``, or point
+the target at ``dashboard.metrics_port``:
 
 .. code-block:: yaml
 
