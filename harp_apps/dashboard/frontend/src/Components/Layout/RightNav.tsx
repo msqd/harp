@@ -12,7 +12,7 @@ export function RightNav() {
       {systemQuery.data.user ?? "anonymous"}
       <br />
       <span className="text-xs">
-        <a href={getDocumentationUrl(systemQuery.data.version)} target="_blank" rel="noreferrer">
+        <a href={getDocumentationUrl(systemQuery.data.version)} target="_blank" rel="noopener noreferrer">
           <QuestionMarkCircleIcon className="inline-block w-4 h-4 mx-1" />
           Help
         </a>

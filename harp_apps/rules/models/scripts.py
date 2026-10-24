@@ -1,4 +1,5 @@
 import ast
+import builtins
 from typing import Callable
 
 
@@ -48,7 +49,14 @@ class Script(Callable):
             return cls(f.read(), filename=filename)
 
     def __call__(self, context: dict):
-        exec(self._code, None, context)
+        """Run the script with fresh globals: a copy of the builtins plus the context, nothing shared with other scripts.
+        What the script assigns is written back to the context."""
+        namespace = {**context, "__builtins__": dict(vars(builtins))}
+        try:
+            exec(self._code, namespace)
+        finally:
+            namespace.pop("__builtins__", None)
+            context.update(namespace)
 
     def __eq__(self, other):
         return isinstance(other, Script) and self._code == other._code
@@ -65,6 +73,10 @@ class Script(Callable):
 class ExecutableObject(Callable):
     def __init__(self, target: Callable):
         self._target = target
+
+    @property
+    def filename(self):
+        return f"<callable:{getattr(self._target, '__qualname__', type(self._target).__name__)}>"
 
     def __call__(self, context: dict):
         return self._target(context)

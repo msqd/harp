@@ -255,11 +255,11 @@ or...
 Logging
 :::::::
 
-To instruct SQLAlchemy to log all queries, set ``LOGGING_SQLALCHEMY=INFO`` in your env.
+To instruct SQLAlchemy to log all queries, set ``LOGGING_SQL=INFO`` in your env.
 
 .. code-block:: shell
 
-    LOGGING_SQLALCHEMY=INFO harp-proxy server ...
+    LOGGING_SQL=INFO harp-proxy server ...
 
 It works with all HARP commands, not just ``start``.
 

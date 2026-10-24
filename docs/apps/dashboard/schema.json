@@ -81,6 +81,11 @@
           "description": "Whether the application is enabled",
           "type": "boolean"
         },
+        "host": {
+          "default": "[::]",
+          "description": "Address on which the dashboard application will listen. The default listens on every interface, which a published Docker port needs. Use `127.0.0.1` to listen on the loopback interface only.",
+          "type": "string"
+        },
         "port": {
           "default": 4080,
           "description": "Port on which the dashboard application will be served.",
@@ -162,9 +167,9 @@
       "properties": {
         "endpoint": { "type": "string" },
         "action": { "enum": ["up", "down", "checking"], "type": "string" },
-        "url": { "type": "string" }
+        "index": { "type": "integer" }
       },
-      "required": ["endpoint", "action", "url"],
+      "required": ["endpoint", "action", "index"],
       "title": "SystemPutProxyInput",
       "type": "object"
     },
@@ -179,9 +184,10 @@
   "title": "__ROOT__",
   "anyOf": [
     { "$ref": "#/$defs/SystemPutProxyInput" },
+    { "$ref": "#/$defs/DashboardSettings" },
     { "$ref": "#/$defs/BasicAuthSettings" },
+    { "$ref": "#/$defs/NoAuthSettings" },
     { "$ref": "#/$defs/User" },
-    { "$ref": "#/$defs/DevserverSettings" },
-    { "$ref": "#/$defs/DashboardSettings" }
+    { "$ref": "#/$defs/DevserverSettings" }
   ]
 }

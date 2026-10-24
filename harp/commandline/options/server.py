@@ -28,6 +28,12 @@ def _parse_option(option: tuple[str, str]) -> tuple[str, Union[str, bool]]:
     return key, value
 
 
+def _format_value(value) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
+
+
 @dataclass(kw_only=True)
 class CommonServerOptions(dict):
     """
@@ -47,12 +53,12 @@ class CommonServerOptions(dict):
     def as_list(self):
         items = list(
             chain(
-                (f"--set {quote(key)}={quote(value)}" for key, value in self.options.items()),
+                (f"--set {quote(key)}={quote(_format_value(value))}" for key, value in self.options.items()),
                 (f"--endpoint {quote(key)}={quote(value)}" for key, value in self.endpoints.items()),
-                ("--enable {app}".format(app=app) for app in self.enable),
-                ("--disable {app}".format(app=app) for app in self.disable),
-                ("--file " + file for file in self.files),
-                ("--example " + example for example in self.examples),
+                (f"--enable {quote(app)}" for app in self.enable),
+                (f"--disable {quote(app)}" for app in self.disable),
+                (f"--file {quote(file)}" for file in self.files),
+                (f"--example {quote(example)}" for example in self.examples),
             )
         )
         if self.strict:
@@ -156,6 +162,8 @@ class _EnhancedParserCommand(click.RichCommand):
     def parse_args(self, ctx: click.Context, args: List[str]) -> List[str]:
         index = 0
         while index < len(args):
+            if args[index].startswith("--set="):
+                args = args[:index] + ["--set", args[index].removeprefix("--set=")] + args[index + 1 :]
             if args[index] == "--set":
                 if index + 1 < len(args):
                     # if an equal sign is present, we expand the argument into two separated arguments
