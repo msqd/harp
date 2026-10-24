@@ -5,6 +5,7 @@ import httpx
 from hishel import Request, Response
 from hishel._async_httpx import _httpx_to_internal as _hishel_httpx_to_internal
 from hishel._async_httpx import _IteratorStream
+from hishel._core._spec import parse_date
 from hishel._core.models import ResponseMetadata
 from hishel.httpx import AsyncCacheTransport as HishelAsyncCacheTransport
 
@@ -40,6 +41,20 @@ def _internal_to_httpx(value):
         return httpx.Response(value.status_code, headers=headers, stream=stream, extensions=value.metadata)
     stream = _IteratorStream(value._aiter_stream())
     return httpx.Request(value.method, value.url, headers=headers, stream=stream, extensions=value.metadata)
+
+
+# An HTTP date in the past, standing for "already expired".
+_ALREADY_EXPIRED = "Thu, 01 Jan 1970 00:00:00 GMT"
+
+
+def _expire_malformed_expires(response: Response) -> None:
+    """RFC 9111 §5.3: an invalid ``Expires`` value means "already expired".
+
+    hishel raises on a value it cannot parse, which would answer the client a 500 for an upstream's mistake.
+    """
+    if "expires" in response.headers and parse_date(response.headers["expires"]) is None:
+        del response.headers["expires"]  # assigning would add a value next to the malformed one
+        response.headers["expires"] = _ALREADY_EXPIRED
 
 
 def _endpoint_name(request: httpx.Request) -> str:
@@ -181,4 +196,5 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         dropped = hop_by_hop_names(response.headers) - {"content-length"}
         for name in [name for name in response.headers if name.lower() in dropped]:
             del response.headers[name]
+        _expire_malformed_expires(response)
         return response
