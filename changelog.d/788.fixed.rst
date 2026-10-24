@@ -1,0 +1,1 @@
+Replace deprecated Click command types and rich-click markup configuration in the CLI.

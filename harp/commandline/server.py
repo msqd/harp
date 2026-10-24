@@ -1,6 +1,6 @@
 from typing import cast
 
-from click import BaseCommand, ClickException
+from click import ClickException, Command
 
 from harp import run
 from harp.commandline.options.server import CommonServerOptions, server_command
@@ -37,4 +37,4 @@ def server(**kwargs):
         _info.state("down")
 
 
-server = cast(BaseCommand, server)
+server = cast(Command, server)

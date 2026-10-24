@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 from typing import cast
 
-from click import BaseCommand
+from click import Command
 from packaging.version import Version
 
 from harp.commandline import cookiecutters as templates
@@ -116,4 +116,4 @@ def create(template, name, no_app, no_config, harp_source):
         subprocess.run([*command, "--no-input", "--config-file", config_file, template_path], check=True)
 
 
-create = cast(BaseCommand, create)
+create = cast(Command, create)

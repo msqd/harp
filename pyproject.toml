@@ -19,7 +19,6 @@ dependencies = [
     "asgiref>=3.10,<3.13",
     # Not imported directly (httpx's trust store). Floor: older bundles trust compromised eMudhra intermediates, see #1405.
     "certifi>=2026.10.19",
-    # Imported directly (harp.commandline). 9.0 removes BaseCommand, which we cast to.
     "click>=8.1,<9",
     "colorama>=0.4,<0.5",
     "dataclasses-json>=0.6,<0.7",

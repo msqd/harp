@@ -4,7 +4,7 @@ from functools import partial
 from typing import cast
 
 from alembic import command
-from click import BaseCommand
+from click import Command
 from pyheck import upper_camel
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -40,7 +40,7 @@ def migrate(*, operation, revision, reset=False, **kwargs):
     asyncio.run(do_migrate(engine, migrator=migrator, reset=reset))
 
 
-migrate = cast(BaseCommand, migrate)
+migrate = cast(Command, migrate)
 
 
 @server_command("db:create-migration")
@@ -51,7 +51,7 @@ def create_migration(*, message, **kwargs):
     command.revision(alembic_cfg, autogenerate=True, message=message or "auto-generated migration")
 
 
-create_migration = cast(BaseCommand, create_migration)
+create_migration = cast(Command, create_migration)
 
 
 @server_command("db:merge")
@@ -63,7 +63,7 @@ def run_db_merge_command(*, message, revisions, **kwargs):
     command.merge(alembic_cfg, message=message or "merge migration", revisions=revisions)
 
 
-run_db_merge_command = cast(BaseCommand, run_db_merge_command)
+run_db_merge_command = cast(Command, run_db_merge_command)
 
 
 @server_command("db:feature")
@@ -89,7 +89,7 @@ def feature(features, operation, **kwargs):
             raise ValueError(f"Invalid operation {operation}.")
 
 
-feature = cast(BaseCommand, feature)
+feature = cast(Command, feature)
 
 
 @server_command("db:history")
@@ -99,7 +99,7 @@ def history(**kwargs):
     command.history(alembic_cfg)
 
 
-history = cast(BaseCommand, history)
+history = cast(Command, history)
 
 
 @server_command("db:reset")
@@ -111,4 +111,4 @@ def reset(**kwargs):
     asyncio.run(do_reset(engine))
 
 
-reset = cast(BaseCommand, reset)
+reset = cast(Command, reset)
