@@ -1,0 +1,93 @@
+Version 0.12.0 (2026-10-24)
+===========================
+
+Important Changes
+:::::::::::::::::
+
+- PostgreSQL and MySQL drivers are now extras: run ``pip install harp-proxy[postgresql]`` or ``pip install harp-proxy[mysql]`` (``asyncpg``; ``aiomysql`` with ``cryptography``) before pointing ``storage.url`` at them, else startup fails naming the extra. SQLite stays in the base install, and ``psycopg2-binary`` is no longer installed. (#889)
+- ⚠️ Response bodies are streamed to the client as they arrive. HARP records at most ``proxy.max_recorded_body_size`` (1 MiB) of each, measured decoded: a longer body is recorded truncated, marked ``truncated-response-body`` and not stored in the HTTP cache. A client leaving mid-body is marked ``client-disconnected``. Transactions end once the body is sent, so their duration and TPDEX now cover the transfer to the client. (#911)
+- A configuration file's ``applications:`` list now replaces the default set; it used to be silently ignored. A list that omits a dependency (for example ``proxy`` for ``storage``) now fails startup, naming the missing application: list every application you need, or drop the key to keep the default set. ``--applications`` replaces the file's list, ``--enable`` / ``--disable`` apply after. (#994)
+- HARP now refuses to start on an outdated storage schema, with the commands to fix it. A SQLite file written by 0.11 must be deleted or reset (``harp-proxy db:reset``); PostgreSQL and MySQL need ``harp-proxy db:migrate up head``. (#1214)
+- ⚠️ Request bodies are recorded at most ``proxy.max_recorded_body_size`` (1 MiB) like responses: a longer one is recorded truncated, marked ``truncated-request-body``, and still forwarded whole. (#1218)
+- ⚠️ A request body from a client silent for longer than ``proxy.client_read_timeout`` (30 s), or arriving below ``proxy.min_request_body_rate`` (1 KiB/s, after 10 s), is answered ``408`` and never forwarded upstream. (#1220)
+- ⚠️ SQLite now enforces foreign keys on every connection, so retention also removes the messages and tags of deleted transactions, and the orphan sweep frees their blobs. (#1274)
+- ⚠️ MySQL and MariaDB are deprecated: they keep working, with no production support, and HARP logs a warning at boot. PostgreSQL is the production database, SQLite is for development. (#1383)
+
+Added
+:::::
+
+- Storage load shedding is no longer silent: periodic warning, `dropped` Prometheus counter by kind, and `/metrics` on the dashboard port (optionally on its own `dashboard.metrics_port`). (#945)
+- New "Upgrading to 0.12" page in the operator guide, and a ``tooling`` fragment type kept out of the release notes. (#1298)
+
+Changed
+:::::::
+
+- Moved every harp-proxy.net link to harp-project.net, and dropped the Plausible script from the docs (Google Analytics stays). (#842)
+- Document the remaining buffering limits: request bodies are read in full before going upstream, and streams that stay open (SSE, long-polling) are not supported yet. (#1128)
+- Event dispatches are logged at debug instead of info. (#1184)
+- Transaction text search counts and pages transactions instead of joined messages, and matches ``%`` and ``_`` literally on every backend. On MySQL and MariaDB it matches substrings instead of word prefixes. (#1275)
+- Mark the Helm chart as unsupported and not production-ready in the docs. (#1300)
+- Add ``SECURITY.md`` with the private vulnerability reporting route, a security-fix flow in the branching guide, and the correct trusted-publisher workflow (``cicd.yml``) in the release guide. (#1317)
+
+Fixed
+:::::
+
+- Overview performance chart legend lists the G grade, and G scores render in G's colour instead of grey. (#626)
+- Cache: a successful ``PUT``, ``POST``, ``PATCH`` or ``DELETE`` now invalidates the stored responses for its target and its same-host ``Location`` / ``Content-Location`` URIs (RFC 9111 §4.4). (#909)
+- Transaction markers (`skip-*`, new `shed-*` set when storage drops data under pressure) are now persisted and returned by the transaction API. (#970)
+- Under the default in-memory storage (``sqlite+aiosqlite:///:memory:``), the HTTP cache no longer loses entries written while other requests use the database: the one connection is now taken in turn instead of shared at once. (#995)
+- A client ``Connection`` header no longer strips headers injected by rules: it is applied to the incoming request before rules run. (#1001)
+- Reject requests whose path is not valid UTF-8 with a 400 instead of failing unguarded. (#1018)
+- Endpoint url credentials (`http://user:pass@host/`) are no longer sent in the `Host` header: they go out as `Authorization: Basic` unless the request already carries an `Authorization`, and are left out of the recorded remote url and logs. (#1021)
+- Overlong request paths now answer 414 URI Too Long instead of 500, without reaching the upstream or counting against its liveness. (#1023)
+- SQL blob storage: MySQL sessions are pinned to UTC so the orphan grace holds on non-UTC servers, and `put()` renews a blob in one statement so the janitor cannot delete it in between. (#1106)
+- Header values holding obs-text (bytes above 0x7F, e.g. an ``ETag``) are proxied and cached byte for byte instead of answering 500. (#1126)
+- Rules setting ``skip-storage`` no longer leave an unfinished transaction row in storage: the transaction started event is now dispatched after the request filters. (#1127)
+- Current button group and paginator item use primary-900, white text now passes WCAG AA. (#1136)
+- File-backed SQLite storage uses a write-ahead log, which removes multi-second request stalls under concurrent requests. (#1152)
+- Cache entries are read and written with libyaml when available. (#1176)
+- Blob ids are hashed without copying the body, and large bodies off the event loop. (#1177)
+- The janitor sweep reads and deletes in short batches, releasing the database connection between them, so requests no longer stall behind it under the default in-memory storage. (#1215)
+- Fix the http_cache documentation example: an explicit `applications:` list must include `http_client`. A test now loads every documented `applications:` example. (#1216)
+- A client aborting an upload is no longer forwarded upstream as a complete request: the transaction ends with the ``client-disconnected`` marker. (#1217)
+- A response streaming for longer than ``proxy.client_read_timeout`` is no longer cut: the timeout now applies to the request body only, and answers ``408``. (#1245)
+- A failing cache storage is logged as a warning and no longer breaks the response nor counts against the upstream's circuit breaker. (#1272)
+- Ship the in-memory request bridge in production code so ``harp-proxy rules run`` works when installed from the wheel. (#1273)
+- Storage load shedding now engages while the database is stalled: queue pressure is measured on every push instead of every 5 s by the consumer. (#1277)
+- The endpoint status change API (``PUT /api/system/proxy``) now names the endpoint it received in its "not found" error. (#1279)
+- Config files no longer register HARP yaml tags (`!include`, `!ref`, `!cfg`) on PyYAML's global `SafeLoader`; HARP uses its own safe loader, and included files use it too. (#1280)
+- Dashboard syntax highlighter now ships prismjs 1.30.0 (pnpm override), not 1.27.0 via refractor. (#1281)
+- Replace the real Sentry DSN in the ``sentry`` example with a placeholder. (#1282)
+- Fix transaction flags API: repeated PUT is idempotent, unknown flag answers 400, unknown transaction 404, DELETE removes only the named flag, and the list star reverts when the request fails. (#1285)
+- Fix `get_transaction_list(with_messages=False)` raising `MissingGreenlet`. (#1286)
+- Docker page: commands start the server, tags match the published ones, uid 1000 and ``--init`` documented. (#1290)
+- The contributor setup installs the frontend dependencies and pre-commit hooks, so a fresh clone gives a working development server. (#1292)
+- Configuration page examples use the right storage key, and the page documents environment variables, precedence and the ``/etc`` files. (#1293)
+- Fix stale statements in the README and start page, and in the audit log, storage, cache and rules docs. (#1294)
+- Docs for users run ``harp-proxy server`` instead of the development launcher. (#1295)
+- Rules docs: render the examples, document the matching grammar, fix the recipe directive and the truncated ``on_response`` page. (#1296)
+- The proxy full example no longer crashes at startup: ``controller: null`` selects the default controller, and an endpoint using the default controller with neither ``url`` nor ``remote`` is refused at settings validation, naming the endpoint. Endpoints with a custom controller are unaffected. (#1297)
+- Storage sheds only under sustained backlog: a level engages once the queue has stayed at or above it for 2 s, so short bursts are recorded in full, and recording resumes as soon as the queue drains. ``async_worker_queue_backlog`` now reports 0 when the queue is empty. (#1382)
+- Document memory sizing under recording backlog and on-off message shedding on a slow database, and fix three wording errors. (#1393)
+- An aborted upload is recorded with the partial request body and the ``client-disconnected`` marker when storage is enabled, instead of answering a 500 with a traceback.
+- Upgrading page: known issue, a stalled storage database stalls proxied requests while the http cache is on.
+
+Security
+::::::::
+
+- Proxy path guard also refuses dot segments written as ``..;``, double-encoded, overlong UTF-8, NUL-terminated or fullwidth (400). (#1009, GHSA-vvjr-4qwm-6xjx)
+- Dashboard dependencies bumped to patch and minor releases that close advisories (react-router-dom, lodash, @babel/runtime); `@ladle/react` and `sort-by` moved to devDependencies. (#1016)
+- Mask URL passwords of every URL type in ``/api/system/settings`` and in the startup log, not only strings and DSNs (``--unsecure`` still shows them). (#1219)
+- Stop pydantic serializer warnings, which printed endpoint URL passwords on stderr at every ``GET /api/system/proxy``. (#1246)
+- Stop logging the endpoint password from health-check probes; credentials are sent as a Basic Authorization header. (#1250)
+- Aggressive-cache rules example and cache recipes no longer add `public` and skip requests with `Authorization` or `Cookie` and upstream `private` responses, so authenticated responses are not shared. (#1271)
+- Narrow CI workflow token permissions per job and stop persisting checkout credentials. (#1316)
+- harp-proxy now requires certifi 2026.10.19 or later, so the TLS trust store no longer contains the eMudhra roots whose intermediates were compromised. (#1405)
+- Dashboard serves captured bodies as inert attachments (``Content-Disposition: attachment``, ``nosniff``, sandbox CSP), and sends ``nosniff``, ``X-Frame-Options: DENY`` and a ``Content-Security-Policy`` on every response. (GHSA-gm6g-4j8h-w9xf)
+- Never store upstream cookies in the shared HTTP client: a ``Set-Cookie`` from one client's upstream session was replayed to other clients (GHSA-jpw8-42g9-g437).
+- The dashboard now requires authentication by default: without ``dashboard.auth``, a random ``admin`` password is generated at each start and logged once; ``dashboard.auth.type: none`` opts out (see :ref:`upgrading-0-12`). (GHSA-75m3-4r56-gcwm)
+
+Removed
+:::::::
+
+- asyncmy support is removed (unfixed advisory): a ``mysql+asyncmy://`` storage URL is refused at startup, use ``mysql+aiomysql://``. (#916)

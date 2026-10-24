@@ -1,1 +1,0 @@
-asyncmy support is removed (unfixed advisory): a ``mysql+asyncmy://`` storage URL is refused at startup, use ``mysql+aiomysql://``.

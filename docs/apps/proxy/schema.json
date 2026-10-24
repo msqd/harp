@@ -251,6 +251,22 @@
           "items": { "$ref": "#/$defs/EndpointSettings" },
           "type": "array"
         },
+        "client_read_timeout": {
+          "default": 30.0,
+          "description": "Seconds a client may stay silent in the middle of a request body before it is answered 408. Each silence is timed on its own: a client sending a byte at shorter intervals is not cut.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "min_request_body_rate": {
+          "default": 1024,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "request_body_grace_period": {
+          "default": 10.0,
+          "minimum": 0,
+          "type": "number"
+        },
         "max_recorded_body_size": {
           "default": 1048576,
           "gt": 0,

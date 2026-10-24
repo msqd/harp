@@ -1,1 +1,0 @@
-Docs titles name the version line and its role (``HARP Proxy 0.11 (stable)``, ``0.12 (next)``), and "Edit on GitHub" opens the right branch.

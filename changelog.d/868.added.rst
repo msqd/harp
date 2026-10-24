@@ -1,1 +1,0 @@
-CI runs the storage suite against MySQL and MariaDB in its own job.

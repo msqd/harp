@@ -63,7 +63,7 @@ class Transaction(Base):
     def tags(self):
         return {tag_value.tag.name: tag_value.value for tag_value in self._tag_values}
 
-    def to_model(self, with_user_flags=False):
+    def to_model(self, with_user_flags=False, with_messages=False):
         return TransactionModel(
             id=self.id,
             type=self.type,
@@ -92,7 +92,7 @@ class Transaction(Base):
                     else {}
                 ),
             ),
-            messages=([message.to_model() for message in self.messages] if self.messages else []),
+            messages=([message.to_model() for message in self.messages] if with_messages else []),
             tags=self.tags,
             markers=decode_markers(self.markers),
         )

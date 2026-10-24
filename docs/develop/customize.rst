@@ -11,7 +11,7 @@ HARP supports extensive customization through YAML configuration files:
 
 - **Endpoints and routing**: Define proxies, ports, and target URLs
 - **HTTP client behavior**: Timeouts, retries, caching, connection pooling
-- **Storage backends**: SQLite, PostgreSQL, MySQL, Redis
+- **Storage backends**: PostgreSQL, SQLite (development only), MySQL (deprecated), Redis
 - **Transaction lifecycle**: Custom scripts for request/response processing
 - **Dashboard and monitoring**: Enable and configure the web UI
 - **Authentication**: Basic auth, custom authentication handlers

@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 from datetime import UTC, datetime
 
@@ -45,6 +46,26 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         worker.register_events(dispatcher)
         return worker
 
+    async def build_backlog(self, worker: StorageAsyncWorkerQueue, size: int, release: asyncio.Event):
+        """Stall the consumer until ``release`` is set, with ``size`` items waiting behind it for the pressure hold."""
+        if not size:
+            return
+
+        now = worker.clock()
+        worker.clock = lambda: now
+
+        async def stalled():
+            await release.wait()
+
+        async def noop():
+            pass
+
+        await worker.push(stalled)
+        await asyncio.sleep(0)  # consumer is now stuck on the first item
+        for _ in range(size):
+            await worker.push(noop)
+        worker.clock = lambda: now + worker.pressure_hold
+
     async def create_transaction_and_messages(
         self,
         dispatcher: AsyncEventDispatcher,
@@ -57,7 +78,8 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
     ) -> Transaction:
         """Helper to create a transaction with request/response messages through events."""
         worker = self.create_worker(dispatcher, sql_storage, blob_storage)
-        worker._pressure = pressure
+        release = asyncio.Event()
+        await self.build_backlog(worker, pressure, release)
 
         # Create transaction
         transaction = Transaction(
@@ -87,6 +109,7 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         await dispatcher.adispatch(EVENT_TRANSACTION_ENDED, TransactionEvent(transaction=transaction))
 
         # Wait for worker to process all events
+        release.set()
         await worker.wait_until_empty()
 
         return transaction

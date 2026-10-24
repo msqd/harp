@@ -63,6 +63,58 @@ class TestTransactionsController(TransactionsControllerTestFixtureMixin, Storage
             assert response["endpoint"]["values"] == [{"count": 3, "name": "foo"}]
 
 
+class TestTransactionsControllerFlags(TransactionsControllerTestFixtureMixin, StorageTestFixtureMixin):
+    def request(self, method):
+        return Mock(spec=HttpRequest, method=method, query=MultiDict(), extensions={"user": "anonymous"})
+
+    async def flags_of(self, controller: TransactionsController, transaction_id):
+        transaction = await controller.storage.get_transaction(transaction_id, username="anonymous")
+        return transaction.extras.get("flags", [])
+
+    async def test_put_flag_twice_keeps_one_flag(self, controller: TransactionsController):
+        transaction = await self.create_transaction(controller.storage)
+
+        first = await controller.set_user_flag(self.request("PUT"), transaction.id, "favorite")
+        second = await controller.set_user_flag(self.request("PUT"), transaction.id, "favorite")
+
+        assert first.status == 200
+        assert second.status == 200
+        assert await self.flags_of(controller, transaction.id) == ["favorite"]
+
+    async def test_delete_removes_only_the_named_flag(self, controller: TransactionsController, monkeypatch):
+        from harp_apps.storage.models import flags
+
+        monkeypatch.setitem(flags.FLAGS_BY_NAME, "other", 2)
+        monkeypatch.setitem(flags.FLAGS_BY_TYPE, 2, "other")
+        transaction = await self.create_transaction(controller.storage)
+        await controller.set_user_flag(self.request("PUT"), transaction.id, "favorite")
+        await controller.set_user_flag(self.request("PUT"), transaction.id, "other")
+
+        response = await controller.set_user_flag(self.request("DELETE"), transaction.id, "other")
+
+        assert response.status == 200
+        assert await self.flags_of(controller, transaction.id) == ["favorite"]
+
+    async def test_delete_flag_not_set_answers_2xx(self, controller: TransactionsController):
+        transaction = await self.create_transaction(controller.storage)
+
+        response = await controller.set_user_flag(self.request("DELETE"), transaction.id, "favorite")
+
+        assert response.status == 200
+
+    async def test_unknown_flag_answers_400(self, controller: TransactionsController):
+        transaction = await self.create_transaction(controller.storage)
+
+        response = await controller.set_user_flag(self.request("PUT"), transaction.id, "nope")
+
+        assert response.status == 400
+
+    async def test_unknown_transaction_answers_404(self, controller: TransactionsController):
+        for method in ("PUT", "DELETE"):
+            response = await controller.set_user_flag(self.request(method), "missing", "favorite")
+            assert response.status == 404
+
+
 class TestTransactionsControllerThroughASGI(
     TransactionsControllerTestFixtureMixin,
     StorageTestFixtureMixin,

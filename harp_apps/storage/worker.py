@@ -1,6 +1,5 @@
 from datetime import UTC
 from functools import partial
-from math import log10
 from time import monotonic
 
 from prometheus_client import Counter
@@ -9,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from whistle import IAsyncEventDispatcher
 
 from harp import get_logger
-from harp.http import get_serializer_for
+from harp.http import ClientDisconnected, get_serializer_for
 from harp.models import Blob
 from harp.models.transactions import encode_cache_flag, encode_markers
 from harp.utils.background import AsyncWorkerQueue
@@ -21,6 +20,7 @@ from harp_apps.proxy.events import (
     TransactionEvent,
 )
 from harp_apps.storage.constants import (
+    CLIENT_DISCONNECTED,
     SKIP_REQUEST_BODY_STORAGE,
     SKIP_REQUEST_HEADERS_STORAGE,
     SKIP_REQUEST_STORAGE,
@@ -47,6 +47,9 @@ DROPPED_COUNTER = Counter(
 
 DROPPED_KINDS = ("transactions", "messages", "headers", "bodies")
 
+#: Backlog size (queued jobs) at which each pressure level starts. A request is about 8 jobs.
+PRESSURE_LEVELS = {level: 10**level for level in range(1, 5)}
+
 # Expose every series at 0 from startup, so alerts and rate() never face a missing series.
 for _kind in DROPPED_KINDS:
     DROPPED_COUNTER.labels(_kind)
@@ -57,10 +60,14 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         self.engine = engine
         self.storage = storage
         self.blob_storage = blob_storage
+        self._held_since = dict.fromkeys(PRESSURE_LEVELS)
         super().__init__()
         self.seen = set()
         self._dropped_since_warning = dict.fromkeys(DROPPED_KINDS, 0)
         self._last_shed_warning_at = None
+
+    #: Seconds the backlog must stay at or above a pressure level before that level sheds.
+    pressure_hold = 2.0
 
     #: Minimum delay (seconds) between two shedding warnings.
     shed_warning_interval = 10.0
@@ -75,7 +82,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             return
 
         counts = " ".join(f"{k}={v}" for k, v in self._dropped_since_warning.items())
-        logger.warning(f"Storage under pressure (backlog ~{self._pressure}), dropped since last warning: {counts}")
+        logger.warning(f"Storage under pressure (backlog ~{self._backlog}), dropped since last warning: {counts}")
         self._dropped_since_warning = dict.fromkeys(DROPPED_KINDS, 0)
         self._last_shed_warning_at = now
 
@@ -86,12 +93,26 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
 
     def cleanup(self):
         super().cleanup()
+        now = self.clock()
+        for level, threshold in PRESSURE_LEVELS.items():
+            if self._backlog < threshold:
+                self._held_since[level] = None
+            elif self._held_since[level] is None:
+                self._held_since[level] = now
 
     @property
-    def pressure(self):
-        if self._pressure <= 1:
-            return 0
-        return int(log10(self._pressure))
+    def pressure(self) -> int:
+        """Highest level whose backlog threshold has been held for :attr:`pressure_hold` seconds, else 0.
+
+        At 2, bodies are shed; at 3, messages; at 4, whole transactions. A shorter burst sheds nothing.
+        """
+        now = self.clock()
+        held = (
+            level
+            for level, since in self._held_since.items()
+            if since is not None and now - since >= self.pressure_hold
+        )
+        return max(held, default=0)
 
     async def on_transaction_started(self, event: TransactionEvent):
         """Event handler to store the transaction in the database."""
@@ -135,7 +156,11 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             )
             return
 
-        await event.message.aread()
+        try:
+            await event.message.aread()
+        except ClientDisconnected:
+            # The client left mid-body: record what arrived. The proxy ends the transaction on its own.
+            event.transaction.markers.add(CLIENT_DISCONNECTED)
         serializer = get_serializer_for(event.message)
 
         message_data = {

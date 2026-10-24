@@ -28,8 +28,11 @@ const SetUnsetFavoriteAction = ({ row }: { row: Row }) => {
   const onClick = (event: React.MouseEvent) => {
     event.preventDefault()
     event.stopPropagation()
-    setUserFlagMutation.mutate({ transactionId: row.transactionId, flag: "favorite", value: !isFavorite })
     setIsFavorite(!isFavorite)
+    setUserFlagMutation.mutate(
+      { transactionId: row.transactionId, flag: "favorite", value: !isFavorite },
+      { onError: () => setIsFavorite(isFavorite) },
+    )
     return false
   }
 
