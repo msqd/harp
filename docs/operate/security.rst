@@ -76,8 +76,11 @@ your traffic.
 - ``dashboard.host`` sets the address the dashboard listens on. It defaults to ``[::]``; ``127.0.0.1`` serves it on
   loopback only (reach it through an SSH tunnel or a reverse proxy on the host).
 - Dashboard responses carry ``X-Content-Type-Options``, ``X-Frame-Options`` and a ``Content-Security-Policy``, and
-  captured message bodies are served as sandboxed attachments. See the security headers section of
-  :doc:`/apps/dashboard/index`.
+  captured message bodies are served as sandboxed attachments. Responses also send ``Referrer-Policy: same-origin``.
+  See the security headers section of :doc:`/apps/dashboard/index`.
+- **Writes are guarded against cross-site requests.** A ``PUT``, ``POST`` or ``DELETE`` on the dashboard is refused
+  with ``403`` when the browser flags it cross-site (``Sec-Fetch-Site``) or its ``Origin`` is not the dashboard's, and
+  with ``415`` unless it sends ``Content-Type: application/json``. Scripts calling the API must send that content type.
 
 The dashboard speaks plain HTTP and sends the login with every request: terminate TLS in front of it
 (:ref:`operate-security-tls`).
@@ -173,8 +176,7 @@ Metrics
 
 Prometheus metrics are served on ``/metrics`` on the dashboard port, under the dashboard login.
 ``dashboard.metrics_port`` serves them on a dedicated port **without authentication**: leave it unset, or restrict the
-port outside HARP. With the ``metrics`` application enabled, ``/.prometheus/metrics`` is also answered on the proxy
-ports: block that path at the gateway that publishes them. See :doc:`prometheus`.
+port outside HARP. The proxy ports never answer a metrics path: ``/.prometheus/metrics`` is proxied upstream like any other path. See :doc:`prometheus`.
 
 
 .. _operate-security-errors:
