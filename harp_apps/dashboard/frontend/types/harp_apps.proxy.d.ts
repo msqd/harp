@@ -27,6 +27,7 @@ declare namespace Apps.Proxy {
     enabled?: boolean;
     endpoints?: EndpointSettings[];
     max_recorded_body_size?: number;
+    max_request_body_size?: number | null;
     client_read_timeout?: number;
     min_request_body_rate?: number;
     request_body_grace_period?: number;
@@ -60,6 +61,7 @@ declare namespace Apps.Proxy {
     name: string;
     port?: number | null;
     description?: string | null;
+    max_request_body_size?: number | null;
     remote?: RemoteSettings | null;
     controller?: Service | string | null;
   }
