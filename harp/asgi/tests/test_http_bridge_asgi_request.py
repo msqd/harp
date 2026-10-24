@@ -234,3 +234,19 @@ class TestHttpRequestAsgiBridgeClient(BaseHttpRequestAsgiBridgeTest):
     @pytest.mark.parametrize("client", [None, [], unset])
     def test_get_client_ipaddr_unknown(self, client):
         assert self.create_bridge(client=client).get_client_ipaddr() is None
+
+
+class TestHttpRequestAsgiBridgeAmbiguousFraming(BaseHttpRequestAsgiBridgeTest):
+    def test_content_length_with_transfer_encoding_is_rejected_and_connection_closed(self):
+        bridge = self.create_bridge(headers=[(b"Content-Length", b"4"), (b"transfer-encoding", b"chunked")])
+
+        with pytest.raises(RejectedRequest) as exc_info:
+            bridge.get_headers()
+
+        assert exc_info.value.status == 400
+        assert exc_info.value.headers == {"Connection": "close"}
+
+    def test_content_length_alone_is_accepted(self):
+        bridge = self.create_bridge(headers=[(b"content-length", b"4")])
+
+        assert bridge.get_headers()["content-length"] == "4"
