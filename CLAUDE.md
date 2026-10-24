@@ -208,7 +208,7 @@ Based on alembic, wrapped with custom logic.
 harp-proxy db:migrate up head
 
 # Create new migration
-harp-proxy db:create-migration "description"
+harp-proxy db:create-migration storage "description"
 
 # Reset database
 harp-proxy db:reset

@@ -3,6 +3,7 @@ import os
 import re
 import traceback
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from typing import Union
 from urllib.parse import quote, quote_plus
 
@@ -88,17 +89,54 @@ def mask_failure(exc: BaseException, url: AnyUrl) -> BaseException:
     return StorageBootError(masked).with_traceback(exc.__traceback__)
 
 
-def create_alembic_config(url: Union[str, URL, Url, MultiHostUrl]):
-    """Create our alembic configuration object, to run alembic commands."""
+STORAGE = "storage"
+
+
+def discover_migration_locations(root: Union[str, Path, None] = None) -> dict[str, Path]:
+    """
+    Map every application that has a ``migrations/versions`` folder to that folder. The list is static: it does not
+    depend on which applications are enabled, so a database migrated while an application was enabled still resolves
+    that application's revisions once it is disabled (see ADR-0011).
+    """
+    import harp_apps
+
+    root = Path(root if root is not None else harp_apps.__path__[0])
+    return {path.parent.parent.name: path for path in sorted(root.glob("*/migrations/versions")) if path.is_dir()}
+
+
+def table_belongs_to(application: str, table_name: str, applications) -> bool:
+    """
+    Tell if ``application`` owns the table named ``table_name``. An application owns the tables prefixed with its name
+    (``auth_users`` for ``auth``). Storage owns what no other application claims, as its tables predate the convention
+    (``transactions``, ``messages``, ``blobs``...).
+    """
+    claimed_by = [other for other in applications if other != STORAGE and table_name.startswith(f"{other}_")]
+    if application == STORAGE:
+        return not claimed_by
+    return application in claimed_by
+
+
+def create_alembic_config(url: Union[str, URL, Url, MultiHostUrl], *, locations: Union[dict[str, Path], None] = None):
+    """Create our alembic configuration object, to run alembic commands.
+
+    The ``locations`` of all applications (default: discovered under ``harp_apps``) are listed as version locations of
+    one alembic environment, enabled or not.
+    """
     from alembic.config import Config as AlembicConfig
 
     if isinstance(url, (Url, MultiHostUrl)):
         url = str(url)
 
     url = make_url(url)
+    locations = discover_migration_locations() if locations is None else locations
 
     alembic_cfg = AlembicConfig()
     alembic_cfg.set_main_option("script_location", os.path.join(storage.__path__[0], "migrations"))
+    alembic_cfg.set_main_option("path_separator", "os")
+    alembic_cfg.set_main_option(
+        "version_locations", os.pathsep.join(str(path).replace("%", "%%") for path in locations.values())
+    )
+    alembic_cfg.attributes["locations"] = dict(locations)
     alembic_cfg.set_main_option(
         "file_template",
         "%%(year)d%%(month).2d%%(day).2d%%(hour).2d%%(minute).2d%%(second).2d_%%(rev)s_%%(slug)s",
@@ -110,6 +148,41 @@ def create_alembic_config(url: Union[str, URL, Url, MultiHostUrl]):
     alembic_cfg.set_main_option("configure_logger", "false")
 
     return alembic_cfg
+
+
+def create_revision(alembic_cfg, application: str, message: str):
+    """Autogenerate a revision holding only ``application``'s tables, in its branch (opened if it has none yet)."""
+    from alembic import command
+    from alembic.script import ScriptDirectory
+
+    locations = alembic_cfg.attributes["locations"]
+    if application not in locations:
+        raise ValueError(f"Unknown application {application!r}, expected one of: {', '.join(sorted(locations))}.")
+
+    alembic_cfg.attributes["application"] = application
+    revisions = ScriptDirectory.from_config(alembic_cfg).walk_revisions()
+    has_branch = any(application in (revision.branch_labels or ()) for revision in revisions)
+    command.revision(
+        alembic_cfg,
+        message=message or "auto-generated migration",
+        autogenerate=True,
+        version_path=str(locations[application]),
+        head=f"{application}@head" if has_branch else "base",
+        branch_label=None if has_branch else application,
+    )
+
+
+def current_revisions_by_application(sync_conn, alembic_cfg) -> dict[str, Union[str, None]]:
+    """The revision each application's branch is at in the database (``None``: not migrated yet)."""
+    from alembic.runtime.migration import MigrationContext
+    from alembic.script import ScriptDirectory
+
+    script = ScriptDirectory.from_config(alembic_cfg)
+    by_folder = {Path(path).resolve(): name for name, path in alembic_cfg.attributes["locations"].items()}
+    current: dict[str, Union[str, None]] = {name: None for name in by_folder.values()}
+    for revision in MigrationContext.configure(sync_conn).get_current_heads():
+        current[by_folder[Path(script.get_revision(revision).path).resolve().parent]] = revision
+    return current
 
 
 def create_harp_settings_with_storage_from_command_line_options(kwargs):
@@ -206,7 +279,7 @@ def _alembic_revisions(sync_conn, alembic_cfg) -> tuple[set[str], set[str]]:
     return current, head
 
 
-async def ensure_schema_is_current(engine):
+async def ensure_schema_is_current(engine, *, alembic_cfg=None):
     """
     Raise :class:`OutdatedSchemaError` if the database schema is older than what this code expects.
 
@@ -228,14 +301,14 @@ async def ensure_schema_is_current(engine):
             f"  - or reset it: harp-proxy db:reset --set storage.url={shown}"
         )
     else:
-        alembic_cfg = create_alembic_config(url.render_as_string(hide_password=False))
+        alembic_cfg = alembic_cfg or create_alembic_config(url.render_as_string(hide_password=False))
         async with engine.connect() as conn:
             current, head = await conn.run_sync(_alembic_revisions, alembic_cfg)
         if current == head:
             return
         details = f"at revision {', '.join(sorted(current)) or 'none'}, expected {', '.join(sorted(head))}"
         options = (
-            f"  - migrate it: harp-proxy db:migrate up head --set storage.url={shown}\n"
+            f"  - migrate it: harp-proxy db:migrate up heads --set storage.url={shown}\n"
             "  - or let HARP migrate on start: set storage.migrate to true"
         )
         database = shown

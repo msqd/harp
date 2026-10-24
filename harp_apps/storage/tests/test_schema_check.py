@@ -67,7 +67,7 @@ async def test_database_behind_alembic_head_is_refused(sql_engine):
         await ensure_schema_is_current(sql_engine)
 
     assert "outdated" in str(exc_info.value)
-    assert "harp-proxy db:migrate up head --set storage.url=" in str(exc_info.value)
+    assert "harp-proxy db:migrate up heads --set storage.url=" in str(exc_info.value)
 
 
 async def _build_system(path):

@@ -88,7 +88,7 @@ To write migrations, the easiest way is to update models then run the autogenera
 
 .. code-block:: shell
 
-    harp-proxy db:create-migration 'some short description'
+    harp-proxy db:create-migration storage 'some short description'
 
 You'll be able to edit the newly added migration file and then, you can migrate your database to apply changes. It is
 recommended to squash migrations before submitting a merge request.
