@@ -9,6 +9,7 @@ from httpx import AsyncClient, Request, Response
 from harp import __parsed_version__
 from harp.http import HttpRequest
 from harp.http.utils import hop_by_hop_names
+from harp.models import Transaction
 from harp.utils.bytes import HEADER_ENCODING, header_bytes
 
 
@@ -68,15 +69,16 @@ class HttpClientProxyAdapter:
         self.user_agent = self.user_agent or self._get_default_user_agent()
         self.extensions = extensions or {}
 
-    async def send(self, request: HttpRequest, url: str) -> Response:
+    async def send(self, request: HttpRequest, url: str, *, transaction: Optional[Transaction] = None) -> Response:
         """
         Send the HTTP request using the provided URL.
 
         :param request: The HttpRequest object to be sent.
         :param url: The URL to which the request is sent.
+        :param transaction: The transaction the request belongs to, whose redaction and markers the cache applies.
         :return: The HTTP response received, its body not read yet: the caller reads it, then closes it.
         """
-        request = self._build_request(request, url)
+        request = self._build_request(request, url, transaction=transaction)
         response = await self.http_client.send(request, stream=True)
         response.headers.encoding = HEADER_ENCODING  # obs-text must read back as the bytes it was
 
@@ -126,7 +128,15 @@ class HttpClientProxyAdapter:
             headers.append(("authorization", "Basic " + b64encode(credentials.encode()).decode()))
         return forwarding_headers(headers, request.client_ipaddr, self.trusted_proxies)
 
-    def _build_request(self, request: HttpRequest, url: str) -> Request:
+    @staticmethod
+    def _transaction_extensions(transaction: Optional[Transaction]) -> Dict[str, Any]:
+        """What the cache, which sits below the transaction, needs from it: read when the request is sent, after the
+        rules ran."""
+        if transaction is None:
+            return {}
+        return {"redaction": transaction.redaction, "markers": frozenset(transaction.markers)}
+
+    def _build_request(self, request: HttpRequest, url: str, *, transaction: Optional[Transaction] = None) -> Request:
         """
         Build the HTTP request.
 
@@ -143,7 +153,7 @@ class HttpClientProxyAdapter:
             strip_credentials(url),
             headers=[(header_bytes(name), header_bytes(value)) for name, value in headers],
             content=request.body,
-            extensions={"harp": {**self.extensions}},
+            extensions={"harp": {**self.extensions, **self._transaction_extensions(transaction)}},
         )
 
         request.extensions["remote_method"] = remote_request.method
