@@ -4,9 +4,13 @@ from httpx import AsyncClient
 
 
 class SlackNotificationSender:
-    def __init__(self, webhook_url: str, public_url: Optional[str] = None) -> None:
+    def __init__(self, webhook_url: str, public_url: Optional[str] = None, timeout: float = 5.0) -> None:
         self.webhook_url = webhook_url
         self.public_url = public_url
+        self._client = AsyncClient(timeout=timeout)
+
+    async def aclose(self) -> None:
+        await self._client.aclose()
 
     async def send_notification(
         self,
@@ -17,12 +21,10 @@ class SlackNotificationSender:
         transaction_id: Optional[str],
     ) -> None:
         slack_message = self._format_error_message(method, url, status_code, message, transaction_id, self.public_url)
-        async with AsyncClient() as client:
-            response = await client.post(
-                self.webhook_url, json={"text": "ERROR NOTIFICATION", "blocks": slack_message["blocks"]}
-            )
-        assert response.status_code == 200
-        assert response.text == "ok"
+        response = await self._client.post(
+            self.webhook_url, json={"text": "ERROR NOTIFICATION", "blocks": slack_message["blocks"]}
+        )
+        response.raise_for_status()
 
     @staticmethod
     def _format_error_message(
