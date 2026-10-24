@@ -456,6 +456,8 @@ jobs:
       - lint-frontend
       - build-documentation
       - build-storybook
+    # always() so a failed need fails the gate instead of skipping it (a skipped required check passes)
+    if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -467,6 +469,14 @@ jobs:
           - python-version: '3.13'
           - check-only: true  # Consolidation job with no Python testing
     steps:
+      - name: Fail unless every needed job succeeded
+        if: matrix.check-only
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          echo "$NEEDS" | jq -e 'all(.[]; .result == "success")' > /dev/null
+
       - name: All checks passed
         if: matrix.check-only
         run: echo "✅ All tests and package builds completed successfully"
