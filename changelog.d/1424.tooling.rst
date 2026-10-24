@@ -1,0 +1,1 @@
+Dashboard build tooling: vitest 4, vulnerable transitive dependencies pinned to patched versions, build-only packages moved to devDependencies, unused ``sort-by`` removed.
