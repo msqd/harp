@@ -17,8 +17,9 @@ To enable it, use ``--enable metrics`` in the command line:
 
     harp-proxy server --enable metrics ...
 
-The ``metrics`` application will decorate the HARP ASGI implementation with a middleware that will expose the metrics
-under the path ``/.prometheus/metrics``. You can configure your prometheus instance to scrape this path (see below).
+The ``metrics`` application collects the metrics below. They are served by the dashboard, under ``/metrics`` (see
+:ref:`below <prometheus-endpoint>`), never on the proxy ports: a ``/.prometheus/metrics`` request on a proxy port is
+proxied to the upstream like any other path.
 
 
 .. _storage-load-shedding:
@@ -36,6 +37,8 @@ whole transactions are not stored. A level engages only once the backlog has sta
 
 These two metrics are always available on ``/metrics``, whether or not the ``metrics`` application is enabled.
 
+
+.. _prometheus-endpoint:
 
 Metrics endpoint
 ::::::::::::::::
@@ -60,14 +63,6 @@ serve it on a dedicated port, without authentication (off by default), set ``das
 Metrics
 :::::::
 
-Metrics at the ASGI handler level (the outermost layer, after the webserver interface):
-
-* ``requests_count``, a requests counter.
-* ``requests_time``, an histogram of requests processing time.
-* ``requests_in_progress``, a gauge of requests currently being processed.
-* ``responses_count``, a responses counter.
-* ``exceptions_count``, an exceptions counter.
-
 Metrics at the controller level (the middle layer, after the asgi kernel but before most of HARP's overhead):
 
 * ``controller_requests_count``, a requests counter from the controller point of view.
@@ -90,7 +85,8 @@ Additionally, a few python-related metrics and info are available, check the met
 Scrape configuration
 :::::::::::::::::::::
 
-Here is an example scrape configuration for prometheus:
+Here is an example scrape configuration for prometheus, against the dashboard port. It follows the dashboard
+authentication: add ``basic_auth`` credentials, or scrape ``dashboard.metrics_port`` instead.
 
 .. code-block:: yaml
 
@@ -99,7 +95,7 @@ Here is an example scrape configuration for prometheus:
         honor_timestamps: true
         scrape_interval: 10s
         scrape_timeout: 10s
-        metrics_path: /.prometheus/metrics
+        metrics_path: /metrics
         scheme: http
         static_configs:
           - targets:
@@ -116,11 +112,6 @@ Scratchpad
 ::::::::::
 
 **How many requests per second are being processed through harp server?**
-
-.. code:: promql
-
-    # everything that goes into harp server, averaged by 1 minute periods
-    sum(rate(requests_time_count[1m]))
 
 .. code:: promql
 
