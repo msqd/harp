@@ -68,6 +68,10 @@ class HttpClientFilterEvent(Event):
     def execute_script(self, script: Callable):
         context = self.create_execution_context()
         script(context)
+        return self.apply_script_context(context)
+
+    def apply_script_context(self, context: dict):
+        """Take into account what a script left in its execution context."""
         if context["response"] != self.response:
             if context["response"] is not None:
                 if not isinstance(context["response"], Response):

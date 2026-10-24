@@ -8,6 +8,8 @@ on:
       - '*.*.*'      # Semantic version tags (e.g., 0.9.0)
       - '*.*.*-*'    # Pre-release tags (e.g., 0.9.0-rc1, 0.9.0-beta.1)
   pull_request:
+  # Dry run: builds and smoke-tests the image, never pushes.
+  workflow_dispatch:
 
 # Least privilege: every job declares what it needs. No job pushes with the checkout credentials.
 permissions: {}
@@ -67,6 +69,48 @@ jobs:
 
       - name: ruff format --check (if this fails, run `make format` and commit)
         run: uv run ruff format --check harp harp_apps tests
+
+  # Generated schemas and types are committed: regenerating them on unmodified code must change nothing.
+  check-types:
+    name: Check Generated Types
+    runs-on: ubuntu-latest
+    needs: check-lockfile
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+          cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: |
+          uv sync --locked
+          cd harp_apps/dashboard/frontend && pnpm install --ignore-workspace
+
+      - name: Generate types
+        run: |
+          uv run bin/generate_types
+          uv run bin/generate_ts_types
+          cd harp_apps/dashboard/frontend && pnpm prettier -w src/Models
+
+      - name: Generated files are committed (if this fails, run `make types` and commit)
+        run: git status --porcelain --untracked-files=all | tee /dev/stderr | { ! grep -q .; }
 
   lint-frontend:
     name: Lint Frontend
@@ -528,6 +572,7 @@ jobs:
       - test-frontend-unit
       - lint-python
       - lint-frontend
+      - check-types
       - lint-workflows
       - build-documentation
       - build-storybook
@@ -547,7 +592,7 @@ jobs:
       - name: All checks passed
         run: echo "✅ All tests and package builds completed successfully"
 
-  # Docker image with wheel from local build (non-release branches)
+  # Docker image from the CI wheel (non-release branches). Built, started, then pushed as is.
   build-docker-image-development:
     name: Build Docker Image (Development)
     needs: all-checks-passed
@@ -574,13 +619,12 @@ jobs:
       - name: Determine version and tags
         id: meta
         run: |
-          # Branch build - use local wheel
-          VERSION=$(git describe --tags --always --dirty)
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "INSTALL_FROM=local" >> $GITHUB_OUTPUT
-
           # main publishes "unstable"; version branches (e.g., 0.9) publish "0.9-git"
-          if [ "$GITHUB_REF_NAME" = "main" ]; then
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            TAGS="ghcr.io/$GITHUB_REPOSITORY:$GITHUB_SHA"
+            PUSH="false"
+            echo "Docker tags (dry run): $TAGS (push disabled)"
+          elif [ "$GITHUB_REF_NAME" = "main" ]; then
             TAGS="ghcr.io/$GITHUB_REPOSITORY:unstable,makersquad/harp-proxy:unstable"
             PUSH="true"
             echo "Docker tags (main): $TAGS"
@@ -613,19 +657,29 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image (GIL enabled)
+      - name: Build Docker image
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           file: Dockerfile
-          push: ${{ steps.meta.outputs.push }}
+          load: true
           tags: ${{ steps.meta.outputs.tags }}
-          build-args: |
-            PYTHON_VERSION=3.13
-            INSTALL_FROM=${{ steps.meta.outputs.INSTALL_FROM }}
-            VERSION=${{ steps.meta.outputs.VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Smoke test Docker image
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: bin/smoke_docker_image "${TAGS%%,*}"
+
+      - name: Push the tested Docker image
+        if: steps.meta.outputs.push == 'true'
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          for tag in ${TAGS//,/ }; do
+            docker push "$tag"
+          done
 
   publish-to-testpypi:
     name: Publish to TestPyPI
@@ -669,7 +723,7 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
 
-  # Docker image with wheel from PyPI (release tags only)
+  # Docker image from the CI wheel (release tags only). Built, started, then pushed as is.
   build-docker-image-release:
     name: Build Docker Image (Release)
     needs: publish-to-pypi
@@ -684,31 +738,16 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      - name: Download wheel artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          python-version: '3.13'
-
-      # The PyPI index can lag the upload, and the Dockerfile `pip install` fails on a miss
-      # (see https://github.com/msqd/harp/issues/1103). Poll with pip itself, up to ~10 minutes.
-      - name: Wait for the release on PyPI
-        run: |
-          for attempt in $(seq 1 30); do
-            if out=$(python -m pip download --no-deps --only-binary=:all: --python-version 3.13 --no-cache-dir -d "$RUNNER_TEMP/pypi-wait" "harp-proxy==$GITHUB_REF_NAME" 2>&1); then
-              exit 0
-            fi
-            echo "harp-proxy==$GITHUB_REF_NAME not on PyPI yet (attempt $attempt/30): $(echo "$out" | tail -n 1)"
-            sleep 20
-          done
-          echo "harp-proxy==$GITHUB_REF_NAME still not installable from PyPI after 10 minutes"
-          exit 1
+          name: python-package-distributions
+          path: dist/
 
       - name: Determine version and tags
         id: meta
         run: |
           VERSION="$GITHUB_REF_NAME"
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "INSTALL_FROM=pypi" >> $GITHUB_OUTPUT
 
           # Determine Docker tags based on version format
           if echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
@@ -745,18 +784,28 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image (GIL enabled)
+      - name: Build Docker image
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
-          file: Dockerfile.pypi
-          push: true
+          file: Dockerfile
+          load: true
           tags: ${{ steps.meta.outputs.tags }}
-          build-args: |
-            PYTHON_VERSION=3.13
-            VERSION=${{ steps.meta.outputs.VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Smoke test Docker image
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: bin/smoke_docker_image "${TAGS%%,*}"
+
+      - name: Push the tested Docker image
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          for tag in ${TAGS//,/ }; do
+            docker push "$tag"
+          done
 
   create-github-release:
     name: Create GitHub Release

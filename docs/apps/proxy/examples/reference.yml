@@ -1,4 +1,5 @@
 proxy:
+  client_read_timeout: 30.0
   enabled: true
   endpoints:
   - controller:
@@ -29,12 +30,11 @@ proxy:
         path: /
         timeout: 10.0
         verify: true
-  client_read_timeout: 30.0
   max_recorded_body_size: 1048576
   min_request_body_rate: 1024
   request_body_grace_period: 10.0
-  trusted_proxies: []
   tags:
     max_count: 20
     max_name_length: 64
     max_value_length: 256
+  trusted_proxies: []

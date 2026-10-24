@@ -22,6 +22,7 @@ def remove_titles_for_non_objects(schema: dict):
 
 
 def generate_schema(models, type="serialization"):
+    models = sorted(models, key=lambda model: (model.__module__, model.__qualname__))
     refs, schema = models_json_schema([(model, type) for model in models], title="__ROOT__")
     schema["anyOf"] = [ref for ref in refs.values()]
     schema = remove_titles_for_non_objects(schema)
