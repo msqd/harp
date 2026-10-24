@@ -286,18 +286,12 @@ Docker images are built from pre-built Python wheels, ensuring consistency with 
 Building Images
 ^^^^^^^^^^^^^^^
 
-HARP provides two Docker build approaches:
-
-1. **buildc** - Builds from local wheel (recommended for development and testing)
-2. **buildc-pypi** - Builds from PyPI package (for validating releases)
+The image is built from the local wheel, like the one CI tests and releases.
 
 .. code-block:: shell
 
     # Build from local wheel (builds wheel first, then Docker image)
     make buildc
-
-    # Build with an explicit Python version (default: 3.13)
-    make buildc PYTHON_VERSION=3.13
 
     # Build for specific platform
     make buildc DOCKER_PLATFORM=linux/amd64
@@ -305,23 +299,13 @@ HARP provides two Docker build approaches:
     # Build with custom tags
     make buildc DOCKER_TAGS="1.0.0 latest"
 
-    # Build from PyPI (requires VERSION)
-    make buildc-pypi VERSION=0.9.0
-
-    # Build from PyPI with Python 3.13
-    make buildc-pypi VERSION=0.9.0 PYTHON_VERSION=3.13
-
 The ``buildc`` target automatically:
 
 1. Builds a Python wheel (``make wheel``)
 2. Creates a Docker image installing the wheel using ``Dockerfile``
 3. Tags the image appropriately
 
-The ``buildc-pypi`` target:
-
-1. Requires VERSION parameter specifying which PyPI package version to install
-2. Creates a Docker image installing from PyPI using ``Dockerfile.pypi``
-3. Useful for validating published releases work correctly
+To start the built image and fetch its ports, as CI does: ``bin/smoke_docker_image <image>``.
 
 Image Management
 ^^^^^^^^^^^^^^^^
@@ -356,7 +340,6 @@ Available Docker environment variables:
 * ``DOCKER_RUN_OPTIONS``: Additional run options
 * ``DOCKER_RUN_COMMAND``: Command to run in container
 * ``DOCKER_PLATFORM``: Target platform (default: auto-detected from host architecture)
-* ``PYTHON_VERSION``: Python version for Docker image (default: ``3.13``)
 
 Cleanup
 -------
@@ -521,7 +504,6 @@ Docker
 * ``DOCKER_RUN_OPTIONS``: Additional docker run options
 * ``DOCKER_RUN_COMMAND``: Container command
 * ``DOCKER_NETWORK``: Docker network name (default: ``harp``)
-* ``PYTHON_VERSION``: Python version for Docker image builds (default: ``3.13``)
 
 Frontend
 ^^^^^^^^

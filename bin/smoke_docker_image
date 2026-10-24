@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Starts a docker image and fetches the proxy and dashboard ports. Usage: bin/smoke_docker_image <image>
+set -euo pipefail
+
+image="${1:?usage: smoke_docker_image <image>}"
+name="harp-smoke-$$"
+proxy_port="${SMOKE_PROXY_PORT:-4000}"
+dashboard_port="${SMOKE_DASHBOARD_PORT:-4080}"
+
+cleanup() {
+    docker logs "$name" 2>&1 | tail -n 50 || true
+    docker rm -f "$name" > /dev/null 2>&1 || true
+}
+trap cleanup EXIT
+
+# No package manager in the runtime image.
+docker run --rm --entrypoint python "$image" -c "import importlib.util, sys; sys.exit(any(importlib.util.find_spec(m) for m in ('pip', 'setuptools')))"
+
+docker run -d --init --name "$name" -p "$proxy_port:4000" -p "$dashboard_port:4080" "$image" \
+    server --example sqlite --example proxy:httpbin > /dev/null
+
+fetch() {
+    for _ in $(seq 1 60); do
+        if curl -fsS -o /dev/null "$1"; then
+            echo "ok: $1"
+            return 0
+        fi
+        sleep 1
+    done
+    echo "failed: $1" >&2
+    return 1
+}
+
+fetch "http://127.0.0.1:$proxy_port/healthz"
+fetch "http://127.0.0.1:$dashboard_port/"
