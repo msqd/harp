@@ -1,0 +1,1 @@
+``HARP_DEBUG`` is now parsed as a boolean (``1``/``true``/``yes``/``on`` enable, ``0``/``false``/``no``/``off``/empty disable, anything else fails at startup), the generic ``DEBUG`` variable is deprecated and ignored from 0.14, and JSON serialization errors no longer expose the traceback or response value unless debug is on.

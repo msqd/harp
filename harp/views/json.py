@@ -6,8 +6,11 @@ import orjson
 from pydantic import AnyUrl
 from whistle import IAsyncEventDispatcher
 
+import harp
 from harp.asgi.events import EVENT_CORE_VIEW, ViewEvent
 from harp.http import HttpResponse
+
+logger = harp.get_logger(__name__)
 
 STRINGIFIABLES = (
     AnyUrl,
@@ -66,21 +69,11 @@ async def on_json_response(event: ViewEvent):
                 HttpResponse(serialized, status=200, content_type=content_type),
             )
         except TypeError as exc:
-            event.set_response(
-                HttpResponse(
-                    orjson.dumps(
-                        {
-                            "error": "Cannot serialize response to json.",
-                            "type": type(exc).__name__,
-                            "message": str(exc),
-                            "traceback": traceback.format_exc(),
-                            "value": repr(event.value),
-                        },
-                    ),
-                    status=500,
-                    content_type=content_type,
-                ),
-            )
+            logger.exception("Cannot serialize response to json.")
+            body = {"error": "Cannot serialize response to json.", "type": type(exc).__name__}
+            if harp.DEBUG:
+                body.update(message=str(exc), traceback=traceback.format_exc(), value=repr(event.value))
+            event.set_response(HttpResponse(orjson.dumps(body), status=500, content_type=content_type))
 
 
 def register(dispatcher: IAsyncEventDispatcher):
