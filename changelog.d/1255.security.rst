@@ -1,1 +1,0 @@
-The storage url password no longer appears in boot error logs.

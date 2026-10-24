@@ -1,1 +1,0 @@
-CI runs the subprocess-marked tests in their own required job.
