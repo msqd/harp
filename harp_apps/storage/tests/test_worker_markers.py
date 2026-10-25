@@ -74,6 +74,8 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         request_body: bytes = b"request content",
         response_body: bytes = b"response content",
         pressure: int = 0,
+        request_headers: dict | None = None,
+        response_headers: dict | None = None,
     ) -> Transaction:
         """Helper to create a transaction with request/response messages through events."""
         worker = self.create_worker(dispatcher, sql_storage, blob_storage)
@@ -94,12 +96,12 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         await dispatcher.adispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(transaction=transaction))
 
         # Create and dispatch request message event
-        request = HttpRequest(method="POST", path="/test", body=request_body)
+        request = HttpRequest(method="POST", path="/test", body=request_body, headers=request_headers)
         request_event = HttpMessageEvent(transaction=transaction, message=request)
         await dispatcher.adispatch(EVENT_TRANSACTION_MESSAGE, request_event)
 
         # Create and dispatch response message event
-        response = HttpResponse(response_body, status=200)
+        response = HttpResponse(response_body, status=200, headers=response_headers)
         response_event = HttpMessageEvent(transaction=transaction, message=response)
         await dispatcher.adispatch(EVENT_TRANSACTION_MESSAGE, response_event)
 
@@ -505,3 +507,59 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
 
         (stored,) = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
         assert stored.markers == {SKIP_REQUEST_BODY_STORAGE, SKIP_RESPONSE_BODY_STORAGE}
+
+    async def stored_pair(self, sql_storage: SqlStorage):
+        (transaction,) = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert len(transaction.messages) == 2
+        return transaction, *transaction.messages
+
+    async def test_request_no_store_suppresses_both_payloads(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        await self.create_transaction_and_messages(
+            AsyncEventDispatcher(),
+            sql_storage,
+            blob_storage,
+            request_headers={"Cache-Control": "private, No-Store"},
+        )
+
+        transaction, request_msg, response_msg = await self.stored_pair(sql_storage)
+        assert {"no-store-request", "no-store-response"} <= set(transaction.markers)
+        for message in (request_msg, response_msg):
+            assert message.summary
+            assert message.headers is None
+            assert message.body is None
+
+    async def test_response_no_store_suppresses_response_payload_only(
+        self, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        await self.create_transaction_and_messages(
+            AsyncEventDispatcher(),
+            sql_storage,
+            blob_storage,
+            response_headers={"Cache-Control": "no-store"},
+        )
+
+        transaction, request_msg, response_msg = await self.stored_pair(sql_storage)
+        assert "no-store-response" in transaction.markers
+        assert "no-store-request" not in transaction.markers
+        assert request_msg.headers is not None
+        assert request_msg.body is not None
+        assert response_msg.summary
+        assert response_msg.headers is None
+        assert response_msg.body is None
+
+    async def test_without_the_directive_both_payloads_are_stored(
+        self, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        await self.create_transaction_and_messages(
+            AsyncEventDispatcher(),
+            sql_storage,
+            blob_storage,
+            request_headers={"Cache-Control": "no-cache"},
+            response_headers={"Cache-Control": "max-age=60"},
+        )
+
+        transaction, request_msg, response_msg = await self.stored_pair(sql_storage)
+        assert not {"no-store-request", "no-store-response"} & set(transaction.markers)
+        for message in (request_msg, response_msg):
+            assert message.headers is not None
+            assert message.body is not None

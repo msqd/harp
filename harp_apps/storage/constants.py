@@ -24,6 +24,10 @@ SHED_MESSAGES = "shed-messages"
 SHED_HEADERS = "shed-headers"
 SHED_BODIES = "shed-bodies"
 
+# Transaction markers set by the storage worker when a `Cache-Control: no-store` suppressed a payload (ADR-0002, #927)
+NO_STORE_REQUEST = "no-store-request"
+NO_STORE_RESPONSE = "no-store-response"
+
 # Transaction markers set when a recording cap cuts data (#911)
 TRUNCATED_REQUEST_BODY = "truncated-request-body"
 TRUNCATED_RESPONSE_BODY = "truncated-response-body"

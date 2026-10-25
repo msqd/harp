@@ -22,6 +22,7 @@ from harp_apps.storage.constants import (
     SKIP_RESPONSE_STORAGE,
 )
 from harp_apps.storage.types import IBlobStorage
+from .coalescing import STORED_METADATA
 from .adapters import AsyncStorageAdapter, stored_at_of, variant_id, variants_of
 from .streams import StoredOnceRead
 
@@ -302,10 +303,12 @@ class AsyncStorage(AsyncBaseStorage):
         # keep RFC 9111 §4.2.2 opt-in and simply do not retain such a response.
         if not self._allow_heuristics and not has_explicit_freshness(response):
             logger.debug(f"Cache entry not retained (no explicit freshness, heuristics off): key={key}")
+            response.metadata["hishel_stored"] = False
             return entry
 
         if is_withheld(request, response):
             logger.debug(f"Cache entry not retained (withheld, see ADR-0009): key={key}")
+            response.metadata["hishel_stored"] = False
             return entry
 
         # RFC 9110 §6.6.1: a cache without a `Date` to age the response against must record its
@@ -329,6 +332,7 @@ class AsyncStorage(AsyncBaseStorage):
                 logger.warning(f"Failed to store cache entry, response not cached: key={key}", exc_info=True)
                 return
             self._remember_key(entry.id, key)
+            response.metadata[STORED_METADATA] = True
             logger.debug(f"Cache entry stored: key={key}")
             self._sweep_if_due()
 
