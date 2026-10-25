@@ -1,5 +1,7 @@
 """PURGE removes one cache entry, behind an opt-in allow-list of peer addresses (#801)."""
 
+from ipaddress import ip_network
+
 import httpx
 import pytest
 from hishel import SpecificationPolicy
@@ -48,7 +50,15 @@ ENABLED = PurgeSettings(enabled=True, allow=["127.0.0.1", "10.0.0.0/8"])
 
 def test_purge_is_disabled_by_default():
     assert PurgeSettings().enabled is False
-    assert PurgeSettings().allow == []
+    assert PurgeSettings().allow == [ip_network("127.0.0.1")]
+
+
+@pytest.mark.asyncio
+async def test_enabling_purge_alone_allows_local_purges():
+    async with make_client(make_transport(Origin(), PurgeSettings(enabled=True))) as local:
+        assert (await local.request("PURGE", f"{HOST}/item")).status_code == 404
+    async with make_client(make_transport(Origin(), PurgeSettings(enabled=True)), peer="::1") as other:
+        assert (await other.request("PURGE", f"{HOST}/item")).status_code == 403
 
 
 @pytest.mark.asyncio
@@ -143,7 +153,7 @@ class TestPurgeForbidden:
         assert origin.requests == [("GET", "/item")]
 
     async def test_enabled_with_an_empty_allow_list_refuses_everyone(self):
-        purge = PurgeSettings(enabled=True)
+        purge = PurgeSettings(enabled=True, allow=[])
         async with make_client(make_transport(Origin(), purge)) as client:
             assert (await client.request("PURGE", f"{HOST}/item")).status_code == 403
 

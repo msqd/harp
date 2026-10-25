@@ -42,6 +42,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: uv.lock is up to date with pyproject.toml (if this fails, run `uv lock` and commit)
         run: uv lock --check
@@ -60,6 +62,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Install dependencies
         run: uv sync --locked
@@ -85,6 +89,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Set up pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
@@ -92,11 +98,10 @@ jobs:
           version: 10
 
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
-          cache: 'pnpm'
-          cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
+          package-manager-cache: false
 
       - name: Install dependencies
         run: |
@@ -129,11 +134,10 @@ jobs:
           version: 10
 
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
-          cache: 'pnpm'
-          cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
+          package-manager-cache: false
 
       - name: Install dependencies
         run: cd harp_apps/dashboard/frontend && pnpm install --ignore-workspace
@@ -155,6 +159,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: zizmor (if this fails, run `uvx zizmor@1.14.2 --offline .github` locally)
         run: uvx zizmor@1.14.2 --offline .github
@@ -194,6 +200,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Export locked requirements
         run: uv export --frozen --all-extras --all-groups --no-emit-project --format requirements-txt -o "$RUNNER_TEMP/requirements.txt"
@@ -235,6 +243,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: pre-commit (if this fails, run `uvx pre-commit run --all-files` locally)
         run: uvx pre-commit==4.3.0 run --all-files --show-diff-on-failure
@@ -264,6 +274,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
@@ -301,6 +313,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
@@ -339,6 +353,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
@@ -373,6 +389,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
@@ -407,6 +425,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
@@ -436,11 +456,10 @@ jobs:
           version: 10
 
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
-          cache: 'pnpm'
-          cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
+          package-manager-cache: false
 
       - name: Install dependencies
         run: cd harp_apps/dashboard/frontend && pnpm install --ignore-workspace
@@ -468,11 +487,10 @@ jobs:
           version: 10
 
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
-          cache: 'pnpm'
-          cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
+          package-manager-cache: false
 
       - name: Install dependencies
         run: cd harp_apps/dashboard/frontend && pnpm install --ignore-workspace
@@ -519,6 +537,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Install dependencies
         run: uv sync --locked
@@ -549,6 +569,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
@@ -583,11 +605,10 @@ jobs:
           version: 10
 
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
-          cache: 'pnpm'
-          cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
+          package-manager-cache: false
 
       - name: Install dependencies
         run: cd harp_apps/dashboard/frontend && pnpm install --ignore-workspace
@@ -639,12 +660,14 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
         with:
-          enable-cache: true
+          # No cache: a release wheel never restores what a branch build wrote.
+          enable-cache: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
+          package-manager-cache: false
 
       - name: Install pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
@@ -661,6 +684,19 @@ jobs:
         env:
           UV: uv
           UVX: uvx
+
+      # The locked runtime dependencies the wheel and the sdist are released with.
+      - name: Generate SBOM
+        run: |
+          mkdir sbom
+          uv export --locked --no-dev --all-extras --no-emit-project --format cyclonedx1.5 --preview-features sbom-export -o sbom/harp-proxy.cdx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: python-package-sbom
+          path: sbom/
+          retention-days: 7
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -701,6 +737,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Test wheel installation
         env:
@@ -787,6 +825,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Export uv.lock as the image constraints
         run: uv run --locked --no-dev python bin/check_docker_lock.py export > dist/constraints.txt
@@ -813,6 +853,7 @@ jobs:
             echo "Docker tags (other branch): $TAGS (push disabled for non-mainline branches)"
           fi
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
+          echo "image=${TAGS%%,*}" >> $GITHUB_OUTPUT
           echo "push=$PUSH" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
@@ -851,6 +892,24 @@ jobs:
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
         run: uv run --locked --no-dev python bin/check_docker_lock.py check "${TAGS%%,*}"
+
+      # A fixable high or critical vulnerability fails the job before anything is pushed.
+      - name: Scan Docker image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.meta.outputs.image }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Generate Docker image SBOM
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          image: ${{ steps.meta.outputs.image }}
+          format: cyclonedx-json
+          output-file: docker-image.cdx.json
+          artifact-name: docker-image-sbom
+          upload-release-assets: false
 
       - name: Push the tested Docker image
         if: steps.meta.outputs.push == 'true'
@@ -911,6 +970,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      attestations: write
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -926,6 +987,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Export uv.lock as the image constraints
         run: uv run --locked --no-dev python bin/check_docker_lock.py export > dist/constraints.txt
@@ -937,6 +1000,7 @@ jobs:
           TAGS=$(python3 bin/docker_tags.py "$GITHUB_REF_NAME" "$GITHUB_REPOSITORY" $(git tag))
           echo "Docker tags: $TAGS"
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
+          echo "image=${TAGS%%,*}" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
@@ -961,8 +1025,6 @@ jobs:
           file: Dockerfile
           load: true
           tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Smoke test Docker image
         env:
@@ -974,6 +1036,24 @@ jobs:
           TAGS: ${{ steps.meta.outputs.tags }}
         run: uv run --locked --no-dev python bin/check_docker_lock.py check "${TAGS%%,*}"
 
+      # A fixable high or critical vulnerability fails the job before anything is pushed.
+      - name: Scan Docker image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.meta.outputs.image }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Generate Docker image SBOM
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          image: ${{ steps.meta.outputs.image }}
+          format: cyclonedx-json
+          output-file: docker-image.cdx.json
+          artifact-name: docker-image-sbom
+          upload-release-assets: false
+
       - name: Push the tested Docker image
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
@@ -982,9 +1062,68 @@ jobs:
             docker push "$tag"
           done
 
+      - name: Get the pushed image digest
+        id: digest
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}
+        run: |
+          DIGEST=$(docker inspect --format '{{json .RepoDigests}}' "$IMAGE" | jq -r --arg prefix "ghcr.io/$GITHUB_REPOSITORY@" '.[] | select(startswith($prefix)) | sub("^.*@"; "")')
+          test -n "$DIGEST"
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+
+      - name: Attest image build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          push-to-registry: true
+
+      - name: Attest image SBOM
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          sbom-path: docker-image.cdx.json
+          push-to-registry: true
+
+  # Signed provenance and SBOM attestations for the wheel and the sdist, the ones PyPI serves.
+  attest-python-package:
+    name: Attest Python Package
+    needs: publish-to-pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
+    steps:
+      - name: Download wheel artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Download SBOM artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: python-package-sbom
+          path: sbom/
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/*
+
+      - name: Attest SBOM
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
+        with:
+          subject-path: dist/*
+          sbom-path: sbom/harp-proxy.cdx.json
+
   create-github-release:
     name: Create GitHub Release
-    needs: publish-to-pypi
+    needs:
+      - publish-to-pypi
+      - attest-python-package
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -999,6 +1138,13 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: python-package-distributions
+          path: dist/
+
+      # Next to the wheel, so `files: dist/*` ships it.
+      - name: Download SBOM artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: python-package-sbom
           path: dist/
 
       - name: Extract version from tag
@@ -1042,6 +1188,8 @@ jobs:
       - name: Install uv
         if: steps.changelog.outputs.pending == 'true'
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Render pre-release notes from fragments
         if: steps.changelog.outputs.pending == 'true'
@@ -1079,6 +1227,31 @@ jobs:
           EOF
           envsubst '$VERSION $GITHUB_REF_NAME' < changes.md > changes.md.tmp
           mv changes.md.tmp changes.md
+
+      - name: Add verification instructions to the notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          cat > verify.md <<'EOF'
+
+          ## Verify
+
+          Every asset and image comes with a build provenance attestation and an SBOM attestation,
+          signed by this repository's release workflow. With the [GitHub CLI](https://cli.github.com/):
+
+          ```bash
+          # a release asset (wheel or sdist), downloaded next to the command
+          gh attestation verify harp_proxy-$VERSION-py3-none-any.whl --repo msqd/harp
+          gh attestation verify harp_proxy-$VERSION-py3-none-any.whl --repo msqd/harp \
+            --predicate-type https://cyclonedx.org/bom
+
+          # the container image
+          gh attestation verify oci://ghcr.io/msqd/harp:$VERSION --repo msqd/harp
+          gh attestation verify oci://ghcr.io/msqd/harp:$VERSION --repo msqd/harp \
+            --predicate-type https://cyclonedx.org/bom
+          ```
+          EOF
+          envsubst '$VERSION' < verify.md >> changes.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2

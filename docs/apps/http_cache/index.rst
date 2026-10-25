@@ -226,7 +226,7 @@ endpoint that cached it::
 
     curl -X PURGE 'http://localhost:8080/path?query=1'
 
-It is **off by default**. Turn it on, and say who may use it:
+It is **off by default**. Turn it on; by default only ``127.0.0.1`` may use it, extend ``allow`` for others:
 
 .. code-block:: yaml
 
@@ -256,8 +256,8 @@ instances. With purge disabled (the default), a ``PURGE`` request is proxied lik
 
 .. warning::
 
-    **Security default.** ``allow`` is empty by default, so nobody may purge, even with ``enabled: true``. The
-    allow-list is the only protection: there is no authentication. Keep it narrow.
+    **Security default.** ``enabled`` is ``false`` by default, and ``allow`` defaults to ``["127.0.0.1"]``, so
+    enabling purge allows local purges only (not ``::1``; add it if you purge over IPv6). The allow-list is the only protection: there is no authentication. Keep it narrow.
 
 **Which address is checked.** The allow-list is matched against the address of the peer HARP is connected to, the same
 address the proxy appends to ``X-Forwarded-For``. It never reads ``X-Forwarded-For``, ``Forwarded`` or any other header,

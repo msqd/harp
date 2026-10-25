@@ -24,4 +24,5 @@ Submodules
     harp.config.example
     harp.config.examples
     harp.config.mixins
+    harp.config.secrets
     harp.config.utils

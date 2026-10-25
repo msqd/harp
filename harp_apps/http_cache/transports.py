@@ -16,7 +16,7 @@ from harp.utils.bytes import HEADER_ENCODING, ensure_bytes, header_bytes
 from harp_apps.http_cache.coalescing import DEFAULT_TIMEOUT, Coalescer
 from harp_apps.http_cache.models import WrappedRequest
 from harp_apps.http_cache.settings import PurgeSettings
-from harp_apps.http_cache.storages import MARKERS_METADATA, MAX_BODY_SIZE_METADATA, REDACTION_METADATA
+from harp_apps.http_cache.storages import MARKERS_METADATA, MAX_BODY_SIZE_METADATA, REDACTION_METADATA, STAMP_METADATA
 from harp_apps.http_cache.streams import ClosableByteStream, UpstreamBody
 
 logger = get_logger(__name__)
@@ -176,6 +176,8 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
                 MAX_BODY_SIZE_METADATA: _max_recorded_body_size(request),
                 REDACTION_METADATA: request.extensions.get("harp", {}).get("redaction"),
                 MARKERS_METADATA: request.extensions.get("harp", {}).get("markers"),
+                # Taken before going upstream: what the origin answers may predate an invalidation that lands meanwhile.
+                STAMP_METADATA: self.storage.stamp,
             },
         )
 
@@ -202,16 +204,11 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         """Drop the stored entries for the resources a successful unsafe request has changed (RFC 9111 §4.4)."""
         endpoint_name = _endpoint_name(request)
         for url in _invalidated_urls(request, response):
-            await self._remove_entries(url, endpoint_name)
+            await self.storage.invalidate(await self._key_for(url, endpoint_name))
             logger.debug(f"Cache invalidated by {request.method} {request.url}: url={url}")
 
-    async def _remove_entries(self, url: httpx.URL, endpoint_name: str) -> int:
-        """Delete every stored variant of a resource within an endpoint, and tell how many there were."""
-        key = await self._cache_proxy._get_key_for_request(Request(method="GET", url=_cache_url(url, endpoint_name)))
-        entries = await self.storage.get_entries(key)
-        for entry in entries:
-            await self.storage.remove_entry(entry.id)
-        return len(entries)
+    async def _key_for(self, url: httpx.URL, endpoint_name: str) -> str:
+        return await self._cache_proxy._get_key_for_request(Request(method="GET", url=_cache_url(url, endpoint_name)))
 
     async def _handle_purge(self, request: httpx.Request) -> httpx.Response:
         """Answer ``PURGE`` here, never upstream: ``403`` for a peer out of the allow-list, else ``200`` or ``404``."""
@@ -219,9 +216,12 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         if peer is None or not any(peer in network for network in self._purge.allow):
             logger.warning(f"Cache purge refused, peer is not allowed: peer={peer} url={request.url}")
             return httpx.Response(403, text="Forbidden")
-        removed = await self._remove_entries(request.url.copy_with(fragment=None), _endpoint_name(request))
-        logger.info(f"Cache purged: url={request.url} entries={removed}")
-        return httpx.Response(200, text="Purged") if removed else httpx.Response(404, text="Not in cache")
+        key = await self._key_for(request.url.copy_with(fragment=None), _endpoint_name(request))
+        if not await self.storage.get_entries(key):
+            return httpx.Response(404, text="Not in cache")
+        await self.storage.invalidate(key)
+        logger.info(f"Cache purged: url={request.url}")
+        return httpx.Response(200, text="Purged")
 
     async def _send_without_caching(self, request: WrappedRequest) -> Response:
         """Go upstream without involving the cache at all, and report the result as a plain miss.

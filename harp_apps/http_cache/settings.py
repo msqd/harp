@@ -1,3 +1,5 @@
+from ipaddress import ip_network
+
 from pydantic import Field, IPvAnyNetwork, model_validator
 
 from harp.config import Configurable, Service, ApplicationSettingsMixin
@@ -51,8 +53,8 @@ class PurgeSettings(Configurable):
     #: Answer ``PURGE`` requests instead of proxying them.
     enabled: bool = False
 
-    #: Peer addresses (IP addresses or CIDR ranges) allowed to purge. Empty by default: nobody.
-    allow: list[IPvAnyNetwork] = Field(default_factory=list)
+    #: Peer addresses (IP addresses or CIDR ranges) allowed to purge. Local only by default.
+    allow: list[IPvAnyNetwork] = Field(default_factory=lambda: [ip_network("127.0.0.1")])
 
 
 class HttpCacheSettings(ApplicationSettingsMixin, Configurable):

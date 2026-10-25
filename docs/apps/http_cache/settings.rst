@@ -119,7 +119,7 @@ purge
 
 .. versionadded:: 0.13
 
-**Default:** ``enabled: false``, ``allow: []``
+**Default:** ``enabled: false``, ``allow: ["127.0.0.1"]``
 
 Removal of one cache entry with a ``PURGE`` request, see :ref:`http-cache-purge`.
 
@@ -133,10 +133,10 @@ Answer ``PURGE`` requests (``200``, ``404`` or ``403``) instead of proxying them
 purge.allow
 ~~~~~~~~~~~
 
-**Type:** ``list`` of IP addresses or CIDR ranges, **Default:** ``[]``
+**Type:** ``list`` of IP addresses or CIDR ranges, **Default:** ``["127.0.0.1"]``
 
-The peer addresses HARP is connected to that may purge, whatever forwarding headers say. Empty means nobody: a peer
-outside the list gets ``403``.
+The peer addresses HARP is connected to that may purge, whatever forwarding headers say. A peer outside the list gets
+``403``, and an empty list refuses everyone. The default allows IPv4 loopback only, not ``::1``.
 
 .. code-block:: yaml
 

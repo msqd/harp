@@ -1,5 +1,7 @@
 """RFC 9111 §4.4: a successful unsafe request invalidates what the cache holds for the resource."""
 
+import asyncio
+
 import httpx
 import pytest
 from hishel import CacheOptions, SpecificationPolicy
@@ -158,3 +160,76 @@ async def test_invalidates_entries_held_by_the_real_storage():
         await client.put(f"{HOST}/item")
         assert (await client.get(f"{HOST}/item")).text == "v2:/item"
     assert origin.gets("/item") == 2
+
+
+class SlowOrigin(Origin):
+    """Reads the resource when the GET arrives, and sends it slowly: a write can land while it is on its way."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.slow_paths: set[str] = {"/item"}
+        self.release = asyncio.Event()
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        if request.method != "GET" or request.url.path not in self.slow_paths:
+            return await super().handle_async_request(request)
+        self.requests.append((request.method, request.url.path))
+        body = f"v{self.version}:{request.url.path}".encode()
+
+        release = self.release
+
+        class Slowly(httpx.AsyncByteStream):
+            async def __aiter__(self):
+                yield body[:2]
+                await release.wait()
+                yield body[2:]
+
+        return httpx.Response(200, headers={"cache-control": "max-age=3600"}, stream=Slowly())
+
+
+async def _until(condition) -> None:
+    for _ in range(200):
+        if condition():
+            return
+        await asyncio.sleep(0.005)
+    raise AssertionError("the condition never came true")
+
+
+@pytest.mark.asyncio
+class TestGetInFlightDuringInvalidation:
+    async def test_old_body_is_not_stored_after_a_write(self):
+        origin = SlowOrigin()
+        async with make_client(origin, AsyncStorage(MemoryBlobStorage())) as client:
+            slow_get = asyncio.create_task(client.get(f"{HOST}/item"))
+            await _until(lambda: origin.gets("/item") == 1)
+
+            await client.post(f"{HOST}/item")
+            origin.release.set()
+            assert (await slow_get).text == "v1:/item"  # the GET that started before the write is answered as it was
+
+            origin.slow_paths.clear()
+            assert (await client.get(f"{HOST}/item")).text == "v2:/item"
+        assert origin.gets("/item") == 2
+
+    async def test_get_not_overlapping_a_write_is_stored(self):
+        origin = SlowOrigin()
+        origin.release.set()
+        async with make_client(origin, AsyncStorage(MemoryBlobStorage())) as client:
+            await client.post(f"{HOST}/item")
+            assert (await client.get(f"{HOST}/item")).text == "v2:/item"
+            assert (await client.get(f"{HOST}/item")).text == "v2:/item"
+        assert origin.gets("/item") == 1
+
+    async def test_get_in_flight_for_another_resource_is_stored(self):
+        origin = SlowOrigin()
+        origin.slow_paths = {"/other"}
+        async with make_client(origin, AsyncStorage(MemoryBlobStorage())) as client:
+            slow_get = asyncio.create_task(client.get(f"{HOST}/other"))
+            await _until(lambda: origin.gets("/other") == 1)
+
+            await client.post(f"{HOST}/item")
+            origin.release.set()
+            await slow_get
+
+            await client.get(f"{HOST}/other")
+        assert origin.gets("/other") == 1

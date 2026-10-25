@@ -27,7 +27,7 @@ class TestHttpCacheSettings(BaseConfigurableTest):
             "ttl": 86400,
             "type": "harp_apps.http_cache.storages.AsyncStorage",
         },
-        "purge": {"enabled": False, "allow": []},
+        "purge": {"enabled": False, "allow": ["127.0.0.1/32"]},
         # hishel 1.0: AsyncCacheTransport moved to _async_httpx module
         # We now wrap it with our custom AsyncCacheTransport for URL normalization
         "transport": {
