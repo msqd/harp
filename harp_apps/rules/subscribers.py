@@ -67,8 +67,16 @@ class RulesSubscriber:
                 f"will match the path only ({event.path_fingerprint!r}) in the next release, rewrite the pattern."
             )
 
-    async def on_filter_event(self, event: ProxyFilterEvent | HttpClientFilterEvent):
+    def _scripts_for(self, event: ProxyFilterEvent | HttpClientFilterEvent) -> list:
+        """The scripts matching the event, plus those matching its alternate fingerprints (each script once)."""
+        endpoint, _, rule = event.criteria
         scripts = list(self.match(*event.criteria))
+        for fingerprint in getattr(event, "alternate_fingerprints", ()):
+            scripts += [s for s in self.match(endpoint, fingerprint, rule) if s not in scripts]
+        return scripts
+
+    async def on_filter_event(self, event: ProxyFilterEvent | HttpClientFilterEvent):
+        scripts = self._scripts_for(event)
         if isinstance(event, HttpClientFilterEvent):
             self._warn_query_dependent(event, scripts)
         for script in scripts:
