@@ -18,7 +18,7 @@ from harp.utils.testing.communicators import ASGICommunicator
 from harp_apps.dashboard.controllers import DashboardController
 from harp_apps.dashboard.passwords import hash_password
 from harp_apps.dashboard.settings import DashboardSettings
-from harp_apps.storage.models import User as SqlUser
+from harp_apps.auth.models import Account as SqlUser
 
 DASHBOARD_PORT = 4080
 
@@ -47,7 +47,7 @@ async def boot(test_api, caplog):
     async def _boot(dashboard=None, *, storage_url="sqlite:///:memory:"):
         builder = ConfigurationBuilder(use_default_applications=False)
         for app in ("http_client", "proxy", "storage", "dashboard"):
-            builder.applications.add(app)
+            builder.applications.add(app, autoload_dependencies=True)
         builder.add_values(
             {
                 "storage": {"url": storage_url, "migrate": True},
@@ -216,7 +216,12 @@ class TestExplicitBasicAuth:
     }
 
     async def test_configured_users_work_and_nothing_is_generated(self, boot, caplog):
-        _, client = await boot(self.BASIC)
+        system, client = await boot(self.BASIC)
+        accounts = system.provider.get("storage").accounts
+        for _attempt in range(100):  # the storage worker imports the configured users once the database is ready
+            if [a for a in await accounts.find_all() if a.username == "alice"]:
+                break
+            await asyncio.sleep(0.05)
 
         assert (await get(client, "GET", "/"))["status"] == 401
         assert (await get(client, "GET", "/", basic("alice", "s3cret")))["status"] == 200

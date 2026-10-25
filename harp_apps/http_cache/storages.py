@@ -9,6 +9,7 @@ from collections import OrderedDict
 from dataclasses import replace
 from email.utils import formatdate
 from hishel import AsyncBaseStorage, Entry, EntryMeta, Request, Response
+from hishel._core._spec import parse_date
 from hishel._utils import make_async_iterator
 
 from harp import get_logger
@@ -108,6 +109,61 @@ def has_explicit_freshness(response: Response) -> bool:
     """
     cache_control = parse_cache_control(response.headers.get("cache-control"))
     return cache_control.s_maxage is not None or cache_control.max_age is not None or "expires" in response.headers
+
+
+def has_validator(response: Response) -> bool:
+    """Whether the response carries what a conditional request needs to be answered ``304 Not Modified``."""
+    return "etag" in response.headers or "last-modified" in response.headers
+
+
+def is_retained_for_revalidation(request: Request, response: Response) -> bool:
+    """Whether a response without explicit freshness is kept anyway, to be revalidated each time it is wanted.
+
+    A conditional request checks that the validator still matches, not that the stored body belongs to the caller.
+    So nothing is kept for a request that carried a credential (ADR-0009's set, rules included): the cache key does
+    not see it, and another caller's conditional request would be answered ``304`` with this caller's body. A
+    credential under a header no rule declares is invisible here. ``no-cache`` is out too: hishel never reuses such
+    an entry, not even by revalidating it. A response setting a cookie is out through :func:`is_withheld`.
+    """
+    credentials = _redaction_of(request).headers
+    return (
+        has_validator(response)
+        and not parse_cache_control(response.headers.get("cache-control")).no_cache
+        and not any(name in credentials for name in request.headers)
+    )
+
+
+#: A date hishel finds so far back that no heuristic freshness lifetime (one week at most) can outlast it.
+NEVER_FRESH_DATE = "Thu, 01 Jan 1970 00:00:00 GMT"
+
+#: Carries the stored ``Date`` of an entry shown to hishel as never fresh, until the entry is stored again or served.
+ORIGINAL_DATE = "x-harp-original-date"
+
+
+def show_as_never_fresh(response: Response) -> None:
+    """Make hishel see an entry as stale, so it asks the origin before serving it, whatever the entry says.
+
+    hishel knows no "stored but never fresh" entry, and ages one from its ``Date`` alone. Hence this one is shown
+    as dated long ago, and its real ``Date`` kept aside: see :func:`restore_date`.
+    """
+    if "date" in response.headers:
+        response.headers[ORIGINAL_DATE] = response.headers["date"]
+        del response.headers["date"]
+    response.headers["date"] = NEVER_FRESH_DATE
+
+
+def restore_date(headers) -> None:
+    """Undo :func:`show_as_never_fresh`: a ``304`` that brought its own ``Date`` keeps it, else the stored one is back."""
+    if ORIGINAL_DATE not in headers:
+        return
+    original = headers[ORIGINAL_DATE]
+    del headers[ORIGINAL_DATE]
+    if headers.get("date") == NEVER_FRESH_DATE:
+        del headers["date"]
+        headers["date"] = original
+        if "age" in headers:  # served stale: its age was counted from the date it was shown with
+            del headers["age"]
+            headers["age"] = str(max(0, int(time.time() - (parse_date(original) or time.time()))))
 
 
 #: How many invalidated keys the storage remembers. Past it the oldest are forgotten, and every request that set out
@@ -270,8 +326,13 @@ class AsyncStorage(AsyncBaseStorage):
         # its callers by anything other than the `Authorization` header (a cookie, an API key
         # header) is invisible to it. Inventing a freshness lifetime for a response the origin
         # never declared cacheable would then hand one caller's body to the next one, so we
-        # keep RFC 9111 §4.2.2 opt-in and simply do not retain such a response.
-        if not self._allow_heuristics and not has_explicit_freshness(response):
+        # keep RFC 9111 §4.2.2 opt-in. Such a response is retained only when it carries a validator,
+        # as an entry that is never fresh: the origin confirms it each time (see `get_entries`).
+        if (
+            not self._allow_heuristics
+            and not has_explicit_freshness(response)
+            and not is_retained_for_revalidation(request, response)
+        ):
             logger.debug(f"Cache entry not retained (no explicit freshness, heuristics off): key={key}")
             response.metadata["hishel_stored"] = False
             return entry
@@ -349,6 +410,10 @@ class AsyncStorage(AsyncBaseStorage):
                 self._refused[endpoint] = self._refused.get(endpoint, 0) + count
                 logger.warning(f"Failed to count refused cache entries: endpoint={endpoint}", exc_info=True)
 
+    def _is_never_fresh(self, response: Response) -> bool:
+        """Whether the origin gave no expiry and, heuristics being off, none may be invented: only it can say."""
+        return not self._allow_heuristics and not has_explicit_freshness(response)
+
     async def get_entries(self, key: str) -> tp.List[Entry]:
         """Retrieve all entries for a given cache key: its unexpired variants, oldest stored first.
 
@@ -368,6 +433,8 @@ class AsyncStorage(AsyncBaseStorage):
                 await self._prune(key, [variant.record.entry_id for variant in stored if variant not in live])
             entries = [self._with_request_url(to_entry(variant)) for variant in live]
             for entry in entries:
+                if self._is_never_fresh(entry.response):
+                    show_as_never_fresh(entry.response)
                 logger.debug(f"Cache hit: key={key}, method={entry.request.method}, entry_id={entry.id}")
             if not entries:
                 logger.debug(f"Cache miss: key={key}")
@@ -424,9 +491,12 @@ class AsyncStorage(AsyncBaseStorage):
                     return None
 
                 entry = to_entry(stored)
+                if self._is_never_fresh(entry.response):
+                    show_as_never_fresh(entry.response)
                 updated = new_entry if isinstance(new_entry, Entry) else new_entry(entry)
                 # the stored url holds no secret and is not the update's to change
                 updated = replace(updated, request=replace(updated.request, url=entry.request.url))
+                restore_date(updated.response.headers)
                 if is_withheld(updated.request, updated.response):
                     # A revalidation brought in a header that must not be stored: the entry goes, not the header.
                     await self._records.delete_entry(id)

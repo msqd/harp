@@ -72,6 +72,10 @@ By default, all default applications load. To load only some, list them in a con
       - proxy
       - storage
 
+An application brings the applications it depends on, loaded before it: the list above loads ``http_client`` too, as
+``proxy`` needs it, and a list naming ``dashboard`` loads ``auth``. Disabling an application that another one needs
+still fails at startup, naming it.
+
 Precedence, from the weakest to the strongest:
 
 #. The default set.

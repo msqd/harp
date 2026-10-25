@@ -78,5 +78,10 @@ class ExecutableObject(Callable):
     def filename(self):
         return f"<callable:{getattr(self._target, '__qualname__', type(self._target).__name__)}>"
 
+    @property
+    def source(self):
+        """A callable has no source to show: its name stands in for it."""
+        return self.filename
+
     def __call__(self, context: dict):
         return self._target(context)

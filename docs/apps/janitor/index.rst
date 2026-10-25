@@ -16,9 +16,14 @@ and the header and body blobs they pointed at, are orphans, and the janitor dele
 metric counts the same orphans.
 
 The sweep runs on every blob backend that can list its blobs (``sql``, ``redis`` and ``memory``). With ``redis``, the
-janitor scans the keys, keeps those referenced by a message in the SQL storage, and deletes
+janitor scans the blob keys, keeps those referenced by a message in the SQL storage, and deletes
 the others unless they were written in the last 10 minutes (tracked by short-lived ``harp:blob-written:<id>`` keys).
 The ``storage_blobs`` and ``storage_blobs_orphans`` metrics count what the blob backend holds.
+
+HARP stores its Redis blobs under the ``harp:blob:`` key prefix, and the janitor only scans, counts and deletes keys
+with that prefix (and its own ``harp:blob-written:`` markers). Other applications can share the Redis database: their
+keys, whatever their type, are never touched. Blobs stored by a version before 0.13 sit under their bare id: they are
+still read, but the janitor does not see them (see :ref:`upgrading-0-13`).
 
 A sweep works in short batches and gives the database connection back between them, so requests are served while it
 runs, even with the default in-memory storage that has a single connection.

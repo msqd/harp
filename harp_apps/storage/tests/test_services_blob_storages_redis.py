@@ -7,7 +7,7 @@ from harp.config import ConfigurationBuilder
 from harp.models import Blob
 from harp.services import CannotResolveTypeException
 from harp_apps.storage.models.blobs import ORPHAN_GRACE
-from harp_apps.storage.services.blob_storages.redis import RedisBlobStorage
+from harp_apps.storage.services.blob_storages.redis import BLOB_PREFIX, RedisBlobStorage
 
 
 async def test_basics(redis_blob_storage: RedisBlobStorage):
@@ -17,17 +17,17 @@ async def test_basics(redis_blob_storage: RedisBlobStorage):
 
     assert _storage.type == "redis"
     assert await _storage.get("foo") is None
-    assert await _storage.client.get("foo") is None
+    assert await _storage.client.get(BLOB_PREFIX + "foo") is None
 
     assert await _storage.put(blob) == blob
     assert await _storage.get("foo") == blob
-    assert await _storage.client.get("foo") == b"text/plain\nbar"
+    assert await _storage.client.get(BLOB_PREFIX + "foo") == b"text/plain\nbar"
 
     assert await _storage.exists("foo")
     assert await _storage.delete("foo") is None
     assert not await _storage.exists("foo")
     assert await _storage.get("foo") is None
-    assert await _storage.client.get("foo") is None
+    assert await _storage.client.get(BLOB_PREFIX + "foo") is None
 
 
 class SystemTestMixin:
@@ -153,7 +153,7 @@ class TestDeleteStale:
 
     async def test_deletes_blobs_that_were_never_marked(self, redis_blob_storage: RedisBlobStorage):
         """Blobs written before the marker existed carry none."""
-        await redis_blob_storage.client.set("a", b"text/plain\n1")
+        await redis_blob_storage.client.set(BLOB_PREFIX + "a", b"text/plain\n1")
 
         assert await redis_blob_storage.delete_stale(["a"], older_than=datetime.now(UTC) - timedelta(hours=1)) == 1
 
@@ -161,5 +161,57 @@ class TestDeleteStale:
         await redis_blob_storage.put(Blob(id="a", data=b"1", content_type="text/plain"))
 
         keys = [key async for key in redis_blob_storage.client.scan_iter()]
-        ttls = [await redis_blob_storage.client.ttl(key) for key in keys if key != b"a"]
+        ttls = [await redis_blob_storage.client.ttl(key) for key in keys if key != (BLOB_PREFIX + "a").encode()]
         assert len(ttls) == 1 and 0 < ttls[0] <= int(ORPHAN_GRACE.total_seconds())
+
+
+class TestSharedRedis:
+    """HARP shares its Redis database with other applications: it only ever touches its own keys."""
+
+    async def test_iter_blob_ids_ignores_foreign_keys(self, redis_blob_storage: RedisBlobStorage):
+        client = redis_blob_storage.client
+        await client.set("session:alice", "data")
+        await client.hset("other:hash", "f", "v")
+        await redis_blob_storage.put(Blob(id="a", data=b"1", content_type="text/plain"))
+
+        assert [blob_id async for blob_id in redis_blob_storage.iter_blob_ids()] == ["a"]
+
+    async def test_iter_blobs_survives_a_foreign_hash(self, redis_blob_storage: RedisBlobStorage):
+        await redis_blob_storage.client.hset("other:hash", "f", "v")
+        meta = Blob(id="m", data=b"entry", content_type="cache/meta")
+        await redis_blob_storage.put(meta)
+
+        assert [blob async for blob in redis_blob_storage.iter_blobs("cache/meta")] == [meta]
+
+    async def test_delete_stale_leaves_foreign_keys(self, redis_blob_storage: RedisBlobStorage):
+        client = redis_blob_storage.client
+        await client.set("session:alice", "data")
+        await redis_blob_storage.put(Blob(id="a", data=b"1", content_type="text/plain"))
+
+        ids = [blob_id async for blob_id in redis_blob_storage.iter_blob_ids()]
+        await redis_blob_storage.delete_stale(ids, older_than=datetime.now(UTC) + timedelta(seconds=1))
+
+        assert await client.get("session:alice") == b"data"
+        assert await redis_blob_storage.get("a") is None
+
+
+class TestLegacyUnprefixedBlobs:
+    """Blobs written before the prefix existed sit under their bare id."""
+
+    async def test_are_still_read(self, redis_blob_storage: RedisBlobStorage):
+        await redis_blob_storage.client.set("old", b"text/plain\nbar")
+
+        assert await redis_blob_storage.exists("old")
+        assert await redis_blob_storage.get("old") == Blob(id="old", data=b"bar", content_type="text/plain")
+
+    async def test_are_deleted_with_their_id(self, redis_blob_storage: RedisBlobStorage):
+        await redis_blob_storage.client.set("old", b"text/plain\nbar")
+
+        await redis_blob_storage.delete("old")
+
+        assert not await redis_blob_storage.exists("old")
+
+    async def test_are_never_listed(self, redis_blob_storage: RedisBlobStorage):
+        await redis_blob_storage.client.set("old", b"text/plain\nbar")
+
+        assert [blob_id async for blob_id in redis_blob_storage.iter_blob_ids()] == []

@@ -17,10 +17,12 @@ class TestDefaultsWithNoStorage(BaseTestDefaultsWith):
 
         assert asdict(system.config) == {
             "applications": ["harp_apps.http_client"],
+            "core": {},
             "http_client": {},
         }
         assert asdict(system.config, verbose=True) == {
             "applications": ["harp_apps.http_client"],
+            "core": {"muted_events": []},
             "http_client": {
                 "enabled": True,
                 "proxy_transport": {"type": "harp_apps.http_client.transports.AsyncFilterableTransport"},

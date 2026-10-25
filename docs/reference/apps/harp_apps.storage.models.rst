@@ -21,4 +21,3 @@ Submodules
     harp_apps.storage.models.metrics
     harp_apps.storage.models.tags
     harp_apps.storage.models.transactions
-    harp_apps.storage.models.users

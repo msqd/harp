@@ -36,9 +36,9 @@ class ApplicationsRegistryMock(ApplicationsRegistry):
 
 def test_add_application(snapshot):
     builder = ConfigurationBuilder(use_default_applications=False)
-    builder.applications.add("storage")
+    builder.applications.add("storage", autoload_dependencies=True)
 
-    assert len(builder.applications) == 1
+    assert list(builder.applications) == ["http_client", "proxy", "storage"]
 
     settings = builder()
 
@@ -63,3 +63,12 @@ def test_add_application(snapshot):
 
     assert asdict(new_settings) == snapshot
     assert orjson.dumps(asdict(new_settings)) == snapshot
+
+
+def test_an_application_key_with_no_settings_takes_the_defaults(tmp_path):
+    config = tmp_path / "config.yml"
+    config.write_text("dashboard:\n")
+    builder = ConfigurationBuilder()
+    builder.add_file(str(config))
+
+    assert builder.build()["dashboard"] == ConfigurationBuilder().build()["dashboard"]

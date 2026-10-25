@@ -39,13 +39,40 @@ The value is the request fingerprint, ``<METHOD> <path>``, for example ``GET /us
 and separated from the path by one space, so you can match on the method (``GET *``), on the path (``* /health``), or
 on both (``POST /orders``).
 
-The path is the one the proxy forwards to the upstream, never the raw target as sent:
+The path is a normalised form of the target, never the raw target as sent. The proxy still forwards the target
+unchanged: only what rules see is normalised, so that a rule matches what the upstream will act on.
 
 - a leading scheme and authority are removed, so ``http://example.com/admin`` and ``//example.com/admin`` both match
   ``GET /admin``;
 - percent-escapes of unreserved characters (letters, digits, ``-``, ``.``, ``_``, ``~``) are decoded, so ``/%61dmin``
-  matches ``GET /admin``. Other escapes stay as sent: ``/a%2Fb`` does not match ``GET /a/b``;
+  matches ``GET /admin``;
+- empty segments are dropped: ``/api//admin`` is matched as ``GET /api/admin``;
+- ``;`` parameters are dropped from each segment: ``/admin;x=1/users;id=2`` is matched as ``GET /admin/users``;
+- a final slash is kept, once: ``/admin//`` and ``/admin/;x`` are matched as ``GET /admin/``. An ``on_request`` or
+  ``on_response`` pattern whose path has no wildcard (``GET /admin``, ``* /admin``) also matches the path with its final
+  slash removed, endpoint patterns and ``on_remote_*`` levels excepted, so ``GET /admin`` matches
+  ``/admin`` and ``/admin/``, and ``GET /admin/*`` matches ``/admin/`` but not ``/admin``;
 - the query string is not part of it, ``GET /users/42?page=2`` is matched as ``GET /users/42``.
+
+An encoded slash, ``%2F`` (any case), stays as sent in that path: ``/a%2Fb`` is matched as ``GET /a%2Fb``. Many
+upstreams read it as a slash, so ``on_request`` and ``on_response`` rules are also matched against a second form with
+``%2F`` taken as ``/`` (and normalised as above): ``GET /a/b`` matches ``/a%2Fb`` too. A rule runs once per request,
+whichever form matched it.
+
+.. admonition:: Writing a deny rule that holds
+    :class: warning
+
+    A rule denies what its pattern matches, nothing more. Write the pattern on the normalised path (no ``;``, no
+    ``//``) and it holds for the variants above. Known limits, which patterns cannot cover for you:
+
+    - to deny a path and everything under it, write ``GET /admin*`` (it also matches ``/administrator``):
+      ``GET /admin/*`` does not match ``/admin`` itself, and ``GET /admin`` only matches that path;
+    - double-encoded escapes (``%252F``), a ``%3B`` read as ``;``, ``%00``, ``%5C`` and backslashes, case-insensitive paths and any other
+      rewriting specific to your upstream are not normalised;
+    - the proxy refuses dot segments (``/./``, ``/../``, encoded or not) on its own, rules do not need to cover them.
+
+    When the upstream is the authority on access, deny there as well: the rules only know the path as the proxy
+    receives it.
 
 This is the string matched by ``on_request`` and ``on_response``, and the one the storage markers set by those rules
 rely on.

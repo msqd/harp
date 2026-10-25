@@ -14,6 +14,8 @@ from harp.models import Results, Transaction
 from harp.settings import PAGE_SIZE
 from harp.utils.background import AsyncWorkerQueue
 from harp.utils.dates import ensure_datetime
+from harp.security.actor import Role
+from harp_apps.auth.models import SYSTEM_ACCOUNT_USERNAME, Account, AccountKind, AccountsRepository
 from harp_apps.storage.constants import TimeBucket
 from harp_apps.storage.models import (
     FLAGS_BY_NAME,
@@ -33,11 +35,7 @@ from harp_apps.storage.models import Transaction as SqlTransaction
 from harp_apps.storage.models import (
     TransactionsRepository,
 )
-from harp_apps.storage.models import User as SqlUser
 from harp_apps.storage.models import UserFlag as SqlUserFlag
-from harp_apps.storage.models import (
-    UsersRepository,
-)
 from harp_apps.storage.settings import StorageSettings
 from harp_apps.storage.types import IBlobStorage, IStorage, TransactionsGroupedByTimeBucket
 from harp_apps.storage.utils.dates import TruncDatetime
@@ -162,7 +160,7 @@ class SqlStorage(IStorage):
         self.tags = TagsRepository(self.session_factory)
         self.tag_values = TagValuesRepository(self.session_factory)
         self.transactions = TransactionsRepository(self.session_factory, tags=self.tags, tag_values=self.tag_values)
-        self.users = UsersRepository(self.session_factory)
+        self.accounts = AccountsRepository(self.session_factory)
         self.metrics = MetricsRepository(self.session_factory)
         self.metric_values = MetricValuesRepository(self.session_factory)
         self.flags = FlagsRepository(self.session_factory)
@@ -244,7 +242,7 @@ class SqlStorage(IStorage):
 
     async def initialize(self):
         """Initialize database."""
-        await self.create_users(["anonymous"])
+        await self.create_system_account(SYSTEM_ACCOUNT_USERNAME)
         self._is_ready.set()
 
     async def finalize(self):
@@ -284,7 +282,7 @@ class SqlStorage(IStorage):
 
         """
 
-        user = await self.users.find_one_by_username(username)
+        user = await self.accounts.find_one_by_username(username)
 
         result = Results()
         query = self.transactions.select(
@@ -328,7 +326,7 @@ class SqlStorage(IStorage):
 
     @override
     async def get_transaction(self, id: str, /, *, username: str) -> Optional[Transaction]:
-        user = await self.users.find_one_by_username(username)
+        user = await self.accounts.find_one_by_username(username)
 
         try:
             transaction = await self.transactions.find_one_by_id(
@@ -408,7 +406,7 @@ class SqlStorage(IStorage):
     async def set_user_flag(self, *, transaction_id: str, username: str, flag: int, value=True):
         """Sets or unsets a user flag on a transaction, idempotently. Raises NoResultFound if the transaction is unknown."""
         async with self.begin() as session:
-            user = await self.users.find_one_by_username(username)
+            user = await self.accounts.find_one_by_username(username)
             transaction = await self.transactions.find_one_by_id(transaction_id)
 
             criteria = (
@@ -425,24 +423,18 @@ class SqlStorage(IStorage):
         await self._is_ready.wait()
 
     @override
-    async def create_users_once_ready(self, users: Iterable[str]):
-        """Sets the list of users to be created once the database is ready."""
+    async def import_users_once_ready(self, users: Iterable[str]):
+        """Imports the users declared in the configuration once the database is ready, if it was not already."""
 
-        async def defered_create_users():
+        async def deferred_import():
             await self.ready()
-            await self.create_users(users)
+            await self.accounts.import_basic_users(users)
 
-        await self.worker.push(defered_create_users)
+        await self.worker.push(deferred_import)
 
-    async def create_users(self, users: Iterable[str]):
+    async def create_system_account(self, username: str):
+        """Creates a system account (it never signs in) if it does not exist."""
         async with self.begin() as session:
-            for username in users:
-                # Check if the username already exists
-                result = await session.execute(select(SqlUser).where(SqlUser.username == username))
-                existing_user = result.scalar_one_or_none()
-
-                # If the username does not exist, create a new user
-                if existing_user is None:
-                    user = SqlUser()
-                    user.username = username
-                    session.add(user)
+            result = await session.execute(select(Account).where(Account.username == username))
+            if result.scalar_one_or_none() is None:
+                session.add(Account(username=username, kind=AccountKind.SYSTEM, role=Role.VIEWER))

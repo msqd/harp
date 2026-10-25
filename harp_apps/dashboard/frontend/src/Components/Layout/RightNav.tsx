@@ -11,7 +11,8 @@ export function RightNav() {
     <div className="flex items-center gap-3">
       <div className="text-sm text-white text-right" title={systemQuery.data.revision}>
         <UserCircleIcon className="inline-block w-4 h-4 mr-1" />
-        {systemQuery.data.user ?? "anonymous"}
+        {systemQuery.data.displayName ?? systemQuery.data.user ?? "anonymous"}
+        {systemQuery.data.role ? <span className="ml-1 text-xs opacity-75">{systemQuery.data.role}</span> : null}
         <br />
         <span className="text-xs">
           <a href={getDocumentationUrl(systemQuery.data.version)} target="_blank" rel="noreferrer">

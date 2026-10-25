@@ -1,0 +1,7 @@
+services:
+  - name: "auth.actors"
+    description: "Resolves a request to the actor (account, effective role, credential) it stands for."
+    type: harp_apps.auth.actors.ActorResolver
+    constructor: from_storage
+    arguments:
+      storage: !ref storage

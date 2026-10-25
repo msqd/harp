@@ -23,6 +23,7 @@ from harp_apps.http_cache.storages import (
     MAX_BODY_SIZE_METADATA,
     REDACTION_METADATA,
     STAMP_METADATA,
+    restore_date,
 )
 from harp_apps.http_cache.streams import ClosableByteStream, UpstreamBody
 
@@ -216,6 +217,7 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
 
         response = _internal_to_httpx(internal_response)
         _restore_original_expires(response)
+        restore_date(response.headers)
         if request.method not in SAFE_METHODS and response.status_code < 400:
             await self._invalidate(request, response)
         return response

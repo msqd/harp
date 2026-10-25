@@ -1,21 +1,29 @@
 import logging
 from re import escape
-from unittest.mock import ANY, Mock, patch
+from unittest.mock import ANY, patch
 
 import orjson
 import pytest
 
 from harp.http import HttpRequest
+from harp.security.actor import set_actor
 from harp.typedefs import GlobalSettings
 from harp.utils.testing import RE
 from harp.views.json import serialize
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.databases import parametrize_with_blob_storages_urls, parametrize_with_database_urls
-from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
+from harp_apps.dashboard.tests._mixins import AdminThroughASGIFixtureMixin
 from harp_apps.dashboard.controllers.system import SystemController
+from harp_apps.dashboard.security.auth import OPEN_ACTOR
 from harp_apps.dashboard.tests._mixins import SystemControllerTestFixtureMixin, parametrize_with_settings
 from harp_apps.proxy.constants import CHECKING, DOWN, UP
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
+
+
+def _request_as_admin():
+    request = HttpRequest()
+    set_actor(request, OPEN_ACTOR)
+    return request
 
 
 class TestSystemController(
@@ -29,6 +37,7 @@ class TestSystemController(
         response = await controller.get_settings()
         assert response.asdict() == {
             "applications": ["harp_apps.storage"],
+            "core": {"muted_events": []},
             "storage": {
                 "blobs": {"type": "sql"},
                 "enabled": True,
@@ -45,6 +54,7 @@ class TestSystemController(
         response = await controller.get_settings()
         assert response.asdict() == {
             "applications": ["harp_apps.storage"],
+            "core": {"muted_events": []},
             "storage": {
                 "blobs": {"type": "redis"},
                 "enabled": True,
@@ -60,6 +70,7 @@ class TestSystemController(
         response = await controller.get_settings()
         assert response.asdict() == {
             "applications": ["harp_apps.storage"],
+            "core": {"muted_events": []},
             "storage": {
                 "blobs": ANY,
                 "enabled": True,
@@ -75,6 +86,7 @@ class TestSystemController(
         response = await controller.get_settings()
         assert response.asdict() == {
             "applications": ["harp_apps.storage"],
+            "core": {"muted_events": []},
             "storage": {
                 "enabled": True,
                 "migrate": True,
@@ -88,7 +100,7 @@ class TestSystemController(
     @parametrize_with_database_urls("sqlite")
     @parametrize_with_blob_storages_urls("sql")
     async def test_get_lists_development_only_settings(self, controller: SystemController):
-        response = await controller.get(Mock(spec=HttpRequest, extensions={}))
+        response = await controller.get(_request_as_admin())
 
         (item,) = orjson.loads(serialize(response))["development_only_settings"]
         assert item["name"] == "storage.url"
@@ -100,7 +112,7 @@ class TestSystemController(
     async def test_get_lists_nothing_when_settings_are_production_grade(self, controller: SystemController):
         controller.settings = GlobalSettings({})
 
-        response = await controller.get(Mock(spec=HttpRequest, extensions={}))
+        response = await controller.get(_request_as_admin())
 
         assert orjson.loads(serialize(response))["development_only_settings"] == []
 
@@ -138,7 +150,7 @@ class TestSystemController(
 class TestSystemControllerThroughASGI(
     SystemControllerTestFixtureMixin,
     StorageTestFixtureMixin,
-    ControllerThroughASGIFixtureMixin,
+    AdminThroughASGIFixtureMixin,
 ):
     @parametrize_with_settings({})
     @parametrize_with_database_urls("sqlite")
@@ -149,7 +161,7 @@ class TestSystemControllerThroughASGI(
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
-            b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
+            b'{"applications":["harp_apps.storage"],"core":{"muted_events":[]},"storage":{"url":"sqlite+aiosqlite:///'
             b':memory:","enabled":true,"migrate":true,"blobs":{"type":"sql"},"redis":null}}'
         )
 
@@ -162,7 +174,7 @@ class TestSystemControllerThroughASGI(
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
-            b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
+            b'{"applications":["harp_apps.storage"],"core":{"muted_events":[]},"storage":{"url":"sqlite+aiosqlite:///'
             b':memory:","enabled":true,"migrate":true,"blobs":{"type":"redis"},"redis":null}}'
         )
 
@@ -180,7 +192,7 @@ class TestSystemControllerThroughASGI(
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
-            b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
+            b'{"applications":["harp_apps.storage"],"core":{"muted_events":[]},"storage":{"url":"sqlite+aiosqlite:///'
             b':memory:","enabled":true,"migrate":true,"blobs":{"type":"sql"},"redis":null}}'
         )
 
@@ -201,7 +213,7 @@ class TestSystemControllerThroughASGI(
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
-            b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
+            b'{"applications":["harp_apps.storage"],"core":{"muted_events":[]},"storage":{"url":"sqlite+aiosqlite:///'
             b':memory:","enabled":true,"migrate":true,"blobs":{"type":"redis"},"redis":null}}'
         )
 
@@ -214,6 +226,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert orjson.loads(response["body"]) == {
             "applications": ["harp_apps.storage"],
+            "core": {"muted_events": []},
             "storage": {
                 "blobs": {"type": "sql"},
                 "enabled": True,
@@ -240,14 +253,14 @@ class TestSystemControllerThroughASGI(
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
-            b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
+            b'{"applications":["harp_apps.storage"],"core":{"muted_events":[]},"storage":{"url":"sqlite+aiosqlite:///'
             b':memory:","enabled":true,"migrate":true,"blobs":{"type":"redis"},"redis":{"url":"redis://us'
             b'er:***@localhost:6379/0"}}}'
         )
 
     @parametrize_with_settings(
         {
-            "applications": ["http_client", "storage", "dashboard"],
+            "applications": ["http_client", "storage", "auth", "dashboard"],
             "storage": {"redis": {"url": "redis://:s3cret@localhost:6379/0"}},
             "dashboard": {"auth": {"type": "basic", "algorithm": "plain", "users": {"alice": "s3cretAlice"}}},
         }
@@ -262,7 +275,7 @@ class TestSystemControllerThroughASGI(
 
     @parametrize_with_settings(
         {
-            "applications": ["proxy", "http_client", "storage", "dashboard"],
+            "applications": ["proxy", "http_client", "storage", "auth", "dashboard"],
             "proxy": {
                 "endpoints": [
                     {"name": "api", "port": 4000, "url": "http://user:p%40ss@127.0.0.1:1/"},
@@ -288,7 +301,7 @@ class TestSystemControllerThroughASGI(
 
     @parametrize_with_settings(
         {
-            "applications": ["proxy", "http_client", "storage", "dashboard"],
+            "applications": ["proxy", "http_client", "storage", "auth", "dashboard"],
             "proxy": {"endpoints": [{"name": "api", "port": 4000, "url": "http://user:secret@127.0.0.1:1/"}]},
         }
     )
@@ -311,7 +324,7 @@ class TestSystemControllerThroughASGI(
 
 
 PROXY_SETTINGS = {
-    "applications": ["proxy", "http_client", "storage", "dashboard"],
+    "applications": ["proxy", "http_client", "storage", "auth", "dashboard"],
     "proxy": {"endpoints": [{"name": "api", "port": 4000, "url": "http://127.0.0.1:1/"}]},
 }
 REMOTE_URL = "http://127.0.0.1:1/"
@@ -330,7 +343,7 @@ def remote_status(response) -> int:
 class TestSystemControllerPutProxy(
     SystemControllerTestFixtureMixin,
     StorageTestFixtureMixin,
-    ControllerThroughASGIFixtureMixin,
+    AdminThroughASGIFixtureMixin,
 ):
     @parametrize_with_settings(PROXY_SETTINGS)
     @parametrize_with_database_urls("sqlite")
@@ -368,7 +381,7 @@ class TestSystemControllerPutProxy(
 
 
 CREDENTIALED_PROXY_SETTINGS = {
-    "applications": ["proxy", "http_client", "storage", "dashboard"],
+    "applications": ["proxy", "http_client", "storage", "auth", "dashboard"],
     "proxy": {"endpoints": [{"name": "api", "port": 4000, "url": "http://user:hunter2@127.0.0.1:1/?email=a@b.com"}]},
 }
 
@@ -376,7 +389,7 @@ CREDENTIALED_PROXY_SETTINGS = {
 class TestSystemControllerPutProxyCredentialedRemote(
     SystemControllerTestFixtureMixin,
     StorageTestFixtureMixin,
-    ControllerThroughASGIFixtureMixin,
+    AdminThroughASGIFixtureMixin,
 ):
     @parametrize_with_settings(CREDENTIALED_PROXY_SETTINGS)
     @parametrize_with_database_urls("sqlite")

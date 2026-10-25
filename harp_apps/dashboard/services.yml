@@ -10,6 +10,7 @@ services:
     type: harp_apps.dashboard.controllers.DashboardController
     arguments:
       router: !ref dashboard.router
+      actors: !ref auth.actors
 
   - name: "dashboard.controller.blobs"
     description: "Sub-controller for the blobs-related routes of the dashboard."

@@ -3,6 +3,20 @@
 Upgrading to 0.13
 =================
 
+Accounts and roles
+::::::::::::::::::
+
+- A new ``auth`` application owns the accounts. The dashboard requires it, so it is loaded with the dashboard, even
+  when your ``applications:`` list does not name it: a list now gains the dependencies of its applications.
+- Every dashboard page has a role: a ``viewer`` reads the overview, transactions and metrics, an ``editor`` also uses
+  the topology and storage pages and sets remote endpoints up or down, an ``admin`` also reads settings and
+  dependencies. The users declared in ``dashboard.auth`` are imported once as ``admin`` accounts, so nothing they do
+  changes. See :doc:`/apps/auth/index`.
+- **PostgreSQL**: the ``users`` table becomes ``auth_accounts`` at the next migration, favourites included. Existing
+  accounts are disabled ``viewer`` people until the import enables the configured ones. Manage accounts with
+  ``auth:set-role``, ``auth:disable-account`` and ``auth:enable-account``.
+- **SQLite**: a file written by 0.12 is refused at start. Delete it (it is recreated) or run ``harp-proxy db:reset``.
+
 Metrics
 :::::::
 
@@ -19,6 +33,41 @@ Metrics
   ``remote_exceptions_count`` are removed (they grew the series count with every distinct path or query string).
   Aggregate queries still work; any ``by (path)`` or ``by (url)`` grouping, or matcher on these labels, stops
   matching. The remaining labels are listed in :doc:`prometheus`.
+
+Rules
+:::::
+
+``on_request`` and ``on_response`` rules match a normalised request path, see :doc:`/apps/rules/patterns`. The proxy
+still forwards the target unchanged. Compared to 0.12:
+
+- Empty segments are dropped: a pattern containing ``//`` (``GET /api//admin``) no longer matches anything, write
+  ``GET /api/admin``. Requests for ``/api//admin`` now match ``GET /api/admin``.
+- ``;`` parameters are dropped: a pattern containing ``;`` no longer matches. Requests for ``/admin;x=1`` now match
+  ``GET /admin``.
+- A final slash is kept once: ``/admin//`` and ``/admin/;x`` are matched as ``/admin/``, so ``GET /admin/*`` keeps
+  matching them. An ``on_request`` or ``on_response`` pattern whose path has no wildcard now also matches the path
+  with its final slash removed, whatever its method part: ``GET /admin`` and ``* /admin`` match ``/admin/`` too.
+  Endpoint patterns and ``on_remote_*`` levels are not concerned. To deny a path and everything under it, write
+  ``GET /admin*``.
+- Empty segments are gone before matching, so a wildcard no longer matches one: ``GET /*/users`` no longer matches
+  ``//users``.
+- ``%2F`` (any case) stays encoded in the path, and rules are also matched against a second form with ``%2F`` read as
+  ``/``. A non-deny rule written for ``GET /a/b`` now also fires for ``/a%2Fb``, and a rule fires once per request.
+- ``on_remote_request`` and ``on_remote_response`` rules still match the raw path sent to the remote endpoint, none of
+  the above applies to them.
+- Not normalised, a deny rule has to account for them: double-encoded escapes (``%252F``), ``%3B`` read as ``;``,
+  ``%00``, ``%5C`` and backslashes, and case (patterns are case sensitive).
+
+Redis blob storage
+::::::::::::::::::
+
+- Blobs are now stored under the ``harp:blob:`` key prefix, so the janitor only ever lists, sweeps and counts those
+  keys: other applications can share the Redis database. Nothing to do to keep working: a blob stored by an earlier
+  version is still found under its bare id.
+- Those older blobs are never listed again: the janitor does not sweep them (orphans among them stay) and the
+  ``storage_blobs`` metrics do not count them, and HTTP cache entries written before the upgrade are not expired by
+  their TTL. They are not copied either. To reclaim them, flush the Redis database if it is dedicated to HARP; on a
+  shared one, delete them by hand, HARP cannot tell them from other applications' keys.
 
 Dashboard authentication
 ::::::::::::::::::::::::
