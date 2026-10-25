@@ -222,8 +222,32 @@ class TestStoredRecords:
                 await store_entry(storage, _request(key), _response(), key)
             await store_entry(storage, _request(other), _response(), other)
 
+        assert await records.stats() == [], "counted in memory, not written on the request path"
+        await storage.flush_counters()
         assert await records.stats() == [EndpointStats("api", 0, 0, 3), EndpointStats("web", 0, 0, 1)]
         assert sum("path over" in record.getMessage() for record in caplog.records) == 2
+
+    async def test_refusals_not_yet_written_are_flushed_on_close(self, storage, records):
+        key = "http://api/" + "x" * MAX_KEY_SIZE
+        await store_entry(storage, _request(key), _response(), key)
+
+        await storage.close()
+
+        assert await records.stats() == [EndpointStats("api", 0, 0, 1)]
+
+    async def test_a_cache_debug_log_never_prints_a_query(self, storage, caplog):
+        url = "http://api/items?token=s3cr3t"
+        key = "http://api/items?abc"
+
+        with caplog.at_level("DEBUG", logger="harp_apps.http_cache.storages"):
+            entry = await store_entry(storage, _request(url), _response(), key)
+            await storage.get_entries(key)
+            await storage.update_entry(entry.id, lambda e: e)
+
+        logged = [
+            record.getMessage() for record in caplog.records if "'logger': 'harp_apps.http_cache" in record.getMessage()
+        ]
+        assert logged and not any("s3cr3t" in message for message in logged)
 
     async def test_the_query_does_not_count_in_the_cap(self, storage, records):
         key = "http://api/items?" + "x" * MAX_KEY_SIZE

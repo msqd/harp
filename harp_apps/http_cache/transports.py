@@ -85,7 +85,7 @@ def _endpoint_name(request: httpx.Request) -> str:
     if not endpoint_name:
         raise ValueError(
             f"The cache transport requires an endpoint name in request.extensions['harp']['endpoint'] "
-            f"(url={request.url}); without it, unrelated requests would share one cache namespace."
+            f"(url={request.url.copy_with(query=None)}); without it, unrelated requests would share one cache namespace."
         )
     return endpoint_name
 
@@ -190,7 +190,7 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         url = _rewrite_request_url(request)
 
         logger.debug(
-            f"Handling async request with rewritten URL for caching: original_url={request.url}, rewritten_url={url}"
+            f"Handling async request with rewritten URL for caching: original_url={request.url.copy_with(query=None)}, rewritten_url={url.partition('?')[0]}"
         )
 
         wrapped_request = WrappedRequest(
@@ -207,7 +207,9 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         )
 
         if _forbids_storage(request):
-            logger.debug(f"Bypassing cache, the request forbids storage (RFC 9111 §5.2.1.5): url={request.url}")
+            logger.debug(
+                f"Bypassing cache, the request forbids storage (RFC 9111 §5.2.1.5): url={request.url.copy_with(query=None)}"
+            )
             internal_response = await self._send_without_caching(wrapped_request)
         else:
             internal_response = await self._handle_cacheable_request(wrapped_request)
@@ -230,7 +232,9 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         endpoint_name = _endpoint_name(request)
         for url in _invalidated_urls(request, response):
             await self.storage.invalidate(await self._key_for(url, endpoint_name))
-            logger.debug(f"Cache invalidated by {request.method} {request.url}: url={url}")
+            logger.debug(
+                f"Cache invalidated by {request.method} {request.url.copy_with(query=None)}: url={url.copy_with(query=None)}"
+            )
 
     async def _key_for(self, url: httpx.URL, endpoint_name: str) -> str:
         return await self._cache_proxy._get_key_for_request(Request(method="GET", url=_cache_url(url, endpoint_name)))
@@ -239,13 +243,15 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         """Answer ``PURGE`` here, never upstream: ``403`` for a peer out of the allow-list, else ``200`` or ``404``."""
         peer = _peer_address(request)
         if peer is None or not any(peer in network for network in self._purge.allow):
-            logger.warning(f"Cache purge refused, peer is not allowed: peer={peer} url={request.url}")
+            logger.warning(
+                f"Cache purge refused, peer is not allowed: peer={peer} url={request.url.copy_with(query=None)}"
+            )
             return httpx.Response(403, text="Forbidden")
         key = await self._key_for(request.url.copy_with(fragment=None), _endpoint_name(request))
         if not await self.storage.get_entries(key):
             return httpx.Response(404, text="Not in cache")
         await self.storage.invalidate(key)
-        logger.info(f"Cache purged: url={request.url}")
+        logger.info(f"Cache purged: url={request.url.copy_with(query=None)}")
         return httpx.Response(200, text="Purged")
 
     async def _send_without_caching(self, request: WrappedRequest) -> Response:

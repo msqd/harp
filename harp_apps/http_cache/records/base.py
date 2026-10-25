@@ -131,8 +131,8 @@ class CacheRecords(ABC):
         """The variants with the largest bodies, largest first, of one endpoint or of all."""
 
     @abstractmethod
-    async def count_refused(self, endpoint: str) -> None:
-        """Count a response of this endpoint that was not stored because its key was too long."""
+    async def count_refused(self, endpoint: str, count: int = 1) -> None:
+        """Count responses of this endpoint that were not stored because their key was too long."""
 
     @abstractmethod
     async def body_digests(self) -> set[str]:

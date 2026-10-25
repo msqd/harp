@@ -85,8 +85,8 @@ class MemoryCacheRecords(CacheRecords):
             for endpoint in sorted(self._entries.keys() | self._refused.keys())
         ]
 
-    async def count_refused(self, endpoint: str) -> None:
-        self._refused[endpoint] = self._refused.get(endpoint, 0) + 1
+    async def count_refused(self, endpoint: str, count: int = 1) -> None:
+        self._refused[endpoint] = self._refused.get(endpoint, 0) + count
 
     async def largest(self, *, endpoint: Optional[str] = None, limit: int = 10) -> list[VariantRecord]:
         records = (r for r in self._by_id.values() if endpoint is None or r.endpoint == endpoint)

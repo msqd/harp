@@ -172,12 +172,12 @@ class SqlCacheRecords(CacheRecords):
             rows = (await conn.execute(select(CacheStats).order_by(CacheStats.endpoint))).all()
         return [EndpointStats(row.endpoint, row.entries, row.bytes, row.refused) for row in rows]
 
-    async def count_refused(self, endpoint: str) -> None:
-        insert = self._dialect.insert(CacheStats).values(endpoint=endpoint, entries=0, bytes=0, refused=1)
+    async def count_refused(self, endpoint: str, count: int = 1) -> None:
+        insert = self._dialect.insert(CacheStats).values(endpoint=endpoint, entries=0, bytes=0, refused=count)
         async with self.engine.begin() as conn:
             await conn.execute(
                 insert.on_conflict_do_update(
-                    index_elements=[CacheStats.endpoint], set_={"refused": CacheStats.refused + 1}
+                    index_elements=[CacheStats.endpoint], set_={"refused": CacheStats.refused + count}
                 )
             )
 

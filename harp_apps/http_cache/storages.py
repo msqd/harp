@@ -140,6 +140,7 @@ class AsyncStorage(AsyncBaseStorage):
         self._allow_heuristics = allow_heuristics
         self._sweep_task: tp.Optional[asyncio.Task] = None
         self._refusing: set[str] = set()
+        self._refused: dict[str, int] = {}
         self._stamp = 0
         self._invalidated_at: OrderedDict[str, int] = OrderedDict()
         self._forgotten_up_to = 0
@@ -181,7 +182,7 @@ class AsyncStorage(AsyncBaseStorage):
 
         Never awaited by the request: the sweep is work no proxied request should wait for.
         """
-        if self._ttl is None:
+        if self._ttl is None and not self._refused:
             return
         if self._sweep_task is not None and not self._sweep_task.done():
             return
@@ -196,8 +197,11 @@ class AsyncStorage(AsyncBaseStorage):
             await asyncio.gather(self._sweep_task, return_exceptions=True)
 
     async def _sweep(self) -> None:
-        """Delete the entries not written for more than `ttl`, by batch, yielding to the event loop along the way."""
+        """Flush the refused counts, then delete the entries not written for more than `ttl`, by batch."""
         try:
+            await self.flush_counters()
+            if self._ttl is None:
+                return
             removed = 0
             while True:
                 deleted = await self._records.delete_stored_before(time.time() - self._ttl, limit=SWEEP_DELETE_BATCH)
@@ -249,7 +253,7 @@ class AsyncStorage(AsyncBaseStorage):
         entry_id = id_ or uuid.uuid4()
 
         logger.debug(
-            f"Creating cache entry: key={key}, url={request.url}, "
+            f"Creating cache entry: key={key}, "
             f"method={request.method}, status={response.status_code}, entry_id={entry_id}"
         )
 
@@ -331,10 +335,19 @@ class AsyncStorage(AsyncBaseStorage):
                 f"Cache entry not retained, path over {MAX_KEY_SIZE} bytes (further ones are counted, not logged): "
                 f"endpoint={endpoint} key={key[:80]}..."
             )
-        try:
-            await self._records.count_refused(endpoint)
-        except Exception:
-            logger.warning(f"Failed to count a refused cache entry: endpoint={endpoint}", exc_info=True)
+        # counted here, written later: the endpoint's counter row is not worth a wait on the request path
+        self._refused[endpoint] = self._refused.get(endpoint, 0) + 1
+        self._sweep_if_due()
+
+    async def flush_counters(self) -> None:
+        """Write the refusals counted since the last time."""
+        pending, self._refused = self._refused, {}
+        for endpoint, count in pending.items():
+            try:
+                await self._records.count_refused(endpoint, count)
+            except Exception:
+                self._refused[endpoint] = self._refused.get(endpoint, 0) + count
+                logger.warning(f"Failed to count refused cache entries: endpoint={endpoint}", exc_info=True)
 
     async def get_entries(self, key: str) -> tp.List[Entry]:
         """Retrieve all entries for a given cache key: its unexpired variants, oldest stored first.
@@ -355,9 +368,7 @@ class AsyncStorage(AsyncBaseStorage):
                 await self._prune(key, [variant.record.entry_id for variant in stored if variant not in live])
             entries = [self._with_request_url(to_entry(variant)) for variant in live]
             for entry in entries:
-                logger.debug(
-                    f"Cache hit: key={key}, url={entry.request.url}, method={entry.request.method}, entry_id={entry.id}"
-                )
+                logger.debug(f"Cache hit: key={key}, method={entry.request.method}, entry_id={entry.id}")
             if not entries:
                 logger.debug(f"Cache miss: key={key}")
             return entries
@@ -450,4 +461,5 @@ class AsyncStorage(AsyncBaseStorage):
         logger.debug("Closing AsyncStorage")
         if self._sweep_task is not None:
             self._sweep_task.cancel()
+        await self.flush_counters()
         await self._records.close()

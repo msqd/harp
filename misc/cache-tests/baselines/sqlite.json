@@ -5,7 +5,7 @@
     "runs": 3,
     "suite_commit": "be694001950cdb4bff937aee7d706feaf7d9c5ab"
   },
-  "reason": "explore/cache cache store on indexed records 1594. Three Set-Cookie cases regress from main and not from this branch: 304-etag-update-response-Set-Cookie, headers-store-Set-Cookie, other-set-cookie, because ADR-0009 withholds responses carrying Set-Cookie. Main needs the same re-recording.",
+  "reason": "explore/cache cache store on indexed records 1594. Three Set-Cookie cases regress from main and not from this branch: 304-etag-update-response-Set-Cookie, headers-store-Set-Cookie, other-set-cookie, because ADR-0009 withholds responses carrying Set-Cookie. Main needs the same re-recording. Per-run flips seen while recording are known flakiness, not regressions: conditional-etag-forward, conditional-etag-strong-generate, headers-store-Test-Header.",
   "recorded_on": "2026-10-25",
   "results": {
     "304-etag-update-response-Cache-Control": true,
