@@ -116,6 +116,55 @@ event dispatcher, so it can listen to events from any component registered with 
             print(event.context)
 
 
+.. _events-unit-of-work:
+Recording an auditable event
+::::::::::::::::::::::::::::
+
+An action on the control plane and the record of it share one database commit, without the acting application knowing
+what records it. Declare the event with the ``auditable`` mark (the event id is part of the mark), then hand it to a
+unit of work:
+
+.. code-block:: python
+
+    from harp.unit_of_work import IUnitOfWorkFactory, auditable
+
+    @auditable("accounts.role_changed")
+    class RoleChanged(Event):
+        ...
+
+    class AccountsService:
+        def __init__(self, unit_of_work: IUnitOfWorkFactory):
+            self.unit_of_work = unit_of_work
+
+        async def change_role(self, ...):
+            async with self.unit_of_work() as uow:
+                ...  # the change
+                await uow.record(RoleChanged(...))
+
+``record`` runs in two phases:
+
+1. Inside the transaction, the event is dispatched on the **transactional dispatcher**
+   (:class:`harp.unit_of_work.TransactionalEventDispatcher`, available in the container), a second dispatcher distinct
+   from the main one. Only listeners attached to it run there, and their writes join the commit: if one fails, the
+   unit of work rolls back and the action fails. Storage's ``current_session()`` gives such a listener the session of
+   the running unit of work.
+2. After the commit, the same event is dispatched on the main dispatcher, for every other listener. A failure there is
+   logged and undoes nothing.
+
+``record`` refuses an event that is not ``auditable``. Mark an event ``loggable`` instead when it deserves a structured
+log line but no audit row; it is dispatched on the main dispatcher as usual. An unmarked event is neither.
+
+An action outside the database goes through ``uow.act``: record the event, act, and the commit comes last. A failing
+action leaves nothing. A commit failing after the action calls the compensation given to ``act``, or logs a critical
+error when there is none.
+
+.. code-block:: python
+
+    async with self.unit_of_work() as uow:
+        await uow.record(RemoteDisabled(...))
+        await uow.act(remote.disable, compensation=remote.enable)
+
+
 See Also
 ::::::::
 

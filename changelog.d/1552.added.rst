@@ -1,0 +1,1 @@
+Core: two-phase unit of work, a transactional dispatcher and ``auditable`` / ``loggable`` event marks, so an action and the record of it share one commit.
