@@ -1,5 +1,5 @@
 import time
-from ipaddress import IPv6Address, ip_address
+from ipaddress import ip_address
 from dataclasses import replace
 
 import httpx
@@ -144,7 +144,7 @@ def _peer_address(request: httpx.Request):
         address = ip_address(request.extensions.get("harp", {}).get("client_ip"))
     except ValueError:
         return None
-    return address.ipv4_mapped or address if isinstance(address, IPv6Address) else address
+    return address
 
 
 #: Methods whose concurrent misses are coalesced: the ones a shared cache answers from a stored response.
