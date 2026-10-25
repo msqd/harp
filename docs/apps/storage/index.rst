@@ -41,15 +41,15 @@ backends for blobs).
 .. warning::
 
     **Recording here is best-effort.** Transactions passing through HARP are recorded, including
-    requests carrying ``Cache-Control: no-store``, but under load the storage worker sheds message
+    requests carrying ``Cache-Control: no-store`` (without their payload), but under load the storage worker sheds message
     detail first and then whole transactions rather than slowing traffic down. Do not treat this
     store as a complete account of what crossed the proxy. See :ref:`what-harp-retains` for what is
     measured, and `#945 <https://github.com/msqd/harp/issues/945>`_ for the measurements.
 
-    A caller's ``Cache-Control: no-store`` binds the cache and does not affect what is recorded
-    here. Whether a caller may suppress payload recording is undecided, see
-    `#927 <https://github.com/msqd/harp/issues/927>`_, so do not build on the current behaviour in
-    either direction.
+    A caller's ``Cache-Control: no-store`` binds the cache and, from 0.13, suppresses the headers and
+    bodies recorded here, for the request and for the response; the transaction and its messages are
+    still recorded, with their summaries. An origin's ``no-store`` suppresses its own response payload
+    only. HARP does not currently provide a way to override this. See :ref:`what-harp-retains`.
 
     Choosing what is not recorded is currently the operator's decision, made with the
     :doc:`rules application </apps/rules/index>` and the :doc:`markers` below.
@@ -255,11 +255,11 @@ or...
 Logging
 :::::::
 
-To instruct SQLAlchemy to log all queries, set ``LOGGING_SQLALCHEMY=INFO`` in your env.
+To instruct SQLAlchemy to log all queries, set ``LOGGING_SQL=INFO`` in your env.
 
 .. code-block:: shell
 
-    LOGGING_SQLALCHEMY=INFO harp-proxy server ...
+    LOGGING_SQL=INFO harp-proxy server ...
 
 It works with all HARP commands, not just ``start``.
 

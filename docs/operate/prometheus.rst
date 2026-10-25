@@ -63,21 +63,35 @@ serve it on a dedicated port, without authentication (off by default), set ``das
 Metrics
 :::::::
 
-Metrics at the controller level (the middle layer, after the asgi kernel but before most of HARP's overhead):
+Metrics at the controller level (the middle layer, after the asgi kernel but before most of HARP's overhead). Labels:
+``name`` (route name), ``port`` and ``method``, plus the ones listed.
 
 * ``controller_requests_count``, a requests counter from the controller point of view.
+  Labels: ``name``, ``port``, ``method``.
 * ``controller_requests_time``, an histogram of requests processing time.
+  Labels: ``name``, ``port``, ``method``.
 * ``controller_requests_in_progress``, a gauge of requests currently being processed by a controller.
+  Labels: ``name``, ``port``, ``method``.
 * ``controller_responses_count``, a controller responses counter.
-* ``controller_exceptions_count``, an controller exceptions counter.
+  Labels: ``name``, ``port``, ``method``, ``status``.
+* ``controller_exceptions_count``, a controller exceptions counter.
+  Labels: ``name``, ``port``, ``method``, ``exception`` (the exception type).
 
 Metrics at the http client level (the innermost layer, when the proxy controller delegates to the http client).
+``name`` is the endpoint name.
 
 * ``remote_requests_count``, a requests counter from the http client point of view.
+  Labels: ``name``, ``method``.
 * ``remote_requests_time``, an histogram of requests processing time.
+  Labels: ``name``, ``method``.
 * ``remote_requests_in_progress``, a gauge of requests currently being processed by the http client.
+  Labels: ``name``, ``method``.
 * ``remote_responses_count``, an http client responses counter.
+  Labels: ``name``, ``method``, ``status``.
 * ``remote_exceptions_count``, an http client exceptions counter.
+  Labels: ``name``, ``method``, ``exception`` (the exception type).
+
+Every label has a bounded set of values: request paths and URLs are never used as labels.
 
 Additionally, a few python-related metrics and info are available, check the metrics endpoint.
 

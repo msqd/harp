@@ -152,6 +152,16 @@ A run on SQLite and a run on PostgreSQL are two different measurements, so each 
 baseline and the target refuses to compare one against the other. See ``misc/cache-tests/README.md``
 for what the comparison does and does not fail on.
 
+Security Probes
+^^^^^^^^^^^^^^^
+
+.. code-block:: shell
+
+    # Replay the security fixes against a running proxy, over a raw socket
+    make test-security-probes
+
+See :doc:`testing/security-probes` for what each probe asserts and how to check one against its vulnerable commit.
+
 Coverage Reports
 ^^^^^^^^^^^^^^^^
 

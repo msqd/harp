@@ -174,3 +174,9 @@ def test_mask_credentials_masks_the_query_password(url, masked):
 )
 def test_url_masking_only_touches_the_userinfo_password(value, expected):
     assert mask_credentials(value) == expected
+
+
+def test_mask_credentials_leaves_a_host_port_followed_by_free_text_intact():
+    message = "could not connect to http://db:5432 as user@host"
+
+    assert mask_credentials(message) == message

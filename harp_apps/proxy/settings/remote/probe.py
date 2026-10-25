@@ -8,7 +8,7 @@ from pydantic import Field
 from pyheck import shouty_snake
 
 from harp import get_logger
-from harp.config import Configurable, Stateful
+from harp.config import Configurable, Secret, Stateful
 from harp_apps.proxy.adapters import strip_credentials
 
 if TYPE_CHECKING:
@@ -34,7 +34,7 @@ class RemoteProbeSettings(Configurable):
 
     method: str = "GET"
     path: str = "/"
-    headers: dict = Field(default_factory=dict)
+    headers: dict[str, Secret] = Field(default_factory=dict)
     interval: float = 10.0
     timeout: float = 10.0
     verify: bool = True
@@ -50,7 +50,7 @@ class RemoteProbe(Stateful[RemoteProbeSettings]):
 
     def _get_headers(self, url: str) -> dict:
         """Probe headers, with the endpoint credentials as a Basic fallback (never in the url, so never logged)."""
-        headers = dict(self.settings.headers)
+        headers = {name: value.get_secret_value() for name, value in self.settings.headers.items()}
         parsed_url = urlparse(url)
         if parsed_url.username is not None and "authorization" not in {name.lower() for name in headers}:
             credentials = f"{unquote(parsed_url.username)}:{unquote(parsed_url.password or '')}"

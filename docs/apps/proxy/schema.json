@@ -114,6 +114,13 @@
           "anyOf": [{ "type": "string" }, { "type": "null" }],
           "default": null
         },
+        "max_request_body_size": {
+          "anyOf": [
+            { "gt": 0, "minimum": 0, "type": "integer" },
+            { "type": "null" }
+          ],
+          "default": null
+        },
         "remote": {
           "anyOf": [{ "$ref": "#/$defs/RemoteSettings" }, { "type": "null" }],
           "default": null
@@ -257,6 +264,13 @@
           "minimum": 0,
           "type": "integer"
         },
+        "max_request_body_size": {
+          "anyOf": [
+            { "gt": 0, "minimum": 0, "type": "integer" },
+            { "type": "null" }
+          ],
+          "default": null
+        },
         "client_read_timeout": {
           "default": 30.0,
           "exclusiveMinimum": 0,
@@ -381,7 +395,11 @@
         "method": { "default": "GET", "type": "string" },
         "path": { "default": "/", "type": "string" },
         "headers": {
-          "additionalProperties": true,
+          "additionalProperties": {
+            "format": "password",
+            "type": "string",
+            "writeOnly": true
+          },
           "title": "Headers",
           "type": "object"
         },
