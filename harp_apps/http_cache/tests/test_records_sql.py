@@ -1,14 +1,16 @@
 """What only the SQL records have to get right: transactions, locks, and what is retried."""
 
 import asyncio
+import time
 import uuid
 from dataclasses import replace
 
 import pytest
+from sqlalchemy import insert
 from sqlalchemy.exc import IntegrityError
 
-from harp_apps.http_cache.models import CacheVariant
-from harp_apps.http_cache.records import EndpointStats
+from harp_apps.http_cache.models import CacheBody, CacheResource, CacheVariant
+from harp_apps.http_cache.records import BanKind, BanMode, EndpointStats
 from harp_apps.http_cache.records import sql as sql_module
 from harp_apps.http_cache.records.sql import SqlCacheRecords, _is_concurrency
 from harp_apps.http_cache.tests.test_records import make_record, put
@@ -112,3 +114,135 @@ async def test_a_put_racing_the_sweep_or_a_purge_neither_deadlocks_nor_drifts(sq
 
 async def test_get_by_id_of_unknown(sql_records):
     assert await sql_records.get_by_id(uuid.uuid4()) is None
+
+
+@pytest.fixture
+def postgres_records(sql_records):
+    if sql_records.engine.dialect.name != "postgresql":
+        pytest.skip("row locks: postgresql only")
+    return sql_records
+
+
+@pytest.fixture
+async def file_records(tmp_path):
+    """Records on a SQLite file: connections are many and the driver opens a transaction only at the first write."""
+    from functools import partial
+
+    from alembic import command
+
+    from harp_apps.storage.engines.sql_engine import SQLAlchemyEngine
+    from harp_apps.storage.utils.migrations import create_alembic_config, do_migrate
+
+    engine = SQLAlchemyEngine.from_url(f"sqlite+aiosqlite:///{tmp_path}/harp.db")
+    cfg = create_alembic_config(engine.url.render_as_string(hide_password=False))
+    await do_migrate(engine, migrator=partial(command.upgrade, cfg, "heads"))
+    try:
+        yield SqlCacheRecords(engine)
+    finally:
+        await engine.dispose()
+
+
+async def test_on_a_sqlite_file_a_reclamation_cannot_slip_between_the_floor_a_fill_read_and_its_commit(file_records):
+    records = file_records
+    await put(records, make_record("http://api/other"))
+    stamp = await records.counter()
+    await records.ban(BanKind.PREFIX, "http://api/users", BanMode.HARD)
+    everything = {"older_than": time.time() + 3600, "bans": 100, "entries": 100}
+    original, runs = records._read_floor, []
+
+    async def read_floor_then_reclaim(conn):
+        floor = await original(conn)
+        runs.append(asyncio.ensure_future(records.reclaim(**everything)))
+        await asyncio.wait(runs, timeout=1)
+        return floor
+
+    records._read_floor = read_floor_then_reclaim
+    await records.put(make_record("http://api/users/1", stamp=stamp), b"payload", keep=8)
+    records._read_floor = original
+    await asyncio.gather(*runs)
+
+    assert await records.get_variants("http://api/users/1") == []
+
+
+class TestReclamationAgainstFillsInFlight:
+    """A fill that started before a ban may commit after the ban was reclaimed. It must not come back."""
+
+    EVERYTHING = {"older_than": time.time() + 3600, "bans": 100, "entries": 100}
+
+    @pytest.fixture
+    def pausing_fill(self, monkeypatch):
+        """Make the fills stop once written, just before they commit."""
+        paused, release = asyncio.Event(), asyncio.Event()
+        original = SqlCacheRecords._forget
+
+        async def pausing(self, conn, removed, *, added=()):
+            if added:
+                paused.set()
+                await release.wait()
+            return await original(self, conn, removed, added=added)
+
+        monkeypatch.setattr(SqlCacheRecords, "_forget", pausing)
+        return paused, release
+
+    async def create_the_floor(self, records):
+        """Reclaim a first ban: the row of the floor then exists, and a reclamation waits on its lock, not on its birth."""
+        await records.ban(BanKind.EXACT, "http://api/first", BanMode.HARD)
+        await records.reclaim(**self.EVERYTHING)
+
+    @pytest.mark.parametrize("floor_exists", [True, False])
+    async def test_the_reclamation_waits_for_the_fill_and_deletes_what_it_stored(
+        self, postgres_records, pausing_fill, floor_exists
+    ):
+        paused, release = pausing_fill
+        if floor_exists:
+            await self.create_the_floor(postgres_records)
+        stamp = await postgres_records.counter()
+        fill = asyncio.create_task(put(postgres_records, make_record("http://api/users/1", stamp=stamp)))
+        await paused.wait()
+        # the fill passed its own check, and the ban lands: only the lookup hides what the fill stores
+        await postgres_records.ban(BanKind.PREFIX, "http://api/users", BanMode.HARD)
+
+        reclaim = asyncio.create_task(postgres_records.reclaim(**self.EVERYTHING))
+        await asyncio.sleep(0.5)
+        waiting = not reclaim.done()
+        release.set()
+        await fill
+        reclaimed = await reclaim
+
+        assert waiting, "the fill in flight holds the floor"
+        assert reclaimed.retired == 1 and reclaimed.deleted == 1
+        assert await postgres_records.bans() == []
+        assert await postgres_records.list_keys() == []
+        assert await postgres_records.stats() == []
+
+    async def test_fills_racing_the_reclamation_are_refused_or_deleted_never_left(self, postgres_records):
+        for round_ in range(5):
+            stamp = await postgres_records.counter()
+            await postgres_records.ban(BanKind.PREFIX, "http://api/users", BanMode.HARD)
+            fills = [
+                put(
+                    postgres_records,
+                    make_record(f"http://api/users/{n}", body=bytes([n + 1]), stamp=stamp),
+                    bytes([n + 1]),
+                )
+                for n in range(12)
+            ]
+            reclaims = [postgres_records.reclaim(**self.EVERYTHING) for _ in range(3)]
+
+            await asyncio.gather(*fills, *reclaims)
+            await postgres_records.reclaim(**self.EVERYTHING)
+
+            assert await postgres_records.bans() == []
+            assert await postgres_records.list_keys() == [], f"round {round_}"
+            assert await postgres_records.stats() == []
+            assert await postgres_records.body_digests() == set()
+
+    async def test_the_orphans_of_a_crashed_writer_are_reclaimed(self, postgres_records):
+        async with postgres_records.engine.begin() as conn:
+            await conn.execute(insert(CacheBody).values(digest="orphan", data=b"x"))
+            await conn.execute(insert(CacheResource).values(key="http://api/lost", endpoint="api"))
+        kept = await put(postgres_records, make_record("http://api/kept"))
+
+        assert await postgres_records.reclaim_orphans(limit=100) == 2
+        assert await postgres_records.body_digests() == {kept.body_digest}
+        assert await postgres_records.list_keys() == [kept.key]

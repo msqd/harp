@@ -40,6 +40,24 @@ class PurgeSettings(Configurable):
     allow: list[IPvAnyNetwork] = Field(default_factory=lambda: [ip_network("127.0.0.1")])
 
 
+class ReclamationSettings(Configurable):
+    """How the invalidation log is reclaimed: the entries old bans cover are deleted, then the bans retired."""
+
+    #: Seconds a ban is kept before it is reclaimed. Keep it above the longest fetch from an origin: a response fetched
+    #: before a ban that was retired since is served, but not cached.
+    grace: float = Field(300, ge=0)
+
+    #: Bans of each mode (hard, soft) a round looks at at most.
+    bans: int = Field(1000, gt=0)
+
+    #: Entries a round deletes at most.
+    entries: int = Field(500, gt=0)
+
+    #: Rounds a run does at most. A run is one sweep of the janitor, or of the cache storage without a janitor.
+    #: ``entries`` times ``rounds`` is the most entries a run deletes: 10 000 by default.
+    rounds: int = Field(20, gt=0)
+
+
 class HttpCacheSettings(ApplicationSettingsMixin, Configurable):
     #: Cache transport to use for the client. This is usually a hishel._async_httpx.AsyncCacheTransport (or subclass) instance.
     transport: Service = Service(
@@ -63,6 +81,9 @@ class HttpCacheSettings(ApplicationSettingsMixin, Configurable):
 
     #: Removal of single entries with the ``PURGE`` method, off by default.
     purge: PurgeSettings = Field(default_factory=PurgeSettings)
+
+    #: Reclamation of the bans of the invalidation log, see :ref:`http-cache-reclamation`.
+    reclamation: ReclamationSettings = Field(default_factory=ReclamationSettings)
 
     #: Cache storage implementation, a.k.a how to store and retrieve cache data.
     #:

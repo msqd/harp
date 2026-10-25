@@ -19,6 +19,13 @@ http_cache:
     enabled: false
     allow: ["127.0.0.1"]  # Peer addresses or CIDR ranges, for example ["127.0.0.1", "10.0.0.0/8"]
 
+  # Reclamation of the bans of the invalidation log (defaults shown)
+  reclamation:
+    grace: 300  # Seconds a ban is kept before it is reclaimed
+    bans: 1000  # Bans of each mode a round looks at, at most
+    entries: 500  # Entries a round deletes, at most
+    rounds: 20  # Rounds a run does, at most (a run is one sweep of the janitor)
+
   # Cache storage (default: harp_apps.http_cache.storages.AsyncStorage)
   storage:
     base: hishel.AsyncBaseStorage

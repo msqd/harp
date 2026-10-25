@@ -253,8 +253,13 @@ Invalidating does not cost a scan of what the cache holds. It appends a *ban* to
 the entries, and every lookup checks the bans that cover the key it reads, in the same round trip. A ban covers:
 
 - **a cache key**: one URL of one endpoint, query string included;
+- **a path prefix**: a path of an endpoint, and everything under it, whatever the query. The prefix is cut at path
+  segments: ``/api/users`` covers ``/api/users``, ``/api/users?page=2`` and ``/api/users/42``, not ``/api/usersx``. It
+  covers both ``http`` and ``https``;
 - **an endpoint**: everything the endpoint cached;
 - **everything**: all endpoints.
+
+Checking a key costs a few reads, twice the depth of its path, whatever the number of entries or bans.
 
 A ban is *soft* or *hard*, as RFC 9111 §4.4 allows either:
 
@@ -262,8 +267,8 @@ A ban is *soft* or *hard*, as RFC 9111 §4.4 allows either:
   ``Last-Modified``). A ``304 Not Modified`` serves the stored body again, and the entry is fresh from then on. An
   entry with no validator is fetched again;
 - a **hard** ban makes the entries unusable. Invalidation by unsafe requests and ``PURGE`` are hard bans on one key, and
-  delete the entries of that key at once. Entries covered by a hard ban on an endpoint or on everything are not served,
-  and are deleted when they expire.
+  delete the entries of that key at once. Entries covered by a hard ban on a path prefix, an endpoint or everything are
+  not served, and are deleted by the reclamation below.
 
 Bans are numbered by a counter kept in the shared store, in the order they commit. A response is stamped with the counter
 read just before the request went to the origin, and a ban numbered above the stamp covers it. So a response fetched
@@ -273,16 +278,37 @@ records (no ``storage`` application), it lives in the process.
 
 .. note::
 
-    This version has no way yet to issue a ban on an endpoint or on everything from outside the code, and a ban is not
-    yet removed once the entries it covers are gone. Each successful unsafe request adds one ban per invalidated URI,
-    and each ``PURGE`` one, and they stay until a later version reclaims them: the log grows with the number of
-    writes through the proxy.
+    This version has no way yet to issue a ban on a path prefix, an endpoint or everything from outside the code.
 
 A soft-banned entry is always revalidated before it is served, whatever freshness it stated (``max-age``, ``Expires``)
 and even when stale responses are allowed. A ban that cannot be recorded is reported: ``PURGE`` answers ``503`` rather
 than ``200``. For the invalidation that follows a write, which comes after the response is ready, the failure is
 logged and the response is not affected.
 
+
+.. _http-cache-reclamation:
+
+Reclaiming bans
+:::::::::::::::
+
+A ban only hides the entries it covers. The :doc:`janitor </apps/janitor/index>` deletes them in the background, then
+retires the ban, so that the log does not grow with the number of writes through the proxy. Without the janitor (no
+``storage`` application, or the janitor disabled), the cache storage does it in its own periodic sweep. Each run is
+bounded and the next one resumes where the last stopped, so a ban on a large prefix is reclaimed over several runs. The
+bounds are the :doc:`reclamation settings <settings>`: with the defaults a run deletes 10 000 entries at most (500 per
+round, 20 rounds). With the janitor, a run is one sweep, every ``period`` (10 minutes by default); without it, a run
+starts at most every ``check_ttl_every`` seconds (60 by default), from a request that reads or stores an entry, so a busy
+cache reclaims faster and an idle one not at all. The same runs delete the bodies and resources no entry refers to.
+
+- A ban is reclaimed once it is ``reclamation.grace`` old (five minutes), so that a response being fetched when it was issued has time to end.
+- A **hard** ban is retired once what it covers is deleted.
+- A **soft** ban deletes nothing: its entries are revalidated, not lost. It is retired once none is left that it makes
+  stale, because they were revalidated, replaced, expired (``ttl``) or deleted. Until then it stays in the log, and it
+  keeps the entries stale. With ``ttl`` unset, a soft ban on entries nobody asks for again stays for ever. A newer ban of
+  the same kind, prefix and mode makes an older one useless: it is dropped at once.
+- A response fetched before a ban that was retired since is not stored, whichever instance fetched it, so that a
+  retired ban never lets an entry it covered come back. This is also the case of a fetch that lasts more than the five
+  minutes above: its response is served, and not cached.
 
 .. _http-cache-purge:
 

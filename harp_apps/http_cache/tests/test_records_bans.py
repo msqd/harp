@@ -10,16 +10,32 @@ from harp_apps.http_cache.tests.test_records import make_record, put
 KEY = "http://api/items/1?abc"
 
 
-def test_a_key_is_covered_by_everything_its_endpoint_and_each_directory_of_its_path():
-    assert ban_prefixes("http://api/items/1?abc") == ["", "http://api/", "http://api/items/"]
+def test_a_key_is_covered_by_everything_its_endpoint_each_directory_of_its_path_and_its_path():
+    assert ban_prefixes("http://api/items/1?abc") == [
+        "",
+        "http://api/",
+        "http://api/items",
+        "http://api/items/",
+        "http://api/items/1",
+    ]
 
 
 def test_the_query_hash_of_a_key_is_not_part_of_its_directories():
-    assert ban_prefixes("http://api/a/b?x/y") == ["", "http://api/", "http://api/a/"]
+    assert ban_prefixes("http://api/a/b?x/y") == [
+        "",
+        "http://api/",
+        "http://api/a",
+        "http://api/a/",
+        "http://api/a/b",
+    ]
 
 
 def test_a_key_without_path_is_covered_by_everything_and_its_endpoint():
     assert ban_prefixes("http://api") == ["", "http://api/"]
+
+
+def test_a_path_ending_with_a_slash_is_not_listed_twice():
+    assert ban_prefixes("http://api/items/") == ["", "http://api/", "http://api/items", "http://api/items/"]
 
 
 async def test_the_counter_starts_at_zero(records):
@@ -228,3 +244,19 @@ async def test_bans_survive_the_deletion_of_the_variants_they_cover(records, mod
 
     assert await records.put(make_record(KEY, stamp=0), b"payload", keep=8) is False
     assert await records.counter() == ban.seq
+
+
+async def test_a_path_ban_covers_the_path_and_everything_under_it_cut_at_segments(records):
+    await put(records, make_record("http://api/users"))
+    await put(records, make_record("http://api/users?abc"))
+    await put(records, make_record("http://api/users/42"))
+    await put(records, make_record("http://api/users/42/posts?abc"))
+    outside = await put(records, make_record("http://api/usersx"))
+    other_scheme = await put(records, make_record("https://api/users/42"))
+
+    await records.ban(BanKind.PREFIX, "http://api/users", BanMode.HARD)
+
+    for key in ("http://api/users", "http://api/users?abc", "http://api/users/42", "http://api/users/42/posts?abc"):
+        assert await records.get_variants(key) == [], key
+    assert [stored for stored, _ in await records.get_variants(outside.key)] == [outside]
+    assert [stored for stored, _ in await records.get_variants(other_scheme.key)] == [other_scheme]

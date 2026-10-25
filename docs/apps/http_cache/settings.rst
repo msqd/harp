@@ -146,6 +146,51 @@ The peer addresses HARP is connected to that may purge, whatever forwarding head
         allow: ["127.0.0.1", "10.0.0.0/8"]
 
 
+reclamation
+-----------
+
+**Default:** ``grace: 300``, ``bans: 1000``, ``entries: 500``, ``rounds: 20``
+
+How the bans of the invalidation log are reclaimed, see :ref:`http-cache-reclamation`.
+
+reclamation.grace
+~~~~~~~~~~~~~~~~~
+
+**Type:** ``float``, **Default:** ``300``
+
+Seconds a ban is kept before it is reclaimed. Keep it above the longest fetch from an origin: a response fetched before
+a ban that was retired since is served, but not cached.
+
+reclamation.bans
+~~~~~~~~~~~~~~~~
+
+**Type:** ``int``, **Default:** ``1000``
+
+The bans of each mode (hard, soft) a round looks at, at most.
+
+reclamation.entries
+~~~~~~~~~~~~~~~~~~~
+
+**Type:** ``int``, **Default:** ``500``
+
+The entries a round deletes, at most.
+
+reclamation.rounds
+~~~~~~~~~~~~~~~~~~
+
+**Type:** ``int``, **Default:** ``20``
+
+The rounds a run does, at most. With ``entries``, this bounds a run to ``entries × rounds`` deleted entries: 10 000 with
+the defaults, one run per janitor ``period`` (10 minutes by default), about 1 000 entries a minute.
+
+.. code-block:: yaml
+
+    http_cache:
+      reclamation:
+        grace: 600
+        entries: 1000
+
+
 storage
 -------
 

@@ -6,9 +6,11 @@ from .base import (
     BanMode,
     CacheRecords,
     EndpointStats,
+    Reclaimed,
     StoredVariant,
     VariantRecord,
     ban_prefixes,
+    covered_ranges,
     digest_of,
     endpoint_of,
 )
@@ -21,9 +23,11 @@ __all__ = [
     "CacheRecords",
     "EndpointStats",
     "MemoryCacheRecords",
+    "Reclaimed",
     "StoredVariant",
     "VariantRecord",
     "ban_prefixes",
+    "covered_ranges",
     "digest_of",
     "endpoint_of",
 ]

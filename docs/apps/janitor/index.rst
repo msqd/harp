@@ -25,6 +25,10 @@ with that prefix (and its own ``harp:blob-written:`` markers). Other application
 keys, whatever their type, are never touched. Blobs stored by a version before 0.13 sit under their bare id: they are
 still read, but the janitor does not see them (see :ref:`upgrading-0-13`).
 
+With the :doc:`HTTP cache </apps/http_cache/index>` loaded, each sweep also reclaims the bans of its invalidation log and
+the entries they cover, see :ref:`http-cache-reclamation`. With the janitor disabled, the cache storage does it in its own
+periodic sweep.
+
 A sweep works in short batches and gives the database connection back between them, so requests are served while it
 runs, even with the default in-memory storage that has a single connection.
 

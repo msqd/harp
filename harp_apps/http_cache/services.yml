@@ -42,6 +42,7 @@ services:
     type: [ !cfg "storage.type", "harp_apps.http_cache.storages.AsyncStorage" ]
     defaults:
       records: !ref [ "http_cache.records.sql", "http_cache.records.memory" ]
+      reclamation: !cfg "reclamation"
     arguments: [ !cfg "storage.arguments", { } ]
 
   # Records in the process, used by the cache storage if the storage application is not loaded (see services_sql.yml)
