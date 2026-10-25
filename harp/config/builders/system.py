@@ -8,6 +8,7 @@ from harp.asgi import ASGIKernel
 from harp.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_VIEW
 from harp.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.services import Container, Services
+from harp.sweeps import SweepRegistry
 from harp.typedefs import GlobalSettings
 from harp.utils.network import Bind
 from harp.views.json import on_json_response
@@ -178,7 +179,9 @@ class SystemBuilder:
         # Prepare and dispatch «bind» event.
         dispatcher = self.build_dispatcher()
         container = self.build_container(config, dispatcher)
-        await self.dispatch_bind_event(dispatcher, container, config)
+        sweeps = SweepRegistry()
+        container.add_instance(sweeps, SweepRegistry)
+        await self.dispatch_bind_event(dispatcher, container, config, sweeps)
 
         # todo: this looks like not the right place, should not be tightly coupled to the factory
         from harp.controllers import ProxyControllerResolver
@@ -189,6 +192,7 @@ class SystemBuilder:
         # Prepare and dispatch «bound» event.
         provider = container.build_provider()
         await self.dispatch_bound_event(dispatcher, provider, controller_resolver)
+        self.warn_about_unscheduled_sweeps(sweeps)
 
         # Build the kernel and dispatch «ready» event.
         event = await self.dispatch_ready_event(dispatcher, provider, controller_resolver)
@@ -223,12 +227,13 @@ class SystemBuilder:
         dispatcher: IAsyncEventDispatcher,
         container: Container,
         config,
+        sweeps: SweepRegistry | None = None,
     ) -> OnBindEvent:
         # dispatch "bind" event: this is the last chance to add services to the container
         try:
             return cast(
                 OnBindEvent,
-                await dispatcher.adispatch(EVENT_BIND, OnBindEvent(container, config)),
+                await dispatcher.adispatch(EVENT_BIND, OnBindEvent(container, config, sweeps)),
             )
         except Exception as exc:
             logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_BIND, exc)
@@ -249,6 +254,15 @@ class SystemBuilder:
         except Exception as exc:
             logger.fatal("💣 Fatal while dispatching «%s» event: %s", EVENT_BOUND, exc)
             raise
+
+    @staticmethod
+    def warn_about_unscheduled_sweeps(sweeps: SweepRegistry):
+        if sweeps.unscheduled:
+            logger.warning(
+                "🧹 Sweeps are declared but nothing schedules them, they will not run: %s. Load the janitor "
+                "application to run them.",
+                ", ".join(sweeps.unscheduled),
+            )
 
     async def dispatch_ready_event(
         self,

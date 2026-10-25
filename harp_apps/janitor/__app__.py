@@ -20,6 +20,7 @@ async def on_bound(event: OnBoundEvent):
     await event.provider.get(IStorage).ready()
 
     worker = event.provider.get(JanitorWorker)
+    worker.schedule()
     event.provider.set(JANITOR_WORKER_TASK, asyncio.create_task(worker.run()))
 
 

@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 
 from harp.models import Blob as BlobModel
 from harp_apps.janitor.settings import JanitorSettings
-from harp_apps.janitor.tests import worker_with_grace
+from harp_apps.janitor.tests import purge_old_transactions, worker_with_grace
 from harp_apps.janitor.worker import JanitorWorker
 from harp_apps.storage.models import Blob, Message
 from harp_apps.storage.models.transactions import transaction_tag_values_association_table
@@ -32,7 +32,7 @@ class TestJanitorWorker(StorageTestFixtureMixin):
         async with sql_storage.session_factory() as session:
             assert (await worker.compute_metrics(session))["storage.transactions"] == 3
 
-        await worker.delete_old_transactions()
+        await purge_old_transactions(sql_storage, worker.settings)
 
         async with sql_storage.session_factory() as session:
             assert (await worker.compute_metrics(session))["storage.transactions"] == 1
@@ -47,7 +47,7 @@ class TestJanitorWorker(StorageTestFixtureMixin):
             sql_storage, transaction_id=transaction.id, kind="misc", summary="x", headers=headers.id, body=body.id
         )
 
-        await worker.delete_old_transactions()
+        await purge_old_transactions(sql_storage, worker.settings)
         await worker.delete_orphan_blobs()
 
         async with sql_storage.session_factory() as session:
@@ -147,7 +147,7 @@ class TestJanitorWorker(StorageTestFixtureMixin):
         async with sql_storage.session_factory() as session:
             assert (await worker.compute_metrics(session))["storage.transactions"] == 3
 
-        await worker.delete_old_transactions()
+        await purge_old_transactions(sql_storage, worker.settings)
 
         async with sql_storage.session_factory() as session:
             assert (await worker.compute_metrics(session))["storage.transactions"] == 2
@@ -158,7 +158,7 @@ class TestJanitorWorker(StorageTestFixtureMixin):
         await self.create_transaction(sql_storage, started_at=datetime.now(UTC) - timedelta(days=3))
         await self.create_transaction(sql_storage, started_at=datetime.now(UTC) - timedelta(days=1))
 
-        await worker.delete_old_transactions()
+        await purge_old_transactions(sql_storage, worker.settings)
 
         async with sql_storage.session_factory() as session:
             assert (await worker.compute_metrics(session))["storage.transactions"] == 1
@@ -196,7 +196,7 @@ class TestRetentionKeepsSharedBlobs(StorageTestFixtureMixin):
                 sql_storage, transaction_id=transaction.id, kind="misc", summary="x", headers=headers.id, body=body.id
             )
 
-        await worker.delete_old_transactions()
+        await purge_old_transactions(sql_storage, worker.settings)
         await worker.delete_orphan_blobs()
 
         assert await blob_storage.get(body.id) == body

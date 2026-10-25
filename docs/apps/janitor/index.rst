@@ -23,6 +23,18 @@ The ``storage_blobs`` and ``storage_blobs_orphans`` metrics count what the blob 
 A sweep works in short batches and gives the database connection back between them, so requests are served while it
 runs, even with the default in-memory storage that has a single connection.
 
+Sweeps declared by applications
+:::::::::::::::::::::::::::::::
+
+The janitor does not know which applications need cleaning: applications declare their periodic cleanups as *sweeps*,
+and the janitor schedules them, one after the other, on every pass (or less often when the sweep declares a longer
+interval). It measures each sweep (runs, failures, items, duration; ``janitor_sweep_*`` Prometheus metrics, labelled by
+sweep), and a sweep that fails or exceeds its time budget never stops the others. The transaction purge described above
+is the sweep ``storage.transactions``, declared by the storage application.
+
+If the janitor is disabled, declared sweeps do not run, and startup logs a warning naming them. To declare a sweep from
+your own application, see :doc:`/contribute/sweeps`.
+
 .. toctree::
     :hidden:
     :maxdepth: 1

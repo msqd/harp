@@ -1,0 +1,1 @@
+Applications now declare their periodic cleanups as sweeps (name, interval, budget, function) in the core, and the janitor schedules and measures them without knowing any application. The transaction purge is declared by storage, and startup warns when sweeps are declared but no janitor is loaded.

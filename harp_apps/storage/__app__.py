@@ -12,6 +12,7 @@ from harp.config.events import OnBindEvent, OnBoundEvent, OnShutdownEvent
 from harp_apps.storage.engines import warn_if_database_is_deprecated
 from harp_apps.storage.models import Base
 from harp_apps.storage.settings import StorageSettings
+from harp_apps.storage.sweeps import transactions_purge_sweep
 from harp_apps.storage.types import IStorage
 from harp_apps.storage.utils.migrations import mask_failure
 from harp_apps.storage.worker import StorageAsyncWorkerQueue
@@ -71,6 +72,19 @@ async def _boot_storage(event: OnBoundEvent):
     worker = event.provider.get(StorageAsyncWorkerQueue)
     if event.dispatcher:
         worker.register_events(event.dispatcher)
+
+    _declare_sweeps(event, storage)
+
+
+def _declare_sweeps(event: OnBoundEvent, storage: IStorage):
+    # The retention period is the janitor's `old_after` setting. It is read when the sweep runs, which only happens
+    # under the janitor, so the setting is always there by then.
+    from harp_apps.janitor.settings import JanitorSettings
+
+    def old_after():
+        return event.provider.get(JanitorSettings).old_after_delta
+
+    event.sweeps.declare(transactions_purge_sweep(storage, old_after))
 
 
 async def on_shutdown(event: OnShutdownEvent):
