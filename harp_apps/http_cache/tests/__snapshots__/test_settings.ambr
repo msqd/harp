@@ -89,6 +89,27 @@
         'title': 'CachePolicySettings',
         'type': 'object',
       }),
+      'PurgeSettings': dict({
+        'additionalProperties': False,
+        'description': '``PURGE`` removes one cache entry, for the peers allowed to ask.',
+        'properties': dict({
+          'allow': dict({
+            'items': dict({
+              'format': 'ipvanynetwork',
+              'type': 'string',
+            }),
+            'title': 'Allow',
+            'type': 'array',
+          }),
+          'enabled': dict({
+            'default': False,
+            'title': 'Enabled',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'PurgeSettings',
+        'type': 'object',
+      }),
       'Service': dict({
         'additionalProperties': True,
         'description': 'A settings base class for service definitions.',
@@ -171,6 +192,9 @@
           }),
           'type': 'hishel.SpecificationPolicy',
         }),
+      }),
+      'purge': dict({
+        '$ref': '#/$defs/PurgeSettings',
       }),
       'storage': dict({
         '$ref': '#/$defs/Service',
@@ -284,6 +308,27 @@
         'title': 'CachePolicySettings',
         'type': 'object',
       }),
+      'PurgeSettings': dict({
+        'additionalProperties': False,
+        'description': '``PURGE`` removes one cache entry, for the peers allowed to ask.',
+        'properties': dict({
+          'allow': dict({
+            'items': dict({
+              'format': 'ipvanynetwork',
+              'type': 'string',
+            }),
+            'title': 'Allow',
+            'type': 'array',
+          }),
+          'enabled': dict({
+            'default': False,
+            'title': 'Enabled',
+            'type': 'boolean',
+          }),
+        }),
+        'title': 'PurgeSettings',
+        'type': 'object',
+      }),
       'Service': dict({
         'additionalProperties': True,
         'description': 'A settings base class for service definitions.',
@@ -366,6 +411,9 @@
           }),
           'type': 'hishel.SpecificationPolicy',
         }),
+      }),
+      'purge': dict({
+        '$ref': '#/$defs/PurgeSettings',
       }),
       'storage': dict({
         '$ref': '#/$defs/Service',
