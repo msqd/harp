@@ -1,3 +1,4 @@
+import copy
 import os
 from typing import Iterable, Self, cast
 
@@ -19,12 +20,30 @@ from .system import System
 logger = get_logger(__name__)
 
 
+class _ReadOnce:
+    """Wraps a file source so it is parsed once, then served from memory (a copy, as merging mutates)."""
+
+    def __init__(self, source):
+        self._source = source
+        self._values = None
+        self._read = False
+
+    def __repr__(self):
+        return repr(self._source)
+
+    def get_values(self):
+        if not self._read:
+            self._values = self._source.get_values()
+            self._read = True
+        return copy.deepcopy(self._values)
+
+
 def _get_system_configuration_sources():
     for _candidate in DEFAULT_SYSTEM_CONFIG_FILENAMES:
         if os.path.exists(_candidate):
             from harp.utils.config.yaml import YAMLFile
 
-            yield YAMLFile(_candidate)
+            yield _ReadOnce(YAMLFile(_candidate))
             break
 
 
@@ -88,7 +107,8 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
 
         super().__init__()
 
-        for source in _get_system_configuration_sources():
+        self._system_sources = list(_get_system_configuration_sources())
+        for source in self._system_sources:
             self._replace_applications_from(source)
 
     def enable_application(self, name: str):
@@ -151,6 +171,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         else:
             raise ValueError(f"Unknown file extension: {ext}")
 
+        source = _ReadOnce(source)
         self._replace_applications_from(source)
         self.add_source(source)
 
@@ -203,7 +224,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
             EnvVars(prefix="DEFAULT__HARP_"),
             MapSource(self.applications.defaults()),
             MapSource(self._defaults or {}),
-            *_get_system_configuration_sources(),
+            *self._system_sources,
             *self._sources,
         )
 
