@@ -69,14 +69,18 @@ async def test_a_foreign_key_race_is_the_one_integrity_error_that_is_retried(sql
         record = make_record("http://api/a")
         with pytest.raises(IntegrityError) as foreign_key:
             await conn.execute(
-                insert(CacheVariant).values(**{name: getattr(record, name) for name in record.__slots__})
+                insert(CacheVariant).values(
+                    **{name: getattr(record, name) for name in CacheVariant.__table__.columns.keys()}
+                )
             )
         await conn.rollback()
     first = await put(sql_records, make_record("http://api/b"))
     with pytest.raises(IntegrityError) as duplicate:
         async with sql_records.engine.begin() as conn:
             other = make_record("http://api/b", variant="x", entry_id=first.entry_id)
-            await conn.execute(insert(CacheVariant).values(**{n: getattr(other, n) for n in other.__slots__}))
+            await conn.execute(
+                insert(CacheVariant).values(**{n: getattr(other, n) for n in CacheVariant.__table__.columns.keys()})
+            )
 
     assert _is_concurrency(foreign_key.value) is True
     assert _is_concurrency(duplicate.value) is False

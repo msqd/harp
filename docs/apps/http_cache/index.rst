@@ -241,6 +241,48 @@ with a ``2xx`` or ``3xx`` status, HARP invalidates:
 An error response (``4xx``, ``5xx``) invalidates nothing. Invalidation applies within the endpoint that
 handled the request, like the cache itself, and also when the request carries ``Cache-Control: no-store``.
 
+Each of these URIs is one *hard* ban on its cache key, see :ref:`http-cache-invalidation-log`.
+
+
+.. _http-cache-invalidation-log:
+
+The invalidation log
+::::::::::::::::::::
+
+Invalidating does not cost a scan of what the cache holds. It appends a *ban* to a numbered log kept in the same store as
+the entries, and every lookup checks the bans that cover the key it reads, in the same round trip. A ban covers:
+
+- **a cache key**: one URL of one endpoint, query string included;
+- **an endpoint**: everything the endpoint cached;
+- **everything**: all endpoints.
+
+A ban is *soft* or *hard*, as RFC 9111 §4.4 allows either:
+
+- a **soft** ban makes the entries stale: they stay, and the next request revalidates them with their validators (``ETag``,
+  ``Last-Modified``). A ``304 Not Modified`` serves the stored body again, and the entry is fresh from then on. An
+  entry with no validator is fetched again;
+- a **hard** ban makes the entries unusable. Invalidation by unsafe requests and ``PURGE`` are hard bans on one key, and
+  delete the entries of that key at once. Entries covered by a hard ban on an endpoint or on everything are not served,
+  and are deleted when they expire.
+
+Bans are numbered by a counter kept in the shared store, in the order they commit. A response is stamped with the counter
+read just before the request went to the origin, and a ban numbered above the stamp covers it. So a response fetched
+before an invalidation is never stored after it, nor served as fresh if it got stored in the meantime, whichever HARP
+instance fetched or invalidated. The log is shared by the instances using the same storage database; with the in-memory
+records (no ``storage`` application), it lives in the process.
+
+.. note::
+
+    This version has no way yet to issue a ban on an endpoint or on everything from outside the code, and a ban is not
+    yet removed once the entries it covers are gone. Each successful unsafe request adds one ban per invalidated URI,
+    and each ``PURGE`` one, and they stay until a later version reclaims them: the log grows with the number of
+    writes through the proxy.
+
+A soft-banned entry is always revalidated before it is served, whatever freshness it stated (``max-age``, ``Expires``)
+and even when stale responses are allowed. A ban that cannot be recorded is reported: ``PURGE`` answers ``503`` rather
+than ``200``. For the invalidation that follows a write, which comes after the response is ready, the failure is
+logged and the response is not affected.
+
 
 .. _http-cache-purge:
 
@@ -263,7 +305,8 @@ It is **off by default**. Turn it on; by default only ``127.0.0.1`` may use it, 
         enabled: true
         allow: ["127.0.0.1", "10.0.0.0/8"]  # addresses or CIDR ranges
 
-With purge enabled, the request is answered by HARP and **never sent upstream**:
+With purge enabled, the request is answered by HARP and **never sent upstream**. The purge is recorded whether or not
+an entry was found, so that a response being fetched at that moment is not stored either:
 
 .. list-table::
     :header-rows: 1
@@ -278,9 +321,11 @@ With purge enabled, the request is answered by HARP and **never sent upstream**:
       - Nothing is cached for that URL on that endpoint.
     * - ``403``
       - The peer is not in ``allow``. Nothing is removed.
+    * - ``503``
+      - The purge could not be recorded. Nothing is known to be removed: try again.
 
-The same path on another endpoint is not touched. There is no wildcard or prefix purge, and no purge across HARP
-instances. With purge disabled (the default), a ``PURGE`` request is proxied like any other request.
+The same path on another endpoint is not touched. There is no wildcard or prefix purge. The purge is a hard ban on the
+key, so it applies to every HARP instance sharing the storage database. With purge disabled (the default), a ``PURGE`` request is proxied like any other request.
 
 .. warning::
 

@@ -20,11 +20,13 @@ from harp_apps.http_cache.settings import PurgeSettings
 from harp_apps.http_cache.storages import (
     REQUEST_URL,
     MARKERS_METADATA,
+    FETCH_STAMP,
     MAX_BODY_SIZE_METADATA,
+    drop_harp_headers,
     REDACTION_METADATA,
-    STAMP_METADATA,
     restore_date,
 )
+from harp_apps.http_cache.records import BanMode
 from harp_apps.http_cache.streams import ClosableByteStream, UpstreamBody
 
 logger = get_logger(__name__)
@@ -202,10 +204,9 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
                 MAX_BODY_SIZE_METADATA: _max_recorded_body_size(request),
                 REDACTION_METADATA: request.extensions.get("harp", {}).get("redaction"),
                 MARKERS_METADATA: request.extensions.get("harp", {}).get("markers"),
-                # Taken before going upstream: what the origin answers may predate an invalidation that lands meanwhile.
-                STAMP_METADATA: self.storage.stamp,
             },
         )
+        FETCH_STAMP.set(None)  # this request has not been to the origin yet, see request_sender
 
         if _forbids_storage(request):
             logger.debug(
@@ -233,7 +234,13 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         """Drop the stored entries for the resources a successful unsafe request has changed (RFC 9111 §4.4)."""
         endpoint_name = _endpoint_name(request)
         for url in _invalidated_urls(request, response):
-            await self.storage.invalidate(await self._key_for(url, endpoint_name))
+            try:
+                await self.storage.invalidate(await self._key_for(url, endpoint_name), mode=BanMode.HARD)
+            except Exception:
+                # the write went through and its response is on its way: a cache that cannot be invalidated is
+                # logged, it does not fail the request
+                logger.warning(f"Failed to record cache invalidation: url={url.copy_with(query=None)}", exc_info=True)
+                continue
             logger.debug(
                 f"Cache invalidated by {request.method} {request.url.copy_with(query=None)}: url={url.copy_with(query=None)}"
             )
@@ -250,9 +257,16 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
             )
             return httpx.Response(403, text="Forbidden")
         key = await self._key_for(request.url.copy_with(fragment=None), _endpoint_name(request))
-        if not await self.storage.get_entries(key):
+        found = bool(await self.storage.get_entries(key))
+        # Banned either way: a fetch in flight may be about to store the first entry, and a lookup that failed saw
+        # nothing for want of looking.
+        try:
+            await self.storage.invalidate(key, mode=BanMode.HARD)
+        except Exception:
+            logger.error(f"Cache purge failed: url={request.url.copy_with(query=None)}", exc_info=True)
+            return httpx.Response(503, text="Purge failed")
+        if not found:
             return httpx.Response(404, text="Not in cache")
-        await self.storage.invalidate(key)
         logger.info(f"Cache purged: url={request.url.copy_with(query=None)}")
         return httpx.Response(200, text="Purged")
 
@@ -290,11 +304,16 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
 
         ``content-length`` is deliberately kept: it describes the body being stored, and the
         controller drops it on the way out to the client anyway.
+
+        The invalidation counter is read just before going upstream, for the response (or the confirmation of a stored
+        one) not to outlive an invalidation that lands while the origin answers: see :data:`FETCH_STAMP`.
         """
+        FETCH_STAMP.set(await self.storage.stamp())
         httpx_response = await self.next_transport.handle_async_request(_internal_to_httpx(request.unwrap()))
         if httpx_response.status_code == 304:
             await httpx_response.aread()  # never leave a stream unconsumed
         response = _httpx_to_internal(httpx_response)
+        drop_harp_headers(response.headers)  # before HARP writes its own: see _expire_malformed_expires
         dropped = hop_by_hop_names(response.headers) - {"content-length"}
         for name in [name for name in response.headers if name.lower() in dropped]:
             del response.headers[name]

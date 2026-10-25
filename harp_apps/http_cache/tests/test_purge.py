@@ -1,5 +1,6 @@
 """PURGE removes one cache entry, behind an opt-in allow-list of peer addresses (#801)."""
 
+import asyncio
 from ipaddress import ip_network
 
 import httpx
@@ -10,6 +11,8 @@ from harp_apps.http_cache.settings import PurgeSettings
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
 from harp_apps.http_cache.records import MemoryCacheRecords
+from harp_apps.http_cache.tests.test_invalidation import SlowOrigin, _until
+from harp_apps.http_cache.tests.test_storage_failure import FailingRecords
 
 HOST = "http://origin.test"
 
@@ -167,3 +170,62 @@ class TestPurgeDisabled:
             response = await client.request("PURGE", f"{HOST}/item")
         assert response.text == "body"
         assert origin.count("PURGE", "/item") == 1
+
+
+def make_transport_on(records, origin) -> AsyncCacheTransport:
+    return AsyncCacheTransport(
+        next_transport=origin, storage=AsyncStorage(records), policy=SpecificationPolicy(), purge=ENABLED
+    )
+
+
+@pytest.mark.asyncio
+class TestPurgeIsAlwaysABan:
+    """Whether or not an entry was found: a fetch may be in flight that will store one."""
+
+    async def test_a_purge_that_finds_nothing_is_recorded(self, records):
+        async with make_client(make_transport_on(records, Origin())) as client:
+            response = await client.request("PURGE", f"{HOST}/item")
+
+        assert response.status_code == 404
+        assert await records.counter() == 1
+
+    async def test_a_refused_peer_records_nothing(self, records):
+        async with make_client(make_transport_on(records, Origin()), peer="192.168.0.1") as client:
+            await client.request("PURGE", f"{HOST}/item")
+
+        assert await records.counter() == 0
+
+    async def test_the_first_fetch_in_flight_is_not_stored(self, records):
+        origin = SlowOrigin()
+        async with make_client(make_transport_on(records, origin)) as client:
+            slow_get = asyncio.create_task(client.get(f"{HOST}/item"))
+            await _until(lambda: origin.gets("/item") == 1)
+
+            assert (await client.request("PURGE", f"{HOST}/item")).status_code == 404
+            origin.release.set()
+            await slow_get
+
+            origin.slow_paths.clear()
+            await client.get(f"{HOST}/item")
+
+        assert origin.gets("/item") == 2
+
+    async def test_a_purge_that_cannot_be_recorded_does_not_answer_200(self, caplog):
+        records = FailingRecords()
+        async with make_client(make_transport_on(records, Origin())) as client:
+            await client.get(f"{HOST}/item")
+            records.fail("ban")
+
+            response = await client.request("PURGE", f"{HOST}/item")
+
+        assert response.status_code == 503
+        assert "Cache purge failed" in caplog.text
+
+    async def test_a_purge_whose_lookup_failed_is_still_recorded(self):
+        records = FailingRecords()
+        async with make_client(make_transport_on(records, Origin())) as client:
+            records.fail("get")
+
+            await client.request("PURGE", f"{HOST}/item")
+
+        assert await records.counter() == 1

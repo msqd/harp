@@ -5,9 +5,9 @@ import uuid
 import weakref
 from contextvars import ContextVar
 from contextlib import asynccontextmanager
-from collections import OrderedDict
 from dataclasses import replace
 from email.utils import formatdate
+import httpx
 from hishel import AsyncBaseStorage, Entry, EntryMeta, Request, Response
 from hishel._core._spec import parse_date
 from hishel._utils import make_async_iterator
@@ -22,7 +22,7 @@ from harp_apps.storage.constants import (
 )
 from .coalescing import STORED_METADATA
 from .adapters import to_entry, to_record
-from .records import CacheRecords, endpoint_of
+from .records import BanKind, BanMode, CacheRecords, endpoint_of
 from .streams import StoredOnceRead
 
 # How many expired entries the sweep deletes at once.
@@ -55,9 +55,13 @@ REDACTION_METADATA = "harp_redaction"
 #: Request metadata key holding the markers of the request's transaction.
 MARKERS_METADATA = "harp_markers"
 
-#: Request metadata key holding the storage's :attr:`~AsyncStorage.stamp` when the request set out. A response is not
-#: stored if its key was invalidated after that.
-STAMP_METADATA = "harp_invalidation_stamp"
+#: The storage's :meth:`~AsyncStorage.stamp` read before the request went to the origin, set by the transport. What the
+#: origin answers may predate an invalidation that lands meanwhile: an entry made of it carries this stamp, and a ban
+#: numbered above it covers the entry.
+FETCH_STAMP: ContextVar[tp.Optional[int]] = ContextVar("harp_http_cache_fetch_stamp", default=None)
+
+#: Schemes an endpoint is reached by: a cache key starts with the scheme of the request, an endpoint ban covers each.
+ENDPOINT_SCHEMES = ("http", "https")
 
 #: Markers that keep a transaction's messages out of storage, the cache included. ``skip-storage`` is not one:
 #: the storage worker sets it itself under pressure, and load must not switch the cache off.
@@ -140,20 +144,75 @@ NEVER_FRESH_DATE = "Thu, 01 Jan 1970 00:00:00 GMT"
 ORIGINAL_DATE = "x-harp-original-date"
 
 
-def show_as_never_fresh(response: Response) -> None:
+#: What hishel is shown instead of the freshness an entry stated: no lifetime, and no staleness to be allowed.
+#: ``must-revalidate`` is what stops ``allow_stale`` from serving it as it is.
+#: The last directive is HARP's own, so that what an origin states, ``max-age=0, must-revalidate`` included, is never
+#: mistaken for what HARP showed.
+NEVER_FRESH_CACHE_CONTROL = "max-age=0, must-revalidate, x-harp-shown"
+
+#: Carry the stored ``Cache-Control`` and ``Expires`` of an entry shown as never fresh.
+STORED_CACHE_CONTROL = "x-harp-stored-cache-control"
+STORED_EXPIRES = "x-harp-stored-expires"
+
+
+def show_as_never_fresh(response: Response, *, revalidate: bool = False) -> None:
     """Make hishel see an entry as stale, so it asks the origin before serving it, whatever the entry says.
 
     hishel knows no "stored but never fresh" entry, and ages one from its ``Date`` alone. Hence this one is shown
-    as dated long ago, and its real ``Date`` kept aside: see :func:`restore_date`.
+    as dated long ago, and its real ``Date`` kept aside: see :func:`restore_date`. Such an entry may still be served
+    stale where the operator allows it (``allow_stale``).
+
+    With ``revalidate``, the entry must be revalidated whatever the policy: hishel would take an ``Expires`` or a
+    ``max-age`` for what they say, and serve a stale entry if told to allow it. It is shown with a freshness lifetime
+    of 0 and ``must-revalidate``, and its real ``Cache-Control`` and ``Expires`` are kept aside. Validators are left.
     """
     if "date" in response.headers:
         response.headers[ORIGINAL_DATE] = response.headers["date"]
         del response.headers["date"]
     response.headers["date"] = NEVER_FRESH_DATE
+    if revalidate:
+        _show_as_always_revalidated(response)
+
+
+def _show_as_always_revalidated(response: Response) -> None:
+    headers = response.headers
+    # always set, empty when there was none: it is what tells that the entry was shown. Assigning appends, hence the
+    # deletes: nothing planted under these names survives.
+    _delete(headers, STORED_CACHE_CONTROL, STORED_EXPIRES)
+    headers[STORED_CACHE_CONTROL] = ", ".join(headers.get_list("cache-control") or [])
+    _delete(headers, "cache-control")
+    headers["cache-control"] = NEVER_FRESH_CACHE_CONTROL
+    if "expires" in headers:
+        headers[STORED_EXPIRES] = headers["expires"]
+        del headers["expires"]
+
+
+def _delete(headers, *names: str) -> None:
+    for name in names:
+        if name in headers:
+            del headers[name]
+
+
+def drop_harp_headers(headers) -> None:
+    """Remove every ``x-harp-*`` header: they are HARP's, and an origin does not get to write them."""
+    _delete(headers, *{name for name in headers if name.lower().startswith("x-harp-")})
 
 
 def restore_date(headers) -> None:
-    """Undo :func:`show_as_never_fresh`: a ``304`` that brought its own ``Date`` keeps it, else the stored one is back."""
+    """Undo :func:`show_as_never_fresh`: a ``304`` that brought its own ``Date``, ``Cache-Control`` or ``Expires``
+    keeps it, else the stored one is back."""
+    if STORED_CACHE_CONTROL in headers:
+        original = headers[STORED_CACHE_CONTROL]
+        del headers[STORED_CACHE_CONTROL]
+        if headers.get("cache-control") == NEVER_FRESH_CACHE_CONTROL:  # a 304 stating its own is not this one
+            del headers["cache-control"]
+            if original:
+                headers["cache-control"] = original
+    if STORED_EXPIRES in headers:
+        original = headers[STORED_EXPIRES]
+        del headers[STORED_EXPIRES]
+        if "expires" not in headers:
+            headers["expires"] = original
     if ORIGINAL_DATE not in headers:
         return
     original = headers[ORIGINAL_DATE]
@@ -166,9 +225,8 @@ def restore_date(headers) -> None:
             headers["age"] = str(max(0, int(time.time() - (parse_date(original) or time.time()))))
 
 
-#: How many invalidated keys the storage remembers. Past it the oldest are forgotten, and every request that set out
-#: before the newest forgotten one is treated as invalidated: some responses go unstored, none is stored stale.
-INVALIDATION_LOG_SIZE = 8192
+class InvalidationError(Exception):
+    """An invalidation could not be recorded: the cache still serves what it should not."""
 
 
 class AsyncStorage(AsyncBaseStorage):
@@ -197,9 +255,6 @@ class AsyncStorage(AsyncBaseStorage):
         self._sweep_task: tp.Optional[asyncio.Task] = None
         self._refusing: set[str] = set()
         self._refused: dict[str, int] = {}
-        self._stamp = 0
-        self._invalidated_at: OrderedDict[str, int] = OrderedDict()
-        self._forgotten_up_to = 0
         self._key_locks: weakref.WeakValueDictionary[str, asyncio.Lock] = weakref.WeakValueDictionary()
 
     @asynccontextmanager
@@ -209,26 +264,68 @@ class AsyncStorage(AsyncBaseStorage):
         async with lock:
             yield
 
-    @property
-    def stamp(self) -> int:
-        """Counts the invalidations so far: read when a request sets out, it tells later whether its key was invalidated since."""
-        return self._stamp
+    async def stamp(self) -> int:
+        """The invalidation counter, shared by every instance: read before going to the origin, it tells later whether
+        what the origin answered was invalidated meanwhile.
 
-    def _invalidated_since(self, key: str, stamp: int) -> bool:
-        return self._invalidated_at.get(key, self._forgotten_up_to) > stamp
+        When the counter cannot be read this is ``0``, which every ban is above: whatever is stored from that fetch is
+        invalidated by the first ban that covers it.
+        """
+        try:
+            return await self._records.counter()
+        except Exception:
+            logger.warning("Failed to read the cache invalidation counter", exc_info=True)
+            return 0
 
-    async def invalidate(self, key: str) -> None:
-        """Drop every variant of a key, and refuse the responses of requests that set out before (RFC 9111 §4.4)."""
+    async def invalidate(self, key: str, *, mode: BanMode) -> None:
+        """Invalidate every variant of a cache key (RFC 9111 §4.4), and the responses of fetches that set out before.
+
+        A soft ban keeps the variants, which are revalidated before they are served. A hard ban makes them unusable,
+        and they are deleted.
+
+        Raises:
+            InvalidationError: when the ban could not be recorded, and whoever asked must not be told otherwise. A hard
+                invalidation still deletes the variants it can, so that the cache serves less of what it should not. A
+                hard ban whose entries could not be deleted is recorded, hence done: they are not served, and the
+                failure is logged.
+        """
         async with self._locked(key):
-            self._stamp += 1
-            self._invalidated_at[key] = self._stamp
-            self._invalidated_at.move_to_end(key)
-            while len(self._invalidated_at) > INVALIDATION_LOG_SIZE:
-                self._forgotten_up_to = self._invalidated_at.popitem(last=False)[1]
             try:
-                await self._records.delete_key(key)
-            except Exception:
-                logger.warning(f"Failed to remove cache entry: key={key}", exc_info=True)
+                await self._ban(BanKind.EXACT, key, mode, f"key {key}")
+            finally:
+                if mode is BanMode.HARD:
+                    try:
+                        await self._records.delete_key(key)
+                    except Exception:
+                        logger.warning(f"Failed to remove cache entry: key={key}", exc_info=True)
+
+    async def invalidate_endpoint(self, endpoint: str, *, mode: BanMode) -> None:
+        """Invalidate everything an endpoint holds. Entries stay in the store until they expire, but are not served.
+
+        Raises:
+            InvalidationError: when a ban could not be recorded.
+        """
+        for scheme in ENDPOINT_SCHEMES:
+            try:
+                # spelled as the cache keys are: httpx lowercases the host, and so must this
+                prefix = str(httpx.URL(f"{scheme}://{endpoint}/"))
+            except httpx.InvalidURL as exc:
+                raise InvalidationError(f"Cache invalidation of endpoint {endpoint!r}: not a valid host") from exc
+            await self._ban(BanKind.PREFIX, prefix, mode, f"endpoint {endpoint}")
+
+    async def invalidate_all(self, *, mode: BanMode) -> None:
+        """Invalidate everything the cache holds. Entries stay in the store until they expire, but are not served.
+
+        Raises:
+            InvalidationError: when the ban could not be recorded.
+        """
+        await self._ban(BanKind.PREFIX, "", mode, "everything")
+
+    async def _ban(self, kind: BanKind, prefix: str, mode: BanMode, what: str) -> None:
+        try:
+            await self._records.ban(kind, prefix, mode)
+        except Exception as exc:
+            raise InvalidationError(f"Cache invalidation of {what} could not be recorded") from exc
 
     def _is_expired(self, stored_at: float) -> bool:
         return self._ttl is not None and time.time() - stored_at > self._ttl
@@ -272,17 +369,16 @@ class AsyncStorage(AsyncBaseStorage):
         except Exception:
             logger.exception("Cache ttl sweep failed")
 
-    async def _store_variant(self, entry: Entry, redaction: Redaction, stamp: tp.Optional[int]) -> bool:
+    async def _store_variant(self, entry: Entry, redaction: Redaction, stamp: int) -> bool:
         """Add an entry to the variants of its key: it replaces the variant it supersedes, and pushes out the oldest.
 
         Nothing is added if the key was invalidated since ``stamp``: the response may show the resource as it was.
         """
-        record, body = await to_record(entry, redaction)
+        record, body = await to_record(entry, redaction, stamp=stamp)
         async with self._locked(record.key):
-            if stamp is not None and self._invalidated_since(record.key, stamp):
+            if not await self._records.put(record, body, keep=MAX_VARIANTS_PER_KEY):
                 logger.debug(f"Cache entry not retained (key invalidated while in flight): key={record.key}")
                 return False
-            await self._records.put(record, body, keep=MAX_VARIANTS_PER_KEY)
         return True
 
     async def create_entry(
@@ -356,12 +452,15 @@ class AsyncStorage(AsyncBaseStorage):
         if limit is None:
             limit = DEFAULT_MAX_RECORDED_BODY_SIZE
 
+        # Read now, while the context is the request's: the body ends in the client's.
+        stamp = FETCH_STAMP.get() or 0
+
         async def store(body: bytes) -> None:
             try:
                 stored = await self._store_variant(
                     replace(entry, response=replace(entry.response, stream=make_async_iterator([body]))),
                     _redaction_of(request),
-                    request.metadata.get(STAMP_METADATA),
+                    stamp,
                 )
             except Exception:
                 # The upstream served this response correctly: a cache that cannot keep it must not break it.
@@ -432,9 +531,9 @@ class AsyncStorage(AsyncBaseStorage):
                 logger.debug(f"Cache entry expired: key={key}")
                 await self._prune(key, [variant.record.entry_id for variant in stored if variant not in live])
             entries = [self._with_request_url(to_entry(variant)) for variant in live]
-            for entry in entries:
-                if self._is_never_fresh(entry.response):
-                    show_as_never_fresh(entry.response)
+            for variant, entry in zip(live, entries):
+                if variant.record.stale or self._is_never_fresh(entry.response):
+                    show_as_never_fresh(entry.response, revalidate=variant.record.stale)
                 logger.debug(f"Cache hit: key={key}, method={entry.request.method}, entry_id={entry.id}")
             if not entries:
                 logger.debug(f"Cache miss: key={key}")
@@ -491,8 +590,8 @@ class AsyncStorage(AsyncBaseStorage):
                     return None
 
                 entry = to_entry(stored)
-                if self._is_never_fresh(entry.response):
-                    show_as_never_fresh(entry.response)
+                if stored.record.stale or self._is_never_fresh(entry.response):
+                    show_as_never_fresh(entry.response, revalidate=stored.record.stale)
                 updated = new_entry if isinstance(new_entry, Entry) else new_entry(entry)
                 # the stored url holds no secret and is not the update's to change
                 updated = replace(updated, request=replace(updated.request, url=entry.request.url))
@@ -501,8 +600,13 @@ class AsyncStorage(AsyncBaseStorage):
                     # A revalidation brought in a header that must not be stored: the entry goes, not the header.
                     await self._records.delete_entry(id)
                     return None
-                record, body = await to_record(updated)
-                await self._records.put(record, body, keep=MAX_VARIANTS_PER_KEY, replaces=id)
+                # What the origin just confirmed is current as of the fetch that asked it, which may be later than the
+                # stamp of the entry: a soft ban between the two is lifted. Without a fetch, the stamp stays.
+                stamp = max(located.stamp, FETCH_STAMP.get() or 0)
+                record, body = await to_record(updated, stamp=stamp)
+                if not await self._records.put(record, body, keep=MAX_VARIANTS_PER_KEY, replaces=id):
+                    logger.debug(f"Cache entry not updated (invalidated while in flight): key={key}, entry_id={id}")
+                    return None
         except Exception:
             logger.warning(f"Failed to update cache entry: entry_id={id}", exc_info=True)
             return None

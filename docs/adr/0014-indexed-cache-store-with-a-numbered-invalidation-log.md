@@ -69,8 +69,7 @@ is accepted before 1.0.
   `entry_id`, status, `vary`, body digest and size, instants, serialized heads), `http_cache_bodies` (digest, data)
   and `http_cache_stats` (endpoint, entries, bytes), in the `http_cache` alembic branch. Keys and resource endpoints
   are `COLLATE "C"` on PostgreSQL, so records list in `(endpoint, key)` order, bytewise.
-- **`stamp` on variant records is reserved for the invalidation log** (#1596): the counter read before the origin
-  fetch. It is stored as given, `0` until then; nothing reads it.
+- **`stamp` on variant records** is the invalidation counter read before the origin fetch (#1596, below).
 - **Counters** are updated in the transaction of each write, expiry and deletion, last, so the row of an endpoint is
   locked for the least time. The largest entries are read from an index on `(endpoint, body_size)`.
 - **Writers of a key** take turns by locking its resource row (`SELECT … FOR UPDATE`). Every write locks the resource
@@ -84,6 +83,51 @@ is accepted before 1.0.
   grace period. During a rolling upgrade, an instance still on the old version keeps writing and reading blobs: the
   entries it stores are not seen by the new instances, and the janitor of a new instance deletes them once they are
   older than the grace. Those entries miss and are fetched again from the origin.
+
+## As implemented in the invalidation log (#1596)
+
+- **Tables** `http_cache_bans` `(seq, kind, prefix, mode, created_at)`, primary key `seq`, index `(prefix, seq)`, and
+  `http_cache_counter`, one row holding the number of the last ban. `kind` is `exact` (the prefix is the whole cache
+  key, query hash included) or `prefix`. An endpoint is a `prefix` ban on `scheme://endpoint/`, one per scheme
+  (`http`, `https`), and everything is the empty prefix. A path prefix (#1597) is a `prefix` ban cut after a `/`; the
+  lookup already tests every such prefix of a key (`ban_prefixes`), so only the issuing and the reclamation remain.
+- **Numbering** is `INSERT … ON CONFLICT DO UPDATE SET value = value + 1 RETURNING value` on the counter row, in the
+  transaction that inserts the ban, so the row stays locked until the ban commits: bans commit in order, and a counter
+  read by a fetch has every lower ban visible. The row is created by that first upsert, which is what lets SQLite (never
+  migrated) work.
+- **Lookup** returns the variants of a key that no *hard* ban covers with a number above their stamp, in the same
+  statement (`NOT EXISTS`), and flags `stale` those a *soft* ban covers. The storage shows a stale variant to hishel as
+  never fresh, the mechanism already used for entries kept for revalidation, so the origin is asked with the validators.
+  Memory keeps the highest number per `(kind, prefix, mode)` and checks the key's prefixes. Both are O(depth of the key).
+- **The stamp** is read in `AsyncCacheTransport.request_sender`, just before the request goes upstream (a miss or a
+  revalidation), and handed to the storage in a context variable (`FETCH_STAMP`): hishel gives `update_entry` no
+  request. Hits do not read it. A new entry carries it; a 304 raises the stamp of the variant to the stamp of the
+  revalidating fetch if higher, which is what makes a soft-banned entry fresh again. When the counter cannot be read
+  the stamp is `0`, which every ban is above. The read is not cached: one primary key lookup per origin fetch.
+- **The fill race** is refused twice: `put` returns `False` before writing when a ban covers the key above the record's
+  stamp (a store, or a 304 freshening), and the lookup hides or marks stale what got stored in the window between the
+  check and the commit. The second is what the correctness rests on; the first spares a dead row.
+- **Unsafe-method invalidation and `PURGE`** are a hard `exact` ban on the cache key, and delete its variants as
+  before. `PURGE` bans whether or not it found an entry, since a first fetch may be in flight. **Each successful unsafe
+  request therefore adds one ban per invalidated URI (the target, `Location`, `Content-Location`), and each `PURGE`
+  one, until reclamation (#1597) retires them.**
+- **Failures.** `AsyncStorage.invalidate`, `invalidate_endpoint` and `invalidate_all` raise `InvalidationError` when a
+  ban cannot be recorded: an invalidation somebody asked for is never reported done when it was not (`PURGE` answers
+  `503`); a hard invalidation whose ban failed still deletes the key's variants, best effort. A hard ban whose delete fails is recorded, hence done, and the failure is logged. The automatic invalidation
+  after a write catches the error and logs it: the response is ready and must not break (#1272).
+- **A soft ban is always revalidated.** Presented as a past `Date` alone, an entry fresh by `Expires` or by a huge
+  `max-age` stayed fresh in hishel, and `allow_stale` served it as it was. A soft-banned entry is now shown with
+  `Cache-Control: max-age=0, must-revalidate, x-harp-shown` and no `Expires`, its own values kept in `x-harp-stored-*`
+  headers and put back after the 304 unless the 304 states them again (the extra directive is what tells HARP's value
+  from an origin's `max-age=0, must-revalidate`). Origin responses lose every `x-harp-*` header before anything is
+  stored. Entries kept only for their validator (heuristics off) are
+  shown as before, by `Date` alone: `allow_stale` may still serve them.
+- **Endpoint names** are spelled as httpx spells the host of a cache key (lowercase) in endpoint bans.
+- **Not in this step:** bans on endpoint and everything are issued by `AsyncStorage.invalidate_endpoint` and
+  `invalidate_all`, with nothing yet calling them (#1599). Entries they cover are not deleted until the ttl sweep
+  removes them, and no ban is retired: reclamation (#1597) is what stops the log growing, one row per unsafe request
+  until then. The Redis records (#1595) implement `CacheRecords.counter`, `ban`, and the ban check of `get_variants`
+  and `put`.
 
 ## Rejected
 

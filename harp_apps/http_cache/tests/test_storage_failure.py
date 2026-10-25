@@ -4,9 +4,9 @@ import httpx
 import pytest
 from hishel import CacheOptions, SpecificationPolicy
 
-from harp_apps.http_cache.storages import AsyncStorage
+from harp_apps.http_cache.storages import AsyncStorage, InvalidationError
 from harp_apps.http_cache.transports import AsyncCacheTransport
-from harp_apps.http_cache.records import MemoryCacheRecords
+from harp_apps.http_cache.records import BanKind, BanMode, MemoryCacheRecords
 
 URL = "http://origin.test/item"
 BODY = b"0123" * 4
@@ -41,6 +41,14 @@ class FailingRecords(MemoryCacheRecords):
     async def delete_key(self, *args, **kwargs):
         self._check("delete")
         return await super().delete_key(*args, **kwargs)
+
+    async def ban(self, *args, **kwargs):
+        self._check("ban")
+        return await super().ban(*args, **kwargs)
+
+    async def counter(self, *args, **kwargs):
+        self._check("counter")
+        return await super().counter(*args, **kwargs)
 
 
 class Origin(httpx.AsyncBaseTransport):
@@ -89,6 +97,99 @@ async def test_failing_delete_does_not_break_an_invalidating_request(caplog):
 
     assert response.content == BODY
     assert "Failed to remove cache entry" in caplog.text
+
+
+async def test_failing_ban_does_not_break_an_invalidating_request(caplog):
+    records = FailingRecords()
+    async with make_client(records) as client:
+        await client.get(URL)
+        records.fail("ban")
+        response = await client.post(URL)
+
+    assert response.content == BODY
+    assert "Failed to record cache invalidation" in caplog.text
+
+
+async def test_failing_ban_still_drops_the_entry_of_an_invalidating_request():
+    records = FailingRecords()
+    async with make_client(records) as client:
+        await client.get(URL)
+        records.fail("ban")
+        await client.post(URL)
+
+    assert await records.get_variants("http://api/item") == []
+
+
+class TestExplicitInvalidationFailsClosed:
+    """An invalidation somebody asked for is never reported done when it was not recorded."""
+
+    async def test_a_key(self):
+        records = FailingRecords()
+        records.fail("ban")
+
+        with pytest.raises(InvalidationError, match="http://api/item"):
+            await AsyncStorage(records).invalidate("http://api/item", mode=BanMode.HARD)
+
+    async def test_an_endpoint(self):
+        records = FailingRecords()
+        records.fail("ban")
+
+        with pytest.raises(InvalidationError, match="api"):
+            await AsyncStorage(records).invalidate_endpoint("api", mode=BanMode.SOFT)
+
+    @pytest.mark.parametrize("endpoint", ["a:b", "[::1", "\x00"])
+    async def test_an_endpoint_name_that_is_no_host(self, endpoint):
+        with pytest.raises(InvalidationError):
+            await AsyncStorage(MemoryCacheRecords()).invalidate_endpoint(endpoint, mode=BanMode.HARD)
+
+    async def test_a_hard_key_whose_ban_failed_is_still_deleted(self):
+        records = FailingRecords()
+        storage = AsyncStorage(records)
+        async with make_client(records) as client:
+            await client.get(URL)
+            records.fail("ban")
+            with pytest.raises(InvalidationError):
+                await storage.invalidate("http://api/item", mode=BanMode.HARD)
+
+        assert await records.get_variants("http://api/item") == []
+
+    async def test_everything(self):
+        records = FailingRecords()
+        records.fail("ban")
+
+        with pytest.raises(InvalidationError):
+            await AsyncStorage(records).invalidate_all(mode=BanMode.HARD)
+
+    async def test_a_hard_ban_whose_delete_failed_is_still_recorded(self, caplog):
+        records = FailingRecords()
+        storage = AsyncStorage(records)
+        records.fail("delete")
+
+        await storage.invalidate("http://api/item", mode=BanMode.HARD)
+
+        assert await records.counter() == 1
+        assert "Failed to remove cache entry" in caplog.text
+
+
+async def test_failing_counter_does_not_break_the_response(caplog):
+    records = FailingRecords()
+    records.fail("counter")
+    async with make_client(records) as client:
+        response = await client.get(URL)
+
+    assert response.content == BODY
+    assert "Failed to read the cache invalidation counter" in caplog.text
+
+
+async def test_what_a_fetch_without_counter_stores_is_invalidated_by_any_ban_that_covers_it():
+    records = FailingRecords()
+    records.fail("counter")
+    async with make_client(records) as client:
+        await client.get(URL)
+        records.fail()
+        await records.ban(BanKind.PREFIX, "http://api/", BanMode.HARD)
+
+        assert await records.get_variants("http://api/item") == []
 
 
 class RevalidatingOrigin(httpx.AsyncBaseTransport):
