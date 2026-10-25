@@ -1,24 +1,18 @@
-"""The janitor and the HTTP cache share one blobs table.
+"""The janitor and the HTTP cache of earlier versions.
 
-A cache entry is a ``cache/meta`` blob pointing at header and body blobs that are content-addressed,
-and shared with message blobs. Only the ``cache/meta`` blob says which of them the cache still uses,
-so the janitor has to follow those references before calling anything an orphan.
+That cache was ``cache/meta`` blobs pointing at header and body blobs, which the janitor had to follow before calling
+anything an orphan. The cache now keeps its records in tables of their own (ADR-0014) and drops what the earlier
+one left: nothing reads those blobs anymore, so the janitor reclaims them like any blob nothing references.
 """
 
-import asyncio
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from hishel import Headers, Request, Response
-from hishel._core.models import AnyIterable
-from sqlalchemy import select, update
+from sqlalchemy import update
 
 from harp.models import Blob
-from harp_apps.http_cache.tests import store_entry
-from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.janitor.settings import JanitorSettings
 from harp_apps.janitor.tests import worker_with_grace
-from harp_apps.janitor.worker import JanitorWorker
 from harp_apps.storage.models import Blob as SqlBlob
 from harp_apps.storage.services.blob_storages.sql import SqlBlobStorage
 from harp_apps.storage.services.sql import SqlStorage
@@ -28,85 +22,35 @@ from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 NO_GRACE = timedelta(0)
 
 
-def _request(url="http://endpoint/resource"):
-    return Request(method="GET", url=url, headers=Headers({"accept": "text/plain"}))
-
-
-def _response(body=b"payload"):
-    return Response(
-        status_code=200,
-        headers=Headers({"cache-control": "max-age=3600", "content-type": "text/plain"}),
-        stream=AnyIterable(body),
-        metadata={},
-    )
-
-
 @pytest.fixture
 def sql_only(blob_storage: IBlobStorage):
     if blob_storage.type != "sql":
         pytest.skip("The janitor only sweeps SQL blob storage.")
 
 
-class TestJanitorAndHttpCache(StorageTestFixtureMixin):
+class TestJanitorAndTheCacheOfEarlierVersions(StorageTestFixtureMixin):
     @pytest.fixture
     def worker(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
         return worker_with_grace(sql_storage, blob_storage, JanitorSettings(), NO_GRACE)
 
-    @pytest.fixture
-    def cache(self, blob_storage: IBlobStorage):
-        return AsyncStorage(blob_storage)
-
-    async def orphans(self, worker: JanitorWorker, sql_storage: SqlStorage):
-        async with sql_storage.session_factory() as session:
-            return (await worker.compute_metrics(session))["storage.blobs.orphans"]
-
-    async def test_cached_entry_survives_janitor_passes(self, worker, cache):
-        await store_entry(cache, _request(), _response(), "key-1")
-
-        for _ in range(3):
-            await worker.delete_orphan_blobs()
-
-        (entry,) = await cache.get_entries("key-1")
-        assert await entry.response.aread() == b"payload"
-
-    async def test_cache_blobs_are_not_counted_as_orphans(self, worker, cache, sql_storage, blob_storage):
-        await store_entry(cache, _request(), _response(), "key-1")
-        assert await self.orphans(worker, sql_storage) == 0
-
-        await self.create_blob(blob_storage, "referenced by nothing")
-        assert await self.orphans(worker, sql_storage) == 1
-
-    async def test_blobs_of_a_replaced_entry_are_reclaimed(self, worker, cache, blob_storage):
-        await store_entry(cache, _request(), _response(b"old"), "key-1")
-        old_body = Blob.from_data(b"old", content_type="text/plain")
-        assert await blob_storage.get(old_body.id) is not None
-
-        await store_entry(cache, _request(), _response(b"new"), "key-1")
-        await worker.delete_orphan_blobs()
-
-        assert await blob_storage.get(old_body.id) is None
-        assert await blob_storage.get(Blob.from_data(b"new", content_type="text/plain").id) is not None
-
-    async def test_blob_shared_with_a_message_outlives_the_cache_entry(self, worker, cache, blob_storage, sql_storage):
-        await store_entry(cache, _request(), _response(b"shared"), "key-1")
-        shared = Blob.from_data(b"shared", content_type="text/plain")
-        t = await self.create_transaction(sql_storage)
-        await self.create_message(
-            sql_storage, transaction_id=t.id, kind="misc", summary="x", headers="h", body=shared.id
+    async def test_the_blobs_of_an_old_cache_entry_are_reclaimed(self, worker, blob_storage):
+        headers = await blob_storage.put(Blob.from_data(b"accept: */*", content_type="http/headers"))
+        body = await blob_storage.put(Blob.from_data(b"payload", content_type="text/plain"))
+        meta = (
+            f"variants:\n- request: {{headers: {headers.id}}}\n  response: {{headers: {headers.id}, body: {body.id}}}\n"
         )
+        await blob_storage.force_put(Blob(id="k", data=meta.encode(), content_type="cache/meta"))
 
-        await blob_storage.delete("key-1")
         await worker.delete_orphan_blobs()
 
-        assert await blob_storage.get(shared.id) is not None
+        assert [await blob_storage.get(blob_id) for blob_id in ("k", headers.id, body.id)] == [None, None, None]
 
-    async def test_unreferenced_cache_meta_is_never_an_orphan(self, worker, blob_storage):
-        """Cache storage is reclaimed by the TTL sweep, not by the janitor."""
+    async def test_an_unreadable_cache_entry_is_reclaimed_too(self, worker, blob_storage):
         await blob_storage.force_put(Blob(id="k", data=b"not even yaml: [", content_type="cache/meta"))
 
         await worker.delete_orphan_blobs()
 
-        assert await blob_storage.get("k") is not None
+        assert await blob_storage.get("k") is None
 
 
 @pytest.mark.usefixtures("sql_only")
@@ -158,46 +102,3 @@ class TestBlobStorageSharedByInstances(StorageTestFixtureMixin):
         await self.create_message(sql_storage, transaction_id=t.id, kind="misc", summary="x", headers="h", body=x.id)
 
         assert await b.get(x.id) is not None
-
-
-async def _all_ids(blob_storage):
-    if blob_storage.type == "sql":
-        async with blob_storage.engine.connect() as conn:
-            for row in await conn.execute(select(SqlBlob.id)):
-                yield row.id
-    else:
-        async for blob_id in blob_storage.iter_blob_ids():
-            yield blob_id
-
-
-class TestExpiredEntriesReleaseTheirBlobs(StorageTestFixtureMixin):
-    """Whatever the blob backend, an expired entry's header and body blobs do not outlive it."""
-
-    @pytest.fixture(params=["sql", "redis", "memory"])
-    def any_blob_storage(self, request, blob_storage):
-        if request.param == "memory":
-            if blob_storage.type != "sql":
-                pytest.skip("independent of the blob_storage parametrization")
-            from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
-
-            return MemoryBlobStorage()
-        if request.param != blob_storage.type:
-            pytest.skip("covered by the other parametrization of blob_storage")
-        return blob_storage
-
-    @pytest.mark.parametrize("expiry", ["read", "sweep"])
-    async def test_header_and_body_blobs_are_released(self, sql_storage, any_blob_storage, expiry):
-        worker = worker_with_grace(sql_storage, any_blob_storage, JanitorSettings(), NO_GRACE)
-        cache = AsyncStorage(any_blob_storage, ttl=0.01)
-        await store_entry(cache, _request(), _response(b"expiring"), "key-1")
-        body = Blob.from_data(b"expiring", content_type="text/plain")
-        assert await any_blob_storage.get(body.id) is not None
-
-        await asyncio.sleep(0.05)
-        if expiry == "read":
-            assert await cache.get_entries("key-1") == []
-        else:
-            await cache._sweep()
-        await worker.delete_orphan_blobs()
-
-        assert [blob_id async for blob_id in _all_ids(any_blob_storage)] == []

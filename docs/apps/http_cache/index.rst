@@ -43,9 +43,28 @@ cache each time. The limit is ``harp_apps.http_cache.storages.MAX_VARIANTS_PER_K
 oldest stored one. Storing a variant again, with the same selecting headers, replaces it. Each variant expires on its
 own, after the storage ``ttl``.
 
-A cache entry is a ``cache/meta`` blob holding the list of its variants, oldest first. Entries written before this
-version hold a single entry and are read as one variant. They are rewritten in the new format the next time their key is
-written, which makes them unreadable by an earlier version.
+.. _http-cache-records:
+
+Where the cache keeps its entries
+:::::::::::::::::::::::::::::::::
+
+The cache keeps one record per resource (its cache key: the request URL, its host replaced by the endpoint name) and
+one per variant under it, ordered by endpoint, then path. Bodies are stored once, by content digest, however many
+variants carry the same body, and deleted with the last one. The cache counts, per endpoint, its entries and the bytes
+of their bodies as it writes, and indexes the entries by size.
+
+- With the :doc:`storage </apps/storage/index>` application loaded, the records are in its database, in the
+  ``http_cache_*`` tables, shared by every instance of HARP: PostgreSQL, or SQLite for development. The tables are
+  created by the migrations of the ``http_cache`` application. A response whose cache key is over 2048 bytes is
+  not cached.
+- Without it, the records are in the process, and lost at restart.
+
+.. versionchanged:: 0.14
+
+    The cache used to keep a ``cache/meta`` blob per cache key, in the blob storage, SQL or Redis. The entries it left
+    are not read anymore: the cache starts empty once, at upgrade, and the :doc:`janitor </apps/janitor/index>` deletes
+    the old blobs. With Redis as blob storage, the cache is now in the storage database until it has a Redis backend of
+    its own.
 
 .. versionchanged:: 0.13
 

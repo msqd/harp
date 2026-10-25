@@ -16,7 +16,7 @@ from httpx import AsyncClient, Response, AsyncHTTPTransport
 
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
+from harp_apps.http_cache.records import MemoryCacheRecords
 
 
 # ============================================================================
@@ -73,7 +73,7 @@ def any_storage(request, mock_storage):
     """
     if request.param == "double":
         return mock_storage
-    return AsyncStorage(MemoryBlobStorage())
+    return AsyncStorage(MemoryCacheRecords())
 
 
 @pytest.fixture

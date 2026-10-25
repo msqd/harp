@@ -1,0 +1,6 @@
+# Loaded when the storage application is: the cache keeps its records in the storage database.
+
+services:
+
+  - name: "http_cache.records.sql"
+    type: harp_apps.http_cache.records.sql.SqlCacheRecords

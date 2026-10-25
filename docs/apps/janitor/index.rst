@@ -9,14 +9,14 @@ The ``harp_apps.janitor`` application runs a background worker to clean up the s
 older than the retention period (60 days by default), and the orphan blobs. Transactions flagged by a user
 (favorites) are kept past the retention period.
 
-An orphan is a blob referenced by no message and by no HTTP cache entry. Blobs written in the last 10 minutes are kept,
-as the message or cache entry referencing them may not be committed yet. ``cache/meta`` blobs, the HTTP cache entries
-themselves, are never deleted by the janitor: cache storage is reclaimed by the ``ttl`` of ``http_cache.storage``
-(see :doc:`/apps/http_cache/settings`). Once an entry is expired or replaced, the janitor removes the header and body
-blobs nothing references anymore. The ``storage_blobs_orphans`` metric counts the same orphans.
+An orphan is a blob referenced by no message. Blobs written in the last 10 minutes are kept, as the message referencing
+them may not be committed yet. The HTTP cache does not keep blobs (it has records of its own, reclaimed by the ``ttl`` of
+``http_cache.storage``, see :doc:`/apps/http_cache/settings`): the ``cache/meta`` blobs of the cache of earlier versions,
+and the header and body blobs they pointed at, are orphans, and the janitor deletes them. The ``storage_blobs_orphans``
+metric counts the same orphans.
 
 The sweep runs on every blob backend that can list its blobs (``sql``, ``redis`` and ``memory``). With ``redis``, the
-janitor scans the keys, keeps those referenced by a message in the SQL storage or by a ``cache/meta`` entry, and deletes
+janitor scans the keys, keeps those referenced by a message in the SQL storage, and deletes
 the others unless they were written in the last 10 minutes (tracked by short-lived ``harp:blob-written:<id>`` keys).
 The ``storage_blobs`` and ``storage_blobs_orphans`` metrics count what the blob backend holds.
 

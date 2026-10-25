@@ -10,7 +10,7 @@ from harp_apps.http_cache.transports import AsyncCacheTransport
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.events import EVENT_FILTER_PROXY_REQUEST
 from harp_apps.proxy.settings.remote import Remote
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
+from harp_apps.http_cache.records import MemoryCacheRecords
 
 
 class Rule:
@@ -32,7 +32,7 @@ async def _upstream_calls(edit, path="/") -> int:
     client = AsyncClient(
         transport=AsyncCacheTransport(
             next_transport=AsyncHTTPTransport(),
-            storage=AsyncStorage(MemoryBlobStorage()),
+            storage=AsyncStorage(MemoryCacheRecords()),
             policy=SpecificationPolicy(cache_options=CacheOptions(shared=True, supported_methods=["GET", "HEAD"])),
         )
     )

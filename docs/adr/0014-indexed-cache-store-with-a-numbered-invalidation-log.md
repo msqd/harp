@@ -49,6 +49,25 @@ they index by opaque hash, and Cloudflare had to add a per-machine index to find
 The store replaces the adapter HARP gives hishel today. The existing cache is dropped at upgrade, which
 is accepted before 1.0.
 
+## As implemented in the store (#1594)
+
+- **The cache key is the URL.** hishel keys its storage by `sha256(url)`, which is opaque: nothing can be ordered or
+  ranged by it. `AsyncCacheTransport` now keys by the request URL, its host the endpoint name, as this record assumes.
+  A key over 2048 bytes is not cached (PostgreSQL refuses to index values past a third of a page).
+- **Tables** `http_cache_resources` (key, endpoint), `http_cache_variants` (primary key `(key, variant)`, unique
+  `entry_id`, status, `vary`, body digest and size, instants, serialized heads), `http_cache_bodies` (digest, data)
+  and `http_cache_stats` (endpoint, entries, bytes), in the `http_cache` alembic branch. Keys and resource endpoints
+  are `COLLATE "C"` on PostgreSQL, so records list in `(endpoint, key)` order, bytewise.
+- **`stamp` on variant records is reserved for the invalidation log** (#1596): the counter read before the origin
+  fetch. It is stored as given, `0` until then; nothing reads it.
+- **Counters** are updated in the transaction of each write, expiry and deletion, last, so the row of an endpoint is
+  locked for the least time. The largest entries are read from an index on `(endpoint, body_size)`.
+- **Writers of a key** take turns by locking its resource row (`SELECT … FOR UPDATE`), and retry on a unique
+  violation, a deadlock or a body deleted under them.
+- **Memory** keeps the same records in dictionaries and a sorted list, and is used when the storage application is not
+  loaded. **Redis** blob storage no longer holds the cache: it is in the storage database until the Redis backend.
+- **The old cache** (`cache/meta` blobs) is not read. The janitor sees it as orphan blobs and deletes it.
+
 ## Rejected
 
 - **A derived index beside today's blobs.** Two stores to keep consistent, and prefix invalidation still

@@ -6,36 +6,36 @@ import respx
 from hishel import CacheOptions, SpecificationPolicy
 
 from harp.http import HttpRequest
+from harp_apps.http_cache.records import MemoryCacheRecords
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.events import EVENT_TRANSACTION_ENDED
 from harp_apps.proxy.settings.remote import Remote
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
 
 URL = "http://example.com/"
 BODY = b"0123456789" * 100
 
 
-class FailingBlobStorage(MemoryBlobStorage):
+class FailingRecords(MemoryCacheRecords):
     def __init__(self, failing: str):
         super().__init__()
         self.failing = failing
 
     async def put(self, *args, **kwargs):
         if self.failing == "put":
-            raise ConnectionError("blob storage down")
+            raise ConnectionError("cache records down")
         return await super().put(*args, **kwargs)
 
-    async def get(self, *args, **kwargs):
+    async def get_variants(self, *args, **kwargs):
         if self.failing == "get":
-            raise ConnectionError("blob storage down")
-        return await super().get(*args, **kwargs)
+            raise ConnectionError("cache records down")
+        return await super().get_variants(*args, **kwargs)
 
-    async def delete(self, *args, **kwargs):
+    async def delete_key(self, *args, **kwargs):
         if self.failing == "delete":
-            raise ConnectionError("blob storage down")
-        return await super().delete(*args, **kwargs)
+            raise ConnectionError("cache records down")
+        return await super().delete_key(*args, **kwargs)
 
 
 class EndedTransactions:
@@ -60,7 +60,7 @@ async def test_failing_cache_storage_leaves_response_transaction_and_endpoint_in
         http_client=httpx.AsyncClient(
             transport=AsyncCacheTransport(
                 next_transport=httpx.AsyncHTTPTransport(),
-                storage=AsyncStorage(FailingBlobStorage(operation)),
+                storage=AsyncStorage(FailingRecords(operation)),
                 policy=SpecificationPolicy(cache_options=CacheOptions(shared=True, supported_methods=["GET", "HEAD"])),
             )
         ),

@@ -14,6 +14,8 @@ async def on_bind(event: OnBindEvent):
         Path(dirname(__file__)) / "services.yml",
         bind_settings=settings,
     )
+    if "storage" in event.settings:
+        event.container.load(Path(dirname(__file__)) / "services_sql.yml", bind_settings=settings)
 
     # WORKAROUND: Manually override http_client's transport
     # until cross-app service overrides are supported (issue #806)

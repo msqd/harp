@@ -21,7 +21,7 @@ from harp_apps.proxy.settings import TagsSettings
 from harp_apps.proxy.settings.remote import Remote
 from harp_apps.storage.constants import SKIP_STORAGE, TRUNCATED_REQUEST_BODY, TRUNCATED_RESPONSE_BODY
 from harp_apps.storage.services.sql import SqlStorage
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
+from harp_apps.http_cache.records import MemoryCacheRecords
 from harp_apps.storage.types import IBlobStorage, IStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 from harp_apps.storage.worker import StorageAsyncWorkerQueue
@@ -348,7 +348,7 @@ class TestHttpProxyControllerWithStorage(
         return AsyncClient(
             transport=AsyncCacheTransport(
                 next_transport=AsyncHTTPTransport(),
-                storage=AsyncStorage(MemoryBlobStorage()),
+                storage=AsyncStorage(MemoryCacheRecords()),
                 policy=SpecificationPolicy(
                     cache_options=CacheOptions(shared=True, supported_methods=["GET", "HEAD"], allow_stale=False)
                 ),

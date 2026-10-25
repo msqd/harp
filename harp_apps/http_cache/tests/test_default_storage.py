@@ -14,7 +14,7 @@ from harp_apps.http_cache.tests import store_entry
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.storage.engines import SQLAlchemyEngine
 from harp_apps.storage.models import Base
-from harp_apps.storage.services.blob_storages.sql import SqlBlobStorage
+from harp_apps.http_cache.records.sql import SqlCacheRecords
 from harp_apps.storage.settings import StorageSettings
 
 ENTRIES = 20
@@ -45,7 +45,7 @@ async def default_engine():
 @pytest.mark.asyncio
 async def test_entries_stored_concurrently_are_all_served(default_engine):
     """Concurrent lookups must not undo the writes of concurrent stores."""
-    storage = AsyncStorage(SqlBlobStorage(default_engine))
+    storage = AsyncStorage(SqlCacheRecords(default_engine))
 
     async def miss():
         for _ in range(ENTRIES):

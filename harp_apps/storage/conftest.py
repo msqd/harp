@@ -1,3 +1,5 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from functools import partial
 
 import pytest
@@ -51,6 +53,22 @@ def database_url(request):
     yield from create_database_container_for(dialect, image, driver)
 
 
+@asynccontextmanager
+async def migrated_engine(database_url, test_id) -> AsyncIterator[AsyncEngine]:
+    """An engine to a new isolated database, named after the test, with the schema of every application."""
+    async with get_scoped_database_url(database_url, test_id) as scoped_database_url:
+        # Built the way the application builds it, so tests share its pooling, in-memory SQLite included.
+        engine = SQLAlchemyEngine.from_url(scoped_database_url)
+        try:
+            # todo refactor (dup in sqlstorage.initialize / sqlstorage._run_migrations)
+            alembic_cfg = create_alembic_config(engine.url.render_as_string(hide_password=False))
+            migrator = partial(command.upgrade, alembic_cfg, "heads")
+            await do_migrate(engine, migrator=migrator)
+            yield engine
+        finally:
+            await engine.dispose()
+
+
 @pytest.fixture
 async def sql_engine(database_url, test_id) -> AsyncEngine:
     """
@@ -65,17 +83,8 @@ async def sql_engine(database_url, test_id) -> AsyncEngine:
     each test.
 
     """
-    async with get_scoped_database_url(database_url, test_id) as scoped_database_url:
-        # Built the way the application builds it, so tests share its pooling, in-memory SQLite included.
-        engine = SQLAlchemyEngine.from_url(scoped_database_url)
-        try:
-            # todo refactor (dup in sqlstorage.initialize / sqlstorage._run_migrations)
-            alembic_cfg = create_alembic_config(engine.url.render_as_string(hide_password=False))
-            migrator = partial(command.upgrade, alembic_cfg, "heads")
-            await do_migrate(engine, migrator=migrator)
-            yield engine
-        finally:
-            await engine.dispose()
+    async with migrated_engine(database_url, test_id) as engine:
+        yield engine
 
 
 @pytest.fixture

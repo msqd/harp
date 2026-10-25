@@ -9,7 +9,7 @@ from hishel import CacheOptions, SpecificationPolicy
 
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
+from harp_apps.http_cache.records import MemoryCacheRecords
 
 URL = "http://origin.test/item"
 
@@ -43,7 +43,7 @@ def make_client(origin: Origin, max_recorded_body_size: int | None = None) -> ht
 
     transport = AsyncCacheTransport(
         next_transport=origin,
-        storage=AsyncStorage(MemoryBlobStorage()),
+        storage=AsyncStorage(MemoryCacheRecords()),
         policy=SpecificationPolicy(cache_options=CacheOptions(shared=True, supported_methods=["GET", "HEAD"])),
     )
     return httpx.AsyncClient(transport=transport, event_hooks={"request": [name_endpoint]})

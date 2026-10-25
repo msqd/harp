@@ -14,14 +14,14 @@ from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.events import EVENT_TRANSACTION_ENDED
 from harp_apps.proxy.settings.remote import Remote
 from harp_apps.storage.constants import TRUNCATED_RESPONSE_BODY
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
+from harp_apps.http_cache.records import MemoryCacheRecords
 
 
 def _cached_client():
     return AsyncClient(
         transport=AsyncCacheTransport(
             next_transport=AsyncHTTPTransport(),
-            storage=AsyncStorage(MemoryBlobStorage()),
+            storage=AsyncStorage(MemoryCacheRecords()),
             policy=SpecificationPolicy(cache_options=CacheOptions(shared=True, supported_methods=["GET", "HEAD"])),
         )
     )

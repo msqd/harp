@@ -9,7 +9,7 @@ from hishel import SpecificationPolicy
 from harp_apps.http_cache.settings import PurgeSettings
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
+from harp_apps.http_cache.records import MemoryCacheRecords
 
 HOST = "http://origin.test"
 
@@ -30,7 +30,7 @@ class Origin(httpx.AsyncBaseTransport):
 def make_transport(origin, purge) -> AsyncCacheTransport:
     return AsyncCacheTransport(
         next_transport=origin,
-        storage=AsyncStorage(MemoryBlobStorage()),
+        storage=AsyncStorage(MemoryCacheRecords()),
         policy=SpecificationPolicy(),
         purge=purge,
     )

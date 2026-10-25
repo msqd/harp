@@ -516,18 +516,13 @@ class TestCacheKeyConsistency:
 
     @pytest.mark.asyncio
     async def test_cache_key_format(self, normalized_transport, mock_storage):
-        """Test that cache keys are in expected format (likely SHA256 hex digest)."""
+        """The cache key is the request url, its host the endpoint name: the store lists and orders by it (ADR-0014)."""
         request = Request(
-            method="GET", url="http://backend.local/api/resource", extensions={"harp": {"endpoint": "api"}}
+            method="GET", url="http://backend.local/api/resource?a=1", extensions={"harp": {"endpoint": "api"}}
         )
         await normalized_transport.handle_async_request(request)
 
-        assert len(mock_storage.created_keys) == 1
-        cache_key = mock_storage.created_keys[0]
-
-        # Should be a hex string of length 64 (SHA256)
-        assert len(cache_key) == 64, f"Expected 64-char hex string, got {len(cache_key)}"
-        assert all(c in "0123456789abcdef" for c in cache_key), "Cache key should be hex string"
+        assert mock_storage.created_keys == ["http://api/api/resource?a=1"]
 
 
 class TestRfcCompliance:

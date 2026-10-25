@@ -155,6 +155,18 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         super().__init__(*args, **kwargs)
         self._purge = purge or PurgeSettings()
         self._coalescer = Coalescer(coalescing_timeout)
+        self._hishel_key_for_request = self._cache_proxy._get_key_for_request
+        self._cache_proxy._get_key_for_request = self._get_key_for_request
+
+    async def _get_key_for_request(self, request: Request) -> str:
+        """The cache key is the request url, its host being the endpoint name.
+
+        hishel hashes the url, which hides what the cache stores: the store orders its records by key to list them per
+        endpoint and per path (ADR-0014). A request keyed by its body is left to hishel.
+        """
+        if self._cache_proxy.policy.use_body_key or request.metadata.get("hishel_body_key"):
+            return await self._hishel_key_for_request(request)
+        return str(request.url)
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Wraps the request to use a rewritten url (for cache key handling)."""

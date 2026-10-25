@@ -29,8 +29,8 @@ http_cache.transport
 The caching transport wraps the HTTP client's proxy transport to intercept requests and responses.
 It extends Hishel's ``AsyncCacheTransport`` with:
 
-- **Cache key normalization:** Ensures consistent cache keys for load-balanced backends
-- **Storage integration:** Uses HARP's blob storage system
+- **Cache key normalization:** Ensures consistent cache keys for load-balanced backends: the request URL, its host replaced
+  by the endpoint name
 
 This service overrides the ``http_client`` transport to enable caching.
 
@@ -79,32 +79,40 @@ http_cache.storage
 
 **Type:** ``harp_apps.http_cache.storages.AsyncStorage``
 
-The storage backend for cached HTTP responses. Adapts Hishel's storage interface to HARP's blob
-storage system.
+The storage backend for cached HTTP responses. Adapts Hishel's storage interface to the cache records of
+:class:`~harp_apps.http_cache.records.CacheRecords`.
 
 Features:
 
 - **TTL support:** Automatic expiration of old cache entries
 - **Periodic cleanup:** Background cleanup of expired entries
-- **Blob storage integration:** Uses ``storage.blobs`` service when available
-- **Fallback storage:** Uses in-memory storage if no blob storage is configured
+- **Indexed records:** One per cache key, one per variant, bodies by content digest, counters per endpoint
 
 Dependencies:
 
-- ``storage.blobs`` (optional) - Blob storage from storage application
-- ``http_cache.fallback_blob_storage`` - Fallback if no blob storage available
+- ``http_cache.records.sql`` (optional) - Records in the database of the storage application
+- ``http_cache.records.memory`` - Records in the process, used if the storage application is not loaded
 
 
-http_cache.fallback_blob_storage
----------------------------------
+http_cache.records.sql
+----------------------
 
-**Type:** ``harp_apps.storage.services.blob_storages.memory.MemoryBlobStorage``
+**Type:** ``harp_apps.http_cache.records.sql.SqlCacheRecords``
 
-In-memory blob storage used as a fallback when the storage application doesn't provide blob storage.
+The cache records in the ``http_cache_*`` tables of the storage database, shared by every instance of HARP. Defined
+only when the storage application is loaded.
+
+
+http_cache.records.memory
+-------------------------
+
+**Type:** ``harp_apps.http_cache.records.memory.MemoryCacheRecords``
+
+The cache records in the process, used when the storage application is not loaded.
 
 .. warning::
-   This fallback storage is not suitable for production use. Configure proper blob storage
-   (Redis, PostgreSQL, etc.) via the storage application for production deployments.
+   These records are lost at restart and not shared between instances. Load the storage application for production
+   deployments.
 
 
 Integration with http_client

@@ -183,7 +183,12 @@ async def test_ensure_schema_is_current_checks_every_head(tmp_path, sql_engine):
 
     root = _application_tree(tmp_path, with_migrations=["auth"])
     real = discover_migration_locations()  # the fixture migrated every real application
-    locations = {"storage": real["storage"], "audit": real["audit"], **discover_migration_locations(root)}
+    locations = {
+        "storage": real["storage"],
+        "audit": real["audit"],
+        "http_cache": real["http_cache"],
+        **discover_migration_locations(root),
+    }
     cfg = create_alembic_config(sql_engine.url.render_as_string(hide_password=False), locations=locations)
 
     # storage is at its head, auth has a branch that was never applied

@@ -18,7 +18,7 @@ from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.events import EVENT_TRANSACTION_ENDED, EVENT_TRANSACTION_MESSAGE
 from harp_apps.proxy.settings.remote import Remote
 from harp_apps.storage.constants import CLIENT_DISCONNECTED
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
+from harp_apps.http_cache.records import MemoryCacheRecords
 
 BODY_SIZE = 256 * 1024 * 1024
 CHUNK = b"x" * 65536
@@ -82,7 +82,7 @@ def _cached_client():
     return httpx.AsyncClient(
         transport=AsyncCacheTransport(
             next_transport=httpx.AsyncHTTPTransport(),
-            storage=AsyncStorage(MemoryBlobStorage()),
+            storage=AsyncStorage(MemoryCacheRecords()),
             policy=SpecificationPolicy(cache_options=CacheOptions(shared=True, supported_methods=["GET", "HEAD"])),
         )
     )

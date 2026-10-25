@@ -153,19 +153,18 @@ storage
 
 **Default:** ``harp_apps.http_cache.storages.AsyncStorage``
 
-The storage backend for cached responses. By default, it uses the storage application's blob storage
-(``storage.blobs``), with an in-memory fallback if no blob storage is configured.
+The storage backend for cached responses. By default, it keeps its records in the database of the storage
+application, with an in-memory fallback if that application is not loaded
+(see :ref:`where the cache keeps its entries <http-cache-records>`).
 
 The default storage includes:
 
 - **ttl:** Seconds after which an entry is expired, counted from when it was stored or last freshened by a ``304``
   (default: ``86400``, 24 hours). An entry with a longer ``max-age`` is still expired after ``ttl``. ``null`` disables
-  expiry by age. Each variant of a ``Vary`` resource expires on its own. An expired entry is not served and, once none of its key's variants is left, its ``cache/meta`` blob is deleted. The header and body blobs it
-  pointed at are then removed by the :doc:`janitor </apps/janitor/index>`.
+  expiry by age. Each variant of a ``Vary`` resource expires on its own. An expired entry is not served, and is deleted
+  with its body when nothing else carries it.
 - **check_ttl_every:** Minimum seconds between two sweeps deleting expired entries, per process (default: ``60.0``).
-  A sweep runs in the background, never inside a proxied request.
-  Needs a blob storage that can list its entries (SQL); with Redis, a warning is logged at startup and only entries
-  that are read again expire.
+  A sweep runs in the background, never inside a proxied request, and deletes by batch.
 - **allow_heuristics:** Whether to retain responses with no explicit expiry (default: ``false``)
 
 .. code-block:: yaml

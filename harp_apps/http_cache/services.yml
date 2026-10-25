@@ -41,9 +41,9 @@ services:
     base: [ !cfg "storage.base", "hishel.AsyncBaseStorage" ]
     type: [ !cfg "storage.type", "harp_apps.http_cache.storages.AsyncStorage" ]
     defaults:
-      storage: !ref [ "storage.blobs", "http_cache.fallback_blob_storage" ]
+      records: !ref [ "http_cache.records.sql", "http_cache.records.memory" ]
     arguments: [ !cfg "storage.arguments", { } ]
 
-  # Fallback blob storage, used by the cache storage if no other storage is available
-  - name: "http_cache.fallback_blob_storage"
-    type: harp_apps.storage.services.blob_storages.memory.MemoryBlobStorage
+  # Records in the process, used by the cache storage if the storage application is not loaded (see services_sql.yml)
+  - name: "http_cache.records.memory"
+    type: harp_apps.http_cache.records.memory.MemoryCacheRecords
