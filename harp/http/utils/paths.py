@@ -12,9 +12,15 @@ def _decode_unreserved(match: re.Match) -> str:
 
 
 def _collapse(path: str) -> str:
-    """Drop the empty segments, the ``;`` parameters of each segment and the trailing slash, as common upstreams do."""
-    segments = (segment.partition(";")[0] for segment in path.split("/"))
-    return "/" + "/".join(segment for segment in segments if segment)
+    """
+    Drop the empty segments and the ``;`` parameters of each segment, as common upstreams do. A final slash is kept
+    (once), so that a ``<prefix>/*`` pattern still matches ``<prefix>/``.
+    """
+    segments = [segment.partition(";")[0] for segment in path.split("/")]
+    kept = [segment for segment in segments if segment]
+    if not kept:
+        return "/"
+    return "/" + "/".join(kept) + ("/" if not segments[-1] else "")
 
 
 def _unreserved_decoded(target: str) -> str | None:
@@ -30,7 +36,7 @@ def normalize_path(target: str) -> str:
     """
     The path of a request target as rules match it, not as it is forwarded (the proxy forwards it unchanged): a
     leading scheme and authority are removed, the query is dropped, percent-escapes of unreserved characters are
-    decoded (RFC 3986 §2.3), and empty segments, ``;`` parameters and the trailing slash are dropped. Other escapes,
+    decoded (RFC 3986 §2.3), and empty segments and ``;`` parameters are dropped (a final slash is kept). Other escapes,
     ``%2F`` included, stay as sent (see :func:`normalize_path_variants`).
     """
     path = _unreserved_decoded(target)

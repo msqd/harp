@@ -126,20 +126,29 @@ async def _is_denied(pattern: str, raw_path: str) -> bool:
     "raw_path",
     [
         "/admin//users",
-        "///admin///users//",
-        "/admin/users/",
+        "///admin///users",
         "/admin;x=1/users",
         "/admin/users;jsessionid=1",
-        "/admin/users;a=1/",
         "/;/admin/users",
         "/admin%2Fusers",
         "/admin%2fusers",
         "/admin%2F%2Fusers",
-        "/%61dmin%2Fusers/",
+        "/%61dmin%2Fusers",
     ],
 )
 async def test_deny_rule_holds_for_path_variants_the_upstream_normalises(raw_path):
     assert await _is_denied("GET /admin/users", raw_path)
+
+
+@pytest.mark.parametrize("raw_path", ["/admin/", "/admin//", "/admin/;x", "/admin/users/", "/admin%2F", "/admin/a;b/"])
+async def test_prefix_deny_rule_still_matches_trailing_slash_variants(raw_path):
+    assert await _is_denied("GET /admin/*", raw_path)
+
+
+@pytest.mark.parametrize("raw_path", ["/admin/users/", "/admin/users;a=1/", "/%61dmin%2Fusers/"])
+async def test_trailing_slash_is_kept_so_exact_deny_rules_end_with_a_wildcard(raw_path):
+    assert not await _is_denied("GET /admin/users", raw_path)
+    assert await _is_denied("GET /admin/users*", raw_path)
 
 
 async def test_other_paths_are_not_denied():
@@ -150,8 +159,8 @@ async def test_other_paths_are_not_denied():
 
 def test_fingerprint_collapses_variants_but_keeps_reserved_escapes_encoded():
     event = ProxyFilterEvent("api", request=_asgi_request("/a///b;x=1/c%2Fd/"))
-    assert event.fingerprint == "GET /a/b/c%2Fd"
-    assert event.alternate_fingerprints == ["GET /a/b/c/d"]
+    assert event.fingerprint == "GET /a/b/c%2Fd/"
+    assert event.alternate_fingerprints == ["GET /a/b/c/d/"]
 
 
 def test_root_stays_root():

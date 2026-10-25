@@ -48,8 +48,8 @@ unchanged: only what rules see is normalised, so that a rule matches what the up
   matches ``GET /admin``;
 - empty segments are dropped: ``/api//admin`` is matched as ``GET /api/admin``;
 - ``;`` parameters are dropped from each segment: ``/admin;x=1/users;id=2`` is matched as ``GET /admin/users``;
-- the trailing slash is dropped (except for the root): ``/admin/`` is matched as ``GET /admin``, so write patterns
-  without a trailing slash;
+- a final slash is kept, once: ``/admin//`` and ``/admin/;x`` are matched as ``GET /admin/``. ``/admin/`` is therefore
+  **not** matched by ``GET /admin``, but is by ``GET /admin/*`` and ``GET /admin*``;
 - the query string is not part of it, ``GET /users/42?page=2`` is matched as ``GET /users/42``.
 
 An encoded slash, ``%2F`` (any case), stays as sent in that path: ``/a%2Fb`` is matched as ``GET /a%2Fb``. Many
@@ -60,12 +60,13 @@ whichever form matched it.
 .. admonition:: Writing a deny rule that holds
     :class: warning
 
-    A rule denies what its pattern matches, nothing more. Write the pattern on the normalised path (no trailing slash,
-    no ``;``, no ``//``) and it holds for every variant above. Known limits, which patterns cannot cover for you:
+    A rule denies what its pattern matches, nothing more. Write the pattern on the normalised path (no ``;``, no
+    ``//``) and it holds for the variants above. Known limits, which patterns cannot cover for you:
 
-    - a deny rule on a prefix should end with a wildcard right after it (``GET /admin*``, not ``GET /admin/*``),
-      so that it also covers ``/admin`` itself and paths your upstream may reach by other means;
-    - double-encoded escapes (``%252F``), a ``%3B`` read as ``;``, backslashes, case-insensitive paths and any other
+    - the final slash is kept, so ``GET /admin/users`` does not deny ``/admin/users/``. Write prefix and exact deny
+      rules with a wildcard right after the path: ``GET /admin*``, ``GET /admin/users*``. ``GET /admin/*`` also works
+      for what is under ``/admin/``, but not for ``/admin`` itself;
+    - double-encoded escapes (``%252F``), a ``%3B`` read as ``;``, ``%00``, ``%5C`` and backslashes, case-insensitive paths and any other
       rewriting specific to your upstream are not normalised;
     - the proxy refuses dot segments (``/./``, ``/../``, encoded or not) on its own, rules do not need to cover them.
 
