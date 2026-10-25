@@ -14,4 +14,5 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
+    harp.security.actor
     harp.security.credentials

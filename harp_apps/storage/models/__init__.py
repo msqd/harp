@@ -5,7 +5,10 @@ from .messages import Message, MessagesRepository
 from .metrics import Metric, MetricsRepository, MetricValue, MetricValuesRepository
 from .tags import Tag, TagsRepository, TagValue, TagValuesRepository
 from .transactions import Transaction, TransactionsRepository
-from .users import User, UsersRepository
+
+# Favourites belong to an account: its model must be on the shared ``Base`` wherever the schema is built. Imported as
+# a module, as it may be the one importing us (it needs ``Base``).
+from harp_apps.auth import models as _auth_models  # noqa: E402,F401
 
 __all__ = [
     "FLAGS_BY_NAME",
@@ -25,8 +28,6 @@ __all__ = [
     "TagsRepository",
     "Transaction",
     "TransactionsRepository",
-    "User",
     "UserFlag",
-    "UsersRepository",
     "FlagsRepository",
 ]

@@ -5,6 +5,7 @@ from sqlalchemy.exc import NoResultFound
 from harp.controllers import GetHandler, RouteHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest, JsonHttpResponse
 from harp.models.transactions import Transaction
+from harp.security.actor import Role, get_actor
 from harp.settings import PAGE_SIZE
 from harp.views.json import json
 from harp_apps.storage.models.flags import FLAGS_BY_NAME
@@ -36,7 +37,7 @@ class TransactionsController(RoutingController):
 
         super().__init__(handle_errors=handle_errors, router=router)
 
-    @GetHandler("/filters")
+    @GetHandler("/filters", role=Role.VIEWER)
     async def filters(self, request: HttpRequest):
         await self.facets["endpoint"].refresh()
 
@@ -44,7 +45,7 @@ class TransactionsController(RoutingController):
             {name: facet.filter_from_query(request.query) for name, facet in self.facets.items()},
         )
 
-    @GetHandler("/")
+    @GetHandler("/", role=Role.VIEWER)
     async def list(self, request: HttpRequest):
         page = int(request.query.get("page", 1))
         if page < 1:
@@ -57,7 +58,7 @@ class TransactionsController(RoutingController):
             filters={name: facet.get_filter_from_query(request.query) for name, facet in self.facets.items()},
             page=page,
             cursor=cursor,
-            username=request.extensions.get("user") or "anonymous",
+            username=get_actor(request).account.username,
             text_search=request.query.get("search", ""),
         )
 
@@ -70,11 +71,11 @@ class TransactionsController(RoutingController):
             }
         )
 
-    @GetHandler("/{id}")
+    @GetHandler("/{id}", role=Role.VIEWER)
     async def get(self, request: HttpRequest, id):
         transaction = await self.storage.get_transaction(
             id,
-            username=request.extensions.get("user") or "anonymous",
+            username=get_actor(request).account.username,
         )
 
         if not transaction:
@@ -82,9 +83,9 @@ class TransactionsController(RoutingController):
 
         return JsonHttpResponse(transaction.to_dict())
 
-    @RouteHandler("/{id}/flags/{flag}", methods=["PUT", "DELETE"])
+    @RouteHandler("/{id}/flags/{flag}", methods=["PUT", "DELETE"], role=Role.VIEWER)
     async def set_user_flag(self, request: HttpRequest, id, flag):
-        username = request.extensions.get("user", None) or "anonymous"
+        username = get_actor(request).account.username
         flag_id = FLAGS_BY_NAME.get(flag)
         if flag_id is None:
             return JsonHttpResponse({"error": "Unknown flag"}, status=400)

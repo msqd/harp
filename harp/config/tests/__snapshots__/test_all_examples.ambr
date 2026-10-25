@@ -55,6 +55,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/dashboard/examples/auth.basic.yml]
   '''
+  auth: {}
   dashboard:
     auth:
       type: basic
@@ -72,6 +73,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/dashboard/examples/auth.none.yml]
   '''
+  auth: {}
   dashboard:
     auth:
       type: none
@@ -86,6 +88,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/dashboard/examples/auth.yml]
   '''
+  auth: {}
   dashboard:
     auth:
       algorithm: plaintext
@@ -104,6 +107,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/dashboard/examples/devserver.yml]
   '''
+  auth: {}
   dashboard:
     devserver:
       port: 11111
@@ -118,6 +122,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/dashboard/examples/main.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -130,6 +135,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/dashboard/examples/reference.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -142,6 +148,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/http_cache/examples/cache.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -154,6 +161,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/http_cache/examples/reference.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache:
     transport:
@@ -168,6 +176,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/http_client/examples/full.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client:
@@ -183,6 +192,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/http_client/examples/reference.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -195,6 +205,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/http_client/examples/simple.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client:
@@ -214,6 +225,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/notifications/examples/dashboard.yml]
   '''
+  auth: {}
   dashboard:
     public_url: http://localhost:4080
   http_cache: {}
@@ -227,6 +239,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/notifications/examples/main.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -239,6 +252,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/proxy/examples/basics.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -257,6 +271,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/proxy/examples/custom_controller.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -280,6 +295,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/proxy/examples/full-shorthand.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -299,6 +315,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/proxy/examples/full.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -331,6 +348,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/proxy/examples/multiple.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -354,6 +372,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/proxy/examples/pooled-aggressive.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -383,6 +402,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/proxy/examples/pooled-fallback.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -409,6 +429,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/proxy/examples/pooled-healthcheck.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -438,6 +459,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/proxy/examples/pooled.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -457,6 +479,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/proxy/examples/reference.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -485,6 +508,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/proxy/examples/swapi.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -503,6 +527,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/rules/examples/overview.toml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -524,6 +549,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/rules/examples/patterns-endpoint.toml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -542,6 +568,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/rules/examples/patterns-order-more.toml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -558,6 +585,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/rules/examples/patterns-order.toml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -581,6 +609,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/rules/examples/patterns-request.toml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -600,6 +629,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/rules/examples/patterns-stage.toml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -617,6 +647,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/rules/examples/rules.toml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -635,6 +666,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/rules/examples/rules.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -653,6 +685,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/storage/examples/mysql-aiomysql.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -666,6 +699,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/storage/examples/postgres-asyncpg.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -679,6 +713,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/storage/examples/redis.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -694,6 +729,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/storage/examples/reference.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -706,6 +742,7 @@
 # ---
 # name: test_load_documentation_example[docs/apps/storage/examples/sqlite-aiosqlite.yml]
   '''
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -724,9 +761,11 @@
   - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
+  - harp_apps.auth
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  auth: {}
   dashboard:
     auth:
       type: basic
@@ -755,9 +794,11 @@
   - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
+  - harp_apps.auth
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -776,9 +817,11 @@
   - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
+  - harp_apps.auth
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -802,9 +845,11 @@
   - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
+  - harp_apps.auth
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -842,9 +887,11 @@
   - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
+  - harp_apps.auth
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -883,9 +930,11 @@
   - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
+  - harp_apps.auth
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -970,9 +1019,11 @@
   - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
+  - harp_apps.auth
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -995,9 +1046,11 @@
   - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
+  - harp_apps.auth
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -1015,9 +1068,11 @@
   - harp_apps.http_cache
   - harp_apps.proxy
   - harp_apps.storage
+  - harp_apps.auth
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  auth: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
