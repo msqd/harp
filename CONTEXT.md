@@ -104,6 +104,18 @@ _Avoid_: API key, personal access token
 An admin's single-use offer of an account with a given role, which expires. The only way an account
 for a person comes to exist; the person accepting it chooses the sign-in method.
 
+**Audit Event**:
+What an account did to HARP, or what access HARP granted on its own, when, by which means and with
+what outcome: a sign-in, a change to someone's access, a manual action on traffic. Never shed,
+never edited. Traffic through the proxy belongs to the transaction record, and what HARP does on its
+own, such as a breaker opening, to its logs.
+_Avoid_: audit log, audit trail, history, journal
+
+**Actor**:
+Who did what an audit event records: an account, with the session or token it acted through and the
+client it acted from. When nobody could be identified, as in a failed sign-in, only what was
+claimed and where from.
+
 **Session**:
 One browser signed in to an account through one identity. It ends on its own, at sign-out, or when
 an admin or the account revokes it; ending one session leaves the others open.

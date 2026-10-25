@@ -15,6 +15,7 @@ stays with its status changed.
 | [0009](./0009-credentials-redacted-before-storage-by-rule.md) | Credentials are redacted before storage, by rule, and credential headers are redacted by default | accepted, not yet implemented |
 | [0010](./0010-harp-credentials-never-reach-an-origin.md) | HARP's own credentials never reach an origin, and no setting changes that | proposed |
 | [0011](./0011-each-app-owns-an-alembic-branch.md) | Each application owns a branch of one alembic history | proposed |
+| [0012](./0012-critical-actions-recorded-in-their-own-commit.md) | A critical action and its audit event share one commit, through a two-phase unit of work | proposed |
 
 ## Writing one
 

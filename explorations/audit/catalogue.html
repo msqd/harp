@@ -1,0 +1,180 @@
+<title>Catalogue d'audit HARP</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout : une colonne de lecture, tables et diagrammes peuvent déborder dans leur propre conteneur. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --fg: #1b2230;
+  --muted: #5a6475;
+  --line: #d9dee6;
+  --accent: #2448c8;
+  --accent-soft: #e6ecfb;
+  --new: #1d7a4e;
+  --new-soft: #e3f3ea;
+  --open: #a35a00;
+  --open-soft: #fbefdc;
+  --font-display: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151c; --surface: #181d26; --fg: #e3e7ee; --muted: #9aa3b2; --line: #2b3240;
+    --accent: #7d9bff; --accent-soft: #1d2a4d; --new: #5fcf98; --new-soft: #15301f;
+    --open: #f0b25a; --open-soft: #33260f; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151c; --surface: #181d26; --fg: #e3e7ee; --muted: #9aa3b2; --line: #2b3240;
+  --accent: #7d9bff; --accent-soft: #1d2a4d; --new: #5fcf98; --new-soft: #15301f;
+  --open: #f0b25a; --open-soft: #33260f; color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+main { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: 2.1rem; }
+h2 { font-size: 1.45rem; padding-top: 8px; border-top: 1px solid var(--line); }
+h3 { font-size: 1.1rem; }
+p, ul, ol { margin: 0; max-width: 68ch; }
+li + li { margin-top: 4px; }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+code { background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.12rem; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 0.9rem; color: var(--muted); }
+.chip { display: inline-block; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; padding: 1px 7px; border-radius: 999px; vertical-align: 1px; }
+.chip.new { background: var(--new-soft); color: var(--new); }
+.chip.keep { background: var(--accent-soft); color: var(--accent); }
+.chip.open { background: var(--open-soft); color: var(--open); }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+pre.mermaid { margin: 0; padding: 16px; background: var(--surface); text-align: center; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.col { font-family: var(--font-mono); white-space: nowrap; font-weight: 600; }
+td.type { font-family: var(--font-mono); white-space: nowrap; color: var(--muted); font-size: 0.85rem; }
+.tablehead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
+.tablehead h3 { font-family: var(--font-mono); }
+.why { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.why > div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; min-width: 0; }
+.why h3 { font-size: 1rem; margin-bottom: 6px; }
+.why p { font-size: 0.93rem; color: var(--muted); }
+.questions { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; max-width: none; }
+.questions li { background: var(--open-soft); border-radius: 8px; padding: 12px 16px; margin: 0; }
+.questions strong { color: var(--open); }
+.questions p { color: var(--fg); font-size: 0.95rem; margin-top: 4px; }
+.rejected td:first-child { font-weight: 600; white-space: nowrap; }
+main { max-width: none; }
+main > header p, main > section > p { max-width: 90ch; }
+td.col { white-space: nowrap; }
+.outc { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.o { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600; padding: 1px 6px; border-radius: 999px; white-space: nowrap; }
+.o.ok { background: var(--new-soft); color: var(--new); }
+.o.fail { background: var(--open-soft); color: var(--open); }
+.o.deny { background: var(--accent-soft); color: var(--accent); }
+.o.try { background: var(--line); color: var(--fg); }
+tr.group td { background: var(--bg); font-family: var(--font-display); font-weight: 700; font-size: 1rem; padding-top: 16px; }
+td.small { font-size: 0.86rem; color: var(--muted); }
+pre.json { margin: 0; padding: 16px; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5; background: var(--surface); color: var(--fg); }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <span class="eyebrow">explore/audit · catalogue après grill · 25 octobre 2026</span>
+    <h1>Ce que l'audit enregistre</h1>
+    <p class="lede">L'audit couvre le plan de contrôle : ce qu'un account fait à HARP, et les accès que HARP accorde de lui-même. Chaque événement est écrit dans le même commit que l'action, puis copié dans le logger <code>harp.audit</code>. Les refus sur les actions critiques y figurent ; les lectures, le trafic et les comportements automatiques n'y figurent pas.</p>
+    <div class="legend">
+      <span><span class="o ok">succeeded</span> l'action a eu lieu</span>
+      <span><span class="o fail">failed</span> tentée, mais elle a échoué (mauvais mot de passe, erreur)</span>
+      <span><span class="o deny">denied</span> refusée faute de rôle (403)</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>Le catalogue</h2>
+    <div class="scroll"><table>
+      <tr><th>Action</th><th>Déclenchée par</th><th>Rôle requis</th><th>Résultats</th><th>Cible</th><th>Détail</th></tr>
+
+      <tr class="group"><td colspan="6">Connexions</td></tr>
+      <tr><td class="col">auth.signed_in</td><td>Formulaire de login, callback OIDC, acceptation d'une invitation</td><td>aucun</td><td><span class="outc"><span class="o ok">succeeded</span></span></td><td>account</td><td class="small">method, issuer (OIDC), session_id</td></tr>
+      <tr><td class="col">auth.signed_out</td><td>Bouton « Se déconnecter »</td><td>aucun</td><td><span class="outc"><span class="o ok">succeeded</span></span></td><td>session</td><td class="small">—</td></tr>
+      <tr><td class="col">auth.sessions_revoked</td><td>« Déconnecter partout », ou un Admin qui révoque une session</td><td>soi-même, ou Admin</td><td><span class="outc"><span class="o ok">succeeded</span><span class="o deny">denied</span></span></td><td>account ou session</td><td class="small">count, scope : one, all</td></tr>
+
+      <tr class="group"><td colspan="6">Accès</td></tr>
+      <tr><td class="col">auth.invitation.created</td><td>Écran d'administration, ou HARP au démarrage sans Admin (lien de setup, actor : système)</td><td>Admin, ou système</td><td><span class="outc"><span class="o ok">succeeded</span><span class="o deny">denied</span></span></td><td>invitation</td><td class="small">role, expected_email, expires_at</td></tr>
+      <tr><td class="col">auth.invitation.accepted</td><td>Lien d'invitation</td><td>aucun</td><td><span class="outc"><span class="o ok">succeeded</span><span class="o fail">failed</span></span></td><td>invitation, account créé</td><td class="small">method ; reason si l'acceptation échoue : expired, revoked, already_used, email_mismatch</td></tr>
+      <tr><td class="col">auth.invitation.revoked</td><td>Écran d'administration</td><td>Admin</td><td><span class="outc"><span class="o ok">succeeded</span><span class="o deny">denied</span></span></td><td>invitation</td><td class="small">—</td></tr>
+      <tr><td class="col">auth.account.created</td><td><code>harp auth:create-account</code>, ou création d'un compte machine</td><td>Admin, ou CLI sur la machine</td><td><span class="outc"><span class="o ok">succeeded</span><span class="o deny">denied</span></span></td><td>account</td><td class="small">kind, role ; via cli pour la ligne de commande</td></tr>
+      <tr><td class="col">auth.account.role_changed</td><td>Écran d'administration</td><td>Admin</td><td><span class="outc"><span class="o ok">succeeded</span><span class="o deny">denied</span></span></td><td>account</td><td class="small">from, to</td></tr>
+      <tr><td class="col">auth.account.disabled / enabled</td><td>Écran d'administration</td><td>Admin</td><td><span class="outc"><span class="o ok">succeeded</span><span class="o deny">denied</span></span></td><td>account</td><td class="small">sessions_revoked (count)</td></tr>
+      <tr><td class="col">auth.password_changed</td><td>« Mon compte »</td><td>soi-même</td><td><span class="outc"><span class="o ok">succeeded</span><span class="o fail">failed</span></span></td><td>account</td><td class="small">reason : wrong_current_password, policy (trop court, dans la liste noire)</td></tr>
+      <tr><td class="col">auth.identity.linked</td><td>« Mon compte », après réauthentification</td><td>soi-même</td><td><span class="outc"><span class="o ok">succeeded</span><span class="o fail">failed</span></span></td><td>identity</td><td class="small">method, issuer</td></tr>
+      <tr><td class="col">auth.identity.unlinked</td><td>« Mon compte », ou écran d'administration</td><td>soi-même, ou Admin</td><td><span class="outc"><span class="o ok">succeeded</span><span class="o deny">denied</span></span></td><td>identity</td><td class="small">method, issuer, sessions_revoked</td></tr>
+      <tr><td class="col">auth.token.created</td><td>« Mes jetons », ou un Admin pour un compte machine</td><td>soi-même, ou Admin</td><td><span class="outc"><span class="o ok">succeeded</span><span class="o deny">denied</span></span></td><td>token</td><td class="small">name, prefix, role, expires_at (le secret n'apparaît jamais)</td></tr>
+      <tr><td class="col">auth.token.revoked</td><td>« Mes jetons », ou écran d'administration</td><td>soi-même, ou Admin</td><td><span class="outc"><span class="o ok">succeeded</span><span class="o deny">denied</span></span></td><td>token</td><td class="small">name, prefix</td></tr>
+
+      <tr class="group"><td colspan="6">Trafic</td></tr>
+      <tr><td class="col">proxy.remote.state_changed</td><td>Changement manuel, <code>PUT /api/system/proxy</code> (dashboard). Les passages automatiques du breaker vont dans les logs.</td><td>Editor</td><td><span class="outc"><span class="o ok">succeeded</span><span class="o fail">failed</span><span class="o deny">denied</span></span></td><td>remote d'un endpoint</td><td class="small">endpoint, url, from, to (up, down, checking)</td></tr>
+      <tr><td class="col">http_cache.invalidated</td><td>Explorateur de cache (dashboard). Un <code>PURGE</code> HTTP est du trafic : c'est le Transaction Record qui le garde.</td><td>Editor</td><td><span class="outc"><span class="o ok">succeeded</span><span class="o fail">failed</span><span class="o deny">denied</span></span></td><td>endpoint ou cache entier</td><td class="small">scope : entry, prefix, endpoint, all ; key ou prefix ; removed (count)</td></tr>
+    </table></div>
+    <p>Un refus (<span class="o deny">denied</span>) reprend le nom de l'action refusée, avec <code>required_role</code> dans le détail. On lit ainsi au même endroit « Bob a tenté de se donner le rôle Admin » et « Alice a donné le rôle Admin à Bob ».</p>
+  </section>
+
+  <section>
+    <h2>Dans les logs seulement</h2>
+    <p>Ces événements sont déclarés <code>loggable</code> par l'app qui les émet. Ils partent, au mieux et sans transaction, dans le logger <code>harp.events</code>, et l'Operator peut faire taire chacun d'eux. Un événement non déclaré ne va ni en audit ni en log ; les événements du trafic ne sont jamais déclarés.</p>
+    <div class="scroll"><table>
+      <tr><th>Événement</th><th>Déclenché par</th><th>Détail</th></tr>
+      <tr><td class="col">auth.sign_in_failed</td><td>Formulaire de login, callback OIDC, Basic, jeton refusé</td><td class="small">method, claimed (identifiant tenté ou préfixe de jeton), ip, reason : unknown_account, wrong_password, account_disabled, no_identity, rate_limited, bad_token, token_expired, token_revoked</td></tr>
+      <tr><td class="col">proxy.remote.state_changed</td><td>Le breaker ou la liveness, sans acteur</td><td class="small">endpoint, url, from, to</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Ce qui n'est pas enregistré</h2>
+    <div class="scroll"><table>
+      <tr><th>Quoi</th><th>Pourquoi</th></tr>
+      <tr><td class="col">Les lectures, y compris les lectures refusées</td><td>Un Viewer qui ouvre une transaction, ou qui tombe sur un 403 en ouvrant la page des settings, n'a rien changé. Ces lectures se comptent en milliers par jour.</td></tr>
+      <tr><td class="col">Chaque requête authentifiée par jeton ou par Basic</td><td><code>last_used_at</code> suffit. Les échecs vont dans les logs (<code>auth.sign_in_failed</code>).</td></tr>
+      <tr><td class="col">Les expirations de session, de jeton ou d'invitation</td><td>Personne n'a agi. L'état se lit dans les tables d'auth.</td></tr>
+      <tr><td class="col">Les favoris</td><td>Ce sont les préférences personnelles d'un compte, pas des actions sur HARP.</td></tr>
+      <tr><td class="col">Les requêtes MCP</td><td>Ce sont des lectures. Les quotas d'explore/mcp les comptent ailleurs.</td></tr>
+      <tr><td class="col">Le trafic, PURGE compris</td><td>Il passe par le proxy, et c'est le Transaction Record qui le garde.</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>La forme d'un événement</h2>
+    <div class="scroll"><table>
+      <tr><th>Champ</th><th>Sens</th></tr>
+      <tr><td class="col">id, occurred_at</td><td>Identifiant croissant et horodatage UTC.</td></tr>
+      <tr><td class="col">action, outcome</td><td>Le nom de l'action dans le catalogue, et son résultat.</td></tr>
+      <tr><td class="col">actor_account_id</td><td>L'account qui agit. Vide quand c'est le système qui agit, par exemple pour l'invitation de setup.</td></tr>
+      <tr><td class="col">actor_via, actor_via_id</td><td><code>session</code>, <code>token</code>, <code>cli</code> ou <code>system</code>, avec l'id de la session ou du jeton. Plus tard <code>access_token</code>, pour un agent MCP passé par OAuth.</td></tr>
+      <tr><td class="col">actor_client</td><td>Le client par lequel l'account agit, quand on le connaît. Par exemple, un agent MCP.</td></tr>
+      <tr><td class="col">ip, user_agent</td><td>D'où vient la requête.</td></tr>
+      <tr><td class="col">target_type, target_id, target_label</td><td>Sur quoi porte l'action. Le label est recopié (le username, le nom du jeton) pour rester lisible après une suppression.</td></tr>
+      <tr><td class="col">details</td><td>Un JSON court, propre à chaque action (dernière colonne du catalogue). Il ne contient jamais de secret.</td></tr>
+    </table></div>
+    <div class="scroll">
+<pre class="json">{"id": 18342, "occurred_at": "2026-10-25T09:14:07Z",
+ "action": "auth.account.role_changed", "outcome": "succeeded",
+ "actor_account_id": 1, "actor_via": "session", "actor_via_id": 211,
+ "actor_client": null,
+ "ip": "10.0.4.12", "user_agent": "Firefox/141",
+ "target_type": "account", "target_id": 7, "target_label": "bob",
+ "details": {"from": "viewer", "to": "editor"}}</pre>
+    </div>
+  </section>
+</main>
