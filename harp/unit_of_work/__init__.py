@@ -29,15 +29,20 @@ from harp.event_dispatcher import LoggingAsyncEventDispatcher
 logger = get_logger(__name__)
 
 __all__ = [
+    "ANY_EVENT",
     "IUnitOfWorkFactory",
     "TransactionalEventDispatcher",
     "UnitOfWork",
     "UnsupportedEventError",
     "auditable",
+    "current_unit_of_work",
     "is_auditable",
     "is_loggable",
     "loggable",
 ]
+
+#: Event id for a transactional listener that wants every recorded event.
+ANY_EVENT = "*"
 
 AUDITABLE = "auditable"
 LOGGABLE = "loggable"
@@ -80,12 +85,27 @@ class TransactionalEventDispatcher(LoggingAsyncEventDispatcher):
     """
     The second dispatcher: listeners attached here run inside the unit of work's transaction. Distinct from the main
     dispatcher, so an ordinary listener cannot end up inside a transaction.
+
+    A listener attached to :data:`ANY_EVENT` receives every event recorded, whatever its id: the audit needs it, as it
+    cannot know the ids declared by the other applications.
     """
+
+    def get_listeners(self, event_id: Optional[str] = None, /):
+        listeners = super().get_listeners(event_id)
+        if event_id is None or event_id == ANY_EVENT:
+            return listeners
+        return (*listeners, *super().get_listeners(ANY_EVENT))
 
 
 _open_unit_of_work: ContextVar[Optional["UnitOfWork"]] = ContextVar("harp_open_unit_of_work", default=None)
 
 Compensation = Callable[[], Awaitable[None]]
+AfterCommit = Callable[[], Awaitable[None]]
+
+
+def current_unit_of_work() -> Optional["UnitOfWork"]:
+    """The unit of work open in this context, if any (for transactional listeners)."""
+    return _open_unit_of_work.get()
 
 
 class UnitOfWork(ABC):
@@ -101,6 +121,7 @@ class UnitOfWork(ABC):
         self._dispatcher = dispatcher
         self._recorded: list[IEvent] = []
         self._actions: list[Optional[Compensation]] = []
+        self._after_commit: list[AfterCommit] = []
         self._transaction_context: Optional[AbstractAsyncContextManager] = None
         self._state = "new"
         self._token: Optional[Token] = None
@@ -120,6 +141,11 @@ class UnitOfWork(ABC):
             raise UnsupportedEventError(f"{type(event).__name__} is not marked auditable, it cannot be recorded.")
         await self._transactional.adispatch(event.event_id, event)  # type: ignore[attr-defined]
         self._recorded.append(event)
+
+    def after_commit(self, callback: AfterCommit) -> None:
+        """Runs ``callback`` once the transaction is committed. A failure is logged and undoes nothing."""
+        self._ensure_open()
+        self._after_commit.append(callback)
 
     async def act(self, action: Callable[[], Awaitable[None]], *, compensation: Optional[Compensation] = None) -> None:
         """Runs an action outside the database; a failure of the action propagates and rolls everything back."""
@@ -174,6 +200,11 @@ class UnitOfWork(ABC):
                 logger.critical("A compensation failed after its unit of work did not commit.", exc_info=True)
 
     async def _dispatch_recorded(self) -> None:
+        for callback in self._after_commit:
+            try:
+                await callback()
+            except Exception:
+                logger.exception("An after-commit callback failed; the commit stands.")
         for event in self._recorded:
             try:
                 await self._dispatcher.adispatch(event.event_id, event)  # type: ignore[attr-defined]

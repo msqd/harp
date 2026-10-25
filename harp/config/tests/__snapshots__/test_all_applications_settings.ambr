@@ -7,6 +7,14 @@
     ''',
   })
 # ---
+# name: test_all_applications_default_settings[harp_apps.audit]
+  dict({
+    'harp_apps.audit.settings.AuditSettings': '''
+      {}
+  
+    ''',
+  })
+# ---
 # name: test_all_applications_default_settings[harp_apps.contrib.sentry]
   dict({
     'harp_apps.contrib.sentry.settings.SentrySettings': '''
