@@ -120,7 +120,7 @@ class LazySettingReference(BaseReference):
         for part in target.strip().split("."):
             try:
                 x = x[part]
-            except (TypeError, KeyError):
+            except (TypeError, KeyError, AttributeError):
                 x = self.default
                 break
 

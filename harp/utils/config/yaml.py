@@ -61,9 +61,9 @@ def include_constructor(self, node):
         filename, module = filename.split(" from ")
         module = import_module(module)
         for _path in module.__path__:
-            filename = os.path.join(_path, filename)
-            if os.path.exists(filename):
-                return _include(filename, type(self))
+            candidate = os.path.join(_path, filename)
+            if os.path.exists(candidate):
+                return _include(candidate, type(self))
         raise FileNotFoundError(f"File not found: {filename} (search path: {', '.join(module.__path__)})")
 
     return _include(filename, type(self))

@@ -130,7 +130,7 @@ async def on_remote_response_show_cache_control(event: HttpClientFilterEvent):
     cache_control = response.headers.get_list("Cache-Control")
     if cache_control:
         try:
-            parsed_cached_control = parse_cache_control(cache_control)
+            parsed_cached_control = parse_cache_control(", ".join(cache_control))
         except ParseError as exc:
             parsed_cached_control = exc
 
