@@ -21,21 +21,31 @@ logger = get_logger(__name__)
 
 
 class _ReadOnce:
-    """Wraps a file source so it is parsed once, then served from memory (a copy, as merging mutates)."""
+    """
+    Wraps a file source so that, while a build is open, it is parsed once then served from memory (a copy, as
+    merging mutates). Outside a build, every read goes to the file.
+    """
 
     def __init__(self, source):
         self._source = source
         self._values = None
         self._read = False
+        self._open = False
+
+    def open(self):
+        self._open = True
 
     def __repr__(self):
         return repr(self._source)
 
-    def reset(self):
+    def close(self):
+        self._open = False
         self._values = None
         self._read = False
 
     def get_values(self):
+        if not self._open:
+            return self._source.get_values()
         if not self._read:
             self._values = self._source.get_values()
             self._read = True
@@ -350,13 +360,15 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         Raises:
             ValueError: If strict mode is enabled and configuration exists for unloaded applications.
         """
+        # The cache lives for one build: files are read again by the next build.
+        sources = [s for s in (*self._system_sources, *self._sources) if isinstance(s, _ReadOnce)]
+        for source in sources:
+            source.open()
         try:
             return self._build(strict)
         finally:
-            # The cache lives for one build: the next one reads the files again.
-            for source in (*self._system_sources, *self._sources):
-                if isinstance(source, _ReadOnce):
-                    source.reset()
+            for source in sources:
+                source.close()
 
     def _build(self, strict: bool = None) -> GlobalSettings:
         if strict is None:
