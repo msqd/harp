@@ -15,6 +15,7 @@ Submodules
     :maxdepth: 1
 
     harp_apps.http_cache.adapters
+    harp_apps.http_cache.coalescing
     harp_apps.http_cache.models
     harp_apps.http_cache.settings
     harp_apps.http_cache.storages
