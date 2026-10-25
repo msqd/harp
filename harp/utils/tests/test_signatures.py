@@ -2,8 +2,8 @@ import inspect
 
 import pytest
 
-from harp.controllers import arguments
-from harp.controllers.arguments import resolve_arguments
+from harp.utils import signatures
+from harp.utils.signatures import resolve_arguments
 
 
 def test_resolve_arguments_uses_candidates_and_defaults():
@@ -28,7 +28,7 @@ def test_resolve_arguments_fails_on_missing_required():
 def test_signature_is_memoized_per_subject(monkeypatch):
     # signature() runs on every request; controllers are stable, so it must be computed once per
     # subject and reused, not recomputed on each call.
-    arguments._cached_signature.cache_clear()
+    signatures._cached_signature.cache_clear()
     calls = {"n": 0}
     real_signature = inspect.signature
 
@@ -36,7 +36,7 @@ def test_signature_is_memoized_per_subject(monkeypatch):
         calls["n"] += 1
         return real_signature(subject)
 
-    monkeypatch.setattr(arguments, "signature", counting_signature)
+    monkeypatch.setattr(signatures, "signature", counting_signature)
 
     def subject(a, b=2): ...
 

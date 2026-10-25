@@ -11,7 +11,7 @@ from harp.http import HttpRequest, HttpResponse
 from harp.meta import get_meta, has_meta, set_meta
 from harp.utils.arguments import Arguments
 
-from .arguments import resolve_arguments
+from harp.utils.signatures import resolve_arguments
 
 
 logger = get_logger(__name__)

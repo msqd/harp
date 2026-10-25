@@ -7,7 +7,7 @@ from whistle import AsyncEventDispatcher, Event, IAsyncEventDispatcher
 from harp import get_logger
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse, RejectedRequest
 
-from ..controllers.arguments import resolve_arguments
+from ..utils.signatures import resolve_arguments
 from ..utils.types import typeof
 from .bridge.requests import HttpRequestAsgiBridge
 from .bridge.responses import HttpResponseAsgiBridge
