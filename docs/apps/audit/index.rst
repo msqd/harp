@@ -87,6 +87,26 @@ Each application declares the events it records. This is what the proxy and the 
     logged on ``harp.events`` with the same event name, the same details and no actor, once per real transition (a
     remote that stays down emits nothing more). You can mute them with ``core.muted_events``.
 
+Reading the audit
+:::::::::::::::::
+
+The dashboard reads the audit, nothing else does: no MCP tool exposes it, and HARP has no export (collect the log
+output below instead). The server enforces who sees what, the dashboard only hides what a role cannot use.
+
+Audit page
+    Admins only (``GET /api/audit``). Events newest first, 40 per page, filtered by period (``since`` and ``until``, ISO
+    8601 instants), actor (``actor``, the username exactly), action (``action``, a prefix: ``auth.`` lists every
+    authentication event), and target (``target_type`` and ``target_id``). The filters add up. An Editor or a Viewer
+    is answered ``403``.
+
+My account
+    Every account (``GET /api/audit/mine``). The events whose actor is the account, or whose target is the account
+    (``target_type: account`` and its id): its sign-ins, sessions, tokens and identities, to spot a device it does not
+    know. The same filters apply, and can only narrow it. Where somebody else acted from (``ip``, ``user_agent``) is
+    left out when that somebody is not the account: an Admin changing your role does not hand you their address.
+
+Both answer ``{items, total, pages, perPage}``, with ``page`` choosing the page.
+
 Append-only
 :::::::::::
 

@@ -31,6 +31,8 @@ const mockBlobsResponses: { [key: string]: BlobResponse } = {
   },
 }
 export const handlers: RequestHandler[] = [
+  api.audit,
+  api.audit.mine,
   api.overview,
   api.summary,
   api.system,

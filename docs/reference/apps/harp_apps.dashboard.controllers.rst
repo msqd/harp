@@ -14,6 +14,7 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
+    harp_apps.dashboard.controllers.audit
     harp_apps.dashboard.controllers.blobs
     harp_apps.dashboard.controllers.metrics
     harp_apps.dashboard.controllers.models

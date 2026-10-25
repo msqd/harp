@@ -12,6 +12,8 @@ export const navigationItems = [
   { label: "Overview", to: "/", exact: true },
   { label: "Transactions", to: "/transactions" },
   { label: "System", to: "/system", requires: "editor" as const },
+  { label: "Audit", to: "/audit", requires: "admin" as const },
+  { label: "My account", to: "/account" },
 ]
 
 export const routes: RouteObject[] = [
@@ -42,6 +44,14 @@ export const routes: RouteObject[] = [
           {
             path: "system",
             Component: lazy(() => import("./Pages/System/SystemPage")),
+          },
+          {
+            path: "audit",
+            Component: lazy(() => import("./Pages/Audit/AuditPage")),
+          },
+          {
+            path: "account",
+            Component: lazy(() => import("./Pages/Account/AccountPage")),
           },
           { path: "*", Component: NotFoundPage },
         ],
