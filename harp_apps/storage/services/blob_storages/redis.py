@@ -5,14 +5,15 @@ from datetime import datetime
 from typing import override
 
 from redis.asyncio import Redis
+from redis.exceptions import ResponseError
 
 from harp.models import Blob
 from harp_apps.storage.models.blobs import ORPHAN_GRACE
 from harp_apps.storage.types import IBlobStorage
 
 #: Every blob lives at ``<prefix><blob id>``: the Redis database may be shared with other applications, whose keys HARP
-#: never lists or sweeps. Blobs stored before the prefix existed sit under their bare id (a sha1
-#: hexdigest): they are still read and deleted by id, but never listed.
+#: never lists or sweeps. Blobs stored before the prefix existed sit under their bare id (a
+#: 40 or 64 character hexdigest): they are still read and deleted by id, but never listed.
 BLOB_PREFIX = "harp:blob:"
 
 #: Marks a blob as recently written: key ``<prefix><blob id>``, holding the write time, living `ORPHAN_GRACE`.
@@ -22,8 +23,9 @@ WRITE_MARKER_PREFIX = "harp:blob-written:"
 
 SCAN_BATCH_SIZE = 500
 
-#: Blobs of 0.12 and earlier sit under their bare id, a sha1 hexdigest. Only such ids are looked up outside the prefix.
-_LEGACY_BLOB_ID = re.compile(r"[0-9a-f]{40}")
+#: Blobs of 0.12 and earlier sit under their bare id: 40 hex characters for a blob (the shape of every blob id still),
+#: 64 for an HTTP cache entry (a sha256 cache key). Only such ids are looked up outside the prefix.
+_LEGACY_BLOB_ID = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
 
 
 def _legacy_keys(blob_id: str) -> tuple[str, ...]:
@@ -67,10 +69,13 @@ class RedisBlobStorage(IBlobStorage):
 
     @override
     async def get(self, blob_id):
-        data = await self.client.get(BLOB_PREFIX + blob_id)
-        if data is None and _legacy_keys(blob_id):
-            data = await self.client.get(blob_id)
-        if data is not None:
+        try:
+            data = await self.client.get(BLOB_PREFIX + blob_id)
+            if data is None and _legacy_keys(blob_id):
+                data = await self.client.get(blob_id)
+        except ResponseError:  # a bare key of another type: not a blob
+            return None
+        if data is not None and b"\n" in data:
             content_type, body = data.split(b"\n", 1)
             return Blob(
                 id=blob_id,
