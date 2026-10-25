@@ -40,7 +40,7 @@ class HypercornAdapter:
         try:
             return await serve(cast(Framework, self.system.asgi_app), hypercorn_config, mode="asgi")
         except LifespanFailureError as exc:
-            logger.exception(f"Server initiliation failed: {repr(exc.__cause__)}", exc_info=exc.__cause__)
-            if type(exc.__cause__).__module__.startswith("asyncpg"):
+            logger.exception(f"Server initiliation failed: {exc}", exc_info=exc)
+            if "asyncpg." in str(exc):
                 logger.error("Could not connect to underlying postgres storage backend, check your config.")
             sys.exit(-1)

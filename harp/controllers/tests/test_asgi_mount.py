@@ -5,6 +5,7 @@ from asgiref.testing import ApplicationCommunicator
 from whistle import AsyncEventDispatcher
 
 from harp.asgi.bridge.requests import HttpRequestAsgiBridge
+from harp.asgi.events import EVENT_CORE_STOPPED
 from harp.asgi.kernel import ASGIKernel
 from harp.controllers import AsgiMountController
 from harp.http import AlreadyHandledHttpResponse, HttpRequest
@@ -71,6 +72,34 @@ class TestMountedRequests:
         await AsgiMountController(app, prefix="/mcp")(_request(_scope("/mcp")), _Sink())
 
         assert app.scope["path"] == "/"
+
+    async def test_percent_encoded_prefix_is_matched_on_the_decoded_path(self):
+        app = Recorder()
+        scope = {**_scope("/mcp/x"), "raw_path": b"/m%63p/x"}
+
+        await AsgiMountController(app, prefix="/mcp")(_request(scope), _Sink())
+
+        assert app.scope["path"] == "/x"
+        assert app.scope["raw_path"] == b"/x"
+
+    async def test_raw_path_keeps_its_encoding_after_the_prefix(self):
+        app = Recorder()
+        scope = {**_scope("/mcp/a b"), "raw_path": b"/mcp/a%20b"}
+
+        await AsgiMountController(app, prefix="/mcp")(_request(scope), _Sink())
+
+        assert app.scope["path"] == "/a b"
+        assert app.scope["raw_path"] == b"/a%20b"
+
+    async def test_missing_raw_path_is_fine(self):
+        app = Recorder()
+        scope = _scope()
+        del scope["raw_path"]
+
+        await AsgiMountController(app, prefix="/mcp")(_request(scope), _Sink())
+
+        assert app.scope["path"] == "/messages"
+        assert "raw_path" not in app.scope
 
     async def test_empty_prefix_leaves_the_path_alone(self):
         app = Recorder()
@@ -171,12 +200,73 @@ class TestMountedLifespan:
         assert app.events == ["lifespan.startup", "lifespan.shutdown"]
         await asyncio.wait_for(com.wait(), 1)
 
-    async def test_kernel_without_mounts_still_returns_after_startup(self):
+    async def test_kernel_without_mounts_completes_startup_then_shutdown(self):
+        com = _lifespan_communicator(ASGIKernel(dispatcher=AsyncEventDispatcher()))
+
+        await com.send_input({"type": "lifespan.startup"})
+        assert (await com.receive_output(1))["type"] == "lifespan.startup.complete"
+
+        await com.send_input({"type": "lifespan.shutdown"})
+        assert (await com.receive_output(1))["type"] == "lifespan.shutdown.complete"
+        await asyncio.wait_for(com.wait(), 1)
+
+    async def test_mounted_app_failing_to_start_fails_the_kernel_startup(self):
+        kernel = ASGIKernel(dispatcher=AsyncEventDispatcher())
+        AsgiMountController(_fails_to_start, prefix="/mcp").register(kernel.dispatcher)
+        com = _lifespan_communicator(kernel)
+
+        await com.send_input({"type": "lifespan.startup"})
+        message = await com.receive_output(1)
+
+        assert message["type"] == "lifespan.startup.failed"
+        assert "boom" in message["message"]
+
+    async def test_kernel_reports_a_failing_stopped_listener(self):
         kernel = ASGIKernel(dispatcher=AsyncEventDispatcher())
 
-        com = ApplicationCommunicator(kernel, {"type": "lifespan", "asgi": {"version": "3.0", "spec_version": "2.1"}})
+        async def fail(event):
+            raise ValueError("stuck")
+
+        kernel.dispatcher.add_listener(EVENT_CORE_STOPPED, fail)
+        com = _lifespan_communicator(kernel)
         await com.send_input({"type": "lifespan.startup"})
-        await asyncio.wait_for(com.wait(), 1)
+        await com.receive_output(1)
+
+        await com.send_input({"type": "lifespan.shutdown"})
+        message = await com.receive_output(1)
+
+        assert message["type"] == "lifespan.shutdown.failed"
+        assert "stuck" in message["message"]
+
+    async def test_mounted_app_crashing_after_startup_does_not_break_shutdown(self):
+        kernel = ASGIKernel(dispatcher=AsyncEventDispatcher())
+        healthy = LifespanApp()
+        AsgiMountController(_crashes_after_start, prefix="/a").register(kernel.dispatcher)
+        AsgiMountController(healthy, prefix="/b").register(kernel.dispatcher)
+        com = _lifespan_communicator(kernel)
+        await com.send_input({"type": "lifespan.startup"})
+        assert (await com.receive_output(1))["type"] == "lifespan.startup.complete"
+        await asyncio.sleep(0)
+
+        await com.send_input({"type": "lifespan.shutdown"})
+
+        assert (await com.receive_output(1))["type"] == "lifespan.shutdown.complete"
+        assert healthy.events == ["lifespan.startup", "lifespan.shutdown"]
+
+
+def _lifespan_communicator(kernel):
+    return ApplicationCommunicator(kernel, {"type": "lifespan", "asgi": {"version": "3.0", "spec_version": "2.1"}})
+
+
+async def _fails_to_start(scope, receive, send):
+    await receive()
+    await send({"type": "lifespan.startup.failed", "message": "boom"})
+
+
+async def _crashes_after_start(scope, receive, send):
+    await receive()
+    await send({"type": "lifespan.startup.complete"})
+    raise RuntimeError("crashed")
 
 
 @pytest.mark.parametrize("prefix", ["mcp", "/mcp/"])

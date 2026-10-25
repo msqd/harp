@@ -9,11 +9,12 @@ class ASGICommunicator:
         self.asgi_app = asgi_app
         self.default_host = default_host or self.default_host
         self.default_port = default_port or self.default_port
+        self._lifespan = None
 
     async def asgi_lifespan_startup(self):
         from asgiref.testing import ApplicationCommunicator
 
-        com = ApplicationCommunicator(
+        self._lifespan = ApplicationCommunicator(
             self.asgi_app,
             LifespanScope(
                 type="lifespan",
@@ -23,10 +24,20 @@ class ASGICommunicator:
                 },
             ),
         )
-        await com.send_input(
+        await self._lifespan.send_input(
             LifespanStartupEvent(type="lifespan.startup"),
         )
-        await com.wait()
+        message = await self._lifespan.receive_output(5)
+        if message["type"] != "lifespan.startup.complete":
+            raise RuntimeError(f"Lifespan startup did not complete: {message}")
+
+    async def asgi_lifespan_shutdown(self):
+        """Ends the lifespan started by :meth:`asgi_lifespan_startup`."""
+        await self._lifespan.send_input({"type": "lifespan.shutdown"})
+        message = await self._lifespan.receive_output(5)
+        if message["type"] != "lifespan.shutdown.complete":
+            raise RuntimeError(f"Lifespan shutdown did not complete: {message}")
+        await self._lifespan.wait()
 
     def http_request(self, method, path, *, body=b"", headers=None, host=None, port=None):
         from harp.utils.testing.communicators import HTTPCommunicator

@@ -34,8 +34,9 @@ By default, the mounted application receives ``lifespan.startup`` and ``lifespan
 :meth:`~harp.controllers.AsgiMountController.register` has been called with the kernel's dispatcher. An application
 that does not support the lifespan scope is simply served without it. Pass ``lifespan=False`` to skip it entirely.
 
-The kernel waits for ``lifespan.shutdown`` (and fires ``core.stopped``) only when something listens to that event, so
-setups without a mount behave as before.
+The kernel always waits for ``lifespan.shutdown`` after startup, then fires ``core.stopped``. A failure in either phase
+is reported to the server as ``lifespan.startup.failed`` or ``lifespan.shutdown.failed``. A mounted application that
+fails to start fails the startup; one that fails while stopping is logged and the rest of the shutdown goes on.
 
 Limits
 ------

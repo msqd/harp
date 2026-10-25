@@ -1,5 +1,6 @@
 import asyncio
 from typing import Optional
+from urllib.parse import quote
 
 from asgiref.typing import ASGIApplication, ASGISendCallable
 
@@ -49,11 +50,22 @@ class AsgiMountController:
             "path": path[len(self.prefix) :] or "/",
             "root_path": scope.get("root_path", "") + self.prefix,
         }
-        if "raw_path" in scope:
-            mounted["raw_path"] = scope["raw_path"][len(self.prefix.encode()) :] or b"/"
+        raw_path = scope.get("raw_path")
+        if raw_path is not None:
+            mounted["raw_path"] = self._strip_prefix_from_raw_path(raw_path, mounted["path"])
 
         await self.app(mounted, request._impl.asgi_receive, asgi_send)
         return AlreadyHandledHttpResponse()
+
+    def _strip_prefix_from_raw_path(self, raw_path: bytes, path: str) -> bytes:
+        """The raw path keeps its original encoding when it spells the prefix literally, else it is rebuilt from the
+        decoded path (the prefix was matched on it, so it may be percent-encoded in the raw one)."""
+        prefix = self.prefix.encode()
+        if raw_path == prefix:
+            return b"/"
+        if raw_path.startswith(prefix + b"/"):
+            return raw_path[len(prefix) :]
+        return quote(path).encode()
 
     def register(self, dispatcher):
         """Ties the mounted application's lifespan to the kernel's, through the dispatcher it uses."""
@@ -83,16 +95,22 @@ class AsgiMountController:
             self._lifespan_task = None
             logger.info("Mounted application does not support lifespan.", prefix=self.prefix)
         elif message["type"] == "lifespan.startup.failed":
+            self._lifespan_task = None
             raise RuntimeError(f'Mounted application "{self.prefix or "/"}" failed to start: {message.get("message")}')
 
     async def stop(self):
+        """Stops the application. Failures are logged, never raised, so the rest of the shutdown goes on."""
         task, self._lifespan_task = self._lifespan_task, None
         if task is None:
             return
 
-        await self._lifespan_inbox.put({"type": "lifespan.shutdown"})
-        await self._lifespan_outbox.get()
-        await task
+        try:
+            if not task.done():
+                await self._lifespan_inbox.put({"type": "lifespan.shutdown"})
+                await self._lifespan_outbox.get()
+            await task
+        except Exception:
+            logger.exception("Mounted application failed during shutdown.", prefix=self.prefix)
 
     async def _run_lifespan(self, scope):
         await self.app(scope, self._lifespan_inbox.get, self._lifespan_outbox.put)
