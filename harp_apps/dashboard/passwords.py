@@ -131,6 +131,38 @@ def dummy_hash(algorithm: TAlgorithm, stored_hashes: list[str]) -> str:
     return _DUMMY[algorithm]("harp", stored_hashes)
 
 
+def hash_cost(algorithm: TAlgorithm, stored: str) -> int | None:
+    """Comparable cost of verifying ``stored``, None when it is not a hash (or has no cost, like plaintext)."""
+    if algorithm == "pbkdf2_sha256":
+        try:
+            return _parse_pbkdf2_sha256(stored)[0]
+        except ValueError:
+            return None
+    if algorithm == "argon2":
+        from argon2 import extract_parameters
+        from argon2.exceptions import InvalidHashError
+
+        try:
+            parameters = extract_parameters(stored)
+        except InvalidHashError:
+            return None
+        return parameters.memory_cost * parameters.time_cost * parameters.parallelism
+    return None
+
+
+def pad_verification(algorithm: TAlgorithm, password: str, stored: str, costliest: str) -> None:
+    """After verifying ``stored``, do the work that makes it cost as much as ``costliest``.
+
+    Exact for ``pbkdf2_sha256`` (the missing rounds). Not done for ``argon2``, whose cost is not additive: mixed argon2
+    parameters are warned about at configuration instead.
+    """
+    if algorithm != "pbkdf2_sha256":
+        return
+    missing = _parse_pbkdf2_sha256(costliest)[0] - _parse_pbkdf2_sha256(stored)[0]
+    if missing > 0:
+        _pbkdf2(password, b"harp-padding", missing)
+
+
 def hash_password(algorithm: TAlgorithm, password: str) -> str:
     return _HASH[algorithm](password)
 

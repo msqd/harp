@@ -1,6 +1,7 @@
 import asyncio
 import hmac
 import secrets
+from concurrent.futures import ThreadPoolExecutor
 from functools import cached_property
 from time import monotonic
 from typing import Annotated, Any, Literal
@@ -10,12 +11,26 @@ from pydantic import BeforeValidator, Field, model_validator
 from harp import get_logger
 from harp.config import Configurable, Secret
 from harp.utils.config import yaml
-from harp_apps.dashboard.passwords import ALGORITHMS, TAlgorithm, dummy_hash, verify_password
+from harp_apps.dashboard.passwords import (
+    ALGORITHMS,
+    TAlgorithm,
+    dummy_hash,
+    hash_cost,
+    pad_verification,
+    verify_password,
+)
 
 logger = get_logger(__name__)
 
 CHECK_CACHE_TTL = 60.0
 CHECK_CACHE_MAX_ENTRIES = 1024
+
+# Password verifications are slow and memory hungry by design, and anyone can trigger them with random credentials. They
+# run on their own small pool, so a flood can neither starve the default executor (DNS resolution of upstreams) nor
+# exhaust memory. Excess verifications wait in the pool's queue. There is no failure rate limit (known limit).
+VERIFY_WORKERS = 4
+VERIFY_THREAD_PREFIX = "harp-auth-verify"
+_VERIFY_EXECUTOR = ThreadPoolExecutor(max_workers=VERIFY_WORKERS, thread_name_prefix=VERIFY_THREAD_PREFIX)
 
 
 def _check_algorithm(value):
@@ -84,7 +99,16 @@ class BasicAuthSettings(Configurable):
                 import argon2  # noqa: F401
             except ImportError as exc:
                 raise ValueError("The argon2 algorithm needs its extra: install harp-proxy[argon2].") from exc
+        self._warn_on_mixed_costs()
         return self
+
+    def _warn_on_mixed_costs(self):
+        costs = {hash_cost(self.algorithm, user.password.get_secret_value()) for user in self.users.values()}
+        if len(costs - {None}) > 1:
+            logger.warning(
+                "Dashboard passwords are hashed with different costs. Every check costs as much as the costliest, "
+                "the cheaper hashes only keep their strength: rehash them (dashboard.auth.users)."
+            )
 
     @cached_property
     def _dummy_hash(self):
@@ -118,7 +142,12 @@ class BasicAuthSettings(Configurable):
                 f"Dashboard user «{username}» has a stored password that is not a valid {self.algorithm} hash, "
                 "authentication refused. Check dashboard.auth.users."
             )
+            # Not faster than an unknown user.
+            verify_password(self.algorithm, password, self._dummy_hash)
             return False
+
+        # Hashes made before an upgrade may be cheaper than new ones: every check costs the costliest.
+        pad_verification(self.algorithm, password, stored, self._dummy_hash)
 
         if not user or not matches:
             return False
@@ -133,7 +162,7 @@ class BasicAuthSettings(Configurable):
         if self._verified.get(key, 0) > now:
             return username
 
-        result = await asyncio.to_thread(self.check, username, password)
+        result = await asyncio.get_running_loop().run_in_executor(_VERIFY_EXECUTOR, self.check, username, password)
         if result:
             for expired in [k for k, v in self._verified.items() if v <= now]:
                 del self._verified[expired]

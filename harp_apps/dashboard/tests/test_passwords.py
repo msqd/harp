@@ -118,3 +118,91 @@ def test_dummy_hash_argon2_has_the_configured_parameters():
     settings = BasicAuthSettings(algorithm="argon2", users={"a": cheap})
 
     assert argon2.extract_parameters(settings._dummy_hash) == argon2.extract_parameters(cheap)
+
+
+CHEAP = PASSLIB_HASH  # 29000 rounds, the other users have 600000
+
+
+@pytest.fixture
+def pbkdf2_rounds(monkeypatch):
+    """Rounds of every PBKDF2 derivation done, the work a check does."""
+    from harp_apps.dashboard import passwords
+
+    done = []
+    original = passwords._pbkdf2
+
+    def spy(password, salt, rounds):
+        done.append(rounds)
+        return original(password, salt, rounds)
+
+    monkeypatch.setattr(passwords, "_pbkdf2", spy)
+    return done
+
+
+@pytest.fixture
+def mixed_costs_settings():
+    costly = hash_password("pbkdf2_sha256", "s3cretBob")
+    settings = BasicAuthSettings(algorithm="pbkdf2_sha256", users={"alice": CHEAP, "bob": costly, "eve": "garbage"})
+    settings._dummy_hash  # computed at configuration, not counted in the work of a check
+    return settings
+
+
+@pytest.mark.parametrize(
+    "username, password",
+    [
+        ("nobody", "x"),
+        ("alice", "wrong"),
+        ("alice", "s3cretAlice"),
+        ("bob", "wrong"),
+        ("bob", "s3cretBob"),
+        ("eve", "x"),
+    ],
+)
+def test_every_check_costs_the_costliest_configured_hash(mixed_costs_settings, pbkdf2_rounds, username, password):
+    mixed_costs_settings.check(username, password)
+
+    assert sum(pbkdf2_rounds) == PBKDF2_ROUNDS
+
+
+def test_mixed_costs_warn_at_validation():
+    with structlog.testing.capture_logs() as logs:
+        BasicAuthSettings(algorithm="pbkdf2_sha256", users={"a": CHEAP, "b": hash_password("pbkdf2_sha256", "x")})
+
+    assert any(log["log_level"] == "warning" and "rehash" in log["event"] for log in logs)
+
+
+def test_same_costs_do_not_warn():
+    with structlog.testing.capture_logs() as logs:
+        BasicAuthSettings(algorithm="pbkdf2_sha256", users={"a": CHEAP, "b": CHEAP})
+
+    assert not logs
+
+
+async def test_verifications_run_on_a_dedicated_bounded_executor(monkeypatch):
+    import asyncio
+    import threading
+    import time
+
+    from harp_apps.dashboard.settings import auth
+
+    settings = BasicAuthSettings(algorithm="plaintext", users={"a": "b"})
+    running, peak, threads = 0, 0, set()
+    lock = threading.Lock()
+
+    def slow_check(self, username, password):
+        nonlocal running, peak
+        with lock:
+            running += 1
+            peak = max(peak, running)
+            threads.add(threading.current_thread().name)
+        time.sleep(0.05)
+        with lock:
+            running -= 1
+        return False
+
+    monkeypatch.setattr(BasicAuthSettings, "check", slow_check)
+
+    await asyncio.gather(*(settings.acheck("a", f"p{i}") for i in range(4 * auth.VERIFY_WORKERS)))
+
+    assert 1 < peak <= auth.VERIFY_WORKERS
+    assert all(name.startswith(auth.VERIFY_THREAD_PREFIX) for name in threads)
