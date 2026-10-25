@@ -1,4 +1,5 @@
 import traceback
+from html import escape
 
 from asgiref.typing import ASGIReceiveCallable, ASGISendCallable, Scope
 from hypercorn.utils import LifespanFailureError
@@ -131,19 +132,29 @@ class ASGIKernel:
                 content_type="text/plain",
             )
 
+        response_started = False
+
+        async def tracking_send(message):
+            nonlocal response_started
+            if message["type"] == "http.response.start":
+                response_started = True
+            await send(message)
+
         try:
-            return await self.do_handle_http(request, send)
+            return await self.do_handle_http(request, tracking_send)
 
         except Exception as exc:
             if not self.handle_errors:
                 raise
 
-            # todo refactor this
-            logger.exception()
+            logger.exception("Unhandled exception while handling request")
+            if response_started:
+                # The response is already on the wire: a second "http.response.start" would be a protocol error.
+                raise
             if self.debug:
                 return HttpResponse(
-                    f"<h1>Internal Server Error</h1><h2>{type(exc).__name__}: {exc}</h2> "
-                    f"<pre>{traceback.format_exc()}</pre>",
+                    f"<h1>Internal Server Error</h1><h2>{escape(type(exc).__name__)}: {escape(str(exc))}</h2> "
+                    f"<pre>{escape(traceback.format_exc())}</pre>",
                     status=500,
                     content_type="text/html",
                 )
