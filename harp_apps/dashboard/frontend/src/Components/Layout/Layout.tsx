@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation } from "react-router"
 import tw, { styled } from "twin.macro"
 
 import logo from "Assets/logo.svg"
+import { Role, roleIncludes, useRole } from "Domain/System"
 import { getDocumentationUrl } from "Utils/Documentation"
 import { DevelopmentOnlyWarning } from "ui/Components/DevelopmentOnlyWarning"
 import { Navbar } from "ui/Components/Navbar"
@@ -18,6 +19,8 @@ export interface NavigationItem {
   label: string
   to: string
   exact?: boolean
+  /** The lowest role that may use the page; everyone, when unset. */
+  requires?: Role
 }
 
 interface LayoutProps {
@@ -29,6 +32,7 @@ interface LayoutProps {
 function Layout({ title, navigationItems, navBarClassName }: LayoutProps) {
   const location = useLocation()
   const system = useSystemQuery().data
+  const role = useRole()
   return (
     <div className="flex h-screen min-h-screen max-h-screen w-screen flex-col">
       <Navbar
@@ -49,7 +53,7 @@ function Layout({ title, navigationItems, navBarClassName }: LayoutProps) {
             documentationUrl={getDocumentationUrl(system?.version)}
           />
         }
-        items={navigationItems}
+        items={navigationItems.filter(({ requires }) => roleIncludes(role, requires ?? "viewer"))}
         currentPath={location.pathname}
         Link={Link}
         Wrapper={StyledContainerWithHorizontalConstraint}

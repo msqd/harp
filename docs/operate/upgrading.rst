@@ -3,6 +3,20 @@
 Upgrading to 0.13
 =================
 
+Accounts and roles
+::::::::::::::::::
+
+- A new ``auth`` application owns the accounts. The dashboard requires it, so it is loaded with the dashboard, even
+  when your ``applications:`` list does not name it: a list now gains the dependencies of its applications.
+- Every dashboard page has a role: a ``viewer`` reads the overview, transactions and metrics, an ``editor`` also uses
+  the topology and storage pages and sets remote endpoints up or down, an ``admin`` also reads settings and
+  dependencies. The users declared in ``dashboard.auth`` are imported once as ``admin`` accounts, so nothing they do
+  changes. See :doc:`/apps/auth/index`.
+- **PostgreSQL**: the ``users`` table becomes ``auth_accounts`` at the next migration, favourites included. Existing
+  accounts are disabled ``viewer`` people until the import enables the configured ones. Manage accounts with
+  ``auth:set-role``, ``auth:disable-account`` and ``auth:enable-account``.
+- **SQLite**: a file written by 0.12 is refused at start. Delete it (it is recreated) or run ``harp-proxy db:reset``.
+
 Metrics
 :::::::
 

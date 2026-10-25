@@ -98,6 +98,7 @@ class ApplicationsRegistry:
 
     def __init__(self, *, namespaces: Optional[list[str]] = None):
         self._applications = {}
+        self._autoloaded = set()
         self.namespaces = namespaces or self.namespaces
 
     def __contains__(self, name):
@@ -177,40 +178,57 @@ class ApplicationsRegistry:
 
         Args:
             *names: Application names to add
-            autoload_dependencies: If True, automatically add declared dependencies.
+            autoload_dependencies: If True, automatically add declared dependencies, before the application. They stay
+                                   loaded only as long as an application needs them (see :meth:`remove`).
                                    Defaults to False for backward compatibility.
         """
         for name in names:
-            if name.rsplit(".", 1)[-1] == RESERVED_APPLICATION_NAME:
-                raise ValueError(
-                    f'"{RESERVED_APPLICATION_NAME}" is reserved for the core settings section: '
-                    f"an application cannot be named {RESERVED_APPLICATION_NAME} ({name})."
-                )
-            full_name = self.resolve_name(name)
-            short_name = self.resolve_short_name(full_name)
+            self._add(name, autoload_dependencies=autoload_dependencies, explicit=True)
 
-            # If autoload is enabled, load dependencies FIRST
-            if autoload_dependencies and short_name not in self._applications:
-                app = self.get_application(full_name)
-                dependencies = getattr(app, "dependencies", [])
-                if dependencies:
-                    # Recursively add dependencies before the current app
-                    self.add(*dependencies, autoload_dependencies=True)
+    def _add(self, name, *, autoload_dependencies: bool, explicit: bool):
+        if name.rsplit(".", 1)[-1] == RESERVED_APPLICATION_NAME:
+            raise ValueError(
+                f'"{RESERVED_APPLICATION_NAME}" is reserved for the core settings section: '
+                f"an application cannot be named {RESERVED_APPLICATION_NAME} ({name})."
+            )
+        full_name = self.resolve_name(name)
+        short_name = self.resolve_short_name(full_name)
 
-            if short_name not in self._applications:
-                self._applications[short_name] = self.get_application(full_name)
-            elif self._applications[short_name] != self.get_application(full_name):
-                raise ValueError(
-                    f"Application {short_name} already registered with a different type ({self._applications[short_name].__module__}.{self._applications[short_name].__qualname__})."
-                )
+        if explicit:
+            self._autoloaded.discard(short_name)
+
+        # If autoload is enabled, load dependencies FIRST
+        if autoload_dependencies and short_name not in self._applications:
+            for dependency in getattr(self.get_application(full_name), "dependencies", []):
+                if dependency not in self._applications:
+                    self._autoloaded.add(self.resolve_short_name(self.resolve_name(dependency)))
+                self._add(dependency, autoload_dependencies=True, explicit=False)
+
+        if short_name not in self._applications:
+            self._applications[short_name] = self.get_application(full_name)
+        elif self._applications[short_name] != self.get_application(full_name):
+            raise ValueError(
+                f"Application {short_name} already registered with a different type ({self._applications[short_name].__module__}.{self._applications[short_name].__qualname__})."
+            )
 
     def remove(self, *names):
+        """Remove applications, and the dependencies that were loaded for them only and nothing needs anymore."""
         for name in names:
             full_name = self.resolve_name(name)
             short_name = self.resolve_short_name(full_name)
 
             if short_name in self._applications:
                 del self._applications[short_name]
+                self._autoloaded.discard(short_name)
+
+        self._drop_unneeded_autoloaded()
+
+    def _drop_unneeded_autoloaded(self):
+        needed = {dep for app in self._applications.values() for dep in getattr(app, "dependencies", [])}
+        for name in [name for name in self._autoloaded if name not in needed]:
+            self._autoloaded.discard(name)
+            self._applications.pop(name, None)
+            self._drop_unneeded_autoloaded()
 
     def items(self) -> ItemsView[str, Application]:
         return self._applications.items()

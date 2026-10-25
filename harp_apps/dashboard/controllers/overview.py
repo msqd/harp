@@ -4,6 +4,7 @@ from statistics import StatisticsError, mean
 
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest
+from harp.security.actor import Role
 from harp.views import json
 from harp_apps.storage.constants import TimeBucket
 from harp_apps.storage.types import IStorage
@@ -55,7 +56,7 @@ class OverviewController(RoutingController):
         self.storage = storage
         super().__init__(handle_errors=handle_errors, router=router)
 
-    @GetHandler("/summary")
+    @GetHandler("/summary", role=Role.VIEWER)
     async def get_summary_data(self, request: HttpRequest):
         time_span = "24h"
         time_bucket = time_bucket_for_range[time_span]
@@ -93,7 +94,7 @@ class OverviewController(RoutingController):
             }
         )
 
-    @GetHandler("/")
+    @GetHandler("/", role=Role.VIEWER)
     async def get_overview_data(self, request: HttpRequest):
         # endpoint and range from request
         endpoint = request.query.get("endpoint")

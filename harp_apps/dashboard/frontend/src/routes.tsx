@@ -11,7 +11,7 @@ const TransactionListPage = lazy(() => import("./Pages/Transactions/TransactionL
 export const navigationItems = [
   { label: "Overview", to: "/", exact: true },
   { label: "Transactions", to: "/transactions" },
-  { label: "System", to: "/system" },
+  { label: "System", to: "/system", requires: "editor" as const },
 ]
 
 export const routes: RouteObject[] = [

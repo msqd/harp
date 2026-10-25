@@ -1,7 +1,7 @@
 import pytest
 
 from harp.utils.testing.communicators import ASGICommunicator
-from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
+from harp_apps.dashboard.tests._mixins import AdminThroughASGIFixtureMixin
 from harp_apps.dashboard.controllers.blobs import BlobsController
 from harp_apps.storage.models import Blob
 from harp_apps.storage.types import IBlobStorage
@@ -59,7 +59,7 @@ class TestBlobsController(
 class TestBlobsControllerThroughASGI(
     BlobsControllerTestFixtureMixin,
     StorageTestFixtureMixin,
-    ControllerThroughASGIFixtureMixin,
+    AdminThroughASGIFixtureMixin,
 ):
     async def test_get_not_found(self, client: ASGICommunicator):
         response = await client.http_get("/api/blobs/not-a-blob")
