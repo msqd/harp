@@ -1,1 +1,1 @@
-The kernel now answers an unhandled controller exception with a 500 and logs the error with its traceback; the debug error page escapes its content.
+An exception raised after the response started is now logged and re-raised without a second response start, and the debug error page escapes what it shows.

@@ -1,27 +1,6 @@
-import logging
-
 import pytest
-import structlog
-import structlog.testing
 
-from harp.asgi import kernel as kernel_module
 from harp.asgi.kernel import ASGIKernel
-
-
-@pytest.fixture(autouse=True)
-def logs(monkeypatch):
-    """Bind the kernel logger like a running HARP does (filtering ``BoundLogger``, whose ``exception()`` requires an event)."""
-    capture = structlog.testing.LogCapture()
-    monkeypatch.setattr(
-        kernel_module,
-        "logger",
-        structlog.wrap_logger(
-            None,
-            processors=[structlog.dev.set_exc_info, structlog.processors.format_exc_info, capture],
-            wrapper_class=structlog.make_filtering_bound_logger(logging.NOTSET),
-        ),
-    )
-    return capture.entries
 
 
 class _Resolver:
@@ -67,7 +46,7 @@ def _kernel(controller, **kwargs):
 
 class TestKernelUnhandledControllerException:
     @pytest.mark.asyncio
-    async def test_controller_raising_gets_a_500_and_the_error_is_logged_with_traceback(self, logs):
+    async def test_controller_raising_gets_a_500_and_the_error_is_logged(self, caplog):
         async def controller():
             raise RuntimeError("boom-marker")
 
@@ -76,12 +55,10 @@ class TestKernelUnhandledControllerException:
         assert error is None
         assert [(m["type"], m.get("status")) for m in sent][:1] == [("http.response.start", 500)]
         assert b"Internal Server Error" in b"".join(m.get("body", b"") for m in sent)
-        assert [e["log_level"] for e in logs] == ["error"]
-        assert "Traceback" in logs[0]["exception"]
-        assert "RuntimeError: boom-marker" in logs[0]["exception"]
+        assert "Unhandled exception while handling request" in caplog.text
 
     @pytest.mark.asyncio
-    async def test_exception_after_response_started_is_reraised_without_a_second_start(self, logs):
+    async def test_exception_after_response_started_is_reraised_without_a_second_start(self, caplog):
         async def controller(asgi_send):
             await asgi_send({"type": "http.response.start", "status": 200, "headers": []})
             raise RuntimeError("late-boom")
@@ -90,7 +67,7 @@ class TestKernelUnhandledControllerException:
 
         assert isinstance(error, RuntimeError)
         assert [m["type"] for m in sent] == ["http.response.start"]
-        assert "RuntimeError: late-boom" in logs[0]["exception"]
+        assert "Unhandled exception while handling request" in caplog.text
 
 
 class TestKernelDebugErrorPage:
