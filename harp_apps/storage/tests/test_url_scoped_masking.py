@@ -44,7 +44,7 @@ def test_hide_password_leaves_the_rest_of_the_message_intact(username, password)
     shown = url.render_as_string(hide_password=False)
     template = (
         "harp.errors.OutdatedSchemaError: The storage schema of {} is outdated (at revision none).\n"
-        "  - migrate it: harp-proxy db:migrate up head --set storage.url={}\n"
+        "  - migrate it: harp-proxy db:migrate up heads --set storage.url={}\n"
         "config: {}; driver: password authentication failed for user {!r}\n"
         "another password: redis://{}:{}2@cache/0?password={}2"
     )
@@ -127,7 +127,7 @@ async def test_an_outdated_schema_is_refused_with_a_usable_command(database_url,
     message = str(exc_info.value)
     hidden = url.render_as_string(hide_password=True)
     assert f"The storage schema of {hidden} is outdated" in message
-    assert f"harp-proxy db:migrate up head --set storage.url={hidden}\n" in message
+    assert f"harp-proxy db:migrate up heads --set storage.url={hidden}\n" in message
     assert url.render_as_string(hide_password=False) not in message
 
 
