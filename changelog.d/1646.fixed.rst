@@ -1,0 +1,1 @@
+Proxy: client tags are now bounded by the storage column widths, names to 64 characters and values to 255 (the default value bound was 256, which failed to store on PostgreSQL); `proxy.tags.max_name_length` and `max_value_length` cannot be set above these, and a tag over the bound is dropped.

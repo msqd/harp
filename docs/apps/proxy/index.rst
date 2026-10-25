@@ -94,8 +94,9 @@ A request header starting with ``x-harp-`` is removed from the request and store
 bounded, and a tag over a bound is dropped while the request is proxied as usual:
 
 - 20 tags per transaction (``max_count``): the first ones in request header order are kept;
-- names up to 64 characters (``max_name_length``), values up to 256 (``max_value_length``). Oversized tags are dropped
-  first and do not count towards the 20.
+- names up to 64 characters (``max_name_length``), values up to 255 (``max_value_length``). Oversized tags are dropped
+  first and do not count towards the 20. These are the widths of the storage columns: the bounds can be lowered but
+  not raised, and a configuration above them is rejected at startup.
 
 Dropped tags are logged at debug level with the transaction id, never their value.
 
@@ -105,7 +106,7 @@ Dropped tags are logged at debug level with the transaction id, never their valu
       tags:
         max_count: 20
         max_name_length: 64
-        max_value_length: 256
+        max_value_length: 255
 
 Tagging stays open: any name is accepted. If HARP is exposed to untrusted callers, strip ``x-harp-*`` headers from the
 requests you do not trust (at your load balancer or gateway), or lower these bounds, since every kept tag is stored.
