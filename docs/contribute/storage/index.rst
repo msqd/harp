@@ -32,7 +32,7 @@ Migrations: one branch per application
 ::::::::::::::::::::::::::::::::::::::
 
 HARP has one alembic environment and one ``alembic_version`` table. Each application that owns tables owns a *branch*
-of that history (see ``docs/adr/0011-each-app-owns-an-alembic-branch.md``). Storage's revisions are the ``storage``
+of that history (see ``docs/adr/0012-each-app-owns-an-alembic-branch.md``). Storage's revisions are the ``storage``
 branch.
 
 To give an application ``acme`` its branch:

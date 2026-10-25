@@ -8,7 +8,7 @@ The dashboard knows one way in, HTTP Basic against users declared in the configu
 
 A new `auth` application, always loaded, owns accounts, identities, sessions, tokens and invitations (`auth_*` tables, taking over `users`). Roles are Viewer, Editor, Admin. Sign-in methods are password (web form and server-side sessions), OpenID Connect providers, tokens, and HTTP Basic (deprecated). Nobody enters without an invitation; the first Admin accepts a setup link HARP logs. The proxy never forwards HARP's own credentials to an origin.
 
-Design, vocabulary and decisions: `CONTEXT.md` (Access), `explorations/auth/decisions.md`, ADR-0010 and ADR-0011 on branch `explore/auth`.
+Design, vocabulary and decisions: `CONTEXT.md` (Access), `explorations/auth/decisions.md`, ADR-0011 and ADR-0012 on branch `explore/auth`.
 
 **Children** (milestone [explore/auth](https://github.com/msqd/harp/milestone/24), PRs into branch `explore/auth`)
 

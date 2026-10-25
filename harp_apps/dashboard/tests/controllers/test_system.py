@@ -8,7 +8,7 @@ import pytest
 from harp.utils.testing import RE
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.databases import parametrize_with_blob_storages_urls, parametrize_with_database_urls
-from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
+from harp_apps.dashboard.tests._mixins import AdminThroughASGIFixtureMixin
 from harp_apps.dashboard.controllers.system import SystemController
 from harp_apps.dashboard.tests._mixins import SystemControllerTestFixtureMixin, parametrize_with_settings
 from harp_apps.proxy.constants import CHECKING, DOWN, UP
@@ -115,7 +115,7 @@ class TestSystemController(
 class TestSystemControllerThroughASGI(
     SystemControllerTestFixtureMixin,
     StorageTestFixtureMixin,
-    ControllerThroughASGIFixtureMixin,
+    AdminThroughASGIFixtureMixin,
 ):
     @parametrize_with_settings({})
     @parametrize_with_database_urls("sqlite")
@@ -224,7 +224,7 @@ class TestSystemControllerThroughASGI(
 
     @parametrize_with_settings(
         {
-            "applications": ["http_client", "storage", "dashboard"],
+            "applications": ["http_client", "storage", "auth", "dashboard"],
             "storage": {"redis": {"url": "redis://:s3cret@localhost:6379/0"}},
             "dashboard": {"auth": {"type": "basic", "algorithm": "plain", "users": {"alice": "s3cretAlice"}}},
         }
@@ -239,7 +239,7 @@ class TestSystemControllerThroughASGI(
 
     @parametrize_with_settings(
         {
-            "applications": ["proxy", "http_client", "storage", "dashboard"],
+            "applications": ["proxy", "http_client", "storage", "auth", "dashboard"],
             "proxy": {
                 "endpoints": [
                     {"name": "api", "port": 4000, "url": "http://user:p%40ss@127.0.0.1:1/"},
@@ -265,7 +265,7 @@ class TestSystemControllerThroughASGI(
 
     @parametrize_with_settings(
         {
-            "applications": ["proxy", "http_client", "storage", "dashboard"],
+            "applications": ["proxy", "http_client", "storage", "auth", "dashboard"],
             "proxy": {"endpoints": [{"name": "api", "port": 4000, "url": "http://user:secret@127.0.0.1:1/"}]},
         }
     )
@@ -288,7 +288,7 @@ class TestSystemControllerThroughASGI(
 
 
 PROXY_SETTINGS = {
-    "applications": ["proxy", "http_client", "storage", "dashboard"],
+    "applications": ["proxy", "http_client", "storage", "auth", "dashboard"],
     "proxy": {"endpoints": [{"name": "api", "port": 4000, "url": "http://127.0.0.1:1/"}]},
 }
 REMOTE_URL = "http://127.0.0.1:1/"
@@ -307,7 +307,7 @@ def remote_status(response) -> int:
 class TestSystemControllerPutProxy(
     SystemControllerTestFixtureMixin,
     StorageTestFixtureMixin,
-    ControllerThroughASGIFixtureMixin,
+    AdminThroughASGIFixtureMixin,
 ):
     @parametrize_with_settings(PROXY_SETTINGS)
     @parametrize_with_database_urls("sqlite")
@@ -319,9 +319,9 @@ class TestSystemControllerPutProxy(
     async def test_put_proxy_changes_remote_status(
         self, client: ASGICommunicator, blob_storage, action, previous, expected
     ):
-        await put_proxy(client, endpoint="api", url=REMOTE_URL, action=previous)
+        await put_proxy(client, endpoint="api", index=0, action=previous)
 
-        response = await put_proxy(client, endpoint="api", url=REMOTE_URL, action=action)
+        response = await put_proxy(client, endpoint="api", index=0, action=action)
 
         assert response["status"] == 200
         assert remote_status(response) == expected
@@ -332,9 +332,9 @@ class TestSystemControllerPutProxy(
     @pytest.mark.parametrize(
         ("data", "status", "message"),
         [
-            ({"endpoint": "api", "url": REMOTE_URL, "action": "explode"}, 400, b"Invalid input"),
-            ({"endpoint": "nope", "url": REMOTE_URL, "action": "up"}, 404, b"Endpoint not found: nope"),
-            ({"endpoint": "api", "url": "http://elsewhere/", "action": "up"}, 404, b"Endpoint URL not found"),
+            ({"endpoint": "api", "index": 0, "action": "explode"}, 400, b"Invalid input"),
+            ({"endpoint": "nope", "index": 0, "action": "up"}, 404, b"Endpoint not found: nope"),
+            ({"endpoint": "api", "index": 1, "action": "up"}, 404, b"Remote endpoint not found"),
         ],
     )
     async def test_put_proxy_rejects_bad_input(self, client: ASGICommunicator, blob_storage, data, status, message):
@@ -342,3 +342,28 @@ class TestSystemControllerPutProxy(
 
         assert response["status"] == status
         assert message in response["body"]
+
+
+CREDENTIALED_PROXY_SETTINGS = {
+    "applications": ["proxy", "http_client", "storage", "auth", "dashboard"],
+    "proxy": {"endpoints": [{"name": "api", "port": 4000, "url": "http://user:hunter2@127.0.0.1:1/?email=a@b.com"}]},
+}
+
+
+class TestSystemControllerPutProxyCredentialedRemote(
+    SystemControllerTestFixtureMixin,
+    StorageTestFixtureMixin,
+    AdminThroughASGIFixtureMixin,
+):
+    @parametrize_with_settings(CREDENTIALED_PROXY_SETTINGS)
+    @parametrize_with_database_urls("sqlite")
+    @parametrize_with_blob_storages_urls("sql")
+    @pytest.mark.parametrize(("action", "expected"), [("up", UP), ("down", DOWN), ("checking", CHECKING)])
+    async def test_put_proxy_identifies_the_remote_by_index(
+        self, client: ASGICommunicator, blob_storage, action, expected
+    ):
+        response = await put_proxy(client, endpoint="api", index=0, action=action)
+
+        assert response["status"] == 200
+        assert remote_status(response) == expected
+        assert b"hunter2" not in response["body"]

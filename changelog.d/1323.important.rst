@@ -1,0 +1,1 @@
+Rules and storage markers match the normalised path the proxy forwards (no scheme, authority or query string, unreserved escapes decoded); ``on_remote_*`` rules matching on the query string are deprecated and will match the path only in the next release.

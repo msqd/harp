@@ -61,6 +61,8 @@ export default defineConfig(({ mode }) => {
           // Emptied by `emptyOutDirExcept` below: `web/.gitkeep` is tracked and must survive the build.
           emptyOutDir: false,
           outDir: "../web",
+          // vitest 4 inlines small assets as data URIs; keep them as paths so snapshots stay stable.
+          assetsInlineLimit: mode === "test" ? 0 : undefined,
           rollupOptions: {
             output: {
               manualChunks: {

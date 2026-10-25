@@ -1,0 +1,1 @@
+Generated schemas and TypeScript types are emitted in a stable order, ``make types`` also generates the ``http_cache`` schema, and CI fails when regenerating them changes the tree.

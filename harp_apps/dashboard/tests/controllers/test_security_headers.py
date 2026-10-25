@@ -12,6 +12,7 @@ from harp_apps.dashboard.controllers import DashboardController
 from harp_apps.dashboard.controllers.blobs import INERT_BLOB_HEADERS
 from harp_apps.dashboard.settings import BasicAuthSettings, DashboardSettings
 from harp_apps.dashboard.settings.auth import User
+from harp_apps.dashboard.tests._mixins import RoleNamedActors
 from harp_apps.storage.types import IStorage
 
 DASHBOARD_CSP = (
@@ -26,6 +27,7 @@ def _create_controller(settings: DashboardSettings = None):
         storage=cast(IStorage, Mock(spec=IStorage)),
         settings=settings or DashboardSettings(auth={"type": "none"}, devserver={"enabled": True, "port": 5173}),
         http_client=Mock(spec=AsyncClient),
+        actors=RoleNamedActors(),
     )
     controller._ui_devserver_proxy_controller = None
     return controller
@@ -34,6 +36,7 @@ def _create_controller(settings: DashboardSettings = None):
 def _assert_security_headers(headers):
     assert headers["x-content-type-options"] == "nosniff"
     assert headers["x-frame-options"] == "DENY"
+    assert headers["referrer-policy"] == "same-origin"
     assert headers["content-security-policy"] == DASHBOARD_CSP
 
 
@@ -105,6 +108,7 @@ async def test_devserver_responses_get_no_content_security_policy():
 
     assert response.headers["x-content-type-options"] == "nosniff"
     assert response.headers["x-frame-options"] == "DENY"
+    assert response.headers["referrer-policy"] == "same-origin"
     assert "content-security-policy" not in response.headers
 
 

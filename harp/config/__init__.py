@@ -28,6 +28,7 @@ from .events import (
     OnShutdownEvent,
 )
 from .mixins import ApplicationSettingsMixin
+from .secrets import Secret
 
 __all__ = [
     "Application",
@@ -44,6 +45,7 @@ __all__ = [
     "OnBoundEvent",
     "OnReadyEvent",
     "OnShutdownEvent",
+    "Secret",
     "Service",
     "Stateful",
     "asdict",

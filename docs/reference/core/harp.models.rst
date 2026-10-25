@@ -17,4 +17,5 @@ Submodules
     harp.models.base
     harp.models.blobs
     harp.models.messages
+    harp.models.redaction
     harp.models.transactions

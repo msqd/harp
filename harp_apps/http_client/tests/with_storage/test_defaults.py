@@ -20,6 +20,7 @@ class TestDefaultsWithStorage(BaseTestDefaultsWith):
         system = await self.create_system(applications=applications)
         assert set(system.config["applications"]) == {
             "harp_apps.http_client",
+            "harp_apps.proxy",  # storage needs it
             "harp_apps.storage",
         }
         assert asdict(system.config["http_client"]) == {}

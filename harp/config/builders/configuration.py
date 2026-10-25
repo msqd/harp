@@ -81,10 +81,10 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         self._applications_pinned = bool(pinned_applications)
         self._application_ops: list[tuple[str, str]] = []
         for app_name in pinned_applications:
-            self.applications.add(app_name)
+            self.applications.add(app_name, autoload_dependencies=True)
 
         if use_default_applications:
-            self.applications.add(*DEFAULT_APPLICATIONS)
+            self.applications.add(*DEFAULT_APPLICATIONS, autoload_dependencies=True)
 
         super().__init__()
 
@@ -94,7 +94,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
     def enable_application(self, name: str):
         """Adds an application, remembering it so it is applied again after a file replaces the set."""
         self._application_ops.append(("add", name))
-        self.applications.add(name)
+        self.applications.add(name, autoload_dependencies=True)
 
     def disable_application(self, name: str):
         """Removes an application, remembering it so it is applied again after a file replaces the set."""
@@ -113,8 +113,9 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
             return
         # Resolve every name first so an unknown one fails before the set is touched.
         replacement = self.create_application_registry()
-        replacement.add(*names)
+        replacement.add(*names, autoload_dependencies=True)
         self.applications._applications = replacement._applications
+        self.applications._autoloaded = replacement._autoloaded
         for operation, name in self._application_ops:
             getattr(self.applications, operation)(name)
 

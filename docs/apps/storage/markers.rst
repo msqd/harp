@@ -23,6 +23,7 @@ Prefix          Cause                                           Markers
 ``shed-``       Storage dropped data under pressure             ``shed-messages``, ``shed-headers``, ``shed-bodies``
 ``truncated-``  A recording cap cut the data                    ``truncated-request-body``, ``truncated-response-body``
 ``client-``     The client went away                            ``client-disconnected``
+``no-store-``   A ``Cache-Control: no-store`` suppressed it     ``no-store-request``, ``no-store-response``
 ==============  ==============================================  ==========================================================
 
 The storage worker sets the ``shed-`` markers when it drops the messages, headers or bodies of a transaction because
@@ -65,6 +66,13 @@ This is useful for:
 Header Storage Markers
 ----------------------
 
+.. note::
+
+    These markers are not the way to keep credentials out of storage. They drop every header to hide one, they leave
+    the query string in the request summary, and the :doc:`cache </apps/http_cache/index>` does not honour them (only
+    ``skip-request-storage`` and ``skip-response-storage`` keep a response out of the cache).
+    Credentials are handled by :doc:`redaction <redaction>`.
+
 ``skip-request-headers-storage``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -73,7 +81,7 @@ The request body and message metadata (summary, timestamps, etc.) will still be 
 
 This is useful for:
 
-- Requests with sensitive authentication headers that should not be persisted
+- Dropping every request header, when :doc:`redaction <redaction>` of the few credential headers is not enough
 - Compliance requirements that prohibit storing certain request headers
 
 ``skip-response-headers-storage``
@@ -84,7 +92,7 @@ The response body and message metadata (summary, timestamps, etc.) will still be
 
 This is useful for:
 
-- Responses with sensitive headers that should not be persisted
+- Dropping every response header, when :doc:`redaction <redaction>` of the few credential headers is not enough
 - Compliance requirements that prohibit storing certain response headers
 
 Truncation Markers
@@ -133,6 +141,29 @@ Set by the proxy when it removed HARP's own credentials (the dashboard session c
 request before it is recorded and forwarded to the origin, or a ``Set-Cookie`` of HARP's session cookie from the origin's
 response. See :doc:`/apps/proxy/index`.
 
+No-store Markers
+----------------
+
+``no-store-request``
+~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 0.13
+
+Set by the storage worker when the request carries ``Cache-Control: no-store``. Neither the headers nor the body of
+the request, nor of its response, are stored: it sets ``no-store-response`` too. The transaction and both message
+rows are still recorded, with their summaries.
+
+``no-store-response``
+~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 0.13
+
+Set by the storage worker when the response carries ``Cache-Control: no-store``, or when the request did. The headers
+and the body of the response are not stored; the request is recorded normally when only the response asked.
+
+These markers tell a payload suppressed on purpose from one shed under load (``shed-``). HARP does not currently
+provide a way to override them. See :ref:`what-harp-retains`.
+
 Message Storage Markers
 -----------------------
 
@@ -147,6 +178,10 @@ This is useful for:
 - Completely omitting request storage for specific endpoints
 - Privacy requirements that prohibit storing any request data
 
+.. versionchanged:: 0.13
+   A transaction carrying this marker is not cached either: its response is never stored by the
+   :doc:`HTTP cache </apps/http_cache/index>`.
+
 ``skip-response-storage``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -157,6 +192,10 @@ This is useful for:
 
 - Completely omitting response storage for specific endpoints
 - Privacy requirements that prohibit storing any response data
+
+.. versionchanged:: 0.13
+   A transaction carrying this marker is not cached either: its response is never stored by the
+   :doc:`HTTP cache </apps/http_cache/index>`.
 
 Transaction Storage Marker
 ---------------------------

@@ -5,8 +5,10 @@ from typing import AsyncIterator, Awaitable, Callable, Optional
 from httpx import AsyncByteStream, Response
 
 from harp.http import RejectedRequest
+from harp.http.decompression import BoundedDecoder
 
 REQUEST_TIMEOUT_STATUS_CODE = 408
+PAYLOAD_TOO_LARGE_STATUS_CODE = 413
 
 
 class RequestBodyTooSlow(RejectedRequest):
@@ -21,6 +23,34 @@ class RequestBodyStalled(RejectedRequest):
 
     def __init__(self):
         super().__init__("Request body stalled", status=REQUEST_TIMEOUT_STATUS_CODE)
+
+
+class RequestBodyTooLarge(RejectedRequest):
+    """Raised while reading a request body, or before reading it, when it is larger than the endpoint accepts."""
+
+    def __init__(self):
+        super().__init__(
+            "Request body too large", status=PAYLOAD_TOO_LARGE_STATUS_CODE, headers={"Connection": "close"}
+        )
+
+
+class MaxSizeStream(AsyncByteStream):
+    """Passes a request body through, and raises :class:`RequestBodyTooLarge` as soon as it exceeds ``limit`` bytes."""
+
+    def __init__(self, stream: AsyncByteStream, *, limit: int):
+        self._stream = stream
+        self._limit = limit
+
+    async def __aiter__(self) -> AsyncIterator[bytes]:
+        received = 0
+        async for chunk in self._stream:
+            received += len(chunk)
+            if received > self._limit:
+                raise RequestBodyTooLarge()
+            yield chunk
+
+    async def aclose(self) -> None:
+        await self._stream.aclose()
 
 
 class MinRateStream(AsyncByteStream):
@@ -65,13 +95,24 @@ class MinRateStream(AsyncByteStream):
 
 
 class UpstreamResponseStream(AsyncByteStream):
-    """The body of an upstream response, decoded, read as it arrives. Closing it releases the upstream connection."""
+    """The body of an upstream response, decoded, read as it arrives. Closing it releases the upstream connection.
+
+    Decoding expands at most a bounded step at a time, so a small compressed body cannot swell in memory.
+    """
 
     def __init__(self, response: Response):
         self._response = response
 
     async def __aiter__(self) -> AsyncIterator[bytes]:
-        async for chunk in self._response.aiter_bytes():
+        if self._response.is_stream_consumed:  # already read whole by a filter
+            async for chunk in self._response.aiter_bytes():
+                yield chunk
+            return
+        decoder = BoundedDecoder(self._response.headers.get("content-encoding"))
+        async for raw in self._response.aiter_raw():
+            for chunk in decoder.decode(raw):
+                yield chunk
+        for chunk in decoder.flush():
             yield chunk
 
     async def aclose(self) -> None:

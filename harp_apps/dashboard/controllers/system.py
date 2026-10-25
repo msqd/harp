@@ -8,6 +8,7 @@ from harp import __revision__, __version__, get_logger
 from harp.config.asdict import asdict
 from harp.controllers import GetHandler, ProxyControllerResolver, PutHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest, HttpResponse, JsonHttpResponse
+from harp.security.actor import Role, get_actor
 from harp.typedefs.global_settings import GlobalSettings
 from harp.views.json import json
 from harp_apps.storage.models import MetricValue
@@ -39,24 +40,26 @@ class SystemController(RoutingController):
 
         super().__init__(handle_errors=handle_errors, router=router)
 
-    @GetHandler("/")
+    @GetHandler("/", role=Role.VIEWER)
     async def get(self, request: HttpRequest):
-        user = request.extensions.get("user")
+        actor = get_actor(request)
 
         return json(
             {
                 "version": __version__,
                 "revision": __revision__,
-                "user": user,
+                "user": actor.account.username,
+                "displayName": actor.account.display_name,
+                "role": actor.role.label,
             }
         )
 
-    @GetHandler("/proxy")
+    @GetHandler("/proxy", role=Role.EDITOR)
     async def get_proxy(self):
         endpoints = list(self.resolver.endpoints.values())
         return json({"endpoints": asdict(endpoints, verbose=True)})
 
-    @PutHandler("/proxy")
+    @PutHandler("/proxy", role=Role.EDITOR)
     async def put_proxy(self, request: HttpRequest):
         endpoints = list(self.resolver.endpoints.values())
 
@@ -74,34 +77,35 @@ class SystemController(RoutingController):
         if not endpoint:
             return HttpResponse(f"Endpoint not found: {input_data.endpoint}", status=404)
 
+        # The remote is identified by position: its url is masked on the way out, so it cannot be sent back.
         try:
-            endpoint.remote[input_data.url]
-        except KeyError:
-            return HttpResponse(f"Endpoint URL not found: {input_data.url}", status=404)
+            url = str(endpoint.remote.endpoints[input_data.index].settings.url)
+        except IndexError:
+            return HttpResponse(f"Remote endpoint not found: {input_data.index}", status=404)
 
         match input_data.action:
             case "up":
-                endpoint.remote.set_up(input_data.url)
+                endpoint.remote.set_up(url)
             case "down":
-                endpoint.remote.set_down(input_data.url)
+                endpoint.remote.set_down(url)
             case "checking":
-                endpoint.remote.set_checking(input_data.url)
+                endpoint.remote.set_checking(url)
             case _:
                 return HttpResponse(b"Invalid action", status=400)
 
         return await self.get_proxy()
 
-    @GetHandler("/settings")
+    @GetHandler("/settings", role=Role.ADMIN)
     async def get_settings(self):
         return JsonHttpResponse(
             asdict(self.settings, verbose=True, secure=True, mode="python"),
         )
 
-    @GetHandler("/dependencies")
+    @GetHandler("/dependencies", role=Role.ADMIN)
     async def get_dependencies(self):
         return json({"python": await self.__get_cached_python_dependencies()})
 
-    @GetHandler("/storage")
+    @GetHandler("/storage", role=Role.EDITOR)
     async def get_storage(self):
         subquery = select(
             func.rank()

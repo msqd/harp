@@ -37,6 +37,8 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
   const markers = transaction.markers ?? []
   const isRequestBodyTruncated = markers.includes("truncated-request-body")
   const isResponseBodyTruncated = markers.includes("truncated-response-body")
+  const isRequestNoStore = markers.includes("no-store-request")
+  const isResponseNoStore = markers.includes("no-store-response")
   const isClientDisconnected = markers.includes("client-disconnected")
   const tags = (transaction.tags ? Object.entries(transaction.tags) : []) as unknown as [string, string]
   const transactionUrl = `${window.location.origin}/transactions/${transaction.id}`
@@ -76,6 +78,18 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
           open={message.kind != "error"}
           className="relative"
         >
+          {message.kind == "request" && isRequestNoStore ? (
+            <p role="note" className="px-2 pt-2 text-xs text-amber-700">
+              Not recorded: the request carried Cache-Control: no-store, so neither its headers nor its body are kept.
+            </p>
+          ) : null}
+          {message.kind == "response" && isResponseNoStore ? (
+            <p role="note" className="px-2 pt-2 text-xs text-amber-700">
+              {isRequestNoStore
+                ? "Not recorded: the request carried Cache-Control: no-store, so neither the headers nor the body of the response are kept."
+                : "Not recorded: the response carried Cache-Control: no-store, so neither its headers nor its body are kept."}
+            </p>
+          ) : null}
           <MessageHeaders id={message.headers} />
           {message.kind == "request" && isRequestBodyTruncated ? (
             <p role="note" className="px-2 pt-2 text-xs text-amber-700">

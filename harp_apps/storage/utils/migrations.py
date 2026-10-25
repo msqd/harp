@@ -39,6 +39,7 @@ def _forms(password: str) -> set[str]:
     forms = {password, quote(password, safe=""), quote(password), quote_plus(password)}
     # SQLAlchemy only escapes the characters that would end the userinfo
     forms.add(URL.create("x", username="", password=password).render_as_string(hide_password=False)[len("x://:") : -1])
+    forms |= {re.sub(r"%[0-9A-F]{2}", lambda m: m.group().lower(), form) for form in forms}
     # the form given to configparser doubles every percent sign
     return forms | {form.replace("%", "%%") for form in forms}
 
@@ -55,15 +56,18 @@ def _url_scoped_patterns(url: URL) -> list[re.Pattern]:
 def hide_password(message: str, url: AnyUrl) -> str:
     """Mask the password of ``url`` where it sits in a url in ``message``: its userinfo or ``?password=``.
 
-    Elsewhere the password is left alone: it is often a common word, or the user or database name, and masking
-    it there would corrupt the message.
+    The shared shape-based masking runs on top, so any other url is covered whatever its encoding. Elsewhere the
+    password is left alone: it is often a common word, or the user or database name, and masking it there would
+    corrupt the message.
     """
-    url = _as_sqlalchemy_url(url)
-    if not _passwords(url):
-        return message
-    for pattern in _url_scoped_patterns(url):
+    try:
+        patterns = _url_scoped_patterns(_as_sqlalchemy_url(url))
+    except Exception:
+        # a url SQLAlchemy cannot parse (multi-host): only the shape-based masking applies
+        patterns = []
+    for pattern in patterns:
         message = pattern.sub(r"\1***", message)
-    return message
+    return mask_credentials(message)
 
 
 def printable_url(url: AnyUrl) -> str:
@@ -96,7 +100,7 @@ def discover_migration_locations(root: Union[str, Path, None] = None) -> dict[st
     """
     Map every application that has a ``migrations/versions`` folder to that folder. The list is static: it does not
     depend on which applications are enabled, so a database migrated while an application was enabled still resolves
-    that application's revisions once it is disabled (see ADR-0011).
+    that application's revisions once it is disabled (see ADR-0012).
     """
     import harp_apps
 
@@ -201,21 +205,39 @@ def create_revision(alembic_cfg, application: str, message: str):
 
 
 def current_revisions_by_application(sync_conn, alembic_cfg) -> dict[str, Union[str, None]]:
-    """The revision each application's branch is at in the database (``None``: not migrated yet)."""
+    """
+    The revision each application's branch is at in the database (``None``: not migrated yet).
+
+    A revision that depends on another branch's (``depends_on``) supersedes it in ``alembic_version``: that branch is
+    at the revision the dependency names, or further if it has gone on since.
+    """
     from alembic.runtime.migration import MigrationContext
     from alembic.script import ScriptDirectory
 
     script = ScriptDirectory.from_config(alembic_cfg)
     by_folder = {Path(path).resolve(): name for name, path in alembic_cfg.attributes["locations"].items()}
     current: dict[str, Union[str, None]] = {name: None for name in by_folder.values()}
+    # every revision of each application the database has gone through, newest first within one walk
+    seen: dict[str, dict[str, None]] = {name: {} for name in current}
     for revision in MigrationContext.configure(sync_conn).get_current_heads():
         try:
-            current[by_folder[Path(script.get_revision(revision).path).resolve().parent]] = revision
+            for reached in script.iterate_revisions(revision, "base"):
+                seen[by_folder[Path(reached.path).resolve().parent]][reached.revision] = None
         except Exception:
             raise UnknownRevisionError(
                 f"The database is at revision {revision!r}, which this version of HARP does not know. It was probably "
                 "migrated by a newer version, or by an application whose migrations are not installed."
             ) from None
+    for application, revisions in seen.items():
+        # the newest is the one no other revision of the application descends from, whatever order the heads came in
+        ancestors = {
+            ancestor.revision
+            for revision in revisions
+            for ancestor in script.iterate_revisions(revision, "base")
+            if ancestor.revision != revision
+        }
+        newest = [revision for revision in revisions if revision not in ancestors]
+        current[application] = newest[0] if newest else None
     return current
 
 
@@ -308,13 +330,20 @@ def _missing_columns(sync_conn) -> list[str]:
     return missing
 
 
-def _alembic_revisions(sync_conn, alembic_cfg) -> tuple[set[str], set[str]]:
+def _alembic_revisions(sync_conn, alembic_cfg) -> tuple[set[str], set[str], set[str]]:
+    """The revisions the database is at, the heads of the scripts, and every revision the database has gone through."""
     from alembic.runtime.migration import MigrationContext
     from alembic.script import ScriptDirectory
 
+    script = ScriptDirectory.from_config(alembic_cfg)
     current = set(MigrationContext.configure(sync_conn).get_current_heads())
-    head = set(ScriptDirectory.from_config(alembic_cfg).get_heads())
-    return current, head
+    try:
+        # a revision depending on another branch's supersedes it in the database: follow dependencies too
+        reached = {r.revision for revision in current for r in script.iterate_revisions(revision, "base")}
+    except Exception:
+        # a revision these scripts do not know: the database is not at their heads
+        reached = set()
+    return current, set(script.get_heads()), reached
 
 
 async def ensure_schema_is_current(engine, *, alembic_cfg=None):
@@ -341,8 +370,8 @@ async def ensure_schema_is_current(engine, *, alembic_cfg=None):
     else:
         alembic_cfg = alembic_cfg or create_alembic_config(url.render_as_string(hide_password=False))
         async with engine.connect() as conn:
-            current, head = await conn.run_sync(_alembic_revisions, alembic_cfg)
-        if current == head:
+            current, head, reached = await conn.run_sync(_alembic_revisions, alembic_cfg)
+        if head <= reached:
             return
         details = f"at revision {', '.join(sorted(current)) or 'none'}, expected {', '.join(sorted(head))}"
         options = (

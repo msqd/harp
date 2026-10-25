@@ -60,3 +60,21 @@ it("says nothing of truncation or disconnection for a body recorded whole", asyn
   await result.findByText("identity")
   expect(result.queryByRole("note")).toBeNull()
 })
+
+it("says the request asked for no-store when it suppressed both payloads", async () => {
+  const result = renderDetailAt("/transactions/IJKL9012")
+
+  const notes = await result.findAllByText(/not recorded: the request carried Cache-Control: no-store/i)
+  expect(notes).toHaveLength(2)
+  expect(notes[0]).toHaveAttribute("role", "note")
+})
+
+it("says the origin asked for no-store when only the response payload was suppressed", async () => {
+  const result = renderDetailAt("/transactions/MNOP3456")
+
+  const note = await result.findByText(/not recorded: the response carried Cache-Control: no-store/i)
+  expect(note).toHaveAttribute("role", "note")
+  expect(result.queryAllByRole("note")).toHaveLength(1)
+  const responseTitle = result.getByText("Response")
+  expect(responseTitle.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+})
