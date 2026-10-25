@@ -73,17 +73,12 @@ class ServiceDefinition(BaseModel):
 
         # todo scope override limitation, as it is most probably a mistake.
 
-        return type(self)(
-            name=self.name,
-            description=(other.description if other.description is not None else self.description),
-            lifestyle=(other.lifestyle if other.lifestyle is not None else self.lifestyle),
-            base=other.base if other.base is not None else self.base,
-            type=other.type if other.type is not None else self.type,
-            constructor=(other.constructor if other.constructor is not None else self.constructor),
-            arguments=(other.arguments if other.arguments is not None else self.arguments),
-            defaults=other.defaults if other.defaults is not None else self.defaults,
-            positionals=(other.positionals if other.positionals is not None else self.positionals),
-        )
+        overrides = {
+            field: value
+            for field in type(self).model_fields
+            if field not in ("name", "override") and (value := getattr(other, field)) is not None
+        }
+        return self.model_copy(update={**overrides, "override": None})
 
     def bind_settings(self, settings: Any):
         for k in ("base", "type", "constructor"):
