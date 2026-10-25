@@ -4,12 +4,17 @@
 - **Date**: 2026-10-24
 - **Decided in**: [explore/auth](https://github.com/msqd/harp/milestone/24)
 
-**Proposed on the explore/auth exploration branch; nothing of it is implemented.**
+**Proposed on the explore/auth exploration branch.**
 
-Before forwarding a request to an origin, the proxy removes HARP's own credentials from it: the
-dashboard session cookie, and any `Authorization: Bearer` value that is a HARP token (recognised by its
-`harp_` prefix and its checksum). The removal is recorded on the transaction with a marker. No setting
-turns it off.
+The proxy keeps HARP's own credentials and an origin apart, in both directions:
+
+- **Requests.** Before the request is recorded and forwarded, the proxy removes the dashboard session
+  cookie, and any `Authorization: Bearer` value that is a HARP token (recognised by its `harp_` prefix
+  and its checksum).
+- **Responses.** The proxy removes from an origin's response every `Set-Cookie` whose cookie name is one
+  of HARP's session cookie names; other `Set-Cookie` headers are kept.
+
+Either removal is recorded on the transaction with a marker. No setting turns it off.
 
 ## Why the proxy sees them at all
 
@@ -18,6 +23,17 @@ A cookie is scoped to a host, not to a port. A browser that signed in to the das
 application in that browser makes through it. A HARP token pasted into the wrong `Authorization` header
 by a caller travels the same way. Without the strip, an origin, which is a third party, receives a
 credential that lets it act on HARP as that account.
+
+The same scoping works backwards: an origin answering through a proxy port can send
+`Set-Cookie: harp_session=<attacker session>; Path=/`, and the browser applies it to every port of the
+host, the dashboard included. The `__Host-` prefix pins a cookie to a host, not to a port, so it does not
+help. Dropping that `Set-Cookie` closes the planting.
+
+An origin can also act on HARP with no credential at all: a page it serves through a proxy port can issue
+state-changing requests to the dashboard, and `SameSite` ignores ports, so the browser sends the session
+cookie along. Stripping credentials does not address that. It is handled by a separate explore/auth issue
+requiring same-origin on state-changing dashboard routes, and the documentation recommends serving the
+dashboard on a separate hostname.
 
 The MCP authorization specification forbids passing a server's tokens through to an upstream for the
 same reason.

@@ -18,7 +18,13 @@ from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.tpdex import tpdex
 from harp.settings import DEFAULT_CLIENT_READ_TIMEOUT, DEFAULT_MIN_REQUEST_BODY_RATE, DEFAULT_REQUEST_BODY_GRACE_PERIOD
-from harp_apps.storage.constants import CLIENT_DISCONNECTED, DEFAULT_MAX_RECORDED_BODY_SIZE, TRUNCATED_RESPONSE_BODY
+from harp.security.credentials import strip_harp_credentials, strip_harp_set_cookies
+from harp_apps.storage.constants import (
+    CLIENT_DISCONNECTED,
+    DEFAULT_MAX_RECORDED_BODY_SIZE,
+    HARP_CREDENTIALS_STRIPPED,
+    TRUNCATED_RESPONSE_BODY,
+)
 from .adapters import HttpClientProxyAdapter, strip_credentials
 from .constants import (
     BREAK_ON_NETWORK_ERROR,
@@ -310,7 +316,12 @@ class HttpProxyController(AbstractHttpProxyController):
         # client's do on the way out. `content-encoding` and the identifying `server`/`date` are
         # dropped for their own reasons, unrelated to the hop.
         dropped = hop_by_hop_names(response.headers) | {"server", "date", "content-encoding"}
-        headers = {k: v for k, v in response.headers.multi_items() if k.lower() not in dropped}
+        forwarded = [(k, v) for k, v in response.headers.multi_items() if k.lower() not in dropped]
+        # An origin may not plant or overwrite HARP's session cookie (ADR-0010).
+        forwarded, stripped = strip_harp_set_cookies(forwarded)
+        if stripped:
+            transaction.markers.add(HARP_CREDENTIALS_STRIPPED)
+        headers = dict(forwarded)
 
         # Store the status class in the transaction extras for later use
         transaction.extras["status_class"] = f"{response.status_code // 100}xx"
@@ -493,6 +504,15 @@ class HttpProxyController(AbstractHttpProxyController):
 
         # allow filtering the incoming messsage/transaction before the transaction is stored
         context.update(await self.filter_request(context))
+
+        # HARP's own credentials stop here, after the rules had their say and before anything records the request or
+        # forwards it. No setting turns this off (ADR-0010).
+        # A filter may have put another request in the context: the one recorded and the one forwarded are stripped alike.
+        for message in {id(request): request, id(context.request): context.request}.values():
+            remaining, stripped = strip_harp_credentials(message.headers.items())
+            if stripped:
+                message.headers = remaining
+                context.transaction.markers.add(HARP_CREDENTIALS_STRIPPED)
 
         # dispatch transaction started event, after the filters so markers they set (skip-storage) are seen
         # we don't really want to await this, should run in background ? or use an async queue ?

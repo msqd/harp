@@ -250,3 +250,30 @@ of them relies on the upstream's behaviour:
 - Unicode look-alike dots (fullwidth ``．`` U+FF0E, sent as ``%EF%BC%8E``): ``/%EF%BC%8E%EF%BC%8E/x``.
 
 Legitimate paths are forwarded unchanged: ``/a%2eb``, ``/%20``, ``/%C3%A9``, ``/page;jsessionid=abc``.
+
+HARP credentials
+----------------
+
+A cookie is scoped to a host, not to a port: a browser signed in to the dashboard sends its session cookie to every proxy
+port on the same host. HARP's own credentials never reach an origin, so the proxy removes them from the request before
+forwarding it:
+
+- the dashboard session cookie (``__Host-harp_session`` over HTTPS, ``harp_session`` over HTTP) is removed from
+  ``Cookie``. The other cookies are kept, and the header is dropped when nothing is left;
+- an ``Authorization: Bearer`` header whose value is a HARP token (``harp_`` prefix and valid checksum) is removed. Any
+  other bearer is forwarded unchanged.
+
+The removal happens before the request is recorded, so the stored transaction does not hold them either, whatever the
+redaction settings say.
+
+The other direction is closed too: an origin cannot plant or overwrite the dashboard session, which browsers share
+across ports. Every ``Set-Cookie`` of an origin response naming ``harp_session`` or ``__Host-harp_session`` is removed;
+other ``Set-Cookie`` headers are kept.
+
+When something was removed, in either direction, the transaction carries the ``harp-credentials-stripped``
+:doc:`marker </apps/storage/markers>`. No setting turns this off, and no other header is touched. The strip runs after the
+:doc:`rules </apps/rules/index>` ``on_request``, so a rule that copies the cookie into another header hands it to the
+origin: do not write one.
+
+Serve the dashboard on a hostname of its own, not on the host of your proxy ports: cookies ignore ports, and a page an
+origin serves through a proxy port can send requests to a dashboard on the same host.
