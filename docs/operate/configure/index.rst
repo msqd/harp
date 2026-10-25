@@ -96,11 +96,8 @@ To disable an application, set ``enabled: false`` at the application's root leve
         enabled: false  # Storage application will not be loaded
         url: "postgresql+asyncpg://user:password@localhost:5432/harp"  # Configuration preserved but unused
 
-    auth:
-        enabled: false  # Auth will not be loaded (it requires storage)
-
     dashboard:
-        enabled: false  # Dashboard will not be loaded (it requires storage and auth)
+        enabled: false  # Dashboard will not be loaded (it requires storage; auth, loaded for it, goes too)
 
     janitor:
         enabled: false  # Janitor will not be loaded (it requires storage)

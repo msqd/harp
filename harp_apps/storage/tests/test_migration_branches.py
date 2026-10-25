@@ -225,6 +225,43 @@ async def test_a_branch_depending_on_another_leaves_that_one_at_its_head_in_the_
     assert current == {"audit": "audit0001", "storage": STORAGE_HEAD}
 
 
+@pytest.mark.parametrize("reverse", [False, True])
+async def test_status_shows_the_newest_revision_of_a_branch_that_went_on_past_its_dependency(
+    tmp_path, monkeypatch, reverse
+):
+    """storage0002 follows storage0001, which audit0001 depends on: the order the heads are read in must not matter."""
+    root = tmp_path / "apps"
+    for name, revision, down, label, depends in (
+        ("storage", "storage0001", None, "storage", None),
+        ("audit", "audit0001", None, "audit", "storage0001"),
+        ("storage", "storage0002", "storage0001", None, None),
+    ):
+        _write_revision(
+            root / name / "migrations" / "versions",
+            revision=revision,
+            label=label,
+            down_revision=down,
+            depends_on=depends,
+        )
+    db = tmp_path / "ahead.db"
+    cfg = create_alembic_config(f"sqlite+aiosqlite:///{db}", locations=discover_migration_locations(root))
+    await _run(command.upgrade, cfg, "heads")
+
+    from alembic.runtime.migration import MigrationContext
+
+    heads = MigrationContext.get_current_heads
+    monkeypatch.setattr(MigrationContext, "get_current_heads", lambda self: tuple(sorted(heads(self), reverse=reverse)))
+    engine = create_async_engine(f"sqlite+aiosqlite:///{db}")
+
+    async with engine.connect() as conn:
+        stored = sorted((await conn.execute(text("SELECT version_num FROM alembic_version"))).scalars().all())
+        current = await conn.run_sync(lambda c: current_revisions_by_application(c, cfg))
+    await engine.dispose()
+
+    assert stored == ["audit0001", "storage0002"]
+    assert current == {"audit": "audit0001", "storage": "storage0002"}
+
+
 async def test_ensure_schema_is_current_accepts_a_branch_that_depends_on_another(tmp_path, sql_engine):
     if sql_engine.dialect.name == "sqlite":
         pytest.skip("sqlite schema is checked against the models, not alembic")

@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Callable, Optional
 
 from sqlalchemy import update
-from sqlalchemy.exc import IntegrityError, NoResultFound
+from sqlalchemy.exc import NoResultFound
 
 from harp.security.actor import Actor, ActorAccount, Role, effective_role
 from harp_apps.auth.models import Account, AccountKind, AccountsRepository
@@ -53,21 +53,10 @@ class ActorResolver:
 
     async def basic(self, username: str) -> Optional[Actor]:
         """
-        The actor of a user declared in the configuration and authenticated with Basic. Such a user is an Admin, as it
-        could already do everything: its account is created if it does not exist yet.
+        The actor of a user of the configuration authenticated with Basic. Its account was created by the one-time
+        import: without one (deleted, never imported) nobody acts.
         """
-        try:
-            account = await self.accounts.find_one({"username": username})
-        except NoResultFound:
-            account = await self._create_admin(username)
-        return await self._actor(account, via="basic")
-
-    async def _create_admin(self, username: str) -> Account:
-        try:
-            return await self.accounts.create({"username": username, "kind": AccountKind.PERSON, "role": Role.ADMIN})
-        except IntegrityError:
-            # created meanwhile, by the startup import of the configured users
-            return await self.accounts.find_one({"username": username})
+        return await self.resolve(username, via="basic")
 
     async def _actor(self, account: Account, *, via, via_id=None, cap=None, client=None) -> Optional[Actor]:
         if account.disabled_at is not None or account.kind == AccountKind.SYSTEM:

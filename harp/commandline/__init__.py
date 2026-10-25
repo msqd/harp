@@ -113,9 +113,10 @@ if check_packages("harp_apps.rules.commandline"):
     entrypoint.add_command(cast(Command, rules_entrypoint))
 
 if check_packages("harp_apps.auth.commandline"):
-    from harp_apps.auth.commandline import create_account
+    from harp_apps.auth.commandline import create_account, disable_account, enable_account, set_role
 
-    entrypoint.add_command(create_account)
+    for auth_command in (create_account, set_role, disable_account, enable_account):
+        entrypoint.add_command(auth_command)
 
 entrypoint.add_command(server)
 entrypoint.add_command(system)

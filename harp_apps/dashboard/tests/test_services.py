@@ -23,7 +23,7 @@ class BaseSystemTest:
 
 
 class TestBlobsControllerService(BaseSystemTest):
-    applications = ["http_client", "storage", "auth", "harp_apps.dashboard"]
+    applications = ["http_client", "storage", "harp_apps.dashboard"]
     settings = {"dashboard": asdict(DashboardSettings(devserver={"enabled": True, "port": 5173}))}
 
     async def test_get_instances(self):

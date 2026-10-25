@@ -94,12 +94,21 @@ async def test_unknown_account_resolves_to_nobody(resolver):
     assert await resolver.resolve("nobody", via="basic") is None
 
 
-async def test_basic_user_declared_in_configuration_is_an_admin_even_before_its_account_exists(resolver, accounts):
-    actor = await resolver.basic("carol")
+async def test_basic_user_without_account_is_nobody_and_gets_no_account(resolver, accounts):
+    assert await resolver.basic("carol") is None
 
-    assert actor.role is Role.ADMIN
-    account = await accounts.find_one({"username": "carol"})
-    assert (account.kind, account.role) == (AccountKind.PERSON, Role.ADMIN)
+    assert [a.username for a in await accounts.find_all()] == []
+
+
+async def test_basic_user_whose_account_was_deleted_does_not_come_back(resolver, accounts):
+    account = await accounts.create({"username": "carol", "role": Role.ADMIN})
+    assert await resolver.basic("carol") is not None
+
+    async with accounts.session_factory() as session:
+        await session.delete(await session.get(type(account), account.id))
+        await session.commit()
+
+    assert await resolver.basic("carol") is None
 
 
 async def test_basic_keeps_the_role_of_an_existing_account(resolver, accounts):

@@ -4,9 +4,9 @@ Renames ``users`` to ``auth_accounts`` and gives it what an account needs: ``dis
 case), ``kind``, ``role``, ``created_at``, ``last_seen_at`` and ``disabled_at``. ``username`` goes from 32 to 255
 characters. Favourites (``trans_user_flags``) keep their foreign key and so their author.
 
-Rows that exist are the accounts that could sign in through Basic, who can already do everything: they become
-``person`` / ``admin``. ``anonymous`` authors favourites recorded before there were accounts and never signs in: it
-becomes a ``system`` account, with the lowest role.
+Rows that exist are accounts that may no longer be configured, so none gets access from here: they become disabled
+``viewer`` people, and the one-time import of the users configured for Basic enables them as Admin. ``anonymous``
+authors favourites recorded before there were accounts and never signs in: it becomes a ``system`` account.
 
 A downgrade gives ``users`` back; it fails if a username is longer than 32 characters, and the accounts created since
 (machines, system) become users like the others.
@@ -78,7 +78,7 @@ def upgrade() -> None:
     op.add_column("auth_accounts", sa.Column("display_name", sa.String(255), nullable=True))
     op.add_column("auth_accounts", sa.Column("email", sa.String(320), nullable=True))
     op.add_column("auth_accounts", sa.Column("kind", sa.String(16), nullable=False, server_default="person"))
-    op.add_column("auth_accounts", sa.Column("role", sa.String(16), nullable=False, server_default="admin"))
+    op.add_column("auth_accounts", sa.Column("role", sa.String(16), nullable=False, server_default="viewer"))
     op.add_column(
         "auth_accounts",
         sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.func.now()),
@@ -86,7 +86,10 @@ def upgrade() -> None:
     op.add_column("auth_accounts", sa.Column("last_seen_at", sa.TIMESTAMP(timezone=True), nullable=True))
     op.add_column("auth_accounts", sa.Column("disabled_at", sa.TIMESTAMP(timezone=True), nullable=True))
 
-    op.execute(sa.text("UPDATE auth_accounts SET kind = 'system', role = 'viewer' WHERE username = 'anonymous'"))
+    # nobody gets access from a migration: the accounts that existed are disabled viewers until the one-time import of
+    # the users configured for Basic enables them (as Admin). ``anonymous`` authors favourites and never signs in.
+    op.execute(sa.text("UPDATE auth_accounts SET kind = 'system' WHERE username = 'anonymous'"))
+    op.execute(sa.text("UPDATE auth_accounts SET disabled_at = now() WHERE username <> 'anonymous'"))
 
     # the defaults served the rows that existed, new accounts say what they are
     op.alter_column("auth_accounts", "kind", server_default=None)

@@ -242,7 +242,7 @@ class SqlStorage(IStorage):
 
     async def initialize(self):
         """Initialize database."""
-        await self.create_users([SYSTEM_ACCOUNT_USERNAME], kind=AccountKind.SYSTEM, role=Role.VIEWER)
+        await self.create_system_account(SYSTEM_ACCOUNT_USERNAME)
         self._is_ready.set()
 
     async def finalize(self):
@@ -423,19 +423,18 @@ class SqlStorage(IStorage):
         await self._is_ready.wait()
 
     @override
-    async def create_users_once_ready(self, users: Iterable[str]):
-        """Sets the list of users to be created once the database is ready."""
+    async def import_users_once_ready(self, users: Iterable[str]):
+        """Imports the users declared in the configuration once the database is ready, if it was not already."""
 
-        async def defered_create_users():
+        async def deferred_import():
             await self.ready()
-            await self.create_users(users)
+            await self.accounts.import_basic_users(users)
 
-        await self.worker.push(defered_create_users)
+        await self.worker.push(deferred_import)
 
-    async def create_users(self, users: Iterable[str], *, kind=AccountKind.PERSON, role=Role.ADMIN):
-        """Creates the accounts that do not exist yet. Accounts declared in configuration (Basic) are Admins."""
+    async def create_system_account(self, username: str):
+        """Creates a system account (it never signs in) if it does not exist."""
         async with self.begin() as session:
-            for username in users:
-                result = await session.execute(select(Account).where(Account.username == username))
-                if result.scalar_one_or_none() is None:
-                    session.add(Account(username=username, kind=kind, role=role))
+            result = await session.execute(select(Account).where(Account.username == username))
+            if result.scalar_one_or_none() is None:
+                session.add(Account(username=username, kind=AccountKind.SYSTEM, role=Role.VIEWER))

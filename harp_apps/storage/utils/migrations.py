@@ -217,18 +217,27 @@ def current_revisions_by_application(sync_conn, alembic_cfg) -> dict[str, Union[
     script = ScriptDirectory.from_config(alembic_cfg)
     by_folder = {Path(path).resolve(): name for name, path in alembic_cfg.attributes["locations"].items()}
     current: dict[str, Union[str, None]] = {name: None for name in by_folder.values()}
+    # every revision of each application the database has gone through, newest first within one walk
+    seen: dict[str, dict[str, None]] = {name: {} for name in current}
     for revision in MigrationContext.configure(sync_conn).get_current_heads():
         try:
-            # newest first: the first revision seen of an application is where its branch stands
             for reached in script.iterate_revisions(revision, "base"):
-                application = by_folder[Path(reached.path).resolve().parent]
-                if current[application] is None:
-                    current[application] = reached.revision
+                seen[by_folder[Path(reached.path).resolve().parent]][reached.revision] = None
         except Exception:
             raise UnknownRevisionError(
                 f"The database is at revision {revision!r}, which this version of HARP does not know. It was probably "
                 "migrated by a newer version, or by an application whose migrations are not installed."
             ) from None
+    for application, revisions in seen.items():
+        # the newest is the one no other revision of the application descends from, whatever order the heads came in
+        ancestors = {
+            ancestor.revision
+            for revision in revisions
+            for ancestor in script.iterate_revisions(revision, "base")
+            if ancestor.revision != revision
+        }
+        newest = [revision for revision in revisions if revision not in ancestors]
+        current[application] = newest[0] if newest else None
     return current
 
 

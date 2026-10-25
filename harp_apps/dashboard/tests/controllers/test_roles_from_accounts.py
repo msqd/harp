@@ -96,8 +96,8 @@ async def test_a_disabled_account_answers_401_even_with_the_right_password(dashb
     assert response.headers["www-authenticate"].startswith("Basic")
 
 
-async def test_a_user_of_the_configuration_without_account_yet_is_an_admin(dashboard, accounts):
+async def test_a_user_of_the_configuration_without_account_answers_401_and_gets_none(dashboard, accounts):
     response = await call(dashboard, "erin", "/api/system/settings")
 
-    assert response.status == 200
-    assert (await accounts.find_one({"username": "erin"})).role is Role.ADMIN
+    assert response.status == 401
+    assert "erin" not in [a.username for a in await accounts.find_all()]

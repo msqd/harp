@@ -36,9 +36,11 @@ class SystemControllerTestFixtureMixin:
         raw_settings["storage"].setdefault("blobs", {})
         raw_settings["storage"]["blobs"].setdefault("type", blob_storage.type)
 
-        system = await ConfigurationBuilder(raw_settings, use_default_applications=False).abuild_system(
-            validate_dependencies=False
-        )
+        # exactly these applications: the tests here look at one controller, not at what its dependencies bring
+        applications = raw_settings.pop("applications")
+        builder = ConfigurationBuilder(raw_settings, use_default_applications=False)
+        builder.applications.add(*applications)
+        system = await builder.abuild_system(validate_dependencies=False)
 
         try:
             yield SystemController(

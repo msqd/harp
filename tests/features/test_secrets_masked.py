@@ -43,7 +43,7 @@ SECRETS = {
 }
 
 CONFIG = f"""
-applications: [http_client, proxy, storage, auth, dashboard, notifications, harp_apps.contrib.sentry]
+applications: [http_client, proxy, storage, dashboard, notifications, harp_apps.contrib.sentry]
 notifications:
   slack_webhook_url: {SLACK_WEBHOOK}
   google_chat_webhook_url: "{GCHAT_WEBHOOK}"

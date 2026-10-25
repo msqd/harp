@@ -113,10 +113,10 @@ class DashboardController(RoutingController):
         if self._auth and actors is None:
             raise ConfigurationError("The dashboard authenticates its users, it needs the actor resolver of auth.")
 
-        # create users if they don't exist; keep a strong reference to the task, as the event loop
+        # import the configured users once; keep a strong reference to the task, as the event loop
         # only holds a weak one and would let it be garbage-collected before completion.
         if self._auth:
-            self._create_users_task = asyncio.create_task(self.storage.create_users_once_ready(self._auth.users))
+            self._create_users_task = asyncio.create_task(self.storage.import_users_once_ready(self._auth.users))
 
         # UI is always initialized when the dashboard app is enabled
         # (the `enabled` setting controls whether the entire app loads)

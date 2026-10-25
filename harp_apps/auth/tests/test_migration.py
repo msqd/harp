@@ -87,12 +87,15 @@ async def test_users_become_auth_accounts(users_engine):
 
 
 @parametrize_with_database_urls("postgresql")
-async def test_existing_accounts_become_admin_people_and_anonymous_a_system_account(users_engine):
+async def test_existing_accounts_become_dormant_viewers_and_anonymous_a_system_account(users_engine):
+    """None gets access from the migration: the one-time import of the Basic users enables the ones configured."""
     await upgrade(users_engine)
 
-    assert await rows(users_engine, "SELECT username, kind, role FROM auth_accounts ORDER BY username") == [
-        ("alice", "person", "admin"),
-        ("anonymous", "system", "viewer"),
+    assert await rows(
+        users_engine, "SELECT username, kind, role, disabled_at IS NOT NULL FROM auth_accounts ORDER BY username"
+    ) == [
+        ("alice", "person", "viewer", True),
+        ("anonymous", "system", "viewer", False),
     ]
 
 
@@ -103,9 +106,9 @@ async def test_existing_accounts_get_a_creation_date_and_nothing_else_to_remembe
     assert (
         await rows(
             users_engine,
-            "SELECT created_at IS NOT NULL, display_name, email, last_seen_at, disabled_at FROM auth_accounts",
+            "SELECT created_at IS NOT NULL, display_name, email, last_seen_at FROM auth_accounts",
         )
-        == [(True, None, None, None, None)] * 2
+        == [(True, None, None, None)] * 2
     )
 
 
@@ -212,6 +215,6 @@ async def test_downgrade_then_upgrade_again(users_engine):
     await upgrade(users_engine)
 
     assert await rows(users_engine, "SELECT username, role FROM auth_accounts ORDER BY username") == [
-        ("alice", "admin"),
+        ("alice", "viewer"),
         ("anonymous", "viewer"),
     ]

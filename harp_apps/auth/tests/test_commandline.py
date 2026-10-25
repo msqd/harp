@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from harp.security.actor import Role
 from harp.utils.testing.cli import CliRunner
-from harp_apps.auth.commandline import create_account
+from harp_apps.auth.commandline import create_account, disable_account, enable_account, set_role
 from harp_apps.auth.models import AccountKind, AccountsRepository
 from harp_apps.storage.models import Base
 
@@ -113,3 +113,70 @@ def test_the_account_is_a_person(database):
 
     account = asyncio.run(read())
     assert (account.kind, account.role) == (AccountKind.PERSON, Role.ADMIN)
+
+
+def run(database, command, *args):
+    return CliRunner().invoke(command, [*args, "--set", f"storage.url=sqlite+aiosqlite:///{database}"])
+
+
+def state_of(database, username):
+    with sqlite3.connect(database) as conn:
+        return conn.execute(
+            "SELECT role, disabled_at IS NOT NULL FROM auth_accounts WHERE username = ?", (username,)
+        ).fetchone()
+
+
+def test_set_role_changes_the_role(database):
+    invoke(database, "alice", "--role", "viewer")
+
+    result = run(database, set_role, "alice", "admin")
+
+    assert result.exit_code == 0, result.output
+    assert state_of(database, "alice") == ("admin", 0)
+
+
+def test_set_role_refuses_an_unknown_role_and_an_unknown_account(database):
+    invoke(database, "alice", "--role", "viewer")
+
+    assert run(database, set_role, "alice", "root").exit_code != 0
+    result = run(database, set_role, "nobody", "admin")
+
+    assert result.exit_code != 0
+    assert "nobody" in result.output
+    assert state_of(database, "alice") == ("viewer", 0)
+
+
+def test_disable_then_enable_an_account_without_deleting_it(database):
+    invoke(database, "alice", "--role", "admin")
+
+    assert run(database, disable_account, "alice").exit_code == 0
+    assert state_of(database, "alice") == ("admin", 1)
+
+    assert run(database, enable_account, "alice").exit_code == 0
+    assert state_of(database, "alice") == ("admin", 0)
+
+
+def test_disabling_an_unknown_account_is_reported(database):
+    result = run(database, disable_account, "nobody")
+
+    assert result.exit_code != 0
+    assert "nobody" in result.output
+
+
+def test_a_system_account_cannot_be_changed(database):
+    with sqlite3.connect(database) as conn:
+        conn.execute("INSERT INTO auth_accounts (username, kind, role) VALUES ('anonymous', 'system', 'viewer')")
+
+    assert run(database, set_role, "anonymous", "admin").exit_code != 0
+    assert state_of(database, "anonymous") == ("viewer", 0)
+
+
+def test_the_commands_are_part_of_the_harp_command():
+    from harp.commandline import entrypoint
+
+    for name, command in (
+        ("auth:set-role", set_role),
+        ("auth:disable-account", disable_account),
+        ("auth:enable-account", enable_account),
+    ):
+        assert entrypoint.commands[name] is command

@@ -42,10 +42,12 @@ table. Favourites keep their author.
 ``created_at``, ``last_seen_at``, ``disabled_at``
     ``last_seen_at`` is written at most once a minute. A disabled account answers ``401`` at its next request.
 
-Today accounts sign in with the **Basic** authentication of the dashboard (:doc:`/apps/dashboard/settings`). A user
-declared there is an account that is created on first use, with the ``admin`` role, as it could already do everything.
-Its role is then the one of the account, which is read from the database on every request: demoting or disabling an
-account applies at once.
+Today accounts sign in with the **Basic** authentication of the dashboard (:doc:`/apps/dashboard/settings`). The users
+declared there are **imported once** per database, at the first start with the ``auth`` application: each becomes an
+enabled ``admin`` person (an account that already exists is enabled and made ``admin``), and a ``system`` account
+named ``basic-import`` records that it ran. Later starts import nothing: a configured user without an account, because
+it was deleted or added to the configuration afterwards, answers ``401``. The role is the one of the account, read from
+the database on every request: demoting or disabling an account applies at once.
 
 Roles
 :::::
@@ -70,10 +72,11 @@ Every dashboard route declares the role it requires, and a request below it is a
 without a declared role is reserved to ``admin``. The dashboard shows the account and its role in its header, and
 does not offer the pages the role cannot use.
 
-.. note::
+.. warning::
 
     A dashboard explicitly left open (``dashboard.auth.type: none``) has no account to ask a role of: everything is
-    allowed, and favourites are the ones of the ``anonymous`` account, as before.
+    allowed, and favourites are the ones of the ``anonymous`` account, as before. This is a **temporary deviation** from
+    the design, which has no open mode; it is removed when password sign-in lands (#1520).
 
 
 The actor
@@ -98,6 +101,16 @@ creates an account. It is also the way back in when no Admin is left: create one
 there is nothing to restart. The command refuses a username or an email that is taken, and a database whose schema is not
 current.
 
+.. code-block:: shell
+
+    harp-proxy auth:set-role alice admin
+    harp-proxy auth:disable-account alice
+    harp-proxy auth:enable-account alice
+
+change the role of an account, and revoke or restore it. **Revoke by disabling**: a disabled account answers ``401`` at
+its next request and nothing is lost. Never delete a row: the favourites of the account go with it. These commands are
+the way to manage accounts until the administration screen exists.
+
 .. note::
 
     The command does not set a password yet: until password sign-in lands, an account signs in through a user of the
@@ -107,18 +120,19 @@ current.
 Upgrading
 :::::::::
 
-- **PostgreSQL**: the first revision of the ``auth`` branch renames ``users`` to ``auth_accounts`` and gives the
-  existing rows the ``person`` kind and the ``admin`` role, ``anonymous`` becoming a ``viewer`` ``system`` account.
+- **PostgreSQL**: the first revision of the ``auth`` branch renames ``users`` to ``auth_accounts``. The rows that
+  existed become **disabled** ``viewer`` people, so nobody gets access from the migration; ``anonymous`` becomes an
+  enabled ``viewer`` ``system`` account. The one-time import of the Basic users then enables the configured ones, as
+  ``admin``. Enable any other with ``auth:enable-account`` and ``auth:set-role``.
   ``harp-proxy db:migrate down auth@base`` gives ``users`` back, which fails if a username is longer than 32
   characters. See :doc:`/operate/migrations`.
 - **SQLite** is never migrated by alembic: a file written by an earlier version is refused at start, delete it (it is
   recreated) or run ``harp-proxy db:reset``.
 - **MySQL and MariaDB** are deprecated and not migrated: the revision logs a warning and does nothing.
-- An ``applications:`` list in your configuration must now include ``auth`` for the dashboard to start.
 
 
 Loading
 :::::::
 
-The ``auth`` application is loaded by default, before the dashboard. It can be disabled with ``auth.enabled: false``,
-as long as the dashboard is (the dashboard requires it).
+The dashboard declares ``auth`` in its dependencies, so ``auth`` is loaded whenever the dashboard is, before it, even
+when an ``applications:`` list does not name it (:doc:`/develop/run`). A HARP without dashboard loads no ``auth``.

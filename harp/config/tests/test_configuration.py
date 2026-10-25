@@ -36,9 +36,9 @@ class ApplicationsRegistryMock(ApplicationsRegistry):
 
 def test_add_application(snapshot):
     builder = ConfigurationBuilder(use_default_applications=False)
-    builder.applications.add("storage")
+    builder.applications.add("storage", autoload_dependencies=True)
 
-    assert len(builder.applications) == 1
+    assert list(builder.applications) == ["http_client", "proxy", "storage"]
 
     settings = builder()
 

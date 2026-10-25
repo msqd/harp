@@ -55,8 +55,8 @@ class IStorage(Protocol):
         """Sets or unsets a user flag on a transaction."""
         ...
 
-    async def create_users_once_ready(self, users: Iterable[str]):
-        """Create users."""
+    async def import_users_once_ready(self, users: Iterable[str]):
+        """Import the users of the configuration as accounts, once."""
         ...
 
     async def get_usage(self):

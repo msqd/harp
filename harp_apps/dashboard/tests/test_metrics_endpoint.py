@@ -60,7 +60,7 @@ async def test_dashboard_metrics_follow_dashboard_auth():
 async def _build(dashboard_settings: dict):
     return await ConfigurationBuilder(
         {
-            "applications": ["http_client", "storage", "auth", "harp_apps.dashboard"],
+            "applications": ["http_client", "storage", "harp_apps.dashboard"],
             "dashboard": {
                 **asdict(DashboardSettings(auth={"type": "none"}, devserver={"enabled": True, "port": 5173})),
                 **dashboard_settings,

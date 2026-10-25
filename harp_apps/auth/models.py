@@ -9,7 +9,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import TIMESTAMP, CheckConstraint, Enum, Integer, String, func, select
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from sqlalchemy.types import TypeDecorator
 
@@ -21,6 +21,9 @@ if TYPE_CHECKING:
 
 #: The account that authors the favourites recorded before accounts had roles. It never signs in.
 SYSTEM_ACCOUNT_USERNAME = "anonymous"
+
+#: A system account that records that the users declared in the configuration (Basic) were imported. It never signs in.
+IMPORT_MARKER_USERNAME = "basic-import"
 
 
 class AccountKind(StrEnum):
@@ -109,3 +112,46 @@ class AccountsRepository(Repository):
                     .unique()
                     .scalar_one()
                 )
+
+    async def find_all(self) -> list[Account]:
+        async with self.session_factory() as session:
+            return list((await session.execute(select(Account).order_by(Account.id))).scalars())
+
+    async def import_basic_users(self, usernames) -> bool:
+        """
+        Imports the users declared in the configuration as enabled Admin people (decision 21), once for the database:
+        later calls do nothing, so an account that was deleted, demoted or disabled stays so. Returns whether it ran.
+        """
+        try:
+            async with self.session_factory() as session:
+                if (
+                    await session.execute(select(Account.id).where(Account.username == IMPORT_MARKER_USERNAME))
+                ).first():
+                    return False
+                session.add(Account(username=IMPORT_MARKER_USERNAME, kind=AccountKind.SYSTEM, role=Role.VIEWER))
+                for username in usernames:
+                    account = (
+                        await session.execute(select(Account).where(Account.username == username))
+                    ).scalar_one_or_none()
+                    if account is None:
+                        session.add(Account(username=username, kind=AccountKind.PERSON, role=Role.ADMIN))
+                    elif account.kind != AccountKind.SYSTEM:
+                        account.role, account.disabled_at = Role.ADMIN, None
+                await session.commit()
+                return True
+        except IntegrityError:
+            # another process imported meanwhile
+            return False
+
+    async def update_account(self, username: str, **values) -> Account:
+        """Changes a person or machine account (not a system one). Raises NoResultFound if there is none."""
+        async with self.session_factory() as session:
+            account = (
+                await session.execute(
+                    select(Account).where(Account.username == username, Account.kind != AccountKind.SYSTEM)
+                )
+            ).scalar_one()
+            for key, value in values.items():
+                setattr(account, key, value)
+            await session.commit()
+            return account

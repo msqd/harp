@@ -8,7 +8,6 @@ DEFAULT_APPLICATIONS = (
     "http_cache",
     "proxy",
     "storage",
-    "auth",
     "dashboard",
     "janitor",
     "rules",

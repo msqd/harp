@@ -19,4 +19,4 @@ Reference
 Implementation (python): :class:`AuthSettings <harp_apps.auth.settings.AuthSettings>`
 
 ``enabled``
-    Set to ``false`` to disable the application, which the dashboard requires. Default ``true``.
+    Set to ``false`` to disable the application, which the dashboard requires: disable both. Default ``true``.

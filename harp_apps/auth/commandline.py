@@ -1,10 +1,11 @@
 """Commands of the authentication application."""
 
 import asyncio
+from datetime import UTC, datetime
 from typing import Optional, cast
 
 from click import Command
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from harp.commandline.options.server import server_command
@@ -73,3 +74,54 @@ def _what_exists(username: str, email: Optional[str]) -> str:
 
 
 create_account = cast(Command, create_account)
+
+
+async def _update_account(url, username: str, **values) -> None:
+    engine = create_async_engine(str(url))
+    try:
+        await ensure_schema_is_current(engine)
+        await AccountsRepository(async_sessionmaker(engine, expire_on_commit=False)).update_account(username, **values)
+    finally:
+        await engine.dispose()
+
+
+def _update(kwargs, username: str, **values) -> None:
+    settings = create_harp_settings_with_storage_from_command_line_options(kwargs)
+    try:
+        asyncio.run(_update_account(settings.get("storage").url, username, **values))
+    except OutdatedSchemaError as exc:
+        raise click.ClickException(str(exc)) from None
+    except NoResultFound:
+        raise click.ClickException(
+            f"There is no account named {username} (system accounts cannot be changed)."
+        ) from None
+
+
+@server_command("auth:set-role")
+@click.argument("username")
+@click.argument("role", type=click.Choice([role.label for role in Role]))
+def set_role(*, username: str, role: str, **kwargs):
+    """Sets the role of an account. Takes effect at its next request."""
+    _update(kwargs, username, role=Role.parse(role))
+    click.echo(f"Account {username} is now {role}.")
+
+
+@server_command("auth:disable-account")
+@click.argument("username")
+def disable_account(*, username: str, **kwargs):
+    """Revokes an account without deleting it: it answers 401 at its next request. Undo with auth:enable-account."""
+    _update(kwargs, username, disabled_at=datetime.now(UTC))
+    click.echo(f"Account {username} is disabled.")
+
+
+@server_command("auth:enable-account")
+@click.argument("username")
+def enable_account(*, username: str, **kwargs):
+    """Enables an account that was disabled."""
+    _update(kwargs, username, disabled_at=None)
+    click.echo(f"Account {username} is enabled.")
+
+
+set_role = cast(Command, set_role)
+disable_account = cast(Command, disable_account)
+enable_account = cast(Command, enable_account)
