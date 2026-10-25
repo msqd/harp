@@ -26,7 +26,7 @@ class Message(Base):
     transaction_id: Mapped[str] = mapped_column(ForeignKey("transactions.id", ondelete="CASCADE"))
     transaction: Mapped["Transaction"] = relationship(back_populates="messages")
 
-    __table_args__ = (Index("ix_transaction_id", "transaction_id"),)
+    __table_args__ = (Index(None, "transaction_id"),)
 
     def to_model(self):
         return MessageModel(
