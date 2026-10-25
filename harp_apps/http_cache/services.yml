@@ -17,6 +17,7 @@ services:
       storage: !ref "http_cache.storage"
       # hishel 1.0: parameter renamed from 'controller' to 'policy'
       policy: !ref "http_cache.policy"
+      purge: !cfg "purge"
     arguments: [ !cfg "transport.arguments", { } ]
 
   # Caching policy, responsible for determining what is cacheable
