@@ -1,0 +1,1 @@
+Trusted proxies now match IPv4-mapped peers (``::ffff:a.b.c.d``) against IPv4 networks, and forwarding headers carry them as plain IPv4.

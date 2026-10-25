@@ -136,7 +136,8 @@ is appended after it, so the upstream sees the whole chain.
         - 10.0.0.0/8
         - fd00::/8
 
-``trusted_proxies`` is a list of CIDR ranges (a single address works too) and is empty by default. Only list proxies you
+``trusted_proxies`` is a list of CIDR ranges (a single address works too) and is empty by default. An IPv4-mapped peer (``::ffff:127.0.0.1``, as a dual-stack
+listener sees IPv4 clients) is read as plain IPv4: ``127.0.0.0/8`` trusts it, and the upstream sees ``127.0.0.1``. Only list proxies you
 operate: anything in these ranges can set the client address your upstream sees.
 
 .. _proxy-buffering-and-streaming:
