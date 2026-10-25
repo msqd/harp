@@ -18,7 +18,6 @@ Submodules
     harp_apps.audit
     harp_apps.contrib
     harp_apps.dashboard
-    harp_apps.events
     harp_apps.http_cache
     harp_apps.http_client
     harp_apps.janitor

@@ -12,6 +12,7 @@ from harp.utils.config.yaml import include_constructor  # noqa
 from harp import get_logger
 
 from ..applications import ApplicationsRegistry
+from ..core import CoreSettings
 from ..defaults import DEFAULT_APPLICATIONS, DEFAULT_SYSTEM_CONFIG_FILENAMES
 from ..examples import get_example_filename
 from .system import System
@@ -190,7 +191,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         return {k: (self.applications[k].normalize(v) if k in self.applications else v) for k, v in x.items()}
 
     # System keys that are not application-specific
-    SYSTEM_KEYS = frozenset({"applications", "harp_apps"})
+    SYSTEM_KEYS = frozenset({"applications", "core", "harp_apps"})
 
     def _get_config_sources(self):
         """
@@ -255,7 +256,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         Every unknown key is reported, whatever its value. Checking only mappings would let a typo
         or a leftover block through unnoticed whenever it happened to hold a list, a string or a
         scalar, including under ``--strict``. The keys that legitimately hold a non-mapping,
-        ``applications`` and ``harp_apps``, are excluded by name through SYSTEM_KEYS.
+        ``applications``, ``core`` and ``harp_apps``, are excluded by name through SYSTEM_KEYS.
 
         Args:
             settings: Configuration dictionary from first pass.
@@ -355,10 +356,15 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
                 _local_settings = settings_type(**_local_settings)
             all_settings.append((name, _local_settings))
 
+        core = settings.get("core", {})
+        if not isinstance(core, CoreSettings):
+            core = CoreSettings(**core)
+
         return cast(
             GlobalSettings,
             {
                 "applications": self.applications.aslist(),
+                "core": core,
                 **{name: value for name, value in sorted(all_settings) if value},
             },
         )

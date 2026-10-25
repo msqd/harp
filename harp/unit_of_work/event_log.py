@@ -1,5 +1,14 @@
+"""
+The event log (ADR-0013): the events declared ``loggable`` are written, one structured line each, to ``harp.events``.
+
+Only a declared event can be listened to, and the Operator can only mute one: an unmarked event is never logged.
+"""
+
+from whistle import IAsyncEventDispatcher
+
 from harp import get_logger
-from harp.unit_of_work import is_loggable
+from harp.config.core import CoreSettings
+from harp.unit_of_work import is_loggable, loggable_events
 
 EVENTS_LOGGER = "harp.events"
 
@@ -40,3 +49,20 @@ async def log_event(event) -> None:
         )
     except Exception:
         pass
+
+
+def validate_muted_events(muted: list[str]) -> None:
+    unknown = sorted(set(muted) - set(loggable_events()))
+    if unknown:
+        raise ValueError(
+            f"core.muted_events can only name loggable events, not: {', '.join(unknown)}. "
+            f"Loggable events: {', '.join(sorted(loggable_events())) or 'none'}."
+        )
+
+
+def attach_event_log(dispatcher: IAsyncEventDispatcher, settings: CoreSettings) -> None:
+    """Attaches the event log to every declared loggable event that is not muted. Raises if a muted one is not loggable."""
+    validate_muted_events(settings.muted_events)
+    for event_id in loggable_events():
+        if event_id not in settings.muted_events:
+            dispatcher.add_listener(event_id, log_event)

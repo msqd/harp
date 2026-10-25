@@ -47,14 +47,6 @@
     ''',
   })
 # ---
-# name: test_all_applications_default_settings[harp_apps.events]
-  dict({
-    'harp_apps.events.settings.EventsSettings': '''
-      {}
-  
-    ''',
-  })
-# ---
 # name: test_all_applications_default_settings[harp_apps.http_cache]
   dict({
     'harp_apps.http_cache.settings.CachePolicyOptions': '''

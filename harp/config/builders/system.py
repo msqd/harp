@@ -10,10 +10,12 @@ from harp.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.services import Container, Services
 from harp.typedefs import GlobalSettings
 from harp.unit_of_work import TransactionalEventDispatcher
+from harp.unit_of_work.event_log import attach_event_log
 from harp.utils.network import Bind
 from harp.views.json import on_json_response
 
 from .. import ApplicationsRegistry
+from ..core import CoreSettings
 from ..development_only import development_only_settings
 from ..events import (
     EVENT_BIND,
@@ -189,6 +191,7 @@ class SystemBuilder:
 
         # Prepare and dispatch «bound» event.
         provider = container.build_provider()
+        attach_event_log(dispatcher, config.get("core") or CoreSettings())
         await self.dispatch_bound_event(dispatcher, provider, controller_resolver)
 
         # Build the kernel and dispatch «ready» event.

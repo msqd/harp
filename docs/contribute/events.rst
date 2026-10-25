@@ -184,11 +184,11 @@ Declare the event with the ``loggable`` mark and dispatch it on the main dispatc
 
     await dispatcher.adispatch("http_client.breaker_opened", BreakerOpened("upstream", 5))
 
-The :doc:`events application </apps/events/index>` listens to every declared loggable event and writes one line to the
-``harp.events`` logger (``kind: event``, ``event_id``, ``outcome``, ``details``), best-effort: a line that cannot be
-built is dropped and the dispatch carries on. As for audit events, only the ``details_fields`` the class declares are
+The core listens to every declared loggable event and writes one line to the ``harp.events`` logger (``kind: event``,
+``event_id``, ``outcome``, ``details``), best-effort: a line that cannot be built is dropped and the dispatch carries
+on. The level of the logger is ``LOGGING_EVENT_LOG`` (see :doc:`/operate/logging`). As for audit events, only the ``details_fields`` the class declares are
 logged, as scalars, and a class declaring a field named like a secret cannot be defined. The Operator can mute a
-loggable event with ``events.muted``, never add one: an unmarked event is never logged, whatever id it is dispatched
+loggable event with ``core.muted_events`` (see :doc:`/operate/configure/index`), never add one: an unmarked event is never logged, whatever id it is dispatched
 under. Declare the class before the system is built (import it from your application), as the listeners are attached
 once, when the system is bound.
 

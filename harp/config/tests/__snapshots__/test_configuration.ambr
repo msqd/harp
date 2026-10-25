@@ -1,6 +1,6 @@
 # serializer version: 1
 # name: test_add_application
-  b'{"applications":["harp_apps.storage"],"storage":{}}'
+  b'{"applications":["harp_apps.storage"],"core":{},"storage":{}}'
 # ---
 # name: test_add_application.1
   dict({
@@ -8,10 +8,12 @@
       'harp_apps.storage',
       'foo.bar',
     ]),
+    'core': dict({
+    }),
     'storage': dict({
     }),
   })
 # ---
 # name: test_add_application.2
-  b'{"applications":["harp_apps.storage","foo.bar"],"storage":{}}'
+  b'{"applications":["harp_apps.storage","foo.bar"],"core":{},"storage":{}}'
 # ---

@@ -1,1 +1,1 @@
-Events: events declared ``loggable`` are written as one structured line each to the ``harp.events`` logger, and ``events.muted`` mutes some of them (only loggable events can be named).
+Core: events declared ``loggable`` are written as one structured line each to the ``harp.events`` logger, and the new ``core.muted_events`` setting mutes some of them (only loggable events can be named).

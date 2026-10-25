@@ -12,7 +12,6 @@ package).
     audit/index
     contrib/sentry/index
     dashboard/index
-    events/index
     http_cache/index
     http_client/index
     janitor/index
