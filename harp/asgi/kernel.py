@@ -17,6 +17,7 @@ from .events import (
     EVENT_CORE_REQUEST,
     EVENT_CORE_RESPONSE,
     EVENT_CORE_STARTED,
+    EVENT_CORE_STOPPED,
     EVENT_CORE_VIEW,
     ControllerEvent,
     RequestEvent,
@@ -78,6 +79,13 @@ class ASGIKernel:
                 raise LifespanFailureError(EVENT_CORE_STARTED, repr(exc)) from exc
 
             self.started = True
+            await send({"type": "lifespan.startup.complete"})
+
+            # Only wait for the shutdown if someone cares, so applications that do not keep returning right after startup.
+            if self.dispatcher.has_listeners(EVENT_CORE_STOPPED):
+                await receive()
+                await self.dispatcher.adispatch(EVENT_CORE_STOPPED, Event())
+                await send({"type": "lifespan.shutdown.complete"})
             return
 
         if asgi_type == "websocket":

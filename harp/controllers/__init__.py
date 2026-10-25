@@ -20,6 +20,7 @@ Contents
 
 """
 
+from .asgi_mount import AsgiMountController
 from .default import not_found_controller
 from .resolvers import DefaultControllerResolver, ProxyControllerResolver
 from .routing import (
@@ -42,6 +43,7 @@ from .typing import IControllerResolver
 __title__ = "Controllers"
 
 __all__ = [
+    "AsgiMountController",
     "AnyMethodHandler",
     "ConnectHandler",
     "IControllerResolver",
