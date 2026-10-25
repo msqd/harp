@@ -1,6 +1,6 @@
 import time
 from base64 import b64encode
-from ipaddress import IPv4Network, IPv6Address, IPv6Network, ip_address
+from ipaddress import IPv4Network, IPv6Network, ip_address
 from typing import Any, Dict, Optional, Sequence
 from urllib.parse import unquote, urlparse
 
@@ -34,8 +34,6 @@ def forwarding_headers(
         address = ip_address(peer) if peer else None
     except ValueError:
         address = None
-    if isinstance(address, IPv6Address) and address.ipv4_mapped:
-        address = address.ipv4_mapped
     trusted = address is not None and any(address in network for network in trusted_proxies)
 
     kept = [(name, value) for name, value in headers if name.lower() not in FORWARDING_HEADERS]

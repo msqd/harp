@@ -268,7 +268,8 @@ refused.
 This matters behind a reverse proxy or load balancer, where the peer is that proxy for every client. Listing the
 proxy in ``allow`` then lets everyone behind it purge, so either filter ``PURGE`` at the proxy, or reach HARP directly
 for purges (from the host, or through a private port) and list only those addresses. IPv4-mapped IPv6 addresses
-(``::ffff:127.0.0.1``) are matched as their IPv4 address.
+(``::ffff:127.0.0.1``) are matched as their IPv4 address, so write ``allow`` ranges in IPv4 form: a mapped-form range
+(``::ffff:127.0.0.0/104``, ``::ffff:0:0/96``) or ``::/0`` does not match IPv4 peers.
 
 
 Cache key normalization

@@ -1,3 +1,4 @@
+from ipaddress import IPv6Address
 from typing import Optional
 from urllib.parse import parse_qsl
 
@@ -42,11 +43,15 @@ class HttpRequestAsgiBridge(HttpRequestBridge):
             return None
 
     def get_client_ipaddr(self) -> Optional[str]:
-        """Get the address of the peer HARP is talking to from asgi scope."""
+        """Get the address of the peer HARP is talking to from asgi scope; an IPv4-mapped one is read as IPv4."""
         try:
-            return (self.asgi_scope.get("client", _default_host) or _default_host)[0]
+            peer = (self.asgi_scope.get("client", _default_host) or _default_host)[0]
         except IndexError:
             return None
+        try:
+            return str(IPv6Address(peer).ipv4_mapped or peer)
+        except ValueError:
+            return peer
 
     def get_method(self) -> str:
         """Get the HTTP method from asgi scope."""

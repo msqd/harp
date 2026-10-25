@@ -100,23 +100,6 @@ async def test_recorded_request_is_unchanged():
 
 
 @pytest.mark.asyncio
-async def test_ipv4_mapped_peer_matches_an_ipv4_trusted_network():
-    _, headers = await _outgoing(CLAIMS, "::ffff:127.0.0.1", trusted=("127.0.0.0/8",))
-
-    assert headers.get_list("x-forwarded-for") == ["6.6.6.6, 127.0.0.1"]
-    assert headers.get_list("forwarded") == ["for=6.6.6.6, for=127.0.0.1"]
-    assert headers.get_list("x-real-ip") == ["6.6.6.6"]
-
-
-@pytest.mark.asyncio
-async def test_ipv4_mapped_peer_is_reported_as_plain_ipv4_when_untrusted():
-    _, headers = await _outgoing(CLAIMS, "::ffff:203.0.113.7")
-
-    assert headers.get_list("x-forwarded-for") == ["203.0.113.7"]
-    assert headers.get_list("forwarded") == ["for=203.0.113.7"]
-
-
-@pytest.mark.asyncio
 async def test_native_ipv6_peer_is_unchanged():
     _, headers = await _outgoing(CLAIMS, "fd00::1", trusted=("fd00::/8",))
 

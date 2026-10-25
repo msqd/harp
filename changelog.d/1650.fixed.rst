@@ -1,1 +1,1 @@
-Trusted proxies now match IPv4-mapped peers (``::ffff:a.b.c.d``) against IPv4 networks, and forwarding headers carry them as plain IPv4.
+Trusted proxies and PURGE allow-lists now match IPv4-mapped peers (``::ffff:a.b.c.d``) against IPv4 ranges, and forwarding headers carry them as plain IPv4; ranges written in mapped form (``::ffff:10.0.0.0/104``) or ``::/0`` no longer match IPv4 peers, write the IPv4 form.
