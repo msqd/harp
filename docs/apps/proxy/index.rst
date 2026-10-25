@@ -140,6 +140,11 @@ is appended after it, so the upstream sees the whole chain.
 ``trusted_proxies`` is a list of CIDR ranges (a single address works too) and is empty by default. Only list proxies you
 operate: anything in these ranges can set the client address your upstream sees.
 
+An IPv4-mapped peer (``::ffff:127.0.0.1``, as a dual-stack listener sees IPv4 clients) is read as plain IPv4:
+``127.0.0.0/8`` trusts it, and the upstream sees ``127.0.0.1``. The reverse no longer holds: a range written in mapped
+form (``::ffff:10.0.0.0/104``, ``::ffff:0:0/96``) or ``::/0`` does not match IPv4 peers any more. Write the IPv4 form
+instead.
+
 .. _proxy-buffering-and-streaming:
 
 Buffering and streaming
