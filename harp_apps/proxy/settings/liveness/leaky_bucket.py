@@ -38,7 +38,7 @@ class LeakyBucketLivenessSubjectState(BaseModel):
 class LeakyBucketLiveness(BaseLiveness[LeakyBucketLivenessSettings]):
     @classmethod
     def get_state_of(cls, subject: LivenessSubject) -> LeakyBucketLivenessSubjectState:
-        _attr = f"__{type(cls).__name__}__state__"
+        _attr = f"__{cls.__name__}__state__"
         if not hasattr(subject, _attr):
             setattr(subject, _attr, LeakyBucketLivenessSubjectState())
         return getattr(subject, _attr)

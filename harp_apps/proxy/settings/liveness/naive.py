@@ -26,7 +26,7 @@ class NaiveLivenessSubjectState(BaseModel):
 class NaiveLiveness(BaseLiveness[NaiveLivenessSettings]):
     @classmethod
     def get_state_of(cls, subject: LivenessSubject) -> NaiveLivenessSubjectState:
-        _attr = f"__{type(cls).__name__}__state__"
+        _attr = f"__{cls.__name__}__state__"
         if not hasattr(subject, _attr):
             setattr(subject, _attr, NaiveLivenessSubjectState())
         return getattr(subject, _attr)

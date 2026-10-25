@@ -44,7 +44,7 @@ class RoutingController:
         pass
 
     def create_router(self):
-        return self.RouterType(*self.RouterArguments.args, *self.RouterArguments.kwargs)
+        return self.RouterType(*self.RouterArguments.args, **self.RouterArguments.kwargs)
 
     async def __call__(self, request: HttpRequest):
         try:

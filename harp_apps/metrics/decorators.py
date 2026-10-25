@@ -35,7 +35,7 @@ def _instrument(wrapped, *, requests, in_progress, responses, exceptions, durati
             return response
         except Exception as exc:  # noqa: BLE001
             exceptions.labels(**labels, exception=type(exc).__name__).inc()
-            raise exc from None
+            raise
         finally:
             after_time = time.perf_counter()
             duration.labels(**labels).observe(after_time - before_time)
