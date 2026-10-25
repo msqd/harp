@@ -20,6 +20,18 @@ Metrics
   Aggregate queries still work; any ``by (path)`` or ``by (url)`` grouping, or matcher on these labels, stops
   matching. The remaining labels are listed in :doc:`prometheus`.
 
+Dashboard authentication
+::::::::::::::::::::::::
+
+- passlib is no longer a dependency. ``dashboard.auth.algorithm`` accepts ``pbkdf2_sha256`` (default), ``argon2``
+  (needs ``harp-proxy[argon2]``) and ``plaintext`` (tests only, logs a warning at every start). Any other value
+  (``bcrypt``, ``md5_crypt``, ``sha512_crypt``, ...) makes the configuration invalid, and HARP refuses to start with a
+  message listing the accepted ones: hash the passwords again with ``pbkdf2_sha256`` or ``argon2``, see
+  :doc:`/apps/dashboard/index`.
+- Existing ``pbkdf2_sha256`` hashes (``$pbkdf2-sha256$...``, made by passlib) keep working as they are, no rehash.
+- Hashes created by HARP now use 600000 PBKDF2 rounds (passlib's default was 29000), so a login costs more CPU.
+  Successful logins are cached for a minute.
+
 .. _upgrading-0-12:
 
 Upgrading to 0.12

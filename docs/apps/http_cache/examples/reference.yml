@@ -14,6 +14,11 @@ http_cache:
       supported_methods: [GET, HEAD]  # Cacheable methods
       allow_stale: false  # Don't serve stale responses
 
+  # Removal of one entry with PURGE (default: disabled, local peers only)
+  purge:
+    enabled: false
+    allow: ["127.0.0.1"]  # Peer addresses or CIDR ranges, for example ["127.0.0.1", "10.0.0.0/8"]
+
   # Cache storage (default: harp_apps.http_cache.storages.AsyncStorage)
   storage:
     base: hishel.AsyncBaseStorage

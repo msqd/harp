@@ -1,0 +1,1 @@
+Cache: ``PURGE`` removes one cache entry, behind the opt-in ``http_cache.purge`` settings (``enabled``, off by default, and an ``allow`` list of peer addresses, ``127.0.0.1`` by default).
