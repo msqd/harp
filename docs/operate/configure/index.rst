@@ -79,7 +79,11 @@ Core settings
 -------------
 
 Some settings belong to no application: they are read from the ``core`` section, which is always there and cannot be
-disabled. Unknown keys in it are rejected when the configuration loads.
+disabled. Unknown keys in it are rejected when the configuration loads. ``core`` is a reserved name: an application
+cannot be named ``core``, and HARP refuses to load one.
+
+Like any setting, they can be given with ``--set core.muted_events=...`` or with the environment, where a list is a
+comma-separated string: ``HARP_CORE__MUTED_EVENTS=the.first.id,the.second.id``.
 
 ``muted_events``
     List of ``loggable`` event ids not to write to the event log (see :ref:`events-loggable`). Default: none. Naming an

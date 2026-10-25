@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from .configurables.base import Configurable
 
@@ -14,3 +14,11 @@ class CoreSettings(Configurable):
         default_factory=list,
         description="Ids of the loggable events not to write to the event log. Only a loggable event can be named.",
     )
+
+    @field_validator("muted_events", mode="before")
+    @classmethod
+    def _split_comma_separated(cls, value):
+        """Environment variables hold strings: ``HARP_CORE__MUTED_EVENTS=a.b,c.d``."""
+        if isinstance(value, str):
+            return [item.strip() for item in value.split(",") if item.strip()]
+        return value

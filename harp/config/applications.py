@@ -19,6 +19,9 @@ from .events import (
     OnShutdownHandler,
 )
 
+#: Name of the configuration section of the core settings: no application can take it.
+RESERVED_APPLICATION_NAME = "core"
+
 #: Cache for applications
 applications = {}
 
@@ -178,6 +181,11 @@ class ApplicationsRegistry:
                                    Defaults to False for backward compatibility.
         """
         for name in names:
+            if name.rsplit(".", 1)[-1] == RESERVED_APPLICATION_NAME:
+                raise ValueError(
+                    f'"{RESERVED_APPLICATION_NAME}" is reserved for the core settings section: '
+                    f"an application cannot be named {RESERVED_APPLICATION_NAME} ({name})."
+                )
             full_name = self.resolve_name(name)
             short_name = self.resolve_short_name(full_name)
 

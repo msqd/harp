@@ -1,10 +1,11 @@
 import pytest
 from pydantic import ValidationError
+from config.env import EnvVars
 from structlog.testing import capture_logs
 from whistle import AsyncEventDispatcher, Event
 
 from harp._logging import logging_config
-from harp.config import ConfigurationBuilder
+from harp.config import ApplicationsRegistry, ConfigurationBuilder
 from harp.config.builders.system import SystemBuilder
 from harp.config.core import CoreSettings
 from harp.unit_of_work import auditable, loggable
@@ -168,3 +169,23 @@ def test_the_core_section_rejects_unknown_keys():
 
     with pytest.raises(ValidationError):
         builder.build()
+
+
+def test_the_core_section_can_be_set_with_the_set_option():
+    builder = ConfigurationBuilder()
+    builder.add_values({"core.muted_events": ["a.b"]})
+
+    assert builder.build()["core"].muted_events == ["a.b"]
+
+
+def test_the_core_section_can_be_set_from_the_environment(monkeypatch):
+    monkeypatch.setenv("HARP_CORE__MUTED_EVENTS", "a.b, c.d")
+    builder = ConfigurationBuilder()
+    builder.add_source(EnvVars(prefix="HARP_"))
+
+    assert builder.build()["core"].muted_events == ["a.b", "c.d"]
+
+
+def test_an_application_cannot_be_named_core():
+    with pytest.raises(ValueError, match="core"):
+        ApplicationsRegistry().add("harp_apps.core")
