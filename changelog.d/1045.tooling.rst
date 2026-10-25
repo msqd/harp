@@ -1,0 +1,1 @@
+Filtering integration tests now build a real system against in-memory sqlite and disable leaf apps (janitor, metrics), no longer xfail.

@@ -2,19 +2,28 @@ import asyncio
 import time
 import typing as tp
 import uuid
+import weakref
+from contextlib import asynccontextmanager
 from collections import OrderedDict
 from dataclasses import replace
 import yaml
 from email.utils import formatdate
+from urllib.parse import parse_qsl, urlsplit
 from hishel import AsyncBaseStorage, Entry, EntryMeta, Request, Response
 from hishel._utils import make_async_iterator
 
 from harp import get_logger
 from harp.models import Blob
+from harp.models.redaction import Redaction
 from harp.http.utils import parse_cache_control
-from harp_apps.storage.constants import DEFAULT_MAX_RECORDED_BODY_SIZE
+from harp_apps.storage.constants import (
+    DEFAULT_MAX_RECORDED_BODY_SIZE,
+    SKIP_REQUEST_STORAGE,
+    SKIP_RESPONSE_STORAGE,
+)
 from harp_apps.storage.types import IBlobStorage
-from .adapters import AsyncStorageAdapter, stored_at_of
+from .coalescing import STORED_METADATA
+from .adapters import AsyncStorageAdapter, stored_at_of, variant_id, variants_of
 from .streams import StoredOnceRead
 
 # libyaml's loader decodes an entry about ten times faster than the pure Python one.
@@ -29,11 +38,51 @@ SWEEP_DELETE_BATCH = 200
 CACHE_META_CONTENT_TYPE = "cache/meta"
 DEFAULT_TTL = 86400
 
+#: How many variants of a ``Vary`` resource one cache key holds. Storing one more evicts the oldest stored.
+MAX_VARIANTS_PER_KEY = 8
+
 logger = get_logger(__name__)
 HEADERS_ENCODING = "iso-8859-1"
 
 #: Request metadata key holding the largest response body the cache may store (the proxy's recording cap).
 MAX_BODY_SIZE_METADATA = "harp_max_recorded_body_size"
+
+#: Request metadata key holding the :class:`~harp.models.redaction.Redaction` in force for the request.
+REDACTION_METADATA = "harp_redaction"
+
+#: Request metadata key holding the markers of the request's transaction.
+MARKERS_METADATA = "harp_markers"
+
+#: Request metadata key holding the storage's :attr:`~AsyncStorage.stamp` when the request set out. A response is not
+#: stored if its key was invalidated after that.
+STAMP_METADATA = "harp_invalidation_stamp"
+
+#: Markers that keep a transaction's messages out of storage, the cache included. ``skip-storage`` is not one:
+#: the storage worker sets it itself under pressure, and load must not switch the cache off.
+_SKIP_MARKERS = frozenset({SKIP_REQUEST_STORAGE, SKIP_RESPONSE_STORAGE})
+
+
+def _redaction_of(request: Request) -> Redaction:
+    return request.metadata.get(REDACTION_METADATA) or Redaction()
+
+
+def is_withheld(request: Request, response: Response) -> bool:
+    """Whether this exchange must stay out of the cache, because storing it would keep a credential.
+
+    The cache reads back what it stores to answer requests, so a redacted value is only safe where it is never
+    compared or replayed (ADR-0009). Hence three cases where nothing is stored at all: the response varies on a
+    redacted header, its URL carries a redacted query parameter, or it carries a redacted header itself. What an
+    operator keeps out of storage with a ``skip-*-storage`` marker stays out of the cache too.
+    """
+    if _SKIP_MARKERS & set(request.metadata.get(MARKERS_METADATA) or ()):
+        return True
+
+    redaction = _redaction_of(request)
+    if any(name.strip() in redaction.headers for name in ",".join(response.headers.get_list("vary") or []).split(",")):
+        return True
+    if any(name in redaction.headers for name in response.headers):
+        return True
+    return any(name in redaction.query for name, _ in parse_qsl(urlsplit(request.url).query, keep_blank_values=True))
 
 
 def has_explicit_freshness(response: Response) -> bool:
@@ -59,13 +108,18 @@ def has_explicit_freshness(response: Response) -> bool:
 # freshens nothing under load, which is the defect this index exists to fix.
 KEY_INDEX_SIZE = 8192
 
+#: How many invalidated keys the storage remembers. Past it the oldest are forgotten, and every request that set out
+#: before the newest forgotten one is treated as invalidated: some responses go unstored, none is stored stale.
+INVALIDATION_LOG_SIZE = 8192
+
 
 class AsyncStorage(AsyncBaseStorage):
     """HARP's AsyncBaseStorage implementation using blob storage backend.
 
     This implementation adapts hishel 1.0's Entry-based API to work with HARP's
-    blob storage system. We store a single entry per cache key, maintaining
-    backward compatibility with existing cached data.
+    blob storage system. A cache key holds the variants of its resource, at most
+    :data:`MAX_VARIANTS_PER_KEY`, in one blob; a blob written before variants existed
+    reads as a single one.
 
     hishel addresses entries by UUID while this store addresses blobs by cache key, so a
     bounded index of recently seen ids bridges the two. See :data:`KEY_INDEX_SIZE` for why a
@@ -95,6 +149,46 @@ class AsyncStorage(AsyncBaseStorage):
         self._allow_heuristics = allow_heuristics
         self._keys_by_id: OrderedDict[uuid.UUID, str] = OrderedDict()
         self._sweep_task: tp.Optional[asyncio.Task] = None
+        self._stamp = 0
+        self._invalidated_at: OrderedDict[str, int] = OrderedDict()
+        self._forgotten_up_to = 0
+        self._key_locks: weakref.WeakValueDictionary[str, asyncio.Lock] = weakref.WeakValueDictionary()
+
+    @asynccontextmanager
+    async def _locked(self, key: str) -> tp.AsyncIterator[None]:
+        """Serialize the writers of one cache key: they read the variants, change them and write them all back."""
+        lock = self._key_locks.get(key) or self._key_locks.setdefault(key, asyncio.Lock())
+        async with lock:
+            yield
+
+    @property
+    def stamp(self) -> int:
+        """Counts the invalidations so far: read when a request sets out, it tells later whether its key was invalidated since."""
+        return self._stamp
+
+    def _invalidated_since(self, key: str, stamp: int) -> bool:
+        return self._invalidated_at.get(key, self._forgotten_up_to) > stamp
+
+    async def invalidate(self, key: str) -> None:
+        """Drop every variant of a key, and refuse the responses of requests that set out before (RFC 9111 §4.4)."""
+        async with self._locked(key):
+            self._stamp += 1
+            self._invalidated_at[key] = self._stamp
+            self._invalidated_at.move_to_end(key)
+            while len(self._invalidated_at) > INVALIDATION_LOG_SIZE:
+                self._forgotten_up_to = self._invalidated_at.popitem(last=False)[1]
+            try:
+                await self._impl.write_variants(key, [])
+            except Exception:
+                logger.warning(f"Failed to remove cache entry: key={key}", exc_info=True)
+
+    async def _prune(self, key: str) -> None:
+        """Drop the expired variants of a key, and the key itself when none is left."""
+        async with self._locked(key):
+            variants = await self._impl.load_variants(key)
+            live = [variant for variant in variants if not self._is_expired(stored_at_of(variant))]
+            if len(live) < len(variants):
+                await self._impl.write_variants(key, live)
 
     def _is_expired(self, stored_at: float) -> bool:
         return self._ttl is not None and time.time() - stored_at > self._ttl
@@ -138,8 +232,12 @@ class AsyncStorage(AsyncBaseStorage):
             seen = 0
             async for blob in self._storage.iter_blobs(CACHE_META_CONTENT_TYPE):
                 try:
-                    if self._is_expired(stored_at_of(yaml.load(blob.data, Loader=_YamlLoader))):
+                    variants = variants_of(yaml.load(blob.data, Loader=_YamlLoader))
+                    live = [variant for variant in variants if not self._is_expired(stored_at_of(variant))]
+                    if not live:
                         expired.append(blob)
+                    elif len(live) < len(variants):
+                        await self._prune(blob.id)
                 except Exception:
                     logger.exception(f"Unreadable cache entry, left alone: key={blob.id}")
                 if len(expired) >= SWEEP_DELETE_BATCH:
@@ -181,6 +279,24 @@ class AsyncStorage(AsyncBaseStorage):
             return None
         self._keys_by_id.move_to_end(entry_id)
         return key
+
+    async def _store_variant(self, key: str, entry: Entry, redaction: Redaction, stamp: tp.Optional[int]) -> bool:
+        """Add an entry to the variants of its key: it replaces the variant it supersedes, and pushes out the oldest.
+
+        Nothing is added if the key was invalidated since ``stamp``: the response may show the resource as it was.
+        """
+        variant = await self._impl.serialize_variant(entry, redaction)
+        async with self._locked(key):
+            if stamp is not None and self._invalidated_since(key, stamp):
+                logger.debug(f"Cache entry not retained (key invalidated while in flight): key={key}")
+                return False
+            kept = [
+                stored
+                for stored in await self._impl.load_variants(key)
+                if not self._is_expired(stored_at_of(stored)) and stored.get("selecting") != variant["selecting"]
+            ]
+            await self._impl.write_variants(key, [*kept, variant][-MAX_VARIANTS_PER_KEY:])
+        return True
 
     async def create_entry(
         self,
@@ -226,6 +342,12 @@ class AsyncStorage(AsyncBaseStorage):
         # keep RFC 9111 §4.2.2 opt-in and simply do not retain such a response.
         if not self._allow_heuristics and not has_explicit_freshness(response):
             logger.debug(f"Cache entry not retained (no explicit freshness, heuristics off): key={key}")
+            response.metadata["hishel_stored"] = False
+            return entry
+
+        if is_withheld(request, response):
+            logger.debug(f"Cache entry not retained (withheld, see ADR-0009): key={key}")
+            response.metadata["hishel_stored"] = False
             return entry
 
         # RFC 9110 §6.6.1: a cache without a `Date` to age the response against must record its
@@ -239,14 +361,20 @@ class AsyncStorage(AsyncBaseStorage):
 
         async def store(body: bytes) -> None:
             try:
-                await self._impl.store_entry(
-                    key, replace(entry, response=replace(entry.response, stream=make_async_iterator([body])))
+                stored = await self._store_variant(
+                    key,
+                    replace(entry, response=replace(entry.response, stream=make_async_iterator([body]))),
+                    _redaction_of(request),
+                    request.metadata.get(STAMP_METADATA),
                 )
             except Exception:
                 # The upstream served this response correctly: a cache that cannot keep it must not break it.
                 logger.warning(f"Failed to store cache entry, response not cached: key={key}", exc_info=True)
                 return
+            if not stored:
+                return
             self._remember_key(entry.id, key)
+            response.metadata[STORED_METADATA] = True
             logger.debug(f"Cache entry stored: key={key}")
             self._sweep_if_due()
 
@@ -265,39 +393,39 @@ class AsyncStorage(AsyncBaseStorage):
         )
 
     async def get_entries(self, key: str) -> tp.List[Entry]:
-        """Retrieve all entries for a given cache key.
-
-        Note: Our implementation stores only one entry per key, so this returns
-        a list with at most one element.
+        """Retrieve all entries for a given cache key: its unexpired variants, oldest stored first.
 
         Args:
             key: The cache key
 
         Returns:
-            List of Entry objects (empty if not found, single element if found)
+            List of Entry objects (empty if not found)
         """
         logger.debug(f"Retrieving cache entries: key={key}")
         try:
             self._sweep_if_due()
-            entry = await self._impl.retrieve_entry(key)
-            if entry and self._is_expired(entry.extra["stored_at"]):
+            variants = await self._impl.load_variants(key)
+            live = [variant for variant in variants if not self._is_expired(stored_at_of(variant))]
+            if len(live) < len(variants):
                 logger.debug(f"Cache entry expired: key={key}")
-                await self._storage.delete(key)
-                return []
-            if entry:
+                await self._prune(key)
+            entries = []
+            for variant in live:
+                try:
+                    entry = await self._impl.unserialize_variant(key, variant)
+                except ValueError as e:
+                    # Incomplete cache entry - log warning and treat as cache miss
+                    logger.warning(f"Cache entry incomplete for key={key}: {e}")
+                    continue
                 # hishel will address this entry by id if it later needs to freshen or drop it.
                 self._remember_key(entry.id, key)
                 logger.debug(
                     f"Cache hit: key={key}, url={entry.request.url}, method={entry.request.method}, entry_id={entry.id}"
                 )
-                return [entry]
-            else:
+                entries.append(entry)
+            if not entries:
                 logger.debug(f"Cache miss: key={key}")
-                return []
-        except ValueError as e:
-            # Incomplete cache entry - log warning and treat as cache miss
-            logger.warning(f"Cache entry incomplete for key={key}: {e}")
-            return []
+            return entries
         except Exception:
             # Unexpected error - log full traceback
             logger.exception(f"Failed to retrieve cache for key={key}")
@@ -326,14 +454,23 @@ class AsyncStorage(AsyncBaseStorage):
             return None
 
         try:
-            entry = await self._impl.retrieve_entry(key)
-            if entry is None or entry.id != id:
-                # The blob was evicted or replaced between the lookup and here.
-                logger.debug(f"Cache entry vanished before update: entry_id={id}, key={key}")
-                return None
+            async with self._locked(key):
+                variants = await self._impl.load_variants(key)
+                position = next((n for n, variant in enumerate(variants) if variant_id(key, variant) == id), None)
+                if position is None:
+                    # The variant was evicted or replaced between the lookup and here.
+                    logger.debug(f"Cache entry vanished before update: entry_id={id}, key={key}")
+                    return None
 
-            updated = new_entry if isinstance(new_entry, Entry) else new_entry(entry)
-            await self._impl.store_entry(key, updated)
+                entry = await self._impl.unserialize_variant(key, variants[position])
+                updated = new_entry if isinstance(new_entry, Entry) else new_entry(entry)
+                if is_withheld(updated.request, updated.response):
+                    # A revalidation brought in a header that must not be stored: the entry goes, not the header.
+                    await self._impl.write_variants(key, variants[:position] + variants[position + 1 :])
+                    self._keys_by_id.pop(id, None)
+                    return None
+                variants[position] = await self._impl.serialize_variant(updated)
+                await self._impl.write_variants(key, variants)
         except Exception:
             logger.warning(f"Failed to update cache entry: key={key}, entry_id={id}", exc_info=True)
             return None
@@ -343,13 +480,9 @@ class AsyncStorage(AsyncBaseStorage):
     async def remove_entry(self, id: uuid.UUID) -> None:
         """Remove an entry by its ID.
 
-        hishel invalidates the stored entries a revalidation did *not* match, which only arises
-        where several entries share a cache key. This store holds one entry per key, so hishel
-        does not currently reach this method: the lists it builds for invalidation
-        (``revalidating_entries[:-1]``, and the non-matching entries after a 304) are always
-        empty here. It is implemented rather than left inert because that is a property of the
-        storage shape today and not of the contract, and it changes the moment one key can hold
-        several variants. See https://github.com/msqd/harp/issues/910.
+        hishel invalidates the stored entries a revalidation did *not* match, which arises where
+        several entries share a cache key: the variants of a ``Vary`` resource. Only the variant
+        with this id goes; the others stay.
 
         Args:
             id: The entry UUID
@@ -359,7 +492,9 @@ class AsyncStorage(AsyncBaseStorage):
             return
 
         try:
-            await self._storage.delete(key)
+            async with self._locked(key):
+                variants = await self._impl.load_variants(key)
+                await self._impl.write_variants(key, [v for v in variants if variant_id(key, v) != id])
         except Exception:
             logger.warning(f"Failed to remove cache entry: key={key}, entry_id={id}", exc_info=True)
             return

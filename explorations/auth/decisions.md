@@ -98,5 +98,25 @@ holds the design choices.
 28. SQLite is never migrated by alembic: `_do_migrate` runs `create_all` on SQLite
     (`harp_apps/storage/utils/migrations.py:141-148`, "drop/recreate is fine when harp is
     upgraded"). Taking over `users` therefore happens on PostgreSQL and MySQL only; an existing
-    SQLite database is recreated on upgrade, as today. ADR-0011's SQLite batch argument for the
+    SQLite database is recreated on upgrade, as today. ADR-0012's SQLite batch argument for the
     naming convention is moot; the convention still serves PostgreSQL and MySQL.
+29. Token checksum (clarifies 14): CRC32 over every character before the last six, `harp_`
+    included, written as six zero-padded base62 characters. Format, cookie names
+    (`__Host-harp_session` over HTTPS, `harp_session` otherwise) and the strip live in the core
+    contract `harp/security/credentials.py` (#1521); the auth app generates tokens with it (#1522).
+30. The strip runs right after the request filters, before the transaction is recorded, so HARP's
+    session cookie and HARP bearer tokens reach neither the origin nor the transaction record,
+    whatever ADR-0009 redaction settings say (found by the adversarial review of #1575). It covers
+    `Authorization: Bearer harp_…` and the two session cookies only: a HARP token placed elsewhere
+    (query, other scheme, custom header) is the caller's mistake (user's decision, 2026-10-25).
+31. One parser for HARP tokens in `Authorization`: the auth app reuses `harp/security/credentials.py`
+    and accepts nothing more lenient, so no form accepted by auth escapes the proxy's strip.
+32. Responses too: the proxy strips from origin responses every `Set-Cookie` named `harp_session` or
+    `__Host-harp_session`, so an origin cannot plant or overwrite a dashboard session (`__Host-` does
+    not pin a port). In #1521; ADR-0011 covers both directions.
+33. Same-site CSRF across ports (SameSite ignores ports): state-changing dashboard routes require a
+    same-origin request (#1586), on top of #1324 left unchanged in 0.13; the docs recommend a
+    hostname of its own for the dashboard.
+34. MySQL and MariaDB are treated as unsupported in these explorations (deprecated by ADR-0005,
+    support being removed; user, 2026-10-25): design, code and tests target PostgreSQL (production)
+    and SQLite (dev, `create_all`). New revisions may be no-ops on MySQL with a warning.

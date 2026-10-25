@@ -2,13 +2,10 @@ from typing import cast
 
 from click import Command
 
-from harp import get_logger
 from harp.utils.commandline import click
 
 from .lint import lint_command
 from .run import run_command
-
-logger = get_logger(__name__)
 
 
 @click.group("rules")

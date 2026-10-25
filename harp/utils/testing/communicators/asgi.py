@@ -39,7 +39,7 @@ class ASGICommunicator:
             raise RuntimeError(f"Lifespan shutdown did not complete: {message}")
         await self._lifespan.wait()
 
-    def http_request(self, method, path, *, body=b"", headers=None, host=None, port=None):
+    def http_request(self, method, path, *, body=b"", headers=None, host=None, port=None, client=None):
         from harp.utils.testing.communicators import HTTPCommunicator
 
         communicator = HTTPCommunicator(
@@ -50,6 +50,7 @@ class ASGICommunicator:
             headers=headers,
             hostname=host or self.default_host,
             port=port or self.default_port,
+            client=client,
         )
 
         return communicator.get_response()

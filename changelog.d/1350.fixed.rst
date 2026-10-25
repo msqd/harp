@@ -1,0 +1,1 @@
+Docker ``latest`` and major tags no longer move backwards when a patch is released on an older line.

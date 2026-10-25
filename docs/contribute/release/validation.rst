@@ -60,6 +60,19 @@ product owner accepted the work, so they verify the whole of it before the user 
 
 The contents of the recette are the product owner's to define. Nothing here constrains them.
 
+Path-handling checks go straight to HARP
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Probe the proxy path guard directly against HARP, with no tunnel or CDN in between. A Cloudflare
+quick tunnel, like any edge, normalises or refuses paths itself before the origin sees them:
+
+- ``/a/b/../c`` reaches HARP as ``/a/c``;
+- ``/../x`` is refused by the edge;
+- ``%00`` is refused by the edge.
+
+A check sent through such a hop reports the edge's behaviour, not HARP's.
+
+
 
 3. The user signs off
 :::::::::::::::::::::

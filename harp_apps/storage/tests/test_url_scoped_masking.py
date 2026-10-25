@@ -44,9 +44,9 @@ def test_hide_password_leaves_the_rest_of_the_message_intact(username, password)
     shown = url.render_as_string(hide_password=False)
     template = (
         "harp.errors.OutdatedSchemaError: The storage schema of {} is outdated (at revision none).\n"
-        "  - migrate it: harp-proxy db:migrate up head --set storage.url={}\n"
+        "  - migrate it: harp-proxy db:migrate up heads --set storage.url={}\n"
         "config: {}; driver: password authentication failed for user {!r}\n"
-        "another password: redis://{}:{}2@cache/0?password={}2"
+        "another url: redis://{}:{}@cache/0?password={}"
     )
 
     masked = hide_password(
@@ -55,7 +55,7 @@ def test_hide_password_leaves_the_rest_of_the_message_intact(username, password)
     )
 
     hidden = url.render_as_string(hide_password=True)
-    assert masked == template.format(hidden, hidden, hidden, username, username, password, password)
+    assert masked == template.format(hidden, hidden, hidden, username, username, "***", "***")
 
 
 @pytest.mark.parametrize("password", ["Top@Secret", "sp ace%x", "harp", "1"])
@@ -127,7 +127,7 @@ async def test_an_outdated_schema_is_refused_with_a_usable_command(database_url,
     message = str(exc_info.value)
     hidden = url.render_as_string(hide_password=True)
     assert f"The storage schema of {hidden} is outdated" in message
-    assert f"harp-proxy db:migrate up head --set storage.url={hidden}\n" in message
+    assert f"harp-proxy db:migrate up heads --set storage.url={hidden}\n" in message
     assert url.render_as_string(hide_password=False) not in message
 
 
@@ -184,3 +184,37 @@ async def test_system_config_masks_a_query_password(database_url, options, tmp_p
     assert result.exit_code == 0, result.output
     assert "password=***" in result.output
     assert "Qu3ry" not in result.output
+
+
+@pytest.mark.parametrize(
+    "written",
+    [
+        "postgresql://u:Zq9!b%24@db/harp",  # partially encoded
+        "postgresql://u:Zq9%21b%2f%3a@db/harp",  # lowercase hex
+        "postgresql://u:Zq9%%21b@db/harp",  # configparser doubling
+        "postgresql://u@db/harp?password=Zq9%2fb&ssl=disable",
+    ],
+)
+def test_hide_password_masks_a_url_whatever_its_encoding(written):
+    masked = hide_password(f"boom {written}!", "postgresql://u:Zq9!b@db/harp")
+
+    assert "Zq9" not in masked
+    assert "***" in masked
+
+
+MULTI_HOST_URL = "postgresql+asyncpg://u:Zq9!b%24@127.0.0.1:1,127.0.0.1:2/harp"
+
+
+def test_mask_failure_masks_a_url_sqlalchemy_cannot_parse():
+    safe = mask_failure(ValueError(f"cannot connect to {MULTI_HOST_URL}"), MULTI_HOST_URL)
+
+    assert isinstance(safe, StorageBootError)
+    assert "Zq9" not in str(safe)
+    assert "u:***@127.0.0.1:1,127.0.0.1:2/harp" in str(safe)
+
+
+def test_a_password_with_spaces_is_masked_in_the_storage_url():
+    url = _url("u", "sp ace x")
+    shown = url.render_as_string(hide_password=False)
+
+    assert hide_password(f"boom {shown}!", url) == f"boom {url.render_as_string(hide_password=True)}!"

@@ -1,9 +1,8 @@
 import secrets
 from typing import Optional
 
-from passlib.hash import pbkdf2_sha256
-
 from harp import get_logger
+from harp_apps.dashboard.passwords import hash_password
 from harp_apps.dashboard.settings.auth import BasicAuthSettings, NoAuthSettings, User
 
 logger = get_logger(__name__)
@@ -11,17 +10,16 @@ logger = get_logger(__name__)
 GENERATED_USERNAME = "admin"
 
 
-def resolve_authentication(auth: Optional[BasicAuthSettings | NoAuthSettings]) -> Optional[BasicAuthSettings]:
+def resolve_authentication(
+    auth: Optional[BasicAuthSettings | NoAuthSettings], bind: str
+) -> Optional[BasicAuthSettings]:
     """
     Returns the basic authentication enforced by the dashboard, or None if it was explicitly left open.
 
     Without configured authentication, a random password is generated and logged once. It is only kept as a hash.
+    The warning names the address the dashboard listens on (``bind``).
     """
     if isinstance(auth, NoAuthSettings):
-        logger.warning(
-            "Dashboard authentication is disabled (dashboard.auth.type=none): the dashboard is unauthenticated and "
-            "exposes proxied traffic to anyone who can reach its port."
-        )
         return None
 
     if auth is not None:
@@ -29,11 +27,11 @@ def resolve_authentication(auth: Optional[BasicAuthSettings | NoAuthSettings]) -
 
     password = secrets.token_urlsafe(24)
     logger.warning(
-        f"Dashboard login (generated for this boot only): username={GENERATED_USERNAME} password={password} "
+        f"Dashboard login on {bind} (generated for this boot only): username={GENERATED_USERNAME} password={password} "
         "— set dashboard.auth to choose your own."
     )
     return BasicAuthSettings(
         type="basic",
         algorithm="pbkdf2_sha256",
-        users={GENERATED_USERNAME: User(password=pbkdf2_sha256.hash(password))},
+        users={GENERATED_USERNAME: User(password=hash_password("pbkdf2_sha256", password))},
     )

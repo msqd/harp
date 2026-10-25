@@ -71,7 +71,7 @@ async def sql_engine(database_url, test_id) -> AsyncEngine:
         try:
             # todo refactor (dup in sqlstorage.initialize / sqlstorage._run_migrations)
             alembic_cfg = create_alembic_config(engine.url.render_as_string(hide_password=False))
-            migrator = partial(command.upgrade, alembic_cfg, "head")
+            migrator = partial(command.upgrade, alembic_cfg, "heads")
             await do_migrate(engine, migrator=migrator)
             yield engine
         finally:

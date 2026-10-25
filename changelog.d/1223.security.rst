@@ -1,0 +1,1 @@
+Upstream response bodies are decompressed in bounded steps, so a small compressed body can no longer swell in memory.

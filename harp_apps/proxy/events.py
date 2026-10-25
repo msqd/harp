@@ -4,6 +4,7 @@ from whistle import Event
 
 from harp import get_logger
 from harp.utils.types import typeof
+from harp.http.utils import normalize_path
 from harp.http import BaseHttpMessage, HttpError, HttpResponse
 from harp.http.requests import HttpRequest
 from harp.models import Transaction
@@ -56,8 +57,13 @@ class ProxyFilterEvent(Event):
         return "on_" + self.name.rsplit(".", 1)[-1]
 
     @property
+    def fingerprint(self):
+        """``<METHOD> <path>``, with the path the proxy forwards (see :func:`normalize_path`), no query string."""
+        return f"{self.request.method} {normalize_path(self.request.path)}"
+
+    @property
     def criteria(self):
-        return self.endpoint, str(self.request), self._get_rule_name()
+        return self.endpoint, self.fingerprint, self._get_rule_name()
 
     def create_execution_context(self):
         return {
@@ -73,6 +79,10 @@ class ProxyFilterEvent(Event):
     def execute_script(self, script: Callable):
         context = self.create_execution_context()
         script(context)
+        return self.apply_script_context(context)
+
+    def apply_script_context(self, context: dict):
+        """Take into account what a script left in its execution context."""
         if context["response"] != self.response:
             if context["response"] is None:
                 self.set_response(None)

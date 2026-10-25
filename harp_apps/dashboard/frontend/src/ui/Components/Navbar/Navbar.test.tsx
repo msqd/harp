@@ -39,4 +39,12 @@ describe("Navbar", () => {
     const activeLink = screen.getByText("About")
     expect(activeLink).toHaveClass("border-primary")
   })
+
+  it("keeps the compact children in the bar, outside the menu, shown below md only", () => {
+    render(<Navbar compactChildren={<button type="button">Status</button>} />)
+
+    const status = screen.getByRole("button", { name: "Status" })
+    expect(status.closest("nav")).toBe(screen.getByRole("navigation"))
+    expect(status.parentElement).toHaveClass("md:hidden")
+  })
 })

@@ -61,6 +61,19 @@ def test_server_commands_keep_equals_in_set_values(command, args):
 
 
 @pytest.mark.parametrize("command", [config_subcommand, server])
+@pytest.mark.parametrize(
+    "args",
+    [
+        ("--set=dashboard.port=8080",),
+        ("--set=storage.url=postgresql://host/db?sslmode=require",),
+    ],
+)
+def test_server_commands_accept_long_equals_form_of_set(command, args):
+    name, value = args[0].removeprefix("--set=").split("=", 1)
+    assert _call_command(command, *args)["options"] == ((name, value),)
+
+
+@pytest.mark.parametrize("command", [config_subcommand, server])
 def test_server_commands_render_rich_help(command):
     result = CliRunner().invoke(command, ["--help"])
 
@@ -103,3 +116,42 @@ def _call_command(cmd, *args):
     ctx = Context(cmd)
     cmd.parse_args(ctx, list(args))
     return ctx.params
+
+
+def test_as_list_quotes_every_value():
+    import shlex
+
+    nasty = "x; touch /tmp/pwned $(id) `id` 'q' \"d\""
+    options = CommonServerOptions(
+        options=(),
+        endpoints=(f"{nasty}=4000:http://localhost/",),
+        files=(nasty,),
+        examples=(nasty,),
+        enable=(nasty,),
+        disable=(nasty,),
+    )
+
+    argv = shlex.split(" ".join(options.as_list()))
+
+    assert argv == [
+        "--endpoint",
+        f"{nasty}=4000:http://localhost/",
+        "--enable",
+        nasty,
+        "--disable",
+        nasty,
+        "--file",
+        nasty,
+        "--example",
+        nasty,
+    ]
+
+
+def test_set_values_parsed_as_non_strings_reach_the_command():
+    import shlex
+
+    options = CommonServerOptions(options=(("x", "true"), ("y", "false"), ("n", "3")))
+
+    argv = shlex.split(" ".join(options.as_list()))
+
+    assert argv == ["--set", "x=true", "--set", "y=false", "--set", "n=3"]

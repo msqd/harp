@@ -2,7 +2,7 @@
 
 **Problem**
 
-Every table lives in storage's single alembic chain (`harp_apps/storage/migrations`). The auth, audit and cache-index tables coming from the explorations would all have to be written into storage's history. ADR-0011 (branch `explore/auth`) decides that each application owns a branch of one alembic history.
+Every table lives in storage's single alembic chain (`harp_apps/storage/migrations`). The auth, audit and cache-index tables coming from the explorations would all have to be written into storage's history. ADR-0012 (branch `explore/auth`) decides that each application owns a branch of one alembic history.
 
 **Acceptance criteria**
 

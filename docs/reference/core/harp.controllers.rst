@@ -14,6 +14,7 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
+    harp.controllers.asgi_mount
     harp.controllers.default
     harp.controllers.resolvers
     harp.controllers.routing

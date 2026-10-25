@@ -1,0 +1,1 @@
+Unused helpers and constants: ``harp_apps.proxy.helpers.humanize_status``, ``harp_apps.rules.constants.AVAILABLE_EVENTS``, ``harp_apps.http_cache.settings.HEURISTICALLY_CACHEABLE_STATUS_CODES``, ``harp_apps.dashboard.constants.ALL_ALGORITHMS``; also stale ``bin/`` scripts (``activate``, ``create_local_databases``, ``development/wait-until-docker-available``).

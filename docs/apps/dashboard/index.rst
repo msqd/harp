@@ -10,6 +10,11 @@ The ``harp_apps.dashboard`` application implements the administrative api and mi
 If enabled, a server will be available (by default, on port `4080`) to access the :doc:`HARP Dashboard
 </features/dashboard>` and observe whatever goes through the proxy.
 
+It listens on ``dashboard.host``, which defaults to ``[::]`` (every interface) so a published Docker port keeps working.
+Set ``host: 127.0.0.1`` to serve it on the loopback interface only. The startup warning about the dashboard login or
+about disabled authentication names the address it listens on. ``dashboard.host`` applies to the dashboard port only,
+not to ``metrics_port``, which keeps listening on ``[::]``.
+
 .. toctree::
     :hidden:
     :maxdepth: 1
@@ -101,9 +106,13 @@ can scrape it without credentials. Any other path there answers 404. Keep it on 
 Security headers
 ----------------
 
-Every dashboard response carries ``X-Content-Type-Options: nosniff`` and ``X-Frame-Options: DENY``; the built
+Every dashboard response carries ``X-Content-Type-Options: nosniff`` and ``X-Frame-Options: DENY`` and ``Referrer-Policy: same-origin``; the built
 dashboard also sends a ``Content-Security-Policy`` that allows only its own scripts, styles and API, and forbids
 framing (``frame-ancestors 'none'``). The dashboard cannot be embedded in another page.
+
+Requests that change state (``PUT``, ``POST``, ``DELETE``) are refused unless they are ``application/json`` and come
+from the dashboard itself: a cross-site ``Origin`` or ``Sec-Fetch-Site`` is answered ``403``, a missing JSON content
+type ``415``. Scripts calling these routes must send ``Content-Type: application/json``.
 
 Captured message bodies (``/api/blobs/{id}``) are served with ``Content-Disposition: attachment`` and
 ``Content-Security-Policy: sandbox; default-src 'none'``: opening one in a browser downloads it, and it never runs as

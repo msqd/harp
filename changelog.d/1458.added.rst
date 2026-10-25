@@ -1,0 +1,1 @@
+Release and development images are scanned before push, wheel, sdist and images ship an SBOM and a signed provenance attestation (``gh attestation verify``), and tag builds no longer restore branch caches.

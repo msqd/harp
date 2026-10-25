@@ -6,13 +6,10 @@ Dashboard Application
 from os.path import dirname
 from pathlib import Path
 
-from harp import get_logger
 from harp.config import Application, OnBindEvent, OnBoundEvent
 
 from .controllers.metrics import metrics_port_controller
 from .settings import DashboardSettings
-
-logger = get_logger(__name__)
 
 
 async def on_bind(event: OnBindEvent):
@@ -41,13 +38,15 @@ async def on_bound(event: OnBoundEvent):
     # Add our controller to the controller resolver, using the configured dashboard port. This is what will actually
     # make the server to route requests to the dashboard controller when an incoming request is received on the
     # dashboard port.
+    settings = event.provider.get(DashboardSettings)
     event.resolver.add_controller(
         event.provider.get("dashboard.controller"),
         name="dashboard",
-        port=event.provider.get(DashboardSettings).port,
+        port=settings.port,
+        host=settings.host,
     )
 
-    metrics_port = event.provider.get(DashboardSettings).metrics_port
+    metrics_port = settings.metrics_port
     if metrics_port:
         event.resolver.add_controller(metrics_port_controller, name="metrics", port=metrics_port)
 

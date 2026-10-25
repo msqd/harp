@@ -33,6 +33,7 @@ def _create_controller(settings: DashboardSettings = None):
 def _assert_security_headers(headers):
     assert headers["x-content-type-options"] == "nosniff"
     assert headers["x-frame-options"] == "DENY"
+    assert headers["referrer-policy"] == "same-origin"
     assert headers["content-security-policy"] == DASHBOARD_CSP
 
 
@@ -120,6 +121,7 @@ async def test_devserver_responses_get_no_content_security_policy():
 
     assert response.headers["x-content-type-options"] == "nosniff"
     assert response.headers["x-frame-options"] == "DENY"
+    assert response.headers["referrer-policy"] == "same-origin"
     assert "content-security-policy" not in response.headers
 
 

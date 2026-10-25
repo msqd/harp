@@ -59,6 +59,29 @@ All test jobs run directly on the runner using ``uv`` (no Docker containers):
   * Uses pnpm and Node.js 24
   * Runs ``pnpm test:unit`` in ``harp_apps/dashboard/frontend``
 
+Security jobs
+^^^^^^^^^^^^^
+
+All four are required by *All Checks Passed*.
+
+**dependency-review**
+  On pull requests, fails when the change adds a runtime dependency with a high or critical advisory (``actions/dependency-review-action``)
+
+**audit-python**
+  Fails on any known advisory in ``uv.lock`` (``uv export`` then ``pip-audit``)
+
+  * Reproduce: ``uv export --frozen --all-extras --all-groups --no-emit-project -o /tmp/req.txt && uvx pip-audit --disable-pip --no-deps -r /tmp/req.txt``
+
+**audit-frontend**
+  Fails on any high or critical advisory in ``pnpm-lock.yaml`` (``pnpm audit --audit-level high``)
+
+**pre-commit**
+  Runs every pre-commit hook on all files, secret detection (``detect-secrets``) included
+
+  * Reproduce: ``uvx pre-commit run --all-files``
+  * Hooks are pinned to commit SHAs in ``.pre-commit-config.yaml``, version in a trailing comment
+  * Test fixtures and docs are excluded; other accepted findings are listed in ``.secrets.baseline``. For a false positive, run ``uvx detect-secrets scan --baseline .secrets.baseline`` and commit the result.
+
 Documentation and UI jobs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -102,8 +125,9 @@ Build and release jobs
   Builds Docker image for development branches
 
   * Only runs for non-tag pushes
-  * Uses local wheel from build
-  * Other branches build only, nothing is pushed
+  * Installs the wheel built by CI, starts the image and fetches the proxy and dashboard ports (``bin/smoke_docker_image``) before any push
+  * The pushed image is the one that was tested
+  * Other branches build and test only, nothing is pushed
   * ``main`` pushes ``unstable`` to GHCR and Docker Hub
   * Version branches (e.g., ``0.9``) push ``<version>-git`` to GHCR and Docker Hub
 
@@ -120,13 +144,15 @@ Build and release jobs
   * Uses trusted publishing (OIDC)
 
 **build-docker-image-release**
-  Builds Docker image from PyPI release
+  Builds, tests and pushes the Docker image of a release
 
   * Only runs for release tags
-  * Uses ``Dockerfile.pypi`` to install from PyPI
+  * Same ``Dockerfile`` and CI wheel as the development image, smoke-tested before it is pushed
   * Mainline releases (``X.Y.Z``) get multiple tags: ``X``, ``X.Y``, ``X.Y.Z``
   * Pre-releases (``X.Y.Z-rc1``) get exact tag only
   * ``0.9.x`` releases also tagged as ``:latest``
+
+  A manual ``workflow_dispatch`` run builds and smoke-tests the development image without pushing (dry run).
 
 **create-github-release**
   Creates GitHub release
@@ -339,8 +365,8 @@ Key files
 
 * ``.github/workflows/cicd.yml``: Main CI/CD workflow
 * ``Makefile``: Build and test automation
-* ``Dockerfile``: Production image (uses local wheel)
-* ``Dockerfile.pypi``: Release image (installs from PyPI)
+* ``Dockerfile``: Production image (installs the CI wheel; base pinned by digest)
+* ``bin/smoke_docker_image``: Starts an image and fetches its ports
 * ``pyproject.toml``: Python dependencies and tool config
 * ``uv.lock``: Locked Python dependencies
 * ``harp_apps/dashboard/frontend/package.json``: Frontend dependencies

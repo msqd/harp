@@ -18,7 +18,7 @@ class TagsRepository(Repository[Tag]):
 
 class TagValue(Base):
     __tablename__ = "tag_values"
-    __table_args__ = (UniqueConstraint("tag_id", "value", name=f"_{__tablename__[3:]}_uc"),)
+    __table_args__ = (UniqueConstraint("tag_id", "value"),)
 
     id = mapped_column(Integer(), primary_key=True, unique=True, autoincrement=True)
 
