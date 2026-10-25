@@ -10,7 +10,7 @@ from pydantic import BeforeValidator, Field, model_validator
 from harp import get_logger
 from harp.config import Configurable, Secret
 from harp.utils.config import yaml
-from harp_apps.dashboard.constants import TAlgorithm
+from harp_apps.dashboard.passwords import ALGORITHMS, TAlgorithm, hash_password, verify_password
 
 logger = get_logger(__name__)
 
@@ -18,9 +18,15 @@ CHECK_CACHE_TTL = 60.0
 CHECK_CACHE_MAX_ENTRIES = 1024
 
 
-def _replace_plain_algorithm_for_bc(value):
+def _check_algorithm(value):
     if value == "plain":
         return "plaintext"
+    if isinstance(value, str) and value not in ALGORITHMS:
+        raise ValueError(
+            f"Unsupported password algorithm «{value}». Accepted: {', '.join(ALGORITHMS)}. Other passlib "
+            "algorithms (bcrypt, md5_crypt, ...) are no longer supported: hash the passwords again with pbkdf2_sha256 "
+            "or argon2."
+        )
     return value
 
 
@@ -50,10 +56,10 @@ class BasicAuthSettings(Configurable):
 
     algorithm: Annotated[
         TAlgorithm,
-        BeforeValidator(_replace_plain_algorithm_for_bc),
+        BeforeValidator(_check_algorithm),
         Field(
             "pbkdf2_sha256",
-            description="Hashing algorithm used for passwords.",
+            description="Hashing algorithm used for passwords. «plaintext» is for tests only.",
         ),
     ]
 
@@ -66,18 +72,24 @@ class BasicAuthSettings(Configurable):
         ),
     ]
 
-    @cached_property
-    def _algorithm_module(self):
-        return getattr(__import__("passlib.hash", fromlist=[self.algorithm]), self.algorithm)
-
-    @cached_property
-    def algorithm_impl(self):
-        return self._algorithm_module.verify
+    @model_validator(mode="after")
+    def _check_algorithm_is_usable(self):
+        if self.algorithm == "plaintext":
+            logger.warning(
+                "Dashboard passwords are stored in plaintext (dashboard.auth.algorithm=plaintext). "
+                "Use it for tests only, hash them with pbkdf2_sha256 or argon2."
+            )
+        elif self.algorithm == "argon2":
+            try:
+                import argon2  # noqa: F401
+            except ImportError as exc:
+                raise ValueError("The argon2 algorithm needs its extra: install harp-proxy[argon2].") from exc
+        return self
 
     @cached_property
     def _dummy_hash(self):
         """A valid hash for the configured algorithm, verified against when the user is unknown."""
-        return self._algorithm_module.hash("harp")
+        return hash_password(self.algorithm, "harp")
 
     @cached_property
     def _verified(self) -> dict[bytes, float]:
@@ -100,7 +112,7 @@ class BasicAuthSettings(Configurable):
         stored = user.password.get_secret_value() if user else self._dummy_hash
 
         try:
-            matches = self.algorithm_impl(password, stored)
+            matches = verify_password(self.algorithm, password, stored)
         except ValueError:
             logger.error(
                 f"Dashboard user «{username}» has a stored password that is not a valid {self.algorithm} hash, "
