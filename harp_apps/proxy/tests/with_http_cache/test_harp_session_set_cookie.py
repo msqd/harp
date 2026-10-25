@@ -1,4 +1,7 @@
-"""An origin's Set-Cookie for HARP's session cookie never reaches the client, cached response included."""
+"""An origin's Set-Cookie for HARP's session cookie never reaches the client.
+
+The cache does not store a response carrying a redacted header such as Set-Cookie, so the second request is fresh too;
+the strip must hold either way."""
 
 import pytest
 import respx
@@ -25,18 +28,17 @@ def _cached_client():
     )
 
 
-@pytest.mark.parametrize("times", [1, 2], ids=["fresh", "from-cache"])
-async def test_session_set_cookie_is_stripped_whether_fresh_or_cached(times):
+@pytest.mark.parametrize("times", [1, 2], ids=["once", "twice"])
+async def test_session_set_cookie_is_stripped_on_repeated_requests(times):
     endpoint = Endpoint.from_kwargs(settings={"name": "test", "port": 80, "url": "http://example.com/"})
     controller = HttpProxyController(http_client=_cached_client(), remote=endpoint.remote, name="test")
     origin = Response(
         200, content=b"hello", headers=[("cache-control", "max-age=3600"), ("set-cookie", "harp_session=evil; Path=/")]
     )
     with respx.mock:
-        route = respx.get("http://example.com/").mock(return_value=origin)
+        respx.get("http://example.com/").mock(return_value=origin)
         for _ in range(times):
             result = await controller(HttpRequest(method="GET", path="/"))
             await result.aread()
 
-    assert route.call_count == 1 if times == 2 else True
     assert "set-cookie" not in {name.lower() for name in result.headers}
