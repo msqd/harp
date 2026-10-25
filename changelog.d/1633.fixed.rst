@@ -1,0 +1,1 @@
+Rules: wildcard patterns are now matched in time linear in the length of the path, whatever the number of wildcards.
