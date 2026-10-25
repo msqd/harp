@@ -128,9 +128,10 @@ class MockAsyncStorage(AsyncBaseStorage):
                     self.removed_ids.append(id)
                     return
 
-    stamp = 0
+    async def stamp(self) -> int:
+        return 0
 
-    async def invalidate(self, key: str) -> None:
+    async def invalidate(self, key: str, *, mode) -> None:
         """Drop every entry of a key, as the real storage does."""
         for entry in await self.get_entries(key):
             await self.remove_entry(entry.id)

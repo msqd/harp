@@ -3,10 +3,10 @@ from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy import text
 
-from harp_apps.http_cache.models import CacheBody, CacheResource, CacheStats, CacheVariant
+from harp_apps.http_cache.models import CacheBan, CacheBody, CacheCounter, CacheResource, CacheStats, CacheVariant
 from harp_apps.storage.utils.migrations import create_alembic_config, discover_migration_locations, table_belongs_to
 
-TABLES = (CacheResource, CacheBody, CacheVariant, CacheStats)
+TABLES = (CacheResource, CacheBody, CacheVariant, CacheStats, CacheBan, CacheCounter)
 
 
 def test_the_cache_owns_a_branch_of_its_own():
@@ -41,6 +41,7 @@ async def test_keys_are_compared_bytewise_on_postgresql(sql_engine):
         ).all()
 
     assert sorted(bytewise) == [
+        ("http_cache_bans", "prefix"),
         ("http_cache_resources", "endpoint"),
         ("http_cache_resources", "key"),
         ("http_cache_variants", "key"),

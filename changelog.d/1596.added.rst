@@ -1,0 +1,1 @@
+Http cache: invalidation is a numbered log of bans (cache key, endpoint or everything; soft to revalidate, hard to drop) shared by all instances, and a response fetched before an invalidation is never stored after it.

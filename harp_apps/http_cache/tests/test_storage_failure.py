@@ -6,7 +6,7 @@ from hishel import CacheOptions, SpecificationPolicy
 
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
-from harp_apps.http_cache.records import MemoryCacheRecords
+from harp_apps.http_cache.records import BanKind, BanMode, MemoryCacheRecords
 
 URL = "http://origin.test/item"
 BODY = b"0123" * 4
@@ -41,6 +41,14 @@ class FailingRecords(MemoryCacheRecords):
     async def delete_key(self, *args, **kwargs):
         self._check("delete")
         return await super().delete_key(*args, **kwargs)
+
+    async def ban(self, *args, **kwargs):
+        self._check("ban")
+        return await super().ban(*args, **kwargs)
+
+    async def counter(self, *args, **kwargs):
+        self._check("counter")
+        return await super().counter(*args, **kwargs)
 
 
 class Origin(httpx.AsyncBaseTransport):
@@ -89,6 +97,38 @@ async def test_failing_delete_does_not_break_an_invalidating_request(caplog):
 
     assert response.content == BODY
     assert "Failed to remove cache entry" in caplog.text
+
+
+async def test_failing_ban_does_not_break_an_invalidating_request(caplog):
+    records = FailingRecords()
+    async with make_client(records) as client:
+        await client.get(URL)
+        records.fail("ban")
+        response = await client.post(URL)
+
+    assert response.content == BODY
+    assert "Failed to record cache invalidation" in caplog.text
+
+
+async def test_failing_counter_does_not_break_the_response(caplog):
+    records = FailingRecords()
+    records.fail("counter")
+    async with make_client(records) as client:
+        response = await client.get(URL)
+
+    assert response.content == BODY
+    assert "Failed to read the cache invalidation counter" in caplog.text
+
+
+async def test_what_a_fetch_without_counter_stores_is_invalidated_by_any_ban_that_covers_it():
+    records = FailingRecords()
+    records.fail("counter")
+    async with make_client(records) as client:
+        await client.get(URL)
+        records.fail()
+        await records.ban(BanKind.PREFIX, "http://api/", BanMode.HARD)
+
+        assert await records.get_variants("http://api/item") == []
 
 
 class RevalidatingOrigin(httpx.AsyncBaseTransport):

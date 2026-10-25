@@ -1,18 +1,29 @@
 import asyncio
+import time
 import uuid
 from collections import defaultdict
 from collections.abc import Awaitable, Callable, Iterable, Sequence
 from typing import Optional, TypeVar
 
-from sqlalchemy import Row, delete, exists, select, tuple_
+from sqlalchemy import ColumnElement, Row, and_, delete, exists, or_, select, tuple_
 from sqlalchemy.dialects import postgresql, sqlite
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
 from harp import get_logger
-from harp_apps.http_cache.models import CacheBody, CacheResource, CacheStats, CacheVariant
+from harp_apps.http_cache.models import CacheBan, CacheBody, CacheCounter, CacheResource, CacheStats, CacheVariant
 
-from .base import CacheRecords, EndpointStats, StoredVariant, VariantRecord, endpoint_of
+from .base import (
+    Ban,
+    BanKind,
+    BanMode,
+    CacheRecords,
+    EndpointStats,
+    StoredVariant,
+    VariantRecord,
+    ban_prefixes,
+    endpoint_of,
+)
 
 logger = get_logger(__name__)
 
@@ -31,8 +42,20 @@ _FOREIGN_KEY_SQLSTATE = "23503"
 _FIELDS = tuple(column.name for column in CacheVariant.__table__.columns)
 
 
+#: The row of the invalidation counter.
+_COUNTER_ID = 1
+
+
 def _record(row: Row) -> VariantRecord:
-    return VariantRecord(**{name: row._mapping[name] for name in _FIELDS})
+    return VariantRecord(**{name: row._mapping[name] for name in _FIELDS}, stale=bool(row._mapping.get("stale")))
+
+
+def _covers(key: str) -> ColumnElement[bool]:
+    """Whether a ban covers a key: it is the ban of the key itself, or of one of the prefixes the key starts with."""
+    return or_(
+        and_(CacheBan.kind == BanKind.EXACT.value, CacheBan.prefix == key),
+        and_(CacheBan.kind == BanKind.PREFIX.value, CacheBan.prefix.in_(ban_prefixes(key))),
+    )
 
 
 class SqlCacheRecords(CacheRecords):
@@ -46,28 +69,66 @@ class SqlCacheRecords(CacheRecords):
         return {"postgresql": postgresql, "sqlite": sqlite}[self.engine.dialect.name]
 
     async def get_variants(self, key: str) -> list[StoredVariant]:
+        newer_ban = CacheBan.seq > CacheVariant.stamp
+        hard = exists().where(newer_ban, CacheBan.mode == BanMode.HARD.value, _covers(key))
+        soft = exists().where(newer_ban, CacheBan.mode == BanMode.SOFT.value, _covers(key))
         async with self.engine.connect() as conn:
             rows = (
                 await conn.execute(
-                    select(CacheVariant.__table__, CacheBody.data)
+                    select(CacheVariant.__table__, CacheBody.data, soft.label("stale"))
                     .join(CacheBody, CacheBody.digest == CacheVariant.body_digest)
-                    .where(CacheVariant.key == key)
+                    .where(CacheVariant.key == key, ~hard)
                     .order_by(CacheVariant.stored_at, CacheVariant.variant)
                 )
             ).all()
         return [StoredVariant(_record(row), bytes(row.data)) for row in rows]
+
+    async def counter(self) -> int:
+        async with self.engine.connect() as conn:
+            value = (await conn.execute(select(CacheCounter.value).where(CacheCounter.id == _COUNTER_ID))).scalar()
+        return value or 0
+
+    async def ban(self, kind: BanKind, prefix: str, mode: BanMode) -> Ban:
+        async def append(conn: AsyncConnection) -> Ban:
+            # The counter row stays locked until the ban commits: bans commit in the order of their numbers.
+            insert = self._dialect.insert(CacheCounter).values(id=_COUNTER_ID, value=1)
+            seq = (
+                await conn.execute(
+                    insert.on_conflict_do_update(
+                        index_elements=[CacheCounter.id], set_={"value": CacheCounter.value + 1}
+                    ).returning(CacheCounter.value)
+                )
+            ).scalar_one()
+            ban = Ban(seq, kind, prefix, mode, time.time())
+            await conn.execute(
+                self._dialect.insert(CacheBan).values(
+                    seq=seq, kind=kind.value, prefix=prefix, mode=mode.value, created_at=ban.created_at
+                )
+            )
+            return ban
+
+        return await self._write(append)
+
+    async def _is_banned(self, conn: AsyncConnection, key: str, stamp: int) -> bool:
+        """Whether a ban covers a key with a number above this stamp."""
+        return bool((await conn.execute(select(exists().where(CacheBan.seq > stamp, _covers(key))))).scalar())
 
     async def get_by_id(self, entry_id: uuid.UUID) -> Optional[VariantRecord]:
         async with self.engine.connect() as conn:
             row = (await conn.execute(select(CacheVariant.__table__).where(CacheVariant.entry_id == entry_id))).first()
         return _record(row) if row else None
 
-    async def put(self, record: VariantRecord, body: bytes, *, keep: int, replaces: Optional[uuid.UUID] = None) -> None:
-        await self._write(lambda conn: self._put(conn, record, body, keep, replaces))
+    async def put(self, record: VariantRecord, body: bytes, *, keep: int, replaces: Optional[uuid.UUID] = None) -> bool:
+        return await self._write(lambda conn: self._put(conn, record, body, keep, replaces))
 
     async def _put(
         self, conn: AsyncConnection, record: VariantRecord, body: bytes, keep: int, replaces: Optional[uuid.UUID]
-    ) -> None:
+    ) -> bool:
+        # A ban that lands after this check still hides what is stored: lookups check bans too. This only spares the
+        # write. It comes first, so that a refusal leaves no resource row behind.
+        if await self._is_banned(conn, record.key, record.stamp):
+            return False
+
         # Locks are taken resource first, then variants, by every writer: nobody waits for a row while holding one
         # that the owner of that row waits for.
         insert = self._dialect.insert
@@ -87,7 +148,7 @@ class SqlCacheRecords(CacheRecords):
                 ).first()
             )
             if gone:
-                return
+                return False
 
         superseded = CacheVariant.variant == record.variant
         superseded &= CacheVariant.key == record.key
@@ -114,6 +175,7 @@ class SqlCacheRecords(CacheRecords):
             removed += await self._delete_variants(conn, CacheVariant.entry_id.in_(evicted))
 
         await self._forget(conn, removed, added=[record])
+        return True
 
     async def delete_entry(self, entry_id: uuid.UUID) -> bool:
         async def delete_it(conn: AsyncConnection) -> bool:

@@ -248,7 +248,7 @@ async def test_the_largest_entries_come_biggest_first(records):
 
 
 async def test_the_stamp_is_kept_on_the_record(records):
-    """Reserved: the invalidation counter read before the fetch (#1596)."""
+    """The invalidation counter read before the fetch."""
     record = await put(records, make_record(stamp=42))
 
     assert (await records.get_by_id(record.entry_id)).stamp == 42

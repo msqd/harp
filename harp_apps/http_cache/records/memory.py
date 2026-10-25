@@ -1,8 +1,20 @@
+import time
 import uuid
 from bisect import bisect_left, bisect_right, insort
+from dataclasses import replace
 from typing import Optional
 
-from .base import CacheRecords, EndpointStats, StoredVariant, VariantRecord, endpoint_of
+from .base import (
+    Ban,
+    BanKind,
+    BanMode,
+    CacheRecords,
+    EndpointStats,
+    StoredVariant,
+    VariantRecord,
+    ban_prefixes,
+    endpoint_of,
+)
 
 
 class MemoryCacheRecords(CacheRecords):
@@ -23,17 +35,41 @@ class MemoryCacheRecords(CacheRecords):
         self._refused: dict[str, int] = {}
         #: ``(stored_at, entry id)`` of every variant, oldest first: what expiry reads from the start.
         self._by_age: list[tuple[float, str]] = []
+        self._counter = 0
+        #: The number of the last ban of each kind, prefix and mode: the only one that matters to a check.
+        self._bans: dict[tuple[BanKind, str, BanMode], int] = {}
 
     async def get_variants(self, key: str) -> list[StoredVariant]:
-        return [StoredVariant(record, self._bodies[record.body_digest]) for record in self._oldest_first(key)]
+        hard, soft = self._newest_ban(key, BanMode.HARD), self._newest_ban(key, BanMode.SOFT)
+        return [
+            StoredVariant(replace(record, stale=soft > record.stamp), self._bodies[record.body_digest])
+            for record in self._oldest_first(key)
+            if hard <= record.stamp
+        ]
 
     async def get_by_id(self, entry_id: uuid.UUID) -> Optional[VariantRecord]:
         return self._by_id.get(entry_id)
 
-    async def put(self, record: VariantRecord, body: bytes, *, keep: int, replaces: Optional[uuid.UUID] = None) -> None:
+    async def counter(self) -> int:
+        return self._counter
+
+    async def ban(self, kind: BanKind, prefix: str, mode: BanMode) -> Ban:
+        self._counter += 1
+        self._bans[kind, prefix, mode] = self._counter
+        return Ban(self._counter, kind, prefix, mode, time.time())
+
+    def _newest_ban(self, key: str, mode: BanMode) -> int:
+        """The number of the last ban of this mode that covers a key, ``0`` when none does."""
+        covering = [self._bans.get((BanKind.EXACT, key, mode), 0)]
+        covering += (self._bans.get((BanKind.PREFIX, prefix, mode), 0) for prefix in ban_prefixes(key))
+        return max(covering)
+
+    async def put(self, record: VariantRecord, body: bytes, *, keep: int, replaces: Optional[uuid.UUID] = None) -> bool:
+        if max(self._newest_ban(record.key, mode) for mode in BanMode) > record.stamp:
+            return False
         if replaces is not None:
             if replaces not in self._by_id:
-                return
+                return False
             self._remove(self._by_id[replaces])
         self._remove(self._variants.get(record.key, {}).get(record.variant))
 
@@ -49,6 +85,7 @@ class MemoryCacheRecords(CacheRecords):
 
         for evicted in self._oldest_first(record.key)[:-keep] if keep > 0 else self._oldest_first(record.key):
             self._remove(evicted)
+        return True
 
     async def delete_entry(self, entry_id: uuid.UUID) -> bool:
         record = self._by_id.get(entry_id)

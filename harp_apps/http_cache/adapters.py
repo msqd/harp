@@ -66,7 +66,7 @@ async def to_record(
     Args:
         entry: The Entry to describe
         redaction: Which request header values are replaced by the placeholder (the default set if omitted)
-        stamp: The invalidation counter read before the origin fetch, reserved for the invalidation log (#1596)
+        stamp: The invalidation counter read before the origin fetch: a ban numbered above it covers the record
     """
     redaction = redaction or Redaction()
     body = await entry.response.aread()

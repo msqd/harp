@@ -159,7 +159,7 @@ class CacheVariant(Base):
     variant: Mapped[str] = mapped_column(String(64), primary_key=True)
     entry_id: Mapped[uuid.UUID] = mapped_column(Uuid, unique=True)
     endpoint: Mapped[str] = mapped_column(Text)
-    #: Reserved for the invalidation log (#1596): the invalidation counter read before the origin fetch.
+    #: The invalidation counter read before the origin fetch: a ban with a higher number covering the key invalidates it.
     stamp: Mapped[int] = mapped_column(BigInteger, server_default="0")
     status: Mapped[int] = mapped_column(SmallInteger)
     vary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -182,3 +182,30 @@ class CacheStats(Base):
     bytes: Mapped[int] = mapped_column(BigInteger)
     #: Responses not stored because their key was too long.
     refused: Mapped[int] = mapped_column(BigInteger, server_default="0")
+
+
+class CacheBan(Base):
+    """One invalidation of the log (ADR-0014): the entries it covers, stamped below its number, are invalidated."""
+
+    __tablename__ = "http_cache_bans"
+    # the bans that may cover a key are found by prefix, and only the newer than an entry matter
+    __table_args__ = (Index("ix_http_cache_bans_prefix_seq", "prefix", "seq"),)
+
+    seq: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
+    kind: Mapped[str] = mapped_column(String(8))
+    prefix: Mapped[str] = mapped_column(_KEY)
+    mode: Mapped[str] = mapped_column(String(8))
+    created_at: Mapped[float] = mapped_column(Float)
+
+
+class CacheCounter(Base):
+    """The invalidation counter: one row, the number of the last ban.
+
+    Bans are numbered by updating this row, not by a sequence: the row stays locked until the ban commits, so bans
+    commit in the order of their numbers, and a counter read by a fetch has every lower ban visible.
+    """
+
+    __tablename__ = "http_cache_counter"
+
+    id: Mapped[int] = mapped_column(SmallInteger, primary_key=True, autoincrement=False)
+    value: Mapped[int] = mapped_column(BigInteger)
