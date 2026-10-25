@@ -263,5 +263,6 @@ forwarding it:
 - an ``Authorization: Bearer`` header whose value is a HARP token (``harp_`` prefix and valid checksum) is removed. Any
   other bearer is forwarded unchanged.
 
-When something was removed, the transaction carries the ``harp-credentials-stripped`` :doc:`marker </apps/storage/markers>`.
+The removal happens before the request is recorded, so the stored transaction does not hold them either, whatever the
+redaction settings say. When something was removed, the transaction carries the ``harp-credentials-stripped`` :doc:`marker </apps/storage/markers>`.
 No setting turns this off, and no other header is touched.

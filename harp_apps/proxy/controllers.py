@@ -291,12 +291,6 @@ class HttpProxyController(AbstractHttpProxyController):
         :param full_url: The full URL to which the request is forwarded.
         :return: The HTTP response received from the remote server, its body streamed from the remote as it is read.
         """
-        # HARP's own credentials stop here, after the rules had their say. No setting turns this off (ADR-0010).
-        remaining, stripped = strip_harp_credentials(context.request.headers.items())
-        if stripped:
-            context.request.headers = remaining
-            transaction.markers.add(HARP_CREDENTIALS_STRIPPED)
-
         response = await self.proxy.send(context.request, full_url)
 
         # Update the status of the remote URL based on the response status code
@@ -505,6 +499,13 @@ class HttpProxyController(AbstractHttpProxyController):
 
         # allow filtering the incoming messsage/transaction before the transaction is stored
         context.update(await self.filter_request(context))
+
+        # HARP's own credentials stop here, after the rules had their say and before anything records the request or
+        # forwards it. No setting turns this off (ADR-0010).
+        remaining, stripped = strip_harp_credentials(context.request.headers.items())
+        if stripped:
+            context.request.headers = remaining
+            context.transaction.markers.add(HARP_CREDENTIALS_STRIPPED)
 
         # dispatch transaction started event, after the filters so markers they set (skip-storage) are seen
         # we don't really want to await this, should run in background ? or use an async queue ?

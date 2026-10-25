@@ -77,3 +77,26 @@ def test_bearer_scheme_is_case_insensitive():
 def test_nothing_to_strip():
     headers = [("cookie", "a=1; b=2")]
     assert strip_harp_credentials(headers) == (headers, False)
+
+
+def test_header_names_are_case_insensitive():
+    headers = [("AUTHORIZATION", f"Bearer {TOKEN}"), ("COOKIE", "harp_session=y")]
+    assert strip_harp_credentials(headers) == ([], True)
+
+
+def test_every_cookie_header_is_stripped():
+    headers = [("cookie", "harp_session=y; a=1"), ("cookie", "b=2; __Host-harp_session=z")]
+    assert strip_harp_credentials(headers) == ([("cookie", "a=1"), ("cookie", "b=2")], True)
+
+
+def test_cookie_with_a_similar_name_is_kept():
+    headers = [("cookie", "xharp_session=1; harp_session_2=2")]
+    assert strip_harp_credentials(headers) == (headers, False)
+
+
+def test_empty_session_cookie_is_removed():
+    assert strip_harp_credentials([("cookie", "a=1; harp_session=")]) == ([("cookie", "a=1")], True)
+
+
+def test_quoted_session_cookie_is_removed():
+    assert strip_harp_credentials([("cookie", 'harp_session="abc"; a=1')]) == ([("cookie", "a=1")], True)

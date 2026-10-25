@@ -6,6 +6,9 @@ Both rely on the definitions here, so the core needs no dependency on that appli
 A token is ``harp_<prefix 8><secret 43><crc32 6>``: base62 only after ``harp_``, the last six characters being the
 CRC32 of everything before them (``harp_`` included) written in base62, zero padded. The checksum rejects typos before
 any lookup.
+
+This module is the only parser of HARP tokens in ``Authorization``. The authentication application must reuse it and
+accept nothing more lenient than it does: whatever the application would take as a HARP token, the proxy has to strip.
 """
 
 import secrets
@@ -46,8 +49,11 @@ def build_token(prefix: str, secret: str) -> str:
 
 def generate_token() -> str:
     """A new random token."""
-    draw = lambda length: "".join(secrets.choice(BASE62) for _ in range(length))  # noqa: E731
-    return build_token(draw(TOKEN_ID_LENGTH), draw(TOKEN_SECRET_LENGTH))
+    return build_token(_random_base62(TOKEN_ID_LENGTH), _random_base62(TOKEN_SECRET_LENGTH))
+
+
+def _random_base62(length: int) -> str:
+    return "".join(secrets.choice(BASE62) for _ in range(length))
 
 
 def is_harp_token(value: str) -> bool:
@@ -73,8 +79,9 @@ def strip_harp_credentials(headers):
     for name, value in headers:
         lowered = name.lower()
         if lowered == "cookie":
-            cookies = [c for c in value.split(";") if c.split("=", 1)[0].strip() not in SESSION_COOKIE_NAMES]
-            if len(cookies) != len(value.split(";")):
+            pieces = value.split(";")
+            cookies = [c for c in pieces if c.split("=", 1)[0].strip() not in SESSION_COOKIE_NAMES]
+            if len(cookies) != len(pieces):
                 stripped = True
                 if cookies := [c.strip() for c in cookies if c.strip()]:
                     kept.append((name, "; ".join(cookies)))
