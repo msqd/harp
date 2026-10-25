@@ -4,8 +4,9 @@
 - **Date**: 2026-10-24
 - **Decided in**: [explore/auth](https://github.com/msqd/harp/milestone/24)
 
-**Proposed on the explore/auth exploration branch; nothing of it is implemented.** Line references are
-to `main` when this record was written.
+**Proposed on the explore/auth exploration branch.** #1518 implements the mechanism there: storage is the first
+branch (`storage`), the static `version_locations`, `heads` everywhere and the `include_object` filter. No other
+application has tables yet. Line references are to `main` when this record was written.
 
 HARP keeps one alembic environment and one `alembic_version` table, and each application that owns
 tables owns a branch of that history: its own `migrations/versions` folder and a `branch_label` named
@@ -30,7 +31,8 @@ revision it cannot locate. A static list closes that failure by construction.
 - All models stay on storage's `Base`, because an in-memory SQLite database is built with
   `Base.metadata.create_all` (`harp_apps/storage/__app__.py:26`) and never sees alembic.
 - Autogenerating a revision for one application filters the metadata with `include_object` on that
-  application's table prefix, so a revision never picks up another application's tables.
+  application's table prefix (`<application>_`), so a revision never picks up another application's tables.
+  Storage's tables predate the convention, so storage owns every table that no other application claims by prefix.
 - A `naming_convention` on the metadata comes first, in the storage branch: today's constraints have no
   names, and SQLite batch migrations cannot alter an unnamed foreign key such as
   `trans_user_flags.user_id`.

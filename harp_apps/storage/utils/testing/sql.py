@@ -12,15 +12,15 @@ from harp.commandline import migrations
 from harp.utils.testing.cli import CliRunner
 
 
-async def run_cli_migrate_command(url: Union[str | URL | Url | MultiHostUrl], /, *, operation="up", revision="head"):
+async def run_cli_migrate_command(url: Union[str | URL | Url | MultiHostUrl], /, *, operation="up", revision="heads"):
     """
     Run the `migrate` command from the CLI, synchronously, in a thread (via ThreadPoolExecutor). This uses click's
     CliRunner which is a testing helper. You should not use this outside tests, as it will setup a fully separate harp
     instance with its own configuration, etc.
 
     :param url:
-    :param operation: up or down
-    :param revision: target revision ("head" for latest, "base" for initial or specific revision number)
+    :param operation: up, down or status
+    :param revision: target revision ("heads" for latest, "base" for initial or specific revision number), None for status
     :return:
     """
     if isinstance(url, (Url, MultiHostUrl)):
@@ -34,7 +34,7 @@ async def run_cli_migrate_command(url: Union[str | URL | Url | MultiHostUrl], /,
             migrations.migrate,
             [
                 operation,
-                revision,
+                *([revision] if revision else []),
                 "--set",
                 "storage.url=" + url.render_as_string(hide_password=False),
             ],

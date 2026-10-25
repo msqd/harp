@@ -25,8 +25,10 @@ holds the design choices.
 9. An account links another identity from its own session, after re-authenticating when the
    session is older than 15 minutes; never by matching emails. It may remove any identity but its
    last; an Admin may remove any. Removing an identity revokes the sessions it opened.
-10. No open mode. The auth app is always loaded; the system account `anonymous` stays only as the
-    author of existing flags and is never resolved for a request again.
+10. No open mode. The dashboard declares `auth` in its `dependencies`, so auth is loaded whenever a
+    dashboard is; a HARP without dashboard loads no auth (no app is mandatory, see explore/audit
+    decision 6). The system account `anonymous` stays only as the author of existing flags and is
+    never resolved for a request again.
 11. With no sign-in method configured, the password method is enabled, with no account and no
     default credentials. Nobody signs in before accepting the setup link (an invitation to the
     Admin role) that HARP logs while no Admin exists. Proxied traffic is never blocked.
@@ -93,3 +95,8 @@ holds the design choices.
     external IdP as authorization server: an access token for HARP's audience resolves to an
     existing identity by (issuer, sub), with no new table. HARP as its own authorization server
     stays additive (client id, kind and parent on tokens, a one-time codes table) if ever needed.
+28. SQLite is never migrated by alembic: `_do_migrate` runs `create_all` on SQLite
+    (`harp_apps/storage/utils/migrations.py:141-148`, "drop/recreate is fine when harp is
+    upgraded"). Taking over `users` therefore happens on PostgreSQL and MySQL only; an existing
+    SQLite database is recreated on upgrade, as today. ADR-0011's SQLite batch argument for the
+    naming convention is moot; the convention still serves PostgreSQL and MySQL.
