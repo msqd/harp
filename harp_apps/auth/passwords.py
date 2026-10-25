@@ -25,6 +25,14 @@ PARALLELISM = 1
 MAX_CONCURRENT = 4
 
 
+#: Verifications allowed to wait for a free slot; the next one is refused at once instead of queueing behind them.
+MAX_WAITING = 16
+
+
+class HasherBusy(Exception):
+    """Every slot is taken and the queue is full: nothing was done."""
+
+
 class PasswordPolicyError(ValueError):
     """The password is refused; the message is safe to show to the person choosing it."""
 
@@ -54,14 +62,32 @@ def check_policy(password: str) -> None:
 class PasswordHasher:
     """Hashes and verifies passwords off the event loop, with a cap on how many run at once."""
 
-    def __init__(self, *, max_concurrent: int = MAX_CONCURRENT):
+    def __init__(self, *, max_concurrent: int = MAX_CONCURRENT, max_waiting: int = MAX_WAITING):
         self._argon2 = Argon2(time_cost=TIME_COST, memory_cost=MEMORY_COST_KIB, parallelism=PARALLELISM, type=Type.ID)
         self._slots = asyncio.Semaphore(max_concurrent)
+        self._max_waiting = max_waiting
+        self._waiting = 0
         self._dummy = self._argon2.hash("harp has no such account")
 
+    async def _slot(self):
+        """Takes a slot, or raises :class:`HasherBusy` when too many are already waiting for one."""
+        if self._slots.locked():
+            if self._waiting >= self._max_waiting:
+                raise HasherBusy()
+            self._waiting += 1
+            try:
+                await self._slots.acquire()
+            finally:
+                self._waiting -= 1
+        else:
+            await self._slots.acquire()
+
     async def hash(self, password: str) -> str:
-        async with self._slots:
+        await self._slot()
+        try:
             return await asyncio.to_thread(self._argon2.hash, _normalize(password))
+        finally:
+            self._slots.release()
 
     def _verify_sync(self, password: str, stored: str) -> bool:
         try:
@@ -71,8 +97,11 @@ class PasswordHasher:
 
     async def verify(self, password: str, stored: str) -> bool:
         """Whether ``password`` is the one ``stored`` hashes. A malformed hash is a refusal, never an error."""
-        async with self._slots:
+        await self._slot()
+        try:
             return await asyncio.to_thread(self._verify_sync, password, stored)
+        finally:
+            self._slots.release()
 
     async def verify_unknown(self, password: str) -> None:
         """Pays what a verification costs when there is nothing to verify against, so that an unknown account takes as

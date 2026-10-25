@@ -61,6 +61,13 @@ def check_username(username: str) -> None:
         raise UsernameRefused("A username has 1 to 64 letters, digits, or any of . _ @ + -")
 
 
+def login_of(username: str) -> Optional[str]:
+    """What a password identity is keyed on: the username folded to lower case, or None when it cannot be one. Case
+    variants are one login whatever the collation of the database, and so are they for the throttle."""
+    login = username.casefold()
+    return login if _USERNAME_SHAPE.fullmatch(login) else None
+
+
 class ReservedUsernameError(ValueError):
     def __init__(self, username):
         super().__init__(f"The username {username!r} is reserved for a system account.")
@@ -334,6 +341,22 @@ class IdentitiesRepository(Repository):
         async with self.session_factory() as session:
             await session.execute(
                 update(Identity).where(Identity.id == identity_id).values(password_hash=password_hash)
+            )
+            await session.commit()
+
+    async def replace_password(
+        self, identity_id: int, password_hash: str, *, account_id: int, keep: int, at: datetime
+    ) -> None:
+        """Sets the hash and ends every other open session of the account, in one transaction: a crash in between
+        must not leave the old sessions open on the new password."""
+        async with self.session_factory() as session:
+            await session.execute(
+                update(Identity).where(Identity.id == identity_id).values(password_hash=password_hash)
+            )
+            await session.execute(
+                update(Session)
+                .where(Session.account_id == account_id, Session.id != keep, Session.revoked_at.is_(None))
+                .values(revoked_at=at)
             )
             await session.commit()
 

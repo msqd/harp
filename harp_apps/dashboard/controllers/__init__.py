@@ -19,14 +19,15 @@ from harp.views.json import on_json_response
 from harp_apps import dashboard
 from harp_apps.auth.actors import ActorResolver
 from harp_apps.auth.setup import SetupLink
-from harp_apps.auth.signin import Authenticator
+from harp_apps.auth.signin import Authenticator, Busy, Throttled
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.settings.remote import Remote
 from harp_apps.storage.types import IStorage
 
 from ..security.cookies import is_secure, read_session_secret
 from ..settings import DashboardSettings
-from .auth import PublicAuthRoutes, problem
+from ..security.addresses import client_address
+from .auth import PublicAuthRoutes, busy, problem, too_many
 from .metrics import METRICS_PATH, metrics_controller
 
 logger = get_logger(__name__)
@@ -79,6 +80,13 @@ def _send_with_headers(asgi_send: ASGISendCallable, headers: dict) -> ASGISendCa
     return send
 
 
+class Declined(Exception):
+    """A request that was not even looked at, and the response to give: the sign-in limits said no."""
+
+    def __init__(self, response: HttpResponse):
+        self.response = response
+
+
 class DashboardController(RoutingController):
     name = "ui"
 
@@ -120,6 +128,7 @@ class DashboardController(RoutingController):
 
         # the sign-in and setup pages and the requests they make; without the services, only Basic gets in
         self._public = None
+        self._authenticator = authenticator
         if authenticator is not None and setup is not None:
             self._public = PublicAuthRoutes(authenticator, setup, settings)
 
@@ -220,7 +229,20 @@ class DashboardController(RoutingController):
         if not credentials:
             return None
 
-        username = await self._auth.acheck(credentials[0], credentials[1])
+        async def right() -> bool:
+            return bool(await self._auth.acheck(credentials[0], credentials[1]))
+
+        if self._authenticator is None:
+            username = await self._auth.acheck(credentials[0], credentials[1])
+        else:
+            # Basic is slowed down like the password method: a request is an attempt, whatever the cache says
+            address = client_address(request, self.settings.trusted_proxies)
+            checked = await self._authenticator.guarded(credentials[0].casefold()[:255], address, right)
+            if isinstance(checked, Throttled):
+                raise Declined(too_many(checked.retry_after))
+            if isinstance(checked, Busy):
+                raise Declined(busy(checked.retry_after))
+            username = credentials[0] if checked.value else False
         return await self.actors.basic(username) if username else None
 
     def _unauthorized(self, request: HttpRequest) -> HttpResponse:
@@ -248,7 +270,10 @@ class DashboardController(RoutingController):
         if self._public is not None and self._public.matches(request):
             return self._refuse_forged_request(request) or await self._public(request)
 
-        actor = await self._authenticate(request)
+        try:
+            actor = await self._authenticate(request)
+        except Declined as declined:
+            return declined.response
         if actor is None:
             return self._unauthorized(request)
         set_actor(request, actor)

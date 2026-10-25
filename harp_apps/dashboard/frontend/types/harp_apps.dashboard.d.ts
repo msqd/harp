@@ -54,6 +54,10 @@ declare namespace Apps.Dashboard {
      */
     auth?: BasicAuthSettings | null;
     /**
+     * Networks of the reverse proxies in front of the dashboard (`10.0.0.0/8`). Only a connection from one of them may tell, in `X-Forwarded-For`, which address the client has: the limits on failed sign-ins are kept per client address, and without this every client behind a proxy shares the address of the proxy.
+     */
+    trusted_proxies?: string[];
+    /**
      * Development server settings, only useful for internal frontend development.
      */
     devserver?: DevserverSettings | null;

@@ -115,3 +115,35 @@ async def test_concurrent_verifications_are_capped(monkeypatch):
     await asyncio.gather(*(hasher.verify(GOOD, stored) for _ in range(6)))
 
     assert peak == 2
+
+
+async def test_when_the_queue_is_full_a_verification_is_refused_at_once(monkeypatch):
+    from harp_apps.auth.passwords import HasherBusy
+
+    hasher = PasswordHasher(max_concurrent=1, max_waiting=2)
+    stored = await hasher.hash(GOOD)
+    original = hasher._verify_sync
+
+    def slow(password, stored):
+        import time
+
+        time.sleep(0.2)
+        return original(password, stored)
+
+    monkeypatch.setattr(hasher, "_verify_sync", slow)
+
+    results = await asyncio.gather(*(hasher.verify(GOOD, stored) for _ in range(8)), return_exceptions=True)
+
+    assert sum(isinstance(r, HasherBusy) for r in results) == 5  # one running, two waiting
+    assert [r for r in results if not isinstance(r, Exception)] == [True] * 3
+
+
+async def test_the_queue_empties_after_a_refusal(monkeypatch):
+    from harp_apps.auth.passwords import HasherBusy
+
+    hasher = PasswordHasher(max_concurrent=1, max_waiting=0)
+    stored = await hasher.hash(GOOD)
+    results = await asyncio.gather(*(hasher.verify(GOOD, stored) for _ in range(3)), return_exceptions=True)
+    assert any(isinstance(r, HasherBusy) for r in results)
+
+    assert await hasher.verify(GOOD, stored) is True

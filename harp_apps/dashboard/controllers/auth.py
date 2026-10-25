@@ -19,7 +19,9 @@ from harp_apps.auth.passwords import PasswordPolicyError
 from harp_apps.auth.sessions import SessionsService
 from harp_apps.auth.models import UsernameRefused
 from harp_apps.auth.setup import SetupLink, SetupLinkRefused
-from harp_apps.auth.signin import Authenticator, Refused, Signed, Throttled
+from harp_apps.auth.passwords import HasherBusy
+from harp_apps.auth.signin import Authenticator, Busy, Refused, Signed, Throttled
+from harp_apps.dashboard.security.addresses import client_address
 from harp_apps.dashboard.security.cookies import clear_session_cookie, is_secure, set_session_cookie
 from harp_apps.dashboard.settings import DashboardSettings
 
@@ -66,9 +68,30 @@ async def read_input(request: HttpRequest, model: type[T]) -> T | JsonHttpRespon
         return problem(400, "The request is malformed.", error="Bad Request")
 
 
-def _address(request: HttpRequest) -> str:
-    # The address of the connection: a header says whatever its sender wants, and the per address slow down with it.
-    return request.client_ipaddr or "unknown"
+def _address(request: HttpRequest, settings: DashboardSettings) -> str:
+    # The address of the connection, or the client's when a trusted proxy says so: a header says whatever its sender
+    # wants, and the limits per address go with it.
+    return client_address(request, settings.trusted_proxies)
+
+
+def busy(retry_after: float = 1.0) -> JsonHttpResponse:
+    seconds = max(1, math.ceil(retry_after))
+    return problem(
+        503,
+        "Too many sign-ins at once. Try again in a moment.",
+        error="Service Unavailable",
+        headers={"Retry-After": str(seconds)},
+    )
+
+
+def too_many(retry_after: float) -> JsonHttpResponse:
+    seconds = max(1, math.ceil(retry_after))
+    return problem(
+        429,
+        f"Too many attempts. Try again in {seconds} seconds.",
+        error="Too Many Requests",
+        headers={"Retry-After": str(seconds)},
+    )
 
 
 def _start_session(response: HttpResponse, request: HttpRequest, settings: DashboardSettings, signed: Signed, max_age):
@@ -128,19 +151,18 @@ class PublicAuthRoutes:
         if isinstance(data, HttpResponse):
             return data
         result = await self.authenticator.sign_in(
-            data.username, data.password, ip=_address(request), user_agent=request.headers.get("user-agent")
+            data.username,
+            data.password,
+            ip=_address(request, self.settings),
+            user_agent=request.headers.get("user-agent"),
         )
         match result:
             case Signed():
                 return _start_session(ok(), request, self.settings, result, self.session_max_age)
             case Throttled(retry_after=wait):
-                seconds = max(1, math.ceil(wait))
-                return problem(
-                    429,
-                    f"Too many attempts. Try again in {seconds} seconds.",
-                    error="Too Many Requests",
-                    headers={"Retry-After": str(seconds)},
-                )
+                return too_many(wait)
+            case Busy(retry_after=wait):
+                return busy(wait)
             case Refused():
                 return problem(401, "Wrong username or password.", error="Unauthorized")
 
@@ -153,7 +175,7 @@ class PublicAuthRoutes:
                 data.secret,
                 data.username,
                 data.password,
-                ip=_address(request),
+                ip=_address(request, self.settings),
                 user_agent=request.headers.get("user-agent"),
             )
         except SetupLinkRefused:
@@ -164,6 +186,8 @@ class PublicAuthRoutes:
             )
         except (UsernameRefused, PasswordPolicyError) as exc:
             return problem(400, str(exc), error="Bad Request")
+        except HasherBusy:
+            return busy()
         return _start_session(ok(), request, self.settings, signed, self.session_max_age)
 
 
@@ -226,7 +250,7 @@ class AuthController(RoutingController):
                 data.current,
                 data.new,
                 keep=int(actor.via_id),
-                ip=_address(request),
+                ip=_address(request, self.settings),
             )
         except PasswordPolicyError as exc:
             return problem(400, str(exc), error="Bad Request")

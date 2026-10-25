@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, Mock
 
 import orjson
+from base64 import b64encode
 import pytest
 from http_router import Router
 from httpx import AsyncClient
@@ -19,11 +20,12 @@ from harp_apps.auth.sessions import SessionsService
 from harp_apps.auth.settings import AuthSettings
 from harp_apps.auth.setup import SetupLink
 from harp_apps.auth.signin import Authenticator
-from harp_apps.auth.throttle import FREE_FAILURES, SignInThrottle
+from harp_apps.auth.throttle import PAIR_FREE_FAILURES, SignInThrottle
 from harp_apps.dashboard.controllers import DashboardController
 from harp_apps.dashboard.controllers.auth import AuthController
 from harp_apps.dashboard.controllers.system import SystemController
-from harp_apps.dashboard.settings import DashboardSettings
+from harp_apps.dashboard.settings import BasicAuthSettings, DashboardSettings
+from harp_apps.dashboard.settings.auth import User
 from harp_apps.storage.conftest import *  # noqa: F401,F403
 from harp_apps.storage.types import IStorage
 
@@ -75,7 +77,7 @@ def dashboard_settings():
 
 
 @pytest.fixture
-def dashboard(factory, hasher, sessions, throttle, setup, clock, dashboard_settings):
+async def dashboard(factory, hasher, sessions, throttle, setup, clock, dashboard_settings):
     authenticator = Authenticator(IdentitiesRepository(factory), sessions, hasher, throttle, clock=clock)
     router = Router(trim_last_slash=True)
     SystemController(storage=MagicMock(spec=IStorage), settings={}, resolver=MagicMock(), router=router)
@@ -241,7 +243,7 @@ async def test_a_wrong_password_and_an_unknown_account_answer_the_same(dashboard
 
 
 async def test_too_many_failures_answer_429_with_the_wait(dashboard, alice):
-    for _ in range(FREE_FAILURES):
+    for _ in range(PAIR_FREE_FAILURES):
         await post(dashboard, "/api/auth/signin", {"username": "alice", "password": "wrong password, quite long"})
 
     response = await post(dashboard, "/api/auth/signin", {"username": "alice", "password": PASSWORD})
@@ -251,7 +253,7 @@ async def test_too_many_failures_answer_429_with_the_wait(dashboard, alice):
 
 
 async def test_the_address_is_the_one_of_the_connection_not_a_header(dashboard, alice):
-    for _ in range(FREE_FAILURES):
+    for _ in range(PAIR_FREE_FAILURES):
         await post(
             dashboard,
             "/api/auth/signin",
@@ -259,15 +261,108 @@ async def test_the_address_is_the_one_of_the_connection_not_a_header(dashboard, 
             extra={"x-forwarded-for": "198.51.100.1"},
         )
 
-    # same connection, other claimed origin, other account: still slowed down
+    # same connection, other claimed origin: still the same pair
     response = await post(
         dashboard,
         "/api/auth/signin",
-        {"username": "bob", "password": PASSWORD},
+        {"username": "alice", "password": PASSWORD},
         extra={"x-forwarded-for": "198.51.100.99"},
     )
 
     assert response.status == 429
+
+
+async def test_somebody_else_on_another_address_is_not_slowed_down_by_the_guesses_at_a_name(dashboard, alice):
+    for _ in range(PAIR_FREE_FAILURES * 2):
+        await post(dashboard, "/api/auth/signin", {"username": "alice", "password": "wrong password, quite long"})
+
+    response = await post(
+        dashboard, "/api/auth/signin", {"username": "alice", "password": PASSWORD}, client="203.0.113.99"
+    )
+
+    assert response.status == 200
+
+
+class TestBehindATrustedProxy:
+    @pytest.fixture
+    def dashboard_settings(self):
+        return DashboardSettings(devserver={"enabled": True, "port": 5173}, trusted_proxies=["10.0.0.0/8"])
+
+    async def test_the_client_the_proxy_names_is_the_address(self, dashboard, alice):
+        for _ in range(PAIR_FREE_FAILURES):
+            await post(
+                dashboard,
+                "/api/auth/signin",
+                {"username": "alice", "password": "wrong password, quite long"},
+                extra={"x-forwarded-for": "198.51.100.1"},
+                client="10.0.0.1",
+            )
+
+        attacker = await post(
+            dashboard,
+            "/api/auth/signin",
+            {"username": "alice", "password": PASSWORD},
+            extra={"x-forwarded-for": "198.51.100.1"},
+            client="10.0.0.1",
+        )
+        victim = await post(
+            dashboard,
+            "/api/auth/signin",
+            {"username": "alice", "password": PASSWORD},
+            extra={"x-forwarded-for": "203.0.113.5"},
+            client="10.0.0.1",
+        )
+
+        assert (attacker.status, victim.status) == (429, 200)
+
+    async def test_the_session_records_the_client_not_the_proxy(self, dashboard, alice, factory):
+        await post(
+            dashboard,
+            "/api/auth/signin",
+            {"username": "alice", "password": PASSWORD},
+            extra={"x-forwarded-for": "203.0.113.5"},
+            client="10.0.0.1",
+        )
+
+        async with factory() as db:
+            assert (await db.execute(select(Session))).scalars().one().ip == "203.0.113.5"
+
+    async def test_a_client_cannot_name_itself_when_the_peer_is_not_a_proxy(self, dashboard, alice):
+        for _ in range(PAIR_FREE_FAILURES):
+            await post(
+                dashboard,
+                "/api/auth/signin",
+                {"username": "alice", "password": "wrong password, quite long"},
+                extra={"x-forwarded-for": "198.51.100.1"},
+                client="192.0.2.1",
+            )
+
+        response = await post(
+            dashboard,
+            "/api/auth/signin",
+            {"username": "alice", "password": PASSWORD},
+            extra={"x-forwarded-for": "198.51.100.77"},
+            client="192.0.2.1",
+        )
+
+        assert response.status == 429
+
+
+async def test_a_full_hashing_queue_answers_503_at_once(dashboard, alice, hasher):
+    hasher._max_waiting = 0
+    hasher._slots = __import__("asyncio").Semaphore(1)
+    import asyncio
+
+    responses = await asyncio.gather(
+        *(
+            post(dashboard, "/api/auth/signin", {"username": "alice", "password": PASSWORD}, client=f"10.7.{i}.1")
+            for i in range(6)
+        )
+    )
+
+    statuses = sorted({r.status for r in responses})
+    assert 503 in statuses and 200 in statuses
+    assert all("retry-after" in r.headers for r in responses if r.status == 503)
 
 
 @pytest.mark.parametrize("path", ["/api/auth/signin", "/api/auth/setup"])
@@ -527,3 +622,48 @@ async def test_a_refused_username_is_explained(dashboard, setup):
     )
 
     assert response.status == 400 and "username" in orjson.loads(response.body)["message"].lower()
+
+
+class TestBasicIsSlowedDownToo:
+    @pytest.fixture
+    def dashboard_settings(self):
+        return DashboardSettings(
+            auth=BasicAuthSettings(type="basic", algorithm="plaintext", users={"carol": User(password="s3cret")}),
+            devserver={"enabled": True, "port": 5173},
+        )
+
+    @pytest.fixture
+    async def carol(self, factory):
+        return await AccountsRepository(factory).create({"username": "carol", "role": Role.VIEWER})
+
+    @staticmethod
+    def basic(password, username="carol"):
+        return {"authorization": "basic " + b64encode(f"{username}:{password}".encode()).decode()}
+
+    async def test_guessing_the_password_of_a_basic_user_is_refused_after_a_few_failures(self, dashboard, carol):
+        for _ in range(PAIR_FREE_FAILURES):
+            assert (await call(dashboard, path="/api/system/", headers=self.basic("wrong"))).status == 401
+
+        response = await call(dashboard, path="/api/system/", headers=self.basic("s3cret"))
+
+        assert response.status == 429 and int(response.headers["retry-after"]) >= 1
+
+    async def test_the_right_password_from_elsewhere_still_gets_in(self, dashboard, carol):
+        for _ in range(PAIR_FREE_FAILURES * 2):
+            await call(dashboard, path="/api/system/", headers=self.basic("wrong"))
+
+        response = await call(dashboard, path="/api/system/", headers=self.basic("s3cret"), client="203.0.113.99")
+
+        assert response.status == 200
+
+    async def test_case_variants_of_the_name_share_the_count(self, dashboard, carol):
+        for name in ("carol", "CAROL", "Carol", "cArOl", "caROL"):
+            await call(dashboard, path="/api/system/", headers=self.basic("wrong", name))
+
+        response = await call(dashboard, path="/api/system/", headers=self.basic("wrong", "CAROL"))
+
+        assert response.status == 429
+
+    async def test_a_working_script_is_not_slowed_down(self, dashboard, carol):
+        for _ in range(PAIR_FREE_FAILURES * 3):
+            assert (await call(dashboard, path="/api/system/", headers=self.basic("s3cret"))).status == 200

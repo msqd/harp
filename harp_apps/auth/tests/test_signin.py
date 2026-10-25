@@ -10,7 +10,7 @@ from harp_apps.auth.passwords import PasswordHasher, PasswordPolicyError
 from harp_apps.auth.sessions import SessionsService
 from harp_apps.auth.settings import AuthSettings
 from harp_apps.auth.signin import Authenticator, Refused, Signed, Throttled
-from harp_apps.auth.throttle import FREE_FAILURES, SignInThrottle
+from harp_apps.auth.throttle import PAIR_FREE_FAILURES, SignInThrottle
 
 PASSWORD = "correct horse battery staple"
 NOW = datetime(2026, 10, 25, 12, 0, tzinfo=UTC)
@@ -38,9 +38,26 @@ def hasher():
     return PasswordHasher()
 
 
+class Monotonic:
+    now = 1000.0
+
+    def __call__(self):
+        return self.now
+
+
 @pytest.fixture
-def throttle():
-    return SignInThrottle()
+def monotonic():
+    return Monotonic()
+
+
+@pytest.fixture
+def throttle(monotonic):
+    return SignInThrottle(clock=monotonic)
+
+
+@pytest.fixture
+def slept():
+    return []
 
 
 @pytest.fixture
@@ -54,8 +71,11 @@ def sessions(factory, clock):
 
 
 @pytest.fixture
-def authenticator(identities, sessions, hasher, throttle, clock):
-    return Authenticator(identities, sessions, hasher, throttle, clock=clock)
+def authenticator(identities, sessions, hasher, throttle, clock, slept):
+    async def sleep(seconds):
+        slept.append(seconds)
+
+    return Authenticator(identities, sessions, hasher, throttle, clock=clock, sleep=sleep)
 
 
 @pytest.fixture
@@ -136,7 +156,7 @@ async def test_absurd_input_is_refused_without_looking_anything_up(authenticator
 
 
 async def test_failures_slow_the_account_down_and_the_right_password_waits_too(authenticator, alice):
-    for _ in range(FREE_FAILURES):
+    for _ in range(PAIR_FREE_FAILURES):
         assert await sign_in(authenticator, password="wrong password, quite long") == Refused()
 
     result = await sign_in(authenticator)
@@ -155,28 +175,28 @@ async def test_guesses_sent_at_once_meet_the_wait_as_the_others_do(authenticator
         *(sign_in(authenticator, password=f"wrong guess number {i}") for i in range(40)),
     )
 
-    assert len(verified) <= FREE_FAILURES
-    assert sum(isinstance(r, Throttled) for r in results) >= 40 - FREE_FAILURES
+    assert len(verified) <= PAIR_FREE_FAILURES
+    assert sum(isinstance(r, Throttled) for r in results) >= 40 - PAIR_FREE_FAILURES
 
 
 async def test_concurrent_sign_ins_of_the_right_password_are_not_throttled(authenticator, alice):
     import asyncio
 
-    results = await asyncio.gather(*(sign_in(authenticator) for _ in range(FREE_FAILURES)))
+    results = await asyncio.gather(*(sign_in(authenticator) for _ in range(PAIR_FREE_FAILURES)))
 
     assert all(isinstance(r, Signed) for r in results)
 
 
-async def test_a_wait_is_not_a_lockout(authenticator, alice, throttle):
-    for _ in range(FREE_FAILURES):
+async def test_a_wait_is_not_a_lockout(authenticator, alice, monotonic):
+    for _ in range(PAIR_FREE_FAILURES):
         await sign_in(authenticator, password="wrong password, quite long")
-    throttle.clock = lambda: 10**9  # much later
+    monotonic.now += 61  # the longest wait is a minute
 
     assert isinstance(await sign_in(authenticator), Signed)
 
 
 async def test_a_throttled_attempt_does_not_make_the_wait_longer(authenticator, alice, throttle):
-    for _ in range(FREE_FAILURES):
+    for _ in range(PAIR_FREE_FAILURES):
         await sign_in(authenticator, password="wrong password, quite long")
     before = throttle.retry_after("alice", "10.0.0.1")
 
@@ -187,7 +207,7 @@ async def test_a_throttled_attempt_does_not_make_the_wait_longer(authenticator, 
 
 
 async def test_a_success_clears_the_failures_of_the_account(authenticator, alice, throttle):
-    for _ in range(FREE_FAILURES - 1):
+    for _ in range(PAIR_FREE_FAILURES - 1):
         await sign_in(authenticator, password="wrong password, quite long")
 
     await sign_in(authenticator)
@@ -244,7 +264,7 @@ async def test_the_new_password_must_meet_the_policy(authenticator, alice):
 
 async def test_guessing_the_current_password_is_throttled_like_a_sign_in(authenticator, alice):
     keep = await sign_in(authenticator)
-    for _ in range(FREE_FAILURES):
+    for _ in range(PAIR_FREE_FAILURES):
         await authenticator.change_password(
             alice.id, "alice", "not the current one, no", "another very long passphrase", keep=keep.session.id, ip="x"
         )
@@ -254,3 +274,112 @@ async def test_guessing_the_current_password_is_throttled_like_a_sign_in(authent
     )
 
     assert result is False
+
+
+# --- names, rooms, delays -------------------------------------------------------------------------------------------
+
+
+async def test_case_variants_of_a_name_are_one_login(authenticator, alice):
+    assert isinstance(await sign_in(authenticator, "ALICE"), Signed)
+    assert isinstance(await sign_in(authenticator, "Alice"), Signed)
+
+
+async def test_case_variants_share_one_count(authenticator, alice, throttle):
+    for name in ("Alice", "ALICE", "aLiCe", "alice", "ALICE"):
+        await sign_in(authenticator, name, password="wrong password, quite long")
+
+    assert throttle.retry_after("alice", "10.0.0.1") > 0
+    assert isinstance(await sign_in(authenticator, "aLICE"), Throttled)
+
+
+@pytest.mark.parametrize("username", ["alicé", "ali ce", "ａlice", "alice\n", "a" * 300])
+async def test_a_name_that_cannot_be_a_login_is_refused_after_a_verification_and_counted_together(
+    authenticator, alice, hasher, monkeypatch, username
+):
+    verified = []
+    original = hasher._verify_sync
+    monkeypatch.setattr(hasher, "_verify_sync", lambda p, s: verified.append(s) or original(p, s))
+
+    assert await sign_in(authenticator, username) == Refused()
+    assert len(verified) == 1
+
+
+async def test_a_victim_whose_name_is_hammered_from_everywhere_signs_in_within_a_bounded_delay(
+    authenticator, alice, slept
+):
+    from harp_apps.auth.throttle import ACCOUNT_FREE_FAILURES, MAX_DELAY
+
+    for i in range(ACCOUNT_FREE_FAILURES + 8):
+        await sign_in(authenticator, password="wrong password, quite long", ip=f"198.51.{i // 250}.{i % 250}")
+    slept.clear()
+
+    result = await sign_in(authenticator, ip="203.0.113.5")
+
+    assert isinstance(result, Signed)
+    assert 0 < sum(slept) <= MAX_DELAY
+
+
+async def test_a_victim_behind_the_shared_address_of_a_proxy_signs_in_whatever_the_flood(authenticator, alice, slept):
+    from harp_apps.auth.throttle import ADDRESS_FREE_FAILURES, ADDRESS_MAX_DELAY
+
+    for i in range(ADDRESS_FREE_FAILURES + 20):
+        await sign_in(authenticator, f"guess{i}", password="wrong password, quite long", ip="10.0.0.1")
+    slept.clear()
+
+    result = await sign_in(authenticator, ip="10.0.0.1")
+
+    assert isinstance(result, Signed)
+    assert 0 < sum(slept) <= ADDRESS_MAX_DELAY
+
+
+async def test_a_full_queue_is_answered_at_once_and_not_counted(identities, sessions, throttle, clock, alice, slept):
+    from harp_apps.auth.signin import Busy
+
+    busy_hasher = PasswordHasher(max_concurrent=1, max_waiting=0)
+    authenticator = Authenticator(identities, sessions, busy_hasher, throttle, clock=clock)
+    import asyncio
+
+    results = await asyncio.gather(*(sign_in(authenticator, ip=f"10.0.{i}.1") for i in range(6)))
+
+    assert any(isinstance(r, Busy) for r in results)
+    assert any(isinstance(r, Signed) for r in results)
+    for i in range(6):
+        assert throttle.retry_after("alice", f"10.0.{i}.1") == 0
+    assert isinstance(await sign_in(authenticator, ip="10.0.0.1"), Signed)
+
+
+async def test_a_guess_whose_client_leaves_is_still_counted(authenticator, alice, hasher, throttle, monkeypatch):
+    import asyncio
+
+    started = asyncio.Event()
+
+    async def never_answers(password, stored):
+        started.set()
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr(hasher, "verify", never_answers)
+
+    for _ in range(PAIR_FREE_FAILURES):
+        started.clear()
+        task = asyncio.create_task(sign_in(authenticator, password="wrong password, quite long"))
+        await started.wait()
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+
+    assert throttle.retry_after("alice", "10.0.0.1") > 0
+
+
+async def test_changing_the_password_is_one_transaction(authenticator, alice, sessions, monkeypatch):
+    keep = await sign_in(authenticator)
+    other = await sign_in(authenticator)
+
+    async def never(*args, **kwargs):
+        raise AssertionError("a second commit")
+
+    monkeypatch.setattr(sessions, "revoke_others", never)
+
+    assert await authenticator.change_password(
+        alice.id, "alice", PASSWORD, "another very long passphrase", keep=keep.session.id, ip="x"
+    )
+    assert await sessions.authenticate(other.secret) is None
+    assert await sessions.authenticate(keep.secret) is not None

@@ -21,6 +21,7 @@ from harp_apps.auth.models import (
     Identity,
     UsernameRefused,
     check_username,
+    login_of,
 )
 from harp_apps.auth.passwords import PasswordHasher, PasswordPolicyError, check_policy
 from harp_apps.storage.utils.migrations import (
@@ -50,7 +51,7 @@ async def _create_account(url, values: dict, password: str) -> None:
                         account_id=account.id,
                         method=PASSWORD_METHOD,
                         issuer="",
-                        subject=account.username,
+                        subject=login_of(account.username),
                         password_hash=password_hash,
                     )
                 )

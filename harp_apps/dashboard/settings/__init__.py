@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from pydantic import Field, model_validator
+from pydantic import Field, IPvAnyNetwork, model_validator
 
 from harp.config import ApplicationSettingsMixin, Configurable
 from harp_apps.dashboard.settings.auth import BasicAuthSettings
@@ -33,6 +33,13 @@ class DashboardSettings(ApplicationSettingsMixin, Configurable):
         "imported once as accounts. When not set, the dashboard signs people in with a password, and a setup link "
         "logged at start lets the first administrator in. There is no way to serve the dashboard without "
         "authentication.",
+    )
+
+    trusted_proxies: list[IPvAnyNetwork] = Field(
+        default_factory=list,
+        description="Networks of the reverse proxies in front of the dashboard (`10.0.0.0/8`). Only a connection from "
+        "one of them may tell, in `X-Forwarded-For`, which address the client has: the limits on failed sign-ins are "
+        "kept per client address, and without this every client behind a proxy shares the address of the proxy.",
     )
 
     devserver: Optional[DevserverSettings] = Field(

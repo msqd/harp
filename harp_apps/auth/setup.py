@@ -23,6 +23,7 @@ from harp_apps.auth.models import (
     PASSWORD_METHOD,
     UsernameRefused,
     check_username,
+    login_of,
     Account,
     AccountKind,
     Identity,
@@ -147,12 +148,16 @@ class SetupLink:
                 account_id=account.id,
                 method=PASSWORD_METHOD,
                 issuer="",
-                subject=username,
+                subject=login_of(username),
                 password_hash=password_hash,
                 last_sign_in_at=now,
             )
             session.add(identity)
-            await session.flush()
+            try:
+                await session.flush()
+            except IntegrityError:  # another account signs in under the same login, written otherwise
+                await session.rollback()
+                raise UsernameRefused("This username is taken.") from None
             await session.execute(
                 update(Invitation).where(Invitation.id == invitation_id).values(account_id=account.id)
             )

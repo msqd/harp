@@ -145,6 +145,17 @@ async def test_accepting_creates_the_admin_with_a_password_and_signs_it_in(setup
     assert invitation.accepted_at == NOW and invitation.account_id == account.id
 
 
+async def test_the_admin_signs_in_under_the_login_of_its_name_whatever_the_case(setup, factory):
+    from harp_apps.auth.models import IdentitiesRepository
+
+    link = await setup.publish("http://localhost:4080")
+
+    await setup.accept(secret_of(link), "Root.Admin", PASSWORD, ip="1.2.3.4", user_agent=None)
+
+    identity, account = await IdentitiesRepository(factory).find_password("root.admin")
+    assert (identity.subject, account.username) == ("root.admin", "Root.Admin")
+
+
 async def test_a_link_is_single_use(setup):
     secret = secret_of(await setup.publish("http://localhost:4080"))
     await setup.accept(secret, "root", PASSWORD, ip="1.2.3.4", user_agent=None)

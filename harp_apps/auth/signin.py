@@ -1,18 +1,21 @@
 """Signing in with a password, and changing it."""
 
+import asyncio
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Callable, Optional
+from typing import Any, Awaitable, Callable, Optional
 
-from harp_apps.auth.models import Account, AccountKind, IdentitiesRepository, Identity, Session
-from harp_apps.auth.passwords import MAX_LENGTH, PasswordHasher, check_policy
+from harp_apps.auth.models import Account, AccountKind, IdentitiesRepository, Identity, Session, login_of
+from harp_apps.auth.passwords import MAX_LENGTH, HasherBusy, PasswordHasher, check_policy
 from harp_apps.auth.sessions import SessionsService
-from harp_apps.auth.throttle import SignInThrottle
+from harp_apps.auth.throttle import Admitted, Busy as ThrottleBusy, Refused as ThrottleRefused, SignInThrottle
 from harp_apps.storage.types import IStorage
 
 #: Longer than any password the policy accepts, by a margin: a refusal needs no hashing of megabytes.
 MAX_PASSWORD_INPUT = 4 * MAX_LENGTH
-MAX_USERNAME_INPUT = 255
+
+#: The throttle key of a name that cannot be a login at all, so that every such name shares one count.
+INVALID_LOGIN = "\0invalid"
 
 
 @dataclass(frozen=True)
@@ -30,9 +33,24 @@ class Refused:
 
 @dataclass(frozen=True)
 class Throttled:
-    """Too many failures: try again in ``retry_after`` seconds. The password was not looked at."""
+    """Too many failures from this address against this account: try again in ``retry_after`` seconds. The password was
+    not looked at."""
 
     retry_after: float
+
+
+@dataclass(frozen=True)
+class Busy:
+    """Too many attempts are under way. Nothing was looked at or counted: try again in a moment."""
+
+    retry_after: float = 1.0
+
+
+@dataclass(frozen=True)
+class Checked:
+    """The attempt went through the throttle and its check ran: ``value`` is what the check answered."""
+
+    value: Any
 
 
 def _utcnow() -> datetime:
@@ -52,12 +70,14 @@ class Authenticator:
         throttle: SignInThrottle,
         *,
         clock: Callable[[], datetime] = _utcnow,
+        sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
     ):
         self.identities = identities
         self.sessions = sessions
         self.hasher = hasher
         self.throttle = throttle
         self.clock = clock
+        self.sleep = sleep
 
     @classmethod
     def from_storage(
@@ -65,31 +85,56 @@ class Authenticator:
     ) -> "Authenticator":
         return cls(IdentitiesRepository(storage.accounts.session_factory), sessions, hasher, throttle)
 
+    async def guarded(self, key: str, ip: str, check: Callable[[], Awaitable[Any]]) -> Checked | Throttled | Busy:
+        """
+        Runs ``check`` (does this person know the secret?) under the throttle, for a way in that has none of its own.
+        The attempt counts as a failure from the start; a truthy answer takes it back. It is refused when the address
+        has to wait for this account, held a little when the address or the account has seen many failures, and
+        answered at once when too many attempts are under way.
+        """
+        admitted = self.throttle.begin(key, ip)
+        if isinstance(admitted, ThrottleRefused):
+            return Throttled(admitted.retry_after)
+        if isinstance(admitted, ThrottleBusy):
+            return Busy(admitted.retry_after)
+        assert isinstance(admitted, Admitted)
+        # a client that leaves, or an error, does not get its guess back
+        outcome = "failure"
+        try:
+            if admitted.delay:
+                await self.sleep(admitted.delay)
+            value = await check()
+            outcome = "success" if value else "failure"
+            return Checked(value)
+        except HasherBusy:
+            outcome = "abandoned"
+            return Busy()
+        finally:
+            self.throttle.end(admitted, outcome)
+
     async def sign_in(
         self, username: str, password: str, *, ip: str, user_agent: Optional[str]
-    ) -> Signed | Refused | Throttled:
-        if (wait := self.throttle.retry_after(username, ip)) > 0:
-            return Throttled(wait)
-        # counted as a failure from the start and taken back on success: guesses sent at once all meet the wait
-        self.throttle.failed(username, ip)
-
-        found = await self._verified(username, password)
-        if found is None:
+    ) -> Signed | Refused | Throttled | Busy:
+        # case and accent variants of a name are one name, for the lookup and for the throttle
+        login = login_of(username)
+        checked = await self.guarded(login or INVALID_LOGIN, ip, lambda: self._verified(login, password))
+        if not isinstance(checked, Checked):
+            return checked
+        if checked.value is None:
             return Refused()
-        identity, account = found
+        identity, account = checked.value
 
-        self.throttle.succeeded(username, ip)
         await self._rehash_if_outdated(identity, password)
         await self.identities.signed_in(identity.id, self.clock())
         secret, session = await self.sessions.open(account.id, identity.id, user_agent=user_agent, ip=ip)
         return Signed(secret, session)
 
-    async def _verified(self, username: str, password: str) -> Optional[tuple[Identity, Account]]:
+    async def _verified(self, login: Optional[str], password: str) -> Optional[tuple[Identity, Account]]:
         """The identity and account when the password is right and the account may sign in. A verification is paid in
-        every case but absurd input, so the time taken tells nothing about which of them failed."""
-        if not (0 < len(username) <= MAX_USERNAME_INPUT and 0 < len(password) <= MAX_PASSWORD_INPUT):
+        every case but an absurd password, so the time taken tells nothing about which of them failed."""
+        if not 0 < len(password) <= MAX_PASSWORD_INPUT:
             return None
-        found = await self.identities.find_password(username)
+        found = await self.identities.find_password(login) if login else None
         if found is None or not found[0].password_hash:
             await self.hasher.verify_unknown(password)
             return None
@@ -105,23 +150,24 @@ class Authenticator:
         self, account_id: int, username: str, current: str, new: str, *, keep: int, ip: str
     ) -> bool:
         """
-        Replaces the password of the account and ends its other sessions, ``keep`` being the one that asks. Returns
-        False when the current password is not the right one, or when guessing it was slowed down. Raises
-        :class:`~harp_apps.auth.passwords.PasswordPolicyError` when the new one is refused.
+        Replaces the password of the account and ends its other sessions (one transaction), ``keep`` being the one that
+        asks. Returns False when the current password is not the right one, or when guessing it was slowed down or
+        there was no room. Raises :class:`~harp_apps.auth.passwords.PasswordPolicyError` when the new one is refused.
         """
-        if self.throttle.retry_after(username, ip) > 0:
-            return False
-        self.throttle.failed(username, ip)
-        identity = await self.identities.find_password_of_account(account_id)
-        if (
-            identity is None
-            or not identity.password_hash
-            or not (0 < len(current) <= MAX_PASSWORD_INPUT)
-            or not await self.hasher.verify(current, identity.password_hash)
-        ):
-            return False
-        self.throttle.succeeded(username, ip)
         check_policy(new)
-        await self.identities.set_password_hash(identity.id, await self.hasher.hash(new))
-        await self.sessions.revoke_others(account_id, keep=keep)
+        identity = await self.identities.find_password_of_account(account_id)
+
+        async def current_is_right() -> bool:
+            if identity is None or not identity.password_hash or not 0 < len(current) <= MAX_PASSWORD_INPUT:
+                return False
+            return await self.hasher.verify(current, identity.password_hash)
+
+        checked = await self.guarded(login_of(username) or INVALID_LOGIN, ip, current_is_right)
+        if not isinstance(checked, Checked) or not checked.value:
+            return False
+        try:
+            new_hash = await self.hasher.hash(new)
+        except HasherBusy:
+            return False
+        await self.identities.replace_password(identity.id, new_hash, account_id=account_id, keep=keep, at=self.clock())
         return True

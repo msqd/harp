@@ -8,3 +8,4 @@ dashboard:
   metrics_port: null
   port: 4080
   public_url: null
+  trusted_proxies: []

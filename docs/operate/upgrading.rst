@@ -30,6 +30,8 @@ Signing in to the dashboard
   application) and sets a cookie, ``__Host-harp_session`` behind HTTPS and ``harp_session`` over plain HTTP. Scripts
   that called the dashboard port with Basic credentials keep working while ``dashboard.auth`` is configured; Basic is
   deprecated.
+- Behind a reverse proxy, list its network in ``dashboard.trusted_proxies``: the limits on failed sign-ins are kept per
+  client address, and the proxy's own address is all they see otherwise. See :doc:`/apps/auth/index`.
 - Set the cookie's flavour right behind a reverse proxy that terminates TLS: send ``X-Forwarded-Proto: https`` or set
   ``dashboard.public_url`` to an ``https`` URL.
 - Lost the only administrator? ``harp-proxy auth:create-account <name> --role admin`` asks for a password (or

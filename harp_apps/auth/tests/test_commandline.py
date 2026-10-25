@@ -240,6 +240,22 @@ def test_the_account_gets_the_password_typed_at_the_prompt_as_an_argon2id_hash(d
     assert PASSWORD not in result.output
 
 
+def test_the_login_of_an_account_is_its_name_in_lower_case(database):
+    result = invoke(database, "Alice", "--role", "admin")
+
+    assert result.exit_code == 0, result.output
+    assert [(row[0], row[3]) for row in identities_of(database)] == [("Alice", "alice")]
+
+
+def test_two_names_that_differ_by_case_only_cannot_both_sign_in(database):
+    invoke(database, "Alice", "--role", "admin")
+
+    result = invoke(database, "alice", "--role", "viewer")
+
+    assert result.exit_code != 0
+    assert [row[0] for row in accounts_of(database)] == ["Alice"]
+
+
 def test_the_two_entries_must_match(database):
     result = CliRunner().invoke(
         create_account,

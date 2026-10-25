@@ -95,11 +95,31 @@ parameters change. At most four verifications run at once. The policy is the one
 characters, none from a bundled list of the 10 000 most common passwords, no composition rule and no expiry. An unknown
 account, a disabled one and a wrong password are refused with the same answer, after the same verification.
 
-**Failed sign-ins slow down, never lock out.** From the fifth failure on, for an account name and for an address, the
-next attempt has to wait 1 second, then 2, 4, ... up to 5 minutes; an attempt made too early answers ``429`` with
-``Retry-After`` and its password is not looked at. The count is kept for 15 minutes, in memory and per process. The
-address is the one of the connection: ``X-Forwarded-For`` is not trusted, so behind a reverse proxy every visitor shares
-the address of the proxy, and the per account wait is what protects an account.
+**Failed sign-ins slow down, never lock out, and nobody can slow down somebody on another address.** Failures are
+counted three ways, and an attempt counts as a failure from the moment it starts (a success takes it back), so guesses
+sent at once meet the limits like the later ones:
+
+- *One address against one account*: from the fifth failure, that address waits 1 second, then 2, 4, ... up to 1 minute
+  before its next attempt on that account; an attempt made too early answers ``429`` with ``Retry-After`` and its
+  password is not looked at. Guessing at ``alice`` from your address only slows you down.
+- *One address, any account* (an IPv6 address stands for its /64): after 100 failures its attempts are held a little,
+  up to 10 seconds, and never refused. Everybody behind a shared address waits a few seconds at worst.
+- *One account, every address*: after 100 consecutive failures (the limit of NIST SP 800-63B-4) attempts from addresses
+  that never signed in to the account are held 1 second, 2, 4, ... up to 1 minute, never refused; an address that did
+  sign in (the last 8, for 30 days, until the process restarts) is not held. Whoever hammers a name delays a person
+  elsewhere by a minute at most.
+
+Names are folded to lower case and checked (1 to 64 of ``A-Za-z0-9._@+-``) before the lookup and the count, so case
+variants are one login; a name that cannot be one shares a single count. Counts are forgotten after 15 minutes without
+failure (an hour for an account), kept in memory and per process, and an entry under penalty is never dropped to make
+room for another: a flood of new names and addresses does not reset anything. At most 16 verifications wait for one of
+the 4 hashing slots, and attempts beyond that are answered ``503`` at once, uncounted. Basic is slowed down the same
+way.
+
+**The address** is the one of the connection. Behind a reverse proxy it is the proxy's, so list its network in
+``dashboard.trusted_proxies``: only a connection from a listed network may name the client in ``X-Forwarded-For``, read
+from the right up to the first address that is not a listed proxy. Without it every visitor shares one address, which
+the rules above keep harmless, but the limits per address then protect little.
 
 **Sessions** are rows of ``auth_sessions``. The cookie holds a random 256 bits secret and nothing else (``HttpOnly``,
 ``SameSite=Lax``, ``Path=/``), and the table holds its SHA-256, so reading the database opens no session. Over HTTPS the
