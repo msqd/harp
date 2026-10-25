@@ -148,6 +148,14 @@ Upstreams
   2025.10 (DigiCert Global Root CA, DigiCert High Assurance EV, Entrust and AffirmTrust among them). An
   upstream whose chain ends only at one of them now fails TLS verification.
 
+Proxy
+-----
+
+- ``proxy.tags.max_value_length`` above 255 or ``proxy.tags.max_name_length`` above 64 now fails at
+  startup: they are the widths of the storage columns. Set them to 255 and 64 or lower (the old
+  ``max_value_length`` default of 256 failed to store on PostgreSQL). A tag over the bound is still
+  dropped.
+
 Storage
 -------
 
