@@ -1,5 +1,5 @@
 dashboard.auth:
   type: basic
-  algorithm: plain
+  algorithm: plaintext  # tests only, use pbkdf2_sha256 otherwise
   users:
     admin: { password: "not-so-secret" }

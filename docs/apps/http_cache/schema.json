@@ -67,6 +67,7 @@
             }
           }
         },
+        "purge": { "$ref": "#/$defs/PurgeSettings" },
         "storage": {
           "$ref": "#/$defs/Service",
           "default": {
@@ -79,6 +80,19 @@
         }
       },
       "title": "HttpCacheSettings",
+      "type": "object"
+    },
+    "PurgeSettings": {
+      "additionalProperties": false,
+      "description": "``PURGE`` removes one cache entry, for the peers allowed to ask.",
+      "properties": {
+        "enabled": { "default": false, "type": "boolean" },
+        "allow": {
+          "items": { "format": "ipvanynetwork", "type": "string" },
+          "type": "array"
+        }
+      },
+      "title": "PurgeSettings",
       "type": "object"
     },
     "Service": {
@@ -116,6 +130,7 @@
   "anyOf": [
     { "$ref": "#/$defs/CachePolicyOptions" },
     { "$ref": "#/$defs/CachePolicySettings" },
-    { "$ref": "#/$defs/HttpCacheSettings" }
+    { "$ref": "#/$defs/HttpCacheSettings" },
+    { "$ref": "#/$defs/PurgeSettings" }
   ]
 }
