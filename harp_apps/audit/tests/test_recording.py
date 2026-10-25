@@ -86,8 +86,8 @@ async def test_a_system_actor_has_no_account(unit_of_work, session_factory):
 
 
 async def test_a_failing_audit_write_rolls_back_the_action(unit_of_work, session_factory):
-    # not JSON serializable: the insert of the audit row fails, after the action wrote its own row
-    event = RoleChanged(details={"from": object()})
+    # `actor_via` is NOT NULL: the insert of the audit row fails, after the action wrote its own row
+    event = RoleChanged(actor=Actor(via=None))
 
     with pytest.raises(Exception):
         await change_role(unit_of_work, event)
@@ -142,6 +142,25 @@ async def test_an_event_without_declared_fields_records_no_details(unit_of_work,
 
     (row,) = await rows(session_factory)
     assert row.details == {}
+
+
+@auditable("test.with_meta")
+class WithMeta(AuditableEvent):
+    details_fields = ("meta", "scopes", "count")
+
+
+@pytest.mark.parametrize("meta", [{"password": "hunter2"}, [{"password": "hunter2"}], [["hunter2"]]])
+async def test_declared_fields_hold_scalars_only(unit_of_work, session_factory, meta):
+    event = WithMeta(details={"meta": meta, "scopes": ["read", "write"], "count": 2})
+
+    with capture_logs() as logs:
+        await change_role(unit_of_work, event)
+
+    (row,) = await rows(session_factory)
+    assert row.details == {"scopes": ["read", "write"], "count": 2}
+    assert "hunter2" not in str(logs)
+    (warning,) = [entry for entry in logs if entry["log_level"] == "warning"]
+    assert warning["dropped"] == ["meta"]
 
 
 async def test_the_log_line_is_written_after_the_commit_only(unit_of_work, session_factory):

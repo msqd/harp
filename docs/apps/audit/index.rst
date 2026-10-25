@@ -65,6 +65,9 @@ Table ``audit_events``:
     names them. An event class has no field for a secret (a token creation declares ``prefix`` and ``name``, never the
     token), and a class declaring a field named like one (``password``, ``secret``, ``token``, ``key``...) cannot be
     defined. Fields ending in ``_id``, ``_name``, ``_label``, ``_type`` or ``_prefix`` are fine.
+    A declared field holds a scalar (text, number, boolean, null) or a list of them; a dict or a nested structure is
+    dropped with a warning. The event author declares which fields are safe and values are not inspected, so a declared
+    field must never carry a credential (ids, names, prefixes and scopes only).
 
 Append-only
 :::::::::::

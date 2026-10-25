@@ -11,14 +11,28 @@ AUDIT_LOGGER = "harp.audit"
 logger = get_logger(AUDIT_LOGGER)
 
 
+_SCALARS = (str, int, float, bool, type(None))
+
+
+def _is_scalar(value) -> bool:
+    """A scalar, or a flat list of scalars: nothing nested, where a credential could hide."""
+    if isinstance(value, (list, tuple)):
+        return all(isinstance(item, _SCALARS) for item in value)
+    return isinstance(value, _SCALARS)
+
+
 def _declared_details(event) -> dict:
-    """Default-deny: only the detail fields the event class declares are kept, the others are dropped (names logged)."""
+    """
+    Default-deny: only the detail fields the event class declares, holding scalars (or a list of scalars), are kept. The
+    others are dropped, and their names (never their values) logged.
+    """
     declared = getattr(type(event), "details_fields", ())
     details = getattr(event, "details", None) or {}
-    dropped = sorted(str(name) for name in details if name not in declared)
+    kept = {name: value for name, value in details.items() if name in declared and _is_scalar(value)}
+    dropped = sorted(str(name) for name in details if name not in kept)
     if dropped:
-        logger.warning("Undeclared audit details dropped.", event_id=event.event_id, dropped=dropped)
-    return {name: value for name, value in details.items() if name in declared}
+        logger.warning("Undeclared or non-scalar audit details dropped.", event_id=event.event_id, dropped=dropped)
+    return kept
 
 
 def _fields(event) -> dict:
