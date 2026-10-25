@@ -1,15 +1,25 @@
 from functools import wraps
 from typing import Generic, TypeVar
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import MetaData, delete, select, update
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql.functions import func
 
 
+# Every constraint gets a deterministic name, because SQLite batch migrations can only alter what they can name.
+NAMING_CONVENTION = {
+    "ix": "ix_%(column_0_N_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_N_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_N_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+
+
 class Base(AsyncAttrs, DeclarativeBase):
-    pass
+    metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 
 def with_session(f):

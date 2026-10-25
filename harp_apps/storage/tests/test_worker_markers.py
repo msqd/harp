@@ -61,7 +61,10 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
             pass
 
         await worker.push(stalled)
-        await asyncio.sleep(0)  # consumer is now stuck on the first item
+        # wait until the consumer has taken the first item and is stuck on it, however loaded the machine is
+        async with asyncio.timeout(10):
+            while worker._queue.qsize():
+                await asyncio.sleep(0.001)
         for _ in range(size):
             await worker.push(noop)
         worker.clock = lambda: now + worker.pressure_hold
