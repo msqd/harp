@@ -209,7 +209,12 @@ class TestExplicitBasicAuth:
     BASIC = {"auth": {"type": "basic", "algorithm": "plaintext", "users": {"alice": {"password": "s3cret"}}}}
 
     async def test_configured_users_work_and_nothing_is_generated(self, boot, caplog):
-        _, client = await boot(self.BASIC)
+        system, client = await boot(self.BASIC)
+        accounts = system.provider.get("storage").accounts
+        for _attempt in range(100):  # the storage worker imports the configured users once the database is ready
+            if [a for a in await accounts.find_all() if a.username == "alice"]:
+                break
+            await asyncio.sleep(0.05)
 
         assert (await get(client, "GET", "/"))["status"] == 401
         assert (await get(client, "GET", "/", basic("alice", "s3cret")))["status"] == 200

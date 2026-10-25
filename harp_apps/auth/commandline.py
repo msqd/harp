@@ -12,7 +12,7 @@ from harp.commandline.options.server import server_command
 from harp.errors import OutdatedSchemaError
 from harp.security.actor import Role
 from harp.utils.commandline import click
-from harp_apps.auth.models import AccountKind, AccountsRepository
+from harp_apps.auth.models import RESERVED_USERNAMES, AccountKind, AccountsRepository
 from harp_apps.storage.utils.migrations import (
     create_harp_settings_with_storage_from_command_line_options,
     ensure_schema_is_current,
@@ -49,6 +49,8 @@ async def _create_account(url, values: dict) -> None:
 @click.option("--email", help="Email of the account, shown and never a way in.")
 def create_account(*, username: str, role: str, display_name: Optional[str], email: Optional[str], **kwargs):
     """Creates an account, which is also how access is recovered when no Admin is left."""
+    if username in RESERVED_USERNAMES:
+        raise click.ClickException(f"The username {username!r} is reserved for a system account.")
     settings = create_harp_settings_with_storage_from_command_line_options(kwargs)
     values = {
         "username": username,

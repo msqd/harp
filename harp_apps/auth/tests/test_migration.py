@@ -97,6 +97,10 @@ async def test_existing_accounts_become_dormant_viewers_and_anonymous_a_system_a
         ("alice", "person", "viewer", True),
         ("anonymous", "system", "viewer", False),
     ]
+    assert await rows(users_engine, "SELECT username, disabled_reason FROM auth_accounts ORDER BY username") == [
+        ("alice", "migrated"),
+        ("anonymous", None),
+    ]
 
 
 @parametrize_with_database_urls("postgresql")

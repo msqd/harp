@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import TIMESTAMP, CheckConstraint, Enum, Integer, String, func, select
+from sqlalchemy import TIMESTAMP, CheckConstraint, Enum, Integer, String, case, func, select, update
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from sqlalchemy.types import TypeDecorator
@@ -24,6 +24,17 @@ SYSTEM_ACCOUNT_USERNAME = "anonymous"
 
 #: A system account that records that the users declared in the configuration (Basic) were imported. It never signs in.
 IMPORT_MARKER_USERNAME = "basic-import"
+
+#: Names of the system accounts: no person or machine may take them.
+RESERVED_USERNAMES = frozenset({SYSTEM_ACCOUNT_USERNAME, IMPORT_MARKER_USERNAME})
+
+#: ``disabled_reason`` of the accounts the migration disabled, waiting for the one-time import.
+MIGRATED = "migrated"
+
+
+class ReservedUsernameError(ValueError):
+    def __init__(self, username):
+        super().__init__(f"The username {username!r} is reserved for a system account.")
 
 
 class AccountKind(StrEnum):
@@ -77,6 +88,8 @@ class Account(Base):
     created_at: Mapped[datetime] = mapped_column(UTCTimestamp(), nullable=False, server_default=func.now())
     last_seen_at: Mapped[Optional[datetime]] = mapped_column(UTCTimestamp(), nullable=True)
     disabled_at: Mapped[Optional[datetime]] = mapped_column(UTCTimestamp(), nullable=True)
+    #: Who disabled the account: ``migrated`` (the migration, until the import) or ``operator``.
+    disabled_reason: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
 
     flags: Mapped[List["UserFlag"]] = relationship(
         back_populates="user",
@@ -117,41 +130,68 @@ class AccountsRepository(Repository):
         async with self.session_factory() as session:
             return list((await session.execute(select(Account).order_by(Account.id))).scalars())
 
+    async def _import_done(self) -> bool:
+        """Whether the import ran: a system account holds the marker. A person with that name is refused."""
+        async with self.session_factory() as session:
+            kind = (
+                await session.execute(select(Account.kind).where(Account.username == IMPORT_MARKER_USERNAME))
+            ).scalar_one_or_none()
+        if kind is not None and kind != AccountKind.SYSTEM:
+            raise ReservedUsernameError(IMPORT_MARKER_USERNAME)
+        return kind is not None
+
     async def import_basic_users(self, usernames) -> bool:
         """
-        Imports the users declared in the configuration as enabled Admin people (decision 21), once for the database:
-        later calls do nothing, so an account that was deleted, demoted or disabled stays so. Returns whether it ran.
+        Imports the users declared in the configuration (decision 21), once for the database. Missing ones are created
+        as enabled Admin people; the ones the migration left disabled are enabled as Admin. Any other account is left as
+        it is, so what the Operator decided before or during the import (a role, a disabling) wins, and later calls do
+        nothing. Returns whether it ran.
         """
-        try:
-            async with self.session_factory() as session:
-                if (
-                    await session.execute(select(Account.id).where(Account.username == IMPORT_MARKER_USERNAME))
-                ).first():
-                    return False
-                session.add(Account(username=IMPORT_MARKER_USERNAME, kind=AccountKind.SYSTEM, role=Role.VIEWER))
-                for username in usernames:
-                    account = (
-                        await session.execute(select(Account).where(Account.username == username))
-                    ).scalar_one_or_none()
-                    if account is None:
-                        session.add(Account(username=username, kind=AccountKind.PERSON, role=Role.ADMIN))
-                    elif account.kind != AccountKind.SYSTEM:
-                        account.role, account.disabled_at = Role.ADMIN, None
-                await session.commit()
-                return True
-        except IntegrityError:
-            # another process imported meanwhile
+        if await self._import_done():
             return False
-
-    async def update_account(self, username: str, **values) -> Account:
-        """Changes a person or machine account (not a system one). Raises NoResultFound if there is none."""
         async with self.session_factory() as session:
-            account = (
-                await session.execute(
-                    select(Account).where(Account.username == username, Account.kind != AccountKind.SYSTEM)
-                )
-            ).scalar_one()
-            for key, value in values.items():
-                setattr(account, key, value)
+            session.add(Account(username=IMPORT_MARKER_USERNAME, kind=AccountKind.SYSTEM, role=Role.VIEWER))
+            try:
+                await session.flush()
+            except IntegrityError:
+                # the marker is unique: another process imported meanwhile
+                await session.rollback()
+                return False
+            for username in usernames:
+                exists = (await session.execute(select(Account.id).where(Account.username == username))).first()
+                if exists is None:
+                    session.add(Account(username=username, kind=AccountKind.PERSON, role=Role.ADMIN))
+                else:
+                    # conditional on the mark, so a change landing meanwhile is never overwritten
+                    await session.execute(
+                        update(Account)
+                        .where(
+                            Account.username == username,
+                            Account.kind != AccountKind.SYSTEM,
+                            Account.disabled_reason == MIGRATED,
+                        )
+                        .values(role=Role.ADMIN, disabled_at=None, disabled_reason=None)
+                    )
             await session.commit()
-            return account
+            return True
+
+    async def update_account(self, username: str, **values) -> None:
+        """
+        Changes a person or machine account (not a system one) with a single UPDATE. Disabling or enabling records who
+        decided (``operator``) or clears it; any change consumes the mark of the migration, so the import leaves the
+        account alone. Raises NoResultFound if there is none.
+        """
+        reason = Account.disabled_reason
+        if "disabled_at" in values:
+            reason = "operator" if values["disabled_at"] is not None else None
+        else:
+            reason = case((Account.disabled_reason == MIGRATED, "operator"), else_=Account.disabled_reason)
+        async with self.session_factory() as session:
+            result = await session.execute(
+                update(Account)
+                .where(Account.username == username, Account.kind != AccountKind.SYSTEM)
+                .values(**values, disabled_reason=reason)
+            )
+            await session.commit()
+        if result.rowcount == 0:
+            raise NoResultFound(username)

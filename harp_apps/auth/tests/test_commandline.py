@@ -180,3 +180,24 @@ def test_the_commands_are_part_of_the_harp_command():
         ("auth:enable-account", enable_account),
     ):
         assert entrypoint.commands[name] is command
+
+
+@pytest.mark.parametrize("username", ["basic-import", "anonymous"])
+def test_reserved_system_names_cannot_be_created(database, username):
+    result = invoke(database, username, "--role", "admin")
+
+    assert result.exit_code != 0
+    assert "reserved" in result.output
+    assert accounts_of(database) == []
+
+
+def test_disabling_and_enabling_leave_a_reason_the_import_does_not_touch(database):
+    invoke(database, "alice", "--role", "viewer")
+
+    run(database, disable_account, "alice")
+    with sqlite3.connect(database) as conn:
+        assert conn.execute("SELECT disabled_reason FROM auth_accounts").fetchone() == ("operator",)
+
+    run(database, enable_account, "alice")
+    with sqlite3.connect(database) as conn:
+        assert conn.execute("SELECT disabled_reason FROM auth_accounts").fetchone() == (None,)

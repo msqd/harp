@@ -42,11 +42,17 @@ table. Favourites keep their author.
 ``created_at``, ``last_seen_at``, ``disabled_at``
     ``last_seen_at`` is written at most once a minute. A disabled account answers ``401`` at its next request.
 
+``disabled_reason``
+    ``migrated`` on the accounts the migration disabled and the import has not enabled yet, ``operator`` once an
+    Operator disabled one.
+
 Today accounts sign in with the **Basic** authentication of the dashboard (:doc:`/apps/dashboard/settings`). The users
-declared there are **imported once** per database, at the first start with the ``auth`` application: each becomes an
-enabled ``admin`` person (an account that already exists is enabled and made ``admin``), and a ``system`` account
+declared there are **imported once** per database, at the first start with the ``auth`` application: a missing one
+becomes an enabled ``admin`` person, one the migration disabled is enabled as ``admin``, and any other existing account
+is left as it is, so a role or a disabling set with the commands below before that start wins. A ``system`` account
 named ``basic-import`` records that it ran. Later starts import nothing: a configured user without an account, because
-it was deleted or added to the configuration afterwards, answers ``401``. The role is the one of the account, read from
+it was deleted, **or because it was added to ``dashboard.auth.users`` after the first import**, answers ``401``. Add
+such a user with ``auth:create-account``. The role is the one of the account, read from
 the database on every request: demoting or disabling an account applies at once.
 
 Roles

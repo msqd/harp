@@ -85,11 +85,17 @@ def upgrade() -> None:
     )
     op.add_column("auth_accounts", sa.Column("last_seen_at", sa.TIMESTAMP(timezone=True), nullable=True))
     op.add_column("auth_accounts", sa.Column("disabled_at", sa.TIMESTAMP(timezone=True), nullable=True))
+    op.add_column("auth_accounts", sa.Column("disabled_reason", sa.String(32), nullable=True))
 
     # nobody gets access from a migration: the accounts that existed are disabled viewers until the one-time import of
     # the users configured for Basic enables them (as Admin). ``anonymous`` authors favourites and never signs in.
     op.execute(sa.text("UPDATE auth_accounts SET kind = 'system' WHERE username = 'anonymous'"))
-    op.execute(sa.text("UPDATE auth_accounts SET disabled_at = now() WHERE username <> 'anonymous'"))
+    # marked, so the import enables these and only these: what the Operator decides meanwhile is never overwritten
+    op.execute(
+        sa.text(
+            "UPDATE auth_accounts SET disabled_at = now(), disabled_reason = 'migrated' WHERE username <> 'anonymous'"
+        )
+    )
 
     # the defaults served the rows that existed, new accounts say what they are
     op.alter_column("auth_accounts", "kind", server_default=None)
@@ -107,7 +113,16 @@ def downgrade() -> None:
     for name in CHECKS:
         op.drop_constraint(op.f(name), "auth_accounts", type_="check")
     op.drop_constraint("uq_auth_accounts_email", "auth_accounts", type_="unique")
-    for column in ("disabled_at", "last_seen_at", "created_at", "role", "kind", "email", "display_name"):
+    for column in (
+        "disabled_reason",
+        "disabled_at",
+        "last_seen_at",
+        "created_at",
+        "role",
+        "kind",
+        "email",
+        "display_name",
+    ):
         op.drop_column("auth_accounts", column)
     op.alter_column("auth_accounts", "username", existing_type=sa.String(255), type_=sa.String(32))
 
