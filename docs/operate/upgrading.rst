@@ -52,13 +52,19 @@ Redis blob storage
   version is still found under its bare id (40 lowercase hexadecimal characters for a blob, the shape blob ids still
   have; 64 for an HTTP cache entry written by 0.12). Any other id is only looked up under the prefix. Residue: a
   string key of another application, named with 40 or 64 lowercase hexadecimal characters and containing a newline, is
-  still readable through ``/api/blobs/<id>``.
+  still readable through ``/api/blobs/<id>``. A proxy client can also make the cache delete the bare key
+  ``sha256(<url>)`` with an unsafe request to that URL: a foreign key is only at risk if another application names its
+  keys by the same sha256. This is unchanged from before.
 - Those older blobs are never listed again: the janitor does not sweep them (orphans among them stay) and the
   ``storage_blobs`` metrics do not count them, and HTTP cache entries written before the upgrade are not expired by
-  their TTL. They are not copied either. To reclaim them, flush the Redis database if it is dedicated to HARP; on a
-  shared one, delete them by hand, HARP cannot tell them from other applications' keys. Nothing removes these bare
-  keys on its own: only an explicit deletion of that exact id does. Once the cache is warm again, drop the
-  64-character keys (old cache entries) and the 40-character ones nothing needs anymore.
+  their TTL. They are not copied either. Nothing removes these bare keys on its own: only an explicit deletion of that
+  exact id does. To reclaim them once the cache is warm again:
+
+  - On a Redis database dedicated to HARP, flush it. The cache refills, but message bodies still stored in the SQL
+    database lose their blobs.
+  - On a shared database, delete a bare key only if its value starts with a content-type line HARP writes (for example
+    ``cache/meta`` or ``http/headers``, followed by a newline). Never delete by name shape alone: it can match other
+    applications' keys. Keep the 40-character blobs that stored messages still reference.
 
 Dashboard authentication
 ::::::::::::::::::::::::
