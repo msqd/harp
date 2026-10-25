@@ -5,6 +5,7 @@ from functools import cached_property
 from time import monotonic
 from typing import Annotated, Any, Literal
 
+import passlib.hash
 from pydantic import BeforeValidator, Field, model_validator
 
 from harp import get_logger
@@ -68,7 +69,7 @@ class BasicAuthSettings(Configurable):
 
     @cached_property
     def _algorithm_module(self):
-        return getattr(__import__("passlib.hash", fromlist=[self.algorithm]), self.algorithm)
+        return getattr(passlib.hash, self.algorithm)
 
     @cached_property
     def algorithm_impl(self):
@@ -135,20 +136,4 @@ class BasicAuthSettings(Configurable):
         """This validator overcomes the behaviour of model_dump(exclude_defaults=True, exclude_unset=True) and forces
         some defaults to be dumped everytime."""
         data.setdefault("type", "basic")
-        return data
-
-
-class NoAuthSettings(Configurable):
-    """Explicit opt-out: the dashboard is served without any authentication."""
-
-    type: Literal["none"] = Field(
-        None,
-        description="Authentication type. «none» serves the dashboard without authentication.",
-    )
-
-    @model_validator(mode="before")
-    @classmethod
-    def model_always_shown_defaults(cls, data):
-        """Same as for basic authentication: the type must survive dumps that exclude defaults."""
-        data.setdefault("type", "none")
         return data

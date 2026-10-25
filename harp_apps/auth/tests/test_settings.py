@@ -4,7 +4,12 @@ from harp_apps.auth.settings import AuthSettings
 
 
 def test_defaults():
-    assert asdict(AuthSettings(), verbose=True) == {"enabled": True}
+    assert asdict(AuthSettings(), verbose=True) == {
+        "enabled": True,
+        "session_idle_hours": 12,
+        "session_max_hours": 168,
+        "setup_link_hours": 72,
+    }
 
 
 def test_auth_is_loaded_by_default_before_the_dashboard_that_needs_it():

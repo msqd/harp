@@ -10,7 +10,7 @@ from harp.http import HttpRequest
 from harp_apps.dashboard.controllers import DashboardController
 from harp_apps.dashboard.settings import BasicAuthSettings, DashboardSettings
 from harp_apps.dashboard.settings.auth import User
-from harp_apps.dashboard.tests._mixins import RoleNamedActors
+from harp_apps.dashboard.tests._mixins import BASIC_ADMIN_HEADERS, RoleNamedActors, basic_admin_settings
 from harp_apps.storage import worker as _worker  # noqa: F401  (registers the `dropped` counter)
 from harp_apps.storage.types import IStorage
 
@@ -18,7 +18,7 @@ from harp_apps.storage.types import IStorage
 def create_controller(settings: DashboardSettings | None = None) -> DashboardController:
     controller = DashboardController(
         storage=cast(IStorage, Mock(spec=IStorage)),
-        settings=settings or DashboardSettings(auth={"type": "none"}, devserver={"enabled": True, "port": 5173}),
+        settings=settings or basic_admin_settings(),
         http_client=Mock(spec=AsyncClient),
         actors=RoleNamedActors(),
     )
@@ -35,7 +35,7 @@ def metrics_request(**kwargs) -> HttpRequest:
 async def test_dashboard_port_serves_metrics():
     controller = create_controller()
 
-    response = await controller(metrics_request(), AsyncMock())
+    response = await controller(metrics_request(headers=BASIC_ADMIN_HEADERS), AsyncMock())
 
     body = response.body.decode()
     assert response.status == 200
@@ -62,7 +62,7 @@ async def _build(dashboard_settings: dict):
         {
             "applications": ["http_client", "storage", "harp_apps.dashboard"],
             "dashboard": {
-                **asdict(DashboardSettings(auth={"type": "none"}, devserver={"enabled": True, "port": 5173})),
+                **asdict(DashboardSettings(devserver={"enabled": True, "port": 5173})),
                 **dashboard_settings,
             },
         },
@@ -88,7 +88,7 @@ async def test_metrics_port_serves_metrics_on_its_own_port():
 
 async def test_dropped_series_exist_before_any_drop():
     # alerting and rate() need the series to exist at 0 from startup
-    response = await create_controller()(metrics_request(), AsyncMock())
+    response = await create_controller()(metrics_request(headers=BASIC_ADMIN_HEADERS), AsyncMock())
 
     body = response.body.decode()
     for kind in ("transactions", "messages", "headers", "bodies"):

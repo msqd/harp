@@ -26,7 +26,10 @@ async def on_bound(event: OnBoundEvent):
 async def on_shutdown(event: OnShutdownEvent):
     worker = event.provider.get(JanitorWorker)
     worker.stop()
-    event.provider.get(JANITOR_WORKER_TASK).cancel()
+    task = event.provider.get(JANITOR_WORKER_TASK)
+    task.cancel()
+    # wait for it to be gone: a query still running when the storage closes its connections never comes back
+    await asyncio.gather(task, return_exceptions=True)
 
 
 application = Application(

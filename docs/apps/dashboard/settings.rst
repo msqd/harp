@@ -29,11 +29,6 @@ Implementation (python): :class:`BasicAuthSettings <harp_apps.dashboard.settings
 
 .. include:: ./_howto_auth_hash.rst
 
-Implementation (python): :class:`NoAuthSettings <harp_apps.dashboard.settings.auth.NoAuthSettings>`
-
-.. jsonschema:: ./schema.json
-   :pointer: /$defs/NoAuthSettings
-
 .devserver
 ----------
 

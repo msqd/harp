@@ -72,6 +72,16 @@
       "title": "BasicAuthSettings",
       "type": "object"
     },
+    "ChangePasswordInput": {
+      "additionalProperties": false,
+      "properties": {
+        "current": { "type": "string" },
+        "new": { "type": "string" }
+      },
+      "required": ["current", "new"],
+      "title": "ChangePasswordInput",
+      "type": "object"
+    },
     "DashboardSettings": {
       "additionalProperties": false,
       "description": "Root settings for the dashboard application.",
@@ -98,23 +108,11 @@
         },
         "auth": {
           "anyOf": [
-            {
-              "discriminator": {
-                "mapping": {
-                  "basic": "#/$defs/BasicAuthSettings",
-                  "none": "#/$defs/NoAuthSettings"
-                },
-                "propertyName": "type"
-              },
-              "oneOf": [
-                { "$ref": "#/$defs/BasicAuthSettings" },
-                { "$ref": "#/$defs/NoAuthSettings" }
-              ]
-            },
+            { "$ref": "#/$defs/BasicAuthSettings" },
             { "type": "null" }
           ],
           "default": null,
-          "description": "Authentication settings for the dashboard. When not set, the dashboard requires a login with the `admin` user and a random password generated and logged at each boot. Use `type: none` to explicitly serve the dashboard without authentication."
+          "description": "Deprecated. Dashboard users declared in the configuration, signing in with HTTP Basic. They are imported once as accounts. When not set, the dashboard signs people in with a password, and a setup link logged at start lets the first administrator in. There is no way to serve the dashboard without authentication."
         },
         "devserver": {
           "anyOf": [
@@ -149,18 +147,32 @@
       "title": "DevserverSettings",
       "type": "object"
     },
-    "NoAuthSettings": {
+    "NoInput": {
       "additionalProperties": false,
-      "description": "Explicit opt-out: the dashboard is served without any authentication.",
+      "description": "Routes that need nothing still take a JSON body (``{}``), which is what keeps a cross-site form out.",
+      "properties": {},
+      "title": "NoInput",
+      "type": "object"
+    },
+    "SetupInput": {
+      "additionalProperties": false,
       "properties": {
-        "type": {
-          "const": "none",
-          "default": null,
-          "description": "Authentication type. «none» serves the dashboard without authentication.",
-          "type": "string"
-        }
+        "secret": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" }
       },
-      "title": "NoAuthSettings",
+      "required": ["secret", "username", "password"],
+      "title": "SetupInput",
+      "type": "object"
+    },
+    "SignInInput": {
+      "additionalProperties": false,
+      "properties": {
+        "username": { "type": "string" },
+        "password": { "type": "string" }
+      },
+      "required": ["username", "password"],
+      "title": "SignInInput",
       "type": "object"
     },
     "SystemPutProxyInput": {
@@ -189,10 +201,13 @@
   },
   "title": "__ROOT__",
   "anyOf": [
+    { "$ref": "#/$defs/ChangePasswordInput" },
+    { "$ref": "#/$defs/NoInput" },
+    { "$ref": "#/$defs/SetupInput" },
+    { "$ref": "#/$defs/SignInInput" },
     { "$ref": "#/$defs/SystemPutProxyInput" },
     { "$ref": "#/$defs/DashboardSettings" },
     { "$ref": "#/$defs/BasicAuthSettings" },
-    { "$ref": "#/$defs/NoAuthSettings" },
     { "$ref": "#/$defs/User" },
     { "$ref": "#/$defs/DevserverSettings" }
   ]

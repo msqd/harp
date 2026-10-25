@@ -26,8 +26,34 @@ def database(tmp_path):
     return path
 
 
-def invoke(database, *args):
-    return CliRunner().invoke(create_account, [*args, "--set", f"storage.url=sqlite+aiosqlite:///{database}"])
+PASSWORD = "correct horse battery staple"
+
+
+def invoke(database, *args, password=PASSWORD):
+    """Runs auth:create-account, typing the password (twice) at the prompt unless it is generated."""
+    typed = None if password is None else f"{password}\n{password}\n"
+    return CliRunner().invoke(
+        create_account, [*args, "--set", f"storage.url=sqlite+aiosqlite:///{database}"], input=typed
+    )
+
+
+def identities_of(database) -> list[tuple]:
+    with sqlite3.connect(database) as conn:
+        return conn.execute(
+            "SELECT a.username, i.method, i.issuer, i.subject, i.password_hash FROM auth_identities i "
+            "JOIN auth_accounts a ON a.id = i.account_id"
+        ).fetchall()
+
+
+def verifies(database, username, password) -> bool:
+    from argon2 import PasswordHasher
+    from argon2.exceptions import VerificationError
+
+    (row,) = [r for r in identities_of(database) if r[0] == username]
+    try:
+        return PasswordHasher().verify(row[4], password)
+    except VerificationError:
+        return False
 
 
 def accounts_of(database) -> list[tuple]:
@@ -201,3 +227,69 @@ def test_disabling_and_enabling_leave_a_reason_the_import_does_not_touch(databas
     run(database, enable_account, "alice")
     with sqlite3.connect(database) as conn:
         assert conn.execute("SELECT disabled_reason FROM auth_accounts").fetchone() == (None,)
+
+
+def test_the_account_gets_the_password_typed_at_the_prompt_as_an_argon2id_hash(database):
+    result = invoke(database, "alice", "--role", "admin")
+
+    assert result.exit_code == 0, result.output
+    ((username, method, issuer, subject, stored),) = identities_of(database)
+    assert (username, method, issuer, subject) == ("alice", "password", "", "alice")
+    assert stored.startswith("$argon2id$v=19$m=19456,t=2,p=1$")
+    assert verifies(database, "alice", PASSWORD)
+    assert PASSWORD not in result.output
+
+
+def test_the_two_entries_must_match(database):
+    result = CliRunner().invoke(
+        create_account,
+        ["alice", "--role", "admin", "--set", f"storage.url=sqlite+aiosqlite:///{database}"],
+        input=f"{PASSWORD}\nanother password entirely\n",
+    )
+
+    assert result.exit_code != 0
+    assert accounts_of(database) == []
+
+
+@pytest.mark.parametrize("password", ["short", "password", "a" * 257])
+def test_a_password_that_breaks_the_policy_creates_nothing(database, password):
+    result = invoke(database, "alice", "--role", "admin", password=password)
+
+    assert result.exit_code != 0
+    assert accounts_of(database) == [] and identities_of(database) == []
+
+
+def test_a_generated_password_is_shown_once_and_works(database):
+    result = invoke(database, "alice", "--role", "admin", "--generate-password", password=None)
+
+    assert result.exit_code == 0, result.output
+    (line,) = [ln for ln in result.output.splitlines() if ln.startswith("Password: ")]
+    generated = line.removeprefix("Password: ")
+    assert len(generated) >= 15
+    assert verifies(database, "alice", generated)
+    assert result.output.count(generated) == 1
+
+
+def test_generated_passwords_differ(database):
+    first = invoke(database, "alice", "--role", "admin", "--generate-password", password=None)
+    second = invoke(database, "bob", "--role", "admin", "--generate-password", password=None)
+
+    assert first.output != second.output
+
+
+@pytest.mark.parametrize("username", ["has space", "", "a" * 65, "new\nline"])
+def test_a_username_that_cannot_sign_in_is_refused(database, username):
+    result = invoke(database, username, "--role", "admin")
+
+    assert result.exit_code != 0
+    assert accounts_of(database) == []
+
+
+def test_an_existing_account_keeps_its_password(database):
+    invoke(database, "alice", "--role", "viewer")
+
+    result = invoke(database, "alice", "--role", "admin", password="another very long passphrase")
+
+    assert result.exit_code != 0
+    assert verifies(database, "alice", PASSWORD) and not verifies(database, "alice", "another very long passphrase")
+    assert len(identities_of(database)) == 1

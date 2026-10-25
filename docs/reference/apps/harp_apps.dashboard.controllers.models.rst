@@ -14,4 +14,5 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
+    harp_apps.dashboard.controllers.models.auth
     harp_apps.dashboard.controllers.models.system

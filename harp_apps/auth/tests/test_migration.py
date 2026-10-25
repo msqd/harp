@@ -171,7 +171,7 @@ def _schema(sync_conn):
     """Columns, constraint names and indexes of the tables the take over touches."""
     inspector = inspect(sync_conn)
     schema = {}
-    for table in ("auth_accounts", "trans_user_flags"):
+    for table in ("auth_accounts", "trans_user_flags", "auth_identities", "auth_sessions", "auth_invitations"):
         schema[table] = {
             "columns": {
                 c["name"]: (str(c["type"]), c["nullable"], c["default"] is not None)
@@ -189,6 +189,9 @@ def _schema(sync_conn):
                 for fk in inspector.get_foreign_keys(table)
             },
             "checks": {c["name"]: c["sqltext"] for c in inspector.get_check_constraints(table)},
+            "indexes": {i["name"]: tuple(i["column_names"]) for i in inspector.get_indexes(table)}
+            if table.startswith(("auth_identities", "auth_sessions", "auth_invitations"))
+            else {},
         }
     return schema
 

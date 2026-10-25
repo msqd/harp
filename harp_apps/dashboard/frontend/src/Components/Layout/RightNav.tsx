@@ -1,8 +1,21 @@
 import { QuestionMarkCircleIcon, TagIcon, UserCircleIcon } from "@heroicons/react/20/solid"
 
+import { useApi } from "Domain/Api"
 import { getDocumentationUrl } from "Utils/Documentation"
 
 import { useSystemQuery } from "../../Domain/System"
+
+function SignOut() {
+  const api = useApi()
+  const signOut = () => {
+    void api.post("/auth/signout", { body: "{}" }).finally(() => window.location.assign("/signin"))
+  }
+  return (
+    <button type="button" className="ml-2 underline" onClick={signOut}>
+      Sign out
+    </button>
+  )
+}
 
 export function RightNav() {
   const systemQuery = useSystemQuery()
@@ -11,6 +24,7 @@ export function RightNav() {
       <UserCircleIcon className="inline-block w-4 h-4 mr-1" />
       {systemQuery.data.displayName ?? systemQuery.data.user ?? "anonymous"}
       {systemQuery.data.role ? <span className="ml-1 text-xs opacity-75">{systemQuery.data.role}</span> : null}
+      {systemQuery.data.via === "session" ? <SignOut /> : null}
       <br />
       <span className="text-xs">
         <a href={getDocumentationUrl(systemQuery.data.version)} target="_blank" rel="noopener noreferrer">

@@ -13,16 +13,20 @@ from harp.asgi.events import ViewEvent
 from harp.controllers import RoutingController
 from harp.errors import ConfigurationError
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse, JsonHttpResponse
+from harp.http.responses import RedirectHttpResponse
 from harp.security.actor import Actor, set_actor
 from harp.views.json import on_json_response
 from harp_apps import dashboard
 from harp_apps.auth.actors import ActorResolver
+from harp_apps.auth.setup import SetupLink
+from harp_apps.auth.signin import Authenticator
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.settings.remote import Remote
 from harp_apps.storage.types import IStorage
 
-from ..security.auth import OPEN_ACTOR, resolve_authentication
+from ..security.cookies import is_secure, read_session_secret
 from ..settings import DashboardSettings
+from .auth import PublicAuthRoutes, problem
 from .metrics import METRICS_PATH, metrics_controller
 
 logger = get_logger(__name__)
@@ -99,6 +103,8 @@ class DashboardController(RoutingController):
         http_client: AsyncClient,
         router: Router = None,
         actors: Optional[ActorResolver] = None,
+        authenticator: Optional[Authenticator] = None,
+        setup: Optional[SetupLink] = None,
     ):
         super().__init__(router=router, handle_errors=False)
 
@@ -107,11 +113,19 @@ class DashboardController(RoutingController):
         self.storage = storage
         self.settings = settings
 
-        # the authentication actually enforced, which is not necessarily what is configured (see the security module)
-        self._auth = resolve_authentication(self.settings.auth, f"{self.settings.host}:{self.settings.port}")
-        self.actors = actors
-        if self._auth and actors is None:
+        # There is no open mode: every request is resolved to an actor by the resolver of the auth application.
+        if actors is None:
             raise ConfigurationError("The dashboard authenticates its users, it needs the actor resolver of auth.")
+        self.actors = actors
+
+        # the sign-in and setup pages and the requests they make; without the services, only Basic gets in
+        self._public = None
+        if authenticator is not None and setup is not None:
+            self._public = PublicAuthRoutes(authenticator, setup, settings)
+
+        # Basic is deprecated (#1525): it stays for the users declared in the configuration, whose passwords are
+        # still verified from there.
+        self._auth = self.settings.auth
 
         # import the configured users once; keep a strong reference to the task, as the event loop
         # only holds a weak one and would let it be garbage-collected before completion.
@@ -198,25 +212,45 @@ class DashboardController(RoutingController):
 
     async def _authenticate(self, request: HttpRequest) -> Optional[Actor]:
         """The actor of the request, or None if it is not authenticated or its account may not act."""
-        if not self._auth:
-            return OPEN_ACTOR
+        secret = read_session_secret(request, secure=is_secure(request, public_url=self.settings.public_url))
+        if secret and (actor := await self.actors.session(secret)):
+            return actor
 
-        credentials = request.basic_auth
+        credentials = request.basic_auth if self._auth else None
         if not credentials:
             return None
 
         username = await self._auth.acheck(credentials[0], credentials[1])
         return await self.actors.basic(username) if username else None
 
+    def _unauthorized(self, request: HttpRequest) -> HttpResponse:
+        """
+        What a request that is not signed in gets.
+
+        With Basic configured (deprecated), the challenge is kept for whoever shows no session cookie. A request that
+        has one is a session that ended: no challenge, or the browser would ask for a Basic password in the middle of
+        the dashboard. The dashboard's own requests (``/api``) get a 401, a browser fetching a page is sent to sign in.
+        """
+        challenge = {}
+        if (
+            self._auth
+            and read_session_secret(request, secure=is_secure(request, public_url=self.settings.public_url)) is None
+        ):
+            challenge = {"WWW-Authenticate": 'Basic realm="Harp Dashboard"'}
+
+        if request.path.startswith("/api/") or request.method not in ("GET", "HEAD"):
+            return problem(401, "Sign in to use the dashboard.", error="Unauthorized", headers=challenge)
+        if challenge or self._public is None or request.path == METRICS_PATH:
+            return HttpResponse(b"Unauthorized", status=401, headers=challenge, content_type="text/plain")
+        return RedirectHttpResponse("/signin")
+
     async def _handle(self, request: HttpRequest, asgi_send: ASGISendCallable) -> HttpResponse:
+        if self._public is not None and self._public.matches(request):
+            return self._refuse_forged_request(request) or await self._public(request)
+
         actor = await self._authenticate(request)
         if actor is None:
-            return HttpResponse(
-                b"Unauthorized",
-                status=401,
-                headers={"WWW-Authenticate": 'Basic realm="Harp Dashboard"'},
-                content_type="text/plain",
-            )
+            return self._unauthorized(request)
         set_actor(request, actor)
 
         if refusal := self._refuse_forged_request(request):

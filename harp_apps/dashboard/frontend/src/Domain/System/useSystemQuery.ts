@@ -14,5 +14,7 @@ export function useSystemQuery() {
     displayName?: string | null
     /** Role the request acts with. */
     role?: Role
+    /** How the request got in: a `session` can be signed out of. */
+    via?: string
   }>(["system"], () => api.fetch("/system").then((r) => r.json()))
 }

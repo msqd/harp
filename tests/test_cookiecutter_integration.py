@@ -953,7 +953,7 @@ class TestEnhancedMakefile:
 
         # Set dashboard port via HARP_OPTIONS environment variable
         env = os.environ.copy()
-        env["HARP_OPTIONS"] = f"--set dashboard.port={port} --set dashboard.auth.type=none"
+        env["HARP_OPTIONS"] = f"--set dashboard.port={port}"
 
         # Start server in background
         server_process = subprocess.Popen(
@@ -1007,7 +1007,7 @@ class TestEnhancedMakefile:
 
         # Set dashboard port via HARP_OPTIONS environment variable
         env = os.environ.copy()
-        env["HARP_OPTIONS"] = f"--set dashboard.port={port} --set dashboard.auth.type=none"
+        env["HARP_OPTIONS"] = f"--set dashboard.port={port}"
 
         server_process = subprocess.Popen(
             ["make", "start"], cwd=project_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env
@@ -1147,7 +1147,7 @@ class TestEnhancedMakefile:
 
         # Set dashboard port via HARP_OPTIONS environment variable
         env = os.environ.copy()
-        env["HARP_OPTIONS"] = f"--set dashboard.port={port} --set dashboard.auth.type=none"
+        env["HARP_OPTIONS"] = f"--set dashboard.port={port}"
 
         server_process = subprocess.Popen(
             ["make", "start"], cwd=project_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env

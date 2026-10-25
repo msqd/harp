@@ -50,6 +50,7 @@ class SystemController(RoutingController):
                 "revision": __revision__,
                 "user": actor.account.username,
                 "displayName": actor.account.display_name,
+                "via": actor.via,
                 "role": actor.role.label,
             }
         )

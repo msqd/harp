@@ -17,6 +17,25 @@ Accounts and roles
   ``auth:set-role``, ``auth:disable-account`` and ``auth:enable-account``.
 - **SQLite**: a file written by 0.12 is refused at start. Delete it (it is recreated) or run ``harp-proxy db:reset``.
 
+Signing in to the dashboard
+:::::::::::::::::::::::::::
+
+- **The dashboard has no open mode anymore.** ``dashboard.auth.type: none`` (``--set dashboard.auth.type=none``) is
+  refused at start, and the password generated at each start for the ``admin`` user is gone. Remove the setting.
+- With no ``dashboard.auth``, **the password method is on and has no account**: HARP logs a setup link at start
+  (``There is no administrator yet``), single use, valid 72 hours, replaced at each start. Opening it creates the first
+  administrator, with a password of 15 characters or more. In a container, read it with ``docker logs <container>``.
+  Nobody signs in before. Proxied traffic is never blocked.
+- Signing in opens a session of the server (12 hours without activity, 7 days at most, both settings of the ``auth``
+  application) and sets a cookie, ``__Host-harp_session`` behind HTTPS and ``harp_session`` over plain HTTP. Scripts
+  that called the dashboard port with Basic credentials keep working while ``dashboard.auth`` is configured; Basic is
+  deprecated.
+- Set the cookie's flavour right behind a reverse proxy that terminates TLS: send ``X-Forwarded-Proto: https`` or set
+  ``dashboard.public_url`` to an ``https`` URL.
+- Lost the only administrator? ``harp-proxy auth:create-account <name> --role admin`` asks for a password (or
+  ``--generate-password``). See :doc:`/apps/auth/index`.
+- **PostgreSQL**: the ``auth`` branch gains ``auth_identities``, ``auth_sessions`` and ``auth_invitations``.
+
 Metrics
 :::::::
 

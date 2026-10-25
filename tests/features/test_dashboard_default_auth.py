@@ -1,6 +1,7 @@
 """
-The dashboard requires a login by default: without a configured ``dashboard.auth``, a random password is generated at
-each boot and logged once. ``dashboard.auth.type: none`` is the explicit opt-out.
+The dashboard requires a sign-in, and there is no way around it. With nothing configured, the password method is on with
+no account: the setup link HARP logs at start lets the first administrator in, and every other route answers 401 (or
+sends a browser to the sign-in page) until somebody is signed in.
 """
 
 import asyncio
@@ -10,21 +11,33 @@ from base64 import b64encode
 
 import orjson
 import pytest
-from sqlalchemy import select
 
 from harp.config import ConfigurationBuilder
 from harp.config.asdict import asdict
 from harp.utils.testing.communicators import ASGICommunicator
 from harp_apps.dashboard.controllers import DashboardController
-from harp_apps.dashboard.settings import DashboardSettings
-from harp_apps.auth.models import Account as SqlUser
 
 DASHBOARD_PORT = 4080
 
 #: Paths that are not registered on the router but are served (or forwarded) by the dashboard port.
 EXTRA_PATHS = ("/", "/index.html", "/assets/app.js", "/no/such/page", "/no-such-file.txt", "/metrics", "/api/unknown")
 
-PASSWORD_LOG = re.compile(r"username=(?P<username>\S+) password=(?P<password>\S+)")
+#: What anybody may reach, since it is how one signs in.
+PUBLIC = {
+    ("GET", "/signin"),
+    ("GET", "/setup"),
+    ("GET", "/auth.js"),
+    ("POST", "/api/auth/signin"),
+    ("POST", "/api/auth/setup"),
+}
+
+SETUP_LINK = re.compile(r"/setup#(?P<secret>[A-Za-z0-9_-]{43})")
+PASSWORD = "correct horse battery staple"
+JSON = [
+    (b"content-type", b"application/json"),
+    (b"host", b"harp.test"),
+    (b"origin", b"http://harp.test"),
+]
 
 
 def basic(username, password):
@@ -67,8 +80,8 @@ async def boot(test_api, caplog):
         await system.dispose()
 
 
-def logged_credentials(caplog):
-    return [m.groupdict() for m in PASSWORD_LOG.finditer(caplog.text)]
+def setup_links(caplog):
+    return [m.group("secret") for m in SETUP_LINK.finditer(caplog.text)]
 
 
 def dashboard_routes(system):
@@ -80,135 +93,171 @@ def dashboard_routes(system):
     return routes
 
 
-async def get(client, method, path, headers=None):
-    return await client.http_request(method, path, headers=headers, port=DASHBOARD_PORT)
+async def get(client, method, path, headers=None, body=None):
+    return await client.http_request(method, path, headers=headers, body=body or b"", port=DASHBOARD_PORT)
 
 
 def header(response, name):
     return {k.lower(): v for k, v in response["headers"]}.get(name)
 
 
+async def set_up(client, caplog) -> list:
+    """Accepts the setup link of the logs, returns the headers that carry the session of the new Admin."""
+    (secret,) = setup_links(caplog)[-1:]
+    body = orjson.dumps({"secret": secret, "username": "root", "password": PASSWORD})
+    response = await get(client, "POST", "/api/auth/setup", JSON, body)
+    assert response["status"] == 200, response["body"]
+    cookie = header(response, b"set-cookie").decode().split(";", 1)[0]
+    return [(b"cookie", cookie.encode())]
+
+
 class TestDefaultDashboardAuth:
-    async def test_generated_credentials_are_logged_once(self, boot, caplog):
-        await boot()
-
-        (credentials,) = logged_credentials(caplog)
-        assert credentials["username"] == "admin"
-        assert len(credentials["password"]) >= 22  # 128 bits, url-safe base64
-
-    async def test_credentials_are_new_at_every_boot(self, boot, caplog):
+    async def test_the_setup_link_is_logged_once_and_replaced_at_every_boot(self, boot, caplog):
         await boot()
         await boot()
 
-        first, second = logged_credentials(caplog)
-        assert first["password"] != second["password"]
+        first, second = setup_links(caplog)
+        assert first != second
 
-    async def test_every_route_requires_the_logged_credentials(self, boot, caplog):
+    async def test_nobody_gets_in_before_the_link_is_accepted(self, boot, caplog):
         system, client = await boot()
-        (credentials,) = logged_credentials(caplog)
-        good = basic(credentials["username"], credentials["password"])
-        bad = basic(credentials["username"], "wrong")
 
         targets = dashboard_routes(system) + [("GET", path) for path in EXTRA_PATHS]
         assert ("PUT", "/api/system/proxy") in targets  # the table really walks the router
 
         failures = []
         for method, path in targets:
-            for headers in (None, bad):
-                response = await get(client, method, path, headers)
-                if response["status"] != 401 or not header(response, b"www-authenticate"):
-                    failures.append((method, path, "anonymous" if headers is None else "wrong", response["status"]))
-            if (await get(client, method, path, good))["status"] == 401:
-                failures.append((method, path, "logged credentials", 401))
+            if (method, path) in PUBLIC:
+                continue
+            response = await get(client, method, path, JSON if method != "GET" else None)
+            # a browser fetching a page is sent to sign in, anything else is refused
+            if response["status"] not in (401, 302) or (response["status"] == 302 and method != "GET"):
+                failures.append((method, path, response["status"]))
+            if response["status"] == 302 and header(response, b"location") != b"/signin":
+                failures.append((method, path, header(response, b"location")))
 
         assert failures == []
 
-    @pytest.mark.parametrize("path", ["/", "/index.html", "/assets/app.js", "/metrics", "/api/system/settings"])
-    async def test_logged_credentials_open_the_dashboard(self, boot, caplog, path):
+    async def test_signing_in_before_the_link_is_accepted_is_refused(self, boot):
         _, client = await boot()
-        (credentials,) = logged_credentials(caplog)
 
-        response = await get(client, "GET", path, basic(credentials["username"], credentials["password"]))
+        body = orjson.dumps({"username": "root", "password": PASSWORD})
+        response = await get(client, "POST", "/api/auth/signin", JSON, body)
 
-        assert response["status"] == 200
+        assert response["status"] == 401
+
+    async def test_the_pages_are_public(self, boot):
+        _, client = await boot()
+
+        for path in ("/signin", "/setup", "/auth.js"):
+            assert (await get(client, "GET", path))["status"] == 200
+
+    async def test_a_browser_is_sent_to_the_sign_in_page(self, boot):
+        _, client = await boot()
+
+        response = await get(client, "GET", "/")
+
+        assert response["status"] == 302 and header(response, b"location") == b"/signin"
+
+    @pytest.mark.parametrize("path", ["/", "/index.html", "/assets/app.js", "/metrics", "/api/system/settings"])
+    async def test_the_session_of_the_first_admin_opens_the_dashboard(self, boot, caplog, path):
+        _, client = await boot()
+        session = await set_up(client, caplog)
+
+        assert (await get(client, "GET", path, session))["status"] == 200
+
+    async def test_every_route_requires_the_session(self, boot, caplog):
+        system, client = await boot()
+        session = await set_up(client, caplog)
+
+        failures = []
+        for method, path in dashboard_routes(system) + [("GET", path) for path in EXTRA_PATHS]:
+            if (method, path) in PUBLIC:
+                continue
+            headers = [*JSON, *session] if method != "GET" else session
+            if (await get(client, method, path, headers))["status"] == 401:
+                failures.append((method, path))
+
+        assert failures == []
+
+    async def test_the_link_works_once(self, boot, caplog):
+        _, client = await boot()
+        await set_up(client, caplog)
+        body = orjson.dumps({"secret": setup_links(caplog)[-1], "username": "other", "password": PASSWORD})
+
+        response = await get(client, "POST", "/api/auth/setup", JSON, body)
+
+        assert response["status"] == 400
+
+    async def test_the_admin_signs_in_again_and_out(self, boot, caplog):
+        _, client = await boot()
+        first = await set_up(client, caplog)
+
+        body = orjson.dumps({"username": "root", "password": PASSWORD})
+        signed_in = await get(client, "POST", "/api/auth/signin", JSON, body)
+        assert signed_in["status"] == 200
+        second = [(b"cookie", header(signed_in, b"set-cookie").split(b";", 1)[0])]
+        assert (await get(client, "GET", "/api/system/", second))["status"] == 200
+
+        out = await get(client, "POST", "/api/auth/signout", [*JSON, *second], b"{}")
+        assert out["status"] == 200
+        assert (await get(client, "GET", "/api/system/", second))["status"] == 401
+        assert (await get(client, "GET", "/api/system/", first))["status"] == 200
 
     async def test_unauthenticated_proxy_update_changes_nothing(self, boot, caplog, test_api):
         _, client = await boot()
-        (credentials,) = logged_credentials(caplog)
-        good = basic(credentials["username"], credentials["password"])
+        session = await set_up(client, caplog)
 
         async def endpoint_status():
-            response = await get(client, "GET", "/api/system/proxy", good)
+            response = await get(client, "GET", "/api/system/proxy", session)
             assert response["status"] == 200
             return orjson.loads(response["body"])["endpoints"][0]["remote"]["endpoints"][0]["status"]
 
         before = await endpoint_status()
         body = b'{"endpoint": "test", "action": "down", "index": 0}'
-        response = await client.http_request("PUT", "/api/system/proxy", body=body, port=DASHBOARD_PORT)
+        response = await get(client, "PUT", "/api/system/proxy", JSON, body)
 
         assert response["status"] == 401
         assert await endpoint_status() == before
         assert (await client.http_get("/echo", port=80))["status"] == 200
 
-    async def test_password_is_nowhere_but_the_boot_log(self, boot, caplog):
+    async def test_proxied_traffic_is_never_blocked(self, boot):
+        _, client = await boot()
+
+        assert (await client.http_get("/echo", port=80))["status"] == 200
+
+    async def test_no_secret_reaches_the_settings_or_the_logs_but_the_link(self, boot, caplog):
         system, client = await boot()
-        (credentials,) = logged_credentials(caplog)
-        good = basic(credentials["username"], credentials["password"])
+        session = await set_up(client, caplog)
+        secret = setup_links(caplog)[-1]
+        cookie = session[0][1].decode().split("=", 1)[1]
 
         for path in ("/api/system/settings", "/api/system/storage"):
-            body = (await get(client, "GET", path, good))["body"].decode()
-            assert credentials["password"] not in body
-        assert credentials["password"] not in repr(asdict(system.config, secure=False, verbose=True))
-        assert caplog.text.count(credentials["password"]) == 1
+            body = (await get(client, "GET", path, session))["body"].decode()
+            assert PASSWORD not in body and cookie not in body and secret not in body
+        assert PASSWORD not in repr(asdict(system.config, secure=False, verbose=True))
+        assert caplog.text.count(secret) == 1
+        assert PASSWORD not in caplog.text and cookie not in caplog.text
 
-    async def test_generated_auth_is_not_copied_into_the_settings(self, boot, caplog):
-        system, client = await boot()
-        (credentials,) = logged_credentials(caplog)
-        good = basic(credentials["username"], credentials["password"])
+    async def test_the_open_mode_is_refused_at_boot(self, boot):
+        with pytest.raises(Exception, match="no open mode"):
+            await boot({"auth": {"type": "none"}})
 
-        assert system.provider.get(DashboardSettings).auth is None
-        response = await get(client, "GET", "/api/system/settings", good)
-        assert orjson.loads(response["body"])["dashboard"].get("auth") is None
-
-    async def test_repeated_boots_leave_one_user_row(self, boot, tmp_path):
+    async def test_once_an_admin_exists_no_link_is_made(self, boot, caplog, tmp_path):
         url = f"sqlite:///{tmp_path}/harp.db"
+        _, client = await boot(storage_url=url)
+        await set_up(client, caplog)
+        logged = len(setup_links(caplog))
 
-        async def admin_rows(storage):
-            async with storage.session_factory() as session:
-                return (await session.execute(select(SqlUser.username).where(SqlUser.username == "admin"))).all()
+        await boot(storage_url=url)
 
-        for _ in range(2):
-            system, _client = await boot(storage_url=url)
-            storage = system.provider.get("storage")
-            await system.provider.get("dashboard.controller")._create_users_task
-            for _attempt in range(60):  # the user is created by the storage worker, once the database is ready
-                if await admin_rows(storage):
-                    break
-                await asyncio.sleep(0.05)
-
-        assert await admin_rows(storage) == [("admin",)]
-
-
-class TestDashboardAuthOptOut:
-    async def test_none_leaves_the_dashboard_open(self, boot):
-        _, client = await boot({"auth": {"type": "none"}})
-
-        assert (await get(client, "GET", "/"))["status"] == 200
-        assert (await get(client, "GET", "/api/system/settings"))["status"] == 200
-
-    async def test_none_warns_at_every_boot(self, boot, caplog):
-        await boot({"auth": {"type": "none"}})
-
-        warnings = [r for r in caplog.records if r.levelno == logging.WARNING and "unauthenticated" in r.getMessage()]
-        assert len(warnings) == 1
-        assert "proxied traffic" in warnings[0].getMessage()
-        assert logged_credentials(caplog) == []
+        assert len(setup_links(caplog)) == logged
 
 
 class TestExplicitBasicAuth:
     BASIC = {"auth": {"type": "basic", "algorithm": "plaintext", "users": {"alice": {"password": "s3cret"}}}}
 
-    async def test_configured_users_work_and_nothing_is_generated(self, boot, caplog):
+    async def test_configured_users_work_and_no_link_is_logged(self, boot, caplog):
         system, client = await boot(self.BASIC)
         accounts = system.provider.get("storage").accounts
         for _attempt in range(100):  # the storage worker imports the configured users once the database is ready
@@ -219,26 +268,32 @@ class TestExplicitBasicAuth:
         assert (await get(client, "GET", "/"))["status"] == 401
         assert (await get(client, "GET", "/", basic("alice", "s3cret")))["status"] == 200
         assert (await get(client, "GET", "/", basic("admin", "s3cret")))["status"] == 401
-        assert logged_credentials(caplog) == []
-        assert not [r for r in caplog.records if r.levelno >= logging.WARNING and "ashboard" in r.getMessage()]
+        assert setup_links(caplog) == []
+
+    async def test_a_browser_keeps_the_basic_prompt(self, boot):
+        _, client = await boot(self.BASIC)
+
+        response = await get(client, "GET", "/")
+
+        assert response["status"] == 401 and header(response, b"www-authenticate").startswith(b"Basic")
+
+    async def test_the_api_of_an_ended_session_does_not_prompt_for_a_password(self, boot):
+        _, client = await boot(self.BASIC)
+
+        response = await get(client, "GET", "/api/system/", [(b"cookie", b"harp_session=" + b"x" * 43)])
+
+        assert response["status"] == 401 and header(response, b"www-authenticate") is None
 
 
 class TestMetricsPort:
     async def test_metrics_port_serves_only_metrics(self, boot):
-        system, _ = await boot({"auth": {"type": "none"}, "metrics_port": 9100})
+        system, _ = await boot({"metrics_port": 9100})
         client = ASGICommunicator(system.asgi_app)
         await client.asgi_lifespan_startup()
 
         assert (await client.http_get("/metrics", port=9100))["status"] == 200
         for path in ("/", "/api/system/settings", "/api/transactions/", "/anything"):
             assert (await client.http_get(path, port=9100))["status"] == 404
-
-    async def test_metrics_port_stays_open_under_default_auth(self, boot):
-        system, _ = await boot({"metrics_port": 9100})
-        client = ASGICommunicator(system.asgi_app)
-        await client.asgi_lifespan_startup()
-
-        assert (await client.http_get("/metrics", port=9100))["status"] == 200
 
 
 class TestWebsocket:

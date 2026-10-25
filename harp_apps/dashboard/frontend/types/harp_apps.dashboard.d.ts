@@ -6,6 +6,23 @@
  */
 
 declare namespace Apps.Dashboard {
+  export interface ChangePasswordInput {
+    current: string;
+    new: string;
+  }
+  /**
+   * Routes that need nothing still take a JSON body (``{}``), which is what keeps a cross-site form out.
+   */
+  export interface NoInput {}
+  export interface SetupInput {
+    secret: string;
+    username: string;
+    password: string;
+  }
+  export interface SignInInput {
+    username: string;
+    password: string;
+  }
   export interface SystemPutProxyInput {
     endpoint: string;
     action: "up" | "down" | "checking";
@@ -33,9 +50,9 @@ declare namespace Apps.Dashboard {
      */
     metrics_port?: number | null;
     /**
-     * Authentication settings for the dashboard. When not set, the dashboard requires a login with the `admin` user and a random password generated and logged at each boot. Use `type: none` to explicitly serve the dashboard without authentication.
+     * Deprecated. Dashboard users declared in the configuration, signing in with HTTP Basic. They are imported once as accounts. When not set, the dashboard signs people in with a password, and a setup link logged at start lets the first administrator in. There is no way to serve the dashboard without authentication.
      */
-    auth?: (BasicAuthSettings | NoAuthSettings) | null;
+    auth?: BasicAuthSettings | null;
     /**
      * Development server settings, only useful for internal frontend development.
      */
@@ -110,15 +127,6 @@ declare namespace Apps.Dashboard {
   }
   export interface User {
     password: string;
-  }
-  /**
-   * Explicit opt-out: the dashboard is served without any authentication.
-   */
-  export interface NoAuthSettings {
-    /**
-     * Authentication type. «none» serves the dashboard without authentication.
-     */
-    type?: "none";
   }
   export interface DevserverSettings {
     /**

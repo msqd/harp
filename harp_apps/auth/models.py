@@ -4,11 +4,24 @@ The table descends from storage's ``users`` (favourites keep their author), whic
 ``Base``: every model shares it.
 """
 
+import re
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import TIMESTAMP, CheckConstraint, Enum, Integer, String, case, func, select, update
+from sqlalchemy import (
+    TIMESTAMP,
+    CheckConstraint,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+    case,
+    func,
+    select,
+    update,
+)
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from sqlalchemy.types import TypeDecorator
@@ -30,6 +43,22 @@ RESERVED_USERNAMES = frozenset({SYSTEM_ACCOUNT_USERNAME, IMPORT_MARKER_USERNAME}
 
 #: ``disabled_reason`` of the accounts the migration disabled, waiting for the one-time import.
 MIGRATED = "migrated"
+
+
+_USERNAME_SHAPE = re.compile(r"[A-Za-z0-9._@+-]{1,64}")
+
+
+class UsernameRefused(ValueError):
+    """The username cannot be used for a new account; the message is safe to show."""
+
+
+def check_username(username: str) -> None:
+    """Raises :class:`UsernameRefused` unless a new account may have this name: not a system account's, and short, with
+    nothing a login form or a log line could mistake."""
+    if username in RESERVED_USERNAMES:
+        raise UsernameRefused("This username is reserved.")
+    if not _USERNAME_SHAPE.fullmatch(username):
+        raise UsernameRefused("A username has 1 to 64 letters, digits, or any of . _ @ + -")
 
 
 class ReservedUsernameError(ValueError):
@@ -195,3 +224,159 @@ class AccountsRepository(Repository):
             await session.commit()
         if result.rowcount == 0:
             raise NoResultFound(username)
+
+
+#: The sign-in method of a password identity: ``issuer`` is empty and ``subject`` is the username.
+PASSWORD_METHOD = "password"  # pragma: allowlist secret
+
+
+class Identity(Base):
+    """The link between an account and one sign-in method, such as "alice, with a password"."""
+
+    __tablename__ = "auth_identities"
+
+    id = mapped_column(Integer(), primary_key=True, autoincrement=True)
+    account_id: Mapped[int] = mapped_column(
+        ForeignKey("auth_accounts.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    method: Mapped[str] = mapped_column(String(16), nullable=False)
+    #: The OIDC ``iss``, empty for a password.
+    issuer: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    #: The login of a password, the ``sub`` of an OIDC provider.
+    subject: Mapped[str] = mapped_column(String(255), nullable=False)
+    #: PHC string, for passwords only.
+    password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCTimestamp(), nullable=False, server_default=func.now())
+    last_sign_in_at: Mapped[Optional[datetime]] = mapped_column(UTCTimestamp(), nullable=True)
+
+    __table_args__ = (UniqueConstraint("method", "issuer", "subject"),)
+
+
+class Session(Base):
+    """One browser signed in to an account through one identity. The cookie holds a secret, only its hash is kept."""
+
+    __tablename__ = "auth_sessions"
+
+    id = mapped_column(Integer(), primary_key=True, autoincrement=True)
+    #: SHA-256 (hex) of the secret in the cookie: reading the table gives nobody a session.
+    secret_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    account_id: Mapped[int] = mapped_column(
+        ForeignKey("auth_accounts.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    identity_id: Mapped[int] = mapped_column(ForeignKey("auth_identities.id", ondelete="CASCADE"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(UTCTimestamp(), nullable=False, server_default=func.now())
+    #: Written at most once a minute.
+    last_seen_at: Mapped[datetime] = mapped_column(UTCTimestamp(), nullable=False, server_default=func.now())
+    expires_at: Mapped[datetime] = mapped_column(UTCTimestamp(), nullable=False)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(UTCTimestamp(), nullable=True)
+    user_agent: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    ip: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
+
+
+class Invitation(Base):
+    """An admin's single-use offer of an account with a role. Here only the setup link uses it (no ``invited_by``)."""
+
+    __tablename__ = "auth_invitations"
+
+    id = mapped_column(Integer(), primary_key=True, autoincrement=True)
+    #: SHA-256 (hex) of the secret in the link.
+    secret_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    role: Mapped[Role] = mapped_column(RoleType(), nullable=False)
+    expected_email: Mapped[Optional[str]] = mapped_column(String(320), nullable=True)
+    #: Who offered it; empty for the setup link, which nobody offered.
+    invited_by: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("auth_accounts.id", ondelete="SET NULL"), nullable=True
+    )
+    #: The account it created, filled when it is accepted.
+    account_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("auth_accounts.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(UTCTimestamp(), nullable=False, server_default=func.now())
+    expires_at: Mapped[datetime] = mapped_column(UTCTimestamp(), nullable=False)
+    accepted_at: Mapped[Optional[datetime]] = mapped_column(UTCTimestamp(), nullable=True)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(UTCTimestamp(), nullable=True)
+
+    __table_args__ = (CheckConstraint("role IN ('viewer', 'editor', 'admin')", name="role"),)
+
+    @validates("expected_email")
+    def _lower_case_expected_email(self, key, value):
+        return None if value is None else value.lower()
+
+
+class IdentitiesRepository(Repository):
+    Type = Identity
+
+    async def find_password(self, username: str) -> Optional[tuple[Identity, Account]]:
+        """The password identity of ``username`` and its account, or None."""
+        async with self.session_factory() as session:
+            row = (
+                await session.execute(
+                    select(Identity, Account)
+                    .join(Account, Account.id == Identity.account_id)
+                    .where(
+                        Identity.method == PASSWORD_METHOD,
+                        Identity.issuer == "",
+                        Identity.subject == username,
+                    )
+                )
+            ).first()
+        return None if row is None else (row[0], row[1])
+
+    async def find_password_of_account(self, account_id: int) -> Optional[Identity]:
+        async with self.session_factory() as session:
+            return (
+                await session.execute(
+                    select(Identity).where(Identity.account_id == account_id, Identity.method == PASSWORD_METHOD)
+                )
+            ).scalar_one_or_none()
+
+    async def set_password_hash(self, identity_id: int, password_hash: str) -> None:
+        async with self.session_factory() as session:
+            await session.execute(
+                update(Identity).where(Identity.id == identity_id).values(password_hash=password_hash)
+            )
+            await session.commit()
+
+    async def signed_in(self, identity_id: int, at: datetime) -> None:
+        async with self.session_factory() as session:
+            await session.execute(update(Identity).where(Identity.id == identity_id).values(last_sign_in_at=at))
+            await session.commit()
+
+
+class SessionsRepository(Repository):
+    Type = Session
+
+    async def find_by_secret_hash(self, secret_hash: str) -> Optional[Session]:
+        async with self.session_factory() as session:
+            return (
+                await session.execute(select(Session).where(Session.secret_hash == secret_hash))
+            ).scalar_one_or_none()
+
+    async def seen(self, session_id: int, at: datetime) -> None:
+        async with self.session_factory() as session:
+            await session.execute(update(Session).where(Session.id == session_id).values(last_seen_at=at))
+            await session.commit()
+
+    async def _revoke(self, at: datetime, *criteria) -> int:
+        async with self.session_factory() as session:
+            result = await session.execute(
+                update(Session).where(Session.revoked_at.is_(None), *criteria).values(revoked_at=at)
+            )
+            await session.commit()
+        return result.rowcount
+
+    async def revoke(self, session_id: int, at: datetime) -> int:
+        """Ends one session (sign out). Returns how many were open."""
+        return await self._revoke(at, Session.id == session_id)
+
+    async def revoke_all(self, account_id: int, at: datetime) -> int:
+        """Ends every open session of the account (sign out everywhere), with a single UPDATE."""
+        return await self._revoke(at, Session.account_id == account_id)
+
+    async def revoke_others(self, account_id: int, keep_id: int, at: datetime) -> int:
+        """Ends every open session of the account but one."""
+        return await self._revoke(at, Session.account_id == account_id, Session.id != keep_id)
+
+
+class InvitationsRepository(Repository):
+    Type = Invitation

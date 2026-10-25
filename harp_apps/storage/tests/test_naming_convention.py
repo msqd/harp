@@ -122,14 +122,19 @@ async def create_all_names() -> dict:
         await engine.dispose()
 
 
+AUTH_TABLES_CREATED_AFTER = {"auth_identities", "auth_sessions", "auth_invitations"}
+
+
 def as_named_by_the_naming_revision(names: dict) -> dict:
-    """The naming revision predates the auth branch, which renames ``users``: read the models as it knew them."""
+    """The naming revision predates the auth branch, which renames ``users`` and creates its other tables: read the
+    models as it knew them."""
     return {
         ("users" if table == "auth_accounts" else table, *key): (
             value.replace("auth_accounts", "users") if isinstance(value, str) else value
         )
         for (table, *key), value in names.items()
         if (table, *key) != ("auth_accounts", "uq", ("email",))  # a column the naming revision has not seen
+        and table not in AUTH_TABLES_CREATED_AFTER
     }
 
 

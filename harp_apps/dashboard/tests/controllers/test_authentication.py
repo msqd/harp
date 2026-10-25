@@ -18,10 +18,10 @@ from harp_apps.dashboard.tests._mixins import RoleNamedActors
 from harp_apps.storage.types import IStorage
 
 
-async def test_controller_no_auth():
+async def test_controller_without_configured_users_lets_nobody_in_without_a_session():
     controller = await _create_mock_controller()
     response = await controller(HttpRequest(), AsyncMock())
-    assert response.status == 404
+    assert response.status == 401
 
 
 async def test_controller_auth_plaintext():
@@ -176,7 +176,7 @@ def test_cache_keys_differ_between_instances():
 async def _create_mock_controller(settings: DashboardSettings = None):
     controller = DashboardController(
         storage=cast(IStorage, Mock(spec=IStorage)),
-        settings=settings or DashboardSettings(auth={"type": "none"}, devserver={"enabled": True, "port": 5173}),
+        settings=settings or DashboardSettings(devserver={"enabled": True, "port": 5173}),
         http_client=Mock(spec=AsyncClient),
         actors=RoleNamedActors(),
     )

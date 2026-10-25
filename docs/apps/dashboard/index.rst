@@ -58,20 +58,14 @@ Internal implementation: :class:`DashboardSettings <harp_apps.dashboard.settings
 Authentication
 --------------
 
-Configuration for dashboard user authentication.
+**The dashboard requires a sign-in, and there is no way to turn it off.** People sign in with a username and a password
+at ``/signin``; with no account yet, the setup link HARP logs at start creates the first administrator. Accounts,
+roles, sessions and the setup link are the business of the :doc:`auth application </apps/auth/index>`. Every route of
+the dashboard port is behind a session, ``/metrics`` included; only the sign-in and setup pages, and the requests they
+make, are reachable without one.
 
-**By default, the dashboard requires a login.** Without ``dashboard.auth``, HARP generates a random password for the
-``admin`` user at each start and logs it once:
-
-.. code-block:: text
-
-    Dashboard login (generated for this boot only): username=admin password=<password> ...
-
-The password is new at every start, kept only as a hash in memory, and never shown in the settings, the storage or any
-other log line. Every route of the dashboard port is behind it, ``/metrics`` included. In a container, read it with
-``docker logs <container>``.
-
-To choose your own users, configure basic authentication: nothing is generated then.
+Configuring users in ``dashboard.auth`` is **deprecated**: they sign in with HTTP Basic, their passwords stay verified
+from the configuration, and they are imported once as ``admin`` accounts.
 
 .. literalinclude:: ./examples/auth.yml
     :language: yaml
@@ -84,19 +78,17 @@ Internal implementation: :class:`BasicAuthSettings <harp_apps.dashboard.settings
 
 .. include:: ./_howto_auth_hash.rst
 
-Each user is an account of the :doc:`auth application </apps/auth/index>`, which gives it a role (``viewer``,
-``editor`` or ``admin``) that decides the pages and actions it may use. Users declared here are ``admin``.
+Each user is an account of the auth application, which gives it a role (``viewer``, ``editor`` or ``admin``) that
+decides the pages and actions it may use. Users declared here are ``admin``.
 
-To explicitly serve the dashboard without authentication, set the type to ``none`` (or
-``--set dashboard.auth.type=none``).
+A browser fetching a page without a session is sent to ``/signin``, except when ``dashboard.auth`` is configured, where
+the Basic prompt is kept. The dashboard's own requests (``/api``) get a ``401`` without ``WWW-Authenticate``, so that a
+session that ended never makes the browser ask for a Basic password.
 
-.. literalinclude:: ./examples/auth.none.yml
-    :language: yaml
+.. note::
 
-.. warning::
+    ``dashboard.auth.type: none``, which served the dashboard to anyone, was removed: it is refused at start.
 
-    An unauthenticated dashboard exposes everything that goes through the proxy to anyone who can reach its port. HARP
-    logs a warning at every start. Only use it behind a network boundary you trust.
 
 Metrics port
 ------------

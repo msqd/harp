@@ -33,12 +33,11 @@ Ingress
 
 You can enable the dashboard ingress by setting ``ingress.enabled`` to ``true`` in your values.
 
-The dashboard requires a login. Without ``dashboard.auth`` in ``harp.settings``, HARP generates a password for the
-``admin`` user at each pod start and prints it once in the pod logs (``kubectl logs <pod> | grep "Dashboard login"``),
-so it changes whenever the pod restarts. To choose your own users, set ``dashboard.auth`` through ``harp.settings``
-(see :doc:`/apps/dashboard/index`). Settings are rendered into the chart's ConfigMap, which is readable by anyone who can read
-ConfigMaps in the namespace: use password hashes (``pbkdf2_sha256``), never plain passwords. ``dashboard.auth.type: none``
-serves the dashboard unauthenticated and logs a warning at every start: do not use it with a public ingress.
+The dashboard requires a sign-in. While no administrator exists, HARP prints a setup link in the pod logs at each pod
+start (``kubectl logs <pod> | grep "setup#"``); opening it creates the first administrator. Set
+``dashboard.public_url`` so that the link names your ingress. See :doc:`/apps/auth/index`. Users declared in
+``dashboard.auth`` (deprecated) are rendered into the chart's ConfigMap, which is readable by anyone who can read
+ConfigMaps in the namespace: use password hashes (``pbkdf2_sha256``), never plain passwords.
 
 
 Database
