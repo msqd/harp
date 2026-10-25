@@ -8,7 +8,7 @@ import pytest
 import respx
 from hishel import Headers, Request, Response, SpecificationPolicy
 
-from harp_apps.http_cache.coalescing import Coalescer
+from harp_apps.http_cache.coalescing import MAX_BODY_SIZE_METADATA, Coalescer
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
 from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
@@ -233,25 +233,80 @@ class TestStalledLeader:
         assert waited < 0.05
 
 
+def _chunked(chunks: int, headers=CACHEABLE, size: int = 4):
+    """A cacheable response of ``chunks`` 4-byte chunks, and how many chunks have been read from it."""
+    read = []
+
+    async def body():
+        for _ in range(chunks):
+            read.append(1)
+            yield b"x" * size
+
+    async def send(request):
+        return Response(status_code=200, headers=Headers(headers), stream=body(), metadata={"hishel_stored": True})
+
+    return send, read
+
+
+def _request(cap: int | None) -> Request:
+    return Request(method="GET", url=URL, metadata={MAX_BODY_SIZE_METADATA: cap})
+
+
 @pytest.mark.asyncio
 class TestReadAhead:
-    async def test_a_body_larger_than_the_read_ahead_follows_its_client(self):
-        read = 0
+    async def test_a_body_larger_than_the_cap_follows_its_client(self):
+        send, read = _chunked(10)
 
-        async def body():
-            nonlocal read
-            for _ in range(10):
-                read += 1
-                yield b"xxxx"
-
-        async def send(request):
-            return Response(
-                status_code=200, headers=Headers(CACHEABLE), stream=body(), metadata={"hishel_stored": True}
-            )
-
-        coalescer = Coalescer(read_ahead=8)
-        response = await coalescer.run("k", Request(method="GET", url=URL), send)
+        response = await Coalescer().run("k", _request(8), send)
         await asyncio.sleep(0.05)
 
-        assert read < 10
+        assert len(read) < 10
         assert [chunk async for chunk in response.stream] == [b"xxxx"] * 10
+
+    async def test_a_body_within_the_cap_is_read_ahead_of_its_client(self):
+        send, read = _chunked(10)
+
+        response = await Coalescer().run("k", _request(64), send)
+        await asyncio.sleep(0.05)
+
+        assert len(read) == 10
+        assert [chunk async for chunk in response.stream] == [b"xxxx"] * 10
+
+    async def test_a_cap_above_the_default_allows_a_larger_read_ahead(self):
+        send, read = _chunked(3, size=1024 * 1024)
+
+        await Coalescer().run("k", _request(8 * 1024 * 1024), send)
+        await asyncio.sleep(0.05)
+
+        assert len(read) == 3
+
+    async def test_a_body_declared_larger_than_the_cap_is_not_read_ahead(self):
+        send, read = _chunked(10, {**CACHEABLE, "content-length": "40"})
+
+        response = await Coalescer().run("k", _request(8), send)
+        await asyncio.sleep(0.05)
+
+        assert read == []
+        assert [chunk async for chunk in response.stream] == [b"xxxx"] * 10
+
+
+@pytest.mark.asyncio
+class TestSlowHeaders:
+    async def test_a_flight_that_timed_out_a_waiter_before_its_headers_takes_no_new_waiter(self):
+        origin = Origin(delay=3.0)
+        with respx.mock:
+            respx.get(URL).mock(side_effect=origin)
+            async with _client(coalescing_timeout=1.0) as client:
+                leader = asyncio.create_task(client.get(URL))
+                await asyncio.sleep(0.05)
+                waiter = asyncio.create_task(client.get(URL))
+                await asyncio.sleep(1.2)  # the waiter has given up on the flight, whose headers are not there yet
+                started = time.monotonic()
+                late = asyncio.create_task(client.get(URL))
+                await asyncio.sleep(0.2)
+                waited = time.monotonic() - started
+                late.cancel()
+                await asyncio.gather(leader, waiter, return_exceptions=True)
+
+        assert origin.fetches == 3
+        assert waited < 0.5

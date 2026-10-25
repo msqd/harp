@@ -64,9 +64,13 @@ A request never fails because of it. It waits at most ``coalescing_timeout`` sec
 share: a response that cannot be stored, or one the cache does not retain.
 
 The waiters are released once the cache has the body, not once the leading client has read it: a client that reads
-slowly, or stops reading, delays nobody. To allow that, up to 1 MiB (``DEFAULT_MAX_RECORDED_BODY_SIZE``) of the body are
-read ahead of that client; a larger body is not stored, so its waiters fetch on their own at once. Once a waiter has given
-up on a fetch after ``coalescing_timeout``, later requests no longer wait for that fetch.
+slowly, or stops reading, delays nobody. To allow that, the body is read ahead of that client, up to the proxy's recording
+cap (``proxy.max_recorded_body_size``, see `Response size`_). A body larger than the cap, or declared so by its
+``Content-Length``, is not stored: its waiters fetch on their own at once, and it is read at the client's pace. Once a
+waiter has given up on a fetch after ``coalescing_timeout``, later requests no longer wait for that fetch.
+
+One wait remains: a request whose own variant is cached can still wait, at most ``coalescing_timeout``, for another
+variant's fetch whose headers have not arrived yet. That wait depends on the origin, not on any client.
 
 On a cold key the ``Vary`` of the resource is not known until the first response arrives, so a request for another
 variant waits for that response's headers, not for its body.

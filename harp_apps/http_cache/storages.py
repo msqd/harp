@@ -23,7 +23,7 @@ from harp_apps.storage.constants import (
     SKIP_RESPONSE_STORAGE,
 )
 from harp_apps.storage.types import IBlobStorage
-from .coalescing import STORED_METADATA
+from .coalescing import MAX_BODY_SIZE_METADATA, STORED_METADATA
 from .adapters import AsyncStorageAdapter, stored_at_of, variant_id, variants_of
 from .streams import StoredOnceRead
 
@@ -46,7 +46,6 @@ logger = get_logger(__name__)
 HEADERS_ENCODING = "iso-8859-1"
 
 #: Request metadata key holding the largest response body the cache may store (the proxy's recording cap).
-MAX_BODY_SIZE_METADATA = "harp_max_recorded_body_size"
 
 #: Request metadata key holding the :class:`~harp.models.redaction.Redaction` in force for the request.
 REDACTION_METADATA = "harp_redaction"

@@ -19,15 +19,20 @@ from harp_apps.storage.constants import DEFAULT_MAX_RECORDED_BODY_SIZE
 #: Response metadata key set once the response body is stored: what the waiters of a flight are waiting for.
 STORED_METADATA = "harp_cache_stored"
 
-DEFAULT_TIMEOUT = 30.0
+#: Request metadata key holding the endpoint's recording cap: the cache stores no body larger.
+MAX_BODY_SIZE_METADATA = "harp_max_recorded_body_size"
 
-#: Bytes of a leader's body read ahead of its client: the cache stores no body larger, so nothing more is worth it.
-DEFAULT_READ_AHEAD = DEFAULT_MAX_RECORDED_BODY_SIZE
+DEFAULT_TIMEOUT = 30.0
 
 
 def _vary_names(response: Response) -> frozenset[str]:
     values = response.headers.get_list("vary") or []
     return frozenset(name.strip().lower() for value in values for name in value.split(",") if name.strip())
+
+
+def _declared_size(response: Response) -> int:
+    value = response.headers.get("content-length")
+    return int(value) if value is not None and value.isdigit() else 0
 
 
 class Flight:
@@ -63,10 +68,8 @@ class Flight:
 
 
 class Coalescer:
-    def __init__(self, timeout: float = DEFAULT_TIMEOUT, read_ahead: int = DEFAULT_READ_AHEAD):
-        """``read_ahead`` is how many bytes of a body are read for the cache ahead of a slow client."""
+    def __init__(self, timeout: float = DEFAULT_TIMEOUT):
         self._timeout = timeout
-        self._read_ahead = read_ahead
         self._flights: dict[tuple[str, str], list[Flight]] = {}
 
     async def run(self, key: str, request: Request, send: tp.Callable[[Request], tp.Awaitable[Response]]) -> Response:
@@ -89,7 +92,9 @@ class Coalescer:
         while True:
             flights = self._flights.get(slot, [])
             # Until a leader's response is known, nobody can tell which variant it fetches.
-            undescribed = next((flight for flight in flights if not flight.described.is_set()), None)
+            undescribed = next(
+                (flight for flight in flights if not flight.described.is_set() and not flight.expired), None
+            )
             if undescribed is None:
                 return next(
                     (
@@ -99,7 +104,10 @@ class Coalescer:
                     ),
                     None,
                 )
-            if not await self._wait(undescribed.described, deadline) or undescribed.serves(request):
+            if not await self._wait(undescribed.described, deadline):
+                undescribed.expired = True
+                return undescribed
+            if undescribed.serves(request):
                 return undescribed  # even if it has finished since: how it ended is for the waiter to read
 
     async def _wait(self, event: asyncio.Event, deadline: float) -> bool:
@@ -109,7 +117,7 @@ class Coalescer:
             return False
         return True
 
-    async def _lead(self, slot, request, send) -> Response:
+    async def _lead(self, slot, request: Request, send) -> Response:
         flight = Flight(request)
         self._flights.setdefault(slot, []).append(flight)
         try:
@@ -122,8 +130,12 @@ class Coalescer:
             # Served from the cache, or not storable: a hit for the waiters, or nothing to share with them.
             self._release(slot, flight, shareable=bool(response.metadata.get("hishel_from_cache")))
             return response
+        limit = request.metadata.get(MAX_BODY_SIZE_METADATA) or DEFAULT_MAX_RECORDED_BODY_SIZE
+        if _declared_size(response) > limit:
+            self._release(slot, flight)  # never stored: no use reading it ahead of its client
+            return response
         release = lambda shareable: self._release(slot, flight, shareable)  # noqa: E731
-        return replace(response, stream=_ReadAhead(response, release, self._read_ahead))
+        return replace(response, stream=_ReadAhead(response, release, limit))
 
     def _release(self, slot: tuple[str, str], flight: Flight, shareable: bool = False) -> None:
         flights = self._flights.get(slot, [])
