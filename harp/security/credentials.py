@@ -112,5 +112,7 @@ def strip_harp_set_cookies(headers):
 
 
 def _sets_session_cookie(set_cookie: str) -> bool:
-    pair = set_cookie.lstrip("= \t")
-    return any(pair.startswith(f"{name}=") for name in SESSION_COOKIE_NAMES)
+    pair = set_cookie.split(";", 1)[0].lstrip("= \t")
+    if "=" not in pair:
+        return False
+    return pair.split("=", 1)[0].strip(" \t") in SESSION_COOKIE_NAMES
