@@ -8,7 +8,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BeforeValidator, Field, model_validator
 
 from harp import get_logger
-from harp.config import Configurable
+from harp.config import Configurable, Secret
 from harp.utils.config import yaml
 from harp_apps.dashboard.constants import TAlgorithm
 
@@ -32,7 +32,7 @@ def _load(value):
 
 
 class User(Configurable):
-    password: str
+    password: Secret
 
     @model_validator(mode="before")
     @classmethod
@@ -97,7 +97,7 @@ class BasicAuthSettings(Configurable):
     def check(self, username, password):
         """Blocking check (hashing is slow by design), prefer :meth:`acheck` from the event loop."""
         user = self.users.get(username)
-        stored = user.password if user else self._dummy_hash
+        stored = user.password.get_secret_value() if user else self._dummy_hash
 
         try:
             matches = self.algorithm_impl(password, stored)

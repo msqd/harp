@@ -175,7 +175,13 @@
     },
     "User": {
       "additionalProperties": false,
-      "properties": { "password": { "type": "string" } },
+      "properties": {
+        "password": {
+          "format": "password",
+          "type": "string",
+          "writeOnly": true
+        }
+      },
       "required": ["password"],
       "title": "User",
       "type": "object"

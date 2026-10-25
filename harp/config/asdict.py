@@ -6,24 +6,51 @@ from typing import Literal
 
 from pydantic import RedisDsn
 from pydantic.networks import _BaseMultiHostUrl, _BaseUrl
+from pydantic.types import _SecretBase
 from pydantic_core import MultiHostUrl, Url
 
-MASK = "***"
+from .secrets import MASK, REVEAL_SECRETS
 
-# Only the userinfo of the authority is touched (up to the first `/`, `?` or `#`). The username may be empty:
-# `redis://:password@host` is the usual Redis form.
-mask_password_re = re.compile(r"(://[^:/?#@\s]*:)([^/?#\s]+)(@)")
+# The authority of a URL, from `scheme://` up to the first `/`, `?` or `#`. A multi-host DSN holds one `userinfo@host`
+# per comma-separated entry, and each one has its own credentials.
+_authority_re = re.compile(r"(?P<scheme>[A-Za-z][A-Za-z0-9+.-]*)(?P<sep>://)(?P<authority>[^/?#\s]*)")
 
-# asyncpg also reads the password from a `?password=` query parameter.
-mask_query_password_re = re.compile(r"([?&]password=)[^&#\s'\"]*", re.IGNORECASE)
+# Over HTTP, a username without a password is still a credential: it is sent as the Basic auth username, which is where
+# API tokens go. Other schemes (a database user) keep it.
+_TOKEN_USERNAME_SCHEMES = frozenset({"http", "https"})
+
+# Query parameters that carry a secret by convention (asyncpg reads the password of a DSN from `?password=`).
+_SECRET_QUERY_PARAMETERS = (
+    "password|passwd|pwd|key|api[_-]?key|token|access[_-]?token|auth|secret|client[_-]?secret|signature|sig"
+)
+mask_query_password_re = re.compile(rf"([?&](?:{_SECRET_QUERY_PARAMETERS})=)[^&#\s'\"]*", re.IGNORECASE)
 
 # Dictionary keys whose string value is a secret by name, whatever the algorithm that protects it.
 SECRET_KEYS = frozenset({"password"})
 
 
+def _mask_userinfo(host: str, scheme: str) -> str:
+    userinfo, at, rest = host.rpartition("@")
+    if not at:
+        return host
+    username, colon, _ = userinfo.partition(":")
+    if colon:
+        return f"{username}:{MASK}@{rest}"
+    if username and scheme.lower() in _TOKEN_USERNAME_SCHEMES:
+        return f"{MASK}@{rest}"
+    return host
+
+
+def _mask_authority(match: re.Match) -> str:
+    scheme = match["scheme"]
+    hosts = ",".join(_mask_userinfo(host, scheme) for host in match["authority"].split(","))
+    return f"{scheme}{match['sep']}{hosts}"
+
+
 def mask_credentials(value: str) -> str:
-    """Replace the password of any ``scheme://user:password@host`` or ``?password=`` found in ``value``."""
-    value = mask_password_re.sub(rf"\1{MASK}\3", value)
+    """Hide the credentials of any URL found in ``value``: the password of every ``scheme://user:password@host``, the
+    token used as the username of an HTTP URL, and the query parameters that carry a secret."""
+    value = _authority_re.sub(_mask_authority, value)
     return mask_query_password_re.sub(rf"\1{MASK}", value)
 
 
@@ -52,8 +79,13 @@ def asdict(
     verbose=False,
     mode: Literal["json", "python"] | str = "json",
 ):
+    """Dump ``obj`` to plain data. With ``secure``, secrets are masked: first by type (``Secret`` settings and URL
+    types), then by shape as a fallback (credentials found in any string, values of ``password`` keys)."""
     if isinstance(obj, URL_TYPES):
         return url_serializer(obj, secure=secure, verbose=verbose)
+
+    if isinstance(obj, _SecretBase):
+        return MASK if secure else obj.get_secret_value()
 
     if hasattr(obj, "_asdict"):
         return obj._asdict(secure=secure)
@@ -61,7 +93,14 @@ def asdict(
     _asdict = partial(asdict, secure=secure, verbose=verbose, mode=mode)
 
     if hasattr(obj, "model_dump"):
-        return _asdict(obj.model_dump(mode=mode, exclude_unset=not verbose, exclude_defaults=not verbose))
+        return _asdict(
+            obj.model_dump(
+                mode=mode,
+                exclude_unset=not verbose,
+                exclude_defaults=not verbose,
+                context={REVEAL_SECRETS: not secure},
+            )
+        )
 
     # A DSN only keeps its own type as far as the nearest `model_dump`: in "json" mode pydantic
     # renders it to a plain string on the way out, and the serializers above never see it. Masking
@@ -89,7 +128,7 @@ def asdict(
             # dict as it requires the default_factory as its first arg.
             result = type(obj)(getattr(obj, "default_factory"))
             for k, v in obj.items():
-                result[_asdict(k)] = asdict(v, secure=secure)
+                result[_asdict(k)] = _mask_secret_value(k, _asdict(v), secure)
             return result
         return type(obj)((_asdict(k), _mask_secret_value(k, _asdict(v), secure)) for k, v in obj.items())
 

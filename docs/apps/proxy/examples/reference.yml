@@ -7,6 +7,7 @@ proxy:
         type: IAsyncEventDispatcher
       type: harp_apps.proxy.controllers.HttpProxyController
     description: null
+    max_request_body_size: null
     name: my-endpoint
     port: 4000
     remote:
@@ -31,6 +32,7 @@ proxy:
         timeout: 10.0
         verify: true
   max_recorded_body_size: 1048576
+  max_request_body_size: null
   min_request_body_rate: 1024
   request_body_grace_period: 10.0
   tags:

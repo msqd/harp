@@ -459,25 +459,12 @@ class TestHttpProxyControllerWithStorage(
         assert "Age" in hit.headers
 
     @respx.mock
-    async def test_a_no_store_request_is_still_recorded_in_0_10(
+    async def test_a_no_store_request_suppresses_its_payload_recording(
         self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
     ):
-        """A client's `no-store` binds HARP's cache. In 0.10 it does not bind the transaction record.
+        """A caller's `no-store` binds the cache and suppresses payload recording (ADR-0002, #927).
 
-        This pins 0.10's behaviour. It is not an argument that the behaviour is right, and it is
-        **expected to be replaced**: https://github.com/msqd/harp/issues/927 was decided the other
-        way, and from 0.11 a caller's `no-store` suppresses payload recording while leaving the
-        transaction and message rows in place. The decision is recorded as ADR-0002, under
-        `docs/adr/`.
-
-        So if you are implementing #927 and this test fails, that is the point: rewrite it to assert
-        the new behaviour rather than treating the failure as a regression. An earlier version of
-        this docstring argued the opposite case on the grounds that the record is an operator's
-        audit trail. That argument is withdrawn: the record is best-effort and sheds under load
-        (#945), so it was never the thing that argument needed it to be.
-
-        Everything the cache is asked to forget is still asserted present here: the
-        transaction, both messages, both header blobs and both body blobs.
+        The transaction and both message rows stay, with their summaries; no headers, no bodies.
         """
         endpoint = respx.get("http://example.com/").mock(
             return_value=Response(200, content=b"Hello.", headers={"Cache-Control": "max-age=3600"})
@@ -504,14 +491,17 @@ class TestHttpProxyControllerWithStorage(
         assert endpoint.call_count == 2
         assert [response.headers["X-Cache"] for response in responses] == ["MISS", "MISS"]
 
-        # The transaction record kept everything anyway, both times.
+        # The record keeps that the calls happened, without their payload, and says why.
         transactions = await self._find_transactions_from_storage(sql_storage)
         assert len(transactions) == 2
         for transaction in transactions:
             assert transaction.extras["cached"] is False
+            assert {"no-store-request", "no-store-response"} <= set(transaction.markers)
             request_message, response_message = transaction.messages
-            assert (await blob_storage.get(request_message.headers)).data == b"cache-control: no-store"
-            assert (await blob_storage.get(response_message.body)).data == b"Hello."
+            for message in (request_message, response_message):
+                assert message.summary
+                assert message.headers is None
+                assert message.body is None
 
     @respx.mock
     async def test_skip_storage_marker_set_by_filter_leaves_no_row(

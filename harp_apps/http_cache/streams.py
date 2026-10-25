@@ -8,6 +8,8 @@ import typing as tp
 
 import httpx
 
+from harp.http.decompression import BoundedDecoder
+
 
 async def aclose_source(body) -> None:
     """Close a body if it can be closed: hishel's own bodies (a stored entry's) cannot, and need not."""
@@ -35,14 +37,6 @@ class UpstreamBody:
         await self._response.aclose()
 
 
-def body_decoder(content_encoding: tp.Optional[str]):
-    """The decoder httpx applies to a body sent with this ``Content-Encoding``, the one the proxy reads it through.
-
-    Built by httpx itself, so the cache measures a body exactly as the proxy does."""
-    headers = [("content-encoding", content_encoding)] if content_encoding else []
-    return httpx.Response(200, headers=headers)._get_content_decoder()
-
-
 class StoredOnceRead:
     """Passes a body through and awaits ``on_end`` with it once read to its end, unless it is over ``limit`` bytes.
 
@@ -62,7 +56,7 @@ class StoredOnceRead:
         self._chunks = aiter(source)
         self._limit = limit
         self._on_end = on_end
-        self._decoder = body_decoder(content_encoding)
+        self._decoder = BoundedDecoder(content_encoding)
         self._body = bytearray()
         self._decoded_size = 0
         self._over = False
@@ -85,11 +79,14 @@ class StoredOnceRead:
             self._measure(lambda: self._decoder.decode(chunk))
         return chunk
 
-    def _measure(self, decode: tp.Callable[[], bytes]) -> None:
+    def _measure(self, decode: tp.Callable[[], tp.Iterator[bytes]]) -> None:
         if self._over:
             return
         try:
-            self._decoded_size += len(decode())
+            for piece in decode():
+                self._decoded_size += len(piece)
+                if self._decoded_size > self._limit:
+                    break
         except httpx.DecodingError:
             self._decoded_size = self._limit + 1
         if self._decoded_size > self._limit or len(self._body) > self._limit:

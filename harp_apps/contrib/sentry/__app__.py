@@ -39,7 +39,7 @@ async def on_ready(event: OnReadyEvent):
 
     from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
-    init_sentry(settings.dsn)
+    init_sentry(settings.dsn.get_secret_value())
     event.asgi_app = SentryAsgiMiddleware(event.asgi_app)
 
 
