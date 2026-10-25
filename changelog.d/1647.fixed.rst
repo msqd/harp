@@ -1,0 +1,1 @@
+Redis blob reads, existence checks and deletions stay under the ``harp:blob:`` prefix: other Redis keys answer 404 through ``/api/blobs/<id>``; only 40-hex-character ids (the pre-0.13 form) are still looked up under their bare key.
