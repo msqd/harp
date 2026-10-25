@@ -16,13 +16,19 @@ def _like_prefix(prefix: str) -> str:
     return prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
 
 
+def _instant(text: str) -> datetime:
+    """An ISO 8601 instant; one without a zone (``2026-10-01``) is UTC, the audit's clock."""
+    value = datetime.fromisoformat(text)
+    return value if value.tzinfo else value.replace(tzinfo=UTC)
+
+
 def _filters(query) -> list:
     """The conditions a request asks for; each one is on a column that has an index (``actor_label`` aside)."""
     conditions = []
     if since := query.get("since"):
-        conditions.append(AuditEvent.occurred_at >= datetime.fromisoformat(since))
+        conditions.append(AuditEvent.occurred_at >= _instant(since))
     if until := query.get("until"):
-        conditions.append(AuditEvent.occurred_at <= datetime.fromisoformat(until))
+        conditions.append(AuditEvent.occurred_at <= _instant(until))
     if actor := query.get("actor"):
         conditions.append(AuditEvent.actor_label == actor)
     if action := query.get("action"):
@@ -50,8 +56,8 @@ def _iso(value: datetime) -> str:
 
 
 def _serialize(row: AuditEvent, *, own_account_id: int | None = None, hide_foreign_origin: bool = False) -> dict:
-    """``hide_foreign_origin``: keep to the account where somebody else acted from (the ip and user agent of an Admin
-    who changed its role are none of its business)."""
+    """``hide_foreign_origin``: keep to the account how somebody else acted (the ip, user agent, credential id
+    and client of an Admin who changed its role are none of its business)."""
     foreign = hide_foreign_origin and row.actor_account_id != own_account_id
     return {
         "id": row.id,
@@ -62,8 +68,8 @@ def _serialize(row: AuditEvent, *, own_account_id: int | None = None, hide_forei
             "id": row.actor_account_id,
             "label": row.actor_label,
             "via": row.actor_via,
-            "viaId": row.actor_via_id,
-            "client": row.actor_client,
+            "viaId": None if foreign else row.actor_via_id,
+            "client": None if foreign else row.actor_client,
         },
         "ip": None if foreign else row.ip,
         "userAgent": None if foreign else row.user_agent,

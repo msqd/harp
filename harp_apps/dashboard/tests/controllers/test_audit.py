@@ -109,6 +109,13 @@ class TestAuditController(StorageTestFixtureMixin):
 
         assert [item["action"] for item in page["items"]] == ["b"]
 
+    async def test_a_period_given_as_days_is_read_as_utc(self, controller, sql_storage):
+        await self.seed(sql_storage, event(60 * 24 * 3, action="before"), event(0, action="inside"))
+
+        page = body(await controller.list(request_of(9, since="2026-10-24", until="2026-10-26")))
+
+        assert [item["action"] for item in page["items"]] == ["inside"]
+
     async def test_filters_by_actor_username(self, controller, sql_storage):
         await self.seed(sql_storage, event(actor_label="alice"), event(actor_label="bob"))
 
@@ -178,14 +185,24 @@ class TestAuditController(StorageTestFixtureMixin):
     async def test_my_activity_hides_where_someone_else_acted_from(self, controller, sql_storage):
         await self.seed(
             sql_storage,
-            event(1, action="by-me", actor_account_id=5),
-            event(0, action="by-admin", actor_account_id=6, target_type="account", target_id="5"),
+            event(1, action="by-me", actor_account_id=5, actor_via_id="211", actor_client="cli"),
+            event(
+                0,
+                action="by-admin",
+                actor_account_id=6,
+                actor_via_id="9",
+                actor_client="mcp",
+                target_type="account",
+                target_id="5",
+            ),
         )
 
         by_admin, by_me = body(await controller.mine(request_of(5, role=Role.VIEWER)))["items"]
 
         assert (by_me["ip"], by_me["userAgent"]) == ("10.0.0.1", "Firefox")
+        assert (by_me["actor"]["viaId"], by_me["actor"]["client"]) == ("211", "cli")
         assert (by_admin["ip"], by_admin["userAgent"]) == (None, None)
+        assert (by_admin["actor"]["viaId"], by_admin["actor"]["client"]) == (None, None)
 
     async def test_a_request_without_an_account_id_has_no_activity(self, controller, sql_storage):
         await self.seed(sql_storage, event(actor_account_id=None))

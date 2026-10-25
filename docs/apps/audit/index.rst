@@ -102,8 +102,8 @@ Audit page
 My account
     Every account (``GET /api/audit/mine``). The events whose actor is the account, or whose target is the account
     (``target_type: account`` and its id): its sign-ins, sessions, tokens and identities, to spot a device it does not
-    know. The same filters apply, and can only narrow it. Where somebody else acted from (``ip``, ``user_agent``) is
-    left out when that somebody is not the account: an Admin changing your role does not hand you their address.
+    know. The same filters apply, and can only narrow it. How somebody else acted (``ip``, ``user_agent``, the credential
+    id and the client) is left out when that somebody is not the account: an Admin changing your role does not hand you their address.
 
 Both answer ``{items, total, pages, perPage}``, with ``page`` choosing the page.
 
