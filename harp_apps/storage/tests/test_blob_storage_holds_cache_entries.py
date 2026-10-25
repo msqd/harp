@@ -1,7 +1,7 @@
 """
 The blobs table holds two kinds of identifier.
 
-Message blobs are keyed by a sha1 hexdigest, 40 characters. HTTP cache entries are keyed by
+Message blobs are keyed by a 40-character hexdigest. HTTP cache entries are keyed by
 hishel, which uses a sha256 hexdigest, 64 characters. Both land in ``blobs.id``.
 
 PostgreSQL and MySQL enforce the declared column width, so a column too narrow for the cache key

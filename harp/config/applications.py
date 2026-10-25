@@ -63,7 +63,6 @@ class Application:
         self.on_ready = on_ready
         self.on_shutdown = on_shutdown
 
-        # todo: implement dependencies
         self.dependencies = dependencies or []
 
     def defaults(self):

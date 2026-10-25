@@ -1,0 +1,1 @@
+Concurrent cache misses for one resource are one origin fetch: the other requests wait for the stored entry, and fetch on their own if it takes longer than ``coalescing_timeout``.

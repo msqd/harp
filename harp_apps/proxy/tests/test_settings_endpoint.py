@@ -43,6 +43,7 @@ class TestEndpointSettingsWithCustomController(BaseConfigurableTest):
     expected_verbose = {
         **expected,
         "description": None,
+        "max_request_body_size": None,
         "remote": None,
         "controller": custom_controller,
     }
@@ -58,6 +59,7 @@ class TestEndpointSettingsWithRemote(BaseConfigurableTest):
     expected_verbose = {
         **expected,
         "description": None,
+        "max_request_body_size": None,
         "remote": {
             "break_on": ["network_error", "unhandled_exception"],
             "check_after": 10.0,

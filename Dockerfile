@@ -1,22 +1,23 @@
-ARG PYTHON_VERSION=3.13
-FROM python:${PYTHON_VERSION}-slim
+# Pinned by digest, bumped by Dependabot (docker ecosystem). Keep the tag next to the digest.
+FROM python:3.13-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962 AS builder
+
+# dist/ holds the CI wheel and constraints.txt, the runtime lock exported by `bin/check_docker_lock.py export`:
+# the image installs the versions CI tested, not the newest in the wheel's ranges.
+COPY dist/*.whl dist/constraints.txt /tmp/wheels/
+
+RUN pip install --no-cache-dir --prefix=/install -c /tmp/wheels/constraints.txt "harp-proxy[postgresql,mysql,sentry] @ file://$(ls /tmp/wheels/*.whl)"
+
+
+FROM python:3.13-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962
 
 WORKDIR /app
 
-# Copy and install wheel
-ARG INSTALL_FROM=local
-ARG VERSION
+# The runtime image installs nothing: no package manager left behind.
+RUN pip uninstall --yes pip setuptools wheel 2>/dev/null; \
+    rm -f /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.* ; \
+    ! python -m pip --version
 
-COPY dist/*.whl /tmp/
-
-RUN if [ "$INSTALL_FROM" = "pypi" ]; then \
-      echo "Installing from PyPI: harp-proxy==$VERSION"; \
-      pip install --no-cache-dir "harp-proxy[postgresql,mysql]==$VERSION"; \
-    else \
-      echo "Installing from local wheel"; \
-      pip install --no-cache-dir "harp-proxy[postgresql,mysql] @ file://$(ls /tmp/*.whl)"; \
-    fi && \
-    rm -rf /tmp/*.whl
+COPY --from=builder /install /usr/local
 
 # Create non-root user and set up shell aliases
 RUN useradd -m -u 1000 harp && \
@@ -29,6 +30,9 @@ RUN useradd -m -u 1000 harp && \
 USER harp
 
 EXPOSE 4000-4999
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:4000/healthz', timeout=3)"]
 
 # Note: Use `docker run --init` to enable tini for proper signal handling
 ENTRYPOINT ["harp-proxy"]

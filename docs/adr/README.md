@@ -8,14 +8,15 @@ stays with its status changed.
 | | Decision | Status |
 |---|---|---|
 | [0001](./0001-compliant-by-default-operator-may-override.md) | Compliant by default, and the operator may override anything | accepted |
-| [0002](./0002-caller-no-store-suppresses-payload-recording.md) | A caller's `no-store` suppresses payload recording, but not the record that traffic happened | accepted, not yet implemented |
+| [0002](./0002-caller-no-store-suppresses-payload-recording.md) | A caller's `no-store` suppresses payload recording, but not the record that traffic happened | accepted |
 | [0003](./0003-cache-compliance-compared-per-test-against-a-pinned-baseline.md) | RFC 9111 compliance is compared per test id against a baseline pinned to its storage backend | accepted |
 | [0004](./0004-trunk-main-and-version-line-branches.md) | Development happens on `main`; a version line gets its branch when it ships | accepted |
 | [0005](./0005-postgresql-production-database.md) | PostgreSQL is the production database; MySQL and MariaDB are deprecated | accepted |
 | [0009](./0009-credentials-redacted-before-storage-by-rule.md) | Credentials are redacted before storage, by rule, and credential headers are redacted by default | accepted, not yet implemented |
-| [0010](./0010-harp-credentials-never-reach-an-origin.md) | HARP's own credentials never reach an origin, and no setting changes that | proposed |
-| [0011](./0011-each-app-owns-an-alembic-branch.md) | Each application owns a branch of one alembic history | proposed |
-| [0012](./0012-critical-actions-recorded-in-their-own-commit.md) | A critical action and its audit event share one commit, through a two-phase unit of work | proposed |
+| [0010](./0010-docker-images-install-exactly-uv-lock.md) | Docker images install exactly `uv.lock` | accepted |
+| [0011](./0011-harp-credentials-never-reach-an-origin.md) | HARP's own credentials never reach an origin, and no setting changes that | proposed |
+| [0012](./0012-each-app-owns-an-alembic-branch.md) | Each application owns a branch of one alembic history | proposed |
+| [0013](./0013-critical-actions-recorded-in-their-own-commit.md) | A critical action and its audit event share one commit, through a two-phase unit of work | proposed |
 
 ## Writing one
 

@@ -9,21 +9,32 @@ description = "HARP is an API Runtime Proxy, a toolkit to enhance the speed, rel
 authors = [{ name = "Romain Dorgueil", email = "romain@makersquad.fr" }]
 requires-python = ">=3.13,<3.14"
 readme = "README.rst"
+license = "LGPL-3.0-or-later"
+license-files = ["LICENSE.rst"]
+keywords = ["api", "proxy", "reverse-proxy", "http", "cache", "observability", "asgi"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: Proxy Servers",
+    "Topic :: Internet :: WWW/HTTP",
+]
 dependencies = [
-    "aiohttp>=3.14.3,<3.15",
+    # Floor plus major cap. On 0.x releases the minor is the breaking level, so those cap the next minor instead.
+    # Any other narrower cap carries a comment naming the regression.
     "aiosqlite>=0.20,<0.22",
-    "alembic>=1.17,<1.18",
-    "asgi-prometheus>=1.2,<1.3",
-    "asgi-tools>=1.3,<1.4",
+    "alembic>=1.17,<2",
     "asgimiddlewarestaticfile>=0.6,<0.7",
     "asgiref>=3.10,<3.13",
     # Not imported directly (httpx's trust store). Floor: older bundles trust compromised eMudhra intermediates, see #1405.
     "certifi>=2026.10.19",
     "click>=8.1,<9",
-    "colorama>=0.4,<0.5",
-    "dataclasses-json>=0.6,<0.7",
     "dataclasses-jsonschema>=2.16,<2.17",
-    "essentials-configuration>=2.0,<2.1",
+    "essentials-configuration>=2.0,<3",
     # Capped below 1.1.10: it regresses the RFC 9111 suite (conditional-etag-vary-headers-mismatch, see #869).
     "hishel>=1.1.7,<1.1.10",
     "http-router>=5.0,<6.0",
@@ -32,25 +43,23 @@ dependencies = [
     "httpx>=0.27,<0.29",
     "hypercorn>=0.17,<0.18",
     "multidict>=6.9.1,<7",
-    "orjson>=3.11,<3.12",
+    "orjson>=3.11,<4",
     # Deliberately unbounded above: packaging is a PyPA core utility much of the
     # environment also depends on, and a cap on it propagates to co-installed
     # packages. We use two frozen names from it (Version, InvalidVersion).
     "packaging>=23.2",
-    "passlib>=1.7,<1.8",
+    "passlib>=1.7,<2",
     # Imported directly (harp_apps.metrics, harp.commandline.server).
     "prometheus-client>=0.20,<1",
+    # Capped below 2.13, the last series validated: 2.14.1 breaks model_dump in our serializers (PydanticSerializationError, "index_key").
     "pydantic>=2.12,<2.13",
     "pyheck>=0.1,<0.2",
-    "pyyaml>=6.0,<6.1",
+    "pyyaml>=6.0,<7",
     "redis>=5.2,<8.1",
     "rich>=14.0,<15",
-    "rich-click>=1.9,<1.10",
-    "rodi>=2.0,<2.1",
-    "sentry-sdk>=2.18,<3.0",
-    "slack-sdk>=3.37,<3.38",
-    "sqlalchemy[asyncio]>=2.0,<2.1",
-    "sqlalchemy-utils>=0.42,<0.43",
+    "rich-click>=1.9,<2",
+    "rodi>=2.0,<3",
+    "sqlalchemy[asyncio]>=2.0,<3",
     "structlog>=25,<27",
     "svix-ksuid>=0.6,<0.7",
     "whistle>=2.0.1,<3",
@@ -62,6 +71,14 @@ mysql = [
     "cryptography>=50.0,<51",
 ]
 postgresql = ["asyncpg>=0.30,<0.31"]
+sentry = ["sentry-sdk>=2.18,<3"]
+
+[project.urls]
+Homepage = "https://harp-project.net"
+Documentation = "https://docs.harp-project.net/en/latest/"
+Repository = "https://github.com/msqd/harp"
+Issues = "https://github.com/msqd/harp/issues"
+Changelog = "https://docs.harp-project.net/en/latest/changelogs/index.html"
 
 [project.scripts]
 harp-proxy = "harp.commandline:entrypoint"
@@ -69,11 +86,13 @@ harp = "harp.commandline:entrypoint"
 
 [dependency-groups]
 dev = [
+    "asgi-tools>=1.3,<1.4",
+    "colorama>=0.4,<0.5",
     "cookiecutter>=2.6,<2.7",
     "freezegun>=1.5.5,<2",
     "furo>=2023.9.10,<2026.0.0",
     "hatchling==1.27.0",
-    "harp-proxy[mysql,postgresql]",
+    "harp-proxy[mysql,postgresql,sentry]",
     "honcho>=2.0,<2.1",
     "jscc>=0.3.0,<0.4",
     "jsonpointer>=3.0.0,<4",
@@ -107,6 +126,8 @@ dev = [
 default-groups = ["dev"]
 # Keep in sync with the cooldown in .github/dependabot.yml
 exclude-newer = "3 days"
+# GHSA-cx6f-vjhg-g3cc: 21.14.9 to 21.14.12 are vulnerable, 21.14.13 is the fix. Drop once it is 3 days old.
+exclude-newer-package = { virtualenv = false }
 # First uv that reads a relative exclude-newer is 0.9.17 (bisected with `uv lock --check`).
 # Older uv cannot even parse this table, so this line documents the floor more than it enforces it.
 required-version = ">=0.9.17"

@@ -128,7 +128,7 @@ The default storage includes:
 
 - **ttl:** Seconds after which an entry is expired, counted from when it was stored or last freshened by a ``304``
   (default: ``86400``, 24 hours). An entry with a longer ``max-age`` is still expired after ``ttl``. ``null`` disables
-  expiry by age. An expired entry is not served and its ``cache/meta`` blob is deleted. The header and body blobs it
+  expiry by age. Each variant of a ``Vary`` resource expires on its own. An expired entry is not served and, once none of its key's variants is left, its ``cache/meta`` blob is deleted. The header and body blobs it
   pointed at are then removed by the :doc:`janitor </apps/janitor/index>`.
 - **check_ttl_every:** Minimum seconds between two sweeps deleting expired entries, per process (default: ``60.0``).
   A sweep runs in the background, never inside a proxied request.

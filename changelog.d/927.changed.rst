@@ -1,0 +1,1 @@
+A request or response carrying ``Cache-Control: no-store`` is recorded without its headers and body: the transaction carries ``no-store-request`` and ``no-store-response`` markers and the dashboard says why the payload is missing. No override exists yet.

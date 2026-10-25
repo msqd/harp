@@ -23,6 +23,7 @@ Submodules
     harp.http
     harp.meta
     harp.models
+    harp.security
     harp.services
     harp.settings
     harp.typedefs

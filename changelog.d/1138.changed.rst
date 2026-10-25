@@ -1,0 +1,1 @@
+The cache keeps up to 8 ``Vary`` variants per cache key instead of one, so a resource alternating between representations is served from the cache each time; a ninth variant evicts the oldest. The ``cache/meta`` blob now holds a list of variants: entries stored by earlier versions are still read, but a key written by this version cannot be read by an earlier one.

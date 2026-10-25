@@ -58,9 +58,10 @@ Although the reason may be debatable, if you need to, you can replace the respon
 Reading the response body
 :::::::::::::::::::::::::
 
-The response body is streamed, not loaded in memory. Reading ``response.body`` before it has been read raises a
-``RuntimeError`` (``await response.aread()`` loads it). Rule scripts are synchronous, so they cannot await
-``aread()``: filter on the status and the headers, or replace the whole response.
+The response body is streamed, not loaded in memory. Reading ``response.body`` raises a ``RuntimeError``, and rule
+scripts are synchronous so they cannot await ``aread()``. The script then fails like any other, see
+:doc:`execution`: a warning names the rule and the response is sent unchanged. Filter on the status and the headers, or
+replace the whole response.
 
 
 Context reference
