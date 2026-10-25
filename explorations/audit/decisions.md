@@ -78,3 +78,8 @@ there).
 16. The core holds the unit-of-work contract and the transactional dispatcher; it has no
     persistence, so storage provides the unit-of-work implementation (its session factory). Auth,
     dashboard and later the cache explorer use it and declare `audit` in their dependencies.
+17. Details are default-deny: each auditable event class declares its detail fields, and the audit
+    persists and logs only those. No key-name redaction heuristic (an independent review of #1591
+    showed it leaks `{name: password, value: …}`, `pwd`, `key`). An event never carries a secret by
+    construction. Append-only is a code guarantee; the docs say how an Operator can also enforce it
+    in PostgreSQL by role permissions.
