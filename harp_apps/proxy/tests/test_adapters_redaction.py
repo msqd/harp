@@ -40,3 +40,16 @@ async def test_extension_without_a_transaction_has_neither():
 
     assert "redaction" not in extension
     assert "markers" not in extension
+
+
+@pytest.mark.asyncio
+async def test_extension_carries_the_peer_address_not_a_forwarded_one():
+    async with AsyncClient() as client:
+        adapter = HttpClientProxyAdapter(client, extensions={"endpoint": "api"})
+        request = HttpRequest(
+            method="PURGE", path="/x", headers={"x-forwarded-for": "10.0.0.1"}, body=b"", client_ipaddr="192.168.0.9"
+        )
+        await request.aread()
+        built = adapter._build_request(request, "http://example.com/x")
+
+    assert built.extensions["harp"]["client_ip"] == "192.168.0.9"
