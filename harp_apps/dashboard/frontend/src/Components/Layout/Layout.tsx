@@ -3,14 +3,13 @@ import { Link, Outlet, useLocation } from "react-router"
 import tw, { styled } from "twin.macro"
 
 import logo from "Assets/logo.svg"
-import { Role, roleIncludes, useRole } from "Domain/System"
+import { Role, roleIncludes, useRole, useSystemQuery } from "Domain/System"
 import { getDocumentationUrl } from "Utils/Documentation"
 import { DevelopmentOnlyWarning } from "ui/Components/DevelopmentOnlyWarning"
 import { Navbar } from "ui/Components/Navbar"
 
 import { RightNav } from "./RightNav.tsx"
 
-import { useSystemQuery } from "../../Domain/System"
 import { Loader } from "../Loader"
 
 const StyledContainerWithHorizontalConstraint = styled.div(() => [tw`mx-auto px-2 sm:px-6 lg:px-8`])

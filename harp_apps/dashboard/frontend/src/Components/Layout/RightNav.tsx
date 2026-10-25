@@ -15,7 +15,7 @@ export function RightNav() {
         {systemQuery.data.role ? <span className="ml-1 text-xs opacity-75">{systemQuery.data.role}</span> : null}
         <br />
         <span className="text-xs">
-          <a href={getDocumentationUrl(systemQuery.data.version)} target="_blank" rel="noopener noreferrer">
+          <a href={getDocumentationUrl(systemQuery.data.version)} target="_blank" rel="noreferrer">
             <QuestionMarkCircleIcon className="inline-block w-4 h-4 mx-1" />
             Help
           </a>
