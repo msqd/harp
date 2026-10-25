@@ -313,3 +313,12 @@ class TestLeakyBucketLiveness:
         )
 
         self.do_test_endpoint_leaky_bucket_state_changes(remote["http://example.com/"])
+
+
+def test_each_liveness_keeps_its_own_state_on_a_subject():
+    subject = MockSubject()
+
+    naive = NaiveLiveness.get_state_of(subject)
+    leaky = LeakyBucketLiveness.get_state_of(subject)
+
+    assert type(naive) is not type(leaky)

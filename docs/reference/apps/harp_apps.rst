@@ -16,6 +16,7 @@ Submodules
 
     harp_apps.acme
     harp_apps.audit
+    harp_apps.auth
     harp_apps.contrib
     harp_apps.dashboard
     harp_apps.http_cache

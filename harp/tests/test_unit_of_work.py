@@ -14,6 +14,7 @@ from harp.unit_of_work import (
     is_auditable,
     is_loggable,
     loggable,
+    loggable_events,
 )
 
 
@@ -470,3 +471,22 @@ async def test_failing_after_commit_callback_is_logged_and_the_commit_stands(mak
 
     assert uow.journal == ["begin", "commit"]
     assert "log sink down" in caplog.text
+
+
+def test_loggable_events_are_declared_by_id():
+    assert loggable_events()["test.logged"] is Logged
+
+
+def test_audited_and_unmarked_events_are_not_declared_loggable():
+    assert "test.audited" not in loggable_events()
+    assert "proxy.transaction.started" not in loggable_events()
+
+
+def test_a_loggable_event_cannot_declare_a_secret_detail_field():
+    with pytest.raises(TypeError, match="password"):
+
+        @loggable("test.leaky")
+        class Leaky(Event):
+            details_fields = ("username", "password")
+
+    assert "test.leaky" not in loggable_events()

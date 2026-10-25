@@ -42,6 +42,19 @@ async def test_a_harp_without_an_application_depending_on_audit_loads_no_audit()
     assert "audit" not in builder.applications
 
 
+async def test_an_application_depending_on_audit_loads_it_when_dependencies_are_autoloaded():
+    builder = ConfigurationBuilder()
+    builder.add_values({"storage": {"url": "sqlite+aiosqlite:///:memory:"}})
+
+    builder.applications.add("harp_apps.audit.tests.needy", autoload_dependencies=True)
+
+    assert "audit" in builder.applications
+
+    builder.applications.remove("harp_apps.audit.tests.needy")
+
+    assert "audit" not in builder.applications
+
+
 async def test_an_application_depending_on_audit_needs_it_enabled():
     builder = configuration()
 

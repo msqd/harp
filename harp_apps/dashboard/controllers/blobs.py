@@ -1,5 +1,6 @@
 from harp.controllers import GetHandler, RouterPrefix, RoutingController
 from harp.http import HttpResponse
+from harp.security.actor import Role
 from harp_apps.storage.types import IBlobStorage
 
 #: Blobs are captured traffic, hence untrusted. The dashboard reads them with fetch(), which needs the recorded
@@ -18,7 +19,7 @@ class BlobsController(RoutingController):
         self.storage = storage
         super().__init__(handle_errors=handle_errors, router=router)
 
-    @GetHandler("/{id}")
+    @GetHandler("/{id}", role=Role.VIEWER)
     async def get(self, id):
         blob = await self.storage.get(id)
         if not blob:

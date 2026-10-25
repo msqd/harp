@@ -312,3 +312,17 @@ __parsed_version__ = _parse_version(__version__)
         # Version should not be "unknown" in development
         if not os.environ.get("CI"):
             assert "unknown" not in result.stdout.lower()
+
+
+def test_import_survives_a_missing_git_executable():
+    """With a .git directory but no git on PATH, the version comes from package metadata."""
+    import subprocess
+
+    env = {k: v for k, v in os.environ.items() if k != "CI"}
+    env["PATH"] = "/nonexistent"
+    result = subprocess.run(
+        [sys.executable, "-c", "import harp; print(harp.__revision__)"], env=env, capture_output=True, text=True
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "unknown"

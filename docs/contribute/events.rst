@@ -161,7 +161,36 @@ author declares which fields are safe: values are not inspected, so a declared f
 names, prefixes and scopes only).
 
 ``record`` refuses an event that is not ``auditable``. Mark an event ``loggable`` instead when it deserves a structured
-log line but no audit row; it is dispatched on the main dispatcher as usual. An unmarked event is neither.
+log line but no audit row (see below). An unmarked event is neither.
+
+.. _events-loggable:
+Logging an event
+::::::::::::::::
+
+Declare the event with the ``loggable`` mark and dispatch it on the main dispatcher, outside any unit of work:
+
+.. code-block:: python
+
+    from harp.unit_of_work import loggable
+
+    @loggable("http_client.breaker_opened")
+    class BreakerOpened(Event):
+        details_fields = ("remote", "failures")
+
+        def __init__(self, remote, failures):
+            super().__init__()
+            self.outcome = "failed"
+            self.details = {"remote": remote, "failures": failures}
+
+    await dispatcher.adispatch("http_client.breaker_opened", BreakerOpened("upstream", 5))
+
+The core listens to every declared loggable event and writes one line to the ``harp.events`` logger (``kind: event``,
+``event_id``, ``outcome``, ``details``), best-effort: a line that cannot be built is dropped and the dispatch carries
+on. The level of the logger is ``LOGGING_EVENT_LOG`` (see :doc:`/operate/logging`). As for audit events, only the ``details_fields`` the class declares are
+logged, as scalars, and a class declaring a field named like a secret cannot be defined. The Operator can mute a
+loggable event with ``core.muted_events`` (see :doc:`/operate/configure/index`), never add one: an unmarked event is never logged, whatever id it is dispatched
+under. Declare the class before the system is built (import it from your application), as the listeners are attached
+once, when the system is bound.
 
 An action outside the database goes through ``uow.act``: record the event, act, and the commit comes last. A failing
 action leaves nothing. A commit failing after the action calls the compensation given to ``act``, or logs a critical

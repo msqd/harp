@@ -9,7 +9,7 @@ from multidict import MultiDict
 
 from harp.http import HttpRequest
 from harp.utils.testing.communicators import ASGICommunicator
-from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
+from harp_apps.dashboard.tests._mixins import AdminThroughASGIFixtureMixin
 from harp_apps.dashboard.controllers.overview import OverviewController, time_bucket_for_range
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
@@ -104,7 +104,7 @@ class TestOverviewController(OverviewControllerTestFixtureMixin, StorageTestFixt
 class TestOverviewControllerThroughASGI(
     OverviewControllerTestFixtureMixin,
     StorageTestFixtureMixin,
-    ControllerThroughASGIFixtureMixin,
+    AdminThroughASGIFixtureMixin,
 ):
     @parametrize_with_now
     async def test_get_summary_data_with_a_few_transactions_using_asgi(

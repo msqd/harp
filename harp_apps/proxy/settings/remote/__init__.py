@@ -149,6 +149,7 @@ class Remote(Stateful[RemoteSettings]):
 
         # set the initial pool of available remote endpoints
         self.refresh()
+        return self
 
     def __getitem__(self, url: str) -> RemoteEndpoint:
         return self._endpoints[normalize_url(url)]
@@ -196,8 +197,10 @@ class Remote(Stateful[RemoteSettings]):
 
         self[url].status = DOWN
 
-        if old_status >= DOWN:
+        if old_status > DOWN:
             if is_event_loop_running():
+                if pending := getattr(self[url], "_delayed_set_checking", None):
+                    pending.cancel()
 
                 async def delayed_set_checking():
                     await asyncio.sleep(self.settings.check_after)
