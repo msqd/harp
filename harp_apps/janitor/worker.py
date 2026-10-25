@@ -1,4 +1,5 @@
 import asyncio
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from typing import cast
 
@@ -30,6 +31,9 @@ class JanitorWorker:
         self.storage: SqlStorage = cast(SqlStorage, storage)
         self.blob_storage: IBlobStorage = blob_storage
         self.settings = settings
+
+        #: Sweeps other applications hand to the janitor (the audit's retention): awaited each loop, a failure is logged.
+        self.sweeps: list[Callable[[], Awaitable[object]]] = []
 
         self.running = False
         self.session_factory = self.storage.session_factory
@@ -68,6 +72,12 @@ class JanitorWorker:
             logger.debug("🧹 Deleted %d old transactions", result.rowcount)
 
         await self.delete_orphan_blobs()
+
+        for sweep in self.sweeps:
+            try:
+                await sweep()
+            except Exception as exc:
+                logger.exception(exc)
 
         # Compute and store stored objecg counts as metrics
         logger.debug("🧹 Compute and store metrics...")

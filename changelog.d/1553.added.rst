@@ -1,0 +1,1 @@
+Audit application: records the auditable events of the control plane in the commit of their action, with a copy on the ``harp.audit`` logger, purged by the janitor after ``audit.retention_days`` (365).

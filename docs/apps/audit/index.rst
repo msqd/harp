@@ -1,0 +1,76 @@
+Audit
+=====
+
+.. tags:: applications
+
+The ``harp_apps.audit`` application keeps the audit events: what an account did to HARP (a change to someone's access, a
+manual action on traffic), when, by which means and with what outcome. Each event is written in the same database commit
+as the action it records, so there is no action without its event, and no event without its action. If the event cannot
+be written, the action fails and nothing is changed.
+
+Audit events are never edited, and never shed under load. The only deletion is the retention.
+
+Loading
+:::::::
+
+The audit is not loaded by default, and you do not enable it yourself: the applications that perform critical actions
+declare ``audit`` in their dependencies, so it is loaded whenever such an action can happen. A HARP without them loads no
+audit. The audit tables exist in the database all the same, empty, as every application's tables do.
+
+If you list your applications by hand, add ``audit`` to the list when an application you enabled requires it, or HARP
+refuses to start and tells you so.
+
+Settings
+::::::::
+
+``retention_days``
+    Age in days after which an event is deleted. Positive integer, default ``365``. The janitor does the sweep, together
+    with its own, and independently of the retention of transactions (``janitor.old_after``). The janitor must be
+    enabled for events to be purged. Keeping them longer is the job of your SIEM, fed by the log output below.
+
+.. code-block:: yaml
+
+    audit:
+      retention_days: 730
+
+What an event holds
+:::::::::::::::::::
+
+Table ``audit_events``:
+
+``id``, ``occurred_at``
+    Increasing identifier and UTC timestamp.
+
+``action``, ``outcome``
+    The name of the action (``auth.account.role_changed``), and its outcome: ``succeeded``, ``failed`` or ``denied``.
+
+``actor_account_id``, ``actor_label``
+    The account that acts and its username, copied. Empty when HARP acts on its own. There is no foreign key: an event
+    outlives the account.
+
+``actor_via``, ``actor_via_id``, ``actor_client``
+    ``session``, ``token``, ``cli`` or ``system``, with the id of the session or token, and the client the account acts
+    from when known.
+
+``ip``, ``user_agent``
+    Where the request comes from.
+
+``target_type``, ``target_id``, ``target_label``
+    What the action is about. The label is copied (the username, the name of a token), so it stays readable once the
+    target is deleted.
+
+``details``
+    A short JSON, specific to each action. Whatever sits under a key that looks like a secret (``token``, ``password``,
+    ``secret``, ``api_key``, ``authorization``, ``cookie``...) is replaced by ``[redacted]`` before it is written: no
+    secret reaches the audit. Keys ending in ``_id``, ``_name``, ``_label``, ``_type`` or ``_prefix`` are kept.
+
+Log output
+::::::::::
+
+Once the commit is done, each event is also written to the ``harp.audit`` logger, with the same fields as the row, the
+id of the row, and ``kind: audit``. Collect it into your SIEM with the collector of your choice, filtering on
+``logger: harp.audit`` or ``kind: audit`` (use ``LOGGING_FORMAT=json``). Muting the logger drops the copy, never the row.
+
+.. seealso::
+
+    - :ref:`Events » Recording an auditable event <events-unit-of-work>`

@@ -6,6 +6,7 @@ from whistle import AsyncEventDispatcher, Event
 
 from harp.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.unit_of_work import (
+    ANY_EVENT,
     TransactionalEventDispatcher,
     UnitOfWork,
     UnsupportedEventError,
@@ -416,3 +417,56 @@ async def test_body_failing_after_a_successful_action_calls_its_compensation(mak
 
     assert uow.journal == ["begin", "rollback"]
     assert compensated == [True]
+
+
+async def test_transactional_wildcard_listener_receives_every_recorded_event(make_uow, transactional):
+    seen = []
+
+    async def listener(event):
+        seen.append(event.event_id)
+
+    transactional.add_listener(ANY_EVENT, listener)
+
+    async with make_uow() as uow:
+        await uow.record(Audited())
+
+    assert seen == ["test.audited"]
+
+
+async def test_after_commit_callbacks_run_once_the_transaction_is_committed(make_uow):
+    uow = make_uow()
+
+    async def callback():
+        uow.journal.append("after commit")
+
+    async with uow:
+        uow.after_commit(callback)
+        assert uow.journal == ["begin"]
+
+    assert uow.journal == ["begin", "commit", "after commit"]
+
+
+async def test_after_commit_callbacks_do_not_run_on_rollback(make_uow):
+    uow = make_uow()
+
+    async def callback():
+        uow.journal.append("after commit")
+
+    with pytest.raises(RuntimeError):
+        async with uow:
+            uow.after_commit(callback)
+            raise RuntimeError("body failed")
+
+    assert uow.journal == ["begin", "rollback"]
+
+
+async def test_failing_after_commit_callback_is_logged_and_the_commit_stands(make_uow, caplog):
+    async def callback():
+        raise ValueError("log sink down")
+
+    uow = make_uow()
+    async with uow:
+        uow.after_commit(callback)
+
+    assert uow.journal == ["begin", "commit"]
+    assert "log sink down" in caplog.text

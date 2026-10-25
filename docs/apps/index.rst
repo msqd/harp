@@ -9,6 +9,7 @@ package).
 .. toctree::
     :maxdepth: 1
 
+    audit/index
     contrib/sentry/index
     dashboard/index
     http_cache/index

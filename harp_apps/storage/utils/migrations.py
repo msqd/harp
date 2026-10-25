@@ -2,7 +2,9 @@ import asyncio
 import os
 import re
 import traceback
+from contextlib import suppress
 from concurrent.futures import ThreadPoolExecutor
+from importlib import import_module
 from pathlib import Path
 from typing import Union
 from urllib.parse import quote, quote_plus
@@ -185,6 +187,10 @@ def create_revision(alembic_cfg, application: str, message: str):
     locations = alembic_cfg.attributes["locations"]
     if application not in locations:
         raise ValueError(f"Unknown application {application!r}, expected one of: {', '.join(sorted(locations))}.")
+
+    # the models register on Base when imported; an application that is not enabled has not been
+    with suppress(ModuleNotFoundError):
+        import_module(f"harp_apps.{application}.models")
 
     check_prefixes(application, model_tables(), locations)
     alembic_cfg.attributes["application"] = application
