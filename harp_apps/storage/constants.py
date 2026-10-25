@@ -33,3 +33,6 @@ DEFAULT_MAX_RECORDED_BODY_SIZE = 1024 * 1024
 
 # Transaction marker set when the client went away before the end of the response body (#911)
 CLIENT_DISCONNECTED = "client-disconnected"
+
+# Transaction marker set when the proxy removed HARP's own credentials from the request before the origin (ADR-0010)
+HARP_CREDENTIALS_STRIPPED = "harp-credentials-stripped"

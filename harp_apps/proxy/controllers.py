@@ -18,7 +18,13 @@ from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.tpdex import tpdex
 from harp.settings import DEFAULT_CLIENT_READ_TIMEOUT, DEFAULT_MIN_REQUEST_BODY_RATE, DEFAULT_REQUEST_BODY_GRACE_PERIOD
-from harp_apps.storage.constants import CLIENT_DISCONNECTED, DEFAULT_MAX_RECORDED_BODY_SIZE, TRUNCATED_RESPONSE_BODY
+from harp.security.credentials import strip_harp_credentials
+from harp_apps.storage.constants import (
+    CLIENT_DISCONNECTED,
+    DEFAULT_MAX_RECORDED_BODY_SIZE,
+    HARP_CREDENTIALS_STRIPPED,
+    TRUNCATED_RESPONSE_BODY,
+)
 from .adapters import HttpClientProxyAdapter, strip_credentials
 from .constants import (
     BREAK_ON_NETWORK_ERROR,
@@ -285,6 +291,12 @@ class HttpProxyController(AbstractHttpProxyController):
         :param full_url: The full URL to which the request is forwarded.
         :return: The HTTP response received from the remote server, its body streamed from the remote as it is read.
         """
+        # HARP's own credentials stop here, after the rules had their say. No setting turns this off (ADR-0010).
+        remaining, stripped = strip_harp_credentials(context.request.headers.items())
+        if stripped:
+            context.request.headers = remaining
+            transaction.markers.add(HARP_CREDENTIALS_STRIPPED)
+
         response = await self.proxy.send(context.request, full_url)
 
         # Update the status of the remote URL based on the response status code
