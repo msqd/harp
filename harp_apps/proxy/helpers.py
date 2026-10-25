@@ -1,10 +1,5 @@
 from harp.http import HttpRequest
-from harp_apps.proxy.constants import CHECKING, DOWN, UP
 from harp_apps.proxy.settings import TagsSettings
-
-
-def humanize_status(status):
-    return {CHECKING: "checking", UP: "up", DOWN: "down"}.get(status, "unknown")
 
 
 def extract_tags_from_request(
