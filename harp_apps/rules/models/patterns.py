@@ -24,7 +24,20 @@ class Pattern:
     def __repr__(self):
         return "Pattern(%r)" % self._source
 
-    def match(self, value: str, /):
+    def match(self, value: str, /, *, trailing_slash: bool = False):
+        """
+        Match a value. With ``trailing_slash``, a ``<METHOD> <path>`` pattern whose path has no wildcard also matches
+        the value with its final slash removed.
+        """
+        if self._glob(value):
+            return True
+        if trailing_slash and value.endswith("/"):
+            _, space, path = self._source.partition(" ")
+            if space and "*" not in path:
+                return self._glob(value[:-1])
+        return False
+
+    def _glob(self, value: str, /) -> bool:
         """Glob-style match, "*" standing for any run of characters, in time linear in the length of value."""
         first, *rest = self._parts
         if not rest:

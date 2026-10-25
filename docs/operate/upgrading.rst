@@ -20,6 +20,30 @@ Metrics
   Aggregate queries still work; any ``by (path)`` or ``by (url)`` grouping, or matcher on these labels, stops
   matching. The remaining labels are listed in :doc:`prometheus`.
 
+Rules
+:::::
+
+``on_request`` and ``on_response`` rules match a normalised request path, see :doc:`/apps/rules/patterns`. The proxy
+still forwards the target unchanged. Compared to 0.12:
+
+- Empty segments are dropped: a pattern containing ``//`` (``GET /api//admin``) no longer matches anything, write
+  ``GET /api/admin``. Requests for ``/api//admin`` now match ``GET /api/admin``.
+- ``;`` parameters are dropped: a pattern containing ``;`` no longer matches. Requests for ``/admin;x=1`` now match
+  ``GET /admin``.
+- A final slash is kept once: ``/admin//`` and ``/admin/;x`` are matched as ``/admin/``, so ``GET /admin/*`` keeps
+  matching them. An ``on_request`` or ``on_response`` pattern whose path has no wildcard now also matches the path
+  with its final slash removed, whatever its method part: ``GET /admin`` and ``* /admin`` match ``/admin/`` too.
+  Endpoint patterns and ``on_remote_*`` levels are not concerned. To deny a path and everything under it, write
+  ``GET /admin*``.
+- Empty segments are gone before matching, so a wildcard no longer matches one: ``GET /*/users`` no longer matches
+  ``//users``.
+- ``%2F`` (any case) stays encoded in the path, and rules are also matched against a second form with ``%2F`` read as
+  ``/``. A non-deny rule written for ``GET /a/b`` now also fires for ``/a%2Fb``, and a rule fires once per request.
+- ``on_remote_request`` and ``on_remote_response`` rules still match the raw path sent to the remote endpoint, none of
+  the above applies to them.
+- Not normalised, a deny rule has to account for them: double-encoded escapes (``%252F``), ``%3B`` read as ``;``,
+  ``%00``, ``%5C`` and backslashes, and case (patterns are case sensitive).
+
 Redis blob storage
 ::::::::::::::::::
 
