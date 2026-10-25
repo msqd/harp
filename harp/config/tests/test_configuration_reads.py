@@ -52,3 +52,15 @@ def test_each_build_reads_files_again(tmp_path, monkeypatch):
     builder.build()
 
     assert reads == [str(path), str(path)]
+
+
+def test_file_edited_between_builds_is_seen_by_the_next_build(tmp_path):
+    path = tmp_path / "a.yml"
+    path.write_text("applications: [storage, proxy]\nstorage: {migrate: false}\n")
+
+    builder = ConfigurationBuilder()
+    builder.add_file(str(path))
+    assert builder.build()["storage"]["migrate"] is False
+
+    path.write_text("applications: [storage, proxy]\nstorage: {migrate: true}\n")
+    assert builder.build()["storage"]["migrate"] is True
