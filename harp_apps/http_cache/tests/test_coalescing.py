@@ -6,8 +6,9 @@ import time
 import httpx
 import pytest
 import respx
-from hishel import SpecificationPolicy
+from hishel import Headers, Request, Response, SpecificationPolicy
 
+from harp_apps.http_cache.coalescing import Coalescer
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
 from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
@@ -193,3 +194,64 @@ class TestCoalescing:
 
         assert origin.fetches == 1
         assert all(r.extensions["hishel_from_cache"] for r in responses)
+
+
+@pytest.mark.asyncio
+class TestStalledLeader:
+    async def test_a_leader_whose_client_stalls_delays_no_follower(self):
+        origin = Origin(delay=0.01, body_delay=0.01)
+        with respx.mock:
+            respx.get(URL).mock(side_effect=origin)
+            async with _client(coalescing_timeout=2.0) as client:
+                async with client.stream("GET", URL) as leader:
+                    chunks = leader.aiter_raw()
+                    await anext(chunks)  # the leader's client reads a first chunk, then stalls
+                    waits = []
+                    for _ in range(3):
+                        started = time.monotonic()
+                        follower = await client.get(URL)
+                        waits.append(time.monotonic() - started)
+
+        assert max(waits) < 1.0
+        assert origin.fetches == 1
+        assert follower.extensions["hishel_from_cache"]
+
+    async def test_a_flight_that_timed_out_a_waiter_accepts_no_new_joiner(self):
+        origin = Origin(delay=0.01, body_delay=1.0)
+        with respx.mock:
+            respx.get(URL).mock(side_effect=origin)
+            async with _client(coalescing_timeout=0.1) as client:
+                leader = asyncio.create_task(client.get(URL))
+                await asyncio.sleep(0.05)
+                waiter = asyncio.create_task(client.get(URL))  # waits 0.1 s, then fetches on its own
+                await asyncio.sleep(0.2)
+                started = time.monotonic()
+                async with client.stream("GET", URL):
+                    waited = time.monotonic() - started
+                await asyncio.gather(leader, waiter)
+
+        assert waited < 0.05
+
+
+@pytest.mark.asyncio
+class TestReadAhead:
+    async def test_a_body_larger_than_the_read_ahead_follows_its_client(self):
+        read = 0
+
+        async def body():
+            nonlocal read
+            for _ in range(10):
+                read += 1
+                yield b"xxxx"
+
+        async def send(request):
+            return Response(
+                status_code=200, headers=Headers(CACHEABLE), stream=body(), metadata={"hishel_stored": True}
+            )
+
+        coalescer = Coalescer(read_ahead=8)
+        response = await coalescer.run("k", Request(method="GET", url=URL), send)
+        await asyncio.sleep(0.05)
+
+        assert read < 10
+        assert [chunk async for chunk in response.stream] == [b"xxxx"] * 10

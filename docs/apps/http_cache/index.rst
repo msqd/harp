@@ -63,6 +63,11 @@ A request never fails because of it. It waits at most ``coalescing_timeout`` sec
 ``transport.arguments`` entry), and fetches on its own if the leading fetch fails, takes longer, or leaves nothing to
 share: a response that cannot be stored, or one the cache does not retain.
 
+The waiters are released once the cache has the body, not once the leading client has read it: a client that reads
+slowly, or stops reading, delays nobody. To allow that, up to 10 MiB (``DEFAULT_MAX_RECORDED_BODY_SIZE``) of the body are
+read ahead of that client; a larger body is not stored, so its waiters fetch on their own at once. Once a waiter has given
+up on a fetch after ``coalescing_timeout``, later requests no longer wait for that fetch.
+
 On a cold key the ``Vary`` of the resource is not known until the first response arrives, so a request for another
 variant waits for that response's headers, not for its body.
 

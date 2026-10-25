@@ -6,6 +6,7 @@ time, and when the leader fails, times out, or has nothing to share, it fetches 
 """
 
 import asyncio
+import collections
 import time
 import typing as tp
 from dataclasses import replace
@@ -13,11 +14,15 @@ from dataclasses import replace
 from hishel import Request, Response
 
 from harp_apps.http_cache.streams import aclose_source
+from harp_apps.storage.constants import DEFAULT_MAX_RECORDED_BODY_SIZE
 
 #: Response metadata key set once the response body is stored: what the waiters of a flight are waiting for.
 STORED_METADATA = "harp_cache_stored"
 
 DEFAULT_TIMEOUT = 30.0
+
+#: Bytes of a leader's body read ahead of its client: the cache stores no body larger, so nothing more is worth it.
+DEFAULT_READ_AHEAD = DEFAULT_MAX_RECORDED_BODY_SIZE
 
 
 def _vary_names(response: Response) -> frozenset[str]:
@@ -37,6 +42,8 @@ class Flight:
         self.finished = asyncio.Event()
         #: Whether a request that waited can now read what the fetch stored.
         self.shareable = False
+        #: Set when a waiter gave up on it: it takes no new waiter.
+        self.expired = False
 
     def describe(self, response: Response) -> None:
         self._vary = _vary_names(response)
@@ -56,8 +63,10 @@ class Flight:
 
 
 class Coalescer:
-    def __init__(self, timeout: float = DEFAULT_TIMEOUT):
+    def __init__(self, timeout: float = DEFAULT_TIMEOUT, read_ahead: int = DEFAULT_READ_AHEAD):
+        """``read_ahead`` is how many bytes of a body are read for the cache ahead of a slow client."""
         self._timeout = timeout
+        self._read_ahead = read_ahead
         self._flights: dict[tuple[str, str], list[Flight]] = {}
 
     async def run(self, key: str, request: Request, send: tp.Callable[[Request], tp.Awaitable[Response]]) -> Response:
@@ -68,7 +77,10 @@ class Coalescer:
             flight = await self._flight_to_wait_for(slot, request, deadline)
             if flight is None:
                 return await self._lead(slot, request, send)
-            if not await self._wait(flight.finished, deadline) or not flight.shareable:
+            if not await self._wait(flight.finished, deadline):
+                flight.expired = True
+                return await send(request)
+            if not flight.shareable:
                 return await send(request)
 
     async def _flight_to_wait_for(
@@ -80,7 +92,12 @@ class Coalescer:
             undescribed = next((flight for flight in flights if not flight.described.is_set()), None)
             if undescribed is None:
                 return next(
-                    (flight for flight in flights if not flight.finished.is_set() and flight.serves(request)), None
+                    (
+                        flight
+                        for flight in flights
+                        if not flight.finished.is_set() and not flight.expired and flight.serves(request)
+                    ),
+                    None,
                 )
             if not await self._wait(undescribed.described, deadline) or undescribed.serves(request):
                 return undescribed  # even if it has finished since: how it ended is for the waiter to read
@@ -106,7 +123,7 @@ class Coalescer:
             self._release(slot, flight, shareable=bool(response.metadata.get("hishel_from_cache")))
             return response
         release = lambda shareable: self._release(slot, flight, shareable)  # noqa: E731
-        return replace(response, stream=_ReleasedAtEnd(response, release))
+        return replace(response, stream=_ReadAhead(response, release, self._read_ahead))
 
     def _release(self, slot: tuple[str, str], flight: Flight, shareable: bool = False) -> None:
         flights = self._flights.get(slot, [])
@@ -117,31 +134,68 @@ class Coalescer:
         flight.finish(shareable)
 
 
-class _ReleasedAtEnd:
-    """The body of a fetched response, ending its flight once it is read to its end, or closed.
+class _ReadAhead:
+    """The body of a fetched response, read to its end for the cache whatever the pace of its client.
 
-    The flight is shareable only if the body ended in the cache: the storage says so in the response metadata.
+    The flight ends once the cache has the body, not once the client has it. At most ``limit`` bytes are held for a slow
+    client: a body larger than that is not stored, so its flight ends with nothing to share and the read goes on at the
+    client's pace.
     """
 
-    def __init__(self, response: Response, release: tp.Callable[[bool], None]):
+    def __init__(self, response: Response, release: tp.Callable[[bool], None], limit: int):
         self._metadata = response.metadata
         self._source = response.stream
-        self._chunks = aiter(self._source)
         self._release = release
+        self._limit = limit
+        self._chunks: collections.deque[bytes] = collections.deque()
+        self._buffered = 0
+        self._error: tp.Optional[Exception] = None
+        self._done = False
+        self._changed = asyncio.Event()
+        self._consumed = asyncio.Event()
+        self._pump = asyncio.ensure_future(self._read())
 
-    def __aiter__(self) -> "_ReleasedAtEnd":
+    async def _read(self) -> None:
+        try:
+            async for chunk in self._source:
+                self._chunks.append(chunk)
+                self._buffered += len(chunk)
+                self._changed.set()
+                if self._buffered > self._limit:
+                    self._release(False)
+                    while self._buffered > self._limit:
+                        self._consumed.clear()
+                        await self._consumed.wait()
+        except asyncio.CancelledError:
+            self._release(False)
+            raise
+        except Exception as exc:
+            self._error = exc
+            self._release(False)
+        else:
+            self._release(bool(self._metadata.get(STORED_METADATA)))
+        finally:
+            self._done = True
+            self._changed.set()
+
+    def __aiter__(self) -> "_ReadAhead":
         return self
 
     async def __anext__(self) -> bytes:
-        try:
-            return await anext(self._chunks)
-        except StopAsyncIteration:
-            self._release(bool(self._metadata.get(STORED_METADATA)))
-            raise
-        except BaseException:
-            self._release(False)
-            raise
+        while not self._chunks and not self._done:
+            self._changed.clear()
+            await self._changed.wait()
+        if self._chunks:
+            chunk = self._chunks.popleft()
+            self._buffered -= len(chunk)
+            self._consumed.set()
+            return chunk
+        if self._error is not None:
+            raise self._error
+        raise StopAsyncIteration
 
     async def aclose(self) -> None:
+        self._pump.cancel()
+        await asyncio.gather(self._pump, return_exceptions=True)
         self._release(False)
         await aclose_source(self._source)
