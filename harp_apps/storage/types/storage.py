@@ -24,8 +24,12 @@ class IStorage(Protocol):
         page: int = 1,
         cursor: str = "",
         text_search: str = "",
+        from_: datetime | None = None,
+        to: datetime | None = None,
+        time_limit: float | None = None,
     ):
-        """Find transactions, using optional filters, for example to be displayed in the dashboard."""
+        """Find transactions, newest first, using optional filters, for example to be displayed in the dashboard.
+        ``from_`` (included) and ``to`` (excluded) bound the start time; ``time_limit`` (seconds) bounds each query."""
         ...
 
     async def get_transaction(

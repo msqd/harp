@@ -1,0 +1,1 @@
+Storage: ``get_transaction_list`` accepts a ``[from_, to)`` period on ``started_at`` and a ``time_limit`` (PostgreSQL ``statement_timeout``, asyncio timeout on SQLite) that raises ``StorageTimeLimitExceeded``.
