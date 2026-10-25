@@ -3,10 +3,9 @@ from typing import Optional, TypedDict
 from harp import get_logger
 from harp.config.asdict import mask_credentials
 from harp.http import HttpRequest
-from harp_apps.proxy.settings.endpoint import Endpoint
 
 from .default import not_found_controller
-from .typing import IAsyncController, IControllerResolver
+from .typing import IAsyncController, IControllerResolver, IEndpoint
 
 logger = get_logger(__name__)
 
@@ -37,7 +36,7 @@ class _ControllerDefinitionForProxyControllerResolver(TypedDict):
 
 
 class ProxyControllerResolver(DefaultControllerResolver):
-    _endpoints: dict[str, Endpoint]
+    _endpoints: dict[str, IEndpoint]
     _controllers: list[_ControllerDefinitionForProxyControllerResolver]
     _port_to_controller_index: dict[int, int]
     _name_to_controller_index: dict[str, int]
@@ -50,7 +49,7 @@ class ProxyControllerResolver(DefaultControllerResolver):
         self._name_to_controller_index = {}
 
     @property
-    def endpoints(self) -> dict[str, Endpoint]:
+    def endpoints(self) -> dict[str, IEndpoint]:
         return self._endpoints
 
     @property
@@ -79,7 +78,7 @@ class ProxyControllerResolver(DefaultControllerResolver):
     def __iter__(self):
         yield from range(len(self))
 
-    def add_endpoint(self, endpoint: Endpoint, *, controller: IAsyncController):
+    def add_endpoint(self, endpoint: IEndpoint, *, controller: IAsyncController):
         if endpoint.settings.name in self._endpoints:
             raise RuntimeError(f"Endpoint «{endpoint.settings.name}» already exists.")
         self._endpoints[endpoint.settings.name] = endpoint
@@ -116,17 +115,10 @@ class ProxyControllerResolver(DefaultControllerResolver):
         return self.resolve_by_port(request.server_port)
 
     def resolve_by_port(self, port: int):
-        index = self._port_to_controller_index.get(port, None)
-
-        if index is None or index >= len(self):
-            return self.default_controller
-
-        return self[index]
+        return self._controller_at(self._port_to_controller_index.get(port))
 
     def resolve_by_name(self, name: str):
-        index = self._name_to_controller_index.get(name, None)
+        return self._controller_at(self._name_to_controller_index.get(name))
 
-        if index is None or index >= len(self):
-            return self.default_controller
-
-        return self[index]
+    def _controller_at(self, index: Optional[int]):
+        return self.default_controller if index is None else self[index]
