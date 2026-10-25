@@ -10,6 +10,7 @@ import yaml
 from email.utils import formatdate
 from urllib.parse import parse_qsl, urlsplit
 from hishel import AsyncBaseStorage, Entry, EntryMeta, Request, Response
+from hishel._core._spec import parse_date
 from hishel._utils import make_async_iterator
 
 from harp import get_logger
@@ -100,12 +101,21 @@ def has_validator(response: Response) -> bool:
     return "etag" in response.headers or "last-modified" in response.headers
 
 
-def is_retained_for_revalidation(response: Response) -> bool:
+def is_retained_for_revalidation(request: Request, response: Response) -> bool:
     """Whether a response without explicit freshness is kept anyway, to be revalidated each time it is wanted.
 
-    ``no-cache`` is out: hishel never reuses such an entry, not even by revalidating it.
+    A conditional request checks that the validator still matches, not that the stored body belongs to the caller.
+    So nothing is kept for a request that carried a credential (ADR-0009's set, rules included): the cache key does
+    not see it, and another caller's conditional request would be answered ``304`` with this caller's body. A
+    credential under a header no rule declares is invisible here. ``no-cache`` is out too: hishel never reuses such
+    an entry, not even by revalidating it. A response setting a cookie is out through :func:`is_withheld`.
     """
-    return has_validator(response) and not parse_cache_control(response.headers.get("cache-control")).no_cache
+    credentials = _redaction_of(request).headers
+    return (
+        has_validator(response)
+        and not parse_cache_control(response.headers.get("cache-control")).no_cache
+        and not any(name in credentials for name in request.headers)
+    )
 
 
 #: A date hishel finds so far back that no heuristic freshness lifetime (one week at most) can outlast it.
@@ -136,6 +146,9 @@ def restore_date(headers) -> None:
     if headers.get("date") == NEVER_FRESH_DATE:
         del headers["date"]
         headers["date"] = original
+        if "age" in headers:  # served stale: its age was counted from the date it was shown with
+            del headers["age"]
+            headers["age"] = str(max(0, int(time.time() - (parse_date(original) or time.time()))))
 
 
 # How many recently seen entry ids keep a route back to their cache key.
@@ -387,7 +400,7 @@ class AsyncStorage(AsyncBaseStorage):
         if (
             not self._allow_heuristics
             and not has_explicit_freshness(response)
-            and not is_retained_for_revalidation(response)
+            and not is_retained_for_revalidation(request, response)
         ):
             logger.debug(f"Cache entry not retained (no explicit freshness, heuristics off): key={key}")
             response.metadata["hishel_stored"] = False

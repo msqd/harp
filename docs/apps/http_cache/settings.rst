@@ -200,14 +200,23 @@ would then have one caller's response handed to the next one.
 A response is therefore only served from the cache without asking the origin when the origin stated
 how long it stays fresh, through ``Cache-Control: s-maxage``, ``Cache-Control: max-age`` or ``Expires``.
 
-A response with no such expiry but an ``ETag`` or a ``Last-Modified`` is still retained, and never
+A response with no such expiry but an ``ETag`` or a ``Last-Modified`` is still retained (see the credential rule below), and never
 served without the origin confirming it: each use sends a conditional request (``If-None-Match``,
 ``If-Modified-Since``), a ``304 Not Modified`` serves the stored body and a ``200`` serves, and
 replaces it, with the new one. Only the body transfer is saved. With the origin unreachable the request
 fails, the stored response is not served. A response with neither an expiry nor a validator, or with
 ``Cache-Control: no-cache``, is not retained.
 
-Known limits: with ``allow_stale`` turned on in the policy options, such a response is served stale like any
+A conditional request proves that the validator still matches, not that the stored body belongs to the caller:
+an origin comparing only validators would answer ``304`` to another caller, who would get the first one's body.
+So such a response is retained only when its request carried none of the transaction's credential headers
+(``Authorization``, ``Proxy-Authorization``, ``Cookie`` and any name a rule adds to ``transaction.redaction.headers``)
+and the response carries no ``Set-Cookie``. Otherwise it is not retained. A credential sent under a header no rule
+declares is invisible to the cache: if your upstream authenticates callers with one (``X-Api-Key``, say),
+declare it as a credential.
+
+Known limits: entries stored while ``allow_heuristics`` was ``true`` and read after turning it off are revalidated
+too, like any entry without an expiry. With ``allow_stale`` turned on in the policy options, such a response is served stale like any
 other, without asking the origin. While several ``Vary`` variants of one resource are retained this way, which
 one a request revalidates is hishel's choice, not the most recently stored.
 

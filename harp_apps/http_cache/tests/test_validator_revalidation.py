@@ -14,6 +14,7 @@ import respx
 from hishel import CacheOptions, SpecificationPolicy
 from httpx import AsyncClient, AsyncHTTPTransport, Response
 
+from harp.models.redaction import Redaction
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.tests import ENDPOINT_HOOKS
 from harp_apps.http_cache.transports import AsyncCacheTransport
@@ -31,15 +32,23 @@ class _StorageThatCannotUpdate(AsyncStorage):
         return None
 
 
-def _client(*, allow_heuristics=False, storage_class=AsyncStorage):
+def _client(*, allow_heuristics=False, storage_class=AsyncStorage, allow_stale=False, credentials=()):
+    """``credentials`` are the header names a rule declared as credentials on the transaction."""
+
+    async def declare_credentials(request):
+        redaction = Redaction()
+        redaction.headers.update(credentials)
+        request.extensions.setdefault("harp", {})["redaction"] = redaction
+
+    hooks = {"request": [*ENDPOINT_HOOKS["request"], declare_credentials]}
     transport = AsyncCacheTransport(
         next_transport=AsyncHTTPTransport(),
         storage=storage_class(MemoryBlobStorage(), allow_heuristics=allow_heuristics),
         policy=SpecificationPolicy(
-            cache_options=CacheOptions(shared=True, supported_methods=["GET", "HEAD"], allow_stale=False)
+            cache_options=CacheOptions(shared=True, supported_methods=["GET", "HEAD"], allow_stale=allow_stale)
         ),
     )
-    return AsyncClient(transport=transport, event_hooks=ENDPOINT_HOOKS)
+    return AsyncClient(transport=transport, event_hooks=hooks)
 
 
 def _origin(headers, *, revalidates=True):
@@ -123,23 +132,6 @@ class TestValidatorOnlyResponses:
                 await client.get(URL)
 
     @respx.mock
-    async def test_a_callers_response_is_not_handed_to_another_without_the_origin_confirming(self):
-        """The credential is invisible to the cache key: the origin sees each caller's conditional request."""
-        last_modified = _http_date(timedelta(days=-30))
-
-        def respond(request):
-            key = request.headers["x-api-key"]
-            return Response(200, content=f"for-{key}".encode(), headers={"last-modified": last_modified})
-
-        respx.get(URL).mock(side_effect=respond)
-
-        async with _client() as client:
-            await client.get(URL, headers={"x-api-key": "alice"})
-            bob = await client.get(URL, headers={"x-api-key": "bob"})
-
-        assert bob.content == b"for-bob"
-
-    @respx.mock
     async def test_a_304_without_date_does_not_leak_the_marker_to_the_client(self):
         """The client sees the ``Date`` the origin gave the stored response, not the one that keeps it stale."""
         date = _http_date(timedelta(hours=-1))
@@ -206,3 +198,126 @@ class TestValidatorOnlyResponses:
             await client.get(URL)
 
         assert len(seen) == 1
+
+
+def _per_caller_origin(kind, validator, *, response_headers=None, on_200=True):
+    """``/me`` answered per ``X-Api-Key``; a conditional request is answered ``304`` as an origin that only compares validators does."""
+    seen = []
+
+    def respond(request):
+        who = (
+            request.headers.get("x-api-key")
+            or request.headers.get("authorization")
+            or request.headers.get("cookie", "").removeprefix("session=")
+        )
+        seen.append(who)
+        conditional = (
+            request.headers.get("if-modified-since")
+            if kind == "last-modified"
+            else request.headers.get("if-none-match")
+        )
+        if conditional == validator:
+            return Response(304, headers=response_headers or {})
+        return Response(
+            200,
+            content=f"for-{who}".encode(),
+            headers={kind: validator, **((response_headers or {}) if on_200 else {})},
+        )
+
+    respx.get(URL).mock(side_effect=respond)
+    return seen
+
+
+CALLER_HEADERS = [
+    pytest.param({"x-api-key": "alice"}, {"x-api-key": "bob"}, ("x-api-key",), id="declared-x-api-key"),
+    pytest.param({"cookie": "session=alice"}, {"cookie": "session=bob"}, (), id="cookie"),
+    pytest.param({"authorization": "alice"}, {"authorization": "bob"}, (), id="authorization"),
+]
+VALIDATORS = [
+    pytest.param("last-modified", _http_date(timedelta(days=-30)), id="last-modified"),
+    pytest.param("etag", 'W/"1"', id="weak-etag"),
+]
+
+
+@pytest.mark.asyncio
+class TestCredentialedRequestsAreNotRetained:
+    @pytest.mark.parametrize(("alice", "bob", "declared"), CALLER_HEADERS)
+    @pytest.mark.parametrize(("kind", "validator"), VALIDATORS)
+    @respx.mock
+    async def test_a_callers_response_is_never_handed_to_another(self, alice, bob, declared, kind, validator):
+        """A conditional request proves the validator still matches, not that the body is the caller's."""
+        seen = _per_caller_origin(kind, validator)
+
+        async with _client(credentials=declared) as client:
+            await client.get(URL, headers=alice)
+            second = await client.get(URL, headers=bob)
+
+        assert second.content == b"for-" + bob[next(iter(bob))].removeprefix("session=").encode()
+        assert len(seen) == 2
+
+    @respx.mock
+    async def test_a_304_bringing_a_max_age_does_not_make_it_servable_to_further_callers(self):
+        validator = _http_date(timedelta(days=-30))
+        _per_caller_origin("last-modified", validator, response_headers={"cache-control": "max-age=600"}, on_200=False)
+
+        async with _client(credentials=("x-api-key",)) as client:
+            for caller in ("alice", "bob", "carol"):
+                response = await client.get(URL, headers={"x-api-key": caller})
+
+        assert response.content == b"for-carol"
+
+    @respx.mock
+    async def test_a_response_setting_a_cookie_is_not_retained(self):
+        validator = _http_date(timedelta(days=-30))
+        _per_caller_origin("last-modified", validator, response_headers={"set-cookie": "a=1"})
+
+        async with _client() as client:
+            await client.get(URL)
+            storage = client._transport.storage
+            assert await storage.get_entries(await client._transport._key_for(httpx.URL(URL), "test-endpoint")) == []
+
+    @pytest.mark.parametrize(("kind", "validator"), VALIDATORS)
+    @respx.mock
+    async def test_without_any_credential_the_response_is_retained_and_revalidated(self, kind, validator):
+        seen = _per_caller_origin(kind, validator)
+
+        async with _client(credentials=("x-api-key",)) as client:
+            await client.get(URL)
+            second = await client.get(URL)
+
+        assert second.content == b"for-"
+        assert len(seen) == 2
+        assert second.status_code == 200
+
+
+@pytest.mark.asyncio
+class TestStaleServing:
+    @respx.mock
+    async def test_the_age_of_an_entry_served_stale_comes_from_its_real_date(self):
+        date = _http_date(timedelta(hours=-1))
+        _origin({"etag": '"v1"', "date": date})
+
+        async with _client(allow_stale=True) as client:
+            await client.get(URL)
+            second = await client.get(URL)
+
+        assert second.headers["date"] == date
+        assert 3590 <= int(second.headers["age"]) <= 3700
+
+
+@pytest.mark.asyncio
+class TestHeuristicEntriesAfterTurningHeuristicsOff:
+    @respx.mock
+    async def test_an_entry_stored_with_heuristics_on_is_revalidated_once_they_are_off(self):
+        seen = _origin({"last-modified": _http_date(timedelta(days=-30))})
+        storage = AsyncStorage(MemoryBlobStorage(), allow_heuristics=True)
+
+        async with _client(storage_class=lambda blobs, allow_heuristics: storage, allow_heuristics=True) as client:
+            await client.get(URL)
+            await client.get(URL)
+        assert len(seen) == 1
+
+        storage._allow_heuristics = False
+        async with _client(storage_class=lambda blobs, allow_heuristics: storage) as client:
+            await client.get(URL)
+        assert len(seen) == 2
