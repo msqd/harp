@@ -41,7 +41,9 @@ that maintain a working state throughout development.
 - **Package Management**:
     - Backend: UV (migrating from Poetry)
     - Frontend: pnpm (ALWAYS use pnpm, never npm)
-- **Database Support**: SQLite (dev), PostgreSQL, MySQL
+- **Database Support**: PostgreSQL (production), SQLite (development). MySQL and MariaDB are
+  deprecated (ADR-0005) and their removal is announced (#1360): treat them as unsupported, write no
+  new code or tests for them.
 - **Testing**: pytest (backend), Vitest/Playwright (frontend)
 
 ## Development Workflow
@@ -198,6 +200,15 @@ Uses pytest with testcontainers for database tests.
 # Run specific backend test
 uv run pytest tests/features/test_http_proxy.py::TestAsgiProxyWithoutEndpoints::test_asgi_proxy_get_no_endpoint
 ```
+
+Local test runs share one machine with every other session and engineer, and each run starts its
+own database containers. Running too many at once has OOM-killed sessions. So:
+
+- Set `TEST_DATABASE_DIALECTS=sqlite,postgresql`: no MySQL or MariaDB container locally. CI runs the
+  full matrix.
+- Run the tests your change touches, not the whole suite, with at most `-n 2` xdist workers.
+- Before a database-backed run, check available memory (`free -h`); below 3 GiB, wait for other
+  runs to finish.
 
 ### Database Migrations
 
