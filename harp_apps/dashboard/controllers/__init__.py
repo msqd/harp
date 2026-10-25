@@ -1,5 +1,6 @@
 import asyncio
 import os
+from typing import Optional
 from urllib.parse import urlsplit
 
 from asgi_middleware_static_file import ASGIMiddlewareStaticFile
@@ -12,13 +13,15 @@ from harp.asgi.events import ViewEvent
 from harp.controllers import RoutingController
 from harp.errors import ConfigurationError
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse, JsonHttpResponse
+from harp.security.actor import Actor, set_actor
 from harp.views.json import on_json_response
 from harp_apps import dashboard
+from harp_apps.auth.actors import ActorResolver
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.settings.remote import Remote
 from harp_apps.storage.types import IStorage
 
-from ..security.auth import resolve_authentication
+from ..security.auth import OPEN_ACTOR, resolve_authentication
 from ..settings import DashboardSettings
 from .metrics import METRICS_PATH, metrics_controller
 
@@ -75,6 +78,9 @@ def _send_with_headers(asgi_send: ASGISendCallable, headers: dict) -> ASGISendCa
 class DashboardController(RoutingController):
     name = "ui"
 
+    #: A route that declares no role is Admin only: forgetting to think about it must not open anything.
+    roles_required = True
+
     storage: IStorage
     settings: DashboardSettings
     http_client: AsyncClient
@@ -92,6 +98,7 @@ class DashboardController(RoutingController):
         settings: DashboardSettings,
         http_client: AsyncClient,
         router: Router = None,
+        actors: Optional[ActorResolver] = None,
     ):
         super().__init__(router=router, handle_errors=False)
 
@@ -102,6 +109,9 @@ class DashboardController(RoutingController):
 
         # the authentication actually enforced, which is not necessarily what is configured (see the security module)
         self._auth = resolve_authentication(self.settings.auth, f"{self.settings.host}:{self.settings.port}")
+        self.actors = actors
+        if self._auth and actors is None:
+            raise ConfigurationError("The dashboard authenticates its users, it needs the actor resolver of auth.")
 
         # create users if they don't exist; keep a strong reference to the task, as the event loop
         # only holds a weak one and would let it be garbage-collected before completion.
@@ -186,22 +196,28 @@ class DashboardController(RoutingController):
             return JsonHttpResponse({"error": "Content-Type must be application/json", "status": 415}, status=415)
         return None
 
+    async def _authenticate(self, request: HttpRequest) -> Optional[Actor]:
+        """The actor of the request, or None if it is not authenticated or its account may not act."""
+        if not self._auth:
+            return OPEN_ACTOR
+
+        credentials = request.basic_auth
+        if not credentials:
+            return None
+
+        username = await self._auth.acheck(credentials[0], credentials[1])
+        return await self.actors.basic(username) if username else None
+
     async def _handle(self, request: HttpRequest, asgi_send: ASGISendCallable) -> HttpResponse:
-        request.extensions.setdefault("user", None)
-
-        if self._auth:
-            current_auth = request.basic_auth
-
-            if current_auth:
-                request.extensions["user"] = await self._auth.acheck(current_auth[0], current_auth[1])
-
-            if not request.extensions["user"]:
-                return HttpResponse(
-                    b"Unauthorized",
-                    status=401,
-                    headers={"WWW-Authenticate": 'Basic realm="Harp Dashboard"'},
-                    content_type="text/plain",
-                )
+        actor = await self._authenticate(request)
+        if actor is None:
+            return HttpResponse(
+                b"Unauthorized",
+                status=401,
+                headers={"WWW-Authenticate": 'Basic realm="Harp Dashboard"'},
+                content_type="text/plain",
+            )
+        set_actor(request, actor)
 
         if refusal := self._refuse_forged_request(request):
             return refusal

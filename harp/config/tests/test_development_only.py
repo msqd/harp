@@ -67,7 +67,7 @@ def test_each_item_says_what_to_use_instead():
 
 async def test_startup_logs_one_warning_per_setting(caplog):
     builder = ConfigurationBuilder(use_default_applications=False)
-    for app in ("http_client", "proxy", "storage", "dashboard"):
+    for app in ("http_client", "proxy", "storage", "auth", "dashboard"):
         builder.applications.add(app)
     builder.add_values(
         {

@@ -1,10 +1,16 @@
 from datetime import datetime
-from typing import Iterable, Protocol
+from typing import TYPE_CHECKING, Iterable, Protocol
 
 from harp_apps.storage.types import TransactionsGroupedByTimeBucket
 
+if TYPE_CHECKING:
+    from harp_apps.auth.models import AccountsRepository
+
 
 class IStorage(Protocol):
+    accounts: "AccountsRepository"
+    """Accounts, which favourites belong to."""
+
     async def initialize(self):
         """Coroutine function to initialize the instance."""
         ...

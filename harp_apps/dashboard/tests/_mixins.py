@@ -3,9 +3,15 @@ from copy import deepcopy
 import pytest
 
 from harp.config import ConfigurationBuilder
-from harp.controllers import ProxyControllerResolver
+from harp.asgi import ASGIKernel
+from harp.controllers import DefaultControllerResolver, ProxyControllerResolver
+from harp.security.actor import Actor, ActorAccount, Role, set_actor
+
+from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
+from harp.views.json import register as register_json_views
 
 from ..controllers.system import SystemController
+from ..security.auth import OPEN_ACTOR
 
 
 class SystemControllerTestFixtureMixin:
@@ -47,3 +53,28 @@ class SystemControllerTestFixtureMixin:
 
 def parametrize_with_settings(*args):
     return pytest.mark.parametrize("controller", args, indirect=True)
+
+
+class RoleNamedActors:
+    """Stands for the actor resolver: an account is named after its role, ``disabled`` is refused."""
+
+    async def basic(self, username):
+        if username == "disabled":
+            return None
+        role = Role.parse(username)
+        return Actor(account=ActorAccount(id=1, username=username, role=role), role=role, via="basic")
+
+
+class AdminThroughASGIFixtureMixin(ControllerThroughASGIFixtureMixin):
+    """The controller under test is a sub-controller of the dashboard, which is what resolves the actor: here it is an
+    Admin, as when the dashboard is left open."""
+
+    @pytest.fixture
+    def kernel(self, controller):
+        async def as_admin(request):
+            set_actor(request, OPEN_ACTOR)
+            return await controller(request)
+
+        kernel = ASGIKernel(resolver=DefaultControllerResolver(default_controller=as_admin), handle_errors=False)
+        register_json_views(kernel.dispatcher)
+        return kernel

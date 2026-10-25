@@ -205,7 +205,12 @@ def create_revision(alembic_cfg, application: str, message: str):
 
 
 def current_revisions_by_application(sync_conn, alembic_cfg) -> dict[str, Union[str, None]]:
-    """The revision each application's branch is at in the database (``None``: not migrated yet)."""
+    """
+    The revision each application's branch is at in the database (``None``: not migrated yet).
+
+    A revision that depends on another branch's (``depends_on``) supersedes it in ``alembic_version``: that branch is
+    at the revision the dependency names, or further if it has gone on since.
+    """
     from alembic.runtime.migration import MigrationContext
     from alembic.script import ScriptDirectory
 
@@ -214,7 +219,11 @@ def current_revisions_by_application(sync_conn, alembic_cfg) -> dict[str, Union[
     current: dict[str, Union[str, None]] = {name: None for name in by_folder.values()}
     for revision in MigrationContext.configure(sync_conn).get_current_heads():
         try:
-            current[by_folder[Path(script.get_revision(revision).path).resolve().parent]] = revision
+            # newest first: the first revision seen of an application is where its branch stands
+            for reached in script.iterate_revisions(revision, "base"):
+                application = by_folder[Path(reached.path).resolve().parent]
+                if current[application] is None:
+                    current[application] = reached.revision
         except Exception:
             raise UnknownRevisionError(
                 f"The database is at revision {revision!r}, which this version of HARP does not know. It was probably "
@@ -312,13 +321,20 @@ def _missing_columns(sync_conn) -> list[str]:
     return missing
 
 
-def _alembic_revisions(sync_conn, alembic_cfg) -> tuple[set[str], set[str]]:
+def _alembic_revisions(sync_conn, alembic_cfg) -> tuple[set[str], set[str], set[str]]:
+    """The revisions the database is at, the heads of the scripts, and every revision the database has gone through."""
     from alembic.runtime.migration import MigrationContext
     from alembic.script import ScriptDirectory
 
+    script = ScriptDirectory.from_config(alembic_cfg)
     current = set(MigrationContext.configure(sync_conn).get_current_heads())
-    head = set(ScriptDirectory.from_config(alembic_cfg).get_heads())
-    return current, head
+    try:
+        # a revision depending on another branch's supersedes it in the database: follow dependencies too
+        reached = {r.revision for revision in current for r in script.iterate_revisions(revision, "base")}
+    except Exception:
+        # a revision these scripts do not know: the database is not at their heads
+        reached = set()
+    return current, set(script.get_heads()), reached
 
 
 async def ensure_schema_is_current(engine, *, alembic_cfg=None):
@@ -345,8 +361,8 @@ async def ensure_schema_is_current(engine, *, alembic_cfg=None):
     else:
         alembic_cfg = alembic_cfg or create_alembic_config(url.render_as_string(hide_password=False))
         async with engine.connect() as conn:
-            current, head = await conn.run_sync(_alembic_revisions, alembic_cfg)
-        if current == head:
+            current, head, reached = await conn.run_sync(_alembic_revisions, alembic_cfg)
+        if head <= reached:
             return
         details = f"at revision {', '.join(sorted(current)) or 'none'}, expected {', '.join(sorted(head))}"
         options = (

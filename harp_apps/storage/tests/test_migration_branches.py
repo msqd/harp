@@ -29,13 +29,13 @@ STORAGE_HEAD = (
 )
 
 
-def _write_revision(versions: Path, *, revision, label, down_revision=None):
+def _write_revision(versions: Path, *, revision, label, down_revision=None, depends_on=None):
     versions.mkdir(parents=True, exist_ok=True)
     (versions / f"{revision}.py").write_text(
         f"revision = {revision!r}\n"
         f"down_revision = {down_revision!r}\n"
         f"branch_labels = {(label,) if label else None!r}\n"
-        "depends_on = None\n\n\n"
+        f"depends_on = {depends_on!r}\n\n\n"
         "def upgrade():\n    pass\n\n\n"
         "def downgrade():\n    pass\n"
     )
@@ -66,7 +66,7 @@ def test_discovery_finds_storage_in_the_package():
 def test_storage_revisions_form_the_storage_branch():
     script = ScriptDirectory.from_config(create_alembic_config("sqlite+aiosqlite:///:memory:"))
 
-    assert script.get_heads() == [STORAGE_HEAD]
+    assert STORAGE_HEAD in script.get_heads()
     assert script.get_revision("storage@head").revision == STORAGE_HEAD
     assert script.get_revision("storage").revision == "248285939c4c"
 
@@ -92,9 +92,10 @@ def test_storage_owns_what_no_other_application_claims():
     assert not table_belongs_to("auth", "http_cache_entries", applications)
 
 
-def test_storage_tables_are_all_storage_owned():
+def test_every_table_belongs_to_the_application_its_prefix_names():
     for table in Base.metadata.sorted_tables:
-        assert table_belongs_to("storage", table.name, ["auth", "storage"])
+        owner = "auth" if table.name.startswith("auth_") else "storage"
+        assert table_belongs_to(owner, table.name, ["auth", "storage"])
 
 
 async def _run(func, *args):
@@ -181,17 +182,58 @@ async def test_ensure_schema_is_current_checks_every_head(tmp_path, sql_engine):
     if sql_engine.dialect.name == "sqlite":
         pytest.skip("sqlite schema is checked against the models, not alembic")
 
-    root = _application_tree(tmp_path, with_migrations=["auth"])
-    locations = {"storage": discover_migration_locations()["storage"], **discover_migration_locations(root)}
+    root = _application_tree(tmp_path, with_migrations=["audit"])
+    locations = {**discover_migration_locations(), **discover_migration_locations(root)}
     cfg = create_alembic_config(sql_engine.url.render_as_string(hide_password=False), locations=locations)
 
     # storage is at its head, auth has a branch that was never applied
     from harp.errors import OutdatedSchemaError
 
-    with pytest.raises(OutdatedSchemaError, match="auth0001"):
+    with pytest.raises(OutdatedSchemaError, match="audit0001"):
         await ensure_schema_is_current(sql_engine, alembic_cfg=cfg)
 
     await _run(command.upgrade, cfg, "heads")
+    await ensure_schema_is_current(sql_engine, alembic_cfg=cfg)
+
+
+def _dependent_application_locations(root: Path, depends_on: str) -> dict:
+    """Storage as it is, and a branch whose first revision depends on storage's head."""
+    _write_revision(
+        root / "audit" / "migrations" / "versions", revision="audit0001", label="audit", depends_on=depends_on
+    )
+    return {**discover_migration_locations(), **discover_migration_locations(root)}
+
+
+async def test_a_branch_depending_on_another_leaves_that_one_at_its_head_in_the_status(tmp_path):
+    locations = _dependent_application_locations(tmp_path, STORAGE_HEAD)
+    del locations["auth"]  # this database only knows storage and the application depending on it
+    db = tmp_path / "depends.db"
+    cfg = create_alembic_config(f"sqlite+aiosqlite:///{db}", locations=locations)
+    engine = create_async_engine(f"sqlite+aiosqlite:///{db}")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    await _run(command.stamp, cfg, "storage@head")
+    await _run(command.upgrade, cfg, "heads")
+
+    async with engine.connect() as conn:
+        current = await conn.run_sync(lambda c: current_revisions_by_application(c, cfg))
+        stored = (await conn.execute(text("SELECT version_num FROM alembic_version"))).scalars().all()
+    await engine.dispose()
+
+    # alembic keeps one row for both branches, as the revision that depends on the other supersedes it
+    assert stored == ["audit0001"]
+    assert current == {"audit": "audit0001", "storage": STORAGE_HEAD}
+
+
+async def test_ensure_schema_is_current_accepts_a_branch_that_depends_on_another(tmp_path, sql_engine):
+    if sql_engine.dialect.name == "sqlite":
+        pytest.skip("sqlite schema is checked against the models, not alembic")
+
+    locations = _dependent_application_locations(tmp_path, STORAGE_HEAD)
+    cfg = create_alembic_config(sql_engine.url.render_as_string(hide_password=False), locations=locations)
+
+    await _run(command.upgrade, cfg, "heads")
+
     await ensure_schema_is_current(sql_engine, alembic_cfg=cfg)
 
 

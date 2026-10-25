@@ -7,7 +7,8 @@ from multidict import MultiDict
 
 from harp.http import HttpRequest
 from harp.utils.testing.communicators import ASGICommunicator
-from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
+from harp_apps.dashboard.tests._mixins import AdminThroughASGIFixtureMixin
+from harp_apps.dashboard.security.auth import OPEN_ACTOR
 from harp_apps.dashboard.controllers.transactions import TransactionsController
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
@@ -20,7 +21,7 @@ class TransactionsControllerTestFixtureMixin:
 
 class TestTransactionsController(TransactionsControllerTestFixtureMixin, StorageTestFixtureMixin):
     async def test_get_returns_404_when_transaction_not_found(self, controller: TransactionsController):
-        request = Mock(spec=HttpRequest, query=MultiDict(), extensions={"user": "anonymous"})
+        request = Mock(spec=HttpRequest, query=MultiDict(), extensions={"actor": OPEN_ACTOR})
         response = await controller.get(request, "non-existent-id")
         assert response.status == 404
 
@@ -65,7 +66,7 @@ class TestTransactionsController(TransactionsControllerTestFixtureMixin, Storage
 
 class TestTransactionsControllerFlags(TransactionsControllerTestFixtureMixin, StorageTestFixtureMixin):
     def request(self, method):
-        return Mock(spec=HttpRequest, method=method, query=MultiDict(), extensions={"user": "anonymous"})
+        return Mock(spec=HttpRequest, method=method, query=MultiDict(), extensions={"actor": OPEN_ACTOR})
 
     async def flags_of(self, controller: TransactionsController, transaction_id):
         transaction = await controller.storage.get_transaction(transaction_id, username="anonymous")
@@ -118,7 +119,7 @@ class TestTransactionsControllerFlags(TransactionsControllerTestFixtureMixin, St
 class TestTransactionsControllerThroughASGI(
     TransactionsControllerTestFixtureMixin,
     StorageTestFixtureMixin,
-    ControllerThroughASGIFixtureMixin,
+    AdminThroughASGIFixtureMixin,
 ):
     async def test_filters_using_asgi(self, client: ASGICommunicator):
         # todo this is probably not the right place, we're unit testing a controller, should we really duplicate tests

@@ -84,6 +84,9 @@ Internal implementation: :class:`BasicAuthSettings <harp_apps.dashboard.settings
 
 .. include:: ./_howto_auth_hash.rst
 
+Each user is an account of the :doc:`auth application </apps/auth/index>`, which gives it a role (``viewer``,
+``editor`` or ``admin``) that decides the pages and actions it may use. Users declared here are ``admin``.
+
 To explicitly serve the dashboard without authentication, set the type to ``none`` (or
 ``--set dashboard.auth.type=none``).
 

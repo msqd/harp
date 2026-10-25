@@ -17,7 +17,7 @@ from harp.config.asdict import asdict
 from harp.utils.testing.communicators import ASGICommunicator
 from harp_apps.dashboard.controllers import DashboardController
 from harp_apps.dashboard.settings import DashboardSettings
-from harp_apps.storage.models import User as SqlUser
+from harp_apps.auth.models import Account as SqlUser
 
 DASHBOARD_PORT = 4080
 
@@ -45,7 +45,7 @@ async def boot(test_api, caplog):
 
     async def _boot(dashboard=None, *, storage_url="sqlite:///:memory:"):
         builder = ConfigurationBuilder(use_default_applications=False)
-        for app in ("http_client", "proxy", "storage", "dashboard"):
+        for app in ("http_client", "proxy", "storage", "auth", "dashboard"):
             builder.applications.add(app)
         builder.add_values(
             {
