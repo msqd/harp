@@ -35,7 +35,7 @@ class MemoryBlobStorage(IBlobStorage):
                 await self.delete(blob.id)
 
     async def exists(self, blob_id: str) -> bool:
-        return False
+        return blob_id in self._blobs
 
     async def iter_blobs(self, content_type: str) -> AsyncIterator[Blob]:
         for blob in list(self._blobs.values()):

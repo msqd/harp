@@ -91,7 +91,7 @@ class ServiceProvider:
         # singleton lifestyle will get instanciated only once (by provider, two different providers for the same service
         # would create 2 instances-.
         if self._lifestyle == ServiceLifeStyle.SINGLETON:
-            if not self._instance:
+            if self._instance is None:
                 self._instance = self._create_instance(scope, parent_type)
             return self._instance
 
