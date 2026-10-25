@@ -172,16 +172,11 @@ async def test_transactional_listener_failure_rolls_back_and_fails_the_action(ma
 
 async def test_main_listener_failure_is_logged_and_the_commit_stands(make_uow, dispatcher, caplog):
     uow = make_uow()
-    later = []
 
     async def failing(event):
         raise ValueError("webhook down")
 
-    async def other(event):
-        later.append(event)
-
     dispatcher.add_listener("test.audited", failing)
-    dispatcher.add_listener("test.audited", other, priority=-1)
 
     with caplog.at_level(logging.ERROR):
         async with uow:
@@ -341,3 +336,83 @@ async def test_core_container_provides_a_transactional_dispatcher_distinct_from_
         assert system.provider.get(TransactionalEventDispatcher) is transactional
     finally:
         await system.dispose()
+
+
+async def test_record_outside_a_transaction_is_refused(make_uow, transactional):
+    uow = make_uow()
+    seen = []
+
+    async def listener(event):
+        seen.append(event)
+
+    transactional.add_listener("test.audited", listener)
+
+    with pytest.raises(RuntimeError, match="not open"):
+        await uow.record(Audited())
+
+    assert seen == []
+
+
+async def test_act_outside_a_transaction_is_refused(make_uow):
+    async def action():
+        pass
+
+    with pytest.raises(RuntimeError, match="not open"):
+        await make_uow().act(action)
+
+
+async def test_an_instance_is_single_use(make_uow, dispatcher):
+    uow = make_uow()
+    after = []
+
+    async def ordinary(event):
+        after.append(event)
+
+    dispatcher.add_listener("test.audited", ordinary)
+
+    async with uow:
+        await uow.record(Audited())
+
+    with pytest.raises(RuntimeError, match="single-use"):
+        async with uow:
+            pass
+
+    assert len(after) == 1
+
+
+async def test_units_of_work_cannot_be_nested(make_uow):
+    outer, inner = make_uow(), make_uow()
+
+    with pytest.raises(RuntimeError, match="nested"):
+        async with outer:
+            async with inner:
+                pass
+
+    assert inner.journal == []
+    assert outer.journal == ["begin", "rollback"]
+
+
+async def test_a_unit_of_work_can_open_after_another_closed(make_uow):
+    async with make_uow():
+        pass
+    async with make_uow():
+        pass
+
+
+async def test_body_failing_after_a_successful_action_calls_its_compensation(make_uow):
+    uow = make_uow()
+    compensated = []
+
+    async def action():
+        pass
+
+    async def compensation():
+        compensated.append(True)
+
+    with pytest.raises(RuntimeError, match="body failed"):
+        async with uow:
+            await uow.act(action, compensation=compensation)
+            raise RuntimeError("body failed")
+
+    assert uow.journal == ["begin", "rollback"]
+    assert compensated == [True]

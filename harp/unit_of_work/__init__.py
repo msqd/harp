@@ -18,6 +18,7 @@ event is dispatched on the main dispatcher, for every other listener: a failure 
 from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable
 from contextlib import AbstractAsyncContextManager
+from contextvars import ContextVar, Token
 from typing import Optional, Protocol, TypeVar
 
 from whistle import IAsyncEventDispatcher, IEvent
@@ -82,6 +83,8 @@ class TransactionalEventDispatcher(LoggingAsyncEventDispatcher):
     """
 
 
+_open_unit_of_work: ContextVar[Optional["UnitOfWork"]] = ContextVar("harp_open_unit_of_work", default=None)
+
 Compensation = Callable[[], Awaitable[None]]
 
 
@@ -99,6 +102,12 @@ class UnitOfWork(ABC):
         self._recorded: list[IEvent] = []
         self._actions: list[Optional[Compensation]] = []
         self._transaction_context: Optional[AbstractAsyncContextManager] = None
+        self._state = "new"
+        self._token: Optional[Token] = None
+
+    def _ensure_open(self) -> None:
+        if self._state != "open":
+            raise RuntimeError("The unit of work is not open: use it inside `async with`.")
 
     @abstractmethod
     def _transaction(self) -> AbstractAsyncContextManager:
@@ -106,6 +115,7 @@ class UnitOfWork(ABC):
 
     async def record(self, event: IEvent) -> None:
         """Dispatches an auditable event on the transactional dispatcher, inside the transaction."""
+        self._ensure_open()
         if not is_auditable(event):
             raise UnsupportedEventError(f"{type(event).__name__} is not marked auditable, it cannot be recorded.")
         await self._transactional.adispatch(event.event_id, event)  # type: ignore[attr-defined]
@@ -113,21 +123,40 @@ class UnitOfWork(ABC):
 
     async def act(self, action: Callable[[], Awaitable[None]], *, compensation: Optional[Compensation] = None) -> None:
         """Runs an action outside the database; a failure of the action propagates and rolls everything back."""
+        self._ensure_open()
         await action()
         self._actions.append(compensation)
 
     async def __aenter__(self) -> "UnitOfWork":
-        self._transaction_context = self._transaction()
-        await self._transaction_context.__aenter__()
+        if self._state != "new":
+            raise RuntimeError("A unit of work is single-use: create another one.")
+        if _open_unit_of_work.get() is not None:
+            raise RuntimeError("Units of work cannot be nested: one action, one commit.")
+        self._state = "open"
+        self._token = _open_unit_of_work.set(self)
+        try:
+            self._transaction_context = self._transaction()
+            await self._transaction_context.__aenter__()
+        except BaseException:
+            self._close()
+            raise
         return self
+
+    def _close(self) -> None:
+        self._state = "closed"
+        if self._token is not None:
+            _open_unit_of_work.reset(self._token)
+            self._token = None
 
     async def __aexit__(self, exc_type, exc, tb) -> bool:
         assert self._transaction_context is not None
         try:
             suppressed = await self._transaction_context.__aexit__(exc_type, exc, tb)
         except BaseException:
+            self._close()
             await self._compensate()
             raise
+        self._close()
         if exc_type is not None:
             await self._compensate()
             return bool(suppressed)

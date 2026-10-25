@@ -145,6 +145,16 @@ async def test_commit_failure_after_the_action_calls_its_compensation(
     assert compensated == [True]
 
 
+async def test_sql_units_of_work_cannot_be_nested(unit_of_work, session_factory):
+    with pytest.raises(RuntimeError, match="nested"):
+        async with unit_of_work():
+            await current_session().execute(text("INSERT INTO uow_probe (note) VALUES ('action')"))
+            async with unit_of_work():
+                pass
+
+    assert await notes(session_factory) == []
+
+
 async def test_current_session_outside_a_unit_of_work_is_an_error():
     with pytest.raises(RuntimeError):
         current_session()
