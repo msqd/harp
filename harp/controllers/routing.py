@@ -43,14 +43,15 @@ class RoutingController:
         pass
 
     def create_router(self):
-        return self.RouterType(*self.RouterArguments.args, *self.RouterArguments.kwargs)
+        return self.RouterType(*self.RouterArguments.args, **self.RouterArguments.kwargs)
 
     async def __call__(self, request: HttpRequest):
         try:
             match = self.router(request.path, method=request.method)
             sig = signature(match.target)
+            params = match.params or {}  # None on static routes
             args = (
-                request if name == "request" else match.params.get(name, param.default)
+                request if name == "request" else params.get(name, param.default)
                 for name, param in sig.parameters.items()
             )
             return await match.target(*args)

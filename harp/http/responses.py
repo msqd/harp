@@ -103,7 +103,4 @@ class AlreadyHandledHttpResponse(HttpResponse):
 
 class RedirectHttpResponse(HttpResponse):
     def __init__(self, location: str, /, *, status: int = 302, headers: dict = None):
-        if headers is None:
-            headers = {}
-        headers["Location"] = location
-        super().__init__(b"", status=status, headers=headers)
+        super().__init__(b"", status=status, headers={**(headers or {}), "Location": location})

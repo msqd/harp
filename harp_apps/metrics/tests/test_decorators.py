@@ -73,3 +73,15 @@ async def test_remote_records_responses():
 
     assert sample("remote_responses_count_total", name="ep-ok", method="POST", status="204") == 1
     assert sample("remote_requests_in_progress", name="ep-ok", method="POST") == 0
+
+
+async def test_exceptions_keep_their_cause():
+    async def controller(request):
+        raise ValueError("boom") from KeyError("root")
+
+    wrapped = decorate_proxy_controller(controller, name="ctl-cause", port=3333)
+
+    with pytest.raises(ValueError) as caught:
+        await wrapped(HttpRequest(method="GET", path="/x"))
+
+    assert isinstance(caught.value.__cause__, KeyError)
