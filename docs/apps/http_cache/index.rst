@@ -64,7 +64,7 @@ A request never fails because of it. It waits at most ``coalescing_timeout`` sec
 share: a response that cannot be stored, or one the cache does not retain.
 
 The waiters are released once the cache has the body, not once the leading client has read it: a client that reads
-slowly, or stops reading, delays nobody. To allow that, up to 10 MiB (``DEFAULT_MAX_RECORDED_BODY_SIZE``) of the body are
+slowly, or stops reading, delays nobody. To allow that, up to 1 MiB (``DEFAULT_MAX_RECORDED_BODY_SIZE``) of the body are
 read ahead of that client; a larger body is not stored, so its waiters fetch on their own at once. Once a waiter has given
 up on a fetch after ``coalescing_timeout``, later requests no longer wait for that fetch.
 
