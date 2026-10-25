@@ -15,6 +15,12 @@ ORPHANS = 10
 
 
 @pytest.fixture
+def blob_storage(redis_blob_storage: RedisBlobStorage) -> RedisBlobStorage:
+    """These tests are about Redis only: do not run them once more with the SQL blob storage."""
+    return redis_blob_storage
+
+
+@pytest.fixture
 async def worker(sql_storage: SqlStorage, redis_blob_storage: RedisBlobStorage):
     worker = worker_with_grace(sql_storage, redis_blob_storage, JanitorSettings(), timedelta(0))
     worker.batch_size = BATCH
@@ -71,9 +77,34 @@ async def test_a_loop_lists_blobs_once_for_cleanup_and_metrics(worker: JanitorWo
     assert len(scans) == 2  # references of the cache entries, then the blobs: shared by cleanup and metrics
 
 
-async def test_metrics_of_a_loop_describe_what_is_left(worker: JanitorWorker, redis_blob_storage, sql_storage):
+async def test_metrics_stored_by_a_loop_describe_what_is_left(worker: JanitorWorker, sql_storage, monkeypatch):
+    stored = {}
+    insert_values = sql_storage.metrics.insert_values
+
+    async def spy(values, **kwargs):
+        stored.update(values)
+        return await insert_values(values, **kwargs)
+
+    monkeypatch.setattr(sql_storage.metrics, "insert_values", spy)
+
     await worker.loop()
 
+    assert stored["storage.blobs"] == 0
+    assert stored["storage.blobs.orphans"] == 0
+
+
+async def test_a_blob_listed_twice_by_scan_counts_once(worker: JanitorWorker, redis_blob_storage, monkeypatch):
+    worker.batch_size = 2 * ORPHANS + 1
+    iter_blob_ids = redis_blob_storage.iter_blob_ids
+
+    async def twice():
+        async for blob_id in iter_blob_ids():
+            yield blob_id
+            yield blob_id
+
+    monkeypatch.setattr(redis_blob_storage, "iter_blob_ids", twice)
+
     values = await worker.compute_metrics()
-    assert values["storage.blobs"] == 0
-    assert values["storage.blobs.orphans"] == 0
+
+    assert values["storage.blobs"] == ORPHANS
+    assert values["storage.blobs.orphans"] == ORPHANS

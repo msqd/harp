@@ -24,7 +24,8 @@ With ``redis`` (and ``memory``), one sweep per loop serves the cleanup and the m
 entries first, then the blob keys by ``SCAN`` in batches of 500 ids: each batch is looked up in the messages and its
 orphans are deleted, in a single short command, before the next batch is read. The janitor holds one batch plus the
 ids the cache entries reference (so it grows with the cache, not with the number of blobs), and no Redis command scales
-with the number of orphans.
+with the number of orphans. ``SCAN`` may return a key twice: within a batch it counts once, and a repeat landing in
+another batch can still be counted twice in the metrics.
 
 HARP stores its Redis blobs under the ``harp:blob:`` key prefix, and the janitor only scans, counts and deletes keys
 with that prefix (and its own ``harp:blob-written:`` markers). Other applications can share the Redis database: their

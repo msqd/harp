@@ -171,23 +171,28 @@ class JanitorWorker:
         async for blob_id in self.blob_storage.iter_blob_ids():
             batch.append(blob_id)
             if len(batch) >= self.batch_size:
-                found, removed = await self._sweep_batch(batch, kept, older_than, session)
-                total, orphans, deleted = total + len(batch), orphans + found, deleted + removed
+                size, found, removed = await self._sweep_batch(batch, kept, older_than, session)
+                total, orphans, deleted = total + size, orphans + found, deleted + removed
                 batch = []
-        found, removed = await self._sweep_batch(batch, kept, older_than, session)
-        return _Sweep(total + len(batch), orphans + found, deleted + removed)
+        size, found, removed = await self._sweep_batch(batch, kept, older_than, session)
+        return _Sweep(total + size, orphans + found, deleted + removed)
 
-    async def _sweep_batch(self, batch: list[str], kept: set[str], older_than, session) -> tuple[int, int]:
-        """The orphans of a batch of ids, and how many of them were deleted."""
+    async def _sweep_batch(self, batch: list[str], kept: set[str], older_than, session) -> tuple[int, int, int]:
+        """The size of a batch of ids, its orphans, and how many of them were deleted.
+
+        ``SCAN`` may return a key more than once: a batch counts each id once (a repeat in another batch still can't be
+        told, without holding every id).
+        """
+        batch = list(dict.fromkeys(batch))
         if not batch:
-            return 0, 0
+            return 0, 0, 0
         candidates = [blob_id for blob_id in batch if blob_id not in kept]
         referenced = await self.storage.blobs.referenced_by_messages(candidates, session=session)
         orphans = [blob_id for blob_id in candidates if blob_id not in referenced]
         deleted = 0
         if older_than is not None and orphans:
             deleted = await self.blob_storage.delete_stale(orphans, older_than=older_than)
-        return len(orphans), deleted
+        return len(batch), len(orphans), deleted
 
     async def compute_and_store_metrics(self, *, blob_sweep: BlobSweep | None = None):
         """
