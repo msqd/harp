@@ -8,11 +8,6 @@ version = "0.13.0.dev0"
 description = "HARP is an HTTP API Runtime Proxy, a toolkit to enhance the speed, reliability and observability of external APIs."
 authors = [{ name = "Romain Dorgueil", email = "romain@makersquad.fr" }]
 requires-python = ">=3.13,<3.14"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.13",
-]
 readme = "README.rst"
 license = "LGPL-3.0-or-later"
 license-files = ["LICENSE.rst"]
@@ -24,6 +19,7 @@ classifiers = [
     "Intended Audience :: System Administrators",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.13",
     "Topic :: Internet :: Proxy Servers",
     "Topic :: Internet :: WWW/HTTP",
