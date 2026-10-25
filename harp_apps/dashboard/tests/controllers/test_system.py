@@ -29,6 +29,7 @@ class TestSystemController(
         response = await controller.get_settings()
         assert response.asdict() == {
             "applications": ["harp_apps.storage"],
+            "core": {"muted_events": []},
             "storage": {
                 "blobs": {"type": "sql"},
                 "enabled": True,
@@ -45,6 +46,7 @@ class TestSystemController(
         response = await controller.get_settings()
         assert response.asdict() == {
             "applications": ["harp_apps.storage"],
+            "core": {"muted_events": []},
             "storage": {
                 "blobs": {"type": "redis"},
                 "enabled": True,
@@ -60,6 +62,7 @@ class TestSystemController(
         response = await controller.get_settings()
         assert response.asdict() == {
             "applications": ["harp_apps.storage"],
+            "core": {"muted_events": []},
             "storage": {
                 "blobs": ANY,
                 "enabled": True,
@@ -75,6 +78,7 @@ class TestSystemController(
         response = await controller.get_settings()
         assert response.asdict() == {
             "applications": ["harp_apps.storage"],
+            "core": {"muted_events": []},
             "storage": {
                 "enabled": True,
                 "migrate": True,
@@ -149,7 +153,7 @@ class TestSystemControllerThroughASGI(
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
-            b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
+            b'{"applications":["harp_apps.storage"],"core":{"muted_events":[]},"storage":{"url":"sqlite+aiosqlite:///'
             b':memory:","enabled":true,"migrate":true,"blobs":{"type":"sql"},"redis":null}}'
         )
 
@@ -162,7 +166,7 @@ class TestSystemControllerThroughASGI(
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
-            b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
+            b'{"applications":["harp_apps.storage"],"core":{"muted_events":[]},"storage":{"url":"sqlite+aiosqlite:///'
             b':memory:","enabled":true,"migrate":true,"blobs":{"type":"redis"},"redis":null}}'
         )
 
@@ -180,7 +184,7 @@ class TestSystemControllerThroughASGI(
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
-            b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
+            b'{"applications":["harp_apps.storage"],"core":{"muted_events":[]},"storage":{"url":"sqlite+aiosqlite:///'
             b':memory:","enabled":true,"migrate":true,"blobs":{"type":"sql"},"redis":null}}'
         )
 
@@ -201,7 +205,7 @@ class TestSystemControllerThroughASGI(
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
-            b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
+            b'{"applications":["harp_apps.storage"],"core":{"muted_events":[]},"storage":{"url":"sqlite+aiosqlite:///'
             b':memory:","enabled":true,"migrate":true,"blobs":{"type":"redis"},"redis":null}}'
         )
 
@@ -214,6 +218,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert orjson.loads(response["body"]) == {
             "applications": ["harp_apps.storage"],
+            "core": {"muted_events": []},
             "storage": {
                 "blobs": {"type": "sql"},
                 "enabled": True,
@@ -240,7 +245,7 @@ class TestSystemControllerThroughASGI(
         assert response["status"] == 200
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
-            b'{"applications":["harp_apps.storage"],"storage":{"url":"sqlite+aiosqlite:///'
+            b'{"applications":["harp_apps.storage"],"core":{"muted_events":[]},"storage":{"url":"sqlite+aiosqlite:///'
             b':memory:","enabled":true,"migrate":true,"blobs":{"type":"redis"},"redis":{"url":"redis://us'
             b'er:***@localhost:6379/0"}}}'
         )

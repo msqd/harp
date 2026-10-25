@@ -15,3 +15,4 @@ Submodules
     :maxdepth: 1
 
     harp.unit_of_work.audit
+    harp.unit_of_work.event_log

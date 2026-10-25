@@ -52,6 +52,7 @@ def test_load_documentation_example(configfile, snapshot):
     builder.add_file(os.path.join(harp.ROOT_DIR, configfile))
     settings = builder()
     applications = settings.pop("applications", [])
+    settings.pop("core")
     assert len(set(settings.keys()).difference(set(builder.applications.keys()))) == 0
     assert len(applications) >= len(settings)
     assert yaml.dump(asdict(settings)) == snapshot

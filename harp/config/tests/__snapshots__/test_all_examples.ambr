@@ -727,6 +727,7 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  core: {}
   dashboard:
     auth:
       type: basic
@@ -758,6 +759,7 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  core: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -779,6 +781,7 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  core: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -805,6 +808,7 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  core: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -845,6 +849,7 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  core: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -886,6 +891,7 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  core: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -973,6 +979,7 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  core: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -998,6 +1005,7 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  core: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
@@ -1018,6 +1026,7 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  core: {}
   dashboard: {}
   http_cache: {}
   http_client: {}
