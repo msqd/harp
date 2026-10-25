@@ -60,9 +60,19 @@ Table ``audit_events``:
     target is deleted.
 
 ``details``
-    A short JSON, specific to each action. Whatever sits under a key that looks like a secret (``token``, ``password``,
-    ``secret``, ``api_key``, ``authorization``, ``cookie``...) is replaced by ``[redacted]`` before it is written: no
-    secret reaches the audit. Keys ending in ``_id``, ``_name``, ``_label``, ``_type`` or ``_prefix`` are kept.
+    A short JSON, specific to each action. Default-deny: each event class declares the detail fields it may carry
+    (``details_fields``), only those are written to the row and the log, and the others are dropped with a warning that
+    names them. An event class has no field for a secret (a token creation declares ``prefix`` and ``name``, never the
+    token), and a class declaring a field named like one (``password``, ``secret``, ``token``, ``key``...) cannot be
+    defined. Fields ending in ``_id``, ``_name``, ``_label``, ``_type`` or ``_prefix`` are fine.
+
+Append-only
+:::::::::::
+
+Events are never edited: no route nor service updates or deletes a row, and the only deletion is the retention. This is a
+guarantee of the code, not of the database. If you want the database to enforce it, with PostgreSQL revoke ``UPDATE`` and
+``DELETE`` on ``audit_events`` from the role HARP connects with, and run the retention with a separate role that keeps
+``DELETE``.
 
 Log output
 ::::::::::

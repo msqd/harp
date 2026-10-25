@@ -13,6 +13,16 @@ from harp_apps.storage.unit_of_work import SqlUnitOfWorkFactory, current_session
 
 @auditable("test.role_changed")
 class RoleChanged(AuditableEvent):
+    details_fields = ("from", "to")
+
+
+@auditable("test.token_created")
+class TokenCreated(AuditableEvent):
+    details_fields = ("prefix", "name")
+
+
+@auditable("test.bare")
+class Bare(AuditableEvent):
     pass
 
 
@@ -77,7 +87,7 @@ async def test_a_system_actor_has_no_account(unit_of_work, session_factory):
 
 async def test_a_failing_audit_write_rolls_back_the_action(unit_of_work, session_factory):
     # not JSON serializable: the insert of the audit row fails, after the action wrote its own row
-    event = RoleChanged(details={"unserializable": object()})
+    event = RoleChanged(details={"from": object()})
 
     with pytest.raises(Exception):
         await change_role(unit_of_work, event)
@@ -95,17 +105,43 @@ async def test_a_failing_action_leaves_no_audit_row(unit_of_work, session_factor
     assert await rows(session_factory) == []
 
 
-async def test_no_secret_reaches_the_details(unit_of_work, session_factory):
-    event = RoleChanged(
-        target=Target("token", 5, "ci"),
-        details={"token": "hrp_super_secret", "name": "ci", "scopes": ["read"]},
-    )
+LEAKS = [
+    {"name": "password", "value": "hunter2"},
+    {"pwd": "hunter2"},
+    {"key": "hunter2"},
+    {"auth": "hunter2"},
+    {"recovery_codes": ["hunter2"]},
+    {"cmd": "Authorization: hunter2"},
+    {"token": "hrp_hunter2"},
+]
 
-    await change_role(unit_of_work, event)
+
+@pytest.mark.parametrize("leak", LEAKS)
+async def test_undeclared_details_are_never_persisted_nor_logged(unit_of_work, session_factory, leak):
+    event = TokenCreated(target=Target("token", 5, "ci"), details={"prefix": "hrp_ab", "name": "ci", **leak})
+
+    with capture_logs() as logs:
+        await change_role(unit_of_work, event)
 
     (row,) = await rows(session_factory)
-    assert "hrp_super_secret" not in str(row.details)
-    assert row.details == {"token": "[redacted]", "name": "ci", "scopes": ["read"]}
+    assert set(row.details) == {"prefix", "name"}
+    assert "hunter2" not in str(row.details)
+    assert "hunter2" not in str(logs)  # neither the audit line nor the warning about the dropped fields
+
+
+async def test_dropped_details_are_reported_by_name(unit_of_work):
+    with capture_logs() as logs:
+        await change_role(unit_of_work, TokenCreated(details={"prefix": "hrp_ab", "token": "hrp_hunter2"}))
+
+    (warning,) = [entry for entry in logs if entry["log_level"] == "warning"]
+    assert warning["dropped"] == ["token"]
+
+
+async def test_an_event_without_declared_fields_records_no_details(unit_of_work, session_factory):
+    await change_role(unit_of_work, Bare(details={"anything": 1}))
+
+    (row,) = await rows(session_factory)
+    assert row.details == {}
 
 
 async def test_the_log_line_is_written_after_the_commit_only(unit_of_work, session_factory):

@@ -4,12 +4,21 @@ from harp import get_logger
 from harp.unit_of_work import current_unit_of_work
 from harp.unit_of_work.audit import Actor
 from harp_apps.audit.models import AuditEvent
-from harp_apps.audit.redact import redact
 from harp_apps.storage.unit_of_work import current_session
 
 AUDIT_LOGGER = "harp.audit"
 
 logger = get_logger(AUDIT_LOGGER)
+
+
+def _declared_details(event) -> dict:
+    """Default-deny: only the detail fields the event class declares are kept, the others are dropped (names logged)."""
+    declared = getattr(type(event), "details_fields", ())
+    details = getattr(event, "details", None) or {}
+    dropped = sorted(str(name) for name in details if name not in declared)
+    if dropped:
+        logger.warning("Undeclared audit details dropped.", event_id=event.event_id, dropped=dropped)
+    return {name: value for name, value in details.items() if name in declared}
 
 
 def _fields(event) -> dict:
@@ -28,7 +37,7 @@ def _fields(event) -> dict:
         "target_type": target.type if target else None,
         "target_id": None if target is None or target.id is None else str(target.id),
         "target_label": target.label if target else None,
-        "details": redact(getattr(event, "details", None) or {}),
+        "details": _declared_details(event),
     }
 
 
