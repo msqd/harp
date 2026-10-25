@@ -14,7 +14,7 @@ from harp.http.utils import hop_by_hop_names, parse_cache_control
 from harp.utils.bytes import HEADER_ENCODING, ensure_bytes, header_bytes
 from harp_apps.http_cache.coalescing import DEFAULT_TIMEOUT, Coalescer
 from harp_apps.http_cache.models import WrappedRequest
-from harp_apps.http_cache.storages import MARKERS_METADATA, MAX_BODY_SIZE_METADATA, REDACTION_METADATA
+from harp_apps.http_cache.storages import MARKERS_METADATA, MAX_BODY_SIZE_METADATA, REDACTION_METADATA, STAMP_METADATA
 from harp_apps.http_cache.streams import ClosableByteStream, UpstreamBody
 
 logger = get_logger(__name__)
@@ -157,6 +157,8 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
                 MAX_BODY_SIZE_METADATA: _max_recorded_body_size(request),
                 REDACTION_METADATA: request.extensions.get("harp", {}).get("redaction"),
                 MARKERS_METADATA: request.extensions.get("harp", {}).get("markers"),
+                # Taken before going upstream: what the origin answers may predate an invalidation that lands meanwhile.
+                STAMP_METADATA: self.storage.stamp,
             },
         )
 
@@ -186,8 +188,7 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
             key = await self._cache_proxy._get_key_for_request(
                 Request(method="GET", url=_cache_url(url, endpoint_name))
             )
-            for entry in await self.storage.get_entries(key):
-                await self.storage.remove_entry(entry.id)
+            await self.storage.invalidate(key)
             logger.debug(f"Cache invalidated by {request.method} {request.url}: url={url}")
 
     async def _send_without_caching(self, request: WrappedRequest) -> Response:
