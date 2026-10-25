@@ -9,8 +9,8 @@ send it to your SIEM. The application itself is described in :doc:`/apps/audit/i
 What is recorded
 ::::::::::::::::
 
-The audit covers the **control plane**: what an account does to HARP, through the dashboard, the API or the command
-line, and the access HARP grants itself (an actor of ``system``). It records the action, the actor, the target, the
+The audit covers the **control plane**: what an account does to HARP, through the dashboard or the API, and the access
+HARP grants itself (an actor of ``system``). It records the action, the actor, the target, the
 outcome and where the request came from.
 
 It does not record:
@@ -66,13 +66,14 @@ HARP writes two kinds of structured lines, each from its own logger.
         - proxy.remote.state_changed
 
 ``LOGGING_AUDIT`` sets the level of ``harp.audit``, ``INFO`` by default: ``LOGGING_AUDIT=CRITICAL`` drops the log copy of
-every audit event. It never removes the row.
+every audit event. It never removes the row. It also hides the warnings the recorder writes on the same logger, such as
+the details it dropped for not being declared.
 
 Collecting the audit
 ::::::::::::::::::::
 
 Set ``LOGGING_FORMAT=json`` so that each line is one JSON object, written to the standard error of the process. Here is
-an audit line (wrapped here for reading):
+an audit line (abridged, and wrapped here for reading):
 
 .. code-block:: json
 
@@ -99,10 +100,12 @@ The events an account's action writes to the audit. Each event is declared by th
 ``proxy.remote.state_changed``
     An Editor set a remote endpoint up, down or checking by hand, with ``PUT /api/system/proxy`` (the dashboard's
     buttons). The target is the remote (``target_type: remote``, its url without credentials as ``target_id``, the
-    proxy endpoint's name as ``target_label``). Details: ``endpoint``, ``url``, ``from`` and ``to`` (``up``, ``down`` or
-    ``checking``), and ``required_role`` when refused. Outcomes: ``succeeded``; ``denied`` for an account below Editor,
-    with the state left alone. Every refused request writes one ``denied`` row, and there is no rate limit yet. The state
-    change and the event share one commit: if the commit fails, the endpoint gets its previous state back.
+    proxy endpoint's name as ``target_label``). ``from`` and ``to`` are ``up``, ``down`` or ``checking``. Outcomes:
+    ``succeeded``; ``denied`` for an account below Editor, with the state left alone and ``required_role`` in the
+    details. Every refused request writes one ``denied`` row, and there is no rate limit yet. The state change and the
+    event share one commit: if the commit fails, the endpoint gets its previous state back.
+
+    Details: ``endpoint``, ``url``, ``from``, ``to``, ``required_role``.
 
 Loggable events
 :::::::::::::::
@@ -111,8 +114,10 @@ The events written to ``harp.events``, with no actor and no row.
 
 ``proxy.remote.state_changed``
     The breaker or the liveness changed the state of a remote endpoint on its own. Written once per real transition: a
-    remote that stays down emits nothing more. Details: ``endpoint``, ``url``, ``from`` and ``to`` (``up``, ``down`` or
-    ``checking``). A change by an Editor is the audit event of the same name above.
+    remote that stays down emits nothing more. ``from`` and ``to`` are ``up``, ``down`` or ``checking``. A change by an
+    Editor is the audit event of the same name above.
+
+    Details: ``endpoint``, ``url``, ``from``, ``to``.
 
 A test checks these two catalogues against the event classes the applications declare, so an event cannot be added or
 removed without this page following.
