@@ -145,10 +145,21 @@ async def test_prefix_deny_rule_still_matches_trailing_slash_variants(raw_path):
     assert await _is_denied("GET /admin/*", raw_path)
 
 
-@pytest.mark.parametrize("raw_path", ["/admin/users/", "/admin/users;a=1/", "/%61dmin%2Fusers/"])
-async def test_trailing_slash_is_kept_so_exact_deny_rules_end_with_a_wildcard(raw_path):
-    assert not await _is_denied("GET /admin/users", raw_path)
-    assert await _is_denied("GET /admin/users*", raw_path)
+@pytest.mark.parametrize(
+    "raw_path", ["/admin/users/", "/admin/users//", "/admin/users/;x", "/admin/users;a=1/", "/%61dmin%2Fusers/"]
+)
+async def test_exact_deny_rule_also_matches_the_path_without_its_trailing_slash(raw_path):
+    assert await _is_denied("GET /admin/users", raw_path)
+
+
+async def test_exact_rule_for_the_root_still_matches_the_root_only():
+    assert await _is_denied("GET /", "/")
+    assert await _is_denied("GET /", "//")
+    assert not await _is_denied("GET /", "/x")
+
+
+async def test_wildcard_rule_does_not_match_without_the_trailing_slash():
+    assert not await _is_denied("GET /admin/*", "/admin")
 
 
 async def test_other_paths_are_not_denied():

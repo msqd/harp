@@ -48,8 +48,9 @@ unchanged: only what rules see is normalised, so that a rule matches what the up
   matches ``GET /admin``;
 - empty segments are dropped: ``/api//admin`` is matched as ``GET /api/admin``;
 - ``;`` parameters are dropped from each segment: ``/admin;x=1/users;id=2`` is matched as ``GET /admin/users``;
-- a final slash is kept, once: ``/admin//`` and ``/admin/;x`` are matched as ``GET /admin/``. ``/admin/`` is therefore
-  **not** matched by ``GET /admin``, but is by ``GET /admin/*`` and ``GET /admin*``;
+- a final slash is kept, once: ``/admin//`` and ``/admin/;x`` are matched as ``GET /admin/``. A pattern without
+  wildcard also matches the path with its final slash removed (the root ``/`` excepted), so ``GET /admin`` matches
+  ``/admin`` and ``/admin/``, and ``GET /admin/*`` matches ``/admin/`` but not ``/admin``;
 - the query string is not part of it, ``GET /users/42?page=2`` is matched as ``GET /users/42``.
 
 An encoded slash, ``%2F`` (any case), stays as sent in that path: ``/a%2Fb`` is matched as ``GET /a%2Fb``. Many
@@ -63,9 +64,8 @@ whichever form matched it.
     A rule denies what its pattern matches, nothing more. Write the pattern on the normalised path (no ``;``, no
     ``//``) and it holds for the variants above. Known limits, which patterns cannot cover for you:
 
-    - the final slash is kept, so ``GET /admin/users`` does not deny ``/admin/users/``. Write prefix and exact deny
-      rules with a wildcard right after the path: ``GET /admin*``, ``GET /admin/users*``. ``GET /admin/*`` also works
-      for what is under ``/admin/``, but not for ``/admin`` itself;
+    - to deny a path and everything under it, write ``GET /admin*`` (it also matches ``/administrator``):
+      ``GET /admin/*`` does not match ``/admin`` itself, and ``GET /admin`` only matches that path;
     - double-encoded escapes (``%252F``), a ``%3B`` read as ``;``, ``%00``, ``%5C`` and backslashes, case-insensitive paths and any other
       rewriting specific to your upstream are not normalised;
     - the proxy refuses dot segments (``/./``, ``/../``, encoded or not) on its own, rules do not need to cover them.

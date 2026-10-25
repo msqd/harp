@@ -31,7 +31,8 @@ still forwards the target unchanged. Compared to 0.12:
 - ``;`` parameters are dropped: a pattern containing ``;`` no longer matches. Requests for ``/admin;x=1`` now match
   ``GET /admin``.
 - A final slash is kept once: ``/admin//`` and ``/admin/;x`` are matched as ``/admin/``, so ``GET /admin/*`` keeps
-  matching them. ``GET /admin`` does not match ``/admin/``: write prefix deny rules as ``GET /admin*``.
+  matching them. A pattern without wildcard now also matches the path with its final slash removed: ``GET /admin``
+  matches ``/admin/`` too (the root ``/`` excepted). To deny a path and everything under it, write ``GET /admin*``.
 - ``%2F`` (any case) stays encoded in the path, and rules are also matched against a second form with ``%2F`` read as
   ``/``. A non-deny rule written for ``GET /a/b`` now also fires for ``/a%2Fb``, and a rule fires once per request.
 - ``on_remote_request`` and ``on_remote_response`` rules still match the raw path sent to the remote endpoint, none of

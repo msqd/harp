@@ -26,4 +26,9 @@ class Pattern:
         return "Pattern(%r)" % self._source
 
     def match(self, value: str, /):
-        return self._pattern.match(value)
+        if self._pattern.match(value):
+            return True
+        # A pattern without wildcard also matches a path with its trailing slash removed, the root excepted.
+        if "*" not in self._source and value.endswith("/") and not value.endswith(" /"):
+            return self._pattern.match(value[:-1])
+        return None
