@@ -5,7 +5,8 @@ Here gzip and deflate (zlib) are decoded with a maximum output size per step, so
 in constant memory. Other codings (brotli, zstd) are optional dependencies of httpx with no such bound; they are
 decoded by httpx's own decoders, whole.
 
-At most ``MAX_CODINGS`` (4) codings may be stacked in one ``Content-Encoding``; more is a
+At most ``MAX_CODINGS`` (4) codings may be stacked in one ``Content-Encoding``, ``identity`` included and empty items
+not counted, case and spaces ignored; more is a
 :class:`httpx.DecodingError`, raised when the body is first decoded, like corrupt data.
 """
 

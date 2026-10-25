@@ -80,5 +80,27 @@ def test_more_than_four_stacked_encodings_are_a_decoding_error():
 
 
 def test_a_huge_number_of_encodings_is_a_decoding_error_not_a_recursion_error():
+    encoding, encoded = stacked(1200)
+
     with pytest.raises(httpx.DecodingError):
-        decode_all(", ".join(["gzip"] * 5000), b"whatever")
+        decode_all(encoding, encoded)
+
+
+@pytest.mark.parametrize(
+    "encoding, rejected",
+    [
+        ("gzip, , gzip,, gzip, gzip,", False),
+        (" GZip ,  GZIP,gzip , Gzip", False),
+        ("gzip, gzip, gzip, gzip, identity", True),
+        ("identity, identity, identity, identity, identity", True),
+        ("gzip, gzip, gzip, gzip, , ", False),
+    ],
+)
+def test_codings_are_counted_after_normalising(encoding, rejected):
+    decoder = BoundedDecoder(encoding)
+
+    if rejected:
+        with pytest.raises(httpx.DecodingError):
+            list(decoder.decode(b""))
+    else:
+        assert list(decoder.decode(b"")) == []
