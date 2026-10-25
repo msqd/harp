@@ -13,7 +13,7 @@ from harp.meta import get_meta
 from harp.security.actor import Role, get_actor
 from harp.typedefs.global_settings import GlobalSettings
 from harp.unit_of_work import IUnitOfWorkFactory
-from harp.unit_of_work.audit import Target
+from harp.unit_of_work.audit import Target, audit_actor
 from harp.views.json import json
 from harp_apps.proxy.adapters import strip_credentials
 from harp_apps.proxy.constants import CHECKING, DOWN, UP
@@ -23,7 +23,6 @@ from harp_apps.storage.models import MetricValue
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.types import IStorage
 
-from ..audit import audit_actor
 from ..utils.dependencies import get_python_dependencies, parse_dependencies
 from .models.system import SystemPutProxyInput
 

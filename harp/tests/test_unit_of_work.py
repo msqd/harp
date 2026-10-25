@@ -11,6 +11,7 @@ from harp.unit_of_work import (
     UnitOfWork,
     UnsupportedEventError,
     auditable,
+    current_unit_of_work,
     is_auditable,
     is_loggable,
     loggable,
@@ -277,6 +278,27 @@ async def test_commit_failure_after_the_action_calls_its_compensation(make_uow):
             await uow.act(action, compensation=compensation)
 
     assert compensated == [True]
+
+
+@pytest.mark.parametrize("fail_commit", [True, False])
+async def test_compensations_run_while_the_unit_of_work_is_still_current(make_uow, fail_commit):
+    uow = make_uow(fail_commit=fail_commit)
+    seen = []
+
+    async def noop():
+        pass
+
+    async def compensation():
+        seen.append(current_unit_of_work())
+
+    with pytest.raises(RuntimeError):
+        async with uow:
+            await uow.act(noop, compensation=compensation)
+            if not fail_commit:
+                raise RuntimeError("body failed")
+
+    assert seen == [uow]
+    assert current_unit_of_work() is None
 
 
 async def test_commit_failure_after_an_action_without_compensation_logs_critical(make_uow, caplog):

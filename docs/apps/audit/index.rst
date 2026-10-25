@@ -49,8 +49,8 @@ Table ``audit_events``:
     outlives the account.
 
 ``actor_via``, ``actor_via_id``, ``actor_client``
-    ``session``, ``token``, ``cli`` or ``system``, with the id of the session or token, and the client the account acts
-    from when known.
+    ``session``, ``token``, ``cli`` or ``system``, with the id of the session or token (text, kept whatever its form), and the
+    client the account acts from when known.
 
 ``ip``, ``user_agent``
     Where the request comes from.
@@ -79,7 +79,8 @@ Each application declares the events it records. This is what the proxy and the 
     buttons). The target is the remote (``target_type: remote``, its url without credentials as ``target_id``, the
     proxy endpoint's name as ``target_label``). Details: ``endpoint``, ``url``, ``from`` and ``to`` (``up``, ``down`` or
     ``checking``). Outcomes: ``succeeded``; ``denied`` for an account below Editor, with ``required_role`` in the details
-    and the state left alone. The state change and the event share one commit: if the commit fails, the endpoint gets
+    and the state left alone. Every refused request writes one ``denied`` row (there is no rate limit yet): an
+    authenticated account hammering a critical route fills the audit at the pace of its requests. The state change and the event share one commit: if the commit fails, the endpoint gets
     its previous state back.
 
     The breaker and the liveness changing the state of a remote on their own are not audited, as nobody acted. They are

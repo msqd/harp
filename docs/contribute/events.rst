@@ -224,7 +224,11 @@ a manual change inside a unit of work, and give ``uow.act`` the compensation tha
 
 A refused attempt is recorded too. After a controller refuses a request for lack of role, it calls
 ``RoutingController.on_refusal(request, handler)`` on the sub-controller that owns the handler, which may record the
-event with the ``denied`` outcome in a unit of work of its own.
+event with the ``denied`` outcome in a unit of work of its own. A failure in the hook is logged and the refusal is sent
+all the same. ``harp.unit_of_work.audit.audit_actor(request)`` builds the audit actor of a request.
+
+Compensations run while the unit of work is still current, so a relay that checks ``current_unit_of_work()`` also stays
+silent when a failed commit puts the previous state back.
 
 See Also
 ::::::::

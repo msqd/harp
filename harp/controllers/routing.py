@@ -54,7 +54,10 @@ class RoutingController:
         try:
             match = self.router(request.path, method=request.method)
             if refusal := self.refuse_actor(request, match.target):
-                await self.on_refusal(request, match.target)
+                try:
+                    await self.on_refusal(request, match.target)
+                except Exception:
+                    logger.exception("The refusal hook failed, the refusal is sent all the same.")
                 return refusal
             args = resolve_arguments(match.target, **{**(match.params or {}), "request": request})
             return await match.target(*args)

@@ -29,7 +29,7 @@ class AuditEvent(Base):
     actor_account_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
     actor_label: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     actor_via: Mapped[str] = mapped_column(String(16))
-    actor_via_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    actor_via_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     actor_client: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     ip: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
     user_agent: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)

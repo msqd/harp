@@ -1,3 +1,5 @@
+import asyncio
+
 import orjson
 import pytest
 from sqlalchemy import select
@@ -114,11 +116,15 @@ class TestManualRemoteStateChange(SystemControllerTestFixtureMixin, StorageTestF
             raise RuntimeError("commit failed")
 
         monkeypatch.setattr(AsyncSession, "commit", failing_commit)
-        with pytest.raises(RuntimeError, match="commit failed"):
+        with capture_logs() as logs, pytest.raises(RuntimeError, match="commit failed"):
             await controller.put_proxy(self.put_request("down"))
+            await asyncio.sleep(0)
         monkeypatch.undo()
+        await asyncio.sleep(0)
+        await asyncio.sleep(0)
 
         assert remote_status(controller) == UP
+        assert [log for log in logs if log.get("kind") == "event"] == []
         assert [row.details["to"] for row in await audit_rows(sql_storage)] == ["up"]
 
     def put_request(self, action: str) -> HttpRequest:

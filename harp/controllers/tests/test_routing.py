@@ -142,6 +142,19 @@ async def test_a_refusal_reaches_the_sub_controller_owning_the_handler_through_a
     assert (response.status, owner.refused) == (403, ["edit"])
 
 
+class BrokenRefusalController(RoleController):
+    async def on_refusal(self, request, handler):
+        raise RuntimeError("cannot record")
+
+
+async def test_a_failing_refusal_hook_never_turns_the_403_into_an_error():
+    with capture_logs() as logs:
+        response = await BrokenRefusalController(handle_errors=False)(_request("PUT", "/edit", Role.VIEWER))
+
+    assert response.status == 403
+    assert any(log["log_level"] == "error" for log in logs)
+
+
 class UnresolvableController(RoutingController):
     @GetHandler("/unresolvable")
     async def unresolvable(self, missing):
