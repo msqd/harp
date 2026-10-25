@@ -6,13 +6,10 @@ Dashboard Application
 from os.path import dirname
 from pathlib import Path
 
-from harp import get_logger
 from harp.config import Application, OnBindEvent, OnBoundEvent
 
 from .controllers.metrics import metrics_port_controller
 from .settings import DashboardSettings
-
-logger = get_logger(__name__)
 
 
 async def on_bind(event: OnBindEvent):
