@@ -86,7 +86,7 @@ Your collector keeps the lines where ``logger`` is ``harp.audit`` (or ``kind`` i
 is the whole job with `Vector <https://vector.dev>`_, reading the logs of a Docker container named ``harp``. Lines that
 are not JSON, such as the startup messages, are dropped too.
 
-.. literalinclude:: examples/vector-harp-audit.toml
+.. literalinclude:: collectors/vector-harp-audit.toml
     :language: toml
 
 This file was checked with ``vector validate`` and ``vector test`` (Vector 0.43). The collector, the sink and its
