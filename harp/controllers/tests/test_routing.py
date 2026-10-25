@@ -47,3 +47,16 @@ async def test_not_found_is_json(monkeypatch, debug):
     response = await _call("/nope")
     assert response.status == 404
     assert orjson.loads(response.body)["status"] == 404
+
+
+class UnresolvableController(RoutingController):
+    @GetHandler("/unresolvable")
+    async def unresolvable(self, missing):
+        raise AssertionError("handler must not run with an unresolved argument")
+
+
+async def test_unresolvable_handler_argument_is_a_500_not_a_call(monkeypatch):
+    monkeypatch.setattr(harp, "DEBUG", False)
+    response = await UnresolvableController()(HttpRequest(method="GET", path="/unresolvable"))
+    assert response.status == 500
+    assert orjson.loads(response.body) == {"error": "TypeError", "status": 500}
