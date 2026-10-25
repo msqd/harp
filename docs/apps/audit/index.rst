@@ -72,20 +72,7 @@ Table ``audit_events``:
 Catalogue
 :::::::::
 
-Each application declares the events it records. This is what the proxy and the dashboard record.
-
-``proxy.remote.state_changed``
-    An Editor set a remote endpoint up, down or checking by hand, with ``PUT /api/system/proxy`` (the dashboard's
-    buttons). The target is the remote (``target_type: remote``, its url without credentials as ``target_id``, the
-    proxy endpoint's name as ``target_label``). Details: ``endpoint``, ``url``, ``from`` and ``to`` (``up``, ``down`` or
-    ``checking``). Outcomes: ``succeeded``; ``denied`` for an account below Editor, with ``required_role`` in the details
-    and the state left alone. Every refused request writes one ``denied`` row (there is no rate limit yet): an
-    authenticated account hammering a critical route fills the audit at the pace of its requests. The state change and the event share one commit: if the commit fails, the endpoint gets
-    its previous state back.
-
-    The breaker and the liveness changing the state of a remote on their own are not audited, as nobody acted. They are
-    logged on ``harp.events`` with the same event name, the same details and no actor, once per real transition (a
-    remote that stays down emits nothing more). You can mute them with ``core.muted_events``.
+The events each application records are listed in :doc:`/operate/audit`, checked against the declared event classes.
 
 Reading the audit
 :::::::::::::::::
@@ -119,8 +106,8 @@ Log output
 ::::::::::
 
 Once the commit is done, each event is also written to the ``harp.audit`` logger, with the same fields as the row, the
-id of the row, and ``kind: audit``. Collect it into your SIEM with the collector of your choice, filtering on
-``logger: harp.audit`` or ``kind: audit`` (use ``LOGGING_FORMAT=json``). Muting the logger drops the copy, never the row.
+id of the row, and ``kind: audit``. :doc:`/operate/audit` shows how to collect it into a SIEM. ``LOGGING_AUDIT`` sets the level of the
+logger: raising it drops the copy, never the row.
 
 .. seealso::
 

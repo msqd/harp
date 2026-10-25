@@ -36,6 +36,7 @@ __all__ = [
     "UnitOfWork",
     "UnsupportedEventError",
     "auditable",
+    "auditable_events",
     "current_unit_of_work",
     "is_auditable",
     "is_loggable",
@@ -51,6 +52,7 @@ LOGGABLE = "loggable"
 
 _E = TypeVar("_E", bound=type)
 
+_auditable_events: dict[str, type] = {}
 _loggable_events: dict[str, type] = {}
 
 
@@ -65,7 +67,18 @@ def _mark(mark: str, event_id: str) -> Callable[[_E], _E]:
 
 def auditable(event_id: str) -> Callable[[_E], _E]:
     """Declares an event class as a control-plane action, recorded through :meth:`UnitOfWork.record`."""
-    return _mark(AUDITABLE, event_id)
+    mark = _mark(AUDITABLE, event_id)
+
+    def decorate(event_type: _E) -> _E:
+        _auditable_events[event_id] = event_type
+        return mark(event_type)
+
+    return decorate
+
+
+def auditable_events() -> dict[str, type]:
+    """The event classes declared ``auditable`` so far, by event id: what the audit may be asked to record."""
+    return dict(_auditable_events)
 
 
 def loggable(event_id: str) -> Callable[[_E], _E]:

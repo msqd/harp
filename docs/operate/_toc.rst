@@ -9,6 +9,7 @@
     upgrading
     migrations
     logging
+    audit
     security
     prometheus
     runtime

@@ -11,6 +11,7 @@ from harp.unit_of_work import (
     UnitOfWork,
     UnsupportedEventError,
     auditable,
+    auditable_events,
     current_unit_of_work,
     is_auditable,
     is_loggable,
@@ -493,6 +494,15 @@ async def test_failing_after_commit_callback_is_logged_and_the_commit_stands(mak
 
     assert uow.journal == ["begin", "commit"]
     assert "log sink down" in caplog.text
+
+
+def test_auditable_events_are_declared_by_id():
+    assert auditable_events()["test.audited"] is Audited
+
+
+def test_logged_and_unmarked_events_are_not_declared_auditable():
+    assert "test.logged" not in auditable_events()
+    assert "proxy.transaction.started" not in auditable_events()
 
 
 def test_loggable_events_are_declared_by_id():

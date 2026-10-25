@@ -1,0 +1,1 @@
+Operator documentation for the audit: what it records, retention, the ``harp.audit`` and ``harp.events`` loggers, a Vector example to collect it into a SIEM, and a catalogue of events checked against the declared event classes.
