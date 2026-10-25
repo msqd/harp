@@ -95,6 +95,49 @@ def has_explicit_freshness(response: Response) -> bool:
     return cache_control.s_maxage is not None or cache_control.max_age is not None or "expires" in response.headers
 
 
+def has_validator(response: Response) -> bool:
+    """Whether the response carries what a conditional request needs to be answered ``304 Not Modified``."""
+    return "etag" in response.headers or "last-modified" in response.headers
+
+
+def is_retained_for_revalidation(response: Response) -> bool:
+    """Whether a response without explicit freshness is kept anyway, to be revalidated each time it is wanted.
+
+    ``no-cache`` is out: hishel never reuses such an entry, not even by revalidating it.
+    """
+    return has_validator(response) and not parse_cache_control(response.headers.get("cache-control")).no_cache
+
+
+#: A date hishel finds so far back that no heuristic freshness lifetime (one week at most) can outlast it.
+NEVER_FRESH_DATE = "Thu, 01 Jan 1970 00:00:00 GMT"
+
+#: Carries the stored ``Date`` of an entry shown to hishel as never fresh, until the entry is stored again or served.
+ORIGINAL_DATE = "x-harp-original-date"
+
+
+def show_as_never_fresh(response: Response) -> None:
+    """Make hishel see an entry as stale, so it asks the origin before serving it, whatever the entry says.
+
+    hishel knows no "stored but never fresh" entry, and ages one from its ``Date`` alone. Hence this one is shown
+    as dated long ago, and its real ``Date`` kept aside: see :func:`restore_date`.
+    """
+    if "date" in response.headers:
+        response.headers[ORIGINAL_DATE] = response.headers["date"]
+        del response.headers["date"]
+    response.headers["date"] = NEVER_FRESH_DATE
+
+
+def restore_date(headers) -> None:
+    """Undo :func:`show_as_never_fresh`: a ``304`` that brought its own ``Date`` keeps it, else the stored one is back."""
+    if ORIGINAL_DATE not in headers:
+        return
+    original = headers[ORIGINAL_DATE]
+    del headers[ORIGINAL_DATE]
+    if headers.get("date") == NEVER_FRESH_DATE:
+        del headers["date"]
+        headers["date"] = original
+
+
 # How many recently seen entry ids keep a route back to their cache key.
 #
 # The window an id has to survive is a single request cycle, not the lifetime of the entry:
@@ -339,8 +382,13 @@ class AsyncStorage(AsyncBaseStorage):
         # its callers by anything other than the `Authorization` header (a cookie, an API key
         # header) is invisible to it. Inventing a freshness lifetime for a response the origin
         # never declared cacheable would then hand one caller's body to the next one, so we
-        # keep RFC 9111 §4.2.2 opt-in and simply do not retain such a response.
-        if not self._allow_heuristics and not has_explicit_freshness(response):
+        # keep RFC 9111 §4.2.2 opt-in. Such a response is retained only when it carries a validator,
+        # as an entry that is never fresh: the origin confirms it each time (see `get_entries`).
+        if (
+            not self._allow_heuristics
+            and not has_explicit_freshness(response)
+            and not is_retained_for_revalidation(response)
+        ):
             logger.debug(f"Cache entry not retained (no explicit freshness, heuristics off): key={key}")
             response.metadata["hishel_stored"] = False
             return entry
@@ -392,6 +440,10 @@ class AsyncStorage(AsyncBaseStorage):
             ),
         )
 
+    def _is_never_fresh(self, response: Response) -> bool:
+        """Whether the origin gave no expiry and, heuristics being off, none may be invented: only it can say."""
+        return not self._allow_heuristics and not has_explicit_freshness(response)
+
     async def get_entries(self, key: str) -> tp.List[Entry]:
         """Retrieve all entries for a given cache key: its unexpired variants, oldest stored first.
 
@@ -417,6 +469,8 @@ class AsyncStorage(AsyncBaseStorage):
                     # Incomplete cache entry - log warning and treat as cache miss
                     logger.warning(f"Cache entry incomplete for key={key}: {e}")
                     continue
+                if self._is_never_fresh(entry.response):
+                    show_as_never_fresh(entry.response)
                 # hishel will address this entry by id if it later needs to freshen or drop it.
                 self._remember_key(entry.id, key)
                 logger.debug(
@@ -463,7 +517,10 @@ class AsyncStorage(AsyncBaseStorage):
                     return None
 
                 entry = await self._impl.unserialize_variant(key, variants[position])
+                if self._is_never_fresh(entry.response):
+                    show_as_never_fresh(entry.response)
                 updated = new_entry if isinstance(new_entry, Entry) else new_entry(entry)
+                restore_date(updated.response.headers)
                 if is_withheld(updated.request, updated.response):
                     # A revalidation brought in a header that must not be stored: the entry goes, not the header.
                     await self._impl.write_variants(key, variants[:position] + variants[position + 1 :])
