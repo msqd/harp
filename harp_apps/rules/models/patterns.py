@@ -25,10 +25,15 @@ class Pattern:
     def __repr__(self):
         return "Pattern(%r)" % self._source
 
-    def match(self, value: str, /):
+    def match(self, value: str, /, *, trailing_slash: bool = False):
+        """
+        Match a value. With ``trailing_slash``, a ``<METHOD> <path>`` pattern whose path has no wildcard also matches
+        the value with its final slash removed.
+        """
         if self._pattern.match(value):
             return True
-        # A pattern without wildcard also matches a path with its trailing slash removed, the root excepted.
-        if "*" not in self._source and value.endswith("/") and not value.endswith(" /"):
-            return self._pattern.match(value[:-1])
+        if trailing_slash and value.endswith("/"):
+            _, space, path = self._source.partition(" ")
+            if space and "*" not in path:
+                return self._pattern.match(value[:-1])
         return None

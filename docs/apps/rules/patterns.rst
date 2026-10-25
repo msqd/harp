@@ -48,8 +48,9 @@ unchanged: only what rules see is normalised, so that a rule matches what the up
   matches ``GET /admin``;
 - empty segments are dropped: ``/api//admin`` is matched as ``GET /api/admin``;
 - ``;`` parameters are dropped from each segment: ``/admin;x=1/users;id=2`` is matched as ``GET /admin/users``;
-- a final slash is kept, once: ``/admin//`` and ``/admin/;x`` are matched as ``GET /admin/``. A pattern without
-  wildcard also matches the path with its final slash removed (the root ``/`` excepted), so ``GET /admin`` matches
+- a final slash is kept, once: ``/admin//`` and ``/admin/;x`` are matched as ``GET /admin/``. An ``on_request`` or
+  ``on_response`` pattern whose path has no wildcard (``GET /admin``, ``* /admin``) also matches the path with its final
+  slash removed, endpoint patterns and ``on_remote_*`` levels excepted, so ``GET /admin`` matches
   ``/admin`` and ``/admin/``, and ``GET /admin/*`` matches ``/admin/`` but not ``/admin``;
 - the query string is not part of it, ``GET /users/42?page=2`` is matched as ``GET /users/42``.
 

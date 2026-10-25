@@ -50,8 +50,8 @@ class RulesSubscriber:
         dispatcher.remove_listener(EVENT_FILTER_PROXY_RESPONSE, self.on_filter_event)
         self._executor.shutdown(wait=False)
 
-    def match(self, *args):
-        return self.ruleset.match(*args)
+    def match(self, *args, **options):
+        return self.ruleset.match(*args, **options)
 
     def _warn_query_dependent(self, event: HttpClientFilterEvent, scripts: list):
         """Remote levels still match the path with its query string; a rule only matching that way will not match
@@ -70,9 +70,11 @@ class RulesSubscriber:
     def _scripts_for(self, event: ProxyFilterEvent | HttpClientFilterEvent) -> list:
         """The scripts matching the event, plus those matching its alternate fingerprints (each script once)."""
         endpoint, _, rule = event.criteria
-        scripts = list(self.match(*event.criteria))
+        # Only the normalised path of the proxy levels gets the trailing slash retry, not the raw remote paths.
+        options = {"trailing_slash": not isinstance(event, HttpClientFilterEvent)}
+        scripts = list(self.match(*event.criteria, **options))
         for fingerprint in getattr(event, "alternate_fingerprints", ()):
-            scripts += [s for s in self.match(endpoint, fingerprint, rule) if s not in scripts]
+            scripts += [s for s in self.match(endpoint, fingerprint, rule, **options) if s not in scripts]
         return scripts
 
     async def on_filter_event(self, event: ProxyFilterEvent | HttpClientFilterEvent):

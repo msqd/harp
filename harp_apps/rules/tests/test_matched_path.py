@@ -79,7 +79,7 @@ def test_empty_path_is_root():
 
 def _remote_ruleset(pattern: str) -> RuleSet:
     rules = RuleSet()
-    rules.add({"api": {pattern: {"on_remote_request": "logger.info('ran')"}}})
+    rules.add({"api": {pattern: {"on_remote_request": "request.headers['X-Ran'] = '1'"}}})
     return rules
 
 
@@ -111,13 +111,13 @@ async def test_remote_level_path_only_pattern_does_not_warn(caplog):
     assert not _deprecations(caplog)
 
 
-async def _is_denied(pattern: str, raw_path: str) -> bool:
+async def _is_denied(pattern: str, raw_path: str, *, endpoint_pattern: str = "api", endpoint: str = "api") -> bool:
     """Whether a deny rule written as ``pattern`` answers a request for ``raw_path``, through the subscriber."""
     rules = RuleSet()
-    rules.add({"api": {pattern: {"on_request": "response = {'denied': True}"}}})
+    rules.add({endpoint_pattern: {pattern: {"on_request": "response = {'denied': True}"}}})
     dispatcher = AsyncEventDispatcher()
     RulesSubscriber(rules).subscribe(dispatcher)
-    event = ProxyFilterEvent("api", request=_asgi_request(raw_path))
+    event = ProxyFilterEvent(endpoint, request=_asgi_request(raw_path))
     await dispatcher.adispatch(EVENT_FILTER_PROXY_REQUEST, event)
     return event.response is not None and event.response.status == 200
 
@@ -150,6 +150,27 @@ async def test_prefix_deny_rule_still_matches_trailing_slash_variants(raw_path):
 )
 async def test_exact_deny_rule_also_matches_the_path_without_its_trailing_slash(raw_path):
     assert await _is_denied("GET /admin/users", raw_path)
+
+
+async def test_any_method_exact_rule_also_matches_the_path_without_its_trailing_slash():
+    assert await _is_denied("* /admin/users", "/admin/users/")
+
+
+async def test_wildcard_in_the_path_skips_the_trailing_slash_retry():
+    assert not await _is_denied("GET /a*b", "/ab/")
+    assert await _is_denied("GET /a*b", "/ab")
+
+
+async def test_endpoint_names_do_not_get_the_trailing_slash_retry():
+    assert await _is_denied("GET /x", "/x", endpoint_pattern="api", endpoint="api")
+    assert not await _is_denied("GET /x", "/x", endpoint_pattern="api", endpoint="api/")
+
+
+async def test_remote_levels_do_not_get_the_trailing_slash_retry():
+    event = await _dispatch_remote(_remote_ruleset("GET /admin"), "http://example.com/admin/")
+    assert "X-Ran" not in event.request.headers
+    event = await _dispatch_remote(_remote_ruleset("GET /admin"), "http://example.com/admin")
+    assert "X-Ran" in event.request.headers
 
 
 async def test_exact_rule_for_the_root_still_matches_the_root_only():
