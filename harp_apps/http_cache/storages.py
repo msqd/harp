@@ -45,8 +45,6 @@ MAX_VARIANTS_PER_KEY = 8
 logger = get_logger(__name__)
 HEADERS_ENCODING = "iso-8859-1"
 
-#: Request metadata key holding the largest response body the cache may store (the proxy's recording cap).
-
 #: Request metadata key holding the :class:`~harp.models.redaction.Redaction` in force for the request.
 REDACTION_METADATA = "harp_redaction"
 
