@@ -155,6 +155,7 @@ class TestExpiry:
 
         assert len(await records.get_variants(KEY)) == 1
         assert await accepts(storage) == ["application/json"]
+        await storage.wait_for_sweep()  # the lookup may have started one: it would hold the database open
 
     async def test_an_expired_variant_is_not_served_nor_counted(self, records, clock):
         storage = AsyncStorage(records, ttl=100, check_ttl_every=10_000)

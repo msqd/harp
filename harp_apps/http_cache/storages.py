@@ -22,7 +22,7 @@ from harp_apps.storage.constants import (
 )
 from .coalescing import STORED_METADATA
 from .adapters import to_entry, to_record
-from .records import BanKind, BanMode, CacheRecords, endpoint_of
+from .records import BanKind, BanMode, CacheRecords, Reclaimed, endpoint_of
 from .streams import StoredOnceRead
 
 # How many expired entries the sweep deletes at once.
@@ -62,6 +62,16 @@ FETCH_STAMP: ContextVar[tp.Optional[int]] = ContextVar("harp_http_cache_fetch_st
 
 #: Schemes an endpoint is reached by: a cache key starts with the scheme of the request, an endpoint ban covers each.
 ENDPOINT_SCHEMES = ("http", "https")
+
+#: Seconds a ban is kept before reclamation takes it: longer than a fetch can last, so that a fill that started before the
+#: ban is stored, or refused by the ban, rather than refused for the floor that reclaiming it raises.
+BAN_GRACE = 300
+
+#: What one round of reclamation does at most, and how many rounds a run does at most: bans of each mode retired, and
+#: variants deleted. A run that is cut short is resumed by the next, wherever it stopped.
+RECLAIM_BANS = 1000
+RECLAIM_ENTRIES = 500
+RECLAIM_ROUNDS = 20
 
 #: Markers that keep a transaction's messages out of storage, the cache included. ``skip-storage`` is not one:
 #: the storage worker sets it itself under pressure, and load must not switch the cache off.
@@ -253,6 +263,9 @@ class AsyncStorage(AsyncBaseStorage):
         self._ttl = ttl
         self._allow_heuristics = allow_heuristics
         self._sweep_task: tp.Optional[asyncio.Task] = None
+        #: Set by the application when the janitor runs :meth:`reclaim`. Otherwise the sweep of this storage does, which
+        #: is all there is to run it when the storage application, hence the janitor, is not loaded.
+        self.reclaimed_by_janitor = False
         self._refusing: set[str] = set()
         self._refused: dict[str, int] = {}
         self._key_locks: weakref.WeakValueDictionary[str, asyncio.Lock] = weakref.WeakValueDictionary()
@@ -313,6 +326,29 @@ class AsyncStorage(AsyncBaseStorage):
                 raise InvalidationError(f"Cache invalidation of endpoint {endpoint!r}: not a valid host") from exc
             await self._ban(BanKind.PREFIX, prefix, mode, f"endpoint {endpoint}")
 
+    async def invalidate_prefix(self, endpoint: str, path: str, *, mode: BanMode) -> None:
+        """Invalidate a path of an endpoint, and everything under it, whatever the query.
+
+        ``/api/users`` covers ``/api/users``, ``/api/users?page=2`` and ``/api/users/42``, not ``/api/usersx``. Entries
+        stay in the store until reclamation deletes them (see :meth:`reclaim`), but are not served.
+
+        Raises:
+            InvalidationError: when the path is not one, or a ban could not be recorded.
+        """
+        path = path or "/"
+        if not path.startswith("/") or any(char in "?#" or not char.isprintable() or char == " " for char in path):
+            raise InvalidationError(f"Cache invalidation of path {path!r}: not a path (it starts with /, has no query)")
+        for scheme in ENDPOINT_SCHEMES:
+            try:
+                url = httpx.URL(f"{scheme}://{endpoint}{path}")
+            except httpx.InvalidURL as exc:
+                raise InvalidationError(f"Cache invalidation of {endpoint!r}{path!r}: not a valid url") from exc
+            prefix = f"{url.scheme}://{url.netloc.decode()}{url.raw_path.decode('ascii')}".rstrip("/")
+            if prefix == f"{url.scheme}://{url.netloc.decode()}":
+                await self._ban(BanKind.PREFIX, prefix + "/", mode, f"endpoint {endpoint}")
+            else:
+                await self._ban(BanKind.PREFIX, prefix, mode, f"path {path} of endpoint {endpoint}")
+
     async def invalidate_all(self, *, mode: BanMode) -> None:
         """Invalidate everything the cache holds. Entries stay in the store until they expire, but are not served.
 
@@ -327,6 +363,33 @@ class AsyncStorage(AsyncBaseStorage):
         except Exception as exc:
             raise InvalidationError(f"Cache invalidation of {what} could not be recorded") from exc
 
+    async def reclaim(self, *, grace: tp.Optional[float] = None) -> Reclaimed:
+        """Delete what the old bans cover and retire them, then the bodies and resources nothing refers to.
+
+        Meant for a worker that runs it from time to time (the janitor): bounded by :data:`RECLAIM_ROUNDS` rounds of
+        :data:`RECLAIM_ENTRIES` deletions, resumed where it stopped by the next run. A hard ban is retired when what it
+        covers is deleted. A soft ban is not: its entries are revalidated, not deleted, so it is retired only when none is
+        left that it makes stale (revalidated, replaced, expired or deleted), and until then it keeps the entries stale
+        and costs a ban in the log. Bans younger than ``grace`` seconds (:data:`BAN_GRACE`) are left alone.
+        """
+        total = Reclaimed()
+        for _ in range(RECLAIM_ROUNDS):
+            run = await self._records.reclaim(
+                older_than=time.time() - (BAN_GRACE if grace is None else grace),
+                bans=RECLAIM_BANS,
+                entries=RECLAIM_ENTRIES,
+            )
+            total = Reclaimed(total.retired + run.retired, total.deleted + run.deleted, run.pending)
+            if not run.pending:
+                break
+            await asyncio.sleep(0)
+        orphans = await self._records.reclaim_orphans(limit=RECLAIM_ENTRIES)
+        if total.retired or total.deleted or orphans:
+            logger.debug(
+                f"Cache reclamation retired {total.retired} bans, deleted {total.deleted} entries and {orphans} orphans"
+            )
+        return total
+
     def _is_expired(self, stored_at: float) -> bool:
         return self._ttl is not None and time.time() - stored_at > self._ttl
 
@@ -335,7 +398,7 @@ class AsyncStorage(AsyncBaseStorage):
 
         Never awaited by the request: the sweep is work no proxied request should wait for.
         """
-        if self._ttl is None and not self._refused:
+        if self._ttl is None and not self._refused and self.reclaimed_by_janitor:
             return
         if self._sweep_task is not None and not self._sweep_task.done():
             return
@@ -350,20 +413,24 @@ class AsyncStorage(AsyncBaseStorage):
             await asyncio.gather(self._sweep_task, return_exceptions=True)
 
     async def _sweep(self) -> None:
-        """Flush the refused counts, then delete the entries not written for more than `ttl`, by batch."""
+        """Flush the refused counts, delete the entries not written for more than `ttl` by batch, and reclaim the bans
+        unless the janitor does."""
         try:
             await self.flush_counters()
-            if self._ttl is None:
-                return
-            removed = 0
-            while True:
-                deleted = await self._records.delete_stored_before(time.time() - self._ttl, limit=SWEEP_DELETE_BATCH)
-                removed += deleted
-                if deleted < SWEEP_DELETE_BATCH:
-                    break
-                await asyncio.sleep(0)
-            if removed:
-                logger.debug(f"Cache ttl sweep removed {removed} entries")
+            if self._ttl is not None:
+                removed = 0
+                while True:
+                    deleted = await self._records.delete_stored_before(
+                        time.time() - self._ttl, limit=SWEEP_DELETE_BATCH
+                    )
+                    removed += deleted
+                    if deleted < SWEEP_DELETE_BATCH:
+                        break
+                    await asyncio.sleep(0)
+                if removed:
+                    logger.debug(f"Cache ttl sweep removed {removed} entries")
+            if not self.reclaimed_by_janitor:
+                await self.reclaim()
         except asyncio.CancelledError:
             raise
         except Exception:

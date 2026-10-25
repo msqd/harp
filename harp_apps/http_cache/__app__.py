@@ -3,7 +3,11 @@ from os.path import dirname
 from pathlib import Path
 
 from harp.config import Application, OnBindEvent
+from harp.config.events import OnBoundEvent
+from harp.services import CannotResolveTypeException
+from harp_apps.janitor.worker import JanitorWorker
 from .settings import HttpCacheSettings
+from .storages import AsyncStorage
 
 
 async def on_bind(event: OnBindEvent):
@@ -36,8 +40,21 @@ async def on_bind(event: OnBindEvent):
         service.defaults["transport"] = LazyServiceReference(target="http_cache.transport")
 
 
+async def on_bound(event: OnBoundEvent):
+    """Have the janitor reclaim the bans (ADR-0014), if there is one: otherwise the storage sweeps by itself."""
+    try:
+        janitor = event.provider.get(JanitorWorker)
+    except CannotResolveTypeException:
+        return
+    storage = event.provider.get("http_cache.storage")
+    if isinstance(storage, AsyncStorage):
+        storage.reclaimed_by_janitor = True
+        janitor.sweeps.append(storage.reclaim)
+
+
 application = Application(
     on_bind=on_bind,
+    on_bound=on_bound,
     settings_type=HttpCacheSettings,
     dependencies=["http_client"],
 )

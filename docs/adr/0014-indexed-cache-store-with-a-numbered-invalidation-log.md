@@ -129,6 +129,59 @@ is accepted before 1.0.
   until then. The Redis records (#1595) implement `CacheRecords.counter`, `ban`, and the ban check of `get_variants`
   and `put`.
 
+## As implemented in prefix bans and reclamation (#1597)
+
+- **A path ban** is a `prefix` ban whose prefix has no trailing `/`: `scheme://endpoint/api/users` covers the resource at
+  that path whatever its query, and everything under `scheme://endpoint/api/users/`, not `/api/usersx`. One per scheme,
+  like an endpoint ban (`AsyncStorage.invalidate_prefix`, the root being the endpoint ban). A prefix with a trailing `/`
+  stays a directory (endpoint bans). To cover the path itself, `ban_prefixes(key)` now lists, for each directory of the
+  key, the form with and without the `/`, and the path: twice the depth plus two reads, still independent of the number of
+  entries and bans. `covered_ranges(kind, prefix)` is the same coverage seen from the ban, as ranges of keys
+  (`[p, p[:-1]+"0")` for a directory; for a path, the path itself, `p/…` and `p?…`), which is what reclamation deletes by
+  range on the key index. A test checks both agree on a corpus of keys.
+- **Reclamation** is `CacheRecords.reclaim(older_than, bans, entries)`, one bounded run, stateless (what is left in the
+  tables is the state to resume from), run by the janitor as a sweep registered by the `http_cache` application
+  (`AsyncStorage.reclaim`: rounds of 500 deletions, 1000 bans of each mode, 20 rounds at most), or by the cache storage's
+  own sweep when there is no janitor. A ban is taken once it is older than five minutes (`BAN_GRACE`).
+    - **Hard ban**: delete in batches, by key range, the variants stamped below the ban (locking the resource rows in key
+      order, then `_forget` for bodies, resources and counters, as every deletion does, so counters stay exact), then
+      retire the ban when a batch finds nothing more.
+    - **Exact bans** (one per unsafe request and `PURGE`, whose entries were deleted when they were issued) are retired in
+      one statement per round when nothing they cover is left, so that reclamation keeps up with the writes.
+    - **Soft ban**: nothing is deleted, its entries are to be revalidated, which is the point of soft. It is retired when
+      no variant is left in its range stamped below it: revalidated (a 304 raises the stamp to the fetch's), replaced,
+      expired by the `ttl` sweep or deleted. Until then it costs a ban in the log and keeps the entries stale, which is
+      what it is for. With no `ttl`, a soft ban on entries nobody asks for again stays for ever. Considered and
+      rejected: marking the entries stale in their rows (a column, a migration and a Redis counterpart) so as to retire
+      at once; deleting them (it defeats the soft ban).
+    - **Redundant bans**: a ban is dropped, at any age, when a newer one has the same kind, prefix and mode: whatever the
+      older covers, the newer does, so lookups and refusals are unchanged. This keeps repeated invalidations of one
+      prefix, soft ones above all, to one row. Memory keeps only the newest per `(kind, prefix, mode)` already.
+    - **Orphans**: bodies and resources no variant refers to are deleted by `reclaim_orphans`. The store does not produce
+      them (every write is one transaction); this is the safety net. A writer that meets the deletion of a body it just
+      reused retries on the foreign key violation, as it does when the last variant leaves.
+- **A retired ban never lets back a covered entry**, reasoned against the fill stamp. A fill stamped `t` is covered by a
+  ban numbered `s > t`. Before retirement the ban refuses the fill (`put` checks it) and hides what slipped past that
+  check (lookups check it). After it, nothing does, so a fill that a retired ban would have covered must not be stored.
+  A **floor** under stamps, one row of the counter table (`id = 2`), refuses a *new fill* stamped below it. A run raises
+  the floor to the highest ban it is about to reclaim, **before** it deletes anything. A fill stamped at or above `s`
+  read the counter after the ban `s` committed (bans commit in the order of their numbers), so a retired `s` never
+  covered it. That leaves the fills in flight when the floor is raised: one that passed the floor check and commits
+  afterwards would not be seen by the deletion. So every fill reads the floor row `FOR SHARE` as the first statement of
+  its transaction, held until commit, and raising the floor updates that row: it waits for the fills in flight to commit
+  (the deletion then sees them, and deletes them if covered) and the fills that start after read the new floor (and are
+  refused if covered). Fills do not block one another, nor bans (which lock the other counter row). When the floor row
+  does not exist yet (nothing was ever retired) a fill creates it (`ON CONFLICT DO NOTHING`) before locking it, so a first
+  raise cannot miss it. A 304 freshening (`replaces` given) is not a fill: the variant it replaces is still there, which
+  means no retired ban covered it (it would have been deleted), and for a soft ban the check for stale variants and the
+  replacement are atomic. A fill refused for the floor is served and not cached; so is one whose counter could not be
+  read (stamp `0`) once any ban was retired. A fill refused though no retired ban covered it is the price of the floor
+  being a single number: it happens only to a fetch that outlasts `BAN_GRACE`, which is why bans are not taken younger.
+  The cost is a shared row lock on one row per fill, and `SELECT … FOR SHARE` writes to the page. On SQLite (never
+  migrated, writers serialized by the database) the lock clause is a no-op.
+- **Memory** keeps the same rules in the process: the floor is an integer, the newest ban per `(kind, prefix, mode)`.
+- **Redis** (#1595) has to implement `bans`, `reclaim` and `reclaim_orphans`, and the floor, in its scripts.
+
 ## Rejected
 
 - **A derived index beside today's blobs.** Two stores to keep consistent, and prefix invalidation still

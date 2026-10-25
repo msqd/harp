@@ -1,0 +1,1 @@
+Http cache: bans can cover a path prefix (cut at path segments), and the janitor deletes the entries old bans cover and retires them, so the log no longer grows with every write; a response fetched before a retired ban is never stored.

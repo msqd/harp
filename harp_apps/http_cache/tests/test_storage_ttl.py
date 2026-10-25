@@ -106,6 +106,7 @@ class TestEntryExpiry:
         clock.advance(86400 * 365)
 
         assert len(await storage.get_entries("endpoint/key")) == 1
+        await storage.wait_for_sweep()  # it reclaims bans, and would hold the database open
 
     async def test_default_ttl_is_24_hours(self, records, clock):
         storage = AsyncStorage(records)

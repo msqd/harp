@@ -18,27 +18,49 @@ def digest_of(data: bytes) -> str:
 
 
 def ban_prefixes(key: str) -> list[str]:
-    """The prefixes a prefix ban can cover a key by: everything, its endpoint, and each directory of its path.
+    """The prefixes a prefix ban can cover a key by: everything, its endpoint, each directory of its path, its path.
 
-    A prefix ends with a ``/``, so ``http://api/items/`` covers ``http://api/items/1`` and not ``http://api/itemsx``.
-    Checking a key against the bans costs as many lookups as it has prefixes, never as many as there are bans.
+    A prefix is cut at path segments. One that ends with a ``/`` is a directory: ``http://api/items/`` covers
+    ``http://api/items/1`` and not ``http://api/itemsx``. One that does not is a path (``http://api/items``): it covers
+    the resource at that path, whatever its query, and everything under ``http://api/items/``. The endpoint, with its
+    ``/``, is the directory every path is under. Checking a key against the bans costs as many lookups as it has
+    prefixes (twice its depth, plus two), never as many as there are bans.
     """
     path = key.partition("?")[0]
-    start = path.find("/", path.find("://") + 3)
-    if start == -1:
+    root = path.find("/", path.find("://") + 3)
+    if root == -1:
         return ["", path + "/"]
-    prefixes = [""]
-    while start != -1:
-        prefixes.append(path[: start + 1])
-        start = path.find("/", start + 1)
+    prefixes = ["", path[: root + 1]]
+    slash = path.find("/", root + 1)
+    while slash != -1:
+        prefixes += [path[:slash], path[: slash + 1]]
+        slash = path.find("/", slash + 1)
+    if not path.endswith("/"):
+        prefixes.append(path)
     return prefixes
 
 
 class BanKind(StrEnum):
-    """What a ban covers: one cache key, or every key that starts with its prefix (an endpoint, a directory, all)."""
+    """What a ban covers: one cache key, or every key that starts with its prefix (an endpoint, a path, all)."""
 
     EXACT = "exact"
     PREFIX = "prefix"
+
+
+def covered_ranges(kind: BanKind, prefix: str) -> list[tuple[str, Optional[str]]]:
+    """The keys a ban covers, as ranges ``[low, high)`` of keys in bytewise order, ``high`` ``None`` for no end.
+
+    This is :func:`ban_prefixes` seen from the ban rather than from the key: what reclamation reads and deletes without
+    going through every entry. Characters are chosen next to ``/`` (``0``), ``?`` (``@``) and the end of a string.
+    """
+    if kind is BanKind.EXACT:
+        return [(prefix, prefix + "\0")]
+    if not prefix:
+        return [("", None)]
+    if prefix.endswith("/"):
+        return [(prefix, prefix[:-1] + "0")]
+    # a path: itself, itself with a query, and everything under it
+    return [(prefix, prefix + "\0"), (prefix + "/", prefix + "0"), (prefix + "?", prefix + "@")]
 
 
 class BanMode(StrEnum):
@@ -136,6 +158,20 @@ class EndpointStats:
     refused: int = 0
 
 
+@dataclass(frozen=True, slots=True)
+class Reclaimed:
+    """What one run of :meth:`CacheRecords.reclaim` did."""
+
+    #: Bans retired.
+    retired: int = 0
+
+    #: Variants deleted because a ban covered them.
+    deleted: int = 0
+
+    #: The run stopped on its limits, not because it had nothing left to do: another run is worth it.
+    pending: bool = False
+
+
 class CacheRecords(ABC):
     """Where the cache keeps its records (ADR-0014): one per resource, one per variant, bodies by content digest.
 
@@ -160,7 +196,9 @@ class CacheRecords(ABC):
         """Store a variant in place of the one it supersedes (same key and variant) and of ``replaces``, if given.
 
         Nothing is stored, and ``False`` is returned, when a ban covers the key with a number above the stamp of the
-        record: the fetch it comes from started before that invalidation. Nor when ``replaces`` is given and that
+        record: the fetch it comes from started before that invalidation. Nor, unless ``replaces`` is given, when the
+        stamp is below the floor that reclamation raised (see :meth:`reclaim`): a ban that covered the fetch may have
+        been retired since. Nor when ``replaces`` is given and that
         variant is gone (purged, or replaced by another writer, possibly of another instance): the copy being written
         is older than what happened to it.
         The key then keeps at most ``keep`` variants: the oldest stored are deleted.
@@ -177,6 +215,31 @@ class CacheRecords(ABC):
         The numbers are given in the order the bans commit, so that a counter read by a fetch has every lower ban
         visible. Bans do not delete the entries they cover: that is for :meth:`delete_key` and reclamation.
         """
+
+    @abstractmethod
+    async def bans(self) -> list[Ban]:
+        """The bans of the log, oldest first."""
+
+    @abstractmethod
+    async def reclaim(self, *, older_than: float, bans: int, entries: int) -> Reclaimed:
+        """Delete what the old bans cover, then retire them (ADR-0014). Bounded, and safe to run again at any point.
+
+        Only bans created before ``older_than`` (POSIX seconds) are touched, and at most ``bans`` of each mode; at most
+        ``entries`` variants are deleted. A hard ban is retired once nothing it covers is left. A soft ban deletes
+        nothing, its variants being revalidated rather than lost: it is retired once none is left that it makes stale,
+        because they were revalidated, replaced, expired or deleted. A ban made redundant by a newer one of the same
+        kind, prefix and mode is dropped, whatever its age.
+
+        A retired ban must never let back what it covered. A fill that started before the ban (its stamp is below the
+        ban's number) can still be in flight when the ban is retired. Before it reclaims a ban, the run raises a floor
+        under the stamps of new fills: a store stamped below it is refused, and the run waits for the stores that are
+        in flight to end first, so that what they stored is seen by the deletion. A fill that started after the ban is
+        stamped at or above its number and is not concerned.
+        """
+
+    @abstractmethod
+    async def reclaim_orphans(self, *, limit: int) -> int:
+        """Delete up to ``limit`` bodies, and as many resources, that no variant refers to. Tells how many went."""
 
     @abstractmethod
     async def delete_entry(self, entry_id: uuid.UUID) -> bool:

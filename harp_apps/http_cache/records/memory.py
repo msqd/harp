@@ -10,6 +10,7 @@ from .base import (
     BanMode,
     CacheRecords,
     EndpointStats,
+    Reclaimed,
     StoredVariant,
     VariantRecord,
     ban_prefixes,
@@ -36,8 +37,10 @@ class MemoryCacheRecords(CacheRecords):
         #: ``(stored_at, entry id)`` of every variant, oldest first: what expiry reads from the start.
         self._by_age: list[tuple[float, str]] = []
         self._counter = 0
-        #: The number of the last ban of each kind, prefix and mode: the only one that matters to a check.
-        self._bans: dict[tuple[BanKind, str, BanMode], int] = {}
+        #: The last ban of each kind, prefix and mode: the only one that matters to a check.
+        self._bans: dict[tuple[BanKind, str, BanMode], Ban] = {}
+        #: Fills stamped below it are refused: bans up to this number may have been retired, see :meth:`reclaim`.
+        self._floor = 0
 
     async def get_variants(self, key: str) -> list[StoredVariant]:
         hard, soft = self._newest_ban(key, BanMode.HARD), self._newest_ban(key, BanMode.SOFT)
@@ -55,17 +58,24 @@ class MemoryCacheRecords(CacheRecords):
 
     async def ban(self, kind: BanKind, prefix: str, mode: BanMode) -> Ban:
         self._counter += 1
-        self._bans[kind, prefix, mode] = self._counter
-        return Ban(self._counter, kind, prefix, mode, time.time())
+        ban = self._bans[kind, prefix, mode] = Ban(self._counter, kind, prefix, mode, time.time())
+        return ban
+
+    async def bans(self) -> list[Ban]:
+        return sorted(self._bans.values(), key=lambda ban: ban.seq)
 
     def _newest_ban(self, key: str, mode: BanMode) -> int:
         """The number of the last ban of this mode that covers a key, ``0`` when none does."""
-        covering = [self._bans.get((BanKind.EXACT, key, mode), 0)]
-        covering += (self._bans.get((BanKind.PREFIX, prefix, mode), 0) for prefix in ban_prefixes(key))
-        return max(covering)
+        covering = [self._bans.get((BanKind.EXACT, key, mode))]
+        covering += (self._bans.get((BanKind.PREFIX, prefix, mode)) for prefix in ban_prefixes(key))
+        return max((ban.seq for ban in covering if ban), default=0)
 
     async def put(self, record: VariantRecord, body: bytes, *, keep: int, replaces: Optional[uuid.UUID] = None) -> bool:
         if max(self._newest_ban(record.key, mode) for mode in BanMode) > record.stamp:
+            return False
+        # A fill that started before a retired ban may be covered by it. A replacement is not a fill: the variant it
+        # replaces is still there, so no retired ban covered it.
+        if replaces is None and record.stamp < self._floor:
             return False
         if replaces is not None:
             if replaces not in self._by_id:
@@ -86,6 +96,51 @@ class MemoryCacheRecords(CacheRecords):
         for evicted in self._oldest_first(record.key)[:-keep] if keep > 0 else self._oldest_first(record.key):
             self._remove(evicted)
         return True
+
+    async def reclaim(self, *, older_than: float, bans: int, entries: int) -> Reclaimed:
+        old = sorted((ban for ban in self._bans.values() if ban.created_at < older_than), key=lambda ban: ban.seq)
+        all_hard = [ban for ban in old if ban.mode is BanMode.HARD]
+        hard, soft = all_hard[:bans], [ban for ban in old if ban.mode is BanMode.SOFT][:bans]
+        if hard or soft:
+            self._floor = max(self._floor, *(ban.seq for ban in hard + soft))
+
+        retired = deleted = 0
+        pending = len(all_hard) > bans
+        for ban in hard:
+            covered = [record for record in self._covered(ban) if record.stamp < ban.seq]
+            budget = entries - deleted
+            for record in covered[:budget]:
+                self._remove(record)
+            deleted += min(len(covered), budget)
+            if len(covered) > budget:
+                pending = True
+                continue
+            self._retire(ban)
+            retired += 1
+        for ban in soft:
+            if not any(record.stamp < ban.seq for record in self._covered(ban)):
+                self._retire(ban)
+                retired += 1
+        return Reclaimed(retired, deleted, pending)
+
+    def _covered(self, ban: Ban) -> list[VariantRecord]:
+        """The variants a ban covers, whatever their stamp."""
+        start, stop = 0, len(self._keys)
+        if ban.prefix:
+            endpoint = endpoint_of(ban.prefix)
+            start, stop = bisect_left(self._keys, (endpoint, "")), bisect_left(self._keys, (endpoint + "\0", ""))
+        keys = (key for _, key in self._keys[start:stop])
+        if ban.kind is BanKind.EXACT:
+            keys = (key for key in keys if key == ban.prefix)
+        else:
+            keys = (key for key in keys if ban.prefix in ban_prefixes(key))
+        return [record for key in keys for record in self._variants[key].values()]
+
+    def _retire(self, ban: Ban) -> None:
+        del self._bans[ban.kind, ban.prefix, ban.mode]
+
+    async def reclaim_orphans(self, *, limit: int) -> int:
+        return 0  # bodies are reference counted: none outlives its last variant
 
     async def delete_entry(self, entry_id: uuid.UUID) -> bool:
         record = self._by_id.get(entry_id)
