@@ -1,0 +1,1 @@
+Accept click's long form `--set=key=value`, like `--set key=value`.

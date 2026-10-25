@@ -33,7 +33,7 @@ async def _run_migrations(engine: AsyncEngine):
         from harp_apps.storage.utils.migrations import create_alembic_config, do_migrate
 
         alembic_cfg = create_alembic_config(engine.url.render_as_string(hide_password=False))
-        migrator = partial(command.upgrade, alembic_cfg, "head")
+        migrator = partial(command.upgrade, alembic_cfg, "heads")
         await do_migrate(engine, migrator=migrator)
 
 

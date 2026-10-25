@@ -12,7 +12,7 @@ from harp.utils.network import get_available_network_port, wait_for_port
 from harp.utils.testing.communicators import ASGICommunicator
 
 
-async def _call(kernel, raw_path: bytes, query_string: bytes = b"") -> dict:
+async def _call(kernel, raw_path: bytes, query_string: bytes = b"", headers=()) -> dict:
     scope = {
         "type": "http",
         "http_version": "2",
@@ -21,7 +21,7 @@ async def _call(kernel, raw_path: bytes, query_string: bytes = b"") -> dict:
         "path": "/",
         "raw_path": raw_path,
         "query_string": query_string,
-        "headers": [],
+        "headers": list(headers),
         "server": ("localhost", 80),
     }
     sent = []
@@ -52,6 +52,42 @@ class TestKernelRejectedRequest:
     async def test_non_utf8_query_gets_400_then_next_request_is_served(self, kernel):
         assert (await _call(kernel, b"/", b"a=\xff"))["status"] == 400
         assert (await _call(kernel, b"/"))["status"] == 404
+
+    @pytest.mark.asyncio
+    async def test_content_length_with_transfer_encoding_gets_400_with_connection_close(self, kernel):
+        message = await _call(kernel, b"/", headers=[(b"content-length", b"4"), (b"transfer-encoding", b"chunked")])
+
+        assert message["status"] == 400
+        assert (b"connection", b"close") in [(k.lower(), v) for k, v in message["headers"]]
+
+
+class TestRawSocketAmbiguousFraming:
+    @pytest.mark.asyncio
+    async def test_socket_is_closed_after_the_400(self):
+        kernel = ASGIKernel()
+        await ASGICommunicator(kernel).asgi_lifespan_startup()
+
+        shutdown = asyncio.Event()
+        port = get_available_network_port()
+        config = Config()
+        config.bind = [f"localhost:{port}"]
+        server = asyncio.ensure_future(serve(kernel, config=config, shutdown_trigger=shutdown.wait))
+        await asyncio.to_thread(wait_for_port, port, "localhost")
+        try:
+            reader, writer = await asyncio.open_connection("localhost", port)
+            writer.write(
+                b"POST / HTTP/1.1\r\nHost: localhost\r\nContent-Length: 4\r\nTransfer-Encoding: chunked\r\n\r\n"
+                b"0\r\n\r\n"
+            )
+            await writer.drain()
+            data = await asyncio.wait_for(reader.read(), 5)  # read() only returns at EOF
+            writer.close()
+        finally:
+            shutdown.set()
+            await server
+
+        assert data.startswith(b"HTTP/1.1 400")
+        assert b"connection: close" in data.lower()
 
 
 async def _h2c_status(port: int, path: bytes) -> int | None:

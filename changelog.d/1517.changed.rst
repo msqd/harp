@@ -1,0 +1,1 @@
+Storage names every primary key, unique constraint, foreign key and index after a naming convention, and a migration renames the existing ones (stacked duplicate unique constraints are dropped).

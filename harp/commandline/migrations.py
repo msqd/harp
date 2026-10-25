@@ -12,8 +12,11 @@ from harp import get_logger
 from harp.commandline.options.server import server_command
 from harp.utils.commandline import click
 from harp_apps.storage.utils.migrations import (
+    UnknownRevisionError,
     create_alembic_config,
     create_harp_settings_with_storage_from_command_line_options,
+    create_revision,
+    current_revisions_by_application,
     do_migrate,
     do_reset,
 )
@@ -21,14 +24,36 @@ from harp_apps.storage.utils.migrations import (
 logger = get_logger(__name__)
 
 
+async def print_status(engine, alembic_cfg):
+    """Print the revision each application's branch is at."""
+    if engine.dialect.name == "sqlite":
+        click.echo("sqlite schemas are not tracked by alembic.")
+        return
+    try:
+        async with engine.connect() as conn:
+            current = await conn.run_sync(lambda sync_conn: current_revisions_by_application(sync_conn, alembic_cfg))
+    except UnknownRevisionError as exc:
+        raise click.ClickException(str(exc)) from None
+    finally:
+        await engine.dispose()
+    for application, revision in sorted(current.items()):
+        click.echo(f"{application}: {revision or 'not migrated'}")
+
+
 @server_command("db:migrate")
-@click.argument("operation", nargs=1, type=click.Choice(["up", "down"]))
-@click.argument("revision", nargs=1)
+@click.argument("operation", nargs=1, type=click.Choice(["up", "down", "status"]))
+@click.argument("revision", nargs=1, required=False)
 @click.option("--reset", is_flag=True, help="Reset the database (drop all before migrations).")
 def migrate(*, operation, revision, reset=False, **kwargs):
     settings = create_harp_settings_with_storage_from_command_line_options(kwargs)
     alembic_cfg = create_alembic_config(settings.get("storage").url)
     engine = create_async_engine(alembic_cfg.get_main_option("sqlalchemy.url"))
+
+    if operation == "status":
+        asyncio.run(print_status(engine, alembic_cfg))
+        return
+    if not revision:
+        raise click.UsageError(f"{operation!r} needs a revision ('heads' for the latest of every application).")
 
     if operation == "up":
         migrator = partial(command.upgrade, alembic_cfg, revision)
@@ -44,11 +69,15 @@ migrate = cast(Command, migrate)
 
 
 @server_command("db:create-migration")
+@click.argument("application", nargs=1)
 @click.argument("message", nargs=1)
-def create_migration(*, message, **kwargs):
+def create_migration(*, application, message, **kwargs):
     settings = create_harp_settings_with_storage_from_command_line_options(kwargs)
     alembic_cfg = create_alembic_config(settings.get("storage").url)
-    command.revision(alembic_cfg, autogenerate=True, message=message or "auto-generated migration")
+    try:
+        create_revision(alembic_cfg, application, message)
+    except ValueError as exc:
+        raise click.UsageError(str(exc)) from None
 
 
 create_migration = cast(Command, create_migration)

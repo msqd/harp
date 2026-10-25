@@ -2,6 +2,7 @@
 
 import glob
 import os
+import sys
 from shutil import copyfile
 
 import pyheck
@@ -9,7 +10,10 @@ import pyheck
 from harp import ROOT_DIR, get_logger
 from harp.config import asdict
 from harp.utils.config import yaml
-from harp.utils.typescript import generate_schema, generate_typescript_and_jsonschema
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from tools.typescript import generate_schema, generate_typescript_and_jsonschema
 
 logger = get_logger(__name__)
 
@@ -28,7 +32,7 @@ def generate_typescript_definitions_for_application(
 
     """
     models = []
-    for file in glob.glob(f"harp_apps/{application_name}/**/*.py", root_dir=ROOT_DIR, recursive=True):
+    for file in sorted(glob.glob(f"harp_apps/{application_name}/**/*.py", root_dir=ROOT_DIR, recursive=True)):
         mod_path, _ = os.path.splitext(file)
         mod_path = mod_path.split(os.sep)
         if mod_path[-1] == "__init__":
@@ -76,11 +80,11 @@ def generate_typescript_definitions_for_application(
 
 
 if __name__ == "__main__":
-    for app in ("dashboard", "http_client", "proxy", "storage"):
+    for app in ("dashboard", "http_cache", "http_client", "proxy", "storage"):
         generate_typescript_definitions_for_application(
             app,
             destination=os.path.join(ROOT_DIR, f"harp_apps/dashboard/frontend/types/harp_apps.{app}.d.ts"),
-            schema_destination=os.path.join(ROOT_DIR, f"harp_apps/{app}/docs/schema.json"),
+            schema_destination=os.path.join(ROOT_DIR, f"docs/apps/{app}/schema.json"),
             namespace="Apps." + pyheck.upper_camel(app),
         )
 

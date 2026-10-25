@@ -34,13 +34,39 @@ The cache automatically handles:
 - **Vary matching**, so a stored response is never reused for a request whose selecting headers differ
 - **Cache directives** including no-store, no-cache, private, public, and must-revalidate
 
-.. note::
+Variants of a ``Vary`` resource
+:::::::::::::::::::::::::::::::
 
-    ``Vary`` is matched correctly but currently buys you no reuse. The storage holds one entry per
-    cache key, so two variants of the same resource overwrite each other, and a caller alternating
-    between them gets no cache hits at all. Nobody is served the wrong variant; they are served no
-    cache. This is not new in 0.10, the behaviour is the same on 0.9.1, and it is tracked in
-    `#910 <https://github.com/msqd/harp/issues/910>`_.
+A cache key holds up to **8 variants** of its resource, one per distinct value of the request headers the response
+varies on, so a caller alternating between ``Accept: text/html`` and ``Accept: application/json`` is served from the
+cache each time. The limit is ``harp_apps.http_cache.storages.MAX_VARIANTS_PER_KEY``. Storing a ninth variant evicts the
+oldest stored one. Storing a variant again, with the same selecting headers, replaces it. Each variant expires on its
+own, after the storage ``ttl``.
+
+A cache entry is a ``cache/meta`` blob holding the list of its variants, oldest first. Entries written before this
+version hold a single entry and are read as one variant. They are rewritten in the new format the next time their key is
+written, which makes them unreadable by an earlier version.
+
+.. versionchanged:: 0.13
+
+    A cache key used to hold a single entry, so variants of a resource evicted each other.
+
+
+Concurrent misses
+:::::::::::::::::
+
+When several requests for one variant of a resource miss together, one of them fetches from the origin and the others wait
+for the stored entry, then are served from it. Requests for another variant, or for another endpoint, do not wait for it.
+The coalescing is within one HARP process.
+
+A request never fails because of it. It waits at most ``coalescing_timeout`` seconds (30 by default, a
+``transport.arguments`` entry), and fetches on its own if the leading fetch fails, takes longer, or leaves nothing to
+share: a response that cannot be stored, or one the cache does not retain.
+
+On a cold key the ``Vary`` of the resource is not known until the first response arrives, so a request for another
+variant waits for that response's headers, not for its body.
+
+.. versionadded:: 0.13
 
 
 Features
@@ -52,6 +78,12 @@ Features
 - **Flexible Storage:** Supports multiple storage backends via the storage application
 - **Configurable Policy:** Customize caching behavior through policy configuration
 
+
+.. note::
+
+    Credentials are :doc:`redacted </apps/storage/redaction>` in what the cache stores. A response that varies on,
+    carries (``Set-Cookie``) or was requested with a redacted value is not cached at all, unless you opt the name out of
+    redaction.
 
 .. _http-cache-shared:
 
@@ -165,7 +197,7 @@ offers no validator for is simply fetched again, since there is nothing to reval
 
 
 Invalidation by unsafe requests
--------------------------------
+:::::::::::::::::::::::::::::::
 
 .. versionadded:: 0.12
 
@@ -275,11 +307,26 @@ answer the *next* caller, which is why ``no-store`` binds it: the directive is a
 transaction record retains in order to show operators what passed through their own proxy, and
 nothing in it is ever read back into a response.
 
-**A caller's** ``no-store`` **binds the cache and does not affect the transaction record.**
-Such a request is not served from a stored entry and nothing about it is cached, and it is recorded
-like any other request. Whether a caller may suppress payload recording is undecided, see
-`#927 <https://github.com/msqd/harp/issues/927>`_, so do not build on the current behaviour in
-either direction.
+**A caller's** ``no-store`` **binds the cache and suppresses the payload of the transaction record.**
+Such a request is not served from a stored entry and nothing about it is cached. It is still
+recorded, with its summary (method, path and query string) and its timing, but neither its headers
+nor its body are stored, and neither are those of the response. The transaction carries the markers
+``no-store-request`` and ``no-store-response``, and the dashboard says the payload was not recorded
+and why, which tells it apart from a payload shed under load.
+
+**An origin's** ``no-store`` **suppresses its own response payload only.** The response headers and
+body are not stored and the transaction carries ``no-store-response``; the request is recorded
+normally, since it is evidence of what was asked of a third party.
+
+.. versionchanged:: 0.13
+   Up to 0.12, a ``no-store`` of either side was recorded like any other message.
+
+.. warning::
+
+    HARP does not currently provide a way to override this. An override is owed, and the intended
+    mechanism is the transaction markers. The decision is recorded in
+    `ADR-0002 <https://github.com/msqd/harp/blob/main/docs/adr/0002-caller-no-store-suppresses-payload-recording.md>`_.
+    The query string and path of the request summary are still stored: see :doc:`/apps/storage/redaction`.
 
 Note also what RFC 9111 §5.2.1.5 says of the directive: it "is not a reliable or sufficient
 mechanism for ensuring privacy. In particular, malicious or compromised caches might not recognize
@@ -309,16 +356,10 @@ The suite lives in ``harp_apps/http_cache/tests/rfc9111/``.
 
 .. warning::
 
-    **Read this before citing the suite as evidence of compliance.** It runs against a storage
-    double, not against the storage that ships. The double holds several entries per cache key;
-    ``AsyncStorage`` holds one, as its own docstring says. So the suite is evidence about what the
-    policy *decides to store*, and no evidence at all about what the storage *retains*.
-
-    ``Vary`` (§4.1) is where that difference bites, and it is why ``Vary`` is not in the list above.
-    The double can hold two variants side by side and the shipped storage cannot, so those tests
-    pass on a behaviour that does not work in production. See
-    `#910 <https://github.com/msqd/harp/issues/910>`_ for the behaviour and
-    `#965 <https://github.com/msqd/harp/issues/965>`_ for why the tests do not catch it.
+    **Read this before citing the suite as evidence of compliance.** Most of it runs against a storage double,
+    which holds several entries per cache key and applies no ``ttl``. It is evidence about what the policy
+    *decides to store*; what the storage *retains* is covered by the tests that run against ``AsyncStorage``
+    itself.
 
 
 Configuration reference

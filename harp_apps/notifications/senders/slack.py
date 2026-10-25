@@ -1,26 +1,23 @@
 from typing import Optional
 
-from slack_sdk.webhook.async_client import AsyncWebhookClient
+from harp_apps.notifications.senders.base import WebhookNotificationSender
 
 
-class SlackNotificationSender:
-    def __init__(self, webhook_url: str, public_url: Optional[str] = None) -> None:
-        self.webhook_url = webhook_url
-        self.client = AsyncWebhookClient(webhook_url)
-        self.public_url = public_url
+def _escape_mrkdwn(text: str) -> str:
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
-    async def send_notification(
+
+class SlackNotificationSender(WebhookNotificationSender):
+    def _build_payload(
         self,
         method: Optional[str],
         url: Optional[str],
         status_code: int,
         message: str,
         transaction_id: Optional[str],
-    ) -> None:
+    ) -> dict:
         slack_message = self._format_error_message(method, url, status_code, message, transaction_id, self.public_url)
-        response = await self.client.send(text="ERROR NOTIFICATION", blocks=slack_message["blocks"])
-        assert response.status_code == 200
-        assert response.body == "ok"
+        return {"text": "ERROR NOTIFICATION", "blocks": slack_message["blocks"]}
 
     @staticmethod
     def _format_error_message(
@@ -31,6 +28,7 @@ class SlackNotificationSender:
         transaction_id: Optional[str],
         public_url: Optional[str] = None,
     ) -> dict:
+        url, message = _escape_mrkdwn(url or ""), _escape_mrkdwn(message)
         blocks = [
             {
                 "type": "header",

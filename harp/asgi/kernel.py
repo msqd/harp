@@ -180,7 +180,7 @@ class ASGIKernel:
         try:
             request = HttpRequest(HttpRequestAsgiBridge(scope, receive))
         except RejectedRequest as exc:
-            return HttpResponse(exc.message, status=exc.status, content_type="text/plain")
+            return HttpResponse(exc.message, status=exc.status, headers=exc.headers, content_type="text/plain")
 
         if not self.started:
             return HttpResponse(

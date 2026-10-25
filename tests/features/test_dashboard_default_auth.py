@@ -143,7 +143,7 @@ class TestDefaultDashboardAuth:
             return orjson.loads(response["body"])["endpoints"][0]["remote"]["endpoints"][0]["status"]
 
         before = await endpoint_status()
-        body = b'{"endpoint": "test", "action": "down", "url": "%s"}' % test_api.url.encode()
+        body = b'{"endpoint": "test", "action": "down", "index": 0}'
         response = await client.http_request("PUT", "/api/system/proxy", body=body, port=DASHBOARD_PORT)
 
         assert response["status"] == 401

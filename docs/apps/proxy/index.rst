@@ -110,6 +110,35 @@ Dropped tags are logged at debug level with the transaction id, never their valu
 Tagging stays open: any name is accepted. If HARP is exposed to untrusted callers, strip ``x-harp-*`` headers from the
 requests you do not trust (at your load balancer or gateway), or lower these bounds, since every kept tag is stored.
 
+.. _proxy-forwarding-headers:
+
+Forwarding headers and trusted proxies
+::::::::::::::::::::::::::::::::::::::
+
+.. versionchanged:: 0.13
+
+    The peer address is sent upstream, and inbound forwarding headers are stripped unless the peer is trusted.
+
+HARP tells the upstream who is calling it. On every proxied request it appends the address of the peer it is talking to
+to ``X-Forwarded-For`` and to ``Forwarded`` (RFC 7239, ``for=``; an IPv6 address is bracketed and quoted:
+``for="[2001:db8::1]"``). This applies to the request sent upstream only, never to the request recorded in the
+dashboard.
+
+The ``X-Forwarded-For``, ``Forwarded`` and ``X-Real-IP`` headers a client sends are claims it chose freely, so by default
+they are stripped before the request goes upstream, and the upstream only sees the real peer. If HARP runs behind a load
+balancer or gateway of yours, list its addresses in ``trusted_proxies``: what a trusted peer sends is kept, and the peer
+is appended after it, so the upstream sees the whole chain.
+
+.. code-block:: yaml
+
+    proxy:
+      trusted_proxies:
+        - 10.0.0.0/8
+        - fd00::/8
+
+``trusted_proxies`` is a list of CIDR ranges (a single address works too) and is empty by default. Only list proxies you
+operate: anything in these ranges can set the client address your upstream sees.
+
 .. _proxy-buffering-and-streaming:
 
 Buffering and streaming
@@ -165,6 +194,23 @@ to disable the check. The silence timeout above does not catch such a client, si
     proxy:
       min_request_body_rate: 1KiB
       request_body_grace_period: 10.0
+
+.. _proxy-max-request-body-size:
+
+**An oversized request can be refused.** There is no limit on the request body size by default. Set
+``max_request_body_size`` and a request body larger than it is answered ``413``, and its request is never forwarded
+upstream. A declared ``Content-Length`` above the cap is refused before any of the body is read; a chunked body is
+refused as soon as it crosses the cap. Without a cap, the proxy holds the whole body in memory, so set one when HARP is
+exposed to untrusted clients. An endpoint may set its own cap, in place of the global one.
+
+.. code-block:: yaml
+
+    proxy:
+      max_request_body_size: 100MiB
+      endpoints:
+        - name: uploads
+          url: http://uploads:8080
+          max_request_body_size: 1GiB
 
 The transaction ends once the body has been sent, so its duration, and the :doc:`TPDEX </user/performances>`
 computed from it, cover the whole exchange including the transfer to the client. When the client goes away before the
@@ -250,3 +296,30 @@ of them relies on the upstream's behaviour:
 - Unicode look-alike dots (fullwidth ``．`` U+FF0E, sent as ``%EF%BC%8E``): ``/%EF%BC%8E%EF%BC%8E/x``.
 
 Legitimate paths are forwarded unchanged: ``/a%2eb``, ``/%20``, ``/%C3%A9``, ``/page;jsessionid=abc``.
+
+HARP credentials
+----------------
+
+A cookie is scoped to a host, not to a port: a browser signed in to the dashboard sends its session cookie to every proxy
+port on the same host. HARP's own credentials never reach an origin, so the proxy removes them from the request before
+forwarding it:
+
+- the dashboard session cookie (``__Host-harp_session`` over HTTPS, ``harp_session`` over HTTP) is removed from
+  ``Cookie``. The other cookies are kept, and the header is dropped when nothing is left;
+- an ``Authorization: Bearer`` header whose value is a HARP token (``harp_`` prefix and valid checksum) is removed. Any
+  other bearer is forwarded unchanged.
+
+The removal happens before the request is recorded, so the stored transaction does not hold them either, whatever the
+redaction settings say.
+
+The other direction is closed too: an origin cannot plant or overwrite the dashboard session, which browsers share
+across ports. Every ``Set-Cookie`` of an origin response naming ``harp_session`` or ``__Host-harp_session`` is removed;
+other ``Set-Cookie`` headers are kept.
+
+When something was removed, in either direction, the transaction carries the ``harp-credentials-stripped``
+:doc:`marker </apps/storage/markers>`. No setting turns this off, and no other header is touched. The strip runs after the
+:doc:`rules </apps/rules/index>` ``on_request``, so a rule that copies the cookie into another header hands it to the
+origin: do not write one.
+
+Serve the dashboard on a hostname of its own, not on the host of your proxy ports: cookies ignore ports, and a page an
+origin serves through a proxy port can send requests to a dashboard on the same host.

@@ -88,9 +88,47 @@ const mockTransaction2: Transaction = {
   extras: {},
   markers: ["client-disconnected", "truncated-response-body"],
 }
+const mockTransactionNoStore: Transaction = {
+  id: "IJKL9012",
+  type: "GET",
+  endpoint: "endpoint1",
+  started_at: "2021-08-20T20:00:00Z",
+  finished_at: "2021-08-20T20:01:00Z",
+  elapsed: 25,
+  messages: [
+    {
+      id: 1,
+      transaction_id: "IJKL9012",
+      kind: "request",
+      summary: "GET /this/is/short HTTP/1.1",
+      created_at: "2021-08-20T20:00:00Z",
+    } as Message,
+    {
+      id: 2,
+      transaction_id: "IJKL9012",
+      kind: "response",
+      summary: "HTTP/1.1 200 OK",
+      created_at: "2021-08-20T20:01:00Z",
+    } as Message,
+  ],
+  tags: {},
+  extras: {},
+  markers: ["no-store-request", "no-store-response"],
+}
+const mockTransactionOriginNoStore: Transaction = {
+  ...mockTransactionNoStore,
+  id: "MNOP3456",
+  markers: ["no-store-response"],
+}
 const mockTransactions: { [key: string]: Transaction } = {
   ABCD1234: mockTransaction1,
   EFGH5678: mockTransaction2,
+}
+// Reachable by id only, so the list (and its snapshot) stays as it was
+const mockTransactionsById: { [key: string]: Transaction } = {
+  ...mockTransactions,
+  IJKL9012: mockTransactionNoStore,
+  MNOP3456: mockTransactionOriginNoStore,
 }
 
 export default Object.assign(
@@ -104,7 +142,7 @@ export default Object.assign(
     }),
     id: http.get<PathParams>("/api/transactions/:id", ({ params }) => {
       const id = params.id as string
-      const transaction = mockTransactions[id]
+      const transaction = mockTransactionsById[id]
       if (transaction) {
         return HttpResponse.json(transaction)
       } else {

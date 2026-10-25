@@ -429,7 +429,7 @@
           url: https://api4.example.com/
         probe:
           headers:
-            x-probe: 'true'
+            x-probe: '***'
           path: /health
   rules: {}
   storage: {}
