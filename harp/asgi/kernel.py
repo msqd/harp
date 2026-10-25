@@ -1,7 +1,5 @@
 import traceback
-from functools import lru_cache
 from html import escape
-from inspect import signature
 
 from asgiref.typing import ASGIReceiveCallable, ASGISendCallable, Scope
 from hypercorn.utils import LifespanFailureError
@@ -10,6 +8,7 @@ from whistle import AsyncEventDispatcher, Event, IAsyncEventDispatcher
 from harp import get_logger
 from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse, RejectedRequest
 
+from ..utils.signatures import resolve_arguments
 from ..utils.types import typeof
 from .bridge.requests import HttpRequestAsgiBridge
 from .bridge.responses import HttpResponseAsgiBridge
@@ -26,24 +25,6 @@ from .events import (
 )
 
 logger = get_logger(__name__)
-
-
-@lru_cache(maxsize=1024)
-def _cached_signature(subject):
-    """Memoize signature introspection: controllers are long-lived, so their prototype never
-    changes, and this runs on every request.
-
-    Two constraints come from caching on the subject itself, which a plain ``signature()`` call did
-    not impose. Both are satisfied by today's controllers, which are long-lived and hashed by
-    identity, so this is a note for whoever writes the next one:
-
-    - The controller must be **hashable**. An unhashable one raises ``TypeError`` here rather than
-      resolving, because it cannot be used as a cache key.
-    - The cache holds a **strong reference** to every controller it has seen. Controllers created
-      per request or per connection would therefore be pinned, up to ``maxsize``, and would never
-      hit the cache anyway.
-    """
-    return signature(subject)
 
 
 class ASGIKernel:
@@ -89,24 +70,6 @@ class ASGIKernel:
 
         raise RuntimeError(f'Unable to handle request, invalid type "{asgi_type}".')
 
-    def _resolve_arguments(self, subject, **candidates):
-        """
-        Dynamicaly resolve arguments by names in prototype, looking at a "candidates" dictionary that
-        contains the possible arguments used.
-        """
-
-        while hasattr(subject, "_mock_wraps"):
-            subject = subject._mock_wraps
-
-        try:
-            return [
-                (candidates[name] if name in candidates or param.default is param.empty else param.default)
-                for name, param in _cached_signature(subject).parameters.items()
-                if param.kind is not param.KEYWORD_ONLY
-            ], {}
-        except KeyError as exc:
-            raise TypeError(f"Unable to resolve arguments: {exc}")
-
     async def _resolve_http_controller(self, request: HttpRequest):
         """
         Resolves the controller for the given request, aka the callable that will handle the request. If we fail to do
@@ -133,8 +96,8 @@ class ASGIKernel:
 
     async def _execute_http_controller(self, controller, request: HttpRequest, send: ASGISendCallable):
         """Executes the given controller and make all efforts to build a http response."""
-        args, kwargs = self._resolve_arguments(controller, request=request, asgi_send=send)
-        response = await controller(*args, **kwargs)
+        args = resolve_arguments(controller, request=request, asgi_send=send)
+        response = await controller(*args)
 
         # if the controller returned anything that is not a response, maybe some view listener can create one from this
         # value (for example for json data, etc.).
