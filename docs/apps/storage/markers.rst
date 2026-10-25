@@ -123,6 +123,16 @@ with the response body read until then, and ends when the client left. The dashb
 It is also set when the client goes away before the end of its request body: nothing is sent upstream, since the
 request is incomplete, and the transaction is recorded as a ``400`` error.
 
+Credentials Markers
+-------------------
+
+``harp-credentials-stripped``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Set by the proxy when it removed HARP's own credentials (the dashboard session cookie, a HARP bearer token) from the
+request before it is recorded and forwarded to the origin, or a ``Set-Cookie`` of HARP's session cookie from the origin's
+response. See :doc:`/apps/proxy/index`.
+
 Message Storage Markers
 -----------------------
 
