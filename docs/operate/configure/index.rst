@@ -88,8 +88,7 @@ disabled. Unknown keys in it are rejected when the configuration loads.
 .. code-block:: yaml
 
     core:
-      muted_events:
-        - the.event.id
+      muted_events: []  # ids of the loggable events to mute, as documented by the applications that emit them
 
 Implementation (python): :class:`CoreSettings <harp.config.core.CoreSettings>`
 
