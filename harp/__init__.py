@@ -28,7 +28,7 @@ Contents
 """
 
 import os
-from subprocess import check_output
+from subprocess import CalledProcessError, check_output
 from typing import TYPE_CHECKING
 
 from packaging.version import InvalidVersion, Version
@@ -83,9 +83,21 @@ __version__ = "unknown"  # Fallback version
 __hardcoded_version__ = __version__
 __revision__ = __version__  # Will be set to git commit hash if available
 
+
+def _git_revision():
+    """Returns the git commit hash in development mode, None if not in a usable git checkout."""
+    if os.environ.get("CI") or not os.path.exists(os.path.join(ROOT_DIR, ".git")):
+        return None
+    try:
+        return check_output(["git", "rev-parse", "HEAD"], cwd=ROOT_DIR).decode("utf-8").strip()
+    except (OSError, CalledProcessError):
+        # git missing, or unusable here (e.g. "dubious ownership" in a container)
+        return None
+
+
 # Layer 1: Git-based version (development mode)
-if not os.environ.get("CI") and os.path.exists(os.path.join(ROOT_DIR, ".git")):
-    __revision__ = check_output(["git", "rev-parse", "HEAD"], cwd=ROOT_DIR).decode("utf-8").strip()
+if _revision := _git_revision():
+    __revision__ = _revision
     try:
         # Use git describe for detailed version info (e.g., "0.9.0-3-gd1234ab-dirty")
         __version__ = (

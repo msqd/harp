@@ -4,7 +4,7 @@ from structlog.testing import capture_logs
 
 import harp
 from harp.controllers import GetHandler, RoutingController
-from harp.http import HttpRequest
+from harp.http import HttpRequest, HttpResponse
 from harp.utils.arguments import Arguments
 
 
@@ -56,3 +56,13 @@ async def test_router_arguments_reach_the_router_as_keywords():
 
     response = await StrictSlashController()(HttpRequest(method="GET", path="/boom/"))
     assert response.status == 404
+
+
+async def test_handler_parameter_defaults_apply_on_static_routes():
+    class DefaultsController(RoutingController):
+        @GetHandler("/items")
+        async def items(self, request, page=1):
+            return HttpResponse(str(page))
+
+    response = await DefaultsController()(HttpRequest(method="GET", path="/items"))
+    assert (response.status, response.body) == (200, b"1")
