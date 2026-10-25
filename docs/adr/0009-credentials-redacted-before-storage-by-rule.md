@@ -141,8 +141,7 @@ Hence three cases where the response is **not stored in the cache** at all:
   else's credential. This is the case [#1140](https://github.com/msqd/harp/issues/1140) ruled on.
 - **Its request URL carries a query parameter in the set.** The stored URL is compared whole, so a
   redacted one never matches again: storing it costs a blob and serves nothing, and storing it in clear
-  defeats the redaction. *Superseded for the cache by ADR-0014 as implemented (#1594): the cache key holds a hash of
-  the query, the url is stored redacted and given back its real value when read, so such a response is cached.*
+  defeats the redaction. *For the cache, see ADR-0014 ("As implemented"): this case changed there.*
 - **It carries a response header in the set**, `Set-Cookie` by default. Replaying `Set-Cookie: REDACTED`
   breaks the client; replaying the real value hands one caller's session to the next.
 

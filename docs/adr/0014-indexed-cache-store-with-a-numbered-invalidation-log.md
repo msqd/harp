@@ -61,8 +61,10 @@ is accepted before 1.0.
   such a parameter is therefore cached (ADR-0009 withheld it); hishel matches an entry by its whole url, so the
   storage gives the entries it reads the url of the request being looked up when it differs from the stored one only
   by redacted values. A path over 2048 bytes is not cached (PostgreSQL refuses to index values past a third of a
-  page): it is counted in `http_cache_stats.refused` and warned about once per endpoint. Only the hash of a low-entropy
-  secret can be guessed from the key: that is accepted.
+  page): it is counted in `http_cache_stats.refused` and warned about once per endpoint. **Accepted risk:** the hash is a
+  plain sha256 (no secret salt, so that every instance computes the same key), hence a low-entropy secret in the
+  query could be guessed from a dump of the database by hashing candidates. This ADR supersedes ADR-0009 on one
+  point for the cache: ADR-0009 withheld responses to URLs with a redacted query parameter, they are now cached.
 - **Tables** `http_cache_resources` (key, endpoint), `http_cache_variants` (primary key `(key, variant)`, unique
   `entry_id`, status, `vary`, body digest and size, instants, serialized heads), `http_cache_bodies` (digest, data)
   and `http_cache_stats` (endpoint, entries, bytes), in the `http_cache` alembic branch. Keys and resource endpoints

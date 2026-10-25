@@ -105,8 +105,13 @@ Features
 .. note::
 
     Credentials are :doc:`redacted </apps/storage/redaction>` in what the cache stores. A response that varies on,
-    carries (``Set-Cookie``) or was requested with a redacted value is not cached at all, unless you opt the name out of
-    redaction.
+    or carries (``Set-Cookie``), a redacted header is not cached at all, unless you opt the name out of redaction.
+
+    A redacted query parameter does not keep a response out of the cache: the cache key holds the plain sha256 of the
+    whole query string, and the query shown has the value replaced. The value itself is not stored, but **a
+    low-entropy secret (a short PIN, a small numeric token) could be guessed from a dump of the database**, by hashing
+    candidates. Do not rely on the key's hash to hide such a value: keep it in a header, or opt the route out of
+    caching.
 
 .. _http-cache-shared:
 
