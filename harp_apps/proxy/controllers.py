@@ -507,10 +507,12 @@ class HttpProxyController(AbstractHttpProxyController):
 
         # HARP's own credentials stop here, after the rules had their say and before anything records the request or
         # forwards it. No setting turns this off (ADR-0010).
-        remaining, stripped = strip_harp_credentials(context.request.headers.items())
-        if stripped:
-            context.request.headers = remaining
-            context.transaction.markers.add(HARP_CREDENTIALS_STRIPPED)
+        # A filter may have put another request in the context: the one recorded and the one forwarded are stripped alike.
+        for message in {id(request): request, id(context.request): context.request}.values():
+            remaining, stripped = strip_harp_credentials(message.headers.items())
+            if stripped:
+                message.headers = remaining
+                context.transaction.markers.add(HARP_CREDENTIALS_STRIPPED)
 
         # dispatch transaction started event, after the filters so markers they set (skip-storage) are seen
         # we don't really want to await this, should run in background ? or use an async queue ?

@@ -9,6 +9,9 @@ any lookup.
 
 This module is the only parser of HARP tokens in ``Authorization``. The authentication application must reuse it and
 accept nothing more lenient than it does: whatever the application would take as a HARP token, the proxy has to strip.
+
+Likewise the session cookie names are read case-sensitively, as browsers do: the authentication application accepts
+``harp_session`` and ``__Host-harp_session`` only, so ``HARP_SESSION=…`` is neither stripped nor accepted.
 """
 
 import secrets
@@ -99,11 +102,15 @@ def strip_harp_set_cookies(headers):
     """Remove from response headers, given as ``(name, value)`` pairs, every ``Set-Cookie`` naming a HARP session
     cookie: an origin must not plant or overwrite the dashboard session, which browsers share across ports.
 
+    A nameless cookie (``=harp_session=x``) is a bare value to a browser, which sends it back as ``harp_session=x``: it
+    goes too.
+
     :return: the remaining pairs, and whether anything was removed.
     """
-    kept = [
-        (name, value)
-        for name, value in headers
-        if name.lower() != "set-cookie" or value.split("=", 1)[0].strip() not in SESSION_COOKIE_NAMES
-    ]
+    kept = [(name, value) for name, value in headers if name.lower() != "set-cookie" or not _sets_session_cookie(value)]
     return kept, len(kept) != len(headers)
+
+
+def _sets_session_cookie(set_cookie: str) -> bool:
+    pair = set_cookie.lstrip("= \t")
+    return any(pair.startswith(f"{name}=") for name in SESSION_COOKIE_NAMES)

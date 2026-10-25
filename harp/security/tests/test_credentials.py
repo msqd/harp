@@ -120,3 +120,28 @@ def test_strip_session_set_cookie_from_response():
 def test_response_without_session_set_cookie_is_unchanged():
     headers = [("set-cookie", "a=1")]
     assert strip_harp_set_cookies(headers) == (headers, False)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "=harp_session=evil; Path=/",
+        "= harp_session=evil",
+        "  =__Host-harp_session=evil; Secure",
+        " harp_session=evil",
+    ],
+)
+def test_nameless_set_cookie_carrying_a_session_cookie_is_stripped(value):
+    assert strip_harp_set_cookies([("set-cookie", value)]) == ([], True)
+
+
+def test_nameless_set_cookie_is_otherwise_kept():
+    headers = [("set-cookie", "=foo; Path=/")]
+    assert strip_harp_set_cookies(headers) == (headers, False)
+
+
+def test_session_cookie_name_is_case_sensitive():
+    headers = [("cookie", "HARP_SESSION=1")]
+    assert strip_harp_credentials(headers) == (headers, False)
+    headers = [("set-cookie", "HARP_SESSION=1")]
+    assert strip_harp_set_cookies(headers) == (headers, False)
