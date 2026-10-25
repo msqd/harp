@@ -3,16 +3,16 @@ import time
 import typing as tp
 import uuid
 import weakref
+from contextvars import ContextVar
 from contextlib import asynccontextmanager
 from collections import OrderedDict
 from dataclasses import replace
 from email.utils import formatdate
-from urllib.parse import parse_qsl, urlsplit
 from hishel import AsyncBaseStorage, Entry, EntryMeta, Request, Response
 from hishel._utils import make_async_iterator
 
 from harp import get_logger
-from harp.models.redaction import Redaction
+from harp.models.redaction import REDACTED, Redaction
 from harp.http.utils import parse_cache_control
 from harp_apps.storage.constants import (
     DEFAULT_MAX_RECORDED_BODY_SIZE,
@@ -21,7 +21,7 @@ from harp_apps.storage.constants import (
 )
 from .coalescing import STORED_METADATA
 from .adapters import to_entry, to_record
-from .records import CacheRecords
+from .records import CacheRecords, endpoint_of
 from .streams import StoredOnceRead
 
 # How many expired entries the sweep deletes at once.
@@ -32,11 +32,17 @@ DEFAULT_TTL = 86400
 #: How many variants of a ``Vary`` resource one cache key holds. Storing one more evicts the oldest stored.
 MAX_VARIANTS_PER_KEY = 8
 
-#: The longest cache key, in bytes, that is stored. Keys are indexed, and PostgreSQL refuses to index values past a
-#: third of a page (about 2.7 kB): a longer one would be refused on that backend only.
+#: The longest path, in bytes, of a cache key that is stored. Keys are indexed, and PostgreSQL refuses to index values
+#: past a third of a page (about 2.7 kB): a longer one would be refused on that backend only.
 MAX_KEY_SIZE = 2048
 
 logger = get_logger(__name__)
+
+#: The url of the request being looked up, set by the transport when it derives the cache key. The stored entries hold
+#: their url with the values of redacted query parameters replaced (ADR-0009), while hishel matches an entry by its
+#: whole url: :meth:`AsyncStorage.get_entries` gives them the url of the request they match.
+REQUEST_URL: ContextVar[tp.Optional[str]] = ContextVar("harp_http_cache_request_url", default=None)
+
 HEADERS_ENCODING = "iso-8859-1"
 
 #: Request metadata key holding the largest response body the cache may store (the proxy's recording cap).
@@ -65,9 +71,10 @@ def is_withheld(request: Request, response: Response) -> bool:
     """Whether this exchange must stay out of the cache, because storing it would keep a credential.
 
     The cache reads back what it stores to answer requests, so a redacted value is only safe where it is never
-    compared or replayed (ADR-0009). Hence three cases where nothing is stored at all: the response varies on a
-    redacted header, its URL carries a redacted query parameter, or it carries a redacted header itself. What an
-    operator keeps out of storage with a ``skip-*-storage`` marker stays out of the cache too.
+    compared or replayed (ADR-0009). Hence two cases where nothing is stored at all: the response varies on a
+    redacted header, or it carries a redacted header itself. What an operator keeps out of storage with a
+    ``skip-*-storage`` marker stays out of the cache too. A redacted query parameter does not withhold the response:
+    the key holds a hash of the query, and the query kept for display has the value replaced.
     """
     if _SKIP_MARKERS & set(request.metadata.get(MARKERS_METADATA) or ()):
         return True
@@ -75,9 +82,22 @@ def is_withheld(request: Request, response: Response) -> bool:
     redaction = _redaction_of(request)
     if any(name.strip() in redaction.headers for name in ",".join(response.headers.get_list("vary") or []).split(",")):
         return True
-    if any(name in redaction.headers for name in response.headers):
-        return True
-    return any(name in redaction.query for name, _ in parse_qsl(urlsplit(request.url).query, keep_blank_values=True))
+    return any(name in redaction.headers for name in response.headers)
+
+
+def _same_url_but_redacted(stored: str, current: str) -> bool:
+    """Whether ``stored`` is ``current`` with the value of some query parameters replaced by the placeholder."""
+    stored_path, _, stored_query = stored.partition("?")
+    path, _, query = current.partition("?")
+    stored_parameters, parameters = stored_query.split("&"), query.split("&")
+    return (
+        stored_path == path
+        and len(stored_parameters) == len(parameters)
+        and all(
+            kept == given or kept == f"{given.partition('=')[0]}={REDACTED}"
+            for kept, given in zip(stored_parameters, parameters)
+        )
+    )
 
 
 def has_explicit_freshness(response: Response) -> bool:
@@ -119,6 +139,7 @@ class AsyncStorage(AsyncBaseStorage):
         self._ttl = ttl
         self._allow_heuristics = allow_heuristics
         self._sweep_task: tp.Optional[asyncio.Task] = None
+        self._refusing: set[str] = set()
         self._stamp = 0
         self._invalidated_at: OrderedDict[str, int] = OrderedDict()
         self._forgotten_up_to = 0
@@ -256,8 +277,8 @@ class AsyncStorage(AsyncBaseStorage):
             response.metadata["hishel_stored"] = False
             return entry
 
-        if len(key.encode("utf-8")) > MAX_KEY_SIZE:
-            logger.debug(f"Cache entry not retained (key over {MAX_KEY_SIZE} bytes): key={key[:80]}...")
+        if len(key.partition("?")[0].encode("utf-8")) > MAX_KEY_SIZE:
+            await self._refuse(key)
             response.metadata["hishel_stored"] = False
             return entry
 
@@ -301,6 +322,20 @@ class AsyncStorage(AsyncBaseStorage):
             ),
         )
 
+    async def _refuse(self, key: str) -> None:
+        """A path too long to be indexed: say so once per endpoint, and count it, so that it is seen why it never caches."""
+        endpoint = endpoint_of(key)
+        if endpoint not in self._refusing:
+            self._refusing.add(endpoint)
+            logger.warning(
+                f"Cache entry not retained, path over {MAX_KEY_SIZE} bytes (further ones are counted, not logged): "
+                f"endpoint={endpoint} key={key[:80]}..."
+            )
+        try:
+            await self._records.count_refused(endpoint)
+        except Exception:
+            logger.warning(f"Failed to count a refused cache entry: endpoint={endpoint}", exc_info=True)
+
     async def get_entries(self, key: str) -> tp.List[Entry]:
         """Retrieve all entries for a given cache key: its unexpired variants, oldest stored first.
 
@@ -318,7 +353,7 @@ class AsyncStorage(AsyncBaseStorage):
             if len(live) < len(stored):
                 logger.debug(f"Cache entry expired: key={key}")
                 await self._prune(key, [variant.record.entry_id for variant in stored if variant not in live])
-            entries = [to_entry(variant) for variant in live]
+            entries = [self._with_request_url(to_entry(variant)) for variant in live]
             for entry in entries:
                 logger.debug(
                     f"Cache hit: key={key}, url={entry.request.url}, method={entry.request.method}, entry_id={entry.id}"
@@ -330,6 +365,14 @@ class AsyncStorage(AsyncBaseStorage):
             # Unexpected error - log full traceback
             logger.exception(f"Failed to retrieve cache for key={key}")
             return []
+
+    @staticmethod
+    def _with_request_url(entry: Entry) -> Entry:
+        """The entry, its request url the one being looked up when it is the stored one but for redacted values."""
+        current = REQUEST_URL.get()
+        if current and current != entry.request.url and _same_url_but_redacted(entry.request.url, current):
+            return replace(entry, request=replace(entry.request, url=current))
+        return entry
 
     async def _prune(self, key: str, entry_ids: list[uuid.UUID]) -> None:
         """Drop the variants of a key that have expired."""
@@ -371,6 +414,8 @@ class AsyncStorage(AsyncBaseStorage):
 
                 entry = to_entry(stored)
                 updated = new_entry if isinstance(new_entry, Entry) else new_entry(entry)
+                # the stored url holds no secret and is not the update's to change
+                updated = replace(updated, request=replace(updated.request, url=entry.request.url))
                 if is_withheld(updated.request, updated.response):
                     # A revalidation brought in a header that must not be stored: the entry goes, not the header.
                     await self._records.delete_entry(id)

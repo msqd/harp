@@ -271,3 +271,43 @@ async def test_an_empty_body_is_a_body(records, size):
 
     ((_, body),) = await records.get_variants(record.key)
     assert body == b"x" * size
+
+
+async def test_a_variant_purged_since_it_was_read_does_not_come_back(records):
+    """The copy being written (a 304 freshening, say) predates the purge."""
+    old = await put(records)
+    await records.delete_key(old.key)
+
+    await records.put(replace(old, stored_at=2000.0), b"fresher", keep=8, replaces=old.entry_id)
+
+    assert await records.list_keys() == []
+    assert await records.stats() == []
+    assert await records.body_digests() == set()
+
+
+async def test_a_variant_replaced_since_it_was_read_is_not_overwritten(records):
+    old = await put(records, make_record(variant="v", body=b"old"), b"old")
+    current = await put(records, make_record(variant="v", body=b"current"), b"current")
+
+    await records.put(replace(old, stored_at=2000.0), b"stale", keep=8, replaces=old.entry_id)
+
+    assert [(r, b) for r, b in await records.get_variants(old.key)] == [(current, b"current")]
+    assert await records.stats() == [EndpointStats("api", 1, len(b"current"))]
+
+
+async def test_responses_refused_are_counted_per_endpoint(records):
+    await records.count_refused("api")
+    await records.count_refused("api")
+    await records.count_refused("web")
+    await put(records, make_record("http://web/x", body=b"1"), b"1")
+
+    assert await records.stats() == [EndpointStats("api", 0, 0, 2), EndpointStats("web", 1, 1, 1)]
+
+    await records.delete_key("http://web/x")
+    assert await records.stats() == [EndpointStats("api", 0, 0, 2), EndpointStats("web", 0, 0, 1)]
+
+
+async def test_the_query_kept_for_display_is_read_back(records):
+    record = await put(records, make_record(query="a=REDACTED&b=1"))
+
+    assert (await records.get_by_id(record.entry_id)).query == "a=REDACTED&b=1"

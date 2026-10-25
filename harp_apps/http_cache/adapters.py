@@ -9,11 +9,12 @@ import hashlib
 import json
 import time
 import typing as tp
+from urllib.parse import unquote_plus
 
 from hishel import Entry, EntryMeta, Request, Response
 from hishel._core.models import AnyIterable
 
-from harp.models.redaction import Redaction
+from harp.models.redaction import REDACTED, Redaction
 from harp_apps.http_cache.records import StoredVariant, VariantRecord, digest_of, endpoint_of
 from harp_apps.http_cache.utils import deserialize_headers, prepare_headers_for_serialization
 
@@ -37,6 +38,17 @@ def selecting_headers(request: Request, response: Response) -> dict[str, tp.Opti
     if "*" in names:
         return {"*": None}
     return {name: request.headers.get(name) for name in names}
+
+
+def redact_query(query: str, names: tp.Collection[str]) -> str:
+    """The query string with the value of each parameter in ``names`` replaced (ADR-0009), the rest left as it was."""
+    if not names:
+        return query
+    parameters = []
+    for parameter in query.split("&"):
+        name, equals, _ = parameter.partition("=")
+        parameters.append(f"{name}={REDACTED}" if equals and unquote_plus(name) in names else parameter)
+    return "&".join(parameters)
 
 
 def variant_of(selecting: tp.Mapping[str, tp.Optional[str]]) -> str:
@@ -64,10 +76,12 @@ async def to_record(
         response.headers, varying=(b"date", b"content-length")
     )
     selecting = selecting_headers(request, response)
+    location, _, query = request.url.partition("?")
+    query = redact_query(query, redaction.query) if query else None
     head = {
         "request": {
             "method": request.method,
-            "url": request.url,
+            "url": f"{location}?{query}" if query else location,
             "headers": request_headers.decode(_HEADERS_ENCODING),
             "varying": request_varying,
         },
@@ -98,6 +112,7 @@ async def to_record(
         created_at=entry.meta.created_at,
         stored_at=time.time(),  # last write: what the storage ttl counts from
         head=json.dumps(head, separators=(",", ":")).encode(),
+        query=query,
     )
     return record, body
 

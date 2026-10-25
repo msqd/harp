@@ -20,6 +20,9 @@ class MemoryCacheRecords(CacheRecords):
         self._references: dict[str, int] = {}
         self._entries: dict[str, int] = {}
         self._bytes: dict[str, int] = {}
+        self._refused: dict[str, int] = {}
+        #: ``(stored_at, entry id)`` of every variant, oldest first: what expiry reads from the start.
+        self._by_age: list[tuple[float, str]] = []
 
     async def get_variants(self, key: str) -> list[StoredVariant]:
         return [StoredVariant(record, self._bodies[record.body_digest]) for record in self._oldest_first(key)]
@@ -29,7 +32,9 @@ class MemoryCacheRecords(CacheRecords):
 
     async def put(self, record: VariantRecord, body: bytes, *, keep: int, replaces: Optional[uuid.UUID] = None) -> None:
         if replaces is not None:
-            self._remove(self._by_id.get(replaces))
+            if replaces not in self._by_id:
+                return
+            self._remove(self._by_id[replaces])
         self._remove(self._variants.get(record.key, {}).get(record.variant))
 
         self._bodies[record.body_digest] = body
@@ -38,6 +43,7 @@ class MemoryCacheRecords(CacheRecords):
             insort(self._keys, (record.endpoint, record.key))
         self._variants.setdefault(record.key, {})[record.variant] = record
         self._by_id[record.entry_id] = record
+        insort(self._by_age, (record.stored_at, str(record.entry_id)))
         self._entries[record.endpoint] = self._entries.get(record.endpoint, 0) + 1
         self._bytes[record.endpoint] = self._bytes.get(record.endpoint, 0) + record.body_size
 
@@ -56,9 +62,9 @@ class MemoryCacheRecords(CacheRecords):
         return len(records)
 
     async def delete_stored_before(self, cutoff: float, *, limit: int) -> int:
-        expired = sorted((r for r in self._by_id.values() if r.stored_at < cutoff), key=lambda r: r.stored_at)[:limit]
-        for record in expired:
-            self._remove(record)
+        expired = self._by_age[: min(limit, bisect_left(self._by_age, (cutoff, "")))]
+        for _, entry_id in expired:
+            self._remove(self._by_id[uuid.UUID(entry_id)])
         return len(expired)
 
     async def list_keys(
@@ -73,9 +79,14 @@ class MemoryCacheRecords(CacheRecords):
 
     async def stats(self) -> list[EndpointStats]:
         return [
-            EndpointStats(endpoint, self._entries[endpoint], self._bytes[endpoint])
-            for endpoint in sorted(self._entries)
+            EndpointStats(
+                endpoint, self._entries.get(endpoint, 0), self._bytes.get(endpoint, 0), self._refused.get(endpoint, 0)
+            )
+            for endpoint in sorted(self._entries.keys() | self._refused.keys())
         ]
+
+    async def count_refused(self, endpoint: str) -> None:
+        self._refused[endpoint] = self._refused.get(endpoint, 0) + 1
 
     async def largest(self, *, endpoint: Optional[str] = None, limit: int = 10) -> list[VariantRecord]:
         records = (r for r in self._by_id.values() if endpoint is None or r.endpoint == endpoint)
@@ -96,6 +107,7 @@ class MemoryCacheRecords(CacheRecords):
             del self._variants[record.key]
             del self._keys[bisect_left(self._keys, (record.endpoint, record.key))]
         del self._by_id[record.entry_id]
+        del self._by_age[bisect_left(self._by_age, (record.stored_at, str(record.entry_id)))]
 
         self._references[record.body_digest] -= 1
         if not self._references[record.body_digest]:

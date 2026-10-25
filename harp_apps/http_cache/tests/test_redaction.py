@@ -2,14 +2,19 @@
 
 from dataclasses import replace
 
+import hashlib
+
 import httpx
+from sqlalchemy import select
 from hishel import CacheOptions, Headers, SpecificationPolicy
 
 from harp.models.redaction import REDACTED, Redaction
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
 from harp_apps.storage.constants import SKIP_REQUEST_STORAGE, SKIP_RESPONSE_STORAGE, SKIP_STORAGE
+from harp_apps.http_cache.models import CacheBody, CacheResource, CacheStats, CacheVariant
 from harp_apps.http_cache.records import MemoryCacheRecords
+from harp_apps.http_cache.records.sql import SqlCacheRecords
 
 URL = "http://origin.test/item"
 
@@ -25,9 +30,9 @@ class Origin(httpx.AsyncBaseTransport):
 
 
 class Setup:
-    def __init__(self, origin: Origin, harp: dict):
+    def __init__(self, origin: Origin, harp: dict, records=None):
         self.origin = origin
-        self.records = MemoryCacheRecords()
+        self.records = records or MemoryCacheRecords()
         self.storage = AsyncStorage(self.records)
         transport = AsyncCacheTransport(
             next_transport=origin,
@@ -103,11 +108,60 @@ async def test_a_response_carrying_a_redacted_response_header_is_not_cached():
     assert await setup.records.list_keys() == []
 
 
-async def test_a_url_carrying_a_redacted_query_parameter_is_not_cached():
-    setup = Setup(Origin(), {"redaction": redaction(query=["client_secret"])})
+async def everything(records) -> str:
+    """Every value any cache table holds."""
+    if isinstance(records, SqlCacheRecords):
+        async with records.engine.connect() as conn:
+            return "".join(
+                [
+                    str((await conn.execute(select(table))).all())
+                    for table in (CacheResource, CacheVariant, CacheBody, CacheStats)
+                ]
+            )
+    return repr(vars(records))
 
-    assert await setup.fetch_twice(f"{URL}?client_secret=abc&x=1") == 2
-    assert await setup.records.list_keys() == []
+
+async def test_a_secret_query_value_reaches_no_cache_table(records):
+    setup = Setup(Origin(), {"redaction": redaction(query=["client_secret"])}, records)
+
+    assert await setup.fetch_twice(f"{URL}?client_secret=hunter2-value&x=1") == 1  # cached all the same
+
+    assert "hunter2-value" not in await everything(records)
+
+
+async def test_the_query_kept_for_display_has_the_secret_replaced(records):
+    setup = Setup(Origin(), {"redaction": redaction(query=["client_secret"])}, records)
+    await setup.fetch_twice(f"{URL}?client_secret=hunter2-value&x=1")
+
+    (key,) = await records.list_keys()
+    ((stored, _),) = await records.get_variants(key)
+
+    assert stored.query == f"client_secret={REDACTED}&x=1"
+    assert f"/item?client_secret={REDACTED}&x=1" in stored.head.decode()
+
+
+async def test_two_query_values_never_share_an_entry(records):
+    setup = Setup(Origin(), {"redaction": redaction(query=["client_secret"])}, records)
+
+    async with setup.client:
+        await setup.client.get(f"{URL}?client_secret=one")
+        await setup.client.get(f"{URL}?client_secret=two")
+        await setup.client.get(f"{URL}?client_secret=one")
+
+    assert setup.origin.calls == 2
+    assert len(await records.list_keys()) == 2
+
+
+async def test_a_key_is_the_path_in_clear_and_a_hash_of_the_query(records):
+    setup = Setup(Origin(), {"redaction": redaction()}, records)
+    async with setup.client:
+        await setup.client.get(f"{URL}?x=1")
+        await setup.client.get(URL)
+
+    keys = await records.list_keys()
+
+    assert keys[0] == "http://api/item"
+    assert keys[1] == f"http://api/item?{hashlib.sha256(b'x=1').hexdigest()}"
 
 
 async def test_a_url_with_other_query_parameters_is_cached():

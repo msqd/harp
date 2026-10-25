@@ -60,6 +60,8 @@ share the same cache key.
 - Async lifecycle methods (aclose)
 """
 
+import hashlib
+
 import pytest
 from hishel import SpecificationPolicy
 from hishel.httpx import AsyncCacheTransport
@@ -516,13 +518,13 @@ class TestCacheKeyConsistency:
 
     @pytest.mark.asyncio
     async def test_cache_key_format(self, normalized_transport, mock_storage):
-        """The cache key is the request url, its host the endpoint name: the store lists and orders by it (ADR-0014)."""
+        """The cache key is the endpoint and path in clear, and a hash of the query: the store orders by it (ADR-0014)."""
         request = Request(
             method="GET", url="http://backend.local/api/resource?a=1", extensions={"harp": {"endpoint": "api"}}
         )
         await normalized_transport.handle_async_request(request)
 
-        assert mock_storage.created_keys == ["http://api/api/resource?a=1"]
+        assert mock_storage.created_keys == [f"http://api/api/resource?{hashlib.sha256(b'a=1').hexdigest()}"]
 
 
 class TestRfcCompliance:

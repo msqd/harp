@@ -49,8 +49,9 @@ async def _upstream_calls(edit, path="/") -> int:
 
 
 @respx.mock
-async def test_a_query_parameter_redacted_by_a_rule_keeps_the_response_out_of_the_cache():
-    assert await _upstream_calls(lambda transaction: transaction.redaction.query.add("client_secret")) == 2
+async def test_a_query_parameter_redacted_by_a_rule_does_not_keep_the_response_out_of_the_cache():
+    """The cache key holds a hash of the query, and the url is stored redacted: nothing to withhold."""
+    assert await _upstream_calls(lambda transaction: transaction.redaction.query.add("client_secret")) == 1
 
 
 @respx.mock

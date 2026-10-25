@@ -48,6 +48,7 @@ def upgrade() -> None:
         sa.Column("created_at", sa.Float(), nullable=False),
         sa.Column("stored_at", sa.Float(), nullable=False),
         sa.Column("head", sa.LargeBinary(), nullable=False),
+        sa.Column("query", sa.Text(), nullable=True),
         sa.ForeignKeyConstraint(
             ["body_digest"],
             ["http_cache_bodies.digest"],
@@ -71,6 +72,7 @@ def upgrade() -> None:
         sa.Column("endpoint", sa.Text(), nullable=False),
         sa.Column("entries", sa.BigInteger(), nullable=False),
         sa.Column("bytes", sa.BigInteger(), nullable=False),
+        sa.Column("refused", sa.BigInteger(), server_default="0", nullable=False),
         sa.PrimaryKeyConstraint("endpoint", name=op.f("pk_http_cache_stats")),
     )
 

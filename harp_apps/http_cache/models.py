@@ -168,6 +168,8 @@ class CacheVariant(Base):
     created_at: Mapped[float] = mapped_column(Float)
     stored_at: Mapped[float] = mapped_column(Float)
     head: Mapped[bytes] = mapped_column(LargeBinary)
+    #: The query string, for display only: the values of redacted parameters are replaced (ADR-0009).
+    query: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
 
 class CacheStats(Base):
@@ -178,3 +180,5 @@ class CacheStats(Base):
     endpoint: Mapped[str] = mapped_column(Text, primary_key=True)
     entries: Mapped[int] = mapped_column(BigInteger)
     bytes: Mapped[int] = mapped_column(BigInteger)
+    #: Responses not stored because their key was too long.
+    refused: Mapped[int] = mapped_column(BigInteger, server_default="0")

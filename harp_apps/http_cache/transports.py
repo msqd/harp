@@ -1,3 +1,4 @@
+import hashlib
 import time
 from ipaddress import IPv6Address, ip_address
 from dataclasses import replace
@@ -16,7 +17,13 @@ from harp.utils.bytes import HEADER_ENCODING, ensure_bytes, header_bytes
 from harp_apps.http_cache.coalescing import DEFAULT_TIMEOUT, Coalescer
 from harp_apps.http_cache.models import WrappedRequest
 from harp_apps.http_cache.settings import PurgeSettings
-from harp_apps.http_cache.storages import MARKERS_METADATA, MAX_BODY_SIZE_METADATA, REDACTION_METADATA, STAMP_METADATA
+from harp_apps.http_cache.storages import (
+    REQUEST_URL,
+    MARKERS_METADATA,
+    MAX_BODY_SIZE_METADATA,
+    REDACTION_METADATA,
+    STAMP_METADATA,
+)
 from harp_apps.http_cache.streams import ClosableByteStream, UpstreamBody
 
 logger = get_logger(__name__)
@@ -159,14 +166,20 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         self._cache_proxy._get_key_for_request = self._get_key_for_request
 
     async def _get_key_for_request(self, request: Request) -> str:
-        """The cache key is the request url, its host being the endpoint name.
+        """The cache key: endpoint and path in clear, then a hash of the whole query string.
 
         hishel hashes the url, which hides what the cache stores: the store orders its records by key to list them per
-        endpoint and per path (ADR-0014). A request keyed by its body is left to hishel.
+        endpoint and per path, and a path prefix is a range of keys (ADR-0014). The query stays out of the key but for
+        its hash, as it may hold credentials (ADR-0009): two different values never share an entry. A request keyed by
+        its body has the hash of its body in the hash.
         """
+        REQUEST_URL.set(str(request.url))
+        url = httpx.URL(request.url)
+        path, _, query = url.raw_path.decode("ascii").partition("?")
+        key = f"{url.scheme}://{url.netloc.decode('utf-8')}{path}"
         if self._cache_proxy.policy.use_body_key or request.metadata.get("hishel_body_key"):
-            return await self._hishel_key_for_request(request)
-        return str(request.url)
+            query += "\0" + await self._hishel_key_for_request(request)
+        return f"{key}?{hashlib.sha256(query.encode()).hexdigest()}" if query else key
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Wraps the request to use a rewritten url (for cache key handling)."""

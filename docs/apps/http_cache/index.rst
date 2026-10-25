@@ -48,22 +48,26 @@ own, after the storage ``ttl``.
 Where the cache keeps its entries
 :::::::::::::::::::::::::::::::::
 
-The cache keeps one record per resource (its cache key: the request URL, its host replaced by the endpoint name) and
-one per variant under it, ordered by endpoint, then path. Bodies are stored once, by content digest, however many
+The cache keeps one record per resource and one per variant under it, ordered by endpoint, then path. The cache key
+is the endpoint and the path in clear, followed by a hash of the query string: two different query values never share an
+entry, and no query value is stored in the cache tables, as it may hold a credential. The query is kept for display only,
+with the values of the :doc:`redacted parameters </apps/storage/redaction>` replaced by ``REDACTED``. Bodies are stored once, by content digest, however many
 variants carry the same body, and deleted with the last one. The cache counts, per endpoint, its entries and the bytes
 of their bodies as it writes, and indexes the entries by size.
 
 - With the :doc:`storage </apps/storage/index>` application loaded, the records are in its database, in the
   ``http_cache_*`` tables, shared by every instance of HARP: PostgreSQL, or SQLite for development. The tables are
-  created by the migrations of the ``http_cache`` application. A response whose cache key is over 2048 bytes is
-  not cached.
+  created by the migrations of the ``http_cache`` application. A response whose path is over 2048 bytes is
+  not cached: it is counted, per endpoint, in the cache counters, and a warning is logged once per endpoint.
 - Without it, the records are in the process, and lost at restart.
 
 .. versionchanged:: 0.14
 
     The cache used to keep a ``cache/meta`` blob per cache key, in the blob storage, SQL or Redis. The entries it left
     are not read anymore: the cache starts empty once, at upgrade, and the :doc:`janitor </apps/janitor/index>` deletes
-    the old blobs. With Redis as blob storage, the cache is now in the storage database until it has a Redis backend of
+    the old blobs. During a rolling upgrade, the entries that an instance still on the old version stores are not seen
+    by the new ones, and are deleted by the janitor once older than its grace period: they miss and are fetched again.
+    A response whose URL carries a redacted query parameter used to be left out of the cache, and is now cached. With Redis as blob storage, the cache is now in the storage database until it has a Redis backend of
     its own.
 
 .. versionchanged:: 0.13

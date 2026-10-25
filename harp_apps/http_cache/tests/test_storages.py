@@ -212,3 +212,22 @@ class TestStoredRecords:
 
         assert await entry.response.aread() == b"payload"
         assert await records.list_keys() == []
+
+    async def test_a_refused_path_is_counted_and_warned_about_once_per_endpoint(self, storage, records, caplog):
+        key = "http://api/" + "x" * MAX_KEY_SIZE
+        other = key.replace("api", "web")
+
+        with caplog.at_level("WARNING"):
+            for _ in range(3):
+                await store_entry(storage, _request(key), _response(), key)
+            await store_entry(storage, _request(other), _response(), other)
+
+        assert await records.stats() == [EndpointStats("api", 0, 0, 3), EndpointStats("web", 0, 0, 1)]
+        assert sum("path over" in record.getMessage() for record in caplog.records) == 2
+
+    async def test_the_query_does_not_count_in_the_cap(self, storage, records):
+        key = "http://api/items?" + "x" * MAX_KEY_SIZE
+
+        await store_entry(storage, _request(key), _response(), key)
+
+        assert await records.list_keys() == [key]

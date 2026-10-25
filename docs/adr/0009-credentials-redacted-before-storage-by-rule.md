@@ -141,7 +141,8 @@ Hence three cases where the response is **not stored in the cache** at all:
   else's credential. This is the case [#1140](https://github.com/msqd/harp/issues/1140) ruled on.
 - **Its request URL carries a query parameter in the set.** The stored URL is compared whole, so a
   redacted one never matches again: storing it costs a blob and serves nothing, and storing it in clear
-  defeats the redaction.
+  defeats the redaction. *Superseded for the cache by ADR-0014 as implemented (#1594): the cache key holds a hash of
+  the query, the url is stored redacted and given back its real value when read, so such a response is cached.*
 - **It carries a response header in the set**, `Set-Cookie` by default. Replaying `Set-Cookie: REDACTED`
   breaks the client; replaying the real value hands one caller's session to the next.
 
@@ -199,7 +200,7 @@ for sensitive authentication headers, and the cache does not honour it. That pag
 
 **Caching changes by default.** Responses with `Set-Cookie`, or with `Vary: Authorization` or
 `Vary: Cookie`, are no longer cached unless the operator opts the header out of redaction. A response to a
-URL with a redacted query parameter is not cached either.
+URL with a redacted query parameter is not cached either (until #1594, see above).
 
 **A stored `REDACTED` is ambiguous in one case**: a caller that really sent the string `REDACTED`. That is
 accepted; a marker recording that redaction happened can be added if it ever matters.

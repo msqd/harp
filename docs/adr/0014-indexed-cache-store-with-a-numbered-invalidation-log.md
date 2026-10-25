@@ -51,9 +51,18 @@ is accepted before 1.0.
 
 ## As implemented in the store (#1594)
 
-- **The cache key is the URL.** hishel keys its storage by `sha256(url)`, which is opaque: nothing can be ordered or
-  ranged by it. `AsyncCacheTransport` now keys by the request URL, its host the endpoint name, as this record assumes.
-  A key over 2048 bytes is not cached (PostgreSQL refuses to index values past a third of a page).
+- **The cache key is the endpoint and the path in clear, then a hash of the query.** hishel keys its storage by
+  `sha256(url)`, which is opaque: nothing can be ordered or ranged by it. `AsyncCacheTransport` now keys by
+  `<scheme>://<endpoint><path>`, followed by `?` and the sha256 of the whole query string as it came when there is one
+  (a request keyed by its body adds its hash to it). Two different query values never share an entry, a path prefix
+  is a range of keys (#1597), and no query value is in any table, since a query may hold a credential (ADR-0009). The
+  query is also kept in `http_cache_variants.query`, for display only, with the values of the parameters in the
+  request's redaction set replaced by `REDACTED`, and so is the url in the stored head. A response whose URL carries
+  such a parameter is therefore cached (ADR-0009 withheld it); hishel matches an entry by its whole url, so the
+  storage gives the entries it reads the url of the request being looked up when it differs from the stored one only
+  by redacted values. A path over 2048 bytes is not cached (PostgreSQL refuses to index values past a third of a
+  page): it is counted in `http_cache_stats.refused` and warned about once per endpoint. Only the hash of a low-entropy
+  secret can be guessed from the key: that is accepted.
 - **Tables** `http_cache_resources` (key, endpoint), `http_cache_variants` (primary key `(key, variant)`, unique
   `entry_id`, status, `vary`, body digest and size, instants, serialized heads), `http_cache_bodies` (digest, data)
   and `http_cache_stats` (endpoint, entries, bytes), in the `http_cache` alembic branch. Keys and resource endpoints
@@ -62,11 +71,17 @@ is accepted before 1.0.
   fetch. It is stored as given, `0` until then; nothing reads it.
 - **Counters** are updated in the transaction of each write, expiry and deletion, last, so the row of an endpoint is
   locked for the least time. The largest entries are read from an index on `(endpoint, body_size)`.
-- **Writers of a key** take turns by locking its resource row (`SELECT … FOR UPDATE`), and retry on a unique
-  violation, a deadlock or a body deleted under them.
+- **Writers of a key** take turns by locking its resource row (`SELECT … FOR UPDATE`). Every write locks the resource
+  rows first and the variants after, whoever the writer is (store, purge, expiry sweep), so none waits for what the
+  other holds. A write retries on a deadlock or a foreign key violated by the body or resource another writer just
+  deleted; any other integrity error is raised. A 304 freshening replaces its variant only if it is still there: a
+  copy read before a purge, or before another instance replaced it, does not come back.
 - **Memory** keeps the same records in dictionaries and a sorted list, and is used when the storage application is not
   loaded. **Redis** blob storage no longer holds the cache: it is in the storage database until the Redis backend.
-- **The old cache** (`cache/meta` blobs) is not read. The janitor sees it as orphan blobs and deletes it.
+- **The old cache** (`cache/meta` blobs) is not read. The janitor sees it as orphan blobs and deletes it, after its
+  grace period. During a rolling upgrade, an instance still on the old version keeps writing and reading blobs: the
+  entries it stores are not seen by the new instances, and the janitor of a new instance deletes them once they are
+  older than the grace. Those entries miss and are fetched again from the origin.
 
 ## Rejected
 

@@ -56,6 +56,10 @@ class VariantRecord:
     #: The request and response heads, serialized by :mod:`harp_apps.http_cache.adapters`.
     head: bytes
 
+    #: The query string of the request, for display only: the values of redacted parameters (ADR-0009) are replaced.
+    #: The key holds a hash of the whole query, never its values.
+    query: Optional[str] = None
+
 
 class StoredVariant(NamedTuple):
     """A variant record, with its body."""
@@ -71,6 +75,9 @@ class EndpointStats:
     endpoint: str
     entries: int
     bytes: int
+
+    #: Responses that were not stored because their key was too long.
+    refused: int = 0
 
 
 class CacheRecords(ABC):
@@ -92,6 +99,8 @@ class CacheRecords(ABC):
     async def put(self, record: VariantRecord, body: bytes, *, keep: int, replaces: Optional[uuid.UUID] = None) -> None:
         """Store a variant in place of the one it supersedes (same key and variant) and of ``replaces``, if given.
 
+        When ``replaces`` is given and that variant is gone (purged, or replaced by another writer, possibly of
+        another instance), nothing is stored: the copy being written is older than what happened to it.
         The key then keeps at most ``keep`` variants: the oldest stored are deleted.
         """
 
@@ -120,6 +129,10 @@ class CacheRecords(ABC):
     @abstractmethod
     async def largest(self, *, endpoint: Optional[str] = None, limit: int = 10) -> list[VariantRecord]:
         """The variants with the largest bodies, largest first, of one endpoint or of all."""
+
+    @abstractmethod
+    async def count_refused(self, endpoint: str) -> None:
+        """Count a response of this endpoint that was not stored because its key was too long."""
 
     @abstractmethod
     async def body_digests(self) -> set[str]:
