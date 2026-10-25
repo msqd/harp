@@ -4,7 +4,7 @@ import pytest
 import structlog
 from pydantic import ValidationError
 
-from harp_apps.dashboard.passwords import ALGORITHMS, hash_password, verify_password
+from harp_apps.dashboard.passwords import ALGORITHMS, PBKDF2_ROUNDS, hash_password, verify_password
 from harp_apps.dashboard.settings.auth import BasicAuthSettings
 
 # Made by passlib 1.7.4 (`pbkdf2_sha256.hash`): users keep hashes made before passlib was removed.
@@ -87,3 +87,34 @@ def test_basic_auth_checks_a_passlib_hash():
 
     assert settings.check("alice", "s3cretAlice") == "alice"
     assert settings.check("alice", "wrong") is False
+
+
+def _rounds(stored):
+    return int(stored.split("$")[2])
+
+
+def test_dummy_hash_costs_as_much_as_a_configured_passlib_hash():
+    settings = BasicAuthSettings(algorithm="pbkdf2_sha256", users={"alice": PASSLIB_HASH})
+
+    assert settings._dummy_hash.startswith("$pbkdf2-sha256$")
+    assert _rounds(settings._dummy_hash) == 29000
+
+
+def test_dummy_hash_uses_the_costliest_configured_hash():
+    settings = BasicAuthSettings(
+        algorithm="pbkdf2_sha256", users={"a": PASSLIB_HASH_NON_ASCII, "b": PASSLIB_HASH, "c": "garbage"}
+    )
+
+    assert _rounds(settings._dummy_hash) == 29000
+
+
+def test_dummy_hash_defaults_without_users():
+    assert _rounds(BasicAuthSettings(algorithm="pbkdf2_sha256")._dummy_hash) == PBKDF2_ROUNDS
+
+
+def test_dummy_hash_argon2_has_the_configured_parameters():
+    argon2 = pytest.importorskip("argon2")
+    cheap = argon2.PasswordHasher(time_cost=1, memory_cost=8, parallelism=1).hash("x")
+    settings = BasicAuthSettings(algorithm="argon2", users={"a": cheap})
+
+    assert argon2.extract_parameters(settings._dummy_hash) == argon2.extract_parameters(cheap)

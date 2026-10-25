@@ -10,7 +10,7 @@ from pydantic import BeforeValidator, Field, model_validator
 from harp import get_logger
 from harp.config import Configurable, Secret
 from harp.utils.config import yaml
-from harp_apps.dashboard.passwords import ALGORITHMS, TAlgorithm, hash_password, verify_password
+from harp_apps.dashboard.passwords import ALGORITHMS, TAlgorithm, dummy_hash, verify_password
 
 logger = get_logger(__name__)
 
@@ -88,8 +88,8 @@ class BasicAuthSettings(Configurable):
 
     @cached_property
     def _dummy_hash(self):
-        """A valid hash for the configured algorithm, verified against when the user is unknown."""
-        return hash_password(self.algorithm, "harp")
+        """A hash as costly as the configured users', verified against when the user is unknown."""
+        return dummy_hash(self.algorithm, [user.password.get_secret_value() for user in self.users.values()])
 
     @cached_property
     def _verified(self) -> dict[bytes, float]:

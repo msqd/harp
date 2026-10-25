@@ -30,14 +30,12 @@ def _pbkdf2(password: str, salt: bytes, rounds: int) -> bytes:
     return hashlib.pbkdf2_hmac("sha256", password.encode(), salt, rounds)
 
 
-def _hash_pbkdf2_sha256(password: str) -> str:
-    salt = secrets.token_bytes(16)
-    return (
-        f"{_PBKDF2_PREFIX}{PBKDF2_ROUNDS}${_ab64_encode(salt)}${_ab64_encode(_pbkdf2(password, salt, PBKDF2_ROUNDS))}"
-    )
+def _hash_pbkdf2_sha256(password: str, rounds: int = PBKDF2_ROUNDS, salt_size: int = 16) -> str:
+    salt = secrets.token_bytes(salt_size)
+    return f"{_PBKDF2_PREFIX}{rounds}${_ab64_encode(salt)}${_ab64_encode(_pbkdf2(password, salt, rounds))}"
 
 
-def _verify_pbkdf2_sha256(password: str, stored: str) -> bool:
+def _parse_pbkdf2_sha256(stored: str) -> tuple[int, bytes, bytes]:
     if not stored.startswith(_PBKDF2_PREFIX):
         raise ValueError("not a pbkdf2_sha256 hash")
     try:
@@ -48,7 +46,26 @@ def _verify_pbkdf2_sha256(password: str, stored: str) -> bool:
         raise ValueError("not a pbkdf2_sha256 hash") from exc
     if rounds < 1 or not salt or not checksum:
         raise ValueError("not a pbkdf2_sha256 hash")
+    return rounds, salt, checksum
+
+
+def _verify_pbkdf2_sha256(password: str, stored: str) -> bool:
+    rounds, salt, checksum = _parse_pbkdf2_sha256(stored)
     return hmac.compare_digest(_pbkdf2(password, salt, rounds), checksum)
+
+
+def _dummy_pbkdf2_sha256(password: str, stored_hashes: list[str]) -> str:
+    costliest = None
+    for stored in stored_hashes:
+        try:
+            parsed = _parse_pbkdf2_sha256(stored)
+        except ValueError:
+            continue
+        if costliest is None or parsed[0] > costliest[0]:
+            costliest = parsed
+    if costliest is None:
+        return _hash_pbkdf2_sha256(password)
+    return _hash_pbkdf2_sha256(password, rounds=costliest[0], salt_size=len(costliest[1]))
 
 
 def _argon2():
@@ -72,6 +89,24 @@ def _verify_argon2(password: str, stored: str) -> bool:
         return False
 
 
+def _dummy_argon2(password: str, stored_hashes: list[str]) -> str:
+    from argon2 import PasswordHasher, extract_parameters
+    from argon2.exceptions import InvalidHashError
+
+    costliest = None
+    for stored in stored_hashes:
+        try:
+            parameters = extract_parameters(stored)
+        except InvalidHashError:
+            continue
+        cost = parameters.memory_cost * parameters.time_cost * parameters.parallelism
+        if costliest is None or cost > costliest[0]:
+            costliest = (cost, parameters)
+    if costliest is None:
+        return _hash_argon2(password)
+    return PasswordHasher.from_parameters(costliest[1]).hash(password)
+
+
 def _hash_plaintext(password: str) -> str:
     return password
 
@@ -82,6 +117,18 @@ def _verify_plaintext(password: str, stored: str) -> bool:
 
 _HASH = {"pbkdf2_sha256": _hash_pbkdf2_sha256, "argon2": _hash_argon2, "plaintext": _hash_plaintext}
 _VERIFY = {"pbkdf2_sha256": _verify_pbkdf2_sha256, "argon2": _verify_argon2, "plaintext": _verify_plaintext}
+
+
+_DUMMY = {
+    "pbkdf2_sha256": _dummy_pbkdf2_sha256,
+    "argon2": _dummy_argon2,
+    "plaintext": lambda password, stored_hashes: password,
+}
+
+
+def dummy_hash(algorithm: TAlgorithm, stored_hashes: list[str]) -> str:
+    """A hash as costly to verify as the costliest of ``stored_hashes`` (the default cost when none is valid)."""
+    return _DUMMY[algorithm]("harp", stored_hashes)
 
 
 def hash_password(algorithm: TAlgorithm, password: str) -> str:
