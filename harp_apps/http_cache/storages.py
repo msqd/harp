@@ -146,7 +146,9 @@ ORIGINAL_DATE = "x-harp-original-date"
 
 #: What hishel is shown instead of the freshness an entry stated: no lifetime, and no staleness to be allowed.
 #: ``must-revalidate`` is what stops ``allow_stale`` from serving it as it is.
-NEVER_FRESH_CACHE_CONTROL = "max-age=0, must-revalidate"
+#: The last directive is HARP's own, so that what an origin states, ``max-age=0, must-revalidate`` included, is never
+#: mistaken for what HARP showed.
+NEVER_FRESH_CACHE_CONTROL = "max-age=0, must-revalidate, x-harp-shown"
 
 #: Carry the stored ``Cache-Control`` and ``Expires`` of an entry shown as never fresh.
 STORED_CACHE_CONTROL = "x-harp-stored-cache-control"
@@ -173,15 +175,27 @@ def show_as_never_fresh(response: Response, *, revalidate: bool = False) -> None
 
 
 def _show_as_always_revalidated(response: Response) -> None:
-    # always set, empty when there was none: it is what tells that the entry was shown, and the shown value may well be
-    # one an origin sends
-    response.headers[STORED_CACHE_CONTROL] = ", ".join(response.headers.get_list("cache-control") or [])
-    if "cache-control" in response.headers:
-        del response.headers["cache-control"]
-    response.headers["cache-control"] = NEVER_FRESH_CACHE_CONTROL
-    if "expires" in response.headers:
-        response.headers[STORED_EXPIRES] = response.headers["expires"]
-        del response.headers["expires"]
+    headers = response.headers
+    # always set, empty when there was none: it is what tells that the entry was shown. Assigning appends, hence the
+    # deletes: nothing planted under these names survives.
+    _delete(headers, STORED_CACHE_CONTROL, STORED_EXPIRES)
+    headers[STORED_CACHE_CONTROL] = ", ".join(headers.get_list("cache-control") or [])
+    _delete(headers, "cache-control")
+    headers["cache-control"] = NEVER_FRESH_CACHE_CONTROL
+    if "expires" in headers:
+        headers[STORED_EXPIRES] = headers["expires"]
+        del headers["expires"]
+
+
+def _delete(headers, *names: str) -> None:
+    for name in names:
+        if name in headers:
+            del headers[name]
+
+
+def drop_harp_headers(headers) -> None:
+    """Remove every ``x-harp-*`` header: they are HARP's, and an origin does not get to write them."""
+    _delete(headers, *{name for name in headers if name.lower().startswith("x-harp-")})
 
 
 def restore_date(headers) -> None:
@@ -190,7 +204,7 @@ def restore_date(headers) -> None:
     if STORED_CACHE_CONTROL in headers:
         original = headers[STORED_CACHE_CONTROL]
         del headers[STORED_CACHE_CONTROL]
-        if headers.get("cache-control") == NEVER_FRESH_CACHE_CONTROL:
+        if headers.get("cache-control") == NEVER_FRESH_CACHE_CONTROL:  # a 304 stating its own is not this one
             del headers["cache-control"]
             if original:
                 headers["cache-control"] = original
@@ -270,17 +284,20 @@ class AsyncStorage(AsyncBaseStorage):
         and they are deleted.
 
         Raises:
-            InvalidationError: when the ban could not be recorded. Nothing is then invalidated, and whoever asked must
-                not be told otherwise. A hard ban whose entries could not be deleted is recorded, hence done: they are
-                not served, and the failure is logged.
+            InvalidationError: when the ban could not be recorded, and whoever asked must not be told otherwise. A hard
+                invalidation still deletes the variants it can, so that the cache serves less of what it should not. A
+                hard ban whose entries could not be deleted is recorded, hence done: they are not served, and the
+                failure is logged.
         """
         async with self._locked(key):
-            await self._ban(BanKind.EXACT, key, mode, f"key {key}")
-            if mode is BanMode.HARD:
-                try:
-                    await self._records.delete_key(key)
-                except Exception:
-                    logger.warning(f"Failed to remove cache entry: key={key}", exc_info=True)
+            try:
+                await self._ban(BanKind.EXACT, key, mode, f"key {key}")
+            finally:
+                if mode is BanMode.HARD:
+                    try:
+                        await self._records.delete_key(key)
+                    except Exception:
+                        logger.warning(f"Failed to remove cache entry: key={key}", exc_info=True)
 
     async def invalidate_endpoint(self, endpoint: str, *, mode: BanMode) -> None:
         """Invalidate everything an endpoint holds. Entries stay in the store until they expire, but are not served.
@@ -289,8 +306,12 @@ class AsyncStorage(AsyncBaseStorage):
             InvalidationError: when a ban could not be recorded.
         """
         for scheme in ENDPOINT_SCHEMES:
-            # spelled as the cache keys are: httpx lowercases the host, and so must this
-            await self._ban(BanKind.PREFIX, str(httpx.URL(f"{scheme}://{endpoint}/")), mode, f"endpoint {endpoint}")
+            try:
+                # spelled as the cache keys are: httpx lowercases the host, and so must this
+                prefix = str(httpx.URL(f"{scheme}://{endpoint}/"))
+            except httpx.InvalidURL as exc:
+                raise InvalidationError(f"Cache invalidation of endpoint {endpoint!r}: not a valid host") from exc
+            await self._ban(BanKind.PREFIX, prefix, mode, f"endpoint {endpoint}")
 
     async def invalidate_all(self, *, mode: BanMode) -> None:
         """Invalidate everything the cache holds. Entries stay in the store until they expire, but are not served.

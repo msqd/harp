@@ -179,6 +179,80 @@ class TestSoftBanWhateverMakesTheEntryFresh:
         assert revalidated.headers["cache-control"] == hit.headers["cache-control"] == "max-age=3600, public"
 
 
+class RevalidationOrigin(httpx.AsyncBaseTransport):
+    """A ``200`` fresh for an hour, then a ``304`` saying what ``revalidated`` says (nothing when ``None``)."""
+
+    def __init__(self, revalidated: str | None = None, extra: dict[str, str] | None = None):
+        self.requests: list[httpx.Request] = []
+        self.revalidated = revalidated
+        self.extra = extra or {}
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        self.requests.append(request)
+        if request.headers.get("if-none-match") == '"v1"':
+            headers = {"etag": '"v1"'}
+            if self.revalidated:
+                headers["cache-control"] = self.revalidated
+            return httpx.Response(304, headers=headers)
+        headers = {"etag": '"v1"', "cache-control": "max-age=3600", **self.extra}
+        return httpx.Response(200, headers=headers, content=b"v1")
+
+
+async def _stored_headers(storage) -> dict[str, str]:
+    from harp_apps.http_cache.adapters import to_entry
+
+    (variant,) = await storage._records.get_variants(f"http://{ENDPOINT}/item")
+    return dict(to_entry(variant).response.headers)
+
+
+@pytest.mark.asyncio
+class TestWhatTheOriginSaysAfterASoftBan:
+    @pytest.mark.parametrize("revalidated", ["max-age=0, must-revalidate", "max-age=0"])
+    async def test_a_304_shortening_the_freshness_is_kept(self, storage, revalidated):
+        origin = RevalidationOrigin(revalidated)
+        async with make_client(origin, storage) as client:
+            await client.get(f"{HOST}/item")
+            await storage.invalidate_endpoint(ENDPOINT, mode=BanMode.SOFT)
+
+            second = await client.get(f"{HOST}/item")
+            third = await client.get(f"{HOST}/item")
+
+        assert second.headers["cache-control"] == third.headers["cache-control"] == revalidated
+        assert len(origin.requests) == 3
+        assert (await _stored_headers(storage))["cache-control"] == revalidated
+
+    async def test_nothing_of_harp_is_left_in_what_is_served_or_stored(self, storage):
+        origin = RevalidationOrigin()
+        async with make_client(origin, storage) as client:
+            await client.get(f"{HOST}/item")
+            await storage.invalidate_endpoint(ENDPOINT, mode=BanMode.SOFT)
+            second = await client.get(f"{HOST}/item")
+            third = await client.get(f"{HOST}/item")
+
+        stored = await _stored_headers(storage)
+        for headers in (second.headers, third.headers, stored):
+            assert not [name for name in headers if name.startswith("x-harp")]
+            assert headers["cache-control"] == "max-age=3600"
+        assert len(origin.requests) == 2
+
+    @pytest.mark.parametrize(
+        "forged",
+        ["x-harp-stored-cache-control", "x-harp-stored-expires", "x-harp-original-date", "x-harp-anything"],
+    )
+    async def test_an_origin_cannot_plant_harp_headers(self, storage, forged):
+        origin = RevalidationOrigin(extra={forged: "max-age=31536000"})
+        async with make_client(origin, storage) as client:
+            first = await client.get(f"{HOST}/item")
+            await storage.invalidate_endpoint(ENDPOINT, mode=BanMode.SOFT)
+            second = await client.get(f"{HOST}/item")
+            third = await client.get(f"{HOST}/item")
+
+        for headers in (first.headers, second.headers, third.headers, await _stored_headers(storage)):
+            assert not [name for name in headers if name.startswith("x-harp")]
+            assert headers["cache-control"] == "max-age=3600"
+        assert len(origin.requests) == 2
+
+
 @pytest.mark.asyncio
 class TestEndpointNames:
     async def test_an_endpoint_with_capitals_is_invalidated(self, storage):

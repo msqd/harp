@@ -113,12 +113,14 @@ is accepted before 1.0.
   one, until reclamation (#1597) retires them.**
 - **Failures.** `AsyncStorage.invalidate`, `invalidate_endpoint` and `invalidate_all` raise `InvalidationError` when a
   ban cannot be recorded: an invalidation somebody asked for is never reported done when it was not (`PURGE` answers
-  `503`). A hard ban whose delete fails is recorded, hence done, and the failure is logged. The automatic invalidation
+  `503`); a hard invalidation whose ban failed still deletes the key's variants, best effort. A hard ban whose delete fails is recorded, hence done, and the failure is logged. The automatic invalidation
   after a write catches the error and logs it: the response is ready and must not break (#1272).
 - **A soft ban is always revalidated.** Presented as a past `Date` alone, an entry fresh by `Expires` or by a huge
   `max-age` stayed fresh in hishel, and `allow_stale` served it as it was. A soft-banned entry is now shown with
-  `Cache-Control: max-age=0, must-revalidate` and no `Expires`, its own values kept in `x-harp-stored-*` headers and
-  put back after the 304 (unless the 304 states them again). Entries kept only for their validator (heuristics off) are
+  `Cache-Control: max-age=0, must-revalidate, x-harp-shown` and no `Expires`, its own values kept in `x-harp-stored-*`
+  headers and put back after the 304 unless the 304 states them again (the extra directive is what tells HARP's value
+  from an origin's `max-age=0, must-revalidate`). Origin responses lose every `x-harp-*` header before anything is
+  stored. Entries kept only for their validator (heuristics off) are
   shown as before, by `Date` alone: `allow_stale` may still serve them.
 - **Endpoint names** are spelled as httpx spells the host of a cache key (lowercase) in endpoint bans.
 - **Not in this step:** bans on endpoint and everything are issued by `AsyncStorage.invalidate_endpoint` and

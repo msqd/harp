@@ -22,6 +22,7 @@ from harp_apps.http_cache.storages import (
     MARKERS_METADATA,
     FETCH_STAMP,
     MAX_BODY_SIZE_METADATA,
+    drop_harp_headers,
     REDACTION_METADATA,
     restore_date,
 )
@@ -312,6 +313,7 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         if httpx_response.status_code == 304:
             await httpx_response.aread()  # never leave a stream unconsumed
         response = _httpx_to_internal(httpx_response)
+        drop_harp_headers(response.headers)  # before HARP writes its own: see _expire_malformed_expires
         dropped = hop_by_hop_names(response.headers) - {"content-length"}
         for name in [name for name in response.headers if name.lower() in dropped]:
             del response.headers[name]

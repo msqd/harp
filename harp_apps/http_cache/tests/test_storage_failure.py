@@ -110,6 +110,16 @@ async def test_failing_ban_does_not_break_an_invalidating_request(caplog):
     assert "Failed to record cache invalidation" in caplog.text
 
 
+async def test_failing_ban_still_drops_the_entry_of_an_invalidating_request():
+    records = FailingRecords()
+    async with make_client(records) as client:
+        await client.get(URL)
+        records.fail("ban")
+        await client.post(URL)
+
+    assert await records.get_variants("http://api/item") == []
+
+
 class TestExplicitInvalidationFailsClosed:
     """An invalidation somebody asked for is never reported done when it was not recorded."""
 
@@ -126,6 +136,22 @@ class TestExplicitInvalidationFailsClosed:
 
         with pytest.raises(InvalidationError, match="api"):
             await AsyncStorage(records).invalidate_endpoint("api", mode=BanMode.SOFT)
+
+    @pytest.mark.parametrize("endpoint", ["a:b", "[::1", "\x00"])
+    async def test_an_endpoint_name_that_is_no_host(self, endpoint):
+        with pytest.raises(InvalidationError):
+            await AsyncStorage(MemoryCacheRecords()).invalidate_endpoint(endpoint, mode=BanMode.HARD)
+
+    async def test_a_hard_key_whose_ban_failed_is_still_deleted(self):
+        records = FailingRecords()
+        storage = AsyncStorage(records)
+        async with make_client(records) as client:
+            await client.get(URL)
+            records.fail("ban")
+            with pytest.raises(InvalidationError):
+                await storage.invalidate("http://api/item", mode=BanMode.HARD)
+
+        assert await records.get_variants("http://api/item") == []
 
     async def test_everything(self):
         records = FailingRecords()
