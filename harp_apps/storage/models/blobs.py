@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
 import yaml
-from sqlalchemy import TIMESTAMP, LargeBinary, String, delete, func, or_, select
+from sqlalchemy import TIMESTAMP, LargeBinary, String, delete, func, select
 from sqlalchemy.orm import aliased, mapped_column
 
 from harp import get_logger
@@ -29,48 +29,23 @@ class Blob(Base):
     created_at = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 
 
-CACHE_META_CONTENT_TYPE = "cache/meta"
-
 #: How long a blob is protected from the orphan sweep after it was last written.
 #:
-#: A producer stores its blobs first, then the message (or cache entry) referencing them, so for a
+#: A producer stores its blobs first, then the message referencing them, so for a
 #: moment a freshly written blob is referenced by nothing. Writing content that is already stored
 #: renews the protection, see `SqlBlobStorage.put`.
 ORPHAN_GRACE = timedelta(minutes=10)
 
-_CACHE_META_BATCH = 200
 _SCAN_BATCH = 1000
 _DELETE_CHUNK = 500
 
 
-def cache_meta_references(data: bytes) -> set[str]:
-    """The blob ids a ``cache/meta`` blob points at: request headers, response headers and body, of every variant.
-
-    A blob written before variants existed holds a single entry at its top. A blob that cannot be read
-    references nothing; its entry is already unusable.
-    """
-    try:
-        meta = yaml.load(data, Loader=_YamlLoader)
-        variants = meta["variants"] if "variants" in meta else [meta]
-        return {
-            blob_id
-            for variant in variants
-            for blob_id in (
-                variant["request"]["headers"],
-                variant["response"]["headers"],
-                variant["response"]["body"],
-            )
-        }
-    except (yaml.YAMLError, KeyError, TypeError):
-        logger.warning("Unreadable cache/meta blob, its references are ignored.")
-        return set()
-
-
 class BlobsRepository(Repository[Blob]):
-    """An orphan is a blob nothing references: no message, and no ``cache/meta`` entry.
+    """An orphan is a blob no message references. Count, selection and deletion all read the same definition,
+    :meth:`find_orphans`.
 
-    ``cache/meta`` blobs themselves are never orphans, the cache's TTL sweep reclaims them. Count,
-    selection and deletion all read the same definition, :meth:`find_orphans`.
+    The HTTP cache keeps nothing here: the ``cache/meta`` blobs of the cache of earlier versions, and the blobs they
+    pointed at, are orphans like any other.
     """
 
     Type = Blob
@@ -98,33 +73,12 @@ class BlobsRepository(Repository[Blob]):
             .outerjoin(MH, MH.headers == Blob.id)
             .outerjoin(MB, MB.body == Blob.id)
             .where(Blob.id > after, Blob.id <= upto)
-            .where(or_(Blob.content_type.is_(None), Blob.content_type != CACHE_META_CONTENT_TYPE))
             .group_by(Blob.id)
             .having(func.count(MH.id) + func.count(MB.id) == 0)
         )
         if older_than is not None:
             query = query.where(Blob.created_at < older_than)
         return query
-
-    async def _cache_references(self, session=None) -> set[str]:
-        references: set[str] = set()
-        last_id = ""
-        while True:
-            async with self._batch_session(session) as batch:
-                rows = (
-                    await batch.execute(
-                        select(Blob.id, Blob.data)
-                        .where(Blob.content_type == CACHE_META_CONTENT_TYPE, Blob.id > last_id)
-                        .order_by(Blob.id)
-                        .limit(_CACHE_META_BATCH)
-                    )
-                ).all()
-            for _, data in rows:
-                references |= cache_meta_references(data)
-            await asyncio.sleep(0)  # a large cache must not hold the event loop for the whole pass
-            if len(rows) < _CACHE_META_BATCH:
-                return references
-            last_id = rows[-1][0]
 
     async def _candidates(self, session, older_than: datetime | None) -> list[str]:
         candidates: list[str] = []
@@ -150,9 +104,7 @@ class BlobsRepository(Repository[Blob]):
 
         Scans in short batches, each in its own session unless the caller passes one.
         """
-        candidates = await self._candidates(session, older_than)
-        referenced = await self._cache_references(session)
-        return [blob_id for blob_id in candidates if blob_id not in referenced]
+        return await self._candidates(session, older_than)
 
     async def count_orphans(self, /, *, session=None) -> int:
         return len(await self.find_orphans(session=session))

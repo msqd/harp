@@ -1,9 +1,4 @@
-"""Unit tests for AsyncStorage's entry-id to cache-key index.
-
-hishel addresses entries by UUID; this store addresses blobs by cache key. The index that
-bridges the two is what makes ``update_entry`` and ``remove_entry`` able to do anything at all,
-so both the resolving path and the failing path are covered here.
-"""
+"""Unit tests for AsyncStorage: hishel addresses entries by UUID, the records find them by it."""
 
 from harp_apps.http_cache.tests import store_entry
 from harp_apps.http_cache.tests import ENDPOINT_HOOKS
@@ -19,9 +14,9 @@ from dataclasses import replace
 from hishel import CacheOptions, Headers, Request, Response, SpecificationPolicy
 from hishel._core.models import AnyIterable
 
-from harp_apps.http_cache.storages import KEY_INDEX_SIZE, AsyncStorage
+from harp_apps.http_cache.records import EndpointStats
+from harp_apps.http_cache.storages import MAX_KEY_SIZE, AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
 
 CACHEABLE = {"cache-control": "max-age=300", "content-type": "text/plain"}
 
@@ -40,8 +35,8 @@ def _response(body=b"payload", **extra_headers):
 
 
 @pytest.fixture
-def storage():
-    return AsyncStorage(MemoryBlobStorage())
+def storage(records):
+    return AsyncStorage(records)
 
 
 @pytest.mark.asyncio
@@ -90,15 +85,14 @@ class TestUpdateEntry:
         assert await stored.response.aread() == b"replaced"
 
     async def test_an_entry_retrieved_from_storage_can_be_updated(self, storage):
-        """The index survives a round trip through storage, which is how hishel reaches it.
+        """The entry is found by its id in the records, by a storage that never stored it.
 
-        In production the entry hishel updates comes from ``get_entries``, not from
-        ``create_entry``, so a version of this that only indexed on create would pass the test
-        above and fail in the proxy.
+        In production the entry hishel updates comes from ``get_entries``, and another instance
+        may be the one that stored it.
         """
         await store_entry(storage, _request(), _response(), "key-1")
 
-        fresh_storage = AsyncStorage(storage._storage)
+        fresh_storage = AsyncStorage(storage._records)
         (retrieved,) = await fresh_storage.get_entries("key-1")
 
         updated = await fresh_storage.update_entry(
@@ -112,22 +106,32 @@ class TestUpdateEntry:
         (stored,) = await fresh_storage.get_entries("key-1")
         assert stored.response.headers["etag"] == '"round-trip"'
 
-    async def test_an_unknown_id_returns_none_and_says_so_loudly(self, storage, caplog):
-        """An index miss is the defect coming back, so it must not pass in silence.
+    async def test_an_unknown_id_returns_none(self, storage):
+        """The entry was evicted, replaced or expired since hishel looked it up."""
+        assert await storage.update_entry(uuid.uuid4(), lambda entry: entry) is None
 
-        A miss means the 304 freshens nothing and the entry revalidates on every subsequent
-        request. The symptom is a cache that looks slow rather than broken, so this warning is
-        the only thing that would connect the two.
-        """
-        unknown = uuid.uuid4()
+    async def test_an_update_that_changes_the_variant_replaces_the_entry(self, storage):
+        """A 304 can bring a Vary the entry did not have: it is then another variant, not a second entry."""
+        created = await store_entry(storage, _request(), _response(), "key-1")
 
-        with caplog.at_level("WARNING"):
-            result = await storage.update_entry(unknown, lambda entry: entry)
-
-        assert result is None
-        assert any(str(unknown) in record.getMessage() for record in caplog.records), (
-            "an index miss produced no warning naming the entry"
+        await storage.update_entry(
+            created.id,
+            lambda entry: replace(
+                entry, response=replace(entry.response, headers=Headers({**CACHEABLE, "vary": "Accept"}))
+            ),
         )
+
+        (stored,) = await storage.get_entries("key-1")
+        assert stored.id == created.id
+        assert stored.response.headers["vary"] == "Accept"
+
+    async def test_an_update_keeps_the_entry_id(self, storage):
+        created = await store_entry(storage, _request(), _response(), "key-1")
+
+        await storage.update_entry(created.id, lambda entry: entry)
+
+        (stored,) = await storage.get_entries("key-1")
+        assert stored.id == created.id
 
 
 @pytest.mark.asyncio
@@ -140,45 +144,13 @@ class TestRemoveEntry:
 
         assert await storage.get_entries("key-1") == []
 
-    async def test_removing_an_unknown_id_is_harmless_and_says_so_loudly(self, storage, caplog):
+    async def test_removing_an_unknown_id_is_harmless(self, storage):
         """Paired with the test above so "nothing was deleted" cannot be read as "it worked"."""
         created = await store_entry(storage, _request(), _response(), "key-1")
-        unknown = uuid.uuid4()
 
-        with caplog.at_level("WARNING"):
-            await storage.remove_entry(unknown)
+        await storage.remove_entry(uuid.uuid4())
 
-        assert any(str(unknown) in record.getMessage() for record in caplog.records)
-        # The entry that does exist was not touched.
-        assert len(await storage.get_entries("key-1")) == 1
-        assert (await storage.get_entries("key-1"))[0].id == created.id
-
-
-@pytest.mark.asyncio
-class TestKeyIndexBound:
-    async def test_the_index_is_bounded(self, storage):
-        """The index must not grow with the number of entries ever stored.
-
-        It exists to bridge one request cycle, not to mirror the cache.
-        """
-        for i in range(KEY_INDEX_SIZE + 50):
-            await store_entry(storage, _request(f"http://endpoint/{i}"), _response(), f"key-{i}")
-
-        assert len(storage._keys_by_id) == KEY_INDEX_SIZE
-
-    async def test_the_most_recently_seen_entry_survives_eviction(self, storage):
-        """Eviction is least-recently-used, so the entry currently in flight is the last to go."""
-        first = await store_entry(storage, _request("http://endpoint/first"), _response(), "key-first")
-
-        for i in range(KEY_INDEX_SIZE - 1):
-            await store_entry(storage, _request(f"http://endpoint/{i}"), _response(), f"key-{i}")
-
-        # Touching it moves it back to the front, the way `get_entries` does mid-cycle.
-        assert storage._key_for(first.id, "update") == "key-first"
-
-        await store_entry(storage, _request("http://endpoint/overflow"), _response(), "key-overflow")
-
-        assert storage._key_for(first.id, "update") == "key-first"
+        assert [entry.id for entry in await storage.get_entries("key-1")] == [created.id]
 
 
 @pytest.mark.asyncio
@@ -223,3 +195,63 @@ class TestDateOnStore:
             await client.get("http://example.com/resource")
 
         assert route.call_count == 2
+
+
+@pytest.mark.asyncio
+class TestStoredRecords:
+    async def test_stored_entries_are_counted_per_endpoint(self, storage, records):
+        await store_entry(storage, _request("http://api/a"), _response(b"12345"), "http://api/a")
+        await store_entry(storage, _request("http://web/b"), _response(b"123"), "http://web/b")
+
+        assert await records.stats() == [EndpointStats("api", 1, 5), EndpointStats("web", 1, 3)]
+
+    async def test_a_key_too_long_to_be_indexed_is_not_stored(self, storage, records):
+        key = "http://api/" + "x" * MAX_KEY_SIZE
+
+        entry = await store_entry(storage, _request(key), _response(), key)
+
+        assert await entry.response.aread() == b"payload"
+        assert await records.list_keys() == []
+
+    async def test_a_refused_path_is_counted_and_warned_about_once_per_endpoint(self, storage, records, caplog):
+        key = "http://api/" + "x" * MAX_KEY_SIZE
+        other = key.replace("api", "web")
+
+        with caplog.at_level("WARNING"):
+            for _ in range(3):
+                await store_entry(storage, _request(key), _response(), key)
+            await store_entry(storage, _request(other), _response(), other)
+
+        assert await records.stats() == [], "counted in memory, not written on the request path"
+        await storage.flush_counters()
+        assert await records.stats() == [EndpointStats("api", 0, 0, 3), EndpointStats("web", 0, 0, 1)]
+        assert sum("path over" in record.getMessage() for record in caplog.records) == 2
+
+    async def test_refusals_not_yet_written_are_flushed_on_close(self, storage, records):
+        key = "http://api/" + "x" * MAX_KEY_SIZE
+        await store_entry(storage, _request(key), _response(), key)
+
+        await storage.close()
+
+        assert await records.stats() == [EndpointStats("api", 0, 0, 1)]
+
+    async def test_a_cache_debug_log_never_prints_a_query(self, storage, caplog):
+        url = "http://api/items?token=s3cr3t"
+        key = "http://api/items?abc"
+
+        with caplog.at_level("DEBUG", logger="harp_apps.http_cache.storages"):
+            entry = await store_entry(storage, _request(url), _response(), key)
+            await storage.get_entries(key)
+            await storage.update_entry(entry.id, lambda e: e)
+
+        logged = [
+            record.getMessage() for record in caplog.records if "'logger': 'harp_apps.http_cache" in record.getMessage()
+        ]
+        assert logged and not any("s3cr3t" in message for message in logged)
+
+    async def test_the_query_does_not_count_in_the_cap(self, storage, records):
+        key = "http://api/items?" + "x" * MAX_KEY_SIZE
+
+        await store_entry(storage, _request(key), _response(), key)
+
+        assert await records.list_keys() == [key]

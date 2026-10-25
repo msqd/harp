@@ -18,7 +18,7 @@ from harp.models.redaction import Redaction
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.tests import ENDPOINT_HOOKS
 from harp_apps.http_cache.transports import AsyncCacheTransport
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
+from harp_apps.http_cache.records import MemoryCacheRecords
 
 URL = "http://example.com/resource"
 
@@ -43,7 +43,7 @@ def _client(*, allow_heuristics=False, storage_class=AsyncStorage, allow_stale=F
     hooks = {"request": [*ENDPOINT_HOOKS["request"], declare_credentials]}
     transport = AsyncCacheTransport(
         next_transport=AsyncHTTPTransport(),
-        storage=storage_class(MemoryBlobStorage(), allow_heuristics=allow_heuristics),
+        storage=storage_class(MemoryCacheRecords(), allow_heuristics=allow_heuristics),
         policy=SpecificationPolicy(
             cache_options=CacheOptions(shared=True, supported_methods=["GET", "HEAD"], allow_stale=allow_stale)
         ),
@@ -310,14 +310,14 @@ class TestHeuristicEntriesAfterTurningHeuristicsOff:
     @respx.mock
     async def test_an_entry_stored_with_heuristics_on_is_revalidated_once_they_are_off(self):
         seen = _origin({"last-modified": _http_date(timedelta(days=-30))})
-        storage = AsyncStorage(MemoryBlobStorage(), allow_heuristics=True)
+        storage = AsyncStorage(MemoryCacheRecords(), allow_heuristics=True)
 
-        async with _client(storage_class=lambda blobs, allow_heuristics: storage, allow_heuristics=True) as client:
+        async with _client(storage_class=lambda records, allow_heuristics: storage, allow_heuristics=True) as client:
             await client.get(URL)
             await client.get(URL)
         assert len(seen) == 1
 
         storage._allow_heuristics = False
-        async with _client(storage_class=lambda blobs, allow_heuristics: storage) as client:
+        async with _client(storage_class=lambda records, allow_heuristics: storage) as client:
             await client.get(URL)
         assert len(seen) == 2

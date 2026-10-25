@@ -1,3 +1,4 @@
+import hashlib
 import time
 from ipaddress import IPv6Address, ip_address
 from dataclasses import replace
@@ -17,6 +18,7 @@ from harp_apps.http_cache.coalescing import DEFAULT_TIMEOUT, Coalescer
 from harp_apps.http_cache.models import WrappedRequest
 from harp_apps.http_cache.settings import PurgeSettings
 from harp_apps.http_cache.storages import (
+    REQUEST_URL,
     MARKERS_METADATA,
     MAX_BODY_SIZE_METADATA,
     REDACTION_METADATA,
@@ -84,7 +86,7 @@ def _endpoint_name(request: httpx.Request) -> str:
     if not endpoint_name:
         raise ValueError(
             f"The cache transport requires an endpoint name in request.extensions['harp']['endpoint'] "
-            f"(url={request.url}); without it, unrelated requests would share one cache namespace."
+            f"(url={request.url.copy_with(query=None)}); without it, unrelated requests would share one cache namespace."
         )
     return endpoint_name
 
@@ -161,6 +163,24 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         super().__init__(*args, **kwargs)
         self._purge = purge or PurgeSettings()
         self._coalescer = Coalescer(coalescing_timeout)
+        self._hishel_key_for_request = self._cache_proxy._get_key_for_request
+        self._cache_proxy._get_key_for_request = self._get_key_for_request
+
+    async def _get_key_for_request(self, request: Request) -> str:
+        """The cache key: endpoint and path in clear, then a hash of the whole query string.
+
+        hishel hashes the url, which hides what the cache stores: the store orders its records by key to list them per
+        endpoint and per path, and a path prefix is a range of keys (ADR-0014). The query stays out of the key but for
+        its hash, as it may hold credentials (ADR-0009): two different values never share an entry. A request keyed by
+        its body has the hash of its body in the hash.
+        """
+        REQUEST_URL.set(str(request.url))
+        url = httpx.URL(request.url)
+        path, _, query = url.raw_path.decode("ascii").partition("?")
+        key = f"{url.scheme}://{url.netloc.decode('utf-8')}{path}"
+        if self._cache_proxy.policy.use_body_key or request.metadata.get("hishel_body_key"):
+            query += "\0" + await self._hishel_key_for_request(request)
+        return f"{key}?{hashlib.sha256(query.encode()).hexdigest()}" if query else key
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Wraps the request to use a rewritten url (for cache key handling)."""
@@ -171,7 +191,7 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         url = _rewrite_request_url(request)
 
         logger.debug(
-            f"Handling async request with rewritten URL for caching: original_url={request.url}, rewritten_url={url}"
+            f"Handling async request with rewritten URL for caching: original_url={request.url.copy_with(query=None)}, rewritten_url={url.partition('?')[0]}"
         )
 
         wrapped_request = WrappedRequest(
@@ -188,7 +208,9 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         )
 
         if _forbids_storage(request):
-            logger.debug(f"Bypassing cache, the request forbids storage (RFC 9111 §5.2.1.5): url={request.url}")
+            logger.debug(
+                f"Bypassing cache, the request forbids storage (RFC 9111 §5.2.1.5): url={request.url.copy_with(query=None)}"
+            )
             internal_response = await self._send_without_caching(wrapped_request)
         else:
             internal_response = await self._handle_cacheable_request(wrapped_request)
@@ -212,7 +234,9 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         endpoint_name = _endpoint_name(request)
         for url in _invalidated_urls(request, response):
             await self.storage.invalidate(await self._key_for(url, endpoint_name))
-            logger.debug(f"Cache invalidated by {request.method} {request.url}: url={url}")
+            logger.debug(
+                f"Cache invalidated by {request.method} {request.url.copy_with(query=None)}: url={url.copy_with(query=None)}"
+            )
 
     async def _key_for(self, url: httpx.URL, endpoint_name: str) -> str:
         return await self._cache_proxy._get_key_for_request(Request(method="GET", url=_cache_url(url, endpoint_name)))
@@ -221,13 +245,15 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         """Answer ``PURGE`` here, never upstream: ``403`` for a peer out of the allow-list, else ``200`` or ``404``."""
         peer = _peer_address(request)
         if peer is None or not any(peer in network for network in self._purge.allow):
-            logger.warning(f"Cache purge refused, peer is not allowed: peer={peer} url={request.url}")
+            logger.warning(
+                f"Cache purge refused, peer is not allowed: peer={peer} url={request.url.copy_with(query=None)}"
+            )
             return httpx.Response(403, text="Forbidden")
         key = await self._key_for(request.url.copy_with(fragment=None), _endpoint_name(request))
         if not await self.storage.get_entries(key):
             return httpx.Response(404, text="Not in cache")
         await self.storage.invalidate(key)
-        logger.info(f"Cache purged: url={request.url}")
+        logger.info(f"Cache purged: url={request.url.copy_with(query=None)}")
         return httpx.Response(200, text="Purged")
 
     async def _send_without_caching(self, request: WrappedRequest) -> Response:

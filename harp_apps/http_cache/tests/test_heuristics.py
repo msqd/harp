@@ -23,7 +23,7 @@ from httpx import AsyncClient, AsyncHTTPTransport, Response
 
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
+from harp_apps.http_cache.records import MemoryCacheRecords
 
 
 def _http_date(delta: timedelta) -> str:
@@ -34,7 +34,7 @@ def _client(*, allow_heuristics=False):
     """Build a client caching through HARP's own storage, as a running proxy does."""
     transport = AsyncCacheTransport(
         next_transport=AsyncHTTPTransport(),
-        storage=AsyncStorage(MemoryBlobStorage(), allow_heuristics=allow_heuristics),
+        storage=AsyncStorage(MemoryCacheRecords(), allow_heuristics=allow_heuristics),
         policy=SpecificationPolicy(
             cache_options=CacheOptions(shared=True, supported_methods=["GET", "HEAD"], allow_stale=False)
         ),

@@ -3,46 +3,47 @@ import time
 import typing as tp
 import uuid
 import weakref
+from contextvars import ContextVar
 from contextlib import asynccontextmanager
 from collections import OrderedDict
 from dataclasses import replace
-import yaml
 from email.utils import formatdate
-from urllib.parse import parse_qsl, urlsplit
 from hishel import AsyncBaseStorage, Entry, EntryMeta, Request, Response
 from hishel._core._spec import parse_date
 from hishel._utils import make_async_iterator
 
 from harp import get_logger
-from harp.models import Blob
-from harp.models.redaction import Redaction
+from harp.models.redaction import REDACTED, Redaction
 from harp.http.utils import parse_cache_control
 from harp_apps.storage.constants import (
     DEFAULT_MAX_RECORDED_BODY_SIZE,
     SKIP_REQUEST_STORAGE,
     SKIP_RESPONSE_STORAGE,
 )
-from harp_apps.storage.types import IBlobStorage
 from .coalescing import STORED_METADATA
-from .adapters import AsyncStorageAdapter, stored_at_of, variant_id, variants_of
+from .adapters import to_entry, to_record
+from .records import CacheRecords, endpoint_of
 from .streams import StoredOnceRead
-
-# libyaml's loader decodes an entry about ten times faster than the pure Python one.
-_YamlLoader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
-
-# How many entries the sweep decodes before handing the event loop back.
-SWEEP_YIELD_EVERY = 50
 
 # How many expired entries the sweep deletes at once.
 SWEEP_DELETE_BATCH = 200
 
-CACHE_META_CONTENT_TYPE = "cache/meta"
 DEFAULT_TTL = 86400
 
 #: How many variants of a ``Vary`` resource one cache key holds. Storing one more evicts the oldest stored.
 MAX_VARIANTS_PER_KEY = 8
 
+#: The longest path, in bytes, of a cache key that is stored. Keys are indexed, and PostgreSQL refuses to index values
+#: past a third of a page (about 2.7 kB): a longer one would be refused on that backend only.
+MAX_KEY_SIZE = 2048
+
 logger = get_logger(__name__)
+
+#: The url of the request being looked up, set by the transport when it derives the cache key. The stored entries hold
+#: their url with the values of redacted query parameters replaced (ADR-0009), while hishel matches an entry by its
+#: whole url: :meth:`AsyncStorage.get_entries` gives them the url of the request they match.
+REQUEST_URL: ContextVar[tp.Optional[str]] = ContextVar("harp_http_cache_request_url", default=None)
+
 HEADERS_ENCODING = "iso-8859-1"
 
 #: Request metadata key holding the largest response body the cache may store (the proxy's recording cap).
@@ -71,9 +72,10 @@ def is_withheld(request: Request, response: Response) -> bool:
     """Whether this exchange must stay out of the cache, because storing it would keep a credential.
 
     The cache reads back what it stores to answer requests, so a redacted value is only safe where it is never
-    compared or replayed (ADR-0009). Hence three cases where nothing is stored at all: the response varies on a
-    redacted header, its URL carries a redacted query parameter, or it carries a redacted header itself. What an
-    operator keeps out of storage with a ``skip-*-storage`` marker stays out of the cache too.
+    compared or replayed (ADR-0009). Hence two cases where nothing is stored at all: the response varies on a
+    redacted header, or it carries a redacted header itself. What an operator keeps out of storage with a
+    ``skip-*-storage`` marker stays out of the cache too. A redacted query parameter does not withhold the response:
+    the key holds a hash of the query, and the query kept for display has the value replaced.
     """
     if _SKIP_MARKERS & set(request.metadata.get(MARKERS_METADATA) or ()):
         return True
@@ -81,9 +83,22 @@ def is_withheld(request: Request, response: Response) -> bool:
     redaction = _redaction_of(request)
     if any(name.strip() in redaction.headers for name in ",".join(response.headers.get_list("vary") or []).split(",")):
         return True
-    if any(name in redaction.headers for name in response.headers):
-        return True
-    return any(name in redaction.query for name, _ in parse_qsl(urlsplit(request.url).query, keep_blank_values=True))
+    return any(name in redaction.headers for name in response.headers)
+
+
+def _same_url_but_redacted(stored: str, current: str) -> bool:
+    """Whether ``stored`` is ``current`` with the value of some query parameters replaced by the placeholder."""
+    stored_path, _, stored_query = stored.partition("?")
+    path, _, query = current.partition("?")
+    stored_parameters, parameters = stored_query.split("&"), query.split("&")
+    return (
+        stored_path == path
+        and len(stored_parameters) == len(parameters)
+        and all(
+            kept == given or kept == f"{given.partition('=')[0]}={REDACTED}"
+            for kept, given in zip(stored_parameters, parameters)
+        )
+    )
 
 
 def has_explicit_freshness(response: Response) -> bool:
@@ -151,40 +166,22 @@ def restore_date(headers) -> None:
             headers["age"] = str(max(0, int(time.time() - (parse_date(original) or time.time()))))
 
 
-# How many recently seen entry ids keep a route back to their cache key.
-#
-# The window an id has to survive is a single request cycle, not the lifetime of the entry:
-# hishel only ever calls `update_entry` or `remove_entry` with an id the state machine got from
-# `get_entries` (or `create_entry`) earlier in that same cycle, in this same process, and
-# `http_cache.storage` is a singleton service. So this only has to exceed the number of cache
-# lookups a process has in flight at one moment, never the number of entries it has stored.
-#
-# 8192 is several orders of magnitude above the in-flight concurrency one HARP process reaches,
-# and costs a few hundred kilobytes. Lowering it trades that memory for the risk that a 304
-# freshens nothing under load, which is the defect this index exists to fix.
-KEY_INDEX_SIZE = 8192
-
 #: How many invalidated keys the storage remembers. Past it the oldest are forgotten, and every request that set out
 #: before the newest forgotten one is treated as invalidated: some responses go unstored, none is stored stale.
 INVALIDATION_LOG_SIZE = 8192
 
 
 class AsyncStorage(AsyncBaseStorage):
-    """HARP's AsyncBaseStorage implementation using blob storage backend.
+    """HARP's AsyncBaseStorage implementation, on indexed cache records (ADR-0014).
 
-    This implementation adapts hishel 1.0's Entry-based API to work with HARP's
-    blob storage system. A cache key holds the variants of its resource, at most
-    :data:`MAX_VARIANTS_PER_KEY`, in one blob; a blob written before variants existed
-    reads as a single one.
-
-    hishel addresses entries by UUID while this store addresses blobs by cache key, so a
-    bounded index of recently seen ids bridges the two. See :data:`KEY_INDEX_SIZE` for why a
-    small bound is sufficient, and :meth:`_key_for` for what happens when it is not.
+    This implementation adapts hishel 1.0's Entry-based API to the records of a :class:`CacheRecords` backend: one per
+    cache key, and one per variant of its resource, at most :data:`MAX_VARIANTS_PER_KEY`. hishel addresses entries by
+    UUID, which the records find directly.
     """
 
     def __init__(
         self,
-        storage: IBlobStorage,
+        records: CacheRecords,
         ttl: tp.Optional[tp.Union[int, float]] = DEFAULT_TTL,
         check_ttl_every: tp.Union[int, float] = 60,
         allow_heuristics: bool = False,
@@ -194,17 +191,12 @@ class AsyncStorage(AsyncBaseStorage):
 
         self._check_ttl_every = check_ttl_every
         self._last_cleaned = time.monotonic()
-        if ttl is not None and not hasattr(storage, "iter_blobs"):
-            logger.warning(
-                f"{type(storage).__name__} cannot enumerate cache entries: the http_cache.storage `ttl` setting "
-                "will not reclaim storage. Entries expire when read, but unread ones are never deleted."
-            )
-        self._impl = AsyncStorageAdapter(storage)
-        self._storage = storage
+        self._records = records
         self._ttl = ttl
         self._allow_heuristics = allow_heuristics
-        self._keys_by_id: OrderedDict[uuid.UUID, str] = OrderedDict()
         self._sweep_task: tp.Optional[asyncio.Task] = None
+        self._refusing: set[str] = set()
+        self._refused: dict[str, int] = {}
         self._stamp = 0
         self._invalidated_at: OrderedDict[str, int] = OrderedDict()
         self._forgotten_up_to = 0
@@ -212,7 +204,7 @@ class AsyncStorage(AsyncBaseStorage):
 
     @asynccontextmanager
     async def _locked(self, key: str) -> tp.AsyncIterator[None]:
-        """Serialize the writers of one cache key: they read the variants, change them and write them all back."""
+        """Serialize the writers of one cache key in this process: they read a variant, change it and write it back."""
         lock = self._key_locks.get(key) or self._key_locks.setdefault(key, asyncio.Lock())
         async with lock:
             yield
@@ -234,17 +226,9 @@ class AsyncStorage(AsyncBaseStorage):
             while len(self._invalidated_at) > INVALIDATION_LOG_SIZE:
                 self._forgotten_up_to = self._invalidated_at.popitem(last=False)[1]
             try:
-                await self._impl.write_variants(key, [])
+                await self._records.delete_key(key)
             except Exception:
                 logger.warning(f"Failed to remove cache entry: key={key}", exc_info=True)
-
-    async def _prune(self, key: str) -> None:
-        """Drop the expired variants of a key, and the key itself when none is left."""
-        async with self._locked(key):
-            variants = await self._impl.load_variants(key)
-            live = [variant for variant in variants if not self._is_expired(stored_at_of(variant))]
-            if len(live) < len(variants):
-                await self._impl.write_variants(key, live)
 
     def _is_expired(self, stored_at: float) -> bool:
         return self._ttl is not None and time.time() - stored_at > self._ttl
@@ -252,9 +236,9 @@ class AsyncStorage(AsyncBaseStorage):
     def _sweep_if_due(self) -> None:
         """Start a background sweep if one is due, at most one at a time and once per `check_ttl_every`.
 
-        Never awaited by the request: decoding every entry is work no proxied request should wait for.
+        Never awaited by the request: the sweep is work no proxied request should wait for.
         """
-        if self._ttl is None or not hasattr(self._storage, "iter_blobs"):
+        if self._ttl is None and not self._refused:
             return
         if self._sweep_task is not None and not self._sweep_task.done():
             return
@@ -268,41 +252,19 @@ class AsyncStorage(AsyncBaseStorage):
         if self._sweep_task is not None:
             await asyncio.gather(self._sweep_task, return_exceptions=True)
 
-    async def _delete_expired(self, expired: list[Blob]) -> int:
-        """Delete expired entries, sparing any that were stored again since they were read."""
-        if not expired:
-            return 0
-        if hasattr(self._storage, "delete_blobs"):
-            await self._storage.delete_blobs(expired)
-        else:
-            for blob in expired:
-                await self._storage.delete(blob.id)
-        await asyncio.sleep(0)
-        return len(expired)
-
     async def _sweep(self) -> None:
-        """Delete the entries not written for more than `ttl`, yielding to the event loop along the way."""
+        """Flush the refused counts, then delete the entries not written for more than `ttl`, by batch."""
         try:
-            expired: list[Blob] = []
+            await self.flush_counters()
+            if self._ttl is None:
+                return
             removed = 0
-            seen = 0
-            async for blob in self._storage.iter_blobs(CACHE_META_CONTENT_TYPE):
-                try:
-                    variants = variants_of(yaml.load(blob.data, Loader=_YamlLoader))
-                    live = [variant for variant in variants if not self._is_expired(stored_at_of(variant))]
-                    if not live:
-                        expired.append(blob)
-                    elif len(live) < len(variants):
-                        await self._prune(blob.id)
-                except Exception:
-                    logger.exception(f"Unreadable cache entry, left alone: key={blob.id}")
-                if len(expired) >= SWEEP_DELETE_BATCH:
-                    removed += await self._delete_expired(expired)
-                    expired = []
-                seen += 1
-                if seen % SWEEP_YIELD_EVERY == 0:
-                    await asyncio.sleep(0)
-            removed += await self._delete_expired(expired)
+            while True:
+                deleted = await self._records.delete_stored_before(time.time() - self._ttl, limit=SWEEP_DELETE_BATCH)
+                removed += deleted
+                if deleted < SWEEP_DELETE_BATCH:
+                    break
+                await asyncio.sleep(0)
             if removed:
                 logger.debug(f"Cache ttl sweep removed {removed} entries")
         except asyncio.CancelledError:
@@ -310,48 +272,17 @@ class AsyncStorage(AsyncBaseStorage):
         except Exception:
             logger.exception("Cache ttl sweep failed")
 
-    def _remember_key(self, entry_id: uuid.UUID, key: str) -> None:
-        """Record how to get back from an entry id to the key its blob is stored under."""
-        self._keys_by_id[entry_id] = key
-        self._keys_by_id.move_to_end(entry_id)
-        while len(self._keys_by_id) > KEY_INDEX_SIZE:
-            self._keys_by_id.popitem(last=False)
-
-    def _key_for(self, entry_id: uuid.UUID, operation: str) -> tp.Optional[str]:
-        """Resolve an entry id back to its cache key, loudly if it cannot.
-
-        A miss is not a graceful degradation. It means a 304 freshens nothing and the entry
-        revalidates on every subsequent request, without end, which is exactly the defect this
-        index exists to fix. The symptom is a cache that looks slow rather than broken, so the
-        cause has to announce itself here or nobody will connect the two.
-        """
-        key = self._keys_by_id.get(entry_id)
-        if key is None:
-            logger.warning(
-                f"Cannot {operation} cache entry {entry_id}: no cache key known for it. The entry will not be "
-                f"refreshed and will be revalidated on every request. If this recurs, {KEY_INDEX_SIZE} "
-                f"(harp_apps.http_cache.storages.KEY_INDEX_SIZE) is too small for this proxy's concurrency."
-            )
-            return None
-        self._keys_by_id.move_to_end(entry_id)
-        return key
-
-    async def _store_variant(self, key: str, entry: Entry, redaction: Redaction, stamp: tp.Optional[int]) -> bool:
+    async def _store_variant(self, entry: Entry, redaction: Redaction, stamp: tp.Optional[int]) -> bool:
         """Add an entry to the variants of its key: it replaces the variant it supersedes, and pushes out the oldest.
 
         Nothing is added if the key was invalidated since ``stamp``: the response may show the resource as it was.
         """
-        variant = await self._impl.serialize_variant(entry, redaction)
-        async with self._locked(key):
-            if stamp is not None and self._invalidated_since(key, stamp):
-                logger.debug(f"Cache entry not retained (key invalidated while in flight): key={key}")
+        record, body = await to_record(entry, redaction)
+        async with self._locked(record.key):
+            if stamp is not None and self._invalidated_since(record.key, stamp):
+                logger.debug(f"Cache entry not retained (key invalidated while in flight): key={record.key}")
                 return False
-            kept = [
-                stored
-                for stored in await self._impl.load_variants(key)
-                if not self._is_expired(stored_at_of(stored)) and stored.get("selecting") != variant["selecting"]
-            ]
-            await self._impl.write_variants(key, [*kept, variant][-MAX_VARIANTS_PER_KEY:])
+            await self._records.put(record, body, keep=MAX_VARIANTS_PER_KEY)
         return True
 
     async def create_entry(
@@ -378,7 +309,7 @@ class AsyncStorage(AsyncBaseStorage):
         entry_id = id_ or uuid.uuid4()
 
         logger.debug(
-            f"Creating cache entry: key={key}, url={request.url}, "
+            f"Creating cache entry: key={key}, "
             f"method={request.method}, status={response.status_code}, entry_id={entry_id}"
         )
 
@@ -411,6 +342,11 @@ class AsyncStorage(AsyncBaseStorage):
             response.metadata["hishel_stored"] = False
             return entry
 
+        if len(key.partition("?")[0].encode("utf-8")) > MAX_KEY_SIZE:
+            await self._refuse(key)
+            response.metadata["hishel_stored"] = False
+            return entry
+
         # RFC 9110 §6.6.1: a cache without a `Date` to age the response against must record its
         # time of receipt, or hishel computes an age of 0 and the response never goes stale.
         if "date" not in response.headers:
@@ -423,7 +359,6 @@ class AsyncStorage(AsyncBaseStorage):
         async def store(body: bytes) -> None:
             try:
                 stored = await self._store_variant(
-                    key,
                     replace(entry, response=replace(entry.response, stream=make_async_iterator([body]))),
                     _redaction_of(request),
                     request.metadata.get(STAMP_METADATA),
@@ -434,7 +369,6 @@ class AsyncStorage(AsyncBaseStorage):
                 return
             if not stored:
                 return
-            self._remember_key(entry.id, key)
             response.metadata[STORED_METADATA] = True
             logger.debug(f"Cache entry stored: key={key}")
             self._sweep_if_due()
@@ -453,6 +387,29 @@ class AsyncStorage(AsyncBaseStorage):
             ),
         )
 
+    async def _refuse(self, key: str) -> None:
+        """A path too long to be indexed: say so once per endpoint, and count it, so that it is seen why it never caches."""
+        endpoint = endpoint_of(key)
+        if endpoint not in self._refusing:
+            self._refusing.add(endpoint)
+            logger.warning(
+                f"Cache entry not retained, path over {MAX_KEY_SIZE} bytes (further ones are counted, not logged): "
+                f"endpoint={endpoint} key={key[:80]}..."
+            )
+        # counted here, written later: the endpoint's counter row is not worth a wait on the request path
+        self._refused[endpoint] = self._refused.get(endpoint, 0) + 1
+        self._sweep_if_due()
+
+    async def flush_counters(self) -> None:
+        """Write the refusals counted since the last time."""
+        pending, self._refused = self._refused, {}
+        for endpoint, count in pending.items():
+            try:
+                await self._records.count_refused(endpoint, count)
+            except Exception:
+                self._refused[endpoint] = self._refused.get(endpoint, 0) + count
+                logger.warning(f"Failed to count refused cache entries: endpoint={endpoint}", exc_info=True)
+
     def _is_never_fresh(self, response: Response) -> bool:
         """Whether the origin gave no expiry and, heuristics being off, none may be invented: only it can say."""
         return not self._allow_heuristics and not has_explicit_freshness(response)
@@ -469,27 +426,16 @@ class AsyncStorage(AsyncBaseStorage):
         logger.debug(f"Retrieving cache entries: key={key}")
         try:
             self._sweep_if_due()
-            variants = await self._impl.load_variants(key)
-            live = [variant for variant in variants if not self._is_expired(stored_at_of(variant))]
-            if len(live) < len(variants):
+            stored = await self._records.get_variants(key)
+            live = [variant for variant in stored if not self._is_expired(variant.record.stored_at)]
+            if len(live) < len(stored):
                 logger.debug(f"Cache entry expired: key={key}")
-                await self._prune(key)
-            entries = []
-            for variant in live:
-                try:
-                    entry = await self._impl.unserialize_variant(key, variant)
-                except ValueError as e:
-                    # Incomplete cache entry - log warning and treat as cache miss
-                    logger.warning(f"Cache entry incomplete for key={key}: {e}")
-                    continue
+                await self._prune(key, [variant.record.entry_id for variant in stored if variant not in live])
+            entries = [self._with_request_url(to_entry(variant)) for variant in live]
+            for entry in entries:
                 if self._is_never_fresh(entry.response):
                     show_as_never_fresh(entry.response)
-                # hishel will address this entry by id if it later needs to freshen or drop it.
-                self._remember_key(entry.id, key)
-                logger.debug(
-                    f"Cache hit: key={key}, url={entry.request.url}, method={entry.request.method}, entry_id={entry.id}"
-                )
-                entries.append(entry)
+                logger.debug(f"Cache hit: key={key}, method={entry.request.method}, entry_id={entry.id}")
             if not entries:
                 logger.debug(f"Cache miss: key={key}")
             return entries
@@ -497,6 +443,20 @@ class AsyncStorage(AsyncBaseStorage):
             # Unexpected error - log full traceback
             logger.exception(f"Failed to retrieve cache for key={key}")
             return []
+
+    @staticmethod
+    def _with_request_url(entry: Entry) -> Entry:
+        """The entry, its request url the one being looked up when it is the stored one but for redacted values."""
+        current = REQUEST_URL.get()
+        if current and current != entry.request.url and _same_url_but_redacted(entry.request.url, current):
+            return replace(entry, request=replace(entry.request, url=current))
+        return entry
+
+    async def _prune(self, key: str, entry_ids: list[uuid.UUID]) -> None:
+        """Drop the variants of a key that have expired."""
+        async with self._locked(key):
+            for entry_id in entry_ids:
+                await self._records.delete_entry(entry_id)
 
     async def update_entry(
         self,
@@ -516,33 +476,35 @@ class AsyncStorage(AsyncBaseStorage):
         Returns:
             The updated Entry, or None if it could not be resolved
         """
-        key = self._key_for(id, "update")
-        if key is None:
-            return None
-
         try:
+            located = await self._records.get_by_id(id)
+            if located is None:
+                # The variant was evicted, replaced or expired between the lookup and here.
+                logger.debug(f"Cache entry vanished before update: entry_id={id}")
+                return None
+            key = located.key
+
             async with self._locked(key):
-                variants = await self._impl.load_variants(key)
-                position = next((n for n, variant in enumerate(variants) if variant_id(key, variant) == id), None)
-                if position is None:
-                    # The variant was evicted or replaced between the lookup and here.
+                stored = next((v for v in await self._records.get_variants(key) if v.record.entry_id == id), None)
+                if stored is None:
                     logger.debug(f"Cache entry vanished before update: entry_id={id}, key={key}")
                     return None
 
-                entry = await self._impl.unserialize_variant(key, variants[position])
+                entry = to_entry(stored)
                 if self._is_never_fresh(entry.response):
                     show_as_never_fresh(entry.response)
                 updated = new_entry if isinstance(new_entry, Entry) else new_entry(entry)
+                # the stored url holds no secret and is not the update's to change
+                updated = replace(updated, request=replace(updated.request, url=entry.request.url))
                 restore_date(updated.response.headers)
                 if is_withheld(updated.request, updated.response):
                     # A revalidation brought in a header that must not be stored: the entry goes, not the header.
-                    await self._impl.write_variants(key, variants[:position] + variants[position + 1 :])
-                    self._keys_by_id.pop(id, None)
+                    await self._records.delete_entry(id)
                     return None
-                variants[position] = await self._impl.serialize_variant(updated)
-                await self._impl.write_variants(key, variants)
+                record, body = await to_record(updated)
+                await self._records.put(record, body, keep=MAX_VARIANTS_PER_KEY, replaces=id)
         except Exception:
-            logger.warning(f"Failed to update cache entry: key={key}, entry_id={id}", exc_info=True)
+            logger.warning(f"Failed to update cache entry: entry_id={id}", exc_info=True)
             return None
         logger.debug(f"Cache entry updated: key={key}, entry_id={id}")
         return updated
@@ -557,22 +519,17 @@ class AsyncStorage(AsyncBaseStorage):
         Args:
             id: The entry UUID
         """
-        key = self._key_for(id, "remove")
-        if key is None:
-            return
-
         try:
-            async with self._locked(key):
-                variants = await self._impl.load_variants(key)
-                await self._impl.write_variants(key, [v for v in variants if variant_id(key, v) != id])
+            removed = await self._records.delete_entry(id)
         except Exception:
-            logger.warning(f"Failed to remove cache entry: key={key}, entry_id={id}", exc_info=True)
+            logger.warning(f"Failed to remove cache entry: entry_id={id}", exc_info=True)
             return
-        self._keys_by_id.pop(id, None)
-        logger.debug(f"Cache entry removed: key={key}, entry_id={id}")
+        logger.debug(f"Cache entry removed: entry_id={id}" if removed else f"Cache entry already gone: entry_id={id}")
 
     async def close(self) -> None:
         """Close the storage (required by AsyncBaseStorage interface)."""
         logger.debug("Closing AsyncStorage")
         if self._sweep_task is not None:
             self._sweep_task.cancel()
+        await self.flush_counters()
+        await self._records.close()

@@ -21,7 +21,7 @@ from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.settings import Endpoint
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
+from harp_apps.http_cache.records import MemoryCacheRecords
 
 
 def _uncached_client():
@@ -32,7 +32,7 @@ def _cached_client():
     return AsyncClient(
         transport=AsyncCacheTransport(
             next_transport=AsyncHTTPTransport(),
-            storage=AsyncStorage(MemoryBlobStorage()),
+            storage=AsyncStorage(MemoryCacheRecords()),
             policy=SpecificationPolicy(
                 cache_options=CacheOptions(shared=True, supported_methods=["GET", "HEAD"], allow_stale=False)
             ),

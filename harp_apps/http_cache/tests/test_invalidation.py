@@ -9,7 +9,7 @@ from hishel import CacheOptions, SpecificationPolicy
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.tests import ENDPOINT_HOOKS
 from harp_apps.http_cache.transports import AsyncCacheTransport
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
+from harp_apps.http_cache.records import MemoryCacheRecords
 
 HOST = "http://origin.test"
 
@@ -154,7 +154,7 @@ class TestLocationHeadersInvalidate:
 @pytest.mark.asyncio
 async def test_invalidates_entries_held_by_the_real_storage():
     origin = Origin()
-    async with make_client(origin, AsyncStorage(MemoryBlobStorage())) as client:
+    async with make_client(origin, AsyncStorage(MemoryCacheRecords())) as client:
         await client.get(f"{HOST}/item")
         await client.get(f"{HOST}/item")
         await client.put(f"{HOST}/item")
@@ -199,7 +199,7 @@ async def _until(condition) -> None:
 class TestGetInFlightDuringInvalidation:
     async def test_old_body_is_not_stored_after_a_write(self):
         origin = SlowOrigin()
-        async with make_client(origin, AsyncStorage(MemoryBlobStorage())) as client:
+        async with make_client(origin, AsyncStorage(MemoryCacheRecords())) as client:
             slow_get = asyncio.create_task(client.get(f"{HOST}/item"))
             await _until(lambda: origin.gets("/item") == 1)
 
@@ -214,7 +214,7 @@ class TestGetInFlightDuringInvalidation:
     async def test_get_not_overlapping_a_write_is_stored(self):
         origin = SlowOrigin()
         origin.release.set()
-        async with make_client(origin, AsyncStorage(MemoryBlobStorage())) as client:
+        async with make_client(origin, AsyncStorage(MemoryCacheRecords())) as client:
             await client.post(f"{HOST}/item")
             assert (await client.get(f"{HOST}/item")).text == "v2:/item"
             assert (await client.get(f"{HOST}/item")).text == "v2:/item"
@@ -223,7 +223,7 @@ class TestGetInFlightDuringInvalidation:
     async def test_get_in_flight_for_another_resource_is_stored(self):
         origin = SlowOrigin()
         origin.slow_paths = {"/other"}
-        async with make_client(origin, AsyncStorage(MemoryBlobStorage())) as client:
+        async with make_client(origin, AsyncStorage(MemoryCacheRecords())) as client:
             slow_get = asyncio.create_task(client.get(f"{HOST}/other"))
             await _until(lambda: origin.gets("/other") == 1)
 

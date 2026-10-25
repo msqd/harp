@@ -43,9 +43,32 @@ cache each time. The limit is ``harp_apps.http_cache.storages.MAX_VARIANTS_PER_K
 oldest stored one. Storing a variant again, with the same selecting headers, replaces it. Each variant expires on its
 own, after the storage ``ttl``.
 
-A cache entry is a ``cache/meta`` blob holding the list of its variants, oldest first. Entries written before this
-version hold a single entry and are read as one variant. They are rewritten in the new format the next time their key is
-written, which makes them unreadable by an earlier version.
+.. _http-cache-records:
+
+Where the cache keeps its entries
+:::::::::::::::::::::::::::::::::
+
+The cache keeps one record per resource and one per variant under it, ordered by endpoint, then path. The cache key
+is the endpoint and the path in clear, followed by a hash of the query string: two different query values never share an
+entry, and no query value is stored in the cache tables, as it may hold a credential. The query is kept for display only,
+with the values of the :doc:`redacted parameters </apps/storage/redaction>` replaced by ``REDACTED``. Bodies are stored once, by content digest, however many
+variants carry the same body, and deleted with the last one. The cache counts, per endpoint, its entries and the bytes
+of their bodies as it writes, and indexes the entries by size.
+
+- With the :doc:`storage </apps/storage/index>` application loaded, the records are in its database, in the
+  ``http_cache_*`` tables, shared by every instance of HARP: PostgreSQL, or SQLite for development. The tables are
+  created by the migrations of the ``http_cache`` application. A response whose path is over 2048 bytes is
+  not cached: it is counted, per endpoint, in the cache counters, and a warning is logged once per endpoint.
+- Without it, the records are in the process, and lost at restart.
+
+.. versionchanged:: 0.14
+
+    The cache used to keep a ``cache/meta`` blob per cache key, in the blob storage, SQL or Redis. The entries it left
+    are not read anymore: the cache starts empty once, at upgrade, and the :doc:`janitor </apps/janitor/index>` deletes
+    the old blobs. During a rolling upgrade, the entries that an instance still on the old version stores are not seen
+    by the new ones, and are deleted by the janitor once older than its grace period: they miss and are fetched again.
+    A response whose URL carries a redacted query parameter used to be left out of the cache, and is now cached. With Redis as blob storage, the cache is now in the storage database until it has a Redis backend of
+    its own.
 
 .. versionchanged:: 0.13
 
@@ -82,8 +105,13 @@ Features
 .. note::
 
     Credentials are :doc:`redacted </apps/storage/redaction>` in what the cache stores. A response that varies on,
-    carries (``Set-Cookie``) or was requested with a redacted value is not cached at all, unless you opt the name out of
-    redaction.
+    or carries (``Set-Cookie``), a redacted header is not cached at all, unless you opt the name out of redaction.
+
+    A redacted query parameter does not keep a response out of the cache: the cache key holds the plain sha256 of the
+    whole query string, and the query shown has the value replaced. The value itself is not stored, but **a
+    low-entropy secret (a short PIN, a small numeric token) could be guessed from a dump of the database**, by hashing
+    candidates. Do not rely on the key's hash to hide such a value: keep it in a header, or opt the route out of
+    caching.
 
 .. _http-cache-shared:
 

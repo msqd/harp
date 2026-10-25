@@ -17,6 +17,7 @@ Submodules
     harp_apps.http_cache.adapters
     harp_apps.http_cache.coalescing
     harp_apps.http_cache.models
+    harp_apps.http_cache.records
     harp_apps.http_cache.settings
     harp_apps.http_cache.storages
     harp_apps.http_cache.streams

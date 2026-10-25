@@ -6,18 +6,15 @@ from dataclasses import replace
 import httpx
 import pytest
 import respx
-import yaml
 from hishel import CacheOptions, Headers, Request, Response, SpecificationPolicy
 from hishel._core.models import AnyIterable
 
 from harp_apps.http_cache.storages import MAX_VARIANTS_PER_KEY, AsyncStorage
 from harp_apps.http_cache.tests import ENDPOINT_HOOKS, store_entry
 from harp_apps.http_cache.transports import AsyncCacheTransport
-from harp_apps.storage.models.blobs import cache_meta_references
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
 
 URL = "http://origin.test/resource"
-KEY = "key"
+KEY = "api/resource"
 
 
 def _request(accept: str) -> Request:
@@ -42,13 +39,8 @@ async def accepts(storage: AsyncStorage) -> list[str]:
 
 
 @pytest.fixture
-def blobs():
-    return MemoryBlobStorage()
-
-
-@pytest.fixture
-def storage(blobs):
-    return AsyncStorage(blobs)
+def storage(records):
+    return AsyncStorage(records)
 
 
 def test_a_key_holds_at_most_eight_variants():
@@ -79,28 +71,10 @@ class TestVariants:
 
     async def test_variants_of_other_keys_are_not_counted(self, storage):
         for n in range(MAX_VARIANTS_PER_KEY):
-            await store_entry(storage, _request(f"type/{n}"), _response("x"), f"other-{n}")
+            await store_entry(storage, _request(f"type/{n}"), _response("x"), f"api/other-{n}")
         await store_variant(storage, "text/html")
 
         assert await accepts(storage) == ["text/html"]
-
-    async def test_a_blob_written_before_variants_is_one_variant(self, storage, blobs):
-        """Entries stored by earlier versions hold a single entry at the top of the blob."""
-        await store_variant(storage, "text/html")
-        blob = await blobs.get(KEY)
-        (entry,) = yaml.safe_load(blob.data)["variants"]
-        await blobs.force_put(replace(blob, data=yaml.safe_dump(entry).encode()))
-
-        assert await accepts(AsyncStorage(blobs)) == ["text/html"]
-
-    async def test_every_variant_is_referenced_for_the_janitor(self, storage, blobs):
-        await store_variant(storage, "text/html")
-        await store_variant(storage, "application/json")
-
-        references = cache_meta_references((await blobs.get(KEY)).data)
-
-        # two request headers and two bodies, and the response headers they share
-        assert len(references) == 5
 
 
 @pytest.mark.asyncio
@@ -125,12 +99,12 @@ class TestOneVariantAtATime:
 
         assert await accepts(storage) == ["application/json"]
 
-    async def test_removing_the_last_variant_deletes_the_blob(self, storage, blobs):
+    async def test_removing_the_last_variant_deletes_the_key(self, storage, records):
         html = await store_variant(storage, "text/html")
 
         await storage.remove_entry(html.id)
 
-        assert await blobs.get(KEY) is None
+        assert await records.list_keys() == []
 
     async def test_concurrent_stores_keep_every_variant(self, storage):
         await asyncio.gather(*(store_variant(storage, f"type/{n}") for n in range(5)))
@@ -143,6 +117,7 @@ class Clock:
         self.now = 1_000_000.0
 
     def time(self):
+        self.now += 1e-6  # two writes never share an instant
         return self.now
 
     def monotonic(self):
@@ -159,18 +134,18 @@ def clock(monkeypatch):
 
 @pytest.mark.asyncio
 class TestExpiry:
-    async def test_the_sweep_deletes_a_blob_whose_variants_all_expired(self, blobs, clock):
-        storage = AsyncStorage(blobs, ttl=100, check_ttl_every=10)
+    async def test_the_sweep_deletes_a_key_whose_variants_all_expired(self, records, clock):
+        storage = AsyncStorage(records, ttl=100, check_ttl_every=10)
         await store_variant(storage, "text/html")
         await store_variant(storage, "application/json")
         clock.now += 101
-        await store_entry(storage, _request("x"), _response("x"), "other")
+        await store_entry(storage, _request("x"), _response("x"), "api/other")
         await storage.wait_for_sweep()
 
-        assert [blob.id async for blob in blobs.iter_blobs("cache/meta")] == ["other"]
+        assert await records.list_keys() == ["api/other"]
 
-    async def test_the_sweep_keeps_the_variants_still_live(self, blobs, clock):
-        storage = AsyncStorage(blobs, ttl=100, check_ttl_every=10)
+    async def test_the_sweep_keeps_the_variants_still_live(self, records, clock):
+        storage = AsyncStorage(records, ttl=100, check_ttl_every=10)
         await store_variant(storage, "text/html")
         clock.now += 60
         await store_variant(storage, "application/json")
@@ -178,11 +153,11 @@ class TestExpiry:
         await storage.get_entries("elsewhere")
         await storage.wait_for_sweep()
 
-        assert len(yaml.safe_load((await blobs.get(KEY)).data)["variants"]) == 1
+        assert len(await records.get_variants(KEY)) == 1
         assert await accepts(storage) == ["application/json"]
 
-    async def test_an_expired_variant_is_not_served_nor_counted(self, blobs, clock):
-        storage = AsyncStorage(blobs, ttl=100, check_ttl_every=10_000)
+    async def test_an_expired_variant_is_not_served_nor_counted(self, records, clock):
+        storage = AsyncStorage(records, ttl=100, check_ttl_every=10_000)
         await store_variant(storage, "text/html")
         clock.now += 101
         for n in range(MAX_VARIANTS_PER_KEY):

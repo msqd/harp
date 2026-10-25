@@ -12,7 +12,7 @@ def test_audit_owns_a_branch_of_its_own():
     script = ScriptDirectory.from_config(create_alembic_config("sqlite+aiosqlite:///:memory:"))
 
     assert script.get_revision("audit").down_revision is None
-    assert len(script.get_heads()) == 3  # storage, auth and audit
+    assert script.get_revision("audit@head").revision in script.get_heads()
 
 
 def test_audit_tables_are_prefixed_and_belong_to_audit():

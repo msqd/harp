@@ -10,7 +10,7 @@ from hishel import SpecificationPolicy
 
 from harp_apps.http_cache.storages import AsyncStorage
 from harp_apps.http_cache.transports import AsyncCacheTransport
-from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
+from harp_apps.http_cache.records import MemoryCacheRecords
 
 URL = "http://origin.test/resource"
 CLIENTS = 20
@@ -53,7 +53,7 @@ class Origin:
 def _client(harp_extensions=None, **transport_options) -> httpx.AsyncClient:
     transport = AsyncCacheTransport(
         next_transport=httpx.AsyncHTTPTransport(),
-        storage=AsyncStorage(MemoryBlobStorage()),
+        storage=AsyncStorage(MemoryCacheRecords()),
         policy=SpecificationPolicy(),
         **transport_options,
     )

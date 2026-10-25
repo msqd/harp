@@ -207,7 +207,7 @@ def _dependent_application_locations(root: Path, depends_on: str) -> dict:
 async def test_a_branch_depending_on_another_leaves_that_one_at_its_head_in_the_status(tmp_path):
     locations = _dependent_application_locations(tmp_path, STORAGE_HEAD)
     # this database only knows storage and the application depending on it
-    del locations["auth"], locations["audit"]
+    del locations["auth"], locations["audit"], locations["http_cache"]
     db = tmp_path / "depends.db"
     cfg = create_alembic_config(f"sqlite+aiosqlite:///{db}", locations=locations)
     engine = create_async_engine(f"sqlite+aiosqlite:///{db}")

@@ -1,13 +1,18 @@
-"""Request wrapper for cache key manipulation in load-balanced environments.
+"""Request wrapper for cache key manipulation in load-balanced environments, and the tables of the SQL cache records.
 
-This module provides WrappedRequest, which allows modifying specific request attributes
-(especially the URL) for cache key generation while preserving the original request
-for actual network transmission.
+WrappedRequest allows modifying specific request attributes (especially the URL) for cache key generation while
+preserving the original request for actual network transmission.
 """
+
+import uuid
+from typing import Any, AsyncIterator, Iterator, Mapping, Optional
 
 from hishel import Headers
 from hishel import Request, RequestMetadata
-from typing import Iterator, AsyncIterator, Mapping, Any
+from sqlalchemy import BigInteger, Float, ForeignKey, Index, LargeBinary, SmallInteger, String, Text, Uuid
+from sqlalchemy.orm import Mapped, mapped_column
+
+from harp_apps.storage.models.base import Base
 
 # Key used to store wrapped request reference in metadata
 _WRAPPED_REQUEST_KEY = "_harp_wrapped_request"
@@ -112,3 +117,68 @@ class WrappedRequest(Request):
             stream=self.stream,
             metadata=wrapped.metadata,
         )
+
+
+#: The cache key, bytewise ordered so that a range of keys is an endpoint, or a path prefix under it. PostgreSQL
+#: would sort it by the database collation, which is not bytewise.
+_KEY = Text().with_variant(Text(collation="C"), "postgresql")
+
+
+class CacheResource(Base):
+    """One per cache key that holds a variant (ADR-0014). The key is the request url, its host the endpoint name."""
+
+    __tablename__ = "http_cache_resources"
+    # resources by endpoint, then path
+    __table_args__ = (Index("ix_http_cache_resources_endpoint_key", "endpoint", "key"),)
+
+    key: Mapped[str] = mapped_column(_KEY, primary_key=True)
+    endpoint: Mapped[str] = mapped_column(_KEY)
+
+
+class CacheBody(Base):
+    """A response body, stored once whoever carries it: by the digest of its content."""
+
+    __tablename__ = "http_cache_bodies"
+
+    digest: Mapped[str] = mapped_column(String(64), primary_key=True)
+    data: Mapped[bytes] = mapped_column(LargeBinary)
+
+
+class CacheVariant(Base):
+    """One stored response of a resource, for one combination of the request headers it varies on."""
+
+    __tablename__ = "http_cache_variants"
+    __table_args__ = (
+        Index("ix_http_cache_variants_stored_at", "stored_at"),
+        Index("ix_http_cache_variants_body_digest", "body_digest"),
+        # largest entries of an endpoint: read from the end of the index
+        Index("ix_http_cache_variants_endpoint_body_size", "endpoint", "body_size"),
+    )
+
+    key: Mapped[str] = mapped_column(_KEY, ForeignKey("http_cache_resources.key"), primary_key=True)
+    variant: Mapped[str] = mapped_column(String(64), primary_key=True)
+    entry_id: Mapped[uuid.UUID] = mapped_column(Uuid, unique=True)
+    endpoint: Mapped[str] = mapped_column(Text)
+    #: Reserved for the invalidation log (#1596): the invalidation counter read before the origin fetch.
+    stamp: Mapped[int] = mapped_column(BigInteger, server_default="0")
+    status: Mapped[int] = mapped_column(SmallInteger)
+    vary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    body_digest: Mapped[str] = mapped_column(String(64), ForeignKey("http_cache_bodies.digest"))
+    body_size: Mapped[int] = mapped_column(BigInteger)
+    created_at: Mapped[float] = mapped_column(Float)
+    stored_at: Mapped[float] = mapped_column(Float)
+    head: Mapped[bytes] = mapped_column(LargeBinary)
+    #: The query string, for display only: the values of redacted parameters are replaced (ADR-0009).
+    query: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+
+class CacheStats(Base):
+    """What an endpoint holds, kept on write: its variants, and the bytes of their bodies."""
+
+    __tablename__ = "http_cache_stats"
+
+    endpoint: Mapped[str] = mapped_column(Text, primary_key=True)
+    entries: Mapped[int] = mapped_column(BigInteger)
+    bytes: Mapped[int] = mapped_column(BigInteger)
+    #: Responses not stored because their key was too long.
+    refused: Mapped[int] = mapped_column(BigInteger, server_default="0")

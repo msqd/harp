@@ -137,8 +137,7 @@ Valkey in the future.
 Retention differs per blob backend, see :doc:`/apps/janitor/index`:
 
 - ``sql``: the janitor deletes the blobs nothing references anymore.
-- ``redis``: same, by scanning the keys. Blobs carry no TTL, as they are shared between transactions and the HTTP
-  cache. Each write also leaves a short-lived ``harp:blob-written:<id>`` marker key that protects fresh blobs from the
+- ``redis``: same, by scanning the keys. Blobs carry no TTL, as they are shared between transactions. Each write also leaves a short-lived ``harp:blob-written:<id>`` marker key that protects fresh blobs from the
   sweep.
 - ``memory``: same, and the blobs are lost on restart anyway.
 
