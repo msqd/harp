@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional, TypedDict
+from typing import Optional, TypedDict
 
 from harp import get_logger
 from harp.config.asdict import mask_credentials
@@ -7,9 +7,6 @@ from harp_apps.proxy.settings.endpoint import Endpoint
 
 from .default import not_found_controller
 from .typing import IAsyncController, IControllerResolver
-
-if TYPE_CHECKING:
-    pass
 
 logger = get_logger(__name__)
 

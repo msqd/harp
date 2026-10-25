@@ -2,23 +2,6 @@ from pydantic import Field, model_validator
 
 from harp.config import Configurable, Service, ApplicationSettingsMixin
 
-# HTTP status codes that are heuristically cacheable according to RFC 9111
-# Migrated from hishel 0.1.x to avoid dependency on internal APIs
-HEURISTICALLY_CACHEABLE_STATUS_CODES = (
-    200,
-    203,
-    204,
-    206,
-    300,
-    301,
-    308,
-    404,
-    405,
-    410,
-    414,
-    501,
-)
-
 
 class CachePolicyOptions(Configurable):
     """Options of the cache policy, mapped onto ``hishel.CacheOptions``."""

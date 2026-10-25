@@ -1,11 +1,7 @@
-from structlog import get_logger
-
 from harp.config import Application, OnBindEvent, OnReadyEvent
 from harp_apps.proxy.events import EVENT_PROXY_ERROR, ProxyErrorEvent
 
 from .settings import SentrySettings
-
-logger = get_logger(__name__)
 
 
 async def on_proxy_error(event: ProxyErrorEvent):
