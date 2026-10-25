@@ -22,7 +22,11 @@ from harp_apps.storage.utils.migrations import (
 )
 from harp_apps.storage.utils.testing.sql import run_cli_migrate_command
 
-STORAGE_HEAD = "e7a4d9c26b18"
+STORAGE_HEAD = (
+    ScriptDirectory.from_config(create_alembic_config("sqlite+aiosqlite:///:memory:"))
+    .get_revision("storage@head")
+    .revision
+)
 
 
 def _write_revision(versions: Path, *, revision, label, down_revision=None):

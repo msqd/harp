@@ -6,12 +6,14 @@ Until now they carried the names their database generated, or none on SQLite, wh
 migrations cannot alter.
 
 Migrations 248285939c4c and d4cd37d29d7a stacked duplicates of the same unique constraint
-(``users.id`` twice, ``tag_values.(tag_id, value)`` twice...) on PostgreSQL and MySQL, which a
-convention could not name apart. One of each is kept. A downgrade restores the generated names
-but does not bring the duplicates back.
+(``tag_values.(tag_id, value)`` twice on PostgreSQL), which a convention could not name apart. One
+of each is kept. A downgrade restores the generated names but does not bring the duplicates back.
 
 The names are computed here and frozen, so that a later change of the convention does not rewrite
-this revision. MySQL names no primary key, its are left alone.
+this revision.
+
+MySQL and MariaDB are unsupported (deprecated, ADR-0005): the revision does nothing there and logs
+a warning.
 
 SQLite never reaches this migration at boot: ``harp_apps/storage/utils/migrations.py`` takes a
 ``Base.metadata.create_all`` branch for that dialect. It is still written for it, as batch
@@ -23,6 +25,7 @@ Create Date: 2026-10-24 12:00:00.000000
 
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Optional, Sequence, Union
 
@@ -34,6 +37,8 @@ revision: str = "e7a4d9c26b18"
 down_revision: Union[str, None] = "c5e8b2d41f73"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
+
+logger = logging.getLogger("alembic.runtime.migration")
 
 TABLES = (
     "blobs",
@@ -86,8 +91,6 @@ def _generated_name(dialect, table, kind, columns, referred_table):
         return {"pk": f"{table}_pkey", "uq": f"{table}_{'_'.join(columns)}_key", "fk": f"{table}_{columns[0]}_fkey"}[
             kind
         ]
-    if dialect == "mysql" and kind == "uq":
-        return columns[0]
     return None
 
 
@@ -105,7 +108,7 @@ def _constraints(bind, *, upgrading):
             return _generated_name(dialect, table, kind, columns, referred_table)
 
         pk = inspector.get_pk_constraint(table)
-        if dialect != "mysql" and pk["constrained_columns"]:
+        if pk["constrained_columns"]:
             columns = tuple(pk["constrained_columns"])
             yield Constraint(table, "pk", columns, pk["name"], new_name("pk", columns))
 
@@ -146,22 +149,6 @@ def _rename_postgresql(constraints, indexes):
         op.execute(sa.text(f'ALTER INDEX "{old}" RENAME TO "{new}"'))
 
 
-def _rename_mysql(constraints, indexes):
-    for c in constraints:
-        if c.kind == "uq" and c.old != c.new:
-            op.execute(sa.text(f"ALTER TABLE `{c.table}` RENAME INDEX `{c.old}` TO `{c.new}`"))
-    for c in constraints:
-        if c.kind == "fk":
-            op.drop_constraint(c.old, c.table, type_="foreignkey")
-    for c in constraints:
-        if c.kind == "fk":
-            op.create_foreign_key(
-                c.new, c.table, c.referred_table, list(c.columns), list(c.referred_columns), ondelete=c.ondelete
-            )
-    for table, old, new in indexes:
-        op.execute(sa.text(f"ALTER TABLE `{table}` RENAME INDEX `{old}` TO `{new}`"))
-
-
 def _rename_sqlite(bind, constraints, indexes):
     """SQLite cannot rename a constraint: recreate each table from its reflection, constraints renamed."""
     for table in dict.fromkeys(c.table for c in constraints):
@@ -185,12 +172,13 @@ def _rename_sqlite(bind, constraints, indexes):
 
 def _apply(*, upgrading):
     bind = op.get_bind()
+    if bind.dialect.name == "mysql":
+        logger.warning("MySQL and MariaDB are unsupported: constraints are left as they are.")
+        return
     constraints = list(_constraints(bind, upgrading=upgrading))
     indexes = list(_renamed_indexes(upgrading=upgrading))
     if bind.dialect.name == "postgresql":
         _rename_postgresql(constraints, indexes)
-    elif bind.dialect.name == "mysql":
-        _rename_mysql(constraints, indexes)
     else:
         _rename_sqlite(bind, constraints, indexes)
 
