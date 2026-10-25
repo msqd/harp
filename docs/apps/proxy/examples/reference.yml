@@ -38,5 +38,5 @@ proxy:
   tags:
     max_count: 20
     max_name_length: 64
-    max_value_length: 256
+    max_value_length: 255
   trusted_proxies: []
