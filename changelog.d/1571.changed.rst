@@ -1,0 +1,1 @@
+Fold the Slack and Google Chat senders into one webhook sender base, and the controller and http client metric wrappers into one.
