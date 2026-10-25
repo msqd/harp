@@ -214,6 +214,63 @@ An error response (``4xx``, ``5xx``) invalidates nothing. Invalidation applies w
 handled the request, like the cache itself, and also when the request carries ``Cache-Control: no-store``.
 
 
+.. _http-cache-purge:
+
+Purging one entry
+:::::::::::::::::
+
+.. versionadded:: 0.13
+
+An operator can remove a cached response before its ``ttl`` with a ``PURGE`` request to the proxy, on the port of the
+endpoint that cached it::
+
+    curl -X PURGE 'http://localhost:8080/path?query=1'
+
+It is **off by default**. Turn it on; by default only ``127.0.0.1`` may use it, extend ``allow`` for others:
+
+.. code-block:: yaml
+
+    http_cache:
+      purge:
+        enabled: true
+        allow: ["127.0.0.1", "10.0.0.0/8"]  # addresses or CIDR ranges
+
+With purge enabled, the request is answered by HARP and **never sent upstream**:
+
+.. list-table::
+    :header-rows: 1
+    :widths: 15 85
+
+    * - Status
+      - When
+    * - ``200``
+      - The target was cached: every stored variant of that URL (path and query string) is removed, within the endpoint
+        that received the request.
+    * - ``404``
+      - Nothing is cached for that URL on that endpoint.
+    * - ``403``
+      - The peer is not in ``allow``. Nothing is removed.
+
+The same path on another endpoint is not touched. There is no wildcard or prefix purge, and no purge across HARP
+instances. With purge disabled (the default), a ``PURGE`` request is proxied like any other request.
+
+.. warning::
+
+    **Security default.** ``enabled`` is ``false`` by default, and ``allow`` defaults to ``["127.0.0.1"]``, so
+    enabling purge allows local purges only (not ``::1``; add it if you purge over IPv6). The allow-list is the only protection: there is no authentication. Keep it narrow.
+
+**Which address is checked.** The allow-list is matched against the address of the peer HARP is connected to, the same
+address the proxy appends to ``X-Forwarded-For``. It never reads ``X-Forwarded-For``, ``Forwarded`` or any other header,
+including those from a peer listed in :ref:`proxy.trusted_proxies <proxy-forwarding-headers>`: trusting a proxy tells HARP
+which forwarded values to keep for the upstream, it does not change who is connected. A peer whose address is unknown is
+refused.
+
+This matters behind a reverse proxy or load balancer, where the peer is that proxy for every client. Listing the
+proxy in ``allow`` then lets everyone behind it purge, so either filter ``PURGE`` at the proxy, or reach HARP directly
+for purges (from the host, or through a private port) and list only those addresses. IPv4-mapped IPv6 addresses
+(``::ffff:127.0.0.1``) are matched as their IPv4 address.
+
+
 Cache key normalization
 -----------------------
 
