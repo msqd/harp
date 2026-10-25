@@ -216,7 +216,7 @@ up-to-date. On that default, upgrading HARP and starting it is enough, and there
 hand.
 
 You can disable this behaviour by setting ``storage.migrate`` to ``false`` in your configuration.
-Applying migrations then becomes yours to do, with ``harp-proxy db:migrate up head``, **before**
+Applying migrations then becomes yours to do, with ``harp-proxy db:migrate up heads``, **before**
 starting the new version. A schema older than the running code is not a degraded mode: 0.10 widened
 ``blobs.id`` for cache keys, and against a database still holding the narrow column, any response the
 cache would store fails with a 500 rather than falling back to a cache miss.
@@ -226,7 +226,7 @@ is older than the code expects. The error names the database and the commands to
 
 SQLite files are not migrated: they are created from the models and never altered. A SQLite file written by
 0.11 lacks ``transactions.markers``, so it must be deleted (it is recreated on next start) or reset with
-``harp-proxy db:reset``. PostgreSQL (and the deprecated MySQL) need ``harp-proxy db:migrate up head``.
+``harp-proxy db:reset``. PostgreSQL (and the deprecated MySQL) need ``harp-proxy db:migrate up heads``.
 
 Migrations are implemented using `Alembic <https://alembic.sqlalchemy.org/>`_.
 

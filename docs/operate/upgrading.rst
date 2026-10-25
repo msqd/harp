@@ -16,7 +16,7 @@ documented way back to 0.11.
   (it is recreated at next start) or run ``harp-proxy db:reset``. Its transactions are lost: export
   what you need before.
 - **PostgreSQL and MySQL**: migrations run at boot by default, so starting 0.12 is enough. With
-  ``storage.migrate: false``, run ``harp-proxy db:migrate up head`` **before** starting the new version.
+  ``storage.migrate: false``, run ``harp-proxy db:migrate up heads`` **before** starting the new version.
   See :doc:`migrations` and :doc:`the storage page </apps/storage/index>`.
 - **Drivers**: PostgreSQL and MySQL drivers are extras. Install ``harp-proxy[postgresql]`` or
   ``harp-proxy[mysql]``, or startup fails naming the extra. ``mysql+asyncmy://`` urls are refused: use

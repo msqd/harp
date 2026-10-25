@@ -1,0 +1,1 @@
+Database migrations are one alembic branch per application: ``harp-proxy db:create-migration`` takes the application name, ``db:migrate status`` shows the revision of each, and ``db:migrate up heads`` upgrades them all.

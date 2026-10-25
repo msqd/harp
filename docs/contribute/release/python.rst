@@ -92,7 +92,7 @@ If the release does carry one:
 * **Check that the changelog says so**, in *Important Changes*, and that it says which backends are
   affected. HARP applies migrations itself on startup when ``storage.migrate`` is enabled, which is
   the default, so an operator on the default path has nothing to run. The manual
-  ``harp-proxy db:migrate up head`` step is for operators who set ``storage.migrate: false``, and
+  ``harp-proxy db:migrate up heads`` step is for operators who set ``storage.migrate: false``, and
   that is the case any warning about breakage should be attached to. See
   :doc:`/apps/storage/index` for the behaviour.
 * **Say whether the previous version still runs against the new schema.** If it does not, a rollback
