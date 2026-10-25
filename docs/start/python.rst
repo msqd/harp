@@ -6,7 +6,7 @@ Harp is also installable using a Python package manager (most likely, `pip`).
 Install with PIP
 ::::::::::::::::::
 
-You need a working Python 3.13+ environment with the `pip` package manager (or another package manager of your choice).
+You need a working Python 3.13 environment with the `pip` package manager (or another package manager of your choice).
 To install it, run:
 
 .. code-block:: shell
@@ -24,6 +24,12 @@ MySQL/MariaDB is deprecated, its extra is:
 .. code-block:: shell
 
     pip install harp-proxy[mysql]
+
+To report errors to Sentry, install the ``sentry`` extra (see :doc:`/apps/contrib/sentry/index`):
+
+.. code-block:: shell
+
+    pip install harp-proxy[sentry]
 
 
 Start a proxy

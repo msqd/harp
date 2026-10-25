@@ -21,6 +21,8 @@ from harp_apps.proxy.events import (
 )
 from harp_apps.storage.constants import (
     CLIENT_DISCONNECTED,
+    NO_STORE_REQUEST,
+    NO_STORE_RESPONSE,
     SKIP_REQUEST_BODY_STORAGE,
     SKIP_REQUEST_HEADERS_STORAGE,
     SKIP_REQUEST_STORAGE,
@@ -53,6 +55,11 @@ PRESSURE_LEVELS = {level: 10**level for level in range(1, 5)}
 # Expose every series at 0 from startup, so alerts and rate() never face a missing series.
 for _kind in DROPPED_KINDS:
     DROPPED_COUNTER.labels(_kind)
+
+
+def _cache_control_directives(message) -> set[str]:
+    values = message.headers.getall("cache-control", [])
+    return {part.split("=")[0].strip().lower() for value in values for part in value.split(",")}
 
 
 class StorageAsyncWorkerQueue(AsyncWorkerQueue):
@@ -133,9 +140,27 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         # Schedule
         await self.push(create_transaction)
 
+    @staticmethod
+    def _mark_no_store(event: HttpMessageEvent):
+        """ADR-0002: a caller's ``no-store`` suppresses both payloads, an origin's only its own response."""
+        markers = event.transaction.markers
+        if "no-store" not in _cache_control_directives(event.message):
+            return
+        if event.message.kind == "request":
+            markers.update((NO_STORE_REQUEST, NO_STORE_RESPONSE))
+        elif event.message.kind == "response":
+            markers.add(NO_STORE_RESPONSE)
+
+    @staticmethod
+    def _is_no_store(event: HttpMessageEvent) -> bool:
+        wanted = NO_STORE_REQUEST if event.message.kind == "request" else NO_STORE_RESPONSE
+        return wanted in event.transaction.markers
+
     async def on_transaction_message(self, event: HttpMessageEvent):
         if SKIP_STORAGE in event.transaction.markers:
             return
+
+        self._mark_no_store(event)
 
         if self.pressure >= 3:
             event.transaction.markers.add(SHED_MESSAGES)
@@ -161,7 +186,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
         except ClientDisconnected:
             # The client left mid-body: record what arrived. The proxy ends the transaction on its own.
             event.transaction.markers.add(CLIENT_DISCONNECTED)
-        serializer = get_serializer_for(event.message)
+        serializer = get_serializer_for(event.message, event.transaction.redaction)
 
         message_data = {
             "transaction_id": event.transaction.id,
@@ -176,7 +201,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             and SKIP_REQUEST_HEADERS_STORAGE in event.transaction.markers
             or event.message.kind == "response"
             and SKIP_RESPONSE_HEADERS_STORAGE in event.transaction.markers
-        )
+        ) or self._is_no_store(event)
 
         # Eventually store the headers blob (later)
         if not skip_headers and self.pressure <= 2:
@@ -199,7 +224,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             and SKIP_REQUEST_BODY_STORAGE in event.transaction.markers
             or event.message.kind == "response"
             and SKIP_RESPONSE_BODY_STORAGE in event.transaction.markers
-        )
+        ) or self._is_no_store(event)
 
         # Eventually store the content blob (later)
         if not skip_body and self.pressure <= 1:

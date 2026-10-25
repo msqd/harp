@@ -33,6 +33,7 @@ async def on_bound(event: OnBoundEvent):
 async def on_shutdown(event: OnShutdownEvent):
     subscriber = event.provider.get(NOTIFICATIONS_SUBSCRIBER)
     subscriber.unsubscribe(event.dispatcher)
+    await subscriber.aclose()
 
 
 application = Application(

@@ -83,7 +83,7 @@ class HonchoManagerFactory:
 
         return (
             None,
-            f'watchfiles --filter python "{cmd}" {os.path.join(ROOT_DIR, "harp")} {os.path.join(ROOT_DIR, "harp_apps")}',
+            f"watchfiles --filter python {quote(cmd)} {quote(os.path.join(ROOT_DIR, 'harp'))} {quote(os.path.join(ROOT_DIR, 'harp_apps'))}",
         )
 
     commands[HARP_SERVER_SERVICE] = _get_server_executable

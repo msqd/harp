@@ -21,3 +21,4 @@ Submodules
     harp_apps.proxy.examples
     harp_apps.proxy.helpers
     harp_apps.proxy.settings
+    harp_apps.proxy.streams

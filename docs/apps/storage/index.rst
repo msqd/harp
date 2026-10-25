@@ -18,6 +18,7 @@ The ``harp_apps.storage`` application implements various storage systems for you
     :maxdepth: 1
 
     Transaction Markers <markers>
+    Redaction <redaction>
     Services <services>
     Settings <settings>
     Internals </reference/apps/harp_apps.storage>
@@ -40,15 +41,15 @@ backends for blobs).
 .. warning::
 
     **Recording here is best-effort.** Transactions passing through HARP are recorded, including
-    requests carrying ``Cache-Control: no-store``, but under load the storage worker sheds message
+    requests carrying ``Cache-Control: no-store`` (without their payload), but under load the storage worker sheds message
     detail first and then whole transactions rather than slowing traffic down. Do not treat this
     store as a complete account of what crossed the proxy. See :ref:`what-harp-retains` for what is
     measured, and `#945 <https://github.com/msqd/harp/issues/945>`_ for the measurements.
 
-    A caller's ``Cache-Control: no-store`` binds the cache and does not affect what is recorded
-    here. Whether a caller may suppress payload recording is undecided, see
-    `#927 <https://github.com/msqd/harp/issues/927>`_, so do not build on the current behaviour in
-    either direction.
+    A caller's ``Cache-Control: no-store`` binds the cache and, from 0.13, suppresses the headers and
+    bodies recorded here, for the request and for the response; the transaction and its messages are
+    still recorded, with their summaries. An origin's ``no-store`` suppresses its own response payload
+    only. HARP does not currently provide a way to override this. See :ref:`what-harp-retains`.
 
     Choosing what is not recorded is currently the operator's decision, made with the
     :doc:`rules application </apps/rules/index>` and the :doc:`markers` below.
@@ -183,7 +184,8 @@ absorbs within 2 seconds is recorded in full. It stops as soon as the backlog fa
 again. Just above the capacity, only some bodies are lost: in one run at 50 requests per second for
 a minute, 339 of 3,000 transactions were recorded without bodies. Messages, then whole transactions,
 go when the database falls far behind, for instance when it stalls. Proxied traffic is not slowed
-down by shedding.
+down by shedding (one exception: a stalled database shared with the http cache, `#1352
+<https://github.com/msqd/harp/issues/1352>`_, see :doc:`/operate/upgrading`).
 
 There is no hysteresis: a level switches on after the 2 second hold and off the moment the backlog
 drops below its threshold. On a slow, not stalled, database whose backlog hovers around 1,000 jobs,
@@ -226,7 +228,8 @@ is older than the code expects. The error names the database and the commands to
 
 SQLite files are not migrated: they are created from the models and never altered. A SQLite file written by
 0.11 lacks ``transactions.markers``, so it must be deleted (it is recreated on next start) or reset with
-``harp-proxy db:reset``. PostgreSQL (and the deprecated MySQL) need ``harp-proxy db:migrate up head``.
+``harp-proxy db:reset``. PostgreSQL (and the deprecated MySQL) are migrated automatically at boot, unless ``storage.migrate`` is ``false``,
+in which case ``harp-proxy db:migrate up head`` is yours to run.
 
 Migrations are implemented using `Alembic <https://alembic.sqlalchemy.org/>`_.
 
@@ -254,10 +257,20 @@ or...
 Logging
 :::::::
 
-To instruct SQLAlchemy to log all queries, set ``LOGGING_SQLALCHEMY=INFO`` in your env.
+To instruct SQLAlchemy to log all queries, set ``LOGGING_SQL=INFO`` in your env.
 
 .. code-block:: shell
 
-    LOGGING_SQLALCHEMY=INFO harp-proxy server ...
+    LOGGING_SQL=INFO harp-proxy server ...
 
-It works with all HARP commands, not just ``start``.
+It works with all HARP commands, not just ``server``.
+
+
+Blob ids
+::::::::
+
+Blobs are content-addressed. A blob id is the SHA-256 of the content type (length-framed) and the body, truncated to
+160 bits: 40 hexadecimal characters, so no schema change.
+
+Blobs written by earlier versions carry SHA-1 ids. They keep resolving, and are not rewritten. A body already stored
+under its old id is stored once more under its new id the next time it is seen, until retention removes the old row.

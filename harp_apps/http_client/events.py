@@ -41,6 +41,11 @@ class HttpClientFilterEvent(Event):
     def fingerprint(self):
         return f"{self.request.method} {self.request.url.raw_path.decode()}"
 
+    @property
+    def path_fingerprint(self):
+        """The fingerprint without the query string, the form every level moves to (see ``rules`` application)."""
+        return f"{self.request.method} {self.request.url.raw_path.decode().partition('?')[0]}"
+
     def _get_rule_name(self) -> str | None:
         if not self.name:
             return None
@@ -63,6 +68,10 @@ class HttpClientFilterEvent(Event):
     def execute_script(self, script: Callable):
         context = self.create_execution_context()
         script(context)
+        return self.apply_script_context(context)
+
+    def apply_script_context(self, context: dict):
+        """Take into account what a script left in its execution context."""
         if context["response"] != self.response:
             if context["response"] is not None:
                 if not isinstance(context["response"], Response):

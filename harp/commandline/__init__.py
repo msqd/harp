@@ -63,7 +63,7 @@ if HARP_ENV == "prod":
 
 @click.group()
 def entrypoint():
-    """HTTP Application Runtime Proxy (HARP)
+    """HTTP API Runtime Proxy (HARP)
 
     The following commands are available to help you setup and run your HTTP proxy application.
 

@@ -1,3 +1,25 @@
+.. _upgrading-0-13:
+
+Upgrading to 0.13
+=================
+
+Metrics
+:::::::
+
+- With the ``metrics`` application enabled, ``/.prometheus/metrics`` is no longer answered on the proxy
+  ports: the request is proxied to the upstream like any other. Metrics are served on ``/metrics`` by the
+  dashboard port, behind its authentication, and on ``dashboard.metrics_port`` when set. Point your scrape
+  configuration at one of them. See :doc:`prometheus`.
+- The ASGI-level metric families disappear with the middleware that produced them: ``requests_count``,
+  ``requests_time``, ``requests_in_progress``, ``responses_count`` and ``exceptions_count``. Dashboards and
+  alerts built on them stop matching: use the ``controller_*`` families instead (``controller_requests_count``,
+  ``controller_requests_time``, ``controller_requests_in_progress``, ``controller_responses_count``,
+  ``controller_exceptions_count``).
+- Exception metrics lose their unbounded labels: ``path`` on ``controller_exceptions_count`` and ``url`` on
+  ``remote_exceptions_count`` are removed (they grew the series count with every distinct path or query string).
+  Aggregate queries still work; any ``by (path)`` or ``by (url)`` grouping, or matcher on these labels, stops
+  matching. The remaining labels are listed in :doc:`prometheus`.
+
 .. _upgrading-0-12:
 
 Upgrading to 0.12
@@ -9,8 +31,8 @@ What changes for an operator going from 0.11 to 0.12. The full list is in the
 Before you upgrade
 ::::::::::::::::::
 
-**Back up the database first.** HARP 0.12 changes the storage schema, and there is no
-documented way back to 0.11.
+**Back up the database first.** HARP 0.12 changes the storage schema. On PostgreSQL and MySQL, the way
+back to 0.11 is :ref:`a down migration <upgrading-0-12-rollback>`.
 
 - **SQLite**: a file written by 0.11 is not migrated, and 0.12 refuses to start on it. Delete the file
   (it is recreated at next start) or run ``harp-proxy db:reset``. Its transactions are lost: export
@@ -28,6 +50,24 @@ documented way back to 0.11.
 - **Applications list**: an ``applications:`` list in your configuration now replaces the default set
   (it used to be ignored). List every application you need, including dependencies such as ``proxy``
   for ``storage``, or remove the key.
+
+.. _upgrading-0-12-rollback:
+
+Rolling back to 0.11
+::::::::::::::::::::
+
+On PostgreSQL and MySQL, 0.12 records a new schema revision, ``c5e8b2d41f73``, which 0.11 does not know: a
+0.11 started with ``storage.migrate: true`` fails at startup with ``Can't locate revision identified by
+'c5e8b2d41f73'``. Before reinstalling 0.11, run this with 0.12:
+
+.. code-block:: shell
+
+    harp-proxy db:migrate down a1c7f3b52e04
+
+It drops the ``transactions.markers`` column, so the markers of recorded transactions are lost, and nothing
+else. ``a1c7f3b52e04`` is the revision 0.11 expects. See :doc:`migrations`.
+
+SQLite never runs migrations, so there is nothing to undo there: restore your backup of the file.
 
 Behaviour changes
 :::::::::::::::::

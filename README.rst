@@ -5,16 +5,9 @@ HARP is an open-source proxy that sits between your application and the HTTP API
 breaker, a rules engine and a searchable record of the traffic, without changes to your code other than the base URL.
 It runs in your infrastructure, next to your application.
 
-HARP is an open-source API Proxy toolkit designed to improve the reliability, performance, security, and observability
-of the APIs you use. It runs in your infrastructure, close to your applications.
-
 .. image:: https://img.shields.io/pypi/v/harp-proxy.svg
     :target: https://pypi.python.org/pypi/harp-proxy
     :alt: PyPI
-
-.. image:: https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/harp
-    :target: https://artifacthub.io/packages/helm/harp/harp-proxy
-    :alt: Artifact Hub
 
 .. image:: https://github.com/msqd/harp/actions/workflows/cicd.yml/badge.svg
     :target: https://github.com/msqd/harp/actions/workflows/cicd.yml
@@ -47,8 +40,8 @@ of the APIs you use. It runs in your infrastructure, close to your applications.
 What it is, and what it is not
 ::::::::::::::::::::::::::::::
 
-HARP is a forward proxy for outgoing HTTP calls, written in Python. You point your application at HARP instead of at the
-remote API, and HARP forwards the request. Along the way it can answer from its cache, stop sending traffic to a
+HARP is a proxy for outgoing HTTP calls, written in Python, with one local port per remote API. You point your
+application at HARP instead of at the remote API, and HARP forwards the request. Along the way it can answer from its cache, stop sending traffic to a
 failing server, apply your own rules, and record the exchange so you can look at it in a dashboard.
 
 .. figure:: https://github.com/msqd/harp/raw/main/docs/images/diagrams/how-it-works-overview.svg
@@ -56,17 +49,23 @@ failing server, apply your own rules, and record the exchange so you can look at
 
 HARP is released as ``0.x`` and is used by its authors in development and in production. Some features are less
 polished than others and some APIs may still change between minor versions: the rules engine, for one, is documented as
-a preview. The `upgrade guide <https://docs.harp-project.net/en/stable/operate/upgrading.html>`_ covers moving to a
-new version.
+a preview (see its `application page <https://docs.harp-project.net/en/stable/apps/rules/>`_). The `upgrade guide
+<https://docs.harp-project.net/en/stable/operate/upgrading.html>`_ covers moving to 0.12 and the changes that came with
+it.
 
-Two limits to know before relying on it:
+Limits to know before relying on it:
 
 * **Recording is best-effort.** Under load HARP sheds message detail first, then whole transactions, instead of slowing
-  your traffic down. Treat the transaction record as an operational view, not as a complete account. The `storage
-  documentation <https://docs.harp-project.net/en/stable/apps/storage/>`_ gives the measured capacity and the memory it
-  needs.
-* **PostgreSQL is the production database.** The default SQLite storage lives in memory and is for development. MySQL
-  and MariaDB are deprecated.
+  your traffic down (one known exception: a stalled database shared with the HTTP cache, `#1352
+  <https://github.com/msqd/harp/issues/1352>`_). Treat the transaction record as an operational view, not as a complete
+  account. A recorded response body is cut at 1 MiB (``proxy.max_recorded_body_size``). The `storage documentation
+  <https://docs.harp-project.net/en/stable/apps/storage/>`_ gives the measured capacity and the memory it needs.
+* **Streaming is not supported.** Server-sent events and long-polling do not work through HARP, and request bodies are
+  read in full before they go upstream. See the `proxy application
+  <https://docs.harp-project.net/en/stable/apps/proxy/>`_.
+* **PostgreSQL is the production database.** Install it with the ``harp-proxy[postgresql]`` extra. The default SQLite
+  storage lives in memory and is for development. MySQL and MariaDB are deprecated. See the `storage application
+  <https://docs.harp-project.net/en/stable/apps/storage/>`_.
 
 What you get
 ::::::::::::
@@ -74,11 +73,12 @@ What you get
 * `Caching <https://docs.harp-project.net/en/stable/features/caching.html>`_ that follows HTTP caching headers (RFC 9111).
 * A `circuit breaker <https://docs.harp-project.net/en/stable/features/circuit-breaker.html>`_ with pools of remote URLs
   and health probes.
-* A `rules engine <https://docs.harp-project.net/en/stable/features/rules.html>`_ (preview) to change requests and
+* A `rules engine <https://docs.harp-project.net/en/stable/apps/rules/>`_ (preview) to change requests and
   responses with small Python scripts.
 * An `audit log <https://docs.harp-project.net/en/stable/features/auditlog.html>`_ of the transactions, shown in a
-  `dashboard <https://docs.harp-project.net/en/stable/features/dashboard.html>`_ protected by a login.
-* `Prometheus metrics <https://docs.harp-project.net/en/stable/operate/prometheus.html>`_, when enabled.
+  `dashboard <https://docs.harp-project.net/en/stable/apps/dashboard/>`_ protected by a login.
+* `Prometheus metrics <https://docs.harp-project.net/en/stable/operate/prometheus.html>`_ on the dashboard port, behind
+  its login (or on an optional, unauthenticated ``dashboard.metrics_port``).
 
 .. figure:: https://github.com/msqd/harp/raw/main/docs/user/images/transactions.png
     :alt: The transactions list of the HARP dashboard
@@ -91,10 +91,13 @@ requires. Start a proxy to `httpbin.org <http://httpbin.org>`_ on port 4000, wit
 
 .. code-block:: bash
 
-    uvx harp-proxy server --endpoint httpbin=4000:http://httpbin.org
+    uvx -p 3.13 harp-proxy server --endpoint httpbin=4000:http://httpbin.org
 
-The dashboard asks for a login. HARP prints a generated password for the ``admin`` user in its output, on a line that
-starts with ``Dashboard login``. It changes at every start.
+The dashboard asks for a login. HARP prints a generated password for the ``admin`` user in its output, on a line
+containing ``Dashboard login``. It changes at every start. To set your own users or to turn the login off, see the
+`dashboard application <https://docs.harp-project.net/en/stable/apps/dashboard/>`_ (``dashboard.auth``, or
+``--set dashboard.auth.type=none``, which leaves the dashboard open to anyone who can reach its port). Scrapers and
+scripts calling port 4080 must send credentials, or use ``dashboard.metrics_port`` for Prometheus.
 
 In another terminal, send a few requests through the proxy:
 
@@ -118,11 +121,11 @@ Where to go next
 
 The documentation is at https://docs.harp-project.net/en/stable/.
 
-* `Quick start <https://docs.harp-project.net/en/stable/start/quick.html>`_: the first run, explained, and how to read
-  the dashboard.
+* `Quick start <https://docs.harp-project.net/en/stable/start/quick.html>`_: the first run, explained. The `user guide
+  <https://docs.harp-project.net/en/stable/user/>`_ shows how to read the dashboard.
 * `Run it in Docker <https://docs.harp-project.net/en/stable/start/docker.html>`_: image tags, a configuration file and
   Docker Compose.
-* `Operate it in production <https://docs.harp-project.net/en/stable/operate/>`_: configuration, PostgreSQL, logging,
+* `Operate it in production <https://docs.harp-project.net/en/stable/operate/>`_: configuration, migrations, logging,
   metrics, upgrades.
 * `Explore the features <https://docs.harp-project.net/en/stable/features/>`_: caching, circuit breaker, rules, audit
   log, one page each.
@@ -159,4 +162,4 @@ People & Credits
 
 * Sponsored by `Makersquad <https://www.makersquad.fr/>`_
 
-`There are many ways you can contribute to HARP! <https://docs.harp-project.net/en/latest/contribute/index.html>`_
+`There are many ways you can contribute to HARP! <https://docs.harp-project.net/en/stable/contribute/index.html>`_

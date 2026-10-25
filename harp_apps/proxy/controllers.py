@@ -3,10 +3,11 @@ import unicodedata
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 from functools import cached_property, lru_cache
+from ipaddress import IPv4Network, IPv6Network
 from time import time
 from httpx import AsyncClient, codes
 from pyheck import shouty_snake
-from typing import Optional, cast, override
+from typing import Optional, Sequence, cast, override
 from urllib.parse import unquote_to_bytes, urlencode, urlsplit
 from whistle import IAsyncEventDispatcher
 
@@ -17,7 +18,11 @@ from harp.models import Transaction
 from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.tpdex import tpdex
-from harp.settings import DEFAULT_CLIENT_READ_TIMEOUT, DEFAULT_MIN_REQUEST_BODY_RATE, DEFAULT_REQUEST_BODY_GRACE_PERIOD
+from harp.settings import (
+    DEFAULT_CLIENT_READ_TIMEOUT,
+    DEFAULT_MIN_REQUEST_BODY_RATE,
+    DEFAULT_REQUEST_BODY_GRACE_PERIOD,
+)
 from harp_apps.storage.constants import CLIENT_DISCONNECTED, DEFAULT_MAX_RECORDED_BODY_SIZE, TRUNCATED_RESPONSE_BODY
 from .adapters import HttpClientProxyAdapter, strip_credentials
 from .constants import (
@@ -48,7 +53,7 @@ from .events import (
 from .helpers import extract_tags_from_request
 from .settings import TagsSettings
 from .settings.remote import Remote
-from .streams import MinRateStream, RecordingStream, UpstreamResponseStream
+from .streams import MaxSizeStream, MinRateStream, RequestBodyTooLarge, RecordingStream, UpstreamResponseStream
 
 logger = get_logger(__name__)
 
@@ -89,10 +94,12 @@ class AbstractHttpProxyController(ABC):
         name=None,
         logging=True,
         max_recorded_body_size: int = DEFAULT_MAX_RECORDED_BODY_SIZE,
+        max_request_body_size: int | None = None,
         min_request_body_rate: int = DEFAULT_MIN_REQUEST_BODY_RATE,
         request_body_grace_period: float = DEFAULT_REQUEST_BODY_GRACE_PERIOD,
         client_read_timeout: float = DEFAULT_CLIENT_READ_TIMEOUT,
         tags: TagsSettings | None = None,
+        trusted_proxies: Sequence[IPv4Network | IPv6Network] = (),
     ):
         self.remote = remote
         if not isinstance(remote, Remote):
@@ -101,6 +108,7 @@ class AbstractHttpProxyController(ABC):
         self._logging = logging
         self._dispatcher = dispatcher or self._dispatcher
         self.max_recorded_body_size = max_recorded_body_size
+        self.max_request_body_size = max_request_body_size
         self.min_request_body_rate = min_request_body_rate
         self.request_body_grace_period = request_body_grace_period
         self.client_read_timeout = client_read_timeout
@@ -108,6 +116,7 @@ class AbstractHttpProxyController(ABC):
 
         self.proxy = HttpClientProxyAdapter(
             http_client,
+            trusted_proxies=trusted_proxies,
             extensions={"endpoint": self.name, "max_recorded_body_size": self.max_recorded_body_size},
         )
 
@@ -175,6 +184,15 @@ class HttpProxyController(AbstractHttpProxyController):
     @override
     async def __call__(self, request: HttpRequest) -> HttpResponse:
         base_url = None
+        limit = self.max_request_body_size
+        if limit is not None and _declared_length(request) > limit:
+            # Nothing read, nothing recorded: the body is refused on its declared size alone.
+            rejected = RequestBodyTooLarge()
+            return HttpResponse(
+                rejected.message, status=rejected.status, headers=rejected.headers, content_type="text/plain"
+            )
+        if limit is not None:
+            request.stream = MaxSizeStream(request.stream, limit=limit)
         # Applied before anything reads the body: the transaction recording does, as soon as it starts.
         request.stream = MinRateStream(
             request.stream,
@@ -285,7 +303,7 @@ class HttpProxyController(AbstractHttpProxyController):
         :param full_url: The full URL to which the request is forwarded.
         :return: The HTTP response received from the remote server, its body streamed from the remote as it is read.
         """
-        response = await self.proxy.send(context.request, full_url)
+        response = await self.proxy.send(context.request, full_url, transaction=transaction)
 
         # Update the status of the remote URL based on the response status code
         self.remote.notify_url_status(base_url, response.status_code)
@@ -510,6 +528,14 @@ class HttpProxyController(AbstractHttpProxyController):
             context.set_response(await self.failure(context.transaction, None, error))
 
         return context
+
+
+def _declared_length(request: HttpRequest) -> int:
+    """The request's declared ``Content-Length``, or 0 when it has none or none that makes sense."""
+    try:
+        return max(int(request.headers.get("content-length", 0)), 0)
+    except ValueError:
+        return 0
 
 
 def _connection_named_headers(headers) -> set:

@@ -11,10 +11,10 @@ Dashboard captures
 
     make docs-assets
 
-This runs ``python -m docs._captures``. It migrates a throwaway SQLite database, fills it with the fixed data of
+This runs ``python -m docs._captures``. It creates a throwaway SQLite database (SQLite is created from the models, never migrated), fills it with the fixed data of
 ``docs/_captures/seed.py``, serves the real dashboard on it with the clock frozen, and takes the screenshots with
 Playwright (the one of the dashboard frontend, so ``make install-frontend`` and ``pnpm exec playwright install
-chromium`` are the only prerequisites). The captures land in ``docs/user/images``. The viewport, the theme (light), the
+chromium`` are needed, and Graphviz for the diagrams, see below). The captures land in ``docs/user/images``. The viewport, the theme (light), the
 clock and the data are fixed: running it again without a UI change gives the same files, byte for byte.
 
 To capture another page, add an entry to ``shots`` in ``docs/_captures/capture.mjs``. To change what the dashboard shows,
@@ -36,6 +36,12 @@ sources. ``make docs-assets`` renders them too, or only them with ``uv run pytho
 ``.dot`` and the ``.svg`` together.
 
 .. graphviz:: ../images/diagrams/how-it-works-overview.dot
+
+.. note::
+
+    The four ``docs/images/HowItWorks-*.png`` files are not used by the docs or the README any more, and they are not
+    generated. They stay in the repository on purpose: the README of every release already published on PyPI embeds them
+    from the ``main`` branch, so deleting them breaks those pages.
 
 Class diagrams, such as the event hierarchies in :doc:`/core/events`, have no source file: they are derived from the
 code with the ``inheritance-diagram`` directive.

@@ -73,7 +73,7 @@ class TestSystemControllerProxy(SystemControllerTestFixtureMixin):
                     {
                         "endpoint": "not-an-api",
                         "action": "up",
-                        "url": "http://example.com",
+                        "index": 0,
                     }
                 )
             )
@@ -86,7 +86,7 @@ class TestSystemControllerProxy(SystemControllerTestFixtureMixin):
                     {
                         "endpoint": "api",
                         "action": "up",
-                        "url": "http://invalid.com",
+                        "index": 5,
                     }
                 )
             )
@@ -99,7 +99,7 @@ class TestSystemControllerProxy(SystemControllerTestFixtureMixin):
                     {
                         "endpoint": "api",
                         "action": "up",
-                        "url": "http://example.com",
+                        "index": 0,
                     }
                 )
             )

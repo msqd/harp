@@ -1,0 +1,1 @@
+Notification payloads no longer carry the query string, and the Slack and Google Chat senders escape the URL and reason phrase.
