@@ -193,7 +193,7 @@ class DashboardController(RoutingController):
             current_auth = request.basic_auth
 
             if current_auth:
-                request.extensions["user"] = self._auth.check(current_auth[0], current_auth[1])
+                request.extensions["user"] = await self._auth.acheck(current_auth[0], current_auth[1])
 
             if not request.extensions["user"]:
                 return HttpResponse(
