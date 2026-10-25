@@ -17,8 +17,8 @@ To run migrations, you can either start your harp-proxy server with the `storage
 
 .. code-block:: shell
 
-    # migrate to the latest revision, or «head»
-    harp-proxy db:migrate up head
+    # migrate every application to its latest revision, or «heads»
+    harp-proxy db:migrate up heads
 
     # migrate down to a specific revision
     harp-proxy db:migrate down <revision>

@@ -4,8 +4,9 @@
 - **Date**: 2026-10-24
 - **Decided in**: [explore/auth](https://github.com/msqd/harp/milestone/24)
 
-**Proposed on the explore/auth exploration branch; nothing of it is implemented.** Line references are
-to `main` when this record was written.
+**Proposed on the explore/auth exploration branch.** #1518 implements the mechanism there: storage is the first
+branch (`storage`), the static `version_locations`, `heads` everywhere and the `include_object` filter. No other
+application has tables yet. Line references are to `main` when this record was written.
 
 HARP keeps one alembic environment and one `alembic_version` table, and each application that owns
 tables owns a branch of that history: its own `migrations/versions` folder and a `branch_label` named

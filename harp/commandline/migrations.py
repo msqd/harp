@@ -12,6 +12,7 @@ from harp import get_logger
 from harp.commandline.options.server import server_command
 from harp.utils.commandline import click
 from harp_apps.storage.utils.migrations import (
+    UnknownRevisionError,
     create_alembic_config,
     create_harp_settings_with_storage_from_command_line_options,
     create_revision,
@@ -31,6 +32,8 @@ async def print_status(engine, alembic_cfg):
     try:
         async with engine.connect() as conn:
             current = await conn.run_sync(lambda sync_conn: current_revisions_by_application(sync_conn, alembic_cfg))
+    except UnknownRevisionError as exc:
+        raise click.ClickException(str(exc)) from None
     finally:
         await engine.dispose()
     for application, revision in sorted(current.items()):

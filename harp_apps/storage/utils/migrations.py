@@ -108,12 +108,39 @@ def table_belongs_to(application: str, table_name: str, applications) -> bool:
     """
     Tell if ``application`` owns the table named ``table_name``. An application owns the tables prefixed with its name
     (``auth_users`` for ``auth``). Storage owns what no other application claims, as its tables predate the convention
-    (``transactions``, ``messages``, ``blobs``...).
+    (``transactions``, ``messages``, ``blobs``...). When prefixes overlap (``cache`` and ``cache_index``), the longest
+    one wins.
     """
-    claimed_by = [other for other in applications if other != STORAGE and table_name.startswith(f"{other}_")]
+    return table_owner(table_name, applications) == application
+
+
+def table_owner(table_name: str, applications) -> str:
+    claims = [other for other in applications if other != STORAGE and table_name.startswith(f"{other}_")]
+    return max(claims, key=len, default=STORAGE)
+
+
+def model_tables() -> list[tuple[str, str]]:
+    """``(module, table name)`` of every mapped model."""
+    return [(mapper.class_.__module__, mapper.local_table.name) for mapper in Base.registry.mappers]
+
+
+def check_prefixes(application: str, tables, applications) -> None:
+    """
+    Refuse to autogenerate for ``application`` when one of its models (``harp_apps.<application>...``) defines a table
+    without its prefix: it would silently end up in storage's revisions instead.
+    """
     if application == STORAGE:
-        return not claimed_by
-    return application in claimed_by
+        return
+    stray = sorted(
+        name
+        for module, name in tables
+        if module.split(".")[:2] == ["harp_apps", application] and table_owner(name, applications) != application
+    )
+    if stray:
+        raise ValueError(
+            f"Tables of {application!r} must be prefixed {application + '_'!r}, got: {', '.join(stray)}. "
+            "Unprefixed tables belong to storage."
+        )
 
 
 def create_alembic_config(url: Union[str, URL, Url, MultiHostUrl], *, locations: Union[dict[str, Path], None] = None):
@@ -159,6 +186,7 @@ def create_revision(alembic_cfg, application: str, message: str):
     if application not in locations:
         raise ValueError(f"Unknown application {application!r}, expected one of: {', '.join(sorted(locations))}.")
 
+    check_prefixes(application, model_tables(), locations)
     alembic_cfg.attributes["application"] = application
     revisions = ScriptDirectory.from_config(alembic_cfg).walk_revisions()
     has_branch = any(application in (revision.branch_labels or ()) for revision in revisions)
@@ -181,8 +209,18 @@ def current_revisions_by_application(sync_conn, alembic_cfg) -> dict[str, Union[
     by_folder = {Path(path).resolve(): name for name, path in alembic_cfg.attributes["locations"].items()}
     current: dict[str, Union[str, None]] = {name: None for name in by_folder.values()}
     for revision in MigrationContext.configure(sync_conn).get_current_heads():
-        current[by_folder[Path(script.get_revision(revision).path).resolve().parent]] = revision
+        try:
+            current[by_folder[Path(script.get_revision(revision).path).resolve().parent]] = revision
+        except Exception:
+            raise UnknownRevisionError(
+                f"The database is at revision {revision!r}, which this version of HARP does not know. It was probably "
+                "migrated by a newer version, or by an application whose migrations are not installed."
+            ) from None
     return current
+
+
+class UnknownRevisionError(ValueError):
+    """The database holds a revision that no listed migrations folder defines."""
 
 
 def create_harp_settings_with_storage_from_command_line_options(kwargs):

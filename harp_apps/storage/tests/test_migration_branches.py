@@ -15,6 +15,8 @@ from harp_apps.storage.utils.migrations import (
     create_revision,
     current_revisions_by_application,
     discover_migration_locations,
+    UnknownRevisionError,
+    check_prefixes,
     ensure_schema_is_current,
     table_belongs_to,
 )
@@ -204,18 +206,117 @@ async def test_migrate_status_shows_current_revision_per_application(database_ur
     assert f"storage: {STORAGE_HEAD}" in status.output
 
 
-async def test_database_migrated_before_branches_upgrades_cleanly(database_url, test_id):
+async def test_database_migrated_before_branches_upgrades_all_heads(database_url, test_id, tmp_path):
+    if database_url.startswith("sqlite"):
+        pytest.skip("sqlite is not tracked by alembic")
+    from harp_apps.storage.utils.testing.sql import get_scoped_database_url
+
+    root = _application_tree(tmp_path, with_migrations=["auth"])
+    locations = {"storage": discover_migration_locations()["storage"], **discover_migration_locations(root)}
+
+    async with get_scoped_database_url(database_url, test_id) as url:
+        cfg = create_alembic_config(url, locations=locations)
+        # a database as 0.12 left it: only storage, a plain revision in alembic_version
+        await _run(command.upgrade, cfg, "storage@a1c7f3b52e04")
+        await _run(command.upgrade, cfg, "heads")
+        engine = create_async_engine(url)
+        async with engine.connect() as conn:
+            current = await conn.run_sync(lambda c: current_revisions_by_application(c, cfg))
+        await engine.dispose()
+
+    assert current == {"auth": "auth0001", "storage": STORAGE_HEAD}
+
+
+async def test_migrate_status_is_readable_when_the_database_holds_an_unknown_revision(database_url, test_id):
     if database_url.startswith("sqlite"):
         pytest.skip("sqlite is not tracked by alembic")
     from harp_apps.storage.utils.testing.sql import get_scoped_database_url
 
     async with get_scoped_database_url(database_url, test_id) as url:
-        cfg = create_alembic_config(url)
-        # alembic_version holds a plain storage revision, as written before branch labels existed
-        await _run(command.upgrade, cfg, "a1c7f3b52e04")
-        result = await run_cli_migrate_command(url)
+        assert (await run_cli_migrate_command(url)).exit_code == 0
+        engine = create_async_engine(url)
+        async with engine.begin() as conn:
+            await conn.execute(text("UPDATE alembic_version SET version_num = 'deadbeef0000'"))
+        await engine.dispose()
+
+        status = await run_cli_migrate_command(url, operation="status", revision=None)
+
+    assert status.exit_code != 0
+    assert "deadbeef0000" in status.output
+    assert "Traceback" not in status.output
+
+
+def test_unknown_revision_in_the_database_is_reported(tmp_path):
+    import sqlite3
+
+    db = tmp_path / "unknown.db"
+    with sqlite3.connect(db) as conn:
+        conn.execute("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)")
+        conn.execute("INSERT INTO alembic_version VALUES ('deadbeef0000')")
+    from sqlalchemy import create_engine
+
+    cfg = create_alembic_config(f"sqlite+aiosqlite:///{db}")
+    with create_engine(f"sqlite:///{db}").connect() as conn:
+        with pytest.raises(UnknownRevisionError, match="deadbeef0000"):
+            current_revisions_by_application(conn, cfg)
+
+
+def test_longest_prefix_wins_when_prefixes_overlap():
+    applications = ["cache", "cache_index", "storage"]
+
+    assert table_belongs_to("cache_index", "cache_index_entries", applications)
+    assert not table_belongs_to("cache", "cache_index_entries", applications)
+    assert table_belongs_to("cache", "cache_entries", applications)
+
+
+def test_a_model_without_its_application_prefix_is_refused():
+    tables = [("harp_apps.auth.models", "auth_users"), ("harp_apps.auth.models", "sessions")]
+
+    with pytest.raises(ValueError, match="sessions"):
+        check_prefixes("auth", tables, ["auth", "storage"])
+
+
+def test_other_applications_models_are_not_checked_against_this_one():
+    tables = [("harp_apps.storage.models", "transactions"), ("harp_apps.auth.models", "auth_users")]
+
+    check_prefixes("auth", tables, ["auth", "storage"])
+    check_prefixes("storage", [("harp_apps.storage.models", "transactions")], ["auth", "storage"])
+
+
+def test_create_revision_refuses_an_unprefixed_table(monkeypatch, tmp_path):
+    from harp_apps.storage.utils import migrations
+
+    monkeypatch.setattr(migrations, "model_tables", lambda: [("harp_apps.auth.models", "sessions")])
+    auth = tmp_path / "auth_versions"
+    auth.mkdir()
+    cfg = create_alembic_config("sqlite+aiosqlite:///:memory:", locations={"auth": auth})
+
+    with pytest.raises(ValueError, match="sessions"):
+        create_revision(cfg, "auth", "msg")
+    assert not list(auth.glob("*.py"))
+
+
+def test_create_migration_command_writes_the_application_revision(tmp_path, monkeypatch, extra_table):
+    import sqlite3
+
+    from harp.commandline import migrations
+    from harp.utils.testing.cli import CliRunner
+    from harp_apps.storage.utils import migrations as utils
+
+    locations = {"storage": tmp_path / "storage_versions", "auth": tmp_path / "auth_versions"}
+    for path in locations.values():
+        path.mkdir()
+    monkeypatch.setattr(utils, "discover_migration_locations", lambda root=None: locations)
+    db = tmp_path / "cli.db"
+    sqlite3.connect(db).close()
+
+    result = CliRunner().invoke(
+        migrations.create_migration, ["auth", "add things", "--set", f"storage.url=sqlite+aiosqlite:///{db}"]
+    )
 
     assert result.exit_code == 0, result.output
+    assert "auth_branch_test_things" in _revision_text(locations["auth"])
+    assert not list(locations["storage"].glob("*.py"))
 
 
 def test_create_migration_refuses_an_unknown_application():

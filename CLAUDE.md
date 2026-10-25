@@ -205,7 +205,7 @@ Based on alembic, wrapped with custom logic.
 
 ```bash
 # Run migrations
-harp-proxy db:migrate up head
+harp-proxy db:migrate up heads
 
 # Create new migration
 harp-proxy db:create-migration storage "description"
