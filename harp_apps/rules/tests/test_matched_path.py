@@ -184,6 +184,7 @@ async def test_wildcard_rule_does_not_match_without_the_trailing_slash():
 
 
 async def test_other_paths_are_not_denied():
+    assert not await _is_denied("GET /admin/users", "/admin/other/")
     assert not await _is_denied("GET /admin/users", "/admin/users2")
     assert not await _is_denied("GET /admin/users", "/admin/user;s")
     assert not await _is_denied("GET /admin/users", "/other/admin/users")
