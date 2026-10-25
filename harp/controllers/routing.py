@@ -1,5 +1,4 @@
 import traceback
-from inspect import signature
 from typing import Optional
 
 from http_router import NotFoundError, Router
@@ -11,6 +10,8 @@ from harp import get_logger
 from harp.http import HttpRequest, HttpResponse
 from harp.meta import get_meta, has_meta, set_meta
 from harp.utils.arguments import Arguments
+
+from harp.utils.signatures import resolve_arguments
 
 
 logger = get_logger(__name__)
@@ -48,12 +49,7 @@ class RoutingController:
     async def __call__(self, request: HttpRequest):
         try:
             match = self.router(request.path, method=request.method)
-            sig = signature(match.target)
-            params = match.params or {}  # None on static routes
-            args = (
-                request if name == "request" else params.get(name, param.default)
-                for name, param in sig.parameters.items()
-            )
+            args = resolve_arguments(match.target, **{**(match.params or {}), "request": request})
             return await match.target(*args)
         except NotFoundError as exc:
             if not self.handle_errors:
