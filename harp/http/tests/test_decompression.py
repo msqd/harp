@@ -4,7 +4,7 @@ import zlib
 import httpx
 import pytest
 
-from harp.http.decompression import MAX_DECODED_STEP, BoundedDecoder
+from harp.http.decompression import MAX_CODINGS, MAX_DECODED_STEP, BoundedDecoder
 
 
 def decode_all(encoding, data, *, step=MAX_DECODED_STEP):
@@ -58,3 +58,27 @@ def test_no_encoding_passes_through(encoding):
 def test_corrupt_data_is_a_decoding_error():
     with pytest.raises(httpx.DecodingError):
         decode_all("gzip", b"definitely not gzip")
+
+
+def stacked(layers, body=b"payload"):
+    for _ in range(layers):
+        body = gzip.compress(body)
+    return ", ".join(["gzip"] * layers), body
+
+
+def test_four_stacked_encodings_are_decoded():
+    encoding, encoded = stacked(MAX_CODINGS)
+
+    assert b"".join(decode_all(encoding, encoded)) == b"payload"
+
+
+def test_more_than_four_stacked_encodings_are_a_decoding_error():
+    encoding, encoded = stacked(MAX_CODINGS + 1)
+
+    with pytest.raises(httpx.DecodingError):
+        decode_all(encoding, encoded)
+
+
+def test_a_huge_number_of_encodings_is_a_decoding_error_not_a_recursion_error():
+    with pytest.raises(httpx.DecodingError):
+        decode_all(", ".join(["gzip"] * 5000), b"whatever")
