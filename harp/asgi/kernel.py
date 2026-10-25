@@ -3,7 +3,6 @@ from functools import lru_cache
 from inspect import signature
 
 from asgiref.typing import ASGIReceiveCallable, ASGISendCallable, Scope
-from hypercorn.utils import LifespanFailureError
 from whistle import AsyncEventDispatcher, Event, IAsyncEventDispatcher
 
 from harp import get_logger
@@ -17,6 +16,7 @@ from .events import (
     EVENT_CORE_REQUEST,
     EVENT_CORE_RESPONSE,
     EVENT_CORE_STARTED,
+    EVENT_CORE_STOPPED,
     EVENT_CORE_VIEW,
     ControllerEvent,
     RequestEvent,
@@ -45,6 +45,10 @@ def _cached_signature(subject):
     return signature(subject)
 
 
+def _describe(exc: Exception) -> str:
+    return f"{type(exc).__module__}.{type(exc).__qualname__}: {exc}"
+
+
 class ASGIKernel:
     dispatcher: IAsyncEventDispatcher
 
@@ -68,17 +72,7 @@ class ASGIKernel:
             return await HttpResponseAsgiBridge(response, send, receive).send()
 
         if asgi_type == "lifespan":
-            await receive()
-            # TODO: there are more than just the lifespan.startup event, maybe handle all messages possible or at
-            # least ignore the ones we're not interested in.
-            # See: https://asgi.readthedocs.io/en/latest/specs/lifespan.html
-            try:
-                await self.dispatcher.adispatch(EVENT_CORE_STARTED, Event())
-            except Exception as exc:
-                raise LifespanFailureError(EVENT_CORE_STARTED, repr(exc)) from exc
-
-            self.started = True
-            return
+            return await self.handle_lifespan(receive, send)
 
         if asgi_type == "websocket":
             # NOT IMPLEMENTED YET!
@@ -87,6 +81,34 @@ class ASGIKernel:
             return
 
         raise RuntimeError(f'Unable to handle request, invalid type "{asgi_type}".')
+
+    async def handle_lifespan(self, receive: ASGIReceiveCallable, send: ASGISendCallable):
+        """
+        Runs the lifespan protocol: dispatches the started event on startup, then waits for the shutdown message and
+        dispatches the stopped event. Failures are reported to the server as ``*.failed`` messages.
+
+        See: https://asgi.readthedocs.io/en/latest/specs/lifespan.html
+        """
+        # TODO: ignore the messages we're not interested in instead of assuming startup comes first.
+        await receive()
+        try:
+            await self.dispatcher.adispatch(EVENT_CORE_STARTED, Event())
+        except Exception as exc:
+            logger.exception("Startup failed.")
+            await send({"type": "lifespan.startup.failed", "message": _describe(exc)})
+            return
+
+        self.started = True
+        await send({"type": "lifespan.startup.complete"})
+
+        await receive()
+        try:
+            await self.dispatcher.adispatch(EVENT_CORE_STOPPED, Event())
+        except Exception as exc:
+            logger.exception("Shutdown failed.")
+            await send({"type": "lifespan.shutdown.failed", "message": _describe(exc)})
+            return
+        await send({"type": "lifespan.shutdown.complete"})
 
     def _resolve_arguments(self, subject, **candidates):
         """

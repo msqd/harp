@@ -11,6 +11,9 @@ if TYPE_CHECKING:
 #: Event fired when the ASGI Kernel receives a "lifespan" ASGI message.
 EVENT_CORE_STARTED = "core.started"
 
+#: Event fired when the ASGI Kernel receives the "lifespan.shutdown" message.
+EVENT_CORE_STOPPED = "core.stopped"
+
 
 class RequestEvent(Event):
     """

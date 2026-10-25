@@ -8,9 +8,9 @@ from httpx import AsyncClient
 
 from harp import get_logger
 from harp.asgi.events import ViewEvent
-from harp.controllers import RoutingController
+from harp.controllers import AsgiMountController, RoutingController
 from harp.errors import ConfigurationError
-from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
+from harp.http import HttpRequest, HttpResponse
 from harp.views.json import on_json_response
 from harp_apps import dashboard
 from harp_apps.proxy.controllers import HttpProxyController
@@ -64,6 +64,17 @@ def _send_with_headers(asgi_send: ASGISendCallable, headers: dict) -> ASGISendCa
     return send
 
 
+def _single_page_app(app):
+    """Serves the app's index for any path that is not a file, so client-side routes survive a reload."""
+
+    async def single_page_app(scope, receive, send):
+        if "." not in scope["path"]:
+            scope = {**scope, "path": "/index.html", "raw_path": b"/index.html"}
+        await app(scope, receive, send)
+
+    return single_page_app
+
+
 class DashboardController(RoutingController):
     name = "ui"
 
@@ -71,7 +82,7 @@ class DashboardController(RoutingController):
     settings: DashboardSettings
     http_client: AsyncClient
 
-    _ui_static_middleware = None
+    _ui_static_controller = None
     _ui_devserver_proxy_controller = None
     _create_users_task = None
 
@@ -114,10 +125,11 @@ class DashboardController(RoutingController):
         # if no devserver is configured, we may need to serve static files
         if not self._ui_devserver_proxy_controller:
             if os.path.exists(self.static_build_path):
-                self._ui_static_middleware = ASGIMiddlewareStaticFile(None, "", [self.static_build_path])
+                static_files = ASGIMiddlewareStaticFile(None, "", [self.static_build_path])
+                self._ui_static_controller = AsgiMountController(_single_page_app(static_files), lifespan=False)
 
         # if no devserver is configured and no static files are found, we can't serve the dashboard
-        if not self._ui_static_middleware and not self._ui_devserver_proxy_controller:
+        if not self._ui_static_controller and not self._ui_devserver_proxy_controller:
             raise ConfigurationError(
                 "Dashboard controller could not initiate because it got neither compiled assets nor a devserver "
                 "configuration. If you're using an editable install, make sure to run `make build-frontend` in the "
@@ -128,7 +140,7 @@ class DashboardController(RoutingController):
         features = {
             "api": True,
             "devserver": bool(self._ui_devserver_proxy_controller),
-            "static": bool(self._ui_static_middleware),
+            "static": bool(self._ui_static_controller),
         }
         return f"{type(self).__name__}({'+'.join(f for f in features if features[f])})"
 
@@ -184,24 +196,9 @@ class DashboardController(RoutingController):
         if request.path == METRICS_PATH:
             return await metrics_controller()
 
-        # Is this a prebuilt static asset? Can we serve it using our middleware? This wil need refactoring, as it ties
-        # the controller implementation to the underlying webserver protocol implementation, but for now, it works.
-        if (
-            self._ui_static_middleware
-            and not request.path.startswith("/api/")
-            and hasattr(request._impl, "asgi_receive")
-        ):
-            # XXX todo fix
-            await self._ui_static_middleware(
-                {
-                    "type": "http",
-                    "path": request.path if "." in request.path else "/index.html",
-                    "method": request.method,
-                },
-                request._impl.asgi_receive,
-                asgi_send,
-            )
-            return AlreadyHandledHttpResponse()
+        # Prebuilt static assets are served by the mounted static files application.
+        if self._ui_static_controller and not request.path.startswith("/api/") and hasattr(request._impl, "asgi_scope"):
+            return await self._ui_static_controller(request, asgi_send)
 
         try:
             return await super().__call__(request)
