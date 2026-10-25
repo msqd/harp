@@ -1,0 +1,1 @@
+CI: no ``${{ }}`` expression in ``run:`` scripts (values go through ``env:``), and a ``zizmor`` job, part of *All Checks Passed*, fails on one.

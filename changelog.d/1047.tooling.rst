@@ -1,0 +1,1 @@
+A weekly workflow lists the direct dependencies whose upper bound excludes the latest PyPI release in its job summary, and fails when there are any.

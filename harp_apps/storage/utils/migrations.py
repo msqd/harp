@@ -41,6 +41,7 @@ def _forms(password: str) -> set[str]:
     forms = {password, quote(password, safe=""), quote(password), quote_plus(password)}
     # SQLAlchemy only escapes the characters that would end the userinfo
     forms.add(URL.create("x", username="", password=password).render_as_string(hide_password=False)[len("x://:") : -1])
+    forms |= {re.sub(r"%[0-9A-F]{2}", lambda m: m.group().lower(), form) for form in forms}
     # the form given to configparser doubles every percent sign
     return forms | {form.replace("%", "%%") for form in forms}
 
@@ -57,15 +58,18 @@ def _url_scoped_patterns(url: URL) -> list[re.Pattern]:
 def hide_password(message: str, url: AnyUrl) -> str:
     """Mask the password of ``url`` where it sits in a url in ``message``: its userinfo or ``?password=``.
 
-    Elsewhere the password is left alone: it is often a common word, or the user or database name, and masking
-    it there would corrupt the message.
+    The shared shape-based masking runs on top, so any other url is covered whatever its encoding. Elsewhere the
+    password is left alone: it is often a common word, or the user or database name, and masking it there would
+    corrupt the message.
     """
-    url = _as_sqlalchemy_url(url)
-    if not _passwords(url):
-        return message
-    for pattern in _url_scoped_patterns(url):
+    try:
+        patterns = _url_scoped_patterns(_as_sqlalchemy_url(url))
+    except Exception:
+        # a url SQLAlchemy cannot parse (multi-host): only the shape-based masking applies
+        patterns = []
+    for pattern in patterns:
         message = pattern.sub(r"\1***", message)
-    return message
+    return mask_credentials(message)
 
 
 def printable_url(url: AnyUrl) -> str:
@@ -98,7 +102,7 @@ def discover_migration_locations(root: Union[str, Path, None] = None) -> dict[st
     """
     Map every application that has a ``migrations/versions`` folder to that folder. The list is static: it does not
     depend on which applications are enabled, so a database migrated while an application was enabled still resolves
-    that application's revisions once it is disabled (see ADR-0011).
+    that application's revisions once it is disabled (see ADR-0012).
     """
     import harp_apps
 

@@ -1,7 +1,7 @@
 """
 Audit Application
 
-Records the auditable events of the other applications in the commit of their action (ADR-0012). Not loaded by default:
+Records the auditable events of the other applications in the commit of their action (ADR-0013). Not loaded by default:
 the applications that perform critical actions declare ``audit`` in their dependencies.
 """
 

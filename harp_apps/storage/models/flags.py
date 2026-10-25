@@ -25,7 +25,7 @@ class UserFlag(Base):
     transaction_id = mapped_column(ForeignKey("transactions.id", ondelete="CASCADE"), nullable=False)
     transaction: Mapped["Transaction"] = relationship(back_populates="flags")
 
-    __table_args__ = (UniqueConstraint("user_id", "transaction_id", "type", name="_user_transaction_uc"),)
+    __table_args__ = (UniqueConstraint("user_id", "transaction_id", "type"),)
 
 
 class FlagsRepository(Repository):

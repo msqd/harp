@@ -168,7 +168,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),
@@ -385,6 +389,20 @@
         ]),
         'default': None,
         'title': 'Description',
+      }),
+      'max_request_body_size': dict({
+        'anyOf': list([
+          dict({
+            'gt': 0,
+            'minimum': 0,
+            'type': 'integer',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+        'title': 'Max Request Body Size',
       }),
       'name': dict({
         'title': 'Name',
@@ -590,7 +608,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),
@@ -807,6 +829,28 @@
         ]),
         'default': None,
         'title': 'Description',
+      }),
+      'max_request_body_size': dict({
+        'anyOf': list([
+          dict({
+            'anyOf': list([
+              dict({
+                'pattern': '^\\s*(\\d*\\.?\\d+)\\s*(\\w+)?',
+                'type': 'string',
+              }),
+              dict({
+                'minimum': 0,
+                'type': 'integer',
+              }),
+            ]),
+            'gt': 0,
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+        'title': 'Max Request Body Size',
       }),
       'name': dict({
         'title': 'Name',
@@ -1012,7 +1056,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),
@@ -1229,6 +1277,20 @@
         ]),
         'default': None,
         'title': 'Description',
+      }),
+      'max_request_body_size': dict({
+        'anyOf': list([
+          dict({
+            'gt': 0,
+            'minimum': 0,
+            'type': 'integer',
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+        'title': 'Max Request Body Size',
       }),
       'name': dict({
         'title': 'Name',
@@ -1434,7 +1496,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),
@@ -1652,6 +1718,28 @@
         'default': None,
         'title': 'Description',
       }),
+      'max_request_body_size': dict({
+        'anyOf': list([
+          dict({
+            'anyOf': list([
+              dict({
+                'pattern': '^\\s*(\\d*\\.?\\d+)\\s*(\\w+)?',
+                'type': 'string',
+              }),
+              dict({
+                'minimum': 0,
+                'type': 'integer',
+              }),
+            ]),
+            'gt': 0,
+          }),
+          dict({
+            'type': 'null',
+          }),
+        ]),
+        'default': None,
+        'title': 'Max Request Body Size',
+      }),
       'name': dict({
         'title': 'Name',
         'type': 'string',
@@ -1747,6 +1835,20 @@
             ]),
             'default': None,
             'title': 'Description',
+          }),
+          'max_request_body_size': dict({
+            'anyOf': list([
+              dict({
+                'gt': 0,
+                'minimum': 0,
+                'type': 'integer',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Max Request Body Size',
           }),
           'name': dict({
             'title': 'Name',
@@ -2040,7 +2142,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),
@@ -2301,6 +2407,28 @@
             'default': None,
             'title': 'Description',
           }),
+          'max_request_body_size': dict({
+            'anyOf': list([
+              dict({
+                'anyOf': list([
+                  dict({
+                    'pattern': '^\\s*(\\d*\\.?\\d+)\\s*(\\w+)?',
+                    'type': 'string',
+                  }),
+                  dict({
+                    'minimum': 0,
+                    'type': 'integer',
+                  }),
+                ]),
+                'gt': 0,
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Max Request Body Size',
+          }),
           'name': dict({
             'title': 'Name',
             'type': 'string',
@@ -2612,7 +2740,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),
@@ -2872,6 +3004,20 @@
             ]),
             'default': None,
             'title': 'Description',
+          }),
+          'max_request_body_size': dict({
+            'anyOf': list([
+              dict({
+                'gt': 0,
+                'minimum': 0,
+                'type': 'integer',
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Max Request Body Size',
           }),
           'name': dict({
             'title': 'Name',
@@ -3165,7 +3311,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),
@@ -3425,6 +3575,28 @@
             ]),
             'default': None,
             'title': 'Description',
+          }),
+          'max_request_body_size': dict({
+            'anyOf': list([
+              dict({
+                'anyOf': list([
+                  dict({
+                    'pattern': '^\\s*(\\d*\\.?\\d+)\\s*(\\w+)?',
+                    'type': 'string',
+                  }),
+                  dict({
+                    'minimum': 0,
+                    'type': 'integer',
+                  }),
+                ]),
+                'gt': 0,
+              }),
+              dict({
+                'type': 'null',
+              }),
+            ]),
+            'default': None,
+            'title': 'Max Request Body Size',
           }),
           'name': dict({
             'title': 'Name',
@@ -3737,7 +3909,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),

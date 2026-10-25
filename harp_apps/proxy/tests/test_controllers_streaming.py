@@ -1,6 +1,7 @@
 """Bounded response streaming: the client gets the upstream body as it arrives, HARP records at most a capped prefix."""
 
 import asyncio
+import gzip
 
 import httpx
 import pytest
@@ -197,6 +198,22 @@ async def test_a_filter_reading_the_body_leaves_it_whole_for_the_client_and_the_
     assert await read_all(response) == b"0123456789"
     recorded = dispatcher.recorded_response()
     assert await recorded.aread() == b"0123"
+
+
+@respx.mock
+async def test_a_compressed_body_is_decoded_in_bounded_steps():
+    bomb = gzip.compress(b"0" * 32 * 1024 * 1024)
+    respx.get(BASE_URL).mock(return_value=httpx.Response(200, headers={"content-encoding": "gzip"}, content=bomb))
+    controller = create_controller(RecordingDispatcher(), max_recorded_body_size=1024)
+
+    response = await controller(HttpRequest())
+    size = largest = 0
+    async for chunk in response.stream:
+        size += len(chunk)
+        largest = max(largest, len(chunk))
+
+    assert size == 32 * 1024 * 1024
+    assert largest <= 256 * 1024
 
 
 async def send_through_asgi(response: HttpResponse) -> list:

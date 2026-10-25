@@ -61,6 +61,10 @@
       {}
   
     ''',
+    'harp_apps.http_cache.settings.PurgeSettings': '''
+      {}
+  
+    ''',
   })
 # ---
 # name: test_all_applications_default_settings[harp_apps.http_client]

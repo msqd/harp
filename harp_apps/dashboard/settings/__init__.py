@@ -10,6 +10,12 @@ from harp_apps.dashboard.settings.devserver import DevserverSettings
 class DashboardSettings(ApplicationSettingsMixin, Configurable):
     """Root settings for the dashboard application."""
 
+    host: str = Field(
+        "[::]",
+        description="Address on which the dashboard application will listen. The default listens on every interface, "
+        "which a published Docker port needs. Use `127.0.0.1` to listen on the loopback interface only.",
+    )
+
     port: int = Field(
         4080,
         description="Port on which the dashboard application will be served.",

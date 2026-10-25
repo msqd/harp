@@ -15,6 +15,7 @@ Submodules
     :maxdepth: 1
 
     harp_apps.acme
+    harp_apps.audit
     harp_apps.contrib
     harp_apps.dashboard
     harp_apps.http_cache

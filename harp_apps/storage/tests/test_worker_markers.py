@@ -1,11 +1,10 @@
 import asyncio
-import hashlib
 from datetime import UTC, datetime
 
 from whistle import AsyncEventDispatcher
 
 from harp.http import HttpRequest, HttpResponse
-from harp.models import Transaction
+from harp.models import Blob, Transaction
 from harp.models.blobs import OFFLOAD_HASH_THRESHOLD
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp_apps.proxy.events import (
@@ -61,7 +60,10 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
             pass
 
         await worker.push(stalled)
-        await asyncio.sleep(0)  # consumer is now stuck on the first item
+        # wait until the consumer has taken the first item and is stuck on it, however loaded the machine is
+        async with asyncio.timeout(10):
+            while worker._queue.qsize():
+                await asyncio.sleep(0.001)
         for _ in range(size):
             await worker.push(noop)
         worker.clock = lambda: now + worker.pressure_hold
@@ -75,6 +77,8 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         request_body: bytes = b"request content",
         response_body: bytes = b"response content",
         pressure: int = 0,
+        request_headers: dict | None = None,
+        response_headers: dict | None = None,
     ) -> Transaction:
         """Helper to create a transaction with request/response messages through events."""
         worker = self.create_worker(dispatcher, sql_storage, blob_storage)
@@ -95,12 +99,12 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         await dispatcher.adispatch(EVENT_TRANSACTION_STARTED, TransactionEvent(transaction=transaction))
 
         # Create and dispatch request message event
-        request = HttpRequest(method="POST", path="/test", body=request_body)
+        request = HttpRequest(method="POST", path="/test", body=request_body, headers=request_headers)
         request_event = HttpMessageEvent(transaction=transaction, message=request)
         await dispatcher.adispatch(EVENT_TRANSACTION_MESSAGE, request_event)
 
         # Create and dispatch response message event
-        response = HttpResponse(response_body, status=200)
+        response = HttpResponse(response_body, status=200, headers=response_headers)
         response_event = HttpMessageEvent(transaction=transaction, message=response)
         await dispatcher.adispatch(EVENT_TRANSACTION_MESSAGE, response_event)
 
@@ -150,7 +154,7 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         assert response_blob.data == b"response data"
 
     async def test_large_body_blob_id_is_its_content_hash(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
-        """Large bodies (hashed off the event loop) get the same blob id as small ones: sha1 of type, newline, data."""
+        """Large bodies (hashed off the event loop) get the same blob id as small ones: `Blob.from_data` id."""
         dispatcher = AsyncEventDispatcher()
         body = b"x" * (OFFLOAD_HASH_THRESHOLD * 4)
 
@@ -160,8 +164,8 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
 
         transactions = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
         request_msg, response_msg = transactions[0].messages
-        assert request_msg.body == hashlib.sha1(b"\n" + body).hexdigest()
-        assert response_msg.body == hashlib.sha1(b"\n" + b"small").hexdigest()
+        assert request_msg.body == Blob.from_data(body).id
+        assert response_msg.body == Blob.from_data(b"small").id
 
     async def test_large_body_round_trips(self, request, sql_storage: SqlStorage, blob_storage: IBlobStorage):
         dispatcher = AsyncEventDispatcher()
@@ -506,3 +510,59 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
 
         (stored,) = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
         assert stored.markers == {SKIP_REQUEST_BODY_STORAGE, SKIP_RESPONSE_BODY_STORAGE}
+
+    async def stored_pair(self, sql_storage: SqlStorage):
+        (transaction,) = await sql_storage.get_transaction_list(username="anonymous", with_messages=True)
+        assert len(transaction.messages) == 2
+        return transaction, *transaction.messages
+
+    async def test_request_no_store_suppresses_both_payloads(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        await self.create_transaction_and_messages(
+            AsyncEventDispatcher(),
+            sql_storage,
+            blob_storage,
+            request_headers={"Cache-Control": "private, No-Store"},
+        )
+
+        transaction, request_msg, response_msg = await self.stored_pair(sql_storage)
+        assert {"no-store-request", "no-store-response"} <= set(transaction.markers)
+        for message in (request_msg, response_msg):
+            assert message.summary
+            assert message.headers is None
+            assert message.body is None
+
+    async def test_response_no_store_suppresses_response_payload_only(
+        self, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        await self.create_transaction_and_messages(
+            AsyncEventDispatcher(),
+            sql_storage,
+            blob_storage,
+            response_headers={"Cache-Control": "no-store"},
+        )
+
+        transaction, request_msg, response_msg = await self.stored_pair(sql_storage)
+        assert "no-store-response" in transaction.markers
+        assert "no-store-request" not in transaction.markers
+        assert request_msg.headers is not None
+        assert request_msg.body is not None
+        assert response_msg.summary
+        assert response_msg.headers is None
+        assert response_msg.body is None
+
+    async def test_without_the_directive_both_payloads_are_stored(
+        self, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        await self.create_transaction_and_messages(
+            AsyncEventDispatcher(),
+            sql_storage,
+            blob_storage,
+            request_headers={"Cache-Control": "no-cache"},
+            response_headers={"Cache-Control": "max-age=60"},
+        )
+
+        transaction, request_msg, response_msg = await self.stored_pair(sql_storage)
+        assert not {"no-store-request", "no-store-response"} & set(transaction.markers)
+        for message in (request_msg, response_msg):
+            assert message.headers is not None
+            assert message.body is not None

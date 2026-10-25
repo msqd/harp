@@ -17,7 +17,7 @@ async def on_bind(event: OnBindEvent):
 
 async def on_bound(event: OnBoundEvent):
     settings = event.provider.get(RulesSettings)
-    subscriber = RulesSubscriber(settings.ruleset)
+    subscriber = RulesSubscriber(settings.ruleset, time_budget=settings.time_budget)
     subscriber.subscribe(event.dispatcher)
     event.provider.set(RULES_SUBSCRIBER, subscriber)
 

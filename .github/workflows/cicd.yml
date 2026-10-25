@@ -8,6 +8,8 @@ on:
       - '*.*.*'      # Semantic version tags (e.g., 0.9.0)
       - '*.*.*-*'    # Pre-release tags (e.g., 0.9.0-rc1, 0.9.0-beta.1)
   pull_request:
+  # Dry run: builds and smoke-tests the image, never pushes.
+  workflow_dispatch:
 
 # Least privilege: every job declares what it needs. No job pushes with the checkout credentials.
 permissions: {}
@@ -40,6 +42,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: uv.lock is up to date with pyproject.toml (if this fails, run `uv lock` and commit)
         run: uv lock --check
@@ -58,6 +62,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Install dependencies
         run: uv sync --locked
@@ -67,6 +73,49 @@ jobs:
 
       - name: ruff format --check (if this fails, run `make format` and commit)
         run: uv run ruff format --check harp harp_apps tests
+
+  # Generated schemas and types are committed: regenerating them on unmodified code must change nothing.
+  check-types:
+    name: Check Generated Types
+    runs-on: ubuntu-latest
+    needs: check-lockfile
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: |
+          uv sync --locked
+          cd harp_apps/dashboard/frontend && pnpm install --ignore-workspace
+
+      - name: Generate types
+        run: |
+          uv run bin/generate_types
+          uv run bin/generate_ts_types
+          cd harp_apps/dashboard/frontend && pnpm prettier -w src/Models
+
+      - name: Generated files are committed (if this fails, run `make types` and commit)
+        run: git status --porcelain --untracked-files=all | tee /dev/stderr | { ! grep -q .; }
 
   lint-frontend:
     name: Lint Frontend
@@ -85,17 +134,120 @@ jobs:
           version: 10
 
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
-          cache: 'pnpm'
-          cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
+          package-manager-cache: false
 
       - name: Install dependencies
         run: cd harp_apps/dashboard/frontend && pnpm install --ignore-workspace
 
       - name: pnpm lint (if this fails, run `make lint-frontend` locally)
         run: cd harp_apps/dashboard/frontend && pnpm lint
+
+  # Fails on a ${{ }} expression pasted into a run: script (template injection). Rules: .github/zizmor.yml
+  lint-workflows:
+    name: Lint Workflows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
+
+      - name: zizmor (if this fails, run `uvx zizmor@1.14.2 --offline .github` locally)
+        run: uvx zizmor@1.14.2 --offline .github
+
+  # Fails a pull request that adds a dependency with a high or critical advisory (runtime scope only).
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      # Only meaningful on a pull request (needs a base to diff against); a step-level condition keeps the
+      # job green on pushes, so the gate can require it unconditionally.
+      - name: Review dependency changes
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          fail-on-scopes: runtime
+
+  # Fails on any known advisory in the locked Python dependencies (dev tools included).
+  audit-python:
+    name: Audit uv.lock
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
+
+      - name: Export locked requirements
+        run: uv export --frozen --all-extras --all-groups --no-emit-project --format requirements-txt -o "$RUNNER_TEMP/requirements.txt"
+
+      - name: pip-audit (if this fails, bump the vulnerable pin and run `uv lock`)
+        run: uvx pip-audit==2.9.0 --disable-pip --no-deps --strict -r "$RUNNER_TEMP/requirements.txt"
+
+  # Fails on any high or critical advisory in the locked frontend dependencies.
+  audit-frontend:
+    name: Audit pnpm-lock.yaml
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        with:
+          version: 10
+
+      - name: pnpm audit (if this fails, bump the vulnerable package and refresh pnpm-lock.yaml)
+        run: cd harp_apps/dashboard/frontend && pnpm audit --audit-level high
+
+  # Fails when a secret is committed: the same hooks as `pre-commit`, pinned to SHAs in .pre-commit-config.yaml.
+  pre-commit:
+    name: Pre-commit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
+
+      - name: pre-commit (if this fails, run `uvx pre-commit run --all-files` locally)
+        run: uvx pre-commit==4.3.0 run --all-files --show-diff-on-failure
 
   test-backend-core:
     name: Test Backend Core (Py${{ matrix.python-version }})
@@ -122,6 +274,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
@@ -159,6 +313,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
@@ -197,6 +353,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
@@ -231,6 +389,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
@@ -265,6 +425,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
@@ -294,17 +456,99 @@ jobs:
           version: 10
 
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
-          cache: 'pnpm'
-          cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
+          package-manager-cache: false
 
       - name: Install dependencies
         run: cd harp_apps/dashboard/frontend && pnpm install --ignore-workspace
 
       - name: Run frontend unit tests
         run: cd harp_apps/dashboard/frontend && pnpm test:unit
+
+  # Browser suite: one browser (chromium), because the config's firefox and webkit projects triple the
+  # runtime on a shared runner. The config already sets CI retries and a single worker; Vite's
+  # dependency optimization is warmed up first so a cold start cannot eat a spec's timeout.
+  test-frontend-browser:
+    name: Test Frontend Browser
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: cd harp_apps/dashboard/frontend && pnpm install --ignore-workspace
+
+      - name: Install Playwright chromium
+        run: cd harp_apps/dashboard/frontend && pnpm exec playwright install --with-deps chromium
+
+      - name: Warm up Vite dependency optimization
+        run: cd harp_apps/dashboard/frontend && pnpm exec vite optimize
+
+      - name: Run frontend browser tests
+        run: cd harp_apps/dashboard/frontend && pnpm exec playwright test --project=chromium
+        env:
+          CI: 'true'
+          LANG: en_US.UTF-8
+
+  # Same container as `make test-frontend`. `--update-snapshots=none` makes a missing baseline a
+  # failure: by default Playwright writes it and moves on.
+  test-frontend-visual:
+    name: Test Frontend Visual
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Run visual tests
+        run: bin/runc_visualtests pnpm test:ui:dev --update-snapshots=none
+
+  check-reference:
+    name: Check API Reference
+    runs-on: ubuntu-latest
+    needs: check-lockfile
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Generate API reference
+        run: make reference
+
+      # `make reference` stages docs/reference/, so a plain diff would miss it.
+      - name: Reference is committed (if this fails, run `make reference` and commit)
+        run: git status --porcelain --untracked-files=all docs/reference | tee /dev/stderr | { ! grep -q .; }
 
   build-documentation:
     name: Build Documentation
@@ -325,6 +569,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Ensure web directory exists
         run: mkdir -p harp_apps/dashboard/web
@@ -359,11 +605,10 @@ jobs:
           version: 10
 
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
-          cache: 'pnpm'
-          cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
+          package-manager-cache: false
 
       - name: Install dependencies
         run: cd harp_apps/dashboard/frontend && pnpm install --ignore-workspace
@@ -395,7 +640,7 @@ jobs:
       - name: Extract version
         id: version
         run: |
-          if [ "${{ github.ref_type }}" = "tag" ]; then
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
             VERSION=${GITHUB_REF#refs/tags/}
             echo "Building release version: $VERSION"
           else
@@ -406,19 +651,23 @@ jobs:
 
       - name: Validate version matches tag
         if: github.ref_type == 'tag'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           chmod +x bin/validate_version
-          bin/validate_version "${{ steps.version.outputs.version }}"
+          bin/validate_version "$VERSION"
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
         with:
-          enable-cache: true
+          # No cache: a release wheel never restores what a branch build wrote.
+          enable-cache: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
+          package-manager-cache: false
 
       - name: Install pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
@@ -435,6 +684,19 @@ jobs:
         env:
           UV: uv
           UVX: uvx
+
+      # The locked runtime dependencies the wheel and the sdist are released with.
+      - name: Generate SBOM
+        run: |
+          mkdir sbom
+          uv export --locked --no-dev --all-extras --no-emit-project --format cyclonedx1.5 --preview-features sbom-export -o sbom/harp-proxy.cdx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: python-package-sbom
+          path: sbom/
+          retention-days: 7
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -475,11 +737,15 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Test wheel installation
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
           WHEEL=$(ls dist/*.whl)
-          echo "Testing wheel: $WHEEL on Python ${{ matrix.python-version }}"
+          echo "Testing wheel: $WHEEL on Python $PYTHON_VERSION"
           uv pip install --system "$WHEEL"
           python -c "import harp; print(f'HARP version: {harp.__version__}')"
           python -c "import sys; print(f'Python: {sys.version}')"
@@ -504,8 +770,17 @@ jobs:
       - test-backend-mysql
       - test-backend-subprocess
       - test-frontend-unit
+      - test-frontend-browser
+      - test-frontend-visual
+      - check-reference
       - lint-python
       - lint-frontend
+      - check-types
+      - lint-workflows
+      - dependency-review
+      - audit-python
+      - audit-frontend
+      - pre-commit
       - build-documentation
       - build-storybook
     # always() so a failed need fails the gate instead of skipping it (a skipped required check passes)
@@ -524,7 +799,7 @@ jobs:
       - name: All checks passed
         run: echo "✅ All tests and package builds completed successfully"
 
-  # Docker image with wheel from local build (non-release branches)
+  # Docker image from the CI wheel (non-release branches). Built, started, then pushed as is.
   build-docker-image-development:
     name: Build Docker Image (Development)
     needs: all-checks-passed
@@ -548,29 +823,37 @@ jobs:
           name: python-package-distributions
           path: dist/
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
+
+      - name: Export uv.lock as the image constraints
+        run: uv run --locked --no-dev python bin/check_docker_lock.py export > dist/constraints.txt
+
       - name: Determine version and tags
         id: meta
         run: |
-          # Branch build - use local wheel
-          VERSION=$(git describe --tags --always --dirty)
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "INSTALL_FROM=local" >> $GITHUB_OUTPUT
-
           # main publishes "unstable"; version branches (e.g., 0.9) publish "0.9-git"
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            TAGS="ghcr.io/${{ github.repository }}:unstable,makersquad/harp-proxy:unstable"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            TAGS="ghcr.io/$GITHUB_REPOSITORY:$GITHUB_SHA"
+            PUSH="false"
+            echo "Docker tags (dry run): $TAGS (push disabled)"
+          elif [ "$GITHUB_REF_NAME" = "main" ]; then
+            TAGS="ghcr.io/$GITHUB_REPOSITORY:unstable,makersquad/harp-proxy:unstable"
             PUSH="true"
             echo "Docker tags (main): $TAGS"
-          elif echo "${{ github.ref_name }}" | grep -qE '^[0-9]+\.[0-9]+$'; then
-            TAGS="ghcr.io/${{ github.repository }}:${{ github.ref_name }}-git,makersquad/harp-proxy:${{ github.ref_name }}-git"
+          elif echo "$GITHUB_REF_NAME" | grep -qE '^[0-9]+\.[0-9]+$'; then
+            TAGS="ghcr.io/$GITHUB_REPOSITORY:$GITHUB_REF_NAME-git,makersquad/harp-proxy:$GITHUB_REF_NAME-git"
             PUSH="true"
             echo "Docker tags (version branch): $TAGS"
           else
-            TAGS="ghcr.io/${{ github.repository }}:${{ github.sha }}"
+            TAGS="ghcr.io/$GITHUB_REPOSITORY:$GITHUB_SHA"
             PUSH="false"
             echo "Docker tags (other branch): $TAGS (push disabled for non-mainline branches)"
           fi
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
+          echo "image=${TAGS%%,*}" >> $GITHUB_OUTPUT
           echo "push=$PUSH" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
@@ -590,19 +873,52 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image (GIL enabled)
+      - name: Build Docker image
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           file: Dockerfile
-          push: ${{ steps.meta.outputs.push }}
+          load: true
           tags: ${{ steps.meta.outputs.tags }}
-          build-args: |
-            PYTHON_VERSION=3.13
-            INSTALL_FROM=${{ steps.meta.outputs.INSTALL_FROM }}
-            VERSION=${{ steps.meta.outputs.VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Smoke test Docker image
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: bin/smoke_docker_image "${TAGS%%,*}"
+
+      - name: Image ships exactly uv.lock
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: uv run --locked --no-dev python bin/check_docker_lock.py check "${TAGS%%,*}"
+
+      # A fixable high or critical vulnerability fails the job before anything is pushed.
+      - name: Scan Docker image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.meta.outputs.image }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Generate Docker image SBOM
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          image: ${{ steps.meta.outputs.image }}
+          format: cyclonedx-json
+          output-file: docker-image.cdx.json
+          artifact-name: docker-image-sbom
+          upload-release-assets: false
+
+      - name: Push the tested Docker image
+        if: steps.meta.outputs.push == 'true'
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          for tag in ${TAGS//,/ }; do
+            docker push "$tag"
+          done
 
   publish-to-testpypi:
     name: Publish to TestPyPI
@@ -646,7 +962,7 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
 
-  # Docker image with wheel from PyPI (release tags only)
+  # Docker image from the CI wheel (release tags only). Built, started, then pushed as is.
   build-docker-image-release:
     name: Build Docker Image (Release)
     needs: publish-to-pypi
@@ -654,6 +970,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      attestations: write
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -661,50 +979,28 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      - name: Download wheel artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          python-version: '3.13'
+          name: python-package-distributions
+          path: dist/
 
-      # The PyPI index can lag the upload, and the Dockerfile `pip install` fails on a miss
-      # (see https://github.com/msqd/harp/issues/1103). Poll with pip itself, up to ~10 minutes.
-      - name: Wait for the release on PyPI
-        run: |
-          for attempt in $(seq 1 30); do
-            if out=$(python -m pip download --no-deps --only-binary=:all: --python-version 3.13 --no-cache-dir -d "$RUNNER_TEMP/pypi-wait" "harp-proxy==${{ github.ref_name }}" 2>&1); then
-              exit 0
-            fi
-            echo "harp-proxy==${{ github.ref_name }} not on PyPI yet (attempt $attempt/30): $(echo "$out" | tail -n 1)"
-            sleep 20
-          done
-          echo "harp-proxy==${{ github.ref_name }} still not installable from PyPI after 10 minutes"
-          exit 1
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
+
+      - name: Export uv.lock as the image constraints
+        run: uv run --locked --no-dev python bin/check_docker_lock.py export > dist/constraints.txt
 
       - name: Determine version and tags
         id: meta
         run: |
-          VERSION="${{ github.ref_name }}"
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "INSTALL_FROM=pypi" >> $GITHUB_OUTPUT
-
-          # Determine Docker tags based on version format
-          if echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            # Mainline release (e.g., 0.9.0) - tag with full, minor, and major versions
-            MAJOR=$(echo "$VERSION" | cut -d. -f1)
-            MINOR=$(echo "$VERSION" | cut -d. -f1-2)
-            TAGS="ghcr.io/${{ github.repository }}:$VERSION,makersquad/harp-proxy:$VERSION"
-            TAGS="$TAGS,ghcr.io/${{ github.repository }}:$MINOR,makersquad/harp-proxy:$MINOR"
-            TAGS="$TAGS,ghcr.io/${{ github.repository }}:$MAJOR,makersquad/harp-proxy:$MAJOR"
-            # `latest` tracks the most recent mainline stable release (pre-releases are excluded by
-            # the branch above). Previously pinned to 0.9.x, which would have frozen `latest` at 0.9.
-            TAGS="$TAGS,makersquad/harp-proxy:latest"
-            echo "Docker tags (mainline): $TAGS"
-          else
-            # Pre-release (e.g., 0.9.0-rc1) - only exact tag
-            TAGS="ghcr.io/${{ github.repository }}:$VERSION,makersquad/harp-proxy:$VERSION"
-            echo "Docker tags (pre-release): $TAGS"
-          fi
+          # The moving tags (`X`, `latest`) only follow the highest stable version, see bin/docker_tags.py
+          TAGS=$(python3 bin/docker_tags.py "$GITHUB_REF_NAME" "$GITHUB_REPOSITORY" $(git tag))
+          echo "Docker tags: $TAGS"
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
+          echo "image=${TAGS%%,*}" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
@@ -722,22 +1018,112 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image (GIL enabled)
+      - name: Build Docker image
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
-          file: Dockerfile.pypi
-          push: true
+          file: Dockerfile
+          load: true
           tags: ${{ steps.meta.outputs.tags }}
-          build-args: |
-            PYTHON_VERSION=3.13
-            VERSION=${{ steps.meta.outputs.VERSION }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+
+      - name: Smoke test Docker image
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: bin/smoke_docker_image "${TAGS%%,*}"
+
+      - name: Image ships exactly uv.lock
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: uv run --locked --no-dev python bin/check_docker_lock.py check "${TAGS%%,*}"
+
+      # A fixable high or critical vulnerability fails the job before anything is pushed.
+      - name: Scan Docker image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.meta.outputs.image }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Generate Docker image SBOM
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          image: ${{ steps.meta.outputs.image }}
+          format: cyclonedx-json
+          output-file: docker-image.cdx.json
+          artifact-name: docker-image-sbom
+          upload-release-assets: false
+
+      - name: Push the tested Docker image
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          for tag in ${TAGS//,/ }; do
+            docker push "$tag"
+          done
+
+      - name: Get the pushed image digest
+        id: digest
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}
+        run: |
+          DIGEST=$(docker inspect --format '{{json .RepoDigests}}' "$IMAGE" | jq -r --arg prefix "ghcr.io/$GITHUB_REPOSITORY@" '.[] | select(startswith($prefix)) | sub("^.*@"; "")')
+          test -n "$DIGEST"
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+
+      - name: Attest image build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          push-to-registry: true
+
+      - name: Attest image SBOM
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          sbom-path: docker-image.cdx.json
+          push-to-registry: true
+
+  # Signed provenance and SBOM attestations for the wheel and the sdist, the ones PyPI serves.
+  attest-python-package:
+    name: Attest Python Package
+    needs: publish-to-pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
+    steps:
+      - name: Download wheel artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Download SBOM artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: python-package-sbom
+          path: sbom/
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/*
+
+      - name: Attest SBOM
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
+        with:
+          subject-path: dist/*
+          sbom-path: sbom/harp-proxy.cdx.json
 
   create-github-release:
     name: Create GitHub Release
-    needs: publish-to-pypi
+    needs:
+      - publish-to-pypi
+      - attest-python-package
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -754,6 +1140,13 @@ jobs:
           name: python-package-distributions
           path: dist/
 
+      # Next to the wheel, so `files: dist/*` ships it.
+      - name: Download SBOM artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: python-package-sbom
+          path: dist/
+
       - name: Extract version from tag
         id: version
         run: |
@@ -763,8 +1156,10 @@ jobs:
 
       - name: Check if changelog exists
         id: changelog
+        env:
+          VERSION_OUT: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
+          VERSION="$VERSION_OUT"
           if [[ "$VERSION" == *-* ]]; then
             # A pre-release does not consume the fragments: its notes are the fragments present at the tag.
             if ls changelog.d/*.*.rst 2>/dev/null | grep -qv README.rst; then
@@ -793,35 +1188,70 @@ jobs:
       - name: Install uv
         if: steps.changelog.outputs.pending == 'true'
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Render pre-release notes from fragments
         if: steps.changelog.outputs.pending == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          CHANGELOG_FILE: ${{ steps.changelog.outputs.file }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          uvx --from "towncrier>=26.9.0" towncrier build --draft --version "${VERSION%%-*}" --date "$(date +%F)" > "${{ steps.changelog.outputs.file }}"
+          uvx --from "towncrier>=26.9.0" towncrier build --draft --version "${VERSION%%-*}" --date "$(date +%F)" > "$CHANGELOG_FILE"
 
       - name: Convert changelog to Markdown
         if: steps.changelog.outputs.exists == 'true'
+        env:
+          CHANGELOG_FILE: ${{ steps.changelog.outputs.file }}
         run: |
-          pandoc --wrap=none --shift-heading-level-by=-1 -o changes.md "${{ steps.changelog.outputs.file }}"
-          echo "Generated changes.md from ${{ steps.changelog.outputs.file }}"
+          pandoc --wrap=none --shift-heading-level-by=-1 -o changes.md "$CHANGELOG_FILE"
+          echo "Generated changes.md from $CHANGELOG_FILE"
 
       - name: Create fallback changelog
         if: steps.changelog.outputs.exists == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          cat > changes.md <<EOF
-          # Release ${{ steps.version.outputs.version }}
+          cat > changes.md <<'EOF'
+          # Release $VERSION
 
-          This release was automatically created from tag ${{ github.ref_name }}.
+          This release was automatically created from tag $GITHUB_REF_NAME.
 
           ## Installation
 
-          \`\`\`bash
-          pip install harp-proxy==${{ steps.version.outputs.version }}
-          \`\`\`
+          ```bash
+          pip install harp-proxy==$VERSION
+          ```
 
           See the [documentation](https://docs.harp-project.net/) for more information.
           EOF
+          envsubst '$VERSION $GITHUB_REF_NAME' < changes.md > changes.md.tmp
+          mv changes.md.tmp changes.md
+
+      - name: Add verification instructions to the notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          cat > verify.md <<'EOF'
+
+          ## Verify
+
+          Every asset and image comes with a build provenance attestation and an SBOM attestation,
+          signed by this repository's release workflow. With the [GitHub CLI](https://cli.github.com/):
+
+          ```bash
+          # a release asset (wheel or sdist), downloaded next to the command
+          gh attestation verify harp_proxy-$VERSION-py3-none-any.whl --repo msqd/harp
+          gh attestation verify harp_proxy-$VERSION-py3-none-any.whl --repo msqd/harp \
+            --predicate-type https://cyclonedx.org/bom
+
+          # the container image
+          gh attestation verify oci://ghcr.io/msqd/harp:$VERSION --repo msqd/harp
+          gh attestation verify oci://ghcr.io/msqd/harp:$VERSION --repo msqd/harp \
+            --predicate-type https://cyclonedx.org/bom
+          ```
+          EOF
+          envsubst '$VERSION' < verify.md >> changes.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2

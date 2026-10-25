@@ -14,6 +14,7 @@ from harp.utils.network import Bind
 from harp.views.json import on_json_response
 
 from .. import ApplicationsRegistry
+from ..development_only import development_only_settings
 from ..events import (
     EVENT_BIND,
     EVENT_BOUND,
@@ -163,6 +164,9 @@ class SystemBuilder:
         # Get lazy configuration.
         config = self.configuration
 
+        for item in development_only_settings(config):
+            logger.warning(f"Development-only setting in use, {item.name}: {item.message}")
+
         # Resolve application dependencies to ensure correct load order
         if validate_dependencies:
             self.applications.validate_dependencies()
@@ -257,7 +261,10 @@ class SystemBuilder:
         # todo: this should be instanciated by the service container, probably using a factory to dispatch the event,
         #  etc. Binds should not sit here, but where?
         asgi_app = self.KernelType(dispatcher=dispatcher, resolver=controller_resolver)
-        binds = [Bind(host=self.hostname, port=port) for port in controller_resolver.ports]
+        binds = [
+            Bind(host=controller_resolver.host_for_port(port) or self.hostname, port=port)
+            for port in controller_resolver.ports
+        ]
         try:
             return cast(
                 OnReadyEvent,

@@ -114,6 +114,38 @@ policy.options.allow_stale
 Serve a stale entry from the cache instead of refetching it from the origin.
 
 
+purge
+-----
+
+.. versionadded:: 0.13
+
+**Default:** ``enabled: false``, ``allow: ["127.0.0.1"]``
+
+Removal of one cache entry with a ``PURGE`` request, see :ref:`http-cache-purge`.
+
+purge.enabled
+~~~~~~~~~~~~~
+
+**Type:** ``bool``, **Default:** ``false``
+
+Answer ``PURGE`` requests (``200``, ``404`` or ``403``) instead of proxying them.
+
+purge.allow
+~~~~~~~~~~~
+
+**Type:** ``list`` of IP addresses or CIDR ranges, **Default:** ``["127.0.0.1"]``
+
+The peer addresses HARP is connected to that may purge, whatever forwarding headers say. A peer outside the list gets
+``403``, and an empty list refuses everyone. The default allows IPv4 loopback only, not ``::1``.
+
+.. code-block:: yaml
+
+    http_cache:
+      purge:
+        enabled: true
+        allow: ["127.0.0.1", "10.0.0.0/8"]
+
+
 storage
 -------
 
@@ -128,7 +160,7 @@ The default storage includes:
 
 - **ttl:** Seconds after which an entry is expired, counted from when it was stored or last freshened by a ``304``
   (default: ``86400``, 24 hours). An entry with a longer ``max-age`` is still expired after ``ttl``. ``null`` disables
-  expiry by age. An expired entry is not served and its ``cache/meta`` blob is deleted. The header and body blobs it
+  expiry by age. Each variant of a ``Vary`` resource expires on its own. An expired entry is not served and, once none of its key's variants is left, its ``cache/meta`` blob is deleted. The header and body blobs it
   pointed at are then removed by the :doc:`janitor </apps/janitor/index>`.
 - **check_ttl_every:** Minimum seconds between two sweeps deleting expired entries, per process (default: ``60.0``).
   A sweep runs in the background, never inside a proxied request.
