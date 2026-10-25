@@ -11,8 +11,7 @@ from pathlib import Path
 import pytest
 
 import harp_apps
-from harp.unit_of_work import loggable_events
-from harp.unit_of_work.audit import AuditableEvent
+from harp.unit_of_work import auditable_events, loggable_events
 
 PAGE = Path(__file__).parent.parent / "docs" / "operate" / "audit.rst"
 SECTION = re.compile(r"^(?P<title>[^\n]+)\n:{3,}\n(?P<body>.*?)(?=^[^\n]+\n:{3,}\n|\Z)", re.MULTILINE | re.DOTALL)
@@ -26,20 +25,19 @@ def _import_declared_events():
             importlib.import_module(module.name)
 
 
-def _subclasses(cls):
-    for subclass in cls.__subclasses__():
-        yield subclass
-        yield from _subclasses(subclass)
+def _shipped(events):
+    """The events the applications declare, not the ones other tests declare in the same process."""
+    return {event_id: cls for event_id, cls in events.items() if cls.__module__.startswith("harp_apps.")}
 
 
 def _declared_auditable():
     _import_declared_events()
-    return {cls.event_id: cls for cls in _subclasses(AuditableEvent) if cls.__dict__.get("mark") == "auditable"}
+    return _shipped(auditable_events())
 
 
 def _declared_loggable():
     _import_declared_events()
-    return loggable_events()
+    return _shipped(loggable_events())
 
 
 def _documented(title: str) -> dict[str, str]:

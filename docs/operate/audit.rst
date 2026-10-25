@@ -65,8 +65,8 @@ HARP writes two kinds of structured lines, each from its own logger.
       muted_events:
         - proxy.remote.state_changed
 
-Muting an audit line never removes the row. ``harp.audit`` has no variable of its own: it follows ``LOGGING_HARP``, which
-sets the level of every ``harp`` logger.
+``LOGGING_AUDIT`` sets the level of ``harp.audit``, ``INFO`` by default: ``LOGGING_AUDIT=CRITICAL`` drops the log copy of
+every audit event. It never removes the row.
 
 Collecting the audit
 ::::::::::::::::::::

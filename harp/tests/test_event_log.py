@@ -47,6 +47,10 @@ def test_lines_go_to_the_harp_events_logger_which_has_its_own_level():
     assert logging_config["loggers"]["harp.events"]["level"] == "INFO"
 
 
+def test_audit_lines_have_their_own_level_apart_from_harp():
+    assert logging_config["loggers"]["harp.audit"]["level"] == "INFO"
+
+
 async def test_a_loggable_event_is_written_as_one_structured_line():
     dispatcher = attached()
 

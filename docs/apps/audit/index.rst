@@ -106,8 +106,8 @@ Log output
 ::::::::::
 
 Once the commit is done, each event is also written to the ``harp.audit`` logger, with the same fields as the row, the
-id of the row, and ``kind: audit``. :doc:`/operate/audit` shows how to collect it into a SIEM. Muting the logger drops the
-copy, never the row.
+id of the row, and ``kind: audit``. :doc:`/operate/audit` shows how to collect it into a SIEM. ``LOGGING_AUDIT`` sets the level of the
+logger: raising it drops the copy, never the row.
 
 .. seealso::
 
