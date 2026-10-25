@@ -1,29 +1,20 @@
 from html import escape
 from typing import Optional
 
-from httpx import AsyncClient
+from httpx import AsyncClient  # noqa: F401  (patched by tests through this module)
+from harp_apps.notifications.senders.base import WebhookNotificationSender
 
 
-class GoogleChatNotificationSender:
-    def __init__(self, webhook_url: str, public_url: Optional[str] = None, timeout: float = 5.0) -> None:
-        self.webhook_url = webhook_url
-        self.public_url = public_url
-        self._client = AsyncClient(timeout=timeout)
-
-    async def aclose(self) -> None:
-        await self._client.aclose()
-
-    async def send_notification(
+class GoogleChatNotificationSender(WebhookNotificationSender):
+    def _build_payload(
         self,
         method: Optional[str],
         url: Optional[str],
         status_code: int,
         message: str,
         transaction_id: Optional[str],
-    ) -> None:
-        error_message = self._format_error_message(method, url, status_code, message, transaction_id, self.public_url)
-        response = await self._client.post(self.webhook_url, json=error_message)
-        response.raise_for_status()
+    ) -> dict:
+        return self._format_error_message(method, url, status_code, message, transaction_id, self.public_url)
 
     @staticmethod
     def _format_error_message(
