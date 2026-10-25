@@ -274,7 +274,14 @@ records (no ``storage`` application), it lives in the process.
 .. note::
 
     This version has no way yet to issue a ban on an endpoint or on everything from outside the code, and a ban is not
-    yet removed once the entries it covers are gone: expect the log to grow with the number of invalidations.
+    yet removed once the entries it covers are gone. Each successful unsafe request adds one ban per invalidated URI,
+    and each ``PURGE`` one, and they stay until a later version reclaims them: the log grows with the number of
+    writes through the proxy.
+
+A soft-banned entry is always revalidated before it is served, whatever freshness it stated (``max-age``, ``Expires``)
+and even when stale responses are allowed. A ban that cannot be recorded is reported: ``PURGE`` answers ``503`` rather
+than ``200``. For the invalidation that follows a write, which comes after the response is ready, the failure is
+logged and the response is not affected.
 
 
 .. _http-cache-purge:
@@ -298,7 +305,8 @@ It is **off by default**. Turn it on; by default only ``127.0.0.1`` may use it, 
         enabled: true
         allow: ["127.0.0.1", "10.0.0.0/8"]  # addresses or CIDR ranges
 
-With purge enabled, the request is answered by HARP and **never sent upstream**:
+With purge enabled, the request is answered by HARP and **never sent upstream**. The purge is recorded whether or not
+an entry was found, so that a response being fetched at that moment is not stored either:
 
 .. list-table::
     :header-rows: 1
@@ -313,6 +321,8 @@ With purge enabled, the request is answered by HARP and **never sent upstream**:
       - Nothing is cached for that URL on that endpoint.
     * - ``403``
       - The peer is not in ``allow``. Nothing is removed.
+    * - ``503``
+      - The purge could not be recorded. Nothing is known to be removed: try again.
 
 The same path on another endpoint is not touched. There is no wildcard or prefix purge. The purge is a hard ban on the
 key, so it applies to every HARP instance sharing the storage database. With purge disabled (the default), a ``PURGE`` request is proxied like any other request.

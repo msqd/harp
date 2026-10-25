@@ -233,7 +233,13 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         """Drop the stored entries for the resources a successful unsafe request has changed (RFC 9111 §4.4)."""
         endpoint_name = _endpoint_name(request)
         for url in _invalidated_urls(request, response):
-            await self.storage.invalidate(await self._key_for(url, endpoint_name), mode=BanMode.HARD)
+            try:
+                await self.storage.invalidate(await self._key_for(url, endpoint_name), mode=BanMode.HARD)
+            except Exception:
+                # the write went through and its response is on its way: a cache that cannot be invalidated is
+                # logged, it does not fail the request
+                logger.warning(f"Failed to record cache invalidation: url={url.copy_with(query=None)}", exc_info=True)
+                continue
             logger.debug(
                 f"Cache invalidated by {request.method} {request.url.copy_with(query=None)}: url={url.copy_with(query=None)}"
             )
@@ -250,9 +256,16 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
             )
             return httpx.Response(403, text="Forbidden")
         key = await self._key_for(request.url.copy_with(fragment=None), _endpoint_name(request))
-        if not await self.storage.get_entries(key):
+        found = bool(await self.storage.get_entries(key))
+        # Banned either way: a fetch in flight may be about to store the first entry, and a lookup that failed saw
+        # nothing for want of looking.
+        try:
+            await self.storage.invalidate(key, mode=BanMode.HARD)
+        except Exception:
+            logger.error(f"Cache purge failed: url={request.url.copy_with(query=None)}", exc_info=True)
+            return httpx.Response(503, text="Purge failed")
+        if not found:
             return httpx.Response(404, text="Not in cache")
-        await self.storage.invalidate(key, mode=BanMode.HARD)
         logger.info(f"Cache purged: url={request.url.copy_with(query=None)}")
         return httpx.Response(200, text="Purged")
 

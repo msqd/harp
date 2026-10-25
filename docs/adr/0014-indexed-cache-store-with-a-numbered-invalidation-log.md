@@ -108,7 +108,19 @@ is accepted before 1.0.
   stamp (a store, or a 304 freshening), and the lookup hides or marks stale what got stored in the window between the
   check and the commit. The second is what the correctness rests on; the first spares a dead row.
 - **Unsafe-method invalidation and `PURGE`** are a hard `exact` ban on the cache key, and delete its variants as
-  before. A failure to ban or to delete is logged, never raised: it must not break the response (#1272).
+  before. `PURGE` bans whether or not it found an entry, since a first fetch may be in flight. **Each successful unsafe
+  request therefore adds one ban per invalidated URI (the target, `Location`, `Content-Location`), and each `PURGE`
+  one, until reclamation (#1597) retires them.**
+- **Failures.** `AsyncStorage.invalidate`, `invalidate_endpoint` and `invalidate_all` raise `InvalidationError` when a
+  ban cannot be recorded: an invalidation somebody asked for is never reported done when it was not (`PURGE` answers
+  `503`). A hard ban whose delete fails is recorded, hence done, and the failure is logged. The automatic invalidation
+  after a write catches the error and logs it: the response is ready and must not break (#1272).
+- **A soft ban is always revalidated.** Presented as a past `Date` alone, an entry fresh by `Expires` or by a huge
+  `max-age` stayed fresh in hishel, and `allow_stale` served it as it was. A soft-banned entry is now shown with
+  `Cache-Control: max-age=0, must-revalidate` and no `Expires`, its own values kept in `x-harp-stored-*` headers and
+  put back after the 304 (unless the 304 states them again). Entries kept only for their validator (heuristics off) are
+  shown as before, by `Date` alone: `allow_stale` may still serve them.
+- **Endpoint names** are spelled as httpx spells the host of a cache key (lowercase) in endpoint bans.
 - **Not in this step:** bans on endpoint and everything are issued by `AsyncStorage.invalidate_endpoint` and
   `invalidate_all`, with nothing yet calling them (#1599). Entries they cover are not deleted until the ttl sweep
   removes them, and no ban is retired: reclamation (#1597) is what stops the log growing, one row per unsafe request

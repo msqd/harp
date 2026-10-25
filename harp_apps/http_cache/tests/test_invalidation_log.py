@@ -1,12 +1,17 @@
 """Invalidating a key, an endpoint or everything through the storage, on every records backend (ADR-0014)."""
 
 import asyncio
+import time
+from email.utils import formatdate
 
 import httpx
 import pytest
+from hishel import CacheOptions, SpecificationPolicy
 
 from harp_apps.http_cache.records import BanMode
 from harp_apps.http_cache.storages import AsyncStorage
+from harp_apps.http_cache.tests import ENDPOINT_HOOKS
+from harp_apps.http_cache.transports import AsyncCacheTransport
 from harp_apps.http_cache.tests.test_invalidation import HOST, SlowOrigin, _until, make_client
 
 ENDPOINT = "test-endpoint"
@@ -87,6 +92,123 @@ class TestSoftBan:
 
             await client.get(f"{HOST}/item")
             await client.get(f"{HOST}/other")
+
+        assert origin.conditional == 1
+
+
+class FreshnessOrigin(ValidatedOrigin):
+    """Like :class:`ValidatedOrigin`, with the freshness headers of the test's choosing."""
+
+    def __init__(self, freshness):
+        """``freshness`` is a dict of headers, or a function making one (an ``Expires`` moves with time)."""
+        super().__init__()
+        self.freshness = freshness
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        response = await super().handle_async_request(request)
+        for name in ("cache-control", "expires"):
+            response.headers.pop(name, None)
+        response.headers.update(self.freshness() if callable(self.freshness) else self.freshness)
+        return response
+
+
+def _expires_in_an_hour() -> dict[str, str]:
+    return {"expires": formatdate(time.time() + 3600, usegmt=True)}
+
+
+def _client(origin, storage, *, allow_stale=False) -> httpx.AsyncClient:
+    policy = SpecificationPolicy(
+        cache_options=CacheOptions(shared=True, supported_methods=["GET", "HEAD"], allow_stale=allow_stale)
+    )
+    transport = AsyncCacheTransport(next_transport=origin, storage=storage, policy=policy)
+    return httpx.AsyncClient(transport=transport, event_hooks=ENDPOINT_HOOKS)
+
+
+@pytest.mark.asyncio
+class TestSoftBanWhateverMakesTheEntryFresh:
+    """The entry is shown to hishel in a form it cannot read as fresh, nor as stale but allowed."""
+
+    @pytest.mark.parametrize(
+        "freshness",
+        [
+            pytest.param(_expires_in_an_hour, id="expires"),
+            pytest.param({"cache-control": "max-age=2147483648"}, id="huge-max-age"),
+            pytest.param({"cache-control": "s-maxage=3600"}, id="s-maxage"),
+            pytest.param({"cache-control": "max-age=3600, stale-while-revalidate=600"}, id="stale-while-revalidate"),
+        ],
+    )
+    @pytest.mark.parametrize("allow_stale", [False, True])
+    async def test_it_is_revalidated_before_being_served(self, storage, freshness, allow_stale):
+        origin = FreshnessOrigin(freshness)
+        async with _client(origin, storage, allow_stale=allow_stale) as client:
+            await client.get(f"{HOST}/item")
+            origin.version = 2
+            await storage.invalidate_endpoint(ENDPOINT, mode=BanMode.SOFT)
+
+            response = await client.get(f"{HOST}/item")
+
+        assert response.text == "v2:/item"
+        assert len(origin.requests) == 2
+
+    @pytest.mark.parametrize("allow_stale", [False, True])
+    async def test_a_304_restores_what_the_origin_said_and_the_entry_is_fresh_again(self, storage, allow_stale):
+        origin = FreshnessOrigin(_expires_in_an_hour)
+        async with _client(origin, storage, allow_stale=allow_stale) as client:
+            await client.get(f"{HOST}/item")
+            await storage.invalidate_endpoint(ENDPOINT, mode=BanMode.SOFT)
+
+            revalidated = await client.get(f"{HOST}/item")
+            hit = await client.get(f"{HOST}/item")
+
+        assert len(origin.requests) == 2
+        for response in (revalidated, hit):
+            assert "expires" in response.headers
+            assert "cache-control" not in response.headers
+            assert not [name for name in response.headers if name.startswith("x-harp")]
+
+    async def test_the_cache_control_of_the_origin_comes_back(self, storage):
+        origin = FreshnessOrigin({"cache-control": "max-age=3600, public"})
+        async with _client(origin, storage) as client:
+            await client.get(f"{HOST}/item")
+            await storage.invalidate_endpoint(ENDPOINT, mode=BanMode.SOFT)
+
+            revalidated = await client.get(f"{HOST}/item")
+            hit = await client.get(f"{HOST}/item")
+
+        assert len(origin.requests) == 2
+        assert revalidated.headers["cache-control"] == hit.headers["cache-control"] == "max-age=3600, public"
+
+
+@pytest.mark.asyncio
+class TestEndpointNames:
+    async def test_an_endpoint_with_capitals_is_invalidated(self, storage):
+        origin = ValidatedOrigin()
+        extensions = {"harp": {"endpoint": "MyAPI"}}
+        async with make_client(origin, storage) as client:
+            await client.get(f"{HOST}/item", extensions=extensions)
+            origin.version = 2
+
+            await storage.invalidate_endpoint("MyAPI", mode=BanMode.HARD)
+
+            assert (await client.get(f"{HOST}/item", extensions=extensions)).text == "v2:/item"
+
+    async def test_an_https_endpoint_is_invalidated(self, storage):
+        origin = ValidatedOrigin()
+        async with make_client(origin, storage) as client:
+            await client.get("https://origin.test/item")
+            origin.version = 2
+
+            await storage.invalidate_endpoint(ENDPOINT, mode=BanMode.HARD)
+
+            assert (await client.get("https://origin.test/item")).text == "v2:/item"
+
+    async def test_an_https_endpoint_is_revalidated_by_a_soft_ban(self, storage):
+        origin = ValidatedOrigin()
+        async with make_client(origin, storage) as client:
+            await client.get("https://origin.test/item")
+            await storage.invalidate_endpoint(ENDPOINT, mode=BanMode.SOFT)
+
+            await client.get("https://origin.test/item")
 
         assert origin.conditional == 1
 

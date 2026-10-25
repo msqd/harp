@@ -4,7 +4,7 @@ import httpx
 import pytest
 from hishel import CacheOptions, SpecificationPolicy
 
-from harp_apps.http_cache.storages import AsyncStorage
+from harp_apps.http_cache.storages import AsyncStorage, InvalidationError
 from harp_apps.http_cache.transports import AsyncCacheTransport
 from harp_apps.http_cache.records import BanKind, BanMode, MemoryCacheRecords
 
@@ -108,6 +108,41 @@ async def test_failing_ban_does_not_break_an_invalidating_request(caplog):
 
     assert response.content == BODY
     assert "Failed to record cache invalidation" in caplog.text
+
+
+class TestExplicitInvalidationFailsClosed:
+    """An invalidation somebody asked for is never reported done when it was not recorded."""
+
+    async def test_a_key(self):
+        records = FailingRecords()
+        records.fail("ban")
+
+        with pytest.raises(InvalidationError, match="http://api/item"):
+            await AsyncStorage(records).invalidate("http://api/item", mode=BanMode.HARD)
+
+    async def test_an_endpoint(self):
+        records = FailingRecords()
+        records.fail("ban")
+
+        with pytest.raises(InvalidationError, match="api"):
+            await AsyncStorage(records).invalidate_endpoint("api", mode=BanMode.SOFT)
+
+    async def test_everything(self):
+        records = FailingRecords()
+        records.fail("ban")
+
+        with pytest.raises(InvalidationError):
+            await AsyncStorage(records).invalidate_all(mode=BanMode.HARD)
+
+    async def test_a_hard_ban_whose_delete_failed_is_still_recorded(self, caplog):
+        records = FailingRecords()
+        storage = AsyncStorage(records)
+        records.fail("delete")
+
+        await storage.invalidate("http://api/item", mode=BanMode.HARD)
+
+        assert await records.counter() == 1
+        assert "Failed to remove cache entry" in caplog.text
 
 
 async def test_failing_counter_does_not_break_the_response(caplog):
