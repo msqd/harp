@@ -16,6 +16,7 @@ stays with its status changed.
 | [0010](./0010-harp-credentials-never-reach-an-origin.md) | HARP's own credentials never reach an origin, and no setting changes that | proposed |
 | [0011](./0011-each-app-owns-an-alembic-branch.md) | Each application owns a branch of one alembic history | proposed |
 | [0012](./0012-critical-actions-recorded-in-their-own-commit.md) | A critical action and its audit event share one commit, through a two-phase unit of work | proposed |
+| [0014](./0014-indexed-cache-store-with-a-numbered-invalidation-log.md) | The cache store is indexed, and invalidation is a numbered log checked at lookup | proposed |
 
 ## Writing one
 

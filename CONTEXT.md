@@ -16,6 +16,23 @@ A store of responses kept in order to answer a later request without going to th
 makes it a cache, and it is why RFC 9111 binds it.
 _Avoid_: storage, response store
 
+**Cache Entry**:
+What the cache keeps for one cache key, a URL on one endpoint: one or more variants.
+_Avoid_: cache record, cached item
+
+**Variant**:
+One response kept for a cache entry, for one combination of the request headers its `Vary` names.
+
+**Invalidation**:
+Removing cache entries because someone decided so: an editor in the dashboard, or a `PURGE` request.
+The only way out of the cache that the audit records, when an account decided it.
+_Avoid_: purge, flush, eviction
+
+**Expiry**:
+A cache entry leaving the cache with no one deciding: its lifetime ran out, or an unsafe request to its
+URL made it stale as RFC 9111 requires.
+_Avoid_: eviction, invalidation
+
 **Transaction Record**:
 What HARP persists about traffic that passed through it, for an operator to inspect. Nothing in it is
 ever read back into a response. Best-effort by design: under load, storage sheds transactions and
