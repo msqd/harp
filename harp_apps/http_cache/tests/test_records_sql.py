@@ -123,6 +123,47 @@ def postgres_records(sql_records):
     return sql_records
 
 
+@pytest.fixture
+async def file_records(tmp_path):
+    """Records on a SQLite file: connections are many and the driver opens a transaction only at the first write."""
+    from functools import partial
+
+    from alembic import command
+
+    from harp_apps.storage.engines.sql_engine import SQLAlchemyEngine
+    from harp_apps.storage.utils.migrations import create_alembic_config, do_migrate
+
+    engine = SQLAlchemyEngine.from_url(f"sqlite+aiosqlite:///{tmp_path}/harp.db")
+    cfg = create_alembic_config(engine.url.render_as_string(hide_password=False))
+    await do_migrate(engine, migrator=partial(command.upgrade, cfg, "heads"))
+    try:
+        yield SqlCacheRecords(engine)
+    finally:
+        await engine.dispose()
+
+
+async def test_on_a_sqlite_file_a_reclamation_cannot_slip_between_the_floor_a_fill_read_and_its_commit(file_records):
+    records = file_records
+    await put(records, make_record("http://api/other"))
+    stamp = await records.counter()
+    await records.ban(BanKind.PREFIX, "http://api/users", BanMode.HARD)
+    everything = {"older_than": time.time() + 3600, "bans": 100, "entries": 100}
+    original, runs = records._read_floor, []
+
+    async def read_floor_then_reclaim(conn):
+        floor = await original(conn)
+        runs.append(asyncio.ensure_future(records.reclaim(**everything)))
+        await asyncio.wait(runs, timeout=1)
+        return floor
+
+    records._read_floor = read_floor_then_reclaim
+    await records.put(make_record("http://api/users/1", stamp=stamp), b"payload", keep=8)
+    records._read_floor = original
+    await asyncio.gather(*runs)
+
+    assert await records.get_variants("http://api/users/1") == []
+
+
 class TestReclamationAgainstFillsInFlight:
     """A fill that started before a ban may commit after the ban was reclaimed. It must not come back."""
 

@@ -158,6 +158,18 @@ async def test_a_soft_ban_is_retired_once_its_entries_are_revalidated(records):
     assert stored.stale is False
 
 
+async def test_soft_bans_that_cannot_be_retired_do_not_hide_the_ones_behind_them(records):
+    for n in range(3):
+        await put(records, make_record(f"http://api/stuck{n}/1"))
+        await records.ban(BanKind.PREFIX, f"http://api/stuck{n}", BanMode.SOFT)
+    await records.ban(BanKind.PREFIX, "http://api/free", BanMode.SOFT)
+
+    reclaimed = await records.reclaim(older_than=NOW["older_than"], bans=2, entries=100)
+
+    assert reclaimed.retired == 1
+    assert [ban.prefix for ban in await records.bans()] == [f"http://api/stuck{n}" for n in range(3)]
+
+
 async def test_a_soft_ban_is_retired_once_its_entries_are_gone(records):
     first = await put(records, make_record("http://api/users/1"))
     await records.ban(BanKind.PREFIX, "http://api/users", BanMode.SOFT)

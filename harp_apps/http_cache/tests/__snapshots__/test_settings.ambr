@@ -110,6 +110,38 @@
         'title': 'PurgeSettings',
         'type': 'object',
       }),
+      'ReclamationSettings': dict({
+        'additionalProperties': False,
+        'description': 'How the invalidation log is reclaimed: the entries old bans cover are deleted, then the bans retired.',
+        'properties': dict({
+          'bans': dict({
+            'default': 1000,
+            'exclusiveMinimum': 0,
+            'title': 'Bans',
+            'type': 'integer',
+          }),
+          'entries': dict({
+            'default': 500,
+            'exclusiveMinimum': 0,
+            'title': 'Entries',
+            'type': 'integer',
+          }),
+          'grace': dict({
+            'default': 300,
+            'minimum': 0,
+            'title': 'Grace',
+            'type': 'number',
+          }),
+          'rounds': dict({
+            'default': 20,
+            'exclusiveMinimum': 0,
+            'title': 'Rounds',
+            'type': 'integer',
+          }),
+        }),
+        'title': 'ReclamationSettings',
+        'type': 'object',
+      }),
       'Service': dict({
         'additionalProperties': True,
         'description': 'A settings base class for service definitions.',
@@ -195,6 +227,9 @@
       }),
       'purge': dict({
         '$ref': '#/$defs/PurgeSettings',
+      }),
+      'reclamation': dict({
+        '$ref': '#/$defs/ReclamationSettings',
       }),
       'storage': dict({
         '$ref': '#/$defs/Service',
@@ -329,6 +364,38 @@
         'title': 'PurgeSettings',
         'type': 'object',
       }),
+      'ReclamationSettings': dict({
+        'additionalProperties': False,
+        'description': 'How the invalidation log is reclaimed: the entries old bans cover are deleted, then the bans retired.',
+        'properties': dict({
+          'bans': dict({
+            'default': 1000,
+            'exclusiveMinimum': 0,
+            'title': 'Bans',
+            'type': 'integer',
+          }),
+          'entries': dict({
+            'default': 500,
+            'exclusiveMinimum': 0,
+            'title': 'Entries',
+            'type': 'integer',
+          }),
+          'grace': dict({
+            'default': 300,
+            'minimum': 0,
+            'title': 'Grace',
+            'type': 'number',
+          }),
+          'rounds': dict({
+            'default': 20,
+            'exclusiveMinimum': 0,
+            'title': 'Rounds',
+            'type': 'integer',
+          }),
+        }),
+        'title': 'ReclamationSettings',
+        'type': 'object',
+      }),
       'Service': dict({
         'additionalProperties': True,
         'description': 'A settings base class for service definitions.',
@@ -414,6 +481,9 @@
       }),
       'purge': dict({
         '$ref': '#/$defs/PurgeSettings',
+      }),
+      'reclamation': dict({
+        '$ref': '#/$defs/ReclamationSettings',
       }),
       'storage': dict({
         '$ref': '#/$defs/Service',

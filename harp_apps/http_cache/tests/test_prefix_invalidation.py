@@ -5,6 +5,7 @@ import asyncio
 import pytest
 
 from harp_apps.http_cache.records import BanKind, BanMode
+from harp_apps.http_cache.settings import ReclamationSettings
 from harp_apps.http_cache.storages import AsyncStorage, InvalidationError
 from harp_apps.http_cache.tests.test_invalidation import HOST, SlowOrigin, _until, make_client
 from harp_apps.http_cache.tests.test_invalidation_log import ENDPOINT, ValidatedOrigin
@@ -120,9 +121,8 @@ class TestReclamation:
 
         assert len(await records.bans()) == 2
 
-    async def test_a_run_goes_on_until_its_limits_are_met(self, records, storage, monkeypatch):
-        monkeypatch.setattr("harp_apps.http_cache.storages.RECLAIM_ENTRIES", 2)
-        monkeypatch.setattr("harp_apps.http_cache.storages.RECLAIM_ROUNDS", 3)
+    async def test_a_run_goes_on_until_its_limits_are_met(self, records):
+        storage = AsyncStorage(records, reclamation=ReclamationSettings(entries=2, rounds=3))
         origin = ValidatedOrigin()
         async with make_client(origin, storage) as client:
             await fetch_all(client, *(f"/api/users/{n}" for n in range(8)))
@@ -153,9 +153,8 @@ class TestReclamation:
         assert origin.gets("/api/users/1") == 2
 
     @pytest.mark.parametrize("ttl", [86400, None])
-    async def test_without_a_janitor_the_storage_reclaims_in_its_own_sweep(self, records, monkeypatch, ttl):
-        monkeypatch.setattr("harp_apps.http_cache.storages.BAN_GRACE", 0)
-        storage = AsyncStorage(records, ttl=ttl, check_ttl_every=0)
+    async def test_without_a_janitor_the_storage_reclaims_in_its_own_sweep(self, records, ttl):
+        storage = AsyncStorage(records, ttl=ttl, check_ttl_every=0, reclamation=ReclamationSettings(grace=0))
         origin = ValidatedOrigin()
         async with make_client(origin, storage) as client:
             await fetch_all(client, "/api/users/1")
@@ -167,10 +166,9 @@ class TestReclamation:
 
         assert await records.bans() == []
 
-    async def test_with_a_janitor_the_storage_leaves_reclaiming_to_it(self, records, monkeypatch):
-        monkeypatch.setattr("harp_apps.http_cache.storages.BAN_GRACE", 0)
-        storage = AsyncStorage(records, check_ttl_every=0)
-        storage.reclaimed_by_janitor = True
+    async def test_with_a_janitor_the_storage_leaves_reclaiming_to_it(self, records):
+        storage = AsyncStorage(records, check_ttl_every=0, reclamation=ReclamationSettings(grace=0))
+        storage.delegate_reclamation()
         origin = ValidatedOrigin()
         async with make_client(origin, storage) as client:
             await storage.invalidate_prefix(ENDPOINT, "/api/users", mode=BanMode.HARD)

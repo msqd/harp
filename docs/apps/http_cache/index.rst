@@ -293,11 +293,14 @@ Reclaiming bans
 
 A ban only hides the entries it covers. The :doc:`janitor </apps/janitor/index>` deletes them in the background, then
 retires the ban, so that the log does not grow with the number of writes through the proxy. Without the janitor (no
-``storage`` application), the cache storage does it in its own periodic sweep. Each run is bounded (a number of bans and
-of deleted entries) and the next one resumes where the last stopped, so a ban on a large prefix is reclaimed over several
-runs. The same runs delete the bodies and resources no entry refers to.
+``storage`` application, or the janitor disabled), the cache storage does it in its own periodic sweep. Each run is
+bounded and the next one resumes where the last stopped, so a ban on a large prefix is reclaimed over several runs. The
+bounds are the :doc:`reclamation settings <settings>`: with the defaults a run deletes 10 000 entries at most (500 per
+round, 20 rounds). With the janitor, a run is one sweep, every ``period`` (10 minutes by default); without it, a run
+starts at most every ``check_ttl_every`` seconds (60 by default), from a request that reads or stores an entry, so a busy
+cache reclaims faster and an idle one not at all. The same runs delete the bodies and resources no entry refers to.
 
-- A ban is reclaimed once it is five minutes old, so that a response being fetched when it was issued has time to end.
+- A ban is reclaimed once it is ``reclamation.grace`` old (five minutes), so that a response being fetched when it was issued has time to end.
 - A **hard** ban is retired once what it covers is deleted.
 - A **soft** ban deletes nothing: its entries are revalidated, not lost. It is retired once none is left that it makes
   stale, because they were revalidated, replaced, expired (``ttl``) or deleted. Until then it stays in the log, and it

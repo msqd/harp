@@ -1,3 +1,4 @@
+import sys
 from os.path import dirname
 
 from pathlib import Path
@@ -5,7 +6,6 @@ from pathlib import Path
 from harp.config import Application, OnBindEvent
 from harp.config.events import OnBoundEvent
 from harp.services import CannotResolveTypeException
-from harp_apps.janitor.worker import JanitorWorker
 from .settings import HttpCacheSettings
 from .storages import AsyncStorage
 
@@ -41,15 +41,18 @@ async def on_bind(event: OnBindEvent):
 
 
 async def on_bound(event: OnBoundEvent):
-    """Have the janitor reclaim the bans (ADR-0014), if there is one: otherwise the storage sweeps by itself."""
+    """Have the janitor reclaim the bans (ADR-0014), if it is loaded: otherwise the storage sweeps by itself."""
+    # The janitor is not a dependency of this application: its module is there only when the application is loaded.
+    janitor_module = sys.modules.get("harp_apps.janitor.worker")
+    if janitor_module is None:
+        return
     try:
-        janitor = event.provider.get(JanitorWorker)
+        janitor = event.provider.get(janitor_module.JanitorWorker)
     except CannotResolveTypeException:
         return
     storage = event.provider.get("http_cache.storage")
     if isinstance(storage, AsyncStorage):
-        storage.reclaimed_by_janitor = True
-        janitor.sweeps.append(storage.reclaim)
+        janitor.sweeps.append(storage.delegate_reclamation())
 
 
 application = Application(

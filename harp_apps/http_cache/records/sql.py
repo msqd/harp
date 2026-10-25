@@ -3,6 +3,7 @@ import time
 import uuid
 from collections import defaultdict
 from collections.abc import Awaitable, Callable, Iterable, Sequence
+from functools import partial
 from typing import Optional, TypeVar
 
 from sqlalchemy import ColumnElement, Row, and_, delete, exists, or_, select, tuple_
@@ -136,40 +137,57 @@ class SqlCacheRecords(CacheRecords):
 
     async def reclaim(self, *, older_than: float, bans: int, entries: int) -> Reclaimed:
         await self._write(self._drop_superseded_bans)
+        retired = deleted = 0
         hard = await self._old_bans(older_than, BanMode.HARD, bans + 1)
         pending, hard = len(hard) > bans, hard[:bans]
-        soft = await self._old_bans(older_than, BanMode.SOFT, bans)
-        if not hard and not soft:
-            return Reclaimed()
+        if hard:
+            retired, deleted, pending = await self._reclaim_hard(hard, entries, pending)
 
+        # Soft bans retire nothing but themselves, and the ones that cannot yet are met again by every run: the whole
+        # log is paged through, so that they never hide the ones behind them.
+        after = 0
+        while page := await self._old_bans(older_than, BanMode.SOFT, bans, after=after):
+            retired += await self._reclaim_soft(page)
+            after = page[-1].seq
+        return Reclaimed(retired, deleted, pending)
+
+    async def _reclaim_hard(self, hard: list[Ban], entries: int, pending: bool) -> tuple[int, int, bool]:
         # Before anything is deleted or retired: no new fill stamped below these bans, and the ones in flight stored.
-        await self._write(lambda conn: self._raise_floor(conn, max(ban.seq for ban in hard + soft)))
+        await self._write(partial(self._raise_floor, seq=max(ban.seq for ban in hard)))
 
         # Most exact bans cover nothing by now (their key was deleted when they were issued): retire those at once.
-        gone = await self._write(lambda conn: self._retire_exact_without_entries(conn, hard + soft))
+        gone = await self._write(partial(self._retire_exact_without_entries, bans=hard))
         retired, deleted = len(gone), 0
-        hard = [ban for ban in hard if ban.seq not in gone]
-        soft = [ban for ban in soft if ban.seq not in gone and ban.kind is not BanKind.EXACT]
         for ban in hard:
-            done, count = await self._write(lambda conn: self._delete_covered(conn, ban, entries - deleted))
+            if ban.seq in gone:
+                continue
+            done, count = await self._write(partial(self._delete_covered, ban=ban, budget=entries - deleted))
             deleted += count
             if not done:
                 pending = True
                 continue
-            await self._write(lambda conn: self._retire(conn, ban))
+            await self._write(partial(self._retire, ban=ban))
             retired += 1
-        for ban in soft:
-            if not await self._write(lambda conn: self._has_stale(conn, ban)):
-                await self._write(lambda conn: self._retire(conn, ban))
-                retired += 1
-        return Reclaimed(retired, deleted, pending)
+        return retired, deleted, pending
 
-    async def _old_bans(self, older_than: float, mode: BanMode, limit: int) -> list[Ban]:
+    async def _reclaim_soft(self, soft: list[Ban]) -> int:
+        await self._write(partial(self._raise_floor, seq=max(ban.seq for ban in soft)))
+        gone = await self._write(partial(self._retire_exact_without_entries, bans=soft))
+        retired = len(gone)
+        for ban in soft:
+            # an exact ban that was not retired just now still has a stale entry
+            if ban.kind is BanKind.EXACT or await self._write(partial(self._has_stale, ban=ban)):
+                continue
+            await self._write(partial(self._retire, ban=ban))
+            retired += 1
+        return retired
+
+    async def _old_bans(self, older_than: float, mode: BanMode, limit: int, *, after: int = 0) -> list[Ban]:
         async with self.engine.connect() as conn:
             rows = (
                 await conn.execute(
                     select(CacheBan)
-                    .where(CacheBan.created_at < older_than, CacheBan.mode == mode.value)
+                    .where(CacheBan.created_at < older_than, CacheBan.mode == mode.value, CacheBan.seq > after)
                     .order_by(CacheBan.seq)
                     .limit(limit)
                 )
@@ -422,6 +440,8 @@ class SqlCacheRecords(CacheRecords):
         for attempt in range(1, ATTEMPTS + 1):
             try:
                 async with self.engine.begin() as conn:
+                    if self.engine.dialect.name == "sqlite":
+                        await self._take_the_write_lock(conn)
                     return await work(conn)
             except (IntegrityError, DBAPIError) as exc:
                 if attempt == ATTEMPTS or not _is_concurrency(exc):
@@ -429,6 +449,13 @@ class SqlCacheRecords(CacheRecords):
                 logger.debug(f"Cache write met a concurrent writer, attempt {attempt}: {exc.__class__.__name__}")
                 await asyncio.sleep(0.01 * attempt)
         raise AssertionError("unreachable")  # pragma: no cover
+
+    async def _take_the_write_lock(self, conn: AsyncConnection) -> None:
+        """SQLite: the driver opens a transaction at the first write, so what a writer read before it was read outside
+        any transaction, and the floor (:meth:`reclaim`) could be raised and the ban retired in between. A write that
+        changes nothing makes the transaction start here, holding the one write lock of the database, as the shared
+        lock on the floor row does on PostgreSQL."""
+        await conn.execute(self._dialect.insert(CacheCounter).values(id=_FLOOR_ID, value=0).on_conflict_do_nothing())
 
     async def _lock_resources(self, conn: AsyncConnection, keys: Iterable[str]) -> bool:
         """Lock the resource rows of these keys, in key order. Tells whether they all exist."""

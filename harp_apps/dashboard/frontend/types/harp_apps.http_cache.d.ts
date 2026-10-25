@@ -44,6 +44,7 @@ declare namespace Apps.HttpCache {
     transport?: Service;
     policy?: CachePolicySettings1;
     purge?: PurgeSettings;
+    reclamation?: ReclamationSettings;
     storage?: Service1;
   }
   /**
@@ -98,6 +99,15 @@ declare namespace Apps.HttpCache {
   export interface PurgeSettings {
     enabled?: boolean;
     allow?: string[];
+  }
+  /**
+   * How the invalidation log is reclaimed: the entries old bans cover are deleted, then the bans retired.
+   */
+  export interface ReclamationSettings {
+    grace?: number;
+    bans?: number;
+    entries?: number;
+    rounds?: number;
   }
   /**
    * A settings base class for service definitions.

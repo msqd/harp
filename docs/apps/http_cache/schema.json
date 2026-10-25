@@ -68,6 +68,7 @@
           }
         },
         "purge": { "$ref": "#/$defs/PurgeSettings" },
+        "reclamation": { "$ref": "#/$defs/ReclamationSettings" },
         "storage": {
           "$ref": "#/$defs/Service",
           "default": {
@@ -93,6 +94,18 @@
         }
       },
       "title": "PurgeSettings",
+      "type": "object"
+    },
+    "ReclamationSettings": {
+      "additionalProperties": false,
+      "description": "How the invalidation log is reclaimed: the entries old bans cover are deleted, then the bans retired.",
+      "properties": {
+        "grace": { "default": 300, "minimum": 0, "type": "number" },
+        "bans": { "default": 1000, "exclusiveMinimum": 0, "type": "integer" },
+        "entries": { "default": 500, "exclusiveMinimum": 0, "type": "integer" },
+        "rounds": { "default": 20, "exclusiveMinimum": 0, "type": "integer" }
+      },
+      "title": "ReclamationSettings",
       "type": "object"
     },
     "Service": {
@@ -131,6 +144,7 @@
     { "$ref": "#/$defs/CachePolicyOptions" },
     { "$ref": "#/$defs/CachePolicySettings" },
     { "$ref": "#/$defs/HttpCacheSettings" },
-    { "$ref": "#/$defs/PurgeSettings" }
+    { "$ref": "#/$defs/PurgeSettings" },
+    { "$ref": "#/$defs/ReclamationSettings" }
   ]
 }

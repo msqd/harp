@@ -142,7 +142,7 @@ is accepted before 1.0.
 - **Reclamation** is `CacheRecords.reclaim(older_than, bans, entries)`, one bounded run, stateless (what is left in the
   tables is the state to resume from), run by the janitor as a sweep registered by the `http_cache` application
   (`AsyncStorage.reclaim`: rounds of 500 deletions, 1000 bans of each mode, 20 rounds at most), or by the cache storage's
-  own sweep when there is no janitor. A ban is taken once it is older than five minutes (`BAN_GRACE`).
+  own sweep when there is no janitor. A ban is taken once it is older than five minutes (`reclamation.grace`).
     - **Hard ban**: delete in batches, by key range, the variants stamped below the ban (locking the resource rows in key
       order, then `_forget` for bodies, resources and counters, as every deletion does, so counters stay exact), then
       retire the ban when a batch finds nothing more.
@@ -154,6 +154,8 @@ is accepted before 1.0.
       what it is for. With no `ttl`, a soft ban on entries nobody asks for again stays for ever. Considered and
       rejected: marking the entries stale in their rows (a column, a migration and a Redis counterpart) so as to retire
       at once; deleting them (it defeats the soft ban).
+      Soft bans that cannot be retired are met by every run, so the log of soft bans is paged through whole (by number),
+      and they never hide the retirable ones behind them.
     - **Redundant bans**: a ban is dropped, at any age, when a newer one has the same kind, prefix and mode: whatever the
       older covers, the newer does, so lookups and refusals are unchanged. This keeps repeated invalidations of one
       prefix, soft ones above all, to one row. Memory keeps only the newest per `(kind, prefix, mode)` already.
@@ -176,9 +178,12 @@ is accepted before 1.0.
   means no retired ban covered it (it would have been deleted), and for a soft ban the check for stale variants and the
   replacement are atomic. A fill refused for the floor is served and not cached; so is one whose counter could not be
   read (stamp `0`) once any ban was retired. A fill refused though no retired ban covered it is the price of the floor
-  being a single number: it happens only to a fetch that outlasts `BAN_GRACE`, which is why bans are not taken younger.
-  The cost is a shared row lock on one row per fill, and `SELECT … FOR SHARE` writes to the page. On SQLite (never
-  migrated, writers serialized by the database) the lock clause is a no-op.
+  being a single number: it happens only to a fetch that outlasts the grace, which is why bans are not taken younger.
+  The cost is a shared row lock on one row per fill, and `SELECT … FOR SHARE` writes to the page. On SQLite
+  the lock clause is a no-op, and the driver opens a transaction only at the first write, so a fill's reads would be
+  outside any transaction: every cache write transaction therefore starts with a write that changes nothing (an
+  `INSERT … ON CONFLICT DO NOTHING` of the floor row), which takes the one write lock of the database, as the shared
+  lock does on PostgreSQL. A test on a SQLite file covers it.
 - **Memory** keeps the same rules in the process: the floor is an integer, the newest ban per `(kind, prefix, mode)`.
 - **Redis** (#1595) has to implement `bans`, `reclaim` and `reclaim_orphans`, and the floor, in its scripts.
 

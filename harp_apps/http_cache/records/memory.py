@@ -100,7 +100,8 @@ class MemoryCacheRecords(CacheRecords):
     async def reclaim(self, *, older_than: float, bans: int, entries: int) -> Reclaimed:
         old = sorted((ban for ban in self._bans.values() if ban.created_at < older_than), key=lambda ban: ban.seq)
         all_hard = [ban for ban in old if ban.mode is BanMode.HARD]
-        hard, soft = all_hard[:bans], [ban for ban in old if ban.mode is BanMode.SOFT][:bans]
+        # every soft ban is checked, stuck ones included: they must not hide the ones behind them
+        hard, soft = all_hard[:bans], [ban for ban in old if ban.mode is BanMode.SOFT]
         if hard or soft:
             self._floor = max(self._floor, *(ban.seq for ban in hard + soft))
 
