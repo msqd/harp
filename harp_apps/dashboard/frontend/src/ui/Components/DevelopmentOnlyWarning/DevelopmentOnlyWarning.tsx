@@ -21,7 +21,7 @@ const TITLE = "Development-only settings in use"
 
 /**
  * Pill for the header: shown only when the instance runs with settings that are fine on a laptop and unsafe in
- * production. The label stays short ("Dev 3") so it fits a phone in landscape; the popover carries the full text, each
+ * production. The pill is an icon and the count so it fits a phone in landscape; the popover carries the full text, each
  * setting, what to use instead, and the documentation.
  */
 function DevelopmentOnlyWarning({ settings, documentationUrl, className }: DevelopmentOnlyWarningProps) {
@@ -32,13 +32,9 @@ function DevelopmentOnlyWarning({ settings, documentationUrl, className }: Devel
     <Popover className={classNames("relative", className)}>
       <PopoverButton
         aria-label={`${TITLE}: ${settings.length}`}
-        className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-amber-100 px-2.5 py-1 sm:gap-0.5 sm:px-1 md:gap-1 md:px-2.5 text-xs font-semibold text-amber-950 ring-1 ring-amber-300 hover:bg-amber-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-950 ring-1 ring-amber-300 hover:bg-amber-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
       >
         <BeakerIcon className="h-4 w-4" aria-hidden="true" />
-        {/* Between `sm` and `md` the header is full: only the icon and the count stay. */}
-        <span aria-hidden="true" className="sm:hidden md:inline">
-          Dev
-        </span>
         <span
           aria-hidden="true"
           className="rounded-full bg-amber-950 px-1.5 text-[10px] leading-4 text-amber-100 sm:px-1 md:px-1.5"

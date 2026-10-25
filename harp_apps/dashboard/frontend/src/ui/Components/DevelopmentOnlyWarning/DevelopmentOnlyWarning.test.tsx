@@ -19,9 +19,9 @@ describe("DevelopmentOnlyWarning", () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it("shows a short label and the count, and names the full text for assistive technology", () => {
+  it("shows an icon and the count only, and names the full text for assistive technology", () => {
     renderPill()
-    expect(pill()).toHaveTextContent("Dev2")
+    expect(pill()).toHaveTextContent(/^2$/)
     expect(pill()).toHaveAccessibleName("Development-only settings in use: 2")
     expect(pill()).toHaveAttribute("aria-expanded", "false")
     expect(screen.queryByText("storage.url")).not.toBeInTheDocument()

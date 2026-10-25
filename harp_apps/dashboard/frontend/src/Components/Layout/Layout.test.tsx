@@ -43,8 +43,11 @@ it("warns about development-only settings in use", async () => {
   const result = renderLayout()
 
   await result.findByText("v.test version")
-  // One pill in the bar below `sm`, one beside the user from `sm` up; CSS shows the right one.
-  expect(result.getAllByRole("button", { name: /development-only settings in use: 1/i })).toHaveLength(2)
+  // One pill at the right end of the bar below `md`, one right of the user block from `md` up; CSS shows one.
+  const pills = result.getAllByRole("button", { name: /development-only settings in use: 1/i })
+  expect(pills).toHaveLength(2)
+  expect(pills.filter((pill) => pill.parentElement?.classList.contains("hidden"))).toHaveLength(1)
+  expect(pills.some((pill) => pill.closest(".md\\:hidden"))).toBe(true)
 })
 
 it("shows no warning when no development-only setting is in use", async () => {

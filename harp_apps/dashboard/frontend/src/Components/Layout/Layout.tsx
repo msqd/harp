@@ -33,22 +33,21 @@ function Layout({ title, navigationItems, navBarClassName }: LayoutProps) {
     <div className="flex h-screen min-h-screen max-h-screen w-screen flex-col">
       <Navbar
         leftChildren={
-          <>
-            <Link to="/" className="flex">
-              <img className="h-8 w-auto" src={logo} alt="HARP" />
-              {title ? (
-                <span className="h-8 px-2 pt-1 text-md font-medium text-white" title={title}>
-                  {title}
-                </span>
-              ) : null}
-            </Link>
-            {/* Below `sm` the right side lives in the hamburger menu: the pill must stay in the header bar. */}
-            <DevelopmentOnlyWarning
-              settings={system?.development_only_settings ?? []}
-              documentationUrl={getDocumentationUrl(system?.version)}
-              className="ml-3 sm:hidden"
-            />
-          </>
+          <Link to="/" className="flex">
+            <img className="h-8 w-auto" src={logo} alt="HARP" />
+            {title ? (
+              <span className="h-8 px-2 pt-1 text-md font-medium text-white" title={title}>
+                {title}
+              </span>
+            ) : null}
+          </Link>
+        }
+        compactChildren={
+          // Below `md` the right side lives in the hamburger menu: the pill must stay in the header bar.
+          <DevelopmentOnlyWarning
+            settings={system?.development_only_settings ?? []}
+            documentationUrl={getDocumentationUrl(system?.version)}
+          />
         }
         items={navigationItems}
         currentPath={location.pathname}

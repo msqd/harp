@@ -16,7 +16,7 @@ exports[`renders the title and data when the query is successful 1`] = `
           class="relative flex h-14 justify-between"
         >
           <div
-            class="flex items-center sm:hidden"
+            class="flex items-center md:hidden"
           >
             <button
               aria-expanded="false"
@@ -52,7 +52,7 @@ exports[`renders the title and data when the query is successful 1`] = `
             </button>
           </div>
           <div
-            class="flex min-w-0 flex-1 items-center justify-start sm:items-stretch"
+            class="flex min-w-0 flex-1 items-center justify-start md:items-stretch"
           >
             <div
               class="flex flex-shrink-0 items-center p-2"
@@ -76,7 +76,7 @@ exports[`renders the title and data when the query is successful 1`] = `
               </a>
             </div>
             <div
-              class="hidden sm:ml-6 sm:flex sm:space-x-8"
+              class="hidden md:ml-6 md:flex md:space-x-8"
             >
               <a
                 aria-current="page"
@@ -103,41 +103,58 @@ exports[`renders the title and data when the query is successful 1`] = `
             </div>
           </div>
           <div
-            class="hidden sm:ml-6 sm:flex sm:items-center"
+            class="flex items-center md:hidden"
+          />
+          <div
+            class="hidden md:ml-6 md:flex md:items-center"
           >
             <div
-              class="text-sm text-white text-right"
-              title="test revision"
+              class="flex items-center gap-3"
             >
               <div
-                class="flex items-center justify-end gap-2"
+                class="text-sm text-white text-right"
+                title="test revision"
               >
-                <span>
-                  <svg
-                    aria-hidden="true"
-                    class="inline-block w-4 h-4 mr-1"
-                    data-slot="icon"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      clip-rule="evenodd"
-                      d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-5.5-2.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0ZM10 12a5.99 5.99 0 0 0-4.793 2.39A6.483 6.483 0 0 0 10 16.5a6.483 6.483 0 0 0 4.793-2.11A5.99 5.99 0 0 0 10 12Z"
-                      fill-rule="evenodd"
-                    />
-                  </svg>
-                  anonymous
-                </span>
-              </div>
-              <span
-                class="text-xs"
-              >
-                <a
-                  href="https://docs.harp-project.net/en/latest/user/?utm_source=dashboard&utm_medium=help"
-                  rel="noopener noreferrer"
-                  target="_blank"
+                <svg
+                  aria-hidden="true"
+                  class="inline-block w-4 h-4 mr-1"
+                  data-slot="icon"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
+                  <path
+                    clip-rule="evenodd"
+                    d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-5.5-2.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0ZM10 12a5.99 5.99 0 0 0-4.793 2.39A6.483 6.483 0 0 0 10 16.5a6.483 6.483 0 0 0 4.793-2.11A5.99 5.99 0 0 0 10 12Z"
+                    fill-rule="evenodd"
+                  />
+                </svg>
+                anonymous
+                <br />
+                <span
+                  class="text-xs"
+                >
+                  <a
+                    href="https://docs.harp-project.net/en/latest/user/?utm_source=dashboard&utm_medium=help"
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="inline-block w-4 h-4 mx-1"
+                      data-slot="icon"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        clip-rule="evenodd"
+                        d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                        fill-rule="evenodd"
+                      />
+                    </svg>
+                    Help
+                  </a>
                   <svg
                     aria-hidden="true"
                     class="inline-block w-4 h-4 mx-1"
@@ -148,28 +165,13 @@ exports[`renders the title and data when the query is successful 1`] = `
                   >
                     <path
                       clip-rule="evenodd"
-                      d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                      d="M4.5 2A2.5 2.5 0 0 0 2 4.5v3.879a2.5 2.5 0 0 0 .732 1.767l7.5 7.5a2.5 2.5 0 0 0 3.536 0l3.878-3.878a2.5 2.5 0 0 0 0-3.536l-7.5-7.5A2.5 2.5 0 0 0 8.38 2H4.5ZM5 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
                       fill-rule="evenodd"
                     />
                   </svg>
-                  Help
-                </a>
-                <svg
-                  aria-hidden="true"
-                  class="inline-block w-4 h-4 mx-1"
-                  data-slot="icon"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    clip-rule="evenodd"
-                    d="M4.5 2A2.5 2.5 0 0 0 2 4.5v3.879a2.5 2.5 0 0 0 .732 1.767l7.5 7.5a2.5 2.5 0 0 0 3.536 0l3.878-3.878a2.5 2.5 0 0 0 0-3.536l-7.5-7.5A2.5 2.5 0 0 0 8.38 2H4.5ZM5 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
-                    fill-rule="evenodd"
-                  />
-                </svg>
-                v.test version
-              </span>
+                  v.test version
+                </span>
+              </div>
             </div>
           </div>
         </div>
