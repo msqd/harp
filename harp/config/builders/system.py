@@ -9,6 +9,7 @@ from harp.asgi.events import EVENT_CORE_REQUEST, EVENT_CORE_VIEW
 from harp.event_dispatcher import LoggingAsyncEventDispatcher
 from harp.services import Container, Services
 from harp.typedefs import GlobalSettings
+from harp.unit_of_work import TransactionalEventDispatcher
 from harp.utils.network import Bind
 from harp.views.json import on_json_response
 
@@ -210,6 +211,7 @@ class SystemBuilder:
     def build_container(self, config, dispatcher):
         container = cast(Container, self.ContainerType())
         container.add_instance(dispatcher, IAsyncEventDispatcher)
+        container.add_instance(TransactionalEventDispatcher(), TransactionalEventDispatcher)
         container.add_instance(config, GlobalSettings)
         self.applications.register_services(container, config)
         return container

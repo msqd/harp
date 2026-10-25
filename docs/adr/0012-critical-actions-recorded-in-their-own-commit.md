@@ -37,7 +37,8 @@ role.
 An action outside the database (a remote set up or down by hand is in-memory state, a cache
 invalidation may hit Redis) uses the same unit of work: write the event, act, commit. A failed action
 rolls back and leaves no row. A commit failing after the action restores the previous state when it
-can, and otherwise logs a critical error; the event's log line still records it.
+can, and otherwise logs a critical error; the event's log line still records it. The same holds when the
+body fails after the action succeeded: the rollback leaves the action orphaned, so its compensation runs too.
 
 The core has no persistence: it holds the contract and the transactional dispatcher, and storage
 provides the implementation, on its session factory.
