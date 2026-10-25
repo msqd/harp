@@ -49,8 +49,8 @@ Table ``audit_events``:
     outlives the account.
 
 ``actor_via``, ``actor_via_id``, ``actor_client``
-    ``session``, ``token``, ``cli`` or ``system``, with the id of the session or token, and the client the account acts
-    from when known.
+    ``session``, ``token``, ``cli`` or ``system``, with the id of the session or token (text, kept whatever its form), and the
+    client the account acts from when known.
 
 ``ip``, ``user_agent``
     Where the request comes from.
@@ -68,6 +68,24 @@ Table ``audit_events``:
     A declared field holds a scalar (text, number, boolean, null) or a list of them; a dict or a nested structure is
     dropped with a warning. The event author declares which fields are safe and values are not inspected, so a declared
     field must never carry a credential (ids, names, prefixes and scopes only).
+
+Catalogue
+:::::::::
+
+Each application declares the events it records. This is what the proxy and the dashboard record.
+
+``proxy.remote.state_changed``
+    An Editor set a remote endpoint up, down or checking by hand, with ``PUT /api/system/proxy`` (the dashboard's
+    buttons). The target is the remote (``target_type: remote``, its url without credentials as ``target_id``, the
+    proxy endpoint's name as ``target_label``). Details: ``endpoint``, ``url``, ``from`` and ``to`` (``up``, ``down`` or
+    ``checking``). Outcomes: ``succeeded``; ``denied`` for an account below Editor, with ``required_role`` in the details
+    and the state left alone. Every refused request writes one ``denied`` row (there is no rate limit yet): an
+    authenticated account hammering a critical route fills the audit at the pace of its requests. The state change and the event share one commit: if the commit fails, the endpoint gets
+    its previous state back.
+
+    The breaker and the liveness changing the state of a remote on their own are not audited, as nobody acted. They are
+    logged on ``harp.events`` with the same event name, the same details and no actor, once per real transition (a
+    remote that stays down emits nothing more). You can mute them with ``core.muted_events``.
 
 Append-only
 :::::::::::

@@ -58,7 +58,9 @@ async def change_role(unit_of_work, event):
 
 def role_changed(**kwargs):
     return RoleChanged(
-        actor=Actor(account_id=1, label="alice", via="session", via_id=211, ip="10.0.4.12", user_agent="Firefox/141"),
+        actor=Actor(
+            account_id=1, label="alice", via="session", via_id="tok_8f3a", ip="10.0.4.12", user_agent="Firefox/141"
+        ),
         target=Target("account", 7, "bob"),
         details={"from": "viewer", "to": "editor"},
         **kwargs,
@@ -71,7 +73,12 @@ async def test_the_event_is_written_in_the_commit_of_its_action(unit_of_work, se
     assert await actions(session_factory) == ["role changed"]
     (row,) = await rows(session_factory)
     assert (row.action, row.outcome) == ("test.role_changed", "succeeded")
-    assert (row.actor_account_id, row.actor_label, row.actor_via, row.actor_via_id) == (1, "alice", "session", 211)
+    assert (row.actor_account_id, row.actor_label, row.actor_via, row.actor_via_id) == (
+        1,
+        "alice",
+        "session",
+        "tok_8f3a",
+    )
     assert (row.ip, row.user_agent) == ("10.0.4.12", "Firefox/141")
     assert (row.target_type, row.target_id, row.target_label) == ("account", "7", "bob")
     assert row.details == {"from": "viewer", "to": "editor"}

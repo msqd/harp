@@ -199,15 +199,23 @@ class UnitOfWork(ABC):
         try:
             suppressed = await self._transaction_context.__aexit__(exc_type, exc, tb)
         except BaseException:
-            self._close()
-            await self._compensate()
+            await self._compensate_then_close()
             raise
-        self._close()
         if exc_type is not None:
-            await self._compensate()
+            await self._compensate_then_close()
             return bool(suppressed)
+        self._close()
         await self._dispatch_recorded()
         return False
+
+    async def _compensate_then_close(self) -> None:
+        """Compensations run while the unit of work is still current, so that what listens to the state they restore
+        can tell it is not an event of its own (it is the unit of work undoing its action)."""
+        self._state = "compensating"
+        try:
+            await self._compensate()
+        finally:
+            self._close()
 
     async def _compensate(self) -> None:
         for compensation in reversed(self._actions):

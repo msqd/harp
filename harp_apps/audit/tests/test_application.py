@@ -36,14 +36,21 @@ def test_audit_is_not_a_default_application():
 
 
 async def test_a_harp_without_an_application_depending_on_audit_loads_no_audit():
-    builder = ConfigurationBuilder()
+    builder = ConfigurationBuilder(use_default_applications=False)
     builder.add_values({"storage": {"url": "sqlite+aiosqlite:///:memory:"}})
+    builder.applications.add("storage")
 
     assert "audit" not in builder.applications
 
 
-async def test_an_application_depending_on_audit_loads_it_when_dependencies_are_autoloaded():
+async def test_the_dashboard_loads_the_audit_with_the_default_applications():
     builder = ConfigurationBuilder()
+
+    assert "audit" in builder.applications
+
+
+async def test_an_application_depending_on_audit_loads_it_when_dependencies_are_autoloaded():
+    builder = ConfigurationBuilder(use_default_applications=False)
     builder.add_values({"storage": {"url": "sqlite+aiosqlite:///:memory:"}})
 
     builder.applications.add("harp_apps.audit.tests.needy", autoload_dependencies=True)
@@ -57,6 +64,8 @@ async def test_an_application_depending_on_audit_loads_it_when_dependencies_are_
 
 async def test_an_application_depending_on_audit_needs_it_enabled():
     builder = configuration()
+    builder.applications.remove("dashboard")  # the dashboard needs the audit itself, and brings it along
+    builder.applications.remove("audit")
 
     with pytest.raises(MissingDependencyError, match="'harp_apps.audit.tests.needy' requires 'audit'"):
         await SystemBuilder(builder.applications, builder.build()).abuild()

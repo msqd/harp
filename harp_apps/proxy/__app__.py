@@ -12,6 +12,7 @@ from harp.config import Application
 from harp.config.events import OnBindEvent, OnBoundEvent, OnShutdownEvent
 from harp.services.resolvers import ServiceResolver
 from harp.utils.services import factory
+from .remote_events import relay_state_changes
 from .settings import Proxy, ProxySettings
 
 PROXY_HEALTHCHECKS_TASK = "proxy.healthchecks"
@@ -69,6 +70,8 @@ async def on_bound(event: OnBoundEvent):
             tags=proxy.settings.tags,
             trusted_proxies=proxy.settings.trusted_proxies,
         )
+        if endpoint.remote:
+            relay_state_changes(endpoint.remote, endpoint=name, dispatcher=event.dispatcher)
         controller = event.provider.get(f"proxy.controllers.{name}_controller")
         event.resolver.add_endpoint(endpoint, controller=controller)
 
