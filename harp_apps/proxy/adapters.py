@@ -153,7 +153,14 @@ class HttpClientProxyAdapter:
             strip_credentials(url),
             headers=[(header_bytes(name), header_bytes(value)) for name, value in headers],
             content=request.body,
-            extensions={"harp": {**self.extensions, **self._transaction_extensions(transaction)}},
+            extensions={
+                "harp": {
+                    **self.extensions,
+                    **self._transaction_extensions(transaction),
+                    # The peer HARP is talking to, never a forwarded header: the cache's PURGE allow-list reads it.
+                    "client_ip": request.client_ipaddr,
+                }
+            },
         )
 
         request.extensions["remote_method"] = remote_request.method

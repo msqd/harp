@@ -1,4 +1,4 @@
-from pydantic import Field, model_validator
+from pydantic import Field, IPvAnyNetwork, model_validator
 
 from harp.config import Configurable, Service, ApplicationSettingsMixin
 
@@ -45,6 +45,16 @@ class CachePolicySettings(Service):
         return self
 
 
+class PurgeSettings(Configurable):
+    """``PURGE`` removes one cache entry, for the peers allowed to ask."""
+
+    #: Answer ``PURGE`` requests instead of proxying them.
+    enabled: bool = False
+
+    #: Peer addresses (IP addresses or CIDR ranges) allowed to purge. Empty by default: nobody.
+    allow: list[IPvAnyNetwork] = Field(default_factory=list)
+
+
 class HttpCacheSettings(ApplicationSettingsMixin, Configurable):
     #: Cache transport to use for the client. This is usually a hishel._async_httpx.AsyncCacheTransport (or subclass) instance.
     transport: Service = Service(
@@ -65,6 +75,9 @@ class HttpCacheSettings(ApplicationSettingsMixin, Configurable):
     #:     policy:
     #:       type: my_custom_policy.CustomPolicy
     policy: CachePolicySettings = CachePolicySettings(type="hishel.SpecificationPolicy")
+
+    #: Removal of single entries with the ``PURGE`` method, off by default.
+    purge: PurgeSettings = Field(default_factory=PurgeSettings)
 
     #: Cache storage implementation, a.k.a how to store and retrieve cache data.
     #:

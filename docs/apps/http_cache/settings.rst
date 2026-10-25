@@ -114,6 +114,38 @@ policy.options.allow_stale
 Serve a stale entry from the cache instead of refetching it from the origin.
 
 
+purge
+-----
+
+.. versionadded:: 0.13
+
+**Default:** ``enabled: false``, ``allow: []``
+
+Removal of one cache entry with a ``PURGE`` request, see :ref:`http-cache-purge`.
+
+purge.enabled
+~~~~~~~~~~~~~
+
+**Type:** ``bool``, **Default:** ``false``
+
+Answer ``PURGE`` requests (``200``, ``404`` or ``403``) instead of proxying them.
+
+purge.allow
+~~~~~~~~~~~
+
+**Type:** ``list`` of IP addresses or CIDR ranges, **Default:** ``[]``
+
+The peer addresses HARP is connected to that may purge, whatever forwarding headers say. Empty means nobody: a peer
+outside the list gets ``403``.
+
+.. code-block:: yaml
+
+    http_cache:
+      purge:
+        enabled: true
+        allow: ["127.0.0.1", "10.0.0.0/8"]
+
+
 storage
 -------
 
