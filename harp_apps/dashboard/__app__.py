@@ -28,6 +28,7 @@ async def on_bound(event: OnBoundEvent):
     event.provider.set(
         "dashboard.subcontrollers",
         [
+            event.provider.get("dashboard.controller.audit"),
             event.provider.get("dashboard.controller.blobs"),
             event.provider.get("dashboard.controller.overview"),
             event.provider.get("dashboard.controller.system"),
