@@ -16,6 +16,7 @@ from harp.config import ConfigurationBuilder
 from harp.config.asdict import asdict
 from harp.utils.testing.communicators import ASGICommunicator
 from harp_apps.dashboard.controllers import DashboardController
+from harp_apps.dashboard.passwords import hash_password
 from harp_apps.dashboard.settings import DashboardSettings
 from harp_apps.storage.models import User as SqlUser
 
@@ -206,7 +207,13 @@ class TestDashboardAuthOptOut:
 
 
 class TestExplicitBasicAuth:
-    BASIC = {"auth": {"type": "basic", "algorithm": "plaintext", "users": {"alice": {"password": "s3cret"}}}}
+    BASIC = {
+        "auth": {
+            "type": "basic",
+            "algorithm": "pbkdf2_sha256",
+            "users": {"alice": {"password": hash_password("pbkdf2_sha256", "s3cret")}},
+        }
+    }
 
     async def test_configured_users_work_and_nothing_is_generated(self, boot, caplog):
         _, client = await boot(self.BASIC)
