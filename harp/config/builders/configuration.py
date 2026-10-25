@@ -31,6 +31,10 @@ class _ReadOnce:
     def __repr__(self):
         return repr(self._source)
 
+    def reset(self):
+        self._values = None
+        self._read = False
+
     def get_values(self):
         if not self._read:
             self._values = self._source.get_values()
@@ -346,6 +350,15 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         Raises:
             ValueError: If strict mode is enabled and configuration exists for unloaded applications.
         """
+        try:
+            return self._build(strict)
+        finally:
+            # The cache lives for one build: the next one reads the files again.
+            for source in (*self._system_sources, *self._sources):
+                if isinstance(source, _ReadOnce):
+                    source.reset()
+
+    def _build(self, strict: bool = None) -> GlobalSettings:
         if strict is None:
             strict = self.strict
 

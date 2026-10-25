@@ -39,3 +39,16 @@ def test_system_file_is_parsed_once_per_build(tmp_path, monkeypatch):
     builder.build()
 
     assert reads == [str(path)]
+
+
+def test_each_build_reads_files_again(tmp_path, monkeypatch):
+    path = tmp_path / "a.yml"
+    path.write_text("applications: [storage, proxy]\nstorage: {}\n")
+    reads = _count_reads(monkeypatch)
+
+    builder = ConfigurationBuilder()
+    builder.add_file(str(path))
+    builder.build()
+    builder.build()
+
+    assert reads == [str(path), str(path)]
