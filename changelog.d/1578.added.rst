@@ -1,0 +1,1 @@
+Controllers can mount an ASGI application under a path prefix (``AsgiMountController``), with its lifespan tied to HARP's; the dashboard's static assets use it.
