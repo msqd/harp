@@ -15,6 +15,7 @@ Submodules
     :maxdepth: 1
 
     harp_apps.dashboard.controllers.blobs
+    harp_apps.dashboard.controllers.metrics
     harp_apps.dashboard.controllers.models
     harp_apps.dashboard.controllers.overview
     harp_apps.dashboard.controllers.system

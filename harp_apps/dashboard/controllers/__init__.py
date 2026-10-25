@@ -1,5 +1,6 @@
 import asyncio
 import os
+from urllib.parse import urlsplit
 
 from asgi_middleware_static_file import ASGIMiddlewareStaticFile
 from asgiref.typing import ASGISendCallable
@@ -10,7 +11,7 @@ from harp import get_logger
 from harp.asgi.events import ViewEvent
 from harp.controllers import RoutingController
 from harp.errors import ConfigurationError
-from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse
+from harp.http import AlreadyHandledHttpResponse, HttpRequest, HttpResponse, JsonHttpResponse
 from harp.views.json import on_json_response
 from harp_apps import dashboard
 from harp_apps.proxy.controllers import HttpProxyController
@@ -23,10 +24,17 @@ from .metrics import METRICS_PATH, metrics_controller
 
 logger = get_logger(__name__)
 
-#: Sent on every dashboard response: never sniff a type, never render the dashboard in a frame.
+SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+
+#: Values of Sec-Fetch-Site for a request the dashboard itself initiated (or a user typing the URL).
+SAME_ORIGIN_FETCH_SITES = frozenset({"same-origin", "none"})
+
+#: Sent on every dashboard response: never sniff a type, never render the dashboard in a frame, never leak a
+#: dashboard URL to another site.
 BASE_SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
+    "Referrer-Policy": "same-origin",
 }
 
 #: What the built dashboard needs, nothing more. Emotion injects <style> elements, hence 'unsafe-inline' for styles
@@ -93,7 +101,7 @@ class DashboardController(RoutingController):
         self.settings = settings
 
         # the authentication actually enforced, which is not necessarily what is configured (see the security module)
-        self._auth = resolve_authentication(self.settings.auth)
+        self._auth = resolve_authentication(self.settings.auth, f"{self.settings.host}:{self.settings.port}")
 
         # create users if they don't exist; keep a strong reference to the task, as the event loop
         # only holds a weak one and would let it be garbage-collected before completion.
@@ -164,6 +172,20 @@ class DashboardController(RoutingController):
             return BASE_SECURITY_HEADERS
         return {**BASE_SECURITY_HEADERS, "Content-Security-Policy": DASHBOARD_CONTENT_SECURITY_POLICY}
 
+    def _refuse_forged_request(self, request: HttpRequest) -> JsonHttpResponse | None:
+        """State-changing requests must come from the dashboard itself: JSON (which a cross-site form cannot send
+        without a preflight) and never flagged cross-site by the browser."""
+        if request.method in SAFE_METHODS:
+            return None
+        if request.headers.get("Sec-Fetch-Site", "same-origin") not in SAME_ORIGIN_FETCH_SITES:
+            return JsonHttpResponse({"error": "Cross-site request refused", "status": 403}, status=403)
+        origin = request.headers.get("Origin")
+        if origin is not None and urlsplit(origin).netloc != request.headers.get("Host"):
+            return JsonHttpResponse({"error": "Cross-site request refused", "status": 403}, status=403)
+        if request.headers.get("Content-Type", "").split(";")[0].strip().lower() != "application/json":
+            return JsonHttpResponse({"error": "Content-Type must be application/json", "status": 415}, status=415)
+        return None
+
     async def _handle(self, request: HttpRequest, asgi_send: ASGISendCallable) -> HttpResponse:
         request.extensions.setdefault("user", None)
 
@@ -171,7 +193,7 @@ class DashboardController(RoutingController):
             current_auth = request.basic_auth
 
             if current_auth:
-                request.extensions["user"] = self._auth.check(current_auth[0], current_auth[1])
+                request.extensions["user"] = await self._auth.acheck(current_auth[0], current_auth[1])
 
             if not request.extensions["user"]:
                 return HttpResponse(
@@ -180,6 +202,9 @@ class DashboardController(RoutingController):
                     headers={"WWW-Authenticate": 'Basic realm="Harp Dashboard"'},
                     content_type="text/plain",
                 )
+
+        if refusal := self._refuse_forged_request(request):
+            return refusal
 
         if request.path == METRICS_PATH:
             return await metrics_controller()

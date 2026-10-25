@@ -1,0 +1,1 @@
+Dashboard writes (``PUT``, ``POST``, ``DELETE``) now require ``Content-Type: application/json`` and a same-origin request; scripts must send that header or get ``415``. Responses also carry ``Referrer-Policy: same-origin``, and links opening a new window carry ``rel="noopener noreferrer"``.

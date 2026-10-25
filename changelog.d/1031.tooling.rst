@@ -1,0 +1,1 @@
+Release validation docs: path-handling checks must run straight to HARP, not through a tunnel or CDN.

@@ -1,16 +1,20 @@
 from hishel import Headers
 from multidict import CIMultiDict
 
+from harp.models.redaction import REDACTED
 from harp.utils.bytes import ensure_bytes, ensure_str
 
 
-def prepare_headers_for_serialization(headers, /, *, varying=()) -> tuple[bytes, dict[str, str], dict[str, str]]:
+def prepare_headers_for_serialization(
+    headers, /, *, varying=(), redacted=()
+) -> tuple[bytes, dict[str, str], dict[str, str]]:
     """Prepare headers for serialization.
 
     Args:
         headers: Either a list of (bytes, bytes) tuples (hishel 0.1.x / httpcore)
                  or a Headers mapping (hishel 1.0)
         varying: Tuple of header names that should be stored separately
+        redacted: Lower case header names whose values are replaced by the placeholder
 
     Returns:
         Tuple of (static_headers_bytes, varying_headers_dict, metadata_dict)
@@ -35,6 +39,8 @@ def prepare_headers_for_serialization(headers, /, *, varying=()) -> tuple[bytes,
 
     for k, v in header_items:
         k = k.lower().strip()
+        if k.decode() in redacted:
+            v = REDACTED.encode()
         if k in varying:
             varying_headers[k.decode()] = v.decode()
         else:

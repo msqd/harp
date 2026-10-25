@@ -1,11 +1,7 @@
-from structlog import get_logger
-
 from harp.config import Application, OnBindEvent, OnReadyEvent
 from harp_apps.proxy.events import EVENT_PROXY_ERROR, ProxyErrorEvent
 
 from .settings import SentrySettings
-
-logger = get_logger(__name__)
 
 
 async def on_proxy_error(event: ProxyErrorEvent):
@@ -39,7 +35,7 @@ async def on_ready(event: OnReadyEvent):
 
     from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 
-    init_sentry(settings.dsn)
+    init_sentry(settings.dsn.get_secret_value())
     event.asgi_app = SentryAsgiMiddleware(event.asgi_app)
 
 

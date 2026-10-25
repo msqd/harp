@@ -45,3 +45,24 @@ async def test_notifications_with_proxy(httpbin):
         assert send_notification_kwargs["status_code"] == 502, "Status code should be 502"
         assert send_notification_kwargs["message"] == "Bad Gateway", "Message should be 'Bad Gateway'"
         assert send_notification_kwargs["method"] == "GET", "HTTP method should be GET"
+
+
+async def test_failing_webhook_does_not_change_response(httpbin):
+    settings = {
+        "applications": ["http_client", "proxy", "notifications"],
+        "proxy": {"endpoints": [{"name": "httpbin", "port": 80, "url": httpbin}]},
+        "notifications": {"slack_webhook_url": "https://slack.example.com"},
+    }
+    system = await ConfigurationBuilder(settings, use_default_applications=False).abuild_system(
+        validate_dependencies=False
+    )
+    client = ASGICommunicator(system.asgi_app)
+    await client.asgi_lifespan_startup()
+
+    with mock.patch(
+        "harp_apps.notifications.senders.slack.SlackNotificationSender.send_notification",
+        side_effect=ConnectionError("webhook down"),
+    ):
+        response = await client.http_get("/status/502")
+
+    assert response["status"] == 502

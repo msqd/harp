@@ -1,0 +1,1 @@
+Pull requests run a dependency review, ``uv.lock`` and ``pnpm-lock.yaml`` are audited, and pre-commit hooks (pinned to SHAs, with secret detection) run in CI, all required by ``All Checks Passed``.

@@ -98,7 +98,9 @@ export function RefreshButton({ onClick, ...moreProps }: ButtonProps & HTMLAttri
 
 export function OpenInNewWindowLink({ id }: { id: string }) {
   return (
-    <StyledButton as={(props) => <Link {...props} target="_blank" to={`/transactions/${id}`} />}>
+    <StyledButton
+      as={(props) => <Link {...props} target="_blank" rel="noopener noreferrer" to={`/transactions/${id}`} />}
+    >
       <LinkIcon /> open in new window
     </StyledButton>
   )

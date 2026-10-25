@@ -1,9 +1,10 @@
-from unittest import mock
+import json
 
+import httpx
 import pytest
+import respx
 
 from harp_apps.notifications.senders import SlackNotificationSender
-from harp_apps.notifications.senders.slack import AsyncWebhookClient
 
 
 @pytest.mark.parametrize(
@@ -28,21 +29,39 @@ def test_message_does_not_contain_link_if_no_public_url(public_url, expected_lin
     assert link_button == expected_link
 
 
+@respx.mock
 async def test_send_notification():
-    with mock.patch.object(AsyncWebhookClient, "send", new_callable=mock.AsyncMock) as mock_send:
-        webhook_url = "http://example.com/webhook"
-        public_url = "http://example.com"
-        sender = SlackNotificationSender(webhook_url, public_url)
+    route = respx.post("http://example.com/webhook").mock(return_value=httpx.Response(200, text="ok"))
+    sender = SlackNotificationSender("http://example.com/webhook", "http://example.com")
 
-        mock_send.return_value.status_code = 200
-        mock_send.return_value.body = "ok"
+    await sender.send_notification("POST", "http://example.com/api", 500, "Internal Server Error", "12345")
 
-        method = "POST"
-        url = "http://example.com/api"
-        status_code = 500
-        message = "Internal Server Error"
-        transaction_id = "12345"
+    assert route.call_count == 1
+    payload = json.loads(route.calls.last.request.content)
+    assert payload["text"] == "ERROR NOTIFICATION"
+    assert payload["blocks"][0]["type"] == "header"
 
-        await sender.send_notification(method, url, status_code, message, transaction_id)
-        mock_send.assert_called_once()
-        assert mock_send.call_args[1]["text"] == "ERROR NOTIFICATION"
+
+@respx.mock
+async def test_send_notification_reports_failure_as_http_error_and_reuses_client():
+    respx.post("http://example.com/webhook").mock(return_value=httpx.Response(500, text="boom"))
+    sender = SlackNotificationSender("http://example.com/webhook")
+    client = sender._client
+
+    for _ in range(2):
+        with pytest.raises(httpx.HTTPStatusError):
+            await sender.send_notification("GET", "http://example.com/", 500, "Error", "1")
+
+    assert sender._client is client
+    await sender.aclose()
+
+
+def test_message_escapes_mrkdwn_control_characters():
+    message = SlackNotificationSender._format_error_message(
+        "GET", "https://example.com/a<b>&y", 500, "<!channel> & co", "123"
+    )
+
+    rendered = json.dumps(message)
+    assert "<!channel>" not in rendered
+    assert "https://example.com/a&lt;b&gt;&amp;y" in rendered
+    assert "&lt;!channel&gt; &amp; co" in rendered

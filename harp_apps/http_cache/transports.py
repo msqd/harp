@@ -12,8 +12,9 @@ from hishel.httpx import AsyncCacheTransport as HishelAsyncCacheTransport
 from harp import get_logger
 from harp.http.utils import hop_by_hop_names, parse_cache_control
 from harp.utils.bytes import HEADER_ENCODING, ensure_bytes, header_bytes
+from harp_apps.http_cache.coalescing import DEFAULT_TIMEOUT, Coalescer
 from harp_apps.http_cache.models import WrappedRequest
-from harp_apps.http_cache.storages import MAX_BODY_SIZE_METADATA
+from harp_apps.http_cache.storages import MARKERS_METADATA, MAX_BODY_SIZE_METADATA, REDACTION_METADATA, STAMP_METADATA
 from harp_apps.http_cache.streams import ClosableByteStream, UpstreamBody
 
 logger = get_logger(__name__)
@@ -129,7 +130,16 @@ def _forbids_storage(request: httpx.Request) -> bool:
     return bool(parse_cache_control(request.headers.get("cache-control")).no_store)
 
 
+#: Methods whose concurrent misses are coalesced: the ones a shared cache answers from a stored response.
+COALESCED_METHODS = frozenset({"GET", "HEAD"})
+
+
 class AsyncCacheTransport(HishelAsyncCacheTransport):
+    def __init__(self, *args, coalescing_timeout: float = DEFAULT_TIMEOUT, **kwargs):
+        """``coalescing_timeout`` bounds, in seconds, how long a request waits for the fetch it shares with others."""
+        super().__init__(*args, **kwargs)
+        self._coalescer = Coalescer(coalescing_timeout)
+
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Wraps the request to use a rewritten url (for cache key handling)."""
         internal_request = _httpx_to_internal(request)
@@ -142,20 +152,34 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         wrapped_request = WrappedRequest(
             internal_request,
             url=url,
-            metadata={**internal_request.metadata, MAX_BODY_SIZE_METADATA: _max_recorded_body_size(request)},
+            metadata={
+                **internal_request.metadata,
+                MAX_BODY_SIZE_METADATA: _max_recorded_body_size(request),
+                REDACTION_METADATA: request.extensions.get("harp", {}).get("redaction"),
+                MARKERS_METADATA: request.extensions.get("harp", {}).get("markers"),
+                # Taken before going upstream: what the origin answers may predate an invalidation that lands meanwhile.
+                STAMP_METADATA: self.storage.stamp,
+            },
         )
 
         if _forbids_storage(request):
             logger.debug(f"Bypassing cache, the request forbids storage (RFC 9111 §5.2.1.5): url={request.url}")
             internal_response = await self._send_without_caching(wrapped_request)
         else:
-            internal_response = await self._cache_proxy.handle_request(wrapped_request)
+            internal_response = await self._handle_cacheable_request(wrapped_request)
 
         response = _internal_to_httpx(internal_response)
         _restore_original_expires(response)
         if request.method not in SAFE_METHODS and response.status_code < 400:
             await self._invalidate(request, response)
         return response
+
+    async def _handle_cacheable_request(self, request: WrappedRequest) -> Response:
+        """Concurrent misses for one variant of a resource share one origin fetch (#947)."""
+        if request.method not in COALESCED_METHODS:
+            return await self._cache_proxy.handle_request(request)
+        key = await self._cache_proxy._get_key_for_request(request)
+        return await self._coalescer.run(key, request, self._cache_proxy.handle_request)
 
     async def _invalidate(self, request: httpx.Request, response: httpx.Response) -> None:
         """Drop the stored entries for the resources a successful unsafe request has changed (RFC 9111 §4.4)."""
@@ -164,8 +188,7 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
             key = await self._cache_proxy._get_key_for_request(
                 Request(method="GET", url=_cache_url(url, endpoint_name))
             )
-            for entry in await self.storage.get_entries(key):
-                await self.storage.remove_entry(entry.id)
+            await self.storage.invalidate(key)
             logger.debug(f"Cache invalidated by {request.method} {request.url}: url={url}")
 
     async def _send_without_caching(self, request: WrappedRequest) -> Response:

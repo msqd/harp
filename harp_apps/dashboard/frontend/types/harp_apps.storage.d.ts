@@ -6,6 +6,16 @@
  */
 
 declare namespace Apps.Storage {
+  export interface StorageSettings {
+    url?: string;
+    /**
+     * Whether the application is enabled
+     */
+    enabled?: boolean;
+    migrate?: boolean;
+    blobs?: BlobStorageSettings;
+    redis?: RedisSettings | null;
+  }
   export interface BlobStorageSettings {
     /**
      * Base type for service definition.
@@ -45,16 +55,6 @@ declare namespace Apps.Storage {
     } | null;
     url?: string;
     [k: string]: unknown;
-  }
-  export interface StorageSettings {
-    url?: string;
-    /**
-     * Whether the application is enabled
-     */
-    enabled?: boolean;
-    migrate?: boolean;
-    blobs?: BlobStorageSettings1;
-    redis?: RedisSettings | null;
   }
   export interface BlobStorageSettings1 {
     /**

@@ -1,4 +1,4 @@
-"""HARP's own credentials never reach an origin (ADR-0010)."""
+"""HARP's own credentials never reach an origin (ADR-0011)."""
 
 import httpx
 import respx

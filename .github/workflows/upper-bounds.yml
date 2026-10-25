@@ -1,0 +1,27 @@
+name: Upper bounds
+
+# Weekly report of the direct dependencies whose range excludes the latest PyPI release (see #1047).
+# Fails when the list is not empty; the list is in the job summary. Never runs on pushes or pull requests.
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  upper-bounds:
+    name: Upper bounds vs latest PyPI release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+
+      - name: List upper bounds that exclude the latest release (see the job summary)
+        run: uv run --no-project --with packaging python bin/check_upper_bounds.py

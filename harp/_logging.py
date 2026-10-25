@@ -21,12 +21,6 @@ processors = [
     structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
 ]
 
-try:
-    _exc_formatter_options = {"width": os.get_terminal_size()[0]}
-except OSError:
-    _exc_formatter_options = {}
-
-
 LOGGING_FORMATTERS = {
     "json": {
         "()": structlog.stdlib.ProcessorFormatter,

@@ -11,10 +11,11 @@ from .typing import BaseHttpMessage
 class RejectedRequest(Exception):
     """Raised while reading a request that must be answered with an error status and not be processed further."""
 
-    def __init__(self, message: str, /, *, status: int = 400):
+    def __init__(self, message: str, /, *, status: int = 400, headers: Optional[dict] = None):
         super().__init__(message)
         self.message = message
         self.status = status
+        self.headers = headers or {}
 
 
 class ClientDisconnected(Exception):
