@@ -1,1 +1,1 @@
-Storage: a request whose method is over 16 characters is now recorded on PostgreSQL, with its method truncated to 16 characters, instead of being lost.
+Storage: a request whose method is over 16 characters is now recorded on PostgreSQL, with its method truncated to 16 characters, instead of being lost; filtering transactions by method matches the stored, truncated value.
