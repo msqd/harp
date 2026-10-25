@@ -14,7 +14,7 @@ class HTTPCommunicator(ApplicationCommunicator):
     directly.
     """
 
-    def __init__(self, application, method, path, body=b"", headers=None, *, hostname="0.0.0.0", port=80):
+    def __init__(self, application, method, path, body=b"", headers=None, *, hostname="0.0.0.0", port=80, client=None):
         # Like hypercorn: split the raw request target at "?", never parse it as a URL.
         raw_path, _, query_string = path.encode("ascii").partition(b"?")
         self.scope = {
@@ -26,6 +26,7 @@ class HTTPCommunicator(ApplicationCommunicator):
             "query_string": query_string,
             "headers": headers or [],
             **({"server": (hostname, port)} if port and hostname else {}),
+            **({"client": client} if client else {}),
         }
         assert isinstance(body, bytes)
         self.body = body

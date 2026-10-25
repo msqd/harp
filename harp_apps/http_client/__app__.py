@@ -1,12 +1,9 @@
 from os.path import dirname
 from pathlib import Path
 
-from harp import get_logger
 from harp.config import Application, OnBindEvent
 
 from .settings import HttpClientSettings
-
-logger = get_logger(__name__)
 
 
 async def on_bind(event: OnBindEvent):

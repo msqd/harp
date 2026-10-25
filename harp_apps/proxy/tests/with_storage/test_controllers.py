@@ -249,8 +249,8 @@ class TestHttpProxyControllerWithStorage(
             "transaction_id": ANY,
             "kind": "request",
             "summary": "GET / HTTP/1.1",
-            "headers": "916ef336ce8ac9a91de41ce88c4b4bfc747b3ac9",
-            "body": "adc83b19e793491b1c6ea0fd8b46cd9f32e592fc",
+            "headers": "e16aaad8ef3406ba55f2c90748d15fcbb6cdd66a",
+            "body": "af5570f5a1810b7af78caf4bc70a660f0df51e42",
             "created_at": ANY,
         }
 
@@ -264,8 +264,8 @@ class TestHttpProxyControllerWithStorage(
             "transaction_id": ANY,
             "kind": "response",
             "summary": "HTTP/1.1 200 OK",
-            "headers": "916ef336ce8ac9a91de41ce88c4b4bfc747b3ac9",
-            "body": "6ffdd89703735cc316470566467b816446f008ce",
+            "headers": "e16aaad8ef3406ba55f2c90748d15fcbb6cdd66a",
+            "body": "ce9e973bfc3d9e7e5c8987ea1ee70bbc00896a98",
             "created_at": ANY,
         }
 
@@ -316,8 +316,8 @@ class TestHttpProxyControllerWithStorage(
             "transaction_id": ANY,
             "kind": "request",
             "summary": "GET / HTTP/1.1",
-            "headers": "62ccbc3696048078cc4ced90d9239c1d4abc9e49",
-            "body": "adc83b19e793491b1c6ea0fd8b46cd9f32e592fc",
+            "headers": "c7a6a4abca83566b122a9d7117af9ae9bb9a5b60",
+            "body": "af5570f5a1810b7af78caf4bc70a660f0df51e42",
             "created_at": ANY,
         }
 
@@ -330,8 +330,8 @@ class TestHttpProxyControllerWithStorage(
             "transaction_id": ANY,
             "kind": "response",
             "summary": "HTTP/1.1 200 OK",
-            "headers": "916ef336ce8ac9a91de41ce88c4b4bfc747b3ac9",
-            "body": "6ffdd89703735cc316470566467b816446f008ce",
+            "headers": "e16aaad8ef3406ba55f2c90748d15fcbb6cdd66a",
+            "body": "ce9e973bfc3d9e7e5c8987ea1ee70bbc00896a98",
             "created_at": ANY,
         }
 
@@ -459,25 +459,12 @@ class TestHttpProxyControllerWithStorage(
         assert "Age" in hit.headers
 
     @respx.mock
-    async def test_a_no_store_request_is_still_recorded_in_0_10(
+    async def test_a_no_store_request_suppresses_its_payload_recording(
         self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
     ):
-        """A client's `no-store` binds HARP's cache. In 0.10 it does not bind the transaction record.
+        """A caller's `no-store` binds the cache and suppresses payload recording (ADR-0002, #927).
 
-        This pins 0.10's behaviour. It is not an argument that the behaviour is right, and it is
-        **expected to be replaced**: https://github.com/msqd/harp/issues/927 was decided the other
-        way, and from 0.11 a caller's `no-store` suppresses payload recording while leaving the
-        transaction and message rows in place. The decision is recorded as ADR-0002, under
-        `docs/adr/`.
-
-        So if you are implementing #927 and this test fails, that is the point: rewrite it to assert
-        the new behaviour rather than treating the failure as a regression. An earlier version of
-        this docstring argued the opposite case on the grounds that the record is an operator's
-        audit trail. That argument is withdrawn: the record is best-effort and sheds under load
-        (#945), so it was never the thing that argument needed it to be.
-
-        Everything the cache is asked to forget is still asserted present here: the
-        transaction, both messages, both header blobs and both body blobs.
+        The transaction and both message rows stay, with their summaries; no headers, no bodies.
         """
         endpoint = respx.get("http://example.com/").mock(
             return_value=Response(200, content=b"Hello.", headers={"Cache-Control": "max-age=3600"})
@@ -504,14 +491,17 @@ class TestHttpProxyControllerWithStorage(
         assert endpoint.call_count == 2
         assert [response.headers["X-Cache"] for response in responses] == ["MISS", "MISS"]
 
-        # The transaction record kept everything anyway, both times.
+        # The record keeps that the calls happened, without their payload, and says why.
         transactions = await self._find_transactions_from_storage(sql_storage)
         assert len(transactions) == 2
         for transaction in transactions:
             assert transaction.extras["cached"] is False
+            assert {"no-store-request", "no-store-response"} <= set(transaction.markers)
             request_message, response_message = transaction.messages
-            assert (await blob_storage.get(request_message.headers)).data == b"cache-control: no-store"
-            assert (await blob_storage.get(response_message.body)).data == b"Hello."
+            for message in (request_message, response_message):
+                assert message.summary
+                assert message.headers is None
+                assert message.body is None
 
     @respx.mock
     async def test_skip_storage_marker_set_by_filter_leaves_no_row(

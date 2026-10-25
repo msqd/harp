@@ -4,6 +4,7 @@ from typing import List
 
 from .base import Entity
 from .messages import Message
+from .redaction import Redaction
 
 
 def encode_markers(markers) -> str | None:
@@ -30,6 +31,8 @@ def encode_cache_flag(cached) -> str | None:
 
 @dataclasses.dataclass(kw_only=True)
 class Transaction(Entity):
+    """An HTTP transaction, as stored and as sent to the dashboard."""
+
     id: str = None
     """Unique identifier for this transaction."""
 
@@ -64,6 +67,14 @@ class Transaction(Entity):
     # Markers, used for transaction management (e.g. skip storage on high pressure)
     markers: set = dataclasses.field(default_factory=set)
 
+    # Which header and query parameter values are replaced by a placeholder before anything is stored
+    redaction: Redaction = dataclasses.field(default_factory=Redaction)
+
+    @classmethod
+    def _get_fields(cls, base_fields=True):
+        """Redaction rules are working state: kept out of the serialised form (dict and schema)."""
+        return [f for f in super()._get_fields(base_fields) if f.field.name != "redaction"]
+
     def as_storable_dict(self, /, *, with_messages=False, with_tags=False):
         """Create a dict that can be passed to a storage creation method."""
         data = self._asdict()
@@ -86,5 +97,6 @@ class Transaction(Entity):
 
     def _asdict(self, /, *, secure=True):
         result = dataclasses.asdict(self)
+        result.pop("redaction", None)
         result["markers"] = sorted(self.markers)
         return result

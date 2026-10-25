@@ -1,11 +1,14 @@
 import logging
 from re import escape
-from unittest.mock import ANY, patch
+from unittest.mock import ANY, Mock, patch
 
 import orjson
 import pytest
 
+from harp.http import HttpRequest
+from harp.typedefs import GlobalSettings
 from harp.utils.testing import RE
+from harp.views.json import serialize
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.databases import parametrize_with_blob_storages_urls, parametrize_with_database_urls
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
@@ -80,6 +83,26 @@ class TestSystemController(
                 "redis": None,
             },
         }
+
+    @parametrize_with_settings({})
+    @parametrize_with_database_urls("sqlite")
+    @parametrize_with_blob_storages_urls("sql")
+    async def test_get_lists_development_only_settings(self, controller: SystemController):
+        response = await controller.get(Mock(spec=HttpRequest, extensions={}))
+
+        (item,) = orjson.loads(serialize(response))["development_only_settings"]
+        assert item["name"] == "storage.url"
+        assert "PostgreSQL" in item["message"]
+
+    @parametrize_with_settings({})
+    @parametrize_with_database_urls("sqlite")
+    @parametrize_with_blob_storages_urls("sql")
+    async def test_get_lists_nothing_when_settings_are_production_grade(self, controller: SystemController):
+        controller.settings = GlobalSettings({})
+
+        response = await controller.get(Mock(spec=HttpRequest, extensions={}))
+
+        assert orjson.loads(serialize(response))["development_only_settings"] == []
 
     @parametrize_with_settings({})
     @parametrize_with_database_urls("sqlite")
@@ -319,9 +342,9 @@ class TestSystemControllerPutProxy(
     async def test_put_proxy_changes_remote_status(
         self, client: ASGICommunicator, blob_storage, action, previous, expected
     ):
-        await put_proxy(client, endpoint="api", url=REMOTE_URL, action=previous)
+        await put_proxy(client, endpoint="api", index=0, action=previous)
 
-        response = await put_proxy(client, endpoint="api", url=REMOTE_URL, action=action)
+        response = await put_proxy(client, endpoint="api", index=0, action=action)
 
         assert response["status"] == 200
         assert remote_status(response) == expected
@@ -332,9 +355,9 @@ class TestSystemControllerPutProxy(
     @pytest.mark.parametrize(
         ("data", "status", "message"),
         [
-            ({"endpoint": "api", "url": REMOTE_URL, "action": "explode"}, 400, b"Invalid input"),
-            ({"endpoint": "nope", "url": REMOTE_URL, "action": "up"}, 404, b"Endpoint not found: nope"),
-            ({"endpoint": "api", "url": "http://elsewhere/", "action": "up"}, 404, b"Endpoint URL not found"),
+            ({"endpoint": "api", "index": 0, "action": "explode"}, 400, b"Invalid input"),
+            ({"endpoint": "nope", "index": 0, "action": "up"}, 404, b"Endpoint not found: nope"),
+            ({"endpoint": "api", "index": 1, "action": "up"}, 404, b"Remote endpoint not found"),
         ],
     )
     async def test_put_proxy_rejects_bad_input(self, client: ASGICommunicator, blob_storage, data, status, message):
@@ -342,3 +365,28 @@ class TestSystemControllerPutProxy(
 
         assert response["status"] == status
         assert message in response["body"]
+
+
+CREDENTIALED_PROXY_SETTINGS = {
+    "applications": ["proxy", "http_client", "storage", "dashboard"],
+    "proxy": {"endpoints": [{"name": "api", "port": 4000, "url": "http://user:hunter2@127.0.0.1:1/?email=a@b.com"}]},
+}
+
+
+class TestSystemControllerPutProxyCredentialedRemote(
+    SystemControllerTestFixtureMixin,
+    StorageTestFixtureMixin,
+    ControllerThroughASGIFixtureMixin,
+):
+    @parametrize_with_settings(CREDENTIALED_PROXY_SETTINGS)
+    @parametrize_with_database_urls("sqlite")
+    @parametrize_with_blob_storages_urls("sql")
+    @pytest.mark.parametrize(("action", "expected"), [("up", UP), ("down", DOWN), ("checking", CHECKING)])
+    async def test_put_proxy_identifies_the_remote_by_index(
+        self, client: ASGICommunicator, blob_storage, action, expected
+    ):
+        response = await put_proxy(client, endpoint="api", index=0, action=action)
+
+        assert response["status"] == 200
+        assert remote_status(response) == expected
+        assert b"hunter2" not in response["body"]

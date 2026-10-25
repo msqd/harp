@@ -23,8 +23,10 @@ Submodules
     harp.http
     harp.meta
     harp.models
+    harp.security
     harp.services
     harp.settings
     harp.typedefs
+    harp.unit_of_work
     harp.utils
     harp.views

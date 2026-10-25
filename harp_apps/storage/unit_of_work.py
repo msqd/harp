@@ -1,5 +1,5 @@
 """
-SQL implementation of the core unit of work (ADR-0012), on the storage session factory.
+SQL implementation of the core unit of work (ADR-0013), on the storage session factory.
 
 Transactional listeners write through :func:`current_session`, so their rows join the commit of the action.
 """

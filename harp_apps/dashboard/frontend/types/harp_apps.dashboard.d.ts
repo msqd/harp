@@ -9,64 +9,51 @@ declare namespace Apps.Dashboard {
   export interface SystemPutProxyInput {
     endpoint: string;
     action: "up" | "down" | "checking";
-    url: string;
+    index: number;
     [k: string]: unknown;
+  }
+  /**
+   * Root settings for the dashboard application.
+   */
+  export interface DashboardSettings {
+    /**
+     * Whether the application is enabled
+     */
+    enabled?: boolean;
+    /**
+     * Address on which the dashboard application will listen. The default listens on every interface, which a published Docker port needs. Use `127.0.0.1` to listen on the loopback interface only.
+     */
+    host?: string;
+    /**
+     * Port on which the dashboard application will be served.
+     */
+    port?: number;
+    /**
+     * Port on which the Prometheus metrics (`/metrics`) are also served, unauthenticated. Disabled by default. Metrics are always served on the dashboard port, under the dashboard authentication.
+     */
+    metrics_port?: number | null;
+    /**
+     * Authentication settings for the dashboard. When not set, the dashboard requires a login with the `admin` user and a random password generated and logged at each boot. Use `type: none` to explicitly serve the dashboard without authentication.
+     */
+    auth?: (BasicAuthSettings | NoAuthSettings) | null;
+    /**
+     * Development server settings, only useful for internal frontend development.
+     */
+    devserver?: DevserverSettings | null;
+    /**
+     * Public URL of the dashboard application, used to generate absolute links, for example in notifications.
+     */
+    public_url?: string | null;
   }
   export interface BasicAuthSettings {
     /**
-     * Authentication type. Only «basic» is supported for now.
+     * Authentication type.
      */
     type?: "basic";
     /**
-     * Hashing algorithm used for passwords.
+     * Hashing algorithm used for passwords. «plaintext» is for tests only.
      */
-    algorithm?:
-      | "argon2"
-      | "bcrypt"
-      | "bcrypt_sha256"
-      | "cisco_asa"
-      | "cisco_pix"
-      | "cisco_type7"
-      | "django_bcrypt"
-      | "django_bcrypt_sha256"
-      | "django_des_crypt"
-      | "django_disabled"
-      | "django_pbkdf2_sha1"
-      | "django_pbkdf2_sha256"
-      | "django_salted_md5"
-      | "django_salted_sha1"
-      | "grub_pbkdf2_sha512"
-      | "hex_digest"
-      | "ldap_crypt"
-      | "ldap_md5"
-      | "ldap_plaintext"
-      | "ldap_salted_md5"
-      | "ldap_salted_sha1"
-      | "ldap_salted_sha256"
-      | "ldap_salted_sha512"
-      | "ldap_sha1"
-      | "lmhash"
-      | "md5_crypt"
-      | "msdcc"
-      | "msdcc2"
-      | "mssql2000"
-      | "mssql2005"
-      | "mysql323"
-      | "mysql41"
-      | "nthash"
-      | "oracle10"
-      | "oracle11"
-      | "pbkdf2_sha1"
-      | "pbkdf2_sha256"
-      | "pbkdf2_sha512"
-      | "phpass"
-      | "plain"
-      | "plaintext"
-      | "postgres_md5"
-      | "scram"
-      | "scrypt"
-      | "sha256_crypt"
-      | "sha512_crypt";
+    algorithm?: "pbkdf2_sha256" | "argon2" | "plaintext";
     users?: Users;
   }
   /**
@@ -78,6 +65,15 @@ declare namespace Apps.Dashboard {
   export interface User {
     password: string;
   }
+  /**
+   * Explicit opt-out: the dashboard is served without any authentication.
+   */
+  export interface NoAuthSettings {
+    /**
+     * Authentication type. «none» serves the dashboard without authentication.
+     */
+    type?: "none";
+  }
   export interface DevserverSettings {
     /**
      * Enable or disable the development server.
@@ -87,30 +83,5 @@ declare namespace Apps.Dashboard {
      * Port on which the development server will be served (internal). The proxy will forward dashboard requests to this port, if enabled.
      */
     port?: number | null;
-  }
-  /**
-   * Root settings for the dashboard application.
-   */
-  export interface DashboardSettings {
-    /**
-     * Whether the application is enabled
-     */
-    enabled?: boolean;
-    /**
-     * Port on which the dashboard application will be served.
-     */
-    port?: number;
-    /**
-     * Authentication settings for the dashboard.
-     */
-    auth?: BasicAuthSettings | null;
-    /**
-     * Development server settings, only useful for internal frontend development.
-     */
-    devserver?: DevserverSettings | null;
-    /**
-     * Public URL of the dashboard application, used to generate absolute links, for example in notifications.
-     */
-    public_url?: string | null;
   }
 }

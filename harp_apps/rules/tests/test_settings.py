@@ -49,3 +49,11 @@ def test_apply():
     for script in settings.ruleset.match("api1", "GET /foo", "on_request"):
         script(context)
     assert context == {"foo": 42}
+
+
+def test_time_budget_is_not_a_rule_and_survives_normalisation():
+    settings = RulesSettings(time_budget=0.25, **{"*": {"*": {"on_request": "foo = 42"}}})
+
+    assert settings.time_budget == 0.25
+    assert len(settings.ruleset) == 1
+    assert RulesSettings(**settings._asdict()).time_budget == 0.25

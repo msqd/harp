@@ -22,7 +22,11 @@ from harp_apps.storage.utils.migrations import (
 )
 from harp_apps.storage.utils.testing.sql import run_cli_migrate_command
 
-STORAGE_HEAD = "c5e8b2d41f73"
+STORAGE_HEAD = (
+    ScriptDirectory.from_config(create_alembic_config("sqlite+aiosqlite:///:memory:"))
+    .get_revision("storage@head")
+    .revision
+)
 
 
 def _write_revision(versions: Path, *, revision, label, down_revision=None):
@@ -62,7 +66,7 @@ def test_discovery_finds_storage_in_the_package():
 def test_storage_revisions_form_the_storage_branch():
     script = ScriptDirectory.from_config(create_alembic_config("sqlite+aiosqlite:///:memory:"))
 
-    assert script.get_heads() == [STORAGE_HEAD]
+    assert STORAGE_HEAD in script.get_heads()
     assert script.get_revision("storage@head").revision == STORAGE_HEAD
     assert script.get_revision("storage").revision == "248285939c4c"
 
@@ -178,7 +182,8 @@ async def test_ensure_schema_is_current_checks_every_head(tmp_path, sql_engine):
         pytest.skip("sqlite schema is checked against the models, not alembic")
 
     root = _application_tree(tmp_path, with_migrations=["auth"])
-    locations = {"storage": discover_migration_locations()["storage"], **discover_migration_locations(root)}
+    real = discover_migration_locations()  # the fixture migrated every real application
+    locations = {"storage": real["storage"], "audit": real["audit"], **discover_migration_locations(root)}
     cfg = create_alembic_config(sql_engine.url.render_as_string(hide_password=False), locations=locations)
 
     # storage is at its head, auth has a branch that was never applied
@@ -236,7 +241,9 @@ async def test_migrate_status_is_readable_when_the_database_holds_an_unknown_rev
         assert (await run_cli_migrate_command(url)).exit_code == 0
         engine = create_async_engine(url)
         async with engine.begin() as conn:
-            await conn.execute(text("UPDATE alembic_version SET version_num = 'deadbeef0000'"))
+            await conn.execute(
+                text(f"UPDATE alembic_version SET version_num = 'deadbeef0000' WHERE version_num = '{STORAGE_HEAD}'")
+            )
         await engine.dispose()
 
         status = await run_cli_migrate_command(url, operation="status", revision=None)

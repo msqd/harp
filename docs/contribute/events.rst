@@ -151,6 +151,15 @@ unit of work:
 2. After the commit, the same event is dispatched on the main dispatcher, for every other listener. A failure there is
    logged and undoes nothing.
 
+An auditable event derives from :class:`harp.unit_of_work.audit.AuditableEvent` and carries an ``actor``, a ``target``,
+an ``outcome`` and a ``details`` dict, which the :doc:`audit application </apps/audit/index>` records. A transactional
+listener attached to ``harp.unit_of_work.ANY_EVENT`` receives every recorded event, and ``uow.after_commit(callback)``
+runs a callback once the commit is done.
+
+Only the ``details_fields`` an auditable event declares are recorded, and only as scalars or lists of scalars. The event
+author declares which fields are safe: values are not inspected, so a declared field must never carry a credential (ids,
+names, prefixes and scopes only).
+
 ``record`` refuses an event that is not ``auditable``. Mark an event ``loggable`` instead when it deserves a structured
 log line but no audit row; it is dispatched on the main dispatcher as usual. An unmarked event is neither.
 

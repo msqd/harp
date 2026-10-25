@@ -1,0 +1,1 @@
+The release image is the one CI tested: built from the CI wheel, started and fetched before it is pushed. Its base is pinned by digest, it ships without pip and setuptools, and it has a HEALTHCHECK on /healthz.

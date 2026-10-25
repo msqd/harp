@@ -10,6 +10,8 @@ from harp.utils.bytes import ensure_bytes, ensure_str
 from .base import Entity
 
 
+BLOB_ID_LENGTH = 40
+
 # Above this size, hashing is offloaded to a thread (hashlib releases the GIL on large buffers).
 OFFLOAD_HASH_THRESHOLD = 64 * 1024
 
@@ -28,10 +30,13 @@ class Blob(Entity):
             content_type = content_type.split(";", 1)[0].strip()
 
         data = ensure_bytes(data)
-        digest = hashlib.sha1(content_type.encode("utf-8") if content_type else b"")
-        digest.update(b"\n")
+        # Content type is length-framed, so no (type, body) pair can produce the hash input of another.
+        # SHA-256 truncated to 160 bits keeps the 40 hex characters of the historical SHA-1 ids.
+        content_type_bytes = content_type.encode("utf-8") if content_type else b""
+        digest = hashlib.sha256(len(content_type_bytes).to_bytes(8, "big"))
+        digest.update(content_type_bytes)
         digest.update(data)
-        return cls(id=digest.hexdigest(), data=data, content_type=content_type)
+        return cls(id=digest.hexdigest()[:BLOB_ID_LENGTH], data=data, content_type=content_type)
 
     @classmethod
     async def afrom_data(cls, data, /, *, content_type=None):

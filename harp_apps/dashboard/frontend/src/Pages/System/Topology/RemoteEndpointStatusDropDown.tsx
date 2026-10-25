@@ -20,9 +20,11 @@ function getHumanStatus(status: number) {
 
 export default function RemoteEndpointStatusDropDown({
   endpointName,
+  index,
   remoteEndpoint,
 }: {
   endpointName: string
+  index: number
   remoteEndpoint: Apps.Proxy.RemoteEndpoint
 }) {
   const mutation = useSystemProxyMutation()
@@ -30,9 +32,9 @@ export default function RemoteEndpointStatusDropDown({
   const humanStatus = useMemo(() => getHumanStatus(status), [status])
   const handleMutation = useCallback(
     (status: string) => {
-      mutation.mutate({ endpoint: endpointName, url: remoteEndpoint.settings.url, action: status })
+      mutation.mutate({ endpoint: endpointName, index, action: status })
     },
-    [mutation, endpointName, remoteEndpoint.settings.url],
+    [mutation, endpointName, index],
   )
   return (
     <Menu as="div" className="relative text-left">

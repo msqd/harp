@@ -1,0 +1,1 @@
+The URL masking only hides the password of the userinfo, and the status toggle of the dashboard identifies a remote endpoint by its position instead of its masked URL.

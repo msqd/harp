@@ -2,7 +2,7 @@
 
 **Problem**
 
-An action and the record of it cannot share a commit today: every listener of the main dispatcher runs wherever the event is dispatched, so putting the audit write in the action's transaction would also put every other listener there, and a failing webhook would cancel a change of role. ADR-0012 (branch `explore/audit`) decides a two-phase unit of work.
+An action and the record of it cannot share a commit today: every listener of the main dispatcher runs wherever the event is dispatched, so putting the audit write in the action's transaction would also put every other listener there, and a failing webhook would cancel a change of role. ADR-0013 (branch `explore/audit`) decides a two-phase unit of work.
 
 **Acceptance criteria**
 
