@@ -25,6 +25,7 @@ from whistle import IAsyncEventDispatcher, IEvent
 
 from harp import get_logger
 from harp.event_dispatcher import LoggingAsyncEventDispatcher
+from harp.unit_of_work.audit import is_secret_field
 
 logger = get_logger(__name__)
 
@@ -39,6 +40,7 @@ __all__ = [
     "is_auditable",
     "is_loggable",
     "loggable",
+    "loggable_events",
 ]
 
 #: Event id for a transactional listener that wants every recorded event.
@@ -48,6 +50,8 @@ AUDITABLE = "auditable"
 LOGGABLE = "loggable"
 
 _E = TypeVar("_E", bound=type)
+
+_loggable_events: dict[str, type] = {}
 
 
 def _mark(mark: str, event_id: str) -> Callable[[_E], _E]:
@@ -66,7 +70,23 @@ def auditable(event_id: str) -> Callable[[_E], _E]:
 
 def loggable(event_id: str) -> Callable[[_E], _E]:
     """Declares an event class as worth a structured log line, dispatched on the main dispatcher."""
-    return _mark(LOGGABLE, event_id)
+    mark = _mark(LOGGABLE, event_id)
+
+    def decorate(event_type: _E) -> _E:
+        secret = [name for name in getattr(event_type, "details_fields", ()) if is_secret_field(name)]
+        if secret:
+            raise TypeError(
+                f"{event_type.__name__} declares detail fields that look like secrets: {', '.join(secret)}."
+            )
+        _loggable_events[event_id] = event_type
+        return mark(event_type)
+
+    return decorate
+
+
+def loggable_events() -> dict[str, type]:
+    """The event classes declared ``loggable`` so far, by event id: what the event log may be asked to mute."""
+    return dict(_loggable_events)
 
 
 def is_auditable(event: object) -> bool:

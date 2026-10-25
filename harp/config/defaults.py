@@ -11,4 +11,5 @@ DEFAULT_APPLICATIONS = (
     "dashboard",
     "janitor",
     "rules",
+    "events",
 )

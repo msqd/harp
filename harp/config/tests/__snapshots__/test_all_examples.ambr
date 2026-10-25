@@ -61,6 +61,7 @@
       users:
         admin:
           password: '***'
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -75,6 +76,7 @@
   dashboard:
     auth:
       type: none
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -93,6 +95,7 @@
       users:
         admin:
           password: '***'
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -107,6 +110,7 @@
   dashboard:
     devserver:
       port: 11111
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -119,6 +123,7 @@
 # name: test_load_documentation_example[docs/apps/dashboard/examples/main.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -131,6 +136,7 @@
 # name: test_load_documentation_example[docs/apps/dashboard/examples/reference.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -143,6 +149,7 @@
 # name: test_load_documentation_example[docs/apps/http_cache/examples/cache.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -155,6 +162,7 @@
 # name: test_load_documentation_example[docs/apps/http_cache/examples/reference.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache:
     transport:
       type: harp_apps.http_cache.transports.AsyncCacheTransport
@@ -169,6 +177,7 @@
 # name: test_load_documentation_example[docs/apps/http_client/examples/full.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client:
     timeout: 10.0
@@ -184,6 +193,7 @@
 # name: test_load_documentation_example[docs/apps/http_client/examples/reference.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -196,6 +206,7 @@
 # name: test_load_documentation_example[docs/apps/http_client/examples/simple.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client:
     timeout: 10.0
@@ -216,6 +227,7 @@
   '''
   dashboard:
     public_url: http://localhost:4080
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -228,6 +240,7 @@
 # name: test_load_documentation_example[docs/apps/notifications/examples/main.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -240,6 +253,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/basics.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -258,6 +272,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/custom_controller.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -281,6 +296,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/full-shorthand.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -300,6 +316,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/full.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -332,6 +349,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/multiple.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -355,6 +373,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/pooled-aggressive.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -384,6 +403,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/pooled-fallback.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -410,6 +430,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/pooled-healthcheck.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -439,6 +460,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/pooled.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -458,6 +480,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/reference.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -486,6 +509,7 @@
 # name: test_load_documentation_example[docs/apps/proxy/examples/swapi.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -504,6 +528,7 @@
 # name: test_load_documentation_example[docs/apps/rules/examples/overview.toml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -525,6 +550,7 @@
 # name: test_load_documentation_example[docs/apps/rules/examples/patterns-endpoint.toml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -543,6 +569,7 @@
 # name: test_load_documentation_example[docs/apps/rules/examples/patterns-order-more.toml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -559,6 +586,7 @@
 # name: test_load_documentation_example[docs/apps/rules/examples/patterns-order.toml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -582,6 +610,7 @@
 # name: test_load_documentation_example[docs/apps/rules/examples/patterns-request.toml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -601,6 +630,7 @@
 # name: test_load_documentation_example[docs/apps/rules/examples/patterns-stage.toml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -618,6 +648,7 @@
 # name: test_load_documentation_example[docs/apps/rules/examples/rules.toml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -636,6 +667,7 @@
 # name: test_load_documentation_example[docs/apps/rules/examples/rules.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -654,6 +686,7 @@
 # name: test_load_documentation_example[docs/apps/storage/examples/mysql-aiomysql.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -667,6 +700,7 @@
 # name: test_load_documentation_example[docs/apps/storage/examples/postgres-asyncpg.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -680,6 +714,7 @@
 # name: test_load_documentation_example[docs/apps/storage/examples/redis.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -695,6 +730,7 @@
 # name: test_load_documentation_example[docs/apps/storage/examples/reference.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -707,6 +743,7 @@
 # name: test_load_documentation_example[docs/apps/storage/examples/sqlite-aiosqlite.yml]
   '''
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -727,6 +764,7 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  - harp_apps.events
   dashboard:
     auth:
       type: basic
@@ -739,6 +777,7 @@
           password: '***'
         miles:
           password: '***'
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -758,7 +797,9 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  - harp_apps.events
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -779,7 +820,9 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  - harp_apps.events
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -805,7 +848,9 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  - harp_apps.events
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -845,7 +890,9 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  - harp_apps.events
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -886,7 +933,9 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  - harp_apps.events
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -973,7 +1022,9 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  - harp_apps.events
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -998,7 +1049,9 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  - harp_apps.events
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
@@ -1018,7 +1071,9 @@
   - harp_apps.dashboard
   - harp_apps.janitor
   - harp_apps.rules
+  - harp_apps.events
   dashboard: {}
+  events: {}
   http_cache: {}
   http_client: {}
   janitor: {}
