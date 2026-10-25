@@ -5,6 +5,7 @@ from structlog.testing import capture_logs
 import harp
 from harp.controllers import GetHandler, RoutingController
 from harp.http import HttpRequest
+from harp.utils.arguments import Arguments
 
 
 class BoomController(RoutingController):
@@ -47,3 +48,11 @@ async def test_not_found_is_json(monkeypatch, debug):
     response = await _call("/nope")
     assert response.status == 404
     assert orjson.loads(response.body)["status"] == 404
+
+
+async def test_router_arguments_reach_the_router_as_keywords():
+    class StrictSlashController(BoomController):
+        RouterArguments = Arguments(trim_last_slash=False)
+
+    response = await StrictSlashController()(HttpRequest(method="GET", path="/boom/"))
+    assert response.status == 404
