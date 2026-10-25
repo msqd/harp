@@ -30,6 +30,8 @@ interface NavbarProps {
   currentPath?: string
   leftChildren?: ReactElement
   rightChildren?: ReactElement
+  /** Stays in the bar, at its right end, below `md` where `rightChildren` has moved into the menu. */
+  compactChildren?: ReactElement
   className?: string
 }
 
@@ -54,6 +56,7 @@ function Navbar({
   currentPath = "/",
   leftChildren = undefined,
   rightChildren = undefined,
+  compactChildren = undefined,
   className,
 }: NavbarProps) {
   return (
@@ -62,7 +65,7 @@ function Navbar({
         <>
           <Wrapper>
             <div className="relative flex h-14 justify-between">
-              <div className="flex items-center sm:hidden">
+              <div className="flex items-center md:hidden">
                 {/* Mobile menu button */}
                 <Disclosure.Button className="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary">
                   <span className="absolute -inset-0.5" />
@@ -74,7 +77,7 @@ function Navbar({
                   )}
                 </Disclosure.Button>
               </div>
-              <div className="flex min-w-0 flex-1 items-center justify-start sm:items-stretch">
+              <div className="flex min-w-0 flex-1 items-center justify-start md:items-stretch">
                 <div className="flex flex-shrink-0 items-center p-2">
                   {leftChildren ?? (
                     <Link to="/">
@@ -82,7 +85,7 @@ function Navbar({
                     </Link>
                   )}
                 </div>
-                <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <div className="hidden md:ml-6 md:flex md:space-x-8">
                   {/* Desktop navigation */}
                   {items.map((item, index) => (
                     <Link
@@ -102,14 +105,15 @@ function Navbar({
                   ))}
                 </div>
               </div>
+              {compactChildren ? <div className="flex items-center md:hidden">{compactChildren}</div> : null}
               {rightChildren ? (
-                /* Below `sm` this moves into the disclosure panel, so it cannot collide with the logo. */
-                <div className="hidden sm:ml-6 sm:flex sm:items-center">{rightChildren}</div>
+                /* Below `md` this moves into the disclosure panel, so it cannot collide with the logo. */
+                <div className="hidden md:ml-6 md:flex md:items-center">{rightChildren}</div>
               ) : null}
             </div>
           </Wrapper>
-          <Disclosure.Panel className="sm:hidden">
-            {/* Mobile navigation: the only way to reach these destinations below the `sm` breakpoint. */}
+          <Disclosure.Panel className="md:hidden">
+            {/* Mobile navigation: the only way to reach these destinations below the `md` breakpoint. */}
             {({ close }: { close: () => void }) => (
               <>
                 <div className="space-y-1 pb-3 pt-2">
