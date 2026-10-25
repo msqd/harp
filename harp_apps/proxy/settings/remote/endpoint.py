@@ -1,10 +1,13 @@
-from typing import List, Optional
+from typing import Callable, List, Optional
 
-from pydantic import Field, HttpUrl, field_serializer, field_validator, model_validator
+from pydantic import Field, HttpUrl, PrivateAttr, field_serializer, field_validator, model_validator
 
+from harp import get_logger
 from harp.config import Configurable, Stateful
 from harp_apps.proxy.constants import AVAILABLE_POOLS, CHECKING
 from harp_apps.proxy.settings.liveness import InheritLiveness, InheritLivenessSettings, Liveness, LivenessSettings
+
+logger = get_logger(__name__)
 
 
 class RemoteEndpointSettings(Configurable):
@@ -44,6 +47,24 @@ class RemoteEndpoint(Stateful[RemoteEndpointSettings]):
     status: int = CHECKING
     failure_reasons: Optional[set] = None
     liveness: Liveness = Field(None, exclude=True)
+
+    _status_observers: list[Callable[[int, int], None]] = PrivateAttr(default_factory=list)
+
+    def add_status_observer(self, observer: Callable[[int, int], None]) -> None:
+        """Calls ``observer(old, new)`` whenever the status really changes, whoever changed it."""
+        self._status_observers.append(observer)
+
+    def __setattr__(self, name, value):
+        if name != "status":
+            return super().__setattr__(name, value)
+        old = self.status
+        super().__setattr__(name, value)
+        if value != old:
+            for observer in self._status_observers:
+                try:
+                    observer(old, value)
+                except Exception:
+                    logger.exception("A status observer failed.")
 
     @model_validator(mode="after")
     def __initialize(self):

@@ -57,7 +57,9 @@ async def dashboard():
     for sub in (
         lambda: BlobsController(storage=storage, router=router),
         lambda: OverviewController(storage=storage, router=router),
-        lambda: SystemController(storage=storage, settings=MagicMock(), resolver=MagicMock(), router=router),
+        lambda: SystemController(
+            storage=storage, settings=MagicMock(), resolver=MagicMock(), unit_of_work=MagicMock(), router=router
+        ),
         lambda: TransactionsController(storage=storage, router=router),
     ):
         sub()

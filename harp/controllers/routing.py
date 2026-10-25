@@ -54,6 +54,7 @@ class RoutingController:
         try:
             match = self.router(request.path, method=request.method)
             if refusal := self.refuse_actor(request, match.target):
+                await self.on_refusal(request, match.target)
                 return refusal
             args = resolve_arguments(match.target, **{**(match.params or {}), "request": request})
             return await match.target(*args)
@@ -85,6 +86,16 @@ class RoutingController:
         if not actor.can(required):
             return self._refusal(403, "Forbidden")
         return None
+
+    async def on_refusal(self, request: HttpRequest, handler) -> None:
+        """
+        Called once :meth:`refuse_actor` refused ``request`` for ``handler``, before the refusal is sent. A controller
+        that shares its router with sub-controllers has the sub-controller owning the handler told, so that the one who
+        knows what the refused action was can record it.
+        """
+        owner = getattr(handler, "__self__", None)
+        if isinstance(owner, RoutingController) and owner is not self:
+            await owner.on_refusal(request, handler)
 
     @staticmethod
     def _refusal(status: int, error: str) -> HttpResponse:

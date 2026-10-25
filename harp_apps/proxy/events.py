@@ -8,7 +8,10 @@ from harp.http.utils import normalize_path
 from harp.http import BaseHttpMessage, HttpError, HttpResponse
 from harp.http.requests import HttpRequest
 from harp.models import Transaction
+from harp.unit_of_work import auditable, loggable
+from harp.unit_of_work.audit import AuditableEvent
 from harp.views.json import serialize
+from harp_apps.proxy.constants import CHECKING, DOWN, UP
 
 logger = get_logger(__name__)
 
@@ -126,3 +129,33 @@ class ProxyErrorEvent(TransactionEvent):
     def __init__(self, transaction: Transaction, error: HttpError):
         super().__init__(transaction)
         self.error = error
+
+
+#: A remote endpoint changed state: by hand (auditable, an Editor is the actor) or on its own (loggable, no actor).
+EVENT_REMOTE_STATE_CHANGED = "proxy.remote.state_changed"
+
+_STATE_NAMES = {UP: "up", DOWN: "down", CHECKING: "checking"}
+
+
+def state_name(status: int) -> str:
+    """The name of a remote endpoint status, as events carry it: ``up``, ``down`` or ``checking``."""
+    return _STATE_NAMES[status]
+
+
+@loggable(EVENT_REMOTE_STATE_CHANGED)
+class RemoteStateChanged(Event):
+    """The breaker or the liveness changed the state of a remote endpoint. No actor, never an audit row."""
+
+    details_fields = ("endpoint", "url", "from", "to")
+
+    def __init__(self, *, endpoint: str, url: str, old: int, new: int):
+        super().__init__()
+        self.outcome = "succeeded"
+        self.details = {"endpoint": endpoint, "url": url, "from": state_name(old), "to": state_name(new)}
+
+
+@auditable(EVENT_REMOTE_STATE_CHANGED)
+class RemoteStateChangedByHand(AuditableEvent):
+    """An Editor set the state of a remote endpoint (or tried to: ``denied`` carries the ``required_role``)."""
+
+    details_fields = ("endpoint", "url", "from", "to", "required_role")

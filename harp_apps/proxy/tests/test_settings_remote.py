@@ -7,7 +7,7 @@ from httpx import ConnectTimeout
 
 from harp.config.asdict import asdict
 from harp.utils.testing.config import BaseConfigurableTest
-from harp_apps.proxy.constants import CHECKING
+from harp_apps.proxy.constants import CHECKING, DOWN, UP
 from harp_apps.proxy.settings.remote import Remote, RemoteSettings
 
 
@@ -271,3 +271,53 @@ class TestRemoteStateful(BaseConfigurableTest):
 
     def test_model_validate_returns_the_remote(self):
         assert isinstance(Remote.model_validate(self.initial), Remote)
+
+
+class TestRemoteStateObservers:
+    URL = "http://example.com/"
+
+    @staticmethod
+    def observed(remote: Remote) -> list:
+        transitions = []
+        remote.add_state_observer(lambda url, old, new: transitions.append((url, old, new)))
+        return transitions
+
+    def create(self, **endpoint_settings) -> Remote:
+        return Remote.from_settings_dict({"endpoints": [{"url": self.URL, **endpoint_settings}]})
+
+    def test_a_manual_change_is_observed(self):
+        remote = self.create()
+        transitions = self.observed(remote)
+
+        remote.set_up(self.URL)
+        remote.set_down(self.URL)
+
+        assert transitions == [(self.URL, CHECKING, UP), (self.URL, UP, DOWN)]
+
+    def test_setting_the_state_it_already_has_is_not_a_transition(self):
+        remote = self.create()
+        remote.set_down(self.URL)
+        transitions = self.observed(remote)
+
+        remote.set_down(self.URL)
+
+        assert transitions == []
+
+    def test_repeated_failures_on_a_down_remote_are_observed_once(self):
+        remote = self.create(liveness={"type": "naive", "failure_threshold": 2})
+        transitions = self.observed(remote)
+
+        for _ in range(5):
+            remote[self.URL].failure("HTTP_503")
+
+        assert transitions == [(self.URL, CHECKING, DOWN)]
+
+    def test_the_liveness_recovery_is_observed(self):
+        remote = self.create(liveness={"type": "naive"})
+        remote.set_down(self.URL)
+        transitions = self.observed(remote)
+
+        remote[self.URL].success()
+        remote[self.URL].success()
+
+        assert transitions == [(self.URL, DOWN, UP)]

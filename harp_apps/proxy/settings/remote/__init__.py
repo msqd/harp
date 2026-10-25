@@ -1,9 +1,10 @@
 import asyncio
 import warnings
 from collections import deque
-from typing import ClassVar, Iterable, List, Mapping, Optional
+from functools import partial
+from typing import Callable, ClassVar, Iterable, List, Mapping, Optional
 
-from pydantic import Field, computed_field, field_serializer, field_validator, model_validator
+from pydantic import Field, PrivateAttr, computed_field, field_serializer, field_validator, model_validator
 
 from harp import get_logger
 from harp.config import Configurable, Stateful
@@ -110,6 +111,9 @@ class Remote(Stateful[RemoteSettings]):
     #: Remote endpoints with current status.
     _endpoints: Mapping[str, RemoteEndpoint] = None
 
+    #: Callables told about every real state transition of an endpoint: ``observer(url, old, new)``.
+    _state_observers: list[Callable[[str, int, int], None]] = PrivateAttr(default_factory=list)
+
     @computed_field
     @property
     def current_pool(self) -> List[str]:
@@ -147,12 +151,30 @@ class Remote(Stateful[RemoteSettings]):
             if endpoint.liveness.settings.type == "inherit":
                 endpoint.liveness = self.liveness
 
+        # relay the transitions of each endpoint, whatever changes its status (liveness, probe, hand)
+        for endpoint in self._endpoints.values():
+            endpoint.add_status_observer(partial(self._notify_state_observers, str(endpoint.settings.url)))
+
         # set the initial pool of available remote endpoints
         self.refresh()
         return self
 
     def __getitem__(self, url: str) -> RemoteEndpoint:
         return self._endpoints[normalize_url(url)]
+
+    def add_state_observer(self, observer: Callable[[str, int, int], None]) -> None:
+        """
+        Calls ``observer(url, old, new)`` on every real state transition of an endpoint (``UP``, ``DOWN``, ``CHECKING``),
+        and only then: setting the state an endpoint already has tells nobody. The remote knows nothing of who listens.
+        """
+        self._state_observers.append(observer)
+
+    def _notify_state_observers(self, url: str, old: int, new: int) -> None:
+        for observer in self._state_observers:
+            try:
+                observer(url, old, new)
+            except Exception:
+                logger.exception("A state observer failed.")
 
     def refresh(self):
         """Recompute the current pool of endpoints."""

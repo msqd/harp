@@ -14,6 +14,7 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
+    harp_apps.dashboard.audit
     harp_apps.dashboard.conftest
     harp_apps.dashboard.controllers
     harp_apps.dashboard.filters

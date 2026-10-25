@@ -203,6 +203,29 @@ error when there is none.
         await uow.act(remote.disable, compensation=remote.enable)
 
 
+.. _events-observers:
+One event, done by hand or on its own
+:::::::::::::::::::::::::::::::::::::
+
+The same thing can happen because an account acted or because the system did. Remote endpoints are the example:
+``proxy.remote.state_changed`` is declared twice, with the same id. ``RemoteStateChangedByHand`` is ``auditable`` and is
+recorded by the dashboard in a unit of work, with the Editor as actor. ``RemoteStateChanged`` is ``loggable``, carries no
+actor and is what the breaker and the liveness produce. Each class carries its mark, so the audit never sees the second
+and the event log never writes the first.
+
+Settings objects (the remote, its endpoints, the liveness) hold no dispatcher and know nothing of events. They only offer
+an observer hook: ``Remote.add_state_observer(callback)`` calls ``callback(url, old, new)`` on every real transition,
+whoever causes it, and never when the state is set to the value it already has. The application wires the hook to its
+dispatcher when the system is bound (``harp_apps.proxy.remote_events.relay_state_changes``). Follow this pattern when
+state held by a configuration object should become an event.
+
+A relay skips a change made while a unit of work is open: the code that opened it records that change with its actor. Run
+a manual change inside a unit of work, and give ``uow.act`` the compensation that restores the previous state.
+
+A refused attempt is recorded too. After a controller refuses a request for lack of role, it calls
+``RoutingController.on_refusal(request, handler)`` on the sub-controller that owns the handler, which may record the
+event with the ``denied`` outcome in a unit of work of its own.
+
 See Also
 ::::::::
 

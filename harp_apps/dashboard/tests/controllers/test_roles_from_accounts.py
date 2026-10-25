@@ -37,7 +37,9 @@ async def accounts(sql_engine):
 @pytest.fixture
 async def dashboard(accounts):
     router = Router(trim_last_slash=True)
-    SystemController(storage=MagicMock(spec=IStorage), settings={}, resolver=MagicMock(), router=router)
+    SystemController(
+        storage=MagicMock(spec=IStorage), settings={}, resolver=MagicMock(), unit_of_work=MagicMock(), router=router
+    )
     controller = DashboardController(
         storage=Mock(spec=IStorage),
         settings=DashboardSettings(
