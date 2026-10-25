@@ -18,7 +18,7 @@ from harp.utils.api import api
 from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.tpdex import tpdex
 from harp.settings import DEFAULT_CLIENT_READ_TIMEOUT, DEFAULT_MIN_REQUEST_BODY_RATE, DEFAULT_REQUEST_BODY_GRACE_PERIOD
-from harp.security.credentials import strip_harp_credentials
+from harp.security.credentials import strip_harp_credentials, strip_harp_set_cookies
 from harp_apps.storage.constants import (
     CLIENT_DISCONNECTED,
     DEFAULT_MAX_RECORDED_BODY_SIZE,
@@ -316,7 +316,12 @@ class HttpProxyController(AbstractHttpProxyController):
         # client's do on the way out. `content-encoding` and the identifying `server`/`date` are
         # dropped for their own reasons, unrelated to the hop.
         dropped = hop_by_hop_names(response.headers) | {"server", "date", "content-encoding"}
-        headers = {k: v for k, v in response.headers.multi_items() if k.lower() not in dropped}
+        forwarded = [(k, v) for k, v in response.headers.multi_items() if k.lower() not in dropped]
+        # An origin may not plant or overwrite HARP's session cookie (ADR-0010).
+        forwarded, stripped = strip_harp_set_cookies(forwarded)
+        if stripped:
+            transaction.markers.add(HARP_CREDENTIALS_STRIPPED)
+        headers = dict(forwarded)
 
         # Store the status class in the transaction extras for later use
         transaction.extras["status_class"] = f"{response.status_code // 100}xx"

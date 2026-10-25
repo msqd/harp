@@ -93,3 +93,17 @@ def strip_harp_credentials(headers):
                 continue
         kept.append((name, value))
     return kept, stripped
+
+
+def strip_harp_set_cookies(headers):
+    """Remove from response headers, given as ``(name, value)`` pairs, every ``Set-Cookie`` naming a HARP session
+    cookie: an origin must not plant or overwrite the dashboard session, which browsers share across ports.
+
+    :return: the remaining pairs, and whether anything was removed.
+    """
+    kept = [
+        (name, value)
+        for name, value in headers
+        if name.lower() != "set-cookie" or value.split("=", 1)[0].strip() not in SESSION_COOKIE_NAMES
+    ]
+    return kept, len(kept) != len(headers)

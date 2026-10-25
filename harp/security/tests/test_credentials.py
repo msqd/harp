@@ -6,6 +6,7 @@ from harp.security.credentials import (
     generate_token,
     is_harp_token,
     strip_harp_credentials,
+    strip_harp_set_cookies,
 )
 
 TOKEN = build_token("abcdefgh", "Z" * 43)
@@ -100,3 +101,22 @@ def test_empty_session_cookie_is_removed():
 
 def test_quoted_session_cookie_is_removed():
     assert strip_harp_credentials([("cookie", 'harp_session="abc"; a=1')]) == ([("cookie", "a=1")], True)
+
+
+def test_strip_session_set_cookie_from_response():
+    headers = [
+        ("Set-Cookie", "harp_session=evil; Path=/"),
+        ("set-cookie", "__Host-harp_session=evil; Secure; Path=/"),
+        ("set-cookie", "theme=dark"),
+        ("set-cookie", "xharp_session=1"),
+        ("x", "y"),
+    ]
+    assert strip_harp_set_cookies(headers) == (
+        [("set-cookie", "theme=dark"), ("set-cookie", "xharp_session=1"), ("x", "y")],
+        True,
+    )
+
+
+def test_response_without_session_set_cookie_is_unchanged():
+    headers = [("set-cookie", "a=1")]
+    assert strip_harp_set_cookies(headers) == (headers, False)
