@@ -1,4 +1,4 @@
-from typing import Literal, Tuple, get_args
+from typing import Literal
 
 TAlgorithm = Literal[
     "argon2",
@@ -48,4 +48,3 @@ TAlgorithm = Literal[
     "sha256_crypt",
     "sha512_crypt",
 ]
-ALL_ALGORITHMS: Tuple[TAlgorithm, ...] = get_args(TAlgorithm)
