@@ -150,7 +150,7 @@ declare namespace Apps.Proxy {
     verify?: boolean;
   }
   export interface Headers {
-    [k: string]: unknown;
+    [k: string]: string;
   }
   /**
    * A settings base class for service definitions.

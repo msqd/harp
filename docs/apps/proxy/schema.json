@@ -395,7 +395,11 @@
         "method": { "default": "GET", "type": "string" },
         "path": { "default": "/", "type": "string" },
         "headers": {
-          "additionalProperties": true,
+          "additionalProperties": {
+            "format": "password",
+            "type": "string",
+            "writeOnly": true
+          },
           "title": "Headers",
           "type": "object"
         },

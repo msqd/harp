@@ -7,7 +7,7 @@ from rich.tree import Tree
 
 from harp.commandline.options.server import CommonServerOptions, _EnhancedParserCommand, _server_click_options
 from harp.config import ConfigurationBuilder
-from harp.config.asdict import asdict
+from harp.config.asdict import asdict, mask_credentials
 from harp.utils.commandline import click
 
 
@@ -39,9 +39,11 @@ def _format_value(value):
             return "[]"
         items = ", ".join(_format_value(v) for v in value)
         return f"[{items}]"
+    # Services are built from settings and urls, which carry credentials: whatever is printed goes through the same
+    # masking as the configuration dump.
     if isinstance(value, str):
-        return f'"{value}"'
-    return str(value)
+        return f'"{mask_credentials(value)}"'
+    return mask_credentials(str(value))
 
 
 def _choose_primary_key(keys):
@@ -170,15 +172,17 @@ def system():
 @click.option(
     "--unsecure",
     is_flag=True,
-    help="Shows the passwords, which are masked by default.",
+    help="Shows the secrets, which are masked by default.",
 )
 @_server_click_options
 def config_subcommand(raw=False, json=False, unsecure=False, **kwargs):
     """Compiles and dumps the current configuration.
 
-    Passwords embedded in configured URLs (a database DSN, a Redis URL, an upstream carrying
-    credentials) and dashboard user passwords are masked in every output shape, so the output is safe to paste into a bug
-    report. Pass --unsecure to see them.
+    Secret settings are masked in every output shape: notification webhook URLs, the Sentry DSN, probe headers and
+    dashboard user passwords, whatever their value, and in any URL the passwords of every host, the token used as the
+    username of an HTTP URL and the secret query parameters (key, api_key, token, password...). Pass --unsecure to see
+    them. A secret typed as a free-form string elsewhere can not be recognized, so skim the output before pasting it
+    into a public bug report.
 
     Example:
 
