@@ -114,6 +114,13 @@
           "anyOf": [{ "type": "string" }, { "type": "null" }],
           "default": null
         },
+        "max_request_body_size": {
+          "anyOf": [
+            { "gt": 0, "minimum": 0, "type": "integer" },
+            { "type": "null" }
+          ],
+          "default": null
+        },
         "remote": {
           "anyOf": [{ "$ref": "#/$defs/RemoteSettings" }, { "type": "null" }],
           "default": null
@@ -251,14 +258,27 @@
           "items": { "$ref": "#/$defs/EndpointSettings" },
           "type": "array"
         },
+        "max_recorded_body_size": {
+          "default": 1048576,
+          "gt": 0,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max_request_body_size": {
+          "anyOf": [
+            { "gt": 0, "minimum": 0, "type": "integer" },
+            { "type": "null" }
+          ],
+          "default": null
+        },
         "client_read_timeout": {
           "default": 30.0,
-          "description": "Seconds a client may stay silent in the middle of a request body before it is answered 408. Each silence is timed on its own: a client sending a byte at shorter intervals is not cut.",
           "exclusiveMinimum": 0,
           "type": "number"
         },
         "min_request_body_rate": {
           "default": 1024,
+          "ge": 0,
           "minimum": 0,
           "type": "integer"
         },
@@ -267,31 +287,21 @@
           "minimum": 0,
           "type": "number"
         },
-        "max_recorded_body_size": {
-          "default": 1048576,
-          "gt": 0,
-          "minimum": 0,
-          "type": "integer"
-        },
         "trusted_proxies": {
           "default": [],
-          "description": "CIDR ranges of the proxies in front of HARP. The X-Forwarded-For, Forwarded and X-Real-IP headers of a peer outside these ranges are stripped, a trusted peer's are kept. The peer address is appended to X-Forwarded-For and Forwarded in both cases.",
           "items": { "format": "ipvanynetwork", "type": "string" },
           "type": "array"
         },
-        "tags": { "$ref": "#/$defs/TagsSettings" }
+        "tags": {
+          "$ref": "#/$defs/TagsSettings",
+          "default": {
+            "max_count": 20,
+            "max_name_length": 64,
+            "max_value_length": 256
+          }
+        }
       },
       "title": "ProxySettings",
-      "type": "object"
-    },
-    "TagsSettings": {
-      "description": "Bounds on the tags a client sets with x-harp-* request headers. A tag over a bound is dropped, never the request.",
-      "properties": {
-        "max_count": { "default": 20, "description": "Tags kept per transaction: the first ones in request header order.", "exclusiveMinimum": 0, "type": "integer" },
-        "max_name_length": { "default": 64, "description": "Longest tag name kept, in characters.", "exclusiveMinimum": 0, "type": "integer" },
-        "max_value_length": { "default": 256, "description": "Longest tag value kept, in characters.", "exclusiveMinimum": 0, "type": "integer" }
-      },
-      "title": "TagsSettings",
       "type": "object"
     },
     "Remote": {
@@ -385,7 +395,11 @@
         "method": { "default": "GET", "type": "string" },
         "path": { "default": "/", "type": "string" },
         "headers": {
-          "additionalProperties": true,
+          "additionalProperties": {
+            "format": "password",
+            "type": "string",
+            "writeOnly": true
+          },
           "title": "Headers",
           "type": "object"
         },
@@ -470,38 +484,62 @@
       },
       "title": "Service",
       "type": "object"
+    },
+    "TagsSettings": {
+      "additionalProperties": false,
+      "description": "Bounds on the tags a client sets with ``x-harp-*`` request headers. A tag over a bound is dropped, never the\nrequest.",
+      "properties": {
+        "max_count": {
+          "default": 20,
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
+        "max_name_length": {
+          "default": 64,
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
+        "max_value_length": {
+          "default": 256,
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        }
+      },
+      "title": "TagsSettings",
+      "type": "object"
     }
   },
   "title": "__ROOT__",
   "anyOf": [
-    { "$ref": "#/$defs/BaseEndpointSettings" },
-    { "$ref": "#/$defs/Endpoint" },
-    { "$ref": "#/$defs/EndpointSettings" },
     { "$ref": "#/$defs/BaseProxySettings" },
     { "$ref": "#/$defs/Proxy" },
     { "$ref": "#/$defs/ProxySettings" },
-    { "$ref": "#/$defs/RemoteEndpoint" },
-    { "$ref": "#/$defs/RemoteEndpointSettings" },
-    { "$ref": "#/$defs/BaseRemoteSettings" },
-    { "$ref": "#/$defs/Remote" },
-    { "$ref": "#/$defs/RemoteSettings" },
-    { "$ref": "#/$defs/RemoteProbe" },
-    { "$ref": "#/$defs/RemoteProbeSettings" },
+    { "$ref": "#/$defs/TagsSettings" },
+    { "$ref": "#/$defs/BaseEndpointSettings" },
+    { "$ref": "#/$defs/Endpoint" },
+    { "$ref": "#/$defs/EndpointSettings" },
     { "$ref": "#/$defs/BaseLiveness" },
     { "$ref": "#/$defs/BaseLivenessSettings" },
     { "$ref": "#/$defs/BaseLiveness_IgnoreLivenessSettings_" },
     { "$ref": "#/$defs/BaseLiveness_InheritLivenessSettings_" },
     { "$ref": "#/$defs/BaseLiveness_LeakyBucketLivenessSettings_" },
     { "$ref": "#/$defs/BaseLiveness_NaiveLivenessSettings_" },
+    { "$ref": "#/$defs/IgnoreLiveness" },
+    { "$ref": "#/$defs/IgnoreLivenessSettings" },
     { "$ref": "#/$defs/InheritLiveness" },
     { "$ref": "#/$defs/InheritLivenessSettings" },
     { "$ref": "#/$defs/LeakyBucketLiveness" },
     { "$ref": "#/$defs/LeakyBucketLivenessSettings" },
     { "$ref": "#/$defs/LeakyBucketLivenessSubjectState" },
-    { "$ref": "#/$defs/IgnoreLiveness" },
-    { "$ref": "#/$defs/IgnoreLivenessSettings" },
     { "$ref": "#/$defs/NaiveLiveness" },
     { "$ref": "#/$defs/NaiveLivenessSettings" },
-    { "$ref": "#/$defs/NaiveLivenessSubjectState" }
+    { "$ref": "#/$defs/NaiveLivenessSubjectState" },
+    { "$ref": "#/$defs/BaseRemoteSettings" },
+    { "$ref": "#/$defs/Remote" },
+    { "$ref": "#/$defs/RemoteSettings" },
+    { "$ref": "#/$defs/RemoteEndpoint" },
+    { "$ref": "#/$defs/RemoteEndpointSettings" },
+    { "$ref": "#/$defs/RemoteProbe" },
+    { "$ref": "#/$defs/RemoteProbeSettings" }
   ]
 }

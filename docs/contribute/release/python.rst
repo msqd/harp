@@ -39,7 +39,20 @@ The automated release workflow handles:
 2. **Package building** - Builds wheel in isolated sandbox environment with frontend bundled
 3. **Testing** - Tests installation on Python 3.13
 4. **Publishing** - Publishes to TestPyPI, then production PyPI
-5. **GitHub Release** - Creates release with changelog and wheel artifacts
+5. **Attestations** - Signs a build provenance and an SBOM attestation for the wheel, the sdist and the
+   Docker image (``attestations: write`` and ``id-token: write`` on those jobs only), after scanning the
+   image: a fixable high or critical vulnerability fails the job before anything is pushed
+6. **GitHub Release** - Creates release with changelog, wheel artifacts and the SBOM; the notes say how
+   to verify them with ``gh attestation verify``
+
+Tag builds restore no cache: ``setup-uv`` and ``setup-node`` cache nothing, and the release image build
+sets no BuildKit cache, so a dependency run once on a branch cannot reach a release.
+
+The Docker image is built from the same wheel, and ships the versions pinned in ``uv.lock`` rather
+than the newest in the wheel's ranges (see ``docs/adr/0010-docker-images-install-exactly-uv-lock.md``).
+CI fails the image build if what is installed differs from ``uv.lock``. Releasing therefore ships
+whatever ``uv.lock`` holds at the tag: refresh it first with ``uv lock`` (Dependabot does so routinely),
+because a dependency fix that is not in the lock is not in the image.
 
 Who does what, and when
 -----------------------

@@ -55,6 +55,12 @@ MySQL/MariaDB is deprecated, its extra is:
 
     uvx --from "harp-proxy[mysql]" harp-proxy server
 
+To report errors to Sentry, add the ``sentry`` extra (see :doc:`/apps/contrib/sentry/index`):
+
+.. code-block:: shell
+
+    uvx --from "harp-proxy[sentry]" harp-proxy server
+
 Test Your Proxy
 :::::::::::::::
 

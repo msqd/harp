@@ -195,6 +195,23 @@ to disable the check. The silence timeout above does not catch such a client, si
       min_request_body_rate: 1KiB
       request_body_grace_period: 10.0
 
+.. _proxy-max-request-body-size:
+
+**An oversized request can be refused.** There is no limit on the request body size by default. Set
+``max_request_body_size`` and a request body larger than it is answered ``413``, and its request is never forwarded
+upstream. A declared ``Content-Length`` above the cap is refused before any of the body is read; a chunked body is
+refused as soon as it crosses the cap. Without a cap, the proxy holds the whole body in memory, so set one when HARP is
+exposed to untrusted clients. An endpoint may set its own cap, in place of the global one.
+
+.. code-block:: yaml
+
+    proxy:
+      max_request_body_size: 100MiB
+      endpoints:
+        - name: uploads
+          url: http://uploads:8080
+          max_request_body_size: 1GiB
+
 The transaction ends once the body has been sent, so its duration, and the :doc:`TPDEX </user/performances>`
 computed from it, cover the whole exchange including the transfer to the client. When the client goes away before the
 end of the body, HARP stops reading the upstream and releases its connection at once, and the transaction is recorded

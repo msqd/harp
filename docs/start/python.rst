@@ -25,6 +25,12 @@ MySQL/MariaDB is deprecated, its extra is:
 
     pip install harp-proxy[mysql]
 
+To report errors to Sentry, install the ``sentry`` extra (see :doc:`/apps/contrib/sentry/index`):
+
+.. code-block:: shell
+
+    pip install harp-proxy[sentry]
+
 
 Start a proxy
 :::::::::::::

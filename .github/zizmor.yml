@@ -1,4 +1,1 @@
-rules:
-  # Not in scope of the expression-in-run check; tracked separately.
-  cache-poisoning:
-    disable: true
+rules: {}

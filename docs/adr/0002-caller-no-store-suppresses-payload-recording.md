@@ -1,10 +1,10 @@
 # ADR-0002: A caller's `no-store` suppresses payload recording, but not the record that traffic happened
 
-- **Status**: accepted, not yet implemented
+- **Status**: accepted, implemented in 0.13 (by markers, see *Consequences*)
 - **Date**: 2026-08-17
 - **Decided in**: [#927](https://github.com/msqd/harp/issues/927)
 
-**This decision applies from 0.11 and is not implemented in 0.10.** What 0.10 does is described below
+**This decision applies from 0.13 and is not implemented before.** What 0.10 does is described below
 under *Rejected*, as "Recording everything, as 0.10 does". Read this record as what was decided, not as
 a description of the release you are running.
 
@@ -76,6 +76,10 @@ booleans, `x_no_store_request` and `x_no_store_response`, recording that a direc
 suppression rather than that storage failed. They describe what was dropped rather than who asked for it,
 which is the distinction that matters when someone is looking at an empty panel and wondering whether HARP
 lost their data. Neither exists yet; both arrive with the implementation.
+
+**Amended with the implementation ([#927](https://github.com/msqd/harp/issues/927)): no column.** Transaction
+markers are persisted since 0.12, so the two booleans became the markers `no-store-request` and
+`no-store-response`, with the same meaning.
 
 **Redaction remains unsolved and is now more visible.** The message summary carries the request method,
 path and query string, with no scheme or host, and nothing on the transaction path is masked. A caller

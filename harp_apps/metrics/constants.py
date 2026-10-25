@@ -22,8 +22,8 @@ CONTROLLER_RESPONSES = Counter(
 )
 CONTROLLER_EXCEPTIONS = Counter(
     "controller_exceptions_count",
-    "Count of exceptions raised in controllers by route name, port, method, path and exception type",
-    ["name", "port", "method", "path", "exception"],
+    "Count of exceptions raised in controllers by route name, port, method and exception type",
+    ["name", "port", "method", "exception"],
 )
 REMOTE_REQUESTS = Counter(
     "remote_requests_count",
@@ -47,6 +47,6 @@ REMOTE_RESPONSES = Counter(
 )
 REMOTE_EXCEPTIONS = Counter(
     "remote_exceptions_count",
-    "Count of exceptions raised in remotes by route name, method, path and exception type",
-    ["name", "method", "url", "exception"],
+    "Count of exceptions raised in remotes by route name, method and exception type",
+    ["name", "method", "exception"],
 )

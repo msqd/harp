@@ -1,0 +1,1 @@
+Error notifications are sent in the background, with a per-sender ``timeout`` and a bounded ``queue_size``: a slow or failing webhook no longer delays or changes the response.

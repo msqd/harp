@@ -1,3 +1,4 @@
+import json
 from unittest import mock
 
 import pytest
@@ -49,3 +50,15 @@ async def test_send_notification():
         await sender.send_notification(method, url, status_code, message, transaction_id)
         mock_post.assert_called_once()
         assert mock_post.call_args[0][0] == webhook_url
+
+
+def test_message_escapes_html_in_url_and_reason_phrase():
+    message = GoogleChatNotificationSender._format_error_message(
+        "GET", "https://example.com/<i>a</i>", 500, "<script>alert(1)</script>", "123"
+    )
+
+    rendered = json.dumps(message)
+    assert "<script>" not in rendered
+    assert "<i>a</i>" not in rendered
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in rendered
+    assert "https://example.com/&lt;i&gt;a&lt;/i&gt;" in rendered

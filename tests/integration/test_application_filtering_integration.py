@@ -6,7 +6,7 @@ These tests verify the COMPLETE flow from configuration to system build:
 2. Config file parsing → Application filtering → System instantiation
 3. Real file I/O, real configuration building, real SystemBuilder.abuild()
 
-TEST COVERAGE (18 passing, 3 xfail):
+TEST COVERAGE (21 passing):
 
 PASSING TESTS:
 - test_yaml_config_with_disabled_http_client
@@ -28,7 +28,7 @@ PASSING TESTS:
 - test_warning_log_structure
 - test_info_logs_during_system_build
 
-EXPECTED FAILURES (xfail, storage is a required dependency; tracked under #807):
+STORAGE-BACKED TESTS (run against sqlite in memory; the disabled app is a leaf nothing depends on):
 - test_abuild_with_disabled_app_in_config
 - test_abuild_with_multiple_disabled_apps
 - test_full_flow_temp_config_to_running_system
@@ -338,19 +338,19 @@ class TestSystemBuilderAbuildWithDisabledApps:
     """Test complete SystemBuilder.abuild() flow with disabled apps."""
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Storage is a required dependency - system cannot start without it")
     async def test_abuild_with_disabled_app_in_config(self, tmp_path, caplog):
         """
         Test SystemBuilder.abuild() creates System with disabled app filtered out.
 
         Flow: Config with disabled app → SystemBuilder.abuild() → System instance (no disabled app)
 
-        Note: This test currently fails because storage is a required dependency for other apps.
-        TODO: Refactor to use a non-critical app (like acme) for testing.
+        Disables janitor: no other app depends on it, whereas disabling storage would leave dashboard and janitor
+        without their dependency.
         """
         config_file = tmp_path / "config.yaml"
         config_data = {
-            "storage": {"enabled": False, "url": "sqlite:///:memory:"},
+            "storage": {"url": "sqlite:///:memory:"},
+            "janitor": {"enabled": False},
             "proxy": {
                 "endpoints": [
                     {
@@ -385,15 +385,16 @@ class TestSystemBuilderAbuildWithDisabledApps:
             assert system.config is config
 
             # Verify disabled app not in final system
-            assert "storage" not in config
+            assert "janitor" not in config
             assert "proxy" in config
+            assert "storage" in config
 
             # Verify applications registry doesn't include disabled app
-            assert "storage" not in system_builder.applications
+            assert "janitor" not in system_builder.applications
 
             # Verify warning was logged
             warning_messages = [record.message for record in caplog.records if record.levelname == "WARNING"]
-            assert any("storage" in msg for msg in warning_messages)
+            assert any("janitor" in msg for msg in warning_messages)
         finally:
             # Cleanup
             await system.dispose()
@@ -435,13 +436,13 @@ class TestSystemBuilderAbuildWithDisabledApps:
             await system.dispose()
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Storage is a required dependency - system cannot start without it")
     async def test_abuild_with_multiple_disabled_apps(self, tmp_path, caplog):
         """Test SystemBuilder.abuild() with multiple disabled apps."""
         config_file = tmp_path / "config.yaml"
         config_data = {
-            "storage": {"enabled": False, "url": "sqlite:///:memory:"},
-            "http_client": {"enabled": False},
+            "storage": {"url": "sqlite:///:memory:"},
+            "janitor": {"enabled": False},
+            "metrics": {"enabled": False},
             "proxy": {
                 "endpoints": [
                     {
@@ -468,15 +469,15 @@ class TestSystemBuilderAbuildWithDisabledApps:
         system = await system_builder.abuild()
 
         try:
-            # Only proxy should be in final system
             assert "proxy" in config
-            assert "storage" not in config
-            assert "http_client" not in config
+            assert "storage" in config
+            assert "janitor" not in config
+            assert "metrics" not in config
 
             # Verify warnings for all disabled apps
             warning_messages = [record.message for record in caplog.records if record.levelname == "WARNING"]
-            assert any("storage" in msg for msg in warning_messages)
-            assert any("http_client" in msg for msg in warning_messages)
+            assert any("janitor" in msg for msg in warning_messages)
+            assert any("metrics" in msg for msg in warning_messages)
         finally:
             await system.dispose()
 
@@ -591,7 +592,6 @@ class TestRealWorldScenarioMixedApps:
         assert "http_client" in config
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Storage is a required dependency - system cannot start without it")
     async def test_full_flow_temp_config_to_running_system(self, tmp_path, caplog):
         """
         Test complete end-to-end flow: temp config file → running system.
@@ -600,10 +600,8 @@ class TestRealWorldScenarioMixedApps:
         """
         config_file = tmp_path / "config.yaml"
         config_data = {
-            "storage": {
-                "enabled": False,
-                "url": "sqlite:///:memory:",
-            },
+            "storage": {"url": "sqlite:///:memory:"},
+            "janitor": {"enabled": False},
             "proxy": {
                 "endpoints": [
                     {
@@ -625,7 +623,7 @@ class TestRealWorldScenarioMixedApps:
             config = config_builder.build()
 
         # Step 3: Verify filtering happened
-        assert "storage" not in config
+        assert "janitor" not in config
         assert "proxy" in config
 
         # Step 4: Build system
@@ -646,12 +644,12 @@ class TestRealWorldScenarioMixedApps:
             assert system.asgi_app is not None
 
             # Step 7: Verify disabled app not in any part of system
-            assert "storage" not in config
-            assert "storage" not in system_builder.applications
+            assert "janitor" not in config
+            assert "janitor" not in system_builder.applications
 
             # Step 8: Verify warnings were logged
             warning_messages = [record.message for record in caplog.records if record.levelname == "WARNING"]
-            assert any("storage" in msg for msg in warning_messages)
+            assert any("janitor" in msg for msg in warning_messages)
 
         finally:
             # Cleanup

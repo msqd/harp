@@ -78,7 +78,7 @@ What you get
 * An `audit log <https://docs.harp-project.net/en/stable/features/auditlog.html>`_ of the transactions, shown in a
   `dashboard <https://docs.harp-project.net/en/stable/apps/dashboard/>`_ protected by a login.
 * `Prometheus metrics <https://docs.harp-project.net/en/stable/operate/prometheus.html>`_ on the dashboard port, behind
-  its login (the ``metrics`` application adds a second, optional endpoint).
+  its login (or on an optional, unauthenticated ``dashboard.metrics_port``).
 
 .. figure:: https://github.com/msqd/harp/raw/main/docs/user/images/transactions.png
     :alt: The transactions list of the HARP dashboard

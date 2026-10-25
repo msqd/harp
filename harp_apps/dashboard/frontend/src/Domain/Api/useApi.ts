@@ -14,6 +14,15 @@ export function useApi() {
   }
 
   /**
+   * State-changing requests always declare JSON: the API refuses anything else, which a cross-site form cannot send.
+   */
+  function _fetchJson(url: string, init: RequestInit | undefined, method: string) {
+    const headers = new Headers(init?.headers)
+    headers.set("Content-Type", "application/json")
+    return _fetch(url, { ...(init || {}), method, headers })
+  }
+
+  /**
    * Wrapper for http get requests.
    *
    * @param url
@@ -30,7 +39,7 @@ export function useApi() {
    * @param init
    */
   function post(url: string, init?: RequestInit) {
-    return _fetch(url, { ...(init || {}), method: "POST" })
+    return _fetchJson(url, init, "POST")
   }
 
   /**
@@ -40,7 +49,7 @@ export function useApi() {
    * @param init
    */
   function del(url: string, init?: RequestInit) {
-    return _fetch(url, { ...(init || {}), method: "DELETE" })
+    return _fetchJson(url, init, "DELETE")
   }
 
   /**
@@ -50,7 +59,7 @@ export function useApi() {
    * @param init
    */
   function put(url: string, init?: RequestInit) {
-    return _fetch(url, { ...(init || {}), method: "PUT" })
+    return _fetchJson(url, init, "PUT")
   }
 
   return {

@@ -27,6 +27,7 @@ it("renders the status menu outside the clipping remote table", async () => {
     <div data-testid="remote-table" style={{ overflow: "hidden" }}>
       <RemoteEndpointStatusDropDown
         endpointName="example"
+        index={0}
         remoteEndpoint={{ settings: { url: "https://example.com/" }, status: 1 }}
       />
     </div>,
@@ -63,6 +64,24 @@ it("sends each chosen status and replaces the topology with the response", async
     current = await result.findByText(next)
   }
 
-  const url = "https://api1.example.com/"
-  expect(bodies).toEqual(["down", "checking", "up"].map((action) => ({ endpoint: "endpoint1", url, action })))
+  expect(bodies).toEqual(["down", "checking", "up"].map((action) => ({ endpoint: "endpoint1", index: 0, action })))
+})
+
+it("identifies a credentialed remote by its index, never by its masked url", async () => {
+  const bodies: unknown[] = []
+  server.events.on("request:start", async ({ request }) => {
+    if (request.method === "PUT") bodies.push(await request.clone().json())
+  })
+
+  const result = renderWithClient(
+    <RemoteEndpointStatusDropDown
+      endpointName="example"
+      index={2}
+      remoteEndpoint={{ settings: { url: "https://user:***@example.com/?email=a@b.com" }, status: 1 }}
+    />,
+  )
+  fireEvent.click(result.getByRole("button", { name: "up" }))
+  fireEvent.click(await result.findByText("Set down"))
+
+  await waitFor(() => expect(bodies).toEqual([{ endpoint: "example", index: 2, action: "down" }]))
 })

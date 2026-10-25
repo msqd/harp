@@ -1,5 +1,3 @@
-from asgi_prometheus import PrometheusMiddleware
-
 from harp import get_logger
 from harp.config import Application, OnReadyEvent
 from harp.controllers import ProxyControllerResolver
@@ -7,16 +5,10 @@ from harp.controllers import ProxyControllerResolver
 from .decorators import decorate_http_client_send, decorate_proxy_controller
 from .settings import MetricsSettings
 
-_metrics_url = "/.prometheus/metrics"
-
 logger = get_logger(__name__)
 
 
 async def on_ready(event: OnReadyEvent):
-    # decorate the asgi app with outer metrics
-    event.asgi_app = PrometheusMiddleware(event.asgi_app, metrics_url=_metrics_url, group_paths=["/"])
-    event.asgi_app.scopes = ("http",)
-
     # decorate all controllers with metrics
     resolver = event.provider.get(ProxyControllerResolver)
     for i in resolver:
@@ -30,7 +22,7 @@ async def on_ready(event: OnReadyEvent):
     http_client = event.provider.get("http_client")
     http_client.send = decorate_http_client_send(http_client.send)
 
-    logger.info(f"🌎 Prometheus enabled, metrics under {_metrics_url}.")
+    logger.info("🌎 Prometheus enabled, metrics under /metrics on the dashboard port.")
 
 
 application = Application(
