@@ -95,12 +95,8 @@ def _print_services(console: Console, system_obj):
 
     # Collect unique services (one per provider) with their best primary key
     unique_services = []
-    seen_provider_ids = set()
 
-    for provider_id, all_keys in provider_to_keys.items():
-        if provider_id in seen_provider_ids:
-            continue
-
+    for all_keys in provider_to_keys.values():
         # Choose the best primary key for this provider
         primary_key = _choose_primary_key(all_keys)
         if not primary_key:
@@ -110,7 +106,6 @@ def _print_services(console: Console, system_obj):
         provider = services_map[primary_key]
 
         unique_services.append((primary_key, provider, all_keys))
-        seen_provider_ids.add(provider_id)
 
     # Sort services by name for better readability
     sorted_services = sorted(unique_services, key=lambda x: x[0])

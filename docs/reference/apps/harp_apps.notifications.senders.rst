@@ -14,5 +14,6 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
+    harp_apps.notifications.senders.base
     harp_apps.notifications.senders.google_chat
     harp_apps.notifications.senders.slack

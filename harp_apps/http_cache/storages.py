@@ -53,6 +53,10 @@ REDACTION_METADATA = "harp_redaction"
 #: Request metadata key holding the markers of the request's transaction.
 MARKERS_METADATA = "harp_markers"
 
+#: Request metadata key holding the storage's :attr:`~AsyncStorage.stamp` when the request set out. A response is not
+#: stored if its key was invalidated after that.
+STAMP_METADATA = "harp_invalidation_stamp"
+
 #: Markers that keep a transaction's messages out of storage, the cache included. ``skip-storage`` is not one:
 #: the storage worker sets it itself under pressure, and load must not switch the cache off.
 _SKIP_MARKERS = frozenset({SKIP_REQUEST_STORAGE, SKIP_RESPONSE_STORAGE})
@@ -104,6 +108,10 @@ def has_explicit_freshness(response: Response) -> bool:
 # freshens nothing under load, which is the defect this index exists to fix.
 KEY_INDEX_SIZE = 8192
 
+#: How many invalidated keys the storage remembers. Past it the oldest are forgotten, and every request that set out
+#: before the newest forgotten one is treated as invalidated: some responses go unstored, none is stored stale.
+INVALIDATION_LOG_SIZE = 8192
+
 
 class AsyncStorage(AsyncBaseStorage):
     """HARP's AsyncBaseStorage implementation using blob storage backend.
@@ -141,6 +149,9 @@ class AsyncStorage(AsyncBaseStorage):
         self._allow_heuristics = allow_heuristics
         self._keys_by_id: OrderedDict[uuid.UUID, str] = OrderedDict()
         self._sweep_task: tp.Optional[asyncio.Task] = None
+        self._stamp = 0
+        self._invalidated_at: OrderedDict[str, int] = OrderedDict()
+        self._forgotten_up_to = 0
         self._key_locks: weakref.WeakValueDictionary[str, asyncio.Lock] = weakref.WeakValueDictionary()
 
     @asynccontextmanager
@@ -149,6 +160,27 @@ class AsyncStorage(AsyncBaseStorage):
         lock = self._key_locks.get(key) or self._key_locks.setdefault(key, asyncio.Lock())
         async with lock:
             yield
+
+    @property
+    def stamp(self) -> int:
+        """Counts the invalidations so far: read when a request sets out, it tells later whether its key was invalidated since."""
+        return self._stamp
+
+    def _invalidated_since(self, key: str, stamp: int) -> bool:
+        return self._invalidated_at.get(key, self._forgotten_up_to) > stamp
+
+    async def invalidate(self, key: str) -> None:
+        """Drop every variant of a key, and refuse the responses of requests that set out before (RFC 9111 §4.4)."""
+        async with self._locked(key):
+            self._stamp += 1
+            self._invalidated_at[key] = self._stamp
+            self._invalidated_at.move_to_end(key)
+            while len(self._invalidated_at) > INVALIDATION_LOG_SIZE:
+                self._forgotten_up_to = self._invalidated_at.popitem(last=False)[1]
+            try:
+                await self._impl.write_variants(key, [])
+            except Exception:
+                logger.warning(f"Failed to remove cache entry: key={key}", exc_info=True)
 
     async def _prune(self, key: str) -> None:
         """Drop the expired variants of a key, and the key itself when none is left."""
@@ -248,16 +280,23 @@ class AsyncStorage(AsyncBaseStorage):
         self._keys_by_id.move_to_end(entry_id)
         return key
 
-    async def _store_variant(self, key: str, entry: Entry, redaction: Redaction) -> None:
-        """Add an entry to the variants of its key: it replaces the variant it supersedes, and pushes out the oldest."""
+    async def _store_variant(self, key: str, entry: Entry, redaction: Redaction, stamp: tp.Optional[int]) -> bool:
+        """Add an entry to the variants of its key: it replaces the variant it supersedes, and pushes out the oldest.
+
+        Nothing is added if the key was invalidated since ``stamp``: the response may show the resource as it was.
+        """
         variant = await self._impl.serialize_variant(entry, redaction)
         async with self._locked(key):
+            if stamp is not None and self._invalidated_since(key, stamp):
+                logger.debug(f"Cache entry not retained (key invalidated while in flight): key={key}")
+                return False
             kept = [
                 stored
                 for stored in await self._impl.load_variants(key)
                 if not self._is_expired(stored_at_of(stored)) and stored.get("selecting") != variant["selecting"]
             ]
             await self._impl.write_variants(key, [*kept, variant][-MAX_VARIANTS_PER_KEY:])
+        return True
 
     async def create_entry(
         self,
@@ -322,14 +361,17 @@ class AsyncStorage(AsyncBaseStorage):
 
         async def store(body: bytes) -> None:
             try:
-                await self._store_variant(
+                stored = await self._store_variant(
                     key,
                     replace(entry, response=replace(entry.response, stream=make_async_iterator([body]))),
                     _redaction_of(request),
+                    request.metadata.get(STAMP_METADATA),
                 )
             except Exception:
                 # The upstream served this response correctly: a cache that cannot keep it must not break it.
                 logger.warning(f"Failed to store cache entry, response not cached: key={key}", exc_info=True)
+                return
+            if not stored:
                 return
             self._remember_key(entry.id, key)
             response.metadata[STORED_METADATA] = True

@@ -1,34 +1,23 @@
 from typing import Optional
 
-from httpx import AsyncClient
+from harp_apps.notifications.senders.base import WebhookNotificationSender
 
 
 def _escape_mrkdwn(text: str) -> str:
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-class SlackNotificationSender:
-    def __init__(self, webhook_url: str, public_url: Optional[str] = None, timeout: float = 5.0) -> None:
-        self.webhook_url = webhook_url
-        self.public_url = public_url
-        self._client = AsyncClient(timeout=timeout)
-
-    async def aclose(self) -> None:
-        await self._client.aclose()
-
-    async def send_notification(
+class SlackNotificationSender(WebhookNotificationSender):
+    def _build_payload(
         self,
         method: Optional[str],
         url: Optional[str],
         status_code: int,
         message: str,
         transaction_id: Optional[str],
-    ) -> None:
+    ) -> dict:
         slack_message = self._format_error_message(method, url, status_code, message, transaction_id, self.public_url)
-        response = await self._client.post(
-            self.webhook_url, json={"text": "ERROR NOTIFICATION", "blocks": slack_message["blocks"]}
-        )
-        response.raise_for_status()
+        return {"text": "ERROR NOTIFICATION", "blocks": slack_message["blocks"]}
 
     @staticmethod
     def _format_error_message(

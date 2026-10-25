@@ -13,7 +13,10 @@ from harp_apps.notifications.typing import NotificationSender
 
 logger = get_logger(__name__)
 
-AVAILABLE_WEBHOOK_URLS = ["slack_webhook_url", "google_chat_webhook_url"]
+SENDER_CLASSES = {
+    "slack_webhook_url": SlackNotificationSender,
+    "google_chat_webhook_url": GoogleChatNotificationSender,
+}
 
 
 def _without_query(url: Optional[str]) -> Optional[str]:
@@ -30,31 +33,10 @@ class NotificationSubscriber:
         self.timeout = settings.timeout
         self._queue: asyncio.Queue = asyncio.Queue(maxsize=settings.queue_size)
         self._worker: Optional[asyncio.Task] = None
-        for name in AVAILABLE_WEBHOOK_URLS:
-            if name == "google_chat_webhook_url":
-                try:
-                    webhook_url = getattr(settings, name)
-                    (
-                        self.senders.append(
-                            GoogleChatNotificationSender(webhook_url.get_secret_value(), public_url, self.timeout)
-                        )
-                        if webhook_url
-                        else None
-                    )
-                except AttributeError:
-                    pass
-            elif name == "slack_webhook_url":
-                try:
-                    webhook_url = getattr(settings, name)
-                    (
-                        self.senders.append(
-                            SlackNotificationSender(webhook_url.get_secret_value(), public_url, self.timeout)
-                        )
-                        if webhook_url
-                        else None
-                    )
-                except AttributeError:
-                    pass
+        for field, sender_class in SENDER_CLASSES.items():
+            webhook_url = getattr(settings, field)
+            if webhook_url:
+                self.senders.append(sender_class(webhook_url.get_secret_value(), public_url, self.timeout))
 
     def subscribe(self, dispatcher: IAsyncEventDispatcher):
         dispatcher.add_listener(EVENT_CORE_RESPONSE, self.on_response_send_error_notifications)

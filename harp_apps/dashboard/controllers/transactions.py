@@ -2,7 +2,6 @@ import math
 
 from sqlalchemy.exc import NoResultFound
 
-from harp import get_logger
 from harp.controllers import GetHandler, RouteHandler, RouterPrefix, RoutingController
 from harp.http import HttpRequest, JsonHttpResponse
 from harp.models.transactions import Transaction
@@ -18,8 +17,6 @@ from ..filters import (
     TransactionStatusFacet,
     TransactionTpdexFacet,
 )
-
-logger = get_logger(__name__)
 
 
 @RouterPrefix("/api/transactions")
