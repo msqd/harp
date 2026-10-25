@@ -87,7 +87,8 @@ def asdict(
     if isinstance(obj, _SecretBase):
         return MASK if secure else obj.get_secret_value()
 
-    if hasattr(obj, "_asdict"):
+    # namedtuples have an ``_asdict`` too, without ``secure``: they are dumped field by field below
+    if hasattr(obj, "_asdict") and not isinstance(obj, tuple):
         return obj._asdict(secure=secure)
 
     _asdict = partial(asdict, secure=secure, verbose=verbose, mode=mode)
