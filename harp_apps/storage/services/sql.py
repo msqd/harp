@@ -41,6 +41,7 @@ from harp_apps.storage.models import (
 from harp_apps.storage.settings import StorageSettings
 from harp_apps.storage.types import IBlobStorage, IStorage, TransactionsGroupedByTimeBucket
 from harp_apps.storage.utils.dates import TruncDatetime
+from harp_apps.storage.utils.time_limit import execute_with_time_limit
 
 logger = get_logger(__name__)
 
@@ -105,6 +106,19 @@ def _filter_query_for_user_flags(query, values, /, *, user_id):
                     )
                 ),
             )
+    return query
+
+
+def _as_utc(value: datetime) -> datetime:
+    return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
+
+
+def _filter_period(query, from_: Optional[datetime], to: Optional[datetime]):
+    """Keep transactions started in ``[from_, to)``, either bound optional, naive values being UTC."""
+    if from_ is not None:
+        query = query.filter(SqlTransaction.started_at >= _as_utc(from_))
+    if to is not None:
+        query = query.filter(SqlTransaction.started_at < _as_utc(to))
     return query
 
 
@@ -284,10 +298,16 @@ class SqlStorage(IStorage):
         page: int = 1,
         cursor: str = "",
         text_search="",
+        from_: Optional[datetime] = None,
+        to: Optional[datetime] = None,
+        time_limit: Optional[float] = None,
     ):
         """
         Implements :meth:`Storage.find_transactions <harp.typedefs.storage.Storage.find_transactions>`.
 
+        Transactions are listed newest first. ``from_`` (included) and ``to`` (excluded) bound ``started_at``, naive
+        values being UTC; the text search is applied together with that bound. ``time_limit`` (seconds) stops each query
+        of the call, raising :class:`StorageTimeLimitExceeded`.
         """
 
         user = await self.users.find_one_by_username(username)
@@ -306,10 +326,12 @@ class SqlStorage(IStorage):
             query = _filter_query_for_user_flags(query, filters.get("flag", None), user_id=user.id)
             query = _numerical_filter_query(query, "tpdex", filters.get("tpdex", None))
 
+        query = _filter_period(query, from_, to)
+
         if text_search:
             query = _filter_transactions_based_on_text(query, text_search)
 
-        query = query.order_by(SqlTransaction.started_at.desc())
+        query = query.order_by(SqlTransaction.started_at.desc(), SqlTransaction.id.desc())
 
         # apply cursor (before count)
         if page and cursor:
@@ -317,9 +339,8 @@ class SqlStorage(IStorage):
 
         async with self.begin() as session:
             # count items from query
-            result.meta["total"] = await session.scalar(
-                query.with_only_columns(func.count(SqlTransaction.id)).order_by(None)
-            )
+            count_query = query.with_only_columns(func.count(SqlTransaction.id)).order_by(None)
+            result.meta["total"] = (await execute_with_time_limit(session, count_query, time_limit=time_limit)).scalar()
 
             # apply limit/offset (after count), then read the page in the same session so count and
             # list share one transaction (one round-trip setup, consistent snapshot).
@@ -327,7 +348,8 @@ class SqlStorage(IStorage):
             if page:
                 query = query.offset(max(0, (page - 1) * PAGE_SIZE))
 
-            for transaction in (await session.scalars(query)).unique().all():
+            page_result = await execute_with_time_limit(session, query, time_limit=time_limit)
+            for transaction in page_result.scalars().unique().all():
                 result.append(transaction.to_model(with_user_flags=True, with_messages=with_messages))
 
         return result
