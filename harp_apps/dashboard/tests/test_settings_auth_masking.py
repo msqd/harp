@@ -1,13 +1,13 @@
 """Dashboard user passwords never leave in ``secure`` dumps, whatever the algorithm."""
 
 import pytest
-from passlib.hash import pbkdf2_sha256
 
 from harp.config.asdict import asdict
+from harp_apps.dashboard.passwords import hash_password
 from harp_apps.dashboard.settings import DashboardSettings
 
 # Random salt: parametrize ids must be explicit, or they differ per xdist worker.
-HASHED = pbkdf2_sha256.hash("s3cretAlice")
+HASHED = hash_password("pbkdf2_sha256", "s3cretAlice")
 
 
 def _settings(algorithm, password):

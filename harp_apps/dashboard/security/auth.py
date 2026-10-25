@@ -1,9 +1,8 @@
 import secrets
 from typing import Optional
 
-from passlib.hash import pbkdf2_sha256
-
 from harp import get_logger
+from harp_apps.dashboard.passwords import hash_password
 from harp_apps.dashboard.settings.auth import BasicAuthSettings, NoAuthSettings, User
 
 logger = get_logger(__name__)
@@ -34,5 +33,5 @@ def resolve_authentication(
     return BasicAuthSettings(
         type="basic",
         algorithm="pbkdf2_sha256",
-        users={GENERATED_USERNAME: User(password=pbkdf2_sha256.hash(password))},
+        users={GENERATED_USERNAME: User(password=hash_password("pbkdf2_sha256", password))},
     )
