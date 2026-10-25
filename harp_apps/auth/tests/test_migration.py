@@ -151,6 +151,8 @@ async def test_email_is_unique_and_lower_cased_by_the_database(users_engine):
 @parametrize_with_database_urls("postgresql")
 async def test_migrated_schema_is_the_one_of_the_models(users_engine, database_url, test_id):
     await upgrade(users_engine)
+    # the other applications' branches too: the schema is only current with every head applied
+    await in_thread(command.upgrade, cfg_of(users_engine), "heads")
     await ensure_schema_is_current(users_engine, alembic_cfg=cfg_of(users_engine))
 
     async with get_scoped_database_url(database_url, f"{test_id}_models") as url:

@@ -320,9 +320,11 @@ async def test_migrate_status_is_readable_when_the_database_holds_an_unknown_rev
         assert (await run_cli_migrate_command(url)).exit_code == 0
         engine = create_async_engine(url)
         async with engine.begin() as conn:
+            # one row per branch head: keep one, and make it unknown
             await conn.execute(
-                text(f"UPDATE alembic_version SET version_num = 'deadbeef0000' WHERE version_num = '{STORAGE_HEAD}'")
+                text("DELETE FROM alembic_version WHERE version_num <> (SELECT min(version_num) FROM alembic_version)")
             )
+            await conn.execute(text("UPDATE alembic_version SET version_num = 'deadbeef0000'"))
         await engine.dispose()
 
         status = await run_cli_migrate_command(url, operation="status", revision=None)

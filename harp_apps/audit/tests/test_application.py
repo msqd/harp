@@ -50,7 +50,7 @@ async def test_an_application_depending_on_audit_loads_it_when_dependencies_are_
 
     assert "audit" in builder.applications
 
-    builder.applications.remove("needy")
+    builder.applications.remove("harp_apps.audit.tests.needy")
 
     assert "audit" not in builder.applications
 

@@ -1,11 +1,12 @@
 import logging
 from re import escape
-from unittest.mock import ANY, Mock, patch
+from unittest.mock import ANY, patch
 
 import orjson
 import pytest
 
 from harp.http import HttpRequest
+from harp.security.actor import set_actor
 from harp.typedefs import GlobalSettings
 from harp.utils.testing import RE
 from harp.views.json import serialize
@@ -13,9 +14,16 @@ from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.databases import parametrize_with_blob_storages_urls, parametrize_with_database_urls
 from harp_apps.dashboard.tests._mixins import AdminThroughASGIFixtureMixin
 from harp_apps.dashboard.controllers.system import SystemController
+from harp_apps.dashboard.security.auth import OPEN_ACTOR
 from harp_apps.dashboard.tests._mixins import SystemControllerTestFixtureMixin, parametrize_with_settings
 from harp_apps.proxy.constants import CHECKING, DOWN, UP
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
+
+
+def _request_as_admin():
+    request = HttpRequest()
+    set_actor(request, OPEN_ACTOR)
+    return request
 
 
 class TestSystemController(
@@ -92,7 +100,7 @@ class TestSystemController(
     @parametrize_with_database_urls("sqlite")
     @parametrize_with_blob_storages_urls("sql")
     async def test_get_lists_development_only_settings(self, controller: SystemController):
-        response = await controller.get(Mock(spec=HttpRequest, extensions={}))
+        response = await controller.get(_request_as_admin())
 
         (item,) = orjson.loads(serialize(response))["development_only_settings"]
         assert item["name"] == "storage.url"
@@ -104,7 +112,7 @@ class TestSystemController(
     async def test_get_lists_nothing_when_settings_are_production_grade(self, controller: SystemController):
         controller.settings = GlobalSettings({})
 
-        response = await controller.get(Mock(spec=HttpRequest, extensions={}))
+        response = await controller.get(_request_as_admin())
 
         assert orjson.loads(serialize(response))["development_only_settings"] == []
 
