@@ -22,7 +22,7 @@ from harp_apps.storage.utils.migrations import (
 )
 from harp_apps.storage.utils.testing.sql import run_cli_migrate_command
 
-STORAGE_HEAD = "c5e8b2d41f73"
+STORAGE_HEAD = "e7a4d9c26b18"
 
 
 def _write_revision(versions: Path, *, revision, label, down_revision=None):
