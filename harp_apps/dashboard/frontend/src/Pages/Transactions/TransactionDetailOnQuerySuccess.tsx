@@ -8,6 +8,7 @@ import { ucfirst } from "Utils/Strings"
 import CopyToClipboard from "ui/Components/CopyToClipBoard/CopyToClipboard.tsx"
 import { Pane } from "ui/Components/Pane"
 
+import { CacheDetails } from "./Components/CacheDetails"
 import { Duration } from "./Components/Duration.tsx"
 import { Foldable } from "./Components/Foldable"
 import { MessageBody } from "./Components/MessageBody"
@@ -59,7 +60,14 @@ export function TransactionDetailOnQuerySuccess({ query }: { query: QueryObserve
             />
           </div>
         }
-        children={tags.length ? <Tags tags={tags} /> : null}
+        children={
+          tags.length || transaction.extras?.cache_outcome ? (
+            <>
+              {tags.length ? <Tags tags={tags} /> : null}
+              <CacheDetails extras={transaction.extras} />
+            </>
+          ) : null
+        }
       />
       {(transaction.messages || []).map((message) => (
         <Foldable

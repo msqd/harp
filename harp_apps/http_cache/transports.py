@@ -7,17 +7,20 @@ import httpx
 from hishel import Request, Response
 from hishel._async_httpx import _httpx_to_internal as _hishel_httpx_to_internal
 from hishel._async_httpx import _IteratorStream
-from hishel._core._spec import parse_date
+from hishel._core._spec import get_age, get_freshness_lifetime, parse_date
 from hishel._core.models import ResponseMetadata
 from hishel.httpx import AsyncCacheTransport as HishelAsyncCacheTransport
 
 from harp import get_logger
+from harp.models.transactions import CacheOutcome
 from harp.http.utils import hop_by_hop_names, parse_cache_control
 from harp.utils.bytes import HEADER_ENCODING, ensure_bytes, header_bytes
 from harp_apps.http_cache.coalescing import DEFAULT_TIMEOUT, Coalescer
 from harp_apps.http_cache.models import WrappedRequest
 from harp_apps.http_cache.settings import PurgeSettings
 from harp_apps.http_cache.storages import (
+    CACHE_KEY,
+    ENTRY_METADATA,
     REQUEST_URL,
     MARKERS_METADATA,
     FETCH_STAMP,
@@ -151,6 +154,16 @@ def _peer_address(request: httpx.Request):
     return address.ipv4_mapped or address if isinstance(address, IPv6Address) else address
 
 
+#: Response extension carrying what the cache did for the response, see :meth:`AsyncCacheTransport._report`.
+CACHE_METADATA = "harp_cache"
+
+
+def _remaining_freshness(response: Response, shared: bool) -> int | None:
+    """Seconds of freshness left by hishel's reckoning, ``None`` when it finds no lifetime to count from."""
+    lifetime = get_freshness_lifetime(response, shared)
+    return None if lifetime is None else lifetime - get_age(response)
+
+
 #: Methods whose concurrent misses are coalesced: the ones a shared cache answers from a stored response.
 COALESCED_METHODS = frozenset({"GET", "HEAD"})
 
@@ -182,7 +195,9 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         key = f"{url.scheme}://{url.netloc.decode('utf-8')}{path}"
         if self._cache_proxy.policy.use_body_key or request.metadata.get("hishel_body_key"):
             query += "\0" + await self._hishel_key_for_request(request)
-        return f"{key}?{hashlib.sha256(query.encode()).hexdigest()}" if query else key
+        key = f"{key}?{hashlib.sha256(query.encode()).hexdigest()}" if query else key
+        CACHE_KEY.set(key)
+        return key
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Wraps the request to use a rewritten url (for cache key handling)."""
@@ -207,6 +222,7 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
             },
         )
         FETCH_STAMP.set(None)  # this request has not been to the origin yet, see request_sender
+        CACHE_KEY.set(None)
 
         if _forbids_storage(request):
             logger.debug(
@@ -216,12 +232,53 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         else:
             internal_response = await self._handle_cacheable_request(wrapped_request)
 
+        try:
+            internal_response.metadata[CACHE_METADATA] = self._report(internal_response)  # type: ignore[typeddict-unknown-key]
+        except Exception:
+            # the response is ready, and a report on it must not break it
+            logger.warning("Failed to describe the cache outcome", exc_info=True)
+            restore_date(internal_response.headers)
         response = _internal_to_httpx(internal_response)
         _restore_original_expires(response)
-        restore_date(response.headers)
         if request.method not in SAFE_METHODS and response.status_code < 400:
             await self._invalidate(request, response)
         return response
+
+    def _report(self, response: Response) -> dict:
+        """What the cache did for this response: its outcome, which entry, and how fresh it is.
+
+        Everything comes from what hishel and the storage already say (the response metadata, the entry the storage
+        tagged, the fetch stamp), and from hishel's own freshness functions: no caching rule is decided here.
+        Restores the headers the storage showed hishel (:func:`restore_date`), once the freshness hishel judged by is read.
+        """
+        metadata = response.metadata
+        shared = self._cache_proxy.policy.cache_options.shared  # type: ignore[union-attr]
+        judged = _remaining_freshness(response, shared)
+        restore_date(response.headers)
+
+        if metadata.get("hishel_from_cache"):
+            if metadata.get("hishel_revalidated"):
+                outcome = CacheOutcome.REVALIDATED
+            else:
+                outcome = CacheOutcome.HIT if judged is not None and judged > 0 else CacheOutcome.STALE
+        elif metadata.get("hishel_stored"):
+            outcome = CacheOutcome.MISS
+        else:
+            outcome = CacheOutcome.UNCACHEABLE
+
+        entry = metadata.get(ENTRY_METADATA) or {}
+        stamps = [stamp for stamp in (entry.get("stamp"), FETCH_STAMP.get()) if stamp is not None]
+        if outcome in (CacheOutcome.UNCACHEABLE, CacheOutcome.STALE):
+            ttl = None if outcome is CacheOutcome.UNCACHEABLE else 0
+        else:
+            ttl = max(_remaining_freshness(response, shared) or 0, 0)
+        return {
+            "outcome": outcome,
+            "key": CACHE_KEY.get(),
+            "variant": entry.get("variant"),
+            "seq": max(stamps) if stamps else None,
+            "ttl": ttl,
+        }
 
     async def _handle_cacheable_request(self, request: WrappedRequest) -> Response:
         """Concurrent misses for one variant of a resource share one origin fetch (#947)."""

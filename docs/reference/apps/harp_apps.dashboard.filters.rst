@@ -15,6 +15,7 @@ Submodules
     :maxdepth: 1
 
     harp_apps.dashboard.filters.base
+    harp_apps.dashboard.filters.transaction_cache
     harp_apps.dashboard.filters.transaction_endpoint
     harp_apps.dashboard.filters.transaction_flag
     harp_apps.dashboard.filters.transaction_method

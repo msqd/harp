@@ -10,7 +10,7 @@ from whistle import IAsyncEventDispatcher
 from harp import get_logger
 from harp.http import ClientDisconnected, get_serializer_for
 from harp.models import Blob
-from harp.models.transactions import encode_cache_flag, encode_markers
+from harp.models.transactions import cache_columns, encode_cache_flag, encode_markers
 from harp.utils.background import AsyncWorkerQueue
 from harp_apps.proxy.events import (
     EVENT_TRANSACTION_ENDED,
@@ -264,6 +264,7 @@ class StorageAsyncWorkerQueue(AsyncWorkerQueue):
             "tpdex": event.transaction.tpdex,
             "x_status_class": event.transaction.extras.get("status_class"),
             "x_cached": encode_cache_flag(event.transaction.extras.get("cached")),
+            **cache_columns(event.transaction.extras),
             "markers": encode_markers(event.transaction.markers),
         }
 

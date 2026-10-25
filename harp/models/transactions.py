@@ -1,5 +1,6 @@
 import dataclasses
 from datetime import datetime
+from enum import StrEnum
 from typing import List
 
 from .base import Entity
@@ -27,6 +28,41 @@ def encode_cache_flag(cached) -> str | None:
     its own, so it cannot be read back as evidence of a HARP cache hit.
     """
     return "true" if cached else None
+
+
+class CacheOutcome(StrEnum):
+    """What the cache did for a response, as the cache itself reports it (hishel and the store, no rule of ours)."""
+
+    #: Served from the cache, fresh.
+    HIT = "hit"
+
+    #: Served from the cache as it was, though no longer fresh (the operator allows it).
+    STALE = "stale"
+
+    #: Stored response confirmed by the origin (``304``), then served.
+    REVALIDATED = "revalidated"
+
+    #: Fetched from the origin, and kept when it can be (a response that replaced a stale one is a miss too).
+    MISS = "miss"
+
+    #: Fetched from the origin, and not kept: the exchange or its response forbids storage, or the method is not cached.
+    UNCACHEABLE = "uncacheable"
+
+
+#: The extras of a transaction describing its cache outcome, and the ``x_`` column each is stored in.
+CACHE_EXTRAS = {
+    "cache_outcome": "x_cache_outcome",
+    "cache_key": "x_cache_key",
+    "cache_variant": "x_cache_variant",
+    "cache_seq": "x_cache_seq",
+    "cache_age": "x_cache_age",
+    "cache_ttl": "x_cache_ttl",
+}
+
+
+def cache_columns(extras: dict) -> dict:
+    """The ``x_`` columns for the cache extras of a transaction (``None`` for what the cache did not report)."""
+    return {column: extras.get(name) for name, column in CACHE_EXTRAS.items()}
 
 
 @dataclasses.dataclass(kw_only=True)
@@ -89,6 +125,7 @@ class Transaction(Entity):
 
         data["markers"] = encode_markers(self.markers)
         data["x_cached"] = encode_cache_flag(extras.get("cached"))
+        data.update(cache_columns(extras))
         data["x_method"] = extras.get("method")
         data["x_no_cache"] = bool(extras.get("no_cache"))
         data["x_status_class"] = extras.get("status_class")

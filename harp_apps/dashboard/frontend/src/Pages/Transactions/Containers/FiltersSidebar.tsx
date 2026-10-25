@@ -96,6 +96,7 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
   const setEndpointFilter = _createSetFilterFor("endpoint")
   const setMethodFilter = _createSetFilterFor("method")
   const setStatusFilter = _createSetFilterFor("status")
+  const setCacheFilter = _createSetFilterFor("cache")
   const setFlagsFilter = _createSetFilterFor("flag")
 
   return (
@@ -130,6 +131,17 @@ export function FiltersSidebar({ filters }: FiltersSidebarProps) {
           values={filters["status"] as ArrayFilter}
           setValues={setStatusFilter}
           meta={filtersQuery.data.status.values}
+        />
+      ) : null}
+
+      {filtersQuery.isSuccess && filtersQuery.data.cache ? (
+        <Facet
+          title="Cache"
+          name="cache"
+          type="checkboxes"
+          values={filters["cache"] as ArrayFilter}
+          setValues={setCacheFilter}
+          meta={filtersQuery.data.cache.values}
         />
       ) : null}
 

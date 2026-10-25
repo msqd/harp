@@ -18,6 +18,10 @@ const mockTransactionsFilters = {
     values: [{ name: "2xx" }, { name: "3xx" }, { name: "4xx" }, { name: "5xx" }],
     current: [],
   },
+  cache: {
+    values: [{ name: "hit" }, { name: "stale" }, { name: "revalidated" }, { name: "miss" }, { name: "uncacheable" }],
+    current: [],
+  },
   flag: {
     values: [{ name: "flag1" }, { name: "flag2" }],
     current: [],
@@ -120,6 +124,26 @@ const mockTransactionOriginNoStore: Transaction = {
   id: "MNOP3456",
   markers: ["no-store-response"],
 }
+const mockTransactionCacheRevalidated: Transaction = {
+  ...mockTransaction1,
+  id: "QRST7890",
+  tags: {},
+  extras: {
+    cached: true,
+    cache_outcome: "revalidated",
+    cache_key: "http://endpoint1/items?" + "a".repeat(64),
+    cache_variant: "b".repeat(64),
+    cache_seq: 12,
+    cache_age: 90,
+    cache_ttl: 30,
+  },
+}
+const mockTransactionCacheUncacheable: Transaction = {
+  ...mockTransaction1,
+  id: "UVWX1234",
+  tags: {},
+  extras: { cache_outcome: "uncacheable", cache_key: "http://endpoint1/items", cache_seq: 3 },
+}
 const mockTransactions: { [key: string]: Transaction } = {
   ABCD1234: mockTransaction1,
   EFGH5678: mockTransaction2,
@@ -129,6 +153,8 @@ const mockTransactionsById: { [key: string]: Transaction } = {
   ...mockTransactions,
   IJKL9012: mockTransactionNoStore,
   MNOP3456: mockTransactionOriginNoStore,
+  QRST7890: mockTransactionCacheRevalidated,
+  UVWX1234: mockTransactionCacheUncacheable,
 }
 
 export default Object.assign(

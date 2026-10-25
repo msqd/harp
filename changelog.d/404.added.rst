@@ -1,0 +1,1 @@
+Transactions record their cache outcome (hit, stale, revalidated, miss, uncacheable) with the age, the freshness left, the cache key, the variant and the invalidation number. The transaction detail shows them and the transaction list can be filtered by outcome.

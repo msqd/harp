@@ -397,6 +397,45 @@ class TestHttpProxyControllerWithStorage(
         assert sorted(t.extras["cached"] for t in transactions) == [False, True]
 
     @respx.mock
+    async def test_the_cache_outcome_is_recorded_with_the_transaction(
+        self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        respx.get("http://example.com/").mock(
+            return_value=Response(200, content=b"Hello.", headers={"Cache-Control": "max-age=3600"})
+        )
+        controller = self.create_controller(
+            "http://example.com/",
+            dispatcher=dispatcher,
+            name="api",
+            http_client=self.create_cache_backed_client(),
+        )
+
+        await self._proxy_repeatedly(controller, dispatcher, sql_storage, blob_storage, times=2)
+
+        transactions = await self._find_transactions_from_storage(sql_storage)
+        by_outcome = {t.extras["cache_outcome"]: t.extras for t in transactions}
+        assert sorted(by_outcome) == ["hit", "miss"]
+        for extras in by_outcome.values():
+            assert extras["cache_key"] == "http://api/"
+            assert extras["cache_variant"] == ""
+            assert extras["cache_seq"] == 0
+            assert 3590 <= extras["cache_ttl"] <= 3600
+        assert by_outcome["hit"]["cache_age"] < 60
+        assert "cache_age" not in by_outcome["miss"]
+
+    @respx.mock
+    async def test_a_transaction_without_cache_has_no_outcome(
+        self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
+    ):
+        respx.get("http://example.com/").mock(return_value=Response(200, content=b"Hello."))
+        controller = self.create_controller("http://example.com/", dispatcher=dispatcher, name="api")
+
+        await self._proxy_repeatedly(controller, dispatcher, sql_storage, blob_storage, times=1)
+
+        (transaction,) = await self._find_transactions_from_storage(sql_storage)
+        assert "cache_outcome" not in transaction.extras
+
+    @respx.mock
     async def test_an_upstream_x_cache_header_is_not_mistaken_for_our_own(
         self, dispatcher: IAsyncEventDispatcher, sql_storage: SqlStorage, blob_storage: IBlobStorage
     ):
@@ -430,8 +469,7 @@ class TestHttpProxyControllerWithStorage(
 
         _miss, hit = await self._proxy_repeatedly(controller, dispatcher, sql_storage, blob_storage, times=2)
 
-        # `cache_age` lives in the runtime extras only and is never persisted, so the age has to be
-        # read where a client would read it.
+        # the age is read where a client would read it
         transactions = await self._find_transactions_from_storage(sql_storage)
         assert sorted(t.extras["cached"] for t in transactions) == [False, True]
         assert int(hit.headers["Age"]) < 60

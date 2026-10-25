@@ -130,6 +130,7 @@ def as_named_by_the_naming_revision(names: dict) -> dict:
         )
         for (table, *key), value in names.items()
         if (table, *key) != ("auth_accounts", "uq", ("email",))  # a column the naming revision has not seen
+        and (table, *key) != ("transactions", "ix", ("x_cache_outcome",))  # nor this one
     }
 
 
