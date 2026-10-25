@@ -59,6 +59,7 @@ class RemoteEndpoint(Stateful[RemoteEndpointSettings]):
                         f"Unsupported liveness type: {self.settings.liveness.type}. The underlying setting of type "
                         f"{type(self.settings.liveness).__name__} must implement a build_impl method."
                     ) from exc
+        return self
 
     def success(self) -> bool:
         """Returns a boolean indicating if a state change happened."""

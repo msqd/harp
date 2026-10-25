@@ -141,7 +141,7 @@ class TestJanitorWorker(StorageTestFixtureMixin):
             sql_storage, started_at=datetime.now(UTC) - timedelta(days=60) + timedelta(minutes=1)
         )
 
-        user = await sql_storage.users.find_one_by_username("anonymous")
+        user = await sql_storage.accounts.find_one_by_username("anonymous")
         await sql_storage.flags.create({"type": 1, "user_id": user.id, "transaction_id": t1.id})
 
         async with sql_storage.session_factory() as session:

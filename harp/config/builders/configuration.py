@@ -1,3 +1,4 @@
+import copy
 import os
 from typing import Iterable, Self, cast
 
@@ -20,12 +21,44 @@ from .system import System
 logger = get_logger(__name__)
 
 
+class _ReadOnce:
+    """
+    Wraps a file source so that, while a build is open, it is parsed once then served from memory (a copy, as
+    merging mutates). Outside a build, every read goes to the file.
+    """
+
+    def __init__(self, source):
+        self._source = source
+        self._values = None
+        self._read = False
+        self._open = False
+
+    def open(self):
+        self._open = True
+
+    def __repr__(self):
+        return repr(self._source)
+
+    def close(self):
+        self._open = False
+        self._values = None
+        self._read = False
+
+    def get_values(self):
+        if not self._open:
+            return self._source.get_values()
+        if not self._read:
+            self._values = self._source.get_values()
+            self._read = True
+        return copy.deepcopy(self._values)
+
+
 def _get_system_configuration_sources():
     for _candidate in DEFAULT_SYSTEM_CONFIG_FILENAMES:
         if os.path.exists(_candidate):
             from harp.utils.config.yaml import YAMLFile
 
-            yield YAMLFile(_candidate)
+            yield _ReadOnce(YAMLFile(_candidate))
             break
 
 
@@ -82,20 +115,21 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         self._applications_pinned = bool(pinned_applications)
         self._application_ops: list[tuple[str, str]] = []
         for app_name in pinned_applications:
-            self.applications.add(app_name)
+            self.applications.add(app_name, autoload_dependencies=True)
 
         if use_default_applications:
-            self.applications.add(*DEFAULT_APPLICATIONS)
+            self.applications.add(*DEFAULT_APPLICATIONS, autoload_dependencies=True)
 
         super().__init__()
 
-        for source in _get_system_configuration_sources():
+        self._system_sources = list(_get_system_configuration_sources())
+        for source in self._system_sources:
             self._replace_applications_from(source)
 
     def enable_application(self, name: str):
         """Adds an application, remembering it so it is applied again after a file replaces the set."""
         self._application_ops.append(("add", name))
-        self.applications.add(name)
+        self.applications.add(name, autoload_dependencies=True)
 
     def disable_application(self, name: str):
         """Removes an application, remembering it so it is applied again after a file replaces the set."""
@@ -114,8 +148,9 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
             return
         # Resolve every name first so an unknown one fails before the set is touched.
         replacement = self.create_application_registry()
-        replacement.add(*names)
+        replacement.add(*names, autoload_dependencies=True)
         self.applications._applications = replacement._applications
+        self.applications._autoloaded = replacement._autoloaded
         for operation, name in self._application_ops:
             getattr(self.applications, operation)(name)
 
@@ -152,6 +187,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         else:
             raise ValueError(f"Unknown file extension: {ext}")
 
+        source = _ReadOnce(source)
         self._replace_applications_from(source)
         self.add_source(source)
 
@@ -204,7 +240,7 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
             EnvVars(prefix="DEFAULT__HARP_"),
             MapSource(self.applications.defaults()),
             MapSource(self._defaults or {}),
-            *_get_system_configuration_sources(),
+            *self._system_sources,
             *self._sources,
         )
 
@@ -326,6 +362,17 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         Raises:
             ValueError: If strict mode is enabled and configuration exists for unloaded applications.
         """
+        # The cache lives for one build: files are read again by the next build.
+        sources = [s for s in (*self._system_sources, *self._sources) if isinstance(s, _ReadOnce)]
+        for source in sources:
+            source.open()
+        try:
+            return self._build(strict)
+        finally:
+            for source in sources:
+                source.close()
+
+    def _build(self, strict: bool = None) -> GlobalSettings:
         if strict is None:
             strict = self.strict
 

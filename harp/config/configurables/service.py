@@ -28,7 +28,8 @@ class Service(BaseConfigurable):
     @classmethod
     def __validate(cls, values):
         """Use extra fields as arguments."""
-        arguments = values.get("arguments", {})
+        values = dict(values)
+        arguments = dict(values.get("arguments") or {})
         for k in list(values.keys()):
             if k not in cls.model_fields:
                 if str.isidentifier(k) and not iskeyword(k):

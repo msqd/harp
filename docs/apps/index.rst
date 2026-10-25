@@ -10,6 +10,7 @@ package).
     :maxdepth: 1
 
     audit/index
+    auth/index
     contrib/sentry/index
     dashboard/index
     http_cache/index

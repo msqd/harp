@@ -14,6 +14,7 @@ from harp_apps.dashboard.controllers import DashboardController
 from harp_apps.dashboard.passwords import hash_password
 from harp_apps.dashboard.settings import BasicAuthSettings, DashboardSettings
 from harp_apps.dashboard.settings.auth import User
+from harp_apps.dashboard.tests._mixins import RoleNamedActors
 from harp_apps.storage.types import IStorage
 
 
@@ -177,6 +178,7 @@ async def _create_mock_controller(settings: DashboardSettings = None):
         storage=cast(IStorage, Mock(spec=IStorage)),
         settings=settings or DashboardSettings(auth={"type": "none"}, devserver={"enabled": True, "port": 5173}),
         http_client=Mock(spec=AsyncClient),
+        actors=RoleNamedActors(),
     )
     # Disable the devserver proxy to avoid actual HTTP calls in tests
     controller._ui_devserver_proxy_controller = None

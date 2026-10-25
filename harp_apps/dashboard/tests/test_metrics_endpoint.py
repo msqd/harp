@@ -10,6 +10,7 @@ from harp.http import HttpRequest
 from harp_apps.dashboard.controllers import DashboardController
 from harp_apps.dashboard.settings import BasicAuthSettings, DashboardSettings
 from harp_apps.dashboard.settings.auth import User
+from harp_apps.dashboard.tests._mixins import RoleNamedActors
 from harp_apps.storage import worker as _worker  # noqa: F401  (registers the `dropped` counter)
 from harp_apps.storage.types import IStorage
 
@@ -19,6 +20,7 @@ def create_controller(settings: DashboardSettings | None = None) -> DashboardCon
         storage=cast(IStorage, Mock(spec=IStorage)),
         settings=settings or DashboardSettings(auth={"type": "none"}, devserver={"enabled": True, "port": 5173}),
         http_client=Mock(spec=AsyncClient),
+        actors=RoleNamedActors(),
     )
     controller._ui_devserver_proxy_controller = None
     return controller

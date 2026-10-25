@@ -14,6 +14,7 @@ from functools import partial
 
 import pytest
 from alembic import command
+import sqlalchemy as sa
 from sqlalchemy import inspect, text
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -121,6 +122,17 @@ async def create_all_names() -> dict:
         await engine.dispose()
 
 
+def as_named_by_the_naming_revision(names: dict) -> dict:
+    """The naming revision predates the auth branch, which renames ``users``: read the models as it knew them."""
+    return {
+        ("users" if table == "auth_accounts" else table, *key): (
+            value.replace("auth_accounts", "users") if isinstance(value, str) else value
+        )
+        for (table, *key), value in names.items()
+        if (table, *key) != ("auth_accounts", "uq", ("email",))  # a column the naming revision has not seen
+    }
+
+
 def only_names(names: dict) -> dict:
     return {key: (value if isinstance(value, str) or value is None else min(value)) for key, value in names.items()}
 
@@ -182,7 +194,7 @@ def test_metadata_has_a_naming_convention_for_every_kind_of_constraint():
 async def test_create_all_names_constraints_after_the_convention():
     names = only_names(await create_all_names())
 
-    assert names[("trans_user_flags", "fk", ("user_id",))] == "fk_trans_user_flags_user_id_users"
+    assert names[("trans_user_flags", "fk", ("user_id",))] == "fk_trans_user_flags_user_id_auth_accounts"
     assert names[("trans_user_flags", "pk", ("id",))] == "pk_trans_user_flags"
     assert names[("trans_user_flags", "uq", ("user_id", "transaction_id", "type"))] == (
         "uq_trans_user_flags_user_id_transaction_id_type"
@@ -192,8 +204,10 @@ async def test_create_all_names_constraints_after_the_convention():
     assert names[("transactions", "ix", ("endpoint",))] == "ix_transactions_endpoint"
 
 
-async def assert_named_like_create_all(engine):
+async def assert_named_like_create_all(engine, *, before_auth=False):
     expected = only_names(await create_all_names())
+    if before_auth:
+        expected = as_named_by_the_naming_revision(expected)
     actual = only_names(await names_of(engine))
     # other applications' tables are in the metadata (or in the database) depending on what the process loaded
     shared = {key[0] for key in expected} & {key[0] for key in actual}
@@ -217,7 +231,7 @@ async def test_schema_reached_by_the_boot_path_is_named_like_create_all(sql_engi
 async def test_naming_migration_names_a_0_12_schema_like_create_all(legacy_engine):
     await migrate(legacy_engine, "up")
 
-    await assert_named_like_create_all(legacy_engine)
+    await assert_named_like_create_all(legacy_engine, before_auth=True)
 
 
 @parametrize_with_database_urls(*SUPPORTED)
@@ -241,6 +255,8 @@ def _without(value, duplicates):
 
 @parametrize_with_database_urls(*SUPPORTED)
 async def test_schema_is_current_after_migrating_from_0_12(legacy_engine):
+    if legacy_engine.dialect.name == "sqlite":
+        pytest.skip("an existing sqlite file is recreated on upgrade, not migrated: it has no auth_accounts")
     await migrate(legacy_engine, "up")
     await migrate_to_heads(legacy_engine)
 
@@ -262,10 +278,14 @@ ROWS = {
 }
 
 
+#: Tables the models no longer know under that name: the naming revision still does.
+LEGACY_TABLES = {"users": sa.table("users", sa.column("id"), sa.column("username"))}
+
+
 async def _insert_rows(engine):
     async with engine.begin() as conn:
-        for table, values in ROWS.items():
-            await conn.execute(Base.metadata.tables[table].insert().values(**values))
+        for name, values in ROWS.items():
+            await conn.execute(LEGACY_TABLES.get(name, Base.metadata.tables.get(name)).insert().values(**values))
 
 
 def _orphans(sync_conn) -> dict:
