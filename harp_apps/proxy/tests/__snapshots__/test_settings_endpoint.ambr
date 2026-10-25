@@ -168,7 +168,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),
@@ -604,7 +608,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),
@@ -1048,7 +1056,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),
@@ -1484,7 +1496,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),
@@ -2126,7 +2142,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),
@@ -2720,7 +2740,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),
@@ -3287,7 +3311,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),
@@ -3881,7 +3909,11 @@
         ''',
         'properties': dict({
           'headers': dict({
-            'additionalProperties': True,
+            'additionalProperties': dict({
+              'format': 'password',
+              'type': 'string',
+              'writeOnly': True,
+            }),
             'title': 'Headers',
             'type': 'object',
           }),

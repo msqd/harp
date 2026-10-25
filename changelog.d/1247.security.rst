@@ -1,0 +1,1 @@
+Secret settings are masked by type in ``GET /api/system/settings``, ``harp-proxy system config`` and ``system services``: notification webhook URLs, Sentry DSN, probe header values and dashboard passwords, plus every host of a multi-host DSN, HTTP usernames used as tokens and secret query parameters such as ``?api_key=``. (#1247)
