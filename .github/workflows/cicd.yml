@@ -487,11 +487,10 @@ jobs:
           version: 10
 
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
-          cache: 'pnpm'
-          cache-dependency-path: harp_apps/dashboard/frontend/pnpm-lock.yaml
+          package-manager-cache: false
 
       - name: Install dependencies
         run: cd harp_apps/dashboard/frontend && pnpm install --ignore-workspace
@@ -538,6 +537,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        with:
+          enable-cache: false
 
       - name: Install dependencies
         run: uv sync --locked
