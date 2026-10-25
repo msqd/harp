@@ -49,12 +49,16 @@ Redis blob storage
 
 - Blobs are now stored under the ``harp:blob:`` key prefix, so the janitor only ever lists, sweeps and counts those
   keys: other applications can share the Redis database. Nothing to do to keep working: a blob stored by an earlier
-  version is still found under its bare id (40 lowercase hexadecimal characters, the form of every blob id before 0.13;
-  any other id is only looked up under the prefix).
+  version is still found under its bare id (40 lowercase hexadecimal characters for a blob, the shape blob ids still
+  have; 64 for an HTTP cache entry written by 0.12). Any other id is only looked up under the prefix. Residue: a
+  string key of another application, named with 40 or 64 lowercase hexadecimal characters and containing a newline, is
+  still readable through ``/api/blobs/<id>``.
 - Those older blobs are never listed again: the janitor does not sweep them (orphans among them stay) and the
   ``storage_blobs`` metrics do not count them, and HTTP cache entries written before the upgrade are not expired by
   their TTL. They are not copied either. To reclaim them, flush the Redis database if it is dedicated to HARP; on a
-  shared one, delete them by hand, HARP cannot tell them from other applications' keys.
+  shared one, delete them by hand, HARP cannot tell them from other applications' keys. Nothing removes these bare
+  keys on its own: only an explicit deletion of that exact id does. Once the cache is warm again, drop the
+  64-character keys (old cache entries) and the 40-character ones nothing needs anymore.
 
 Dashboard authentication
 ::::::::::::::::::::::::

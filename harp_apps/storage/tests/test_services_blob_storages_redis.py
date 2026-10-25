@@ -237,3 +237,25 @@ class TestLegacyUnprefixedBlobs:
         await redis_blob_storage.delete("session:alice")
 
         assert await redis_blob_storage.client.get("session:alice") == b"data"
+
+    async def test_http_cache_entries_of_0_12_are_still_read(self, redis_blob_storage: RedisBlobStorage):
+        key = "b" * 64
+        await redis_blob_storage.client.set(key, b"cache/meta\nentry")
+
+        assert await redis_blob_storage.get(key) == Blob(id=key, data=b"entry", content_type="cache/meta")
+
+    @pytest.mark.parametrize("length", [40, 64])
+    async def test_hex_named_list_key_is_not_a_blob(self, redis_blob_storage: RedisBlobStorage, length: int):
+        key = "c" * length
+        await redis_blob_storage.client.lpush(key, b"x")
+
+        assert await redis_blob_storage.get(key) is None
+
+    @pytest.mark.parametrize("length", [40, 64])
+    async def test_hex_named_string_without_newline_is_not_a_blob(
+        self, redis_blob_storage: RedisBlobStorage, length: int
+    ):
+        key = "d" * length
+        await redis_blob_storage.client.set(key, b"no newline")
+
+        assert await redis_blob_storage.get(key) is None
