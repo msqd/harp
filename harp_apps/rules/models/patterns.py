@@ -1,4 +1,3 @@
-import re
 from weakref import WeakValueDictionary
 
 
@@ -16,7 +15,7 @@ class Pattern:
 
     def __init__(self, source: str, /):
         self._source = source
-        self._pattern = re.compile("^" + ".*".join([re.escape(x) for x in source.split("*")]) + "$")
+        self._parts = source.split("*")
 
     @property
     def source(self):
@@ -30,10 +29,31 @@ class Pattern:
         Match a value. With ``trailing_slash``, a ``<METHOD> <path>`` pattern whose path has no wildcard also matches
         the value with its final slash removed.
         """
-        if self._pattern.match(value):
+        if self._glob(value):
             return True
         if trailing_slash and value.endswith("/"):
             _, space, path = self._source.partition(" ")
             if space and "*" not in path:
-                return self._pattern.match(value[:-1])
-        return None
+                return self._glob(value[:-1])
+        return False
+
+    def _glob(self, value: str, /) -> bool:
+        """Glob-style match, "*" standing for any run of characters, in time linear in the length of value."""
+        first, *rest = self._parts
+        if not rest:
+            return value == first
+        *middle, last = rest
+
+        if not value.startswith(first) or not value.endswith(last):
+            return False
+        position, end = len(first), len(value) - len(last)
+        if position > end:
+            return False
+
+        # Leftmost placement of each inner segment leaves the most room for the next ones, so no backtracking.
+        for part in middle:
+            found = value.find(part, position, end)
+            if found < 0:
+                return False
+            position = found + len(part)
+        return True

@@ -33,15 +33,27 @@ still forwards the target unchanged. Compared to 0.12:
 - A final slash is kept once: ``/admin//`` and ``/admin/;x`` are matched as ``/admin/``, so ``GET /admin/*`` keeps
   matching them. An ``on_request`` or ``on_response`` pattern whose path has no wildcard now also matches the path
   with its final slash removed, whatever its method part: ``GET /admin`` and ``* /admin`` match ``/admin/`` too.
-  Endpoint patterns and ``on_remote_*`` levels are not concerned.
+  Endpoint patterns and ``on_remote_*`` levels are not concerned. To deny a path and everything under it, write
+  ``GET /admin*``.
 - Empty segments are gone before matching, so a wildcard no longer matches one: ``GET /*/users`` no longer matches
-  ``//users``. To deny a path and everything under it, write ``GET /admin*``.
+  ``//users``.
 - ``%2F`` (any case) stays encoded in the path, and rules are also matched against a second form with ``%2F`` read as
   ``/``. A non-deny rule written for ``GET /a/b`` now also fires for ``/a%2Fb``, and a rule fires once per request.
 - ``on_remote_request`` and ``on_remote_response`` rules still match the raw path sent to the remote endpoint, none of
   the above applies to them.
 - Not normalised, a deny rule has to account for them: double-encoded escapes (``%252F``), ``%3B`` read as ``;``,
   ``%00``, ``%5C`` and backslashes, and case (patterns are case sensitive).
+
+Redis blob storage
+::::::::::::::::::
+
+- Blobs are now stored under the ``harp:blob:`` key prefix, so the janitor only ever lists, sweeps and counts those
+  keys: other applications can share the Redis database. Nothing to do to keep working: a blob stored by an earlier
+  version is still found under its bare id.
+- Those older blobs are never listed again: the janitor does not sweep them (orphans among them stay) and the
+  ``storage_blobs`` metrics do not count them, and HTTP cache entries written before the upgrade are not expired by
+  their TTL. They are not copied either. To reclaim them, flush the Redis database if it is dedicated to HARP; on a
+  shared one, delete them by hand, HARP cannot tell them from other applications' keys.
 
 Dashboard authentication
 ::::::::::::::::::::::::
