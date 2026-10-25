@@ -1,5 +1,5 @@
 """
-Two-phase unit of work (see ADR-0012).
+Two-phase unit of work (see ADR-0013).
 
 The core holds the contract and the transactional dispatcher; it has no persistence. An implementation (storage, for the
 database) provides :meth:`UnitOfWork._transaction`.

@@ -1,4 +1,4 @@
-# ADR-0012: A critical action and its audit event share one commit, through a two-phase unit of work
+# ADR-0013: A critical action and its audit event share one commit, through a two-phase unit of work
 
 - **Status**: proposed
 - **Date**: 2026-10-25

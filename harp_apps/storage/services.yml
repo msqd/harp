@@ -17,7 +17,7 @@ services:
     arguments: { "url": [!cfg "url"] }
 
   - name: "storage.unit_of_work"
-    description: "Two-phase unit of work (ADR-0012), on the storage session factory."
+    description: "Two-phase unit of work (ADR-0013), on the storage session factory."
     base: harp.unit_of_work.IUnitOfWorkFactory
     type: harp_apps.storage.unit_of_work.SqlUnitOfWorkFactory
     constructor: from_storage

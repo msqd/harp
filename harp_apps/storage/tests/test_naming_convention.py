@@ -134,6 +134,12 @@ async def migrate(engine, direction):
         await in_thread(command.downgrade, alembic_cfg, PREVIOUS_REVISION)
 
 
+async def migrate_to_heads(engine):
+    """Bring the other applications' branches up too: their tables are in ``Base.metadata`` once loaded."""
+    alembic_cfg = create_alembic_config(engine.url.render_as_string(hide_password=False))
+    await in_thread(command.upgrade, alembic_cfg, "heads")
+
+
 async def in_thread(fn, *args):
     with ThreadPoolExecutor() as executor:
         await asyncio.get_event_loop().run_in_executor(executor, partial(fn, *args))
@@ -189,6 +195,10 @@ async def test_create_all_names_constraints_after_the_convention():
 async def assert_named_like_create_all(engine):
     expected = only_names(await create_all_names())
     actual = only_names(await names_of(engine))
+    # other applications' tables are in the metadata (or in the database) depending on what the process loaded
+    shared = {key[0] for key in expected} & {key[0] for key in actual}
+    expected = {key: value for key, value in expected.items() if key[0] in shared}
+    actual = {key: value for key, value in actual.items() if key[0] in shared}
     assert actual == {key: value for key, value in expected.items() if key in actual}
     # MySQL has no name for a primary key
     assert set(expected) - set(actual) <= {key for key in expected if key[1] == "pk"}
@@ -232,6 +242,7 @@ def _without(value, duplicates):
 @parametrize_with_database_urls(*SUPPORTED)
 async def test_schema_is_current_after_migrating_from_0_12(legacy_engine):
     await migrate(legacy_engine, "up")
+    await migrate_to_heads(legacy_engine)
 
     await ensure_schema_is_current(legacy_engine)
 
