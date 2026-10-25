@@ -14,8 +14,5 @@ class RE(object):
     def __eq__(self, other):
         return self.pattern.match(other) is not None
 
-    def __ne__(self, other):
-        return self.pattern.match(other) is None
-
     def __repr__(self):
         return f"<RE {self.pattern.pattern}>"
