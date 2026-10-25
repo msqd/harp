@@ -1,5 +1,5 @@
 harp_apps.notifications.senders.base
-=====================================
+====================================
 
 .. automodule:: harp_apps.notifications.senders.base
     :members:
