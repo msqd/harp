@@ -89,6 +89,9 @@ class BasicAuthSettings(Configurable):
         return secrets.token_bytes(32)
 
     def _cache_key(self, username, password) -> bytes:
+        # Not password storage (CodeQL py/weak-sensitive-data-hashing, dismissed): the key only lives in memory, under
+        # a random per-process secret, for CHECK_CACHE_TTL. Reading it needs process memory, which already exposes the
+        # plaintext credentials of live requests.
         return hmac.new(self._cache_secret, f"{len(username)}:{username}:{password}".encode(), "sha256").digest()
 
     def check(self, username, password):
