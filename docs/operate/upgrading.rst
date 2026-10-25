@@ -34,6 +34,17 @@ Metrics
   Aggregate queries still work; any ``by (path)`` or ``by (url)`` grouping, or matcher on these labels, stops
   matching. The remaining labels are listed in :doc:`prometheus`.
 
+Redis blob storage
+::::::::::::::::::
+
+- Blobs are now stored under the ``harp:blob:`` key prefix, so the janitor only ever lists, sweeps and counts those
+  keys: other applications can share the Redis database. Nothing to do to keep working: a blob stored by an earlier
+  version is still found under its bare id.
+- Those older blobs are never listed again: the janitor does not sweep them (orphans among them stay) and the
+  ``storage_blobs`` metrics do not count them, and HTTP cache entries written before the upgrade are not expired by
+  their TTL. They are not copied either. To reclaim them, flush the Redis database if it is dedicated to HARP; on a
+  shared one, delete them by hand, HARP cannot tell them from other applications' keys.
+
 Dashboard authentication
 ::::::::::::::::::::::::
 

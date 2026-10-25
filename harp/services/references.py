@@ -4,15 +4,8 @@ from typing import Any, Self
 
 from pydantic import BaseModel
 
+from harp.typedefs import NotSet
 from harp.utils.config import yaml
-
-
-class _NotSet:
-    def __repr__(self):
-        return "<not set>"
-
-
-_notset = _NotSet()
 
 
 class BaseReference(BaseModel):
@@ -95,7 +88,7 @@ class LazySettingReference(BaseReference):
     """
 
     target: str
-    default: Any = _notset
+    default: Any = NotSet
 
     def __init__(self, target=None, **kwargs):
         super().__init__(target=target, **kwargs)
@@ -127,7 +120,7 @@ class LazySettingReference(BaseReference):
         for part in target.strip().split("."):
             try:
                 x = x[part]
-            except (TypeError, KeyError):
+            except (TypeError, KeyError, AttributeError):
                 x = self.default
                 break
 
@@ -138,7 +131,7 @@ class LazySettingReference(BaseReference):
             else:
                 raise ValueError(f"Unsupported operator: {operator}")
 
-        return x if x is not _notset else None
+        return x if x is not NotSet else None
 
     def __str__(self):
         return f"!cfg {self.target}"

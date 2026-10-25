@@ -180,3 +180,13 @@ def test_mask_credentials_leaves_a_host_port_followed_by_free_text_intact():
     message = "could not connect to http://db:5432 as user@host"
 
     assert mask_credentials(message) == message
+
+
+def test_a_namedtuple_is_dumped_field_by_field():
+    from collections import namedtuple
+
+    Pair = namedtuple("Pair", ["name", "dsn"])
+
+    assert asdict(Pair("db", "postgresql://user:secret@host/db")) == Pair(
+        "db", mask_credentials("postgresql://user:secret@host/db")
+    )

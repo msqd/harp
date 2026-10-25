@@ -2,7 +2,7 @@ from functools import cached_property
 from inspect import signature
 from typing import List, Optional, Type
 
-from rodi import CannotResolveTypeException, ResolutionContext, ServiceLifeStyle
+from rodi import CannotResolveTypeException, CircularDependencyException, ResolutionContext, ServiceLifeStyle
 
 from harp.config.configurables.service import LazyService
 from harp.utils.packages import import_string
@@ -104,7 +104,19 @@ class ServiceResolver:
         except ValueError:
             return None
 
+    _resolving = False
+
     def __call__(self, context: ResolutionContext):
+        # a resolver is only cached in the context once it returned, so re-entering it means a cycle of references
+        if self._resolving:
+            raise CircularDependencyException(self.base_type, self.concrete_type)
+        self._resolving = True
+        try:
+            return self._resolve(context)
+        finally:
+            self._resolving = False
+
+    def _resolve(self, context: ResolutionContext):
         concrete_type = self.concrete_type
 
         chain = context.dynamic_chain
