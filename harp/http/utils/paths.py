@@ -37,7 +37,7 @@ def normalize_path(target: str) -> str:
     The path of a request target as rules match it, not as it is forwarded (the proxy forwards it unchanged): a
     leading scheme and authority are removed, the query is dropped, percent-escapes of unreserved characters are
     decoded (RFC 3986 §2.3), and empty segments and ``;`` parameters are dropped (a final slash is kept). Other escapes,
-    ``%2F`` included, stay as sent (see :func:`normalize_path_variants`).
+    ``%2F`` included, stay as sent (see :func:`_normalize_path_variants`).
     """
     path = _unreserved_decoded(target)
     if path is None:  # the request is refused later, match what was received
@@ -45,7 +45,7 @@ def normalize_path(target: str) -> str:
     return _collapse(path)
 
 
-def normalize_path_variants(target: str) -> list[str]:
+def _normalize_path_variants(target: str) -> list[str]:
     """
     Other readings of the path that an upstream may act on: with ``%2F`` taken as a slash. Empty when the path has
     no such escape.
