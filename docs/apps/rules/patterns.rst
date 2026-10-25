@@ -39,9 +39,33 @@ The value is the request fingerprint, ``<METHOD> <path>``, for example ``GET /us
 and separated from the path by one space, so you can match on the method (``GET *``), on the path (``* /health``), or
 on both (``POST /orders``).
 
-For ``on_request`` and ``on_response``, the path is the one received by the proxy, without query string. For
-``on_remote_request`` and ``on_remote_response``, the path is the one sent to the remote endpoint, and it includes the
-query string (``GET /users/42?page=2``).
+The path is the one the proxy forwards to the upstream, never the raw target as sent:
+
+- a leading scheme and authority are removed, so ``http://example.com/admin`` and ``//example.com/admin`` both match
+  ``GET /admin``;
+- percent-escapes of unreserved characters (letters, digits, ``-``, ``.``, ``_``, ``~``) are decoded, so ``/%61dmin``
+  matches ``GET /admin``. Other escapes stay as sent: ``/a%2Fb`` does not match ``GET /a/b``;
+- the query string is not part of it, ``GET /users/42?page=2`` is matched as ``GET /users/42``.
+
+This is the string matched by ``on_request`` and ``on_response``, and the one the storage markers set by those rules
+rely on.
+
+.. versionchanged:: 0.13
+
+    ``on_remote_request`` and ``on_remote_response`` still match the path sent to the remote endpoint, base path and
+    query string included (``GET /api/users/42?page=2``, not normalised). A rule that matches only thanks to the query
+    string logs a deprecation warning, and remote levels will match the path only in the next release: write the
+    pattern as ``GET /api/users/42*`` or ``GET /api/users/*`` to be ready.
+
+.. code-block:: toml
+
+    # on_request: matched as "GET /admin", whatever the target was (/admin?x=1, http://host/admin, /%61dmin).
+    [rules."*"."GET /admin"]
+    on_request = "request.headers['X-Admin'] = 'yes'"
+
+    # on_remote_request: matched as "GET /api/users/42?page=2" for now, rewrite it to end with a wildcard.
+    [rules."*"."GET /api/users/*"]
+    on_remote_request = "request.headers['X-Remote'] = 'yes'"
 
 .. literalinclude:: examples/patterns-request.toml
     :language: toml

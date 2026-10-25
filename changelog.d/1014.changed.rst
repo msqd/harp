@@ -1,0 +1,1 @@
+Docker images install exactly the dependency versions pinned in ``uv.lock``, and CI checks it.

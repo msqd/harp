@@ -2,7 +2,7 @@
 
 **Problem**
 
-A cookie is scoped to a host, not to a port: a browser signed in to the dashboard sends its session cookie to every proxy port on the same host, and the proxy forwards it to the origin. A HARP token in a caller's `Authorization` header is forwarded the same way. ADR-0010 (branch `explore/auth`) decides HARP always removes them.
+A cookie is scoped to a host, not to a port: a browser signed in to the dashboard sends its session cookie to every proxy port on the same host, and the proxy forwards it to the origin. A HARP token in a caller's `Authorization` header is forwarded the same way. ADR-0011 (branch `explore/auth`) decides HARP always removes them.
 
 **Acceptance criteria**
 

@@ -34,3 +34,18 @@ If you want the notifications to include a link to your dashboard, you need to a
 
 .. literalinclude:: ./examples/dashboard.yml
     :language: yaml
+
+
+Delivery
+::::::::
+
+Notifications are queued and sent in the background: they never delay or change the response the client receives,
+whatever the webhooks do.
+
+``timeout``
+    Seconds each sender has to deliver a notification (default ``5``). A sender that is too slow or that fails is
+    logged at warning level, and the other senders are not affected.
+
+``queue_size``
+    Maximum number of notifications waiting to be sent (default ``100``). During a burst of errors, notifications
+    beyond that limit are dropped and logged at warning level.

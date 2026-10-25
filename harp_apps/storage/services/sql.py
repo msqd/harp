@@ -147,9 +147,6 @@ class SqlStorage(IStorage):
     connection used to execute queries."""
 
     def __init__(self, engine: AsyncEngine, blob_storage: IBlobStorage, settings: StorageSettings):
-        # XXX lokks like settings are not used anymore, except to know if we should run migrations or not
-        self._should_migrate = settings.migrate
-
         self.metadata = Base.metadata
 
         self.blob_storage = blob_storage
@@ -170,8 +167,6 @@ class SqlStorage(IStorage):
         self.metric_values = MetricValuesRepository(self.session_factory)
         self.flags = FlagsRepository(self.session_factory)
 
-        self._debug = False
-
     def __repr__(self):
         return f'<{type(self).__name__} dialect="{self.engine.dialect.name}" object at {hex(id(self))}>'
 
@@ -182,7 +177,6 @@ class SqlStorage(IStorage):
                 yield session
 
     def install_debugging_instrumentation(self, *, echo=False):
-        self._debug = True
         self._original_session_factory = self.session_factory
         self._debug_index = 1
         self.sql_queries = []
@@ -409,10 +403,6 @@ class SqlStorage(IStorage):
                 SqlTransaction.started_at > (datetime.now(UTC) - timedelta(hours=24))
             )
             return (await session.execute(query)).scalar_one_or_none()
-
-    async def _on_startup_actions(self, TransactionEvent):
-        """Event handler to create the database tables on startup. May drop them first if configured to do so."""
-        await self.initialize()
 
     @override
     async def set_user_flag(self, *, transaction_id: str, username: str, flag: int, value=True):

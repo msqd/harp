@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import Field, model_validator
+from pydantic import ByteSize, Field, model_validator
 
 from harp.config import Configurable, LazyService, Service, Stateful
 from harp_apps.proxy.settings.remote import Remote, RemoteEndpointSettings, RemoteSettings
@@ -52,6 +52,9 @@ class EndpointSettings(BaseEndpointSettings):
         url: http://my-endpoint:8080
 
     """
+
+    #: largest request body this endpoint accepts, instead of ``proxy.max_request_body_size``
+    max_request_body_size: Optional[ByteSize] = Field(None, gt=0)
 
     #: remote definition, with url pools, probes, etc.
     remote: Optional[RemoteSettings] = Field(None, repr=False)

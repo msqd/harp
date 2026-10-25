@@ -1,0 +1,1 @@
+The proxy appends the peer address to `X-Forwarded-For` and `Forwarded` on the request sent upstream, and strips inbound `X-Forwarded-For`, `Forwarded` and `X-Real-IP` unless the peer is in the new `proxy.trusted_proxies`.

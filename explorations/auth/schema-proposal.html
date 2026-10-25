@@ -261,7 +261,7 @@ flowchart LR
 
   <section>
     <h2>Côté proxy</h2>
-    <p>Avant de transmettre une requête à une origin, le proxy en retire toujours le cookie de session HARP et tout <code>Authorization: Bearer harp_…</code>, et il trace ce retrait sur la transaction. Un cookie est rattaché au host, pas au port : sans ce retrait, le navigateur connecté au dashboard enverrait sa session à l'origin. Aucun réglage ne désactive ce retrait : c'est l'exception à ADR-0001 que consigne ADR-0010, sur la branche locale explore/auth.</p>
+    <p>Avant de transmettre une requête à une origin, le proxy en retire toujours le cookie de session HARP et tout <code>Authorization: Bearer harp_…</code>, et il trace ce retrait sur la transaction. Un cookie est rattaché au host, pas au port : sans ce retrait, le navigateur connecté au dashboard enverrait sa session à l'origin. Aucun réglage ne désactive ce retrait : c'est l'exception à ADR-0001 que consigne ADR-0011, sur la branche locale explore/auth.</p>
   </section>
 
   <section>
@@ -283,7 +283,7 @@ flowchart LR
 
   <section>
     <h2>Migrations</h2>
-    <p>Chaque app possède une branche de l'unique historique alembic (ADR-0011). La liste des branches est statique : toutes les apps de <code>harp_apps/</code> qui ont des migrations, qu'elles soient activées ou non. <code>alembic_version</code> contient donc une ligne par app.</p>
+    <p>Chaque app possède une branche de l'unique historique alembic (ADR-0012). La liste des branches est statique : toutes les apps de <code>harp_apps/</code> qui ont des migrations, qu'elles soient activées ou non. <code>alembic_version</code> contient donc une ligne par app.</p>
     <ol>
       <li><strong>Branche storage :</strong> on pose une <code>naming_convention</code> sur la metadata et on nomme les contraintes existantes. Ça ne change rien au fonctionnement et peut partir sur <code>main</code> tout de suite.</li>
       <li><strong>Branche auth, première révision</strong> (<code>depends_on</code> la précédente) : <code>users</code> devient <code>auth_accounts</code>, avec ses nouvelles colonnes, puis on crée les quatre autres tables.</li>

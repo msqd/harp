@@ -1,7 +1,8 @@
 const baseUrl = "http://127.0.0.1:61110"
 
 export default {
-  timeout: 10000,
+  // The first story pays for the cold start of the dev server; 10s was not enough on a slow machine.
+  timeout: 30000,
   use: {
     baseURL: baseUrl,
   },

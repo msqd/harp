@@ -98,7 +98,7 @@ holds the design choices.
 28. SQLite is never migrated by alembic: `_do_migrate` runs `create_all` on SQLite
     (`harp_apps/storage/utils/migrations.py:141-148`, "drop/recreate is fine when harp is
     upgraded"). Taking over `users` therefore happens on PostgreSQL and MySQL only; an existing
-    SQLite database is recreated on upgrade, as today. ADR-0011's SQLite batch argument for the
+    SQLite database is recreated on upgrade, as today. ADR-0012's SQLite batch argument for the
     naming convention is moot; the convention still serves PostgreSQL and MySQL.
 29. Token checksum (clarifies 14): CRC32 over every character before the last six, `harp_`
     included, written as six zero-padded base62 characters. Format, cookie names
@@ -113,7 +113,7 @@ holds the design choices.
     and accepts nothing more lenient, so no form accepted by auth escapes the proxy's strip.
 32. Responses too: the proxy strips from origin responses every `Set-Cookie` named `harp_session` or
     `__Host-harp_session`, so an origin cannot plant or overwrite a dashboard session (`__Host-` does
-    not pin a port). In #1521; ADR-0010 covers both directions.
+    not pin a port). In #1521; ADR-0011 covers both directions.
 33. Same-site CSRF across ports (SameSite ignores ports): state-changing dashboard routes require a
     same-origin request (#1586), on top of #1324 left unchanged in 0.13; the docs recommend a
     hostname of its own for the dashboard.

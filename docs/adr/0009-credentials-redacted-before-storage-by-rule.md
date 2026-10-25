@@ -152,6 +152,13 @@ credentials, which is added to the outgoing request only and so never reached th
 
 An operator who opts a name out of the set gets these responses cached again, and stored in clear.
 
+What an operator keeps out of storage stays out of every store. A transaction carrying `skip-request-storage` or
+`skip-response-storage` has its response never stored by the cache, which until now ignored these markers. The markers
+travel with the outgoing request in its `harp` extension, like the set, as they stand once `on_request` has run.
+`skip-storage` is not one of them: the storage worker also sets it itself under pressure, and load must not switch the
+cache off. The header and body markers are not honoured either, since the cache stores no body of its own to omit
+and its request headers are already redacted.
+
 ## Existing data
 
 Nothing already stored is rewritten. Rows and blobs recorded before the upgrade keep the values they were

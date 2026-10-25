@@ -1,6 +1,6 @@
 """HARP's own credentials, as a contract of the core.
 
-The proxy removes them before a request reaches an origin (ADR-0010), and the authentication application issues them.
+The proxy removes them before a request reaches an origin (ADR-0011), and the authentication application issues them.
 Both rely on the definitions here, so the core needs no dependency on that application.
 
 A token is ``harp_<prefix 8><secret 43><crc32 6>``: base62 only after ``harp_``, the last six characters being the

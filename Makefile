@@ -44,7 +44,6 @@ DOCKER_BUILD_OPTIONS ?= --platform=$(DOCKER_PLATFORM)
 DOCKER_NETWORK ?= harp
 DOCKER_RUN_COMMAND ?=
 DOCKER_RUN_OPTIONS ?=
-PYTHON_VERSION ?= 3.13
 
 # frontend
 PNPM ?= $(shell which pnpm || echo "pnpm")
@@ -140,7 +139,7 @@ build-frontend: install-frontend  ## Builds the harp dashboard frontend (compile
 ########################################################################################################################
 
 .PHONY: preqa qa qa-full types format format-backend format-frontend optimize-images
-.PHONY: test test-backend test-frontend test-frontend-update test-frontend-ui-update test-e2e-cache test-e2e-cache-baseline
+.PHONY: test test-backend test-frontend test-frontend-update test-frontend-ui-update test-e2e-cache test-e2e-cache-baseline test-security-probes
 .PHONY: lint-frontend coverage cloc
 
 preqa: types format reference  ## Runs pre-qa checks (types generation, formatting, api reference).
@@ -216,6 +215,9 @@ test-e2e-cache-baseline: install-backend-dev  ## Records the RFC 9111 compliance
 	$(call execute,git submodule update --init --recursive misc/cache-tests/cache-tests)
 	$(call execute,cd misc/cache-tests && CACHE_TESTS_RECORD_REASON="$(REASON)" ./run-tests.sh)
 
+test-security-probes: install-backend-dev  ## Replays the security fixes against a running proxy (pulls a PostgreSQL container).
+	$(call execute,env -u FORCE_COLOR -u NO_COLOR $(PYTEST) -o python_files='probe_*.py' tests/security_probes)
+
 lint-frontend: install-frontend  ## Lints the frontend codebase.
 	$(call execute,cd $(FRONTEND_DIR); $(PNPM) lint)
 
@@ -230,17 +232,11 @@ cloc:  ## Counts lines of code in the project.
 # Docker builds
 ########################################################################################################################
 
-.PHONY: buildc buildc-pypi pushc runc runc-shell runc-example-repositories
+.PHONY: buildc pushc runc runc-shell runc-example-repositories
 
-buildc: wheel  ## Builds the docker image from wheel (PYTHON_VERSION, default 3.13).
-	$(call execute,$(DOCKER) build $(DOCKER_OPTIONS) $(DOCKER_BUILD_OPTIONS) --build-arg PYTHON_VERSION=$(PYTHON_VERSION) --build-arg INSTALL_FROM=local --build-arg VERSION=$(VERSION) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .)
-
-buildc-pypi:  ## Builds the docker image from PyPI (requires VERSION, PYTHON_VERSION, default 3.13).
-	@if [ -z "$(VERSION)" ]; then \
-		echo "ERROR: VERSION is required. Usage: make buildc-pypi VERSION=0.9.0"; \
-		exit 1; \
-	fi
-	$(call execute,$(DOCKER) build $(DOCKER_OPTIONS) $(DOCKER_BUILD_OPTIONS) --build-arg PYTHON_VERSION=$(PYTHON_VERSION) --build-arg VERSION=$(VERSION) -f Dockerfile.pypi -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .)
+buildc: wheel  ## Builds the docker image from wheel, constrained to uv.lock.
+	$(call execute,$(UV) run python bin/check_docker_lock.py export > dist/constraints.txt)
+	$(call execute,$(DOCKER) build $(DOCKER_OPTIONS) $(DOCKER_BUILD_OPTIONS) -t $(DOCKER_IMAGE) $(foreach tag,$(VERSION) $(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag)$(DOCKER_TAGS_SUFFIX)) .)
 
 pushc:  ## Pushes the docker image to the registry.
 	$(call execute,for tag in $(VERSION) $(DOCKER_TAGS); do $(DOCKER) image push $(DOCKER_IMAGE):$$tag$(DOCKER_TAGS_SUFFIX); done)
@@ -269,7 +265,7 @@ help:   ## Shows available commands.
 	@grep -E '^(install|install-dev|install-frontend|install-backend|install-backend-dev|start-dev|start-dev-frontend|build-frontend|wheel):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo
 	@echo "\033[1mQuality\033[0m"
-	@grep -E '^(preqa|qa|qa-full|qa-nofront|test|test-backend|test-frontend|test-backend-update|test-frontend-update|test-frontend-ui-update|test-e2e-cache|test-e2e-cache-baseline|lint-frontend|format|format-backend|format-frontend|types|coverage|cloc|optimize-images):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^(preqa|qa|qa-full|qa-nofront|test|test-backend|test-frontend|test-backend-update|test-frontend-update|test-frontend-ui-update|test-e2e-cache|test-e2e-cache-baseline|test-security-probes|lint-frontend|format|format-backend|format-frontend|types|coverage|cloc|optimize-images):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@echo
 	@echo "\033[1mDocumentation\033[0m"
 	@grep -E '^(reference|docs|docs-dev):.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?##"}; {printf "    make \033[36m%-30s\033[0m %s\n", $$1, $$2}'

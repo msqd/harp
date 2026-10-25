@@ -2,6 +2,7 @@
 
 import asyncio
 import gzip
+import tracemalloc
 
 import httpx
 from hishel import CacheOptions, SpecificationPolicy
@@ -153,3 +154,19 @@ async def test_compressed_body_within_the_cap_once_decoded_is_stored():
         await client.get(URL)
 
     assert origin.calls == 1
+
+
+async def test_a_bomb_is_measured_without_being_decoded_whole():
+    origin = GzipOrigin(b"0" * 64 * 1024 * 1024)
+    tracemalloc.start()
+    try:
+        async with make_client(origin, max_recorded_body_size=1024) as client:
+            response = await client.send(client.build_request("GET", URL), stream=True)
+            tracemalloc.reset_peak()
+            async for _ in response.aiter_raw():
+                pass
+            _, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+
+    assert peak < 8 * 1024 * 1024

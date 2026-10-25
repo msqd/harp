@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 
 from httpx import codes
 
+from harp.models.redaction import REDACTED, HeaderNames, Redaction
 from harp.utils.bytes import header_display
 
 from .errors import HttpError
@@ -17,8 +18,9 @@ class BaseHttpMessageSerializer(MessageSerializer):
 
     """
 
-    def __init__(self, message: BaseHttpMessage):
+    def __init__(self, message: BaseHttpMessage, redaction: Redaction | None = None):
         self.wrapped = message
+        self.redaction = redaction or Redaction(headers=HeaderNames(), query=set())
 
     @cached_property
     def summary(self) -> str:
@@ -26,7 +28,12 @@ class BaseHttpMessageSerializer(MessageSerializer):
 
     @cached_property
     def headers(self) -> str:
-        return "\n".join([f"{header_display(k)}: {header_display(v)}" for k, v in self.wrapped.headers.items()])
+        return "\n".join(
+            [
+                f"{header_display(k)}: {REDACTED if k.lower() in self.redaction.headers else header_display(v)}"
+                for k, v in self.wrapped.headers.items()
+            ]
+        )
 
     @cached_property
     def body(self) -> bytes:
@@ -49,7 +56,8 @@ class HttpRequestSerializer(BaseHttpMessageSerializer):
 
     @cached_property
     def query_string(self) -> str:
-        return urlencode(self.wrapped.query) if self.wrapped.query else ""
+        query = [(k, REDACTED if k in self.redaction.query else v) for k, v in (self.wrapped.query or {}).items()]
+        return urlencode(query) if query else ""
 
     @cached_property
     def summary(self) -> str:
@@ -96,14 +104,14 @@ class HttpErrorSerializer(BaseHttpMessageSerializer):
         return self.wrapped.message
 
 
-def get_serializer_for(message: BaseMessage) -> MessageSerializer:
+def get_serializer_for(message: BaseMessage, redaction: Redaction | None = None) -> MessageSerializer:
     if isinstance(message, HttpRequest):
-        return HttpRequestSerializer(message)
+        return HttpRequestSerializer(message, redaction)
 
     if isinstance(message, HttpResponse):
-        return HttpResponseSerializer(message)
+        return HttpResponseSerializer(message, redaction)
 
     if isinstance(message, HttpError):
-        return HttpErrorSerializer(message)
+        return HttpErrorSerializer(message, redaction)
 
     raise ValueError(f"No serializer available for message type: {type(message)}")

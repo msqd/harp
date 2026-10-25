@@ -1,0 +1,1 @@
+A request carrying both ``Content-Length`` and ``Transfer-Encoding`` is answered ``400`` with ``Connection: close``, never forwarded and not recorded.
