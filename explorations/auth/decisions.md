@@ -120,3 +120,21 @@ holds the design choices.
 34. MySQL and MariaDB are treated as unsupported in these explorations (deprecated by ADR-0005,
     support being removed; user, 2026-10-25): design, code and tests target PostgreSQL (production)
     and SQLite (dev, `create_all`). New revisions may be no-ops on MySQL with a warning.
+35. Declared dependencies load automatically (user, 2026-10-25): the configuration builder adds every
+    declared dependency (`autoload_dependencies`) for the default applications and for explicit
+    `applications:` lists alike. `auth` is not a default application: the dashboard pulls it in,
+    and a HARP without dashboard loads no auth (decision 10). An explicit list gains implicit
+    dependencies; the docs say so.
+36. The exploration branches drop MySQL and MariaDB from CI (user, 2026-10-25), consistent with
+    decision 34; main keeps its job until the removal announced in #1360. A topic returning to main
+    then lands with MySQL support removed, or handles it at that point.
+37. Password policy (user, 2026-10-25; refines 13): the minimum length is a setting, 15 by default,
+    down to 8 at most; an offline guessability score in the manner of zxcvbn (dictionaries and their
+    combinations, repeats, sequences, keyboard walks, dates, substitutions) refuses passwords below a
+    setting, 3 of 4 by default; the bundled list of common passwords is one of its dictionaries. No
+    network call.
+38. Sweep contract in the core (user, 2026-10-25): applications declare their periodic cleanups
+    (name, interval, budget, function); the janitor only schedules and measures them and knows no
+    application. Transaction purge becomes a sweep declared by storage, audit retention and cache
+    reclamation declare theirs, and the cache drops its own duplicate sweep. Without a janitor
+    nothing is scheduled and a warning names the sweeps not running.
