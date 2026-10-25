@@ -67,7 +67,7 @@ export function OnQuerySuccess<T>(
         role="status"
         className="mb-2 rounded border border-yellow-400 bg-yellow-50 px-3 py-2 text-sm text-yellow-800"
       >
-        Data could not be refreshed, showing the last loaded version. Retrying automatically.
+        Data could not be refreshed, showing the last loaded version.
       </div>
       {content}
     </>
