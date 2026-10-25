@@ -67,10 +67,7 @@
             }
           }
         },
-        "purge": {
-          "$ref": "#/$defs/PurgeSettings",
-          "default": { "enabled": false, "allow": [] }
-        },
+        "purge": { "$ref": "#/$defs/PurgeSettings" },
         "storage": {
           "$ref": "#/$defs/Service",
           "default": {
