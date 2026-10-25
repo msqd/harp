@@ -1,0 +1,1 @@
+Dashboard password checks no longer block the event loop (and proxied traffic): they run in a thread, successful checks are cached for a minute, unknown users cost the same as wrong passwords, and a malformed stored hash answers 401 instead of 500.
