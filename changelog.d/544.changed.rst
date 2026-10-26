@@ -1,0 +1,1 @@
+Document per-endpoint circuit breaker configuration and the naive and leaky liveness options.
