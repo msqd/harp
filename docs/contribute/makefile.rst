@@ -498,7 +498,7 @@ Backend Testing
 * ``PYTEST_OPTIONS``: Additional pytest arguments
 * ``TEST_SKIP_FRONT``: Skip frontend tests if set
 * ``TEST_ALL_DATABASES``: Test all database backends if set
-* ``TEST_DATABASE_DIALECTS``: Comma separated dialects to test (for example ``mysql``), default all
+* ``TEST_DATABASE_DIALECTS``: Comma separated dialects to test (for example ``sqlite,postgresql``), default all. MySQL and MariaDB are unsupported since 0.13, not tested in CI and removed in 0.14
 
 Docker
 ^^^^^^

@@ -3,6 +3,13 @@
 Upgrading to 0.13
 =================
 
+Storage
+:::::::
+
+- **MySQL and MariaDB are unsupported**: they are no longer tested in CI, get no fixes, and their code is removed
+  in 0.14. HARP still logs a warning at boot when ``storage.url`` points to one of them. Migrate to PostgreSQL
+  before 0.14, the only database supported in production. See :doc:`the storage page </apps/storage/index>`.
+
 Metrics
 :::::::
 

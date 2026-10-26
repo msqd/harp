@@ -70,15 +70,15 @@ startup:
 - `SQLite <https://www.sqlite.org/>`_ (config-less default, **for development only**), using `aiosqlite
   <https://aiosqlite.omnilib.dev/>`_ driver.
 - `MySQL <https://www.mysql.com/>`_ / `MariaDB <https://mariadb.org/>`_, using `aiomysql
-  <https://aiomysql.readthedocs.io/>`_ driver. MariaDB uses the same ``mysql+aiomysql://`` URL. **Deprecated**, see below.
+  <https://aiomysql.readthedocs.io/>`_ driver. MariaDB uses the same ``mysql+aiomysql://`` URL. **Unsupported since 0.13**, see below.
 
 .. deprecated:: 0.12
 
-   MySQL and MariaDB keep working and stay tested in CI, but come with no production support and no performance
-   commitment, and will be removed in a future version (not decided yet). HARP logs a deprecation warning at boot
-   when ``storage.url`` points to one of them. Use PostgreSQL for production.
+   MySQL and MariaDB are unsupported since 0.13: they are no longer tested in CI, get no fixes and come with no
+   production support, and their code is removed in 0.14. HARP logs a warning at boot when ``storage.url`` points to
+   one of them. Use PostgreSQL for production.
 
-SQLite ships with the base install. The PostgreSQL and MySQL drivers are extras, install the one you need:
+SQLite ships with the base install. The PostgreSQL driver is an extra (the MySQL one is unsupported since 0.13 and removed in 0.14):
 
 .. code-block:: shell
 
@@ -101,7 +101,7 @@ The main configuration option you're interested in is ``storage.url``, which con
 .. literalinclude:: ./examples/postgres-asyncpg.yml
     :language: yaml
 
-**MySQL/MariaDB example (aiomysql driver, deprecated)**:
+**MySQL/MariaDB example (aiomysql driver, unsupported since 0.13, removed in 0.14)**:
 
 .. literalinclude:: ./examples/mysql-aiomysql.yml
     :language: yaml
@@ -227,7 +227,7 @@ is older than the code expects. The error names the database and the commands to
 
 SQLite files are not migrated: they are created from the models and never altered. A SQLite file written by
 0.11 lacks ``transactions.markers``, so it must be deleted (it is recreated on next start) or reset with
-``harp-proxy db:reset``. PostgreSQL (and the deprecated MySQL) need ``harp-proxy db:migrate up head``.
+``harp-proxy db:reset``. PostgreSQL (and the unsupported MySQL) need ``harp-proxy db:migrate up head``.
 
 Migrations are implemented using `Alembic <https://alembic.sqlalchemy.org/>`_.
 

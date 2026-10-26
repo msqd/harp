@@ -1,0 +1,1 @@
+MySQL and MariaDB are no longer supported or tested from 0.13 and will be removed in 0.14: use PostgreSQL in production.

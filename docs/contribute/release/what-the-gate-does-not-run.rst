@@ -229,7 +229,7 @@ In no gate at all
       - Where it runs
     * - ``make qa-full`` (all databases)
       - Makefile
-      - nowhere; ``TEST_ALL_DATABASES`` defaults false (CI covers MySQL and MariaDB only)
+      - nowhere; ``TEST_ALL_DATABASES`` defaults false (CI tests SQLite and PostgreSQL only: MySQL and MariaDB are unsupported since 0.13)
     * - ``-m subprocess`` (35 tests)
       - pytest marker
       - CI, job *Test Backend Subprocess*
@@ -246,7 +246,7 @@ In no gate at all
       - package.json
       - CI, job *Lint Frontend*
 
-CI runs five backend jobs (one on MySQL and MariaDB, one on the subprocess tests), ``pnpm test:unit``, a documentation build, and two lint jobs: ``ruff
+CI runs four backend jobs (one on the subprocess tests; MySQL and MariaDB are no longer tested since 0.13), ``pnpm test:unit``, a documentation build, and two lint jobs: ``ruff
 check`` with ``ruff format --check`` (*Lint Python*), and ``pnpm lint`` (*Lint Frontend*). That is
 the entire automated gate. Everything else in the Makefile runs only when a human runs it.
 
