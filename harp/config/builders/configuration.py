@@ -345,6 +345,34 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
                     f"names or no longer exist."
                 )
 
+    #: Settings that moved but are still read, as {(application, key): (application, key)}. Applied when the
+    #: configuration is built, with a deprecation warning.
+    DEPRECATED_ALIASES = {
+        ("janitor", "old_after"): ("storage", "retention_days"),
+    }
+
+    def _apply_deprecated_aliases(self, settings: dict):
+        """
+        Read the old location of a moved setting as the new one, and warn. When both are set by the user, the new
+        location wins.
+        """
+        # What the user wrote, not the defaults: a default of the new location must not hide the old one.
+        written: dict = {}
+        for source in self._get_config_sources()[2:]:
+            merge_values(written, source.get_values() or {})
+
+        for (old_app, old_key), (new_app, new_key) in self.DEPRECATED_ALIASES.items():
+            old_value = (written.get(old_app) or {}).get(old_key)
+            if old_value is None:
+                continue
+            old, new = f"{old_app}.{old_key}", f"{new_app}.{new_key}"
+            if (written.get(new_app) or {}).get(new_key) is not None:
+                logger.warning(f"Setting '{old}' is deprecated and ignored: '{new}' is set and wins.", setting=old)
+                continue
+            logger.warning(f"Setting '{old}' is deprecated, use '{new}'.", setting=old)
+            if new_app in self.applications:
+                settings.setdefault(new_app, {})[new_key] = old_value
+
     def build(self, strict: bool = None) -> GlobalSettings:
         """
         Constructs the final, aggregated configuration settings as a GlobalSettings instance.
@@ -392,6 +420,8 @@ class ConfigurationBuilder(BaseConfigurationBuilder):
         settings = {}
         for source in self._get_config_sources():
             merge_values(settings, self.normalize(source.get_values() or {}))
+
+        self._apply_deprecated_aliases(settings)
 
         all_settings = []
         for name, application in self.applications.items():
