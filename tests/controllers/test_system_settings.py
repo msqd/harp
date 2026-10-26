@@ -17,6 +17,7 @@ ALL_APPLICATIONS = (
     "metrics",
     "notifications",
     "acme",
+    "harp_apps.contrib.sentry",
 )
 
 
