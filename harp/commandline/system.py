@@ -7,7 +7,7 @@ from rich.tree import Tree
 
 from harp.commandline.options.server import CommonServerOptions, _EnhancedParserCommand, _server_click_options
 from harp.config import ConfigurationBuilder
-from harp.config.asdict import asdict, mask_credentials, mask_secret_value
+from harp.config.asdict import asdict, mask_credentials, mask_header_pair, mask_secret_value
 from harp.utils.commandline import click
 
 
@@ -42,7 +42,7 @@ def _format_value(value):
     if isinstance(value, (list, tuple)):
         if not value:
             return "[]"
-        items = ", ".join(_format_value(v) for v in value)
+        items = ", ".join(_format_value(v) for v in mask_header_pair(value))
         return f"[{items}]"
     # Services are built from settings and urls, which carry credentials: whatever is printed goes through the same
     # masking as the configuration dump.

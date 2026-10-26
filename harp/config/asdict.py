@@ -83,17 +83,19 @@ def mask_secret_value(key, value, secure):
     return value
 
 
-def _mask_header_pair(items, secure):
-    """A ``[name, value]`` pair is a header whose name says whether its value is a credential. Two header names in a row
-    are a list of names (``redact: [authorization, x-api-key]``), not a pair."""
-    if (
-        secure
-        and len(items) == 2
-        and is_secret_key(items[0])
-        and isinstance(items[1], str)
-        and not is_secret_key(items[1])
-    ):
-        return type(items)((items[0], MASK))
+_header_name_re = re.compile(r"^[A-Za-z0-9-]+$")
+
+
+def _is_header_name(value):
+    return isinstance(value, str) and _header_name_re.match(value) is not None and is_secret_key(value)
+
+
+def mask_header_pair(items, secure=True):
+    """A ``[name, value]`` pair is a header whose name says whether its value is a credential. Two credential-like header
+    names in a row are a list of names (``redact: [authorization, x-api-key]``), not a pair."""
+    if secure and len(items) == 2 and is_secret_key(items[0]) and isinstance(items[1], str):
+        if not _is_header_name(items[1]):
+            return type(items)((items[0], MASK))
     return items
 
 
@@ -147,7 +149,7 @@ def asdict(
         return type(obj)(*[_asdict(v) for v in obj])
 
     if isinstance(obj, (list, tuple)):
-        return _mask_header_pair(type(obj)(_asdict(v) for v in obj), secure)
+        return mask_header_pair(type(obj)(_asdict(v) for v in obj), secure)
 
     if isinstance(obj, dict):
         if hasattr(type(obj), "default_factory"):

@@ -282,3 +282,17 @@ def test_non_secret_keys_stay_visible(mode):
     }
 
     assert asdict(values, mode=mode) == values
+
+
+@pytest.mark.parametrize("mode", ["json", "python"])
+@pytest.mark.parametrize(
+    "pair",
+    [
+        ["Authorization", "Bearer my-secret-token"],
+        ["X-Api-Key", "sk_live_secret_abc"],
+        ["X-Api-Key", "dev_key"],
+        ("Cookie", "session=abc; csrftoken=x"),
+    ],
+)
+def test_a_header_pair_whose_value_looks_like_a_credential_is_masked(mode, pair):
+    assert asdict({"headers": [pair]}, mode=mode)["headers"][0][1] == "***"

@@ -46,6 +46,7 @@ SECRETS = {
     "service-arguments-cookie-header": "ARGSCOOKIE",
     "service-arguments-api-key-header": "ARGSAPIKEY",
     "service-arguments-token-key": "ARGSTOKEN",
+    "service-arguments-pair-list": "ARGSPAIR",
 }
 
 CONFIG = f"""
@@ -74,6 +75,9 @@ http_client:
       X-Api-Key: ARGSAPIKEY
       x-auth-token: ARGSTOKEN
       x-purpose: health
+    params:
+      - [api_key, ARGSPAIR]
+      - [page, "2"]
 proxy:
   endpoints:
     - name: api
