@@ -292,6 +292,11 @@ def test_non_secret_keys_stay_visible(mode):
         ["X-Api-Key", "sk_live_secret_abc"],
         ["X-Api-Key", "dev_key"],
         ("Cookie", "session=abc; csrftoken=x"),
+        ["X-Api-Key", "prod-api-key-7f3a9"],
+        ["Authorization", "token-abc123"],
+        ["X-Auth-Token", "my-secret-token"],
+        ["X-Api-Key", "LISTAPIKEY"],
+        ["X-Api-Key", "a8Kpwd93jf02"],
     ],
 )
 def test_a_header_pair_whose_value_looks_like_a_credential_is_masked(mode, pair):

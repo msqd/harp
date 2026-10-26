@@ -83,18 +83,16 @@ def mask_secret_value(key, value, secure):
     return value
 
 
-_header_name_re = re.compile(r"^[A-Za-z0-9-]+$")
-
-
-def _is_header_name(value):
-    return isinstance(value, str) and _header_name_re.match(value) is not None and is_secret_key(value)
+_CREDENTIAL_HEADER_NAMES = frozenset(
+    {"authorization", "proxy-authorization", "cookie", "set-cookie", "cookie2", "x-api-key", "api-key", "x-auth-token"}
+)
 
 
 def mask_header_pair(items, secure=True):
-    """A ``[name, value]`` pair is a header whose name says whether its value is a credential. Two credential-like header
-    names in a row are a list of names (``redact: [authorization, x-api-key]``), not a pair."""
+    """A ``[name, value]`` pair is a header whose name says whether its value is a credential. A value that is itself a
+    credential header name makes the list a list of names (``redact: [authorization, x-api-key]``), not a pair."""
     if secure and len(items) == 2 and is_secret_key(items[0]) and isinstance(items[1], str):
-        if not _is_header_name(items[1]):
+        if items[1].lower() not in _CREDENTIAL_HEADER_NAMES:
             return type(items)((items[0], MASK))
     return items
 
