@@ -23,8 +23,13 @@ _TOKEN_USERNAME_SCHEMES = frozenset({"http", "https"})
 _SECRET_QUERY_PARAMETERS = "password|passwd|pwd|sslpassword|sslkey|key|api[_-]?key|token|access[_-]?token|auth|secret|client[_-]?secret|signature|sig"  # pragma: allowlist secret
 mask_query_password_re = re.compile(rf"([?&](?:{_SECRET_QUERY_PARAMETERS})=)[^&#\s'\"]*", re.IGNORECASE)
 
-# Dictionary keys whose string value is a secret by name, whatever the algorithm that protects it.
-SECRET_KEYS = frozenset({"password"})
+# Dictionary keys whose string value is a secret by name, whatever the algorithm that protects it: credential headers,
+# and any name that says it holds a token, a secret, a password or a key.
+secret_key_re = re.compile(
+    r"^(authorization|proxy-authorization|cookie|cookie2|set-cookie|cookies)$|(^|[-_])auth$"
+    r"|token|secret|password|passwd|pwd|signature|api[-_]?key|private[-_]?key|[-_]key$",
+    re.IGNORECASE,
+)
 
 
 def _mask_userinfo(host: str, scheme: str) -> str:
@@ -63,10 +68,33 @@ def url_serializer(dsn, secure=True, **kwargs):
 URL_TYPES = (Url, MultiHostUrl, _BaseUrl, _BaseMultiHostUrl, RedisDsn)
 
 
-def _mask_secret_value(key, value, secure):
-    if secure and key in SECRET_KEYS and isinstance(value, str):
+def is_secret_key(key):
+    return isinstance(key, str) and secret_key_re.search(key) is not None
+
+
+def mask_secret_value(key, value, secure):
+    if not secure:
+        return value
+    if isinstance(value, str) and is_secret_key(key):
         return MASK
+    # Cookie names are arbitrary, so every string held under `cookies` is a credential.
+    if isinstance(key, str) and key.lower() == "cookies" and isinstance(value, dict):
+        return {k: MASK if isinstance(v, str) else v for k, v in value.items()}
     return value
+
+
+_CREDENTIAL_HEADER_NAMES = frozenset(
+    {"authorization", "proxy-authorization", "cookie", "set-cookie", "cookie2", "x-api-key", "api-key", "x-auth-token"}
+)
+
+
+def mask_header_pair(items, secure=True):
+    """A ``[name, value]`` pair is a header whose name says whether its value is a credential. A value that is itself a
+    credential header name makes the list a list of names (``redact: [authorization, x-api-key]``), not a pair."""
+    if secure and len(items) == 2 and is_secret_key(items[0]) and isinstance(items[1], str):
+        if items[1].lower() not in _CREDENTIAL_HEADER_NAMES:
+            return type(items)((items[0], MASK))
+    return items
 
 
 def asdict(
@@ -119,7 +147,7 @@ def asdict(
         return type(obj)(*[_asdict(v) for v in obj])
 
     if isinstance(obj, (list, tuple)):
-        return type(obj)(_asdict(v) for v in obj)
+        return mask_header_pair(type(obj)(_asdict(v) for v in obj), secure)
 
     if isinstance(obj, dict):
         if hasattr(type(obj), "default_factory"):
@@ -127,8 +155,8 @@ def asdict(
             # dict as it requires the default_factory as its first arg.
             result = type(obj)(getattr(obj, "default_factory"))
             for k, v in obj.items():
-                result[_asdict(k)] = _mask_secret_value(k, _asdict(v), secure)
+                result[_asdict(k)] = mask_secret_value(k, _asdict(v), secure)
             return result
-        return type(obj)((_asdict(k), _mask_secret_value(k, _asdict(v), secure)) for k, v in obj.items())
+        return type(obj)((_asdict(k), mask_secret_value(k, _asdict(v), secure)) for k, v in obj.items())
 
     return copy.deepcopy(obj)

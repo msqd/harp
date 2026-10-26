@@ -190,3 +190,114 @@ def test_a_namedtuple_is_dumped_field_by_field():
     assert asdict(Pair("db", "postgresql://user:secret@host/db")) == Pair(
         "db", mask_credentials("postgresql://user:secret@host/db")
     )
+
+
+@pytest.mark.parametrize("mode", ["json", "python"])
+@pytest.mark.parametrize(
+    "key",
+    [
+        "Authorization",
+        "COOKIE",
+        "Proxy-Authorization",
+        "X-Auth-Token",
+        "client_secret",
+        "DB_PASSWORD",
+        "X-Api-Key",
+        "api_key",
+    ],
+)
+def test_credential_like_keys_are_masked_at_any_depth(mode, key):
+    arguments = {"headers": {key: "VALUE", "x-purpose": "health"}, "deep": [{"a": {key: "VALUE"}}]}
+
+    assert asdict({"arguments": arguments}, mode=mode) == {
+        "arguments": {"headers": {key: "***", "x-purpose": "health"}, "deep": [{"a": {key: "***"}}]}
+    }
+
+
+def test_unsecure_shows_credential_like_keys():
+    values = {"headers": {"Authorization": "Bearer X"}}
+
+    assert asdict(values, secure=False) == values
+
+
+def test_service_arguments_are_masked():
+    from harp_apps.http_client.settings import HttpClientSettings
+
+    settings = HttpClientSettings(arguments={"headers": {"Authorization": "Bearer X"}})
+
+    assert "Bearer X" not in repr(asdict(settings))
+
+
+@pytest.mark.parametrize("mode", ["json", "python"])
+@pytest.mark.parametrize(
+    "key",
+    [
+        "apikey",
+        "x-apikey",
+        "passwd",
+        "pwd",
+        "auth",
+        "X-Auth",
+        "privatekey",
+        "private_key",
+        "x-amz-signature",
+        "Set-Cookie",
+        "cookie2",
+    ],
+)
+def test_keys_masked_by_the_query_rule_are_masked_too(mode, key):
+    assert asdict({"headers": {key: "VALUE"}}, mode=mode) == {"headers": {key: "***"}}
+
+
+@pytest.mark.parametrize("mode", ["json", "python"])
+def test_every_string_under_cookies_is_masked(mode):
+    values = {"Cookies": {"sid": "VALUE", "theme": "dark", "retries": 3}}
+
+    assert asdict(values, mode=mode) == {"Cookies": {"sid": "***", "theme": "***", "retries": 3}}
+
+
+@pytest.mark.parametrize("mode", ["json", "python"])
+@pytest.mark.parametrize("pair", [["Authorization", "Bearer X"], ("x-api-key", "KEY")])
+def test_a_header_pair_in_a_list_is_masked(mode, pair):
+    result = asdict({"headers": [pair, ["x-purpose", "health"]]}, mode=mode)
+
+    assert result["headers"][0][1] == "***"
+    assert result["headers"][1] == ["x-purpose", "health"]
+
+
+def test_unsecure_shows_header_pairs_and_cookies():
+    values = {"headers": [["Authorization", "Bearer X"]], "cookies": {"sid": "VALUE"}}
+
+    assert asdict(values, secure=False) == values
+
+
+@pytest.mark.parametrize("mode", ["json", "python"])
+def test_non_secret_keys_stay_visible(mode):
+    values = {
+        "key_prefix": "harp",
+        "author": "alice",
+        "cache_key": ["method", "url"],
+        "redact": ["authorization", "x-api-key"],
+        "rules": {"authorization": {"allow": ["GET"]}, "token": {"ttl": 60}},
+    }
+
+    assert asdict(values, mode=mode) == values
+
+
+@pytest.mark.parametrize("mode", ["json", "python"])
+@pytest.mark.parametrize(
+    "pair",
+    [
+        ["Authorization", "Bearer my-secret-token"],
+        ["X-Api-Key", "sk_live_secret_abc"],
+        ["X-Api-Key", "dev_key"],
+        ("Cookie", "session=abc; csrftoken=x"),
+        ["X-Api-Key", "prod-api-key-7f3a9"],
+        ["Authorization", "token-abc123"],
+        ["X-Auth-Token", "my-secret-token"],
+        ["X-Api-Key", "LISTAPIKEY"],
+        ["X-Api-Key", "a8Kpwd93jf02"],
+    ],
+)
+def test_a_header_pair_whose_value_looks_like_a_credential_is_masked(mode, pair):
+    assert asdict({"headers": [pair]}, mode=mode)["headers"][0][1] == "***"

@@ -42,6 +42,11 @@ SECRETS = {
     "dashboard-user-password": USER_PASSWORD,
     "storage-sslpassword-parameter": "SSLPASSPHRASE",
     "storage-sslkey-parameter": "SSLKEYPATH",
+    "service-arguments-authorization-header": "ARGSBEARER",
+    "service-arguments-cookie-header": "ARGSCOOKIE",
+    "service-arguments-api-key-header": "ARGSAPIKEY",
+    "service-arguments-token-key": "ARGSTOKEN",
+    "service-arguments-pair-list": "ARGSPAIR",
 }
 
 CONFIG = f"""
@@ -62,6 +67,17 @@ dashboard:
     algorithm: plaintext
     users:
       alice: {USER_PASSWORD}
+http_client:
+  arguments:
+    headers:
+      authorization: Bearer ARGSBEARER
+      Cookie: session=ARGSCOOKIE
+      X-Api-Key: ARGSAPIKEY
+      x-auth-token: ARGSTOKEN
+      x-purpose: health
+    params:
+      - [api_key, ARGSPAIR]
+      - [page, "2"]
 proxy:
   endpoints:
     - name: api
