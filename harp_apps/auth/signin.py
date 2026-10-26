@@ -1,6 +1,5 @@
 """Signing in with a password, and changing it."""
 
-import asyncio
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Awaitable, Callable, Optional
@@ -8,7 +7,7 @@ from typing import Any, Awaitable, Callable, Optional
 from harp_apps.auth.models import Account, AccountKind, IdentitiesRepository, Identity, Session, login_of
 from harp_apps.auth.passwords import MAX_LENGTH, HasherBusy, PasswordHasher, check_policy
 from harp_apps.auth.sessions import SessionsService
-from harp_apps.auth.throttle import Admitted, Busy as ThrottleBusy, Refused as ThrottleRefused, SignInThrottle
+from harp_apps.auth.throttle import Admitted, Refused as ThrottleRefused, SignInThrottle
 from harp_apps.storage.types import IStorage
 
 #: Longer than any password the policy accepts, by a margin: a refusal needs no hashing of megabytes.
@@ -41,9 +40,14 @@ class Throttled:
 
 @dataclass(frozen=True)
 class Busy:
-    """Too many attempts are under way. Nothing was looked at or counted: try again in a moment."""
+    """The hashing queue is full. Nothing was looked at or counted: try again in a moment."""
 
     retry_after: float = 1.0
+
+
+@dataclass(frozen=True)
+class Changed:
+    """The password was replaced and the other sessions of the account are over."""
 
 
 @dataclass(frozen=True)
@@ -70,14 +74,12 @@ class Authenticator:
         throttle: SignInThrottle,
         *,
         clock: Callable[[], datetime] = _utcnow,
-        sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
     ):
         self.identities = identities
         self.sessions = sessions
         self.hasher = hasher
         self.throttle = throttle
         self.clock = clock
-        self.sleep = sleep
 
     @classmethod
     def from_storage(
@@ -88,21 +90,16 @@ class Authenticator:
     async def guarded(self, key: str, ip: str, check: Callable[[], Awaitable[Any]]) -> Checked | Throttled | Busy:
         """
         Runs ``check`` (does this person know the secret?) under the throttle, for a way in that has none of its own.
-        The attempt counts as a failure from the start; a truthy answer takes it back. It is refused when the address
-        has to wait for this account, held a little when the address or the account has seen many failures, and
-        answered at once when too many attempts are under way.
+        It is refused (:class:`Throttled`) when a limit is over, without holding anything; a falsy answer counts as a
+        failure, and so does a client that leaves or an error; a full hashing queue is :class:`Busy` and counts for
+        nothing.
         """
         admitted = self.throttle.begin(key, ip)
         if isinstance(admitted, ThrottleRefused):
             return Throttled(admitted.retry_after)
-        if isinstance(admitted, ThrottleBusy):
-            return Busy(admitted.retry_after)
         assert isinstance(admitted, Admitted)
-        # a client that leaves, or an error, does not get its guess back
         outcome = "failure"
         try:
-            if admitted.delay:
-                await self.sleep(admitted.delay)
             value = await check()
             outcome = "success" if value else "failure"
             return Checked(value)
@@ -126,7 +123,9 @@ class Authenticator:
 
         await self._rehash_if_outdated(identity, password)
         await self.identities.signed_in(identity.id, self.clock())
-        secret, session = await self.sessions.open(account.id, identity.id, user_agent=user_agent, ip=ip)
+        secret, session = await self.sessions.open(
+            account.id, identity.id, user_agent=user_agent, ip=ip, credential_version=identity.password_version
+        )
         return Signed(secret, session)
 
     async def _verified(self, login: Optional[str], password: str) -> Optional[tuple[Identity, Account]]:
@@ -144,15 +143,17 @@ class Authenticator:
 
     async def _rehash_if_outdated(self, identity: Identity, password: str) -> None:
         if self.hasher.needs_rehash(identity.password_hash):
-            await self.identities.set_password_hash(identity.id, await self.hasher.hash(password))
+            await self.identities.set_password_hash(
+                identity.id, await self.hasher.hash(password), replacing=identity.password_hash
+            )
 
     async def change_password(
         self, account_id: int, username: str, current: str, new: str, *, keep: int, ip: str
-    ) -> bool:
+    ) -> Changed | Refused | Throttled | Busy:
         """
         Replaces the password of the account and ends its other sessions (one transaction), ``keep`` being the one that
-        asks. Returns False when the current password is not the right one, or when guessing it was slowed down or
-        there was no room. Raises :class:`~harp_apps.auth.passwords.PasswordPolicyError` when the new one is refused.
+        asks. :class:`Refused` when the current password is not the right one, :class:`Throttled` when guessing it is
+        over a limit, :class:`Busy` when the hashing queue is full. Raises :class:`~harp_apps.auth.passwords.PasswordPolicyError` when the new one is refused.
         """
         check_policy(new)
         identity = await self.identities.find_password_of_account(account_id)
@@ -163,11 +164,13 @@ class Authenticator:
             return await self.hasher.verify(current, identity.password_hash)
 
         checked = await self.guarded(login_of(username) or INVALID_LOGIN, ip, current_is_right)
-        if not isinstance(checked, Checked) or not checked.value:
-            return False
+        if not isinstance(checked, Checked):
+            return checked
+        if not checked.value:
+            return Refused()
         try:
             new_hash = await self.hasher.hash(new)
         except HasherBusy:
-            return False
+            return Busy()
         await self.identities.replace_password(identity.id, new_hash, account_id=account_id, keep=keep, at=self.clock())
-        return True
+        return Changed()

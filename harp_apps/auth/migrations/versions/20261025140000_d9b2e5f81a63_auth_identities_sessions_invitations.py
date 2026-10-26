@@ -56,6 +56,7 @@ def upgrade() -> None:
         sa.Column("issuer", sa.String(512), nullable=False),
         sa.Column("subject", sa.String(255), nullable=False),
         sa.Column("password_hash", sa.String(255), nullable=True),
+        sa.Column("password_version", sa.Integer(), nullable=False, server_default="0"),
         _timestamp("created_at", nullable=False, default_now=True),
         _timestamp("last_sign_in_at"),
         sa.ForeignKeyConstraint(
@@ -75,6 +76,7 @@ def upgrade() -> None:
         sa.Column("secret_hash", sa.String(64), nullable=False),
         sa.Column("account_id", sa.Integer(), nullable=False),
         sa.Column("identity_id", sa.Integer(), nullable=False),
+        sa.Column("credential_version", sa.Integer(), nullable=False, server_default="0"),
         _timestamp("created_at", nullable=False, default_now=True),
         _timestamp("last_seen_at", nullable=False, default_now=True),
         _timestamp("expires_at", nullable=False),

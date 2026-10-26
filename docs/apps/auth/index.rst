@@ -95,31 +95,36 @@ parameters change. At most four verifications run at once. The policy is the one
 characters, none from a bundled list of the 10 000 most common passwords, no composition rule and no expiry. An unknown
 account, a disabled one and a wrong password are refused with the same answer, after the same verification.
 
-**Failed sign-ins slow down, never lock out, and nobody can slow down somebody on another address.** Failures are
-counted three ways, and an attempt counts as a failure from the moment it starts (a success takes it back), so guesses
-sent at once meet the limits like the later ones:
+**Failed sign-ins are refused, never held, and nobody can lock out somebody on another address.** An attempt over a limit
+is answered ``429`` with ``Retry-After`` before its password is looked at, and holds nothing on the server, so the limits
+cap how many guesses get through and a flood cannot starve the others. A wait is 1 second, then 2, 4, ... up to 1 minute;
+a refused attempt does not extend it. Three counts, of failures that completed (so a dashboard fetching six things at
+once is not refused for being parallel):
 
-- *One address against one account*: from the fifth failure, that address waits 1 second, then 2, 4, ... up to 1 minute
-  before its next attempt on that account; an attempt made too early answers ``429`` with ``Retry-After`` and its
-  password is not looked at. Guessing at ``alice`` from your address only slows you down.
-- *One address, any account* (an IPv6 address stands for its /64): after 100 failures its attempts are held a little,
-  up to 10 seconds, and never refused. Everybody behind a shared address waits a few seconds at worst.
-- *One account, every address*: after 100 consecutive failures (the limit of NIST SP 800-63B-4) attempts from addresses
-  that never signed in to the account are held 1 second, 2, 4, ... up to 1 minute, never refused; an address that did
-  sign in (the last 8, for 30 days, until the process restarts) is not held. Whoever hammers a name delays a person
-  elsewhere by a minute at most.
+- *One address against one account*: from the fifth failure, that address waits before its next attempt on that account.
+  Guessing at ``alice`` from your address only slows you down. At most 21 attempts of one address on one account run at
+  once.
+- *One account, every address*: after 100 consecutive failures (the limit of NIST SP 800-63B-4) addresses that never
+  signed in to the account wait. The last 8 addresses that did (30 days, until the process restarts) are exempt. Whoever
+  hammers a name keeps a person on a new address waiting a minute at most.
+- *One address, every account* (an IPv6 address stands for its /64): after 100 failures it waits. This stops an address
+  that piles up penalised pairs, and takes over for a pair or an account the table has no room to record. Behind a
+  reverse proxy HARP does not know (see below) an attacker's neighbours get short ``429`` too: that is the accepted cost.
 
 Names are folded to lower case and checked (1 to 64 of ``A-Za-z0-9._@+-``) before the lookup and the count, so case
 variants are one login; a name that cannot be one shares a single count. Counts are forgotten after 15 minutes without
 failure (an hour for an account), kept in memory and per process, and an entry under penalty is never dropped to make
-room for another: a flood of new names and addresses does not reset anything. At most 16 verifications wait for one of
-the 4 hashing slots, and attempts beyond that are answered ``503`` at once, uncounted. Basic is slowed down the same
-way.
+room for another: a flood of new names and addresses resets nothing. At most 16 verifications wait for one of the 4
+hashing slots, and attempts beyond that are answered ``503`` with ``Retry-After`` at once, uncounted. Basic and the change
+of password go through the same limits.
 
 **The address** is the one of the connection. Behind a reverse proxy it is the proxy's, so list its network in
 ``dashboard.trusted_proxies``: only a connection from a listed network may name the client in ``X-Forwarded-For``, read
-from the right up to the first address that is not a listed proxy. Without it every visitor shares one address, which
-the rules above keep harmless, but the limits per address then protect little.
+from the right up to the first address that is not a listed proxy. Without it every visitor shares one address and the
+limits per address protect little and refuse neighbours.
+
+**Changing the password** (and ending the other sessions) is one transaction, and bumps a version of the password that
+every session carries: a sign-in that checked the old password cannot open a session that survives the change.
 
 **Sessions** are rows of ``auth_sessions``. The cookie holds a random 256 bits secret and nothing else (``HttpOnly``,
 ``SameSite=Lax``, ``Path=/``), and the table holds its SHA-256, so reading the database opens no session. Over HTTPS the

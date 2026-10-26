@@ -43,7 +43,15 @@ class SessionsService:
     def from_storage(cls, storage: IStorage, settings: AuthSettings) -> "SessionsService":
         return cls(SessionsRepository(storage.accounts.session_factory), settings)
 
-    async def open(self, account_id: int, identity_id: int, *, user_agent: Optional[str], ip: Optional[str]):
+    async def open(
+        self,
+        account_id: int,
+        identity_id: int,
+        *,
+        user_agent: Optional[str],
+        ip: Optional[str],
+        credential_version: int = 0,
+    ):
         """Opens a session. Returns the secret for the cookie (it is not kept) and the row."""
         secret = secrets.token_urlsafe(SECRET_BYTES)
         now = self.clock()
@@ -52,6 +60,7 @@ class SessionsService:
                 "secret_hash": hash_secret(secret),
                 "account_id": account_id,
                 "identity_id": identity_id,
+                "credential_version": credential_version,
                 "created_at": now,
                 "last_seen_at": now,
                 "expires_at": now + self.settings.session_max_age,

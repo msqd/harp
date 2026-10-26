@@ -79,7 +79,10 @@ async def test_the_password_hash_and_the_last_sign_in_are_updated(accounts, iden
     identity = await password_identity(identities, alice)
     now = datetime(2026, 10, 25, tzinfo=UTC)
 
-    await identities.set_password_hash(identity.id, "$argon2id$y")
+    await identities.set_password_hash(identity.id, "$argon2id$y", replacing="$argon2id$x")
+    await identities.set_password_hash(
+        identity.id, "$argon2id$z", replacing="$argon2id$other"
+    )  # changed meanwhile: kept
     await identities.signed_in(identity.id, now)
 
     found, _ = await identities.find_password("alice")

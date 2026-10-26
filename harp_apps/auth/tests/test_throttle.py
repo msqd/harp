@@ -4,11 +4,10 @@ from harp_apps.auth import throttle as module
 from harp_apps.auth.throttle import (
     ACCOUNT_FREE_FAILURES,
     ADDRESS_FREE_FAILURES,
-    MAX_DELAY,
-    MAX_IN_FLIGHT,
+    IN_FLIGHT_SLACK,
+    MAX_WAIT,
     PAIR_FREE_FAILURES,
     Admitted,
-    Busy,
     Refused,
     SignInThrottle,
     address_key,
@@ -84,7 +83,7 @@ def test_the_wait_runs_out_with_time(throttle, clock):
 def test_the_wait_is_short_and_never_a_lockout(throttle):
     fail(throttle, 1000)
 
-    assert 0 < throttle.retry_after("alice", "10.0.0.1") <= MAX_DELAY == 60.0
+    assert 0 < throttle.retry_after("alice", "10.0.0.1") <= MAX_WAIT == 60.0
 
 
 def test_another_address_against_the_same_account_is_not_refused(throttle):
@@ -108,48 +107,80 @@ def test_a_success_clears_the_pair(throttle):
     assert isinstance(throttle.begin("alice", "10.0.0.1"), Admitted)
 
 
-def test_guesses_sent_at_once_meet_the_wait_as_the_others_do(throttle):
-    admitted = [throttle.begin("alice", "10.0.0.1") for _ in range(40)]
+def test_an_abandoned_attempt_is_not_counted(throttle):
+    for _ in range(PAIR_FREE_FAILURES + 5):
+        throttle.end(throttle.begin("alice", "10.0.0.1"), "abandoned")
 
-    assert sum(isinstance(a, Admitted) for a in admitted) == PAIR_FREE_FAILURES
+    assert throttle.retry_after("alice", "10.0.0.1") == 0
+
+
+# --- parallel requests ---------------------------------------------------------------------------------------------
+
+
+def test_parallel_valid_requests_are_never_refused_for_being_parallel(throttle):
+    started = [throttle.begin("alice", "10.0.0.1") for _ in range(PAIR_FREE_FAILURES + IN_FLIGHT_SLACK)]
+    assert all(isinstance(s, Admitted) for s in started)
+
+    for admitted in started:
+        throttle.end(admitted, "success")
+
+    assert isinstance(throttle.begin("alice", "10.0.0.1"), Admitted)
+
+
+def test_the_attempts_of_one_pair_under_way_at_once_are_bounded(throttle):
+    started = [throttle.begin("alice", "10.0.0.1") for _ in range(200)]
+
+    assert sum(isinstance(s, Admitted) for s in started) == PAIR_FREE_FAILURES + IN_FLIGHT_SLACK
+
+
+def test_finished_attempts_make_room_for_others_of_the_pair(throttle):
+    started = [throttle.begin("alice", "10.0.0.1") for _ in range(PAIR_FREE_FAILURES + IN_FLIGHT_SLACK)]
+    throttle.end(started[0], "abandoned")
+
+    assert isinstance(throttle.begin("alice", "10.0.0.1"), Admitted)
+
+
+def test_a_burst_of_guesses_sent_at_once_stops_at_the_bound_then_meets_the_wait(throttle):
+    started = [throttle.begin("alice", "10.0.0.1") for _ in range(200)]
+    for admitted in started:
+        if isinstance(admitted, Admitted):
+            throttle.end(admitted, "failure")
+
+    assert isinstance(throttle.begin("alice", "10.0.0.1"), Refused)
 
 
 # --- the address ---------------------------------------------------------------------------------------------------
 
 
-def test_an_address_is_delayed_after_many_failures_and_never_refused(throttle):
-    for i in range(ADDRESS_FREE_FAILURES + 50):
+def test_an_address_that_piled_up_failures_is_refused_for_every_account(throttle):
+    for i in range(ADDRESS_FREE_FAILURES):
+        attempt(throttle, login=f"user{i // 5}")
+
+    assert isinstance(throttle.begin("somebody", "10.0.0.1"), Refused)
+    assert isinstance(throttle.begin("somebody", "10.0.0.2"), Admitted)
+
+
+def test_the_wait_of_an_address_is_short(throttle):
+    for i in range(ADDRESS_FREE_FAILURES * 3):
         attempt(throttle, login=f"user{i}")
 
-    admitted = throttle.begin("somebody", "10.0.0.1")
-
-    assert isinstance(admitted, Admitted) and 0 < admitted.delay <= module.ADDRESS_MAX_DELAY
+    assert 0 < throttle.retry_after("somebody", "10.0.0.1") <= MAX_WAIT
 
 
-def test_the_delay_of_an_address_is_short(throttle):
-    for i in range(ADDRESS_FREE_FAILURES * 20):
-        attempt(throttle, login=f"user{i}")
-
-    assert throttle.begin("somebody", "10.0.0.1").delay == module.ADDRESS_MAX_DELAY <= 10
-
-
-def test_an_address_with_few_failures_is_not_delayed(throttle):
+def test_an_address_with_few_failures_is_not_refused(throttle):
     for i in range(ADDRESS_FREE_FAILURES - 1):
         attempt(throttle, login=f"user{i}")
 
-    assert throttle.begin("somebody", "10.0.0.1").delay == 0
+    assert isinstance(throttle.begin("somebody", "10.0.0.1"), Admitted)
 
 
-def test_a_success_gives_back_its_own_attempt_to_the_address_and_nothing_more(throttle):
-    for i in range(ADDRESS_FREE_FAILURES - 2):
+def test_a_success_does_not_wash_the_failures_of_the_address(throttle):
+    for i in range(ADDRESS_FREE_FAILURES - 1):
         attempt(throttle, login=f"user{i}")
-    attempt(throttle, login="alice", outcome="success")  # reserved, then given back
+    attempt(throttle, login="alice", outcome="success")
+    fail(throttle, 1, login="other")
 
-    assert throttle.delay_for("somebody", "10.0.0.1") == 0
-    attempt(throttle, login="other")  # one more failure
-    assert throttle.delay_for("somebody", "10.0.0.1") == 0  # exactly the free ones
-    attempt(throttle, login="other2")
-    assert throttle.delay_for("somebody", "10.0.0.1") > 0
+    assert isinstance(throttle.begin("somebody", "10.0.0.1"), Refused)
 
 
 @pytest.mark.parametrize(
@@ -164,11 +195,11 @@ def test_different_ipv6_networks_do_not_share_a_key():
     assert address_key("2001:db8:1:2::1") != address_key("2001:db8:1:3::1")
 
 
-def test_an_ipv6_host_cannot_escape_the_delay_by_changing_address(throttle):
+def test_an_ipv6_host_cannot_escape_the_wait_by_changing_address(throttle):
     for i in range(ADDRESS_FREE_FAILURES + 10):
         attempt(throttle, login=f"user{i}", ip=f"2001:db8:1:2::{i:x}")
 
-    assert throttle.begin("somebody", "2001:db8:1:2:aaaa::1").delay > 0
+    assert isinstance(throttle.begin("somebody", "2001:db8:1:2:aaaa::1"), Refused)
 
 
 # --- the account ---------------------------------------------------------------------------------------------------
@@ -179,48 +210,50 @@ def hammer_account(throttle, times, login="victim"):
         attempt(throttle, login=login, ip=f"198.51.{i // 250}.{i % 250}")
 
 
-def test_an_account_is_not_delayed_for_the_first_hundred_consecutive_failures(throttle):
+def test_an_account_does_not_wait_for_the_first_hundred_consecutive_failures(throttle):
     hammer_account(throttle, ACCOUNT_FREE_FAILURES - 1)
 
-    assert throttle.begin("victim", "203.0.113.9").delay == 0
+    assert isinstance(throttle.begin("victim", "203.0.113.9"), Admitted)
 
 
-def test_then_unknown_addresses_are_delayed_a_little_and_never_refused(throttle):
-    hammer_account(throttle, ACCOUNT_FREE_FAILURES + 30)
-
-    admitted = throttle.begin("victim", "203.0.113.9")
-
-    assert isinstance(admitted, Admitted) and 0 < admitted.delay <= MAX_DELAY
-
-
-def test_the_account_delay_is_capped_short(throttle):
+def test_then_unknown_addresses_are_refused_for_a_minute_at_most(throttle):
     hammer_account(throttle, ACCOUNT_FREE_FAILURES + 500)
 
-    assert throttle.begin("victim", "203.0.113.9").delay == MAX_DELAY
+    refused = throttle.begin("victim", "203.0.113.9")
+
+    assert isinstance(refused, Refused) and 0 < refused.retry_after <= MAX_WAIT
 
 
-def test_an_address_that_signed_in_before_is_not_delayed_by_the_account(throttle):
+def test_the_victim_gets_in_when_the_wait_is_over_whatever_the_attacker_does(throttle, clock):
+    hammer_account(throttle, ACCOUNT_FREE_FAILURES + 500)
+    clock.now += MAX_WAIT
+
+    assert isinstance(throttle.begin("victim", "203.0.113.9"), Admitted)
+
+
+def test_an_address_that_signed_in_before_is_not_refused_by_the_account(throttle):
     attempt(throttle, login="victim", ip="203.0.113.9", outcome="success")
     hammer_account(throttle, ACCOUNT_FREE_FAILURES + 500)
 
-    assert throttle.begin("victim", "203.0.113.9").delay == 0
+    assert isinstance(throttle.begin("victim", "203.0.113.9"), Admitted)
 
 
-def test_a_success_clears_the_account(throttle):
+def test_a_success_clears_the_account(throttle, clock):
     hammer_account(throttle, ACCOUNT_FREE_FAILURES + 50)
+    clock.now += MAX_WAIT
 
-    attempt(throttle, login="victim", ip="203.0.113.9", outcome="success")
+    attempt(throttle, login="victim", ip="203.0.113.5", outcome="success")
 
-    assert throttle.begin("victim", "203.0.113.10").delay == 0
+    assert len(throttle.accounts) == 0
+    assert isinstance(throttle.begin("victim", "203.0.113.77"), Admitted)
 
 
 def test_known_addresses_are_forgotten_after_a_long_time(throttle, clock):
     attempt(throttle, login="victim", ip="203.0.113.9", outcome="success")
-    hammer_account(throttle, ACCOUNT_FREE_FAILURES + 50)
     clock.now += module.KNOWN_FOR + 1
     hammer_account(throttle, ACCOUNT_FREE_FAILURES + 50)
 
-    assert throttle.begin("victim", "203.0.113.9").delay > 0
+    assert isinstance(throttle.begin("victim", "203.0.113.9"), Refused)
 
 
 def test_only_a_few_addresses_are_remembered_per_account(throttle):
@@ -228,41 +261,31 @@ def test_only_a_few_addresses_are_remembered_per_account(throttle):
         attempt(throttle, login="victim", ip=f"203.0.113.{i}", outcome="success")
     hammer_account(throttle, ACCOUNT_FREE_FAILURES + 50)
 
-    assert throttle.begin("victim", "203.0.113.0").delay > 0
-    assert throttle.begin("victim", f"203.0.113.{module.KNOWN_ADDRESSES + 1}").delay == 0
+    assert isinstance(throttle.begin("victim", "203.0.113.0"), Refused)
+    assert isinstance(throttle.begin("victim", f"203.0.113.{module.KNOWN_ADDRESSES + 1}"), Admitted)
 
 
 # --- the victim stays able to sign in -----------------------------------------------------------------------------
 
 
-def test_a_victim_behind_a_shared_address_is_never_refused(throttle, clock):
-    """Everybody comes from the address of the reverse proxy; one attacker guesses there all day."""
-    refused = 0
-    for step in range(0, 86400, 10):
-        clock.now = 1000.0 + step
-        attempt(throttle, login=f"guess{step}", ip="10.0.0.1")
-        result = throttle.begin("alice", "10.0.0.1")
-        if isinstance(result, Refused):
-            refused += 1
-        else:
-            throttle.end(result, "success")
+def test_a_victim_on_another_address_is_not_refused_by_the_guesses_at_their_name(throttle, clock):
+    for step in range(PAIR_FREE_FAILURES * 3):
+        clock.now += 1
+        attempt(throttle, login="alice", ip="198.51.100.1")  # the attacker, from one address
 
-    assert refused == 0
+    assert isinstance(throttle.begin("alice", "203.0.113.5"), Admitted)
 
 
-def test_a_victim_whose_name_is_hammered_waits_a_bounded_time_and_is_never_refused(throttle, clock):
-    worst = 0.0
-    for step in range(0, 3600):
-        clock.now = 1000.0 + step
-        attempt(
-            throttle, login="alice", ip=f"198.51.{step // 250}.{step % 250}"
-        )  # the attacker, a new address each time
-        result = throttle.begin("alice", "203.0.113.5")  # the victim, from their own address
-        assert isinstance(result, Admitted)
-        worst = max(worst, result.delay)
-        throttle.end(result, "abandoned")  # looked at, not counted: only the delay is what is measured here
+def test_a_victim_whose_name_is_hammered_from_everywhere_waits_a_minute_at_most(throttle, clock):
+    waits = []
+    for step in range(3600):
+        clock.now += 1
+        attempt(throttle, login="alice", ip=f"198.51.{step // 250}.{step % 250}")
+        waits.append(throttle.retry_after("alice", "203.0.113.5"))
 
-    assert worst == MAX_DELAY
+    assert max(waits) <= MAX_WAIT
+    clock.now += MAX_WAIT
+    assert isinstance(throttle.begin("alice", "203.0.113.5"), Admitted)
 
 
 # --- memory --------------------------------------------------------------------------------------------------------
@@ -271,8 +294,7 @@ def test_a_victim_whose_name_is_hammered_waits_a_bounded_time_and_is_never_refus
 def test_a_flood_of_fresh_names_and_addresses_does_not_wipe_a_penalty(clock):
     throttle = SignInThrottle(clock=clock, max_entries=200)
     fail(throttle, PAIR_FREE_FAILURES + 3, login="admin", ip="198.51.100.1")
-    wait = throttle.retry_after("admin", "198.51.100.1")
-    assert wait > 0
+    assert throttle.retry_after("admin", "198.51.100.1") > 0
 
     for i in range(5000):
         attempt(throttle, login=f"junk{i}", ip=f"2001:db8:{i:x}::1")
@@ -286,10 +308,44 @@ def test_penalised_entries_survive_while_idle_ones_make_room(clock):
         fail(throttle, PAIR_FREE_FAILURES, login=f"victim{i}", ip="198.51.100.1")
 
     for i in range(1000):
-        attempt(throttle, login=f"junk{i}", ip="10.9.9.9")
+        attempt(throttle, login=f"junk{i}", ip=f"10.9.{i // 250}.{i % 250}")
 
     assert all(throttle.retry_after(f"victim{i}", "198.51.100.1") > 0 for i in range(10))
     assert len(throttle.pairs) <= 50
+
+
+def test_a_table_full_of_penalised_pairs_does_not_free_the_address_that_filled_it(clock):
+    """10 000 throwaway names, five failures each, from one address: the table is full of penalised pairs, and a
+    guess at a name that has no room still meets the wait, as that of the address."""
+    throttle = SignInThrottle(clock=clock, max_entries=100)
+    for i in range(2000):
+        for _ in range(PAIR_FREE_FAILURES):
+            attempt(throttle, login=f"junk{i}", ip="203.0.113.7")
+        clock.now += 0.06
+
+    results = []
+    for _ in range(200):
+        results.append(throttle.begin("alice", "203.0.113.7"))
+        if isinstance(results[-1], Admitted):
+            throttle.end(results[-1], "failure")
+
+    assert sum(isinstance(r, Refused) for r in results) >= 190
+
+
+def test_a_guess_the_pair_table_has_no_room_for_falls_under_its_address(clock):
+    throttle = SignInThrottle(clock=clock, max_entries=100)
+    for i in range(100):  # the table of pairs, full of penalised entries, each from an address of its own
+        fail(throttle, PAIR_FREE_FAILURES, login=f"victim{i}", ip=f"198.51.100.{i}")
+    assert len(throttle.pairs) == 100
+
+    results = []
+    for _ in range(40):
+        results.append(throttle.begin("alice", "203.0.113.7"))
+        if isinstance(results[-1], Admitted):
+            throttle.end(results[-1], "failure")
+
+    assert any(isinstance(r, Refused) for r in results)  # 40 failures, but they weigh more than the free 100
+    assert isinstance(throttle.begin("alice", "203.0.113.8"), Admitted)
 
 
 def test_old_penalties_are_forgotten(throttle, clock):
@@ -300,27 +356,7 @@ def test_old_penalties_are_forgotten(throttle, clock):
     assert throttle.retry_after("alice", "10.0.0.1") == 0
 
 
-# --- room ----------------------------------------------------------------------------------------------------------
+def test_a_success_from_an_address_with_no_failure_leaves_nothing_behind(throttle):
+    attempt(throttle, outcome="success")
 
-
-def test_too_many_attempts_under_way_are_answered_at_once_and_not_counted(throttle):
-    held = [throttle.begin(f"user{i}", f"10.1.{i // 250}.{i % 250}") for i in range(MAX_IN_FLIGHT)]
-    assert all(isinstance(h, Admitted) for h in held)
-
-    assert isinstance(throttle.begin("alice", "10.0.0.1"), Busy)
-    assert throttle.retry_after("alice", "10.0.0.1") == 0
-
-
-def test_finished_attempts_make_room(throttle):
-    held = [throttle.begin(f"user{i}", f"10.1.{i // 250}.{i % 250}") for i in range(MAX_IN_FLIGHT)]
-    throttle.end(held[0], "failure")
-
-    assert isinstance(throttle.begin("alice", "10.0.0.1"), Admitted)
-
-
-def test_an_abandoned_attempt_is_not_counted(throttle):
-    for _ in range(PAIR_FREE_FAILURES + 5):
-        admitted = throttle.begin("alice", "10.0.0.1")
-        throttle.end(admitted, "abandoned")
-
-    assert throttle.retry_after("alice", "10.0.0.1") == 0
+    assert len(throttle.pairs) == len(throttle.addresses) == len(throttle.accounts) == 0

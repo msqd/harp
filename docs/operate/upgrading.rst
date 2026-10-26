@@ -36,7 +36,10 @@ Signing in to the dashboard
   ``dashboard.public_url`` to an ``https`` URL.
 - Lost the only administrator? ``harp-proxy auth:create-account <name> --role admin`` asks for a password (or
   ``--generate-password``). See :doc:`/apps/auth/index`.
-- **PostgreSQL**: the ``auth`` branch gains ``auth_identities``, ``auth_sessions`` and ``auth_invitations``.
+- **PostgreSQL**: the ``auth`` branch gains ``auth_identities``, ``auth_sessions`` and ``auth_invitations``. The tables
+  are new, so no existing row needs rewriting. A password identity is keyed on the login, the username in lower case.
+- Failed sign-ins are refused with ``429`` and ``Retry-After`` (and ``503`` when the hashing queue is full), for the
+  password method and for Basic alike. A script retrying a wrong Basic password in a loop is refused after a few tries.
 
 Metrics
 :::::::

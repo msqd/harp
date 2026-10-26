@@ -10,7 +10,7 @@ from harp_apps.auth.passwords import PasswordHasher, PasswordPolicyError
 from harp_apps.auth.sessions import SessionsService
 from harp_apps.auth.settings import AuthSettings
 from harp_apps.auth.signin import Authenticator, Refused, Signed, Throttled
-from harp_apps.auth.throttle import PAIR_FREE_FAILURES, SignInThrottle
+from harp_apps.auth.throttle import IN_FLIGHT_SLACK, PAIR_FREE_FAILURES, SignInThrottle
 
 PASSWORD = "correct horse battery staple"
 NOW = datetime(2026, 10, 25, 12, 0, tzinfo=UTC)
@@ -56,11 +56,6 @@ def throttle(monotonic):
 
 
 @pytest.fixture
-def slept():
-    return []
-
-
-@pytest.fixture
 def identities(factory):
     return IdentitiesRepository(factory)
 
@@ -71,11 +66,8 @@ def sessions(factory, clock):
 
 
 @pytest.fixture
-def authenticator(identities, sessions, hasher, throttle, clock, slept):
-    async def sleep(seconds):
-        slept.append(seconds)
-
-    return Authenticator(identities, sessions, hasher, throttle, clock=clock, sleep=sleep)
+def authenticator(identities, sessions, hasher, throttle, clock):
+    return Authenticator(identities, sessions, hasher, throttle, clock=clock)
 
 
 @pytest.fixture
@@ -175,14 +167,15 @@ async def test_guesses_sent_at_once_meet_the_wait_as_the_others_do(authenticator
         *(sign_in(authenticator, password=f"wrong guess number {i}") for i in range(40)),
     )
 
-    assert len(verified) <= PAIR_FREE_FAILURES
-    assert sum(isinstance(r, Throttled) for r in results) >= 40 - PAIR_FREE_FAILURES
+    assert len(verified) <= PAIR_FREE_FAILURES + IN_FLIGHT_SLACK
+    assert sum(isinstance(r, Throttled) for r in results) >= 40 - PAIR_FREE_FAILURES - IN_FLIGHT_SLACK
+    assert isinstance(await sign_in(authenticator), Throttled)  # and the wait holds after the burst
 
 
 async def test_concurrent_sign_ins_of_the_right_password_are_not_throttled(authenticator, alice):
     import asyncio
 
-    results = await asyncio.gather(*(sign_in(authenticator) for _ in range(PAIR_FREE_FAILURES)))
+    results = await asyncio.gather(*(sign_in(authenticator) for _ in range(PAIR_FREE_FAILURES + 6)))
 
     assert all(isinstance(r, Signed) for r in results)
 
@@ -239,7 +232,9 @@ async def test_changing_the_password_replaces_it_and_ends_the_other_sessions(aut
     assert await sessions.authenticate(keep.secret) is not None
     assert await sessions.authenticate(other.secret) is None
     assert await sign_in(authenticator, password=PASSWORD) == Refused()
-    assert isinstance(await sign_in(authenticator, password=new_password), Signed)
+    after = await sign_in(authenticator, password=new_password)
+    assert isinstance(after, Signed)
+    assert await sessions.authenticate(after.secret) is not None  # opened with the version of the new password
 
 
 async def test_changing_the_password_needs_the_current_one(authenticator, alice):
@@ -249,7 +244,7 @@ async def test_changing_the_password_needs_the_current_one(authenticator, alice)
         alice.id, "alice", "not the current one, no", "another very long passphrase", keep=keep.session.id, ip="x"
     )
 
-    assert changed is False
+    assert changed == Refused()
     assert isinstance(await sign_in(authenticator), Signed)
 
 
@@ -273,7 +268,7 @@ async def test_guessing_the_current_password_is_throttled_like_a_sign_in(authent
         alice.id, "alice", PASSWORD, "another very long passphrase", keep=keep.session.id, ip="x"
     )
 
-    assert result is False
+    assert isinstance(result, Throttled)
 
 
 # --- names, rooms, delays -------------------------------------------------------------------------------------------
@@ -304,35 +299,59 @@ async def test_a_name_that_cannot_be_a_login_is_refused_after_a_verification_and
     assert len(verified) == 1
 
 
-async def test_a_victim_whose_name_is_hammered_from_everywhere_signs_in_within_a_bounded_delay(
-    authenticator, alice, slept
-):
-    from harp_apps.auth.throttle import ACCOUNT_FREE_FAILURES, MAX_DELAY
+async def test_a_victim_whose_name_is_hammered_from_everywhere_waits_a_minute_at_most(authenticator, alice, monotonic):
+    from harp_apps.auth.throttle import ACCOUNT_FREE_FAILURES, MAX_WAIT
 
     for i in range(ACCOUNT_FREE_FAILURES + 8):
         await sign_in(authenticator, password="wrong password, quite long", ip=f"198.51.{i // 250}.{i % 250}")
-    slept.clear()
 
-    result = await sign_in(authenticator, ip="203.0.113.5")
+    refused = await sign_in(authenticator, ip="203.0.113.5")
+    assert isinstance(refused, Throttled) and 0 < refused.retry_after <= MAX_WAIT
+    monotonic.now += refused.retry_after
 
-    assert isinstance(result, Signed)
-    assert 0 < sum(slept) <= MAX_DELAY
+    assert isinstance(await sign_in(authenticator, ip="203.0.113.5"), Signed)
 
 
-async def test_a_victim_behind_the_shared_address_of_a_proxy_signs_in_whatever_the_flood(authenticator, alice, slept):
-    from harp_apps.auth.throttle import ADDRESS_FREE_FAILURES, ADDRESS_MAX_DELAY
+async def test_a_victim_whose_address_signed_in_before_is_not_held_by_the_flood_on_their_name(
+    authenticator, alice, monotonic
+):
+    from harp_apps.auth.throttle import ACCOUNT_FREE_FAILURES
 
-    for i in range(ADDRESS_FREE_FAILURES + 20):
-        await sign_in(authenticator, f"guess{i}", password="wrong password, quite long", ip="10.0.0.1")
-    slept.clear()
+    assert isinstance(await sign_in(authenticator, ip="203.0.113.5"), Signed)
+    for i in range(ACCOUNT_FREE_FAILURES + 50):
+        await sign_in(authenticator, password="wrong password, quite long", ip=f"198.51.{i // 250}.{i % 250}")
+
+    assert isinstance(await sign_in(authenticator, ip="203.0.113.5"), Signed)
+
+
+async def test_an_address_piling_up_penalised_pairs_is_refused_at_the_address_level(authenticator, alice, throttle):
+    for i in range(21):
+        for _ in range(PAIR_FREE_FAILURES):
+            await sign_in(authenticator, f"junk{i}", password="wrong password, quite long", ip="10.0.0.1")
 
     result = await sign_in(authenticator, ip="10.0.0.1")
 
-    assert isinstance(result, Signed)
-    assert 0 < sum(slept) <= ADDRESS_MAX_DELAY
+    assert isinstance(result, Throttled) and result.retry_after > 0
+    assert isinstance(await sign_in(authenticator, ip="10.0.0.2"), Signed)
 
 
-async def test_a_full_queue_is_answered_at_once_and_not_counted(identities, sessions, throttle, clock, alice, slept):
+async def test_nothing_is_held_while_refused(authenticator, alice, throttle):
+    """Refusing is instant: no sleeping, no slot (the old design slept up to 10 s per attempt)."""
+    import asyncio
+
+    for i in range(21):
+        for _ in range(PAIR_FREE_FAILURES):
+            await sign_in(authenticator, f"junk{i}", password="wrong password, quite long", ip="10.0.0.1")
+
+    results = await asyncio.wait_for(
+        asyncio.gather(*(sign_in(authenticator, f"fresh{i}", ip="10.0.0.1") for i in range(500))), timeout=5
+    )
+
+    assert all(isinstance(r, Throttled) for r in results)
+    assert isinstance(await sign_in(authenticator, ip="10.0.0.2"), Signed)  # nobody else is starved
+
+
+async def test_a_full_queue_is_answered_at_once_and_not_counted(identities, sessions, throttle, clock, alice):
     from harp_apps.auth.signin import Busy
 
     busy_hasher = PasswordHasher(max_concurrent=1, max_waiting=0)
@@ -367,6 +386,89 @@ async def test_a_guess_whose_client_leaves_is_still_counted(authenticator, alice
         await asyncio.gather(task, return_exceptions=True)
 
     assert throttle.retry_after("alice", "10.0.0.1") > 0
+
+
+async def test_a_sign_in_that_read_the_old_password_opens_no_session_once_it_changed(
+    authenticator, alice, sessions, monkeypatch
+):
+    mine = await sign_in(authenticator)
+    original = authenticator._rehash_if_outdated
+
+    async def password_changes_meanwhile(identity, password):
+        await authenticator.change_password(
+            alice.id, "alice", PASSWORD, "another very long passphrase", keep=mine.session.id, ip="y"
+        )
+        await original(identity, password)
+
+    monkeypatch.setattr(authenticator, "_rehash_if_outdated", password_changes_meanwhile)
+
+    late = await sign_in(authenticator, ip="z")
+
+    assert isinstance(late, Signed)
+    assert await sessions.authenticate(late.secret) is None
+    assert await sessions.authenticate(mine.secret) is not None
+
+
+async def test_a_rehash_does_not_write_the_old_password_over_a_new_one(authenticator, factory, identities, monkeypatch):
+    account = await AccountsRepository(factory).create({"username": "bob"})
+    weak = Argon2(time_cost=1, memory_cost=8, parallelism=1).hash(PASSWORD)
+    await identities.create(
+        {"account_id": account.id, "method": "password", "issuer": "", "subject": "bob", "password_hash": weak}
+    )
+    original = authenticator._rehash_if_outdated
+
+    async def password_changes_meanwhile(identity, password):
+        await authenticator.change_password(account.id, "bob", PASSWORD, "another very long passphrase", keep=0, ip="y")
+        await original(identity, password)
+
+    monkeypatch.setattr(authenticator, "_rehash_if_outdated", password_changes_meanwhile)
+    await sign_in(authenticator, "bob", ip="z")
+    monkeypatch.undo()
+
+    assert await sign_in(authenticator, "bob", PASSWORD, ip="a") == Refused()
+    assert isinstance(await sign_in(authenticator, "bob", "another very long passphrase", ip="b"), Signed)
+
+
+async def test_a_busy_hasher_while_changing_the_password_is_busy_not_a_wrong_password(
+    identities, sessions, throttle, clock, alice
+):
+    from harp_apps.auth.signin import Busy
+
+    hasher = PasswordHasher(max_concurrent=1, max_waiting=0)
+    authenticator = Authenticator(identities, sessions, hasher, throttle, clock=clock)
+    keep = await sign_in(authenticator)
+    await hasher._slots.acquire()  # every slot taken, nobody may wait
+    try:
+        result = await authenticator.change_password(
+            alice.id, "alice", PASSWORD, "another very long passphrase", keep=keep.session.id, ip="x"
+        )
+    finally:
+        hasher._slots.release()
+
+    assert isinstance(result, Busy)
+    assert throttle.retry_after("alice", "x") == 0
+
+
+async def test_a_hasher_that_fills_up_after_the_current_password_is_checked_is_busy_too(
+    authenticator, alice, hasher, monkeypatch
+):
+    from harp_apps.auth.passwords import HasherBusy
+    from harp_apps.auth.signin import Busy
+
+    keep = await sign_in(authenticator)
+
+    async def full(password):
+        raise HasherBusy()
+
+    monkeypatch.setattr(hasher, "hash", full)
+
+    result = await authenticator.change_password(
+        alice.id, "alice", PASSWORD, "another very long passphrase", keep=keep.session.id, ip="x"
+    )
+
+    assert isinstance(result, Busy)
+    monkeypatch.undo()
+    assert isinstance(await sign_in(authenticator), Signed)  # the old password still stands
 
 
 async def test_changing_the_password_is_one_transaction(authenticator, alice, sessions, monkeypatch):

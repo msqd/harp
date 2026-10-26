@@ -667,3 +667,66 @@ class TestBasicIsSlowedDownToo:
     async def test_a_working_script_is_not_slowed_down(self, dashboard, carol):
         for _ in range(PAIR_FREE_FAILURES * 3):
             assert (await call(dashboard, path="/api/system/", headers=self.basic("s3cret"))).status == 200
+
+    async def test_parallel_valid_requests_are_never_refused_for_being_parallel(self, dashboard, carol):
+        import asyncio
+
+        responses = await asyncio.gather(
+            *(call(dashboard, path="/api/system/", headers=self.basic("s3cret")) for _ in range(12))
+        )
+
+        assert [r.status for r in responses] == [200] * 12
+
+    async def test_names_that_cannot_be_logins_share_one_count_like_on_sign_in(self, dashboard, carol):
+        for name in ("x y", "z w", "a b", "c d", "e f"):
+            await call(dashboard, path="/api/system/", headers=self.basic("wrong", name))
+
+        response = await call(dashboard, path="/api/system/", headers=self.basic("wrong", "g h"))
+
+        assert response.status == 429
+
+
+async def test_changing_the_password_with_a_full_hashing_queue_is_a_503_not_a_wrong_password(dashboard, alice, hasher):
+    import asyncio
+
+    cookie = await signed_in(dashboard)
+    hasher._slots = asyncio.Semaphore(1)
+    hasher._max_waiting = 0
+    await hasher._slots.acquire()  # the only slot is taken and nobody may wait
+
+    response = await post(
+        dashboard, "/api/auth/password", {"current": PASSWORD, "new": "another very long passphrase"}, cookie=cookie
+    )
+
+    assert response.status == 503 and "retry-after" in response.headers
+
+
+async def test_fresh_names_from_one_address_are_refused_at_once_and_starve_nobody(dashboard, alice):
+    import asyncio
+
+    for i in range(21):
+        for _ in range(PAIR_FREE_FAILURES):
+            await post(
+                dashboard,
+                "/api/auth/signin",
+                {"username": f"junk{i}", "password": "wrong password, quite long"},
+                client="203.0.113.7",
+            )
+
+    flood = await asyncio.wait_for(
+        asyncio.gather(
+            *(
+                post(
+                    dashboard, "/api/auth/signin", {"username": f"fresh{i}", "password": PASSWORD}, client="203.0.113.7"
+                )
+                for i in range(300)
+            )
+        ),
+        timeout=10,
+    )
+    victim = await post(
+        dashboard, "/api/auth/signin", {"username": "alice", "password": PASSWORD}, client="203.0.113.99"
+    )
+
+    assert {r.status for r in flood} == {429}
+    assert victim.status == 200

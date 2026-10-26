@@ -254,8 +254,11 @@ class AuthController(RoutingController):
             )
         except PasswordPolicyError as exc:
             return problem(400, str(exc), error="Bad Request")
-        if not changed:
-            return problem(
-                403, "The current password is not right, or there were too many attempts.", error="Forbidden"
-            )
+        match changed:
+            case Throttled(retry_after=wait):
+                return too_many(wait)
+            case Busy(retry_after=wait):
+                return busy(wait)
+            case Refused():
+                return problem(403, "The current password is not right.", error="Forbidden")
         return ok()

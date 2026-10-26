@@ -19,7 +19,8 @@ from harp.views.json import on_json_response
 from harp_apps import dashboard
 from harp_apps.auth.actors import ActorResolver
 from harp_apps.auth.setup import SetupLink
-from harp_apps.auth.signin import Authenticator, Busy, Throttled
+from harp_apps.auth.models import login_of
+from harp_apps.auth.signin import INVALID_LOGIN, Authenticator, Busy, Throttled
 from harp_apps.proxy.controllers import HttpProxyController
 from harp_apps.proxy.settings.remote import Remote
 from harp_apps.storage.types import IStorage
@@ -237,7 +238,7 @@ class DashboardController(RoutingController):
         else:
             # Basic is slowed down like the password method: a request is an attempt, whatever the cache says
             address = client_address(request, self.settings.trusted_proxies)
-            checked = await self._authenticator.guarded(credentials[0].casefold()[:255], address, right)
+            checked = await self._authenticator.guarded(login_of(credentials[0]) or INVALID_LOGIN, address, right)
             if isinstance(checked, Throttled):
                 raise Declined(too_many(checked.retry_after))
             if isinstance(checked, Busy):

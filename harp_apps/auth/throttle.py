@@ -1,24 +1,24 @@
 """Slowing down who guesses passwords, without letting anyone slow down somebody else.
 
-An attacker who only knows a name, or who shares an address with everybody (a reverse proxy), must not be able to keep a
-person out. So the limits are not one counter but three, each with a different consequence:
+Every limit *refuses*: an attempt over a limit is answered ``429`` with ``Retry-After``, before its password is looked at
+and without holding anything on the server, so the limits cap how many guesses get through and a flood cannot starve
+the others by queueing. Three counts, each with its own consequence:
 
-* **per account and address** (the pair): from the fifth failure of one address against one account, that address has
-  to wait before its next attempt (1 s, 2 s, 4 s ... :data:`MAX_DELAY`), and an attempt made too early is *refused*
-  without looking at the password. Somebody guessing at ``alice`` from their address only slows themselves down: another
-  address is another pair.
-* **per address** (IPv6 by /64): after :data:`ADDRESS_FREE_FAILURES` failures, attempts are *delayed* (never refused) by
-  a little more each time, up to :data:`ADDRESS_MAX_DELAY`. A shared address full of people mistyping, or of one
-  attacker, makes everybody there wait a few seconds, nothing more.
-* **per account** (every address together): NIST SP 800-63B-4 allows 100 consecutive failures; after that the attempts
-  of addresses that never signed in to the account are *delayed* 1 s, 2 s ... :data:`MAX_DELAY`, and a person signing
-  in from an address that did before is not delayed at all. Whoever hammers a name delays an unknown address by at most
-  :data:`MAX_DELAY` seconds and never refuses it.
+* **one address against one account** (the pair): from the fifth failure, that address waits 1 s, 2 s, 4 s ... up to
+  :data:`MAX_WAIT` before its next attempt on that account. Another address is another pair.
+* **one account, every address**: after 100 consecutive failures (NIST SP 800-63B-4), addresses that never signed in to
+  the account wait the same way. The last :data:`KNOWN_ADDRESSES` addresses that did are exempt.
+* **one address, every account** (IPv6 by /64): after :data:`ADDRESS_FREE_FAILURES` failures it waits the same way. This
+  is what stops an address that piles up penalised pairs, and it takes over for a pair or an account the table has no
+  room to record. Cost accepted: behind a reverse proxy HARP does not know (see ``dashboard.trusted_proxies``), the
+  neighbours of an attacker get short refusals.
 
-Attempts are counted as failures when they start and given back on success, so guesses sent at once meet the limits as
-the later ones do. Entries still under penalty are never evicted to make room: a flood of fresh names and addresses
-leaves the waits where they are (it only stops *new* entries from being recorded when the table is full of penalised
-ones). Counts are per process and in memory: with several workers an attacker gets as many guesses as there are workers.
+Only failures that completed are counted, so parallel valid requests (a dashboard fetching six things at once) are never
+refused for being parallel; the number of attempts of one pair under way at once is bounded instead
+(:data:`PAIR_FREE_FAILURES` + :data:`IN_FLIGHT_SLACK`), and the hashing queue bounds the rest.
+
+Entries still under penalty are never evicted to make room: a flood of fresh names leaves the waits where they are. Counts
+are per process and in memory: with several workers an attacker gets as many guesses as there are workers.
 """
 
 import ipaddress
@@ -30,18 +30,17 @@ from typing import Callable
 #: Failures of one address against one account that cost nothing: a person mistypes.
 PAIR_FREE_FAILURES = 5
 
-#: Consecutive failures of one account, from every address, before unknown addresses are delayed (NIST SP 800-63B-4).
+#: Consecutive failures of one account, from every address, before unknown addresses wait (NIST SP 800-63B-4).
 ACCOUNT_FREE_FAILURES = 100
 
-#: Failures of one address, against any account, before it is delayed.
+#: Failures of one address, against any account, before it waits.
 ADDRESS_FREE_FAILURES = 100
 
-#: The longest wait or delay of a pair or an account, in seconds.
-MAX_DELAY = 60.0
+#: The longest wait, in seconds.
+MAX_WAIT = 60.0
 
-#: The longest delay of an address, in seconds, and how much each failure over the free ones adds.
-ADDRESS_MAX_DELAY = 10.0
-ADDRESS_DELAY_STEP = 0.1
+#: Attempts of one pair that may be under way beyond the free failures.
+IN_FLIGHT_SLACK = 16
 
 #: A key without failure for this long (seconds) starts again from zero.
 FORGET_AFTER = 900.0
@@ -52,9 +51,6 @@ KNOWN_ADDRESSES = 8
 KNOWN_FOR = 30 * 86400.0
 
 MAX_ENTRIES = 10_000
-
-#: Attempts under way (waiting out a delay or being checked), all together. More are answered at once.
-MAX_IN_FLIGHT = 2000
 
 
 def address_key(ip: str) -> str:
@@ -70,10 +66,10 @@ def address_key(ip: str) -> str:
     return str(address)
 
 
-def _doubling(failures: int, free: int) -> float:
+def _wait(failures: int, free: int) -> float:
     if failures < free:
         return 0.0
-    return min(2.0 ** min(failures - free, 32), MAX_DELAY)
+    return min(2.0 ** min(failures - free, 32), MAX_WAIT)
 
 
 class _Counters:
@@ -100,21 +96,18 @@ class _Counters:
             return 0, 0.0
         return entry[0], elapsed
 
-    def add(self, key: str) -> None:
+    def wait(self, key: str) -> float:
+        failures, elapsed = self.get(key)
+        return max(0.0, _wait(failures, self.free) - elapsed)
+
+    def add(self, key: str, weight: int = 1) -> bool:
+        """Counts failures. False when there is no room: the entry is not recorded rather than a penalised one dropped."""
         failures, _ = self.get(key)
         if failures == 0 and not self._make_room():
-            return  # full of penalised entries: this one is not recorded rather than one of them forgotten
+            return False
         self._entries.pop(key, None)
-        self._entries[key] = (failures + 1, self.clock())
-
-    def take_back(self, key: str) -> None:
-        entry = self._entries.get(key)
-        if entry is None:
-            return
-        if entry[0] <= 1:
-            del self._entries[key]
-        else:
-            self._entries[key] = (entry[0] - 1, entry[1])
+        self._entries[key] = (failures + weight, self.clock())
+        return True
 
     def clear(self, key: str) -> None:
         self._entries.pop(key, None)
@@ -132,9 +125,8 @@ class _Counters:
 
 @dataclass(frozen=True)
 class Admitted:
-    """The attempt may go on, after ``delay`` seconds. Give it back to :meth:`SignInThrottle.end`."""
+    """The attempt may go on. Give it back to :meth:`SignInThrottle.end` with what became of it."""
 
-    delay: float
     login: str
     address: str
     pair: str
@@ -142,16 +134,9 @@ class Admitted:
 
 @dataclass(frozen=True)
 class Refused:
-    """Too early for this address against this account: try again in ``retry_after`` seconds. Nothing was looked at."""
+    """Over a limit: try again in ``retry_after`` seconds. Nothing was looked at."""
 
     retry_after: float
-
-
-@dataclass(frozen=True)
-class Busy:
-    """Too many attempts are waiting: nothing is recorded, try again in a moment."""
-
-    retry_after: float = 1.0
 
 
 class SignInThrottle:
@@ -162,8 +147,8 @@ class SignInThrottle:
         self.accounts = _Counters(clock, ACCOUNT_FREE_FAILURES, ACCOUNT_FORGET_AFTER, max_entries)
         # login -> address -> time of the last sign in
         self._known: OrderedDict[str, OrderedDict[str, float]] = OrderedDict()
+        self._in_flight: dict[str, int] = {}
         self.max_entries = max_entries
-        self._in_flight = 0
 
     def __len__(self):
         return len(self.pairs) + len(self.addresses) + len(self.accounts)
@@ -173,56 +158,46 @@ class SignInThrottle:
         return seen is not None and self.clock() - seen < KNOWN_FOR
 
     def retry_after(self, login: str, ip: str) -> float:
-        """Seconds the pair must still wait before it may try, 0 when it may."""
-        failures, elapsed = self.pairs.get(f"{login}\0{address_key(ip)}")
-        return max(0.0, _doubling(failures, PAIR_FREE_FAILURES) - elapsed)
-
-    def delay_for(self, login: str, ip: str) -> float:
-        """Seconds an attempt is held before its password is looked at."""
+        """Seconds this address must still wait before it may try this account, 0 when it may."""
         address = address_key(ip)
-        failures, _ = self.addresses.get(address)
-        delay = min(ADDRESS_MAX_DELAY, max(0, failures - ADDRESS_FREE_FAILURES + 1) * ADDRESS_DELAY_STEP)
+        wait = max(self.pairs.wait(f"{login}\0{address}"), self.addresses.wait(address))
         if not self._is_known(login, address):
-            failures, _ = self.accounts.get(login)
-            delay = max(delay, _doubling(failures + 1, ACCOUNT_FREE_FAILURES + 1))
-        return delay
+            wait = max(wait, self.accounts.wait(login))
+        return wait
 
-    def begin(self, login: str, ip: str) -> Admitted | Refused | Busy:
-        """
-        Starts an attempt: refused when the pair is waiting, else counted as a failure from now (taken back by
-        :meth:`end` on success) and told how long to be held.
-        """
+    def begin(self, login: str, ip: str) -> Admitted | Refused:
+        """Starts an attempt, or refuses it."""
         if (wait := self.retry_after(login, ip)) > 0:
             return Refused(wait)
-        if self._in_flight >= MAX_IN_FLIGHT:
-            return Busy()
         address = address_key(ip)
         pair = f"{login}\0{address}"
-        delay = self.delay_for(login, ip)
-        self.pairs.add(pair)
-        self.addresses.add(address)
-        self.accounts.add(login)
-        self._in_flight += 1
-        return Admitted(delay, login, address, pair)
+        if self._in_flight.get(pair, 0) >= PAIR_FREE_FAILURES + IN_FLIGHT_SLACK:
+            return Refused(1.0)
+        self._in_flight[pair] = self._in_flight.get(pair, 0) + 1
+        return Admitted(login, address, pair)
 
     def end(self, admitted: Admitted, outcome: str) -> None:
         """
-        Closes an attempt: ``success`` (the password was right), ``failure`` (it stays counted) or ``abandoned`` (it was
-        never looked at, for lack of room: it is not counted).
+        Closes an attempt: ``success`` (the password was right), ``failure`` (it is counted) or ``abandoned`` (it was
+        never looked at, for lack of room: it is not).
         """
-        self._in_flight = max(0, self._in_flight - 1)
-        if outcome == "failure":
-            return
+        left = self._in_flight.get(admitted.pair, 1) - 1
+        if left > 0:
+            self._in_flight[admitted.pair] = left
+        else:
+            self._in_flight.pop(admitted.pair, None)
         if outcome == "abandoned":
-            self.pairs.take_back(admitted.pair)
-            self.addresses.take_back(admitted.address)
-            self.accounts.take_back(admitted.login)
             return
-        # the pair and the account proved themselves; the address gets this attempt back and keeps its other failures,
-        # or an attacker owning one valid account would wash its guesses against the others
+        if outcome == "failure":
+            recorded = self.pairs.add(admitted.pair)
+            recorded = self.accounts.add(admitted.login) and recorded
+            # a key with no room falls under its address, as if it had piled up penalised pairs
+            self.addresses.add(admitted.address, 1 if recorded else 1 + PAIR_FREE_FAILURES)
+            return
+        # the pair and the account proved themselves; the address keeps its failures, or an attacker owning one valid
+        # account would wash its guesses against the others
         self.pairs.clear(admitted.pair)
         self.accounts.clear(admitted.login)
-        self.addresses.take_back(admitted.address)
         self._remember(admitted.login, admitted.address)
 
     def _remember(self, login: str, address: str) -> None:

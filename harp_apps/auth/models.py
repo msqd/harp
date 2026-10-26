@@ -253,6 +253,9 @@ class Identity(Base):
     subject: Mapped[str] = mapped_column(String(255), nullable=False)
     #: PHC string, for passwords only.
     password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    #: Bumped each time the password is replaced. A session carries the version it was opened with and is void once
+    #: the identity has gone past it, whatever the order a sign-in and a password change committed in.
+    password_version: Mapped[int] = mapped_column(Integer(), nullable=False, default=0, server_default="0")
     created_at: Mapped[datetime] = mapped_column(UTCTimestamp(), nullable=False, server_default=func.now())
     last_sign_in_at: Mapped[Optional[datetime]] = mapped_column(UTCTimestamp(), nullable=True)
 
@@ -271,6 +274,8 @@ class Session(Base):
         ForeignKey("auth_accounts.id", ondelete="CASCADE"), nullable=False, index=True
     )
     identity_id: Mapped[int] = mapped_column(ForeignKey("auth_identities.id", ondelete="CASCADE"), nullable=False)
+    #: ``Identity.password_version`` when the session was opened.
+    credential_version: Mapped[int] = mapped_column(Integer(), nullable=False, default=0, server_default="0")
     created_at: Mapped[datetime] = mapped_column(UTCTimestamp(), nullable=False, server_default=func.now())
     #: Written at most once a minute.
     last_seen_at: Mapped[datetime] = mapped_column(UTCTimestamp(), nullable=False, server_default=func.now())
@@ -337,10 +342,14 @@ class IdentitiesRepository(Repository):
                 )
             ).scalar_one_or_none()
 
-    async def set_password_hash(self, identity_id: int, password_hash: str) -> None:
+    async def set_password_hash(self, identity_id: int, password_hash: str, *, replacing: str) -> None:
+        """Stores a hash of the same password made with other parameters. Only if the stored hash is still the one that
+        was read: a password changed meanwhile is not written over."""
         async with self.session_factory() as session:
             await session.execute(
-                update(Identity).where(Identity.id == identity_id).values(password_hash=password_hash)
+                update(Identity)
+                .where(Identity.id == identity_id, Identity.password_hash == replacing)
+                .values(password_hash=password_hash)
             )
             await session.commit()
 
@@ -350,9 +359,16 @@ class IdentitiesRepository(Repository):
         """Sets the hash and ends every other open session of the account, in one transaction: a crash in between
         must not leave the old sessions open on the new password."""
         async with self.session_factory() as session:
-            await session.execute(
-                update(Identity).where(Identity.id == identity_id).values(password_hash=password_hash)
-            )
+            version = (
+                await session.execute(
+                    update(Identity)
+                    .where(Identity.id == identity_id)
+                    .values(password_hash=password_hash, password_version=Identity.password_version + 1)
+                    .returning(Identity.password_version)
+                )
+            ).scalar_one()
+            # the session that asks goes on with the new version; every other one, opened with an older, is void
+            await session.execute(update(Session).where(Session.id == keep).values(credential_version=version))
             await session.execute(
                 update(Session)
                 .where(Session.account_id == account_id, Session.id != keep, Session.revoked_at.is_(None))
@@ -370,9 +386,14 @@ class SessionsRepository(Repository):
     Type = Session
 
     async def find_by_secret_hash(self, secret_hash: str) -> Optional[Session]:
+        """The session, unless its identity went past the credential version it was opened with."""
         async with self.session_factory() as session:
             return (
-                await session.execute(select(Session).where(Session.secret_hash == secret_hash))
+                await session.execute(
+                    select(Session)
+                    .join(Identity, Identity.id == Session.identity_id)
+                    .where(Session.secret_hash == secret_hash, Session.credential_version == Identity.password_version)
+                )
             ).scalar_one_or_none()
 
     async def seen(self, session_id: int, at: datetime) -> None:
