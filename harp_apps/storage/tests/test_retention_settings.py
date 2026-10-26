@@ -59,3 +59,16 @@ def test_the_storage_key_wins_over_the_alias_and_warns(caplog):
     (message,) = deprecations(caplog)
     assert "storage.retention_days" in message
     assert "ignored" in message
+
+
+def test_the_alias_with_storage_not_loaded_warns_and_goes_nowhere(caplog):
+    builder = ConfigurationBuilder(use_default_applications=True)
+    builder.applications.remove("storage")
+    builder.add_values({"janitor": {"old_after": 30}})
+
+    with caplog.at_level(logging.WARNING):
+        settings = builder.build()
+
+    assert "storage" not in settings
+    (message,) = deprecations(caplog)
+    assert "storage.retention_days" in message

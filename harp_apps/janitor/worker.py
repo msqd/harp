@@ -56,10 +56,9 @@ class JanitorWorker:
 
     async def run(self):
         """
-        Once dependencies are ready, start the main loop (basically, run the `loop()` every `period` seconds), until
+        Start the main loop (basically, run the `loop()` every `period` seconds), until
         `stop()` is called.
         """
-        # do not start before storage is ready
         async with self._running_lock:
             self.running = True
 

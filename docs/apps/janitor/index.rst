@@ -44,7 +44,6 @@ Zero and negative values are rejected when the configuration loads.
     janitor:
       period: 3600  # sweep every hour
 
-
 See the :doc:`settings reference <settings>`.
 
 Loading
