@@ -70,15 +70,17 @@ startup:
 - `SQLite <https://www.sqlite.org/>`_ (config-less default, **for development only**), using `aiosqlite
   <https://aiosqlite.omnilib.dev/>`_ driver.
 - `MySQL <https://www.mysql.com/>`_ / `MariaDB <https://mariadb.org/>`_, using `aiomysql
-  <https://aiomysql.readthedocs.io/>`_ driver. MariaDB uses the same ``mysql+aiomysql://`` URL. **Unsupported since 0.13**, see below.
+  <https://aiomysql.readthedocs.io/>`_ driver. MariaDB uses the same ``mysql+aiomysql://`` URL.
+  **Unsupported since 0.13**, see below.
 
-.. deprecated:: 0.12
+.. versionchanged:: 0.13
 
    MySQL and MariaDB are unsupported since 0.13: they are no longer tested in CI, get no fixes and come with no
    production support, and their code is removed in 0.14. HARP logs a warning at boot when ``storage.url`` points to
    one of them. Use PostgreSQL for production.
 
-SQLite ships with the base install. The PostgreSQL driver is an extra (the MySQL one is unsupported since 0.13 and removed in 0.14):
+SQLite ships with the base install. The PostgreSQL driver is an extra (the MySQL one is unsupported since 0.13
+and removed in 0.14, and the Docker image no longer includes it):
 
 .. code-block:: shell
 

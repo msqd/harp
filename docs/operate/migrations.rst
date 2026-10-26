@@ -65,8 +65,8 @@ MySQL and MariaDB (unsupported)
 -------------------------------
 
 MySQL and MariaDB are unsupported since 0.13 and removed in 0.14. Until then, they add full-text indexes to the
-searchable columns. This is done without any additional configuration. The dashboard transaction search matches substrings literally (``LIKE``), on every backend, so these
-indexes do not speed it up.
+searchable columns. This is done without any additional configuration. The dashboard transaction search
+matches substrings literally (``LIKE``), on every backend, so these indexes do not speed it up.
 
 
 PostgreSQL (and TimescaleDB)
