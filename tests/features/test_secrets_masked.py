@@ -40,6 +40,8 @@ SECRETS = {
     "username-only-url": USERNAME_ONLY_TOKEN,
     "dsn-password": DSN_PASSWORD,
     "dashboard-user-password": USER_PASSWORD,
+    "storage-sslpassword-parameter": "SSLPASSPHRASE",
+    "storage-sslkey-parameter": "SSLKEYPATH",
 }
 
 CONFIG = f"""
@@ -50,7 +52,7 @@ notifications:
 sentry:
   dsn: {SENTRY_DSN}
 storage:
-  url: sqlite+aiosqlite:///{{db}}
+  url: sqlite+aiosqlite:///{{db}}?sslpassword=SSLPASSPHRASE&sslkey=SSLKEYPATH
   redis:
     url: redis://:{DSN_PASSWORD}@cache.internal:6379/0
 dashboard:
