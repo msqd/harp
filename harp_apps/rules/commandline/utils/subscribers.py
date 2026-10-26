@@ -10,8 +10,8 @@ console = Console(force_terminal=True)
 
 
 class DebugRulesSubscriber(RulesSubscriber):
-    def match(self, *args):
-        scripts = list(super().match(*args))
+    def match(self, *args, **options):
+        scripts = list(super().match(*args, **options))
 
         elements = []
         for i, script in enumerate(scripts):

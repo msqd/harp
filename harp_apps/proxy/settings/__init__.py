@@ -9,7 +9,7 @@ from harp.settings import (
     DEFAULT_REQUEST_BODY_GRACE_PERIOD,
 )
 from harp.config import ApplicationSettingsMixin, Configurable, Stateful
-from harp_apps.storage.constants import DEFAULT_MAX_RECORDED_BODY_SIZE
+from harp_apps.storage.constants import DEFAULT_MAX_RECORDED_BODY_SIZE, TAG_NAME_MAX_LENGTH, TAG_VALUE_MAX_LENGTH
 
 from .endpoint import Endpoint, EndpointSettings
 from .remote import Remote, RemoteEndpoint, RemoteEndpointSettings, RemoteProbe, RemoteProbeSettings, RemoteSettings
@@ -41,10 +41,10 @@ class TagsSettings(Configurable):
     max_count: int = Field(20, gt=0)
 
     #: Longest tag name kept, in characters.
-    max_name_length: int = Field(64, gt=0)
+    max_name_length: int = Field(TAG_NAME_MAX_LENGTH, gt=0, le=TAG_NAME_MAX_LENGTH)
 
     #: Longest tag value kept, in characters.
-    max_value_length: int = Field(256, gt=0)
+    max_value_length: int = Field(TAG_VALUE_MAX_LENGTH, gt=0, le=TAG_VALUE_MAX_LENGTH)
 
 
 class ProxySettings(ApplicationSettingsMixin, BaseProxySettings):

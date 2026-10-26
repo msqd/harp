@@ -5,6 +5,7 @@ from whistle import Event
 from harp import get_logger
 from harp.utils.types import typeof
 from harp.http.utils import normalize_path
+from harp.http.utils.paths import _normalize_path_variants
 from harp.http import BaseHttpMessage, HttpError, HttpResponse
 from harp.http.requests import HttpRequest
 from harp.models import Transaction
@@ -61,8 +62,13 @@ class ProxyFilterEvent(Event):
 
     @property
     def fingerprint(self):
-        """``<METHOD> <path>``, with the path the proxy forwards (see :func:`normalize_path`), no query string."""
+        """``<METHOD> <path>``, with the path as rules see it (see :func:`normalize_path`), no query string."""
         return f"{self.request.method} {normalize_path(self.request.path)}"
+
+    @property
+    def alternate_fingerprints(self) -> list[str]:
+        """Other fingerprints an upstream may act on for the same request (see :func:`_normalize_path_variants`)."""
+        return [f"{self.request.method} {path}" for path in _normalize_path_variants(self.request.path)]
 
     @property
     def criteria(self):

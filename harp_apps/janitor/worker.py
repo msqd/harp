@@ -1,5 +1,6 @@
 import asyncio
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import cast
 
@@ -23,7 +24,33 @@ PROMETHEUS_GAUGES = {
 }
 
 
+#: How many blob ids the janitor holds, looks up and deletes at once for a blob backend that lives outside SQL.
+BLOB_BATCH_SIZE = 500
+
+
+@dataclass(frozen=True)
+class _Sweep:
+    blobs: int
+    orphans: int
+    deleted: int = 0
+
+    @property
+    def after_deletion(self) -> "BlobSweep":
+        return BlobSweep(self.blobs - self.deleted, self.orphans - self.deleted)
+
+
+@dataclass(frozen=True)
+class BlobSweep:
+    """What one sweep of a blob backend found, after its deletions: blobs still stored, and orphans among them."""
+
+    blobs: int
+    orphans: int
+
+
 class JanitorWorker:
+    #: Blob ids handled per batch with a backend that lists its blobs, see :data:`BLOB_BATCH_SIZE`.
+    batch_size: int = BLOB_BATCH_SIZE
+
     #: Orphans written more recently than this are kept, see :data:`~harp_apps.storage.models.blobs.ORPHAN_GRACE`.
     orphan_grace: timedelta = ORPHAN_GRACE
 
@@ -71,7 +98,7 @@ class JanitorWorker:
         if result.rowcount:
             logger.debug("🧹 Deleted %d old transactions", result.rowcount)
 
-        await self.delete_orphan_blobs()
+        sweep = await self.delete_orphan_blobs()
 
         for sweep in self.sweeps:
             try:
@@ -81,7 +108,7 @@ class JanitorWorker:
 
         # Compute and store stored objecg counts as metrics
         logger.debug("🧹 Compute and store metrics...")
-        await self.compute_and_store_metrics()
+        await self.compute_and_store_metrics(blob_sweep=sweep)
 
     @with_session
     async def delete_old_transactions(self, /, *, session):
@@ -96,12 +123,15 @@ class JanitorWorker:
         await session.commit()
         return result
 
-    async def delete_orphan_blobs(self):
+    async def delete_orphan_blobs(self) -> BlobSweep | None:
         """
         Find and remove blobs that are not referenced anymore by any transaction.
+
+        Returns what a backend that lists its blobs holds afterwards, so the metrics need not list them again.
         """
 
         count = None
+        sweep = None
 
         if self.blob_storage.type == "sql":
             # A blob is an orphan when no message and no HTTP cache entry references it. Cache entries
@@ -113,8 +143,8 @@ class JanitorWorker:
         elif self._lists_blob_ids:
             # Blobs of a backend that lives outside the SQL database: the same definition of an orphan, read from
             # the messages (SQL) and the cache entries (the backend), then deleted unless written within the grace.
-            _, orphans = await self._find_unreferenced_blobs()
-            count = await self.blob_storage.delete_stale(orphans, older_than=datetime.now(UTC) - self.orphan_grace)
+            sweep = await self._sweep_blobs(older_than=datetime.now(UTC) - self.orphan_grace)
+            count = sweep.deleted
 
         if count is None:
             # The blob storage may need to clean orphans but no implementation is available
@@ -125,39 +155,70 @@ class JanitorWorker:
                 self.blob_storage.type,
                 count,
             )
+        return sweep.after_deletion if sweep else None
 
     @property
     def _lists_blob_ids(self) -> bool:
         return hasattr(self.blob_storage, "iter_blob_ids")
 
-    async def _find_unreferenced_blobs(self, session=None) -> tuple[int, list[str]]:
+    async def _sweep_blobs(self, *, older_than: datetime | None = None, session=None) -> "_Sweep":
         """Count the blobs of a backend that can list them, and find those nothing references.
 
-        Ids are listed before the cache entries are read, so a blob stored in between is either seen as
-        referenced or too young to be removed.
+        Two passes, each streaming: the cache entries first, whose references protect blobs, then the blobs, batch by
+        batch. With `older_than`, each batch's orphans are deleted (unless written since) before the next batch is
+        read. Memory holds one batch and the ids cache entries reference, never the blob ids.
+
+        The cache entries are read before the blobs are listed: a blob stored in between is either listed and
+        looked up in the messages, or written too recently to be removed.
         """
-        blob_ids = [blob_id async for blob_id in self.blob_storage.iter_blob_ids()]
         kept = set()
         async for meta in self.blob_storage.iter_blobs(CACHE_META_CONTENT_TYPE):
             kept.add(meta.id)
             kept |= cache_meta_references(meta.data)
-        candidates = [blob_id for blob_id in blob_ids if blob_id not in kept]
-        referenced = await self.storage.blobs.referenced_by_messages(candidates, session=session)
-        return len(blob_ids), [blob_id for blob_id in candidates if blob_id not in referenced]
 
-    async def compute_and_store_metrics(self):
+        total = orphans = deleted = 0
+        batch: list[str] = []
+        async for blob_id in self.blob_storage.iter_blob_ids():
+            batch.append(blob_id)
+            if len(batch) >= self.batch_size:
+                size, found, removed = await self._sweep_batch(batch, kept, older_than, session)
+                total, orphans, deleted = total + size, orphans + found, deleted + removed
+                batch = []
+        size, found, removed = await self._sweep_batch(batch, kept, older_than, session)
+        return _Sweep(total + size, orphans + found, deleted + removed)
+
+    async def _sweep_batch(self, batch: list[str], kept: set[str], older_than, session) -> tuple[int, int, int]:
+        """The size of a batch of ids, its orphans, and how many of them were deleted.
+
+        ``SCAN`` may return a key more than once: a batch counts each id once (a repeat in another batch still can't be
+        told, without holding every id).
+        """
+        batch = list(dict.fromkeys(batch))
+        if not batch:
+            return 0, 0, 0
+        candidates = [blob_id for blob_id in batch if blob_id not in kept]
+        referenced = await self.storage.blobs.referenced_by_messages(candidates, session=session)
+        orphans = [blob_id for blob_id in candidates if blob_id not in referenced]
+        deleted = 0
+        if older_than is not None and orphans:
+            deleted = await self.blob_storage.delete_stale(orphans, older_than=older_than)
+        return len(batch), len(orphans), deleted
+
+    async def compute_and_store_metrics(self, *, blob_sweep: BlobSweep | None = None):
         """
         Compute counts of objects in storage, and store them as metrics.
         """
 
         # TODO to storage
 
-        values = await self.compute_metrics()
+        values = await self.compute_metrics(blob_sweep=blob_sweep)
         async with self.session_factory() as session:
             await self.storage.metrics.insert_values(values, session=session)
 
-    async def compute_metrics(self, session=None):
-        """Counts of stored objects. Without a session, each count takes the connection only for its own query."""
+    async def compute_metrics(self, session=None, *, blob_sweep: BlobSweep | None = None):
+        """Counts of stored objects. Without a session, each count takes the connection only for its own query.
+
+        A backend that lists its blobs is listed again, unless the sweep that just cleaned it is given."""
         values = {}
         counted = [("storage.transactions", "transactions"), ("storage.messages", "messages")]
         if not self._lists_blob_ids:
@@ -169,8 +230,8 @@ class JanitorWorker:
                 async with self.session_factory() as own:
                     values[key] = await self.do_count(own, name)
         if self._lists_blob_ids:
-            values["storage.blobs"], orphans = await self._find_unreferenced_blobs(session)
-            values["storage.blobs.orphans"] = len(orphans)
+            sweep = blob_sweep or (await self._sweep_blobs(session=session)).after_deletion
+            values["storage.blobs"], values["storage.blobs.orphans"] = sweep.blobs, sweep.orphans
         else:
             values["storage.blobs.orphans"] = await self.storage.blobs.count_orphans(session=session)
 
