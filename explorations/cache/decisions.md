@@ -43,3 +43,20 @@ and URL.
    key, variant id and the invalidation seq in force: #404 moves from 0.14 to explore/cache, since
    the new store produces them. #801 (PURGE with an IP allow-list) stays in 0.13 (building) on
    today's store; explore/cache re-implements it as a ban.
+7. Cache key (user, 2026-10-25): endpoint and path in clear (ordered, prefix-matchable), plus a hash
+   of the full query string, so two different query values never share an entry and no query
+   value (an `api_key`, a token) is stored in clear. For display, the query is stored redacted by
+   ADR-0009's rules. Prefix invalidation applies to the path. hishel 1.0 keyed by `sha256(url)`,
+   which ADR-0014 had not assumed (found by #1594).
+8. A response whose URL carries a redacted query parameter is cached (user, 2026-10-25): with the
+   query hashed in the key and redacted for display, no secret is stored, and each distinct value
+   has its own entry. ADR-0014 states it supersedes ADR-0009 on this point for the cache; ADR-0009
+   keeps its status, with a pointer.
+9. The query hash is a plain sha256 (user, 2026-10-25): accepted risk that a low-entropy secret could
+   be guessed from a database dump; no instance secret is needed for the cache.
+10. A transaction's invalidation number is the stamp of the entry that served it (user, 2026-10-26):
+    "valid as of N", raised to the fetch's stamp when a 304 revalidated it, and the stamp read before
+    the fetch for a response from the origin. A hit reads no counter (ADR-0014).
+11. `uncacheable` covers every exchange the cache did not keep (no-store, withheld, unsupported
+    method, key too long), with no reason recorded (user, 2026-10-26); a fill refused after the
+    headers went out stays a `miss`, as documented.
