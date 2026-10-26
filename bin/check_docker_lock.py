@@ -16,7 +16,7 @@ import sys
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 
-EXTRAS = ("postgresql", "mysql", "sentry")
+EXTRAS = ("postgresql", "sentry")
 PROJECT = "harp-proxy"
 
 LIST_INSTALLED = (

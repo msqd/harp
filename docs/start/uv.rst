@@ -49,7 +49,7 @@ To store in PostgreSQL (the production database), add its extra:
 
     uvx --from "harp-proxy[postgresql]" harp-proxy server
 
-MySQL/MariaDB is deprecated, its extra is:
+MySQL/MariaDB is unsupported since 0.13 and removed in 0.14, do not use it. Its extra is:
 
 .. code-block:: shell
 

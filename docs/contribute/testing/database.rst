@@ -63,7 +63,7 @@ decorator to change the behaviour of ``database_url`` (and ``storage``, which de
             ...
 
     class TestSomeWiderSpecificFeature(StorageTestFixtureMixin):
-        @parametrize_with_database_urls('postgresql', 'mysql')
+        @parametrize_with_database_urls('postgresql', 'sqlite')
         def test_my_not_really_specific_feature(self, storage):
             ...
 
