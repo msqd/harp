@@ -10,9 +10,8 @@ from datetime import timedelta
 import pytest
 from sqlalchemy import insert, select
 
-from harp_apps.janitor.settings import JanitorSettings
-from harp_apps.janitor.tests import worker_with_grace
 from harp_apps.storage.models import Blob as SqlBlob
+from harp_apps.storage.tests import sweeps_with_grace
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.types import IBlobStorage
 
@@ -25,7 +24,7 @@ async def test_request_completes_while_a_pass_is_running(
 ):
     if blob_storage.type != "sql":
         pytest.skip("The janitor only sweeps SQL blob storage.")
-    worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
+    worker = sweeps_with_grace(sql_storage, blob_storage, timedelta(0))
     async with sql_storage.session_factory() as session:
         await session.execute(insert(SqlBlob), [{"id": f"{i:040d}", "data": b"x"} for i in range(BLOBS)])
         await session.commit()

@@ -1,5 +1,6 @@
 """Storage Application"""
 
+from datetime import timedelta
 from functools import partial
 from os.path import dirname
 from pathlib import Path
@@ -12,7 +13,8 @@ from harp.config.events import OnBindEvent, OnBoundEvent, OnShutdownEvent
 from harp_apps.storage.engines import warn_if_database_is_deprecated
 from harp_apps.storage.models import Base
 from harp_apps.storage.settings import StorageSettings
-from harp_apps.storage.types import IStorage
+from harp_apps.storage.sweeps import StorageSweeps
+from harp_apps.storage.types import IBlobStorage, IStorage
 from harp_apps.storage.utils.migrations import mask_failure
 from harp_apps.storage.worker import StorageAsyncWorkerQueue
 
@@ -71,6 +73,14 @@ async def _boot_storage(event: OnBoundEvent):
     worker = event.provider.get(StorageAsyncWorkerQueue)
     if event.dispatcher:
         worker.register_events(event.dispatcher)
+
+    _declare_sweeps(event, settings, storage)
+
+
+def _declare_sweeps(event: OnBoundEvent, settings: StorageSettings, storage: IStorage):
+    sweeps = StorageSweeps(storage, event.provider.get(IBlobStorage), timedelta(days=settings.retention_days))
+    for sweep in sweeps.sweeps():
+        event.sweeps.declare(sweep)
 
 
 async def on_shutdown(event: OnShutdownEvent):
