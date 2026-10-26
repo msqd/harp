@@ -609,7 +609,6 @@ dependencies = [
     { name = "multidict" },
     { name = "orjson" },
     { name = "packaging" },
-    { name = "passlib" },
     { name = "prometheus-client" },
     { name = "pydantic" },
     { name = "pyheck" },
@@ -625,6 +624,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+argon2 = [
+    { name = "argon2-cffi" },
+]
 mysql = [
     { name = "aiomysql" },
     { name = "cryptography" },
@@ -643,7 +645,7 @@ dev = [
     { name = "cookiecutter" },
     { name = "freezegun" },
     { name = "furo" },
-    { name = "harp-proxy", extra = ["mysql", "postgresql", "sentry"] },
+    { name = "harp-proxy", extra = ["argon2", "mysql", "postgresql", "sentry"] },
     { name = "hatchling" },
     { name = "honcho" },
     { name = "jscc" },
@@ -680,6 +682,7 @@ requires-dist = [
     { name = "aiosqlite", specifier = ">=0.20,<0.22" },
     { name = "alembic", specifier = ">=1.17,<2" },
     { name = "argon2-cffi", specifier = ">=25.1,<26" },
+    { name = "argon2-cffi", marker = "extra == 'argon2'", specifier = ">=23.1,<26" },
     { name = "asgimiddlewarestaticfile", specifier = ">=0.6,<0.7" },
     { name = "asgiref", specifier = ">=3.10,<3.13" },
     { name = "asyncpg", marker = "extra == 'postgresql'", specifier = ">=0.30,<0.31" },
@@ -696,7 +699,6 @@ requires-dist = [
     { name = "multidict", specifier = ">=6.9.1,<7" },
     { name = "orjson", specifier = ">=3.11,<4" },
     { name = "packaging", specifier = ">=23.2" },
-    { name = "passlib", specifier = ">=1.7,<2" },
     { name = "prometheus-client", specifier = ">=0.20,<1" },
     { name = "pydantic", specifier = ">=2.12,<2.13" },
     { name = "pyheck", specifier = ">=0.1,<0.2" },
@@ -711,7 +713,7 @@ requires-dist = [
     { name = "svix-ksuid", specifier = ">=0.6,<0.7" },
     { name = "whistle", specifier = ">=2.0.1,<3" },
 ]
-provides-extras = ["mysql", "postgresql", "sentry"]
+provides-extras = ["argon2", "mysql", "postgresql", "sentry"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -720,7 +722,7 @@ dev = [
     { name = "cookiecutter", specifier = ">=2.6,<2.7" },
     { name = "freezegun", specifier = ">=1.5.5,<2" },
     { name = "furo", specifier = ">=2023.9.10,<2026.0.0" },
-    { name = "harp-proxy", extras = ["mysql", "postgresql", "sentry"] },
+    { name = "harp-proxy", extras = ["argon2", "mysql", "postgresql", "sentry"] },
     { name = "hatchling", specifier = "==1.27.0" },
     { name = "honcho", specifier = ">=2.0,<2.1" },
     { name = "jscc", specifier = ">=0.3.0,<0.4" },
@@ -1166,15 +1168,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/7d/fa/3944b40b07da9ce895c0e6303a5ab7d53da063554f534556b134a54d6093/packaging-26.3.tar.gz", hash = "sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79", size = 313412, upload-time = "2026-08-04T18:15:28.737Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl", hash = "sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c", size = 129956, upload-time = "2026-08-04T18:15:27.159Z" },
-]
-
-[[package]]
-name = "passlib"
-version = "1.7.4"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b6/06/9da9ee59a67fae7761aab3ccc84fa4f3f33f125b370f1ccdb915bf967c11/passlib-1.7.4.tar.gz", hash = "sha256:defd50f72b65c5402ab2c573830a6978e5f202ad0d984793c8dde2c4152ebe04", size = 689844, upload-time = "2020-10-08T19:00:52.121Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3b/a4/ab6b7589382ca3df236e03faa71deac88cae040af60c071a78d254a62172/passlib-1.7.4-py2.py3-none-any.whl", hash = "sha256:aa6bca462b8d8bda89c70b382f0c298a20b5560af6cbfa2dce410c0a2fb669f1", size = 525554, upload-time = "2020-10-08T19:00:49.856Z" },
 ]
 
 [[package]]

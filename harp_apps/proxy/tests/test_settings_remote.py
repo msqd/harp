@@ -1,3 +1,5 @@
+import asyncio
+
 import httpx
 import pytest
 import respx
@@ -5,6 +7,7 @@ from httpx import ConnectTimeout
 
 from harp.config.asdict import asdict
 from harp.utils.testing.config import BaseConfigurableTest
+from harp_apps.proxy.constants import CHECKING
 from harp_apps.proxy.settings.remote import Remote, RemoteSettings
 
 
@@ -147,6 +150,19 @@ class TestRemoteStateful(BaseConfigurableTest):
         remote.set_up("http://example.com")
         assert remote.get_url() == "http://example.com/"
 
+    async def test_repeated_set_down_schedules_one_return_to_checking(self):
+        remote = self.create(settings={"endpoints": [{"url": "http://example.com"}], "check_after": 0.05})
+        remote.set_down("http://example.com")
+        remote.set_down("http://example.com")
+        remote.set_up("http://example.com")
+        remote.set_down("http://example.com")
+        delayed = asyncio.all_tasks() - {asyncio.current_task()}
+
+        await asyncio.sleep(0.2)
+
+        assert [task.exception() for task in delayed if not task.cancelled()] == [None]
+        assert remote["http://example.com"].status == CHECKING
+
     @respx.mock
     async def test_basic_probe(self):
         remote = self.create(
@@ -252,3 +268,6 @@ class TestRemoteStateful(BaseConfigurableTest):
         await remote.check()
         assert url.status == 0
         assert url.failure_reasons == {"PROBE_CONNECT_TIMEOUT"}
+
+    def test_model_validate_returns_the_remote(self):
+        assert isinstance(Remote.model_validate(self.initial), Remote)

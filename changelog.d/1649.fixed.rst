@@ -1,0 +1,1 @@
+The janitor sweeps Redis and memory blobs in batches of 500 ids, one sweep per loop for cleanup and metrics, so its memory no longer grows with the blob count (only with the ids cache entries reference) and no single Redis command deletes every orphan.

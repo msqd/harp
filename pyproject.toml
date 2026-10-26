@@ -49,7 +49,6 @@ dependencies = [
     # environment also depends on, and a cap on it propagates to co-installed
     # packages. We use two frozen names from it (Version, InvalidVersion).
     "packaging>=23.2",
-    "passlib>=1.7,<2",
     # Imported directly (harp_apps.metrics, harp.commandline.server).
     "prometheus-client>=0.20,<1",
     # Capped below 2.13, the last series validated: 2.14.1 breaks model_dump in our serializers (PydanticSerializationError, "index_key").
@@ -67,6 +66,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+argon2 = ["argon2-cffi>=23.1,<26"]
 mysql = [
     "aiomysql>=0.2,<0.4",
     "cryptography>=50.0,<51",
@@ -93,7 +93,7 @@ dev = [
     "freezegun>=1.5.5,<2",
     "furo>=2023.9.10,<2026.0.0",
     "hatchling==1.27.0",
-    "harp-proxy[mysql,postgresql,sentry]",
+    "harp-proxy[argon2,mysql,postgresql,sentry]",
     "honcho>=2.0,<2.1",
     "jscc>=0.3.0,<0.4",
     "jsonpointer>=3.0.0,<4",

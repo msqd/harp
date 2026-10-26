@@ -1,4 +1,5 @@
 import time
+from ipaddress import ip_address
 from dataclasses import replace
 
 import httpx
@@ -14,7 +15,14 @@ from harp.http.utils import hop_by_hop_names, parse_cache_control
 from harp.utils.bytes import HEADER_ENCODING, ensure_bytes, header_bytes
 from harp_apps.http_cache.coalescing import DEFAULT_TIMEOUT, Coalescer
 from harp_apps.http_cache.models import WrappedRequest
-from harp_apps.http_cache.storages import MARKERS_METADATA, MAX_BODY_SIZE_METADATA, REDACTION_METADATA, STAMP_METADATA
+from harp_apps.http_cache.settings import PurgeSettings
+from harp_apps.http_cache.storages import (
+    MARKERS_METADATA,
+    MAX_BODY_SIZE_METADATA,
+    REDACTION_METADATA,
+    STAMP_METADATA,
+    restore_date,
+)
 from harp_apps.http_cache.streams import ClosableByteStream, UpstreamBody
 
 logger = get_logger(__name__)
@@ -130,18 +138,35 @@ def _forbids_storage(request: httpx.Request) -> bool:
     return bool(parse_cache_control(request.headers.get("cache-control")).no_store)
 
 
+def _peer_address(request: httpx.Request):
+    """The address of the peer HARP is talking to, as the proxy saw it; ``None`` when unknown or unparsable."""
+    try:
+        address = ip_address(request.extensions.get("harp", {}).get("client_ip"))
+    except ValueError:
+        return None
+    return address
+
+
 #: Methods whose concurrent misses are coalesced: the ones a shared cache answers from a stored response.
 COALESCED_METHODS = frozenset({"GET", "HEAD"})
 
 
 class AsyncCacheTransport(HishelAsyncCacheTransport):
-    def __init__(self, *args, coalescing_timeout: float = DEFAULT_TIMEOUT, **kwargs):
-        """``coalescing_timeout`` bounds, in seconds, how long a request waits for the fetch it shares with others."""
+    def __init__(
+        self, *args, coalescing_timeout: float = DEFAULT_TIMEOUT, purge: PurgeSettings | None = None, **kwargs
+    ):
+        """``coalescing_timeout`` bounds, in seconds, how long a request waits for the fetch it shares with others.
+
+        ``purge`` opts into answering ``PURGE`` requests (#801); without it they are proxied like any other."""
         super().__init__(*args, **kwargs)
+        self._purge = purge or PurgeSettings()
         self._coalescer = Coalescer(coalescing_timeout)
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Wraps the request to use a rewritten url (for cache key handling)."""
+        if request.method == "PURGE" and self._purge.enabled:
+            return await self._handle_purge(request)
+
         internal_request = _httpx_to_internal(request)
         url = _rewrite_request_url(request)
 
@@ -170,6 +195,7 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
 
         response = _internal_to_httpx(internal_response)
         _restore_original_expires(response)
+        restore_date(response.headers)
         if request.method not in SAFE_METHODS and response.status_code < 400:
             await self._invalidate(request, response)
         return response
@@ -185,11 +211,24 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         """Drop the stored entries for the resources a successful unsafe request has changed (RFC 9111 §4.4)."""
         endpoint_name = _endpoint_name(request)
         for url in _invalidated_urls(request, response):
-            key = await self._cache_proxy._get_key_for_request(
-                Request(method="GET", url=_cache_url(url, endpoint_name))
-            )
-            await self.storage.invalidate(key)
+            await self.storage.invalidate(await self._key_for(url, endpoint_name))
             logger.debug(f"Cache invalidated by {request.method} {request.url}: url={url}")
+
+    async def _key_for(self, url: httpx.URL, endpoint_name: str) -> str:
+        return await self._cache_proxy._get_key_for_request(Request(method="GET", url=_cache_url(url, endpoint_name)))
+
+    async def _handle_purge(self, request: httpx.Request) -> httpx.Response:
+        """Answer ``PURGE`` here, never upstream: ``403`` for a peer out of the allow-list, else ``200`` or ``404``."""
+        peer = _peer_address(request)
+        if peer is None or not any(peer in network for network in self._purge.allow):
+            logger.warning(f"Cache purge refused, peer is not allowed: peer={peer} url={request.url}")
+            return httpx.Response(403, text="Forbidden")
+        key = await self._key_for(request.url.copy_with(fragment=None), _endpoint_name(request))
+        if not await self.storage.get_entries(key):
+            return httpx.Response(404, text="Not in cache")
+        await self.storage.invalidate(key)
+        logger.info(f"Cache purged: url={request.url}")
+        return httpx.Response(200, text="Purged")
 
     async def _send_without_caching(self, request: WrappedRequest) -> Response:
         """Go upstream without involving the cache at all, and report the result as a plain miss.

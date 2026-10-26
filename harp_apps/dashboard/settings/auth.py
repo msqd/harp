@@ -1,27 +1,47 @@
 import asyncio
 import hmac
 import secrets
+from concurrent.futures import ThreadPoolExecutor
 from functools import cached_property
 from time import monotonic
 from typing import Annotated, Any, Literal
 
-import passlib.hash
 from pydantic import BeforeValidator, Field, model_validator
 
 from harp import get_logger
 from harp.config import Configurable, Secret
 from harp.utils.config import yaml
-from harp_apps.dashboard.constants import TAlgorithm
+from harp_apps.dashboard.passwords import (
+    ALGORITHMS,
+    TAlgorithm,
+    dummy_hash,
+    hash_cost,
+    pad_verification,
+    verify_password,
+)
 
 logger = get_logger(__name__)
 
 CHECK_CACHE_TTL = 60.0
 CHECK_CACHE_MAX_ENTRIES = 1024
 
+# Password verifications are slow and memory hungry by design, and anyone can trigger them with random credentials. They
+# run on their own small pool, so a flood can neither starve the default executor (DNS resolution of upstreams) nor
+# exhaust memory. Excess verifications wait in the pool's queue. There is no failure rate limit (known limit).
+VERIFY_WORKERS = 4
+VERIFY_THREAD_PREFIX = "harp-auth-verify"
+_VERIFY_EXECUTOR = ThreadPoolExecutor(max_workers=VERIFY_WORKERS, thread_name_prefix=VERIFY_THREAD_PREFIX)
 
-def _replace_plain_algorithm_for_bc(value):
+
+def _check_algorithm(value):
     if value == "plain":
         return "plaintext"
+    if isinstance(value, str) and value not in ALGORITHMS:
+        raise ValueError(
+            f"Unsupported password algorithm «{value}». Accepted: {', '.join(ALGORITHMS)}. Other passlib "
+            "algorithms (bcrypt, md5_crypt, ...) are no longer supported: hash the passwords again with pbkdf2_sha256 "
+            "or argon2."
+        )
     return value
 
 
@@ -51,10 +71,10 @@ class BasicAuthSettings(Configurable):
 
     algorithm: Annotated[
         TAlgorithm,
-        BeforeValidator(_replace_plain_algorithm_for_bc),
+        BeforeValidator(_check_algorithm),
         Field(
             "pbkdf2_sha256",
-            description="Hashing algorithm used for passwords.",
+            description="Hashing algorithm used for passwords. «plaintext» is for tests only.",
         ),
     ]
 
@@ -67,18 +87,33 @@ class BasicAuthSettings(Configurable):
         ),
     ]
 
-    @cached_property
-    def _algorithm_module(self):
-        return getattr(passlib.hash, self.algorithm)
+    @model_validator(mode="after")
+    def _check_algorithm_is_usable(self):
+        if self.algorithm == "plaintext":
+            logger.warning(
+                "Dashboard passwords are stored in plaintext (dashboard.auth.algorithm=plaintext). "
+                "Use it for tests only, hash them with pbkdf2_sha256 or argon2."
+            )
+        elif self.algorithm == "argon2":
+            try:
+                import argon2  # noqa: F401
+            except ImportError as exc:
+                raise ValueError("The argon2 algorithm needs its extra: install harp-proxy[argon2].") from exc
+        self._warn_on_mixed_costs()
+        return self
 
-    @cached_property
-    def algorithm_impl(self):
-        return self._algorithm_module.verify
+    def _warn_on_mixed_costs(self):
+        costs = {hash_cost(self.algorithm, user.password.get_secret_value()) for user in self.users.values()}
+        if len(costs - {None}) > 1:
+            logger.warning(
+                "Dashboard passwords are hashed with different costs. Every check costs as much as the costliest, "
+                "the cheaper hashes only keep their strength: rehash them (dashboard.auth.users)."
+            )
 
     @cached_property
     def _dummy_hash(self):
-        """A valid hash for the configured algorithm, verified against when the user is unknown."""
-        return self._algorithm_module.hash("harp")
+        """A hash as costly as the configured users', verified against when the user is unknown."""
+        return dummy_hash(self.algorithm, [user.password.get_secret_value() for user in self.users.values()])
 
     @cached_property
     def _verified(self) -> dict[bytes, float]:
@@ -101,13 +136,18 @@ class BasicAuthSettings(Configurable):
         stored = user.password.get_secret_value() if user else self._dummy_hash
 
         try:
-            matches = self.algorithm_impl(password, stored)
+            matches = verify_password(self.algorithm, password, stored)
         except ValueError:
             logger.error(
                 f"Dashboard user «{username}» has a stored password that is not a valid {self.algorithm} hash, "
                 "authentication refused. Check dashboard.auth.users."
             )
+            # Not faster than an unknown user.
+            verify_password(self.algorithm, password, self._dummy_hash)
             return False
+
+        # Hashes made before an upgrade may be cheaper than new ones: every check costs the costliest.
+        pad_verification(self.algorithm, password, stored, self._dummy_hash)
 
         if not user or not matches:
             return False
@@ -122,7 +162,7 @@ class BasicAuthSettings(Configurable):
         if self._verified.get(key, 0) > now:
             return username
 
-        result = await asyncio.to_thread(self.check, username, password)
+        result = await asyncio.get_running_loop().run_in_executor(_VERIFY_EXECUTOR, self.check, username, password)
         if result:
             for expired in [k for k, v in self._verified.items() if v <= now]:
                 del self._verified[expired]

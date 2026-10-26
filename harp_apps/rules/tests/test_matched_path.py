@@ -79,7 +79,7 @@ def test_empty_path_is_root():
 
 def _remote_ruleset(pattern: str) -> RuleSet:
     rules = RuleSet()
-    rules.add({"api": {pattern: {"on_remote_request": "logger.info('ran')"}}})
+    rules.add({"api": {pattern: {"on_remote_request": "request.headers['X-Ran'] = '1'"}}})
     return rules
 
 
@@ -109,3 +109,92 @@ async def test_remote_level_path_only_pattern_does_not_warn(caplog):
     with caplog.at_level("WARNING"):
         await _dispatch_remote(_remote_ruleset("GET /users*"), "http://example.com/users?page=2")
     assert not _deprecations(caplog)
+
+
+async def _is_denied(pattern: str, raw_path: str, *, endpoint_pattern: str = "api", endpoint: str = "api") -> bool:
+    """Whether a deny rule written as ``pattern`` answers a request for ``raw_path``, through the subscriber."""
+    rules = RuleSet()
+    rules.add({endpoint_pattern: {pattern: {"on_request": "response = {'denied': True}"}}})
+    dispatcher = AsyncEventDispatcher()
+    RulesSubscriber(rules).subscribe(dispatcher)
+    event = ProxyFilterEvent(endpoint, request=_asgi_request(raw_path))
+    await dispatcher.adispatch(EVENT_FILTER_PROXY_REQUEST, event)
+    return event.response is not None and event.response.status == 200
+
+
+@pytest.mark.parametrize(
+    "raw_path",
+    [
+        "/admin//users",
+        "///admin///users",
+        "/admin;x=1/users",
+        "/admin/users;jsessionid=1",
+        "/;/admin/users",
+        "/admin%2Fusers",
+        "/admin%2fusers",
+        "/admin%2F%2Fusers",
+        "/%61dmin%2Fusers",
+    ],
+)
+async def test_deny_rule_holds_for_path_variants_the_upstream_normalises(raw_path):
+    assert await _is_denied("GET /admin/users", raw_path)
+
+
+@pytest.mark.parametrize("raw_path", ["/admin/", "/admin//", "/admin/;x", "/admin/users/", "/admin%2F", "/admin/a;b/"])
+async def test_prefix_deny_rule_still_matches_trailing_slash_variants(raw_path):
+    assert await _is_denied("GET /admin/*", raw_path)
+
+
+@pytest.mark.parametrize(
+    "raw_path", ["/admin/users/", "/admin/users//", "/admin/users/;x", "/admin/users;a=1/", "/%61dmin%2Fusers/"]
+)
+async def test_exact_deny_rule_also_matches_the_path_without_its_trailing_slash(raw_path):
+    assert await _is_denied("GET /admin/users", raw_path)
+
+
+async def test_any_method_exact_rule_also_matches_the_path_without_its_trailing_slash():
+    assert await _is_denied("* /admin/users", "/admin/users/")
+
+
+async def test_wildcard_in_the_path_skips_the_trailing_slash_retry():
+    assert not await _is_denied("GET /a*b", "/ab/")
+    assert await _is_denied("GET /a*b", "/ab")
+
+
+async def test_endpoint_names_do_not_get_the_trailing_slash_retry():
+    assert await _is_denied("GET /x", "/x", endpoint_pattern="api", endpoint="api")
+    assert not await _is_denied("GET /x", "/x", endpoint_pattern="api", endpoint="api/")
+
+
+async def test_remote_levels_do_not_get_the_trailing_slash_retry():
+    event = await _dispatch_remote(_remote_ruleset("GET /admin"), "http://example.com/admin/")
+    assert "X-Ran" not in event.request.headers
+    event = await _dispatch_remote(_remote_ruleset("GET /admin"), "http://example.com/admin")
+    assert "X-Ran" in event.request.headers
+
+
+async def test_exact_rule_for_the_root_still_matches_the_root_only():
+    assert await _is_denied("GET /", "/")
+    assert await _is_denied("GET /", "//")
+    assert not await _is_denied("GET /", "/x")
+
+
+async def test_wildcard_rule_does_not_match_without_the_trailing_slash():
+    assert not await _is_denied("GET /admin/*", "/admin")
+
+
+async def test_other_paths_are_not_denied():
+    assert not await _is_denied("GET /admin/users", "/admin/other/")
+    assert not await _is_denied("GET /admin/users", "/admin/users2")
+    assert not await _is_denied("GET /admin/users", "/admin/user;s")
+    assert not await _is_denied("GET /admin/users", "/other/admin/users")
+
+
+def test_fingerprint_collapses_variants_but_keeps_reserved_escapes_encoded():
+    event = ProxyFilterEvent("api", request=_asgi_request("/a///b;x=1/c%2Fd/"))
+    assert event.fingerprint == "GET /a/b/c%2Fd/"
+    assert event.alternate_fingerprints == ["GET /a/b/c/d/"]
+
+
+def test_root_stays_root():
+    assert ProxyFilterEvent("api", request=_asgi_request("/;a=1")).fingerprint == "GET /"

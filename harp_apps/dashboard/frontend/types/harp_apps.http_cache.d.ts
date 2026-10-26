@@ -43,6 +43,7 @@ declare namespace Apps.HttpCache {
     enabled?: boolean;
     transport?: Service;
     policy?: CachePolicySettings1;
+    purge?: PurgeSettings;
     storage?: Service1;
   }
   /**
@@ -90,6 +91,13 @@ declare namespace Apps.HttpCache {
     } | null;
     options?: CachePolicyOptions;
     [k: string]: unknown;
+  }
+  /**
+   * ``PURGE`` removes one cache entry, for the peers allowed to ask.
+   */
+  export interface PurgeSettings {
+    enabled?: boolean;
+    allow?: string[];
   }
   /**
    * A settings base class for service definitions.

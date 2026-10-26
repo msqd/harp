@@ -61,6 +61,64 @@ Metrics
   Aggregate queries still work; any ``by (path)`` or ``by (url)`` grouping, or matcher on these labels, stops
   matching. The remaining labels are listed in :doc:`prometheus`.
 
+Rules
+:::::
+
+``on_request`` and ``on_response`` rules match a normalised request path, see :doc:`/apps/rules/patterns`. The proxy
+still forwards the target unchanged. Compared to 0.12:
+
+- Empty segments are dropped: a pattern containing ``//`` (``GET /api//admin``) no longer matches anything, write
+  ``GET /api/admin``. Requests for ``/api//admin`` now match ``GET /api/admin``.
+- ``;`` parameters are dropped: a pattern containing ``;`` no longer matches. Requests for ``/admin;x=1`` now match
+  ``GET /admin``.
+- A final slash is kept once: ``/admin//`` and ``/admin/;x`` are matched as ``/admin/``, so ``GET /admin/*`` keeps
+  matching them. An ``on_request`` or ``on_response`` pattern whose path has no wildcard now also matches the path
+  with its final slash removed, whatever its method part: ``GET /admin`` and ``* /admin`` match ``/admin/`` too.
+  Endpoint patterns and ``on_remote_*`` levels are not concerned. To deny a path and everything under it, write
+  ``GET /admin*``.
+- Empty segments are gone before matching, so a wildcard no longer matches one: ``GET /*/users`` no longer matches
+  ``//users``.
+- ``%2F`` (any case) stays encoded in the path, and rules are also matched against a second form with ``%2F`` read as
+  ``/``. A non-deny rule written for ``GET /a/b`` now also fires for ``/a%2Fb``, and a rule fires once per request.
+- ``on_remote_request`` and ``on_remote_response`` rules still match the raw path sent to the remote endpoint, none of
+  the above applies to them.
+- Not normalised, a deny rule has to account for them: double-encoded escapes (``%252F``), ``%3B`` read as ``;``,
+  ``%00``, ``%5C`` and backslashes, and case (patterns are case sensitive).
+
+Redis blob storage
+::::::::::::::::::
+
+- Blobs are now stored under the ``harp:blob:`` key prefix, so the janitor only ever lists, sweeps and counts those
+  keys: other applications can share the Redis database. Nothing to do to keep working: a blob stored by an earlier
+  version is still found under its bare id (40 lowercase hexadecimal characters for a blob, the shape blob ids still
+  have; 64 for an HTTP cache entry written by 0.12). Any other id is only looked up under the prefix. Residue: a
+  string key of another application, named with 40 or 64 lowercase hexadecimal characters and containing a newline, is
+  still readable through ``/api/blobs/<id>``. A proxy client can also make the cache delete the bare key
+  ``sha256(<url>)`` with an unsafe request to that URL: a foreign key is only at risk if another application names its
+  keys by the same sha256. This is unchanged from before.
+- Those older blobs are never listed again: the janitor does not sweep them (orphans among them stay) and the
+  ``storage_blobs`` metrics do not count them, and HTTP cache entries written before the upgrade are not expired by
+  their TTL. They are not copied either. Nothing removes these bare keys on its own: only an explicit deletion of that
+  exact id does. To reclaim them once the cache is warm again:
+
+  - On a Redis database dedicated to HARP, flush it. The cache refills, but message bodies still stored in the SQL
+    database lose their blobs.
+  - On a shared database, delete a bare key only if its value starts with a content-type line HARP writes (for example
+    ``cache/meta`` or ``http/headers``, followed by a newline). Never delete by name shape alone: it can match other
+    applications' keys. Keep the 40-character blobs that stored messages still reference.
+
+Dashboard authentication
+::::::::::::::::::::::::
+
+- passlib is no longer a dependency. ``dashboard.auth.algorithm`` accepts ``pbkdf2_sha256`` (default), ``argon2``
+  (needs ``harp-proxy[argon2]``) and ``plaintext`` (tests only, logs a warning at every start). Any other value
+  (``bcrypt``, ``md5_crypt``, ``sha512_crypt``, ...) makes the configuration invalid, and HARP refuses to start with a
+  message listing the accepted ones: hash the passwords again with ``pbkdf2_sha256`` or ``argon2``, see
+  :doc:`/apps/dashboard/index`.
+- Existing ``pbkdf2_sha256`` hashes (``$pbkdf2-sha256$...``, made by passlib) keep working as they are, no rehash.
+- Hashes created by HARP now use 600000 PBKDF2 rounds (passlib's default was 29000), so a login costs more CPU.
+  Successful logins are cached for a minute.
+
 .. _upgrading-0-12:
 
 Upgrading to 0.12
@@ -141,6 +199,14 @@ Upstreams
 - The TLS trust store is certifi 2026.10.19 or later, which also drops roots Mozilla removed since
   2025.10 (DigiCert Global Root CA, DigiCert High Assurance EV, Entrust and AffirmTrust among them). An
   upstream whose chain ends only at one of them now fails TLS verification.
+
+Proxy
+-----
+
+- ``proxy.tags.max_value_length`` above 255 or ``proxy.tags.max_name_length`` above 64 now fails at
+  startup: they are the widths of the storage columns. Set them to 255 and 64 or lower (the old
+  ``max_value_length`` default of 256 failed to store on PostgreSQL). A tag over the bound is still
+  dropped.
 
 Storage
 -------

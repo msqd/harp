@@ -16,6 +16,7 @@ from harp.config import ConfigurationBuilder
 from harp.config.asdict import asdict
 from harp.utils.testing.communicators import ASGICommunicator
 from harp_apps.dashboard.controllers import DashboardController
+from harp_apps.dashboard.passwords import hash_password
 
 DASHBOARD_PORT = 4080
 
@@ -255,7 +256,13 @@ class TestDefaultDashboardAuth:
 
 
 class TestExplicitBasicAuth:
-    BASIC = {"auth": {"type": "basic", "algorithm": "plaintext", "users": {"alice": {"password": "s3cret"}}}}
+    BASIC = {
+        "auth": {
+            "type": "basic",
+            "algorithm": "pbkdf2_sha256",
+            "users": {"alice": {"password": hash_password("pbkdf2_sha256", "s3cret")}},
+        }
+    }
 
     async def test_configured_users_work_and_no_link_is_logged(self, boot, caplog):
         system, client = await boot(self.BASIC)

@@ -1,14 +1,17 @@
 import logging
 from re import escape
-from unittest.mock import ANY, patch
+from unittest.mock import ANY, Mock, patch
 
 import orjson
 import pytest
 
+from harp.http import HttpRequest
+from harp.typedefs import GlobalSettings
 from harp.utils.testing import RE
+from harp.views.json import serialize
 from harp.utils.testing.communicators import ASGICommunicator
 from harp.utils.testing.databases import parametrize_with_blob_storages_urls, parametrize_with_database_urls
-from harp_apps.dashboard.tests._mixins import AdminThroughASGIFixtureMixin
+from harp_apps.dashboard.tests._mixins import ADMIN_ACTOR, AdminThroughASGIFixtureMixin
 from harp_apps.dashboard.controllers.system import SystemController
 from harp_apps.dashboard.tests._mixins import SystemControllerTestFixtureMixin, parametrize_with_settings
 from harp_apps.proxy.constants import CHECKING, DOWN, UP
@@ -84,6 +87,26 @@ class TestSystemController(
                 "redis": None,
             },
         }
+
+    @parametrize_with_settings({})
+    @parametrize_with_database_urls("sqlite")
+    @parametrize_with_blob_storages_urls("sql")
+    async def test_get_lists_development_only_settings(self, controller: SystemController):
+        response = await controller.get(Mock(spec=HttpRequest, extensions={"actor": ADMIN_ACTOR}))
+
+        (item,) = orjson.loads(serialize(response))["development_only_settings"]
+        assert item["name"] == "storage.url"
+        assert "PostgreSQL" in item["message"]
+
+    @parametrize_with_settings({})
+    @parametrize_with_database_urls("sqlite")
+    @parametrize_with_blob_storages_urls("sql")
+    async def test_get_lists_nothing_when_settings_are_production_grade(self, controller: SystemController):
+        controller.settings = GlobalSettings({})
+
+        response = await controller.get(Mock(spec=HttpRequest, extensions={"actor": ADMIN_ACTOR}))
+
+        assert orjson.loads(serialize(response))["development_only_settings"] == []
 
     @parametrize_with_settings({})
     @parametrize_with_database_urls("sqlite")

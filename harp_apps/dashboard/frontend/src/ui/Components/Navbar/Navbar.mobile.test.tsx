@@ -35,7 +35,7 @@ const menuButton = () => screen.getByRole("button", { name: "Open main menu" })
 
 /**
  * The desktop links sit in the document at every viewport and are merely hidden by a css breakpoint, so counting
- * links proves nothing about what a phone can reach. These tests drive the menu button, which below the `sm`
+ * links proves nothing about what a phone can reach. These tests drive the menu button, which below the `md`
  * breakpoint is the only way in.
  */
 const openMenu = () => {

@@ -73,7 +73,7 @@ class Application:
     def normalize(self, settings):
         if self.settings_type:
             if not isinstance(settings, self.settings_type):
-                settings = self.settings_type(**settings)
+                settings = self.settings_type(**(settings or {}))
             return asdict(settings, secure=False)
         return settings
 
@@ -200,7 +200,7 @@ class ApplicationsRegistry:
             self._applications[short_name] = self.get_application(full_name)
         elif self._applications[short_name] != self.get_application(full_name):
             raise ValueError(
-                f"Application {short_name} already registered with a different type ({self._applications[short_name].__module__}.{self._applications[short_name].__qualname__})."
+                f"Application {short_name} already registered as {self.resolve_name(short_name)}, cannot register {full_name}."
             )
 
     def remove(self, *names):

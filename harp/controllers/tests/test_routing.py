@@ -4,7 +4,8 @@ from structlog.testing import capture_logs
 
 import harp
 from harp.controllers import GetHandler, PutHandler, RoutingController
-from harp.http import HttpRequest
+from harp.http import HttpRequest, HttpResponse
+from harp.utils.arguments import Arguments
 from harp.security.actor import Actor, ActorAccount, Role, set_actor
 
 
@@ -104,3 +105,34 @@ async def test_a_controller_requiring_roles_treats_an_undeclared_handler_as_admi
 
     assert (await controller(_request("GET", "/undeclared", Role.EDITOR))).status == 403
     assert await controller(_request("GET", "/undeclared", Role.ADMIN)) == "undeclared"
+
+
+class UnresolvableController(RoutingController):
+    @GetHandler("/unresolvable")
+    async def unresolvable(self, missing):
+        raise AssertionError("handler must not run with an unresolved argument")
+
+
+async def test_unresolvable_handler_argument_is_a_500_not_a_call(monkeypatch):
+    monkeypatch.setattr(harp, "DEBUG", False)
+    response = await UnresolvableController()(HttpRequest(method="GET", path="/unresolvable"))
+    assert response.status == 500
+    assert orjson.loads(response.body) == {"error": "TypeError", "status": 500}
+
+
+async def test_router_arguments_reach_the_router_as_keywords():
+    class StrictSlashController(BoomController):
+        RouterArguments = Arguments(trim_last_slash=False)
+
+    response = await StrictSlashController()(HttpRequest(method="GET", path="/boom/"))
+    assert response.status == 404
+
+
+async def test_handler_parameter_defaults_apply_on_static_routes():
+    class DefaultsController(RoutingController):
+        @GetHandler("/items")
+        async def items(self, request, page=1):
+            return HttpResponse(str(page))
+
+    response = await DefaultsController()(HttpRequest(method="GET", path="/items"))
+    assert (response.status, response.body) == (200, b"1")
