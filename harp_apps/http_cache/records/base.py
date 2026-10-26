@@ -275,5 +275,8 @@ class CacheRecords(ABC):
     async def body_digests(self) -> set[str]:
         """The digests of the stored bodies."""
 
+    async def ready(self) -> None:
+        """Check, at startup, that the backend can hold the records. Raise, with what to change, when it cannot."""
+
     async def close(self) -> None:
         """Release what the backend holds."""

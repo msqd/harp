@@ -26,6 +26,11 @@ http_cache:
     entries: 500  # Entries a round deletes, at most
     rounds: 20  # Rounds a run does, at most (a run is one sweep of the janitor)
 
+  # Records in Redis, when Redis is the blob storage of the storage application (defaults shown)
+  redis:
+    prefix: "harp:cache:"  # Start of every key the cache writes
+    retention: 2592000  # Seconds a body is kept after a variant referring to it was stored or freshened (30 days)
+
   # Cache storage (default: harp_apps.http_cache.storages.AsyncStorage)
   storage:
     base: hishel.AsyncBaseStorage

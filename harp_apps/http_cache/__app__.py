@@ -18,6 +18,8 @@ async def on_bind(event: OnBindEvent):
     )
     if "storage" in event.settings:
         event.container.load(Path(dirname(__file__)) / "services_sql.yml", bind_settings=settings)
+        if event.settings["storage"].blobs.type == "redis":
+            event.container.load(Path(dirname(__file__)) / "services_redis.yml", bind_settings=settings)
 
     # WORKAROUND: Manually override http_client's transport
     # until cross-app service overrides are supported (issue #806)
@@ -39,9 +41,11 @@ async def on_bind(event: OnBindEvent):
 
 
 async def on_bound(event: OnBoundEvent):
-    """Declare the periodic maintenance of the cache (ADR-0014): the janitor schedules it, the storage runs none."""
+    """Refuse to start on records that cannot hold the cache, and declare its periodic maintenance (ADR-0014): the
+    janitor schedules it, the storage runs none."""
     storage = event.provider.get("http_cache.storage")
     if isinstance(storage, AsyncStorage):
+        await storage.ready()
         for sweep in storage.sweeps():
             event.sweeps.declare(sweep)
 

@@ -41,7 +41,7 @@ services:
     base: [ !cfg "storage.base", "hishel.AsyncBaseStorage" ]
     type: [ !cfg "storage.type", "harp_apps.http_cache.storages.AsyncStorage" ]
     defaults:
-      records: !ref [ "http_cache.records.sql", "http_cache.records.memory" ]
+      records: !ref [ "http_cache.records.redis", "http_cache.records.sql", "http_cache.records.memory" ]
       reclamation: !cfg "reclamation"
     arguments: [ !cfg "storage.arguments", { } ]
 

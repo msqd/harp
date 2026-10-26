@@ -701,6 +701,10 @@ class AsyncStorage(AsyncBaseStorage):
             return
         logger.debug(f"Cache entry removed: entry_id={id}" if removed else f"Cache entry already gone: entry_id={id}")
 
+    async def ready(self) -> None:
+        """Check, at startup, that the records can be kept where they are: raises, with what to change, when not."""
+        await self._records.ready()
+
     async def close(self) -> None:
         """Close the storage (required by AsyncBaseStorage interface)."""
         logger.debug("Closing AsyncStorage")

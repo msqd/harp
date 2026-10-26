@@ -45,6 +45,7 @@ declare namespace Apps.HttpCache {
     policy?: CachePolicySettings1;
     purge?: PurgeSettings;
     reclamation?: ReclamationSettings;
+    redis?: RedisRecordsSettings;
     storage?: Service1;
   }
   /**
@@ -108,6 +109,13 @@ declare namespace Apps.HttpCache {
     bans?: number;
     entries?: number;
     rounds?: number;
+  }
+  /**
+   * The records of the cache in Redis, which hold them when Redis is the blob storage of the ``storage`` application.
+   */
+  export interface RedisRecordsSettings {
+    prefix?: string;
+    retention?: number;
   }
   /**
    * A settings base class for service definitions.

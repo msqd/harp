@@ -1,0 +1,10 @@
+# Loaded when Redis is the blob storage of the storage application: the cache keeps its records in that Redis.
+
+services:
+
+  - name: "http_cache.records.redis"
+    type: harp_apps.http_cache.records.redis.RedisCacheRecords
+    defaults:
+      client: !ref "storage.redis"
+      prefix: !cfg "redis.prefix"
+      retention: !cfg "redis.retention"

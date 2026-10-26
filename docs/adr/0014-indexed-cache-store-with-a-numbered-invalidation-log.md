@@ -78,7 +78,7 @@ is accepted before 1.0.
   deleted; any other integrity error is raised. A 304 freshening replaces its variant only if it is still there: a
   copy read before a purge, or before another instance replaced it, does not come back.
 - **Memory** keeps the same records in dictionaries and a sorted list, and is used when the storage application is not
-  loaded. **Redis** blob storage no longer holds the cache: it is in the storage database until the Redis backend.
+  loaded. **Redis** blob storage no longer holds the cache: it is in the storage database until the Redis backend (#1595, below).
 - **The old cache** (`cache/meta` blobs) is not read. The janitor sees it as orphan blobs and deletes it, after its
   grace period. During a rolling upgrade, an instance still on the old version keeps writing and reading blobs: the
   entries it stores are not seen by the new instances, and the janitor of a new instance deletes them once they are
@@ -186,6 +186,33 @@ is accepted before 1.0.
   lock does on PostgreSQL. A test on a SQLite file covers it.
 - **Memory** keeps the same rules in the process: the floor is an integer, the newest ban per `(kind, prefix, mode)`.
 - **Redis** (#1595) has to implement `bans`, `reclaim` and `reclaim_orphans`, and the floor, in its scripts.
+
+## As implemented in the Redis store (#1595)
+
+- **Selected** by `storage.blobs.type: redis`, through the client of `storage.redis`; the records are then in no
+  database. Every key starts with `http_cache.redis.prefix` (`harp:cache:`), distinct from the blob prefix.
+- **Layout**: a variant record is a hash (`v:<entry id>`), a resource record a hash of variant to entry id (`r:<key>`),
+  the keys of an endpoint a sorted set with equal scores, hence in bytewise order and read by `ZRANGEBYLEX` ranges
+  (`i:<endpoint>`, with `endpoints` for the endpoints), bodies strings by digest (`b:<digest>`), sorted sets by instant
+  stored (expiry) and by body size (largest, overall and per endpoint), counters hashes per endpoint. The newest ban of
+  each `(mode, kind, prefix)` is one field of a hash, as in the memory records, and the counter and the floor strings.
+- **Every operation is one Lua script.** Redis runs a script alone, so the store needs none of the locks, retries and
+  floor row lock of the SQL records: bans are numbered by `INCR` in the script that records them, a fill checks the
+  bans and the floor and writes in one step, and none can be in flight when reclamation raises the floor. The lookup
+  runs the ban check in the same script. Scripts touch keys they were not given, which Redis Cluster would refuse: it is
+  out of scope. Reclamation pages through the key index (500 keys a script call), so no script holds Redis for long.
+- **Expiry.** Only bodies (`b:`) and the sets of the entries that refer to them (`x:`) have an expiry, `retention`
+  (30 days) after a variant referring to them was stored or freshened, extended with `PEXPIREAT … GT` and never
+  shortened. Records, indexes, counters and bans have none, so a `volatile-*` policy cannot evict a ban. The set of
+  referrers (entry ids, not a count) is what deletes a body with its last variant at once; it expires with the body and
+  is rebuilt as variants are stored, so a lost reference costs a body, never a record. A variant whose body is gone is
+  not served and is deleted when found; `reclaim_orphans` deletes the bodies no set refers to, a page of the keyspace
+  at a time.
+- **Startup** (`CacheRecords.ready`, called when the application is bound) refuses a Redis older than 7 (`GT` needs it)
+  or whose `maxmemory-policy` is neither `noeviction` nor `volatile-*`, with what to change. When `CONFIG GET` is
+  refused (managed services), it warns and starts.
+- **The counter restarting** at one after Redis lost its data lets a response fetched before the restart, stored after
+  it, escape the first bans. It is the only case, and bounded by the fetches in flight at that instant.
 
 ## Rejected
 

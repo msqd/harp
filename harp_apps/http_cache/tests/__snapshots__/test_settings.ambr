@@ -142,6 +142,25 @@
         'title': 'ReclamationSettings',
         'type': 'object',
       }),
+      'RedisRecordsSettings': dict({
+        'additionalProperties': False,
+        'description': 'The records of the cache in Redis, which hold them when Redis is the blob storage of the ``storage`` application.',
+        'properties': dict({
+          'prefix': dict({
+            'default': 'harp:cache:',
+            'title': 'Prefix',
+            'type': 'string',
+          }),
+          'retention': dict({
+            'default': 2592000,
+            'exclusiveMinimum': 0,
+            'title': 'Retention',
+            'type': 'number',
+          }),
+        }),
+        'title': 'RedisRecordsSettings',
+        'type': 'object',
+      }),
       'Service': dict({
         'additionalProperties': True,
         'description': 'A settings base class for service definitions.',
@@ -230,6 +249,9 @@
       }),
       'reclamation': dict({
         '$ref': '#/$defs/ReclamationSettings',
+      }),
+      'redis': dict({
+        '$ref': '#/$defs/RedisRecordsSettings',
       }),
       'storage': dict({
         '$ref': '#/$defs/Service',
@@ -396,6 +418,25 @@
         'title': 'ReclamationSettings',
         'type': 'object',
       }),
+      'RedisRecordsSettings': dict({
+        'additionalProperties': False,
+        'description': 'The records of the cache in Redis, which hold them when Redis is the blob storage of the ``storage`` application.',
+        'properties': dict({
+          'prefix': dict({
+            'default': 'harp:cache:',
+            'title': 'Prefix',
+            'type': 'string',
+          }),
+          'retention': dict({
+            'default': 2592000,
+            'exclusiveMinimum': 0,
+            'title': 'Retention',
+            'type': 'number',
+          }),
+        }),
+        'title': 'RedisRecordsSettings',
+        'type': 'object',
+      }),
       'Service': dict({
         'additionalProperties': True,
         'description': 'A settings base class for service definitions.',
@@ -484,6 +525,9 @@
       }),
       'reclamation': dict({
         '$ref': '#/$defs/ReclamationSettings',
+      }),
+      'redis': dict({
+        '$ref': '#/$defs/RedisRecordsSettings',
       }),
       'storage': dict({
         '$ref': '#/$defs/Service',

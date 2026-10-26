@@ -14,6 +14,7 @@ from harp_apps.http_cache.transports import AsyncCacheTransport
 from harp_apps.storage.constants import SKIP_REQUEST_STORAGE, SKIP_RESPONSE_STORAGE, SKIP_STORAGE
 from harp_apps.http_cache.models import CacheBody, CacheResource, CacheStats, CacheVariant
 from harp_apps.http_cache.records import MemoryCacheRecords
+from harp_apps.http_cache.records.redis import RedisCacheRecords
 from harp_apps.http_cache.records.sql import SqlCacheRecords
 
 URL = "http://origin.test/item"
@@ -118,6 +119,20 @@ async def everything(records) -> str:
                     for table in (CacheResource, CacheVariant, CacheBody, CacheStats)
                 ]
             )
+    if isinstance(records, RedisCacheRecords):
+        client, dump = records.client, []
+        async for key in client.scan_iter():
+            dump.append(repr(key))
+            match (await client.type(key)).decode():
+                case "string":
+                    dump.append(repr(await client.get(key)))
+                case "hash":
+                    dump.append(repr(await client.hgetall(key)))
+                case "set":
+                    dump.append(repr(await client.smembers(key)))
+                case "zset":
+                    dump.append(repr(await client.zrange(key, 0, -1, withscores=True)))
+        return "".join(dump)
     return repr(vars(records))
 
 

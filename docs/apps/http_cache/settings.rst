@@ -191,6 +191,38 @@ the defaults, one run per janitor ``period`` (10 minutes by default), about 1 00
         entries: 1000
 
 
+redis
+-----
+
+**Default:** ``prefix: "harp:cache:"``, ``retention: 2592000``
+
+Where the records are in Redis, used when Redis is the blob storage of the storage application, see
+:ref:`http-cache-redis`.
+
+redis.prefix
+~~~~~~~~~~~~
+
+**Type:** ``str``, **Default:** ``harp:cache:``
+
+The start of every key the cache writes. The Redis database may be shared with other applications: the cache touches
+only the keys under its prefix.
+
+redis.retention
+~~~~~~~~~~~~~~~
+
+**Type:** ``float``, **Default:** ``2592000`` (30 days)
+
+Seconds a body is kept after a variant that refers to it was stored or freshened. Keep it above the storage ``ttl``: an
+entry whose body is gone is not served.
+
+.. code-block:: yaml
+
+    http_cache:
+      redis:
+        prefix: "myapp:cache:"
+        retention: 604800
+
+
 storage
 -------
 

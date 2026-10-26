@@ -59,7 +59,9 @@ of their bodies as it writes, and indexes the entries by size.
   ``http_cache_*`` tables, shared by every instance of HARP: PostgreSQL, or SQLite for development. The tables are
   created by the migrations of the ``http_cache`` application. A response whose path is over 2048 bytes is
   not cached: it is counted, per endpoint, in the cache counters, and a warning is logged once per endpoint.
-- Without it, the records are in the process, and lost at restart.
+- With Redis as the blob storage of the storage application, the records are in that Redis, shared by every instance
+  of HARP (see :ref:`below <http-cache-redis>`). The database holds none of them.
+- Without the storage application, the records are in the process, and lost at restart.
 
 .. versionchanged:: 0.14
 
@@ -67,12 +69,64 @@ of their bodies as it writes, and indexes the entries by size.
     are not read anymore: the cache starts empty once, at upgrade, and the :doc:`janitor </apps/janitor/index>` deletes
     the old blobs. During a rolling upgrade, the entries that an instance still on the old version stores are not seen
     by the new ones, and are deleted by the janitor once older than its grace period: they miss and are fetched again.
-    A response whose URL carries a redacted query parameter used to be left out of the cache, and is now cached. With Redis as blob storage, the cache is now in the storage database until it has a Redis backend of
-    its own.
+    A response whose URL carries a redacted query parameter used to be left out of the cache, and is now cached.
 
 .. versionchanged:: 0.13
 
     A cache key used to hold a single entry, so variants of a resource evicted each other.
+
+
+.. _http-cache-redis:
+
+The cache in Redis
+::::::::::::::::::
+
+Set ``storage.blobs.type`` to ``redis`` (see the :doc:`storage application </apps/storage/index>`), and the cache keeps
+its records in that Redis, through the same client. Nothing else changes: the cache behaves as it does on the database,
+and is measured by the same RFC 9111 suite.
+
+**Requirements.** Redis 7 or later, standalone (Redis Cluster is not supported), and a ``maxmemory-policy`` that is
+``noeviction`` or one of the ``volatile-*`` policies. HARP checks both when it starts, and refuses to start otherwise,
+saying what to change. The invalidation log lives in Redis: under an ``allkeys-*`` policy Redis may evict a ban to make
+room, and the entries it invalidated would be served again. When Redis refuses the ``CONFIG`` command (some managed
+services do), HARP cannot check the policy, warns, and starts: make sure it is not ``allkeys-*``.
+
+**Layout.** Every key starts with the ``redis.prefix`` setting (``harp:cache:``), the Redis database may be shared.
+
+================================ ===============================================================================
+Key                              Holds
+================================ ===============================================================================
+``v:<entry id>``                 hash, a variant record
+``r:<cache key>``                hash, a resource record: variant to entry id
+``i:<endpoint>``                 sorted set of the cache keys of an endpoint, all scores equal: bytewise order
+``endpoints``                    the same, for the endpoints that hold a key
+``b:<digest>``, ``x:<digest>``   a body, and the set of the entries that refer to it
+``age``, ``size``, ``size:<e>``  the entries by instant stored, by body size, and by body size for one endpoint
+``stats:*``                      counters per endpoint: entries, bytes, refused
+``bans``, ``counter``, ``floor`` the invalidation log, its counter, and the floor under the stamps of new fills
+================================ ===============================================================================
+
+Every operation is one Lua script, which Redis runs alone: the cache needs none of the locks and retries the database
+needs, and a ban is checked in the same round trip as the lookup.
+
+**What can be evicted.** Only the bodies, which are what makes the cache big, carry an expiry. Each variant stored or
+freshened extends the expiry of its body to ``redis.retention`` from then (``PEXPIREAT … GT``: never shortened by a
+variant with less to say). A body is deleted with the last variant that refers to it, and one that nothing refers to
+is deleted by the reclamation sweep. A variant whose body expired or was evicted is not served, and is deleted when the
+cache meets it. Records, indexes, counters and the invalidation log never expire, so a ``volatile-*`` policy does not
+touch them. Under ``noeviction``, a write that finds Redis full fails, and the response is served, not cached.
+
+**Operating notes.**
+
+- Keep ``redis.retention`` above the storage ``ttl`` (30 days against 24 hours by default), or entries stop being served
+  before they expire.
+- Memory is spent on records without expiry as well: size ``maxmemory`` for them. They are small next to the bodies.
+- Persistence (RDB, AOF) is yours to choose. Losing the data empties the cache and the log together, and the numbers of
+  the bans start again from one. A response fetched before the restart and stored after it carries a number from before,
+  which the first bans do not cover: that is the one case where an invalidation can miss, and only for a response
+  already in flight. Restoring an old snapshot under a running fleet is worse: restore all or nothing.
+- The same Redis serves the blob storage: the cache and the blobs use different prefixes (``harp:cache:`` and
+  ``harp:blob:``), and each sweep only scans its own.
 
 
 Concurrent misses
