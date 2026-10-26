@@ -97,7 +97,7 @@ class SystemController(RoutingController):
     @GetHandler("/settings")
     async def get_settings(self):
         return JsonHttpResponse(
-            asdict(self.settings, verbose=True, secure=True, mode="python"),
+            asdict(self.settings, verbose=True, secure=True),
         )
 
     @GetHandler("/dependencies")
