@@ -4,9 +4,8 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import func, select
 
 from harp.models import Blob as BlobModel
-from harp_apps.janitor.settings import JanitorSettings
-from harp_apps.janitor.tests import worker_with_grace
-from harp_apps.janitor.worker import JanitorWorker
+from harp_apps.storage.sweeps import StorageSweeps
+from harp_apps.storage.tests import RETENTION, sweeps_with_grace
 from harp_apps.storage.models import Blob, Message
 from harp_apps.storage.models.transactions import transaction_tag_values_association_table
 from harp_apps.storage.models.metrics import MetricValue
@@ -15,9 +14,9 @@ from harp_apps.storage.types import IBlobStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 
-class TestJanitorWorker(StorageTestFixtureMixin):
+class TestStorageSweeps(StorageTestFixtureMixin):
     async def test_delete_old_transactions(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
-        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings())
+        worker = StorageSweeps(sql_storage, blob_storage, RETENTION)
 
         await self.create_transaction(
             sql_storage, started_at=datetime.now(UTC) - timedelta(days=60) - timedelta(hours=1)
@@ -32,13 +31,13 @@ class TestJanitorWorker(StorageTestFixtureMixin):
         async with sql_storage.session_factory() as session:
             assert (await worker.compute_metrics(session))["storage.transactions"] == 3
 
-        await worker.delete_old_transactions()
+        await worker.purge_old_transactions()
 
         async with sql_storage.session_factory() as session:
             assert (await worker.compute_metrics(session))["storage.transactions"] == 1
 
     async def test_retention_leaves_no_child_row_nor_blob(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
-        worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
+        worker = sweeps_with_grace(sql_storage, blob_storage, timedelta(0))
         transaction = await self.create_transaction(sql_storage, started_at=datetime.now(UTC) - timedelta(days=90))
         await sql_storage.transactions.set_tags(transaction, {"env": "tests"})
         headers = await self.create_blob(blob_storage, "headers")
@@ -47,7 +46,7 @@ class TestJanitorWorker(StorageTestFixtureMixin):
             sql_storage, transaction_id=transaction.id, kind="misc", summary="x", headers=headers.id, body=body.id
         )
 
-        await worker.delete_old_transactions()
+        await worker.purge_old_transactions()
         await worker.delete_orphan_blobs()
 
         async with sql_storage.session_factory() as session:
@@ -58,7 +57,7 @@ class TestJanitorWorker(StorageTestFixtureMixin):
 
     async def test_compute_and_store_metrics(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
         """Runs on one connection: the in-memory default database has no second one to give (#995)."""
-        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings())
+        worker = StorageSweeps(sql_storage, blob_storage, RETENTION)
         await self.create_transaction(sql_storage)
 
         await asyncio.wait_for(worker.compute_and_store_metrics(), timeout=10)
@@ -68,7 +67,7 @@ class TestJanitorWorker(StorageTestFixtureMixin):
             assert (await session.execute(select(MetricValue.value).filter_by(metric_id=metric.id))).scalar_one() == 1
 
     async def test_delete_orphan_blobs(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
-        worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
+        worker = sweeps_with_grace(sql_storage, blob_storage, timedelta(0))
 
         b1 = await self.create_blob(blob_storage, "foo")
         b2 = await self.create_blob(blob_storage, "bar")
@@ -113,7 +112,7 @@ class TestJanitorWorker(StorageTestFixtureMixin):
         is where a cache, or anything else that stores blobs, meets the consequence.
         """
 
-        worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
+        worker = sweeps_with_grace(sql_storage, blob_storage, timedelta(0))
 
         blob = await self.create_blob(blob_storage, "swept")
         assert await blob_storage.get(blob.id) is not None
@@ -129,7 +128,7 @@ class TestJanitorWorker(StorageTestFixtureMixin):
     async def test_delete_old_transactions_but_keep_flagged_ones(
         self, sql_storage: SqlStorage, blob_storage: IBlobStorage
     ):
-        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings())
+        worker = StorageSweeps(sql_storage, blob_storage, RETENTION)
 
         t1 = await self.create_transaction(
             sql_storage, started_at=datetime.now(UTC) - timedelta(days=60) - timedelta(hours=1)
@@ -147,46 +146,34 @@ class TestJanitorWorker(StorageTestFixtureMixin):
         async with sql_storage.session_factory() as session:
             assert (await worker.compute_metrics(session))["storage.transactions"] == 3
 
-        await worker.delete_old_transactions()
+        await worker.purge_old_transactions()
 
         async with sql_storage.session_factory() as session:
             assert (await worker.compute_metrics(session))["storage.transactions"] == 2
 
-    async def test_old_after_setting_drives_retention(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
-        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings(old_after=2))
+    async def test_retention_drives_what_is_purged(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
+        worker = StorageSweeps(sql_storage, blob_storage, timedelta(days=2))
 
         await self.create_transaction(sql_storage, started_at=datetime.now(UTC) - timedelta(days=3))
         await self.create_transaction(sql_storage, started_at=datetime.now(UTC) - timedelta(days=1))
 
-        await worker.delete_old_transactions()
+        await worker.purge_old_transactions()
 
         async with sql_storage.session_factory() as session:
             assert (await worker.compute_metrics(session))["storage.transactions"] == 1
 
-    async def test_period_setting_drives_sleep(self, sql_storage: SqlStorage, blob_storage: IBlobStorage, monkeypatch):
-        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings(period=7))
-        sleeps = []
 
-        async def fake_sleep(seconds):
-            sleeps.append(seconds)
-            worker.stop()
+def test_declares_the_purge_the_orphan_sweep_and_the_metrics_in_that_order(sql_storage, blob_storage):
+    declared = StorageSweeps(sql_storage, blob_storage, RETENTION).sweeps()
 
-        async def noop():
-            pass
-
-        monkeypatch.setattr("harp_apps.janitor.worker.asyncio.sleep", fake_sleep)
-        monkeypatch.setattr(worker, "loop", noop)
-
-        await worker.run()
-
-        assert sleeps == [7]
+    assert [sweep.name for sweep in declared] == ["storage.transactions", "storage.blobs.orphans", "storage.metrics"]
 
 
 class TestRetentionKeepsSharedBlobs(StorageTestFixtureMixin):
     async def test_a_body_recorded_twice_outlives_the_first_expired_transaction(
         self, sql_storage: SqlStorage, blob_storage: IBlobStorage
     ):
-        worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
+        worker = sweeps_with_grace(sql_storage, blob_storage, timedelta(0))
         old = await self.create_transaction(sql_storage, started_at=datetime.now(UTC) - timedelta(days=90))
         recent = await self.create_transaction(sql_storage)
         headers = await self.create_blob(blob_storage, "headers")
@@ -196,7 +183,7 @@ class TestRetentionKeepsSharedBlobs(StorageTestFixtureMixin):
                 sql_storage, transaction_id=transaction.id, kind="misc", summary="x", headers=headers.id, body=body.id
             )
 
-        await worker.delete_old_transactions()
+        await worker.purge_old_transactions()
         await worker.delete_orphan_blobs()
 
         assert await blob_storage.get(body.id) == body
@@ -205,7 +192,7 @@ class TestRetentionKeepsSharedBlobs(StorageTestFixtureMixin):
     async def test_blobs_written_during_the_grace_period_are_kept(
         self, sql_storage: SqlStorage, blob_storage: IBlobStorage
     ):
-        worker = JanitorWorker(sql_storage, blob_storage, JanitorSettings())
+        worker = StorageSweeps(sql_storage, blob_storage, RETENTION)
         young = await self.create_blob(blob_storage, "its message is not committed yet")
 
         await worker.delete_orphan_blobs()
@@ -217,7 +204,7 @@ class TestMetricsOfBlobStorage(StorageTestFixtureMixin):
     async def test_blob_figures_come_from_the_blob_storage_in_use(
         self, sql_storage: SqlStorage, blob_storage: IBlobStorage
     ):
-        worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
+        worker = sweeps_with_grace(sql_storage, blob_storage, timedelta(0))
         await self.create_blob(blob_storage, "one")
         await self.create_blob(blob_storage, "two")
 
@@ -231,7 +218,7 @@ async def test_memory_blobs_are_swept_too(sql_storage: SqlStorage):
     from harp_apps.storage.services.blob_storages.memory import MemoryBlobStorage
 
     blob_storage = MemoryBlobStorage()
-    worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(0))
+    worker = sweeps_with_grace(sql_storage, blob_storage, timedelta(0))
     orphan = await blob_storage.put(BlobModel.from_data("orphan"))
 
     assert (await worker.compute_metrics())["storage.blobs.orphans"] == 1

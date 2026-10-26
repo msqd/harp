@@ -12,6 +12,13 @@ services:
       router: !ref dashboard.router
       actors: !ref auth.actors
 
+  - name: "dashboard.controller.audit"
+    description: "Sub-controller for the audit-related routes of the dashboard."
+    type: harp_apps.dashboard.controllers.audit.AuditController
+    arguments:
+      router: !ref dashboard.router
+      storage: !ref storage
+
   - name: "dashboard.controller.blobs"
     description: "Sub-controller for the blobs-related routes of the dashboard."
     type: harp_apps.dashboard.controllers.blobs.BlobsController

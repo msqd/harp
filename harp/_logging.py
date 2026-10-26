@@ -77,6 +77,7 @@ logging_config = {
     "loggers": {
         "harp": {"level": _get_logging_level("harp", default="info")},
         "harp.event_dispatcher": {"level": _get_logging_level("events")},
+        "harp.audit": {"level": _get_logging_level("audit", default="info")},
         "harp.events": {"level": _get_logging_level("event_log", default="info")},
         "harp_apps": {"level": _get_logging_level("harp")},
         "harp_apps.http_cache": {"level": _get_logging_level("http_cache")},

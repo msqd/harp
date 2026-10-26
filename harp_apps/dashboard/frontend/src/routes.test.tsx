@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "react-query"
 import { createMemoryRouter, RouteObject, RouterProvider } from "react-router"
 import { afterEach, expect, it, vi } from "vitest"
 
-import { routes } from "./routes"
+import { navigationItems, routes } from "./routes"
 
 function renderAt(path: string, testRoutes: RouteObject[] = routes) {
   const router = createMemoryRouter(testRoutes, { initialEntries: [path] })
@@ -38,4 +38,12 @@ it("does not present a render error as a 404, and logs it", async () => {
   expect(await screen.findByText("kaboom")).toBeInTheDocument()
   expect(screen.queryByText(/page does not exist/i)).toBeNull()
   expect(consoleError).toHaveBeenCalled()
+})
+
+it("offers the audit to admins only, and the account to everyone", () => {
+  const item = (label: string) => navigationItems.find((i) => i.label === label)
+
+  expect(item("Audit")).toMatchObject({ to: "/audit", requires: "admin" })
+  expect(item("My account")).toMatchObject({ to: "/account" })
+  expect(item("My account")).not.toHaveProperty("requires")
 })

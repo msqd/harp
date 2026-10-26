@@ -1,0 +1,24 @@
+# Collect the HARP audit events from the logs of the "harp" container, and send them to a SIEM.
+# HARP runs with LOGGING_FORMAT=json.
+
+[sources.harp]
+type = "docker_logs"
+include_containers = ["harp"]
+
+# Keep a line only if it is a JSON object written by the audit logger.
+[transforms.harp_audit]
+type = "remap"
+inputs = ["harp"]
+source = '''
+line = object(parse_json(.message) ?? {}) ?? {}
+if line.logger != "harp.audit" || line.kind != "audit" {
+  abort
+}
+. = line
+'''
+
+[sinks.siem]
+type = "http"
+inputs = ["harp_audit"]
+uri = "https://siem.example.com/ingest"
+encoding.codec = "json"

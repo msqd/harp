@@ -63,11 +63,22 @@ Redis blob storage
 
 - Blobs are now stored under the ``harp:blob:`` key prefix, so the janitor only ever lists, sweeps and counts those
   keys: other applications can share the Redis database. Nothing to do to keep working: a blob stored by an earlier
-  version is still found under its bare id.
+  version is still found under its bare id (40 lowercase hexadecimal characters for a blob, the shape blob ids still
+  have; 64 for an HTTP cache entry written by 0.12). Any other id is only looked up under the prefix. Residue: a
+  string key of another application, named with 40 or 64 lowercase hexadecimal characters and containing a newline, is
+  still readable through ``/api/blobs/<id>``. A proxy client can also make the cache delete the bare key
+  ``sha256(<url>)`` with an unsafe request to that URL: a foreign key is only at risk if another application names its
+  keys by the same sha256. This is unchanged from before.
 - Those older blobs are never listed again: the janitor does not sweep them (orphans among them stay) and the
   ``storage_blobs`` metrics do not count them, and HTTP cache entries written before the upgrade are not expired by
-  their TTL. They are not copied either. To reclaim them, flush the Redis database if it is dedicated to HARP; on a
-  shared one, delete them by hand, HARP cannot tell them from other applications' keys.
+  their TTL. They are not copied either. Nothing removes these bare keys on its own: only an explicit deletion of that
+  exact id does. To reclaim them once the cache is warm again:
+
+  - On a Redis database dedicated to HARP, flush it. The cache refills, but message bodies still stored in the SQL
+    database lose their blobs.
+  - On a shared database, delete a bare key only if its value starts with a content-type line HARP writes (for example
+    ``cache/meta`` or ``http/headers``, followed by a newline). Never delete by name shape alone: it can match other
+    applications' keys. Keep the 40-character blobs that stored messages still reference.
 
 Dashboard authentication
 ::::::::::::::::::::::::
@@ -161,6 +172,14 @@ Upstreams
 - The TLS trust store is certifi 2026.10.19 or later, which also drops roots Mozilla removed since
   2025.10 (DigiCert Global Root CA, DigiCert High Assurance EV, Entrust and AffirmTrust among them). An
   upstream whose chain ends only at one of them now fails TLS verification.
+
+Proxy
+-----
+
+- ``proxy.tags.max_value_length`` above 255 or ``proxy.tags.max_name_length`` above 64 now fails at
+  startup: they are the widths of the storage columns. Set them to 255 and 64 or lower (the old
+  ``max_value_length`` default of 256 failed to store on PostgreSQL). A tag over the bound is still
+  dropped.
 
 Storage
 -------

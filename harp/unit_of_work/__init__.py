@@ -36,6 +36,7 @@ __all__ = [
     "UnitOfWork",
     "UnsupportedEventError",
     "auditable",
+    "auditable_events",
     "current_unit_of_work",
     "is_auditable",
     "is_loggable",
@@ -51,6 +52,7 @@ LOGGABLE = "loggable"
 
 _E = TypeVar("_E", bound=type)
 
+_auditable_events: dict[str, type] = {}
 _loggable_events: dict[str, type] = {}
 
 
@@ -65,7 +67,18 @@ def _mark(mark: str, event_id: str) -> Callable[[_E], _E]:
 
 def auditable(event_id: str) -> Callable[[_E], _E]:
     """Declares an event class as a control-plane action, recorded through :meth:`UnitOfWork.record`."""
-    return _mark(AUDITABLE, event_id)
+    mark = _mark(AUDITABLE, event_id)
+
+    def decorate(event_type: _E) -> _E:
+        _auditable_events[event_id] = event_type
+        return mark(event_type)
+
+    return decorate
+
+
+def auditable_events() -> dict[str, type]:
+    """The event classes declared ``auditable`` so far, by event id: what the audit may be asked to record."""
+    return dict(_auditable_events)
 
 
 def loggable(event_id: str) -> Callable[[_E], _E]:
@@ -199,15 +212,23 @@ class UnitOfWork(ABC):
         try:
             suppressed = await self._transaction_context.__aexit__(exc_type, exc, tb)
         except BaseException:
-            self._close()
-            await self._compensate()
+            await self._compensate_then_close()
             raise
-        self._close()
         if exc_type is not None:
-            await self._compensate()
+            await self._compensate_then_close()
             return bool(suppressed)
+        self._close()
         await self._dispatch_recorded()
         return False
+
+    async def _compensate_then_close(self) -> None:
+        """Compensations run while the unit of work is still current, so that what listens to the state they restore
+        can tell it is not an event of its own (it is the unit of work undoing its action)."""
+        self._state = "compensating"
+        try:
+            await self._compensate()
+        finally:
+            self._close()
 
     async def _compensate(self) -> None:
         for compensation in reversed(self._actions):

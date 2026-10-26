@@ -13,6 +13,10 @@ declare namespace Apps.Storage {
      */
     enabled?: boolean;
     migrate?: boolean;
+    /**
+     * Age in days after which transactions are deleted.
+     */
+    retention_days?: number;
     blobs?: BlobStorageSettings;
     redis?: RedisSettings | null;
   }

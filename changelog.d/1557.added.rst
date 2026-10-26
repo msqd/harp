@@ -1,0 +1,1 @@
+Dashboard: an Audit page for Admins (newest first, filtered by period, actor, action and target), and "My account" listing the events that concern the signed-in account, whatever its role.

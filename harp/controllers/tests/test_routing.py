@@ -107,6 +107,54 @@ async def test_a_controller_requiring_roles_treats_an_undeclared_handler_as_admi
     assert await controller(_request("GET", "/undeclared", Role.ADMIN)) == "undeclared"
 
 
+class RefusalAwareController(RoleController):
+    def __init__(self, **kwargs):
+        self.refused = []
+        super().__init__(**kwargs)
+
+    async def on_refusal(self, request, handler):
+        self.refused.append(handler.__name__)
+
+
+async def test_a_refusal_tells_the_controller_before_it_is_sent():
+    controller = RefusalAwareController()
+
+    response = await controller(_request("PUT", "/edit", Role.VIEWER))
+
+    assert (response.status, controller.refused) == (403, ["edit"])
+
+
+async def test_a_permitted_request_is_not_a_refusal():
+    controller = RefusalAwareController()
+
+    await controller(_request("PUT", "/edit", Role.EDITOR))
+
+    assert controller.refused == []
+
+
+async def test_a_refusal_reaches_the_sub_controller_owning_the_handler_through_a_shared_router():
+    router = RoutingController.RouterType(trim_last_slash=True)
+    owner = RefusalAwareController(router=router)
+    front = RoutingController(router=router)
+
+    response = await front(_request("PUT", "/edit", Role.VIEWER))
+
+    assert (response.status, owner.refused) == (403, ["edit"])
+
+
+class BrokenRefusalController(RoleController):
+    async def on_refusal(self, request, handler):
+        raise RuntimeError("cannot record")
+
+
+async def test_a_failing_refusal_hook_never_turns_the_403_into_an_error():
+    with capture_logs() as logs:
+        response = await BrokenRefusalController(handle_errors=False)(_request("PUT", "/edit", Role.VIEWER))
+
+    assert response.status == 403
+    assert any(log["log_level"] == "error" for log in logs)
+
+
 class UnresolvableController(RoutingController):
     @GetHandler("/unresolvable")
     async def unresolvable(self, missing):

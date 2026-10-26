@@ -20,10 +20,10 @@ from harp_apps.storage.constants import (
     SKIP_REQUEST_STORAGE,
     SKIP_RESPONSE_STORAGE,
 )
-from .coalescing import STORED_METADATA
 from .adapters import selecting_headers, to_entry, to_record, variant_of
 from .records import BanKind, BanMode, CacheRecords, Reclaimed, endpoint_of
 from .settings import ReclamationSettings
+from .coalescing import MAX_BODY_SIZE_METADATA, STORED_METADATA
 from .streams import StoredOnceRead
 
 # How many expired entries the sweep deletes at once.
@@ -50,9 +50,6 @@ REQUEST_URL: ContextVar[tp.Optional[str]] = ContextVar("harp_http_cache_request_
 CACHE_KEY: ContextVar[tp.Optional[str]] = ContextVar("harp_http_cache_key", default=None)
 
 HEADERS_ENCODING = "iso-8859-1"
-
-#: Request metadata key holding the largest response body the cache may store (the proxy's recording cap).
-MAX_BODY_SIZE_METADATA = "harp_max_recorded_body_size"
 
 #: Request metadata key holding the :class:`~harp.models.redaction.Redaction` in force for the request.
 REDACTION_METADATA = "harp_redaction"

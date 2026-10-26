@@ -96,7 +96,9 @@ def _asdict(config_file):
 
 
 def _api_system_settings(config_file):
-    controller = SystemController(storage=None, settings=_settings(config_file), resolver=None, handle_errors=False)
+    controller = SystemController(
+        storage=None, settings=_settings(config_file), resolver=None, unit_of_work=None, handle_errors=False
+    )
     return repr(__import__("asyncio").run(controller.get_settings()).asdict())
 
 

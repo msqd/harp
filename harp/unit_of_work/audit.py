@@ -11,7 +11,9 @@ from typing import Any, ClassVar, Optional
 
 from whistle import Event
 
-__all__ = ["Actor", "AuditableEvent", "Target", "is_secret_field"]
+from harp.security.actor import get_actor
+
+__all__ = ["Actor", "AuditableEvent", "Target", "audit_actor", "is_secret_field"]
 
 
 @dataclass(frozen=True)
@@ -22,10 +24,27 @@ class Actor:
     #: Copied (the username), so the event stays readable once the account is gone.
     label: Optional[str] = None
     via: str = "system"
-    via_id: Optional[int] = None
+    #: Identifies the session or token among the account's: a string, as ids of future credentials need not be numbers.
+    via_id: Optional[str] = None
     client: Optional[str] = None
     ip: Optional[str] = None
     user_agent: Optional[str] = None
+
+
+def audit_actor(request) -> Actor:
+    """The actor of ``request`` as an audit event carries them, with where the request comes from."""
+    where = {"ip": request.client_ipaddr, "user_agent": request.headers.get("user-agent")}
+    actor = get_actor(request)
+    if actor is None:
+        return Actor(**where)
+    return Actor(
+        account_id=actor.account.id,
+        label=actor.account.username,
+        via=actor.via,
+        via_id=actor.via_id,
+        client=actor.client,
+        **where,
+    )
 
 
 @dataclass(frozen=True)
