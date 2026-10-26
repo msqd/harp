@@ -168,6 +168,13 @@ class TransactionsRepository(Repository[Transaction]):
         return self.delete().where((self.Type.started_at < threshold) & no_flags)
 
     @with_session
+    async def purge_old(self, old_after: timedelta, /, *, session=None) -> int:
+        """Delete the transactions older than `old_after` that no user flagged, return how many."""
+        result = await session.execute(self.delete_old(old_after))
+        await session.commit()
+        return result.rowcount
+
+    @with_session
     async def create(self, values: dict | TransactionModel, /, *, session=None):
         # convert model to dict
         if isinstance(values, TransactionModel):

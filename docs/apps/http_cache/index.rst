@@ -86,6 +86,15 @@ A request never fails because of it. It waits at most ``coalescing_timeout`` sec
 ``transport.arguments`` entry), and fetches on its own if the leading fetch fails, takes longer, or leaves nothing to
 share: a response that cannot be stored, or one the cache does not retain.
 
+The waiters are released once the cache has the body, not once the leading client has read it: a client that reads
+slowly, or stops reading, delays nobody. To allow that, the body is read ahead of that client, up to the proxy's recording
+cap (``proxy.max_recorded_body_size``, see `Response size`_). A body larger than the cap, or declared so by its
+``Content-Length``, is not stored: its waiters fetch on their own at once, and it is read at the client's pace. Once a
+waiter has given up on a fetch after ``coalescing_timeout``, later requests no longer wait for that fetch.
+
+One wait remains: a request whose own variant is cached can still wait, at most ``coalescing_timeout``, for another
+variant's fetch whose headers have not arrived yet. That wait depends on the origin, not on any client.
+
 On a cold key the ``Vary`` of the resource is not known until the first response arrives, so a request for another
 variant waits for that response's headers, not for its body.
 
@@ -291,14 +300,23 @@ logged and the response is not affected.
 Reclaiming bans
 :::::::::::::::
 
-A ban only hides the entries it covers. The :doc:`janitor </apps/janitor/index>` deletes them in the background, then
-retires the ban, so that the log does not grow with the number of writes through the proxy. Without the janitor (no
-``storage`` application, or the janitor disabled), the cache storage does it in its own periodic sweep. Each run is
-bounded and the next one resumes where the last stopped, so a ban on a large prefix is reclaimed over several runs. The
-bounds are the :doc:`reclamation settings <settings>`: with the defaults a run deletes 10 000 entries at most (500 per
-round, 20 rounds). With the janitor, a run is one sweep, every ``period`` (10 minutes by default); without it, a run
-starts at most every ``check_ttl_every`` seconds (60 by default), from a request that reads or stores an entry, so a busy
-cache reclaims faster and an idle one not at all. The same runs delete the bodies and resources no entry refers to.
+A ban only hides the entries it covers. The ``http_cache.reclamation`` sweep, which the :doc:`janitor
+</apps/janitor/index>` schedules, deletes them in the background, then retires the ban, so that the log does not grow
+with the number of writes through the proxy. Each run is bounded and the next one resumes where the last stopped, so a
+ban on a large prefix is reclaimed over several runs. The bounds are the :doc:`reclamation settings <settings>`: with
+the defaults a run deletes 10 000 entries at most (500 per round, 20 rounds), and there is one run per janitor
+``period`` (10 minutes by default). The same runs delete the bodies and resources no entry refers to.
+
+The cache declares two more sweeps, which the janitor runs at most every ``check_ttl_every`` seconds (60 by default, but
+never more often than its ``period``): ``http_cache.expiry`` deletes the entries older than ``ttl`` (declared when
+``ttl`` is set), and ``http_cache.counters`` writes the counts of the entries that were refused. The cache runs no
+background task of its own.
+
+.. warning::
+
+    Without the janitor (no ``storage`` application, or the janitor disabled), none of these sweeps runs: startup logs a
+    warning naming them, bans are not retired, and expired entries nobody asks for stay in the store. An expired entry
+    is still never served. Load the janitor to reclaim them.
 
 - A ban is reclaimed once it is ``reclamation.grace`` old (five minutes), so that a response being fetched when it was issued has time to end.
 - A **hard** ban is retired once what it covers is deleted.
@@ -367,7 +385,8 @@ refused.
 This matters behind a reverse proxy or load balancer, where the peer is that proxy for every client. Listing the
 proxy in ``allow`` then lets everyone behind it purge, so either filter ``PURGE`` at the proxy, or reach HARP directly
 for purges (from the host, or through a private port) and list only those addresses. IPv4-mapped IPv6 addresses
-(``::ffff:127.0.0.1``) are matched as their IPv4 address.
+(``::ffff:127.0.0.1``) are matched as their IPv4 address, so write ``allow`` ranges in IPv4 form: a mapped-form range
+(``::ffff:127.0.0.0/104``, ``::ffff:0:0/96``) or ``::/0`` does not match IPv4 peers.
 
 
 Cache key normalization

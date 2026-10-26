@@ -271,3 +271,50 @@ Blobs are content-addressed. A blob id is the SHA-256 of the content type (lengt
 
 Blobs written by earlier versions carry SHA-1 ids. They keep resolving, and are not rewritten. A body already stored
 under its old id is stored once more under its new id the next time it is seen, until retention removes the old row.
+
+
+.. _storage-sweeps:
+
+Sweeps
+::::::
+
+The storage application declares its periodic cleanups as :doc:`sweeps </contribute/sweeps>`; they run when the
+:doc:`janitor </apps/janitor/index>` is loaded, on each of its passes, in this order.
+
+``storage.transactions``
+    Deletes all transactions older than ``retention_days`` (60 by default). Transactions flagged by a user (favorites)
+    are kept past the retention period. The database cascades the deletion to messages and tag values.
+
+    .. versionchanged:: 0.12
+
+        The retention is the ``retention_days`` setting of the storage application. ``janitor.old_after`` is a deprecated
+        alias.
+
+``storage.blobs.orphans``
+    Deletes the orphan blobs. An orphan is a blob referenced by no message. Blobs written in the last 10 minutes are
+    kept, as the message referencing them may not be committed yet. The HTTP cache does not keep blobs (it has records
+    of its own, reclaimed by the ``ttl`` of ``http_cache.storage``, see :doc:`/apps/http_cache/settings`): the
+    ``cache/meta`` blobs of the cache of earlier versions, and the header and body blobs they pointed at, are orphans,
+    and this sweep deletes them. The ``storage_blobs_orphans`` metric counts the same orphans.
+
+    It runs on every blob backend that can list its blobs (``sql``, ``redis`` and ``memory``). With ``redis``, the sweep
+    scans the keys, keeps those referenced by a message in the SQL storage, and deletes the
+    others unless they were written in the last 10 minutes (tracked by short-lived ``harp:blob-written:<id>`` keys).
+
+    With ``redis`` (and ``memory``), one pass serves the cleanup and the metrics. It reads the blob keys by ``SCAN`` in
+    batches of 500 ids: each batch is looked up in the messages and its orphans are deleted, in a single short command,
+    before the next batch is read. The sweep holds one batch, and no Redis command scales with the number of orphans.
+    ``SCAN`` may return a key twice: within a batch it counts once, and a repeat landing in another batch can still be
+    counted twice in the metrics.
+
+    HARP stores its Redis blobs under the ``harp:blob:`` key prefix, and the sweep only scans, counts and deletes keys
+    with that prefix (and its own ``harp:blob-written:`` markers). Other applications can share the Redis database: their
+    keys, whatever their type, are never touched. Blobs stored by a version before 0.13 sit under their bare id: they are
+    still read, but the sweep does not see them (see :ref:`upgrading-0-13`).
+
+``storage.metrics``
+    Counts what the storage holds and stores it as metrics (``storage_transactions``, ``storage_messages``,
+    ``storage_blobs`` and ``storage_blobs_orphans``). With ``redis``, the blob figures count what the blob backend holds.
+
+A sweep works in short batches and gives the database connection back between them, so requests are served while it
+runs, even with the default in-memory storage that has a single connection.

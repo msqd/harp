@@ -28,6 +28,7 @@ async def on_bound(event: OnBoundEvent):
     event.provider.set(
         "dashboard.subcontrollers",
         [
+            event.provider.get("dashboard.controller.audit"),
             event.provider.get("dashboard.controller.blobs"),
             event.provider.get("dashboard.controller.overview"),
             event.provider.get("dashboard.controller.system"),
@@ -52,7 +53,7 @@ async def on_bound(event: OnBoundEvent):
 
 
 application = Application(
-    dependencies=["storage", "auth"],
+    dependencies=["storage", "auth", "audit", "proxy"],
     settings_type=DashboardSettings,
     on_bind=on_bind,
     on_bound=on_bound,

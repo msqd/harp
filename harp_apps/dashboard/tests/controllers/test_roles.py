@@ -19,6 +19,7 @@ from harp.http import HttpRequest
 from harp.meta import get_meta
 from harp.security.actor import Role
 from harp_apps.dashboard.controllers import DashboardController
+from harp_apps.dashboard.controllers.audit import AuditController
 from harp_apps.dashboard.controllers.blobs import BlobsController
 from harp_apps.dashboard.controllers.overview import OverviewController
 from harp_apps.dashboard.controllers.system import SystemController
@@ -47,6 +48,8 @@ ROUTES = [
     ("GET", "/api/system/storage", Role.EDITOR),
     ("GET", "/api/system/settings", Role.ADMIN),
     ("GET", "/api/system/dependencies", Role.ADMIN),
+    ("GET", "/api/audit/", Role.ADMIN),
+    ("GET", "/api/audit/mine", Role.VIEWER),
 ]
 
 
@@ -55,9 +58,12 @@ async def dashboard():
     router = Router(trim_last_slash=True)
     storage = MagicMock(spec=IStorage)
     for sub in (
+        lambda: AuditController(storage=storage, router=router),
         lambda: BlobsController(storage=storage, router=router),
         lambda: OverviewController(storage=storage, router=router),
-        lambda: SystemController(storage=storage, settings=MagicMock(), resolver=MagicMock(), router=router),
+        lambda: SystemController(
+            storage=storage, settings=MagicMock(), resolver=MagicMock(), unit_of_work=MagicMock(), router=router
+        ),
         lambda: TransactionsController(storage=storage, router=router),
     ):
         sub()
@@ -108,7 +114,13 @@ async def test_a_disabled_account_answers_401_on_every_route(dashboard, method, 
 def test_every_handler_of_the_dashboard_declares_its_role():
     handlers = [
         (controller.__name__, name)
-        for controller in (BlobsController, OverviewController, SystemController, TransactionsController)
+        for controller in (
+            AuditController,
+            BlobsController,
+            OverviewController,
+            SystemController,
+            TransactionsController,
+        )
         for name, handler in inspect.getmembers(controller, callable)
         if get_meta(handler, "route") and get_meta(handler, "role") is None
     ]

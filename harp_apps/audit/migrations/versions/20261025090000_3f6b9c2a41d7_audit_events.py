@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column("actor_account_id", sa.Integer(), nullable=True),
         sa.Column("actor_label", sa.String(length=255), nullable=True),
         sa.Column("actor_via", sa.String(length=16), nullable=False),
-        sa.Column("actor_via_id", sa.Integer(), nullable=True),
+        sa.Column("actor_via_id", sa.String(length=64), nullable=True),
         sa.Column("actor_client", sa.String(length=255), nullable=True),
         sa.Column("ip", sa.String(length=45), nullable=True),
         sa.Column("user_agent", sa.String(length=512), nullable=True),

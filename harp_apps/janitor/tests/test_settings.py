@@ -7,7 +7,7 @@ from harp_apps.janitor.settings import JanitorSettings
 
 
 def test_defaults():
-    assert asdict(JanitorSettings(), verbose=True) == {"enabled": True, "period": 600, "old_after": 60}
+    assert asdict(JanitorSettings(), verbose=True) == {"enabled": True, "period": 600, "old_after": None}
 
 
 @pytest.mark.parametrize("field", ["period", "old_after"])
@@ -36,4 +36,4 @@ def test_configuration_exposes_janitor_settings():
     builder.add_values({"janitor": {"period": 30}})
     settings = builder.build()
     assert settings["janitor"].period == 30
-    assert settings["janitor"].old_after == 60
+    assert settings["janitor"].old_after is None

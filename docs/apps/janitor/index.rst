@@ -5,32 +5,20 @@ Janitor
 
 .. versionadded:: 0.5
 
-The ``harp_apps.janitor`` application runs a background worker to clean up the storage. It deletes all transactions
-older than the retention period (60 days by default), and the orphan blobs. Transactions flagged by a user
-(favorites) are kept past the retention period.
+The ``harp_apps.janitor`` application runs a background worker that schedules the periodic cleanups, the *sweeps*, that
+applications declare. It knows none of them: it runs the declared sweeps that are due on every pass (every ``period``
+seconds, or less often when a sweep declares a longer interval), one after the other, and measures each of them (runs,
+failures, items, duration; ``janitor_sweep_*`` Prometheus metrics, labelled by sweep). A sweep that fails or exceeds its
+time budget never stops the others.
 
-An orphan is a blob referenced by no message. Blobs written in the last 10 minutes are kept, as the message referencing
-them may not be committed yet. The HTTP cache does not keep blobs (it has records of its own, reclaimed by the ``ttl`` of
-``http_cache.storage``, see :doc:`/apps/http_cache/settings`): the ``cache/meta`` blobs of the cache of earlier versions,
-and the header and body blobs they pointed at, are orphans, and the janitor deletes them. The ``storage_blobs_orphans``
-metric counts the same orphans.
+The storage application declares three sweeps, described in :ref:`storage-sweeps`: ``storage.transactions`` (retention),
+``storage.blobs.orphans`` and ``storage.metrics``.
 
-The sweep runs on every blob backend that can list its blobs (``sql``, ``redis`` and ``memory``). With ``redis``, the
-janitor scans the blob keys, keeps those referenced by a message in the SQL storage, and deletes
-the others unless they were written in the last 10 minutes (tracked by short-lived ``harp:blob-written:<id>`` keys).
-The ``storage_blobs`` and ``storage_blobs_orphans`` metrics count what the blob backend holds.
+With the :doc:`HTTP cache </apps/http_cache/index>` loaded, it also runs the ``http_cache.expiry``, ``http_cache.counters``
+and ``http_cache.reclamation`` sweeps, see :ref:`http-cache-reclamation`.
 
-HARP stores its Redis blobs under the ``harp:blob:`` key prefix, and the janitor only scans, counts and deletes keys
-with that prefix (and its own ``harp:blob-written:`` markers). Other applications can share the Redis database: their
-keys, whatever their type, are never touched. Blobs stored by a version before 0.13 sit under their bare id: they are
-still read, but the janitor does not see them (see :ref:`upgrading-0-13`).
-
-With the :doc:`HTTP cache </apps/http_cache/index>` loaded, each sweep also reclaims the bans of its invalidation log and
-the entries they cover, see :ref:`http-cache-reclamation`. With the janitor disabled, the cache storage does it in its own
-periodic sweep.
-
-A sweep works in short batches and gives the database connection back between them, so requests are served while it
-runs, even with the default in-memory storage that has a single connection.
+If the janitor is disabled, declared sweeps do not run, and startup logs a warning naming them. To declare a sweep from
+your own application, see :doc:`/contribute/sweeps`.
 
 .. toctree::
     :hidden:
@@ -46,7 +34,8 @@ Settings
     Seconds between two sweeps. Positive integer, default ``600`` (10 minutes).
 
 ``old_after``
-    Age in days after which transactions are deleted. Positive integer, default ``60``.
+    Deprecated alias of ``storage.retention_days``: when set, it is used as the retention, with a deprecation warning.
+    If ``storage.retention_days`` is set too, it wins and a warning says ``old_after`` is ignored.
 
 ``enabled``
     Set to ``false`` to disable the janitor. Default ``true``.
@@ -57,7 +46,6 @@ Zero and negative values are rejected when the configuration loads.
 
     janitor:
       period: 3600  # sweep every hour
-      old_after: 14  # keep two weeks of transactions
 
 See the :doc:`settings reference <settings>`.
 

@@ -44,7 +44,7 @@ def test_unknown_application_fails_naming_it(tmp_path):
 
 def test_cli_applications_replace_file_list(tmp_path):
     f = _write(tmp_path, "a.yml", "applications: [storage, proxy]\n")
-    assert _loaded(files=[f], applications=["janitor"]) == {"janitor", "storage", "proxy", "http_client"}
+    assert _loaded(files=[f], applications=["janitor"]) == {"janitor"}
 
 
 def test_enable_disable_apply_after_file_list(tmp_path):

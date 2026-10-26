@@ -7,7 +7,9 @@ from harp.asgi import ASGIKernel
 from harp.controllers import DefaultControllerResolver, ProxyControllerResolver
 from harp.security.actor import Actor, ActorAccount, Role, set_actor
 
+from harp.unit_of_work import TransactionalEventDispatcher
 from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
+from harp_apps.storage.unit_of_work import SqlUnitOfWorkFactory
 from harp.views.json import register as register_json_views
 
 from ..controllers.system import SystemController
@@ -48,6 +50,10 @@ class SystemControllerTestFixtureMixin:
                 settings=system.config,
                 handle_errors=False,
                 resolver=system.provider.get(ProxyControllerResolver),
+                # on the storage under test, with the listeners the loaded applications attached
+                unit_of_work=SqlUnitOfWorkFactory.from_storage(
+                    sql_storage, system.provider.get(TransactionalEventDispatcher), system.dispatcher
+                ),
             )
         finally:
             await system.dispose()

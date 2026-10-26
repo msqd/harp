@@ -208,8 +208,9 @@ The default storage includes:
   (default: ``86400``, 24 hours). An entry with a longer ``max-age`` is still expired after ``ttl``. ``null`` disables
   expiry by age. Each variant of a ``Vary`` resource expires on its own. An expired entry is not served, and is deleted
   with its body when nothing else carries it.
-- **check_ttl_every:** Minimum seconds between two sweeps deleting expired entries, per process (default: ``60.0``).
-  A sweep runs in the background, never inside a proxied request, and deletes by batch.
+- **check_ttl_every:** Minimum seconds between two runs of the sweeps deleting expired entries and writing the cache
+  counters (default: ``60.0``). The janitor runs them, so they never run more often than its ``period``, never inside
+  a proxied request, and delete by batch. Without the janitor they do not run.
 - **allow_heuristics:** Whether to serve responses with no explicit expiry without asking the origin (default: ``false``)
 
 .. code-block:: yaml

@@ -7,7 +7,7 @@ from harp_apps.dashboard.security.auth import OPEN_ACTOR
 
 
 def controller():
-    return SystemController(storage=MagicMock(), settings=MagicMock(), resolver=MagicMock())
+    return SystemController(storage=MagicMock(), settings=MagicMock(), resolver=MagicMock(), unit_of_work=MagicMock())
 
 
 async def test_system_tells_who_is_acting_and_with_which_role():

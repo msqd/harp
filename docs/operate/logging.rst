@@ -29,6 +29,7 @@ You can adjust the verbosity for different parts of HARP using environment varia
 * ``LOGGING``: Root logger level (default: ``INFO``)
 * ``LOGGING_HARP``: HARP core and applications (default: ``INFO``)
 * ``LOGGING_EVENTS``: Internal event dispatching (default: ``WARNING``)
+* ``LOGGING_AUDIT``: Audit log, the ``harp.audit`` lines (default: ``INFO``)
 * ``LOGGING_EVENT_LOG``: Event log, the ``harp.events`` lines (default: ``INFO``)
 * ``LOGGING_HTTP_CACHE``: HTTP cache application (default: ``WARNING``)
 * ``LOGGING_HTTP_CLIENT``: HTTP client application (default: ``WARNING``)
@@ -45,6 +46,7 @@ The following loggers are pre-configured:
 
 * ``harp`` - Core framework (controlled by ``LOGGING_HARP``)
 * ``harp.event_dispatcher`` - Event system (controlled by ``LOGGING_EVENTS``)
+* ``harp.audit`` - Audit log, one line per audit event (controlled by ``LOGGING_AUDIT``)
 * ``harp.events`` - Event log, one line per loggable event (controlled by ``LOGGING_EVENT_LOG``)
 * ``harp_apps`` - All applications (controlled by ``LOGGING_HARP``)
 * ``harp_apps.http_cache`` - HTTP cache application (controlled by ``LOGGING_HTTP_CACHE``)

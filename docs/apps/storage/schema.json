@@ -92,6 +92,12 @@
           "type": "boolean"
         },
         "migrate": { "default": true, "type": "boolean" },
+        "retention_days": {
+          "default": 60,
+          "description": "Age in days after which transactions are deleted.",
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
         "blobs": {
           "$ref": "#/$defs/BlobStorageSettings",
           "default": { "type": "sql" }

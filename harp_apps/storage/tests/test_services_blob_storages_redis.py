@@ -195,23 +195,67 @@ class TestSharedRedis:
         assert await redis_blob_storage.get("a") is None
 
 
+LEGACY_ID = "a" * 40
+
+
 class TestLegacyUnprefixedBlobs:
     """Blobs written before the prefix existed sit under their bare id."""
 
     async def test_are_still_read(self, redis_blob_storage: RedisBlobStorage):
-        await redis_blob_storage.client.set("old", b"text/plain\nbar")
+        await redis_blob_storage.client.set(LEGACY_ID, b"text/plain\nbar")
 
-        assert await redis_blob_storage.exists("old")
-        assert await redis_blob_storage.get("old") == Blob(id="old", data=b"bar", content_type="text/plain")
+        assert await redis_blob_storage.exists(LEGACY_ID)
+        assert await redis_blob_storage.get(LEGACY_ID) == Blob(id=LEGACY_ID, data=b"bar", content_type="text/plain")
 
     async def test_are_deleted_with_their_id(self, redis_blob_storage: RedisBlobStorage):
-        await redis_blob_storage.client.set("old", b"text/plain\nbar")
+        await redis_blob_storage.client.set(LEGACY_ID, b"text/plain\nbar")
 
-        await redis_blob_storage.delete("old")
+        await redis_blob_storage.delete(LEGACY_ID)
 
-        assert not await redis_blob_storage.exists("old")
+        assert not await redis_blob_storage.exists(LEGACY_ID)
 
     async def test_are_never_listed(self, redis_blob_storage: RedisBlobStorage):
-        await redis_blob_storage.client.set("old", b"text/plain\nbar")
+        await redis_blob_storage.client.set(LEGACY_ID, b"text/plain\nbar")
 
         assert [blob_id async for blob_id in redis_blob_storage.iter_blob_ids()] == []
+
+    @pytest.mark.parametrize("key", ["session:alice", "old", "A" * 40, "a" * 39])
+    async def test_foreign_keys_are_not_blobs(self, redis_blob_storage: RedisBlobStorage, key: str):
+        await redis_blob_storage.client.set(key, b"text/plain\nsecret")
+
+        assert await redis_blob_storage.get(key) is None
+        assert not await redis_blob_storage.exists(key)
+
+    async def test_non_string_foreign_key_is_not_a_blob(self, redis_blob_storage: RedisBlobStorage):
+        await redis_blob_storage.client.lpush("queue:jobs", b"x")
+
+        assert await redis_blob_storage.get("queue:jobs") is None
+
+    async def test_foreign_key_is_not_deleted(self, redis_blob_storage: RedisBlobStorage):
+        await redis_blob_storage.client.set("session:alice", b"data")
+
+        await redis_blob_storage.delete("session:alice")
+
+        assert await redis_blob_storage.client.get("session:alice") == b"data"
+
+    async def test_http_cache_entries_of_0_12_are_still_read(self, redis_blob_storage: RedisBlobStorage):
+        key = "b" * 64
+        await redis_blob_storage.client.set(key, b"cache/meta\nentry")
+
+        assert await redis_blob_storage.get(key) == Blob(id=key, data=b"entry", content_type="cache/meta")
+
+    @pytest.mark.parametrize("length", [40, 64])
+    async def test_hex_named_list_key_is_not_a_blob(self, redis_blob_storage: RedisBlobStorage, length: int):
+        key = "c" * length
+        await redis_blob_storage.client.lpush(key, b"x")
+
+        assert await redis_blob_storage.get(key) is None
+
+    @pytest.mark.parametrize("length", [40, 64])
+    async def test_hex_named_string_without_newline_is_not_a_blob(
+        self, redis_blob_storage: RedisBlobStorage, length: int
+    ):
+        key = "d" * length
+        await redis_blob_storage.client.set(key, b"no newline")
+
+        assert await redis_blob_storage.get(key) is None
