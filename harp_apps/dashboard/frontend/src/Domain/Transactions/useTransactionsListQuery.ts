@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react"
 import { useQuery } from "react-query"
 
 import { useApi } from "Domain/Api"
@@ -48,7 +49,9 @@ export function useTransactionsListQuery({
     ? getQueryStringFromRecord({ ...filters, page, cursor: page == 1 ? undefined : cursor, search })
     : ""
 
-  return useQuery<ItemList<Transaction> & { total: number; pages: number; perPage: number }>(
+  const wasPaused = useRef(paused)
+
+  const query = useQuery<ItemList<Transaction> & { total: number; pages: number; perPage: number }>(
     ["transactions", qs],
     () => api.fetch("/transactions" + (qs ? `?${qs}` : "")).then((r) => r.json()),
     {
@@ -57,4 +60,14 @@ export function useTransactionsListQuery({
       refetchOnReconnect: !paused,
     },
   )
+
+  const { refetch } = query
+  useEffect(() => {
+    if (wasPaused.current && !paused) {
+      void refetch()
+    }
+    wasPaused.current = paused
+  }, [paused, refetch])
+
+  return query
 }
