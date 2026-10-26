@@ -11,6 +11,7 @@ from pydantic import BeforeValidator, Field, model_validator
 from harp import get_logger
 from harp.config import Configurable, Secret
 from harp.utils.config import yaml
+from harp_apps.auth.passwords import HasherBusy
 from harp_apps.dashboard.passwords import (
     ALGORITHMS,
     TAlgorithm,
@@ -31,6 +32,11 @@ CHECK_CACHE_MAX_ENTRIES = 1024
 VERIFY_WORKERS = 4
 VERIFY_THREAD_PREFIX = "harp-auth-verify"
 _VERIFY_EXECUTOR = ThreadPoolExecutor(max_workers=VERIFY_WORKERS, thread_name_prefix=VERIFY_THREAD_PREFIX)
+
+#: Verifications that may wait for a worker. The next one is refused at once (``HasherBusy``, a 503 for the dashboard)
+#: instead of queueing behind them, as for the password method.
+VERIFY_MAX_WAITING = 16
+_pending = 0
 
 
 def _check_algorithm(value):
@@ -162,7 +168,14 @@ class BasicAuthSettings(Configurable):
         if self._verified.get(key, 0) > now:
             return username
 
-        result = await asyncio.get_running_loop().run_in_executor(_VERIFY_EXECUTOR, self.check, username, password)
+        global _pending
+        if _pending >= VERIFY_WORKERS + VERIFY_MAX_WAITING:
+            raise HasherBusy()
+        _pending += 1
+        try:
+            result = await asyncio.get_running_loop().run_in_executor(_VERIFY_EXECUTOR, self.check, username, password)
+        finally:
+            _pending -= 1
         if result:
             for expired in [k for k, v in self._verified.items() if v <= now]:
                 del self._verified[expired]

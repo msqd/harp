@@ -15,7 +15,9 @@ the others by queueing. Three counts, each with its own consequence:
 
 Only failures that completed are counted, so parallel valid requests (a dashboard fetching six things at once) are never
 refused for being parallel; the number of attempts of one pair under way at once is bounded instead
-(:data:`PAIR_FREE_FAILURES` + :data:`IN_FLIGHT_SLACK`), and the hashing queue bounds the rest.
+(:data:`PAIR_FREE_FAILURES` + :data:`IN_FLIGHT_SLACK`), and the hashing queue bounds the rest. A key over its free
+failures lets one attempt through at a time, so a burst arriving as a wait runs out gets one guess. Idle keys make room in
+a full table, oldest first, and an address the table cannot record is refused rather than let in unseen.
 
 Entries still under penalty are never evicted to make room: a flood of fresh names leaves the waits where they are. Counts
 are per process and in memory: with several workers an attacker gets as many guesses as there are workers.
@@ -41,6 +43,9 @@ MAX_WAIT = 60.0
 
 #: Attempts of one pair that may be under way beyond the free failures.
 IN_FLIGHT_SLACK = 16
+
+#: Attempts of one address that may be under way at once, whoever they are for.
+MAX_IN_FLIGHT_PER_ADDRESS = 32
 
 #: A key without failure for this long (seconds) starts again from zero.
 FORGET_AFTER = 900.0
@@ -73,7 +78,11 @@ def _wait(failures: int, free: int) -> float:
 
 
 class _Counters:
-    """Failure counts by key, least recently failed first. Idle entries make room; penalised ones never do."""
+    """
+    Failure counts by key, least recently failed first. Keys under their free failures are *idle*: they make room, oldest
+    first, however many penalised keys come before them. A penalised key is dropped only when it is old enough to be
+    forgotten.
+    """
 
     def __init__(self, clock: Callable[[], float], free: int, forget_after: float, max_entries: int):
         self.clock = clock
@@ -81,9 +90,14 @@ class _Counters:
         self.forget_after = forget_after
         self.max_entries = max_entries
         self._entries: OrderedDict[str, tuple[int, float]] = OrderedDict()
+        self._idle: OrderedDict[str, None] = OrderedDict()
 
     def __len__(self):
         return len(self._entries)
+
+    def _drop(self, key: str) -> None:
+        self._entries.pop(key, None)
+        self._idle.pop(key, None)
 
     def get(self, key: str) -> tuple[int, float]:
         """(failures, seconds since the last one); forgets what is old."""
@@ -92,34 +106,48 @@ class _Counters:
             return 0, 0.0
         elapsed = self.clock() - entry[1]
         if elapsed >= self.forget_after:
-            del self._entries[key]
+            self._drop(key)
             return 0, 0.0
         return entry[0], elapsed
+
+    def failures(self, key: str) -> int:
+        return self.get(key)[0]
 
     def wait(self, key: str) -> float:
         failures, elapsed = self.get(key)
         return max(0.0, _wait(failures, self.free) - elapsed)
+
+    def has_room_for(self, key: str) -> bool:
+        """Whether a failure of this key can be recorded."""
+        return self.get(key)[0] > 0 or self._make_room(dry_run=True)
 
     def add(self, key: str, weight: int = 1) -> bool:
         """Counts failures. False when there is no room: the entry is not recorded rather than a penalised one dropped."""
         failures, _ = self.get(key)
         if failures == 0 and not self._make_room():
             return False
-        self._entries.pop(key, None)
-        self._entries[key] = (failures + weight, self.clock())
+        self._drop(key)
+        failures += weight
+        self._entries[key] = (failures, self.clock())
+        if failures < self.free:
+            self._idle[key] = None
         return True
 
     def clear(self, key: str) -> None:
-        self._entries.pop(key, None)
+        self._drop(key)
 
-    def _make_room(self) -> bool:
+    def _make_room(self, dry_run: bool = False) -> bool:
         if len(self._entries) < self.max_entries:
             return True
-        now = self.clock()
-        for key, (failures, last) in list(self._entries.items())[:128]:
-            if failures < self.free or now - last >= self.forget_after:
-                del self._entries[key]
-                return True
+        if self._idle:
+            if not dry_run:
+                self._drop(next(iter(self._idle)))
+            return True
+        oldest = next(iter(self._entries), None)
+        if oldest is not None and self.clock() - self._entries[oldest][1] >= self.forget_after:
+            if not dry_run:
+                self._drop(oldest)
+            return True
         return False
 
 
@@ -148,6 +176,8 @@ class SignInThrottle:
         # login -> address -> time of the last sign in
         self._known: OrderedDict[str, OrderedDict[str, float]] = OrderedDict()
         self._in_flight: dict[str, int] = {}
+        self._in_flight_accounts: dict[str, int] = {}
+        self._in_flight_addresses: dict[str, int] = {}
         self.max_entries = max_entries
 
     def __len__(self):
@@ -167,14 +197,31 @@ class SignInThrottle:
         return wait
 
     def begin(self, login: str, ip: str) -> Admitted | Refused:
-        """Starts an attempt, or refuses it."""
+        """
+        Starts an attempt, or refuses it. A key over its free failures lets one attempt through at a time: the wait is
+        checked here and the failure counted at :meth:`end`, so without that every attempt arriving together when a wait
+        runs out would pass.
+        """
         if (wait := self.retry_after(login, ip)) > 0:
             return Refused(wait)
         address = address_key(ip)
         pair = f"{login}\0{address}"
-        if self._in_flight.get(pair, 0) >= PAIR_FREE_FAILURES + IN_FLIGHT_SLACK:
+        known = self._is_known(login, address)
+        if not known and not self.addresses.has_room_for(address):
+            return Refused(MAX_WAIT)  # nothing could be recorded about this address: it is not let in unseen
+        if self._in_flight_addresses.get(address, 0) >= (
+            1 if self.addresses.failures(address) >= ADDRESS_FREE_FAILURES else MAX_IN_FLIGHT_PER_ADDRESS
+        ):
             return Refused(1.0)
+        pair_limit = 1 if self.pairs.failures(pair) >= PAIR_FREE_FAILURES else PAIR_FREE_FAILURES + IN_FLIGHT_SLACK
+        if self._in_flight.get(pair, 0) >= pair_limit:
+            return Refused(1.0)
+        if not known and self.accounts.failures(login) >= ACCOUNT_FREE_FAILURES:
+            if self._in_flight_accounts.get(login, 0) >= 1:
+                return Refused(1.0)
         self._in_flight[pair] = self._in_flight.get(pair, 0) + 1
+        self._in_flight_addresses[address] = self._in_flight_addresses.get(address, 0) + 1
+        self._in_flight_accounts[login] = self._in_flight_accounts.get(login, 0) + 1
         return Admitted(login, address, pair)
 
     def end(self, admitted: Admitted, outcome: str) -> None:
@@ -182,11 +229,15 @@ class SignInThrottle:
         Closes an attempt: ``success`` (the password was right), ``failure`` (it is counted) or ``abandoned`` (it was
         never looked at, for lack of room: it is not).
         """
-        left = self._in_flight.get(admitted.pair, 1) - 1
-        if left > 0:
-            self._in_flight[admitted.pair] = left
-        else:
-            self._in_flight.pop(admitted.pair, None)
+        for counts, key in (
+            (self._in_flight, admitted.pair),
+            (self._in_flight_accounts, admitted.login),
+            (self._in_flight_addresses, admitted.address),
+        ):
+            if (left := counts.get(key, 1) - 1) > 0:
+                counts[key] = left
+            else:
+                counts.pop(key, None)
         if outcome == "abandoned":
             return
         if outcome == "failure":

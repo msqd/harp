@@ -384,3 +384,114 @@ def test_a_success_from_an_address_with_no_failure_leaves_nothing_behind(throttl
     attempt(throttle, outcome="success")
 
     assert len(throttle.pairs) == len(throttle.addresses) == len(throttle.accounts) == 0
+
+
+# --- eviction: idle entries make room, however many penalised ones come first ---------------------------------------
+
+
+def test_the_oldest_128_entries_being_penalised_does_not_stop_new_ones_from_being_recorded(clock):
+    throttle = SignInThrottle(clock=clock, max_entries=300)
+    for i in range(130):  # the oldest entries are all penalised
+        fail(throttle, PAIR_FREE_FAILURES, login=f"old{i}", ip=f"198.51.{i // 250}.{i % 250}")
+    for i in range(170):  # and the rest of the table is idle filler
+        fail(throttle, 1, login=f"filler{i}", ip=f"192.0.{i // 250}.{i % 250}")
+    assert len(throttle.pairs) == 300
+
+    for _ in range(PAIR_FREE_FAILURES):  # an attacker guesses at a new name from a new address
+        attempt(throttle, login="alice", ip="203.0.113.7")
+
+    assert isinstance(throttle.begin("alice", "203.0.113.7"), Refused)  # the pair limit bites
+    assert len(throttle.pairs) <= 300
+
+
+def test_the_account_limit_still_bites_when_the_oldest_entries_are_penalised(clock):
+    throttle = SignInThrottle(clock=clock, max_entries=300)
+    for i in range(130):
+        fail(throttle, PAIR_FREE_FAILURES, login=f"old{i}", ip=f"198.51.{i // 250}.{i % 250}")
+    for i in range(170):
+        fail(throttle, 1, login=f"filler{i}", ip=f"192.0.{i // 250}.{i % 250}")
+
+    hammer_account(throttle, ACCOUNT_FREE_FAILURES + 20, login="victim")
+
+    assert isinstance(throttle.begin("victim", "203.0.113.9"), Refused)
+
+
+def test_the_address_limit_still_bites_when_the_oldest_entries_are_penalised(clock):
+    throttle = SignInThrottle(clock=clock, max_entries=300)
+    for i in range(130):
+        fail(throttle, ADDRESS_FREE_FAILURES, login=f"old{i}", ip=f"198.51.{i // 250}.{i % 250}")
+    for i in range(170):
+        fail(throttle, 1, login=f"filler{i}", ip=f"192.0.{i // 250}.{i % 250}")
+
+    for i in range(ADDRESS_FREE_FAILURES + 5):
+        attempt(throttle, login=f"name{i}", ip="203.0.113.7")
+
+    assert isinstance(throttle.begin("anyone", "203.0.113.7"), Refused)
+
+
+def test_when_the_address_table_cannot_record_a_new_address_it_is_refused_not_skipped(clock):
+    throttle = SignInThrottle(clock=clock, max_entries=20)
+    for i in range(20):  # every slot of the address table held by an address under penalty
+        for j in range(ADDRESS_FREE_FAILURES // 5):
+            fail(throttle, 5, login=f"u{i}-{j}", ip=f"198.51.100.{i}")
+    assert len(throttle.addresses) == 20
+
+    refused = throttle.begin("alice", "203.0.113.7")
+
+    assert isinstance(refused, Refused) and 0 < refused.retry_after <= MAX_WAIT
+
+
+def test_a_known_address_is_not_refused_for_want_of_room_in_the_address_table(clock):
+    throttle = SignInThrottle(clock=clock, max_entries=20)
+    attempt(throttle, login="alice", ip="203.0.113.7", outcome="success")
+    for i in range(20):
+        for j in range(ADDRESS_FREE_FAILURES // 5):
+            fail(throttle, 5, login=f"u{i}-{j}", ip=f"198.51.100.{i}")
+
+    assert isinstance(throttle.begin("alice", "203.0.113.7"), Admitted)
+
+
+# --- one attempt per wait once over the free failures --------------------------------------------------------------
+
+
+def test_once_over_its_free_failures_a_pair_lets_one_attempt_through_per_wait(throttle, clock):
+    fail(throttle, PAIR_FREE_FAILURES)
+    clock.now += throttle.retry_after("alice", "10.0.0.1")
+
+    burst = [throttle.begin("alice", "10.0.0.1") for _ in range(50)]
+
+    assert sum(isinstance(b, Admitted) for b in burst) == 1
+
+
+def test_once_over_the_free_failures_an_account_lets_one_attempt_per_wait_through(throttle, clock):
+    hammer_account(throttle, ACCOUNT_FREE_FAILURES + 5)
+    clock.now += MAX_WAIT
+
+    burst = [throttle.begin("victim", f"203.0.113.{i}") for i in range(50)]
+
+    assert sum(isinstance(b, Admitted) for b in burst) == 1
+
+
+def test_once_over_the_free_failures_an_address_lets_one_attempt_per_wait_through(throttle, clock):
+    for i in range(ADDRESS_FREE_FAILURES + 5):
+        attempt(throttle, login=f"name{i}", ip="203.0.113.7")
+    clock.now += MAX_WAIT
+
+    burst = [throttle.begin(f"fresh{i}", "203.0.113.7") for i in range(50)]
+
+    assert sum(isinstance(b, Admitted) for b in burst) == 1
+
+
+def test_below_the_free_failures_parallel_requests_still_work(throttle):
+    fail(throttle, PAIR_FREE_FAILURES - 1)
+
+    burst = [throttle.begin("alice", "10.0.0.1") for _ in range(10)]
+
+    assert all(isinstance(b, Admitted) for b in burst)
+
+
+def test_one_address_cannot_have_more_attempts_under_way_than_the_cap(throttle):
+    burst = [throttle.begin(f"user{i}", "10.0.0.1") for i in range(500)]
+
+    assert sum(isinstance(b, Admitted) for b in burst) == module.MAX_IN_FLIGHT_PER_ADDRESS
+    assert isinstance(throttle.begin("alice", "10.0.0.2"), Admitted)

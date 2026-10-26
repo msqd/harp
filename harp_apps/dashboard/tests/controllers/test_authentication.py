@@ -187,3 +187,16 @@ async def _create_mock_controller(settings: DashboardSettings = None):
 
 def _get_auth_headers(username, password):
     return {"authorization": "basic " + b64encode(b":".join((ensure_bytes(username), ensure_bytes(password)))).decode()}
+
+
+async def test_verifications_beyond_the_pool_and_its_queue_are_refused_at_once(monkeypatch):
+    import pytest
+
+    from harp_apps.auth.passwords import HasherBusy
+    from harp_apps.dashboard.settings import auth as settings_auth
+
+    settings = _hashed_controller_settings().auth
+    monkeypatch.setattr(settings_auth, "_pending", settings_auth.VERIFY_WORKERS + settings_auth.VERIFY_MAX_WAITING)
+
+    with pytest.raises(HasherBusy):
+        await settings.acheck("admin", "admin")

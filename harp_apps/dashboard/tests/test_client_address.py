@@ -57,3 +57,15 @@ def test_a_chain_of_trusted_proxies_only_falls_back_to_the_peer():
 
 def test_an_unknown_peer_is_untrusted():
     assert client_address(request(None, "198.51.100.1"), PROXIES) == "unknown"
+
+
+def test_an_ipv4_mapped_peer_is_matched_against_ipv4_networks():
+    assert client_address(request("::ffff:10.1.2.3", "198.51.100.1"), PROXIES) == "198.51.100.1"
+
+
+def test_an_ipv4_mapped_entry_in_the_chain_is_matched_against_ipv4_networks():
+    assert client_address(request("10.1.2.3", "198.51.100.1, ::ffff:10.9.9.9"), PROXIES) == "198.51.100.1"
+
+
+def test_an_ipv4_mapped_client_is_returned_as_it_was_written():
+    assert client_address(request("10.1.2.3", "::ffff:198.51.100.1"), PROXIES) == "::ffff:198.51.100.1"

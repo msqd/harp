@@ -102,10 +102,12 @@ a refused attempt does not extend it. Three counts, of failures that completed (
 once is not refused for being parallel):
 
 - *One address against one account*: from the fifth failure, that address waits before its next attempt on that account.
-  Guessing at ``alice`` from your address only slows you down. Only failures that completed are counted, so up to 21
-  attempts of one pair (5 free plus 16 under way) can start before the first wait: refusing on attempts started would
-  lock a dashboard out for fetching six things at once. The real concurrency is capped lower, by the hashing queue (4
-  verifications at a time, 16 waiting, the rest answered ``503``).
+  Guessing at ``alice`` from your address only slows you down. Only failures that completed are counted, so
+  **up to 21 attempts of one pair (5 free plus 16 under way) can start before the first wait**: refusing on attempts
+  started would lock a dashboard out for fetching six things at once. The real concurrency is lower, since the hashing
+  queue (4 verifications at a time, 16 waiting, the rest answered ``503``) bounds it. Once a pair is over its free
+  failures, one attempt at a time is let through: a burst arriving as a wait runs out gets one guess, not 21. The same
+  holds for an account past 100 failures and for an address past 100.
 - *One account, every address*: after 100 consecutive failures (the limit of NIST SP 800-63B-4) addresses that never
   signed in to the account wait. The last 8 addresses that did (30 days, until the process restarts) are exempt. Whoever
   hammers a name keeps a person on a new address waiting a minute at most.
@@ -118,7 +120,7 @@ once is not refused for being parallel):
 Names are folded to lower case and checked (1 to 64 of ``A-Za-z0-9._@+-``) before the lookup and the count, so case
 variants are one login; a name that cannot be one shares a single count. Counts are forgotten after 15 minutes without
 failure (an hour for an account), kept in memory and per process, and an entry under penalty is never dropped to make
-room for another: a flood of new names and addresses resets nothing. At most 16 verifications wait for one of the 4
+room for another: a flood of new names and addresses resets nothing. At most 32 attempts of one address run at once. At most 16 verifications wait for one of the 4
 hashing slots, and attempts beyond that are answered ``503`` with ``Retry-After`` at once, uncounted. Basic and the change
 of password go through the same limits.
 
@@ -127,8 +129,13 @@ of password go through the same limits.
 from the right up to the first address that is not a listed proxy. Without it every visitor shares one address and the
 limits per address protect little and refuse neighbours.
 
+**Known limit**: the 4 hashing slots and their queue of 16 are shared by everybody. Many addresses sending random
+logins can keep them full, and a new sign-in then gets ``503`` (sessions already open are not affected, and nothing is
+counted against anyone). Basic has its own pool of 4 workers with the same queue and the same ``503``.
+
 **Changing the password** (and ending the other sessions) is one transaction, and bumps a version of the password that
-every session carries: a sign-in that checked the old password cannot open a session that survives the change.
+every session carries: a sign-in that checked the old password cannot open a session that survives the change. A Basic password declared in ``dashboard.auth`` is not changed by it: it is verified from the configuration
+(deprecated), and an account that has only that has no password to change here.
 
 **Sessions** are rows of ``auth_sessions``. The cookie holds a random 256 bits secret and nothing else (``HttpOnly``,
 ``SameSite=Lax``, ``Path=/``), and the table holds its SHA-256, so reading the database opens no session. Over HTTPS the

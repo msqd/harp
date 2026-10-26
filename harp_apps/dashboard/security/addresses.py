@@ -19,6 +19,8 @@ def _is_trusted(address: str, trusted: Sequence[IPv4Network | IPv6Network]) -> b
         parsed = ip_address(address)
     except ValueError:
         return False
+    if parsed.version == 6 and parsed.ipv4_mapped:
+        parsed = parsed.ipv4_mapped  # a dual-stack socket shows an IPv4 peer this way
     return any(parsed in network for network in trusted if parsed.version == network.version)
 
 

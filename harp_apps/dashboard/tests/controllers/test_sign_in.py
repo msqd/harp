@@ -685,6 +685,26 @@ class TestBasicIsSlowedDownToo:
 
         assert response.status == 429
 
+    async def test_a_saturated_verification_pool_is_a_503_and_counts_for_nothing(self, dashboard, carol, monkeypatch):
+        from harp_apps.dashboard.settings import auth as settings_auth
+
+        monkeypatch.setattr(settings_auth, "_pending", 10**6)
+
+        for _ in range(PAIR_FREE_FAILURES * 2):
+            response = await call(dashboard, path="/api/system/", headers=self.basic("wrong"))
+            assert response.status == 503 and int(response.headers["retry-after"]) >= 1
+        monkeypatch.undo()
+
+        assert (await call(dashboard, path="/api/system/", headers=self.basic("s3cret"))).status == 200
+
+    async def test_a_remembered_success_does_not_need_the_pool(self, dashboard, carol, monkeypatch):
+        from harp_apps.dashboard.settings import auth as settings_auth
+
+        assert (await call(dashboard, path="/api/system/", headers=self.basic("s3cret"))).status == 200
+        monkeypatch.setattr(settings_auth, "_pending", 10**6)
+
+        assert (await call(dashboard, path="/api/system/", headers=self.basic("s3cret"))).status == 200
+
 
 async def test_changing_the_password_with_a_full_hashing_queue_is_a_503_not_a_wrong_password(dashboard, alice, hasher):
     import asyncio
