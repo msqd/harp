@@ -26,6 +26,9 @@ Published tags:
 The image runs as a non-root user (uid 1000) and expects ``docker run --init`` (a minimal init process, for proper
 signal handling), which all the examples below use.
 
+The image installs the ``argon2``, ``postgresql`` and ``sentry`` extras, so ``dashboard.auth.algorithm: argon2`` and
+PostgreSQL storage work out of the box. It has no pip: anything else needs a derived image.
+
 
 Start a proxy
 :::::::::::::
