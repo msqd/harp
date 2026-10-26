@@ -138,3 +138,7 @@ holds the design choices.
     application. Transaction purge becomes a sweep declared by storage, audit retention and cache
     reclamation declare theirs, and the cache drops its own duplicate sweep. Without a janitor
     nothing is scheduled and a warning names the sweeps not running.
+39. Retention belongs to storage (user, 2026-10-26; completes 38): the transaction retention setting
+    moves from `janitor.old_after` to the storage settings, and `janitor.old_after` stays read as a
+    deprecated alias with a warning. The orphan-blob purge and the metrics pass become sweeps
+    declared by storage; the janitor keeps scheduling only.
