@@ -26,7 +26,9 @@ mask_query_password_re = re.compile(rf"([?&](?:{_SECRET_QUERY_PARAMETERS})=)[^&#
 # Dictionary keys whose string value is a secret by name, whatever the algorithm that protects it: credential headers,
 # and any name that says it holds a token, a secret, a password or a key.
 secret_key_re = re.compile(
-    r"^(authorization|cookie|proxy-authorization)$|token|secret|password|[-_]key$", re.IGNORECASE
+    r"^(authorization|proxy-authorization|cookie|cookie2|set-cookie|cookies)$|(^|[-_])auth$"
+    r"|token|secret|password|passwd|pwd|signature|api[-_]?key|private[-_]?key|[-_]key$",
+    re.IGNORECASE,
 )
 
 
@@ -66,10 +68,33 @@ def url_serializer(dsn, secure=True, **kwargs):
 URL_TYPES = (Url, MultiHostUrl, _BaseUrl, _BaseMultiHostUrl, RedisDsn)
 
 
+def is_secret_key(key):
+    return isinstance(key, str) and secret_key_re.search(key) is not None
+
+
 def mask_secret_value(key, value, secure):
-    if secure and isinstance(key, str) and isinstance(value, str) and secret_key_re.search(key):
+    if not secure:
+        return value
+    if isinstance(value, str) and is_secret_key(key):
         return MASK
+    # Cookie names are arbitrary, so every string held under `cookies` is a credential.
+    if isinstance(key, str) and key.lower() == "cookies" and isinstance(value, dict):
+        return {k: MASK if isinstance(v, str) else v for k, v in value.items()}
     return value
+
+
+def _mask_header_pair(items, secure):
+    """A ``[name, value]`` pair is a header whose name says whether its value is a credential. Two header names in a row
+    are a list of names (``redact: [authorization, x-api-key]``), not a pair."""
+    if (
+        secure
+        and len(items) == 2
+        and is_secret_key(items[0])
+        and isinstance(items[1], str)
+        and not is_secret_key(items[1])
+    ):
+        return type(items)((items[0], MASK))
+    return items
 
 
 def asdict(
@@ -122,7 +147,7 @@ def asdict(
         return type(obj)(*[_asdict(v) for v in obj])
 
     if isinstance(obj, (list, tuple)):
-        return type(obj)(_asdict(v) for v in obj)
+        return _mask_header_pair(type(obj)(_asdict(v) for v in obj), secure)
 
     if isinstance(obj, dict):
         if hasattr(type(obj), "default_factory"):
