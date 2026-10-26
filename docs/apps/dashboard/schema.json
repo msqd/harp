@@ -11,55 +11,8 @@
         },
         "algorithm": {
           "default": "pbkdf2_sha256",
-          "description": "Hashing algorithm used for passwords.",
-          "enum": [
-            "argon2",
-            "bcrypt",
-            "bcrypt_sha256",
-            "cisco_asa",
-            "cisco_pix",
-            "cisco_type7",
-            "django_bcrypt",
-            "django_bcrypt_sha256",
-            "django_des_crypt",
-            "django_disabled",
-            "django_pbkdf2_sha1",
-            "django_pbkdf2_sha256",
-            "django_salted_md5",
-            "django_salted_sha1",
-            "grub_pbkdf2_sha512",
-            "hex_digest",
-            "ldap_crypt",
-            "ldap_md5",
-            "ldap_plaintext",
-            "ldap_salted_md5",
-            "ldap_salted_sha1",
-            "ldap_salted_sha256",
-            "ldap_salted_sha512",
-            "ldap_sha1",
-            "lmhash",
-            "md5_crypt",
-            "msdcc",
-            "msdcc2",
-            "mssql2000",
-            "mssql2005",
-            "mysql323",
-            "mysql41",
-            "nthash",
-            "oracle10",
-            "oracle11",
-            "pbkdf2_sha1",
-            "pbkdf2_sha256",
-            "pbkdf2_sha512",
-            "phpass",
-            "plain",
-            "plaintext",
-            "postgres_md5",
-            "scram",
-            "scrypt",
-            "sha256_crypt",
-            "sha512_crypt"
-          ],
+          "description": "Hashing algorithm used for passwords. «plaintext» is for tests only.",
+          "enum": ["pbkdf2_sha256", "argon2", "plaintext"],
           "type": "string"
         },
         "users": {
@@ -70,6 +23,16 @@
         }
       },
       "title": "BasicAuthSettings",
+      "type": "object"
+    },
+    "ChangePasswordInput": {
+      "additionalProperties": false,
+      "properties": {
+        "current": { "type": "string" },
+        "new": { "type": "string" }
+      },
+      "required": ["current", "new"],
+      "title": "ChangePasswordInput",
       "type": "object"
     },
     "DashboardSettings": {
@@ -98,23 +61,16 @@
         },
         "auth": {
           "anyOf": [
-            {
-              "discriminator": {
-                "mapping": {
-                  "basic": "#/$defs/BasicAuthSettings",
-                  "none": "#/$defs/NoAuthSettings"
-                },
-                "propertyName": "type"
-              },
-              "oneOf": [
-                { "$ref": "#/$defs/BasicAuthSettings" },
-                { "$ref": "#/$defs/NoAuthSettings" }
-              ]
-            },
+            { "$ref": "#/$defs/BasicAuthSettings" },
             { "type": "null" }
           ],
           "default": null,
-          "description": "Authentication settings for the dashboard. When not set, the dashboard requires a login with the `admin` user and a random password generated and logged at each boot. Use `type: none` to explicitly serve the dashboard without authentication."
+          "description": "Deprecated. Dashboard users declared in the configuration, signing in with HTTP Basic. They are imported once as accounts. When not set, the dashboard signs people in with a password, and a setup link logged at start lets the first administrator in. There is no way to serve the dashboard without authentication."
+        },
+        "trusted_proxies": {
+          "description": "Networks of the reverse proxies in front of the dashboard (`10.0.0.0/8`). Only a connection from one of them may tell, in `X-Forwarded-For`, which address the client has: the limits on failed sign-ins are kept per client address, and without this every client behind a proxy shares the address of the proxy.",
+          "items": { "format": "ipvanynetwork", "type": "string" },
+          "type": "array"
         },
         "devserver": {
           "anyOf": [
@@ -149,18 +105,32 @@
       "title": "DevserverSettings",
       "type": "object"
     },
-    "NoAuthSettings": {
+    "NoInput": {
       "additionalProperties": false,
-      "description": "Explicit opt-out: the dashboard is served without any authentication.",
+      "description": "Routes that need nothing still take a JSON body (``{}``), which is what keeps a cross-site form out.",
+      "properties": {},
+      "title": "NoInput",
+      "type": "object"
+    },
+    "SetupInput": {
+      "additionalProperties": false,
       "properties": {
-        "type": {
-          "const": "none",
-          "default": null,
-          "description": "Authentication type. «none» serves the dashboard without authentication.",
-          "type": "string"
-        }
+        "secret": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" }
       },
-      "title": "NoAuthSettings",
+      "required": ["secret", "username", "password"],
+      "title": "SetupInput",
+      "type": "object"
+    },
+    "SignInInput": {
+      "additionalProperties": false,
+      "properties": {
+        "username": { "type": "string" },
+        "password": { "type": "string" }
+      },
+      "required": ["username", "password"],
+      "title": "SignInInput",
       "type": "object"
     },
     "SystemPutProxyInput": {
@@ -189,10 +159,13 @@
   },
   "title": "__ROOT__",
   "anyOf": [
+    { "$ref": "#/$defs/ChangePasswordInput" },
+    { "$ref": "#/$defs/NoInput" },
+    { "$ref": "#/$defs/SetupInput" },
+    { "$ref": "#/$defs/SignInInput" },
     { "$ref": "#/$defs/SystemPutProxyInput" },
     { "$ref": "#/$defs/DashboardSettings" },
     { "$ref": "#/$defs/BasicAuthSettings" },
-    { "$ref": "#/$defs/NoAuthSettings" },
     { "$ref": "#/$defs/User" },
     { "$ref": "#/$defs/DevserverSettings" }
   ]

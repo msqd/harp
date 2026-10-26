@@ -219,8 +219,6 @@ At startup, HARP logs one ``WARNING`` per setting that suits a laptop but not pr
 to use instead:
 
 - ``storage.url`` pointing to SQLite, file or ``:memory:``, which is also the default: use PostgreSQL.
-- ``dashboard.auth.type: none``: use ``dashboard.auth.type: basic``. A missing ``dashboard.auth`` is not one, the
-  dashboard then generates a password.
 - ``HARP_DEBUG`` (or the deprecated ``DEBUG``) enabling :ref:`debug mode <configure-debug-mode>`: leave it unset.
 
-With PostgreSQL, authentication set or left to its default, and debug off, nothing is logged.
+With PostgreSQL and debug off, nothing is logged.

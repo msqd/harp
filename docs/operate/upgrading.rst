@@ -17,6 +17,33 @@ Accounts and roles
   ``auth:set-role``, ``auth:disable-account`` and ``auth:enable-account``.
 - **SQLite**: a file written by 0.12 is refused at start. Delete it (it is recreated) or run ``harp-proxy db:reset``.
 
+Signing in to the dashboard
+:::::::::::::::::::::::::::
+
+- **The dashboard has no open mode anymore.** ``dashboard.auth.type: none`` (``--set dashboard.auth.type=none``) is
+  refused at start, and the password generated at each start for the ``admin`` user is gone. Remove the setting.
+- With no ``dashboard.auth``, **the password method is on and has no account**: HARP logs a setup link at start
+  (``There is no administrator yet``), single use, valid 72 hours, replaced at each start. Opening it creates the first
+  administrator, with a password of 15 characters or more. In a container, read it with ``docker logs <container>``.
+  Nobody signs in before. Proxied traffic is never blocked.
+- Signing in opens a session of the server (12 hours without activity, 7 days at most, both settings of the ``auth``
+  application) and sets a cookie, ``__Host-harp_session`` behind HTTPS and ``harp_session`` over plain HTTP. Scripts
+  that called the dashboard port with Basic credentials keep working while ``dashboard.auth`` is configured; Basic is
+  deprecated.
+- Behind a reverse proxy, list its network in ``dashboard.trusted_proxies``: the limits on failed sign-ins are kept per
+  client address, and the proxy's own address is all they see otherwise. See :doc:`/apps/auth/index`.
+- Set the cookie's flavour right behind a reverse proxy that terminates TLS: send ``X-Forwarded-Proto: https`` or set
+  ``dashboard.public_url`` to an ``https`` URL.
+- Lost the only administrator? ``harp-proxy auth:create-account <name> --role admin`` asks for a password (or
+  ``--generate-password``). See :doc:`/apps/auth/index`.
+- **PostgreSQL**: the ``auth`` branch gains ``auth_identities``, ``auth_sessions`` and ``auth_invitations``. The tables
+  are new, so no released database has a row to rewrite. A database that ran an earlier build of this branch holds
+  these tables without the ``password_version`` and ``credential_version`` columns, which the revision creates in place:
+  reset them with ``harp-proxy db:migrate down auth@b3f6a1d94c27`` before updating (it drops the three tables), then
+  migrate up again. On SQLite, delete the file as usual. A password identity is keyed on the login, the username in lower case.
+- Failed sign-ins are refused with ``429`` and ``Retry-After`` (and ``503`` when the hashing queue is full), for the
+  password method and for Basic alike. A script retrying a wrong Basic password in a loop is refused after a few tries.
+
 Metrics
 :::::::
 
@@ -33,6 +60,64 @@ Metrics
   ``remote_exceptions_count`` are removed (they grew the series count with every distinct path or query string).
   Aggregate queries still work; any ``by (path)`` or ``by (url)`` grouping, or matcher on these labels, stops
   matching. The remaining labels are listed in :doc:`prometheus`.
+
+Rules
+:::::
+
+``on_request`` and ``on_response`` rules match a normalised request path, see :doc:`/apps/rules/patterns`. The proxy
+still forwards the target unchanged. Compared to 0.12:
+
+- Empty segments are dropped: a pattern containing ``//`` (``GET /api//admin``) no longer matches anything, write
+  ``GET /api/admin``. Requests for ``/api//admin`` now match ``GET /api/admin``.
+- ``;`` parameters are dropped: a pattern containing ``;`` no longer matches. Requests for ``/admin;x=1`` now match
+  ``GET /admin``.
+- A final slash is kept once: ``/admin//`` and ``/admin/;x`` are matched as ``/admin/``, so ``GET /admin/*`` keeps
+  matching them. An ``on_request`` or ``on_response`` pattern whose path has no wildcard now also matches the path
+  with its final slash removed, whatever its method part: ``GET /admin`` and ``* /admin`` match ``/admin/`` too.
+  Endpoint patterns and ``on_remote_*`` levels are not concerned. To deny a path and everything under it, write
+  ``GET /admin*``.
+- Empty segments are gone before matching, so a wildcard no longer matches one: ``GET /*/users`` no longer matches
+  ``//users``.
+- ``%2F`` (any case) stays encoded in the path, and rules are also matched against a second form with ``%2F`` read as
+  ``/``. A non-deny rule written for ``GET /a/b`` now also fires for ``/a%2Fb``, and a rule fires once per request.
+- ``on_remote_request`` and ``on_remote_response`` rules still match the raw path sent to the remote endpoint, none of
+  the above applies to them.
+- Not normalised, a deny rule has to account for them: double-encoded escapes (``%252F``), ``%3B`` read as ``;``,
+  ``%00``, ``%5C`` and backslashes, and case (patterns are case sensitive).
+
+Redis blob storage
+::::::::::::::::::
+
+- Blobs are now stored under the ``harp:blob:`` key prefix, so the janitor only ever lists, sweeps and counts those
+  keys: other applications can share the Redis database. Nothing to do to keep working: a blob stored by an earlier
+  version is still found under its bare id (40 lowercase hexadecimal characters for a blob, the shape blob ids still
+  have; 64 for an HTTP cache entry written by 0.12). Any other id is only looked up under the prefix. Residue: a
+  string key of another application, named with 40 or 64 lowercase hexadecimal characters and containing a newline, is
+  still readable through ``/api/blobs/<id>``. A proxy client can also make the cache delete the bare key
+  ``sha256(<url>)`` with an unsafe request to that URL: a foreign key is only at risk if another application names its
+  keys by the same sha256. This is unchanged from before.
+- Those older blobs are never listed again: the janitor does not sweep them (orphans among them stay) and the
+  ``storage_blobs`` metrics do not count them, and HTTP cache entries written before the upgrade are not expired by
+  their TTL. They are not copied either. Nothing removes these bare keys on its own: only an explicit deletion of that
+  exact id does. To reclaim them once the cache is warm again:
+
+  - On a Redis database dedicated to HARP, flush it. The cache refills, but message bodies still stored in the SQL
+    database lose their blobs.
+  - On a shared database, delete a bare key only if its value starts with a content-type line HARP writes (for example
+    ``cache/meta`` or ``http/headers``, followed by a newline). Never delete by name shape alone: it can match other
+    applications' keys. Keep the 40-character blobs that stored messages still reference.
+
+Dashboard authentication
+::::::::::::::::::::::::
+
+- passlib is no longer a dependency. ``dashboard.auth.algorithm`` accepts ``pbkdf2_sha256`` (default), ``argon2``
+  (needs ``harp-proxy[argon2]``) and ``plaintext`` (tests only, logs a warning at every start). Any other value
+  (``bcrypt``, ``md5_crypt``, ``sha512_crypt``, ...) makes the configuration invalid, and HARP refuses to start with a
+  message listing the accepted ones: hash the passwords again with ``pbkdf2_sha256`` or ``argon2``, see
+  :doc:`/apps/dashboard/index`.
+- Existing ``pbkdf2_sha256`` hashes (``$pbkdf2-sha256$...``, made by passlib) keep working as they are, no rehash.
+- Hashes created by HARP now use 600000 PBKDF2 rounds (passlib's default was 29000), so a login costs more CPU.
+  Successful logins are cached for a minute.
 
 .. _upgrading-0-12:
 
@@ -114,6 +199,14 @@ Upstreams
 - The TLS trust store is certifi 2026.10.19 or later, which also drops roots Mozilla removed since
   2025.10 (DigiCert Global Root CA, DigiCert High Assurance EV, Entrust and AffirmTrust among them). An
   upstream whose chain ends only at one of them now fails TLS verification.
+
+Proxy
+-----
+
+- ``proxy.tags.max_value_length`` above 255 or ``proxy.tags.max_name_length`` above 64 now fails at
+  startup: they are the widths of the storage columns. Set them to 255 and 64 or lower (the old
+  ``max_value_length`` default of 256 failed to store on PostgreSQL). A tag over the bound is still
+  dropped.
 
 Storage
 -------

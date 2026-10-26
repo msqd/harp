@@ -1,13 +1,20 @@
+import re
 import time
 from collections.abc import AsyncIterator, Iterable
 from datetime import datetime
 from typing import override
 
 from redis.asyncio import Redis
+from redis.exceptions import ResponseError
 
 from harp.models import Blob
 from harp_apps.storage.models.blobs import ORPHAN_GRACE
 from harp_apps.storage.types import IBlobStorage
+
+#: Every blob lives at ``<prefix><blob id>``: the Redis database may be shared with other applications, whose keys HARP
+#: never lists or sweeps. Blobs stored before the prefix existed sit under their bare id (a
+#: 40 or 64 character hexdigest): they are still read and deleted by id, but never listed.
+BLOB_PREFIX = "harp:blob:"
 
 #: Marks a blob as recently written: key ``<prefix><blob id>``, holding the write time, living `ORPHAN_GRACE`.
 #: Redis blobs have no ``created_at``; the marker is what keeps the janitor from deleting content whose message is
@@ -16,14 +23,23 @@ WRITE_MARKER_PREFIX = "harp:blob-written:"
 
 SCAN_BATCH_SIZE = 500
 
-# Deletes the blobs (KEYS) whose write marker is older than ARGV[1], or missing. Atomic: a producer storing
-# the same content again cannot slip in between the check and the deletion.
+#: Blobs of 0.12 and earlier sit under their bare id: 40 hex characters for a blob (the shape of every blob id still),
+#: 64 for an HTTP cache entry (a sha256 cache key). Only such ids are looked up outside the prefix.
+_LEGACY_BLOB_ID = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
+
+
+def _legacy_keys(blob_id: str) -> tuple[str, ...]:
+    return (blob_id,) if _LEGACY_BLOB_ID.fullmatch(blob_id) else ()
+
+
+# Deletes the blobs (KEYS, prefixed by ARGV[3]) whose write marker is older than ARGV[1], or missing. Atomic: a
+# producer storing the same content again cannot slip in between the check and the deletion.
 _DELETE_STALE = """
 local deleted = 0
-for _, id in ipairs(KEYS) do
-    local written = redis.call('GET', ARGV[2] .. id)
+for _, key in ipairs(KEYS) do
+    local written = redis.call('GET', ARGV[2] .. string.sub(key, #ARGV[3] + 1))
     if not written or tonumber(written) < tonumber(ARGV[1]) then
-        deleted = deleted + redis.call('DEL', id)
+        deleted = deleted + redis.call('DEL', key)
     end
 end
 return deleted
@@ -53,8 +69,13 @@ class RedisBlobStorage(IBlobStorage):
 
     @override
     async def get(self, blob_id):
-        data = await self.client.get(blob_id)
-        if data is not None:
+        try:
+            data = await self.client.get(BLOB_PREFIX + blob_id)
+            if data is None and _legacy_keys(blob_id):
+                data = await self.client.get(blob_id)
+        except ResponseError:  # a bare key of another type: not a blob
+            return None
+        if data is not None and b"\n" in data:
             content_type, body = data.split(b"\n", 1)
             return Blob(
                 id=blob_id,
@@ -65,7 +86,7 @@ class RedisBlobStorage(IBlobStorage):
     @override
     async def put(self, blob: Blob) -> Blob:
         async with self.client.pipeline(transaction=True) as pipe:
-            pipe.set(blob.id, _encode(blob))
+            pipe.set(BLOB_PREFIX + blob.id, _encode(blob))
             pipe.set(WRITE_MARKER_PREFIX + blob.id, time.time(), ex=int(ORPHAN_GRACE.total_seconds()))
             await pipe.execute()
         return blob
@@ -74,18 +95,17 @@ class RedisBlobStorage(IBlobStorage):
 
     @override
     async def delete(self, blob_id):
-        await self.client.delete(blob_id)
+        await self.client.delete(BLOB_PREFIX + blob_id, *_legacy_keys(blob_id))
 
     @override
     async def exists(self, blob_id: str) -> bool:
-        return bool(await self.client.exists(blob_id))
+        return bool(await self.client.exists(BLOB_PREFIX + blob_id, *_legacy_keys(blob_id)))
 
     async def iter_blob_ids(self) -> AsyncIterator[str]:
-        """Every stored blob id."""
-        async for key in self.client.scan_iter(count=SCAN_BATCH_SIZE):
+        """Every blob id stored under the HARP prefix."""
+        async for key in self.client.scan_iter(match=BLOB_PREFIX + "*", count=SCAN_BATCH_SIZE):
             key = key.decode() if isinstance(key, bytes) else key
-            if not key.startswith(WRITE_MARKER_PREFIX):
-                yield key
+            yield key.removeprefix(BLOB_PREFIX)
 
     async def iter_blobs(self, content_type: str) -> AsyncIterator[Blob]:
         """Every stored blob of this content type.
@@ -108,7 +128,7 @@ class RedisBlobStorage(IBlobStorage):
             return
         async with self.client.pipeline(transaction=False) as pipe:
             for blob_id in blob_ids:
-                pipe.getrange(blob_id, 0, len(header) - 1)
+                pipe.getrange(BLOB_PREFIX + blob_id, 0, len(header) - 1)
             starts = await pipe.execute()
         for blob_id, start in zip(blob_ids, starts):
             if start == header:
@@ -121,7 +141,7 @@ class RedisBlobStorage(IBlobStorage):
         blobs = list(blobs)
         if blobs:
             await self.client.eval(
-                _DELETE_IF_UNCHANGED, len(blobs), *(b.id for b in blobs), *(_encode(b) for b in blobs)
+                _DELETE_IF_UNCHANGED, len(blobs), *(BLOB_PREFIX + b.id for b in blobs), *(_encode(b) for b in blobs)
             )
 
     async def delete_stale(self, blob_ids: Iterable[str], /, *, older_than: datetime) -> int:
@@ -130,5 +150,10 @@ class RedisBlobStorage(IBlobStorage):
         if not blob_ids:
             return 0
         return await self.client.eval(
-            _DELETE_STALE, len(blob_ids), *blob_ids, older_than.timestamp(), WRITE_MARKER_PREFIX
+            _DELETE_STALE,
+            len(blob_ids),
+            *(BLOB_PREFIX + i for i in blob_ids),
+            older_than.timestamp(),
+            WRITE_MARKER_PREFIX,
+            BLOB_PREFIX,
         )

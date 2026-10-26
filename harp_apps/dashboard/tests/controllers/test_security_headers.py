@@ -12,7 +12,7 @@ from harp_apps.dashboard.controllers import DashboardController
 from harp_apps.dashboard.controllers.blobs import INERT_BLOB_HEADERS
 from harp_apps.dashboard.settings import BasicAuthSettings, DashboardSettings
 from harp_apps.dashboard.settings.auth import User
-from harp_apps.dashboard.tests._mixins import RoleNamedActors
+from harp_apps.dashboard.tests._mixins import BASIC_ADMIN_HEADERS, RoleNamedActors, basic_admin_settings
 from harp_apps.storage.types import IStorage
 
 DASHBOARD_CSP = (
@@ -25,7 +25,7 @@ DASHBOARD_CSP = (
 def _create_controller(settings: DashboardSettings = None):
     controller = DashboardController(
         storage=cast(IStorage, Mock(spec=IStorage)),
-        settings=settings or DashboardSettings(auth={"type": "none"}, devserver={"enabled": True, "port": 5173}),
+        settings=settings or basic_admin_settings(),
         http_client=Mock(spec=AsyncClient),
         actors=RoleNamedActors(),
     )
@@ -41,7 +41,7 @@ def _assert_security_headers(headers):
 
 
 async def test_api_responses_carry_security_headers():
-    response = await _create_controller()(HttpRequest(path="/api/nope"), AsyncMock())
+    response = await _create_controller()(HttpRequest(path="/api/nope", headers=BASIC_ADMIN_HEADERS), AsyncMock())
 
     assert response.status == 404
     _assert_security_headers(response.headers)
@@ -59,13 +59,12 @@ async def test_json_views_carry_security_headers():
     _assert_security_headers(response.headers)
 
 
-async def test_default_login_gate_carries_security_headers():
+async def test_unauthenticated_api_responses_carry_security_headers():
     controller = _create_controller(DashboardSettings(devserver={"enabled": True, "port": 5173}))
 
     response = await controller(HttpRequest(path="/api/system"), AsyncMock())
 
     assert response.status == 401
-    assert response.headers["www-authenticate"].startswith("Basic")
     _assert_security_headers(response.headers)
 
 
@@ -92,7 +91,13 @@ async def test_static_assets_carry_security_headers(tmp_path):
     async def asgi_send(message):
         sent.append(message)
 
-    request = HttpRequest(HttpRequestAsgiBridge({"type": "http", "method": "GET", "path": "/"}, AsyncMock()))
+    scope = {
+        "type": "http",
+        "method": "GET",
+        "path": "/",
+        "headers": [(b"authorization", BASIC_ADMIN_HEADERS["authorization"].encode())],
+    }
+    request = HttpRequest(HttpRequestAsgiBridge(scope, AsyncMock()))
     await controller(request, asgi_send)
 
     start = next(message for message in sent if message["type"] == "http.response.start")
@@ -104,7 +109,7 @@ async def test_devserver_responses_get_no_content_security_policy():
     controller = _create_controller()
     controller._ui_devserver_proxy_controller = AsyncMock(return_value=HttpResponse(b"<html></html>"))
 
-    response = await controller(HttpRequest(path="/"), AsyncMock())
+    response = await controller(HttpRequest(path="/", headers=BASIC_ADMIN_HEADERS), AsyncMock())
 
     assert response.headers["x-content-type-options"] == "nosniff"
     assert response.headers["x-frame-options"] == "DENY"

@@ -68,11 +68,10 @@ Dashboard
 The :doc:`dashboard </apps/dashboard/index>` shows everything that goes through the proxy: reaching it is reaching
 your traffic.
 
-- **A login is required by default.** Without ``dashboard.auth``, HARP generates a password for the ``admin`` user at
-  each start and logs it once. Set your own users with ``dashboard.auth`` (basic authentication, passwords kept as
-  hashes). See the authentication section of :doc:`/apps/dashboard/index`.
-- ``dashboard.auth.type: none`` serves the dashboard to anyone who can reach the port. Keep it for a workstation:
-  HARP warns about it at every start.
+- **A sign-in is required, and there is no way around it.** Nobody gets in before the setup link that HARP logs at
+  start, while no administrator exists, is opened; it is single use, valid 72 hours, and replaced at each start. Treat
+  the logs as holding a secret until it is used. Sessions are server side, end after 12 hours idle or 7 days, and can be
+  ended one by one or everywhere. See :doc:`/apps/auth/index`.
 - ``dashboard.host`` sets the address the dashboard listens on. It defaults to ``[::]``; ``127.0.0.1`` serves it on
   loopback only (reach it through an SSH tunnel or a reverse proxy on the host).
 - Dashboard responses carry ``X-Content-Type-Options``, ``X-Frame-Options`` and a ``Content-Security-Policy``, and
@@ -82,8 +81,9 @@ your traffic.
   with ``403`` when the browser flags it cross-site (``Sec-Fetch-Site``) or its ``Origin`` is not the dashboard's, and
   with ``415`` unless it sends ``Content-Type: application/json``. Scripts calling the API must send that content type.
 
-The dashboard speaks plain HTTP and sends the login with every request: terminate TLS in front of it
-(:ref:`operate-security-tls`).
+The dashboard speaks plain HTTP and sends the session cookie (and the password, at sign-in) in the clear: terminate TLS
+in front of it (:ref:`operate-security-tls`), and tell it so with ``X-Forwarded-Proto: https`` or an ``https``
+``dashboard.public_url``, so that the cookie is the ``Secure``, ``__Host-`` prefixed one.
 
 
 .. _operate-security-dev-settings:
@@ -92,7 +92,7 @@ Development-only settings
 :::::::::::::::::::::::::
 
 At startup HARP logs a ``WARNING`` for every setting that is fine on a laptop and unsafe in production: SQLite as
-``storage.url``, ``dashboard.auth.type: none`` and ``HARP_DEBUG``. Treat such a warning in a production log as a defect
+``storage.url`` and ``HARP_DEBUG``. Treat such a warning in a production log as a defect
 of the deployment.
 
 

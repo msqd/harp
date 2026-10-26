@@ -1,7 +1,42 @@
 services:
+  - name: "auth.hasher"
+    description: "Hashes and verifies passwords (Argon2id), a few at a time."
+    type: harp_apps.auth.passwords.PasswordHasher
+
+  - name: "auth.throttle"
+    description: "Slows down who guesses passwords, per account and per address."
+    type: harp_apps.auth.throttle.SignInThrottle
+
+  - name: "auth.sessions"
+    description: "Server-side dashboard sessions."
+    type: harp_apps.auth.sessions.SessionsService
+    constructor: from_storage
+    arguments:
+      storage: !ref storage
+
   - name: "auth.actors"
     description: "Resolves a request to the actor (account, effective role, credential) it stands for."
     type: harp_apps.auth.actors.ActorResolver
     constructor: from_storage
     arguments:
       storage: !ref storage
+      sessions: !ref auth.sessions
+
+  - name: "auth.authenticator"
+    description: "Signs in with a password, changes it."
+    type: harp_apps.auth.signin.Authenticator
+    constructor: from_storage
+    arguments:
+      storage: !ref storage
+      sessions: !ref auth.sessions
+      hasher: !ref auth.hasher
+      throttle: !ref auth.throttle
+
+  - name: "auth.setup"
+    description: "The setup link that lets the first Admin in."
+    type: harp_apps.auth.setup.SetupLink
+    constructor: from_storage
+    arguments:
+      storage: !ref storage
+      sessions: !ref auth.sessions
+      hasher: !ref auth.hasher

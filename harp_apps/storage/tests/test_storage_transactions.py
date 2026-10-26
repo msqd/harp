@@ -1,9 +1,44 @@
+from datetime import UTC, datetime
+
+from harp.models import Transaction
+from harp.utils.guids import generate_transaction_id_ksuid
 from harp.utils.testing.databases import parametrize_with_database_urls
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 
 class TestStorageTransactions(StorageTestFixtureMixin):
+    @parametrize_with_database_urls()
+    async def test_transaction_with_a_long_method_is_stored_truncated(self, sql_storage: SqlStorage):
+        transaction = Transaction(
+            id=generate_transaction_id_ksuid(),
+            type="http",
+            started_at=datetime.now(UTC),
+            endpoint="api",
+            extras={"method": "X" * 40},
+        )
+        await sql_storage.transactions.create(transaction)
+
+        stored = await sql_storage.get_transaction(transaction.id, username="anonymous")
+
+        assert stored is not None
+        assert stored.extras["method"] == "X" * 16
+
+    @parametrize_with_database_urls()
+    async def test_transaction_with_a_16_character_method_is_stored_as_is(self, sql_storage: SqlStorage):
+        transaction = Transaction(
+            id=generate_transaction_id_ksuid(),
+            type="http",
+            started_at=datetime.now(UTC),
+            endpoint="api",
+            extras={"method": "X" * 16},
+        )
+        await sql_storage.transactions.create(transaction)
+
+        stored = await sql_storage.get_transaction(transaction.id, username="anonymous")
+
+        assert stored.extras["method"] == "X" * 16
+
     @parametrize_with_database_urls()
     async def test_get_transaction_has_messages(self, sql_storage: SqlStorage):
         t = await self.create_transaction(sql_storage, endpoint="foo")

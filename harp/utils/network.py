@@ -123,7 +123,8 @@ async def wait_for_service_ready(
                 with socket.create_connection((host, port), timeout=1):
                     return
         except Exception:
-            await asyncio.sleep(retry_interval)
+            pass
+        await asyncio.sleep(retry_interval)
 
     raise TimeoutError(f"Service not ready on {host}:{port} after {timeout} seconds")
 

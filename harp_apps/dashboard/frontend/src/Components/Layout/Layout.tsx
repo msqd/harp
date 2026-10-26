@@ -3,7 +3,9 @@ import { Link, Outlet, useLocation } from "react-router"
 import tw, { styled } from "twin.macro"
 
 import logo from "Assets/logo.svg"
-import { Role, roleIncludes, useRole } from "Domain/System"
+import { Role, roleIncludes, useRole, useSystemQuery } from "Domain/System"
+import { getDocumentationUrl } from "Utils/Documentation"
+import { DevelopmentOnlyWarning } from "ui/Components/DevelopmentOnlyWarning"
 import { Navbar } from "ui/Components/Navbar"
 
 import { RightNav } from "./RightNav.tsx"
@@ -29,6 +31,7 @@ interface LayoutProps {
 function Layout({ title, navigationItems, navBarClassName }: LayoutProps) {
   const location = useLocation()
   const role = useRole()
+  const system = useSystemQuery().data
   return (
     <div className="flex h-screen min-h-screen max-h-screen w-screen flex-col">
       <Navbar
@@ -41,6 +44,13 @@ function Layout({ title, navigationItems, navBarClassName }: LayoutProps) {
               </span>
             ) : null}
           </Link>
+        }
+        compactChildren={
+          // Below `md` the right side lives in the hamburger menu: the pill must stay in the header bar.
+          <DevelopmentOnlyWarning
+            settings={system?.development_only_settings ?? []}
+            documentationUrl={getDocumentationUrl(system?.version)}
+          />
         }
         items={navigationItems.filter(({ requires }) => roleIncludes(role, requires ?? "viewer"))}
         currentPath={location.pathname}

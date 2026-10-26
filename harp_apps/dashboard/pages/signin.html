@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Sign in to HARP</title>
+<style>
+  body { font: 16px/1.4 system-ui, sans-serif; margin: 0; min-height: 100vh; display: grid; place-items: center; }
+  main { width: min(22rem, 100% - 2rem); }
+  h1 { font-size: 1.4rem; margin: 0 0 1rem; }
+  label { display: block; margin: 0 0 1rem; font-weight: 600; }
+  input { display: block; box-sizing: border-box; width: 100%; margin-top: .25rem; padding: .5rem; font: inherit; }
+  button { padding: .5rem 1rem; font: inherit; cursor: pointer; }
+  [data-error] { color: #b00020; min-height: 1.4em; }
+  small { display: block; margin-top: 1.5rem; opacity: .75; }
+</style>
+</head>
+<body data-page="signin">
+<main>
+  <h1>Sign in to HARP</h1>
+  <form method="post" action="/signin" novalidate>
+    <label>Username <input name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus></label>
+    <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+    <p data-error role="alert"></p>
+    <button type="submit">Sign in</button>
+  </form>
+  <small>First start? There is no account yet: open the setup link HARP wrote in its logs.</small>
+</main>
+<script src="/auth.js"></script>
+</body>
+</html>

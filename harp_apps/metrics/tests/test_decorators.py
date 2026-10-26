@@ -3,7 +3,7 @@ import pytest
 from prometheus_client import REGISTRY
 
 from harp.http import HttpRequest
-from harp_apps.metrics.constants import CONTROLLER_EXCEPTIONS, REMOTE_EXCEPTIONS
+from harp_apps.metrics.constants import CONTROLLER_EXCEPTIONS, CONTROLLER_REQUESTS, REMOTE_EXCEPTIONS, REMOTE_REQUESTS
 from harp_apps.metrics.decorators import decorate_http_client_send, decorate_proxy_controller
 
 
@@ -73,3 +73,47 @@ async def test_remote_records_responses():
 
     assert sample("remote_responses_count_total", name="ep-ok", method="POST", status="204") == 1
     assert sample("remote_requests_in_progress", name="ep-ok", method="POST") == 0
+
+
+async def test_exceptions_keep_their_cause():
+    async def controller(request):
+        raise ValueError("boom") from KeyError("root")
+
+    wrapped = decorate_proxy_controller(controller, name="ctl-cause", port=3333)
+
+    with pytest.raises(ValueError) as caught:
+        await wrapped(HttpRequest(method="GET", path="/x"))
+
+    assert isinstance(caught.value.__cause__, KeyError)
+
+
+async def test_controller_method_label_is_bounded():
+    async def controller(request):
+        return type("Response", (), {"status": 200})()
+
+    wrapped = decorate_proxy_controller(controller, name="ctl-method", port=4444)
+    before = series_count(CONTROLLER_REQUESTS)
+
+    for i in range(20):
+        await wrapped(HttpRequest(method=f"CUSTOM{i}", path="/x"))
+    await wrapped(HttpRequest(method="PATCH", path="/x"))
+
+    assert series_count(CONTROLLER_REQUESTS) == before + 2 * 2  # "other" and "PATCH": _total and _created each
+    assert sample("controller_requests_count_total", name="ctl-method", port="4444", method="other") == 20
+    assert sample("controller_requests_count_total", name="ctl-method", port="4444", method="PATCH") == 1
+
+
+async def test_remote_method_label_is_bounded():
+    async def send(request, *args, **kwargs):
+        return httpx.Response(200)
+
+    wrapped = decorate_http_client_send(send)
+    before = series_count(REMOTE_REQUESTS)
+
+    for i in range(20):
+        await wrapped(httpx.Request(f"CUSTOM{i}", "http://example.com/", extensions={"harp": {"endpoint": "ep-m"}}))
+    await wrapped(httpx.Request("DELETE", "http://example.com/", extensions={"harp": {"endpoint": "ep-m"}}))
+
+    assert series_count(REMOTE_REQUESTS) == before + 2 * 2
+    assert sample("remote_requests_count_total", name="ep-m", method="other") == 20
+    assert sample("remote_requests_count_total", name="ep-m", method="DELETE") == 1

@@ -6,6 +6,23 @@
  */
 
 declare namespace Apps.Dashboard {
+  export interface ChangePasswordInput {
+    current: string;
+    new: string;
+  }
+  /**
+   * Routes that need nothing still take a JSON body (``{}``), which is what keeps a cross-site form out.
+   */
+  export interface NoInput {}
+  export interface SetupInput {
+    secret: string;
+    username: string;
+    password: string;
+  }
+  export interface SignInInput {
+    username: string;
+    password: string;
+  }
   export interface SystemPutProxyInput {
     endpoint: string;
     action: "up" | "down" | "checking";
@@ -33,9 +50,13 @@ declare namespace Apps.Dashboard {
      */
     metrics_port?: number | null;
     /**
-     * Authentication settings for the dashboard. When not set, the dashboard requires a login with the `admin` user and a random password generated and logged at each boot. Use `type: none` to explicitly serve the dashboard without authentication.
+     * Deprecated. Dashboard users declared in the configuration, signing in with HTTP Basic. They are imported once as accounts. When not set, the dashboard signs people in with a password, and a setup link logged at start lets the first administrator in. There is no way to serve the dashboard without authentication.
      */
-    auth?: (BasicAuthSettings | NoAuthSettings) | null;
+    auth?: BasicAuthSettings | null;
+    /**
+     * Networks of the reverse proxies in front of the dashboard (`10.0.0.0/8`). Only a connection from one of them may tell, in `X-Forwarded-For`, which address the client has: the limits on failed sign-ins are kept per client address, and without this every client behind a proxy shares the address of the proxy.
+     */
+    trusted_proxies?: string[];
     /**
      * Development server settings, only useful for internal frontend development.
      */
@@ -51,55 +72,9 @@ declare namespace Apps.Dashboard {
      */
     type?: "basic";
     /**
-     * Hashing algorithm used for passwords.
+     * Hashing algorithm used for passwords. «plaintext» is for tests only.
      */
-    algorithm?:
-      | "argon2"
-      | "bcrypt"
-      | "bcrypt_sha256"
-      | "cisco_asa"
-      | "cisco_pix"
-      | "cisco_type7"
-      | "django_bcrypt"
-      | "django_bcrypt_sha256"
-      | "django_des_crypt"
-      | "django_disabled"
-      | "django_pbkdf2_sha1"
-      | "django_pbkdf2_sha256"
-      | "django_salted_md5"
-      | "django_salted_sha1"
-      | "grub_pbkdf2_sha512"
-      | "hex_digest"
-      | "ldap_crypt"
-      | "ldap_md5"
-      | "ldap_plaintext"
-      | "ldap_salted_md5"
-      | "ldap_salted_sha1"
-      | "ldap_salted_sha256"
-      | "ldap_salted_sha512"
-      | "ldap_sha1"
-      | "lmhash"
-      | "md5_crypt"
-      | "msdcc"
-      | "msdcc2"
-      | "mssql2000"
-      | "mssql2005"
-      | "mysql323"
-      | "mysql41"
-      | "nthash"
-      | "oracle10"
-      | "oracle11"
-      | "pbkdf2_sha1"
-      | "pbkdf2_sha256"
-      | "pbkdf2_sha512"
-      | "phpass"
-      | "plain"
-      | "plaintext"
-      | "postgres_md5"
-      | "scram"
-      | "scrypt"
-      | "sha256_crypt"
-      | "sha512_crypt";
+    algorithm?: "pbkdf2_sha256" | "argon2" | "plaintext";
     users?: Users;
   }
   /**
@@ -110,15 +85,6 @@ declare namespace Apps.Dashboard {
   }
   export interface User {
     password: string;
-  }
-  /**
-   * Explicit opt-out: the dashboard is served without any authentication.
-   */
-  export interface NoAuthSettings {
-    /**
-     * Authentication type. «none» serves the dashboard without authentication.
-     */
-    type?: "none";
   }
   export interface DevserverSettings {
     /**

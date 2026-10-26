@@ -68,7 +68,6 @@ def start(with_docs, with_ui, services, server_subprocesses, mock, **kwargs):
         ) from exc
 
     from harp.commandline.utils.manager import (
-        development_server_options,
         HARP_DOCS_SERVICE,
         HARP_UI_SERVICE,
         get_honcho_manager_factory_type,
@@ -85,7 +84,7 @@ def start(with_docs, with_ui, services, server_subprocesses, mock, **kwargs):
 
     HonchoManagerFactory = get_honcho_manager_factory_type()
     manager_factory = HonchoManagerFactory(
-        proxy_options=development_server_options(options),
+        proxy_options=options.as_list(),
         dashboard_devserver_port=_dashboard_devserver_port,
     )
 

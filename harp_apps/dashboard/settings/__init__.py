@@ -1,9 +1,9 @@
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
-from pydantic import Field, model_validator
+from pydantic import Field, IPvAnyNetwork, model_validator
 
 from harp.config import ApplicationSettingsMixin, Configurable
-from harp_apps.dashboard.settings.auth import BasicAuthSettings, NoAuthSettings
+from harp_apps.dashboard.settings.auth import BasicAuthSettings
 from harp_apps.dashboard.settings.devserver import DevserverSettings
 
 
@@ -27,12 +27,19 @@ class DashboardSettings(ApplicationSettingsMixin, Configurable):
         "default. Metrics are always served on the dashboard port, under the dashboard authentication.",
     )
 
-    auth: Optional[Union[BasicAuthSettings, NoAuthSettings]] = Field(
+    auth: Optional[BasicAuthSettings] = Field(
         None,
-        discriminator="type",
-        description="Authentication settings for the dashboard. When not set, the dashboard requires a login with the "
-        "`admin` user and a random password generated and logged at each boot. Use `type: none` to explicitly serve "
-        "the dashboard without authentication.",
+        description="Deprecated. Dashboard users declared in the configuration, signing in with HTTP Basic. They are "
+        "imported once as accounts. When not set, the dashboard signs people in with a password, and a setup link "
+        "logged at start lets the first administrator in. There is no way to serve the dashboard without "
+        "authentication.",
+    )
+
+    trusted_proxies: list[IPvAnyNetwork] = Field(
+        default_factory=list,
+        description="Networks of the reverse proxies in front of the dashboard (`10.0.0.0/8`). Only a connection from "
+        "one of them may tell, in `X-Forwarded-For`, which address the client has: the limits on failed sign-ins are "
+        "kept per client address, and without this every client behind a proxy shares the address of the proxy.",
     )
 
     devserver: Optional[DevserverSettings] = Field(
@@ -49,6 +56,11 @@ class DashboardSettings(ApplicationSettingsMixin, Configurable):
     @classmethod
     def default_auth_type_to_basic(cls, data: Any) -> Any:
         if isinstance(data, dict) and isinstance(data.get("auth"), dict):
+            if data["auth"].get("type") == "none":
+                raise ValueError(
+                    "`dashboard.auth.type: none` was removed: the dashboard has no open mode anymore. Remove it, and "
+                    "open the setup link HARP logs at start to create the first administrator."
+                )
             return {**data, "auth": {"type": "basic", **data["auth"]}}
         return data
 

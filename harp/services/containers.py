@@ -1,5 +1,5 @@
 from rodi import Container as BaseContainer
-from rodi import OverridingServiceException, ServiceLifeStyle
+from rodi import OverridingServiceException
 
 from .models import ServiceDefinitionCollection
 
@@ -25,8 +25,7 @@ class Container(BaseContainer):
             collection.bind_settings(bind_settings)
 
         for service in collection:
-            lifestyle = getattr(ServiceLifeStyle, (service.lifestyle or "singleton").upper())
-            resolver = ServiceResolver(self, service, lifestyle)
+            resolver = ServiceResolver(self, service)
 
             if resolver.base_type in self._map:
                 raise OverridingServiceException(resolver.base_type, resolver)

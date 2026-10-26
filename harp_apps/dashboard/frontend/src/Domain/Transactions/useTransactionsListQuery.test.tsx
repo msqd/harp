@@ -53,14 +53,45 @@ it("pauses automatic updates while preserving cached data and manual refresh, th
   expect(result.result.current.data).toEqual(data)
 
   result.rerender({ paused: false })
-  await act(() => vi.advanceTimersByTimeAsync(10000))
+  await act(() => vi.advanceTimersByTimeAsync(1))
   expect(fetch).toHaveBeenCalledTimes(3)
+  await act(() => vi.advanceTimersByTimeAsync(10000))
+  expect(fetch).toHaveBeenCalledTimes(4)
   await act(async () => {
     focusManager.setFocused(false)
     focusManager.setFocused(true)
     await vi.advanceTimersByTimeAsync(1)
   })
-  expect(fetch).toHaveBeenCalledTimes(4)
+  expect(fetch).toHaveBeenCalledTimes(5)
+  result.unmount()
+  client.clear()
+})
+
+it("fetches at once on resume, then keeps polling at its usual period", async () => {
+  vi.useFakeTimers()
+  fetch.mockReset()
+  const before = { items: [{ id: "OLD" }], total: 1, pages: 1, perPage: 20 }
+  const after = { items: [{ id: "NEW" }], total: 1, pages: 1, perPage: 20 }
+  fetch.mockResolvedValue({ json: async () => before })
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  )
+  const result = renderHook(({ paused }) => useTransactionsListQuery({ paused }), {
+    initialProps: { paused: true },
+    wrapper,
+  })
+  await act(() => vi.advanceTimersByTimeAsync(1))
+  expect(fetch).toHaveBeenCalledTimes(1)
+
+  fetch.mockResolvedValue({ json: async () => after })
+  result.rerender({ paused: false })
+  await act(() => vi.advanceTimersByTimeAsync(1))
+  expect(fetch).toHaveBeenCalledTimes(2)
+  expect(result.result.current.data).toEqual(after)
+
+  await act(() => vi.advanceTimersByTimeAsync(10000))
+  expect(fetch).toHaveBeenCalledTimes(3)
   result.unmount()
   client.clear()
 })

@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 from harp.http import HttpRequest
 from harp.security.actor import Actor, ActorAccount, Role, set_actor
 from harp_apps.dashboard.controllers.system import SystemController
-from harp_apps.dashboard.security.auth import OPEN_ACTOR
 
 
 def controller():
@@ -21,10 +20,11 @@ async def test_system_tells_who_is_acting_and_with_which_role():
     assert (response["user"], response["displayName"], response["role"]) == ("alice", "Alice A.", "viewer")
 
 
-async def test_system_names_the_anonymous_actor_of_an_open_dashboard():
+async def test_system_tells_how_the_request_got_in():
     request = HttpRequest()
-    set_actor(request, OPEN_ACTOR)
+    account = ActorAccount(id=3, username="alice", role=Role.ADMIN)
+    set_actor(request, Actor(account=account, role=Role.ADMIN, via="session", via_id="9"))
 
     response = await controller().get(request)
 
-    assert (response["user"], response["role"]) == ("anonymous", "admin")
+    assert response["via"] == "session"

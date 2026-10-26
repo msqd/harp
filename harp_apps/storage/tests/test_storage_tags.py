@@ -1,3 +1,4 @@
+from harp.utils.testing.databases import parametrize_with_database_urls
 from harp_apps.storage.services.sql import SqlStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
@@ -19,3 +20,12 @@ class TestStorageTags(StorageTestFixtureMixin):
 
         # ... that we can read using our convenience api
         assert t1_again.tags == tags
+
+    @parametrize_with_database_urls()
+    async def test_tag_at_the_column_widths_is_stored(self, sql_storage: SqlStorage):
+        t1 = await self.create_transaction(sql_storage)
+        tags = {"n" * 64: "v" * 255}
+
+        await sql_storage.transactions.set_tags(t1, tags)
+
+        assert (await sql_storage.transactions.find_one_by_id(t1.id, with_tags=True)).tags == tags

@@ -8,6 +8,7 @@ from sqlalchemy.exc import NoResultFound
 
 from harp.security.actor import Actor, ActorAccount, Role, effective_role
 from harp_apps.auth.models import Account, AccountKind, AccountsRepository
+from harp_apps.auth.sessions import SessionsService
 from harp_apps.storage.types import IStorage
 
 #: An account's ``last_seen_at`` is written at most this often.
@@ -27,13 +28,20 @@ class ActorResolver:
     next request) and the one place that applies the cap of the credential to its role.
     """
 
-    def __init__(self, accounts: AccountsRepository, *, clock: Callable[[], datetime] = _utcnow):
+    def __init__(
+        self,
+        accounts: AccountsRepository,
+        *,
+        sessions: Optional[SessionsService] = None,
+        clock: Callable[[], datetime] = _utcnow,
+    ):
         self.accounts = accounts
+        self.sessions = sessions
         self.clock = clock
 
     @classmethod
-    def from_storage(cls, storage: IStorage) -> "ActorResolver":
-        return cls(storage.accounts)
+    def from_storage(cls, storage: IStorage, sessions: SessionsService) -> "ActorResolver":
+        return cls(storage.accounts, sessions=sessions)
 
     async def resolve(
         self,
@@ -50,6 +58,20 @@ class ActorResolver:
         except NoResultFound:
             return None
         return await self._actor(account, via=via, via_id=via_id, cap=cap, client=client)
+
+    async def session(self, secret: str) -> Optional[Actor]:
+        """The actor of the dashboard session the secret of the cookie opens, or None: unknown, revoked, ended by its
+        idle time or its age, or of an account that may no longer act."""
+        if self.sessions is None:
+            return None
+        row = await self.sessions.authenticate(secret)
+        if row is None:
+            return None
+        try:
+            account = await self.accounts.find_one({"id": row.account_id})
+        except NoResultFound:
+            return None
+        return await self._actor(account, via="session", via_id=str(row.id))
 
     async def basic(self, username: str) -> Optional[Actor]:
         """

@@ -5,8 +5,9 @@ Auth
 
 .. versionadded:: 0.13
 
-The ``harp_apps.auth`` application owns who may use HARP: the **accounts**, the **role** each one holds, and the
-**actor** a request stands for. The dashboard depends on it, so it is loaded whenever a dashboard is.
+The ``harp_apps.auth`` application owns who may use HARP: the **accounts**, how they **sign in** (a password, and the
+**sessions** it opens), the **role** each one holds, and the **actor** a request stands for. The dashboard depends on
+it, so it is loaded whenever a dashboard is.
 
 .. toctree::
     :hidden:
@@ -46,8 +47,8 @@ table. Favourites keep their author.
     ``migrated`` on the accounts the migration disabled and the import has not enabled yet, ``operator`` once an
     Operator disabled one.
 
-Today accounts sign in with the **Basic** authentication of the dashboard (:doc:`/apps/dashboard/settings`). The users
-declared there are **imported once** per database, at the first start with the ``auth`` application: a missing one
+Accounts sign in with a **password** (see below), or with the deprecated **Basic** authentication of the dashboard
+(:doc:`/apps/dashboard/settings`). The users declared there are **imported once** per database, at the first start with the ``auth`` application: a missing one
 becomes an enabled ``admin`` person, one the migration disabled is enabled as ``admin``, and any other existing account
 is left as it is, so a role or a disabling set with the commands below before that start wins. A ``system`` account
 named ``basic-import`` records that it ran. Later starts import nothing: a configured user without an account, because
@@ -78,11 +79,102 @@ Every dashboard route declares the role it requires, and a request below it is a
 without a declared role is reserved to ``admin``. The dashboard shows the account and its role in its header, and
 does not offer the pages the role cannot use.
 
-.. warning::
+There is no open mode: every request of the dashboard is resolved to an account, and ``dashboard.auth.type: none`` is
+refused at start.
 
-    A dashboard explicitly left open (``dashboard.auth.type: none``) has no account to ask a role of: everything is
-    allowed, and favourites are the ones of the ``anonymous`` account, as before. This is a **temporary deviation** from
-    the design, which has no open mode; it is removed when password sign-in lands (#1520).
+
+Signing in with a password
+::::::::::::::::::::::::::
+
+The password method needs no configuration: it is on when no sign-in method is configured (and next to Basic when
+``dashboard.auth`` is). A person has one **identity** for it, a row of ``auth_identities`` keyed by ``password``, an
+empty issuer and the username, holding the hash. ``/signin`` is the page, ``POST /api/auth/signin`` the request it makes.
+
+**Passwords** are stored as Argon2id PHC strings (19 MiB, t=2, p=1) and hashed again at the next sign-in when these
+parameters change. At most four verifications run at once. The policy is the one of NIST SP 800-63B-4: 15 to 256
+characters, none from a bundled list of the 10 000 most common passwords, no composition rule and no expiry. An unknown
+account, a disabled one and a wrong password are refused with the same answer, after the same verification.
+
+**Failed sign-ins are refused, never held, and nobody can lock out somebody on another address.** An attempt over a limit
+is answered ``429`` with ``Retry-After`` before its password is looked at, and holds nothing on the server, so the limits
+cap how many guesses get through and a flood cannot starve the others. A wait is 1 second, then 2, 4, ... up to 1 minute;
+a refused attempt does not extend it. Three counts, of failures that completed (so a dashboard fetching six things at
+once is not refused for being parallel):
+
+- *One address against one account*: from the fifth failure, that address waits before its next attempt on that account.
+  Guessing at ``alice`` from your address only slows you down. Only failures that completed are counted, so
+  **up to 21 attempts of one pair (5 free plus 16 under way) can start before the first wait**: refusing on attempts
+  started would lock a dashboard out for fetching six things at once. The real concurrency is lower, since the hashing
+  queue (4 verifications at a time, 16 waiting, the rest answered ``503``) bounds it. Once a pair is over its free
+  failures, one attempt at a time is let through: a burst arriving as a wait runs out gets one guess, not 21. The same
+  holds for an account past 100 failures and for an address past 100.
+- *One account, every address*: after 100 consecutive failures (the limit of NIST SP 800-63B-4) addresses that never
+  signed in to the account wait. The last 8 addresses that did (30 days, until the process restarts) are exempt. Whoever
+  hammers a name keeps a person on a new address waiting a minute at most.
+- *One address, every account* (an IPv6 address stands for its /64): after 100 failures it waits. This stops an address
+  that piles up penalised pairs, and takes over for a pair or an account the table has no room to record. An address an
+  account signed in from is not held by this limit for that account (the pair limit still applies), so flooding a shared
+  address cannot lock out those who signed in from it before; spraying other accounts from it stays refused. Behind a
+  Behind a reverse proxy HARP does not know (see below) an attacker's neighbours get short ``429`` too: that is the accepted cost.
+
+Names are folded to lower case and checked (1 to 64 of ``A-Za-z0-9._@+-``) before the lookup and the count, so case
+variants are one login; a name that cannot be one shares a single count. Counts are forgotten after 15 minutes without
+failure (an hour for an account), kept in memory and per process, and an entry under penalty is never dropped to make
+room for another: a flood of new names and addresses resets nothing. At most 32 attempts of one address run at once. At most 16 verifications wait for one of the 4
+hashing slots, and attempts beyond that are answered ``503`` with ``Retry-After`` at once, uncounted. Basic and the change
+of password go through the same limits.
+
+**The address** is the one of the connection. Behind a reverse proxy it is the proxy's, so list its network in
+``dashboard.trusted_proxies``: only a connection from a listed network may name the client in ``X-Forwarded-For``, read
+from the right up to the first address that is not a listed proxy. Without it every visitor shares one address and the
+limits per address protect little and refuse neighbours.
+
+**Known limit**: the 4 hashing slots and their queue of 16 are shared by everybody. Many addresses sending random
+logins can keep them full, and a new sign-in then gets ``503`` (sessions already open are not affected, and nothing is
+counted against anyone). Basic has its own pool of 4 workers with the same queue and the same ``503``.
+
+**Changing the password** (and ending the other sessions) is one transaction, and bumps a version of the password that
+every session carries: a sign-in that checked the old password cannot open a session that survives the change. A Basic password declared in ``dashboard.auth`` is not changed by it: it is verified from the configuration
+(deprecated), and an account that has only that has no password to change here.
+
+**Sessions** are rows of ``auth_sessions``. The cookie holds a random 256 bits secret and nothing else (``HttpOnly``,
+``SameSite=Lax``, ``Path=/``), and the table holds its SHA-256, so reading the database opens no session. Over HTTPS the
+cookie is ``__Host-harp_session`` and ``Secure``; over plain HTTP it is ``harp_session``. A request is secure when the
+reverse proxy says so (``X-Forwarded-Proto: https``) or when ``dashboard.public_url`` is an ``https`` URL, and only the
+cookie of its flavour is read. The proxy strips both cookie names from the requests it forwards to an origin, and from
+the responses it gets. A session ends after ``session_idle_hours`` (12) without a request or
+after ``session_max_hours`` (168, 7 days) whatever the activity, both checked by the server at each request. Disabling
+the account or lowering its role applies at the next request.
+
+``POST /api/auth/signout`` ends the session of the request, ``POST /api/auth/signout-all`` every session of the account,
+and ``POST /api/auth/password`` (``current``, ``new``) changes the password and ends the other sessions. Like every
+state-changing route of the dashboard they only accept ``application/json`` from the dashboard itself, which is what
+keeps a cross-site form out (:doc:`/apps/dashboard/index`). Same-origin hardening across ports is a separate change.
+
+
+The setup link
+::::::::::::::
+
+While no enabled ``admin`` person exists, HARP logs a link at each start:
+
+.. code-block:: text
+
+    There is no administrator yet: ... http://localhost:4080/setup#<secret>
+
+It names ``dashboard.public_url`` when set, else ``localhost`` and the dashboard port. Opening it asks for a username and
+a password and creates the first Admin, already signed in. The secret is in the fragment of the URL, which a browser never
+sends: it is in no access log and no ``Referer``. It is single use, valid ``setup_link_hours`` (72), stored as a SHA-256,
+and replaced at each start while unused (so the one in the latest logs is the only one that works). A weak password or a
+taken username leaves it valid for another try. It is void as soon as an Admin exists, however it came to exist.
+**Until it is used the logs hold a secret that makes an administrator**: restrict who reads them.
+
+Nothing configured with ``dashboard.auth`` needs it: the users declared there are imported as Admins, and no link is
+logged.
+
+The link is the minimal form of an **invitation**: a row of ``auth_invitations`` for the
+``admin`` role with no ``invited_by``. Invitations for other accounts (#1523) use the same table and the same
+acceptance, with an author, a role and an expected email set by an Admin: nothing here needs migrating, only the
+acceptance generalising.
 
 
 The actor
@@ -103,9 +195,10 @@ Commands
 
     harp-proxy auth:create-account alice --role editor --display-name "Alice" --email alice@example.com
 
-creates an account. It is also the way back in when no Admin is left: create one, the role is read at each request so
-there is nothing to restart. The command refuses a username or an email that is taken, and a database whose schema is not
-current.
+creates an account with a password, which it asks for (twice, not shown; the policy above applies). ``--generate-password``
+makes one up instead and shows it once. It is also the way back in when no Admin is left: create one, the role is read at
+each request so there is nothing to restart. The command refuses a username (1 to 64 letters, digits or any of
+``. _ @ + -``) or an email that is taken, and a database whose schema is not current.
 
 .. code-block:: shell
 
@@ -116,11 +209,6 @@ current.
 change the role of an account, and revoke or restore it. **Revoke by disabling**: a disabled account answers ``401`` at
 its next request and nothing is lost. Never delete a row: the favourites of the account go with it. These commands are
 the way to manage accounts until the administration screen exists.
-
-.. note::
-
-    The command does not set a password yet: until password sign-in lands, an account signs in through a user of the
-    same name declared in ``dashboard.auth``.
 
 
 Upgrading

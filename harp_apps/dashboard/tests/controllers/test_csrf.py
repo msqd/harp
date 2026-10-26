@@ -8,7 +8,7 @@ from httpx import AsyncClient
 from harp.controllers import RoutingController
 from harp.http import HttpRequest, JsonHttpResponse
 from harp_apps.dashboard.controllers import DashboardController
-from harp_apps.dashboard.settings import DashboardSettings
+from harp_apps.dashboard.tests._mixins import BASIC_ADMIN_HEADERS, RoleNamedActors, basic_admin_settings
 from harp_apps.storage.types import IStorage
 
 STATE_CHANGING_ROUTES = [
@@ -17,7 +17,12 @@ STATE_CHANGING_ROUTES = [
     ("DELETE", "/api/transactions/abc/flags/favorite"),
 ]
 
-SAME_ORIGIN = {"content-type": "application/json", "host": "harp.test", "origin": "http://harp.test"}
+SAME_ORIGIN = {
+    "content-type": "application/json",
+    "host": "harp.test",
+    "origin": "http://harp.test",
+    **BASIC_ADMIN_HEADERS,
+}
 
 
 @pytest.fixture
@@ -29,11 +34,12 @@ def routed(monkeypatch):
 
 
 @pytest.fixture
-def controller():
+async def controller():
     controller = DashboardController(
         storage=cast(IStorage, Mock(spec=IStorage)),
-        settings=DashboardSettings(auth={"type": "none"}, devserver={"enabled": True, "port": 5173}),
+        settings=basic_admin_settings(),
         http_client=Mock(spec=AsyncClient),
+        actors=RoleNamedActors(),
     )
     controller._ui_devserver_proxy_controller = None
     return controller
@@ -93,7 +99,7 @@ async def test_cross_site_request_is_refused(controller, routed, method, path, e
 
 @pytest.mark.parametrize("sec_fetch_site", ["same-origin", "none"])
 async def test_sec_fetch_site_from_the_dashboard_itself_is_accepted(controller, routed, sec_fetch_site):
-    headers = {"content-type": "application/json", "sec-fetch-site": sec_fetch_site}
+    headers = {**BASIC_ADMIN_HEADERS, "content-type": "application/json", "sec-fetch-site": sec_fetch_site}
 
     response = await call(controller, "PUT", "/api/system/proxy", headers)
 
@@ -101,6 +107,6 @@ async def test_sec_fetch_site_from_the_dashboard_itself_is_accepted(controller, 
 
 
 async def test_reads_need_neither_content_type_nor_origin(controller, routed):
-    response = await call(controller, "GET", "/api/system", {"origin": "http://evil.test"})
+    response = await call(controller, "GET", "/api/system", {**BASIC_ADMIN_HEADERS, "origin": "http://evil.test"})
 
     assert response.status == 200

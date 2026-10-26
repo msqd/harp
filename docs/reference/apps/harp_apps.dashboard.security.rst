@@ -14,4 +14,5 @@ Submodules
 .. toctree::
     :maxdepth: 1
 
-    harp_apps.dashboard.security.auth
+    harp_apps.dashboard.security.addresses
+    harp_apps.dashboard.security.cookies

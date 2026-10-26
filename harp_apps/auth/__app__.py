@@ -1,7 +1,7 @@
 """
 Authentication Application
 
-Accounts, their roles, and the actor a request stands for.
+Accounts, how they sign in (a password, and the sessions it opens), their roles, and the actor a request stands for.
 """
 
 from os.path import dirname

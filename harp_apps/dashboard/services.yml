@@ -11,6 +11,16 @@ services:
     arguments:
       router: !ref dashboard.router
       actors: !ref auth.actors
+      authenticator: !ref auth.authenticator
+      setup: !ref auth.setup
+
+  - name: "dashboard.controller.auth"
+    description: "Sub-controller for signing out and changing the password."
+    type: harp_apps.dashboard.controllers.auth.AuthController
+    arguments:
+      router: !ref dashboard.router
+      authenticator: !ref auth.authenticator
+      sessions: !ref auth.sessions
 
   - name: "dashboard.controller.blobs"
     description: "Sub-controller for the blobs-related routes of the dashboard."

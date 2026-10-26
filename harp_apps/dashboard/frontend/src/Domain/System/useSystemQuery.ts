@@ -1,6 +1,7 @@
 import { useQuery } from "react-query"
 
 import { useApi } from "Domain/Api"
+import { DevelopmentOnlySetting } from "ui/Components/DevelopmentOnlyWarning"
 
 import type { Role } from "./useRole.ts"
 
@@ -14,5 +15,8 @@ export function useSystemQuery() {
     displayName?: string | null
     /** Role the request acts with. */
     role?: Role
+    /** How the request got in: a `session` can be signed out of. */
+    via?: string
+    development_only_settings?: DevelopmentOnlySetting[]
   }>(["system"], () => api.fetch("/system").then((r) => r.json()))
 }

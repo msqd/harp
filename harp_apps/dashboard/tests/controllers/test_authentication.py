@@ -6,22 +6,22 @@ from typing import cast
 from unittest.mock import AsyncMock, Mock
 
 from httpx import AsyncClient
-from passlib.hash import pbkdf2_sha256
 
 from harp.config.asdict import asdict
 from harp.http import HttpRequest
 from harp.utils.bytes import ensure_bytes
 from harp_apps.dashboard.controllers import DashboardController
+from harp_apps.dashboard.passwords import hash_password
 from harp_apps.dashboard.settings import BasicAuthSettings, DashboardSettings
 from harp_apps.dashboard.settings.auth import User
 from harp_apps.dashboard.tests._mixins import RoleNamedActors
 from harp_apps.storage.types import IStorage
 
 
-async def test_controller_no_auth():
+async def test_controller_without_configured_users_lets_nobody_in_without_a_session():
     controller = await _create_mock_controller()
     response = await controller(HttpRequest(), AsyncMock())
-    assert response.status == 404
+    assert response.status == 401
 
 
 async def test_controller_auth_plaintext():
@@ -77,7 +77,7 @@ class _VerifySpy:
         self.result = result
         self.threads = []
 
-    def __call__(self, password, hashed):
+    def __call__(self, algorithm, password, hashed):
         self.threads.append(threading.get_ident())
         return self.result
 
@@ -87,7 +87,7 @@ def _hashed_controller_settings(users=None):
         auth=BasicAuthSettings(
             type="basic",
             algorithm="pbkdf2_sha256",
-            users=users or {"admin": User(password=pbkdf2_sha256.hash("admin"))},
+            users=users or {"admin": User(password=hash_password("pbkdf2_sha256", "admin"))},
         ),
         devserver={"enabled": True, "port": 5173},
     )
@@ -96,7 +96,7 @@ def _hashed_controller_settings(users=None):
 async def test_password_check_runs_off_the_event_loop(monkeypatch):
     controller = await _create_mock_controller(settings=_hashed_controller_settings())
     spy = _VerifySpy()
-    monkeypatch.setattr(BasicAuthSettings, "algorithm_impl", spy)
+    monkeypatch.setattr("harp_apps.dashboard.settings.auth.verify_password", spy)
 
     response = await controller(HttpRequest(headers=_get_auth_headers("admin", "admin")), AsyncMock())
 
@@ -107,7 +107,7 @@ async def test_password_check_runs_off_the_event_loop(monkeypatch):
 async def test_successful_check_is_cached(monkeypatch):
     controller = await _create_mock_controller(settings=_hashed_controller_settings())
     spy = _VerifySpy()
-    monkeypatch.setattr(BasicAuthSettings, "algorithm_impl", spy)
+    monkeypatch.setattr("harp_apps.dashboard.settings.auth.verify_password", spy)
 
     for _ in range(3):
         response = await controller(HttpRequest(headers=_get_auth_headers("admin", "admin")), AsyncMock())
@@ -119,7 +119,7 @@ async def test_successful_check_is_cached(monkeypatch):
 async def test_cached_check_expires(monkeypatch):
     controller = await _create_mock_controller(settings=_hashed_controller_settings())
     spy = _VerifySpy()
-    monkeypatch.setattr(BasicAuthSettings, "algorithm_impl", spy)
+    monkeypatch.setattr("harp_apps.dashboard.settings.auth.verify_password", spy)
     now = [1000.0]
     monkeypatch.setattr("harp_apps.dashboard.settings.auth.monotonic", lambda: now[0])
 
@@ -133,7 +133,7 @@ async def test_cached_check_expires(monkeypatch):
 async def test_failed_check_is_not_cached(monkeypatch):
     controller = await _create_mock_controller(settings=_hashed_controller_settings())
     spy = _VerifySpy(result=False)
-    monkeypatch.setattr(BasicAuthSettings, "algorithm_impl", spy)
+    monkeypatch.setattr("harp_apps.dashboard.settings.auth.verify_password", spy)
 
     for _ in range(2):
         response = await controller(HttpRequest(headers=_get_auth_headers("admin", "wrong")), AsyncMock())
@@ -145,7 +145,7 @@ async def test_failed_check_is_not_cached(monkeypatch):
 async def test_unknown_user_pays_the_same_verification_as_a_wrong_password(monkeypatch):
     controller = await _create_mock_controller(settings=_hashed_controller_settings())
     spy = _VerifySpy(result=True)  # even a verifier that accepts everything must not let an unknown user in
-    monkeypatch.setattr(BasicAuthSettings, "algorithm_impl", spy)
+    monkeypatch.setattr("harp_apps.dashboard.settings.auth.verify_password", spy)
 
     response = await controller(HttpRequest(headers=_get_auth_headers("nobody", "whatever")), AsyncMock())
 
@@ -176,7 +176,7 @@ def test_cache_keys_differ_between_instances():
 async def _create_mock_controller(settings: DashboardSettings = None):
     controller = DashboardController(
         storage=cast(IStorage, Mock(spec=IStorage)),
-        settings=settings or DashboardSettings(auth={"type": "none"}, devserver={"enabled": True, "port": 5173}),
+        settings=settings or DashboardSettings(devserver={"enabled": True, "port": 5173}),
         http_client=Mock(spec=AsyncClient),
         actors=RoleNamedActors(),
     )
@@ -187,3 +187,16 @@ async def _create_mock_controller(settings: DashboardSettings = None):
 
 def _get_auth_headers(username, password):
     return {"authorization": "basic " + b64encode(b":".join((ensure_bytes(username), ensure_bytes(password)))).decode()}
+
+
+async def test_verifications_beyond_the_pool_and_its_queue_are_refused_at_once(monkeypatch):
+    import pytest
+
+    from harp_apps.auth.passwords import HasherBusy
+    from harp_apps.dashboard.settings import auth as settings_auth
+
+    settings = _hashed_controller_settings().auth
+    monkeypatch.setattr(settings_auth, "_pending", settings_auth.VERIFY_WORKERS + settings_auth.VERIFY_MAX_WAITING)
+
+    with pytest.raises(HasherBusy):
+        await settings.acheck("admin", "admin")

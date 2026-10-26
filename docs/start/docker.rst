@@ -41,28 +41,14 @@ available at http://localhost:4080.
 
 .. _docker-dashboard-login:
 
-The dashboard requires a login. Without ``dashboard.auth`` configured, HARP generates a password for the ``admin`` user at each start and
-prints it once in the container logs:
+The dashboard requires a sign-in, and no account exists yet: HARP logs a setup link at start, which you open to create
+the first administrator (the link is single use and valid for 72 hours). Read it in the container logs:
 
 .. code-block:: shell
 
-    docker logs <container> 2>&1 | grep "Dashboard login"
+    docker logs <container> 2>&1 | grep "setup#"
 
-The password changes every time the container starts. To choose your own users, add ``dashboard.auth`` to your
-configuration file (see :doc:`/apps/dashboard/index`), for example with a hashed password:
-
-.. code-block:: yaml
-
-    dashboard:
-      auth:
-        type: basic
-        algorithm: pbkdf2_sha256
-        users:
-          admin:
-            password: "<hash>"
-
-To serve the dashboard without any authentication, pass ``--set dashboard.auth.type=none``: HARP then logs a warning at every start,
-as anyone reaching the port can read the proxied traffic.
+The link names ``localhost:4080``, or ``dashboard.public_url`` when it is set. See :doc:`/apps/auth/index`.
 
 Without configured endpoints, no traffic can be proxied yet.
 

@@ -1,3 +1,4 @@
+from base64 import b64encode
 from copy import deepcopy
 
 import pytest
@@ -11,7 +12,12 @@ from harp.utils.testing.mixins import ControllerThroughASGIFixtureMixin
 from harp.views.json import register as register_json_views
 
 from ..controllers.system import SystemController
-from ..security.auth import OPEN_ACTOR
+from ..settings import BasicAuthSettings, DashboardSettings
+from ..settings.auth import User
+
+#: An Admin, for tests that look at a sub-controller and so skip the resolution of the actor. The name is the one of the
+#: system account that authors the favourites recorded before there were accounts.
+ADMIN_ACTOR = Actor(account=ActorAccount(id=None, username="anonymous", role=Role.ADMIN), role=Role.ADMIN, via="test")
 
 
 class SystemControllerTestFixtureMixin:
@@ -57,8 +63,23 @@ def parametrize_with_settings(*args):
     return pytest.mark.parametrize("controller", args, indirect=True)
 
 
+def basic_admin_settings() -> DashboardSettings:
+    """Settings of a dashboard with one Basic user, ``admin``, for tests that need to be let in without a database."""
+    return DashboardSettings(
+        auth=BasicAuthSettings(type="basic", algorithm="plaintext", users={"admin": User(password="admin")}),
+        devserver={"enabled": True, "port": 5173},
+    )
+
+
+#: Headers that sign ``admin`` in with Basic, to go with :func:`basic_admin_settings` and :class:`RoleNamedActors`.
+BASIC_ADMIN_HEADERS = {"authorization": "basic " + b64encode(b"admin:admin").decode()}
+
+
 class RoleNamedActors:
     """Stands for the actor resolver: an account is named after its role, ``disabled`` is refused."""
+
+    async def session(self, secret):
+        return None
 
     async def basic(self, username):
         if username == "disabled":
@@ -69,12 +90,12 @@ class RoleNamedActors:
 
 class AdminThroughASGIFixtureMixin(ControllerThroughASGIFixtureMixin):
     """The controller under test is a sub-controller of the dashboard, which is what resolves the actor: here it is an
-    Admin, as when the dashboard is left open."""
+    Admin."""
 
     @pytest.fixture
     def kernel(self, controller):
         async def as_admin(request):
-            set_actor(request, OPEN_ACTOR)
+            set_actor(request, ADMIN_ACTOR)
             return await controller(request)
 
         kernel = ASGIKernel(resolver=DefaultControllerResolver(default_controller=as_admin), handle_errors=False)

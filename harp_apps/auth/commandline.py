@@ -1,6 +1,7 @@
 """Commands of the authentication application."""
 
 import asyncio
+import secrets
 from datetime import UTC, datetime
 from typing import Optional, cast
 
@@ -12,7 +13,17 @@ from harp.commandline.options.server import server_command
 from harp.errors import OutdatedSchemaError
 from harp.security.actor import Role
 from harp.utils.commandline import click
-from harp_apps.auth.models import RESERVED_USERNAMES, AccountKind, AccountsRepository
+from harp_apps.auth.models import (
+    PASSWORD_METHOD,
+    Account,
+    AccountKind,
+    AccountsRepository,
+    Identity,
+    UsernameRefused,
+    check_username,
+    login_of,
+)
+from harp_apps.auth.passwords import PasswordHasher, PasswordPolicyError, check_policy
 from harp_apps.storage.utils.migrations import (
     create_harp_settings_with_storage_from_command_line_options,
     ensure_schema_is_current,
@@ -24,13 +35,27 @@ class AccountExistsError(Exception):
     pass
 
 
-async def _create_account(url, values: dict) -> None:
+async def _create_account(url, values: dict, password: str) -> None:
+    """Creates the account and its password identity together: both exist or none does."""
     engine = create_async_engine(str(url))
     try:
         await ensure_schema_is_current(engine)
-        accounts = AccountsRepository(async_sessionmaker(engine, expire_on_commit=False))
+        password_hash = await PasswordHasher().hash(password)
         try:
-            await accounts.create(values)
+            async with async_sessionmaker(engine, expire_on_commit=False)() as session:
+                account = Account(**values)
+                session.add(account)
+                await session.flush()
+                session.add(
+                    Identity(
+                        account_id=account.id,
+                        method=PASSWORD_METHOD,
+                        issuer="",
+                        subject=login_of(account.username),
+                        password_hash=password_hash,
+                    )
+                )
+                await session.commit()
         except IntegrityError as exc:
             raise AccountExistsError(render_failure(exc, url)) from None
     finally:
@@ -47,10 +72,26 @@ async def _create_account(url, values: dict) -> None:
 )
 @click.option("--display-name", help="Name shown in the dashboard.")
 @click.option("--email", help="Email of the account, shown and never a way in.")
-def create_account(*, username: str, role: str, display_name: Optional[str], email: Optional[str], **kwargs):
-    """Creates an account, which is also how access is recovered when no Admin is left."""
-    if username in RESERVED_USERNAMES:
-        raise click.ClickException(f"The username {username!r} is reserved for a system account.")
+@click.option(
+    "--generate-password",
+    is_flag=True,
+    help="Make up the password and show it once, instead of asking for one.",
+)
+def create_account(
+    *,
+    username: str,
+    role: str,
+    display_name: Optional[str],
+    email: Optional[str],
+    generate_password: bool,
+    **kwargs,
+):
+    """Creates an account with a password, which is also how access is recovered when no Admin is left."""
+    try:
+        check_username(username)
+    except UsernameRefused as exc:
+        raise click.ClickException(str(exc)) from None
+    password = _generate_password() if generate_password else _ask_password()
     settings = create_harp_settings_with_storage_from_command_line_options(kwargs)
     values = {
         "username": username,
@@ -60,13 +101,31 @@ def create_account(*, username: str, role: str, display_name: Optional[str], ema
         "email": email,
     }
     try:
-        asyncio.run(_create_account(settings.get("storage").url, values))
+        asyncio.run(_create_account(settings.get("storage").url, values, password))
     except OutdatedSchemaError as exc:
         raise click.ClickException(str(exc)) from None
     except AccountExistsError:
         # the username and the email are both unique
         raise click.ClickException(_what_exists(username, email)) from None
     click.echo(f"Account {username} created, as {role}.")
+    if generate_password:
+        click.echo(f"Password: {password}")
+        click.echo("It is shown this once and stored hashed: keep it somewhere safe.")
+
+
+def _generate_password() -> str:
+    # 24 characters of 6 bits each: well past the policy, and nothing a person has to read out loud
+    return secrets.token_urlsafe(18)
+
+
+def _ask_password() -> str:
+    """Asks for the password until the policy accepts it (the input is not shown)."""
+    password = click.prompt("Password", hide_input=True, confirmation_prompt=True)
+    try:
+        check_policy(password)
+    except PasswordPolicyError as exc:
+        raise click.ClickException(str(exc)) from None
+    return password
 
 
 def _what_exists(username: str, email: Optional[str]) -> str:

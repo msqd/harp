@@ -32,17 +32,6 @@ def development_only_settings(config: GlobalSettings) -> list[DevelopmentOnlySet
             )
         )
 
-    dashboard = config.get("dashboard")
-    if dashboard is not None and getattr(dashboard.auth, "type", None) == "none":
-        found.append(
-            DevelopmentOnlySetting(
-                "dashboard.auth.type",
-                "Dashboard authentication is disabled (dashboard.auth.type=none): the dashboard is unauthenticated "
-                f"and exposes proxied traffic to anyone who can reach {dashboard.host}:{dashboard.port}. "
-                "Use dashboard.auth.type=basic.",
-            )
-        )
-
     if harp.DEBUG:
         found.append(
             DevelopmentOnlySetting(

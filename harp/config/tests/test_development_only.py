@@ -47,10 +47,6 @@ def test_dashboard_without_auth_is_not_development_only():
     assert names(settings(auth=None)) == []
 
 
-def test_dashboard_auth_none():
-    assert names(settings(auth={"type": "none"})) == ["dashboard.auth.type"]
-
-
 def test_debug(monkeypatch):
     monkeypatch.setattr(harp, "DEBUG", True)
     assert names(settings()) == ["HARP_DEBUG"]
@@ -65,14 +61,15 @@ def test_each_item_says_what_to_use_instead():
     assert "PostgreSQL" in item.message
 
 
-async def test_startup_logs_one_warning_per_setting(caplog):
+async def test_startup_logs_one_warning_per_setting(caplog, monkeypatch):
+    monkeypatch.setattr(harp, "DEBUG", True)
     builder = ConfigurationBuilder(use_default_applications=False)
     for app in ("http_client", "proxy", "storage", "dashboard"):
         builder.applications.add(app, autoload_dependencies=True)
     builder.add_values(
         {
             "storage": {"url": "sqlite:///:memory:"},
-            "dashboard": {"auth": {"type": "none"}, "devserver": {"enabled": False}},
+            "dashboard": {"devserver": {"enabled": False}},
         }
     )
     with caplog.at_level(logging.WARNING):
@@ -80,4 +77,4 @@ async def test_startup_logs_one_warning_per_setting(caplog):
     await system.dispose()
     warned = [r.getMessage() for r in caplog.records if "development" in r.getMessage().lower()]
     assert len(warned) == 2
-    assert sum("dashboard.auth.type" in m for m in warned) == 1
+    assert sum("HARP_DEBUG" in m for m in warned) == 1

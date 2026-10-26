@@ -17,6 +17,7 @@ def test_defaults():
         "metrics_port": None,
         "port": 4080,
         "public_url": None,
+        "trusted_proxies": [],
     }
 
 

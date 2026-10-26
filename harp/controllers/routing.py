@@ -1,5 +1,4 @@
 import traceback
-from inspect import signature
 from typing import Optional
 
 from http_router import NotFoundError, Router
@@ -12,6 +11,8 @@ from harp.http import HttpRequest, HttpResponse
 from harp.meta import get_meta, has_meta, set_meta
 from harp.security.actor import Role, get_actor
 from harp.utils.arguments import Arguments
+
+from harp.utils.signatures import resolve_arguments
 
 
 logger = get_logger(__name__)
@@ -47,18 +48,14 @@ class RoutingController:
         pass
 
     def create_router(self):
-        return self.RouterType(*self.RouterArguments.args, *self.RouterArguments.kwargs)
+        return self.RouterType(*self.RouterArguments.args, **self.RouterArguments.kwargs)
 
     async def __call__(self, request: HttpRequest):
         try:
             match = self.router(request.path, method=request.method)
             if refusal := self.refuse_actor(request, match.target):
                 return refusal
-            sig = signature(match.target)
-            args = (
-                request if name == "request" else match.params.get(name, param.default)
-                for name, param in sig.parameters.items()
-            )
+            args = resolve_arguments(match.target, **{**(match.params or {}), "request": request})
             return await match.target(*args)
         except NotFoundError as exc:
             if not self.handle_errors:

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="no-referrer">
+<title>Set up HARP</title>
+<style>
+  body { font: 16px/1.4 system-ui, sans-serif; margin: 0; min-height: 100vh; display: grid; place-items: center; }
+  main { width: min(22rem, 100% - 2rem); }
+  h1 { font-size: 1.4rem; margin: 0 0 1rem; }
+  label { display: block; margin: 0 0 1rem; font-weight: 600; }
+  input { display: block; box-sizing: border-box; width: 100%; margin-top: .25rem; padding: .5rem; font: inherit; }
+  button { padding: .5rem 1rem; font: inherit; cursor: pointer; }
+  [data-error] { color: #b00020; min-height: 1.4em; }
+  small { display: block; margin: -.5rem 0 1rem; font-weight: 400; opacity: .75; }
+</style>
+</head>
+<body data-page="setup">
+<main>
+  <h1>Create the first administrator</h1>
+  <form method="post" action="/setup" novalidate>
+    <label>Username <input name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus></label>
+    <label>Password
+      <input name="password" type="password" autocomplete="new-password" minlength="15" maxlength="256" required>
+      <small>15 to 256 characters. A sentence works well. No other rule.</small>
+    </label>
+    <label>Password again <input name="confirm" type="password" autocomplete="new-password" required></label>
+    <p data-error role="alert"></p>
+    <button type="submit">Create the account</button>
+  </form>
+</main>
+<script src="/auth.js"></script>
+</body>
+</html>

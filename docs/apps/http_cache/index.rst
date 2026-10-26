@@ -63,6 +63,15 @@ A request never fails because of it. It waits at most ``coalescing_timeout`` sec
 ``transport.arguments`` entry), and fetches on its own if the leading fetch fails, takes longer, or leaves nothing to
 share: a response that cannot be stored, or one the cache does not retain.
 
+The waiters are released once the cache has the body, not once the leading client has read it: a client that reads
+slowly, or stops reading, delays nobody. To allow that, the body is read ahead of that client, up to the proxy's recording
+cap (``proxy.max_recorded_body_size``, see `Response size`_). A body larger than the cap, or declared so by its
+``Content-Length``, is not stored: its waiters fetch on their own at once, and it is read at the client's pace. Once a
+waiter has given up on a fetch after ``coalescing_timeout``, later requests no longer wait for that fetch.
+
+One wait remains: a request whose own variant is cached can still wait, at most ``coalescing_timeout``, for another
+variant's fetch whose headers have not arrived yet. That wait depends on the origin, not on any client.
+
 On a cold key the ``Vary`` of the resource is not known until the first response arrives, so a request for another
 variant waits for that response's headers, not for its body.
 
@@ -212,6 +221,64 @@ with a ``2xx`` or ``3xx`` status, HARP invalidates:
 
 An error response (``4xx``, ``5xx``) invalidates nothing. Invalidation applies within the endpoint that
 handled the request, like the cache itself, and also when the request carries ``Cache-Control: no-store``.
+
+
+.. _http-cache-purge:
+
+Purging one entry
+:::::::::::::::::
+
+.. versionadded:: 0.13
+
+An operator can remove a cached response before its ``ttl`` with a ``PURGE`` request to the proxy, on the port of the
+endpoint that cached it::
+
+    curl -X PURGE 'http://localhost:8080/path?query=1'
+
+It is **off by default**. Turn it on; by default only ``127.0.0.1`` may use it, extend ``allow`` for others:
+
+.. code-block:: yaml
+
+    http_cache:
+      purge:
+        enabled: true
+        allow: ["127.0.0.1", "10.0.0.0/8"]  # addresses or CIDR ranges
+
+With purge enabled, the request is answered by HARP and **never sent upstream**:
+
+.. list-table::
+    :header-rows: 1
+    :widths: 15 85
+
+    * - Status
+      - When
+    * - ``200``
+      - The target was cached: every stored variant of that URL (path and query string) is removed, within the endpoint
+        that received the request.
+    * - ``404``
+      - Nothing is cached for that URL on that endpoint.
+    * - ``403``
+      - The peer is not in ``allow``. Nothing is removed.
+
+The same path on another endpoint is not touched. There is no wildcard or prefix purge, and no purge across HARP
+instances. With purge disabled (the default), a ``PURGE`` request is proxied like any other request.
+
+.. warning::
+
+    **Security default.** ``enabled`` is ``false`` by default, and ``allow`` defaults to ``["127.0.0.1"]``, so
+    enabling purge allows local purges only (not ``::1``; add it if you purge over IPv6). The allow-list is the only protection: there is no authentication. Keep it narrow.
+
+**Which address is checked.** The allow-list is matched against the address of the peer HARP is connected to, the same
+address the proxy appends to ``X-Forwarded-For``. It never reads ``X-Forwarded-For``, ``Forwarded`` or any other header,
+including those from a peer listed in :ref:`proxy.trusted_proxies <proxy-forwarding-headers>`: trusting a proxy tells HARP
+which forwarded values to keep for the upstream, it does not change who is connected. A peer whose address is unknown is
+refused.
+
+This matters behind a reverse proxy or load balancer, where the peer is that proxy for every client. Listing the
+proxy in ``allow`` then lets everyone behind it purge, so either filter ``PURGE`` at the proxy, or reach HARP directly
+for purges (from the host, or through a private port) and list only those addresses. IPv4-mapped IPv6 addresses
+(``::ffff:127.0.0.1``) are matched as their IPv4 address, so write ``allow`` ranges in IPv4 form: a mapped-form range
+(``::ffff:127.0.0.0/104``, ``::ffff:0:0/96``) or ``::/0`` does not match IPv4 peers.
 
 
 Cache key normalization

@@ -33,10 +33,6 @@
       type: basic
   
     ''',
-    'harp_apps.dashboard.settings.auth.NoAuthSettings': '''
-      type: none
-  
-    ''',
     'harp_apps.dashboard.settings.auth.User': '''
       password: secret
   
@@ -58,6 +54,10 @@
   
     ''',
     'harp_apps.http_cache.settings.HttpCacheSettings': '''
+      {}
+  
+    ''',
+    'harp_apps.http_cache.settings.PurgeSettings': '''
       {}
   
     ''',
