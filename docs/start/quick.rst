@@ -55,7 +55,7 @@ Once the container runs, it will serve two different ports from your local host:
   activated by default and requires a login: the ``admin`` password is generated at each start and printed in the logs
   (see :doc:`docker`), or you can :doc:`set your own </apps/dashboard/index>`.
 
-Open the dashboard and go to the «Transactions» tab. It should be empty.
+Open the dashboard and go to the «Transactions» navigation item. It should be empty.
 
 Now make a few requests through the proxy:
 
