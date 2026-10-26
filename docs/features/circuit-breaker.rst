@@ -76,10 +76,14 @@ See the :doc:`proxy settings reference <../apps/proxy/settings>` for the full co
               interval: 10.0
               timeout: 5.0
 
-This example marks a URL as down after three consecutive failures and restores it after two
-consecutive successes. A successful request or probe resets the failure count; a failure resets
-the success count. Probes consider HTTP 2xx and 3xx responses successful, independently of
-``break_on``, which controls failures from proxied requests.
+The naive algorithm marks a URL as down after three consecutive failure signals and restores
+it after two consecutive success signals. A success signal resets the failure count; a failure
+signal resets the success count. Probes emit success signals for HTTP 2xx and 3xx responses,
+and failure signals for other responses or request errors, independently of ``break_on``.
+
+Successful proxied requests do not reset the algorithm's failure count. A successful HTTP 2xx
+or 3xx response from a URL in the half-open state instead marks that URL as up directly,
+without waiting for ``success_threshold``.
 
 Liveness algorithms
 ~~~~~~~~~~~~~~~~~~~
@@ -95,10 +99,10 @@ Set ``liveness.type`` to ``naive`` to count consecutive failures and successes:
       - Meaning
     * - ``failure_threshold``
       - ``1``
-      - Consecutive failures needed to mark a URL as down. Must be greater than zero.
+      - Consecutive failure signals needed to mark a URL as down. Must be greater than zero.
     * - ``success_threshold``
       - ``1``
-      - Consecutive successes needed to mark a URL as up. Must be greater than zero.
+      - Consecutive success signals needed to mark a URL as up. Must be greater than zero.
 
 Set ``liveness.type`` to ``leaky`` to accumulate failures in a bucket that drains over time.
 Each failure adds one to the bucket, up to its capacity. A failure marks the URL as down when
