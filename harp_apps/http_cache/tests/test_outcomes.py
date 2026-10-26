@@ -5,6 +5,7 @@ the variant, the invalidation number the response is valid as of, and the freshn
 transaction.
 """
 
+import asyncio
 from datetime import UTC, datetime, timedelta
 
 import httpx
@@ -235,3 +236,82 @@ class TestInvalidationNumber:
         assert _cache(first)["seq"] == 0
         assert _cache(second)["outcome"] == CacheOutcome.REVALIDATED
         assert _cache(second)["seq"] == 1
+
+
+@pytest.mark.asyncio
+class TestConcurrentRequests:
+    @respx.mock
+    async def test_a_request_that_waited_for_the_fetch_of_another_is_a_hit_with_its_entry(self, storage):
+        async def slow(request):
+            await asyncio.sleep(0.05)
+            return Response(200, content=b"body", headers={"cache-control": "max-age=60"})
+
+        route = respx.get(URL).mock(side_effect=slow)
+        await storage.invalidate(KEY, mode=BanMode.HARD)
+
+        async with _client(storage) as client:
+            first, second = await asyncio.gather(client.get(URL), client.get(URL))
+
+        assert route.call_count == 1
+        assert sorted(_cache(r)["outcome"] for r in (first, second)) == [CacheOutcome.HIT, CacheOutcome.MISS]
+        for response in (first, second):
+            assert _cache(response)["key"] == KEY
+            assert _cache(response)["seq"] == 1
+
+
+@pytest.mark.asyncio
+class TestFreshnessIsReadOnce:
+    @respx.mock
+    async def test_an_entry_shown_never_fresh_and_served_stale_has_no_freshness_left(self, storage):
+        # validator only, so it is stored to be revalidated, shown to hishel as dated long ago; the heuristic of its
+        # real Last-Modified would give it days of freshness once its Date is back
+        _origin({"etag": '"v1"', "last-modified": _http_date(timedelta(days=-30))})
+
+        async with _client(storage, allow_stale=True) as client:
+            await client.get(URL)
+            second = await client.get(URL)
+
+        assert _cache(second)["outcome"] == CacheOutcome.STALE
+        assert _cache(second)["ttl"] == 0
+
+    @respx.mock
+    async def test_a_soft_banned_entry_revalidated_has_the_freshness_it_states(self, storage):
+        _origin({"cache-control": "max-age=60", "etag": '"v1"'})
+
+        async with _client(storage) as client:
+            await client.get(URL)
+            await storage.invalidate(KEY, mode=BanMode.SOFT)
+            second = await client.get(URL)
+
+        assert _cache(second)["outcome"] == CacheOutcome.REVALIDATED
+        assert 58 <= _cache(second)["ttl"] <= 60
+
+
+class TestHishelFreshnessContract:
+    """HARP reads freshness through hishel's private functions: an upgrade that changes them must fail here."""
+
+    def _response(self, **headers):
+        from hishel import Headers
+        from hishel import Response as HishelResponse
+
+        return HishelResponse(status_code=200, headers=Headers(headers))
+
+    def test_lifetime_is_the_max_age_and_age_counts_from_date(self):
+        from hishel._core._spec import get_age, get_freshness_lifetime
+
+        response = self._response(**{"cache-control": "max-age=60", "date": _http_date(timedelta(seconds=-10))})
+
+        assert get_freshness_lifetime(response, True) == 60
+        assert 9 <= get_age(response) <= 11
+
+    def test_lifetime_is_none_when_nothing_states_or_suggests_one(self):
+        from hishel._core._spec import get_freshness_lifetime
+
+        assert get_freshness_lifetime(self._response(), True) is None
+
+    def test_shared_cache_prefers_s_maxage(self):
+        from hishel._core._spec import get_freshness_lifetime
+
+        response = self._response(**{"cache-control": "max-age=60, s-maxage=120"})
+
+        assert (get_freshness_lifetime(response, True), get_freshness_lifetime(response, False)) == (120, 60)

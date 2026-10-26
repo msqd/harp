@@ -5,6 +5,9 @@ miss, uncacheable), the cache key (the endpoint and path in clear, then a hash o
 variant, the invalidation number the response is valid as of, its age and its remaining freshness. The outcome is
 indexed, for the transaction list filter. Existing rows get ``NULL``, read back as an outcome the cache did not report.
 
+The table stays the storage application's (ADR-0012): the columns another application fills on it are named
+``x_<app>_*``, here ``x_cache_*`` for the cache.
+
 SQLite never reaches this migration: ``harp_apps/storage/utils/migrations.py`` takes a
 ``Base.metadata.create_all`` branch for that dialect.
 

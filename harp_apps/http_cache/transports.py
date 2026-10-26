@@ -253,25 +253,26 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
         """
         metadata = response.metadata
         shared = self._cache_proxy.policy.cache_options.shared  # type: ignore[union-attr]
-        judged = _remaining_freshness(response, shared)
+        # Freshness is read once per response. Served as it is, the response still has the headers hishel judged it by
+        # (an entry shown as never fresh has its real ones back only after restore_date, and then reads as fresh): that
+        # one read decides hit or stale, and is the hit's freshness. After a fetch or a 304 the headers are the real
+        # ones, so the read comes after restore_date.
+        served_as_stored = bool(metadata.get("hishel_from_cache")) and not metadata.get("hishel_revalidated")
+        judged = _remaining_freshness(response, shared) if served_as_stored else None
         restore_date(response.headers)
 
-        if metadata.get("hishel_from_cache"):
-            if metadata.get("hishel_revalidated"):
-                outcome = CacheOutcome.REVALIDATED
-            else:
-                outcome = CacheOutcome.HIT if judged is not None and judged > 0 else CacheOutcome.STALE
+        if served_as_stored:
+            outcome = CacheOutcome.HIT if judged is not None and judged > 0 else CacheOutcome.STALE
+            ttl = max(judged or 0, 0) if outcome is CacheOutcome.HIT else 0
+        elif metadata.get("hishel_from_cache"):
+            outcome, ttl = CacheOutcome.REVALIDATED, max(_remaining_freshness(response, shared) or 0, 0)
         elif metadata.get("hishel_stored"):
-            outcome = CacheOutcome.MISS
+            outcome, ttl = CacheOutcome.MISS, max(_remaining_freshness(response, shared) or 0, 0)
         else:
-            outcome = CacheOutcome.UNCACHEABLE
+            outcome, ttl = CacheOutcome.UNCACHEABLE, None
 
         entry = metadata.get(ENTRY_METADATA) or {}
         stamps = [stamp for stamp in (entry.get("stamp"), FETCH_STAMP.get()) if stamp is not None]
-        if outcome in (CacheOutcome.UNCACHEABLE, CacheOutcome.STALE):
-            ttl = None if outcome is CacheOutcome.UNCACHEABLE else 0
-        else:
-            ttl = max(_remaining_freshness(response, shared) or 0, 0)
         return {
             "outcome": outcome,
             "key": CACHE_KEY.get(),

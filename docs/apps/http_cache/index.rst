@@ -449,7 +449,8 @@ The detail also gives, when the cache knows them:
   fetch. An invalidation numbered above it covers the entry.
 
 The key, the variant and the invalidation number say which entry served the transaction, for the cache explorer.
-Transactions recorded before the upgrade have none of them.
+Transactions recorded before the upgrade have none of them. They are stored in ``x_cache_*`` columns of the
+``transactions`` table, which stays the storage application's (ADR-0012).
 
 .. note::
 
