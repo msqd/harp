@@ -2,7 +2,6 @@
 
 import asyncio
 from datetime import timedelta
-from types import SimpleNamespace
 
 import pytest
 
@@ -34,8 +33,7 @@ def clock() -> Clock:
 
 @pytest.fixture
 def worker(sweeps, clock) -> JanitorWorker:
-    storage = SimpleNamespace(session_factory=None)
-    worker = JanitorWorker(storage, SimpleNamespace(type="none"), JanitorSettings(), sweeps=sweeps)
+    worker = JanitorWorker(JanitorSettings(), sweeps=sweeps)
     worker.clock = clock
     return worker
 
@@ -205,16 +203,25 @@ async def test_a_success_clears_the_last_error(worker, sweeps, clock):
     assert worker.sweep_stats["a.one"].last_error is None
 
 
-async def test_loop_runs_the_declared_sweeps(worker, sweeps, monkeypatch):
+async def test_loop_runs_the_declared_sweeps(worker, sweeps):
     run = Recorder()
     declare(sweeps, "a.one", run)
-
-    async def nothing():
-        pass
-
-    monkeypatch.setattr(worker, "delete_orphan_blobs", nothing)
-    monkeypatch.setattr(worker, "compute_and_store_metrics", nothing)
 
     await worker.loop()
 
     assert run.calls == 1
+
+
+async def test_period_setting_drives_sleep(sweeps, monkeypatch):
+    worker = JanitorWorker(JanitorSettings(period=7), sweeps)
+    sleeps = []
+
+    async def fake_sleep(seconds):
+        sleeps.append(seconds)
+        worker.stop()
+
+    monkeypatch.setattr("harp_apps.janitor.worker.asyncio.sleep", fake_sleep)
+
+    await worker.run()
+
+    assert sleeps == [7]

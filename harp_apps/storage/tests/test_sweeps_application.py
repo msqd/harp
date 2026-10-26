@@ -15,11 +15,11 @@ from harp_apps.storage.types import IStorage
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 
-def builder(**janitor) -> ConfigurationBuilder:
+def builder(**storage) -> ConfigurationBuilder:
     builder = ConfigurationBuilder(use_default_applications=False)
     for app in ("http_client", "proxy", "storage", "janitor"):
         builder.applications.add(app, autoload_dependencies=True)
-    builder.add_values({"storage": {"url": "sqlite+aiosqlite:///:memory:"}, "janitor": {"period": 3600, **janitor}})
+    builder.add_values({"storage": {"url": "sqlite+aiosqlite:///:memory:", **storage}, "janitor": {"period": 3600}})
     return builder
 
 
@@ -41,14 +41,18 @@ class TestJanitorApplication(StorageTestFixtureMixin):
             system = await builder().abuild_system(validate_dependencies=False)
         try:
             sweeps = system.provider.get(SweepRegistry)
-            assert [sweep.name for sweep in sweeps] == ["storage.transactions"]
+            assert [sweep.name for sweep in sweeps] == [
+                "storage.transactions",
+                "storage.blobs.orphans",
+                "storage.metrics",
+            ]
             assert sweeps.unscheduled == []
             assert sweep_warnings(caplog) == []
         finally:
             await system.dispose()
 
-    async def test_the_janitor_settings_drive_the_declared_purge(self):
-        system = await builder(old_after=2).abuild_system(validate_dependencies=False)
+    async def test_the_storage_retention_drives_the_declared_purge(self):
+        system = await builder(retention_days=2).abuild_system(validate_dependencies=False)
         try:
             await stop_background_loop(system)  # the in-memory database has one connection, keep it for the test
             storage = system.provider.get(IStorage)
@@ -61,6 +65,7 @@ class TestJanitorApplication(StorageTestFixtureMixin):
             async with storage.session_factory() as session:
                 assert (await session.execute(select(func.count()).select_from(Transaction))).scalar_one() == 1
             assert worker.sweep_stats["storage.transactions"].items == 1
+            assert worker.sweep_stats["storage.metrics"].failures == 0
         finally:
             await system.dispose()
 

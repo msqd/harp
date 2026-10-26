@@ -5,32 +5,14 @@ Janitor
 
 .. versionadded:: 0.5
 
-The ``harp_apps.janitor`` application runs a background worker to clean up the storage. It deletes all transactions
-older than the retention period (60 days by default), and the orphan blobs. Transactions flagged by a user
-(favorites) are kept past the retention period.
+The ``harp_apps.janitor`` application runs a background worker that schedules the periodic cleanups, the *sweeps*, that
+applications declare. It knows none of them: it runs the declared sweeps that are due on every pass (every ``period``
+seconds, or less often when a sweep declares a longer interval), one after the other, and measures each of them (runs,
+failures, items, duration; ``janitor_sweep_*`` Prometheus metrics, labelled by sweep). A sweep that fails or exceeds its
+time budget never stops the others.
 
-An orphan is a blob referenced by no message and by no HTTP cache entry. Blobs written in the last 10 minutes are kept,
-as the message or cache entry referencing them may not be committed yet. ``cache/meta`` blobs, the HTTP cache entries
-themselves, are never deleted by the janitor: cache storage is reclaimed by the ``ttl`` of ``http_cache.storage``
-(see :doc:`/apps/http_cache/settings`). Once an entry is expired or replaced, the janitor removes the header and body
-blobs nothing references anymore. The ``storage_blobs_orphans`` metric counts the same orphans.
-
-The sweep runs on every blob backend that can list its blobs (``sql``, ``redis`` and ``memory``). With ``redis``, the
-janitor scans the keys, keeps those referenced by a message in the SQL storage or by a ``cache/meta`` entry, and deletes
-the others unless they were written in the last 10 minutes (tracked by short-lived ``harp:blob-written:<id>`` keys).
-The ``storage_blobs`` and ``storage_blobs_orphans`` metrics count what the blob backend holds.
-
-A sweep works in short batches and gives the database connection back between them, so requests are served while it
-runs, even with the default in-memory storage that has a single connection.
-
-Sweeps declared by applications
-:::::::::::::::::::::::::::::::
-
-The janitor does not know which applications need cleaning: applications declare their periodic cleanups as *sweeps*,
-and the janitor schedules them, one after the other, on every pass (or less often when the sweep declares a longer
-interval). It measures each sweep (runs, failures, items, duration; ``janitor_sweep_*`` Prometheus metrics, labelled by
-sweep), and a sweep that fails or exceeds its time budget never stops the others. The transaction purge described above
-is the sweep ``storage.transactions``, declared by the storage application.
+The storage application declares three sweeps, described in :ref:`storage-sweeps`: ``storage.transactions`` (retention),
+``storage.blobs.orphans`` and ``storage.metrics``.
 
 If the janitor is disabled, declared sweeps do not run, and startup logs a warning naming them. To declare a sweep from
 your own application, see :doc:`/contribute/sweeps`.
@@ -49,7 +31,8 @@ Settings
     Seconds between two sweeps. Positive integer, default ``600`` (10 minutes).
 
 ``old_after``
-    Age in days after which transactions are deleted. Positive integer, default ``60``.
+    Deprecated alias of ``storage.retention_days``: when set, it is used as the retention, with a deprecation warning.
+    If ``storage.retention_days`` is set too, it wins and a warning says ``old_after`` is ignored.
 
 ``enabled``
     Set to ``false`` to disable the janitor. Default ``true``.
@@ -60,7 +43,7 @@ Zero and negative values are rejected when the configuration loads.
 
     janitor:
       period: 3600  # sweep every hour
-      old_after: 14  # keep two weeks of transactions
+
 
 See the :doc:`settings reference <settings>`.
 

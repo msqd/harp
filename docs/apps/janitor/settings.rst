@@ -13,7 +13,6 @@ Here is an example containing all default values for the ``janitor`` application
     janitor:
       enabled: true
       period: 600
-      old_after: 60
 
 Reference
 :::::::::
