@@ -6,6 +6,7 @@ import time
 import uuid
 from asyncio import get_running_loop
 from collections.abc import AsyncIterable, AsyncIterator, Callable
+from contextlib import asynccontextmanager
 from dataclasses import replace
 from typing import Optional, Union
 
@@ -17,11 +18,13 @@ from httpcore import Response as HttpcoreResponse
 from httpx import AsyncBaseTransport, Request, Response
 from hypercorn import Config
 from hypercorn.asyncio import serve
+from testcontainers.redis import AsyncRedisContainer
 
 from harp.utils.network import get_available_network_port, wait_for_port
 from harp.utils.testing.stub_api import stub_api
 from harp_apps.http_cache import models  # noqa: F401  (the tables must be on storage's Base before the schema is created)
 from harp_apps.http_cache.records import MemoryCacheRecords
+from harp_apps.http_cache.records.redis import RedisCacheRecords
 from harp_apps.http_cache.records.sql import SqlCacheRecords
 from harp.utils.testing.databases import TEST_DATABASES
 from harp_apps.storage.conftest import *  # noqa
@@ -201,14 +204,45 @@ def mock_transport():
     return MockTransport()
 
 
-@pytest.fixture(scope="session", params=["memory", *TEST_DATABASES])
+@pytest.fixture(scope="session")
+def redis_container():
+    """A Redis server, for the whole session."""
+    with AsyncRedisContainer() as container:
+        yield container
+
+
+@pytest.fixture
+def redis_url(redis_container):
+    return f"redis://{redis_container.get_container_host_ip()}:{redis_container.get_exposed_port(6379)}/0"
+
+
+@asynccontextmanager
+async def emptied(container: AsyncRedisContainer):
+    """A client of a Redis server, which holds nothing."""
+    client = await container.get_async_client()
+    try:
+        await client.flushall()
+        yield client
+    finally:
+        await client.aclose()
+
+
+@pytest.fixture
+async def redis_client(redis_container):
+    async with emptied(redis_container) as client:
+        yield client
+
+
+@pytest.fixture(scope="session", params=["memory", "redis", *TEST_DATABASES])
 def cache_backend(request):
-    """The database each records backend runs on: none for the memory one."""
+    """What each records backend runs on: nothing for the memory one, a Redis container, a database url."""
     if request.param == "memory":
         yield None
-        return
-    dialect, image, driver = request.param.split("|")
-    yield from create_database_container_for(dialect, image, driver)
+    elif request.param == "redis":
+        yield request.getfixturevalue("redis_container")
+    else:
+        dialect, image, driver = request.param.split("|")
+        yield from create_database_container_for(dialect, image, driver)
 
 
 @pytest.fixture
@@ -216,6 +250,9 @@ async def records(cache_backend, test_id):
     """Every records backend, for the behaviour they all promise."""
     if cache_backend is None:
         yield MemoryCacheRecords()
-        return
-    async with migrated_engine(cache_backend, test_id) as engine:
-        yield SqlCacheRecords(engine)
+    elif isinstance(cache_backend, AsyncRedisContainer):
+        async with emptied(cache_backend) as client:
+            yield RedisCacheRecords(client)
+    else:
+        async with migrated_engine(cache_backend, test_id) as engine:
+            yield SqlCacheRecords(engine)

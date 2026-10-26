@@ -69,6 +69,7 @@
         },
         "purge": { "$ref": "#/$defs/PurgeSettings" },
         "reclamation": { "$ref": "#/$defs/ReclamationSettings" },
+        "redis": { "$ref": "#/$defs/RedisRecordsSettings" },
         "storage": {
           "$ref": "#/$defs/Service",
           "default": {
@@ -108,6 +109,16 @@
       "title": "ReclamationSettings",
       "type": "object"
     },
+    "RedisRecordsSettings": {
+      "additionalProperties": false,
+      "description": "The records of the cache in Redis, which hold them when Redis is the blob storage of the ``storage`` application.",
+      "properties": {
+        "prefix": { "default": "harp:cache:", "type": "string" },
+        "retention": { "default": 2592000, "exclusiveMinimum": 0, "type": "number" }
+      },
+      "title": "RedisRecordsSettings",
+      "type": "object"
+    },
     "Service": {
       "additionalProperties": true,
       "description": "A settings base class for service definitions.",
@@ -145,6 +156,7 @@
     { "$ref": "#/$defs/CachePolicySettings" },
     { "$ref": "#/$defs/HttpCacheSettings" },
     { "$ref": "#/$defs/PurgeSettings" },
-    { "$ref": "#/$defs/ReclamationSettings" }
+    { "$ref": "#/$defs/ReclamationSettings" },
+    { "$ref": "#/$defs/RedisRecordsSettings" }
   ]
 }

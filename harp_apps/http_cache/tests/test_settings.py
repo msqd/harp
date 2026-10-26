@@ -29,6 +29,7 @@ class TestHttpCacheSettings(BaseConfigurableTest):
         },
         "purge": {"enabled": False, "allow": ["127.0.0.1/32"]},
         "reclamation": {"grace": 300.0, "bans": 1000, "entries": 500, "rounds": 20},
+        "redis": {"prefix": "harp:cache:", "retention": 2592000.0},
         # hishel 1.0: AsyncCacheTransport moved to _async_httpx module
         # We now wrap it with our custom AsyncCacheTransport for URL normalization
         "transport": {

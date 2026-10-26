@@ -58,6 +58,17 @@ class ReclamationSettings(Configurable):
     rounds: int = Field(20, gt=0)
 
 
+class RedisRecordsSettings(Configurable):
+    """The records of the cache in Redis, which hold them when Redis is the blob storage of the ``storage`` application."""
+
+    #: Start of every key the cache writes. The Redis database may be shared with other applications.
+    prefix: str = "harp:cache:"
+
+    #: Seconds a body is kept after a variant that refers to it was stored or freshened. Keep it above the storage ``ttl``:
+    #: an entry whose body is gone is not served.
+    retention: float = Field(30 * 86400, gt=0)
+
+
 class HttpCacheSettings(ApplicationSettingsMixin, Configurable):
     #: Cache transport to use for the client. This is usually a hishel._async_httpx.AsyncCacheTransport (or subclass) instance.
     transport: Service = Service(
@@ -84,6 +95,9 @@ class HttpCacheSettings(ApplicationSettingsMixin, Configurable):
 
     #: Reclamation of the bans of the invalidation log, see :ref:`http-cache-reclamation`.
     reclamation: ReclamationSettings = Field(default_factory=ReclamationSettings)
+
+    #: Where the records are in Redis, see :ref:`http-cache-redis`.
+    redis: RedisRecordsSettings = Field(default_factory=RedisRecordsSettings)
 
     #: Cache storage implementation, a.k.a how to store and retrieve cache data.
     #:

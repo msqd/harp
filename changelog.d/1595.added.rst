@@ -1,0 +1,1 @@
+Http cache: with Redis as the blob storage, the indexed cache store keeps its records, ordered index, invalidation log and bodies in Redis, shared by every instance. HARP refuses to start on a Redis older than 7 or whose ``maxmemory-policy`` is not ``noeviction`` or ``volatile-*``. New ``http_cache.redis`` settings.
