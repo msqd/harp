@@ -55,3 +55,7 @@ def test_dockerfile_installs_the_extras_the_lock_is_exported_with():
     dockerfile = (ROOT / "Dockerfile").read_text()
     extras = re.search(r"harp-proxy\[([^\]]+)\]", dockerfile).group(1).split(",")
     assert tuple(extras) == check.EXTRAS
+
+
+def test_image_supports_argon2_dashboard_hashes():
+    assert "argon2" in check.EXTRAS
