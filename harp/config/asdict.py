@@ -20,9 +20,7 @@ _authority_re = re.compile(r"(?P<scheme>[A-Za-z][A-Za-z0-9+.-]*)(?P<sep>://)(?P<
 _TOKEN_USERNAME_SCHEMES = frozenset({"http", "https"})
 
 # Query parameters that carry a secret by convention (asyncpg reads the password of a DSN from `?password=`).
-_SECRET_QUERY_PARAMETERS = (
-    "password|passwd|pwd|key|api[_-]?key|token|access[_-]?token|auth|secret|client[_-]?secret|signature|sig"
-)
+_SECRET_QUERY_PARAMETERS = "password|passwd|pwd|sslpassword|sslkey|key|api[_-]?key|token|access[_-]?token|auth|secret|client[_-]?secret|signature|sig"  # pragma: allowlist secret
 mask_query_password_re = re.compile(rf"([?&](?:{_SECRET_QUERY_PARAMETERS})=)[^&#\s'\"]*", re.IGNORECASE)
 
 # Dictionary keys whose string value is a secret by name, whatever the algorithm that protects it.
