@@ -151,3 +151,7 @@ holds the design choices.
     the throttle cannot record falls under it. The last known addresses stay exempt from the
     per-account limit. Accepted cost: behind an undeclared shared proxy, an attacker's neighbours
     get short 429s.
+42. A known address reaches its own account through the address limit (user, 2026-10-26; amends
+    41): an address an account signed in from is not refused by the address limit for that account,
+    so an attacker flooding a shared address cannot lock out those who signed in from it before. The
+    pair limit still applies; spraying other accounts from that address stays refused.
