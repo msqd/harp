@@ -1,0 +1,1 @@
+Mask credential-like keys (`authorization`, `cookie`, names with `token`, `secret` or `password`, names ending in `-key` or `_key`) in service arguments in the settings dump and `harp-proxy system config`.

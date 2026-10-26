@@ -7,8 +7,13 @@ from rich.tree import Tree
 
 from harp.commandline.options.server import CommonServerOptions, _EnhancedParserCommand, _server_click_options
 from harp.config import ConfigurationBuilder
-from harp.config.asdict import asdict, mask_credentials
+from harp.config.asdict import asdict, mask_credentials, mask_secret_value
 from harp.utils.commandline import click
+
+
+def _format_item(key, value):
+    """Format a ``key: value`` pair, hiding the value of a credential-like key."""
+    return f"{key}: {_format_value(mask_secret_value(key, value, secure=True))}"
 
 
 def _format_value(value):
@@ -32,7 +37,7 @@ def _format_value(value):
     if isinstance(value, dict):
         if not value:
             return "{}"
-        items = ", ".join(f"{k}: {_format_value(v)}" for k, v in value.items())
+        items = ", ".join(_format_item(k, v) for k, v in value.items())
         return f"{{{items}}}"
     if isinstance(value, (list, tuple)):
         if not value:
@@ -139,7 +144,7 @@ def _print_services(console: Console, system_obj):
         if provider._kwargs:
             kwargs_tree = service_tree.add("[magenta]Arguments[/magenta]")
             for key, value in provider._kwargs.items():
-                kwargs_tree.add(f"{key}: {_format_value(value)}")
+                kwargs_tree.add(_format_item(key, value))
 
         # Show positional arguments if any
         if provider._args:

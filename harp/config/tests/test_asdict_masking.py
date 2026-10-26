@@ -190,3 +190,39 @@ def test_a_namedtuple_is_dumped_field_by_field():
     assert asdict(Pair("db", "postgresql://user:secret@host/db")) == Pair(
         "db", mask_credentials("postgresql://user:secret@host/db")
     )
+
+
+@pytest.mark.parametrize("mode", ["json", "python"])
+@pytest.mark.parametrize(
+    "key",
+    [
+        "Authorization",
+        "COOKIE",
+        "Proxy-Authorization",
+        "X-Auth-Token",
+        "client_secret",
+        "DB_PASSWORD",
+        "X-Api-Key",
+        "api_key",
+    ],
+)
+def test_credential_like_keys_are_masked_at_any_depth(mode, key):
+    arguments = {"headers": {key: "VALUE", "x-purpose": "health"}, "deep": [{"a": {key: "VALUE"}}]}
+
+    assert asdict({"arguments": arguments}, mode=mode) == {
+        "arguments": {"headers": {key: "***", "x-purpose": "health"}, "deep": [{"a": {key: "***"}}]}
+    }
+
+
+def test_unsecure_shows_credential_like_keys():
+    values = {"headers": {"Authorization": "Bearer X"}}
+
+    assert asdict(values, secure=False) == values
+
+
+def test_service_arguments_are_masked():
+    from harp_apps.http_client.settings import HttpClientSettings
+
+    settings = HttpClientSettings(arguments={"headers": {"Authorization": "Bearer X"}})
+
+    assert "Bearer X" not in repr(asdict(settings))

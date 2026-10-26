@@ -23,8 +23,11 @@ _TOKEN_USERNAME_SCHEMES = frozenset({"http", "https"})
 _SECRET_QUERY_PARAMETERS = "password|passwd|pwd|sslpassword|sslkey|key|api[_-]?key|token|access[_-]?token|auth|secret|client[_-]?secret|signature|sig"  # pragma: allowlist secret
 mask_query_password_re = re.compile(rf"([?&](?:{_SECRET_QUERY_PARAMETERS})=)[^&#\s'\"]*", re.IGNORECASE)
 
-# Dictionary keys whose string value is a secret by name, whatever the algorithm that protects it.
-SECRET_KEYS = frozenset({"password"})
+# Dictionary keys whose string value is a secret by name, whatever the algorithm that protects it: credential headers,
+# and any name that says it holds a token, a secret, a password or a key.
+secret_key_re = re.compile(
+    r"^(authorization|cookie|proxy-authorization)$|token|secret|password|[-_]key$", re.IGNORECASE
+)
 
 
 def _mask_userinfo(host: str, scheme: str) -> str:
@@ -63,8 +66,8 @@ def url_serializer(dsn, secure=True, **kwargs):
 URL_TYPES = (Url, MultiHostUrl, _BaseUrl, _BaseMultiHostUrl, RedisDsn)
 
 
-def _mask_secret_value(key, value, secure):
-    if secure and key in SECRET_KEYS and isinstance(value, str):
+def mask_secret_value(key, value, secure):
+    if secure and isinstance(key, str) and isinstance(value, str) and secret_key_re.search(key):
         return MASK
     return value
 
@@ -127,8 +130,8 @@ def asdict(
             # dict as it requires the default_factory as its first arg.
             result = type(obj)(getattr(obj, "default_factory"))
             for k, v in obj.items():
-                result[_asdict(k)] = _mask_secret_value(k, _asdict(v), secure)
+                result[_asdict(k)] = mask_secret_value(k, _asdict(v), secure)
             return result
-        return type(obj)((_asdict(k), _mask_secret_value(k, _asdict(v), secure)) for k, v in obj.items())
+        return type(obj)((_asdict(k), mask_secret_value(k, _asdict(v), secure)) for k, v in obj.items())
 
     return copy.deepcopy(obj)
