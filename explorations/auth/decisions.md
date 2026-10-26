@@ -138,3 +138,16 @@ holds the design choices.
     application. Transaction purge becomes a sweep declared by storage, audit retention and cache
     reclamation declare theirs, and the cache drops its own duplicate sweep. Without a janitor
     nothing is scheduled and a warning names the sweeps not running.
+39. Retention belongs to storage (user, 2026-10-26; completes 38): the transaction retention setting
+    moves from `janitor.old_after` to the storage settings, and `janitor.old_after` stays read as a
+    deprecated alias with a warning. The orphan-blob purge and the metrics pass become sweeps
+    declared by storage; the janitor keeps scheduling only.
+40. The dashboard resolves the client address with its own `dashboard.trusted_proxies` (user,
+    2026-10-26): only a peer in those networks may name the client, from the right of
+    `X-Forwarded-For`. It converges with `proxy.trusted_proxies` (#1425) once main is merged in.
+41. Sign-in limits refuse rather than hold (user, 2026-10-26): an attempt over a limit gets 429 with
+    `Retry-After` and holds no server slot, so the limits cap throughput and one address cannot
+    starve everyone. An address piling up penalised pairs is refused at the address level, and a key
+    the throttle cannot record falls under it. The last known addresses stay exempt from the
+    per-account limit. Accepted cost: behind an undeclared shared proxy, an attacker's neighbours
+    get short 429s.
