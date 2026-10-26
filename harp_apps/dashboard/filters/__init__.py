@@ -1,3 +1,4 @@
+from .transaction_cache import TransactionCacheFacet
 from .transaction_endpoint import TransactionEndpointFacet
 from .transaction_flag import TransactionFlagFacet
 from .transaction_method import TransactionMethodFacet
@@ -8,6 +9,7 @@ from .utils import flatten_facet_value
 __all__ = [
     "TransactionMethodFacet",
     "TransactionStatusFacet",
+    "TransactionCacheFacet",
     "TransactionEndpointFacet",
     "TransactionFlagFacet",
     "TransactionTpdexFacet",

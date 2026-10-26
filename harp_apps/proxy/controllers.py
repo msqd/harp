@@ -353,6 +353,16 @@ class HttpProxyController(AbstractHttpProxyController):
             if created_at is not None:
                 transaction.extras["cache_age"] = int(time() - created_at)
 
+        # What the cache did for this response, as it reports it: the outcome, which entry and how fresh.
+        if reported := response.extensions.get("harp_cache"):
+            transaction.extras.update(
+                cache_outcome=str(reported["outcome"]),
+                cache_key=reported["key"],
+                cache_variant=reported["variant"],
+                cache_seq=reported["seq"],
+                cache_ttl=reported["ttl"],
+            )
+
         proxied = HttpResponse(b"", status=response.status_code, headers=headers)
         proxied.stream = UpstreamResponseStream(response)
         return proxied

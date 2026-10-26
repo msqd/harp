@@ -486,6 +486,203 @@ exports[`renders the title and data when the query is successful 1`] = `
       class="px-4 py-3"
     >
       <fieldset
+        name="cache"
+      >
+        <legend
+          class="flex w-full cursor-pointer css-1ooqpp2"
+        >
+          <span
+            class="grow"
+          >
+            Cache
+          </span>
+          <svg
+            aria-hidden="true"
+            class="h-4 w-4 text-gray-600"
+            data-slot="icon"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m4.5 15.75 7.5-7.5 7.5 7.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </legend>
+        <div
+          class="mt-2 space-y-2 "
+        >
+          <div
+            class="relative flex gap-x-3 select-none cursor-pointer"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="hit"
+                name="hit"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900  cursor-pointer"
+                for="hit"
+              >
+                <div>
+                  hit
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div
+            class="relative flex gap-x-3 select-none cursor-pointer"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="stale"
+                name="stale"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900  cursor-pointer"
+                for="stale"
+              >
+                <div>
+                  stale
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div
+            class="relative flex gap-x-3 select-none cursor-pointer"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="revalidated"
+                name="revalidated"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900  cursor-pointer"
+                for="revalidated"
+              >
+                <div>
+                  revalidated
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div
+            class="relative flex gap-x-3 select-none cursor-pointer"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="miss"
+                name="miss"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900  cursor-pointer"
+                for="miss"
+              >
+                <div>
+                  miss
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div
+            class="relative flex gap-x-3 select-none cursor-pointer"
+          >
+            <div
+              class="flex h-6 items-center"
+            >
+              <input
+                checked=""
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                id="uncacheable"
+                name="uncacheable"
+                type="checkbox"
+              />
+            </div>
+            <div
+              class="text-sm leading-6"
+            >
+              <label
+                class="font-medium text-gray-900  cursor-pointer"
+                for="uncacheable"
+              >
+                <div>
+                  uncacheable
+                  <button
+                    class="text-gray-400 mx-1 font-medium text-xs"
+                  >
+                    only
+                  </button>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+    <div
+      class="px-4 py-3"
+    >
+      <fieldset
         name="flags"
       >
         <legend

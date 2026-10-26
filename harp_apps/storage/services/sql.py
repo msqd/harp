@@ -45,6 +45,7 @@ logger = get_logger(__name__)
 _FILTER_COLUMN_NAMES = {
     "method": "x_method",
     "status": "x_status_class",
+    "cache": "x_cache_outcome",
     "tpdex": "tpdex",
 }
 
@@ -295,6 +296,7 @@ class SqlStorage(IStorage):
             query = _filter_query(query, "endpoint", filters.get("endpoint", None))
             query = _filter_query(query, "method", filters.get("method", None))
             query = _filter_query(query, "status", filters.get("status", None))
+            query = _filter_query(query, "cache", filters.get("cache", None))
             query = _filter_query_for_user_flags(query, filters.get("flag", None), user_id=user.id)
             query = _numerical_filter_query(query, "tpdex", filters.get("tpdex", None))
 

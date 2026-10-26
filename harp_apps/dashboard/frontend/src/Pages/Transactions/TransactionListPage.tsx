@@ -31,7 +31,7 @@ export default function TransactionListPage({ TransactionDataTable }: Transactio
 
   const defaultFilters = (searchParams: URLSearchParams): Filters => {
     const filtersMap: Partial<Filters> = {}
-    const filtersNames = ["endpoint", "method", "status", "flag"]
+    const filtersNames = ["endpoint", "method", "status", "cache", "flag"]
 
     for (const name of filtersNames) {
       const values = searchParams.getAll(name)

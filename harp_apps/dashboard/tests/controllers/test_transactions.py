@@ -31,12 +31,26 @@ class TestTransactionsController(TransactionsControllerTestFixtureMixin, Storage
 
         # todo this format may/will change, but we add this test to ensure we start to be meticulous about quality
         assert response == {
+            "cache": {"current": None, "values": ANY},
             "endpoint": {"current": None, "values": ANY},
             "flag": {"current": None, "values": ANY, "fallbackName": ANY},
             "method": {"current": None, "values": ANY},
             "status": {"current": None, "values": ANY},
             "tpdex": {"current": {"min": ANY, "max": ANY}, "values": ANY},
         }
+
+    async def test_cache_filter_offers_every_outcome(self, controller: TransactionsController):
+        request = Mock(spec=HttpRequest, query=MultiDict([("cache", "hit,stale")]))
+        response = await controller.filters(request)
+
+        assert [value["name"] for value in response["cache"]["values"]] == [
+            "hit",
+            "stale",
+            "revalidated",
+            "miss",
+            "uncacheable",
+        ]
+        assert sorted(response["cache"]["current"]) == ["hit", "stale"]
 
     async def test_filters_meta_updated(self, controller: TransactionsController):
         with freeze_time("2024-01-01 12:00:00"):
@@ -132,6 +146,7 @@ class TestTransactionsControllerThroughASGI(
 
         # todo this format may/will change, but we add this test to ensure we start to be meticulous about quality
         assert orjson.loads(response["body"]) == {
+            "cache": {"current": None, "values": ANY},
             "endpoint": {"current": None, "values": ANY},
             "flag": {"current": None, "values": ANY, "fallbackName": ANY},
             "method": {"current": None, "values": ANY},

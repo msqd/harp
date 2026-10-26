@@ -1,11 +1,24 @@
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import TIMESTAMP, Boolean, Column, Float, ForeignKey, Integer, String, Table, Text, exists, insert
+from sqlalchemy import (
+    TIMESTAMP,
+    BigInteger,
+    Boolean,
+    Column,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    Text,
+    exists,
+    insert,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
 
 from harp.models.transactions import Transaction as TransactionModel
-from harp.models.transactions import decode_markers
+from harp.models.transactions import CACHE_EXTRAS, decode_markers
 
 from .base import Base, Repository, with_session
 from .flags import FLAGS_BY_TYPE, UserFlag
@@ -39,6 +52,12 @@ class Transaction(Base):
     x_method: Mapped[str] = mapped_column(String(16), nullable=True, index=True)
     x_status_class: Mapped[str] = mapped_column(String(3), nullable=True, index=True)
     x_cached: Mapped[str] = mapped_column(String(32), nullable=True)
+    x_cache_outcome: Mapped[str] = mapped_column(String(16), nullable=True, index=True)
+    x_cache_key: Mapped[str] = mapped_column(Text(), nullable=True)
+    x_cache_variant: Mapped[str] = mapped_column(String(64), nullable=True)
+    x_cache_seq: Mapped[int] = mapped_column(BigInteger(), nullable=True)
+    x_cache_age: Mapped[int] = mapped_column(Integer(), nullable=True)
+    x_cache_ttl: Mapped[int] = mapped_column(Integer(), nullable=True)
     x_no_cache: Mapped[bool] = mapped_column(Boolean(), nullable=True, default=False)
     markers: Mapped[str] = mapped_column(Text(), nullable=True)
 
@@ -76,6 +95,11 @@ class Transaction(Base):
                 method=self.x_method,
                 status_class=self.x_status_class,
                 cached=bool(self.x_cached),
+                **{
+                    name: getattr(self, column)
+                    for name, column in CACHE_EXTRAS.items()
+                    if getattr(self, column) is not None
+                },
                 no_cache=bool(self.x_no_cache),
                 **(
                     {

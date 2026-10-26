@@ -12,6 +12,7 @@ from harp_apps.storage.models.flags import FLAGS_BY_NAME
 from harp_apps.storage.types import IStorage
 
 from ..filters import (
+    TransactionCacheFacet,
     TransactionEndpointFacet,
     TransactionFlagFacet,
     TransactionMethodFacet,
@@ -30,6 +31,7 @@ class TransactionsController(RoutingController):
                 TransactionEndpointFacet(storage=self.storage),
                 TransactionMethodFacet(),
                 TransactionStatusFacet(),
+                TransactionCacheFacet(),
                 TransactionFlagFacet(),
                 TransactionTpdexFacet(),
             )

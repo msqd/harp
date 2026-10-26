@@ -21,7 +21,7 @@ from harp_apps.storage.constants import (
     SKIP_RESPONSE_STORAGE,
 )
 from .coalescing import STORED_METADATA
-from .adapters import to_entry, to_record
+from .adapters import selecting_headers, to_entry, to_record, variant_of
 from .records import BanKind, BanMode, CacheRecords, Reclaimed, endpoint_of
 from .settings import ReclamationSettings
 from .streams import StoredOnceRead
@@ -45,6 +45,10 @@ logger = get_logger(__name__)
 #: whole url: :meth:`AsyncStorage.get_entries` gives them the url of the request they match.
 REQUEST_URL: ContextVar[tp.Optional[str]] = ContextVar("harp_http_cache_request_url", default=None)
 
+#: The cache key of the request being handled, set by the transport when it derives it: the transport reports it with the
+#: cache outcome, and cannot derive it again once the request has been sent (a body key needs the body).
+CACHE_KEY: ContextVar[tp.Optional[str]] = ContextVar("harp_http_cache_key", default=None)
+
 HEADERS_ENCODING = "iso-8859-1"
 
 #: Request metadata key holding the largest response body the cache may store (the proxy's recording cap).
@@ -60,6 +64,10 @@ MARKERS_METADATA = "harp_markers"
 #: origin answers may predate an invalidation that lands meanwhile: an entry made of it carries this stamp, and a ban
 #: numbered above it covers the entry.
 FETCH_STAMP: ContextVar[tp.Optional[int]] = ContextVar("harp_http_cache_fetch_stamp", default=None)
+
+#: Response metadata key telling which stored variant a response is: ``{"variant": ..., "stamp": ...}``. Set on the
+#: entries the storage reads, and on a response it is about to store; the transport reports it with the cache outcome.
+ENTRY_METADATA = "harp_cache_entry"
 
 #: Schemes an endpoint is reached by: a cache key starts with the scheme of the request, an endpoint ban covers each.
 ENDPOINT_SCHEMES = ("http", "https")
@@ -522,6 +530,10 @@ class AsyncStorage(AsyncBaseStorage):
 
         # Read now, while the context is the request's: the body ends in the client's.
         stamp = FETCH_STAMP.get() or 0
+        response.metadata[ENTRY_METADATA] = {
+            "variant": variant_of(selecting_headers(request, response)),
+            "stamp": stamp,
+        }
 
         async def store(body: bytes) -> None:
             try:
@@ -600,6 +612,10 @@ class AsyncStorage(AsyncBaseStorage):
                 await self._prune(key, [variant.record.entry_id for variant in stored if variant not in live])
             entries = [self._with_request_url(to_entry(variant)) for variant in live]
             for variant, entry in zip(live, entries):
+                entry.response.metadata[ENTRY_METADATA] = {
+                    "variant": variant.record.variant,
+                    "stamp": variant.record.stamp,
+                }
                 if variant.record.stale or self._is_never_fresh(entry.response):
                     show_as_never_fresh(entry.response, revalidate=variant.record.stale)
                 logger.debug(f"Cache hit: key={key}, method={entry.request.method}, entry_id={entry.id}")

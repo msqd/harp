@@ -78,3 +78,31 @@ it("says the origin asked for no-store when only the response payload was suppre
   const responseTitle = result.getByText("Response")
   expect(responseTitle.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 })
+
+it("shows what the cache did: outcome, age, remaining freshness, and which entry", async () => {
+  const result = renderDetailAt("/transactions/QRST7890")
+
+  const outcome = await result.findByLabelText("Cache outcome")
+  expect(outcome).toHaveTextContent("revalidated")
+  expect(result.getByLabelText("Cache age")).toHaveTextContent("1m 30s")
+  expect(result.getByLabelText("Cache freshness left")).toHaveTextContent("30s")
+  expect(result.getByLabelText("Cache key")).toHaveTextContent("http://endpoint1/items?" + "a".repeat(64))
+  expect(result.getByLabelText("Cache variant")).toHaveTextContent("b".repeat(64))
+  expect(result.getByLabelText("Cache invalidation number")).toHaveTextContent("12")
+})
+
+it("shows an outcome without an entry, age or freshness when the cache kept nothing", async () => {
+  const result = renderDetailAt("/transactions/UVWX1234")
+
+  expect(await result.findByLabelText("Cache outcome")).toHaveTextContent("uncacheable")
+  expect(result.queryByLabelText("Cache age")).toBeNull()
+  expect(result.queryByLabelText("Cache freshness left")).toBeNull()
+  expect(result.queryByLabelText("Cache variant")).toBeNull()
+})
+
+it("shows no cache section for a transaction the cache did not see", async () => {
+  const result = renderDetailAt("/transactions/ABCD1234")
+
+  await result.findByText("identity")
+  expect(result.queryByLabelText("Cache outcome")).toBeNull()
+})

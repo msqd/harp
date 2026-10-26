@@ -403,6 +403,61 @@ cannot influence what the dashboard reports.
     untouched.
 
 
+.. _http-cache-outcome:
+
+Cache outcome of a transaction
+------------------------------
+
+.. versionadded:: 0.14
+
+With the storage application, each transaction records what the cache did for it. The transaction detail of the
+dashboard shows it, and the transaction list can be filtered by it (facet **Cache**, query parameter ``cache``).
+
+.. list-table::
+    :header-rows: 1
+    :widths: 20 80
+
+    * - Outcome
+      - Meaning
+    * - ``hit``
+      - Served from the cache, fresh.
+    * - ``stale``
+      - Served from the cache as it was, though no longer fresh (``allow_stale``).
+    * - ``revalidated``
+      - The origin confirmed the stored response (``304 Not Modified``), which was served.
+    * - ``miss``
+      - Fetched from the origin, and kept when it can be. A response that replaced a stale one (the origin answered
+        the revalidation with a new body) is a miss.
+    * - ``uncacheable``
+      - Fetched from the origin and not kept: the request or the response forbids storage, the method is not cached,
+        or the exchange is withheld (:ref:`what HARP retains <what-harp-retains>`).
+
+A transaction the cache did not see (no cache on the endpoint, or the cache application not loaded) has no outcome.
+The outcome comes from the cache itself (hishel and the store), not from the ``X-Cache`` header, and no caching rule is
+evaluated again to produce it.
+
+The detail also gives, when the cache knows them:
+
+- **Age**: seconds since HARP stored the response, for the outcomes that served a stored one.
+- **Freshness left**: seconds the response stays fresh, as the cache counts them. ``0`` for ``stale``; none for
+  ``uncacheable``.
+- **Key**: the cache key, the endpoint and the path in clear then a hash of the query string, never a query value.
+- **Variant**: the variant of the entry (empty for a response that does not vary), as ``Vary`` selects it.
+- **Invalidation number**: the number of the invalidation log the response is valid as of (:ref:`http-cache-invalidation-log`).
+  For a response served from the cache it is the number its entry was stamped with, raised to the number read before
+  the origin was asked when that revalidated it; for one fetched from the origin, the number read just before the
+  fetch. An invalidation numbered above it covers the entry.
+
+The key, the variant and the invalidation number say which entry served the transaction, for the cache explorer.
+Transactions recorded before the upgrade have none of them. They are stored in ``x_cache_*`` columns of the
+``transactions`` table, which stays the storage application's (ADR-0012).
+
+.. note::
+
+    A response whose body was stored after the headers went out (the entry is written once the body is read to its
+    end) is a ``miss`` even if the store then refuses it, for instance because an invalidation landed in between.
+
+
 Cache-Control directives a client can send
 ------------------------------------------
 
