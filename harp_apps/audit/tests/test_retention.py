@@ -6,7 +6,10 @@ from harp_apps.audit.models import AuditEvent
 from harp_apps.audit.retention import AuditRetention
 from harp_apps.audit.settings import AuditSettings
 from harp_apps.janitor.settings import JanitorSettings
+from harp.sweeps import SweepRegistry
 from harp_apps.janitor.worker import JanitorWorker
+from harp_apps.storage.sweeps import StorageSweeps
+from harp_apps.storage.tests import RETENTION
 from harp_apps.storage.utils.testing.mixins import StorageTestFixtureMixin
 
 
@@ -49,16 +52,23 @@ class TestAuditRetention(StorageTestFixtureMixin):
 
         assert await count(sql_storage) == 1
 
+    async def test_the_sweep_is_declared_under_the_audit_name(self, sql_storage):
+        sweep = AuditRetention(sql_storage, AuditSettings()).sweep()
+
+        assert sweep.name == "audit.retention"
+
     async def test_the_janitor_runs_the_sweep_without_touching_transaction_retention(self, sql_storage, blob_storage):
-        janitor_settings = JanitorSettings()
-        worker = JanitorWorker(sql_storage, blob_storage, janitor_settings)
-        worker.sweeps.append(AuditRetention(sql_storage, AuditSettings()).purge)
+        sweeps = SweepRegistry()
+        sweeps.declare(AuditRetention(sql_storage, AuditSettings()).sweep())
+        for sweep in StorageSweeps(sql_storage, blob_storage, RETENTION).sweeps():
+            sweeps.declare(sweep)
+        worker = JanitorWorker(JanitorSettings(), sweeps=sweeps)
         await self.seed(sql_storage, 100, 400)
         await self.create_transaction(sql_storage, started_at=datetime.now(UTC) - timedelta(days=100))
 
-        await worker.loop()
+        await worker.run_sweeps()
 
         assert await count(sql_storage) == 1  # the 100 days old event is kept, the 400 days old one is gone
-        assert janitor_settings.old_after == 60
-        async with sql_storage.session_factory() as session:
-            assert (await worker.compute_metrics(session))["storage.transactions"] == 0  # transactions: 60 days
+        assert worker.sweep_stats["audit.retention"].items == 1
+        assert worker.sweep_stats["storage.transactions"].items == 1  # transactions: 60 days
+        assert worker.sweep_stats["audit.retention"].failures == 0

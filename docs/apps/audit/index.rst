@@ -24,9 +24,9 @@ Settings
 ::::::::
 
 ``retention_days``
-    Age in days after which an event is deleted. Positive integer, default ``365``. The janitor does the sweep, together
-    with its own, and independently of the retention of transactions (``janitor.old_after``). The janitor must be
-    enabled for events to be purged. Keeping them longer is the job of your SIEM, fed by the log output below.
+    Age in days after which an event is deleted. Positive integer, default ``365``. The audit declares the purge as the
+    ``audit.retention`` :doc:`sweep </contribute/sweeps>`, run on every pass of the janitor, independently of the
+    retention of transactions (``storage.retention_days``). The janitor must be enabled for events to be purged. Keeping them longer is the job of your SIEM, fed by the log output below.
 
 .. code-block:: yaml
 

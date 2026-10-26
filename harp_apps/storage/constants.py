@@ -40,3 +40,7 @@ CLIENT_DISCONNECTED = "client-disconnected"
 
 # Transaction marker set when the proxy removed HARP's own credentials from the request before the origin (ADR-0011)
 HARP_CREDENTIALS_STRIPPED = "harp-credentials-stripped"
+
+# Widths of the tag name and tag value columns, which bound the tags a client can set (#1646)
+TAG_NAME_MAX_LENGTH = 64
+TAG_VALUE_MAX_LENGTH = 255

@@ -42,6 +42,7 @@ class TestSystemController(
                 "blobs": {"type": "sql"},
                 "enabled": True,
                 "migrate": True,
+                "retention_days": 60,
                 "url": "sqlite+aiosqlite:///:memory:",
                 "redis": None,
             },
@@ -59,6 +60,7 @@ class TestSystemController(
                 "blobs": {"type": "redis"},
                 "enabled": True,
                 "migrate": True,
+                "retention_days": 60,
                 "url": "sqlite+aiosqlite:///:memory:",
                 "redis": {"url": "redis://redis.example.com:1234/42"},
             },
@@ -75,6 +77,7 @@ class TestSystemController(
                 "blobs": ANY,
                 "enabled": True,
                 "migrate": True,
+                "retention_days": 60,
                 "url": "sqlite+aiosqlite:///:memory:",
                 "redis": None,
             },
@@ -90,6 +93,7 @@ class TestSystemController(
             "storage": {
                 "enabled": True,
                 "migrate": True,
+                "retention_days": 60,
                 "url": RE(r".*://test:\*\*\*@.*"),
                 "blobs": ANY,
                 "redis": None,
@@ -162,7 +166,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"core":{"muted_events":[]},"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","enabled":true,"migrate":true,"blobs":{"type":"sql"},"redis":null}}'
+            b':memory:","enabled":true,"migrate":true,"retention_days":60,"blobs":{"type":"sql"},"redis":null}}'
         )
 
     @parametrize_with_settings({})
@@ -175,7 +179,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"core":{"muted_events":[]},"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","enabled":true,"migrate":true,"blobs":{"type":"redis"},"redis":null}}'
+            b':memory:","enabled":true,"migrate":true,"retention_days":60,"blobs":{"type":"redis"},"redis":null}}'
         )
 
     @parametrize_with_settings(
@@ -193,7 +197,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"core":{"muted_events":[]},"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","enabled":true,"migrate":true,"blobs":{"type":"sql"},"redis":null}}'
+            b':memory:","enabled":true,"migrate":true,"retention_days":60,"blobs":{"type":"sql"},"redis":null}}'
         )
 
     @parametrize_with_settings(
@@ -214,7 +218,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"core":{"muted_events":[]},"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","enabled":true,"migrate":true,"blobs":{"type":"redis"},"redis":null}}'
+            b':memory:","enabled":true,"migrate":true,"retention_days":60,"blobs":{"type":"redis"},"redis":null}}'
         )
 
     @parametrize_with_database_urls("postgresql")
@@ -231,6 +235,7 @@ class TestSystemControllerThroughASGI(
                 "blobs": {"type": "sql"},
                 "enabled": True,
                 "migrate": True,
+                "retention_days": 60,
                 "redis": None,
                 "url": RE(escape("postgresql+asyncpg://test:***@") + r".*"),
             },
@@ -254,7 +259,7 @@ class TestSystemControllerThroughASGI(
         assert response["headers"] == ((b"content-type", b"application/json"),)
         assert response["body"] == (
             b'{"applications":["harp_apps.storage"],"core":{"muted_events":[]},"storage":{"url":"sqlite+aiosqlite:///'
-            b':memory:","enabled":true,"migrate":true,"blobs":{"type":"redis"},"redis":{"url":"redis://us'
+            b':memory:","enabled":true,"migrate":true,"retention_days":60,"blobs":{"type":"redis"},"redis":{"url":"redis://us'
             b'er:***@localhost:6379/0"}}}'
         )
 

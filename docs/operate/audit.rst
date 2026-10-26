@@ -34,7 +34,8 @@ Retention
 :::::::::
 
 Events stay in the database for ``audit.retention_days`` days, ``365`` by default, whatever the retention of the
-transactions. The janitor deletes the older ones, so it must be enabled.
+transactions (``storage.retention_days``). The janitor runs the ``audit.retention`` sweep that deletes the older ones,
+so it must be enabled: without it, startup logs a warning naming the sweep.
 
 .. code-block:: yaml
 
