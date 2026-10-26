@@ -19,7 +19,7 @@ HARP Proxy has minimal system requirements:
 - **Memory**: ~50MB base, scales with traffic and cache size. If recording falls behind the database, queued request and response bodies add up to about 1,250 × (request body + response body), 2.5 GiB at the 1 MiB body cap (see :ref:`storage-memory-sizing`)
 - **Storage**: Depends on database backend (SQLite in-memory by default)
 
-For production deployments, use PostgreSQL for persistent storage. SQLite is for development only and MySQL/MariaDB is deprecated.
+For production deployments, use PostgreSQL for persistent storage. SQLite is for development only and MySQL/MariaDB is unsupported since 0.13 and removed in 0.14.
 
 
 Installation

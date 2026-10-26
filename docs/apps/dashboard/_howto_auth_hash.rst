@@ -2,7 +2,7 @@ Accepted algorithms (``dashboard.auth.algorithm``):
 
 - ``pbkdf2_sha256`` (default, recommended): PBKDF2-HMAC-SHA256, nothing to install. It reads the hashes passlib made
   (``$pbkdf2-sha256$...``), so hashes written for earlier versions keep working as they are.
-- ``argon2``: Argon2id, needs the extra: ``pip install "harp-proxy[argon2]"``.
+- ``argon2``: Argon2id, needs the extra: ``pip install "harp-proxy[argon2]"``, already in the Docker image.
 - ``plaintext`` (alias ``plain``): **for tests only**. Passwords are stored and compared as written, and HARP logs a
   warning at every start.
 

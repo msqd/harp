@@ -14,7 +14,7 @@ def warn_if_database_is_deprecated(url: Union[str, URL]) -> None:
     """Log one line for MySQL/MariaDB (both use the mysql dialect). Never the url: it may carry a password."""
     if make_url(str(url)).get_backend_name() == "mysql":
         logger.warning(
-            "MySQL/MariaDB storage is deprecated and will be removed in a future version. PostgreSQL is the "
+            "MySQL/MariaDB storage is unsupported since 0.13 and will be removed in 0.14. PostgreSQL is the "
             "supported production database."
         )
 
