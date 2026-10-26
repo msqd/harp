@@ -37,7 +37,10 @@ Signing in to the dashboard
 - Lost the only administrator? ``harp-proxy auth:create-account <name> --role admin`` asks for a password (or
   ``--generate-password``). See :doc:`/apps/auth/index`.
 - **PostgreSQL**: the ``auth`` branch gains ``auth_identities``, ``auth_sessions`` and ``auth_invitations``. The tables
-  are new, so no existing row needs rewriting. A password identity is keyed on the login, the username in lower case.
+  are new, so no released database has a row to rewrite. A database that ran an earlier build of this branch holds
+  these tables without the ``password_version`` and ``credential_version`` columns, which the revision creates in place:
+  reset them with ``harp-proxy db:migrate down auth@b3f6a1d94c27`` before updating (it drops the three tables), then
+  migrate up again. On SQLite, delete the file as usual. A password identity is keyed on the login, the username in lower case.
 - Failed sign-ins are refused with ``429`` and ``Retry-After`` (and ``503`` when the hashing queue is full), for the
   password method and for Basic alike. A script retrying a wrong Basic password in a loop is refused after a few tries.
 

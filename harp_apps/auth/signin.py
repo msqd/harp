@@ -153,7 +153,8 @@ class Authenticator:
         """
         Replaces the password of the account and ends its other sessions (one transaction), ``keep`` being the one that
         asks. :class:`Refused` when the current password is not the right one, :class:`Throttled` when guessing it is
-        over a limit, :class:`Busy` when the hashing queue is full. Raises :class:`~harp_apps.auth.passwords.PasswordPolicyError` when the new one is refused.
+        over a limit, :class:`Busy` when the hashing queue is full. Raises
+        :class:`~harp_apps.auth.passwords.PasswordPolicyError` when the new one is refused.
         """
         check_policy(new)
         identity = await self.identities.find_password_of_account(account_id)

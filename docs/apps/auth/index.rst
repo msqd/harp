@@ -102,14 +102,18 @@ a refused attempt does not extend it. Three counts, of failures that completed (
 once is not refused for being parallel):
 
 - *One address against one account*: from the fifth failure, that address waits before its next attempt on that account.
-  Guessing at ``alice`` from your address only slows you down. At most 21 attempts of one address on one account run at
-  once.
+  Guessing at ``alice`` from your address only slows you down. Only failures that completed are counted, so up to 21
+  attempts of one pair (5 free plus 16 under way) can start before the first wait: refusing on attempts started would
+  lock a dashboard out for fetching six things at once. The real concurrency is capped lower, by the hashing queue (4
+  verifications at a time, 16 waiting, the rest answered ``503``).
 - *One account, every address*: after 100 consecutive failures (the limit of NIST SP 800-63B-4) addresses that never
   signed in to the account wait. The last 8 addresses that did (30 days, until the process restarts) are exempt. Whoever
   hammers a name keeps a person on a new address waiting a minute at most.
 - *One address, every account* (an IPv6 address stands for its /64): after 100 failures it waits. This stops an address
-  that piles up penalised pairs, and takes over for a pair or an account the table has no room to record. Behind a
-  reverse proxy HARP does not know (see below) an attacker's neighbours get short ``429`` too: that is the accepted cost.
+  that piles up penalised pairs, and takes over for a pair or an account the table has no room to record. An address an
+  account signed in from is not held by this limit for that account (the pair limit still applies), so flooding a shared
+  address cannot lock out those who signed in from it before; spraying other accounts from it stays refused. Behind a
+  Behind a reverse proxy HARP does not know (see below) an attacker's neighbours get short ``429`` too: that is the accepted cost.
 
 Names are folded to lower case and checked (1 to 64 of ``A-Za-z0-9._@+-``) before the lookup and the count, so case
 variants are one login; a name that cannot be one shares a single count. Counts are forgotten after 15 minutes without

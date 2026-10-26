@@ -160,9 +160,10 @@ class SignInThrottle:
     def retry_after(self, login: str, ip: str) -> float:
         """Seconds this address must still wait before it may try this account, 0 when it may."""
         address = address_key(ip)
-        wait = max(self.pairs.wait(f"{login}\0{address}"), self.addresses.wait(address))
+        wait = self.pairs.wait(f"{login}\0{address}")
         if not self._is_known(login, address):
-            wait = max(wait, self.accounts.wait(login))
+            # an address an account signed in from reaches that account whatever floods the address or the account
+            wait = max(wait, self.addresses.wait(address), self.accounts.wait(login))
         return wait
 
     def begin(self, login: str, ip: str) -> Admitted | Refused:

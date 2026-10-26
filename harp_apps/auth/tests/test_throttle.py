@@ -183,6 +183,30 @@ def test_a_success_does_not_wash_the_failures_of_the_address(throttle):
     assert isinstance(throttle.begin("somebody", "10.0.0.1"), Refused)
 
 
+def test_a_known_address_flooded_by_failures_on_other_names_still_signs_in_to_its_own_account(throttle):
+    attempt(throttle, login="alice", ip="10.0.0.1", outcome="success")
+    for i in range(ADDRESS_FREE_FAILURES * 2):
+        attempt(throttle, login=f"junk{i // 5}", ip="10.0.0.1")
+    assert throttle.addresses.wait("10.0.0.1") > 0  # the address is over its limit
+
+    assert isinstance(throttle.begin("alice", "10.0.0.1"), Admitted)
+
+
+def test_the_same_flooded_address_is_still_refused_for_an_account_it_never_signed_in_to(throttle):
+    attempt(throttle, login="alice", ip="10.0.0.1", outcome="success")
+    for i in range(ADDRESS_FREE_FAILURES * 2):
+        attempt(throttle, login=f"junk{i // 5}", ip="10.0.0.1")
+
+    assert isinstance(throttle.begin("bob", "10.0.0.1"), Refused)
+
+
+def test_a_known_address_is_still_held_by_the_pair_limit(throttle):
+    attempt(throttle, login="alice", ip="10.0.0.1", outcome="success")
+    fail(throttle, PAIR_FREE_FAILURES, login="alice", ip="10.0.0.1")
+
+    assert isinstance(throttle.begin("alice", "10.0.0.1"), Refused)
+
+
 @pytest.mark.parametrize(
     "ip, other",
     [("2001:db8:1:2::1", "2001:db8:1:2:ffff::9"), ("::ffff:192.0.2.7", "192.0.2.7")],
