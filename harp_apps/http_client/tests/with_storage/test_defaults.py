@@ -39,6 +39,7 @@ class TestDefaultsWithStorage(BaseTestDefaultsWith):
             "blobs": {"type": "sql"},
             "enabled": True,
             "migrate": ANY,
+            "retention_days": ANY,
             "url": ANY,
             "redis": None,
         }

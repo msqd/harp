@@ -16,9 +16,8 @@ from sqlalchemy import select, update
 from harp.models import Blob
 from harp_apps.http_cache.tests import store_entry
 from harp_apps.http_cache.storages import AsyncStorage
-from harp_apps.janitor.settings import JanitorSettings
-from harp_apps.janitor.tests import worker_with_grace
-from harp_apps.janitor.worker import JanitorWorker
+from harp_apps.storage.sweeps import StorageSweeps
+from harp_apps.storage.tests import sweeps_with_grace
 from harp_apps.storage.models import Blob as SqlBlob
 from harp_apps.storage.services.blob_storages.sql import SqlBlobStorage
 from harp_apps.storage.services.sql import SqlStorage
@@ -50,13 +49,13 @@ def sql_only(blob_storage: IBlobStorage):
 class TestJanitorAndHttpCache(StorageTestFixtureMixin):
     @pytest.fixture
     def worker(self, sql_storage: SqlStorage, blob_storage: IBlobStorage):
-        return worker_with_grace(sql_storage, blob_storage, JanitorSettings(), NO_GRACE)
+        return sweeps_with_grace(sql_storage, blob_storage, NO_GRACE)
 
     @pytest.fixture
     def cache(self, blob_storage: IBlobStorage):
         return AsyncStorage(blob_storage)
 
-    async def orphans(self, worker: JanitorWorker, sql_storage: SqlStorage):
+    async def orphans(self, worker: StorageSweeps, sql_storage: SqlStorage):
         async with sql_storage.session_factory() as session:
             return (await worker.compute_metrics(session))["storage.blobs.orphans"]
 
@@ -119,7 +118,7 @@ class TestOrphanGrace(StorageTestFixtureMixin):
             await session.commit()
 
     async def test_young_orphans_are_kept(self, sql_storage, blob_storage):
-        worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(minutes=10))
+        worker = sweeps_with_grace(sql_storage, blob_storage, timedelta(minutes=10))
         young = await self.create_blob(blob_storage, "young")
         old = await self.create_blob(blob_storage, "old")
         await self.age(sql_storage, old.id, timedelta(minutes=11))
@@ -132,7 +131,7 @@ class TestOrphanGrace(StorageTestFixtureMixin):
     async def test_putting_an_old_blob_again_protects_it_from_the_next_sweep(self, sql_storage, blob_storage):
         """Single process window: a producer finds the content already stored, then the sweep runs
         before its message commits."""
-        worker = worker_with_grace(sql_storage, blob_storage, JanitorSettings(), timedelta(minutes=10))
+        worker = sweeps_with_grace(sql_storage, blob_storage, timedelta(minutes=10))
         blob = await self.create_blob(blob_storage, "reused")
         await self.age(sql_storage, blob.id, timedelta(hours=3))
 
@@ -147,7 +146,7 @@ class TestBlobStorageSharedByInstances(StorageTestFixtureMixin):
         if blob_storage.type != "sql":
             pytest.skip("sql only")
         a, b = blob_storage, SqlBlobStorage(sql_engine)
-        worker = worker_with_grace(sql_storage, a, JanitorSettings(), NO_GRACE)
+        worker = sweeps_with_grace(sql_storage, a, NO_GRACE)
 
         x = await self.create_blob(a, "x")
         await self.create_blob(b, "x")
@@ -187,7 +186,7 @@ class TestExpiredEntriesReleaseTheirBlobs(StorageTestFixtureMixin):
 
     @pytest.mark.parametrize("expiry", ["read", "sweep"])
     async def test_header_and_body_blobs_are_released(self, sql_storage, any_blob_storage, expiry):
-        worker = worker_with_grace(sql_storage, any_blob_storage, JanitorSettings(), NO_GRACE)
+        worker = sweeps_with_grace(sql_storage, any_blob_storage, NO_GRACE)
         cache = AsyncStorage(any_blob_storage, ttl=0.01)
         await store_entry(cache, _request(), _response(b"expiring"), "key-1")
         body = Blob.from_data(b"expiring", content_type="text/plain")

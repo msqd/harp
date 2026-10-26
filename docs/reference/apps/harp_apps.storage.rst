@@ -21,6 +21,7 @@ Submodules
     harp_apps.storage.optionals
     harp_apps.storage.services
     harp_apps.storage.settings
+    harp_apps.storage.sweeps
     harp_apps.storage.types
     harp_apps.storage.utils
     harp_apps.storage.worker

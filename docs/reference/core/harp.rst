@@ -26,6 +26,7 @@ Submodules
     harp.security
     harp.services
     harp.settings
+    harp.sweeps
     harp.typedefs
     harp.utils
     harp.views

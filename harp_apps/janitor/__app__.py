@@ -2,10 +2,9 @@ import asyncio
 
 from harp import get_logger
 from harp.config import Application
-from harp.config.events import OnBindEvent, OnBoundEvent, OnShutdownEvent
+from harp.config.events import OnBindEvent, OnBoundEvent, OnReadyEvent, OnShutdownEvent
 from harp_apps.janitor.settings import JanitorSettings
 from harp_apps.janitor.worker import JanitorWorker
-from harp_apps.storage.types import IStorage
 
 logger = get_logger(__name__)
 
@@ -17,8 +16,12 @@ async def on_bind(event: OnBindEvent):
 
 
 async def on_bound(event: OnBoundEvent):
-    await event.provider.get(IStorage).ready()
+    # Sweeps are declared by other applications, possibly after this one is bound: only say we schedule them.
+    event.provider.get(JanitorWorker).schedule()
 
+
+async def on_ready(event: OnReadyEvent):
+    # Every application is bound by now, and has declared its sweeps.
     worker = event.provider.get(JanitorWorker)
     event.provider.set(JANITOR_WORKER_TASK, asyncio.create_task(worker.run()))
 
@@ -30,9 +33,9 @@ async def on_shutdown(event: OnShutdownEvent):
 
 
 application = Application(
-    dependencies=["storage"],
     on_bind=on_bind,
     on_bound=on_bound,
+    on_ready=on_ready,
     on_shutdown=on_shutdown,
     settings_type=JanitorSettings,
 )

@@ -4,6 +4,7 @@ from asgiref.typing import ASGIApplication
 from whistle import Event
 
 from harp.services import Container, Services
+from harp.sweeps import SweepRegistry
 from harp.typedefs import GlobalSettings
 from harp.utils.network import Bind
 
@@ -28,9 +29,13 @@ class OnBindEvent(Event):
     #: Global settings.
     settings: GlobalSettings
 
-    def __init__(self, container: Container, settings: GlobalSettings):
+    #: Where to declare the application's periodic cleanups (see :mod:`harp.sweeps`).
+    sweeps: SweepRegistry
+
+    def __init__(self, container: Container, settings: GlobalSettings, sweeps: SweepRegistry | None = None):
         self.container = container
         self.settings = settings
+        self.sweeps = sweeps if sweeps is not None else SweepRegistry()
 
 
 #: Event fired when the service container is being configured, before the dependencies are resolved. You can configure
@@ -60,6 +65,11 @@ class OnBoundEvent(Event):
     def __init__(self, provider: Services, resolver: "ProxyControllerResolver"):
         self.provider = provider
         self.resolver = resolver
+
+    @property
+    def sweeps(self) -> SweepRegistry:
+        """Where to declare the application's periodic cleanups (see :mod:`harp.sweeps`)."""
+        return self.provider.get(SweepRegistry)
 
 
 #: Event fired when the service container is fully resolved, before the kernel is created. You can setup things that
