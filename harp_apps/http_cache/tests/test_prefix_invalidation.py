@@ -152,32 +152,6 @@ class TestReclamation:
 
         assert origin.gets("/api/users/1") == 2
 
-    @pytest.mark.parametrize("ttl", [86400, None])
-    async def test_without_a_janitor_the_storage_reclaims_in_its_own_sweep(self, records, ttl):
-        storage = AsyncStorage(records, ttl=ttl, check_ttl_every=0, reclamation=ReclamationSettings(grace=0))
-        origin = ValidatedOrigin()
-        async with make_client(origin, storage) as client:
-            await fetch_all(client, "/api/users/1")
-            await storage.wait_for_sweep()  # the one that store started, before the ban
-            await storage.invalidate_prefix(ENDPOINT, "/api/users", mode=BanMode.HARD)
-
-            await fetch_all(client, "/api/other")  # a store starts a sweep, when one is due
-            await storage.wait_for_sweep()
-
-        assert await records.bans() == []
-
-    async def test_with_a_janitor_the_storage_leaves_reclaiming_to_it(self, records):
-        storage = AsyncStorage(records, check_ttl_every=0, reclamation=ReclamationSettings(grace=0))
-        storage.delegate_reclamation()
-        origin = ValidatedOrigin()
-        async with make_client(origin, storage) as client:
-            await storage.invalidate_prefix(ENDPOINT, "/api/users", mode=BanMode.HARD)
-
-            await fetch_all(client, "/api/other")
-            await storage.wait_for_sweep()
-
-        assert len(await records.bans()) == 2
-
     async def test_a_soft_banned_entry_is_revalidated_not_lost_and_its_ban_retired_after(self, records, storage):
         origin = ValidatedOrigin()
         async with make_client(origin, storage) as client:

@@ -14,6 +14,9 @@ time budget never stops the others.
 The storage application declares three sweeps, described in :ref:`storage-sweeps`: ``storage.transactions`` (retention),
 ``storage.blobs.orphans`` and ``storage.metrics``.
 
+With the :doc:`HTTP cache </apps/http_cache/index>` loaded, it also runs the ``http_cache.expiry``, ``http_cache.counters``
+and ``http_cache.reclamation`` sweeps, see :ref:`http-cache-reclamation`.
+
 If the janitor is disabled, declared sweeps do not run, and startup logs a warning naming them. To declare a sweep from
 your own application, see :doc:`/contribute/sweeps`.
 

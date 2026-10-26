@@ -140,7 +140,7 @@ class TestExpiry:
         await store_variant(storage, "application/json")
         clock.now += 101
         await store_entry(storage, _request("x"), _response("x"), "api/other")
-        await storage.wait_for_sweep()
+        await storage.expire()
 
         assert await records.list_keys() == ["api/other"]
 
@@ -150,12 +150,10 @@ class TestExpiry:
         clock.now += 60
         await store_variant(storage, "application/json")
         clock.now += 60
-        await storage.get_entries("elsewhere")
-        await storage.wait_for_sweep()
+        await storage.expire()
 
         assert len(await records.get_variants(KEY)) == 1
         assert await accepts(storage) == ["application/json"]
-        await storage.wait_for_sweep()  # the lookup may have started one: it would hold the database open
 
     async def test_an_expired_variant_is_not_served_nor_counted(self, records, clock):
         storage = AsyncStorage(records, ttl=100, check_ttl_every=10_000)

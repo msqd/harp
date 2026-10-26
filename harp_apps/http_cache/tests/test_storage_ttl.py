@@ -1,7 +1,5 @@
-"""``ttl`` and ``check_ttl_every`` bound how long a cache entry lives in storage.
-
-The janitor does not reclaim cache records: this sweep is the only thing doing it.
-"""
+"""``ttl`` bounds how long a cache entry lives in storage: a read does not serve an expired entry, and the
+``http_cache.expiry`` sweep (``check_ttl_every``, scheduled by the janitor) deletes the ones nobody asks for."""
 
 import asyncio
 from dataclasses import replace
@@ -55,10 +53,8 @@ def _response(max_age=86400 * 30):
 
 
 @pytest.fixture
-async def storage(records, clock):
-    storage = AsyncStorage(records, ttl=TTL, check_ttl_every=CHECK_EVERY)
-    yield storage
-    await storage.wait_for_sweep()  # a sweep still running would hold the database open
+def storage(records, clock):
+    return AsyncStorage(records, ttl=TTL, check_ttl_every=CHECK_EVERY)
 
 
 @pytest.mark.asyncio
@@ -78,10 +74,7 @@ class TestEntryExpiry:
 
     async def test_expired_entry_is_not_served_between_two_sweeps(self, storage, records, clock):
         await store_entry(storage, _request(), _response(), "endpoint/key")
-        clock.advance(TTL - 3)
-        assert len(await storage.get_entries("endpoint/key")) == 1  # a sweep runs here
-
-        clock.advance(5)  # past the ttl, before the next sweep is due
+        clock.advance(TTL + 2)  # past the ttl, before any sweep ran
 
         assert await storage.get_entries("endpoint/key") == []
         assert await records.list_keys() == []
@@ -106,7 +99,6 @@ class TestEntryExpiry:
         clock.advance(86400 * 365)
 
         assert len(await storage.get_entries("endpoint/key")) == 1
-        await storage.wait_for_sweep()  # it reclaims bans, and would hold the database open
 
     async def test_default_ttl_is_24_hours(self, records, clock):
         storage = AsyncStorage(records)
@@ -116,7 +108,6 @@ class TestEntryExpiry:
         assert len(await storage.get_entries("endpoint/key")) == 1
         clock.advance(2)
         assert await storage.get_entries("endpoint/key") == []
-        await storage.wait_for_sweep()
 
     async def test_settings_default_to_24_hours(self):
         assert HttpCacheSettings().storage.arguments["ttl"] == 86400
@@ -128,91 +119,24 @@ class TestSweep:
         await store_entry(storage, _request(), _response(), "endpoint/old")
         clock.advance(TTL + 1)
         await store_entry(storage, _request(), _response(), "endpoint/recent")
-        await storage.wait_for_sweep()
+
+        await storage.expire()
 
         assert await records.list_keys() == ["endpoint/recent"]
-
-    async def test_sweep_runs_at_most_once_per_check_ttl_every(self, storage, records, clock, monkeypatch):
-        runs = []
-        original = records.delete_stored_before
-
-        async def counting(*args, **kwargs):
-            runs.append(clock.now)
-            return await original(*args, **kwargs)
-
-        monkeypatch.setattr(records, "delete_stored_before", counting)
-
-        for _ in range(5):
-            await storage.get_entries("endpoint/key")
-        await storage.wait_for_sweep()
-        assert runs == []
-
-        clock.advance(CHECK_EVERY + 1)
-        for _ in range(5):
-            await storage.get_entries("endpoint/key")
-        await storage.wait_for_sweep()
-        assert len(runs) == 1
-
-        clock.advance(CHECK_EVERY + 1)
-        await storage.get_entries("endpoint/key")
-        await storage.wait_for_sweep()
-        assert len(runs) == 2
 
     async def test_an_entry_freshened_since_it_expired_survives_the_sweep(self, storage, records, clock):
         entry = await store_entry(storage, _request(), _response(), "endpoint/key")
         clock.advance(TTL + 1)
         await storage.update_entry(entry.id, lambda e: e)
-        await storage.wait_for_sweep()
+
+        await storage.expire()
 
         assert await records.list_keys() == ["endpoint/key"]
-
-
-class GatedRecords(MemoryCacheRecords):
-    """Records whose expiry waits until the test lets it go."""
-
-    def __init__(self):
-        super().__init__()
-        self.release = asyncio.Event()
-        self.runs = 0
-
-    async def delete_stored_before(self, *args, **kwargs):
-        self.runs += 1
-        await self.release.wait()
-        return await super().delete_stored_before(*args, **kwargs)
-
-
-@pytest.mark.asyncio
-class TestSweepStaysOffTheRequestPath:
-    async def test_a_request_does_not_wait_for_the_sweep(self, clock):
-        records = GatedRecords()
-        storage = AsyncStorage(records, ttl=TTL, check_ttl_every=CHECK_EVERY)
-        await store_entry(storage, _request(), _response(), "endpoint/key")
-        clock.advance(CHECK_EVERY + 1)
-
-        await asyncio.wait_for(storage.get_entries("endpoint/key"), timeout=1)
-        await asyncio.wait_for(store_entry(storage, _request(), _response(), "endpoint/other"), timeout=1)
-
-        records.release.set()
-        await storage.wait_for_sweep()
-
-    async def test_only_one_sweep_runs_at_a_time(self, clock):
-        records = GatedRecords()
-        storage = AsyncStorage(records, ttl=TTL, check_ttl_every=CHECK_EVERY)
-        clock.advance(CHECK_EVERY + 1)
-        await storage.get_entries("endpoint/key")
-        await asyncio.sleep(0)
-        clock.advance(CHECK_EVERY + 1)
-        await storage.get_entries("endpoint/key")
-        await asyncio.sleep(0)
-
-        assert records.runs == 1
-        records.release.set()
-        await storage.wait_for_sweep()
 
     async def test_sweep_lets_the_event_loop_run(self, clock):
         records = MemoryCacheRecords()
         storage = AsyncStorage(records, ttl=TTL, check_ttl_every=CHECK_EVERY)
-        for i in range(SWEEP_DELETE_BATCH * 3):
+        for i in range(SWEEP_DELETE_BATCH * 4):
             await store_entry(storage, _request(), _response(), f"endpoint/key-{i}")
         clock.advance(TTL + 1)  # everything has expired: the sweep deletes batch after batch
         ticks = 0
@@ -224,19 +148,8 @@ class TestSweepStaysOffTheRequestPath:
                 ticks += 1
 
         task = asyncio.create_task(ticker())
-        await storage.get_entries("endpoint/absent")  # starts the sweep
-        await storage.wait_for_sweep()
+        await storage.expire()
         task.cancel()
 
         assert await records.list_keys() == []
         assert ticks >= 3
-
-    async def test_close_cancels_a_running_sweep(self, clock):
-        records = GatedRecords()
-        storage = AsyncStorage(records, ttl=TTL, check_ttl_every=CHECK_EVERY)
-        clock.advance(CHECK_EVERY + 1)
-        await storage.get_entries("endpoint/key")
-        await asyncio.sleep(0)
-
-        await storage.close()
-        await storage.wait_for_sweep()

@@ -6,6 +6,7 @@ import weakref
 from contextvars import ContextVar
 from contextlib import asynccontextmanager
 from dataclasses import replace
+from datetime import timedelta
 from email.utils import formatdate
 import httpx
 from hishel import AsyncBaseStorage, Entry, EntryMeta, Request, Response
@@ -15,6 +16,7 @@ from hishel._utils import make_async_iterator
 from harp import get_logger
 from harp.models.redaction import REDACTED, Redaction
 from harp.http.utils import parse_cache_control
+from harp.sweeps import Sweep, SweepBudget
 from harp_apps.storage.constants import (
     DEFAULT_MAX_RECORDED_BODY_SIZE,
     SKIP_REQUEST_STORAGE,
@@ -255,13 +257,10 @@ class AsyncStorage(AsyncBaseStorage):
         super().__init__()
 
         self._check_ttl_every = check_ttl_every
-        self._last_cleaned = time.monotonic()
         self._records = records
         self._ttl = ttl
         self._allow_heuristics = allow_heuristics
-        self._sweep_task: tp.Optional[asyncio.Task] = None
         self._reclamation = reclamation or ReclamationSettings()
-        self._reclaimed_elsewhere = False
         self._refusing: set[str] = set()
         self._refused: dict[str, int] = {}
         self._key_locks: weakref.WeakValueDictionary[str, asyncio.Lock] = weakref.WeakValueDictionary()
@@ -359,21 +358,55 @@ class AsyncStorage(AsyncBaseStorage):
         except Exception as exc:
             raise InvalidationError(f"Cache invalidation of {what} could not be recorded") from exc
 
-    def delegate_reclamation(self) -> tp.Callable[[], tp.Awaitable[Reclaimed]]:
-        """Hand :meth:`reclaim` to a worker that will run it (the janitor), once, when the application is bound.
+    def sweeps(self) -> list[Sweep]:
+        """The periodic maintenance of the cache, to declare to whatever schedules it (the janitor): the cache runs none
+        by itself.
 
-        The sweep of this storage then leaves reclaiming to it. Without a worker the sweep does it, which is all there
-        is to run it when the storage application, hence the janitor, is not loaded.
+        Expiry (when there is a ``ttl``) and counters run every ``check_ttl_every`` seconds, reclamation on every pass.
         """
-        self._reclaimed_elsewhere = True
-        return self.reclaim
+        every = timedelta(seconds=self._check_ttl_every) if self._check_ttl_every > 0 else None
+        reclamation = self._reclamation
+        return [
+            *(
+                [Sweep(name="http_cache.expiry", interval=every, budget=SweepBudget(), run=self.expire)]
+                if self._ttl is not None
+                else []
+            ),
+            Sweep(name="http_cache.counters", interval=every, budget=SweepBudget(), run=self._flush),
+            Sweep(
+                name="http_cache.reclamation",
+                interval=None,
+                budget=SweepBudget(items=reclamation.rounds * reclamation.entries),
+                run=self._reclaim,
+            ),
+        ]
+
+    async def expire(self, budget: tp.Optional[SweepBudget] = None) -> int:
+        """Delete the entries not written for more than ``ttl``, by batch."""
+        removed = 0
+        while self._ttl is not None:
+            deleted = await self._records.delete_stored_before(time.time() - self._ttl, limit=SWEEP_DELETE_BATCH)
+            removed += deleted
+            if deleted < SWEEP_DELETE_BATCH:
+                break
+            await asyncio.sleep(0)
+        if removed:
+            logger.debug(f"Cache ttl sweep removed {removed} entries")
+        return removed
+
+    async def _flush(self, budget: tp.Optional[SweepBudget] = None) -> int:
+        return await self.flush_counters()
+
+    async def _reclaim(self, budget: tp.Optional[SweepBudget] = None) -> int:
+        run = await self.reclaim()
+        return run.retired + run.deleted
 
     async def reclaim(self, *, grace: tp.Optional[float] = None) -> Reclaimed:
         """Delete what the old bans cover and retire them, then the bodies and resources nothing refers to.
 
-        Meant for a worker that runs it from time to time (the janitor): bounded by the ``rounds`` and ``entries`` of the
-        reclamation settings, resumed where it stopped by the next run. A hard ban is retired when what it
-        covers is deleted. A soft ban is not: its entries are revalidated, not deleted, so it is retired only when none is
+        Meant for a scheduler that runs it from time to time (the janitor, see :meth:`sweeps`): bounded by the
+        ``rounds`` and ``entries`` of the reclamation settings, resumed where it stopped by the next run. A hard ban is
+        retired when what it covers is deleted. A soft ban is not: its entries are revalidated, not deleted, so it is retired only when none is
         left that it makes stale (revalidated, replaced, expired or deleted), and until then it keeps the entries stale
         and costs a ban in the log. Bans younger than ``grace`` seconds (by default the setting) are left alone.
         """
@@ -398,49 +431,6 @@ class AsyncStorage(AsyncBaseStorage):
 
     def _is_expired(self, stored_at: float) -> bool:
         return self._ttl is not None and time.time() - stored_at > self._ttl
-
-    def _sweep_if_due(self) -> None:
-        """Start a background sweep if one is due, at most one at a time and once per `check_ttl_every`.
-
-        Never awaited by the request: the sweep is work no proxied request should wait for.
-        """
-        if self._ttl is None and not self._refused and self._reclaimed_elsewhere:
-            return
-        if self._sweep_task is not None and not self._sweep_task.done():
-            return
-        if time.monotonic() - self._last_cleaned < self._check_ttl_every:
-            return
-        self._last_cleaned = time.monotonic()
-        self._sweep_task = asyncio.create_task(self._sweep())
-
-    async def wait_for_sweep(self) -> None:
-        """Wait for the running sweep, if any, to end."""
-        if self._sweep_task is not None:
-            await asyncio.gather(self._sweep_task, return_exceptions=True)
-
-    async def _sweep(self) -> None:
-        """Flush the refused counts, delete the entries not written for more than `ttl` by batch, and reclaim the bans
-        unless the janitor does."""
-        try:
-            await self.flush_counters()
-            if self._ttl is not None:
-                removed = 0
-                while True:
-                    deleted = await self._records.delete_stored_before(
-                        time.time() - self._ttl, limit=SWEEP_DELETE_BATCH
-                    )
-                    removed += deleted
-                    if deleted < SWEEP_DELETE_BATCH:
-                        break
-                    await asyncio.sleep(0)
-                if removed:
-                    logger.debug(f"Cache ttl sweep removed {removed} entries")
-            if not self._reclaimed_elsewhere:
-                await self.reclaim()
-        except asyncio.CancelledError:
-            raise
-        except Exception:
-            logger.exception("Cache ttl sweep failed")
 
     async def _store_variant(self, entry: Entry, redaction: Redaction, stamp: int) -> bool:
         """Add an entry to the variants of its key: it replaces the variant it supersedes, and pushes out the oldest.
@@ -547,7 +537,6 @@ class AsyncStorage(AsyncBaseStorage):
                 return
             response.metadata[STORED_METADATA] = True
             logger.debug(f"Cache entry stored: key={key}")
-            self._sweep_if_due()
 
         # The entry is stored once its body has been read to the end, as it reaches the client.
         return replace(
@@ -574,17 +563,19 @@ class AsyncStorage(AsyncBaseStorage):
             )
         # counted here, written later: the endpoint's counter row is not worth a wait on the request path
         self._refused[endpoint] = self._refused.get(endpoint, 0) + 1
-        self._sweep_if_due()
 
-    async def flush_counters(self) -> None:
-        """Write the refusals counted since the last time."""
+    async def flush_counters(self) -> int:
+        """Write the refusals counted since the last time, and return for how many endpoints it did."""
         pending, self._refused = self._refused, {}
+        written = 0
         for endpoint, count in pending.items():
             try:
                 await self._records.count_refused(endpoint, count)
+                written += 1
             except Exception:
                 self._refused[endpoint] = self._refused.get(endpoint, 0) + count
                 logger.warning(f"Failed to count refused cache entries: endpoint={endpoint}", exc_info=True)
+        return written
 
     def _is_never_fresh(self, response: Response) -> bool:
         """Whether the origin gave no expiry and, heuristics being off, none may be invented: only it can say."""
@@ -601,7 +592,6 @@ class AsyncStorage(AsyncBaseStorage):
         """
         logger.debug(f"Retrieving cache entries: key={key}")
         try:
-            self._sweep_if_due()
             stored = await self._records.get_variants(key)
             live = [variant for variant in stored if not self._is_expired(variant.record.stored_at)]
             if len(live) < len(stored):
@@ -714,7 +704,5 @@ class AsyncStorage(AsyncBaseStorage):
     async def close(self) -> None:
         """Close the storage (required by AsyncBaseStorage interface)."""
         logger.debug("Closing AsyncStorage")
-        if self._sweep_task is not None:
-            self._sweep_task.cancel()
         await self.flush_counters()
         await self._records.close()
