@@ -142,3 +142,6 @@ holds the design choices.
     moves from `janitor.old_after` to the storage settings, and `janitor.old_after` stays read as a
     deprecated alias with a warning. The orphan-blob purge and the metrics pass become sweeps
     declared by storage; the janitor keeps scheduling only.
+40. The dashboard resolves the client address with its own `dashboard.trusted_proxies` (user,
+    2026-10-26): only a peer in those networks may name the client, from the right of
+    `X-Forwarded-For`. It converges with `proxy.trusted_proxies` (#1425) once main is merged in.
