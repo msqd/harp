@@ -1,0 +1,1 @@
+Dashboard system settings no longer answer 500 when the HTTP cache is on or `proxy.trusted_proxies` is set.
