@@ -1,5 +1,5 @@
 # Pinned by digest, bumped by Dependabot (docker ecosystem). Keep the tag next to the digest.
-FROM python:3.13-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962 AS builder
+FROM python:3.15-slim@sha256:94d3426f1def7db4a106a232ac121bfd975393e5dfd40a619b955fae45fe7913 AS builder
 
 # dist/ holds the CI wheel and constraints.txt, the runtime lock exported by `bin/check_docker_lock.py export`:
 # the image installs the versions CI tested, not the newest in the wheel's ranges.
@@ -8,7 +8,7 @@ COPY dist/*.whl dist/constraints.txt /tmp/wheels/
 RUN pip install --no-cache-dir --prefix=/install -c /tmp/wheels/constraints.txt "harp-proxy[argon2,postgresql,sentry] @ file://$(ls /tmp/wheels/*.whl)"
 
 
-FROM python:3.13-slim@sha256:d98cc29d3266e535dd9da1099688d9cb3ca4753813571e071763d17725460962
+FROM python:3.15-slim@sha256:94d3426f1def7db4a106a232ac121bfd975393e5dfd40a619b955fae45fe7913
 
 WORKDIR /app
 
