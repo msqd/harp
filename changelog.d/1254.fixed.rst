@@ -1,0 +1,1 @@
+Storage urls with credentials, an empty host and a `host=` socket directory (`postgresql+asyncpg://user@/db?host=/run/postgresql`) are no longer refused.
