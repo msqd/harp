@@ -109,7 +109,7 @@ install-hooks:  ## Installs the git pre-commit hooks.
 # Documentation
 ########################################################################################################################
 
-.PHONY: reference docs docs-dev
+.PHONY: reference docs docs-dev docs-assets
 
 reference: harp  ## Generates API reference documentation as ReST files (docs).
 	rm -rf docs/reference/core docs/reference/apps
@@ -122,6 +122,9 @@ docs:  ## Build html documentation
 
 docs-dev:  ## Spin up a livereload documentation server
 	$(call execute,$(UV_RUN) $(MAKE) -C docs dev)
+
+docs-assets: install-frontend  ## Regenerates the dashboard captures and the README diagrams (needs graphviz and playwright chromium).
+	$(call execute,$(UV_RUN) python -m docs._captures)
 
 
 ########################################################################################################################

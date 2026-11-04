@@ -26,8 +26,19 @@ if [ ! -f harp_apps/dashboard/web/index.html ]; then
     exit 1
 fi
 
-# Clean up README (remove People & Credits section)
+# Replace the People & Credits section of the README: PyPI refuses the raw HTML table it holds
+# (twine check: "raw" directive disabled), so the package gets a plain section linking to the full credits.
 sed '/^People & Credits/,$ d' README.rst > README.rst.tmp
+cat >> README.rst.tmp <<'CREDITS'
+People & Credits
+::::::::::::::::
+
+The people who made HARP are credited in `CONTRIBUTORS.md <https://github.com/msqd/harp/blob/main/CONTRIBUTORS.md>`_.
+
+* Sponsored by `Makersquad <https://www.makersquad.fr/>`_
+
+`There are many ways you can contribute to HARP! <https://docs.harp-project.net/en/stable/contribute/>`_
+CREDITS
 mv README.rst.tmp README.rst
 
 # Build the wheel

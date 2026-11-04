@@ -1,0 +1,40 @@
+digraph "how-it-works-service" {
+    rankdir = LR
+    bgcolor = "white"
+    compound = true
+    nodesep = 0.4
+    ranksep = 0.9
+    fontname = "Helvetica"
+    node [shape = box, style = "rounded,filled", fillcolor = white, color = "#444444", fontname = "Helvetica", fontsize = 13, margin = "0.25,0.15"]
+    edge [color = "#444444", fontname = "Helvetica", fontsize = 11]
+
+    app1 [label = "Your Application 1"]
+    app2 [label = "Your Application 2"]
+    operator [label = "You", shape = ellipse]
+
+    subgraph cluster_service {
+        label = "HARP SERVICE"
+        labeljust = l
+        style = "rounded,filled"
+        color = "#3aa655"
+        fillcolor = "#f4fbf6"
+        fontsize = 11
+
+        proxy1 [label = "Proxy\nport 4000"]
+        proxy2 [label = "Proxy\nport 4001"]
+        storage [label = "Storage", shape = cylinder]
+        proxy1 -> storage [dir = none, style = dotted]
+        proxy2 -> storage [dir = none, style = dotted]
+        dashboard [label = "Dashboard\nport 4080", style = "rounded,filled,dashed"]
+        dashboard -> storage [dir = none, style = dotted]
+    }
+
+    api1 [label = "External API 1", fillcolor = "#e6e6e6"]
+    api2 [label = "External API 2", fillcolor = "#e6e6e6"]
+
+    app1 -> proxy1 [label = "HTTP"]
+    app2 -> proxy2 [label = "HTTP"]
+    proxy1 -> api1 [label = "HTTP"]
+    proxy2 -> api2 [label = "HTTP"]
+    operator -> dashboard [label = "HTTP"]
+}

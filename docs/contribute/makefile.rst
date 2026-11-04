@@ -263,6 +263,9 @@ Documentation
     # Start live-reload documentation server
     make docs-dev
 
+    # Regenerate the dashboard captures and the README diagrams
+    make docs-assets
+
 The documentation is built with Sphinx and placed in ``docs/_build/html/``.
 
 Benchmarks

@@ -106,8 +106,8 @@ applications define background asynchronous tasks, it's a good idea to terminate
 🌲 Class Diagram
 -------------
 
-.. raw:: html
-    :file: events.config.svg
+.. inheritance-diagram:: harp.config.events
+    :parts: 1
 
 
 Core / ASGI Events
@@ -230,5 +230,5 @@ Dispatched as :attr:`EVENT_CORE_RESPONSE` with a :class:`ResponseEvent` instance
 🌲 Class Diagram
 -------------
 
-.. raw:: html
-    :file: events.asgi.svg
+.. inheritance-diagram:: harp.asgi.events
+    :parts: 1
