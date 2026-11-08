@@ -149,6 +149,9 @@ class TransactionsRepository(Repository[Transaction]):
         if isinstance(values, TransactionModel):
             values = values.as_storable_dict()
         tags = values.pop("tags", {})
+        # The method comes from the client as is: bound it to the column width, so the insert never fails.
+        if values.get("x_method") is not None:
+            values["x_method"] = values["x_method"][: Transaction.x_method.type.length]
         transaction = await super().create(values, session=session)
         if len(tags):
             await self.set_tags(transaction, tags, session=session)

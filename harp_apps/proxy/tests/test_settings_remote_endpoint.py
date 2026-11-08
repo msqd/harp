@@ -94,3 +94,6 @@ class TestRemoteEndpointStateful(BaseConfigurableTest):
         "failure_reasons": None,
         "status": 0,
     }
+
+    def test_model_validate_returns_the_endpoint(self):
+        assert isinstance(RemoteEndpoint.model_validate(self.initial), RemoteEndpoint)

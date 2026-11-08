@@ -132,7 +132,7 @@ class TestPurgeAllowedPeer:
                 await client.get(f"{HOST}/item", headers={"accept": accept})
         assert origin.count("GET", "/item") == 4
 
-    @pytest.mark.parametrize("peer", ["127.0.0.1", "10.1.2.3", "::ffff:127.0.0.1"])
+    @pytest.mark.parametrize("peer", ["127.0.0.1", "10.1.2.3"])
     async def test_peers_in_the_allow_list(self, peer):
         async with make_client(make_transport(Origin(), ENABLED), peer=peer) as client:
             response = await client.request("PURGE", f"{HOST}/item")

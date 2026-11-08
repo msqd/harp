@@ -50,7 +50,9 @@ class TestStorageWorkerMarkers(StorageTestFixtureMixin):
         if not size:
             return
 
-        now = worker.clock()
+        # A fixed origin, not the loop clock: `(t + hold) - t` can fall short of `hold` by an ulp when `t + hold`
+        # crosses a power of two, and the hold would then not be reached.
+        now = 0.0
         worker.clock = lambda: now
 
         async def stalled():

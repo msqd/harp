@@ -16,6 +16,8 @@ def ensure_datetime(x, tz=None) -> Optional[datetime]:
     if x is None:
         return None
     if isinstance(x, datetime):
+        if x.tzinfo and tz:
+            return x.astimezone(tz)
         return x.replace(tzinfo=tz)
     if isinstance(x, date):
         return datetime.combine(x, datetime.min.time(), tzinfo=tz)

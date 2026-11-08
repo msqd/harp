@@ -1,0 +1,1 @@
+The ``method`` label of the request metrics only takes standard HTTP method values; any other method is labelled ``other``.

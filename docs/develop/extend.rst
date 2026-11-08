@@ -23,7 +23,7 @@ The best way to learn is by examining HARP's built-in applications in ``harp_app
 
 - **proxy** (``harp_apps.proxy``): HTTP proxy with connection pooling and health checks
 - **http_client** (``harp_apps.http_client``): HTTP client with caching and retry logic
-- **storage** (``harp_apps.storage``): Database backends (PostgreSQL, SQLite for development, deprecated MySQL, Redis)
+- **storage** (``harp_apps.storage``): Database backends (PostgreSQL, SQLite for development, Redis; MySQL is unsupported since 0.13 and removed in 0.14)
 - **dashboard** (``harp_apps.dashboard``): Web UI with React frontend
 - **rules** (``harp_apps.rules``): Transaction lifecycle scripting engine
 

@@ -65,6 +65,11 @@ class TestHttpRequestQuery(BaseHttpRequestTest):
             ("foo", "bar"),
         ]
 
+    def test_blank_values_are_kept_as_in_asgi_requests(self):
+        request = self.create_request(query="flag&a=")
+
+        assert list(sorted(request.query.items())) == [("a", ""), ("flag", "")]
+
 
 class TestHttpRequestBasicAuthentication(BaseHttpRequestTest):
     """

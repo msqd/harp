@@ -1,0 +1,1 @@
+Dashboard: a failed background refresh keeps the data on screen with a notice instead of replacing the page with the error screen for good.

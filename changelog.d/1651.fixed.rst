@@ -1,0 +1,1 @@
+Configuration validation errors name the offending key but no longer print the value given, so a secret under a misspelled key stays out of logs.

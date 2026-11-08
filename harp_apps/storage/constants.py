@@ -37,3 +37,7 @@ DEFAULT_MAX_RECORDED_BODY_SIZE = 1024 * 1024
 
 # Transaction marker set when the client went away before the end of the response body (#911)
 CLIENT_DISCONNECTED = "client-disconnected"
+
+# Widths of the tag name and tag value columns, which bound the tags a client can set (#1646)
+TAG_NAME_MAX_LENGTH = 64
+TAG_VALUE_MAX_LENGTH = 255

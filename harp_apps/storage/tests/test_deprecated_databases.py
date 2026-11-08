@@ -20,7 +20,8 @@ def test_mysql_warns_once_without_leaking_the_url(caplog):
 
     assert len(caplog.records) == 1
     message = caplog.records[0].getMessage()
-    assert "deprecated" in message
+    assert "unsupported since 0.13" in message
+    assert "removed in 0.14" in message
     assert "PostgreSQL" in message
     assert "s3cret" not in message
     assert "localhost" not in message

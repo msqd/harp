@@ -85,6 +85,12 @@ class TestServiceProvider:
         assert instance.a == 1
         assert instance.b == 2
 
+    def test_falsy_singleton_is_built_once(self):
+        provider = ServiceProvider(dict, args=[], kwargs={}, lifestyle=ServiceLifeStyle.SINGLETON)
+        activation_scope = ActivationScope(Services({"empty": provider}))
+
+        assert provider(activation_scope) is provider(activation_scope)
+
     def test_call_method_with_args_and_kwargs(self):
         provider = ServiceProvider(self.constructor, args=[1], kwargs={"b": 2}, lifestyle=self.lifestyle)
         services = Services({"dummy_service": provider})

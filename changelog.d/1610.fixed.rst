@@ -1,0 +1,1 @@
+An exception raised after the response started is now logged and re-raised without a second response start, and the debug error page escapes what it shows.

@@ -28,6 +28,6 @@ bash
 EOF
 chmod +x $entrypoint_script
 
-docker run -it --rm --entrypoint=/entrypoint $run_opts --volume $entrypoint_script:/entrypoint -p 4000-4100:4000-4100 python:3.12-bookworm
+docker run -it --rm --entrypoint=/entrypoint $run_opts --volume $entrypoint_script:/entrypoint -p 4000-4100:4000-4100 python:3.13-bookworm
 
 rm "$entrypoint_script"

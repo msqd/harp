@@ -66,6 +66,7 @@ dependencies = [
 
 [project.optional-dependencies]
 argon2 = ["argon2-cffi>=23.1,<26"]
+# Unsupported since 0.13, removed in 0.14.
 mysql = [
     "aiomysql>=0.2,<0.4",
     "cryptography>=50.0,<51",

@@ -34,3 +34,10 @@ def test_resolve_dict_with_deep_references():
         "foo": {"bar": LazySettingReference("foo.bar")},
     }
     assert _resolve(arguments, {"foo": {"bar": "baz"}}) == {"foo": {"bar": "baz"}}
+
+
+def test_cfgref_default_applies_to_missing_settings_on_a_model():
+    from harp_apps.http_client.settings import HttpClientSettings
+
+    ref = LazySettingReference("nope.x", default="fallback")
+    assert ref.resolve(HttpClientSettings()) == "fallback"

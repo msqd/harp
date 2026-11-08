@@ -32,7 +32,7 @@ def test_oversized_name_or_value_is_dropped_and_does_not_count():
     request = _request(
         {
             "x-harp-" + "n" * 65: "v",
-            "x-harp-long": "v" * 257,
+            "x-harp-long": "v" * 256,
             "x-harp-a": "1",
             "x-harp-b": "2",
         }
@@ -45,16 +45,16 @@ def test_oversized_name_or_value_is_dropped_and_does_not_count():
 
 
 def test_bounds_are_inclusive():
-    request = _request({"x-harp-" + "n" * 64: "v" * 256})
+    request = _request({"x-harp-" + "n" * 64: "v" * 255})
 
     tags, dropped = extract_tags_from_request(request, TagsSettings())
 
-    assert tags == {"n" * 64: "v" * 256}
+    assert tags == {"n" * 64: "v" * 255}
     assert dropped == []
 
 
 def test_dropped_report_names_the_tag_not_the_value():
-    request = _request({"x-harp-secret": "v" * 257})
+    request = _request({"x-harp-secret": "v" * 256})
 
     _, dropped = extract_tags_from_request(request, TagsSettings())
 

@@ -12,6 +12,9 @@ class BaseConfigurable(BaseModel):
 
     """
 
+    # Validation errors name the offending key, never the value: a misplaced secret must not reach the logs.
+    model_config = ConfigDict(hide_input_in_errors=True)
+
     @classmethod
     def from_dict(cls: Type[Self], data: dict) -> Self:
         """Construct a new instance from a dictionary."""

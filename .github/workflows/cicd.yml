@@ -326,7 +326,7 @@ jobs:
         run: uv run pytest harp_apps -n 1 -m 'not subprocess'
         env:
           TESTCONTAINERS_RYUK_DISABLED: 'true'
-          TEST_DATABASE_DIALECTS: sqlite,postgresql  # mysql has its own job
+          TEST_DATABASE_DIALECTS: sqlite,postgresql
 
   test-backend-e2e:
     name: Test Backend E2E (Py${{ matrix.python-version }})
@@ -366,43 +366,7 @@ jobs:
         run: uv run pytest tests -n 1 -m 'not subprocess'
         env:
           TESTCONTAINERS_RYUK_DISABLED: 'true'
-          TEST_DATABASE_DIALECTS: sqlite,postgresql  # mysql has its own job
-
-  # Storage suite against live MySQL (mysql:8-oracle) and MariaDB (mariadb:lts) through aiomysql.
-  # See https://github.com/msqd/harp/issues/868.
-  test-backend-mysql:
-    name: Test Backend MySQL
-    runs-on: ubuntu-latest
-    needs: check-lockfile
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
-          persist-credentials: false
-
-      - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
-        with:
-          python-version: '3.13'
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
-        with:
-          enable-cache: false
-
-      - name: Ensure web directory exists
-        run: mkdir -p harp_apps/dashboard/web
-
-      - name: Install dependencies
-        run: uv sync --locked
-
-      - name: Run storage and proxy-with-storage tests on MySQL and MariaDB
-        run: uv run pytest harp_apps/storage harp_apps/proxy/tests/with_storage -n auto -m 'not subprocess'
-        env:
-          TESTCONTAINERS_RYUK_DISABLED: 'true'
-          TEST_DATABASE_DIALECTS: mysql
+          TEST_DATABASE_DIALECTS: sqlite,postgresql
 
   # Tests that spawn real processes: uv run / uvx harp-proxy, python -m harp, the wheel, harp create project.
   # See https://github.com/msqd/harp/issues/921.
@@ -767,7 +731,6 @@ jobs:
       - test-backend-core
       - test-backend-apps
       - test-backend-e2e
-      - test-backend-mysql
       - test-backend-subprocess
       - test-frontend-unit
       - test-frontend-browser

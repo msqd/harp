@@ -1,0 +1,1 @@
+Each configuration file is now parsed once per build instead of three times.

@@ -23,9 +23,12 @@ class AsyncFilterableTransport(AsyncBaseTransport):
         event = HttpClientFilterEvent(request)
         await self._dispatcher.adispatch(EVENT_FILTER_HTTP_CLIENT_REQUEST, event)
         logger.debug(f"▶▶▶ {event.request}", headers=event.request.headers)
+        upstream = None
         if not event.response:
-            event.response = await self._transport.handle_async_request(event.request)
+            event.response = upstream = await self._transport.handle_async_request(event.request)
         await self._dispatcher.adispatch(EVENT_FILTER_HTTP_CLIENT_RESPONSE, event)
+        if upstream is not None and event.response is not upstream:
+            await upstream.aclose()
         logger.debug(
             f"◀◀◀ {event.response}",
             cache_control=event.response.headers.get("cache-control"),

@@ -1,6 +1,7 @@
 from httpx import ByteStream
 
 from harp.http import HttpResponse
+from harp.http.responses import RedirectHttpResponse
 
 
 class BaseHttpResponseTest:
@@ -113,3 +114,12 @@ class TestHttpResponseReasonPhrase(BaseHttpResponseTest):
         """When reason_phrase extension is set as str, it should return it as-is."""
         response = self.create_response(body=b"", status=502, extensions={"reason_phrase": "Custom Gateway Error"})
         assert response.reason_phrase == "Custom Gateway Error"
+
+
+def test_redirect_leaves_the_given_headers_untouched():
+    headers = {"X-Foo": "bar"}
+
+    response = RedirectHttpResponse("/elsewhere", headers=headers)
+
+    assert headers == {"X-Foo": "bar"}
+    assert response.headers["location"] == "/elsewhere"

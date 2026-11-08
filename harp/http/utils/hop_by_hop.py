@@ -40,5 +40,9 @@ def hop_by_hop_names(headers) -> set:
 
     :param headers: any mapping of header names to values, matched case-insensitively.
     """
-    named_by_connection = {name.strip().lower() for name in headers.get("connection", "").split(",") if name.strip()}
+    # a multidict's get() only returns the first line, while Connection may be sent on several
+    connection = (
+        ",".join(headers.getall("connection", [])) if hasattr(headers, "getall") else headers.get("connection", "")
+    )
+    named_by_connection = {name.strip().lower() for name in connection.split(",") if name.strip()}
     return HOP_BY_HOP_HEADERS | named_by_connection

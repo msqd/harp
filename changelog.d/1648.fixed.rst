@@ -1,0 +1,1 @@
+Responses with more than 4 stacked content codings are rejected as a decoding error, instead of exhausting the stack (`RecursionError`) and memory.

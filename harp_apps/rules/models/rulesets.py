@@ -6,9 +6,9 @@ from harp_apps.rules.constants import DEFAULT_LEVELS, DEFAULT_RULES_LEVELS
 from harp_apps.rules.models.compilers import BaseRuleSetCompiler
 
 
-def _match_level(rules, against):
+def _match_level(rules, against, **options):
     for pattern, rules in rules:
-        if pattern.match(against):
+        if pattern.match(against, **options):
             if hasattr(rules, "items"):
                 yield from rules.items()
             else:
@@ -58,16 +58,19 @@ class BaseRuleSet:
     def add(self, sources: dict):
         self._rules = self._compiler.compile(sources, target=self._rules)
 
-    def match(self, *args):
+    def match(self, *args, trailing_slash: bool = False):
         """
         Match the given arguments against the rules. Each argument must match a "level" in this ruleset.
+
+        With ``trailing_slash``, the second level (the request fingerprint) lets exact patterns match a path without
+        its final slash, see :meth:`Pattern.match`.
         """
         if len(args) != len(self._levels):
             raise ValueError(f"Expected {len(self._levels)} arguments, got {len(args)}")
 
         rules = self.rules.items()
-        for against in args:
-            rules = _match_level(rules, against)
+        for index, against in enumerate(args):
+            rules = _match_level(rules, against, trailing_slash=trailing_slash and index == 1)
         yield from rules
 
     def _asdict(self, /, *, secure=True):

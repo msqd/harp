@@ -297,7 +297,7 @@
           "default": {
             "max_count": 20,
             "max_name_length": 64,
-            "max_value_length": 256
+            "max_value_length": 255
           }
         }
       },
@@ -497,11 +497,13 @@
         "max_name_length": {
           "default": 64,
           "exclusiveMinimum": 0,
+          "maximum": 64,
           "type": "integer"
         },
         "max_value_length": {
-          "default": 256,
+          "default": 255,
           "exclusiveMinimum": 0,
+          "maximum": 255,
           "type": "integer"
         }
       },

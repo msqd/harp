@@ -31,6 +31,7 @@ Submodules
     harp.utils.packages
     harp.utils.processes
     harp.utils.services
+    harp.utils.signatures
     harp.utils.strings
     harp.utils.tpdex
     harp.utils.types

@@ -103,3 +103,15 @@ class TestApplicationsRegistry:
             storage_app = registry.get_application("acme.storage")
             assert registry.get_application("acme.storage") is storage_app
             assert registry.get_application("storage") is not storage_app
+
+    def test_add_a_different_application_under_a_taken_name(self, registry):
+        registry.add("storage")
+        with patch.dict(
+            "sys.modules",
+            {
+                "acme.storage": acme_storage_module,
+                "acme.storage.__app__": acme_storage_app_module,
+            },
+        ):
+            with pytest.raises(ValueError, match="already registered"):
+                registry.add("acme.storage")

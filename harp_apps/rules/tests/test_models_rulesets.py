@@ -10,6 +10,16 @@ def test_simple():
     assert rs._asdict() == {"*": {"*": {"*": "print('Hello, World!')"}}}
 
 
+def callable_rule(context):
+    pass
+
+
+def test_asdict_with_a_callable_rule():
+    rs = RuleSet()
+    rs.add({"*": {"*": {"*": callable_rule}}})
+    assert rs._asdict() == {"*": {"*": {"*": "<callable:callable_rule>"}}}
+
+
 def test_compile():
     compiler = BaseRuleSetCompiler()
     compiled = compiler.compile({"foo": "print('Hello, World!')"})

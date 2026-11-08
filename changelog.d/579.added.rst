@@ -1,0 +1,1 @@
+The dashboard header shows a pill with an icon and a count when development-only settings are in use; it opens a list of each one, what to use instead, and a link to the documentation. The header switches to the hamburger layout below 768px.

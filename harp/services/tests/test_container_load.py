@@ -6,7 +6,9 @@ from string import Template
 from tempfile import NamedTemporaryFile
 from types import ModuleType
 
-from harp.services import Container
+import pytest
+
+from harp.services import CircularDependencyException, Container
 from harp.utils.packages import get_full_qualified_name
 
 
@@ -70,3 +72,17 @@ def test_container_load_include_from_module():
         instance = provider.get("foo")
 
         assert isinstance(instance, Stub)
+
+
+def test_container_build_reports_circular_references(tmp_path):
+    services = tmp_path / "services.yml"
+    services.write_text(
+        "services:\n"
+        "  - {name: a, type: collections.OrderedDict, arguments: {other: !ref b}}\n"
+        "  - {name: b, type: collections.UserDict, arguments: {other: !ref a}}\n"
+    )
+    container = Container()
+    container.load(str(services), bind_settings={})
+
+    with pytest.raises(CircularDependencyException):
+        container.build_provider()

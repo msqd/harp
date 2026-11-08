@@ -4,6 +4,10 @@ httpx decodes each chunk whole: a few kilobytes of gzip can expand to gigabytes 
 Here gzip and deflate (zlib) are decoded with a maximum output size per step, so a decompression bomb streams through
 in constant memory. Other codings (brotli, zstd) are optional dependencies of httpx with no such bound; they are
 decoded by httpx's own decoders, whole.
+
+At most ``MAX_CODINGS`` (4) codings may be stacked in one ``Content-Encoding``, ``identity`` included and empty items
+not counted, case and spaces ignored; more is a
+:class:`httpx.DecodingError`, raised when the body is first decoded, like corrupt data.
 """
 
 import typing as tp
@@ -12,6 +16,7 @@ import zlib
 import httpx
 
 MAX_DECODED_STEP = 64 * 1024
+MAX_CODINGS = 4
 
 
 class _Stage(tp.Protocol):
@@ -95,14 +100,24 @@ class BoundedDecoder:
 
     def __init__(self, content_encoding: tp.Optional[str], *, step: int = MAX_DECODED_STEP):
         codings = [coding.strip().lower() for coding in (content_encoding or "").split(",")]
+        codings = [coding for coding in codings if coding]
+        self._error: tp.Optional[httpx.DecodingError] = None
+        self._stages: tp.List[_Stage] = []
+        if len(codings) > MAX_CODINGS:
+            self._error = httpx.DecodingError(f"Too many content codings: {len(codings)} (at most {MAX_CODINGS})")
+            return
         # The codings were applied in the order listed: they are undone in reverse.
-        stages = (_stage(coding, step) for coding in reversed(codings) if coding)
-        self._stages: tp.List[_Stage] = [stage for stage in stages if stage is not None]
+        stages = (_stage(coding, step) for coding in reversed(codings))
+        self._stages = [stage for stage in stages if stage is not None]
 
     def decode(self, data: bytes) -> tp.Iterator[bytes]:
+        if self._error:
+            raise self._error
         return self._through(self._stages, data)
 
     def flush(self) -> tp.Iterator[bytes]:
+        if self._error:
+            raise self._error
         for index, stage in enumerate(self._stages):
             for piece in stage.flush():
                 yield from self._through(self._stages[index + 1 :], piece)

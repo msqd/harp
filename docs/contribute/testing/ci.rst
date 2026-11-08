@@ -188,7 +188,7 @@ This approach is simpler and faster than using Docker containers.
 Testcontainers support
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Tests that use testcontainers (for PostgreSQL, MySQL, etc.) work automatically on GitHub Actions runners because:
+Tests that use testcontainers (for PostgreSQL, etc.) work automatically on GitHub Actions runners because:
 
 * Docker is pre-installed on ubuntu-latest runners
 * Tests have access to the Docker socket

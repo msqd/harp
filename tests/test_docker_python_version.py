@@ -37,3 +37,11 @@ def test_runtime_image_has_no_pip():
 
 def test_healthcheck_fetches_healthz():
     assert re.search(r"^HEALTHCHECK .*\n?.*/healthz", DOCKERFILE, re.MULTILINE)
+
+
+def test_wheel_test_container_python_matches_project_requirement():
+    requirement = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["requires-python"]
+    images = re.findall(r"\bpython:(\d+\.\d+)-", (ROOT / "bin" / "runc_wheel").read_text())
+    assert images
+    for version in images:
+        assert version in SpecifierSet(requirement), f"bin/runc_wheel runs python {version}, outside {requirement}"

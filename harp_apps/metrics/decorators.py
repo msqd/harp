@@ -3,6 +3,7 @@ from functools import wraps
 from typing import Optional
 
 from harp.controllers.typing import IAsyncController
+from harp.http.utils import HTTP_METHODS
 from harp_apps.metrics.constants import (
     CONTROLLER_EXCEPTIONS,
     CONTROLLER_REQUESTS,
@@ -15,6 +16,13 @@ from harp_apps.metrics.constants import (
     REMOTE_REQUESTS_TIME,
     REMOTE_RESPONSES,
 )
+
+
+def _method_label(method: str) -> str:
+    """
+    Known HTTP methods are their own label value, anything else is "other", to keep the label values bounded.
+    """
+    return method if method in HTTP_METHODS else "other"
 
 
 def _instrument(wrapped, *, requests, in_progress, responses, exceptions, duration, get_labels, status_attribute):
@@ -35,7 +43,7 @@ def _instrument(wrapped, *, requests, in_progress, responses, exceptions, durati
             return response
         except Exception as exc:  # noqa: BLE001
             exceptions.labels(**labels, exception=type(exc).__name__).inc()
-            raise exc from None
+            raise
         finally:
             after_time = time.perf_counter()
             duration.labels(**labels).observe(after_time - before_time)
@@ -57,7 +65,7 @@ def decorate_proxy_controller(wrapped: IAsyncController, *, name: Optional[str] 
         responses=CONTROLLER_RESPONSES,
         exceptions=CONTROLLER_EXCEPTIONS,
         duration=CONTROLLER_REQUESTS_TIME,
-        get_labels=lambda request: {**common_labels, "method": request.method},
+        get_labels=lambda request: {**common_labels, "method": _method_label(request.method)},
         status_attribute="status",
     )
 
@@ -75,7 +83,7 @@ def decorate_http_client_send(wrapped):
         duration=REMOTE_REQUESTS_TIME,
         get_labels=lambda request: {
             "name": request.extensions.get("harp", {}).get("endpoint", "-"),
-            "method": request.method,
+            "method": _method_label(request.method),
         },
         status_attribute="status_code",
     )

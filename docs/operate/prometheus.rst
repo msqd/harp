@@ -64,7 +64,9 @@ Metrics
 :::::::
 
 Metrics at the controller level (the middle layer, after the asgi kernel but before most of HARP's overhead). Labels:
-``name`` (route name), ``port`` and ``method``, plus the ones listed.
+``name`` (route name), ``port`` and ``method``, plus the ones listed. The ``method`` label is one of the standard HTTP
+methods (``GET``, ``HEAD``, ``POST``, ``PUT``, ``DELETE``, ``CONNECT``, ``OPTIONS``, ``TRACE``, ``PATCH``), or ``other``
+for any other method. The remote metrics below follow the same rule.
 
 * ``controller_requests_count``, a requests counter from the controller point of view.
   Labels: ``name``, ``port``, ``method``.

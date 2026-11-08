@@ -20,6 +20,8 @@ const stories = (
           // constrains a wrapper renders the wide layout squeezed into a narrow box. Declared per story as
           // `Story.meta = { viewport: { width, height } }`.
           viewport?: { width: number; height: number }
+          // Accessible-name fragment of a button to click before the screenshot, for stories showing an opened state.
+          openWith?: string
         }
       }
     }
@@ -41,6 +43,12 @@ Object.entries(stories).forEach(([name, story]) => {
     await page.goto(previewUrl)
     // stories are code-splitted, wait for them
     await page.waitForSelector("[data-storyloaded]")
+    if (story.meta?.openWith) {
+      await page
+        .getByRole("button", { name: new RegExp(story.meta.openWith, "i") })
+        .filter({ visible: true })
+        .click()
+    }
     // take and compare a screenshot
     await expect(page).toHaveScreenshot(`${name}.png`)
   })

@@ -16,9 +16,21 @@ themselves, are never deleted by the janitor: cache storage is reclaimed by the 
 blobs nothing references anymore. The ``storage_blobs_orphans`` metric counts the same orphans.
 
 The sweep runs on every blob backend that can list its blobs (``sql``, ``redis`` and ``memory``). With ``redis``, the
-janitor scans the keys, keeps those referenced by a message in the SQL storage or by a ``cache/meta`` entry, and deletes
+janitor scans the blob keys, keeps those referenced by a message in the SQL storage or by a ``cache/meta`` entry, and deletes
 the others unless they were written in the last 10 minutes (tracked by short-lived ``harp:blob-written:<id>`` keys).
 The ``storage_blobs`` and ``storage_blobs_orphans`` metrics count what the blob backend holds.
+
+With ``redis`` (and ``memory``), one sweep per loop serves the cleanup and the metrics. It reads the ``cache/meta``
+entries first, then the blob keys by ``SCAN`` in batches of 500 ids: each batch is looked up in the messages and its
+orphans are deleted, in a single short command, before the next batch is read. The janitor holds one batch plus the
+ids the cache entries reference (so it grows with the cache, not with the number of blobs), and no Redis command scales
+with the number of orphans. ``SCAN`` may return a key twice: within a batch it counts once, and a repeat landing in
+another batch can still be counted twice in the metrics.
+
+HARP stores its Redis blobs under the ``harp:blob:`` key prefix, and the janitor only scans, counts and deletes keys
+with that prefix (and its own ``harp:blob-written:`` markers). Other applications can share the Redis database: their
+keys, whatever their type, are never touched. Blobs stored by a version before 0.13 sit under their bare id: they are
+still read, but the janitor does not see them (see :ref:`upgrading-0-13`).
 
 A sweep works in short batches and gives the database connection back between them, so requests are served while it
 runs, even with the default in-memory storage that has a single connection.

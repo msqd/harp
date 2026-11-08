@@ -48,7 +48,7 @@ class HttpRequestStubBridge(HttpRequestBridge):
         self._closed = False
 
         if isinstance(query, str):
-            query = parse_qsl(query)
+            query = parse_qsl(query, keep_blank_values=True)
         self._query = MultiDict(query or {})
         self._headers = CIMultiDict(headers or {})
 

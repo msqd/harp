@@ -1,5 +1,5 @@
 import time
-from ipaddress import IPv6Address, ip_address
+from ipaddress import ip_address
 from dataclasses import replace
 
 import httpx
@@ -16,7 +16,13 @@ from harp.utils.bytes import HEADER_ENCODING, ensure_bytes, header_bytes
 from harp_apps.http_cache.coalescing import DEFAULT_TIMEOUT, Coalescer
 from harp_apps.http_cache.models import WrappedRequest
 from harp_apps.http_cache.settings import PurgeSettings
-from harp_apps.http_cache.storages import MARKERS_METADATA, MAX_BODY_SIZE_METADATA, REDACTION_METADATA, STAMP_METADATA
+from harp_apps.http_cache.storages import (
+    MARKERS_METADATA,
+    MAX_BODY_SIZE_METADATA,
+    REDACTION_METADATA,
+    STAMP_METADATA,
+    restore_date,
+)
 from harp_apps.http_cache.streams import ClosableByteStream, UpstreamBody
 
 logger = get_logger(__name__)
@@ -138,7 +144,7 @@ def _peer_address(request: httpx.Request):
         address = ip_address(request.extensions.get("harp", {}).get("client_ip"))
     except ValueError:
         return None
-    return address.ipv4_mapped or address if isinstance(address, IPv6Address) else address
+    return address
 
 
 #: Methods whose concurrent misses are coalesced: the ones a shared cache answers from a stored response.
@@ -189,6 +195,7 @@ class AsyncCacheTransport(HishelAsyncCacheTransport):
 
         response = _internal_to_httpx(internal_response)
         _restore_original_expires(response)
+        restore_date(response.headers)
         if request.method not in SAFE_METHODS and response.status_code < 400:
             await self._invalidate(request, response)
         return response

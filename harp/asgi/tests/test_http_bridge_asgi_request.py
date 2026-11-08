@@ -231,6 +231,13 @@ class TestHttpRequestAsgiBridgeClient(BaseHttpRequestAsgiBridgeTest):
     def test_get_client_ipaddr(self):
         assert self.create_bridge(client=["203.0.113.7", 4242]).get_client_ipaddr() == "203.0.113.7"
 
+    @pytest.mark.parametrize(
+        ("peer", "expected"),
+        [("::ffff:127.0.0.1", "127.0.0.1"), ("fd00::1", "fd00::1"), ("not-an-ip", "not-an-ip")],
+    )
+    def test_get_client_ipaddr_reads_a_mapped_peer_as_ipv4(self, peer, expected):
+        assert self.create_bridge(client=[peer, 1234]).get_client_ipaddr() == expected
+
     @pytest.mark.parametrize("client", [None, [], unset])
     def test_get_client_ipaddr_unknown(self, client):
         assert self.create_bridge(client=client).get_client_ipaddr() is None

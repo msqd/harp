@@ -14,7 +14,7 @@ dependencies (backend, frontend, pre-commit hooks) and starts a development serv
 .. note::
    **Docker Required for Tests**
 
-   Running the full test suite requires Docker, as tests use testcontainers to spawn database instances (PostgreSQL, and MySQL, which is deprecated).
+   Running the full test suite requires Docker, as tests use testcontainers to spawn database instances (PostgreSQL; MySQL is unsupported since 0.13 and no longer tested in CI).
 
 Development Workflow
 ::::::::::::::::::::

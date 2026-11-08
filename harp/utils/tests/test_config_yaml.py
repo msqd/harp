@@ -1,5 +1,6 @@
 import subprocess
 import sys
+from types import ModuleType
 
 import pytest
 import yaml as pyyaml
@@ -57,3 +58,15 @@ def test_config_source_supports_harp_tags(tmp_path):
     data = YAMLFile(str(f)).read_source()
     assert data["a"] == {"x": 1}
     assert isinstance(data["b"], LazyServiceReference)
+
+
+def test_include_from_a_package_searches_every_package_path(tmp_path, monkeypatch):
+    first, second = tmp_path / "first", tmp_path / "second"
+    first.mkdir()
+    second.mkdir()
+    (second / "included.yml").write_text("found: true\n")
+    package = ModuleType("split_package")
+    package.__path__ = [str(first), str(second)]
+    monkeypatch.setitem(sys.modules, "split_package", package)
+
+    assert pyyaml.load("!include included.yml from split_package", Loader=yaml.Loader) == {"found": True}

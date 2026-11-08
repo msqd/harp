@@ -97,3 +97,10 @@ async def test_recorded_request_is_unchanged():
     assert request.headers["x-forwarded-for"] == "6.6.6.6"
     assert request.headers["forwarded"] == "for=6.6.6.6"
     assert request.headers["x-real-ip"] == "6.6.6.6"
+
+
+@pytest.mark.asyncio
+async def test_native_ipv6_peer_is_unchanged():
+    _, headers = await _outgoing(CLAIMS, "fd00::1", trusted=("fd00::/8",))
+
+    assert headers.get_list("forwarded") == ['for=6.6.6.6, for="[fd00::1]"']

@@ -46,3 +46,11 @@ async def test_blob_stored_under_a_legacy_sha1_id_still_reads():
     await storage.put(Blob(id=legacy_id, data=b"old body", content_type="text/plain"))
 
     assert (await storage.get(legacy_id)).data == b"old body"
+
+
+async def test_exists_tells_stored_blobs_from_absent_ones():
+    storage = MemoryBlobStorage()
+    await storage.put(Blob(id="a", data=b"1"))
+
+    assert await storage.exists("a") is True
+    assert await storage.exists("absent") is False
