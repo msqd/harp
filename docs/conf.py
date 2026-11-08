@@ -71,6 +71,8 @@ html_js_files = ["js/links-target-blank.js"]
 html_css_files = ["css/harp.css"]
 
 html_baseurl = os.getenv("READTHEDOCS_CANONICAL_URL", "/")
+# the canonical url already carries the language and version
+sitemap_url_scheme = "{link}"
 
 html_sidebars = {
     "**": [
