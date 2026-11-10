@@ -1,7 +1,7 @@
 Transactions
 ============
 
-The «Transactions» tab shows the transactions that passed through the proxies.
+The «Transactions» navigation item shows the transactions that passed through the proxies.
 
 You can filter transactions using various criteria, and show the detailed content of each transactions.
 
