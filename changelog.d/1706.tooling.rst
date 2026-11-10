@@ -1,0 +1,1 @@
+Pin CI jobs to ubuntu-24.04 (Playwright has no ubuntu 26.04 support) and fix the high frontend advisory plus vite and minimatch (api-extractor moves to minimatch 11, the first patched release); two moderate glob/minimatch advisories under tailwindcss > sucrase remain, below the audit gate (--audit-level high).
