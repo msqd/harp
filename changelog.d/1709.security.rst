@@ -1,0 +1,1 @@
+Docker image: rebuild on the current python:3.13-slim digest and upgrade zlib1g, clearing the HIGH CVEs in apt and zlib.
