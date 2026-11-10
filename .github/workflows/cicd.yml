@@ -31,7 +31,7 @@ jobs:
   # See https://github.com/msqd/harp/issues/935.
   check-lockfile:
     name: Check Lockfile
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -50,7 +50,7 @@ jobs:
 
   lint-python:
     name: Lint Python
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: check-lockfile
     permissions:
       contents: read
@@ -77,7 +77,7 @@ jobs:
   # Generated schemas and types are committed: regenerating them on unmodified code must change nothing.
   check-types:
     name: Check Generated Types
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: check-lockfile
     permissions:
       contents: read
@@ -119,7 +119,7 @@ jobs:
 
   lint-frontend:
     name: Lint Frontend
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -148,7 +148,7 @@ jobs:
   # Fails on a ${{ }} expression pasted into a run: script (template injection). Rules: .github/zizmor.yml
   lint-workflows:
     name: Lint Workflows
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -168,7 +168,7 @@ jobs:
   # Fails a pull request that adds a dependency with a high or critical advisory (runtime scope only).
   dependency-review:
     name: Dependency Review
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -189,7 +189,7 @@ jobs:
   # Fails on any known advisory in the locked Python dependencies (dev tools included).
   audit-python:
     name: Audit uv.lock
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -212,7 +212,7 @@ jobs:
   # Fails on any high or critical advisory in the locked frontend dependencies.
   audit-frontend:
     name: Audit pnpm-lock.yaml
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -232,7 +232,7 @@ jobs:
   # Fails when a secret is committed: the same hooks as `pre-commit`, pinned to SHAs in .pre-commit-config.yaml.
   pre-commit:
     name: Pre-commit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -251,7 +251,7 @@ jobs:
 
   test-backend-core:
     name: Test Backend Core (Py${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: check-lockfile
     strategy:
       fail-fast: false
@@ -290,7 +290,7 @@ jobs:
 
   test-backend-apps:
     name: Test Backend Apps (Py${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: check-lockfile
     strategy:
       fail-fast: false
@@ -330,7 +330,7 @@ jobs:
 
   test-backend-e2e:
     name: Test Backend E2E (Py${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: check-lockfile
     strategy:
       fail-fast: false
@@ -372,7 +372,7 @@ jobs:
   # See https://github.com/msqd/harp/issues/921.
   test-backend-subprocess:
     name: Test Backend Subprocess
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: check-lockfile
     permissions:
       contents: read
@@ -405,7 +405,7 @@ jobs:
 
   test-frontend-unit:
     name: Test Frontend Unit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -436,7 +436,7 @@ jobs:
   # dependency optimization is warmed up first so a cold start cannot eat a spec's timeout.
   test-frontend-browser:
     name: Test Frontend Browser
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -475,7 +475,7 @@ jobs:
   # failure: by default Playwright writes it and moves on.
   test-frontend-visual:
     name: Test Frontend Visual
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -489,7 +489,7 @@ jobs:
 
   check-reference:
     name: Check API Reference
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: check-lockfile
     permissions:
       contents: read
@@ -516,7 +516,7 @@ jobs:
 
   build-documentation:
     name: Build Documentation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: check-lockfile
     permissions:
       contents: read
@@ -554,7 +554,7 @@ jobs:
 
   build-storybook:
     name: Build Storybook
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -590,7 +590,7 @@ jobs:
   # Python package build - runs in parallel with tests
   build-python-package:
     name: Build Python Package
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -673,7 +673,7 @@ jobs:
   test-python-package:
     name: Test Python Package (Py${{ matrix.python-version }})
     needs: build-python-package
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -748,7 +748,7 @@ jobs:
       - build-storybook
     # always() so a failed need fails the gate instead of skipping it (a skipped required check passes)
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -767,7 +767,7 @@ jobs:
     name: Build Docker Image (Development)
     needs: all-checks-passed
     if: github.ref_type != 'tag'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
@@ -886,7 +886,7 @@ jobs:
   publish-to-testpypi:
     name: Publish to TestPyPI
     needs: all-checks-passed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Only publish to PyPI for release tags (including pre-releases like rc1, beta1)
     if: github.ref_type == 'tag'
     environment:
@@ -909,7 +909,7 @@ jobs:
   publish-to-pypi:
     name: Publish to PyPI
     needs: publish-to-testpypi
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: pypi
       url: https://pypi.org/p/harp-proxy
@@ -929,7 +929,7 @@ jobs:
   build-docker-image-release:
     name: Build Docker Image (Release)
     needs: publish-to-pypi
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
@@ -1053,7 +1053,7 @@ jobs:
   attest-python-package:
     name: Attest Python Package
     needs: publish-to-pypi
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       attestations: write
@@ -1087,7 +1087,7 @@ jobs:
     needs:
       - publish-to-pypi
       - attest-python-package
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:

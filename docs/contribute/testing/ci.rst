@@ -190,7 +190,7 @@ Testcontainers support
 
 Tests that use testcontainers (for PostgreSQL, etc.) work automatically on GitHub Actions runners because:
 
-* Docker is pre-installed on ubuntu-latest runners
+* Docker is pre-installed on ubuntu-24.04 runners
 * Tests have access to the Docker socket
 * ``TESTCONTAINERS_RYUK_DISABLED=true`` is set for faster cleanup
 
