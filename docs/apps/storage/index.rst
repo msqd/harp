@@ -77,7 +77,8 @@ startup:
 
    MySQL and MariaDB are unsupported since 0.13: they are no longer tested in CI, get no fixes and come with no
    production support, and their code is removed in 0.14. HARP logs a warning at boot when ``storage.url`` points to
-   one of them. Use PostgreSQL for production.
+   one of them. The 0.13 Docker image does not include the MySQL driver: there, a MySQL or MariaDB ``storage.url``
+   refuses to start, see :ref:`upgrading-0-13`. Use PostgreSQL for production.
 
 SQLite ships with the base install. The PostgreSQL driver is an extra (the MySQL one is unsupported since 0.13
 and removed in 0.14, and the Docker image no longer includes it):
