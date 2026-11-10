@@ -1,1 +1,1 @@
-MySQL and MariaDB are no longer supported or tested from 0.13 and will be removed in 0.14: use PostgreSQL in production. The Docker image no longer includes the MySQL driver.
+MySQL and MariaDB are no longer supported or tested from 0.13 and will be removed in 0.14: use PostgreSQL in production. A pip-installed HARP with the ``mysql`` extra warns at boot; the 0.13 Docker image no longer includes the MySQL driver, so a MySQL or MariaDB ``storage.url`` refuses to start there. Migrate to PostgreSQL first, stay on the 0.12 image, or build a derived image with the ``mysql`` extra.

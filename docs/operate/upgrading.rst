@@ -7,8 +7,12 @@ Storage
 :::::::
 
 - **MySQL and MariaDB are unsupported**: they are no longer tested in CI, get no fixes, and their code is removed
-  in 0.14. HARP still logs a warning at boot when ``storage.url`` points to one of them. The Docker image no longer
-  includes the MySQL driver. Migrate to PostgreSQL before 0.14, the only database supported in production. See :doc:`the storage page </apps/storage/index>`.
+  in 0.14. A pip-installed HARP with the ``mysql`` extra still logs a warning at boot when ``storage.url``
+  points to one of them. The 0.13 Docker image no longer includes the MySQL driver and has no pip, so with it a MySQL
+  or MariaDB ``storage.url``
+  **refuses to start**. Migrate to PostgreSQL before upgrading the image, stay on the 0.12 image until you have, or
+  build a derived image that installs the ``mysql`` extra in a build stage. Migrate before 0.14 in any case: PostgreSQL
+  is the only database supported in production. See :doc:`the storage page </apps/storage/index>`.
 
 Metrics
 :::::::
